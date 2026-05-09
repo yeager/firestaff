@@ -1202,5 +1202,2108 @@
       ]
     }
   ],
+  "deltaBuckets": {
+    "schema": "pass449_hall_candidate_framebuffer_delta_buckets.v1",
+    "status": "DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM",
+    "highestImpactFinding": "HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.",
+    "sourceRefs": [
+      "REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294",
+      "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
+      "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
+      "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991"
+    ],
+    "hudStatusSummary": {
+      "rows": 5,
+      "bucketMismatches": 4,
+      "zeroDeltaRows": 1
+    },
+    "rows": [
+      {
+        "scene": "candidate_select",
+        "region": "fullframe",
+        "differingPixels": 58965,
+        "totalPixels": 64000,
+        "deltaPercent": 92.132812,
+        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "firestaffVisual": {
+          "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+          "bytes": 5716,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 15,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 33624,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 20810,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 2753,
+              "rgb": [
+                0,
+                219,
+                219
+              ]
+            },
+            {
+              "count": 2126,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 813,
+              "rgb": [
+                255,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "bytes": 25550,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 16,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 17502,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 7817,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 6921,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 6266,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 5570,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "candidate_select",
+        "region": "hud_status_crop",
+        "differingPixels": 8174,
+        "totalPixels": 10560,
+        "deltaPercent": 77.405303,
+        "classification": "hud_status_capture_state_bucket_mismatch",
+        "firestaffVisual": {
+          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
+          "bytes": 906,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 10,
+          "nonDominantBBox": [
+            0,
+            0,
+            297,
+            29
+          ],
+          "topColors": [
+            {
+              "count": 8506,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 1289,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 302,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 182,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            },
+            {
+              "count": 142,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 11,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            33
+          ],
+          "topColors": [
+            {
+              "count": 3335,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 2510,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 1824,
+              "rgb": [
+                146,
+                109,
+                73
+              ]
+            },
+            {
+              "count": 791,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            },
+            {
+              "count": 575,
+              "rgb": [
+                219,
+                182,
+                146
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "panel_visible",
+        "region": "fullframe",
+        "differingPixels": 58965,
+        "totalPixels": 64000,
+        "deltaPercent": 92.132812,
+        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "firestaffVisual": {
+          "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+          "bytes": 5716,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 15,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 33624,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 20810,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 2753,
+              "rgb": [
+                0,
+                219,
+                219
+              ]
+            },
+            {
+              "count": 2126,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 813,
+              "rgb": [
+                255,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "bytes": 25550,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 16,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 17502,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 7817,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 6921,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 6266,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 5570,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "panel_visible",
+        "region": "panel_crop",
+        "differingPixels": 9692,
+        "totalPixels": 10512,
+        "deltaPercent": 92.199391,
+        "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "firestaffVisual": {
+          "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
+          "bytes": 2387,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 15,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4632,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 2295,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 741,
+              "rgb": [
+                255,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 376,
+              "rgb": [
+                0,
+                219,
+                0
+              ]
+            },
+            {
+              "count": 369,
+              "rgb": [
+                255,
+                182,
+                0
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+          "bytes": 3744,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "mixed",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 6,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4171,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 2380,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 1766,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 966,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 769,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "cancel",
+        "region": "fullframe",
+        "differingPixels": 55171,
+        "totalPixels": 64000,
+        "deltaPercent": 86.204688,
+        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "firestaffVisual": {
+          "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
+          "bytes": 12249,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 10,
+          "nonDominantBBox": [
+            0,
+            33,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 31345,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13405,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 8550,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4283,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 2259,
+              "rgb": [
+                0,
+                219,
+                219
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+          "bytes": 16168,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 16,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 32513,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 6752,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 6099,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 3582,
+              "rgb": [
+                146,
+                109,
+                73
+              ]
+            },
+            {
+              "count": 2278,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "cancel",
+        "region": "panel_crop",
+        "differingPixels": 10307,
+        "totalPixels": 10512,
+        "deltaPercent": 98.049848,
+        "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "firestaffVisual": {
+          "sha256": "b359516dc0f56d81cb45e91c213dc56615a46a350ddde7e94b0d65a5a5604163",
+          "bytes": 3794,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "mixed",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 8,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4355,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 3107,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 1631,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 740,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 470,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+          "bytes": 1571,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 5,
+          "nonDominantBBox": [
+            0,
+            0,
+            131,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 8102,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 1560,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 453,
+              "rgb": [
+                146,
+                73,
+                0
+              ]
+            },
+            {
+              "count": 360,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            },
+            {
+              "count": 37,
+              "rgb": [
+                255,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "cancel",
+        "region": "hud_status_crop",
+        "differingPixels": 7225,
+        "totalPixels": 10560,
+        "deltaPercent": 68.418561,
+        "classification": "hud_status_capture_state_bucket_mismatch",
+        "firestaffVisual": {
+          "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
+          "bytes": 110,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "all_black",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 1,
+          "nonDominantBBox": null,
+          "topColors": [
+            {
+              "count": 10560,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 11,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            33
+          ],
+          "topColors": [
+            {
+              "count": 3335,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 2510,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 1824,
+              "rgb": [
+                146,
+                109,
+                73
+              ]
+            },
+            {
+              "count": 791,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            },
+            {
+              "count": 575,
+              "rgb": [
+                219,
+                182,
+                146
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "resurrect_confirm",
+        "region": "fullframe",
+        "differingPixels": 19123,
+        "totalPixels": 64000,
+        "deltaPercent": 29.879687,
+        "classification": "nonzero_delta_unclassified",
+        "firestaffVisual": {
+          "sha256": "78b121af09ae96ce773dca76d3090e82df677ff6c71a39cdd2995d82359802fe",
+          "bytes": 13005,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 12,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 29043,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13549,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 8590,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4593,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 3201,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 7,
+          "nonDominantBBox": [
+            0,
+            33,
+            320,
+            169
+          ],
+          "topColors": [
+            {
+              "count": 34621,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13144,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 6995,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4586,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 1894,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "resurrect_confirm",
+        "region": "panel_crop",
+        "differingPixels": 5616,
+        "totalPixels": 10512,
+        "deltaPercent": 53.424658,
+        "classification": "nonzero_delta_unclassified",
+        "firestaffVisual": {
+          "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
+          "bytes": 3734,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "mixed",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 7,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4357,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 3116,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 1639,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 753,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 470,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+          "bytes": 3744,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "mixed",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 6,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4171,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 2380,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 1766,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 966,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 769,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "resurrect_confirm",
+        "region": "hud_status_crop",
+        "differingPixels": 2054,
+        "totalPixels": 10560,
+        "deltaPercent": 19.450758,
+        "classification": "hud_status_capture_state_bucket_mismatch",
+        "firestaffVisual": {
+          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
+          "bytes": 906,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 10,
+          "nonDominantBBox": [
+            0,
+            0,
+            297,
+            29
+          ],
+          "topColors": [
+            {
+              "count": 8506,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 1289,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 302,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 182,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            },
+            {
+              "count": 142,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "bytes": 110,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "all_black",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 1,
+          "nonDominantBBox": null,
+          "topColors": [
+            {
+              "count": 10560,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "region": "fullframe",
+        "differingPixels": 56251,
+        "totalPixels": 64000,
+        "deltaPercent": 87.892188,
+        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "firestaffVisual": {
+          "sha256": "eee7c1db698dd1dabdb215ca56e31cf5e12ead77aa81895f40d5cf0eb3a8a03a",
+          "bytes": 13004,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 12,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 29038,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13549,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 8590,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4593,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 3201,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+          "bytes": 16168,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 16,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 32513,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 6752,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 6099,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 3582,
+              "rgb": [
+                146,
+                109,
+                73
+              ]
+            },
+            {
+              "count": 2278,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "region": "panel_crop",
+        "differingPixels": 10304,
+        "totalPixels": 10512,
+        "deltaPercent": 98.021309,
+        "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "firestaffVisual": {
+          "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
+          "bytes": 3734,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "mixed",
+          "dominantRgb": [
+            182,
+            182,
+            182
+          ],
+          "uniqueColors": 7,
+          "nonDominantBBox": [
+            0,
+            0,
+            144,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 4357,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 3116,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 1639,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 753,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 470,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+          "bytes": 1571,
+          "pngDims": [
+            144,
+            73
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 5,
+          "nonDominantBBox": [
+            0,
+            0,
+            131,
+            73
+          ],
+          "topColors": [
+            {
+              "count": 8102,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 1560,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 453,
+              "rgb": [
+                146,
+                73,
+                0
+              ]
+            },
+            {
+              "count": 360,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            },
+            {
+              "count": 37,
+              "rgb": [
+                255,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "region": "hud_status_crop",
+        "differingPixels": 8174,
+        "totalPixels": 10560,
+        "deltaPercent": 77.405303,
+        "classification": "hud_status_capture_state_bucket_mismatch",
+        "firestaffVisual": {
+          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
+          "bytes": 906,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 10,
+          "nonDominantBBox": [
+            0,
+            0,
+            297,
+            29
+          ],
+          "topColors": [
+            {
+              "count": 8506,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 1289,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            },
+            {
+              "count": 302,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 182,
+              "rgb": [
+                255,
+                255,
+                255
+              ]
+            },
+            {
+              "count": 142,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "original_brown_hall_top_band",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 11,
+          "nonDominantBBox": [
+            0,
+            0,
+            320,
+            33
+          ],
+          "topColors": [
+            {
+              "count": 3335,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 2510,
+              "rgb": [
+                182,
+                146,
+                109
+              ]
+            },
+            {
+              "count": 1824,
+              "rgb": [
+                146,
+                109,
+                73
+              ]
+            },
+            {
+              "count": 791,
+              "rgb": [
+                109,
+                36,
+                0
+              ]
+            },
+            {
+              "count": 575,
+              "rgb": [
+                219,
+                182,
+                146
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "hud_status_after",
+        "region": "fullframe",
+        "differingPixels": 16824,
+        "totalPixels": 64000,
+        "deltaPercent": 26.2875,
+        "classification": "nonzero_delta_unclassified",
+        "firestaffVisual": {
+          "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
+          "bytes": 12249,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 10,
+          "nonDominantBBox": [
+            0,
+            33,
+            320,
+            200
+          ],
+          "topColors": [
+            {
+              "count": 31345,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13405,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 8550,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4283,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 2259,
+              "rgb": [
+                0,
+                219,
+                219
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095,
+          "pngDims": [
+            320,
+            200
+          ],
+          "visualBucket": "firestaff_gray_status_hud",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 7,
+          "nonDominantBBox": [
+            0,
+            33,
+            320,
+            169
+          ],
+          "topColors": [
+            {
+              "count": 34621,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "count": 13144,
+              "rgb": [
+                182,
+                182,
+                182
+              ]
+            },
+            {
+              "count": 6995,
+              "rgb": [
+                146,
+                146,
+                146
+              ]
+            },
+            {
+              "count": 4586,
+              "rgb": [
+                109,
+                109,
+                109
+              ]
+            },
+            {
+              "count": 1894,
+              "rgb": [
+                73,
+                73,
+                73
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "scene": "hud_status_after",
+        "region": "hud_status_crop",
+        "differingPixels": 0,
+        "totalPixels": 10560,
+        "deltaPercent": 0.0,
+        "classification": "zero_delta_recorded_no_parity_promotion",
+        "firestaffVisual": {
+          "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
+          "bytes": 110,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "all_black",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 1,
+          "nonDominantBBox": null,
+          "topColors": [
+            {
+              "count": 10560,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "originalVisual": {
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "bytes": 110,
+          "pngDims": [
+            320,
+            33
+          ],
+          "visualBucket": "all_black",
+          "dominantRgb": [
+            0,
+            0,
+            0
+          ],
+          "uniqueColors": 1,
+          "nonDominantBBox": null,
+          "topColors": [
+            {
+              "count": 10560,
+              "rgb": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "repeatedInputHashGroups": [
+      {
+        "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "resurrect_confirm",
+            "region": "hud_status_crop",
+            "visualBucket": "all_black"
+          },
+          {
+            "side": "original",
+            "scene": "hud_status_after",
+            "region": "hud_status_crop",
+            "visualBucket": "all_black"
+          }
+        ]
+      },
+      {
+        "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "cancel",
+            "region": "fullframe",
+            "visualBucket": "original_brown_hall_top_band"
+          },
+          {
+            "side": "original",
+            "scene": "reincarnate_confirm",
+            "region": "fullframe",
+            "visualBucket": "original_brown_hall_top_band"
+          }
+        ]
+      },
+      {
+        "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "resurrect_confirm",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "original",
+            "scene": "hud_status_after",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          }
+        ]
+      },
+      {
+        "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
+        "uses": [
+          {
+            "side": "firestaff",
+            "scene": "cancel",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "firestaff",
+            "scene": "hud_status_after",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          }
+        ]
+      },
+      {
+        "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
+        "uses": [
+          {
+            "side": "firestaff",
+            "scene": "candidate_select",
+            "region": "hud_status_crop",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "firestaff",
+            "scene": "resurrect_confirm",
+            "region": "hud_status_crop",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "firestaff",
+            "scene": "reincarnate_confirm",
+            "region": "hud_status_crop",
+            "visualBucket": "firestaff_gray_status_hud"
+          }
+        ]
+      },
+      {
+        "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+        "uses": [
+          {
+            "side": "firestaff",
+            "scene": "candidate_select",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "firestaff",
+            "scene": "panel_visible",
+            "region": "fullframe",
+            "visualBucket": "firestaff_gray_status_hud"
+          }
+        ]
+      },
+      {
+        "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
+        "uses": [
+          {
+            "side": "firestaff",
+            "scene": "resurrect_confirm",
+            "region": "panel_crop",
+            "visualBucket": "mixed"
+          },
+          {
+            "side": "firestaff",
+            "scene": "reincarnate_confirm",
+            "region": "panel_crop",
+            "visualBucket": "mixed"
+          }
+        ]
+      },
+      {
+        "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "candidate_select",
+            "region": "hud_status_crop",
+            "visualBucket": "original_brown_hall_top_band"
+          },
+          {
+            "side": "original",
+            "scene": "cancel",
+            "region": "hud_status_crop",
+            "visualBucket": "original_brown_hall_top_band"
+          },
+          {
+            "side": "original",
+            "scene": "reincarnate_confirm",
+            "region": "hud_status_crop",
+            "visualBucket": "original_brown_hall_top_band"
+          }
+        ]
+      },
+      {
+        "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "panel_visible",
+            "region": "panel_crop",
+            "visualBucket": "mixed"
+          },
+          {
+            "side": "original",
+            "scene": "resurrect_confirm",
+            "region": "panel_crop",
+            "visualBucket": "mixed"
+          }
+        ]
+      },
+      {
+        "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "cancel",
+            "region": "panel_crop",
+            "visualBucket": "firestaff_gray_status_hud"
+          },
+          {
+            "side": "original",
+            "scene": "reincarnate_confirm",
+            "region": "panel_crop",
+            "visualBucket": "firestaff_gray_status_hud"
+          }
+        ]
+      },
+      {
+        "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "uses": [
+          {
+            "side": "original",
+            "scene": "candidate_select",
+            "region": "fullframe",
+            "visualBucket": "original_brown_hall_top_band"
+          },
+          {
+            "side": "original",
+            "scene": "panel_visible",
+            "region": "fullframe",
+            "visualBucket": "original_brown_hall_top_band"
+          }
+        ]
+      },
+      {
+        "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
+        "uses": [
+          {
+            "side": "firestaff",
+            "scene": "cancel",
+            "region": "hud_status_crop",
+            "visualBucket": "all_black"
+          },
+          {
+            "side": "firestaff",
+            "scene": "hud_status_after",
+            "region": "hud_status_crop",
+            "visualBucket": "all_black"
+          }
+        ]
+      }
+    ],
+    "nonClaims": [
+      "no full pixel parity claim",
+      "no HUD/status parity claim for non-zero rows",
+      "classification describes comparator input/state buckets, not renderer equivalence"
+    ]
+  },
   "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Partial panel_visible comparisons are diagnostic only; pixel parity for a region is differingPixels == 0 with matching original data provenance and source-bound matching state."
 }

@@ -59,6 +59,10 @@
   - `reincarnate_confirm` `hud_status_crop` differingPixels=8174/10560 maxChannelDelta=255 meanAbsDeltaRgb=80.297191
   - `hud_status_after` `fullframe` differingPixels=16824/64000 maxChannelDelta=255 meanAbsDeltaRgb=19.831958
   - `hud_status_after` `hud_status_crop` differingPixels=0/10560 maxChannelDelta=0 meanAbsDeltaRgb=0.0
+- delta buckets: `DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM`
+  - highest-impact finding: HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.
+  - HUD/status summary: rows=5 bucketMismatches=4 zeroDeltaRows=1
+  - source refs: `REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294`, `REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807`, `PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385`, `COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991`
 - `candidate_select` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png` hashField=`scenes.candidate_select.firestaff.fullframe.sha256` exists=True
 - `candidate_select` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png` hashField=`scenes.candidate_select.firestaff.hud_status_crop.sha256` exists=True
 - `candidate_select` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png` hashField=`scenes.candidate_select.original.fullframe.sha256` exists=True

@@ -705,6 +705,112 @@ def run_framebuffer_comparisons() -> tuple[list[dict[str, Any]], list[str]]:
     return rows, errors
 
 
+def classify_png_visual_bucket(path: Path) -> dict[str, Any]:
+    """Return compact, deterministic visual stats for delta triage only."""
+    from PIL import Image, ImageChops
+
+    with Image.open(path) as image:
+        rgb = image.convert("RGB")
+        colors = sorted(rgb.getcolors(maxcolors=100000) or [], reverse=True)
+        dominant = colors[0][1] if colors else (0, 0, 0)
+        diff = ImageChops.difference(rgb, Image.new("RGB", rgb.size, dominant))
+        non_dominant_bbox = diff.getbbox()
+        unique_colors = len(colors)
+        if unique_colors == 1 and dominant == (0, 0, 0):
+            visual = "all_black"
+        elif any(color[1] == (182, 146, 109) for color in colors[:8]) or any(color[1] == (146, 109, 73) for color in colors[:8]):
+            visual = "original_brown_hall_top_band"
+        elif dominant == (0, 0, 0) and any(color[1] == (73, 73, 73) for color in colors[:8]):
+            visual = "firestaff_gray_status_hud"
+        else:
+            visual = "mixed"
+        return {
+            "sha256": sha(path),
+            "bytes": path.stat().st_size,
+            "pngDims": png_dims(path),
+            "visualBucket": visual,
+            "dominantRgb": list(dominant),
+            "uniqueColors": unique_colors,
+            "nonDominantBBox": list(non_dominant_bbox) if non_dominant_bbox else None,
+            "topColors": [
+                {"count": count, "rgb": list(color)} for count, color in colors[:5]
+            ],
+        }
+
+
+def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dict[str, Any]:
+    """Classify pass449 comparator deltas without promoting parity claims.
+
+    The highest-impact current signal is the HUD/status crop family: terminal
+    actions compare different visual state buckets (black, gray status HUD, and
+    brown Hall top band) even before renderer-level pixel parity is evaluated.
+    """
+    rows: list[dict[str, Any]] = []
+    hash_groups: dict[str, list[dict[str, str]]] = {}
+    for cmp_row in comparisons:
+        firestaff_path = ROOT / cmp_row["firestaff"]
+        original_path = ROOT / cmp_row["original"]
+        fs_stats = classify_png_visual_bucket(firestaff_path)
+        og_stats = classify_png_visual_bucket(original_path)
+        for side, stats in (("firestaff", fs_stats), ("original", og_stats)):
+            hash_groups.setdefault(stats["sha256"], []).append({
+                "side": side,
+                "scene": cmp_row["scene"],
+                "region": cmp_row["region"],
+                "visualBucket": stats["visualBucket"],
+            })
+        if cmp_row["differingPixels"] == 0:
+            classification = "zero_delta_recorded_no_parity_promotion"
+        elif cmp_row["region"] == "hud_status_crop" and fs_stats["visualBucket"] != og_stats["visualBucket"]:
+            classification = "hud_status_capture_state_bucket_mismatch"
+        elif cmp_row["region"] == "panel_crop" and cmp_row["deltaPercent"] >= 90:
+            classification = "panel_crop_large_delta_needs_source_state_alignment"
+        elif cmp_row["region"] == "fullframe" and cmp_row["deltaPercent"] >= 80:
+            classification = "fullframe_large_delta_likely_scene_state_or_palette_family"
+        else:
+            classification = "nonzero_delta_unclassified"
+        rows.append({
+            "scene": cmp_row["scene"],
+            "region": cmp_row["region"],
+            "differingPixels": cmp_row["differingPixels"],
+            "totalPixels": cmp_row["totalPixels"],
+            "deltaPercent": cmp_row["deltaPercent"],
+            "classification": classification,
+            "firestaffVisual": fs_stats,
+            "originalVisual": og_stats,
+        })
+    repeated = [
+        {"sha256": digest, "uses": uses}
+        for digest, uses in sorted(hash_groups.items())
+        if len(uses) > 1
+    ]
+    hud_rows = [row for row in rows if row["region"] == "hud_status_crop"]
+    hud_mismatch_rows = [row for row in hud_rows if row["classification"] == "hud_status_capture_state_bucket_mismatch"]
+    return {
+        "schema": "pass449_hall_candidate_framebuffer_delta_buckets.v1",
+        "status": "DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM",
+        "highestImpactFinding": "HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.",
+        "sourceRefs": [
+            "REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294",
+            "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
+            "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
+            "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991",
+        ],
+        "hudStatusSummary": {
+            "rows": len(hud_rows),
+            "bucketMismatches": len(hud_mismatch_rows),
+            "zeroDeltaRows": len([row for row in hud_rows if row["differingPixels"] == 0]),
+        },
+        "rows": rows,
+        "repeatedInputHashGroups": repeated,
+        "nonClaims": [
+            "no full pixel parity claim",
+            "no HUD/status parity claim for non-zero rows",
+            "classification describes comparator input/state buckets, not renderer equivalence",
+        ],
+    }
+
+
 def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any]:
     schema = build_framebuffer_manifest_schema()
     FRAMEBUFFER_SCHEMA_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -741,6 +847,11 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
                         errors += validate_manifest_hash_entry(manifest_data, scene, side, artifact, expected_frame_path(side, scene, artifact))
     comparisons, compare_errors = run_framebuffer_comparisons()
     errors += compare_errors
+    delta_buckets = classify_framebuffer_delta_buckets(comparisons) if comparisons else {
+        "schema": "pass449_hall_candidate_framebuffer_delta_buckets.v1",
+        "status": "NO_COMPARISONS_TO_CLASSIFY",
+        "rows": [],
+    }
     if not missing and not errors:
         status = "COMPARE_COMPLETE"
     elif comparisons and not errors:
@@ -762,6 +873,7 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
         "errors": errors,
         "compareExecuted": bool(comparisons),
         "comparisons": comparisons,
+        "deltaBuckets": delta_buckets,
         "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Partial panel_visible comparisons are diagnostic only; pixel parity for a region is differingPixels == 0 with matching original data provenance and source-bound matching state.",
     }
     COMPARATOR_RESULT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
@@ -980,6 +1092,13 @@ def write_report(manifest: dict[str, Any]) -> None:
         lines.append("- partial comparisons executed (diagnostic only; no full pixel parity claim):")
         for cmp_row in manifest["framebufferComparator"]["comparisons"]:
             lines.append(f"  - `{cmp_row['scene']}` `{cmp_row['region']}` differingPixels={cmp_row['differingPixels']}/{cmp_row['totalPixels']} maxChannelDelta={cmp_row['maxChannelDelta']} meanAbsDeltaRgb={cmp_row['meanAbsDeltaRgb']}")
+    delta = manifest["framebufferComparator"].get("deltaBuckets", {})
+    if delta.get("rows"):
+        lines.append("- delta buckets: `DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM`")
+        lines.append(f"  - highest-impact finding: {delta.get('highestImpactFinding')}")
+        summary = delta.get("hudStatusSummary", {})
+        lines.append(f"  - HUD/status summary: rows={summary.get('rows')} bucketMismatches={summary.get('bucketMismatches')} zeroDeltaRows={summary.get('zeroDeltaRows')}")
+        lines.append("  - source refs: `REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294`, `REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807`, `PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385`, `COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991`")
     for row in manifest["framebufferComparator"]["expectedArtifacts"]:
         lines.append(f"- `{row['scene']}` `{row['side']}` `{row['artifact']}` path=`{row['path']}` hashField=`{row['requiredSha256Field']}` exists={row['exists']}")
     n2 = manifest["n2PanelVisibleOriginalArtifact"]
