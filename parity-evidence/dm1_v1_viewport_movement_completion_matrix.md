@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `PASS`
-Generated: `2026-05-09T03:46:27.586115+00:00`
+Generated: `2026-05-09T04:18:46.790080+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -29,10 +29,10 @@ Generated: `2026-05-09T03:46:27.586115+00:00`
 
 ## Expected blockers
 - `CONFIRMED` `pass435_semantic_original_route_readiness_gate` expected `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY` observed `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY`: remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven
-  -     "pass376 raw route classifier is not green",
-  -     "pass376 raw route classes do not match the semantic promotion sequence",
-  -     "pass376 raw route repeats screenshot hashes",
-  -     "pass376 viewport crops repeat hashes, so labels are not semantically distinct"
+  - {
+  -   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+  -   "blockers": [
+  -     "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
   -   ],
   -   "manifest": "parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json",
   -   "report": "parity-evidence/pass435_dm1_v1_semantic_original_route_readiness_gate.md"
