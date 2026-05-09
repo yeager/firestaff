@@ -529,10 +529,13 @@ static void test_stairs_step_consequence(void)
     unsigned char level0[5 * 5];
     unsigned char level1[5 * 5];
     struct PartyState_Compat party;
+    struct DungeonThings_Compat things;
     struct Dm1V1MovementPipelinePc34Compat pipeline;
     struct Dm1V1MovementPipelineResultPc34Compat result;
 
     setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
 
     /* CLIKMENU.C:271-276: stepping into a stairs square calls F0364 and
      * returns before the normal G0310 cooldown path at CLIKMENU.C:330-346.
@@ -546,10 +549,12 @@ static void test_stairs_step_consequence(void)
     DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
         key_event(0xAB35));
     DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
-        &pipeline, &dungeon, NULL, &party, NULL, &result);
+        &pipeline, &dungeon, &things, &party, NULL, &result);
 
     EXPECT("stairs_into_transition", result.core.stairTransitionApplied == 1);
     EXPECT("stairs_into_no_regular_step", result.core.stepApplied == 0);
+    EXPECT("stairs_into_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
+    EXPECT("stairs_into_target_walk_off", result.core.stairTargetLeaveProcessed == 1);
     EXPECT("stairs_into_movement_flag", result.anyMovementOccurred == 1);
     EXPECT_INT("stairs_into_map", party.mapIndex, 1);
     EXPECT_INT("stairs_into_x", party.mapX, 2);
@@ -566,9 +571,11 @@ static void test_stairs_step_consequence(void)
     DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
         key_event(0xAB32));
     DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
-        &pipeline, &dungeon, NULL, &party, NULL, &result);
+        &pipeline, &dungeon, &things, &party, NULL, &result);
 
     EXPECT("stairs_backward_transition", result.core.stairTransitionApplied == 1);
+    EXPECT("stairs_backward_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
+    EXPECT("stairs_backward_no_target_walk_off", result.core.stairTargetLeaveProcessed == 0);
     EXPECT_INT("stairs_backward_map", party.mapIndex, 1);
     EXPECT_INT("stairs_backward_x_not_south", party.mapX, 2);
     EXPECT_INT("stairs_backward_y_not_south", party.mapY, 2);

@@ -54,6 +54,8 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int sourceMapY;
     int sourceDirection;
     int stairTransitionApplied;
+    int stairSourceLeaveProcessed;
+    int stairTargetLeaveProcessed;
 };
 
 int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(

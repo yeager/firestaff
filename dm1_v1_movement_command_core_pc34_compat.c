@@ -91,6 +91,32 @@ static void dm1_v1_apply_stairs_transition_result(
     outResult->viewportRedrawRequested = 1;
 }
 
+static int dm1_v1_process_stair_walk_off_append(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct SensorEffectList_Compat* outEffects)
+{
+    struct SensorEffectList_Compat tmp;
+    int i;
+
+    if (!outEffects) {
+        return 0;
+    }
+    memset(&tmp, 0, sizeof(tmp));
+    if (!F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+            dungeon, things, mapIndex, mapX, mapY,
+            SENSOR_EVENT_WALK_OFF, &tmp)) {
+        return 0;
+    }
+    for (i = 0; i < tmp.count && outEffects->count < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
+        outEffects->effects[outEffects->count++] = tmp.effects[i];
+    }
+    return 1;
+}
+
 int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     const struct DungeonDatState_Compat* dungeon,
@@ -131,10 +157,17 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         outResult->commandHandled = 1;
 
         /* Source lock: CLIKMENU.C:167-169 consumes a turn command on a stairs
-         * square via F0364_COMMAND_TakeStairs and returns before normal
-         * current-square sensor leave/enter and F0284 turn rotation.
+         * square via F0364_COMMAND_TakeStairs and returns before F0284 turn
+         * rotation.  F0364 still calls MOVESENS.C:F0267 with the current
+         * stairs square as source (CLIKMENU.C:135), so the stairs walk-off
+         * sensor pass is preserved without a same-square walk-on pass.
          */
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            if (dm1_v1_process_stair_walk_off_append(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    &outResult->leaveEffects)) {
+                outResult->stairSourceLeaveProcessed = 1;
+            }
             dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
             outResult->movement.resultCode = MOVE_TURN_ONLY;
             outResult->turnApplied = 1;
@@ -178,6 +211,11 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     if (action == MOVE_BACKWARD) {
         struct StairsTransitionResult_Compat stairs;
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            if (dm1_v1_process_stair_walk_off_append(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    &outResult->leaveEffects)) {
+                outResult->stairSourceLeaveProcessed = 1;
+            }
             dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
             return 1;
         }
@@ -203,6 +241,16 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         targetParty.mapY = outResult->movement.newMapY;
         targetParty.direction = outResult->movement.newDirection;
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, &targetParty, &stairs) && stairs.transitioned) {
+            if (dm1_v1_process_stair_walk_off_append(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    &outResult->leaveEffects)) {
+                outResult->stairSourceLeaveProcessed = 1;
+            }
+            if (dm1_v1_process_stair_walk_off_append(
+                    dungeon, things, targetParty.mapIndex, targetParty.mapX, targetParty.mapY,
+                    &outResult->leaveEffects)) {
+                outResult->stairTargetLeaveProcessed = 1;
+            }
             dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
             return 1;
         }
@@ -247,8 +295,8 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
     return "ReDMCSB Toolchains/Common/Source source lock: "
            "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099 locks/empty-checks/movement-disabled gate, 2118-2127 dequeues, 2150-2156 dispatches turn/move; "
-           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255 living-champion stamina decrement before movement resolution, 224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048 clamps stamina and damages on underflow; "
+           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party via F0267 then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:176-179 stairs sensor-order comment, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255 living-champion stamina decrement before movement resolution, 224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048 clamps stamina and damages on underflow; "
            "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391 applies forward/right deltas; "
            "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
-           "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update.";
+           "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update, 799-818 party walk-off/walk-on sensor processing.";
 }
