@@ -722,6 +722,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME pass428_dm1_v1_route_command_to_movement_gap
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_pass428_dm1_v1_route_command_to_movement_gap.py
+    )
+
+    add_test(
         NAME pass351_dm1_v1_live_viewport_redraw_parity_sweep
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py
     )
