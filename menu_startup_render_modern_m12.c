@@ -1039,18 +1039,22 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    /* Four tall front-door cards per product direction:
-     * Firestaff brand, DM1, CSB, DM2, Nexus. Settings remain available
-     * through the settings view/input path, but are no longer a main
-     * destination card in the modern front-door layout. */
+    /* Front-door cards: one Firestaff brand card plus every real
+     * top-level destination in the shared M12 menu state. Mouse hit
+     * testing uses the same geometry, so entries must not be hidden
+     * here; otherwise keyboard-only destinations become impossible to
+     * reach by pointer. */
     int gridTop = 170;
     int gridBottom = c->h - 130;
     int gridH = gridBottom - gridTop;
-    int cardCount = 5;
+    int entryCount = M12_StartupMenu_GetEntryCount();
+    int cardCount = entryCount + 1;
     int gap = 22;
     int sideMargin = 48;
-    int cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
+    int cardW;
     int cardH = gridH;
+    if (cardCount < 1) cardCount = 1;
+    cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
 
     for (int i = 0; i < cardCount; ++i) {
         int x = sideMargin + i * (cardW + gap);
@@ -1060,7 +1064,9 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
         } else {
             int entryIndex = i - 1;
             int selected = (state->selectedIndex == entryIndex);
-            draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
+            if (entryIndex >= 0 && entryIndex < entryCount) {
+                draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
+            }
         }
     }
 

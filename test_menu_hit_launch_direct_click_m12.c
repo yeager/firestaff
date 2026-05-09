@@ -32,7 +32,8 @@ int main(void) {
     M12_StartupMenuState state;
     M12_MouseHit hit;
     int changed;
-    const int cardW = (1920 - 2 * 48 - 22 * 4) / 5;
+    const int visualCardCount = M12_StartupMenu_GetEntryCount() + 1;
+    const int cardW = (1920 - 2 * 48 - 22 * (visualCardCount - 1)) / visualCardCount;
     const int dm1CardCenterX = 48 + 1 * (cardW + 22) + cardW / 2;
     const int cardCenterY = (170 + (1080 - 130)) / 2;
     const int launchCenterX = 960;
@@ -40,6 +41,9 @@ int main(void) {
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
     force_dm1_available(&state);
+
+    changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 0, NULL);
+    if (!expect(changed == 0 || state.selectedIndex == 0, "DM1 hover should keep/select DM1 card")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 1, NULL);
     if (!expect(changed == 1, "DM1 card direct click should change menu state")) return 1;
@@ -54,6 +58,24 @@ int main(void) {
     if (!expect(state.launchRequested == 1, "Launch direct click should request launch")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "Launch direct click should show ready-to-launch message")) return 1;
 
-    puts("ok: DM1 card click -> game options -> visible V1 Launch direct click requests launch");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    {
+        const int museumCenterX = 48 + 5 * (cardW + 22) + cardW / 2;
+        changed = M12_ModernMenu_HandlePointer(&state, museumCenterX, cardCenterY, 0, NULL);
+        if (!expect(changed == 1 && state.selectedIndex == 4, "Museum hover should navigate main selection")) return 1;
+        changed = M12_ModernMenu_HandlePointer(&state, museumCenterX, cardCenterY, 1, NULL);
+        if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM, "Museum click should open museum view")) return 1;
+    }
+
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    {
+        const int settingsCenterX = 48 + 6 * (cardW + 22) + cardW / 2;
+        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, cardCenterY, 0, NULL);
+        if (!expect(changed == 1 && state.selectedIndex == 5, "Settings hover should navigate main selection")) return 1;
+        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, cardCenterY, 1, NULL);
+        if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Settings click should open settings view")) return 1;
+    }
+
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Museum, Settings and launch DM1");
     return 0;
 }

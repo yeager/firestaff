@@ -18,7 +18,7 @@
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
 #define M12_HIT_MAIN_SIDE_MARGIN    48
 #define M12_HIT_MAIN_CARD_GAP       22
-#define M12_HIT_MAIN_CARD_COUNT     5
+#define M12_HIT_MAIN_CARD_MAX_COUNT 7
 
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
@@ -81,14 +81,15 @@ static int rect_contains(int rx, int ry, int rw, int rh, int x, int y) {
     return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 }
 
-static int m12_hit_main_card_rect(int index, int* rx, int* ry, int* rw, int* rh) {
+static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* rw, int* rh) {
     int gridTop = M12_HIT_MAIN_GRID_TOP;
     int gridBottom = M12_HIT_MAIN_GRID_BOTTOM;
     int gridH = gridBottom - gridTop;
     int side = M12_HIT_MAIN_SIDE_MARGIN;
     int gap = M12_HIT_MAIN_CARD_GAP;
-    int count = M12_HIT_MAIN_CARD_COUNT;
-    int cardW = (M12_HIT_CANVAS_W - 2 * side - gap * (count - 1)) / count;
+    int cardW;
+    if (count <= 0 || count > M12_HIT_MAIN_CARD_MAX_COUNT) return 0;
+    cardW = (M12_HIT_CANVAS_W - 2 * side - gap * (count - 1)) / count;
     if (index < 0 || index >= count) return 0;
     *rx = side + index * (cardW + gap);
     *ry = gridTop;
@@ -157,19 +158,26 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
     }
 
     switch (state->view) {
-        case M12_MENU_VIEW_MAIN:
-            /* Modern front-door view has one brand card followed by
-             * four game cards.  The brand card is decorative; visible
-             * game card slots 1..4 map to menu entry indices 0..3. */
-            for (i = 1; i < M12_HIT_MAIN_CARD_COUNT; ++i) {
-                if (m12_hit_main_card_rect(i, &rx, &ry, &rw, &rh) &&
+        case M12_MENU_VIEW_MAIN: {
+            int entryCount = M12_StartupMenu_GetEntryCount();
+            int cardCount = entryCount + 1;
+            if (cardCount > M12_HIT_MAIN_CARD_MAX_COUNT) {
+                cardCount = M12_HIT_MAIN_CARD_MAX_COUNT;
+                entryCount = cardCount - 1;
+            }
+            /* Brand card is decorative; every following visible card
+             * maps directly to its top-level entry index. */
+            for (i = 1; i < cardCount; ++i) {
+                if (m12_hit_main_card_rect(i, cardCount, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     hit.kind = M12_HIT_MAIN_CARD;
                     hit.index = i - 1;
+                    if (hit.index >= entryCount) hit.kind = M12_HIT_NONE;
                     return hit;
                 }
             }
             break;
+        }
         case M12_MENU_VIEW_SETTINGS:
             for (i = 0; i < M12_HIT_SETTINGS_ROW_COUNT; ++i) {
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
@@ -259,7 +267,7 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             int i;
             /* Move selection to the clicked card via UP/DOWN to keep a
              * single source of truth for cursor movement, then accept. */
-            if (hit.index < 0 || hit.index >= M12_HIT_MAIN_CARD_COUNT) return 0;
+            if (hit.index < 0 || hit.index >= M12_StartupMenu_GetEntryCount()) return 0;
             while (state->selectedIndex != hit.index) {
                 int delta = (hit.index > state->selectedIndex) ? 1 : -1;
                 M12_MenuInput mv = (delta > 0) ? M12_MENU_INPUT_DOWN
@@ -354,15 +362,57 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
                                  int clicked,
                                  int* shouldExit) {
     int changed = 0;
+    M12_MouseHit hit;
     if (!state) return 0;
     state->hoverX = x;
     state->hoverY = y;
+    hit = M12_ModernMenu_HitTest(state, x, y);
     if (clicked) {
         int beforeExit = state->shouldExit;
-        M12_MouseHit hit = M12_ModernMenu_HitTest(state, x, y);
         changed = M12_ModernMenu_ApplyHit(state, hit);
         if (shouldExit && state->shouldExit && !beforeExit) {
             *shouldExit = 1;
+        }
+    } else {
+        /* Mouse navigation without clicking: move the same selection
+         * cursor that keyboard navigation uses, so hover visibly
+         * follows the pointer and a subsequent click activates exactly
+         * what is highlighted. */
+        switch (hit.kind) {
+            case M12_HIT_MAIN_CARD:
+                if (hit.index >= 0 && hit.index < M12_StartupMenu_GetEntryCount() &&
+                    state->selectedIndex != hit.index) {
+                    state->selectedIndex = hit.index;
+                    changed = 1;
+                }
+                break;
+            case M12_HIT_MUSEUM_CATEGORY:
+                if (state->museumSelectedIndex != hit.index) {
+                    state->museumSelectedIndex = hit.index;
+                    changed = 1;
+                }
+                break;
+            case M12_HIT_SETTINGS_ROW:
+            case M12_HIT_SETTINGS_CYCLE:
+                if (state->settingsSelectedIndex != hit.index) {
+                    state->settingsSelectedIndex = hit.index;
+                    changed = 1;
+                }
+                break;
+            case M12_HIT_GAMEOPT_ROW:
+            case M12_HIT_GAMEOPT_CYCLE:
+            case M12_HIT_GAMEOPT_LAUNCH:
+                if (state->gameOptSelectedRow != hit.index) {
+                    state->gameOptSelectedRow = hit.index;
+                    changed = 1;
+                }
+                break;
+            case M12_HIT_NONE:
+            case M12_HIT_MUSEUM_PAGE:
+            case M12_HIT_MESSAGE_DISMISS:
+            case M12_HIT_BACK:
+            default:
+                break;
         }
     }
     return changed;
