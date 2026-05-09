@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T14:43:41.260290+00:00",
+  "timestampUtc": "2026-05-09T15:21:35.708283+00:00",
   "status": "BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING",
-  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638",
-  "branch": "hall-state-evidence-20260509-1638",
-  "head": "8a2ab1703f678456900bc429a97d581f98cac6b6",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "branch": "land-20260509",
+  "head": "13a1accca1c85b98050958d78e103701fd412ab2",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {

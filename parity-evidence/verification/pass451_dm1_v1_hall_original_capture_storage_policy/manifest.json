@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-09T14:43:47.405889+00:00",
+  "timestampUtc": "2026-05-09T15:21:36.119502+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638",
-  "branch": "hall-state-evidence-20260509-1638",
-  "head": "8a2ab1703f678456900bc429a97d581f98cac6b6",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "branch": "land-20260509",
+  "head": "13a1accca1c85b98050958d78e103701fd412ab2",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": true,
@@ -29,7 +29,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/tools/pass173_source_portrait_route_gate_probe.py"
+      "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

@@ -1,9 +1,9 @@
 {
   "schema": "pass450_dm1_v1_hall_completion_audit_matrix.v1",
-  "timestampUtc": "2026-05-09T14:43:47.341052+00:00",
+  "timestampUtc": "2026-05-09T15:21:36.059855+00:00",
   "status": "PASS_WITH_BLOCKERS",
-  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638",
-  "head": "8a2ab1703f678456900bc429a97d581f98cac6b6",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "head": "13a1accca1c85b98050958d78e103701fd412ab2",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 Hall of Champions only",
   "completionPercentageEvidenceBacked": 80.0,
@@ -276,7 +276,7 @@
         "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS wrote /Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
     },
     "hallMirrorSensorDisableSourceLock": {
       "cmd": [
@@ -284,7 +284,7 @@
         "tools/verify_dm1_v1_hall_mirror_sensor_disable_source_lock.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS wrote /Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/parity-evidence/verification/dm1_v1_hall_mirror_sensor_disable_source_lock.json\n"
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_mirror_sensor_disable_source_lock.json\n"
     },
     "hallWalkaroundSourceLock": {
       "cmd": [
@@ -292,7 +292,7 @@
         "tools/verify_dm1_v1_hall_walkaround_source_lock.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS wrote /Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/parity-evidence/verification/dm1_v1_hall_walkaround_source_lock.json\n"
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_walkaround_source_lock.json\n"
     },
     "pass449CandidateFramebufferEvidenceGate": {
       "cmd": [
@@ -300,7 +300,7 @@
         "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate: BLOCKED_PASS449_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_FRAMEBUFFER_ARTIFACTS_MISSING\nwrote /Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/manifest.json\nwrote /Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-state-evidence-20260509-1638/parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md\n"
+      "outputTail": "PASS pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate: BLOCKED_PASS449_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_FRAMEBUFFER_ARTIFACTS_MISSING\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/manifest.json\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md\n"
     }
   },
   "errors": []
