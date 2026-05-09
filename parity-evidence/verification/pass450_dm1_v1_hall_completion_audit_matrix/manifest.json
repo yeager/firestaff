@@ -1,9 +1,9 @@
 {
   "schema": "pass450_dm1_v1_hall_completion_audit_matrix.v1",
-  "timestampUtc": "2026-05-09T17:31:48.825226+00:00",
+  "timestampUtc": "2026-05-09T19:12:27.915262+00:00",
   "status": "PASS_WITH_BLOCKERS",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
-  "head": "bcab0e9f17936396b25d094d129a3b7f28cb6649",
+  "head": "dadffeecd09424a5a11ab8aa6a34f6e030f3aef4",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 Hall of Champions only",
   "completionPercentageEvidenceBacked": 80.0,
@@ -251,8 +251,8 @@
     {
       "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json",
       "exists": true,
-      "bytes": 41496,
-      "sha256": "aeeb75eaa55750df1e4d1f6304b4229247adba6681a4fd4839487d25c3767a51"
+      "bytes": 98094,
+      "sha256": "8a4ea7049cb66335ae57124b716420acb910979192b05e0f6bd8f8f071e1655a"
     }
   ],
   "hallRuntimeProbeArtifacts": [
@@ -300,7 +300,7 @@
         "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate: PARTIAL_PASS449_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/manifest.json\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md\n"
+      "outputTail": "PASS pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate: PASS_PASS449_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/manifest.json\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md\n"
     }
   },
   "errors": []

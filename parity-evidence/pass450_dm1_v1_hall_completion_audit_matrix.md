@@ -34,7 +34,7 @@
 
 ## Pass449 framebuffer comparator artifacts
 - `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json` exists=True sha256 `d9367fde120d531f90eae9a928b2054360dc6c00a21e99a5f420ba14d61f1fb2` bytes `10677`
-- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` exists=True sha256 `aeeb75eaa55750df1e4d1f6304b4229247adba6681a4fd4839487d25c3767a51` bytes `41496`
+- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` exists=True sha256 `8a4ea7049cb66335ae57124b716420acb910979192b05e0f6bd8f8f071e1655a` bytes `98094`
 
 ## Hall runtime probe artifacts
 - `parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.json` exists=True sha256 `d785fffc6e0ce676d69203b663c577879931e2e60e7db8d5d0af6941991453f4` bytes `6268`

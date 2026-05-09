@@ -814,18 +814,40 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
             "status": "FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT",
             "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
             "affectedRows": ["cancel.hud_status_crop", "resurrect_confirm.hud_status_crop", "reincarnate_confirm.hud_status_crop"],
+            "firestaffRouteBlocker": {
+                "status": "BLOCKED_FIRESTAFF_SOURCE_STOP_INPUTS_NOT_GENERATED",
+                "finding": "The available Firestaff pass449 export drives the corridor-facing front-mirror helper path, while the corrected original terminal captures are keyed to the initial-Hall C080 portrait/candidate click route. Re-running the exporter against the currently modeled front-mirror helper only reproduces the same all-black/gray HUD buckets, so replacing these rows needs an M11 C080 initial-Hall candidate click/source-stop capture path rather than another crop copy.",
+                "requiredBeforeUnmask": [
+                    "Firestaff capture route starts from the same initial Hall party tuple as the corrected original terminal captures",
+                    "the C080 portrait/candidate click reaches the candidate panel without the corridor second-mirror helper",
+                    "terminal C160/C161/C162 frames are captured at their source-stop-aligned redraw boundary before pass449 HUD rows are made parity-eligible"
+                ],
+                "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
+                "inspectedFirestaffArtifacts": [
+                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
+                ]
+            },
             "sourceRefs": [
                 "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
                 "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
-                "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991"
+                "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991",
+                "CLIKVIEW.C:F0377_ClickInDungeonView:356-390",
+                "DUNGEON.C:F0128_DrawDungeonView:2608-2612",
+                "MOVESENS.C:F0263_ProcessSensor:1501-1503"
             ],
             "firestaffRefs": [
+                "m11_game_view.c:m11_process_v1_c080_click:7786-7834",
+                "m11_game_view.c:M11_GameView_SelectFrontMirrorCandidate:5292-5339",
                 "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
-                "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398"
+                "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398",
+                "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c:288-397"
             ],
             "maskedRows": sorted(semantic_stop_masked),
             "maskPolicy": "exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist",
-            "nextVerifier": "replace Firestaff terminal HUD/status crops with source-stop-aligned frames, then remove this mask and reinterpret pass449 pixel deltas"
+            "nextVerifier": "add/gate the Firestaff initial-Hall C080 candidate-click capture path, export terminal HUD/status crops from that route, then remove this mask and reinterpret pass449 pixel deltas"
         },
         "parityEligibilitySummary": {
             "eligibleRows": len([row for row in rows if row["parityEligible"]]),
