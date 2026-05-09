@@ -50,14 +50,39 @@ CHECKS: list[dict[str, Any]] = [
         "range": "8318-8618",
         "needles": [
             "void F0128_DUNGEONVIEW_Draw_CPSF(",
-            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, -1",
+            "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
+            "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3010_i_WallSet_Wall_D3L2, C702_ZONE_WALL_D3L2);",
+            "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3072_i_WallSet_Wall_D3R2, C703_ZONE_WALL_D3R2);",
+            "F0676_DrawD3L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0677_DrawD3R2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0678_DrawD2L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0679_DrawD2R2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
+        ],
+        "ordered_needles": [
+            "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
             "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(F0162_DUNGEON_GetSquareFirstObject(L0224_i_MapX, L0225_i_MapY), P0183_i_Direction, L0224_i_MapX, L0225_i_MapY, M598_VIEW_SQUARE_D4L",
+            "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(F0162_DUNGEON_GetSquareFirstObject(L0224_i_MapX, L0225_i_MapY), P0183_i_Direction, L0224_i_MapX, L0225_i_MapY, M599_VIEW_SQUARE_D4R",
+            "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(F0162_DUNGEON_GetSquareFirstObject(L0224_i_MapX, L0225_i_MapY), P0183_i_Direction, L0224_i_MapX, L0225_i_MapY, M597_VIEW_SQUARE_D4C",
+            "F0676_DrawD3L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0677_DrawD3R2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
             "F0116_DUNGEONVIEW_DrawSquareD3L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0117_DUNGEONVIEW_DrawSquareD3R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0678_DrawD2L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0679_DrawD2R2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0119_DUNGEONVIEW_DrawSquareD2L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
             "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0125_DUNGEONVIEW_DrawSquareD0L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+            "F0126_DUNGEONVIEW_DrawSquareD0R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
             "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);",
             "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
         ],
-        "why": "DUNVIEW replays cells from far D4 through D0 before presentation; later near-side calls naturally occlude earlier far pixels.",
+        "why": "DUNVIEW replays cells from far D4 through D0 before presentation; PC34/I34E D3L2/R2 and D2L2/R2 lanes are explicitly kept in the audited order.",
     },
     {
         "id": "d3-side-wall-occludes-by-early-return",
@@ -128,7 +153,19 @@ def main() -> int:
         path = args.source / check["file"]
         text = slice_text(path, check["range"])
         missing = [needle for needle in check["needles"] if needle not in text]
-        passed = not missing
+        ordered_needles = check.get("ordered_needles", [])
+        out_of_order: list[str] = []
+        last_position = -1
+        for needle in ordered_needles:
+            position = text.find(needle)
+            if position < 0:
+                if needle not in missing:
+                    missing.append(needle)
+            elif position <= last_position:
+                out_of_order.append(needle)
+            else:
+                last_position = position
+        passed = not missing and not out_of_order
         ok = ok and passed
         results.append({
             "id": check["id"],
@@ -137,6 +174,8 @@ def main() -> int:
             "function": check["function"],
             "why": check["why"],
             "missing": missing,
+            "orderedNeedleCount": len(ordered_needles),
+            "outOfOrder": out_of_order,
         })
 
     payload = {
@@ -155,6 +194,9 @@ def main() -> int:
             if result["missing"]:
                 for needle in result["missing"]:
                     print(f"  missing: {needle}")
+            if result["outOfOrder"]:
+                for needle in result["outOfOrder"]:
+                    print(f"  out-of-order: {needle}")
     return 0 if ok else 1
 
 
