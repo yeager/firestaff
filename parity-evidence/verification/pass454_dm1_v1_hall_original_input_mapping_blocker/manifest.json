@@ -2,7 +2,7 @@
   "schema": "pass454_dm1_v1_hall_original_input_mapping_blocker.v1",
   "timestampUtc": "2026-05-09T15:31:54.353009+00:00",
   "status": "BLOCKED_CAPTURE_AUTOMATION_ABSOLUTE_COORDINATES_USED_WITH_WINDOW_RELATIVE_CLICK",
-  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-input-timing-state-173859",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json",
   "artifactManifestSha256": "33b54c69685392e80b3450ffdecf618b6ad0d176edde68a0a68ec1332c33fc12",
   "pc34Provenance": {
