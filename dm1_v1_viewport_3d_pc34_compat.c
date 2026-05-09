@@ -173,6 +173,14 @@ static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
       "DUNVIEW.C:6816 F0115 object/creature/projectile/explosion handoff",
       "DUNVIEW.C:6818-6831 teleporter field after F0115",
       "DUNVIEW.C:6697-6720 wall bitmap/ornament then return unless front alcove branches to F0115" },
+    { DM1_VIEW_SQUARE_D2C, 0x3421, true, true, true, true, true, true,
+      "F0121_DUNGEONVIEW_DrawSquareD2C",
+      "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path",
+      "DUNVIEW.C:7343-7353 pit bitmap before floor ornament; BUG0_64 floor ornaments can draw over open pits",
+      "DUNVIEW.C:7355-7357 order then F0108 floor ornament; ceiling pit follows before F0115",
+      "DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff",
+      "DUNVIEW.C:7370-7388 teleporter field after F0115",
+      "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115" },
     { DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, false,
       "F0127_DUNGEONVIEW_DrawSquareD0C",
       "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115",
@@ -839,6 +847,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:6237-6289 D3L2 stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:6375-6495 D3L stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:6666-6831 D3C stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:7260-7388 D2C stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:8241-8308 D0C stairs/pit/ceiling-pit/F0115/teleporter-field order\n"
         "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"

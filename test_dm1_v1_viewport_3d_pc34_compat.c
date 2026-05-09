@@ -405,10 +405,11 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         { DM1_VIEW_SQUARE_D3L2, "F0676_DrawD3L2", 0x3421, 1, "6237-6252", "6275-6278", "6286", "6288-6289", "6253-6264" },
         { DM1_VIEW_SQUARE_D3L,  "F0116_DUNGEONVIEW_DrawSquareD3L", 0x3421, 1, "6375-6405", "6461-6472", "6480", "6482-6495", "6406-6437" },
         { DM1_VIEW_SQUARE_D3C,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", 0x3421, 1, "6666-6696", "6748-6762", "6816", "6818-6831", "6697-6720" },
+        { DM1_VIEW_SQUARE_D2C,  "F0121_DUNGEONVIEW_DrawSquareD2C", 0x3421, 1, "7260-7288", "7343-7353", "7367-7368", "7370-7388", "7289-7312" },
         { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8294", "8295-8308", "8185-8240" },
     };
 
-    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 4);
+    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 5);
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportFloorFieldOrderSpec *spec =
             dm1_viewport_3d_get_floor_field_order_spec_for_square(expected[i].square);
@@ -431,7 +432,7 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         snprintf(id, sizeof(id), "floor_field_order.%zu.field_after_things", i);
         check_int(id, spec->field_after_things ? 1 : 0, 1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.wall_return", i);
-        check_int(id, spec->wall_case_returns_before_things ? 1 : 0, i < 3 ? 1 : 0);
+        check_int(id, spec->wall_case_returns_before_things ? 1 : 0, expected[i].square == DM1_VIEW_SQUARE_D0C ? 0 : 1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.stairs_source", i);
         check_int(id, strstr(spec->stairs_source_lines, expected[i].stairs_line) != NULL, 1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.pit_source", i);
@@ -443,7 +444,7 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         snprintf(id, sizeof(id), "floor_field_order.%zu.wall_source", i);
         check_int(id, strstr(spec->wall_return_source_lines, expected[i].wall_return_line) != NULL, 1);
     }
-    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(4) == NULL, 1);
+    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(5) == NULL, 1);
     check_int("floor_field_order.no_d1_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
 }
 

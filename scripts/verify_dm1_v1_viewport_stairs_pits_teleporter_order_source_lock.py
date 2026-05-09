@@ -86,6 +86,24 @@ CHECKS: list[dict[str, Any]] = [
         ],
         'why': 'D3C center wall occludes/returns; pit/floor/F0115/field follow source order.'
     },
+
+    {
+        'id': 'd2c-stairs-pit-floor-ceiling-things-field-wall-return',
+        'file': 'DUNVIEW.C', 'range': '7260-7388',
+        'ordered': [
+            'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G0079_ai_StairsNativeBitmapIndices[C03_STAIRS_BITMAP_UP_FRONT_D2C], C806_ZONE_STAIRS_UP_FRONT_D2C);',
+            'case C00_ELEMENT_WALL:',
+            'F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C09_WALL_D2C], C709_ZONE_WALL_D2C',
+            'return;',
+            'case C02_ELEMENT_PIT:',
+            'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(L0212_ai_SquareAspect[M554_PIT_OR_TELEPORTER_VISIBLE] ? M763_GRAPHIC_FLOOR_PIT_INVISIBLE_D2C : M757_GRAPHIC_FLOOR_PIT_D2C, C856_ZONE_FLOORPIT_D2C);',
+            'F0108_DUNGEONVIEW_DrawFloorOrnament',
+            'F0112_DUNGEONVIEW_DrawCeilingPit(C065_GRAPHIC_CEILING_PIT_D2C, C865_ZONE_CEILING_PIT_D2C',
+            'F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF',
+            'F0113_DUNGEONVIEW_DrawField',
+        ],
+        'why': 'D2C extends the source lock to a mid-depth center square: stairs/pit/floor/ceiling precede F0115; teleporter field overlays after F0115; wall returns before common things unless alcove branches.'
+    },
     {
         'id': 'd0c-stairs-pit-ceiling-things-field',
         'file': 'DUNVIEW.C', 'range': '8176-8310',
