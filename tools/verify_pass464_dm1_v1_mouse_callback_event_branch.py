@@ -229,11 +229,8 @@ def classify_result(source,runtime):
     if not preds["sourceAuditOk"]: return "FAIL_PASS464_SOURCE_AUDIT", preds, "source audit missing required ReDMCSB anchors"
     if not preds["runtimeRan"]: return "BLOCKED_PASS464_RUNTIME_NOT_RUN", preds, runtime.get("blocker","runtime did not run")
     if preds["f0359Hit"]: return "PASS_PASS464_F0359_REACHED", preds, "F0359_COMMAND_ProcessClick_CPSC stopped after F0781"
-    if preds["f0781Hit"] and preds.get("ioConditionalAllowsF0359") is False:
-        return "PASS_PASS464_F0781_EVENT_SKIPS_F0359", preds, "F0781 reached, but the callback event value is >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION at the IO.C conditional, so this callback skips F0359"
-    if preds["f0781Hit"] and preds.get("ioConditionalAllowsF0359") is True:
-        return "BLOCKED_PASS464_F0781_ALLOWED_F0359_NOT_HIT", preds, "F0781 reached with a command-class mouse event, but the bounded run did not stop at F0359"
-    if preds["f0781Hit"]: return "BLOCKED_PASS464_F0781_EVENT_BRANCH_NOT_PROVEN", preds, "F0781 reached, but event branch/step evidence was not proven"
+    if preds["f0781Hit"]:
+        return "BLOCKED_PASS464_F0781_EVENT_SAMPLE_UNSTABLE", preds, "F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path"
     return "BLOCKED_PASS464_CLICK_NOT_REACHING_F0781", preds, "client-relative clicks were posted after arming, but F0781 did not hit"
 
 def main():

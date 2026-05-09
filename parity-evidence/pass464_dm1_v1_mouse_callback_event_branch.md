@@ -1,8 +1,8 @@
 # Pass464 — DM1 V1 mouse callback event branch
 
-Status: `BLOCKED_PASS464_F0781_EVENT_BRANCH_NOT_PROVEN`
+Status: `BLOCKED_PASS464_CLICK_NOT_REACHING_F0781`
 
-F0781 reached, but event branch/step evidence was not proven
+client-relative clicks were posted after arming, but F0781 did not hit
 
 ## ReDMCSB source audit
 
@@ -29,13 +29,13 @@ F0781 reached, but event branch/step evidence was not proven
 
 - Method: fresh-entry original runtime; arm F0781 mouse callback and F0359 click queue entry; drive client-relative movement-panel clicks; strict stops require (Running)->prompt
 - Route input after arming: `True`
-- Stops: `['F0781_MouseHandler', 'other']`
+- Stops: `['F0781_ConditionalAfterCmp', 'other']`
 - Retained at arm: `{'F0781_MouseHandler': True, 'F0781_EventCmp': True, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': True}`
-- Retained final: `{'F0781_MouseHandler': True, 'F0781_EventCmp': True, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': True}`
+- Retained final: `{'F0781_MouseHandler': False, 'F0781_EventCmp': False, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': False}`
 
 ## Conclusion
 
-- F0781 reached, but event branch/step evidence was not proven
+- client-relative clicks were posted after arming, but F0781 did not hit
 
 ## Artifacts
 
