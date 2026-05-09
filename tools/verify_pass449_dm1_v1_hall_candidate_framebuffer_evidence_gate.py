@@ -25,7 +25,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate"
-STATUS = "PARTIAL_PASS449_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
+STATUS = "PARTIAL_PASS449_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -216,6 +216,8 @@ N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
 CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 CORRECTED_HALL_RUN = "probe-initial-south-corrected"
+CORRECTED_HALL_CANCEL_RUN = "probe-initial-south-cancel-corrected"
+CORRECTED_HALL_REINCARNATE_RUN = "probe-initial-south-reincarnate-corrected"
 FIRESTAFF_HALL_FRAME_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs")
 FIRESTAFF_HALL_FRAME_MANIFEST = FIRESTAFF_HALL_FRAME_ROOT / "hall_candidate_framebuffer_manifest.json"
 
@@ -368,11 +370,12 @@ def crop_png(src: Path, dst: Path, xywh: list[int]) -> None:
 def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Stage currently pairable Hall frames into the comparator tree.
 
-    The old N2 panel-visible context is retained as historical evidence, but
-    the corrected initial-south DOSBox run now supplies source-routed original
-    candidate_select/panel_visible and C160 terminal HUD frames. Cancel and
-    reincarnate remain explicit missing entries until a matching corrected run
-    exists.
+    The old N2 panel-visible context is retained as historical evidence.  The
+    corrected initial-south DOSBox runs now supply source-routed original
+    candidate_select/panel_visible plus C160/C161/C162 terminal frames.  The
+    only remaining HUD limitation is that the comparator schema has one generic
+    hud_status_after scene rather than a separate terminal-scoped HUD scene per
+    cancel/resurrect/reincarnate branch.
     """
     result: dict[str, Any] = {
         "status": "NOT_MATERIALIZED",
@@ -391,9 +394,15 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
         result["errors"].append(f"missing original frame root: {N2_HALL_ARTIFACT_ROOT}")
         return result
     corrected_run_dir = CORRECTED_HALL_ARTIFACT_ROOT / CORRECTED_HALL_RUN
+    corrected_cancel_dir = CORRECTED_HALL_ARTIFACT_ROOT / CORRECTED_HALL_CANCEL_RUN
+    corrected_reincarnate_dir = CORRECTED_HALL_ARTIFACT_ROOT / CORRECTED_HALL_REINCARNATE_RUN
     corrected_keylog = corrected_run_dir / "original-viewpoint-route-keys.log"
-    if not corrected_run_dir.is_dir():
-        result["errors"].append(f"missing corrected original run: {corrected_run_dir}")
+    corrected_cancel_keylog = corrected_cancel_dir / "original-viewpoint-route-keys.log"
+    corrected_reincarnate_keylog = corrected_reincarnate_dir / "original-viewpoint-route-keys.log"
+    for needed in (corrected_run_dir, corrected_cancel_dir, corrected_reincarnate_dir):
+        if not needed.is_dir():
+            result["errors"].append(f"missing corrected original run: {needed}")
+    if result["errors"]:
         return result
 
     original_manifest_path = N2_HALL_ARTIFACT_ROOT / "manifest.json"
@@ -430,7 +439,9 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
     corrected_sources = {
         "candidate_select": corrected_run_dir / "image0002-raw.png",
         "panel_visible": corrected_run_dir / "image0002-raw.png",
+        "cancel": corrected_cancel_dir / "image0004-raw.png",
         "resurrect_confirm": corrected_run_dir / "image0003-raw.png",
+        "reincarnate_confirm": corrected_reincarnate_dir / "image0004-raw.png",
         "hud_status_after": corrected_run_dir / "image0003-raw.png",
     }
     for scene, src in corrected_sources.items():
@@ -446,13 +457,18 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
             crop_png(src, expected_frame_path("original", scene, "hud_status_crop"), REGIONS["hud_status_crop"]["xywh"])
     original_source = original_manifest.get("source_provenance", {}) if isinstance(original_manifest, dict) else {}
     original_provenance = {
-        "stop": "corrected DOSBox-X initial-south Hall run; click:111,82 enters C127/F0280 candidate path, click:130,115 enters C160/F0282 resurrect path",
-        "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click PC 130,115",
+        "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+        "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
         "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
         "commandTranscriptSha256": sha(corrected_keylog) if corrected_keylog.is_file() else "missing",
+        "terminalCommandTranscriptSha256": {
+            "cancel": sha(corrected_cancel_keylog) if corrected_cancel_keylog.is_file() else "missing",
+            "resurrect_confirm": sha(corrected_keylog) if corrected_keylog.is_file() else "missing",
+            "reincarnate_confirm": sha(corrected_reincarnate_keylog) if corrected_reincarnate_keylog.is_file() else "missing",
+        },
         "artifactManifest": str(CORRECTED_HALL_ARTIFACT_ROOT / "pass455_dm1_v1_hall_corrected_click_primitive_capture.json"),
         "sourceProvenance": original_source,
-        "parityUse": "corrected original candidate/resurrect comparator input; cancel and reincarnate still require separate corrected captures",
+        "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input; per-terminal HUD completeness is tracked in pass450",
     }
 
     scenes: dict[str, Any] = {}
@@ -470,9 +486,15 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
                     else:
                         provenance = dict(original_provenance)
                         provenance["terminalAction"] = scene
-                        if artifact == "panel_crop":
-                            provenance["derivedFrom"] = str(corrected_sources.get(scene, original_src))
-                        elif artifact == "hud_status_crop":
+                        if scene == "cancel":
+                            provenance["route"] = "Return Return -> initial Hall South -> click PC 111,82 -> click PC 160,148 (C162 cancel)"
+                            provenance["commandTranscriptSha256"] = sha(corrected_cancel_keylog) if corrected_cancel_keylog.is_file() else "missing"
+                        elif scene == "reincarnate_confirm":
+                            provenance["route"] = "Return Return -> initial Hall South -> click PC 111,82 -> click PC 186,115 (C161 reincarnate)"
+                            provenance["commandTranscriptSha256"] = sha(corrected_reincarnate_keylog) if corrected_reincarnate_keylog.is_file() else "missing"
+                        elif scene == "resurrect_confirm":
+                            provenance["route"] = "Return Return -> initial Hall South -> click PC 111,82 -> click PC 130,115 (C160 resurrect)"
+                        if artifact in ("panel_crop", "hud_status_crop"):
                             provenance["derivedFrom"] = str(corrected_sources.get(scene, original_src))
                     scenes[scene][side][artifact] = frame_entry(path, provenance)
                     result["materialized"].append(rel(path))
@@ -484,7 +506,7 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
     manifest = {
         "schema": "pass449_hall_candidate_framebuffer_manifest.schema.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
-        "status": "PARTIAL_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE_MISSING",
+        "status": "PARTIAL_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD",
         "originalDataProvenance": {
             row["filename"]: {
                 "variant": row["variant"],
@@ -502,13 +524,12 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
         "scenes": scenes,
         "nonClaims": [
             "full pixel parity",
-            "cancel/reincarnate original parity",
             "full HUD/status parity for every terminal action",
         ],
     }
     FRAMEBUFFER_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     FRAMEBUFFER_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    result["status"] = "MATERIALIZED_CORRECTED_ORIGINAL_CANDIDATE_AND_RESURRECT_AVAILABLE"
+    result["status"] = "MATERIALIZED_CORRECTED_ORIGINAL_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE"
     result["manifest"] = rel(FRAMEBUFFER_MANIFEST)
     return result
 
@@ -725,7 +746,7 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
     if not missing and not errors:
         status = "COMPARE_COMPLETE"
     elif comparisons and not errors:
-        status = "PARTIAL_COMPARE_CORRECTED_CANDIDATE_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
+        status = "PARTIAL_COMPARE_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD"
     elif comparisons:
         status = "PARTIAL_COMPARE_WITH_ERRORS"
     else:
@@ -983,7 +1004,7 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines += [
         "",
         "## Remaining blocker",
-        "Corrected original `candidate_select`, `panel_visible`, `resurrect_confirm` and `hud_status_after` inputs are now staged from the initial-south run. Remaining original capture work is `cancel`, `reincarnate_confirm` and per-terminal HUD completeness.",
+        "Corrected original `candidate_select`, `panel_visible`, `cancel`, `resurrect_confirm`, `reincarnate_confirm` and generic `hud_status_after` inputs are now staged from initial-south corrected runs. Remaining original capture work is per-terminal HUD completeness beyond the comparator's single generic HUD scene.",
         "",
         "## Non-claims",
         "No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.",
@@ -1025,7 +1046,7 @@ def main() -> int:
             "hallFullSourceLock": existing_gate,
             "resurrectReincarnateCancelRoutes": panel_gate,
         },
-        "activeBlocker": "Corrected original candidate_select, panel_visible, resurrect_confirm and hud_status_after inputs are now staged; remaining original captures are cancel and reincarnate_confirm plus per-terminal HUD completeness.",
+        "activeBlocker": "Corrected original candidate_select, panel_visible, cancel, resurrect_confirm, reincarnate_confirm and generic hud_status_after inputs are now staged; remaining blocker is per-terminal HUD completeness beyond the comparator's single generic HUD scene.",
         "notClaimed": ["pixel parity", "candidate panel framebuffer parity", "HUD/status framebuffer parity"],
         "errors": errors,
     }

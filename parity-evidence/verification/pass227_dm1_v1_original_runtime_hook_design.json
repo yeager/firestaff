@@ -137,7 +137,7 @@
       }
     ],
     "tools": {
-      "dosbox": null,
+      "dosbox": "/opt/homebrew/bin/dosbox",
       "dosbox-debug": null,
       "dosbox-x": null,
       "gdb": null,

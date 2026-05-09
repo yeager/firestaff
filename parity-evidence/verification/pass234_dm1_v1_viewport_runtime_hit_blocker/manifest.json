@@ -28,7 +28,7 @@
     "symbol_map_exists": true,
     "toolchain_root_exists": true,
     "tools": {
-      "dosbox": null,
+      "dosbox": "/opt/homebrew/bin/dosbox",
       "dosbox-debug": null,
       "dosbox-x": null,
       "objdump": "/usr/bin/objdump",

@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T17:32:02.560660+00:00",
-  "status": "PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE",
+  "timestampUtc": "2026-05-09T18:31:04.364852+00:00",
+  "status": "PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "branch": "land-20260509",
-  "head": "bcab0e9f17936396b25d094d129a3b7f28cb6649",
+  "head": "17b31f11f00298084bb0a7aeea953ba09d4b095e",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3685,22 +3685,25 @@
   },
   "availablePromotableOriginalFrames": [
     "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
+    "probe-initial-south-cancel-corrected/image0004-raw.png (cancel corrected C162 terminal frame)",
     "probe-initial-south-corrected/image0003-raw.png (resurrect_confirm/hud_status_after corrected C160 terminal transition)",
+    "probe-initial-south-reincarnate-corrected/image0004-raw.png (reincarnate_confirm corrected C161 terminal frame)",
+    "probe-initial-south-cancel-corrected/image0005-raw.png (hud_status_after_cancel corrected terminal frame)",
+    "probe-initial-south-reincarnate-corrected/image0005-raw.png (hud_status_after_reincarnate corrected terminal frame)",
     "03_panel_visible_north_front_mirror pc320+viewport224x136 (historical Hall/front-mirror context only)"
   ],
   "correctedHallArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
   "correctedAvailableScenes": {
     "candidate_select_portrait_click_before_panel": true,
     "candidate_panel_visible_after_append": true,
+    "candidate_cancel_after_panel": true,
     "candidate_confirm_resurrect_after_panel": true,
-    "hud_status_after_resurrect": true
+    "candidate_confirm_reincarnate_after_panel": true,
+    "hud_status_after_cancel": true,
+    "hud_status_after_resurrect": true,
+    "hud_status_after_reincarnate": true
   },
-  "missingPromotableScenes": [
-    "candidate_cancel_after_panel",
-    "candidate_confirm_reincarnate_after_panel",
-    "hud_status_after_cancel",
-    "hud_status_after_reincarnate"
-  ],
+  "missingPromotableScenes": [],
   "captureEnvironment": {
     "localHostCaptureReady": true,
     "platform": "Darwin",
@@ -3745,6 +3748,6 @@
     "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py",
     "postCaptureVerificationStep": "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
   },
-  "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus resurrect_confirm/hud_status_after as source-routed original inputs. Do not claim full pixel parity; cancel/reincarnate/per-terminal HUD frames still need separate corrected original captures.",
+  "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 still records comparator completeness and per-terminal HUD scope.",
   "errors": []
 }

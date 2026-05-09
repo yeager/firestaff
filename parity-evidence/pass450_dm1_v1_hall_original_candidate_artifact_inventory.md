@@ -1,6 +1,6 @@
 # pass450_dm1_v1_hall_original_candidate_artifact_inventory
 
-- status: `PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE`
+- status: `PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD`
 - parity claim: **not made**
 - frame rows inventoried: 30
 
@@ -65,14 +65,14 @@
 - root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
 - `candidate_select_portrait_click_before_panel` available=True
 - `candidate_panel_visible_after_append` available=True
+- `candidate_cancel_after_panel` available=True
 - `candidate_confirm_resurrect_after_panel` available=True
+- `candidate_confirm_reincarnate_after_panel` available=True
+- `hud_status_after_cancel` available=True
 - `hud_status_after_resurrect` available=True
+- `hud_status_after_reincarnate` available=True
 
 ## Remaining promotable scenes
-- `candidate_cancel_after_panel`
-- `candidate_confirm_reincarnate_after_panel`
-- `hud_status_after_cancel`
-- `hud_status_after_reincarnate`
 
 ## Capture tooling readiness
 - local host capture ready: `True`

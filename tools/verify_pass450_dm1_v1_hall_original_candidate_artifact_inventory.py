@@ -20,7 +20,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass450_dm1_v1_hall_original_candidate_artifact_inventory"
-STATUS = "PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
+STATUS = "PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -437,11 +437,17 @@ def main() -> int:
     env = audit_environment()
     n2_artifact = audit_n2_hall_artifact()
     corrected_run = CORRECTED_HALL_ARTIFACT_ROOT / "probe-initial-south-corrected"
+    corrected_cancel_run = CORRECTED_HALL_ARTIFACT_ROOT / "probe-initial-south-cancel-corrected"
+    corrected_reincarnate_run = CORRECTED_HALL_ARTIFACT_ROOT / "probe-initial-south-reincarnate-corrected"
     corrected_available = {
         "candidate_select_portrait_click_before_panel": (corrected_run / "image0002-raw.png").is_file(),
         "candidate_panel_visible_after_append": (corrected_run / "image0002-raw.png").is_file(),
+        "candidate_cancel_after_panel": (corrected_cancel_run / "image0004-raw.png").is_file(),
         "candidate_confirm_resurrect_after_panel": (corrected_run / "image0003-raw.png").is_file(),
+        "candidate_confirm_reincarnate_after_panel": (corrected_reincarnate_run / "image0004-raw.png").is_file(),
+        "hud_status_after_cancel": (corrected_cancel_run / "image0005-raw.png").is_file(),
         "hud_status_after_resurrect": (corrected_run / "image0003-raw.png").is_file(),
+        "hud_status_after_reincarnate": (corrected_reincarnate_run / "image0005-raw.png").is_file(),
     }
     missing = [scene for scene in REQUIRED_PROMOTION_SCENES if not corrected_available.get(scene, False)]
     errors = data_errors + source_errors + n2_artifact.get("errors", [])
@@ -460,14 +466,18 @@ def main() -> int:
         "n2HallDosboxArtifact": n2_artifact,
         "availablePromotableOriginalFrames": [
             "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
+            "probe-initial-south-cancel-corrected/image0004-raw.png (cancel corrected C162 terminal frame)",
             "probe-initial-south-corrected/image0003-raw.png (resurrect_confirm/hud_status_after corrected C160 terminal transition)",
+            "probe-initial-south-reincarnate-corrected/image0004-raw.png (reincarnate_confirm corrected C161 terminal frame)",
+            "probe-initial-south-cancel-corrected/image0005-raw.png (hud_status_after_cancel corrected terminal frame)",
+            "probe-initial-south-reincarnate-corrected/image0005-raw.png (hud_status_after_reincarnate corrected terminal frame)",
             "03_panel_visible_north_front_mirror pc320+viewport224x136 (historical Hall/front-mirror context only)",
         ],
         "correctedHallArtifactRoot": str(CORRECTED_HALL_ARTIFACT_ROOT),
         "correctedAvailableScenes": corrected_available,
         "missingPromotableScenes": missing,
         "captureEnvironment": env,
-        "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus resurrect_confirm/hud_status_after as source-routed original inputs. Do not claim full pixel parity; cancel/reincarnate/per-terminal HUD frames still need separate corrected original captures.",
+        "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 still records comparator completeness and per-terminal HUD scope.",
         "errors": errors,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
