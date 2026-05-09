@@ -8578,11 +8578,12 @@ enum {
     M11_GFX_FLOOR_ORNAMENT_BASE = 385,
     M11_GFX_FLOOR_ORNAMENT_VARIANTS = 6,
 
-    /* Stair graphics */
-    M11_GFX_STAIRS_DOWN_D2 = 93,  /* 33x136 */
-    M11_GFX_STAIRS_DOWN_D1 = 95,  /* 60x111 */
-    M11_GFX_STAIRS_UP_D2   = 94,  /* 33x136 */
-    M11_GFX_STAIRS_UP_D1   = 96,  /* 60x111 */
+    /* Stair graphics. ReDMCSB/Greatstone PC34 put stairs in the wall-set
+     * materialized block at 108..125, not in wall-panel slots 93..96. */
+    M11_GFX_STAIRS_UP_D2   = M11_GFX_DM1_STAIRS_UP_FRONT_D2C,
+    M11_GFX_STAIRS_UP_D1   = M11_GFX_DM1_STAIRS_UP_FRONT_D1C,
+    M11_GFX_STAIRS_DOWN_D2 = M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C,
+    M11_GFX_STAIRS_DOWN_D1 = M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C,
 
     /* Champion icon strip (graphic 28 in original CSB/DM).
      * Horizontal strip of 4×4 = 16 directional icons, each 19×14.
@@ -11449,6 +11450,7 @@ static int m11_draw_stairs_asset(const M11_GameViewState* state,
     } else {
         stairIdx = stairUp ? M11_GFX_STAIRS_UP_D2 : M11_GFX_STAIRS_DOWN_D2;
     }
+    stairIdx = m11_wallset_graphic_index_for_state(state, stairIdx);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, stairIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
