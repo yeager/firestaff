@@ -1,0 +1,380 @@
+{
+  "chainedGates": [
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py",
+        "--json",
+        "--source",
+        "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+      ],
+      "covers": "command queue -> movement/turn state -> viewport wall redraw and presentation source chain",
+      "expectedStatus": null,
+      "id": "pass381_movement_viewport_walls_source_lock",
+      "outputTail": [
+        "      \"function\": \"F0097_DUNGEONVIEW_DrawViewport\",",
+        "      \"id\": \"drawviewport-requests-vblank-copy\",",
+        "      \"missing\": [],",
+        "      \"passed\": true,",
+        "      \"source\": \"DRAWVIEW.C:709-722\",",
+        "      \"why\": \"After F0128 composes G0296, DrawViewport requests a screen copy and waits for vertical blank.\"",
+        "    },",
+        "    {",
+        "      \"function\": \"E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF\",",
+        "      \"id\": \"vblank-copies-viewport-buffer-to-screen\",",
+        "      \"missing\": [],",
+        "      \"passed\": true,",
+        "      \"source\": \"BASE.C:961-987\",",
+        "      \"why\": \"The vblank handler copies the composed 224x136 viewport bitmap to the screen memory region.\"",
+        "    }",
+        "  ],",
+        "  \"gate\": \"pass381_dm1_v1_movement_viewport_walls_source_lock\",",
+        "  \"passed\": true,",
+        "  \"sourceRoot\": \"/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source\"",
+        "}"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py"
+      ],
+      "covers": "PC34 input, queue, F0380, F0365/F0366 and command-core regressions",
+      "expectedStatus": null,
+      "id": "pass423_input_command_movement_pipeline_source_lock",
+      "outputTail": [
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "scripts/verify_pass402_dm1_v1_movement_cooldown_order.py"
+      ],
+      "covers": "cooldown ageing before F0380 and no same-tick post-decrement",
+      "expectedStatus": null,
+      "id": "pass402_movement_cooldown_order",
+      "outputTail": [
+        "    \"CLIKMENU.C:F0366 cooldown assignment\": [",
+        "      330,",
+        "      346",
+        "    ],",
+        "    \"COMMAND.C:F0380 movement-disabled gates\": [",
+        "      2095,",
+        "      2100",
+        "    ],",
+        "    \"GAMELOOP.C:disabled tick decrement before F0380\": [",
+        "      150,",
+        "      155,",
+        "      215",
+        "    ],",
+        "    \"MOVESENS.C:F0267 party movement side effects\": [",
+        "      752,",
+        "      775",
+        "    ]",
+        "  },",
+        "  \"status\": \"ok\"",
+        "}"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "ok"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py"
+      ],
+      "covers": "party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain",
+      "expectedStatus": null,
+      "id": "pass406_movement_legality_completion_gate",
+      "outputTail": [
+        "PASS pass406_dm1_v1_movement_legality_completion_gate",
+        "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
+        "- Firestaff: memory_movement_pc34_compat.c:405-490, 706-818",
+        "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
+        "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass406_dm1_v1_game_loop_redraw_cadence.py"
+      ],
+      "covers": "game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering",
+      "expectedStatus": null,
+      "id": "pass406_game_loop_redraw_cadence",
+      "outputTail": [
+        "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
+        "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
+        "- Firestaff: m11_game_view.c:4883-4966; main_loop_m11.c:1623-1635; dm1_v1_movement_pipeline_pc34_compat.c:244-413",
+        "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
+        "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "scripts/verify_pass395_dm1_v1_viewport_walls_source_runtime_lock.py"
+      ],
+      "covers": "wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract",
+      "expectedStatus": null,
+      "id": "pass395_viewport_walls_source_runtime_lock",
+      "outputTail": [
+        "PASS door-front-two-pass-then-front-handoff DUNVIEW.C:6440-6816",
+        "  Door-front cells draw rear contents, then door/frame, then front-side contents in a second F0115 pass.",
+        "PASS f0115-object-creature-projectile-explosion-handoff DUNVIEW.C:4547-5938",
+        "  F0115 is the source handoff for object/creature/projectile/explosion layers after each visible square decides its cell order.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_wall_draw_specs dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:front alcove branches to F0115 dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_thing_layers dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_post_command_redraw dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:COMMAND.C:2045-2156 dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.c:GAMELOOP.C:55-90 dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:dm1_v1_viewport_3d_pc34_compat.h:DM1_ViewportPostCommandRedrawSpec dm1_v1_viewport_3d_pc34_compat.h",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract.",
+        "PASS local:test_dm1_v1_viewport_3d_pc34_compat.c:test_post_command_redraw_contract test_dm1_v1_viewport_3d_pc34_compat.c",
+        "  Firestaff metadata/runtime probe exposes this source-locked contract."
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"
+      ],
+      "covers": "projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards",
+      "expectedStatus": null,
+      "id": "pass405_projectile_explosion_layer_occlusion",
+      "outputTail": [
+        "status=PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION",
+        "source=DUNVIEW.C:4547-4582,4820-4860,5195-5202,5679-5683,5915-5933",
+        "door_occlusion=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937",
+        "firestaff=m11_draw_wall_contents/m11_draw_dm1_side_contents projectiles before deferred m11_draw_dm1_deferred_explosion_pass"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py"
+      ],
+      "covers": "visible viewport cells are map-backed and agree with movement collision square state",
+      "expectedStatus": null,
+      "id": "viewport_square_collision_source_lock",
+      "outputTail": [
+        "PASS relative-cell-coordinates-shared-by-viewport-and-movement DUNGEON.C:1371-1418 F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "  Viewport cells and movement targets share F0150 relative-coordinate math, so visual cells must be resolved in the same map coordinate frame as collision.",
+        "PASS square-byte-query-is-real-map-data-with-bounds-wall DUNGEON.C:1423-1455 F0151_DUNGEON_GetSquare",
+        "  The authoritative square byte comes from G0271_ppuc_CurrentMapData; out-of-bounds viewport/collision probes degrade to wall squares.",
+        "PASS viewport-visible-cells-use-relative-map-coordinates DUNVIEW.C:8464-8544 F0128_DUNGEONVIEW_Draw_CPSF",
+        "  F0128 enumerates visible cells from party coordinates through F0150, then passes concrete map X/Y into each square draw routine.",
+        "PASS square-aspect-promotes-square-byte-to-visible-element-state DUNGEON.C:2518-2720 F0172_DUNGEON_SetSquareAspect",
+        "  DUNVIEW draw routines consume square aspects that are built from the same square byte used for walls, pits, fakewalls, doors, and door state.",
+        "PASS movement-collision-target-uses-same-relative-square-byte CLIKMENU.C:264-332 F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "  Party movement blocks/passability are computed from the same F0150/F0151 target square used by viewport visible-cell coordinates.",
+        "PASS move-result-chain-rechecks-destination-square-state MOVESENS.C:474-540 F0267_MOVE_GetMoveResult_CPSCE",
+        "  After collision permits a move, MOVESENS follows teleporter/pit chains by rereading destination square bytes and mutating party X/Y from that state.",
+        "PASS viewport-present-happens-after-map-backed-draw DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport",
+        "  The final viewport blit presents the buffer only after DUNVIEW has resolved and drawn map-backed visible cells.",
+        "IMPLICATION Firestaff viewport parity must route every visible square through real dungeon square data (or a probe equivalent to F0150/F0151/F0172) and must agree with movement collision checks for walls, doors, fakewalls, groups, pits, and teleporters."
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_v1_viewport_field_zone_aspect_clip_gate.py"
+      ],
+      "covers": "field/teleporter zone/aspect clipping behind nearer blockers",
+      "expectedStatus": null,
+      "id": "viewport_field_zone_aspect_clip_gate",
+      "outputTail": [
+        "V1 viewport field zone/aspect clip gate passed",
+        "- Firestaff field rows/zones: /home/trv2/work/firestaff/m11_game_view.c:9890",
+        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/m11_game_view.c:18124",
+        "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
+        "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
+        "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
+        "- ReDMCSB DUNVIEW.C:6289 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[C14_VIEW_SQUARE_D3L2]], C702_ZONE_WALL_D3L2);",
+        "- ReDMCSB DUNVIEW.C:6831 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);",
+        "- ReDMCSB DUNVIEW.C:7554 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M607_VIEW_SQUARE_D1L]], C713_ZONE_WALL_D1L);",
+        "- ReDMCSB DUNVIEW.C:8159 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);",
+        "- ReDMCSB DEFS wall zones: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_v1_viewport_palette_source_lock_gate.py"
+      ],
+      "covers": "single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming",
+      "expectedStatus": null,
+      "id": "viewport_palette_source_lock_gate",
+      "outputTail": [
+        "V1 viewport palette source-lock gate passed",
+        "- Firestaff palette compute: /home/trv2/work/firestaff/m11_game_view.c:12969",
+        "- Firestaff palette apply: /home/trv2/work/firestaff/m11_game_view.c:8611",
+        "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
+        "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
+        "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": null
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass434_dm1_v1_original_viewport_crop_readiness_gate.py"
+      ],
+      "covers": "original viewport crop/source readiness is available",
+      "expectedStatus": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
+      "id": "pass434_original_viewport_crop_readiness_gate",
+      "outputTail": [
+        "{",
+        "  \"status\": \"PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS\",",
+        "  \"manifest\": \"parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json\",",
+        "  \"report\": \"parity-evidence/pass434_dm1_v1_original_viewport_crop_readiness_gate.md\"",
+        "}"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
+    }
+  ],
+  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
+  "expectedBlockerGates": [
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py"
+      ],
+      "covers": "remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven",
+      "expectedStatus": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+      "id": "pass435_semantic_original_route_readiness_gate",
+      "outputTail": [
+        "{",
+        "  \"status\": \"BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY\",",
+        "  \"blockers\": [",
+        "    \"pass376 raw route classifier is not green\",",
+        "    \"pass376 raw route classes do not match the semantic promotion sequence\",",
+        "    \"pass376 raw route repeats screenshot hashes\",",
+        "    \"pass376 viewport crops repeat hashes, so labels are not semantically distinct\"",
+        "  ],",
+        "  \"manifest\": \"parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json\",",
+        "  \"report\": \"parity-evidence/pass435_dm1_v1_semantic_original_route_readiness_gate.md\"",
+        "}"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY"
+    }
+  ],
+  "gate": "dm1_v1_viewport_movement_completion_matrix",
+  "passed": true,
+  "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRows": [
+    {
+      "function": "GAMELOOP main input/redraw loop",
+      "id": "post_command_redraw_loop",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "main loop redraws viewport from the current party tuple before entering the input wait cycle",
+      "source": "GAMELOOP.C:55-90"
+    },
+    {
+      "function": "GAMELOOP cooldown tick",
+      "id": "cooldown_age_before_f0380",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "old movement/projectile cooldowns age once per loop tick before queued input processing",
+      "source": "GAMELOOP.C:150-155"
+    },
+    {
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "queue_dispatch_turn_move_and_blocked_gates",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "eligible queued turn/move commands dispatch through source handlers after movement-disabled checks",
+      "source": "COMMAND.C:2045-2156"
+    },
+    {
+      "function": "F0366/F0267 movement blockers and side effects",
+      "id": "movement_legality_and_result_chain",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "wall/door/fakewall/group blockers return before movement side effects; successful moves enter F0267 timing/results",
+      "source": "CLIKMENU.C:180-351"
+    },
+    {
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_far_to_near_wall_replay",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "viewport squares replay source-order far-to-near and then request presentation",
+      "source": "DUNVIEW.C:8318-8618"
+    },
+    {
+      "function": "F0116/F0117/F0118 wall and door branches",
+      "id": "wall_door_alcove_occlusion_contract",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "wall squares normally occlude/return, while alcoves and front doors explicitly hand contents to F0115",
+      "source": "DUNVIEW.C:6421-6840"
+    },
+    {
+      "function": "F0121_DUNGEONVIEW_DrawSquareD2C",
+      "id": "d2c_floor_field_and_front_door_order",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "D2C keeps source floor/stairs/field/door/front-content ordering, including the recent D2C field/floor regression surface",
+      "source": "DUNVIEW.C:7244-7388"
+    },
+    {
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "id": "f0115_thing_layer_handoff",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "objects/creatures/projectiles are processed per packed cell, while explosion handling restarts after the packed-cell pass",
+      "source": "DUNVIEW.C:4547-5938"
+    },
+    {
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "drawview_palette_and_present_cadence",
+      "missing": [],
+      "passed": true,
+      "readyClaim": "viewport present uses the single source dungeon palette index and vblank copy cadence rather than invented depth dimming",
+      "source": "DRAWVIEW.C:709-900"
+    }
+  ],
+  "timestampUtc": "2026-05-09T03:46:27.586115+00:00"
+}
