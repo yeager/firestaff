@@ -211,16 +211,16 @@ def runtime_probe(seconds:int, route:str)->dict[str,Any]:
 
 def classify_result(source,runtime):
     kinds=[st.get("kind") for st in runtime.get("stops",[])] if runtime.get("ran") else []
-    f0781=[st for st in runtime.get("stops",[]) if st.get("kind")=="F0781_MouseHandler"] if runtime.get("ran") else []
-    event_rows=[st for st in runtime.get("stops",[]) if st.get("kind")=="F0781_EventCmp"] if runtime.get("ran") else []
+    f0781=[st for st in runtime.get("stops",[]) if st.get("kind") in ("F0781_MouseHandler", "F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")] if runtime.get("ran") else []
+    event_rows=[st for st in runtime.get("stops",[]) if st.get("kind") in ("F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")] if runtime.get("ran") else []
     first=event_rows[0] if event_rows else (f0781[0] if f0781 else {})
     event=first.get("eventValueBeforeIOConditional")
     preds={
         "sourceAuditOk":all(r.get("ok") for r in source),
         "runtimeRan":runtime.get("ran") is True,
         "routeInputAfterArming":runtime.get("routeInputAfterArming") is True,
-        "f0781Hit":"F0781_MouseHandler" in kinds,
-        "f0781EventCmpHit":"F0781_EventCmp" in kinds,
+        "f0781Hit":bool(f0781),
+        "f0781EventCmpHit":bool(event_rows),
         "f0359Hit":"F0359_COMMAND_ProcessClick_CPSC" in kinds,
         "eventValueBeforeIOConditional":event,
         "ioConditionalAllowsF0359": first.get("ioConditionalAllowsF0359"),

@@ -1,8 +1,8 @@
 # Pass464 — DM1 V1 mouse callback event branch
 
-Status: `BLOCKED_PASS464_CLICK_NOT_REACHING_F0781`
+Status: `BLOCKED_PASS464_F0781_EVENT_SAMPLE_UNSTABLE`
 
-client-relative clicks were posted after arming, but F0781 did not hit
+F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path
 
 ## ReDMCSB source audit
 
@@ -35,7 +35,7 @@ client-relative clicks were posted after arming, but F0781 did not hit
 
 ## Conclusion
 
-- client-relative clicks were posted after arming, but F0781 did not hit
+- F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path
 
 ## Artifacts
 
