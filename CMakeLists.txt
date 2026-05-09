@@ -898,6 +898,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass375_dm1_v1_deferred_explosion_pass.py
         )
         add_test(
+            NAME pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py
+        )
+        add_test(
             NAME v1_viewport_distance_row_clip_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_distance_row_clip_gate.py
         )
