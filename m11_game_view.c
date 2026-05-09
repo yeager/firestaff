@@ -7803,16 +7803,18 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     (void)m11_get_front_cell(state, &frontCell);
 
     /* CLIKVIEW.C:356-390 handles the stängd-front-door button before the
-     * generic empty-hand view-cell loop.  DUNVIEW.C draws C1950/C3 button
-     * at viewport-relative x=167..174 y=43..51 for D1C.  Match that
-     * source zone: only a click on the visible button toggles the front
-     * door; broad center/side viewport clicks remain C080 no-ops here. */
+     * generic empty-hand view-cell loop.  DUNVIEW.C:1210-1215 and
+     * F0110_DUNGEONVIEW_DrawDoorButton copy the C1950/C3 D1C button box to
+     * the clickable C05 slot: viewport-relative x=160..175 y=44..52.
+     * Match that full source zone: only a click on the visible button
+     * toggles the front door; broad center/side viewport clicks remain
+     * C080 no-ops here. */
     if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
         frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
         int doorIdx = THING_GET_INDEX(frontCell.firstThing);
         if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
             state->world.things->doors[doorIdx].button &&
-            localX >= 167 && localX <= 174 && localY >= 43 && localY <= 51 &&
+            localX >= 160 && localX <= 175 && localY >= 44 && localY <= 52 &&
             m11_toggle_front_door(state)) {
             return M11_GAME_INPUT_REDRAW;
         }

@@ -1339,6 +1339,8 @@ int main(int argc, char** argv) {
     {
         M11_GameViewState doorButtonMiss;
         M11_GameViewState doorButtonHit;
+        M11_GameViewState doorButtonLeftEdge;
+        M11_GameViewState doorButtonBottomEdge;
         (void)probe_init_synthetic_view(&doorButtonMiss);
         doorButtonMiss.showDebugHUD = 0;
         doorButtonMiss.world.party.direction = DIR_EAST;
@@ -1368,8 +1370,40 @@ int main(int argc, char** argv) {
                          strcmp(doorButtonHit.lastAction, "DOOR") == 0 &&
                          strcmp(doorButtonHit.lastOutcome, "DOOR OPENING") == 0 &&
                          (doorButtonHit.world.dungeon->tiles[0].squareData[3 * doorButtonHit.world.dungeon->maps[0].height + 2] & 0x07) == 2,
-                     "V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path");
+                     "V1 C080 source D1C door-button interior click toggles the front door through the door animation path");
         probe_free_synthetic_view(&doorButtonHit);
+
+        (void)probe_init_synthetic_view(&doorButtonLeftEdge);
+        doorButtonLeftEdge.showDebugHUD = 0;
+        doorButtonLeftEdge.world.party.direction = DIR_EAST;
+        doorButtonLeftEdge.world.party.mapX = 2;
+        doorButtonLeftEdge.world.party.mapY = 2;
+        doorButtonLeftEdge.world.things->doors[0].button = 1;
+        initialTick = doorButtonLeftEdge.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07I2",
+                     M11_GameView_HandlePointer(&doorButtonLeftEdge, 160, 77, 1) == M11_GAME_INPUT_REDRAW &&
+                         doorButtonLeftEdge.world.gameTick == initialTick + 1 &&
+                         strcmp(doorButtonLeftEdge.lastAction, "DOOR") == 0 &&
+                         (doorButtonLeftEdge.world.dungeon->tiles[0].squareData[3 * doorButtonLeftEdge.world.dungeon->maps[0].height + 2] & 0x07) == 2,
+                     "V1 C080 source D1C door-button left/top edge x160/y44 is clickable");
+        probe_free_synthetic_view(&doorButtonLeftEdge);
+
+        (void)probe_init_synthetic_view(&doorButtonBottomEdge);
+        doorButtonBottomEdge.showDebugHUD = 0;
+        doorButtonBottomEdge.world.party.direction = DIR_EAST;
+        doorButtonBottomEdge.world.party.mapX = 2;
+        doorButtonBottomEdge.world.party.mapY = 2;
+        doorButtonBottomEdge.world.things->doors[0].button = 1;
+        initialTick = doorButtonBottomEdge.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07I3",
+                     M11_GameView_HandlePointer(&doorButtonBottomEdge, 175, 85, 1) == M11_GAME_INPUT_REDRAW &&
+                         doorButtonBottomEdge.world.gameTick == initialTick + 1 &&
+                         strcmp(doorButtonBottomEdge.lastAction, "DOOR") == 0 &&
+                         (doorButtonBottomEdge.world.dungeon->tiles[0].squareData[3 * doorButtonBottomEdge.world.dungeon->maps[0].height + 2] & 0x07) == 2,
+                     "V1 C080 source D1C door-button right/bottom edge x175/y52 is clickable");
+        probe_free_synthetic_view(&doorButtonBottomEdge);
     }
 
     syntheticView.world.party.direction = DIR_EAST;
