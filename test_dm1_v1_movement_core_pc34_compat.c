@@ -23,6 +23,10 @@
  * - CLIKMENU.C:291-318 preserves the empty-party bug, then checks
  *   F0175_GROUP_GetThing on otherwise-passable target squares and blocks
  *   non-empty parties before F0267 side effects/cooldowns.
+ * - CLIKMENU.C:317-328 returns on blocked movement before calling F0267;
+ *   MOVESENS.C:438-443 is where accepted party movement first mutates
+ *   G0306/G0307, so wall/door/fakewall/group blockers must leave party
+ *   coordinates unchanged and skip pit/teleporter/sensor side effects.
  * - DUNGEON.C:1371-1391 F0150 applies direction-relative forward/right deltas.
  */
 
@@ -38,6 +42,20 @@ static int expect_int(const char* label, int got, int want)
 static unsigned char square_type(int elementType, int attrs)
 {
     return (unsigned char)((elementType << 5) | (attrs & DUNGEON_SQUARE_MASK_ATTRIBS));
+}
+
+static int expect_blocked_move_kept_party_state(
+    const char* label,
+    const struct PartyState_Compat* party,
+    const struct MovementResult_Compat* result)
+{
+    int ok = 1;
+    ok &= expect_int(label, result->resultCode != MOVE_OK && result->resultCode != MOVE_TURN_ONLY, 1);
+    ok &= expect_int("blocked move keeps x", result->newMapX, party->mapX);
+    ok &= expect_int("blocked move keeps y", result->newMapY, party->mapY);
+    ok &= expect_int("blocked move keeps map", result->newMapIndex, party->mapIndex);
+    ok &= expect_int("blocked move keeps direction", result->newDirection, party->direction);
+    return ok;
 }
 
 static void set_square(unsigned char* squares, int height, int x, int y, unsigned char value)
@@ -127,7 +145,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_movement_core_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318; DUNGEON.C:1371-1391; MOVESENS.C:272-310; PROJEXPL.C:459\n");
+    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318,317-328; DUNGEON.C:1371-1391; MOVESENS.C:272-310,438-443; PROJEXPL.C:459\n");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -198,6 +216,7 @@ int main(void)
     ok &= expect_int("wall target blocks forward",
         process_key_and_try_move(&queue, &dungeon, &party, 0xAB35, 0, 0, 0, &queueResult, &moveResult), 0);
     ok &= expect_int("wall block result code", moveResult.resultCode, MOVE_BLOCKED_WALL);
+    ok &= expect_blocked_move_kept_party_state("wall block skips accepted-move side effects", &party, &moveResult);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
 
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_DOOR, 2));
@@ -205,6 +224,7 @@ int main(void)
     ok &= expect_int("closed door state blocks forward",
         process_key_and_try_move(&queue, &dungeon, &party, 0xAB35, 0, 0, 0, &queueResult, &moveResult), 0);
     ok &= expect_int("closed door block result code", moveResult.resultCode, MOVE_BLOCKED_DOOR);
+    ok &= expect_blocked_move_kept_party_state("closed door block skips accepted-move side effects", &party, &moveResult);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_DOOR, 1));
     ok &= expect_int("one-fourth door passable", F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 2, 1), 1);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_DOOR, 5));
@@ -216,6 +236,7 @@ int main(void)
     ok &= expect_int("closed real fakewall blocks forward",
         process_key_and_try_move(&queue, &dungeon, &party, 0xAB35, 0, 0, 0, &queueResult, &moveResult), 0);
     ok &= expect_int("closed real fakewall block result code", moveResult.resultCode, MOVE_BLOCKED_WALL);
+    ok &= expect_blocked_move_kept_party_state("closed real fakewall block skips accepted-move side effects", &party, &moveResult);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_FAKEWALL, 0x04));
     ok &= expect_int("open fakewall passable", F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 2, 1), 1);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_FAKEWALL, 0x01));
@@ -245,6 +266,12 @@ int main(void)
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, DUNGEON_SQUARE_MASK_THING_LIST));
     ok &= expect_int("impassable target skips group collision gate",
         F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(&dungeon, &things, &party, MOVE_FORWARD), 0);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("structural wall with thing-list still blocks before move result",
+        process_key_and_try_move(&queue, &dungeon, &party, 0xAB35, 0, 0, 0, &queueResult, &moveResult), 0);
+    ok &= expect_blocked_move_kept_party_state("structural blocker skips move-result chain", &party, &moveResult);
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
+    squareFirstThings[0] = THING_ENDOFLIST;
 
     /* MOVESENS.C:272-310 / F0266 intermediary projectile-impact cell maps.
      * Exact source comment case: adjacent east move with a champion in cell 2
