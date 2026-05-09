@@ -1,0 +1,892 @@
+{
+  "schema": "pass454_dm1_v1_hall_original_input_mapping_blocker.v1",
+  "timestampUtc": "2026-05-09T15:31:54.353009+00:00",
+  "status": "BLOCKED_CAPTURE_AUTOMATION_ABSOLUTE_COORDINATES_USED_WITH_WINDOW_RELATIVE_CLICK",
+  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/hall-input-timing-state-173859",
+  "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json",
+  "artifactManifestSha256": "33b54c69685392e80b3450ffdecf618b6ad0d176edde68a0a68ec1332c33fc12",
+  "pc34Provenance": {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "stage": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+  },
+  "expectedPc34Provenance": {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+  },
+  "attemptRows": [
+    {
+      "run": "probe-title-menu-enter",
+      "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+      "freshAttempt": false,
+      "keyLogSha256": "279cb26db0cb6bbf1df462102ea1b109875ad4fe921ea7079138887bf50aed94",
+      "scriptSha256": "0432759ccd1aef9725a3a2e26b873261011a2d376ea6ea9e9bf52f01928a877a",
+      "clicks": [
+        {
+          "button": "left",
+          "pcx": 260,
+          "pcy": 50,
+          "px": 1294,
+          "py": 358,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            869,
+            251
+          ],
+          "loggedWindowRelative": [
+            1294,
+            358
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": true,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 111,
+          "pcy": 82,
+          "px": 797,
+          "py": 465,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            372,
+            358
+          ],
+          "loggedWindowRelative": [
+            797,
+            465
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 159,
+          "pcy": 147,
+          "px": 957,
+          "py": 682,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            532,
+            574
+          ],
+          "loggedWindowRelative": [
+            957,
+            682
+          ],
+          "deltaFromExpected": [
+            425,
+            108
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        }
+      ],
+      "imageSummary": {
+        "run": "probe-title-menu-enter",
+        "exists": true,
+        "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+        "labels": [
+          "title",
+          "menu",
+          "panel_visible",
+          "candidate_select",
+          "cancel",
+          "hud_status_after"
+        ],
+        "uniqueImageSha256Count": 5,
+        "allImagesIdentical": false,
+        "keyLogSha256": "279cb26db0cb6bbf1df462102ea1b109875ad4fe921ea7079138887bf50aed94",
+        "config": "probe-title-menu-enter/dosbox-original-viewports.conf"
+      },
+      "usesWindowRelativeMousemove": true
+    },
+    {
+      "run": "probe-long-wait",
+      "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+      "freshAttempt": false,
+      "keyLogSha256": "ccc04710c2641db3cd76318c56014f763f2806c52d328ed66ccca4bf097c12e5",
+      "scriptSha256": "0432759ccd1aef9725a3a2e26b873261011a2d376ea6ea9e9bf52f01928a877a",
+      "clicks": [
+        {
+          "button": "left",
+          "pcx": 260,
+          "pcy": 50,
+          "px": 1294,
+          "py": 358,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            869,
+            251
+          ],
+          "loggedWindowRelative": [
+            1294,
+            358
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": true,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 111,
+          "pcy": 82,
+          "px": 797,
+          "py": 465,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            372,
+            358
+          ],
+          "loggedWindowRelative": [
+            797,
+            465
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 159,
+          "pcy": 147,
+          "px": 957,
+          "py": 682,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            532,
+            574
+          ],
+          "loggedWindowRelative": [
+            957,
+            682
+          ],
+          "deltaFromExpected": [
+            425,
+            108
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        }
+      ],
+      "imageSummary": {
+        "run": "probe-long-wait",
+        "exists": true,
+        "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+        "labels": [
+          "title",
+          "menu",
+          "panel_visible",
+          "candidate_select",
+          "panel_visible2",
+          "cancel"
+        ],
+        "uniqueImageSha256Count": 2,
+        "allImagesIdentical": false,
+        "keyLogSha256": "ccc04710c2641db3cd76318c56014f763f2806c52d328ed66ccca4bf097c12e5",
+        "config": "probe-long-wait/dosbox-original-viewports.conf"
+      },
+      "usesWindowRelativeMousemove": true
+    },
+    {
+      "run": "probe-pk-fresh-click",
+      "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+      "freshAttempt": true,
+      "keyLogSha256": "36ddfbdc703177aff2c6767cb740e7d5b1f9c6835bdde6c8e241ba4d19d1bcd3",
+      "scriptSha256": "0432759ccd1aef9725a3a2e26b873261011a2d376ea6ea9e9bf52f01928a877a",
+      "clicks": [
+        {
+          "button": "left",
+          "pcx": 111,
+          "pcy": 82,
+          "px": 797,
+          "py": 465,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            372,
+            358
+          ],
+          "loggedWindowRelative": [
+            797,
+            465
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 130,
+          "pcy": 115,
+          "px": 861,
+          "py": 575,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            435,
+            468
+          ],
+          "loggedWindowRelative": [
+            861,
+            575
+          ],
+          "deltaFromExpected": [
+            426,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        }
+      ],
+      "imageSummary": {
+        "run": "probe-pk-fresh-click",
+        "exists": true,
+        "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+        "labels": [
+          "start",
+          "after_portrait",
+          "panel_visible",
+          "confirm",
+          "hud_status_after",
+          "extra"
+        ],
+        "uniqueImageSha256Count": 1,
+        "allImagesIdentical": true,
+        "keyLogSha256": "36ddfbdc703177aff2c6767cb740e7d5b1f9c6835bdde6c8e241ba4d19d1bcd3",
+        "config": "probe-pk-fresh-click/dosbox-original-viewports.conf"
+      },
+      "usesWindowRelativeMousemove": true
+    },
+    {
+      "run": "probe-pm-fresh-click",
+      "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+      "freshAttempt": true,
+      "keyLogSha256": "36ddfbdc703177aff2c6767cb740e7d5b1f9c6835bdde6c8e241ba4d19d1bcd3",
+      "scriptSha256": "0432759ccd1aef9725a3a2e26b873261011a2d376ea6ea9e9bf52f01928a877a",
+      "clicks": [
+        {
+          "button": "left",
+          "pcx": 111,
+          "pcy": 82,
+          "px": 797,
+          "py": 465,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            372,
+            358
+          ],
+          "loggedWindowRelative": [
+            797,
+            465
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 130,
+          "pcy": 115,
+          "px": 861,
+          "py": 575,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            435,
+            468
+          ],
+          "loggedWindowRelative": [
+            861,
+            575
+          ],
+          "deltaFromExpected": [
+            426,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        }
+      ],
+      "imageSummary": {
+        "run": "probe-pm-fresh-click",
+        "exists": true,
+        "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+        "labels": [
+          "start",
+          "after_portrait",
+          "panel_visible",
+          "confirm",
+          "hud_status_after",
+          "extra"
+        ],
+        "uniqueImageSha256Count": 1,
+        "allImagesIdentical": true,
+        "keyLogSha256": "36ddfbdc703177aff2c6767cb740e7d5b1f9c6835bdde6c8e241ba4d19d1bcd3",
+        "config": "probe-pm-fresh-click/dosbox-original-viewports.conf"
+      },
+      "usesWindowRelativeMousemove": true
+    },
+    {
+      "run": "probe-known-entry",
+      "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+      "freshAttempt": true,
+      "keyLogSha256": "ffd7507edd2ae9955581b57c1fb77ca81d80895ff33642952f2b256784fe236e",
+      "scriptSha256": "0432759ccd1aef9725a3a2e26b873261011a2d376ea6ea9e9bf52f01928a877a",
+      "clicks": [
+        {
+          "button": "left",
+          "pcx": 276,
+          "pcy": 140,
+          "px": 1347,
+          "py": 659,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            922,
+            551
+          ],
+          "loggedWindowRelative": [
+            1347,
+            659
+          ],
+          "deltaFromExpected": [
+            425,
+            108
+          ],
+          "matchesExpected": false,
+          "outsideWindow": true,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 111,
+          "pcy": 82,
+          "px": 797,
+          "py": 465,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            372,
+            358
+          ],
+          "loggedWindowRelative": [
+            797,
+            465
+          ],
+          "deltaFromExpected": [
+            425,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        },
+        {
+          "button": "left",
+          "pcx": 130,
+          "pcy": 115,
+          "px": 861,
+          "py": 575,
+          "w": 1067,
+          "h": 832,
+          "ox": null,
+          "oy": null,
+          "expectedWindowRelative": [
+            435,
+            468
+          ],
+          "loggedWindowRelative": [
+            861,
+            575
+          ],
+          "deltaFromExpected": [
+            426,
+            107
+          ],
+          "matchesExpected": false,
+          "outsideWindow": false,
+          "matchesExpectedPlusOrigin": null
+        }
+      ],
+      "imageSummary": {
+        "run": "probe-known-entry",
+        "exists": true,
+        "status": "NO_CANDIDATE_PANEL_VISIBLE_STATIC_AFTER_PORTRAIT_CLICK",
+        "labels": [
+          "start",
+          "after_portrait",
+          "panel_visible",
+          "confirm",
+          "hud_status_after",
+          "extra"
+        ],
+        "uniqueImageSha256Count": 1,
+        "allImagesIdentical": true,
+        "keyLogSha256": "ffd7507edd2ae9955581b57c1fb77ca81d80895ff33642952f2b256784fe236e",
+        "config": "probe-known-entry/dosbox-original-viewports.conf"
+      },
+      "usesWindowRelativeMousemove": true
+    }
+  ],
+  "badClicks": [
+    {
+      "run": "probe-title-menu-enter",
+      "clickIndex": 0,
+      "button": "left",
+      "pcx": 260,
+      "pcy": 50,
+      "px": 1294,
+      "py": 358,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        869,
+        251
+      ],
+      "loggedWindowRelative": [
+        1294,
+        358
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": true,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-title-menu-enter",
+      "clickIndex": 1,
+      "button": "left",
+      "pcx": 111,
+      "pcy": 82,
+      "px": 797,
+      "py": 465,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        372,
+        358
+      ],
+      "loggedWindowRelative": [
+        797,
+        465
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-title-menu-enter",
+      "clickIndex": 2,
+      "button": "left",
+      "pcx": 159,
+      "pcy": 147,
+      "px": 957,
+      "py": 682,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        532,
+        574
+      ],
+      "loggedWindowRelative": [
+        957,
+        682
+      ],
+      "deltaFromExpected": [
+        425,
+        108
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-long-wait",
+      "clickIndex": 0,
+      "button": "left",
+      "pcx": 260,
+      "pcy": 50,
+      "px": 1294,
+      "py": 358,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        869,
+        251
+      ],
+      "loggedWindowRelative": [
+        1294,
+        358
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": true,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-long-wait",
+      "clickIndex": 1,
+      "button": "left",
+      "pcx": 111,
+      "pcy": 82,
+      "px": 797,
+      "py": 465,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        372,
+        358
+      ],
+      "loggedWindowRelative": [
+        797,
+        465
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-long-wait",
+      "clickIndex": 2,
+      "button": "left",
+      "pcx": 159,
+      "pcy": 147,
+      "px": 957,
+      "py": 682,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        532,
+        574
+      ],
+      "loggedWindowRelative": [
+        957,
+        682
+      ],
+      "deltaFromExpected": [
+        425,
+        108
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-pk-fresh-click",
+      "clickIndex": 0,
+      "button": "left",
+      "pcx": 111,
+      "pcy": 82,
+      "px": 797,
+      "py": 465,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        372,
+        358
+      ],
+      "loggedWindowRelative": [
+        797,
+        465
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-pk-fresh-click",
+      "clickIndex": 1,
+      "button": "left",
+      "pcx": 130,
+      "pcy": 115,
+      "px": 861,
+      "py": 575,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        435,
+        468
+      ],
+      "loggedWindowRelative": [
+        861,
+        575
+      ],
+      "deltaFromExpected": [
+        426,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-pm-fresh-click",
+      "clickIndex": 0,
+      "button": "left",
+      "pcx": 111,
+      "pcy": 82,
+      "px": 797,
+      "py": 465,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        372,
+        358
+      ],
+      "loggedWindowRelative": [
+        797,
+        465
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-pm-fresh-click",
+      "clickIndex": 1,
+      "button": "left",
+      "pcx": 130,
+      "pcy": 115,
+      "px": 861,
+      "py": 575,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        435,
+        468
+      ],
+      "loggedWindowRelative": [
+        861,
+        575
+      ],
+      "deltaFromExpected": [
+        426,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-known-entry",
+      "clickIndex": 0,
+      "button": "left",
+      "pcx": 276,
+      "pcy": 140,
+      "px": 1347,
+      "py": 659,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        922,
+        551
+      ],
+      "loggedWindowRelative": [
+        1347,
+        659
+      ],
+      "deltaFromExpected": [
+        425,
+        108
+      ],
+      "matchesExpected": false,
+      "outsideWindow": true,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-known-entry",
+      "clickIndex": 1,
+      "button": "left",
+      "pcx": 111,
+      "pcy": 82,
+      "px": 797,
+      "py": 465,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        372,
+        358
+      ],
+      "loggedWindowRelative": [
+        797,
+        465
+      ],
+      "deltaFromExpected": [
+        425,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    },
+    {
+      "run": "probe-known-entry",
+      "clickIndex": 2,
+      "button": "left",
+      "pcx": 130,
+      "pcy": 115,
+      "px": 861,
+      "py": 575,
+      "w": 1067,
+      "h": 832,
+      "ox": null,
+      "oy": null,
+      "expectedWindowRelative": [
+        435,
+        468
+      ],
+      "loggedWindowRelative": [
+        861,
+        575
+      ],
+      "deltaFromExpected": [
+        426,
+        107
+      ],
+      "matchesExpected": false,
+      "outsideWindow": false,
+      "matchesExpectedPlusOrigin": null
+    }
+  ],
+  "freshStaticAttempts": [
+    "probe-pk-fresh-click",
+    "probe-pm-fresh-click",
+    "probe-known-entry"
+  ],
+  "diagnosis": "Fresh-entry attempts did not prove the original state machine because logged clicks do not land at the computed client-relative PC coordinate; at least one logged click is outside the DOSBox client window. That is an automation coordinate-space bug, not evidence against mouse release/down duration, UI-ready tick, empty hand, modal state, or PC34 data identity.",
+  "nextExecutableAction": {
+    "name": "rerun_fresh_initial_south_click_with_correct_window_relative_mapping",
+    "requirements": [
+      "Do not reuse the stale hall-true-stop click logs as candidate evidence.",
+      "For a DOSBox window, map PC 320x200 coordinates to client-relative coordinates and use xdotool mousemove --window with only those client-relative coordinates.",
+      "Alternatively use absolute/root coordinates without --window, but never add the window origin and also pass --window.",
+      "Log both requested PC coordinate and computed client-relative/absolute coordinate before every click.",
+      "Capture candidate_select only after the click primitive is proven by a movement/turn control click or debugger-visible C080 dispatch."
+    ],
+    "expectedClientRelativeForObservedWindow": {
+      "window": "1067x832",
+      "pc_111_82": [
+        372,
+        358
+      ],
+      "pc_130_115": [
+        435,
+        468
+      ],
+      "pc_159_147": [
+        532,
+        574
+      ]
+    }
+  },
+  "errors": []
+}
