@@ -61,8 +61,8 @@
           "M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers."
         ],
         "core_input_movement": [
-          12,
-          "pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
+          13,
+          "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
         ],
         "viewport_ui_render": [
           12,
@@ -86,8 +86,8 @@
         "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
         "Representative original runtime movement/HUD/viewport overlay parity missing."
       ],
-      "completionPercent": 57,
-      "points": 57,
+      "completionPercent": 58,
+      "points": 58,
       "maxPoints": 100
     },
     {

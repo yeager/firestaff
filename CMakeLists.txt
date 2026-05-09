@@ -1479,3 +1479,11 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         )
     endif()
 endif()
+
+# ── DM1 V1 movement legality completion-matrix gate ─────────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass406_dm1_v1_movement_legality_completion_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py
+    )
+endif()

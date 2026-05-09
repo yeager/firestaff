@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 DOC = ROOT / "docs/parity/COMPLETION_MATRIX.md"
 EXPECTED = {
-    "DM1 V1": 57,
+    "DM1 V1": 58,
     "DM1 V2": 27,
     "CSB V1": 18,
     "CSB V2": 0,

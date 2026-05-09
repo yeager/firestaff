@@ -21,7 +21,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 
 | Target | completionPercent | Points | Status | Primary blockers |
 |---|---:|---:|---|---|
-| DM1 V1 | 57% | 57/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
+| DM1 V1 | 58% | 58/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
 | DM1 V2 | 27% | 27/100 | `in_progress_verified_partial` | V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete. |
 | CSB V1 | 18% | 18/100 | `inventory_only` | Need CSB V1 launch/render smoke and runtime/capture gates; definition matrix is now complete but evidence-only.<br>Do not infer CSB runtime/render/gameplay parity from DM1. |
 | CSB V2 | 0% | 0/100 | `not_started` | No CSB V2 matrix or gates. |
@@ -39,7 +39,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 | `reference_inventory` | 10/10 | DM1 PC 3.4 canonical anchors, ReDMCSB source and Greatstone references are present and repeatedly cited. |
 | `definition_matrix` | 10/10 | docs/parity/PARITY_MATRIX_DM1_V1.md exists and carries DM1 V1 labels/status rows. |
 | `launch_smoke` | 8/10 | M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers. |
-| `core_input_movement` | 12/15 | pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof. |
+| `core_input_movement` | 13/15 | pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof. |
 | `viewport_ui_render` | 12/20 | Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open. |
 | `gameplay_systems` | 2/15 | Semantic suites exist but most gameplay rows remain UNPROVEN or need original-backed cases. |
 | `audio_timing` | 3/10 | Audio assets/event mapping are partly source-backed; cadence/timing overlap remain blocked/unproven. |
