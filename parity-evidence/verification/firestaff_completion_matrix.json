@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-05-08T12:30:00+02:00",
+  "updatedAt": "2026-05-09T06:13:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -146,8 +146,8 @@
           "docs/parity/PARITY_MATRIX_CSB_V1.md now defines the full CSB V1 DoD matrix with acceptance labels, required proof boundaries, and verifier-backed source anchors; parity surface matrix remains evidence-only."
         ],
         "launch_smoke": [
-          0,
-          "No complete CSB V1 launch/render smoke proof."
+          1,
+          "CSB V1 hash-matched launcher path is now gated by csb_v1_launch_blocker_m12: the menu can identify CSB and its matched version for diagnostics, but does not request launch or return a valid launch intent until CSB runtime support exists."
         ],
         "core_input_movement": [
           0,
@@ -170,13 +170,13 @@
           "No CSB V1 overlay regression proof."
         ]
       },
-      "status": "inventory_only",
+      "status": "inventory_and_launch_blocker",
       "primaryBlockers": [
-        "Need CSB V1 launch/render smoke and runtime/capture gates; definition matrix is now complete but evidence-only.",
+        "Need a positive CSB V1 launch/render smoke and runtime/capture gates; current launch evidence is a deliberate negative blocker, not playable CSB.",
         "Do not infer CSB runtime/render/gameplay parity from DM1."
       ],
-      "completionPercent": 18,
-      "points": 18,
+      "completionPercent": 19,
+      "points": 19,
       "maxPoints": 100
     },
     {

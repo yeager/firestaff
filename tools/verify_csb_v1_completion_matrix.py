@@ -22,7 +22,7 @@ CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 CRITERIA = {
     "reference_inventory": (8, "SOURCE_LOCKED_PARTIAL"),
     "definition_matrix": (10, "MATCHED_DEFINITION_ONLY"),
-    "launch_smoke": (0, "BLOCKED_RUNTIME"),
+    "launch_smoke": (1, "NEGATIVE_LAUNCH_BLOCKER"),
     "core_input_movement": (0, "BLOCKED_RUNTIME"),
     "viewport_ui_render": (0, "BLOCKED_CAPTURE"),
     "gameplay_systems": (0, "BLOCKED_RUNTIME"),
@@ -105,8 +105,8 @@ def main() -> int:
         score = csb.get("scores", {}).get("definition_matrix")
         if score is None or score[0] != 10:
             failures.append(f"CSB V1 definition_matrix completion credit must be 10/10, got {score}")
-        if csb.get("completionPercent") != 18 or csb.get("points") != 18:
-            failures.append(f"CSB V1 completion should be 18/100 after DoD matrix, got {csb.get('completionPercent')}/{csb.get('points')}")
+        if csb.get("completionPercent") != 19 or csb.get("points") != 19:
+            failures.append(f"CSB V1 completion should be 19/100 after launch blocker gate, got {csb.get('completionPercent')}/{csb.get('points')}")
 
     result = {
         "schema": "firestaff.csb_v1_completion_matrix.v1",
@@ -115,13 +115,13 @@ def main() -> int:
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
         "source_anchors": source_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
-        "completion_impact": {"target": "CSB V1", "before_percent": 10, "after_percent": 18, "definition_matrix_delta": 8},
+        "completion_impact": {"target": "CSB V1", "before_percent": 18, "after_percent": 19, "launch_blocker_delta": 1},
         "non_claims": NON_CLAIMS,
         "failures": failures,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} impact=+8 points")
+    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} impact=+1 point")
     for failure in failures:
         print(f"- {failure}")
     return 0 if result["pass"] else 1
