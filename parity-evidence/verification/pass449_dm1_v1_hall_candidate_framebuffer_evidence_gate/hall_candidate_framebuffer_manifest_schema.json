@@ -1,0 +1,311 @@
+{
+  "schema": "pass449_hall_candidate_framebuffer_manifest.schema.v1",
+  "manifestPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+  "requiredOriginalDataProvenance": {
+    "GRAPHICS.DAT": {
+      "required": [
+        "variant",
+        "file",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "variant": "exact DM data variant, e.g. DM PC 3.4 English / I34E",
+        "file": "canonical file path or artifact path; filename alone is insufficient",
+        "sha256": "64 hex chars; must match the locked original data row",
+        "bytes": "integer byte size; must match the locked original data row"
+      }
+    },
+    "DUNGEON.DAT": {
+      "required": [
+        "variant",
+        "file",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "variant": "exact DM data variant, e.g. DM PC 3.4 English / I34E",
+        "file": "canonical file path or artifact path; filename alone is insufficient",
+        "sha256": "64 hex chars; must match the locked original data row",
+        "bytes": "integer byte size; must match the locked original data row"
+      }
+    }
+  },
+  "requiredScenes": {
+    "candidate_select": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+    "panel_visible": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+    "cancel": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+    "resurrect_confirm": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+    "reincarnate_confirm": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+    "hud_status_after": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm"
+  },
+  "requiredRegions": {
+    "fullframe": {
+      "xywh": [
+        0,
+        0,
+        320,
+        200
+      ],
+      "requiredFor": [
+        "candidate_select",
+        "panel_visible",
+        "cancel",
+        "resurrect_confirm",
+        "reincarnate_confirm",
+        "hud_status_after"
+      ]
+    },
+    "panel_crop": {
+      "xywh": [
+        80,
+        85,
+        144,
+        73
+      ],
+      "requiredFor": [
+        "panel_visible",
+        "cancel",
+        "resurrect_confirm",
+        "reincarnate_confirm"
+      ]
+    },
+    "hud_status_crop": {
+      "xywh": [
+        0,
+        0,
+        320,
+        33
+      ],
+      "requiredFor": [
+        "candidate_select",
+        "cancel",
+        "resurrect_confirm",
+        "reincarnate_confirm",
+        "hud_status_after"
+      ]
+    }
+  },
+  "sceneEntrySchema": {
+    "required": [
+      "scene",
+      "semanticStop",
+      "firestaff",
+      "original"
+    ],
+    "properties": {
+      "scene": [
+        "candidate_select",
+        "panel_visible",
+        "cancel",
+        "resurrect_confirm",
+        "reincarnate_confirm",
+        "hud_status_after"
+      ],
+      "semanticStop": "one of the source-bound descriptions in requiredScenes",
+      "firestaff": {
+        "fullframe": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        },
+        "panel_crop": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        },
+        "hud_status_crop": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        },
+        "panel_crop": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        },
+        "hud_status_crop": {
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "width",
+            "height",
+            "captureProvenance"
+          ],
+          "properties": {
+            "path": "repo-relative PNG path",
+            "sha256": "64 hex chars of PNG artifact",
+            "bytes": "integer byte size",
+            "width": "320 for fullframe, crop width for crops",
+            "height": "200 for fullframe, crop height for crops",
+            "captureProvenance": {
+              "required": [
+                "stop",
+                "route",
+                "partyTuple",
+                "commandTranscriptSha256"
+              ],
+              "properties": {
+                "stop": "source-bound stop label/function, e.g. F0128->F0097/VIDRV for original",
+                "route": "semantic command route, not screenshot filename",
+                "partyTuple": "map/x/y/dir/championCount/candidateOrdinal/terminalAction as applicable",
+                "commandTranscriptSha256": "hash of exact command/input transcript"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "comparisonOutputSchema": {
+    "perScenePerRegion": [
+      "region",
+      "xywh",
+      "firestaffSha256",
+      "originalSha256",
+      "differingPixels",
+      "totalPixels",
+      "maxChannelDelta",
+      "meanAbsDeltaRgb"
+    ],
+    "passRule": "all required artifacts exist, hashes/dimensions/provenance validate, and region comparisons are recorded; zero deltas may be claimed only from this JSON plus matching provenance"
+  }
+}

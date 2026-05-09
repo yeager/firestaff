@@ -25,19 +25,21 @@
 | graphics/palette/framebuffer parity | `BLOCKED_ORIGINAL_PROMOTABLE_FRAMES_MISSING` | `PANEL.C:1619-1636`, `DEFS.H:2078-2086`, `DATA.C:314-319`, `BASE.C:1341-1369`, `MEMORY.C:2474-2525` | `tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`, `parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md` | promotable original PC34 true-stop frames/crops missing |
 | original PC34 frame/crop availability | `BLOCKED_ORIGINAL_TRUE_STOP_AND_SEMANTIC_FRAMES_MISSING` | `GAMELOOP.C:80-90`, `DRAWVIEW.C:709-722` | `parity-evidence/verification/pass173_source_portrait_route_gate_probe`, `parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json` | promotable original PC34 true-stop frames/crops missing |
 
+## Pass449 framebuffer comparator artifacts
+- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json` exists=True sha256 `d9367fde120d531f90eae9a928b2054360dc6c00a21e99a5f420ba14d61f1fb2` bytes `10677`
+- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` exists=True sha256 `b0e569b4a32aaa6462f497b776b385cd1a5ffa0347732281dc12d0c075693196` bytes `39130`
+
 ## Hall runtime probe artifacts
 - `parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.json` exists=True sha256 `d785fffc6e0ce676d69203b663c577879931e2e60e7db8d5d0af6941991453f4` bytes `6268`
 - `parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.md` exists=True sha256 `a6b409569c1686e57db4de43a29608aa9b225280c5c060e6afcb6b0f3b22e7ac` bytes `2697`
 
 ## Required original scenes still missing
-- `candidate_select_portrait_click_before_panel`
-- `candidate_panel_visible_after_append`
-- `candidate_cancel_after_panel`
-- `candidate_confirm_resurrect_after_panel`
-- `candidate_confirm_reincarnate_after_panel`
-- `hud_status_after_cancel`
-- `hud_status_after_resurrect`
-- `hud_status_after_reincarnate`
+- `candidate_select`
+- `panel_visible`
+- `cancel`
+- `resurrect_confirm`
+- `reincarnate_confirm`
+- `hud_status_after`
 
 ## Bottom line
 Hall source/runtime behavior is mostly locked, including portrait route, candidate append, cancel, confirm, reincarnate core effects, and first-sensor disable semantics. The blocker is not semantics; it is promotable original PC34 evidence: labelled true-stop fullframes/crops for the candidate panel/HUD scenes plus comparator JSON.

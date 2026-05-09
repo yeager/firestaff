@@ -1,9 +1,9 @@
 {
   "schema": "pass450_dm1_v1_hall_completion_audit_matrix.v1",
-  "timestampUtc": "2026-05-09T13:15:55.982152+00:00",
+  "timestampUtc": "2026-05-09T13:27:14.833077+00:00",
   "status": "PASS_WITH_BLOCKERS",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
-  "head": "8f48234addf07bab4af3ee77a0917e1fd2601fcf",
+  "head": "f612cb41f861ee32c11fa95020de547c27873536",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 Hall of Champions only",
   "completionPercentageEvidenceBacked": 80.0,
@@ -184,14 +184,26 @@
     }
   ],
   "requiredOriginalScenesStillMissing": [
-    "candidate_select_portrait_click_before_panel",
-    "candidate_panel_visible_after_append",
-    "candidate_cancel_after_panel",
-    "candidate_confirm_resurrect_after_panel",
-    "candidate_confirm_reincarnate_after_panel",
-    "hud_status_after_cancel",
-    "hud_status_after_resurrect",
-    "hud_status_after_reincarnate"
+    "candidate_select",
+    "panel_visible",
+    "cancel",
+    "resurrect_confirm",
+    "reincarnate_confirm",
+    "hud_status_after"
+  ],
+  "pass449FramebufferComparatorArtifacts": [
+    {
+      "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json",
+      "exists": true,
+      "bytes": 10677,
+      "sha256": "d9367fde120d531f90eae9a928b2054360dc6c00a21e99a5f420ba14d61f1fb2"
+    },
+    {
+      "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json",
+      "exists": true,
+      "bytes": 39130,
+      "sha256": "b0e569b4a32aaa6462f497b776b385cd1a5ffa0347732281dc12d0c075693196"
+    }
   ],
   "hallRuntimeProbeArtifacts": [
     {

@@ -204,14 +204,16 @@ def build_manifest() -> dict[str, Any]:
         "originalData": data,
         "matrix": MATRIX,
         "requiredOriginalScenesStillMissing": [
-            "candidate_select_portrait_click_before_panel",
-            "candidate_panel_visible_after_append",
-            "candidate_cancel_after_panel",
-            "candidate_confirm_resurrect_after_panel",
-            "candidate_confirm_reincarnate_after_panel",
-            "hud_status_after_cancel",
-            "hud_status_after_resurrect",
-            "hud_status_after_reincarnate",
+            "candidate_select",
+            "panel_visible",
+            "cancel",
+            "resurrect_confirm",
+            "reincarnate_confirm",
+            "hud_status_after",
+        ],
+        "pass449FramebufferComparatorArtifacts": [
+            audit_artifact("parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json"),
+            audit_artifact("parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json"),
         ],
         "hallRuntimeProbeArtifacts": [
             audit_artifact("parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.json"),
@@ -248,6 +250,10 @@ def write_report(manifest: dict[str, Any]) -> None:
         refs = ", ".join(f"`{r}`" for r in row["redmcsb"])
         ev = ", ".join(f"`{e}`" for e in row["evidence"])
         lines.append(f"| {row['area']} | `{row['status']}` | {refs} | {ev} | {gap} |")
+    lines += ["", "## Pass449 framebuffer comparator artifacts"]
+    for row in manifest["pass449FramebufferComparatorArtifacts"]:
+        suffix = f" sha256 `{row['sha256']}` bytes `{row['bytes']}`" if row.get("sha256") else ""
+        lines.append(f"- `{row['path']}` exists={row['exists']}{suffix}")
     lines += ["", "## Hall runtime probe artifacts"]
     for row in manifest["hallRuntimeProbeArtifacts"]:
         suffix = f" sha256 `{row['sha256']}` bytes `{row['bytes']}`" if row.get("sha256") else ""
