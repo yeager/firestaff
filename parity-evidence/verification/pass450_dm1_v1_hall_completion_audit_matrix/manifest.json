@@ -1,0 +1,245 @@
+{
+  "schema": "pass450_dm1_v1_hall_completion_audit_matrix.v1",
+  "timestampUtc": "2026-05-09T13:15:55.982152+00:00",
+  "status": "PASS_WITH_BLOCKERS",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "head": "8f48234addf07bab4af3ee77a0917e1fd2601fcf",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 Hall of Champions only",
+  "completionPercentageEvidenceBacked": 80.0,
+  "completionNumerator": 8,
+  "completionDenominator": 10,
+  "completionRule": "Rows with BLOCKED_* statuses are excluded from completion; source/runtime-only verified rows count, but no framebuffer/original pixel parity is counted.",
+  "originalData": [
+    {
+      "label": "dm1_pc34_english_graphics",
+      "variant": "DM PC 3.4 English / I34E",
+      "file": "GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "bytes": 363417,
+      "exists": true,
+      "actualBytes": 363417,
+      "actualSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "ok": true
+    },
+    {
+      "label": "dm1_pc34_english_dungeon",
+      "variant": "DM PC 3.4 English / I34E",
+      "file": "DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "bytes": 33357,
+      "exists": true,
+      "actualBytes": 33357,
+      "actualSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "ok": true
+    }
+  ],
+  "matrix": [
+    {
+      "area": "portrait click route",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py",
+        "tools/verify_v1_champion_portrait_click_source_path.py",
+        "tools/verify_v1_champion_portrait_click_geometry.py",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "CLIKVIEW.C:347-349",
+        "CLIKVIEW.C:406-432",
+        "MOVESENS.C:1501-1503",
+        "DUNVIEW.C:525-525",
+        "COORD.C:1693-1749"
+      ],
+      "claim": "C080 viewport click normalized to the front-wall portrait box reaches C127 and F0280 when the hand/cell/alcove gates allow it."
+    },
+    {
+      "area": "candidate append",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py",
+        "test_dm1_v1_resurrection_pc34_compat.c",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "REVIVE.C:272-294"
+      ],
+      "claim": "F0280 appends a temporary candidate at previous party count, sets G0299 to previous count + 1, and updates leader/action UI for first champion."
+    },
+    {
+      "area": "panel active/display",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME_PANEL_STATE_ONLY",
+      "evidence": [
+        "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "PANEL.C:1619-1636",
+        "PANEL.C:1654-1656",
+        "DEFS.H:2194-2201",
+        "DEFS.H:3774-3777"
+      ],
+      "claim": "Candidate state forces graphic 40 into C101 panel with dark-green transparency; runtime panel-active flag is covered, but original pixel parity is blocked separately."
+    },
+    {
+      "area": "cancel removal",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py",
+        "test_dm1_v1_resurrection_pc34_compat.c",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "REVIVE.C:744-783"
+      ],
+      "claim": "C162 closes inventory, clears candidate ordinal, decrements party count, clears status area, and redraws enabled menus."
+    },
+    {
+      "area": "resurrect confirm",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py",
+        "test_dm1_v1_resurrection_pc34_compat.c",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "REVIVE.C:785-807"
+      ],
+      "claim": "C160 keeps the appended champion, clears candidate mode, unlinks possessions, and disables a mirror-square sensor."
+    },
+    {
+      "area": "reincarnate effects",
+      "status": "VERIFIED_SOURCE_AND_RUNTIME_CORE_EFFECTS",
+      "evidence": [
+        "test_dm1_v1_resurrection_pc34_compat.c",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "REVIVE.C:806-835"
+      ],
+      "claim": "C161 follows confirm semantics plus rename branch and DM1 V1 stat/skill/vital reset/halving effects; runtime covers vitals and first skill clear, pure tests cover stat increment distribution."
+    },
+    {
+      "area": "mirror/sensor disable semantics",
+      "status": "VERIFIED_SOURCE_AND_UNIT",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_mirror_sensor_disable_source_lock.py",
+        "test_dm1_v1_resurrection_pc34_compat.c"
+      ],
+      "redmcsb": [
+        "REVIVE.C:785-799",
+        "REVIVE.C:801-804",
+        "DUNGEON.C:2568-2583",
+        "MOVESENS.C:1390-1395"
+      ],
+      "claim": "Finalization disables the first C03 sensor thing on the mirror square after skipping non-sensors; it intentionally does not search specifically for C127."
+    },
+    {
+      "area": "HUD/status text and modal blockers",
+      "status": "SOURCE_LOCKED_PARTIAL_RUNTIME",
+      "evidence": [
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py",
+        "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py",
+        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c"
+      ],
+      "redmcsb": [
+        "COMMAND.C:2159-2184",
+        "COMMAND.C:2336-2370",
+        "CHAMDRAW.C:536-545",
+        "CHAMDRAW.C:1210-1212",
+        "REVIVE.C:744-783"
+      ],
+      "claim": "Status/inventory/close/rest/save escapes and unrelated slot redraws are source locked; runtime covers party/count/panel transitions, not text/pixel HUD parity."
+    },
+    {
+      "area": "graphics/palette/framebuffer parity",
+      "status": "BLOCKED_ORIGINAL_PROMOTABLE_FRAMES_MISSING",
+      "evidence": [
+        "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py",
+        "parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md"
+      ],
+      "redmcsb": [
+        "PANEL.C:1619-1636",
+        "DEFS.H:2078-2086",
+        "DATA.C:314-319",
+        "BASE.C:1341-1369",
+        "MEMORY.C:2474-2525"
+      ],
+      "claim": "Panel graphic identity, transparent palette index, zone/box coordinates, and original blit/expand path are source locked; original-vs-Firestaff framebuffer parity is not claimed."
+    },
+    {
+      "area": "original PC34 frame/crop availability",
+      "status": "BLOCKED_ORIGINAL_TRUE_STOP_AND_SEMANTIC_FRAMES_MISSING",
+      "evidence": [
+        "parity-evidence/verification/pass173_source_portrait_route_gate_probe",
+        "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json"
+      ],
+      "redmcsb": [
+        "GAMELOOP.C:80-90",
+        "DRAWVIEW.C:709-722"
+      ],
+      "claim": "Existing pass173 frames are review-only/static-no-party and pass377 is movement metadata; required labelled original Hall candidate fullframes/crops do not exist yet."
+    }
+  ],
+  "requiredOriginalScenesStillMissing": [
+    "candidate_select_portrait_click_before_panel",
+    "candidate_panel_visible_after_append",
+    "candidate_cancel_after_panel",
+    "candidate_confirm_resurrect_after_panel",
+    "candidate_confirm_reincarnate_after_panel",
+    "hud_status_after_cancel",
+    "hud_status_after_resurrect",
+    "hud_status_after_reincarnate"
+  ],
+  "hallRuntimeProbeArtifacts": [
+    {
+      "path": "parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.json",
+      "exists": true,
+      "bytes": 6268,
+      "sha256": "d785fffc6e0ce676d69203b663c577879931e2e60e7db8d5d0af6941991453f4"
+    },
+    {
+      "path": "parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.md",
+      "exists": true,
+      "bytes": 2697,
+      "sha256": "a6b409569c1686e57db4de43a29608aa9b225280c5c060e6afcb6b0f3b22e7ac"
+    }
+  ],
+  "gateRuns": {
+    "hallFullSourceLock": {
+      "cmd": [
+        "python3",
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"
+      ],
+      "returncode": 0,
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
+    },
+    "hallMirrorSensorDisableSourceLock": {
+      "cmd": [
+        "python3",
+        "tools/verify_dm1_v1_hall_mirror_sensor_disable_source_lock.py"
+      ],
+      "returncode": 0,
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_mirror_sensor_disable_source_lock.json\n"
+    },
+    "hallWalkaroundSourceLock": {
+      "cmd": [
+        "python3",
+        "tools/verify_dm1_v1_hall_walkaround_source_lock.py"
+      ],
+      "returncode": 0,
+      "outputTail": "PASS wrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/dm1_v1_hall_walkaround_source_lock.json\n"
+    },
+    "pass449CandidateFramebufferEvidenceGate": {
+      "cmd": [
+        "python3",
+        "tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
+      ],
+      "returncode": 0,
+      "outputTail": "PASS pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate: BLOCKED_PASS449_HALL_CANDIDATE_FRAMEBUFFER_ORIGINAL_ARTIFACTS_MISSING\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/manifest.json\nwrote /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md\n"
+    }
+  },
+  "errors": []
+}
