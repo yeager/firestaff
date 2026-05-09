@@ -116,6 +116,22 @@ static const DM1_ViewportThingLayerSpec s_thing_layers[] = {
     { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933", false, true  },
 };
 
+
+static const DM1_ViewportProjectileOcclusionSpec s_projectile_occlusion_specs[] = {
+    { DM1_VIEW_SQUARE_D0C,   0, 0, 11, "DEFS.H:2596; DUNVIEW.C:373,5675-5676,5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D1C,   3, 1,  8, "DEFS.H:2599; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D1L,   4, 1,  9, "DEFS.H:2600; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D1R,   5, 1, 10, "DEFS.H:2601; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D2C,   6, 2,  5, "DEFS.H:2602; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D2L,   7, 2,  6, "DEFS.H:2603; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D2R,   8, 2,  7, "DEFS.H:2604; DUNVIEW.C:373,5667-5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D3C,  11, 3,  0, "DEFS.H:2607; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D3L,  12, 3,  1, "DEFS.H:2608; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D3R,  13, 3,  2, "DEFS.H:2609; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D3L2, 14, 3,  3, "DEFS.H:2610; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
+    { DM1_VIEW_SQUARE_D3R2, 15, 3,  4, "DEFS.H:2611; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
+};
+
 static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[] = {
     { DM1_VIEW_SQUARE_D3L, 0x0218, 0x0349, "DUNVIEW.C:6443-6444 pass1 rear cells before left frame", "DUNVIEW.C:6446-6454 left/right frame draw", "DUNVIEW.C:6457 F0111 door bitmap/ornament", "DUNVIEW.C:6459 pass2 front cells after door" },
     { DM1_VIEW_SQUARE_D3C, 0x0218, 0x0349, "DUNVIEW.C:6722-6723 pass1 rear cells before frame", "DUNVIEW.C:6725-6739 top/side frame and button draw", "DUNVIEW.C:6744 F0111 door bitmap/ornament", "DUNVIEW.C:6746 pass2 front cells after door" },
@@ -677,6 +693,41 @@ const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t in
     return &s_thing_layers[index];
 }
 
+
+size_t dm1_viewport_3d_projectile_occlusion_spec_count(void)
+{
+    return sizeof(s_projectile_occlusion_specs) / sizeof(s_projectile_occlusion_specs[0]);
+}
+
+const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlusion_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_projectile_occlusion_spec_count()) return NULL;
+    return &s_projectile_occlusion_specs[index];
+}
+
+const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_projectile_occlusion_spec_count(); ++i) {
+        if (s_projectile_occlusion_specs[i].square == square) return &s_projectile_occlusion_specs[i];
+    }
+    return NULL;
+}
+
+int dm1_viewport_3d_projectile_zone_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell)
+{
+    if (!spec || view_cell > 3 || spec->g2028_row < 0) return -1;
+    if ((spec->view_depth == 3) && (view_cell <= 1)) return -1;
+    if ((spec->view_depth == 0) && (view_cell >= 2)) return -1;
+    return 2900 + ((int)spec->g2028_row * 4) + view_cell;
+}
+
+int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell)
+{
+    if (!spec || view_cell > 3) return -1;
+    if (dm1_viewport_3d_projectile_zone_for_cell(spec, view_cell) < 0) return -1;
+    return (spec->view_depth << 1) - (view_cell >> 1);
+}
+
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
 {
     return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);
@@ -729,6 +780,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:4547 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n"
         "  DUNVIEW.C:4561-4581 F0115 packed cell-order and object/creature/projectile/explosion z-order\n"
         "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
+        "  DUNVIEW.C:373,5667-5683 projectile occlusion via G2028 row and C2900 zone mapping; D3 front cells/D0 back cells clipped\n"
         "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"
         "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"

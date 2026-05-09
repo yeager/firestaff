@@ -1,0 +1,47 @@
+PASS post-command-next-redraw-sequence COMMAND.C:2045-2156; GAMELOOP.C:55-90; DRAWVIEW.C:709-722
+  An eligible queued command mutates turn/move state; the next GAMELOOP iteration redraws F0128 from the updated party tuple and waits for viewport presentation.
+PASS far-to-near-wall-square-replay-and-present DUNVIEW.C:8318-8610
+  Wall squares are replayed in source order far-to-near; near calls occlude prior pixels before final present.
+PASS wall-square-occlusion-and-alcove-exception DUNVIEW.C:6421-7843
+  Wall case normally returns after wall/ornament draw; front alcoves intentionally hand contained things to F0115.
+PASS door-front-two-pass-then-front-handoff DUNVIEW.C:6440-6816
+  Door-front cells draw rear contents, then door/frame, then front-side contents in a second F0115 pass.
+PASS f0115-object-creature-projectile-explosion-handoff DUNVIEW.C:4547-5938
+  F0115 is the source handoff for object/creature/projectile/explosion layers after each visible square decides its cell order.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_wall_draw_specs dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:front alcove branches to F0115 dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_thing_layers dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_post_command_redraw dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:COMMAND.C:2045-2156 dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:GAMELOOP.C:55-90 dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.h:DM1_ViewportPostCommandRedrawSpec dm1_v1_viewport_3d_pc34_compat.h
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS local:test_dm1_v1_viewport_3d_pc34_compat.c:test_post_command_redraw_contract test_dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff metadata/runtime probe exposes this source-locked contract.
+PASS runtime /home/trv2/work/firestaff-worktrees/pass429-viewport-walls-gap-20260509/build/test_dm1_v1_viewport_3d_pc34_compat
+  PASS post_command_redraw.present_source == 1
+  PASS source_evidence.nonnull non-null
+  PASS source_evidence.g0163 == 1
+  PASS source_evidence.f0128 == 1
+  PASS source_evidence.g2107 == 1
+  PASS source_evidence.pc34_side == 1
+  PASS source_evidence.pc34_d2_side == 1
+  PASS source_evidence.f0115 == 1
+  PASS source_evidence.f0115_cell_order == 1
+  PASS source_evidence.f0115_projectiles == 1
+  PASS source_evidence.projectile_occlusion == 1
+  PASS source_evidence.f0115_explosion_global == 1
+  PASS source_evidence.door_front_occlusion == 1
+  PASS source_evidence.d1c_door_front_occlusion == 1
+  PASS source_evidence.defs_zones == 1
+  PASS source_evidence.occlusion == 1
+  PASS source_evidence.command_dispatch == 1
+  PASS source_evidence.next_redraw == 1
+  PASS source_evidence.present_wait == 1
+  PASS dm1_v1_viewport_3d_source_lock

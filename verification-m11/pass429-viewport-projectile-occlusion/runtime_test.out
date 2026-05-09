@@ -1,0 +1,664 @@
+PASS G0163.D3C.nonnull non-null
+PASS G0163.D3C.left == 74
+PASS G0163.D3C.right == 149
+PASS G0163.D3C.top == 25
+PASS G0163.D3C.bottom == 75
+PASS G0163.D3C.byte_width == 64
+PASS G0163.D3C.height == 51
+PASS G0163.D3C.blit_x == 18
+PASS G0163.D3C.blit_y == 0
+PASS G0163.D3L.nonnull non-null
+PASS G0163.D3L.left == 0
+PASS G0163.D3L.right == 83
+PASS G0163.D3L.top == 25
+PASS G0163.D3L.bottom == 75
+PASS G0163.D3L.byte_width == 64
+PASS G0163.D3L.height == 51
+PASS G0163.D3L.blit_x == 32
+PASS G0163.D3L.blit_y == 0
+PASS G0163.D3R.nonnull non-null
+PASS G0163.D3R.left == 139
+PASS G0163.D3R.right == 223
+PASS G0163.D3R.top == 25
+PASS G0163.D3R.bottom == 75
+PASS G0163.D3R.byte_width == 64
+PASS G0163.D3R.height == 51
+PASS G0163.D3R.blit_x == 0
+PASS G0163.D3R.blit_y == 0
+PASS G0163.D2C.nonnull non-null
+PASS G0163.D2C.left == 60
+PASS G0163.D2C.right == 163
+PASS G0163.D2C.top == 20
+PASS G0163.D2C.bottom == 90
+PASS G0163.D2C.byte_width == 72
+PASS G0163.D2C.height == 71
+PASS G0163.D2C.blit_x == 16
+PASS G0163.D2C.blit_y == 0
+PASS G0163.D2L.nonnull non-null
+PASS G0163.D2L.left == 0
+PASS G0163.D2L.right == 74
+PASS G0163.D2L.top == 20
+PASS G0163.D2L.bottom == 90
+PASS G0163.D2L.byte_width == 72
+PASS G0163.D2L.height == 71
+PASS G0163.D2L.blit_x == 61
+PASS G0163.D2L.blit_y == 0
+PASS G0163.D2R.nonnull non-null
+PASS G0163.D2R.left == 149
+PASS G0163.D2R.right == 223
+PASS G0163.D2R.top == 20
+PASS G0163.D2R.bottom == 90
+PASS G0163.D2R.byte_width == 72
+PASS G0163.D2R.height == 71
+PASS G0163.D2R.blit_x == 0
+PASS G0163.D2R.blit_y == 0
+PASS G0163.D1C.nonnull non-null
+PASS G0163.D1C.left == 32
+PASS G0163.D1C.right == 191
+PASS G0163.D1C.top == 9
+PASS G0163.D1C.bottom == 119
+PASS G0163.D1C.byte_width == 128
+PASS G0163.D1C.height == 111
+PASS G0163.D1C.blit_x == 48
+PASS G0163.D1C.blit_y == 0
+PASS G0163.D1L.nonnull non-null
+PASS G0163.D1L.left == 0
+PASS G0163.D1L.right == 63
+PASS G0163.D1L.top == 9
+PASS G0163.D1L.bottom == 119
+PASS G0163.D1L.byte_width == 128
+PASS G0163.D1L.height == 111
+PASS G0163.D1L.blit_x == 192
+PASS G0163.D1L.blit_y == 0
+PASS G0163.D1R.nonnull non-null
+PASS G0163.D1R.left == 160
+PASS G0163.D1R.right == 223
+PASS G0163.D1R.top == 9
+PASS G0163.D1R.bottom == 119
+PASS G0163.D1R.byte_width == 128
+PASS G0163.D1R.height == 111
+PASS G0163.D1R.blit_x == 0
+PASS G0163.D1R.blit_y == 0
+PASS G0163.D0C.nonnull non-null
+PASS G0163.D0C.left == 0
+PASS G0163.D0C.right == 223
+PASS G0163.D0C.top == 0
+PASS G0163.D0C.bottom == 135
+PASS G0163.D0C.byte_width == 0
+PASS G0163.D0C.height == 0
+PASS G0163.D0C.blit_x == 0
+PASS G0163.D0C.blit_y == 0
+PASS G0163.D0L.nonnull non-null
+PASS G0163.D0L.left == 0
+PASS G0163.D0L.right == 31
+PASS G0163.D0L.top == 0
+PASS G0163.D0L.bottom == 135
+PASS G0163.D0L.byte_width == 16
+PASS G0163.D0L.height == 136
+PASS G0163.D0L.blit_x == 0
+PASS G0163.D0L.blit_y == 0
+PASS G0163.D0R.nonnull non-null
+PASS G0163.D0R.left == 192
+PASS G0163.D0R.right == 223
+PASS G0163.D0R.top == 0
+PASS G0163.D0R.bottom == 135
+PASS G0163.D0R.byte_width == 16
+PASS G0163.D0R.height == 136
+PASS G0163.D0R.blit_x == 0
+PASS G0163.D0R.blit_y == 0
+PASS F0128.draw_order.count == 19
+PASS F0128.draw_order.00.nonnull non-null
+PASS F0128.draw_order.00.square == 1
+PASS F0128.draw_order.00.depth == 4
+PASS F0128.draw_order.00.lateral == -1
+PASS F0128.draw_order.00.source non-null
+PASS F0128.draw_order.01.nonnull non-null
+PASS F0128.draw_order.01.square == 2
+PASS F0128.draw_order.01.depth == 4
+PASS F0128.draw_order.01.lateral == 1
+PASS F0128.draw_order.01.source non-null
+PASS F0128.draw_order.02.nonnull non-null
+PASS F0128.draw_order.02.square == 0
+PASS F0128.draw_order.02.depth == 4
+PASS F0128.draw_order.02.lateral == 0
+PASS F0128.draw_order.02.source non-null
+PASS F0128.draw_order.03.nonnull non-null
+PASS F0128.draw_order.03.square == -101
+PASS F0128.draw_order.03.depth == 3
+PASS F0128.draw_order.03.lateral == -2
+PASS F0128.draw_order.03.source non-null
+PASS F0128.draw_order.04.nonnull non-null
+PASS F0128.draw_order.04.square == -102
+PASS F0128.draw_order.04.depth == 3
+PASS F0128.draw_order.04.lateral == 2
+PASS F0128.draw_order.04.source non-null
+PASS F0128.draw_order.05.nonnull non-null
+PASS F0128.draw_order.05.square == 4
+PASS F0128.draw_order.05.depth == 3
+PASS F0128.draw_order.05.lateral == -1
+PASS F0128.draw_order.05.source non-null
+PASS F0128.draw_order.06.nonnull non-null
+PASS F0128.draw_order.06.square == 5
+PASS F0128.draw_order.06.depth == 3
+PASS F0128.draw_order.06.lateral == 1
+PASS F0128.draw_order.06.source non-null
+PASS F0128.draw_order.07.nonnull non-null
+PASS F0128.draw_order.07.square == 3
+PASS F0128.draw_order.07.depth == 3
+PASS F0128.draw_order.07.lateral == 0
+PASS F0128.draw_order.07.source non-null
+PASS F0128.draw_order.08.nonnull non-null
+PASS F0128.draw_order.08.square == -103
+PASS F0128.draw_order.08.depth == 2
+PASS F0128.draw_order.08.lateral == -2
+PASS F0128.draw_order.08.source non-null
+PASS F0128.draw_order.09.nonnull non-null
+PASS F0128.draw_order.09.square == -104
+PASS F0128.draw_order.09.depth == 2
+PASS F0128.draw_order.09.lateral == 2
+PASS F0128.draw_order.09.source non-null
+PASS F0128.draw_order.10.nonnull non-null
+PASS F0128.draw_order.10.square == 7
+PASS F0128.draw_order.10.depth == 2
+PASS F0128.draw_order.10.lateral == -1
+PASS F0128.draw_order.10.source non-null
+PASS F0128.draw_order.11.nonnull non-null
+PASS F0128.draw_order.11.square == 8
+PASS F0128.draw_order.11.depth == 2
+PASS F0128.draw_order.11.lateral == 1
+PASS F0128.draw_order.11.source non-null
+PASS F0128.draw_order.12.nonnull non-null
+PASS F0128.draw_order.12.square == 6
+PASS F0128.draw_order.12.depth == 2
+PASS F0128.draw_order.12.lateral == 0
+PASS F0128.draw_order.12.source non-null
+PASS F0128.draw_order.13.nonnull non-null
+PASS F0128.draw_order.13.square == 10
+PASS F0128.draw_order.13.depth == 1
+PASS F0128.draw_order.13.lateral == -1
+PASS F0128.draw_order.13.source non-null
+PASS F0128.draw_order.14.nonnull non-null
+PASS F0128.draw_order.14.square == 11
+PASS F0128.draw_order.14.depth == 1
+PASS F0128.draw_order.14.lateral == 1
+PASS F0128.draw_order.14.source non-null
+PASS F0128.draw_order.15.nonnull non-null
+PASS F0128.draw_order.15.square == 9
+PASS F0128.draw_order.15.depth == 1
+PASS F0128.draw_order.15.lateral == 0
+PASS F0128.draw_order.15.source non-null
+PASS F0128.draw_order.16.nonnull non-null
+PASS F0128.draw_order.16.square == 13
+PASS F0128.draw_order.16.depth == 0
+PASS F0128.draw_order.16.lateral == -1
+PASS F0128.draw_order.16.source non-null
+PASS F0128.draw_order.17.nonnull non-null
+PASS F0128.draw_order.17.square == 14
+PASS F0128.draw_order.17.depth == 0
+PASS F0128.draw_order.17.lateral == 1
+PASS F0128.draw_order.17.source non-null
+PASS F0128.draw_order.18.nonnull non-null
+PASS F0128.draw_order.18.square == 12
+PASS F0128.draw_order.18.depth == 0
+PASS F0128.draw_order.18.lateral == 0
+PASS F0128.draw_order.18.source non-null
+PASS F0128.draw_order.out_of_range == 1
+PASS PC34.wall_draw_spec.count == 15
+PASS PC34.wall_spec.00.nonnull non-null
+PASS PC34.wall_spec.00.native == 11
+PASS PC34.wall_spec.00.parity == 10
+PASS PC34.wall_spec.00.center == 0
+PASS PC34.wall_spec.00.zone == 702
+PASS PC34.wall_spec.00.return == 1
+PASS PC34.wall_spec.00.front_alcove == 0
+PASS PC34.wall_spec.00.occlusion_source non-null
+PASS PC34.wall_spec.00.occlusion_line == 1
+PASS PC34.wall_select.00.native_index == 11
+PASS PC34.wall_select.00.native_flip == 0
+PASS PC34.wall_select.00.parity_index == 10
+PASS PC34.wall_select.00.parity_flip == 1
+PASS PC34.wall_spec.01.nonnull non-null
+PASS PC34.wall_spec.01.native == 10
+PASS PC34.wall_spec.01.parity == 11
+PASS PC34.wall_spec.01.center == 0
+PASS PC34.wall_spec.01.zone == 703
+PASS PC34.wall_spec.01.return == 1
+PASS PC34.wall_spec.01.front_alcove == 0
+PASS PC34.wall_spec.01.occlusion_source non-null
+PASS PC34.wall_spec.01.occlusion_line == 1
+PASS PC34.wall_select.01.native_index == 10
+PASS PC34.wall_select.01.native_flip == 0
+PASS PC34.wall_select.01.parity_index == 11
+PASS PC34.wall_select.01.parity_flip == 1
+PASS PC34.wall_spec.02.nonnull non-null
+PASS PC34.wall_spec.02.native == 13
+PASS PC34.wall_spec.02.parity == 12
+PASS PC34.wall_spec.02.center == 0
+PASS PC34.wall_spec.02.zone == 705
+PASS PC34.wall_spec.02.return == 1
+PASS PC34.wall_spec.02.front_alcove == 1
+PASS PC34.wall_spec.02.occlusion_source non-null
+PASS PC34.wall_spec.02.occlusion_line == 1
+PASS PC34.wall_select.02.native_index == 13
+PASS PC34.wall_select.02.native_flip == 0
+PASS PC34.wall_select.02.parity_index == 12
+PASS PC34.wall_select.02.parity_flip == 1
+PASS PC34.wall_spec.03.nonnull non-null
+PASS PC34.wall_spec.03.native == 12
+PASS PC34.wall_spec.03.parity == 13
+PASS PC34.wall_spec.03.center == 0
+PASS PC34.wall_spec.03.zone == 706
+PASS PC34.wall_spec.03.return == 1
+PASS PC34.wall_spec.03.front_alcove == 1
+PASS PC34.wall_spec.03.occlusion_source non-null
+PASS PC34.wall_spec.03.occlusion_line == 1
+PASS PC34.wall_select.03.native_index == 12
+PASS PC34.wall_select.03.native_flip == 0
+PASS PC34.wall_select.03.parity_index == 13
+PASS PC34.wall_select.03.parity_flip == 1
+PASS PC34.wall_spec.04.nonnull non-null
+PASS PC34.wall_spec.04.native == 14
+PASS PC34.wall_spec.04.parity == 14
+PASS PC34.wall_spec.04.center == 1
+PASS PC34.wall_spec.04.zone == 704
+PASS PC34.wall_spec.04.return == 1
+PASS PC34.wall_spec.04.front_alcove == 1
+PASS PC34.wall_spec.04.occlusion_source non-null
+PASS PC34.wall_spec.04.occlusion_line == 1
+PASS PC34.wall_select.04.native_index == 14
+PASS PC34.wall_select.04.native_flip == 0
+PASS PC34.wall_select.04.parity_index == 14
+PASS PC34.wall_select.04.parity_flip == 1
+PASS PC34.wall_spec.05.nonnull non-null
+PASS PC34.wall_spec.05.native == 6
+PASS PC34.wall_spec.05.parity == 5
+PASS PC34.wall_spec.05.center == 0
+PASS PC34.wall_spec.05.zone == 707
+PASS PC34.wall_spec.05.return == 1
+PASS PC34.wall_spec.05.front_alcove == 0
+PASS PC34.wall_spec.05.occlusion_source non-null
+PASS PC34.wall_spec.05.occlusion_line == 1
+PASS PC34.wall_select.05.native_index == 6
+PASS PC34.wall_select.05.native_flip == 0
+PASS PC34.wall_select.05.parity_index == 5
+PASS PC34.wall_select.05.parity_flip == 1
+PASS PC34.wall_spec.06.nonnull non-null
+PASS PC34.wall_spec.06.native == 5
+PASS PC34.wall_spec.06.parity == 6
+PASS PC34.wall_spec.06.center == 0
+PASS PC34.wall_spec.06.zone == 708
+PASS PC34.wall_spec.06.return == 1
+PASS PC34.wall_spec.06.front_alcove == 0
+PASS PC34.wall_spec.06.occlusion_source non-null
+PASS PC34.wall_spec.06.occlusion_line == 1
+PASS PC34.wall_select.06.native_index == 5
+PASS PC34.wall_select.06.native_flip == 0
+PASS PC34.wall_select.06.parity_index == 6
+PASS PC34.wall_select.06.parity_flip == 1
+PASS PC34.wall_spec.07.nonnull non-null
+PASS PC34.wall_spec.07.native == 8
+PASS PC34.wall_spec.07.parity == 7
+PASS PC34.wall_spec.07.center == 0
+PASS PC34.wall_spec.07.zone == 710
+PASS PC34.wall_spec.07.return == 1
+PASS PC34.wall_spec.07.front_alcove == 1
+PASS PC34.wall_spec.07.occlusion_source non-null
+PASS PC34.wall_spec.07.occlusion_line == 1
+PASS PC34.wall_select.07.native_index == 8
+PASS PC34.wall_select.07.native_flip == 0
+PASS PC34.wall_select.07.parity_index == 7
+PASS PC34.wall_select.07.parity_flip == 1
+PASS PC34.wall_spec.08.nonnull non-null
+PASS PC34.wall_spec.08.native == 7
+PASS PC34.wall_spec.08.parity == 8
+PASS PC34.wall_spec.08.center == 0
+PASS PC34.wall_spec.08.zone == 711
+PASS PC34.wall_spec.08.return == 1
+PASS PC34.wall_spec.08.front_alcove == 1
+PASS PC34.wall_spec.08.occlusion_source non-null
+PASS PC34.wall_spec.08.occlusion_line == 1
+PASS PC34.wall_select.08.native_index == 7
+PASS PC34.wall_select.08.native_flip == 0
+PASS PC34.wall_select.08.parity_index == 8
+PASS PC34.wall_select.08.parity_flip == 1
+PASS PC34.wall_spec.09.nonnull non-null
+PASS PC34.wall_spec.09.native == 9
+PASS PC34.wall_spec.09.parity == 9
+PASS PC34.wall_spec.09.center == 1
+PASS PC34.wall_spec.09.zone == 709
+PASS PC34.wall_spec.09.return == 1
+PASS PC34.wall_spec.09.front_alcove == 1
+PASS PC34.wall_spec.09.occlusion_source non-null
+PASS PC34.wall_spec.09.occlusion_line == 1
+PASS PC34.wall_select.09.native_index == 9
+PASS PC34.wall_select.09.native_flip == 0
+PASS PC34.wall_select.09.parity_index == 9
+PASS PC34.wall_select.09.parity_flip == 1
+PASS PC34.wall_spec.10.nonnull non-null
+PASS PC34.wall_spec.10.native == 3
+PASS PC34.wall_spec.10.parity == 2
+PASS PC34.wall_spec.10.center == 0
+PASS PC34.wall_spec.10.zone == 713
+PASS PC34.wall_spec.10.return == 1
+PASS PC34.wall_spec.10.front_alcove == 0
+PASS PC34.wall_spec.10.occlusion_source non-null
+PASS PC34.wall_spec.10.occlusion_line == 1
+PASS PC34.wall_select.10.native_index == 3
+PASS PC34.wall_select.10.native_flip == 0
+PASS PC34.wall_select.10.parity_index == 2
+PASS PC34.wall_select.10.parity_flip == 1
+PASS PC34.wall_spec.11.nonnull non-null
+PASS PC34.wall_spec.11.native == 2
+PASS PC34.wall_spec.11.parity == 3
+PASS PC34.wall_spec.11.center == 0
+PASS PC34.wall_spec.11.zone == 714
+PASS PC34.wall_spec.11.return == 1
+PASS PC34.wall_spec.11.front_alcove == 0
+PASS PC34.wall_spec.11.occlusion_source non-null
+PASS PC34.wall_spec.11.occlusion_line == 1
+PASS PC34.wall_select.11.native_index == 2
+PASS PC34.wall_select.11.native_flip == 0
+PASS PC34.wall_select.11.parity_index == 3
+PASS PC34.wall_select.11.parity_flip == 1
+PASS PC34.wall_spec.12.nonnull non-null
+PASS PC34.wall_spec.12.native == 4
+PASS PC34.wall_spec.12.parity == 4
+PASS PC34.wall_spec.12.center == 1
+PASS PC34.wall_spec.12.zone == 712
+PASS PC34.wall_spec.12.return == 0
+PASS PC34.wall_spec.12.front_alcove == 1
+PASS PC34.wall_spec.12.occlusion_source non-null
+PASS PC34.wall_spec.12.occlusion_line == 1
+PASS PC34.wall_select.12.native_index == 4
+PASS PC34.wall_select.12.native_flip == 0
+PASS PC34.wall_select.12.parity_index == 4
+PASS PC34.wall_select.12.parity_flip == 1
+PASS PC34.wall_spec.13.nonnull non-null
+PASS PC34.wall_spec.13.native == 1
+PASS PC34.wall_spec.13.parity == 0
+PASS PC34.wall_spec.13.center == 0
+PASS PC34.wall_spec.13.zone == 716
+PASS PC34.wall_spec.13.return == 1
+PASS PC34.wall_spec.13.front_alcove == 0
+PASS PC34.wall_spec.13.occlusion_source non-null
+PASS PC34.wall_spec.13.occlusion_line == 1
+PASS PC34.wall_select.13.native_index == 1
+PASS PC34.wall_select.13.native_flip == 0
+PASS PC34.wall_select.13.parity_index == 0
+PASS PC34.wall_select.13.parity_flip == 1
+PASS PC34.wall_spec.14.nonnull non-null
+PASS PC34.wall_spec.14.native == 0
+PASS PC34.wall_spec.14.parity == 1
+PASS PC34.wall_spec.14.center == 0
+PASS PC34.wall_spec.14.zone == 717
+PASS PC34.wall_spec.14.return == 1
+PASS PC34.wall_spec.14.front_alcove == 0
+PASS PC34.wall_spec.14.occlusion_source non-null
+PASS PC34.wall_spec.14.occlusion_line == 1
+PASS PC34.wall_select.14.native_index == 0
+PASS PC34.wall_select.14.native_flip == 0
+PASS PC34.wall_select.14.parity_index == 1
+PASS PC34.wall_select.14.parity_flip == 1
+PASS PC34.wall_select.null_index == 15
+PASS PC34.wall_select.null_flip == 0
+PASS F0115.cell_order.3421.count == 4
+PASS F0115.cell_order.3421.cell0 == 1
+PASS F0115.cell_order.3421.cell1 == 2
+PASS F0115.cell_order.3421.cell2 == 4
+PASS F0115.cell_order.3421.cell3 == 3
+PASS F0115.cell_order.3421.door_pass == 0
+PASS F0115.cell_order.3421.alcove == 0
+PASS F0115.cell_order.0218.count == 2
+PASS F0115.cell_order.0218.door_pass == 1
+PASS F0115.cell_order.0218.cell0 == 1
+PASS F0115.cell_order.0218.cell1 == 2
+PASS F0115.cell_order.0349.count == 2
+PASS F0115.cell_order.0349.door_pass == 2
+PASS F0115.cell_order.0349.cell0 == 4
+PASS F0115.cell_order.0349.cell1 == 3
+PASS F0115.cell_order.alcove == 1
+PASS F0115.cell_order.alcove.count == 0
+PASS F0115.layer.count == 4
+PASS F0115.layer.0.nonnull non-null
+PASS F0115.layer.0.ordinal == 0
+PASS F0115.layer.0.source non-null
+PASS F0115.layer.0.per_cell == 1
+PASS F0115.layer.0.after_all_cells == 0
+PASS F0115.layer.1.nonnull non-null
+PASS F0115.layer.1.ordinal == 1
+PASS F0115.layer.1.source non-null
+PASS F0115.layer.1.per_cell == 1
+PASS F0115.layer.1.after_all_cells == 0
+PASS F0115.layer.2.nonnull non-null
+PASS F0115.layer.2.ordinal == 2
+PASS F0115.layer.2.source non-null
+PASS F0115.layer.2.per_cell == 1
+PASS F0115.layer.2.after_all_cells == 0
+PASS F0115.layer.3.nonnull non-null
+PASS F0115.layer.3.ordinal == 3
+PASS F0115.layer.3.source non-null
+PASS F0115.layer.3.per_cell == 0
+PASS F0115.layer.3.after_all_cells == 1
+PASS F0115.layer.out_of_range == 1
+PASS projectile_occlusion.count == 12
+PASS projectile_occlusion.0.nonnull non-null
+PASS projectile_occlusion.0.source_id == 0
+PASS projectile_occlusion.0.depth == 0
+PASS projectile_occlusion.0.g2028_row == 11
+PASS projectile_occlusion.0.zone0 == 2944
+PASS projectile_occlusion.0.zone1 == 2945
+PASS projectile_occlusion.0.zone2 == -1
+PASS projectile_occlusion.0.zone3 == -1
+PASS projectile_occlusion.0.scale0 == 0
+PASS projectile_occlusion.0.scale2 == -1
+PASS projectile_occlusion.0.source == 1
+PASS projectile_occlusion.1.nonnull non-null
+PASS projectile_occlusion.1.source_id == 3
+PASS projectile_occlusion.1.depth == 1
+PASS projectile_occlusion.1.g2028_row == 8
+PASS projectile_occlusion.1.zone0 == 2932
+PASS projectile_occlusion.1.zone1 == 2933
+PASS projectile_occlusion.1.zone2 == 2934
+PASS projectile_occlusion.1.zone3 == 2935
+PASS projectile_occlusion.1.scale0 == 2
+PASS projectile_occlusion.1.scale2 == 1
+PASS projectile_occlusion.1.source == 1
+PASS projectile_occlusion.2.nonnull non-null
+PASS projectile_occlusion.2.source_id == 4
+PASS projectile_occlusion.2.depth == 1
+PASS projectile_occlusion.2.g2028_row == 9
+PASS projectile_occlusion.2.zone0 == 2936
+PASS projectile_occlusion.2.zone1 == 2937
+PASS projectile_occlusion.2.zone2 == 2938
+PASS projectile_occlusion.2.zone3 == 2939
+PASS projectile_occlusion.2.scale0 == 2
+PASS projectile_occlusion.2.scale2 == 1
+PASS projectile_occlusion.2.source == 1
+PASS projectile_occlusion.3.nonnull non-null
+PASS projectile_occlusion.3.source_id == 5
+PASS projectile_occlusion.3.depth == 1
+PASS projectile_occlusion.3.g2028_row == 10
+PASS projectile_occlusion.3.zone0 == 2940
+PASS projectile_occlusion.3.zone1 == 2941
+PASS projectile_occlusion.3.zone2 == 2942
+PASS projectile_occlusion.3.zone3 == 2943
+PASS projectile_occlusion.3.scale0 == 2
+PASS projectile_occlusion.3.scale2 == 1
+PASS projectile_occlusion.3.source == 1
+PASS projectile_occlusion.4.nonnull non-null
+PASS projectile_occlusion.4.source_id == 6
+PASS projectile_occlusion.4.depth == 2
+PASS projectile_occlusion.4.g2028_row == 5
+PASS projectile_occlusion.4.zone0 == 2920
+PASS projectile_occlusion.4.zone1 == 2921
+PASS projectile_occlusion.4.zone2 == 2922
+PASS projectile_occlusion.4.zone3 == 2923
+PASS projectile_occlusion.4.scale0 == 4
+PASS projectile_occlusion.4.scale2 == 3
+PASS projectile_occlusion.4.source == 1
+PASS projectile_occlusion.5.nonnull non-null
+PASS projectile_occlusion.5.source_id == 7
+PASS projectile_occlusion.5.depth == 2
+PASS projectile_occlusion.5.g2028_row == 6
+PASS projectile_occlusion.5.zone0 == 2924
+PASS projectile_occlusion.5.zone1 == 2925
+PASS projectile_occlusion.5.zone2 == 2926
+PASS projectile_occlusion.5.zone3 == 2927
+PASS projectile_occlusion.5.scale0 == 4
+PASS projectile_occlusion.5.scale2 == 3
+PASS projectile_occlusion.5.source == 1
+PASS projectile_occlusion.6.nonnull non-null
+PASS projectile_occlusion.6.source_id == 8
+PASS projectile_occlusion.6.depth == 2
+PASS projectile_occlusion.6.g2028_row == 7
+PASS projectile_occlusion.6.zone0 == 2928
+PASS projectile_occlusion.6.zone1 == 2929
+PASS projectile_occlusion.6.zone2 == 2930
+PASS projectile_occlusion.6.zone3 == 2931
+PASS projectile_occlusion.6.scale0 == 4
+PASS projectile_occlusion.6.scale2 == 3
+PASS projectile_occlusion.6.source == 1
+PASS projectile_occlusion.7.nonnull non-null
+PASS projectile_occlusion.7.source_id == 11
+PASS projectile_occlusion.7.depth == 3
+PASS projectile_occlusion.7.g2028_row == 0
+PASS projectile_occlusion.7.zone0 == -1
+PASS projectile_occlusion.7.zone1 == -1
+PASS projectile_occlusion.7.zone2 == 2902
+PASS projectile_occlusion.7.zone3 == 2903
+PASS projectile_occlusion.7.scale0 == -1
+PASS projectile_occlusion.7.scale2 == 5
+PASS projectile_occlusion.7.source == 1
+PASS projectile_occlusion.8.nonnull non-null
+PASS projectile_occlusion.8.source_id == 12
+PASS projectile_occlusion.8.depth == 3
+PASS projectile_occlusion.8.g2028_row == 1
+PASS projectile_occlusion.8.zone0 == -1
+PASS projectile_occlusion.8.zone1 == -1
+PASS projectile_occlusion.8.zone2 == 2906
+PASS projectile_occlusion.8.zone3 == 2907
+PASS projectile_occlusion.8.scale0 == -1
+PASS projectile_occlusion.8.scale2 == 5
+PASS projectile_occlusion.8.source == 1
+PASS projectile_occlusion.9.nonnull non-null
+PASS projectile_occlusion.9.source_id == 13
+PASS projectile_occlusion.9.depth == 3
+PASS projectile_occlusion.9.g2028_row == 2
+PASS projectile_occlusion.9.zone0 == -1
+PASS projectile_occlusion.9.zone1 == -1
+PASS projectile_occlusion.9.zone2 == 2910
+PASS projectile_occlusion.9.zone3 == 2911
+PASS projectile_occlusion.9.scale0 == -1
+PASS projectile_occlusion.9.scale2 == 5
+PASS projectile_occlusion.9.source == 1
+PASS projectile_occlusion.10.nonnull non-null
+PASS projectile_occlusion.10.source_id == 14
+PASS projectile_occlusion.10.depth == 3
+PASS projectile_occlusion.10.g2028_row == 3
+PASS projectile_occlusion.10.zone0 == -1
+PASS projectile_occlusion.10.zone1 == -1
+PASS projectile_occlusion.10.zone2 == 2914
+PASS projectile_occlusion.10.zone3 == 2915
+PASS projectile_occlusion.10.scale0 == -1
+PASS projectile_occlusion.10.scale2 == 5
+PASS projectile_occlusion.10.source == 1
+PASS projectile_occlusion.11.nonnull non-null
+PASS projectile_occlusion.11.source_id == 15
+PASS projectile_occlusion.11.depth == 3
+PASS projectile_occlusion.11.g2028_row == 4
+PASS projectile_occlusion.11.zone0 == -1
+PASS projectile_occlusion.11.zone1 == -1
+PASS projectile_occlusion.11.zone2 == 2918
+PASS projectile_occlusion.11.zone3 == 2919
+PASS projectile_occlusion.11.scale0 == -1
+PASS projectile_occlusion.11.scale2 == 5
+PASS projectile_occlusion.11.source == 1
+PASS projectile_occlusion.d0l_unsupported == 1
+PASS projectile_occlusion.out_of_range == 1
+PASS projectile_occlusion.null_zone == -1
+PASS door_front_occlusion.count == 4
+PASS door_front_occlusion.0.nonnull non-null
+PASS door_front_occlusion.rear_order == 536
+PASS door_front_occlusion.front_order == 841
+PASS door_front_occlusion.0.rear_pass == 1
+PASS door_front_occlusion.0.rear_cells == 1
+PASS door_front_occlusion.0.front_pass == 2
+PASS door_front_occlusion.0.front_cells == 1
+PASS door_front_occlusion.0.rear_line == 1
+PASS door_front_occlusion.0.frame_line == 1
+PASS door_front_occlusion.0.door_line == 1
+PASS door_front_occlusion.0.front_line == 1
+PASS door_front_occlusion.1.nonnull non-null
+PASS door_front_occlusion.rear_order == 536
+PASS door_front_occlusion.front_order == 841
+PASS door_front_occlusion.1.rear_pass == 1
+PASS door_front_occlusion.1.rear_cells == 1
+PASS door_front_occlusion.1.front_pass == 2
+PASS door_front_occlusion.1.front_cells == 1
+PASS door_front_occlusion.1.rear_line == 1
+PASS door_front_occlusion.1.frame_line == 1
+PASS door_front_occlusion.1.door_line == 1
+PASS door_front_occlusion.1.front_line == 1
+PASS door_front_occlusion.2.nonnull non-null
+PASS door_front_occlusion.rear_order == 536
+PASS door_front_occlusion.front_order == 841
+PASS door_front_occlusion.2.rear_pass == 1
+PASS door_front_occlusion.2.rear_cells == 1
+PASS door_front_occlusion.2.front_pass == 2
+PASS door_front_occlusion.2.front_cells == 1
+PASS door_front_occlusion.2.rear_line == 1
+PASS door_front_occlusion.2.frame_line == 1
+PASS door_front_occlusion.2.door_line == 1
+PASS door_front_occlusion.2.front_line == 1
+PASS door_front_occlusion.3.nonnull non-null
+PASS door_front_occlusion.rear_order == 536
+PASS door_front_occlusion.front_order == 841
+PASS door_front_occlusion.3.rear_pass == 1
+PASS door_front_occlusion.3.rear_cells == 1
+PASS door_front_occlusion.3.front_pass == 2
+PASS door_front_occlusion.3.front_cells == 1
+PASS door_front_occlusion.3.rear_line == 1
+PASS door_front_occlusion.3.frame_line == 1
+PASS door_front_occlusion.3.door_line == 1
+PASS door_front_occlusion.3.front_line == 1
+PASS door_front_occlusion.out_of_range == 1
+PASS door_front_occlusion.no_side_door_spec == 1
+PASS F0128.parity.true == 1
+PASS F0128.parity.wall_restore == 1
+PASS F0128.parity.false == 0
+PASS F0128.native.wall_stable == 1
+PASS F0098.viewport.width == 224
+PASS F0098.viewport.height == 136
+PASS F0098.black_area_h == 37
+PASS F0098.ceiling_h == 29
+PASS F0098.floor_y == 66
+PASS F0098.floor_h == 70
+PASS PC34.zone.ceiling == 700
+PASS PC34.zone.floor == 701
+PASS PC34.zone.wall_d0r == 717
+PASS post_command_redraw.nonnull non-null
+PASS post_command_redraw.command_mutates_before_draw == 1
+PASS post_command_redraw.redraw_uses_party_tuple == 1
+PASS post_command_redraw.present_waits == 1
+PASS post_command_redraw.command_source == 1
+PASS post_command_redraw.mainloop_source == 1
+PASS post_command_redraw.present_source == 1
+PASS source_evidence.nonnull non-null
+PASS source_evidence.g0163 == 1
+PASS source_evidence.f0128 == 1
+PASS source_evidence.g2107 == 1
+PASS source_evidence.pc34_side == 1
+PASS source_evidence.pc34_d2_side == 1
+PASS source_evidence.f0115 == 1
+PASS source_evidence.f0115_cell_order == 1
+PASS source_evidence.f0115_projectiles == 1
+PASS source_evidence.projectile_occlusion == 1
+PASS source_evidence.f0115_explosion_global == 1
+PASS source_evidence.door_front_occlusion == 1
+PASS source_evidence.d1c_door_front_occlusion == 1
+PASS source_evidence.defs_zones == 1
+PASS source_evidence.occlusion == 1
+PASS source_evidence.command_dispatch == 1
+PASS source_evidence.next_redraw == 1
+PASS source_evidence.present_wait == 1
+PASS dm1_v1_viewport_3d_source_lock

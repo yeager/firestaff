@@ -263,6 +263,69 @@ static void test_f0115_cell_order_and_layer_z_order(void)
 
 
 
+
+static void test_projectile_occlusion_zone_mapping(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int source_id;
+        int depth;
+        int row;
+        int zone0;
+        int zone1;
+        int zone2;
+        int zone3;
+        int scale0;
+        int scale2;
+        const char *line_needle;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D0C,   0, 0, 11, 2944, 2945, -1,   -1, 0, -1, "5675" },
+        { DM1_VIEW_SQUARE_D1C,   3, 1,  8, 2932, 2933, 2934, 2935, 2, 1, "5667" },
+        { DM1_VIEW_SQUARE_D1L,   4, 1,  9, 2936, 2937, 2938, 2939, 2, 1, "5667" },
+        { DM1_VIEW_SQUARE_D1R,   5, 1, 10, 2940, 2941, 2942, 2943, 2, 1, "5667" },
+        { DM1_VIEW_SQUARE_D2C,   6, 2,  5, 2920, 2921, 2922, 2923, 4, 3, "5667" },
+        { DM1_VIEW_SQUARE_D2L,   7, 2,  6, 2924, 2925, 2926, 2927, 4, 3, "5667" },
+        { DM1_VIEW_SQUARE_D2R,   8, 2,  7, 2928, 2929, 2930, 2931, 4, 3, "5667" },
+        { DM1_VIEW_SQUARE_D3C,  11, 3,  0,   -1,   -1, 2902, 2903, -1, 5, "5672" },
+        { DM1_VIEW_SQUARE_D3L,  12, 3,  1,   -1,   -1, 2906, 2907, -1, 5, "5672" },
+        { DM1_VIEW_SQUARE_D3R,  13, 3,  2,   -1,   -1, 2910, 2911, -1, 5, "5672" },
+        { DM1_VIEW_SQUARE_D3L2, 14, 3,  3,   -1,   -1, 2914, 2915, -1, 5, "5672" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 3,  4,   -1,   -1, 2918, 2919, -1, 5, "5672" },
+    };
+
+    check_int("projectile_occlusion.count", (int)dm1_viewport_3d_projectile_occlusion_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportProjectileOcclusionSpec *spec = dm1_viewport_3d_get_projectile_occlusion_spec_for_square(expected[i].square);
+        char id[112];
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.source_id", i);
+        check_int(id, spec->redmcsb_view_square_id, expected[i].source_id);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.depth", i);
+        check_int(id, spec->view_depth, expected[i].depth);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.g2028_row", i);
+        check_int(id, spec->g2028_row, expected[i].row);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.zone0", i);
+        check_int(id, dm1_viewport_3d_projectile_zone_for_cell(spec, 0), expected[i].zone0);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.zone1", i);
+        check_int(id, dm1_viewport_3d_projectile_zone_for_cell(spec, 1), expected[i].zone1);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.zone2", i);
+        check_int(id, dm1_viewport_3d_projectile_zone_for_cell(spec, 2), expected[i].zone2);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.zone3", i);
+        check_int(id, dm1_viewport_3d_projectile_zone_for_cell(spec, 3), expected[i].zone3);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.scale0", i);
+        check_int(id, dm1_viewport_3d_projectile_scale_index_for_cell(spec, 0), expected[i].scale0);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.scale2", i);
+        check_int(id, dm1_viewport_3d_projectile_scale_index_for_cell(spec, 2), expected[i].scale2);
+        snprintf(id, sizeof(id), "projectile_occlusion.%zu.source", i);
+        check_int(id, strstr(spec->source_lines, expected[i].line_needle) != NULL, 1);
+    }
+    check_int("projectile_occlusion.d0l_unsupported", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0L) == NULL, 1);
+    check_int("projectile_occlusion.out_of_range", dm1_viewport_3d_get_projectile_occlusion_spec(12) == NULL, 1);
+    check_int("projectile_occlusion.null_zone", dm1_viewport_3d_projectile_zone_for_cell(NULL, 0), -1);
+}
+
 static void test_door_front_occlusion_split_passes(void)
 {
     static const struct {
@@ -339,6 +402,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
     check_int("source_evidence.f0115_cell_order", strstr(e, "packed cell-order") != NULL, 1);
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
+    check_int("source_evidence.projectile_occlusion", strstr(e, "G2028 row and C2900 zone mapping") != NULL, 1);
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
@@ -355,6 +419,7 @@ int main(void)
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
     test_f0115_cell_order_and_layer_z_order();
+    test_projectile_occlusion_zone_mapping();
     test_door_front_occlusion_split_passes();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();

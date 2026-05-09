@@ -258,6 +258,18 @@ typedef struct {
     bool after_all_cells;
 } DM1_ViewportThingLayerSpec;
 
+/* PC34/I34E projectile visibility and zone contract for F0115.  ReDMCSB
+ * maps MEDIA720 view-square ids through G2028, clips D3 front cells and D0
+ * back cells, then draws through C2900_ZONE_ + row*4 + viewCell.
+ * Source: DUNVIEW.C:373, 5667-5683, 5710-5715, 5881-5883. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int8_t redmcsb_view_square_id;
+    int8_t view_depth;
+    int8_t g2028_row;
+    const char *source_lines;
+} DM1_ViewportProjectileOcclusionSpec;
+
 /* Door-front occlusion contract for ReDMCSB F0116/F0118/F0121/F0124
  * front-door branches: rear cells are drawn with F0115 before the frame and
  * door bitmap, then front cells are drawn with a second F0115 pass after the
@@ -555,6 +567,11 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
 size_t dm1_viewport_3d_thing_layer_spec_count(void);
 const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index);
+size_t dm1_viewport_3d_projectile_occlusion_spec_count(void);
+const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlusion_spec(size_t index);
+const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+int dm1_viewport_3d_projectile_zone_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell);
+int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);

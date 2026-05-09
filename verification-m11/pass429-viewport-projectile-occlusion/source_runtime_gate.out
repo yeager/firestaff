@@ -1,0 +1,51 @@
+PASS media720-view-square-row-map DUNVIEW.C:370-377
+  PC34/I34E projectile row zoning is driven by the MEDIA720 G2028 view-square row map.
+PASS media720-projectile-occlusion-and-zone DUNVIEW.C:5645-5885
+  Projectiles are not depth-sorted globally: F0115 clips unsupported cells, maps survivors to C2900 row zones, scales by depth/cell, and blits into the viewport.
+PASS local:dm1_v1_viewport_3d_pc34_compat.h:DM1_ViewportProjectileOcclusionSpec dm1_v1_viewport_3d_pc34_compat.h
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.h:dm1_viewport_3d_projectile_zone_for_cell dm1_v1_viewport_3d_pc34_compat.h
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:s_projectile_occlusion_specs dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883 dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:return 2900 + ((int)spec->g2028_row * 4) + view_cell; dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:dm1_v1_viewport_3d_pc34_compat.c:return (spec->view_depth << 1) - (view_cell >> 1); dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:test_dm1_v1_viewport_3d_pc34_compat.c:test_projectile_occlusion_zone_mapping test_dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS local:test_dm1_v1_viewport_3d_pc34_compat.c:projectile_occlusion.d0l_unsupported test_dm1_v1_viewport_3d_pc34_compat.c
+  Firestaff runtime metadata exposes the ReDMCSB projectile occlusion contract.
+PASS runtime /home/trv2/work/firestaff-worktrees/pass429-viewport-walls-gap-20260509/build/test_dm1_v1_viewport_3d_pc34_compat
+  PASS F0098.floor_h == 70
+  PASS PC34.zone.ceiling == 700
+  PASS PC34.zone.floor == 701
+  PASS PC34.zone.wall_d0r == 717
+  PASS post_command_redraw.nonnull non-null
+  PASS post_command_redraw.command_mutates_before_draw == 1
+  PASS post_command_redraw.redraw_uses_party_tuple == 1
+  PASS post_command_redraw.present_waits == 1
+  PASS post_command_redraw.command_source == 1
+  PASS post_command_redraw.mainloop_source == 1
+  PASS post_command_redraw.present_source == 1
+  PASS source_evidence.nonnull non-null
+  PASS source_evidence.g0163 == 1
+  PASS source_evidence.f0128 == 1
+  PASS source_evidence.g2107 == 1
+  PASS source_evidence.pc34_side == 1
+  PASS source_evidence.pc34_d2_side == 1
+  PASS source_evidence.f0115 == 1
+  PASS source_evidence.f0115_cell_order == 1
+  PASS source_evidence.f0115_projectiles == 1
+  PASS source_evidence.projectile_occlusion == 1
+  PASS source_evidence.f0115_explosion_global == 1
+  PASS source_evidence.door_front_occlusion == 1
+  PASS source_evidence.d1c_door_front_occlusion == 1
+  PASS source_evidence.defs_zones == 1
+  PASS source_evidence.occlusion == 1
+  PASS source_evidence.command_dispatch == 1
+  PASS source_evidence.next_redraw == 1
+  PASS source_evidence.present_wait == 1
+  PASS dm1_v1_viewport_3d_source_lock
