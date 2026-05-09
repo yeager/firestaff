@@ -48,7 +48,10 @@
 #define DM1_COMMAND_REINCARNATE             161   /* C161_COMMAND_CLICK_IN_PANEL_REINCARNATE */
 #define DM1_COMMAND_CANCEL                  162   /* C162_COMMAND_CLICK_IN_PANEL_CANCEL */
 #define DM1_COMMAND_CLICK_IN_DUNGEON_VIEW    80   /* C080_COMMAND_CLICK_IN_DUNGEON_VIEW */
+#define DM1_SENSOR_DISABLED                   0   /* C000_SENSOR_DISABLED */
 #define DM1_SENSOR_WALL_CHAMPION_PORTRAIT   127   /* C127_SENSOR_WALL_CHAMPION_PORTRAIT */
+#define DM1_THING_TYPE_TEXTSTRING             2   /* C02_THING_TYPE_TEXTSTRING */
+#define DM1_THING_TYPE_SENSOR                 3   /* C03_THING_TYPE_SENSOR */
 #define DM1_VIEW_CELL_DOOR_BUTTON_OR_ORNAMENT 5   /* C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT */
 #define DM1_CHAMPION_NONE                    -1   /* CM1_CHAMPION_NONE */
 #define DM1_EXPLOSION_REBIRTH_STEP1       0xFFE4  /* C0xFFE4 */
@@ -209,6 +212,30 @@ typedef struct {
     uint16_t nextPartyChampionCount;  /* cancel decrements; finalize keeps */
     uint16_t nextCandidateChampionOrdinal; /* cleared to 0 */
 } CandidatePanelResult_Compat;
+
+/* Minimal thing-list model for REVIVE.C:794-799 mirror finalization.
+ * ReDMCSB BUG0_87 deliberately disables the first C03 sensor thing found on
+ * the mirror square; it does not search for C127, and text strings are skipped. */
+typedef struct {
+    uint16_t thingType;      /* M012_TYPE(thing), e.g. C02 textstring/C03 sensor */
+    uint16_t sensorType;     /* M039_TYPE(sensor), meaningful only for C03 sensor */
+} MirrorThing_Compat;
+
+typedef struct {
+    int foundSensor;
+    int disabledThingIndex;      /* -1 if no C03 sensor appears in bounded input */
+    uint16_t disabledOldSensorType;
+    uint16_t disabledNewSensorType;
+} MirrorSensorDisableResult_Compat;
+
+/* F0867a: Source-faithful mirror sensor disable helper.
+ * Source: REVIVE.C:794-799 walks F0161/F0159 thing-list and disables the first
+ * C03 sensor thing with M044_SET_TYPE_DISABLED, regardless of its sensor type.
+ * DUNGEON.C:2568-2583 shows C02 textstrings share wall-square traversal but are
+ * not sensor things; MOVESENS.C:1501-1503 is only the click-time C127 route. */
+MirrorSensorDisableResult_Compat F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(
+    const MirrorThing_Compat* things,
+    uint16_t thingCount);
 
 /* F0867: Finalize the candidate champion decision panel.
  * Source: REVIVE.C:744-785 cancel clears candidate and decrements party count;

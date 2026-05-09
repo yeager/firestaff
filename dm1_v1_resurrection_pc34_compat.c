@@ -235,6 +235,32 @@ CandidateChampionAddResult_Compat F0866_RESURRECTION_RouteChampionPortraitClick_
  *    806-835: Reincarnate applies extra stat/skill changes (F0864 handles math).
  * ================================================================ */
 
+MirrorSensorDisableResult_Compat F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(
+    const MirrorThing_Compat* things,
+    uint16_t thingCount)
+{
+    MirrorSensorDisableResult_Compat out;
+    uint16_t i;
+
+    out.foundSensor = 0;
+    out.disabledThingIndex = -1;
+    out.disabledOldSensorType = DM1_SENSOR_DISABLED;
+    out.disabledNewSensorType = DM1_SENSOR_DISABLED;
+
+    if (!things) return out;
+
+    for (i = 0; i < thingCount; ++i) {
+        if (things[i].thingType == DM1_THING_TYPE_SENSOR) {
+            out.foundSensor = 1;
+            out.disabledThingIndex = (int)i;
+            out.disabledOldSensorType = things[i].sensorType;
+            out.disabledNewSensorType = DM1_SENSOR_DISABLED;
+            return out;
+        }
+    }
+    return out;
+}
+
 CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
     CandidatePanelState_Compat state,
     int16_t command)
@@ -287,6 +313,7 @@ const char* dm1_v1_resurrection_GetEvidence(void) {
            "CHAMPION.C:F0319 bones creation (Type=C05, ChargeCount=champIdx). "
            "CLIKVIEW.C:F0374 alcove+ViAltar bones detection, "
            "C13_EVENT_VI_ALTAR_REBIRTH event creation. "
+           "REVIVE.C:794-799 BUG0_87 first C03 sensor on mirror square is disabled. "
            "DEFS.H: C05_JUNK_BONES, C147_ICON_JUNK_CHAMPION_BONES, "
            "C160/C161/C162 commands, MASK0x8000_CHAMPION_BONES.";
 }
@@ -301,7 +328,10 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (DM1_COMMAND_REINCARNATE == 161);
     ok = ok && (DM1_COMMAND_CANCEL == 162);
     ok = ok && (DM1_COMMAND_CLICK_IN_DUNGEON_VIEW == 80);
+    ok = ok && (DM1_SENSOR_DISABLED == 0);
     ok = ok && (DM1_SENSOR_WALL_CHAMPION_PORTRAIT == 127);
+    ok = ok && (DM1_THING_TYPE_TEXTSTRING == 2);
+    ok = ok && (DM1_THING_TYPE_SENSOR == 3);
 
     /* Verify rebirth health: max=100 → max(25, 100-100/64-1) = max(25,98) = 98, current=49 */
     {

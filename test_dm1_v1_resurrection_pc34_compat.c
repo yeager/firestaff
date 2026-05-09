@@ -288,6 +288,42 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
+static void test_mirror_sensor_disable_order(void) {
+    MirrorThing_Compat things[3];
+    MirrorSensorDisableResult_Compat d;
+
+    printf("[mirror_sensor_disable_order]\n");
+
+    things[0].thingType = DM1_THING_TYPE_TEXTSTRING;
+    things[0].sensorType = 999;
+    things[1].thingType = DM1_THING_TYPE_SENSOR;
+    things[1].sensorType = 12;
+    things[2].thingType = DM1_THING_TYPE_SENSOR;
+    things[2].sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
+    d = F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(things, 3);
+    CHECK(d.foundSensor == 1, "helper finds first C03 sensor thing");
+    CHECK(d.disabledThingIndex == 1, "textstring before sensor is skipped");
+    CHECK(d.disabledOldSensorType == 12, "first sensor type is disabled even when not C127");
+    CHECK(d.disabledNewSensorType == DM1_SENSOR_DISABLED, "disabled type becomes C000");
+
+    things[0].thingType = DM1_THING_TYPE_SENSOR;
+    things[0].sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
+    things[1].thingType = DM1_THING_TYPE_SENSOR;
+    things[1].sensorType = 12;
+    d = F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(things, 2);
+    CHECK(d.disabledThingIndex == 0, "C127 is disabled only when it is first sensor in thing-list order");
+    CHECK(d.disabledOldSensorType == DM1_SENSOR_WALL_CHAMPION_PORTRAIT, "C127 preserved as old type before disable");
+
+    things[0].thingType = DM1_THING_TYPE_TEXTSTRING;
+    things[1].thingType = DM1_THING_TYPE_TEXTSTRING;
+    d = F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(things, 2);
+    CHECK(d.foundSensor == 0, "bounded helper reports no sensor in custom malformed input");
+    CHECK(d.disabledThingIndex == -1, "no sensor leaves index at -1");
+
+    d = F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat(NULL, 2);
+    CHECK(d.foundSensor == 0, "NULL thing list is safe no-op for probe helper");
+}
+
 static void test_command_validation(void) {
     printf("[command_validation]\n");
 
@@ -315,6 +351,7 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
+    test_mirror_sensor_disable_order();
     test_command_validation();
     test_invariant();
 
