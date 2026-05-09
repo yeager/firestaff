@@ -418,6 +418,18 @@ typedef enum {
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 
+int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                           int autoEnterAfterMs,
+                                           uint64_t elapsedMs) {
+    if (!allowHeadlessTimeout) {
+        return 0;
+    }
+    if (autoEnterAfterMs > 0 && elapsedMs > (uint64_t)autoEnterAfterMs) {
+        return 1;
+    }
+    return elapsedMs > 5000U;
+}
+
 static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int autoEnterAfterMs) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
@@ -577,12 +589,14 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
         }
 
         /* Scripted/headless probes cannot send a second physical command.
-         * The modern launcher also treats its explicit Launch action as the
-         * user's entrance confirmation; otherwise the app appears to hang
-         * immediately after pressing Launch.  Preserve the entrance screen
-         * briefly, then continue unless the user quits. */
-        if ((allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) ||
-            (autoEnterAfterMs > 0 && SDL_GetTicks() - started > (Uint64)autoEnterAfterMs)) {
+         * ReDMCSB ENTRANCE.C waits at C099_MODE_WAITING_ON_ENTRANCE until a
+         * fresh command arrives; the launcher click/key that got us here was
+         * drained above and must not count as that command.  Therefore timeout
+         * auto-enter is strictly a dummy-video/autotest escape hatch, never an
+         * interactive runtime behavior. */
+        if (M11_Entrance_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
+                                                   autoEnterAfterMs,
+                                                   (uint64_t)(SDL_GetTicks() - started))) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);

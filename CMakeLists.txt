@@ -1248,6 +1248,19 @@ if(BUILD_TESTING)
     )
     endif()
 
+    # Launcher/entrance handoff wait policy: ReDMCSB waits for fresh input.
+    add_executable(test_m11_entrance_wait_policy
+        test_m11_entrance_wait_policy.c
+    )
+    target_link_libraries(test_m11_entrance_wait_policy PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_entrance_wait_policy PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_entrance_wait_policy
+        COMMAND test_m11_entrance_wait_policy
+    )
+
     # Launcher smoke (needs game data + built firestaff binary)
     add_test(
         NAME m11_launcher_smoke

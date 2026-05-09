@@ -3,6 +3,8 @@
 
 #include "menu_startup_m12.h"
 
+#include <stdint.h>
+
 /*
  * main_loop_m11 — M11 Phase A stub.
  *
@@ -38,6 +40,12 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
    tears down the render module). */
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState);
+
+/* Source-locked entrance wait policy: interactive builds must not auto-enter
+   after launcher handoff; only headless/autotest runs may use a timeout. */
+int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                           int autoEnterAfterMs,
+                                           uint64_t elapsedMs);
 
 #ifdef __cplusplus
 }
