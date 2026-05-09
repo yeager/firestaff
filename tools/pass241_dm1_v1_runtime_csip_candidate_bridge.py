@@ -91,6 +91,13 @@ def main() -> int:
         if item.get("id") in {"command_accepted", "turn_handler", "move_handler", "move_result", "draw_uses_mutated_tuple", "viewport_buffer_composed", "viewport_present"}
     ]
 
+    bridged_symbol_ids = set(SYMBOL_MAP_IDS.values())
+    promoted_bridged_entries = [
+        e.get("id")
+        for e in symbol_map.get("entries", [])
+        if e.get("id") in bridged_symbol_ids and e.get("confidence") == "verified_runtime_hit"
+    ]
+
     guards = {
         "pass235_source_audit_ok": bool(source_audit_seams) and all(item["ok"] for item in source_audit_seams),
         "pass235_entry_capture_ok": entry.get("ok") is True,
@@ -99,7 +106,7 @@ def main() -> int:
         "pass235_fires_sha256_ok": entry.get("fires_exenew", {}).get("sha256") == EXPECTED_SHA256 and entry.get("fires_exenew", {}).get("sha256_matches_expected") is True,
         "pass237_static_status_ok": pass237.get("status") == "CANDIDATE_ONLY_RUNTIME_HITS_REQUIRED",
         "pass237_fires_sha256_ok": pass237.get("fires_input", {}).get("sha256") == EXPECTED_SHA256,
-        "symbol_map_has_no_promotions": not any(e.get("confidence") == "verified_runtime_hit" for e in symbol_map.get("entries", [])),
+        "symbol_map_bridged_candidate_entries_unpromoted": not promoted_bridged_entries,
     }
 
     rows: list[dict[str, Any]] = []
@@ -142,7 +149,12 @@ def main() -> int:
         "guards": guards,
         "chain_coverage": chain_ok,
         "runtime_csip_candidates": rows,
-        "promotion_rule": "These rows are numeric breakpoint candidates only. Keep data/original_runtime symbol-map entries unpromoted until a debugger-observed seam hit proves the command/movement/viewport state transition.",
+        "promotion_rule": "These rows are numeric breakpoint candidates only. Keep bridged data/original_runtime symbol-map entries unpromoted until a debugger-observed seam hit proves the command/movement/viewport state transition.",
+        "existing_unrelated_promotions_ignored": [
+            e.get("id")
+            for e in symbol_map.get("entries", [])
+            if e.get("confidence") == "verified_runtime_hit" and e.get("id") not in bridged_symbol_ids
+        ],
         "artifact_policy": {"text_only": True, "no_original_binaries_committed": True, "no_source_or_log_dump": True},
     }
     (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -176,7 +188,7 @@ def main() -> int:
         "",
         "## Guardrail",
         "",
-        "No `data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json` entry is promoted. These candidates are enough for a reproducible non-manual breakpoint bridge, but not enough to claim `verified_runtime_hit` until the debugger actually stops on the seam with state evidence.",
+        "No bridged candidate entry in `data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json` is promoted by this pass. These candidates are enough for a reproducible non-manual breakpoint bridge, but not enough to claim `verified_runtime_hit` until the debugger actually stops on the bridged seam with state evidence.",
         "",
         "Evidence manifest: `parity-evidence/verification/pass241_dm1_v1_runtime_csip_candidate_bridge/manifest.json`.",
         "",

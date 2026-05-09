@@ -18,7 +18,18 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 REDMCSB_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206")
 IBM_SOURCE = REDMCSB_ROOT / "Toolchains/IBM PC/Source"
-ORIGINAL_FIRES = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES")
+def resolve_existing_path(candidates: list[Path], label: str) -> Path:
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f"{label} not found in any candidate path: " + ", ".join(str(p) for p in candidates))
+
+
+ORIGINAL_FIRES = resolve_existing_path([
+    Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/FIRES",
+    Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
+    Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+], "DM1 PC34 FIRES")
 OUT_DIR = ROOT / "parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard"
 REPORT = ROOT / "parity-evidence/pass210_dm1_v1_original_runtime_binding_guard.md"
 

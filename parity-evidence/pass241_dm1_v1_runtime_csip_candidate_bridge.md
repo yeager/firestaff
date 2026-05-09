@@ -30,6 +30,6 @@ Pass235 already captured FIRES.EXENEW runtime entry/load segment in DOSBox. Pass
 
 ## Guardrail
 
-No `data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json` entry is promoted. These candidates are enough for a reproducible non-manual breakpoint bridge, but not enough to claim `verified_runtime_hit` until the debugger actually stops on the seam with state evidence.
+No bridged candidate entry in `data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json` is promoted by this pass. These candidates are enough for a reproducible non-manual breakpoint bridge, but not enough to claim `verified_runtime_hit` until the debugger actually stops on the bridged seam with state evidence.
 
 Evidence manifest: `parity-evidence/verification/pass241_dm1_v1_runtime_csip_candidate_bridge/manifest.json`.

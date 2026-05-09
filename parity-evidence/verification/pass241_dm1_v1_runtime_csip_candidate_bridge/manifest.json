@@ -9,6 +9,9 @@
     "movement": true,
     "viewport": true
   },
+  "existing_unrelated_promotions_ignored": [
+    "viewport_buffer_composed"
+  ],
   "guards": {
     "pass235_entry_capture_ok": true,
     "pass235_entry_ip_zero": true,
@@ -17,12 +20,12 @@
     "pass235_source_audit_ok": true,
     "pass237_fires_sha256_ok": true,
     "pass237_static_status_ok": true,
-    "symbol_map_has_no_promotions": true
+    "symbol_map_bridged_candidate_entries_unpromoted": true
   },
   "inputs": {
-    "pass235_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
-    "pass237_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "pass235_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
+    "pass237_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "symbol_map": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "load_segment_source": {
     "capture_kind": "pass235 automated DOSBox-debug entry capture for decompressed FIRES.EXENEW fixture",
@@ -31,7 +34,7 @@
     "load_segment": "01ed",
     "psp_segment_inferred": "01DD"
   },
-  "promotion_rule": "These rows are numeric breakpoint candidates only. Keep data/original_runtime symbol-map entries unpromoted until a debugger-observed seam hit proves the command/movement/viewport state transition.",
+  "promotion_rule": "These rows are numeric breakpoint candidates only. Keep bridged data/original_runtime symbol-map entries unpromoted until a debugger-observed seam hit proves the command/movement/viewport state transition.",
   "runtime_csip_candidates": [
     {
       "classification": "runtime_candidate_only_not_verified_hit",

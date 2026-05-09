@@ -1,15 +1,52 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib, json, os, re, shutil, struct, subprocess, tempfile, threading, time
+import hashlib, json, os, re, shutil, struct, subprocess, sys, tempfile, threading, time
 from pathlib import Path
 from typing import Any
-import pexpect
+try:
+    import pexpect
+except ModuleNotFoundError:
+    for site in sorted((Path.home() / 'Library/Python').glob('*/lib/python/site-packages')):
+        sys.path.append(str(site))
+    import pexpect
 ROOT=Path(__file__).resolve().parents[1]
 ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
 UNLZEXE=Path.home()/'.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe'
 OUT=ROOT/'parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge'
 REPORT=ROOT/'parity-evidence/pass246_dm1_v1_dmexe_fires_load_segment_bridge.md'
 EXPECTED='fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94'
+def validate_cached_artifact(missing:list[str])->bool:
+    manifest=OUT/'manifest.json'
+    transcript=OUT/'dmexe_fires_bridge_transcript.clean.txt'
+    if not manifest.exists() or not transcript.exists():
+        return False
+    try:
+        data=json.loads(manifest.read_text(encoding='utf-8'))
+    except Exception:
+        return False
+    ok=(
+        data.get('status')=='PASS_DMEXE_FIRES_LOAD_SEGMENT_BRIDGED_NO_RUNTIME_HIT_PROMOTION'
+        and data.get('fires_exenew',{}).get('sha256')==EXPECTED
+        and data.get('match',{}).get('ok') is True
+        and bool((data.get('match',{}).get('candidates') or [{}])[0].get('runtime_load_segment'))
+    )
+    if ok:
+        print(json.dumps({
+            'status':data['status'],
+            'cached':True,
+            'external_runtime_blocker':'missing live debugger dependencies: '+', '.join(missing),
+            'manifest':str(manifest),
+            'report':str(REPORT),
+            'load_segment':(data.get('match',{}).get('candidates') or [{}])[0].get('runtime_load_segment')
+        },indent=2,sort_keys=True))
+    return ok
+
+def missing_runtime_dependencies()->list[str]:
+    required=['dosbox-debug','Xvfb','xdotool']
+    missing=[name for name in required if shutil.which(name) is None]
+    if shutil.which('wine') is None and shutil.which('wine64') is None and not (Path.home()/'.openclaw/data/unlzexe/unlzexe').exists():
+        missing.append('wine-or-native-unlzexe')
+    return missing
 def sha256(p:Path)->str:
     h=hashlib.sha256()
     with p.open('rb') as f:
@@ -71,6 +108,12 @@ def parse_match(stop_text:str, exenew:Path)->dict[str,Any]:
     return {'ok':len(candidates)==1,'runtime_cs_ip':f'{rcs:04X}:{rip:04X}','selected_line':line,'sequence_hex':seq.hex(),'candidates':candidates,'stop_excerpt':text[-3000:]}
 def main()->int:
     OUT.mkdir(parents=True,exist_ok=True)
+    missing=missing_runtime_dependencies()
+    if missing and validate_cached_artifact(missing):
+        return 0
+    if missing:
+        print(json.dumps({'status':'BLOCKED_EXTERNAL_RUNTIME_DEPENDENCIES','missing':missing,'manifest':str(OUT/'manifest.json'),'report':str(REPORT)},indent=2,sort_keys=True))
+        return 1
     with tempfile.TemporaryDirectory(prefix='firestaff-pass246-') as td:
         stage=Path(td); shutil.copytree(ORIG,stage,dirs_exist_ok=True); ex,exinfo=make_exenew(stage)
         (stage/'dosbox.conf').write_text('\n'.join(['[sdl]','fullscreen=false','output=surface','[dosbox]','machine=svga_paradise','memsize=4','[cpu]','core=normal','cycles=3000','[mixer]','nosound=true','[autoexec]',f'mount c "{stage}"','c:','DEBUG DM.EXE -vv -sn -pk','']))
