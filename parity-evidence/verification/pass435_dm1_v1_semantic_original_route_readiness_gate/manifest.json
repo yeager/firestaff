@@ -1,0 +1,1304 @@
+{
+  "blockers": [
+    "runtime still does not prove F0365/F0366 command dispatch",
+    "pass376 raw route classifier is not green",
+    "pass376 raw route classes do not match the semantic promotion sequence",
+    "pass376 raw route repeats screenshot hashes",
+    "pass376 viewport crops repeat hashes, so labels are not semantically distinct"
+  ],
+  "classifier": {
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 4,
+      "wall_closeup": 2
+    },
+    "classes": [
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay"
+    ],
+    "duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+      "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+    },
+    "exists": true,
+    "expected_sequence": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "spell_panel",
+      "dungeon_gameplay",
+      "inventory"
+    ],
+    "pass": false,
+    "path": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+    "problems": [
+      "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+      "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "image0006-raw.png: classified dungeon_gameplay, expected inventory",
+      "duplicate raw frames detected: 2 unique sha256 value(s) repeat"
+    ],
+    "sequence_ok": false
+  },
+  "crop_manifest": {
+    "duplicate_sha256_counts": {
+      "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": 2,
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 4
+    },
+    "exists": true,
+    "path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "row_count": 6,
+    "rows": [
+      {
+        "bytes": 91407,
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      }
+    ],
+    "rows_all_224x136": true
+  },
+  "inputs": {
+    "pass378_semantic_blocker": {
+      "blockers": [
+        "current pass376 route repeats raw frame hashes",
+        "current pass376 route fails pass80/pass86 expected semantic sequence",
+        "source-portrait retry fails pass80/pass86 expected semantic sequence",
+        "source-portrait retry still repeats raw frame hashes"
+      ],
+      "currentPass376Classifier": {
+        "capture_count": 6,
+        "captures": [
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass376-original-route/image0001-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          },
+          {
+            "classification": "wall_closeup",
+            "file": "verification-screens/pass376-original-route/image0002-raw.png",
+            "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+            "sha12": "fbeb1b82cd09"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass376-original-route/image0003-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass376-original-route/image0004-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          },
+          {
+            "classification": "wall_closeup",
+            "file": "verification-screens/pass376-original-route/image0005-raw.png",
+            "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+            "sha12": "fbeb1b82cd09"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass376-original-route/image0006-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          }
+        ],
+        "class_counts": {
+          "dungeon_gameplay": 4,
+          "wall_closeup": 2
+        },
+        "duplicate_sha256_counts": {
+          "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+          "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+        },
+        "exists": true,
+        "pass": false,
+        "path": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+        "problems": [
+          "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+          "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+          "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+          "image0006-raw.png: classified dungeon_gameplay, expected inventory",
+          "duplicate raw frames detected: 2 unique sha256 value(s) repeat"
+        ],
+        "warnings": []
+      },
+      "exists": true,
+      "failedCommands": [
+        "OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf \"$OUT\"; OUT_DIR=\"$OUT\" DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+        "python3 tools/pass80_original_frame_classifier.py verification-screens/pass378-source-portrait-sixshot-retry --expected pass77 --fail-on-duplicates",
+        "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass378-source-portrait-sixshot-retry --out-dir verification-screens/pass378-source-portrait-sixshot-viewports --dry-run"
+      ],
+      "nextConcreteCommand": "python3 tools/pass162_original_party_route_unblock.py && python3 tools/pass166_source_portrait_click_route_probe.py && python3 tools/verify_pass378_dm1_v1_original_route_semantic_clean_blocker.py",
+      "notClaimed": [
+        "pixel parity",
+        "semantically matched original runtime route",
+        "strict F0128->F0097 original true-stop promotion"
+      ],
+      "path": "parity-evidence/verification/pass378_dm1_v1_original_route_semantic_clean_blocker/manifest.json",
+      "priorManifests": {
+        "pass162_party_route": {
+          "buckets": {
+            "blocked/portrait-c080-no-visible-delta": 2
+          },
+          "errors": [],
+          "exists": true,
+          "path": "parity-evidence/verification/pass162_original_party_route_unblock/manifest.json",
+          "result_summaries": [
+            {
+              "classes": [
+                "entrance_menu",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay"
+              ],
+              "classification": "blocked/portrait-c080-no-visible-delta",
+              "control_count": 0,
+              "name": "source_gated_portrait_then_resurrect",
+              "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+              "static_hits": [
+                "48ed3743ab6a"
+              ],
+              "unique_hashes": [
+                "48ed3743ab6a",
+                "ceb0c2eec633"
+              ]
+            },
+            {
+              "classes": [
+                "entrance_menu",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay"
+              ],
+              "classification": "blocked/portrait-c080-no-visible-delta",
+              "control_count": 0,
+              "name": "source_gated_portrait_then_reincarnate",
+              "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+              "static_hits": [
+                "48ed3743ab6a"
+              ],
+              "unique_hashes": [
+                "48ed3743ab6a",
+                "ceb0c2eec633"
+              ]
+            }
+          ],
+          "status": null
+        },
+        "pass166_portrait_route": {
+          "buckets": {
+            "blocked/static-no-party": 2
+          },
+          "errors": [],
+          "exists": true,
+          "path": "parity-evidence/verification/pass166_source_portrait_click_route_probe/manifest.json",
+          "result_summaries": [
+            {
+              "classes": [
+                "entrance_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "graphics_320x200_unclassified",
+                "title_or_menu",
+                "title_or_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay"
+              ],
+              "classification": "blocked/static-no-party",
+              "control_count": 0,
+              "name": "enter_portrait11182_then_resurrect",
+              "reason": "known static no-party hash present: 48ed3743ab6a",
+              "static_hits": [
+                "48ed3743ab6a"
+              ],
+              "unique_hashes": [
+                "014ed52c71a0",
+                "1339aaf0473c",
+                "17bd7e878157",
+                "307323fbc1f7",
+                "48ed3743ab6a",
+                "84171db7b6d4",
+                "a914971a8a47",
+                "c6f457763e2e"
+              ]
+            },
+            {
+              "classes": [
+                "entrance_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "graphics_320x200_unclassified",
+                "title_or_menu",
+                "title_or_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "entrance_menu",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay",
+                "dungeon_gameplay"
+              ],
+              "classification": "blocked/static-no-party",
+              "control_count": 0,
+              "name": "enter_portrait11182_then_reincarnate",
+              "reason": "known static no-party hash present: 48ed3743ab6a",
+              "static_hits": [
+                "48ed3743ab6a"
+              ],
+              "unique_hashes": [
+                "014ed52c71a0",
+                "125549ae51c3",
+                "17bd7e878157",
+                "307323fbc1f7",
+                "48ed3743ab6a",
+                "4c74e1f91f3c",
+                "a914971a8a47",
+                "ceb0c2eec633"
+              ]
+            }
+          ],
+          "status": null
+        },
+        "pass376_artifact_command": {
+          "blocker": [
+            "pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion",
+            "labelled original 320x200 frames exist, but semantic promotion is blocked by duplicate hashes/pass86 mismatches",
+            "224x136 original crops and manifest exist, but are review inputs only until semantic raw route passes",
+            "paired Firestaff/original diff artifacts for this route are not tracked"
+          ],
+          "exists": true,
+          "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
+          "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
+        },
+        "pass377_paired_diff": {
+          "blocker": null,
+          "exists": true,
+          "path": "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json",
+          "status": "BLOCKED_PASS377_PAIRED_DIFF_ARTIFACTS_ORIGINAL_SIDE_MISSING_FIRESTAFF_SIDE_READY"
+        }
+      },
+      "promotionRule": "Promote only when six raw 320x200 frames classify as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw hashes, then pass86 succeeds without --allow-mismatch.",
+      "schema": "pass378_dm1_v1_original_route_semantic_clean_blocker.v1",
+      "sourceAnchors": [
+        {
+          "file": "CLIKMENU.C",
+          "id": "clikmenu_turn_move_acceptance",
+          "lines": "142-174,180-347",
+          "missing_markers": [],
+          "needles": [
+            "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+            "F0284_CHAMPION_SetPartyDirection",
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+            "F0267_MOVE_GetMoveResult_CPSCE"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+          "why": "A promotable route must prove source turn/move acceptance, not merely repeated static screenshots."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "id": "dunview_viewport_composition",
+          "lines": "8318-8611",
+          "missing_markers": [],
+          "needles": [
+            "void F0128_DUNGEONVIEW_Draw_CPSF",
+            "P0183_i_Direction",
+            "P0184_i_MapX",
+            "P0185_i_MapY",
+            "G0296_puc_Bitmap_Viewport",
+            "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+          "why": "The original crop is meaningful only when bound to F0128 composing a known direction/X/Y viewport buffer."
+        },
+        {
+          "file": "DRAWVIEW.C",
+          "id": "drawview_viewport_presentation",
+          "lines": "709-858",
+          "missing_markers": [],
+          "needles": [
+            "void F0097_DUNGEONVIEW_DrawViewport",
+            "G0324_B_DrawViewportRequested = C1_TRUE",
+            "M526_WaitVerticalBlank",
+            "VIDRV_09_BlitViewPort"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+          "why": "Promotion still needs a post-composition presentation seam, not BPLIST/setup echo text."
+        },
+        {
+          "file": "MOVESENS.C",
+          "id": "portrait_candidate_source_route",
+          "lines": "1392-1502",
+          "missing_markers": [],
+          "needles": [
+            "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+            "F0280_CHAMPION_AddCandidateChampionToParty"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+          "why": "The bounded retry uses the prior ReDMCSB champion-portrait route hypothesis to try to escape no-party static gameplay."
+        }
+      ],
+      "sourcePortraitRetry": {
+        "capture_count": 6,
+        "captures": [
+          {
+            "classification": "title_or_menu",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0001-raw.png",
+            "reason": "sparse viewport plus colorful/right-column title-menu art",
+            "sha12": "7addedda4327"
+          },
+          {
+            "classification": "entrance_menu",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0002-raw.png",
+            "reason": "dungeon entrance/menu controls still occupy the right column",
+            "sha12": "880d853d1bbe"
+          },
+          {
+            "classification": "entrance_menu",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0003-raw.png",
+            "reason": "dungeon entrance/menu controls still occupy the right column",
+            "sha12": "17bd7e878157"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0004-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0005-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          },
+          {
+            "classification": "dungeon_gameplay",
+            "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0006-raw.png",
+            "reason": "viewport content with mostly dark in-game right column",
+            "sha12": "48ed3743ab6a"
+          }
+        ],
+        "class_counts": {
+          "dungeon_gameplay": 3,
+          "entrance_menu": 2,
+          "title_or_menu": 1
+        },
+        "duplicate_sha256_counts": {
+          "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 3
+        },
+        "exists": true,
+        "pass": false,
+        "path": "verification-screens/pass378-source-portrait-sixshot-retry/pass80_original_frame_classifier.json",
+        "problems": [
+          "image0001-raw.png: classified title_or_menu, expected dungeon_gameplay",
+          "image0002-raw.png: classified entrance_menu, expected dungeon_gameplay",
+          "image0003-raw.png: classified entrance_menu, expected dungeon_gameplay",
+          "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+          "image0006-raw.png: classified dungeon_gameplay, expected inventory",
+          "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+        ],
+        "warnings": []
+      },
+      "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "status": "BLOCKED_PASS378_ORIGINAL_ROUTE_NOT_SEMANTICALLY_CLEAN",
+      "timestampUtc": "2026-05-08T10:56:16.999430+00:00"
+    },
+    "pass385_runtime_semantic_route": {
+      "addresses": {
+        "F0097_VIDRV_09_BlitViewPort_indirect_call": "280C:1EFF",
+        "F0128_DUNGEONVIEW_Draw_CPSF": "23B0:40FE",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA7:010D",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA7:01AA",
+        "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",
+        "G0321_B_StopWaitingForPlayerInput": "2C23:1A7C"
+      },
+      "blocker": "corrected loader delta proves F0380/G0321/F0128 runtime path, but semantic command dispatch still missing f0365OrF0366Hit",
+      "branch": "worker/pass384-n2-runtime-recheck-20260508",
+      "exists": true,
+      "head": "91c859adf81619c45a9718a68fa68ac8367cb4b4",
+      "notPromotedBy": [
+        "BPLIST",
+        "BP/BPM command echo",
+        "forced pause",
+        "route keylog alone",
+        "source-only address binding"
+      ],
+      "path": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/manifest.json",
+      "promotionRule": "Promote only if strict post-Running stops prove F0380 plus F0365/F0366, G0321 writes nonzero, and a later F0128 stop in the same bounded post-load run. BPLIST/setup echoes, route keylogs, and forced pause samples are excluded. Pass385 uses FIRES.MAP plus the observed DS/CS +0x0736 loader delta from pass384/pass385 runtime, replacing pass384 +0x0733 candidates.",
+      "proofPredicates": {
+        "breakpointsRetainedAtArm": true,
+        "f0365OrF0366Hit": false,
+        "f0380Hit": true,
+        "g0321StopWaitWriteObserved": true,
+        "nextF0128AfterStopWaitObserved": true,
+        "routeInputAfterArming": true,
+        "sawRunning": true
+      },
+      "repo": "/home/trv2/work/firestaff",
+      "runtimeArtifacts": {
+        "commandLog": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_command_log.json",
+        "routeKeylog": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_route_keylog.json",
+        "transcript": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_runtime.clean.txt"
+      },
+      "runtimeProbe": {
+        "boundedSeconds": 75,
+        "durationSeconds": 114.17,
+        "finalPauseCodeAddr": "22F7:06AD",
+        "method": "post-load pexpect-owned PTY; arm corrected-loader-delta F0380/F0365/F0366/F0128 code breakpoints plus G0321 BPM; strict stops require (Running)->prompt",
+        "ran": true,
+        "retainedAtArm": {
+          "F0128_DUNGEONVIEW_Draw_CPSF": true,
+          "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+          "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+          "F0380_COMMAND_ProcessQueue_CPSC": true,
+          "G0321_B_StopWaitingForPlayerInput": true
+        },
+        "retainedFinal": {
+          "F0128_DUNGEONVIEW_Draw_CPSF": true,
+          "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+          "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+          "F0380_COMMAND_ProcessQueue_CPSC": true,
+          "G0321_B_StopWaitingForPlayerInput": true
+        },
+        "route": "one wait:3500 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900",
+        "routeInputAfterArming": true,
+        "sawRunning": true,
+        "stops": [
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "g0321_bpm",
+            "memoryBreakpoints": [
+              {
+                "addr": "2C23:1A7C",
+                "new": "01",
+                "old": "00"
+              }
+            ],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n\n-> _     CD12",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243634.6373243
+          },
+          {
+            "addr": "23B0:4113",
+            "entryAddr": "23B0:40FE",
+            "kind": "F0128_DUNGEONVIEW_Draw_CPSF",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [
+              "23B0:40FE  55push",
+              "23B0:40FF  8BEC  mov",
+              "23B0:4101  83EC04sub",
+              "23B0:4104  56    push",
+              "23B0:4105  57    push",
+              "23B0:4106  8B7606mov",
+              "23B0:4109  8B7E0Adi",
+              "23B0:410C  833E741A00cmp",
+              "23B0:4111  7404je",
+              "23B0:4113  0Ecs"
+            ],
+            "postRunningExcerpt": "....\n23B0:40FE  55push bp\n23B0:40FF  8BEC  mov  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56    push si\n23B0:4105  57    push di\n23B0:4106  8B7606mov  si,[bp+06]ss:[0FD0]=0006\n23B0:4109  8B7E0Adi,[bp+0A]ss:[0FD4]=0FF4\n23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74]=0001\n23B0:4111  7404je   00004117 ($+4)(down)\n23B0:4113  0Ecs\n-> _     000040663339056  CS=23B040FE1000CA0001B5897301",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243637.7699227
+          },
+          {
+            "addr": "07FB:01D6",
+            "entryAddr": null,
+            "kind": "g0321_bpm",
+            "memoryBreakpoints": [
+              {
+                "addr": "2C23:1A7C",
+                "new": "00",
+                "old": "01"
+              }
+            ],
+            "postRunningCodeLines": [
+              "07FB:01BA  EB0Cjmp",
+              "07FB:01BC  9AB407132Acall",
+              "2A13:07B4\n07FB",
+              "07FB:01C2  9A0704F722call",
+              "22F7:0407\n07FB",
+              "07FB:01C8  9A2508132Acall",
+              "2A13:0825\n07FB",
+              "07FB:01CF  75EB      jne",
+              "07FB:01D1  833E543D00cmp",
+              "07FB:01D6  744Dje"
+            ],
+            "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00\n\n07FB:01BA  EB0Cjmp  short 000001C8 ($+c)   (down)\n07FB:01BC  9AB407132Acall 2A13:07B4\n07FB:01C1  50    push ax     \n07FB:01C2  9A0704F722call 22F7:0407\n07FB:01C7  59op  cx\n07FB:01C8  9A2508132Acall 2A13:0825\n07FB:01CD  0BC0  or   ax,ax\n07FB:01CF  75EB      jne  000001BC ($-15) (no jmp)      \n07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=0000\n07FB:01D6  744Dje   00000225 ($+4d)(down)\n-> _     FFFF303100C07FB01BA1BFFFFC86286865",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243640.6110785
+          },
+          {
+            "addr": "22F7:06AD",
+            "entryAddr": "22F7:0699",
+            "kind": "F0380_COMMAND_ProcessQueue_CPSC",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [
+              "22F7:0699  55  push",
+              "22F7:069A  8BEC      mov",
+              "22F7:069C  83EC04sub",
+              "22F7:069F  56        push",
+              "22F7:06A0  57ush",
+              "22F7:06A1  C7060A1F0100mov",
+              "22F7:06A7  A1081Fmov",
+              "22F7:06AA  40  inc",
+              "22F7:06AB  8BF8      mov",
+              "22F7:06AD  3D0800cmp"
+            ],
+            "postRunningExcerpt": "....\n22F7:0699  55  push bp\n22F7:069A  8BEC      mov  bp,sp    \n22F7:069C  83EC04sub  sp,0004\n22F7:069F  56        push si       \n22F7:06A0  57ush di\n22F7:06A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=0000\n22F7:06A7  A1081Fmov  ax,[1F08]ds:[1F08]=0008\n22F7:06AA  40  inc  ax\n22F7:06AB  8BF8      mov  di,ax\n22F7:06AD  3D0800cmp  ax,0008\n-> _     0000066333922F769949",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243643.4363337
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     7033",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243646.2590714
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     171",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243649.0826714
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     309",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243651.9101388
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     447",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243654.7348442
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     585",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243657.5577164
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     723",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243660.3788872
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     861",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243663.1996126
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     999",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243666.0220687
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     8137",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243668.8507342
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     275",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243671.6763093
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     413",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243674.5032752
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     551",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243677.3260021
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     689",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243680.1497002
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     827",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243682.9742851
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     965",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243685.7960896
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     9103",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243688.6220903
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     241",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243691.4483058
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     379",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243694.2711267
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     517",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243697.0965831
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     655",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243699.9199104
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     793",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243702.7431786
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     931",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243705.5662873
+          },
+          {
+            "addr": null,
+            "entryAddr": null,
+            "kind": "other",
+            "memoryBreakpoints": [],
+            "postRunningCodeLines": [],
+            "postRunningExcerpt": "....\n-> _     90069",
+            "promptReappearedAfterRunning": true,
+            "runningMarkerSeen": true,
+            "t": 1778243708.3877945
+          }
+        ]
+      },
+      "schema": "pass385_dm1_v1_corrected_loader_delta_semantic_route.v1",
+      "sourceAudit": [
+        {
+          "file": "GAMELOOP.C",
+          "lineHits": {
+            "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+            "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 164,
+            "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219
+          },
+          "missing": [],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+        },
+        {
+          "file": "COMMAND.C",
+          "lineHits": {
+            "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+            "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+            "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+          },
+          "missing": [],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+        },
+        {
+          "file": "CLIKMENU.C",
+          "lineHits": {
+            "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+            "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+            "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+          },
+          "missing": [],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lineHits": {
+            "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+            "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+          },
+          "missing": [],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+        }
+      ],
+      "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "status": "BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN",
+      "timestampUtc": "2026-05-08T12:35:17.583727+00:00"
+    },
+    "pass434_crop_readiness": {
+      "branch": "pass423-input-command-salvage",
+      "crop_artifacts": {
+        "files": [
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "01_ingame_start_original_viewport_224x136"
+          },
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "02_ingame_turn_right_original_viewport_224x136"
+          },
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "03_ingame_move_forward_original_viewport_224x136"
+          },
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "04_ingame_spell_panel_original_viewport_224x136"
+          },
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "05_ingame_after_cast_original_viewport_224x136"
+          },
+          {
+            "manifest_row": true,
+            "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+            "png_dims": [
+              224,
+              136
+            ],
+            "png_exists": true,
+            "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
+            "ppm_exists": true,
+            "stem": "06_ingame_inventory_panel_original_viewport_224x136"
+          }
+        ],
+        "files_all_present": true,
+        "manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+        "manifest_exists": true,
+        "row_count": 6,
+        "rows": [
+          {
+            "bytes": 91407,
+            "filename": "01_ingame_start_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+            "width": 224
+          },
+          {
+            "bytes": 91407,
+            "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+            "width": 224
+          },
+          {
+            "bytes": 91407,
+            "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+            "width": 224
+          },
+          {
+            "bytes": 91407,
+            "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+            "width": 224
+          },
+          {
+            "bytes": 91407,
+            "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+            "width": 224
+          },
+          {
+            "bytes": 91407,
+            "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+            "height": 136,
+            "kind": "original_viewport_224x136",
+            "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+            "width": 224
+          }
+        ],
+        "rows_all_224x136": true
+      },
+      "exists": true,
+      "head": "e1572bab8b4b0aacf70923740e30e4cd5a2ef7f1",
+      "not_claimed": [
+        "DOSBox/live original runtime capture",
+        "semantic original route promotion",
+        "original-vs-Firestaff pixel parity",
+        "HUD/overlay parity"
+      ],
+      "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
+      "repo": "/home/trv2/work/firestaff",
+      "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
+      "source_audit": [
+        {
+          "claim": "accepted turns/steps mutate the party tuple before any original viewport crop can be promoted",
+          "exists": true,
+          "file": "CLIKMENU.C",
+          "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+          "id": "movement_route_binds_original_frames_to_party_tuple",
+          "lines": "142-174,180-347",
+          "missing": [],
+          "needles": [
+            "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+            "F0284_CHAMPION_SetPartyDirection",
+            "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+            "F0267_MOVE_GetMoveResult_CPSCE",
+            "G0310_i_DisabledMovementTicks"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+        },
+        {
+          "claim": "the 224x136 crop is meaningful only after F0128 draws G0296 for direction/X/Y",
+          "exists": true,
+          "file": "DUNVIEW.C",
+          "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+          "id": "f0128_composes_g0296_for_known_tuple",
+          "lines": "8318-8611",
+          "missing": [],
+          "needles": [
+            "void F0128_DUNGEONVIEW_Draw_CPSF",
+            "P0183_i_Direction",
+            "P0184_i_MapX",
+            "P0185_i_MapY",
+            "G0296_puc_Bitmap_Viewport",
+            "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+            "F0127_DUNGEONVIEW_DrawSquareD0C",
+            "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+        },
+        {
+          "claim": "capture readiness is locked to the PC34 viewport-present seam, not setup echo/menu text",
+          "exists": true,
+          "file": "DRAWVIEW.C",
+          "function": "F0097_DUNGEONVIEW_DrawViewport",
+          "id": "f0097_presents_pc34_viewport",
+          "lines": "709-858",
+          "missing": [],
+          "needles": [
+            "void F0097_DUNGEONVIEW_DrawViewport",
+            "F0638_GetZone(C007_ZONE_VIEWPORT",
+            "G0296_puc_Bitmap_Viewport",
+            "VIDRV_09_BlitViewPort"
+          ],
+          "ok": true,
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+        }
+      ],
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
+      "timestamp_utc": "2026-05-09T03:31:48.521713+00:00",
+      "tooling": {
+        "capture_script_crop_lock": {
+          "has_imagemagick_crop": true,
+          "has_manifest_geometry_check": true,
+          "has_normalize_only": true,
+          "has_pillow_crop_0_33_224_169": true,
+          "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+        },
+        "dm1_pc34_stage_exists": true,
+        "dosbox_available": true,
+        "dosbox_required_for_this_gate": false,
+        "original_dm_root_exists": true,
+        "pass376_prior_manifest": {
+          "exists": true,
+          "ok": true,
+          "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
+          "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
+        },
+        "pass86_self_test": {
+          "cmd": [
+            "python3",
+            "tools/pass86_original_viewport_crop_manifest.py",
+            "--self-test"
+          ],
+          "output_tail": "{\n  \"pass\": true,\n  \"checks\": [\n    true,\n    true,\n    true\n  ]\n}\n",
+          "returncode": 0
+        },
+        "required_files": [
+          {
+            "exists": true,
+            "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+          },
+          {
+            "exists": true,
+            "path": "tools/pass86_original_viewport_crop_manifest.py"
+          },
+          {
+            "exists": true,
+            "path": "tools/verify_pass376_dm1_v1_original_artifact_command_manifest.py"
+          },
+          {
+            "exists": true,
+            "path": "tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py"
+          },
+          {
+            "exists": true,
+            "path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv"
+          },
+          {
+            "exists": true,
+            "path": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.json"
+          }
+        ],
+        "xvfb_run_available": true
+      }
+    }
+  },
+  "not_claimed": [
+    "DOSBox/live original capture during this gate",
+    "original-vs-Firestaff pixel parity",
+    "semantic route promotion while F0365/F0366 is unproven"
+  ],
+  "promotion_rule": "Promote only when pass434 readiness is green, a bounded post-load runtime proves F0380 plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.",
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass435_dm1_v1_semantic_original_route_readiness_gate.v1",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_audit": [
+    {
+      "claim": "turn commands must be observed reaching F0365, where stop-wait is set and party direction mutates",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "f0365_turn_party_acceptance",
+      "lines": "142-174",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366_move_party_acceptance",
+      "lines": "180-347",
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_viewport_tuple_composition",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "G0296_puc_Bitmap_Viewport",
+        "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "the capture seam must be the PC34 viewport present path, not setup/menu echo",
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_pc34_viewport_present",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0296_puc_Bitmap_Viewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+  "timestampUtc": "2026-05-09T03:37:02.242839+00:00"
+}
