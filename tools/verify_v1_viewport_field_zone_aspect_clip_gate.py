@@ -18,10 +18,15 @@ CMAKE = ROOT / "CMakeLists.txt"
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_DEFS = RED_ROOT / "DEFS.H"
+RED_COORD = RED_ROOT / "COORD.C"
 
 
 def line_no(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
+
+
+def line_slice(text: str, start: int, end: int) -> str:
+    return "\n".join(text.splitlines()[start - 1:end])
 
 
 def require(text: str, needle: str, label: str) -> int:
@@ -32,7 +37,7 @@ def require(text: str, needle: str, label: str) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
+    m = re.search(r"\b(?:STATICFUNCTION\s+)?(?:static\s+)?(?:int|void|int16_t\*)\s+" + re.escape(name) + r"\s*\(", text)
     if not m:
         raise AssertionError(f"missing function {name}")
     brace = text.find("{", m.end())
@@ -74,6 +79,7 @@ def main() -> int:
     fire = SRC.read_text(encoding="utf-8")
     red = RED_DUNVIEW.read_text(encoding="latin-1")
     defs = RED_DEFS.read_text(encoding="latin-1")
+    coord = RED_COORD.read_text(encoding="latin-1")
     cmake = CMAKE.read_text(encoding="utf-8")
 
     # Source evidence: MEDIA720 field aspect mapping and wall-zone family.
@@ -97,6 +103,40 @@ def main() -> int:
         "#define C717_ZONE_WALL_D0R                                      717",
     ]:
         require(defs, needle, "ReDMCSB DEFS wall zones")
+
+    # Source-row clipping seam: fields and C2500/C2900 bitmaps resolve
+    # layout zones through F0635, then blit only against the real viewport.
+    # This prevents a bad local regression where side/deep rows are clamped
+    # into synthetic pane rectangles instead of clipping at G0296 viewport
+    # edges like the original.
+    f0113_body = line_slice(red, 4382, 4474)
+    require_in_order(f0113_body, [
+        "L2470_i_Width = M732_BYTE_WIDTH(P0135_puc_FieldAspect);",
+        "L2471_i_Height = M733_HEIGHT(P0135_puc_FieldAspect);",
+        "if (!F0635_(NULL, L2472_ai_XYZ, P2086_i_ZoneIndex, &L2470_i_Width, &L2471_i_Height))",
+        "C076_GRAPHIC_FIRST_FIELD + M728_NATIVE_BITMAP_RELATIVE_INDEX(P0135_puc_FieldAspect)",
+        "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "G2073_C224_ViewportPixelWidth",
+    ], "ReDMCSB F0113 field zone clip")
+
+    f0791_body = line_slice(red, 3394, 3465)
+    require_in_order(f0791_body, [
+        "if (P2081_i_ZoneIndex == CM1_UNKNOWN)",
+        "if (M007_GET(P2081_i_ZoneIndex, MASK0x8000_SHIFT_OBJECTS_AND_CREATURES",
+        "if (F0635_(P0101_puc_Bitmap_Source, G2032_ai_XYZ, P2081_i_ZoneIndex",
+        "F0132_VIDEO_Blit(P0101_puc_Bitmap_Source, P0102_puc_Bitmap_Destination, G2032_ai_XYZ",
+        "M100_PIXEL_WIDTH(P0102_puc_Bitmap_Destination)",
+    ], "ReDMCSB F0791 object/projectile source-zone clip")
+
+    f0635_body = line_slice(coord, 2052, 2174)
+    require_in_order(f0635_body, [
+        "if (P2131_i_ZoneIndex == CM1_UNKNOWN)",
+        "M009_CLEAR(P2131_i_ZoneIndex, MASK0x8000_SHIFT_OBJECTS_AND_CREATURES)",
+        "F0634_GetLayoutRecord(G2174_ps_LayoutData, P2131_i_ZoneIndex)",
+        "F0625_GetZoneInitializedFromDimensions(L2307_ai_XYZ, 20000, 20000);",
+        "M708_ZONE_WIDTH(L2307_ai_XYZ) = L2299_ps_LayoutRecord2->Data1 - M704_ZONE_LEFT(L2307_ai_XYZ) + L2300_i_;",
+        "M709_ZONE_HEIGHT(L2307_ai_XYZ) = L2299_ps_LayoutRecord2->Data2 - M706_ZONE_TOP(L2307_ai_XYZ) + L2301_;",
+    ], "ReDMCSB COORD F0635 layout zone clipping")
 
     # Firestaff table is expected to be the G2035 aspect order, converted to
     # (relative forward/side, layout-696 destination rect).  The final field in
@@ -133,6 +173,16 @@ def main() -> int:
         "m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,",
     ], "Firestaff field clip/sample/draw gate")
 
+    _, field_zone_body = find_function(fire, "m11_draw_dm1_field_zone")
+    require_in_order(field_zone_body, [
+        "fbY = M11_VIEWPORT_Y + dstY + y;",
+        "if (fbY < 0 || fbY >= fbH)",
+        "fbX = M11_VIEWPORT_X + dstX + x;",
+        "if (fbX < 0 || fbX >= fbW)",
+        "sx = (x + (baseStartUnit * 16)) % (int)field->width;",
+        "framebuffer[fbY * fbW + fbX] = pixel;",
+    ], "Firestaff field viewport clip")
+
     order_pos, order_body = find_function(fire, "m11_draw_viewport")
     require_in_order(order_body, [
         "maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);",
@@ -151,6 +201,9 @@ def main() -> int:
     for needle in source_needles:
         pos = red.find(needle)
         print(f"- ReDMCSB {RED_DUNVIEW.name}:{line_no(red, pos)} {needle}")
+    print(f"- ReDMCSB F0113 field clip: {RED_DUNVIEW}:{line_no(red, red.find('void F0113_DUNGEONVIEW_DrawField'))}")
+    print(f"- ReDMCSB F0791 source-zone bitmap clip: {RED_DUNVIEW}:{line_no(red, red.find('STATICFUNCTION void F0791_DUNGEONVIEW_DrawBitmapXX'))}")
+    print(f"- ReDMCSB F0635 layout-zone clip: {RED_COORD}:{line_no(coord, coord.find('int16_t* F0635_'))}")
     print(f"- ReDMCSB DEFS wall zones: {RED_DEFS}:{line_no(defs, defs.find('#define C702_ZONE_WALL_D3L2'))}-{line_no(defs, defs.find('#define C717_ZONE_WALL_D0R'))}")
     return 0
 
