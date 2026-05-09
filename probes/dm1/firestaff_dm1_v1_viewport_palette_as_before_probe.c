@@ -6,6 +6,13 @@
  *     translate C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME into the current
  *     G0322_B_PaletteSwitchingEnabled state, request the viewport draw, then
  *     wait one vertical blank before returning.
+ *   BASE.C:E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF lines 834-836:
+ *     a pending draw copies G0323_B_EnablePaletteSwitchingRequested into
+ *     G0322_B_PaletteSwitchingEnabled during vertical blank, not at call time.
+ *   BASE.C:E0017 lines 961-973: the same pending-draw vertical blank clears
+ *     G0342_B_RefreshDungeonViewPaletteRequested and copies the selected
+ *     G0304_i_DungeonViewPaletteIndex palette into G0346 middle-screen palette
+ *     before copying viewport rows to screen.
  *   DRAWVIEW.C:F0097 lines 730-798: Amiga path treats C2 as the current palette
  *     state, consumes G0342_B_RefreshDungeonViewPaletteRequested when refreshing
  *     the dungeon palette pointer, and only toggles G0322 when the requested
@@ -20,11 +27,16 @@
  *     pointer state after F0128/F0097 have returned.
  *   GAMELOOP.C:F0002 lines 128-131: FreezeLifeTicks is decremented before the
  *     action area refresh, not by the viewport present routine.
+ *   COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC lines 2336-2347 and 2398-2410:
+ *     both rest-screen entry and freeze overlay call F0097 with C2 as-before,
+ *     so C2 must restore/preserve whichever palette-switch state was active.
  *
  * This closes the remaining redraw/cadence gap around C2 "as before" during
  * rest/freeze style redraws: the presenter must preserve the prior palette state,
  * issue/present the viewport, and not consume the main-loop mouse update before
- * the present has completed.
+ * the present has completed. The follow-up locks the ST vertical-blank refresh
+ * flag path too: disabled palette switching remains disabled, but a pending
+ * dungeon-palette refresh is still consumed before viewport rows are copied.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +72,10 @@ typedef struct {
 static Event events[MAX_EVENTS];
 static int event_count;
 static int failures;
+
+static void reset_events(void) {
+    event_count = 0;
+}
 
 static void record(const char *phase, int value) {
     if (event_count >= MAX_EVENTS) {
@@ -110,6 +126,14 @@ static void present_st_like(Sim *s, int requested) {
     record("wait_one_vblank_before_return", s->vblank_waits);
 
     s->palette_switching_enabled = resolved;
+    record("vblank_palette_switch_committed", s->palette_switching_enabled);
+
+    if (s->refresh_palette_requested) {
+        s->refresh_palette_requested = 0;
+        s->applied_palette_index = s->dungeon_palette_index;
+        record("st_dungeon_palette_refresh_consumed", s->applied_palette_index);
+    }
+
     s->viewport_presented = 1;
     record("viewport_presented", s->palette_switching_enabled);
 }
@@ -122,8 +146,6 @@ static void present_amiga_like(Sim *s, int requested) {
         s->applied_palette_index = s->dungeon_palette_index;
         s->refresh_palette_requested = 0;
         record("dungeon_palette_refresh_consumed", s->applied_palette_index);
-        /* DRAWVIEW.C:783-784 disables palette switching after palette refresh on
-         * this path unless the later requested-state compare toggles it again. */
         s->palette_switching_enabled = C0_VIEWPORT_NOT_DUNGEON_VIEW;
         record("palette_switch_disabled_for_refresh", s->palette_switching_enabled);
     }
@@ -178,6 +200,7 @@ static void game_loop_after_present(Sim *s) {
 }
 
 static void verify_st_as_before_preserves_current_state(void) {
+    reset_events();
     Sim s;
     memset(&s, 0, sizeof s);
     s.palette_switching_enabled = C1_VIEWPORT_DUNGEON_VIEW;
@@ -196,7 +219,28 @@ static void verify_st_as_before_preserves_current_state(void) {
     check_int("freeze tick decremented outside present", s.freeze_life_ticks, 1);
 }
 
+static void verify_st_as_before_preserves_disabled_state_and_refreshes_palette(void) {
+    reset_events();
+    Sim s;
+    memset(&s, 0, sizeof s);
+    s.palette_switching_enabled = C0_VIEWPORT_NOT_DUNGEON_VIEW;
+    s.dungeon_palette_index = 2;
+    s.applied_palette_index = 5;
+    s.refresh_palette_requested = 1;
+
+    record("scenario_st_disabled_refresh_start", s.palette_switching_enabled);
+    present_st_like(&s, C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME);
+
+    check_int("ST disabled C2 resolved to prior disabled state", s.palette_switching_requested, C0_VIEWPORT_NOT_DUNGEON_VIEW);
+    check_int("ST vblank committed disabled palette switch state", s.palette_switching_enabled, C0_VIEWPORT_NOT_DUNGEON_VIEW);
+    check_int("ST vblank consumed dungeon palette refresh flag", s.refresh_palette_requested, 0);
+    check_int("ST vblank copied selected dungeon palette", s.applied_palette_index, 2);
+    check_true("ST palette switch commit precedes refresh", index_of("vblank_palette_switch_committed") < index_of("st_dungeon_palette_refresh_consumed"));
+    check_true("ST palette refresh precedes viewport copy", index_of("st_dungeon_palette_refresh_consumed") < index_of("viewport_presented"));
+}
+
 static void verify_amiga_refresh_then_as_before_reenables_current_state(void) {
+    reset_events();
     Sim s;
     memset(&s, 0, sizeof s);
     s.palette_switching_enabled = C1_VIEWPORT_DUNGEON_VIEW;
@@ -215,6 +259,7 @@ static void verify_amiga_refresh_then_as_before_reenables_current_state(void) {
 }
 
 static void verify_pc_i34_as_before_does_not_reapply_palette(void) {
+    reset_events();
     Sim s;
     memset(&s, 0, sizeof s);
     s.dungeon_palette_index = 7;
@@ -231,9 +276,10 @@ static void verify_pc_i34_as_before_does_not_reapply_palette(void) {
 int main(void) {
     printf("Firestaff DM1 V1 viewport palette/as-before cadence probe\n");
     printf("primary_source=ReDMCSB_WIP20210206/Toolchains/Common/Source\n");
-    printf("locks=DRAWVIEW.C:715-722,DRAWVIEW.C:730-798,DRAWVIEW.C:821-858,GAMELOOP.C:80-102,GAMELOOP.C:128-131\n\n");
+    printf("locks=DRAWVIEW.C:715-722,BASE.C:834-836,BASE.C:961-973,DRAWVIEW.C:730-798,DRAWVIEW.C:821-858,GAMELOOP.C:80-102,GAMELOOP.C:128-131,COMMAND.C:2336-2347,COMMAND.C:2398-2410\n\n");
 
     verify_st_as_before_preserves_current_state();
+    verify_st_as_before_preserves_disabled_state_and_refreshes_palette();
     verify_amiga_refresh_then_as_before_reenables_current_state();
     verify_pc_i34_as_before_does_not_reapply_palette();
 
