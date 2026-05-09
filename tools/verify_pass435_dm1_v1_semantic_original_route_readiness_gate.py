@@ -30,6 +30,20 @@ READY = "PASS435_SEMANTIC_ORIGINAL_ROUTE_READY"
 
 SOURCE_ANCHORS: list[dict[str, Any]] = [
     {
+        "id": "f0380_queue_pop_dispatch",
+        "file": "COMMAND.C",
+        "function": "F0380_COMMAND_ProcessQueue_CPSC",
+        "lines": "2045-2156",
+        "needles": [
+            "void F0380_COMMAND_ProcessQueue_CPSC",
+            "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+            "G2153_i_QueuedCommandsCount--",
+            "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
+        ],
+        "claim": "queued input must be observed through F0380 pop/load before turn commands branch to F0365 or movement commands branch to F0366",
+    },
+    {
         "id": "f0365_turn_party_acceptance",
         "file": "CLIKMENU.C",
         "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
@@ -91,6 +105,7 @@ SOURCE_ANCHORS: list[dict[str, Any]] = [
 INPUTS = {
     "pass434_crop_readiness": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
     "pass385_runtime_semantic_route": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/manifest.json",
+    "pass391_queued_command_dispatch": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/manifest.json",
     "pass378_semantic_blocker": "parity-evidence/verification/pass378_dm1_v1_original_route_semantic_clean_blocker/manifest.json",
     "pass376_classifier": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
     "pass376_crop_manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
@@ -183,9 +198,17 @@ def blocker_list(data: dict[str, Any]) -> list[str]:
         blockers.append("pass434 crop/source readiness is not green")
 
     pred = (data["inputs"]["pass385_runtime_semantic_route"].get("proofPredicates") or {})
-    if pred.get("f0380Hit") is not True:
-        blockers.append("runtime does not prove F0380 command queue hit")
-    if pred.get("f0365OrF0366Hit") is not True:
+    dispatch_pred = (data["inputs"].get("pass391_queued_command_dispatch", {}).get("proofPredicates") or {})
+    pass391_status = data["inputs"].get("pass391_queued_command_dispatch", {}).get("status")
+    pass391_dispatch_ok = (
+        pass391_status == "PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN"
+        and dispatch_pred.get("f0365OrF0366DispatchObserved") is True
+        and dispatch_pred.get("g2153DecrementPopLoadObserved") is True
+        and dispatch_pred.get("consumerBreakpointsArmedAfterIncrement") is True
+    )
+    if not (pred.get("f0380Hit") is True or dispatch_pred.get("f0380PopLoadAfterQueueWriteObserved") is True):
+        blockers.append("runtime does not prove F0380 command queue hit/pop-load")
+    if not pass391_dispatch_ok:
         blockers.append("runtime still does not prove F0365/F0366 command dispatch")
     if pred.get("g0321StopWaitWriteObserved") is not True:
         blockers.append("runtime does not prove G0321 stop-wait write")
@@ -230,13 +253,18 @@ def write_report(data: dict[str, Any]) -> None:
     for row in data["source_audit"]:
         lines.append(f"- `{row['file']}:{row['lines']}` `{row['function']}` — ok=`{row['ok']}`; {row['claim']}")
     pred = data["inputs"]["pass385_runtime_semantic_route"].get("proofPredicates") or {}
+    dispatch_pred = data["inputs"].get("pass391_queued_command_dispatch", {}).get("proofPredicates") or {}
+    pass391_status = data["inputs"].get("pass391_queued_command_dispatch", {}).get("status")
     lines.extend([
         "",
         "## Runtime semantic proof carried forward",
         "",
         f"- pass385 status: `{data['inputs']['pass385_runtime_semantic_route'].get('status')}`",
-        f"- F0380 command queue hit: `{pred.get('f0380Hit')}`",
-        f"- F0365/F0366 command dispatch hit: `{pred.get('f0365OrF0366Hit')}`",
+        f"- pass385 F0380 command queue hit: `{pred.get('f0380Hit')}`",
+        f"- pass385 F0365/F0366 command dispatch hit: `{pred.get('f0365OrF0366Hit')}`",
+        f"- pass391 status: `{pass391_status}`",
+        f"- pass391 F0380 pop/load after queue write: `{dispatch_pred.get('f0380PopLoadAfterQueueWriteObserved')}`",
+        f"- pass391 F0365/F0366 command dispatch observed: `{dispatch_pred.get('f0365OrF0366DispatchObserved')}`",
         f"- G0321 stop-wait write observed: `{pred.get('g0321StopWaitWriteObserved')}`",
         f"- later F0128 after stop-wait observed: `{pred.get('nextF0128AfterStopWaitObserved')}`",
         "",
@@ -279,7 +307,7 @@ def main() -> int:
         "inputs": {name: load_json(rel) for name, rel in INPUTS.items() if name not in {"pass376_classifier", "pass376_crop_manifest"}},
         "classifier": summarize_classifier(INPUTS["pass376_classifier"]),
         "crop_manifest": summarize_crop_manifest(INPUTS["pass376_crop_manifest"]),
-        "promotion_rule": "Promote only when pass434 readiness is green, a bounded post-load runtime proves F0380 plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.",
+        "promotion_rule": "Promote only when pass434 readiness is green, bounded original-runtime evidence proves F0380 pop/load plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.",
         "not_claimed": ["DOSBox/live original capture during this gate", "original-vs-Firestaff pixel parity", "semantic route promotion while F0365/F0366 is unproven"],
     }
     data["blockers"] = blocker_list(data)

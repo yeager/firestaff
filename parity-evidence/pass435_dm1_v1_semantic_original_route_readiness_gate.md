@@ -8,6 +8,7 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## ReDMCSB WIP20210206 source audit
 
+- `COMMAND.C:2045-2156` `F0380_COMMAND_ProcessQueue_CPSC` — ok=`True`; queued input must be observed through F0380 pop/load before turn commands branch to F0365 or movement commands branch to F0366
 - `CLIKMENU.C:142-174` `F0365_COMMAND_ProcessTypes1To2_TurnParty` — ok=`True`; turn commands must be observed reaching F0365, where stop-wait is set and party direction mutates
 - `CLIKMENU.C:180-347` `F0366_COMMAND_ProcessTypes3To6_MoveParty` — ok=`True`; move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed
 - `DUNVIEW.C:8318-8611` `F0128_DUNGEONVIEW_Draw_CPSF` — ok=`True`; viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple
@@ -16,8 +17,11 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 ## Runtime semantic proof carried forward
 
 - pass385 status: `BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN`
-- F0380 command queue hit: `True`
-- F0365/F0366 command dispatch hit: `False`
+- pass385 F0380 command queue hit: `True`
+- pass385 F0365/F0366 command dispatch hit: `False`
+- pass391 status: `PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN`
+- pass391 F0380 pop/load after queue write: `True`
+- pass391 F0365/F0366 command dispatch observed: `True`
 - G0321 stop-wait write observed: `True`
 - later F0128 after stop-wait observed: `True`
 
@@ -31,7 +35,6 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Blockers
 
-- runtime still does not prove F0365/F0366 command dispatch
 - pass376 raw route classifier is not green
 - pass376 raw route classes do not match the semantic promotion sequence
 - pass376 raw route repeats screenshot hashes
@@ -39,7 +42,7 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Promotion rule
 
-Promote only when pass434 readiness is green, a bounded post-load runtime proves F0380 plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.
+Promote only when pass434 readiness is green, bounded original-runtime evidence proves F0380 pop/load plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.
 
 This gate does not launch DOSBox and does not claim pixel parity.
 
