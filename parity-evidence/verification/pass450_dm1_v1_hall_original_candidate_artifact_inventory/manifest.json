@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T15:38:01.146109+00:00",
+  "timestampUtc": "2026-05-09T17:00:52.587859+00:00",
   "status": "BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "branch": "land-20260509",
-  "head": "94edfb9d3be9a71fb983a3afd7e39729052e54b0",
+  "head": "962a2ffd69552b80f3ddc1259aae759d7dc8e58d",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {

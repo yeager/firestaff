@@ -284,8 +284,8 @@
         73
       ],
       "exists": true,
-      "bytes": 2589,
-      "sha256": "4303139e939d287bc236cc4a8b8bc327955ce1adf273b129f31bb666cc367331",
+      "bytes": 2588,
+      "sha256": "7f30fc43f447018a79228cc87c458771c168795983a6f5c8837c1724226e805d",
       "pngDims": [
         144,
         73
@@ -832,7 +832,7 @@
       "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
       "firestaffSha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
       "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
-      "originalSha256": "4303139e939d287bc236cc4a8b8bc327955ce1adf273b129f31bb666cc367331",
+      "originalSha256": "7f30fc43f447018a79228cc87c458771c168795983a6f5c8837c1724226e805d",
       "dimensions": [
         144,
         73

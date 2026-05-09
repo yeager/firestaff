@@ -60,15 +60,15 @@
     },
     {
       "file": "m11_game_view.c",
-      "start": 5376,
-      "end": 5379,
+      "start": 5507,
+      "end": 5509,
       "function": "M11_GameView_HandleMenuInput",
       "assertion": "Firestaff inventory-toggle input clears the map overlay, calls the inventory panel toggle, and requests redraw without touching debug HUD state."
     },
     {
       "file": "m11_game_view.c",
-      "start": 20998,
-      "end": 21005,
+      "start": 21170,
+      "end": 21175,
       "function": "M11_GameView_ToggleInventoryPanel",
       "assertion": "Firestaff toggle flips inventoryPanelActive and resets selected slot only when the panel opens."
     }
