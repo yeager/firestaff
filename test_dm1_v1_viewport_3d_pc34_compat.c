@@ -385,6 +385,8 @@ static void test_post_command_redraw_contract(void)
     check_int("post_command_redraw.redraw_uses_party_tuple", spec->redraw_uses_party_tuple ? 1 : 0, 1);
     check_int("post_command_redraw.present_waits", spec->present_waits_for_viewport ? 1 : 0, 1);
     check_int("post_command_redraw.command_source", strstr(spec->command_source_lines, "COMMAND.C:2045-2156") != NULL, 1);
+    check_int("post_command_redraw.pop_unlock_source", strstr(spec->command_source_lines, "2118-2127") != NULL, 1);
+    check_int("post_command_redraw.turn_move_dispatch_source", strstr(spec->command_source_lines, "2150-2156") != NULL, 1);
     check_int("post_command_redraw.mainloop_source", strstr(spec->main_loop_source_lines, "GAMELOOP.C:55-90") != NULL, 1);
     check_int("post_command_redraw.present_source", strstr(spec->present_source_lines, "DRAWVIEW.C:709-722") != NULL, 1);
 }

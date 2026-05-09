@@ -143,7 +143,7 @@ static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     true,
     true,
     true,
-    "COMMAND.C:2045-2156/F0380 pops a queued command and dispatches turn/move mutations",
+    "COMMAND.C:2045-2156/F0380 pops a queued command; lines 2118-2127 pop/unlock, 2150-2156 dispatch turn/move mutations",
     "GAMELOOP.C:55-90 next loop iteration redraws F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
     "DRAWVIEW.C:709-722 F0097_DUNGEONVIEW_DrawViewport requests the G0296 viewport blit and waits for vertical blank",
 };
