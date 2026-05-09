@@ -369,15 +369,31 @@ typedef struct {
 #define DM1_PC34_ZONE_WALL_D0R              717
 
 typedef struct {
-    uint8_t left_x;     /* Viewport-relative left X (pixel) */
-    uint8_t right_x;    /* Right boundary */
-    uint8_t top_y;      /* Top Y */
-    uint8_t bottom_y;   /* Bottom Y */
-    uint8_t byte_width; /* Bitmap byte width (pc34: same as pixel width) */
-    uint8_t height;     /* Bitmap height in lines */
-    uint8_t blit_x;     /* Destination X in viewport */
-    uint8_t blit_y;     /* Destination Y in viewport */
+    uint8_t left_x;     /* Viewport-relative clip left X (pixel) */
+    uint8_t right_x;    /* Viewport-relative clip right boundary */
+    uint8_t top_y;      /* Viewport-relative clip top Y */
+    uint8_t bottom_y;   /* Viewport-relative clip bottom Y */
+    uint8_t byte_width; /* Source bitmap row width in the active port */
+    uint8_t height;     /* Source bitmap height in lines */
+    uint8_t blit_x;     /* Source X offset passed to F0132/F0684 */
+    uint8_t blit_y;     /* Source Y offset passed to F0132/F0684 */
 } DM1_WallFrame;
+
+/* Resolved source/destination rectangle for wall blits.  ReDMCSB passes the
+ * frame/zone as the destination clip and frame[C6]/frame[C7] (or the bitmap
+ * struct X/Y after F0635_) as the first source pixel.  This gate clips both
+ * the viewport rectangle and the source rows, and marks fully occluded/empty
+ * blits invisible before any pixel copy. */
+typedef struct {
+    bool visible;
+    int16_t src_x;
+    int16_t src_y;
+    int16_t dst_x;
+    int16_t dst_y;
+    int16_t width;
+    int16_t height;
+    const char *source_lines;
+} DM1_ViewportBlitClipGate;
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Viewport 3D Wall Rendering State
@@ -572,6 +588,9 @@ void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
  * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8]
  */
 const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
+DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_WallFrame *frame,
+                                                                      int source_width,
+                                                                      int source_height);
 
 /* Source-locked F0128 visible-square draw order metadata. */
 size_t dm1_viewport_3d_draw_order_count(void);
