@@ -1504,6 +1504,14 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     endif()
 endif()
 
+# ── DM1 V1 original viewport crop/source-lock readiness gate ─────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass434_dm1_v1_original_viewport_crop_readiness_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass434_dm1_v1_original_viewport_crop_readiness_gate.py
+    )
+endif()
+
 # ── DM1 V1 input→command→movement pipeline source-lock gate ──────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
