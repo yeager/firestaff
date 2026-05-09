@@ -36,8 +36,8 @@
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
-      "start": 18335,
-      "end": 18680
+      "start": 18711,
+      "end": 19030
     }
   ],
   "redmcsbMarkers": [
@@ -166,56 +166,56 @@
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status-box background comment",
-      "line": 18437,
+      "line": 18771,
       "needle": "V1 source status-box background"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "alive status fill",
-      "line": 18459,
+      "line": 18793,
       "needle": "M11_GameView_GetV1StatusBoxFillColor"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "source-order shield border block",
-      "line": 18477,
+      "line": 18811,
       "needle": "before top-row\n             * text, bars, and hand slots"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "shield border blit",
-      "line": 18498,
+      "line": 18832,
       "needle": "M11_GameView_GetV1StatusShieldBorderZone"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "name clear/text block",
-      "line": 18514,
+      "line": 18848,
       "needle": "V1 champion name/title status text"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "bar graph block",
-      "line": 18555,
+      "line": 18889,
       "needle": "Pass 43: champion HP/stamina/mana bar graphs"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status hand slots block",
-      "line": 18645,
+      "line": 18979,
       "needle": "V1 status-box hand slots"
     },
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "poison/damage later overlays",
-      "line": 18664,
+      "line": 18998,
       "needle": "GRAPHICS.DAT-backed POISONED label"
     }
   ],
