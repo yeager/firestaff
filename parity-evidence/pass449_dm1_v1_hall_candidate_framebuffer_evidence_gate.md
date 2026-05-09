@@ -1,6 +1,6 @@
 # pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate
 
-- status: `BLOCKED_PASS449_HALL_CANDIDATE_FRAMEBUFFER_ORIGINAL_ARTIFACTS_MISSING`
+- status: `BLOCKED_PASS449_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_FRAMEBUFFER_ARTIFACTS_MISSING`
 - redmcsb: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - parity claim: **not made**; this is a source-locked evidence path and blocker gate.
 
@@ -73,6 +73,15 @@
 - `hud_status_after` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png` hashField=`scenes.hud_status_after.original.fullframe.sha256` exists=False
 - `hud_status_after` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.original.hud_status_crop.sha256` exists=False
 
+## N2 DOSBox original Hall panel-visible artifact
+- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=True ok=True
+- status: `NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION` host=`firestaff-worker` created=`2026-05-09T14:15:00+02:00` entries=11
+- use: original Hall/front-mirror visible context only; not a candidate panel framebuffer comparator input
+- DUNGEON.DAT sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`; GRAPHICS.DAT sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`; TITLE sha256 `adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745`
+- pc320 `pc320/03_panel_visible_north_front_mirror_pc320.png` sha256 `766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0`
+- viewport224x136 `viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png` sha256 `66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f`
+- remaining blocker: candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after original true-stop frames and Firestaff-paired comparator inputs are still missing; N2 candidate clicks did not transition visibly.
+
 ## Current artifacts
 - `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/summary.json` exists=True classification=`blocked/static-no-party-after-gate` use=`review_only_not_promotable`
 - `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0011-after_portrait_click.png` exists=True dims=[320, 200] use=`review_only_not_promotable`
@@ -83,7 +92,7 @@
 - `parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json` exists=True use=`review_only_not_promotable`
 
 ## Remaining blocker
-Original PC34 Hall candidate select/panel/cancel/resurrect/reincarnate/HUD frames are not semantically promotable yet. The pass173 images are review clues only: they remain static/no-party after the gate, so they cannot prove panel pixel parity.
+A hash-locked N2 original `03_panel_visible_north_front_mirror` frame/crop is now available for Hall/front-mirror visible context. It does not prove candidate panel transition or pixel parity. Original candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing/no-transition, and pass173 images remain review clues only.
 
 ## Non-claims
 No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.

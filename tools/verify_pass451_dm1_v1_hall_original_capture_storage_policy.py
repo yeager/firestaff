@@ -22,6 +22,8 @@ MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 TARGET = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
 EXTERNAL_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 
 REQUIRED_NEEDLES = [
     "import json, os, shutil, subprocess, sys, time",
@@ -31,6 +33,31 @@ REQUIRED_NEEDLES = [
     "RUN_BASE_ROOT = Path(os.environ.get(\"FIRESTAFF_PASS173_RUN_BASE\", os.environ.get(\"FIRESTAFF_ARTIFACT_ROOT\", str(DEFAULT_RUN_BASE_ROOT))))",
 ]
 
+
+
+def audit_n2_artifact_root() -> dict[str, Any]:
+    manifest_path = N2_HALL_ARTIFACT_ROOT / "manifest.json"
+    row: dict[str, Any] = {
+        "root": str(N2_HALL_ARTIFACT_ROOT),
+        "exists": N2_HALL_ARTIFACT_ROOT.is_dir(),
+        "manifestPath": str(manifest_path),
+        "expectedStatus": N2_HALL_ARTIFACT_STATUS,
+    }
+    errors: list[str] = []
+    if not manifest_path.is_file():
+        errors.append(f"missing {manifest_path}")
+    else:
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            data = {}
+            errors.append(f"manifest parse failed: {exc}")
+        row.update({"status": data.get("status"), "entryCount": len(data.get("entries", [])) if isinstance(data.get("entries"), list) else None})
+        if data.get("status") != N2_HALL_ARTIFACT_STATUS:
+            errors.append(f"status mismatch: {data.get('status')} != {N2_HALL_ARTIFACT_STATUS}")
+    row["ok"] = not errors
+    row["errors"] = errors
+    return row
 
 def run(cmd: list[str]) -> dict[str, Any]:
     proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -46,6 +73,7 @@ def main() -> int:
     text = TARGET.read_text(encoding="utf-8") if TARGET.exists() else ""
     missing = [needle for needle in REQUIRED_NEEDLES if needle not in text]
     py_compile = run(["python3", "-m", "py_compile", str(TARGET)])
+    n2_artifact_root = audit_n2_artifact_root()
     errors: list[str] = []
     if not TARGET.exists():
         errors.append(f"missing target {TARGET}")
@@ -53,6 +81,7 @@ def main() -> int:
         errors.append(f"missing storage policy needles: {missing}")
     if py_compile["returncode"] != 0:
         errors.append("pass173 py_compile failed")
+    errors += n2_artifact_root.get("errors", [])
     manifest = {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
@@ -64,6 +93,7 @@ def main() -> int:
         "externalArtifactRoot": str(EXTERNAL_ROOT),
         "externalParentExists": EXTERNAL_ROOT.parent.exists(),
         "envOverrides": ["FIRESTAFF_DOSBOX", "FIRESTAFF_PASS173_RUN_BASE", "FIRESTAFF_ARTIFACT_ROOT"],
+        "n2HallDosboxArtifactRoot": n2_artifact_root,
         "fallbackRunBase": "~/.openclaw/data/firestaff-n2-runs only when the N1 external artifact parent is absent and no env override is supplied",
         "pyCompile": py_compile,
         "missing": missing,
@@ -79,6 +109,7 @@ def main() -> int:
         f"- external parent exists: `{manifest['externalParentExists']}`",
         "- env overrides: `FIRESTAFF_DOSBOX`, `FIRESTAFF_PASS173_RUN_BASE`, `FIRESTAFF_ARTIFACT_ROOT`",
         "- fallback: internal run base is allowed only when external root is absent and no env override is set.",
+        f"- ingested N2 Hall DOSBox artifact root: `{n2_artifact_root['root']}` exists={n2_artifact_root['exists']} ok={n2_artifact_root['ok']} status=`{n2_artifact_root.get('status')}`",
         "",
         "## Non-claims",
         "No original Hall candidate screenshot parity is claimed here; this only keeps the next capture attempt reproducible and off the internal disk.",

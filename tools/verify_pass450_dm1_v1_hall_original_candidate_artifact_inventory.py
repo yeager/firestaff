@@ -20,7 +20,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass450_dm1_v1_hall_original_candidate_artifact_inventory"
-STATUS = "BLOCKED_PASS450_ORIGINAL_PC34_HALL_CANDIDATE_FRAMES_NOT_PROMOTABLE"
+STATUS = "BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -69,6 +69,9 @@ PASS173_RUNS = [
     "gate_click_portrait_then_reincarnate",
 ]
 PASS173_ROOT = ROOT / "parity-evidence/verification/pass173_source_portrait_route_gate_probe"
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
+N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
 REQUIRED_PROMOTION_SCENES = [
     "candidate_select_portrait_click_before_panel",
     "candidate_panel_visible_after_append",
@@ -215,6 +218,89 @@ def frame_rows(data_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+
+def audit_n2_hall_artifact() -> dict[str, Any]:
+    root = N2_HALL_ARTIFACT_ROOT
+    manifest_path = root / "manifest.json"
+    sha_path = root / "SHA256SUMS.txt"
+    readme_path = root / "README.md"
+    row: dict[str, Any] = {
+        "root": str(root),
+        "exists": root.is_dir(),
+        "manifestPath": str(manifest_path),
+        "sha256SumsPath": str(sha_path),
+        "readmePath": str(readme_path),
+        "expectedStatus": N2_HALL_ARTIFACT_STATUS,
+        "promotableLabel": N2_PROMOTABLE_LABEL,
+        "promotionUse": "panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity",
+        "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.",
+    }
+    if not root.is_dir():
+        row.update({"ok": False, "errors": [f"missing N2 Hall artifact root {root}"]})
+        return row
+    errors: list[str] = []
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        manifest = {}
+        errors.append(f"manifest read/parse failed: {exc}")
+    row["status"] = manifest.get("status")
+    row["host"] = manifest.get("host")
+    row["created"] = manifest.get("created")
+    row["entryCount"] = len(manifest.get("entries", [])) if isinstance(manifest.get("entries"), list) else None
+    source = manifest.get("source_provenance", {}) if isinstance(manifest.get("source_provenance"), dict) else {}
+    required_source = {
+        "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    }
+    row["sourceProvenance"] = source
+    row["requiredSourceProvenance"] = required_source
+    for key, expected in required_source.items():
+        if source.get(key) != expected:
+            errors.append(f"source_provenance.{key} mismatch: {source.get(key)} != {expected}")
+    if row.get("status") != N2_HALL_ARTIFACT_STATUS:
+        errors.append(f"status mismatch: {row.get('status')} != {N2_HALL_ARTIFACT_STATUS}")
+    if row.get("entryCount") != 11:
+        errors.append(f"entry count mismatch: {row.get('entryCount')} != 11")
+    entries = manifest.get("entries", []) if isinstance(manifest.get("entries"), list) else []
+    promotable = next((entry for entry in entries if str(entry.get("pc320", "")).startswith(f"pc320/{N2_PROMOTABLE_LABEL}") or str(entry.get("viewport224x136", "")).startswith(f"viewport224x136/{N2_PROMOTABLE_LABEL}")), None)
+    row["promotableEntry"] = promotable
+    if not promotable:
+        errors.append(f"missing promotable entry {N2_PROMOTABLE_LABEL}")
+    checked_files: list[dict[str, Any]] = []
+    for entry in entries:
+        for rel_key, hash_key in (("pc320", "pc320_sha256"), ("viewport224x136", "viewport_sha256"), ("root", "root_sha256")):
+            rel_path = entry.get(rel_key)
+            expected_hash = entry.get(hash_key)
+            if not rel_path or not expected_hash:
+                continue
+            path = root / rel_path
+            item = {"path": str(path), "rel": rel_path, "expectedSha256": expected_hash, "exists": path.is_file()}
+            if path.is_file():
+                actual = sha(path)
+                item.update({"actualSha256": actual, "bytes": path.stat().st_size, "pngDims": png_dims(path), "ok": actual == expected_hash})
+                if actual != expected_hash:
+                    errors.append(f"artifact hash mismatch {rel_path}: {actual} != {expected_hash}")
+            else:
+                item["ok"] = False
+                errors.append(f"missing artifact file {path}")
+            checked_files.append(item)
+    row["checkedFiles"] = checked_files
+    if sha_path.is_file():
+        row["sha256SumsSha256"] = sha(sha_path)
+        text = sha_path.read_text(encoding="utf-8", errors="replace")
+        row["sha256SumsLineCount"] = len([ln for ln in text.splitlines() if ln.strip()])
+    else:
+        errors.append(f"missing {sha_path}")
+    if readme_path.is_file():
+        row["readmeSha256"] = sha(readme_path)
+    else:
+        errors.append(f"missing {readme_path}")
+    row["ok"] = not errors
+    row["errors"] = errors
+    return row
+
 def audit_environment() -> dict[str, Any]:
     import os
     import platform
@@ -300,6 +386,18 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines += ["", "## Existing reviewed frames"]
     for row in manifest["existingOriginalReviewFrames"]:
         lines.append(f"- `{row['path']}` sha12 `{row['sha12']}` dims={row['pngDims']} class=`{row.get('class')}` pass173=`{row.get('pass173Classification')}` use=`{row['promotionUse']}`")
+    n2 = manifest["n2HallDosboxArtifact"]
+    lines += ["", "## N2 DOSBox original Hall artifact"]
+    lines.append(f"- root: `{n2['root']}` exists={n2['exists']} ok={n2['ok']}")
+    lines.append(f"- status: `{n2.get('status')}` host=`{n2.get('host')}` created=`{n2.get('created')}` entries={n2.get('entryCount')}")
+    lines.append(f"- promotable/narrowed label: `{n2['promotableLabel']}` use=`{n2['promotionUse']}`")
+    sp = n2.get("sourceProvenance", {})
+    lines.append(f"- DUNGEON.DAT sha256 `{sp.get('DUNGEON.DAT_sha256')}`; GRAPHICS.DAT sha256 `{sp.get('GRAPHICS.DAT_sha256')}`; TITLE sha256 `{sp.get('TITLE_sha256')}`")
+    pe = n2.get("promotableEntry") or {}
+    if pe:
+        lines.append(f"- pc320 `{pe.get('pc320')}` sha256 `{pe.get('pc320_sha256')}`")
+        lines.append(f"- viewport224x136 `{pe.get('viewport224x136')}` sha256 `{pe.get('viewport_sha256')}`")
+    lines.append(f"- remaining blocker: {n2['remainingBlocker']}")
     lines += ["", "## Missing promotable scenes"]
     for scene in manifest["missingPromotableScenes"]:
         lines.append(f"- `{scene}`")
@@ -332,8 +430,9 @@ def main() -> int:
     frames = frame_rows(data_rows)
     pass173_summaries = {run: load_json(PASS173_ROOT / run / "summary.json") for run in PASS173_RUNS}
     env = audit_environment()
-    missing = REQUIRED_PROMOTION_SCENES[:]
-    errors = data_errors + source_errors
+    n2_artifact = audit_n2_hall_artifact()
+    missing = [scene for scene in REQUIRED_PROMOTION_SCENES if scene != "candidate_panel_visible_after_append"]
+    errors = data_errors + source_errors + n2_artifact.get("errors", [])
     manifest = {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
@@ -346,9 +445,11 @@ def main() -> int:
         "sourceLocks": source_rows,
         "pass173Summaries": pass173_summaries,
         "existingOriginalReviewFrames": frames,
+        "n2HallDosboxArtifact": n2_artifact,
+        "availablePromotableOriginalFrames": ["03_panel_visible_north_front_mirror pc320+viewport224x136 (Hall/front-mirror visible only; no candidate transition)"],
         "missingPromotableScenes": missing,
         "captureEnvironment": env,
-        "promotionDecision": "Do not promote current original PC34 Hall frames/crops. They are static no-party review clues and lack source-bound true-stop/semantic labels for candidate panel visibility, cancel, resurrect confirm, reincarnate confirm, and HUD/status outcomes.",
+        "promotionDecision": "Promote only the N2 03_panel_visible_north_front_mirror pc320+viewport224x136 frame as original Hall/front-mirror panel-visible context. Do not claim candidate panel or pixel parity; candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing because this DOSBox-X run did not visibly transition after candidate clicks.",
         "errors": errors,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

@@ -24,7 +24,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate"
-STATUS = "BLOCKED_PASS449_HALL_CANDIDATE_FRAMEBUFFER_ORIGINAL_ARTIFACTS_MISSING"
+STATUS = "BLOCKED_PASS449_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_FRAMEBUFFER_ARTIFACTS_MISSING"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -210,6 +210,9 @@ FRAMEBUFFER_INPUT_DIR = VERIFY_DIR / "framebuffer_inputs"
 FRAMEBUFFER_MANIFEST = FRAMEBUFFER_INPUT_DIR / "hall_candidate_framebuffer_manifest.json"
 FRAMEBUFFER_SCHEMA_PATH = VERIFY_DIR / "hall_candidate_framebuffer_manifest_schema.json"
 COMPARATOR_RESULT = VERIFY_DIR / "hall_candidate_framebuffer_compare.json"
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
+N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
 
 REGIONS = {
     "fullframe": {"xywh": [0, 0, 320, 200], "requiredFor": REQUIRED_SCENES},
@@ -550,6 +553,74 @@ def run(cmd: list[str]) -> dict[str, Any]:
     return {"cmd": cmd, "returncode": proc.returncode, "outputTail": proc.stdout[-4000:]}
 
 
+
+def audit_n2_panel_visible_artifact() -> dict[str, Any]:
+    root = N2_HALL_ARTIFACT_ROOT
+    manifest_path = root / "manifest.json"
+    row: dict[str, Any] = {
+        "root": str(root),
+        "exists": root.is_dir(),
+        "manifestPath": str(manifest_path),
+        "expectedStatus": N2_HALL_ARTIFACT_STATUS,
+        "promotableLabel": N2_PROMOTABLE_LABEL,
+        "parityUse": "original Hall/front-mirror visible context only; not a candidate panel framebuffer comparator input",
+        "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after original true-stop frames and Firestaff-paired comparator inputs are still missing; N2 candidate clicks did not transition visibly.",
+    }
+    if not root.is_dir():
+        row.update({"ok": False, "errors": [f"missing N2 Hall artifact root {root}"]})
+        return row
+    errors: list[str] = []
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        manifest = {}
+        errors.append(f"manifest read/parse failed: {exc}")
+    source = manifest.get("source_provenance", {}) if isinstance(manifest.get("source_provenance"), dict) else {}
+    required_source = {
+        "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    }
+    row.update({
+        "status": manifest.get("status"),
+        "host": manifest.get("host"),
+        "created": manifest.get("created"),
+        "entryCount": len(manifest.get("entries", [])) if isinstance(manifest.get("entries"), list) else None,
+        "sourceProvenance": source,
+        "requiredSourceProvenance": required_source,
+        "findings": manifest.get("findings", []),
+    })
+    for key, expected in required_source.items():
+        if source.get(key) != expected:
+            errors.append(f"source_provenance.{key} mismatch: {source.get(key)} != {expected}")
+    if row.get("status") != N2_HALL_ARTIFACT_STATUS:
+        errors.append(f"status mismatch: {row.get('status')} != {N2_HALL_ARTIFACT_STATUS}")
+    entries = manifest.get("entries", []) if isinstance(manifest.get("entries"), list) else []
+    promotable = next((entry for entry in entries if str(entry.get("pc320", "")).startswith(f"pc320/{N2_PROMOTABLE_LABEL}") or str(entry.get("viewport224x136", "")).startswith(f"viewport224x136/{N2_PROMOTABLE_LABEL}")), None)
+    row["promotableEntry"] = promotable
+    if not promotable:
+        errors.append(f"missing promotable entry {N2_PROMOTABLE_LABEL}")
+    else:
+        for rel_key, hash_key in (("pc320", "pc320_sha256"), ("viewport224x136", "viewport_sha256"), ("root", "root_sha256")):
+            rel_path = promotable.get(rel_key)
+            expected_hash = promotable.get(hash_key)
+            path = root / rel_path if rel_path else root / "__missing__"
+            item_key = f"{rel_key}File"
+            row[item_key] = {"path": str(path), "rel": rel_path, "expectedSha256": expected_hash, "exists": path.is_file()}
+            if path.is_file() and expected_hash:
+                actual = sha(path)
+                row[item_key].update({"actualSha256": actual, "bytes": path.stat().st_size, "pngDims": png_dims(path), "ok": actual == expected_hash})
+                if actual != expected_hash:
+                    errors.append(f"artifact hash mismatch {rel_path}: {actual} != {expected_hash}")
+            else:
+                row[item_key]["ok"] = False
+                errors.append(f"missing promotable artifact file/hash for {rel_key}: {path}")
+    row["sha256SumsExists"] = (root / "SHA256SUMS.txt").is_file()
+    row["readmeExists"] = (root / "README.md").is_file()
+    row["ok"] = not errors
+    row["errors"] = errors
+    return row
+
 def audit_sources() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -685,6 +756,18 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines.append("- required original data provenance: `GRAPHICS.DAT` and `DUNGEON.DAT` must include exact variant, file/path, bytes, and SHA256; filename-only identity is rejected.")
     for row in manifest["framebufferComparator"]["expectedArtifacts"]:
         lines.append(f"- `{row['scene']}` `{row['side']}` `{row['artifact']}` path=`{row['path']}` hashField=`{row['requiredSha256Field']}` exists={row['exists']}")
+    n2 = manifest["n2PanelVisibleOriginalArtifact"]
+    lines += ["", "## N2 DOSBox original Hall panel-visible artifact"]
+    lines.append(f"- root: `{n2['root']}` exists={n2['exists']} ok={n2['ok']}")
+    lines.append(f"- status: `{n2.get('status')}` host=`{n2.get('host')}` created=`{n2.get('created')}` entries={n2.get('entryCount')}")
+    lines.append(f"- use: {n2['parityUse']}")
+    sp = n2.get("sourceProvenance", {})
+    lines.append(f"- DUNGEON.DAT sha256 `{sp.get('DUNGEON.DAT_sha256')}`; GRAPHICS.DAT sha256 `{sp.get('GRAPHICS.DAT_sha256')}`; TITLE sha256 `{sp.get('TITLE_sha256')}`")
+    pe = n2.get("promotableEntry") or {}
+    if pe:
+        lines.append(f"- pc320 `{pe.get('pc320')}` sha256 `{pe.get('pc320_sha256')}`")
+        lines.append(f"- viewport224x136 `{pe.get('viewport224x136')}` sha256 `{pe.get('viewport_sha256')}`")
+    lines.append(f"- remaining blocker: {n2['remainingBlocker']}")
     lines += ["", "## Current artifacts"]
     for row in manifest["reviewArtifacts"]:
         suffix = f" dims={row.get('pngDims')}" if row.get("pngDims") else ""
@@ -693,7 +776,7 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines += [
         "",
         "## Remaining blocker",
-        "Original PC34 Hall candidate select/panel/cancel/resurrect/reincarnate/HUD frames are not semantically promotable yet. The pass173 images are review clues only: they remain static/no-party after the gate, so they cannot prove panel pixel parity.",
+        "A hash-locked N2 original `03_panel_visible_north_front_mirror` frame/crop is now available for Hall/front-mirror visible context. It does not prove candidate panel transition or pixel parity. Original candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing/no-transition, and pass173 images remain review clues only.",
         "",
         "## Non-claims",
         "No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.",
@@ -709,9 +792,10 @@ def main() -> int:
     priors = audit_priors()
     review = audit_review_artifacts()
     framebuffer = audit_framebuffer_manifest(data_rows)
+    n2_panel_visible = audit_n2_panel_visible_artifact()
     existing_gate = run(["python3", "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"])
     panel_gate = run(["./run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"])
-    errors = source_errors + data_errors
+    errors = source_errors + data_errors + n2_panel_visible.get("errors", [])
     if existing_gate["returncode"] != 0:
         errors.append("existing Hall source lock gate failed")
     if panel_gate["returncode"] != 0:
@@ -729,11 +813,12 @@ def main() -> int:
         "reviewArtifacts": review,
         "captureContract": build_capture_contract(),
         "framebufferComparator": framebuffer,
+        "n2PanelVisibleOriginalArtifact": n2_panel_visible,
         "probes": {
             "hallFullSourceLock": existing_gate,
             "resurrectReincarnateCancelRoutes": panel_gate,
         },
-        "activeBlocker": "missing source-bound/promotable original PC34 Hall candidate fullframes/crops/manifest for candidate_select, panel_visible, cancel, resurrect_confirm, reincarnate_confirm, and hud_status_after",
+        "activeBlocker": "N2 provides a hash-locked original Hall/front-mirror visible frame (03_panel_visible_north_front_mirror), but source-bound/promotable original candidate_select/cancel/resurrect_confirm/reincarnate_confirm/HUD true-stop frames plus Firestaff-paired comparator inputs remain missing/no-transition",
         "notClaimed": ["pixel parity", "candidate panel framebuffer parity", "HUD/status framebuffer parity"],
         "errors": errors,
     }
