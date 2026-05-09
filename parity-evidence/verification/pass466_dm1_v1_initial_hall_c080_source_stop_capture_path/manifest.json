@@ -1,0 +1,291 @@
+{
+  "schema": "pass466_dm1_v1_initial_hall_c080_source_stop_capture_path.v1",
+  "timestampUtc": "2026-05-09T19:23:11.578842+00:00",
+  "status": "PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE",
+  "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "lockedData": [
+    {
+      "label": "dm1_pc34_english_graphics",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "bytes": 363417,
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "md5": "fa6b1aa29e191418713bf2cda93d962e",
+      "exists": true,
+      "ok": true,
+      "actual": {
+        "bytes": 363417,
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "md5": "fa6b1aa29e191418713bf2cda93d962e"
+      }
+    },
+    {
+      "label": "dm1_pc34_english_dungeon",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "exists": true,
+      "ok": true,
+      "actual": {
+        "bytes": 33357,
+        "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "md5": "766450c940651fc021c92fe5d0d0b3a6"
+      }
+    }
+  ],
+  "initialDungeonState": {
+    "ok": true,
+    "raw": "0x0861",
+    "state": {
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3,
+      "direction": 2
+    },
+    "directionName": "South",
+    "expected": {
+      "raw": "0x0861",
+      "state": {
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "direction": 2
+      }
+    }
+  },
+  "sourceLocks": [
+    {
+      "id": "dungeon_header_initial_party_location_bits",
+      "file": "DEFS.H",
+      "lines": "989-1013",
+      "claim": "DUNGEON_HEADER stores the initial party tuple bits consumed at new game start.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "initial_hall_party_state",
+      "file": "LOADSAVE.C",
+      "lines": "1940-1944",
+      "claim": "Fresh PC34 new-game state is decoded from DUNGEON_HEADER.InitialPartyLocation into map/x/y/direction globals.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "viewport_mouse_input_to_c080",
+      "file": "COMMAND.C",
+      "lines": "397-403,2322-2323",
+      "claim": "A left click in the viewport dispatches C080 to F0377; panel commands cannot substitute for the candidate click.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "c080_viewport_normalization_and_front_sensor",
+      "file": "CLIKVIEW.C",
+      "lines": "311-431",
+      "claim": "C080 subtracts the PC viewport origin, classifies the front-wall portrait zone, and then invokes F0372 for the front-wall sensor.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "initial_portrait_screen_point",
+      "file": "DUNVIEW.C",
+      "lines": "525,3912-3920",
+      "claim": "The visible D1C front portrait box is viewport x=96..127 y=35..63; center is the source portrait click point.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "pc34_viewport_origin",
+      "file": "COORD.C",
+      "lines": "1693-1698",
+      "claim": "For PC34/I34E, viewport origin maps the portrait center to screen x=111 y=82.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "c127_sensor_to_candidate_append",
+      "file": "MOVESENS.C",
+      "lines": "1392,1501-1502",
+      "claim": "The source Hall transition is C127 wall champion portrait sensor dispatch into F0280 candidate append.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_append_hud_state",
+      "file": "REVIVE.C",
+      "lines": "63-67,272-294",
+      "claim": "F0280 marks candidate mode, appends the temporary champion, and updates the leader/action HUD state before panel choice.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_panel_command_space",
+      "file": "COMMAND.C",
+      "lines": "228-240,1985-1991",
+      "claim": "Only after C080/C127/F0280 may the decision panel dispatch C160/C161/C162 into F0282.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "cancel_terminal_hud_stop",
+      "file": "REVIVE.C",
+      "lines": "744-783",
+      "claim": "Cancel terminal HUD/status capture must stop after candidate is cleared, the status slot is blacked/cleared, and enabled menus are redrawn.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "resurrect_terminal_hud_stop",
+      "file": "REVIVE.C",
+      "lines": "785-899",
+      "claim": "Resurrect terminal HUD/status capture must stop after candidate mode is cleared, resurrection message/update is emitted, inventory closes, and menus redraw.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "reincarnate_terminal_hud_stop",
+      "file": "REVIVE.C",
+      "lines": "785-899",
+      "claim": "Reincarnate terminal HUD/status capture must stop after rename/reincarnation branch returns, inventory closes, and menus redraw.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    }
+  ],
+  "capturePath": [
+    {
+      "step": 1,
+      "label": "fresh_initial_hall",
+      "sourceStop": "first Hall frame before any movement/turn",
+      "partyTuple": {
+        "map": 0,
+        "x": 1,
+        "y": 3,
+        "dir": "South",
+        "championCount": 0,
+        "candidateOrdinal": 0
+      }
+    },
+    {
+      "step": 2,
+      "label": "candidate_click",
+      "command": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+      "pcScreenClick": [
+        111,
+        82
+      ],
+      "chain": [
+        "COMMAND.C F0377",
+        "CLIKVIEW.C F0372",
+        "MOVESENS.C C127",
+        "REVIVE.C F0280"
+      ]
+    },
+    {
+      "step": 3,
+      "label": "candidate_select",
+      "sourceStop": "after F0280 candidate append and before any C160/C161/C162 panel command",
+      "requiredCrops": [
+        "fullframe",
+        "hud_status_crop",
+        "panel_crop"
+      ]
+    },
+    {
+      "step": 4,
+      "label": "cancel",
+      "command": "C162_COMMAND_CLICK_IN_PANEL_CANCEL",
+      "sourceStop": "after REVIVE.C F0282 cancel return, following F0457_START_DrawEnabledMenus_CPSF",
+      "terminalAction": "cancel",
+      "requiredCrops": [
+        "fullframe",
+        "hud_status_crop"
+      ]
+    },
+    {
+      "step": 5,
+      "label": "resurrect_confirm",
+      "command": "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+      "sourceStop": "after REVIVE.C F0282 confirm path closes inventory and redraws enabled menus",
+      "terminalAction": "resurrect_confirm",
+      "requiredCrops": [
+        "fullframe",
+        "hud_status_crop"
+      ]
+    },
+    {
+      "step": 6,
+      "label": "reincarnate_confirm",
+      "command": "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+      "sourceStop": "after F0281 rename branch returns, F0282 closes inventory, and enabled menus are redrawn",
+      "terminalAction": "reincarnate_confirm",
+      "requiredCrops": [
+        "fullframe",
+        "hud_status_crop"
+      ]
+    }
+  ],
+  "pass449MaskedRowsUnblockedForRecapture": [
+    "cancel.hud_status_crop",
+    "resurrect_confirm.hud_status_crop",
+    "reincarnate_confirm.hud_status_crop"
+  ],
+  "captureContract": {
+    "initialState": {
+      "map": 0,
+      "x": 1,
+      "y": 3,
+      "dir": "South"
+    },
+    "candidateClickPcScreen": [
+      111,
+      82
+    ],
+    "forbiddenBeforeCandidateClick": [
+      "turn_left",
+      "turn_right",
+      "step_forward",
+      "step_back",
+      "strafe",
+      "panel C160/C161/C162"
+    ],
+    "terminalHudCrop": {
+      "xywh": [
+        0,
+        0,
+        320,
+        33
+      ],
+      "requiresTerminalAction": [
+        "cancel",
+        "resurrect_confirm",
+        "reincarnate_confirm"
+      ]
+    },
+    "mustRecord": [
+      "sourceStop",
+      "terminalAction",
+      "partyTuple",
+      "command",
+      "fullframeSha256",
+      "hudStatusCropSha256"
+    ]
+  },
+  "errors": [],
+  "nonClaims": [
+    "pixel parity",
+    "frame promotion",
+    "runtime capture success"
+  ]
+}

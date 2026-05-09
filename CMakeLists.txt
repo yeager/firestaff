@@ -1102,6 +1102,10 @@ if(BUILD_TESTING)
         add_test(
             NAME pass455_dm1_v1_hall_corrected_click_primitive_capture
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass455_dm1_v1_hall_corrected_click_primitive_capture.py
+        add_test(
+            NAME pass466_dm1_v1_initial_hall_c080_source_stop_capture_path
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass466_dm1_v1_initial_hall_c080_source_stop_capture_path.py
+        )
         )
         add_test(
             NAME v1_viewport_front_wall_depth_gate
