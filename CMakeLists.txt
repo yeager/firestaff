@@ -291,6 +291,10 @@ if(BUILD_TESTING)
             NAME pass395_touch_queue_integration_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass395_touch_queue_integration.py
         )
+        add_test(
+            NAME dm1_v1_viewport_door_wall_ornament_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_door_wall_ornament_source_lock.py
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
