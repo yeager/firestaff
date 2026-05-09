@@ -1,0 +1,154 @@
+{
+  "anchors": [
+    {
+      "bytes": 33357,
+      "label": "canonical_dm1",
+      "matchesExpected": true,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM PC 3.4 English / I34E canonical symlink"
+    },
+    {
+      "bytes": 33357,
+      "label": "extracted_dm1_pc34_english",
+      "matchesExpected": true,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM PC 3.4 English / I34E DATA"
+    },
+    {
+      "bytes": 33357,
+      "label": "extracted_dm1_pc34_eudata",
+      "matchesExpected": true,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM PC 3.4 Multilanguage / EUDATA same dungeon payload"
+    }
+  ],
+  "contract": "DM1 V1 map/start/dimension comparisons require this exact DUNGEON.DAT byte identity before using parsed facts.",
+  "errors": [],
+  "expected": {
+    "bytes": 33357,
+    "md5": "766450c940651fc021c92fe5d0d0b3a6",
+    "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "variant": "DM PC 3.4 English / I34E DUNGEON.DAT"
+  },
+  "localDungeonVariants": [
+    {
+      "acceptedForDm1V1EnglishComparisons": true,
+      "bytes": 33357,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "acceptedForDm1V1EnglishComparisons": true,
+      "bytes": 33357,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "acceptedForDm1V1EnglishComparisons": true,
+      "bytes": 33357,
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "acceptedForDm1V1EnglishComparisons": false,
+      "bytes": 33687,
+      "md5": "82c7802122e9cfb2dc117bc9d197f457",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "sha256": "290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571"
+    },
+    {
+      "acceptedForDm1V1EnglishComparisons": false,
+      "bytes": 33705,
+      "md5": "b9487db563ff9e89605c77ee44d17d14",
+      "relativePath": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "sha256": "b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817"
+    }
+  ],
+  "parsedCanonicalFacts": {
+    "initialPartyLocationRaw": "0x0861",
+    "initialState": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "map0": {
+      "entrySquareRaw_x1_y3": 176,
+      "frontSquareRaw_x1_y4": 48,
+      "height": 19,
+      "level": 0,
+      "rawMapDataByteOffset": 0,
+      "rawMapDataFileOffset": 21072,
+      "width": 18
+    },
+    "mapCount": 14,
+    "rawMapDataByteCount": 12283,
+    "squareFirstThingCount": 1679,
+    "textDataWordCount": 1749
+  },
+  "pass": "pass448_dm1_v1_dungeon_hash_provenance",
+  "redmcsbSourceAnchors": {
+    "CEDTINC6.C": [
+      {
+        "line": 129,
+        "needle": "F7059_ReadDungeonPartWithChecksum"
+      },
+      {
+        "line": 150,
+        "needle": "*P3720_pi_Checksum += L3962_ui_;"
+      }
+    ],
+    "CEDTINCA.C": [
+      {
+        "line": 5,
+        "needle": "BOOLEAN F7063_LoadDungeon"
+      },
+      {
+        "line": 18,
+        "needle": "F7059_ReadDungeonPartWithChecksum((unsigned char*)P3584_ps_->Dungeon.Header"
+      },
+      {
+        "line": 110,
+        "needle": "F7059_ReadDungeonPartWithChecksum((unsigned char*)P3584_ps_->Dungeon.RawMapData"
+      }
+    ],
+    "FILENAME.C": [
+      {
+        "line": 6,
+        "needle": "G1059_pc_DungeonFileName = \"DATA\\\\DUNGEON.DAT\""
+      }
+    ],
+    "LOADSAVE.C": [
+      {
+        "line": 1803,
+        "needle": "STATICFUNCTION BOOLEAN F0434_STARTEND_IsLoadDungeonSuccessful_CPSC"
+      },
+      {
+        "line": 2337,
+        "needle": "G0521_i_GameFileHandle = Fopen(\"\\\\DUNGEON.DAT\", C0_READ_ONLY)"
+      },
+      {
+        "line": 1941,
+        "needle": "G0306_i_PartyMapX = (AL1353_i_InitialPartyLocation = G0278_ps_DungeonHeader->InitialPartyLocation) & 0x001F;"
+      },
+      {
+        "line": 1942,
+        "needle": "G0307_i_PartyMapY = (AL1353_i_InitialPartyLocation >>= 5) & 0x001F;"
+      },
+      {
+        "line": 1943,
+        "needle": "G0308_i_PartyDirection = (AL1353_i_InitialPartyLocation >> 5) & 0x0003;"
+      }
+    ]
+  },
+  "status": "PASS"
+}

@@ -48,6 +48,7 @@ LOCKED_FILES = [
         variant="DM PC 3.4 English / I34E",
         size=33357,
         sha256="d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        md5="766450c940651fc021c92fe5d0d0b3a6",
     ),
     LockedFile(
         label="dm1_pc34_multilanguage_graphics_crossref",
@@ -65,6 +66,7 @@ LOCKED_FILES = [
         variant="DM PC 3.4 Multilanguage / EUDATA; same dungeon payload as English",
         size=33357,
         sha256="d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        md5="766450c940651fc021c92fe5d0d0b3a6",
     ),
 ]
 
@@ -185,6 +187,7 @@ def check_provenance_doc() -> bool:
         "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
         "fa6b1aa29e191418713bf2cda93d962e",
         "f934d97e43e1ba6e5159839acbcd0611",
+        "766450c940651fc021c92fe5d0d0b3a6",
     ]
     missing = [needle for needle in required if needle not in text]
     if missing:

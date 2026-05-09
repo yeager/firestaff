@@ -1072,6 +1072,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass446_filename_only_asset_identity_audit.py
         )
         add_test(
+            NAME pass448_dm1_v1_dungeon_hash_provenance
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass448_dm1_v1_dungeon_hash_provenance.py
+        )
+        add_test(
             NAME v1_viewport_front_wall_depth_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_front_wall_depth_gate.py
         )
