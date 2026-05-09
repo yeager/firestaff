@@ -29,7 +29,7 @@ Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP2021
 
 - `tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py`
 
-The verifier checks all anchors above and chains the existing `scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py` gate so the movement/turn path and existing wall draw-order source lock fail together.
+The verifier checks all anchors above and chains the existing `scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py` gate so the movement/turn path and existing wall draw-order source lock fail together. It is registered as CTest `pass381_dm1_v1_movement_viewport_walls_source_lock`, keeping this source-lock visible in the standard DM1 V1 viewport gate set instead of relying on manual script runs.
 
 ## Scope guard
 
