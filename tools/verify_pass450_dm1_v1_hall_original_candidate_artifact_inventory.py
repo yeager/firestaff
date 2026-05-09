@@ -216,17 +216,68 @@ def frame_rows(data_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def audit_environment() -> dict[str, Any]:
+    import os
+    import platform
+
+    capture_tool = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
+    external_root = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+    external_parent = external_root.parent
+    env_dosbox = os.environ.get("FIRESTAFF_DOSBOX")
+    dosbox_candidates = [
+        {"name": "FIRESTAFF_DOSBOX", "path": env_dosbox, "available": bool(env_dosbox and Path(env_dosbox).exists())},
+        {"name": "dosbox", "path": cmd_available("dosbox"), "available": bool(cmd_available("dosbox"))},
+        {"name": "dosbox-x", "path": cmd_available("dosbox-x"), "available": bool(cmd_available("dosbox-x"))},
+    ]
+    selected = next((c for c in dosbox_candidates if c["available"]), None)
+    system = platform.system()
+    display = os.environ.get("DISPLAY")
+    xvfb = cmd_available("xvfb-run")
+    needs_xvfb = system == "Linux" and not display
+    missing_tools: list[str] = []
+    if not selected:
+        missing_tools.append("dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox")
+    if needs_xvfb and not xvfb:
+        missing_tools.append("xvfb-run for headless Linux capture")
+    if not STAGE.is_dir():
+        missing_tools.append(f"staged original PC34 directory {STAGE}")
+    if not capture_tool.is_file():
+        missing_tools.append(f"capture tool {capture_tool.relative_to(ROOT)}")
+
+    run_base = Path(os.environ.get("FIRESTAFF_PASS173_RUN_BASE", os.environ.get("FIRESTAFF_ARTIFACT_ROOT", str(external_root))))
+    command_prefix = []
+    if needs_xvfb:
+        command_prefix = [xvfb or "xvfb-run", "-a"]
+    env_parts = [
+        f"FIRESTAFF_ARTIFACT_ROOT={external_root}",
+    ]
+    if selected and selected["path"]:
+        env_parts.append(f"FIRESTAFF_DOSBOX={selected['path']}")
+    next_cmd = " ".join(env_parts + command_prefix + ["python3", "tools/pass173_source_portrait_route_gate_probe.py"])
+    rerun_cmd = "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
+
     return {
-        "localHostCaptureReady": False,
+        "localHostCaptureReady": not missing_tools,
+        "platform": system,
+        "machine": platform.machine(),
+        "path": os.environ.get("PATH"),
+        "display": display,
+        "dosboxCandidates": dosbox_candidates,
+        "selectedDosbox": selected,
         "dosbox": cmd_available("dosbox"),
-        "xvfbRun": cmd_available("xvfb-run"),
-        "display": __import__("os").environ.get("DISPLAY"),
+        "dosboxX": cmd_available("dosbox-x"),
+        "xvfbRun": xvfb,
+        "needsXvfb": needs_xvfb,
         "stageDir": str(STAGE),
         "stageExists": STAGE.is_dir(),
         "captureTool": "tools/pass173_source_portrait_route_gate_probe.py",
-        "captureToolExists": (ROOT / "tools/pass173_source_portrait_route_gate_probe.py").is_file(),
-        "blockingReason": "Local macOS worktree has no dosbox/xvfb-run in PATH, and pass173 currently hardcodes DOSBOX=/usr/bin/dosbox. Generating new original PC34 frames here would be non-deterministic/unavailable.",
-        "nextExecutableStep": "On N2/Linux with /usr/bin/dosbox and xvfb-run available, run: xvfb-run -a python3 tools/pass173_source_portrait_route_gate_probe.py ; then rerun python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py and promote only if pass173 no longer reports blocked/static-no-party-after-gate and all required pass449 scenes have labelled original fullframes/crops plus a true-stop transcript.",
+        "captureToolExists": capture_tool.is_file(),
+        "externalArtifactRoot": str(external_root),
+        "externalParentExists": external_parent.exists(),
+        "configuredRunBase": str(run_base),
+        "missingTools": missing_tools,
+        "blockingReason": "capture-ready" if not missing_tools else "Original PC34 Hall capture is blocked locally by: " + "; ".join(missing_tools),
+        "nextExecutableStep": next_cmd,
+        "postCaptureVerificationStep": rerun_cmd,
     }
 
 
@@ -255,12 +306,20 @@ def write_report(manifest: dict[str, Any]) -> None:
     env = manifest["captureEnvironment"]
     lines += [
         "",
-        "## Capture tooling blocker",
+        "## Capture tooling readiness",
+        f"- local host capture ready: `{env['localHostCaptureReady']}`",
+        f"- platform: `{env['platform']}` `{env['machine']}`",
         f"- dosbox: `{env['dosbox']}`",
-        f"- xvfb-run: `{env['xvfbRun']}`",
+        f"- dosbox-x: `{env['dosboxX']}`",
+        f"- selected DOSBox: `{(env['selectedDosbox'] or {}).get('path')}`",
+        f"- xvfb-run: `{env['xvfbRun']}` needsXvfb=`{env['needsXvfb']}` display=`{env['display']}`",
         f"- stage exists: `{env['stageExists']}` `{env['stageDir']}`",
+        f"- external artifact root: `{env['externalArtifactRoot']}` parentExists=`{env['externalParentExists']}`",
+        f"- configured run base: `{env['configuredRunBase']}`",
+        f"- missing tools/data: `{env['missingTools']}`",
         f"- reason: {env['blockingReason']}",
         f"- next step: `{env['nextExecutableStep']}`",
+        f"- post-capture verification: `{env['postCaptureVerificationStep']}`",
         "",
     ]
     REPORT.write_text("\n".join(lines), encoding="utf-8")

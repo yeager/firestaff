@@ -62,9 +62,17 @@
 - `hud_status_after_resurrect`
 - `hud_status_after_reincarnate`
 
-## Capture tooling blocker
+## Capture tooling readiness
+- local host capture ready: `False`
+- platform: `Darwin` `arm64`
 - dosbox: `None`
-- xvfb-run: `None`
+- dosbox-x: `None`
+- selected DOSBox: `None`
+- xvfb-run: `None` needsXvfb=`False` display=`None`
 - stage exists: `True` `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
-- reason: Local macOS worktree has no dosbox/xvfb-run in PATH, and pass173 currently hardcodes DOSBOX=/usr/bin/dosbox. Generating new original PC34 frames here would be non-deterministic/unavailable.
-- next step: `On N2/Linux with /usr/bin/dosbox and xvfb-run available, run: xvfb-run -a python3 tools/pass173_source_portrait_route_gate_probe.py ; then rerun python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py and promote only if pass173 no longer reports blocked/static-no-party-after-gate and all required pass449 scenes have labelled original fullframes/crops plus a true-stop transcript.`
+- external artifact root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe` parentExists=`True`
+- configured run base: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe`
+- missing tools/data: `['dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox']`
+- reason: Original PC34 Hall capture is blocked locally by: dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox
+- next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe python3 tools/pass173_source_portrait_route_gate_probe.py`
+- post-capture verification: `python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`

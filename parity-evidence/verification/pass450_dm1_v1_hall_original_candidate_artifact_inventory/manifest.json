@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T13:15:45.471616+00:00",
+  "timestampUtc": "2026-05-09T13:34:27.191776+00:00",
   "status": "BLOCKED_PASS450_ORIGINAL_PC34_HALL_CANDIDATE_FRAMES_NOT_PROMOTABLE",
-  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/firestaff-pass450-hall-original-frames-20260509-1509",
-  "branch": "worker/pass450-hall-original-frame-evidence-20260509",
-  "head": "064591f4669c1fc012686f8c5f7bdc54559b6ecb",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "branch": "land-20260509",
+  "head": "f3dba59ab59bc7c95c382275c74cf345b37a8e55",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3225,15 +3225,45 @@
   ],
   "captureEnvironment": {
     "localHostCaptureReady": false,
-    "dosbox": null,
-    "xvfbRun": null,
+    "platform": "Darwin",
+    "machine": "arm64",
+    "path": "/Users/bosse/.cargo/bin:/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/opt/homebrew/Cellar/node@22/22.22.2_2/bin:/opt/homebrew/opt/node@22/bin:/Users/bosse/Library/pnpm:/Users/bosse/.bun/bin",
     "display": null,
+    "dosboxCandidates": [
+      {
+        "name": "FIRESTAFF_DOSBOX",
+        "path": null,
+        "available": false
+      },
+      {
+        "name": "dosbox",
+        "path": null,
+        "available": false
+      },
+      {
+        "name": "dosbox-x",
+        "path": null,
+        "available": false
+      }
+    ],
+    "selectedDosbox": null,
+    "dosbox": null,
+    "dosboxX": null,
+    "xvfbRun": null,
+    "needsXvfb": false,
     "stageDir": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "stageExists": true,
     "captureTool": "tools/pass173_source_portrait_route_gate_probe.py",
     "captureToolExists": true,
-    "blockingReason": "Local macOS worktree has no dosbox/xvfb-run in PATH, and pass173 currently hardcodes DOSBOX=/usr/bin/dosbox. Generating new original PC34 frames here would be non-deterministic/unavailable.",
-    "nextExecutableStep": "On N2/Linux with /usr/bin/dosbox and xvfb-run available, run: xvfb-run -a python3 tools/pass173_source_portrait_route_gate_probe.py ; then rerun python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py and promote only if pass173 no longer reports blocked/static-no-party-after-gate and all required pass449 scenes have labelled original fullframes/crops plus a true-stop transcript."
+    "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
+    "externalParentExists": true,
+    "configuredRunBase": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
+    "missingTools": [
+      "dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox"
+    ],
+    "blockingReason": "Original PC34 Hall capture is blocked locally by: dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox",
+    "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe python3 tools/pass173_source_portrait_route_gate_probe.py",
+    "postCaptureVerificationStep": "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
   },
   "promotionDecision": "Do not promote current original PC34 Hall frames/crops. They are static no-party review clues and lack source-bound true-stop/semantic labels for candidate panel visibility, cancel, resurrect confirm, reincarnate confirm, and HUD/status outcomes.",
   "errors": []
