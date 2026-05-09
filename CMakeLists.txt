@@ -1080,6 +1080,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py
         )
         add_test(
+            NAME pass450_dm1_v1_hall_original_candidate_artifact_inventory
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py
+        )
+        add_test(
             NAME v1_viewport_front_wall_depth_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_front_wall_depth_gate.py
         )
