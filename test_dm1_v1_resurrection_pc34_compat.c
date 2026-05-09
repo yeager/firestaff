@@ -4,7 +4,8 @@
  * Tests all source-locked functions against ReDMCSB-derived invariants:
  *   F0860 bones creation, F0861 Vi Altar trigger,
  *   F0862 champion index extraction, F0863 rebirth health,
- *   F0864 reincarnation stat changes, F0865 command validation.
+ *   F0864 reincarnation stat changes, F0865 command validation,
+ *   F0866 C080/C127 candidate route, F0867 candidate panel finalization.
  */
 
 #include <stdio.h>
@@ -147,6 +148,146 @@ static void test_reincarnation(void) {
     CHECK(r.newCurrentHealth == 25, "odd currentHealth 51→25");
 }
 
+
+static ChampionPortraitClickInput_Compat base_portrait_click_input(void) {
+    ChampionPortraitClickInput_Compat in;
+    in.command = DM1_COMMAND_CLICK_IN_DUNGEON_VIEW;
+    in.leaderEmptyHanded = 1;
+    in.leaderIndex = DM1_CHAMPION_NONE;
+    in.frontWallOrnamentHit = 1;
+    in.facingAlcove = 0;
+    in.frontSquareInBounds = 1;
+    in.sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
+    in.sensorData = 11;
+    in.sensorCell = 2;
+    in.clickedWallCell = 2;
+    in.partyChampionCount = 0;
+    return in;
+}
+
+static void test_champion_portrait_candidate_route(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat r;
+
+    printf("[champion_portrait_candidate_route]\n");
+
+    in = base_portrait_click_input();
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 1, "C080+C05+C127 portrait route reaches F0280");
+    CHECK(r.championPortraitIndex == 11, "sensor data is F0280 portrait index");
+    CHECK(r.candidateChampionIndex == 0, "candidate inserted at previous party count");
+    CHECK(r.candidateChampionOrdinal == 1, "candidate ordinal = previous count + 1");
+    CHECK(r.nextPartyChampionCount == 1, "party count increments before panel decision");
+    CHECK(r.setLeaderToFirstChampion == 1, "first candidate sets leader to champion 0");
+
+    in = base_portrait_click_input();
+    in.partyChampionCount = 3;
+    in.sensorData = 5;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 1, "fourth slot candidate is allowed");
+    CHECK(r.candidateChampionIndex == 3, "fourth candidate index is 3");
+    CHECK(r.candidateChampionOrdinal == 4, "fourth candidate ordinal is 4");
+    CHECK(r.nextPartyChampionCount == 4, "party can reach four champions");
+    CHECK(r.setLeaderToFirstChampion == 0, "non-first candidate does not reset leader");
+
+    in = base_portrait_click_input();
+    in.leaderIndex = 0;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 1, "C127 route also works with existing leader");
+
+    in = base_portrait_click_input();
+    in.command = 7;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "non-C080 command cannot recruit");
+
+    in = base_portrait_click_input();
+    in.leaderEmptyHanded = 0;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "leader hand must be empty before F0280");
+
+    in = base_portrait_click_input();
+    in.frontWallOrnamentHit = 0;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "must hit front wall ornament C05");
+
+    in = base_portrait_click_input();
+    in.facingAlcove = 1;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "facing alcove blocks F0372 wall sensor touch");
+
+    in = base_portrait_click_input();
+    in.sensorType = 1;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "ordinary wall ornament sensor is not champion recruit");
+
+    in = base_portrait_click_input();
+    in.sensorCell = 1;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "sensor cell must equal clicked opposite wall cell");
+
+    in = base_portrait_click_input();
+    in.partyChampionCount = 4;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 0, "full party blocks F0280 candidate add");
+
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(NULL);
+    CHECK(r.triggersCandidateAdd == 0, "NULL input is safe no-op");
+}
+
+static void test_candidate_panel_path(void) {
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat r;
+
+    printf("[candidate_panel_path]\n");
+
+    st.partyChampionCount = 1;
+    st.candidateChampionOrdinal = 1;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_CANCEL);
+    CHECK(r.valid == 1, "cancel valid with candidate state");
+    CHECK(r.cancelled == 1, "cancel flag set");
+    CHECK(r.nextPartyChampionCount == 0, "cancel removes candidate from party count");
+    CHECK(r.nextCandidateChampionOrdinal == 0, "cancel clears candidate ordinal");
+    CHECK(r.disablesMirrorSensor == 0, "cancel does not disable mirror sensor");
+
+    st.partyChampionCount = 2;
+    st.candidateChampionOrdinal = 2;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_RESURRECT);
+    CHECK(r.valid == 1, "resurrect valid with candidate state");
+    CHECK(r.resurrected == 1, "resurrect flag set");
+    CHECK(r.candidateChampionIndex == 1, "panel operates on G0305-1 champion");
+    CHECK(r.nextPartyChampionCount == 2, "resurrect keeps candidate in party");
+    CHECK(r.nextCandidateChampionOrdinal == 0, "resurrect clears candidate ordinal");
+    CHECK(r.disablesMirrorSensor == 1, "resurrect disables mirror sensor");
+
+    st.partyChampionCount = 4;
+    st.candidateChampionOrdinal = 4;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_REINCARNATE);
+    CHECK(r.valid == 1, "reincarnate valid with candidate state");
+    CHECK(r.reincarnated == 1, "reincarnate flag set");
+    CHECK(r.candidateChampionIndex == 3, "fourth candidate index is 3");
+    CHECK(r.disablesMirrorSensor == 1, "reincarnate disables mirror sensor");
+
+    st.partyChampionCount = 1;
+    st.candidateChampionOrdinal = 0;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_RESURRECT);
+    CHECK(r.valid == 0, "panel command blocked without prior candidate state");
+
+    st.partyChampionCount = 2;
+    st.candidateChampionOrdinal = 1;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_RESURRECT);
+    CHECK(r.valid == 0, "candidate ordinal must match appended champion ordinal");
+
+    st.partyChampionCount = 0;
+    st.candidateChampionOrdinal = 0;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_CANCEL);
+    CHECK(r.valid == 0, "empty party/candidate state is invalid");
+
+    st.partyChampionCount = 1;
+    st.candidateChampionOrdinal = 1;
+    r = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, 163);
+    CHECK(r.valid == 0, "unknown panel command invalid");
+}
+
 static void test_command_validation(void) {
     printf("[command_validation]\n");
 
@@ -172,6 +313,8 @@ int main(void) {
     test_champion_index_from_bones();
     test_rebirth_health();
     test_reincarnation();
+    test_champion_portrait_candidate_route();
+    test_candidate_panel_path();
     test_command_validation();
     test_invariant();
 

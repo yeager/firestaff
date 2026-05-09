@@ -22,3 +22,13 @@
 ## Interpretation
 
 This is the first runtime probe after the ReDMCSB C127/F0280 source route and portrait geometry were locked by pass164/pass165. A pass requires no static no-party hash, a visible portrait-click candidate transition, post-choice input deltas, and a party/control marker.
+
+
+## 2026-05-09 implementation lock
+
+Added a pure compat gate for the source route in `dm1_v1_resurrection_pc34_compat.{h,c}`:
+
+- `F0866_RESURRECTION_RouteChampionPortraitClick_Compat` models `COMMAND.C:2318-2324` C080 dispatch -> `CLIKVIEW.C:406-431` C05 front-wall ornament hit -> `CLIKVIEW.C:21-25` front-square/opposite-wall sensor touch -> `MOVESENS.C:1392-1395,1501-1503` C127 -> `REVIVE.C:124-132,272-276` candidate add.
+- `F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat` models `REVIVE.C:744-785` cancel and `REVIVE.C:785-806` resurrect/reincarnate finalization; C160/C161/C162 are invalid unless candidate state already exists.
+
+Narrow gate: `ctest --test-dir build -R dm1_v1_resurrection --output-on-failure` passes with `Results: 88/88 passed`.

@@ -1,0 +1,42 @@
+{
+  "schema": "pass166_source_portrait_click_route_impl_lock.v1",
+  "date": "2026-05-09",
+  "implemented_functions": [
+    {
+      "name": "F0866_RESURRECTION_RouteChampionPortraitClick_Compat",
+      "files": [
+        "dm1_v1_resurrection_pc34_compat.h",
+        "dm1_v1_resurrection_pc34_compat.c"
+      ],
+      "source_locks": [
+        "COMMAND.C:2318-2324 dispatches C080 to F0377",
+        "CLIKVIEW.C:348-349 normalizes viewport coordinates",
+        "CLIKVIEW.C:406-431 requires empty hand, C05 front-wall ornament hit, and not facing alcove before F0372",
+        "CLIKVIEW.C:21-25 targets front square and opposite wall cell",
+        "MOVESENS.C:1392-1395 allows C127 even with no leader and requires clicked wall cell",
+        "MOVESENS.C:1501-1503 calls F0280_CHAMPION_AddCandidateChampionToParty(sensor data)",
+        "REVIVE.C:124-132 gates F0280 on empty hand and party count below four",
+        "REVIVE.C:272-276 sets G0299 candidate ordinal and increments G0305 party count"
+      ]
+    },
+    {
+      "name": "F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat",
+      "files": [
+        "dm1_v1_resurrection_pc34_compat.h",
+        "dm1_v1_resurrection_pc34_compat.c"
+      ],
+      "source_locks": [
+        "COMMAND.C:228-233 defines C160/C161/C162 panel boxes",
+        "REVIVE.C:744 selects candidate at G0305_ui_PartyChampionCount - 1",
+        "REVIVE.C:745-757 cancel clears candidate and decrements party count",
+        "REVIVE.C:785-806 resurrect/reincarnate clear candidate and disable mirror sensor",
+        "REVIVE.C:806-835 reincarnate applies stat/skill changes"
+      ]
+    }
+  ],
+  "test_gate": {
+    "command": "ctest --test-dir build -R dm1_v1_resurrection --output-on-failure",
+    "result": "PASS",
+    "probe_output": "Results: 88/88 passed"
+  }
+}

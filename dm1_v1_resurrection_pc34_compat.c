@@ -180,10 +180,109 @@ int F0865_RESURRECTION_IsCommandValid_Compat(
     return 1;
 }
 
+
+/* ================================================================
+ *  F0866: Hall of Champions portrait click route
+ *  Source chain:
+ *    COMMAND.C:2318-2324 dispatches C080 to F0377.
+ *    CLIKVIEW.C:348-349 converts screen to viewport-relative coordinates.
+ *    CLIKVIEW.C:406-431: empty hand + C05 front wall ornament + !alcove
+ *      calls F0372.
+ *    CLIKVIEW.C:21-25: F0372 targets the front square and opposite wall cell.
+ *    MOVESENS.C:1392-1395 allows C127 even with no leader and requires cell match.
+ *    MOVESENS.C:1501-1503 calls F0280 with sensor data.
+ *    REVIVE.C:124-132 requires empty hand and party count < 4.
+ *    REVIVE.C:272-276 sets candidate ordinal and increments party count.
+ * ================================================================ */
+
+CandidateChampionAddResult_Compat F0866_RESURRECTION_RouteChampionPortraitClick_Compat(
+    const ChampionPortraitClickInput_Compat* in)
+{
+    CandidateChampionAddResult_Compat out;
+    out.triggersCandidateAdd = 0;
+    out.championPortraitIndex = 0;
+    out.nextPartyChampionCount = in ? in->partyChampionCount : 0;
+    out.candidateChampionOrdinal = 0;
+    out.candidateChampionIndex = 0;
+    out.setLeaderToFirstChampion = 0;
+
+    if (!in) return out;
+    if (in->command != DM1_COMMAND_CLICK_IN_DUNGEON_VIEW) return out;
+    if (!in->leaderEmptyHanded) return out;
+    if (!in->frontWallOrnamentHit) return out;
+    if (in->facingAlcove) return out;
+    if (!in->frontSquareInBounds) return out;
+    if (in->sensorType != DM1_SENSOR_WALL_CHAMPION_PORTRAIT) return out;
+    if (in->sensorCell != in->clickedWallCell) return out;
+    if (in->partyChampionCount >= 4) return out;
+
+    (void)in->leaderIndex; /* C127 explicitly bypasses the no-leader rejection. */
+    out.triggersCandidateAdd = 1;
+    out.championPortraitIndex = in->sensorData;
+    out.candidateChampionIndex = in->partyChampionCount;
+    out.candidateChampionOrdinal = in->partyChampionCount + 1;
+    out.nextPartyChampionCount = in->partyChampionCount + 1;
+    out.setLeaderToFirstChampion = (out.nextPartyChampionCount == 1) ? 1 : 0;
+    return out;
+}
+
+/* ================================================================
+ *  F0867: Candidate panel decision (Cancel / Resurrect / Reincarnate)
+ *  Source: REVIVE.C F0282.
+ *    744: candidate champion is at G0305_ui_PartyChampionCount - 1.
+ *    745-757: Cancel clears candidate state and decrements party count.
+ *    785-799: Resurrect/Reincarnate clear candidate state and disable mirror sensor.
+ *    806-835: Reincarnate applies extra stat/skill changes (F0864 handles math).
+ * ================================================================ */
+
+CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+    CandidatePanelState_Compat state,
+    int16_t command)
+{
+    CandidatePanelResult_Compat out;
+    out.valid = 0;
+    out.cancelled = 0;
+    out.resurrected = 0;
+    out.reincarnated = 0;
+    out.disablesMirrorSensor = 0;
+    out.candidateChampionIndex = 0;
+    out.nextPartyChampionCount = state.partyChampionCount;
+    out.nextCandidateChampionOrdinal = state.candidateChampionOrdinal;
+
+    if (state.partyChampionCount == 0) return out;
+    if (state.candidateChampionOrdinal == 0) return out;
+    if (state.candidateChampionOrdinal != state.partyChampionCount) return out;
+    if (command != DM1_COMMAND_RESURRECT &&
+        command != DM1_COMMAND_REINCARNATE &&
+        command != DM1_COMMAND_CANCEL) {
+        return out;
+    }
+
+    out.valid = 1;
+    out.candidateChampionIndex = state.partyChampionCount - 1;
+    out.nextCandidateChampionOrdinal = 0;
+
+    if (command == DM1_COMMAND_CANCEL) {
+        out.cancelled = 1;
+        out.nextPartyChampionCount = state.partyChampionCount - 1;
+        return out;
+    }
+
+    out.disablesMirrorSensor = 1;
+    out.nextPartyChampionCount = state.partyChampionCount;
+    if (command == DM1_COMMAND_RESURRECT) {
+        out.resurrected = 1;
+    } else {
+        out.reincarnated = 1;
+    }
+    return out;
+}
+
 /* -------- Evidence / invariant -------------------------------------- */
 
 const char* dm1_v1_resurrection_GetEvidence(void) {
     return "REVIVE.C:F0280-F0283 resurrection altar processing, "
+           "C080->CLIKVIEW.C:F0377->F0372->MOVESENS.C:F0275 C127->F0280 candidate path; "
            "bones->champion, reincarnation stat halving (MEDIA265_S20E). "
            "CHAMPION.C:F0319 bones creation (Type=C05, ChargeCount=champIdx). "
            "CLIKVIEW.C:F0374 alcove+ViAltar bones detection, "
@@ -201,6 +300,8 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (DM1_COMMAND_RESURRECT == 160);
     ok = ok && (DM1_COMMAND_REINCARNATE == 161);
     ok = ok && (DM1_COMMAND_CANCEL == 162);
+    ok = ok && (DM1_COMMAND_CLICK_IN_DUNGEON_VIEW == 80);
+    ok = ok && (DM1_SENSOR_WALL_CHAMPION_PORTRAIT == 127);
 
     /* Verify rebirth health: max=100 → max(25, 100-100/64-1) = max(25,98) = 98, current=49 */
     {
@@ -249,6 +350,39 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
         ok = ok && (r.newCurrentMana == 25);
         ok = ok && (r.statIncrements[0] == 12);
         ok = ok && (r.statIncrements[1] == 0);
+    }
+
+    /* Verify Hall portrait route and candidate panel ordering */
+    {
+        ChampionPortraitClickInput_Compat in;
+        CandidateChampionAddResult_Compat add;
+        CandidatePanelState_Compat st;
+        CandidatePanelResult_Compat pr;
+        in.command = DM1_COMMAND_CLICK_IN_DUNGEON_VIEW;
+        in.leaderEmptyHanded = 1;
+        in.leaderIndex = DM1_CHAMPION_NONE;
+        in.frontWallOrnamentHit = 1;
+        in.facingAlcove = 0;
+        in.frontSquareInBounds = 1;
+        in.sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
+        in.sensorData = 7;
+        in.sensorCell = 2;
+        in.clickedWallCell = 2;
+        in.partyChampionCount = 0;
+        add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+        ok = ok && (add.triggersCandidateAdd == 1);
+        ok = ok && (add.championPortraitIndex == 7);
+        ok = ok && (add.candidateChampionOrdinal == 1);
+        ok = ok && (add.nextPartyChampionCount == 1);
+        st.partyChampionCount = add.nextPartyChampionCount;
+        st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+        pr = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_CANCEL);
+        ok = ok && (pr.valid == 1);
+        ok = ok && (pr.nextPartyChampionCount == 0);
+        pr = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(st, DM1_COMMAND_RESURRECT);
+        ok = ok && (pr.valid == 1);
+        ok = ok && (pr.disablesMirrorSensor == 1);
+        ok = ok && (pr.nextPartyChampionCount == 1);
     }
 
     /* Verify command validation */
