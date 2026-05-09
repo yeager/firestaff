@@ -175,6 +175,17 @@ int main(int argc, char** argv) {
         int i;
         for (i = 1; i < 6; ++i) {
             int result;
+            /* Canonical DM1 V1 layout (LOADSAVE.C MEDIA529 fix):
+             * start (1,3,SOUTH) has wall west (0,3) and east (2,3); only
+             * forward south (1,4) is legal.  Step 02 captures the turn-right
+             * orientation change at (1,3,WEST); for step 03 we silently rotate
+             * back to SOUTH before forward so a real movement tick is
+             * captured (party at (1,4)).  This keeps the capture route as a
+             * deterministic Firestaff fixture without relying on the buggy
+             * pre-fix decode where (0,3) was walkable. */
+            if (i == 2) {
+                (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
+            }
             if (i == 4) {
                 (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
                 (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
@@ -189,8 +200,10 @@ int main(int argc, char** argv) {
         }
     }
     if (rows[0].mapIndex != 0 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != 2) ok = 0;
-    if (rows[1].direction != 3) ok = 0;
-    if (rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != 3) ok = 0;
+    /* Step 02 (turn right): position unchanged, direction WEST. */
+    if (rows[1].mapX != 1 || rows[1].mapY != 3 || rows[1].direction != 3) ok = 0;
+    /* Step 03 (turn left back to SOUTH then forward): now at (1,4,SOUTH). */
+    if (rows[2].mapX != 1 || rows[2].mapY != 4 || rows[2].direction != 2) ok = 0;
     if (!rows[3].spellPanelOpen || rows[3].spellRuneCount != 1) ok = 0;
     if (rows[4].spellPanelOpen != 0 || rows[4].spellRuneCount != 0) ok = 0;
     if (!rows[5].inventoryPanelActive) ok = 0;

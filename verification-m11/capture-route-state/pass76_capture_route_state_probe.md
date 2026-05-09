@@ -6,7 +6,7 @@ This probe mirrors `verification-screens/capture_firestaff_ingame_series.c` as s
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | 01_ingame_start_latest | start | 1 | 0 | 0 | 1 | 3 | 2 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
 | 02_ingame_turn_right_latest | right | 1 | 1 | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
-| 03_ingame_move_forward_latest | up | 1 | 2 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
-| 04_ingame_spell_panel_latest | spell_rune_1 | 1 | 2 | 0 | 0 | 3 | 3 | 1 | 1 | 0 | 1 | 0 | 0x1400 |
-| 05_ingame_after_cast_latest | spell_rune_4+rune_4+spell_cast | 1 | 3 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
-| 06_ingame_inventory_panel_latest | spell_clear+inventory | 1 | 3 | 0 | 0 | 3 | 3 | 0 | 0 | 1 | 1 | 0 | 0x1400 |
+| 03_ingame_move_forward_latest | up | 1 | 3 | 0 | 1 | 4 | 2 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
+| 04_ingame_spell_panel_latest | spell_rune_1 | 1 | 3 | 0 | 1 | 4 | 2 | 1 | 1 | 0 | 1 | 0 | 0x1400 |
+| 05_ingame_after_cast_latest | spell_rune_4+rune_4+spell_cast | 1 | 4 | 0 | 1 | 4 | 2 | 0 | 0 | 0 | 1 | 0 | 0x1400 |
+| 06_ingame_inventory_panel_latest | spell_clear+inventory | 1 | 4 | 0 | 1 | 4 | 2 | 0 | 0 | 1 | 1 | 0 | 0x1400 |

@@ -78,10 +78,10 @@
         "D0C",
         "rows[0].result != M11_GAME_INPUT_REDRAW",
         "rows[3].result != M11_GAME_INPUT_REDRAW",
-        "move_forward_west",
-        "blocked_forward_south_wall",
-        "rows[2].mapX != 0 || rows[2].mapY != 3",
-        "rows[4].mapX != 1 || rows[4].mapY != 3",
+        "forward_west_blocked",
+        "forward_south_corridor",
+        "rows[2].mapX != 1 || rows[2].mapY != 3",
+        "rows[4].mapX != 1 || rows[4].mapY != 4",
         "viewportRowCount != 19"
       ],
       "verified": true,
@@ -206,45 +206,45 @@
       },
       {
         "center": [
-          -1,
+          0,
           3
         ],
         "left": [
-          -1,
+          0,
           4
         ],
         "party": [
           0,
-          0,
+          1,
           3,
           3
         ],
         "right": [
-          -1,
+          0,
           2
         ],
-        "snapshot": "move_forward_west"
+        "snapshot": "forward_west_blocked"
       },
       {
         "center": [
           1,
-          4
+          5
         ],
         "left": [
           2,
-          4
+          5
         ],
         "party": [
           0,
           1,
-          3,
+          4,
           2
         ],
         "right": [
           0,
-          4
+          5
         ],
-        "snapshot": "blocked_forward_south_wall"
+        "snapshot": "forward_south_corridor"
       }
     ],
     "viewport_rows_far_to_near": [
@@ -379,7 +379,7 @@
       "mapY": 3
     },
     "initialPartyLocationLE": "0x0861",
-    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "verified": true,
     "why": "The canonical DM1 V1 asset starts the party at map 0, x=1, y=3, direction=2 (south)."
   },
@@ -619,7 +619,7 @@
       "why": "Viewport rows are traversed source-order far-to-near using relative coordinates from current party state."
     }
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "route_evidence_checks": [
     {
       "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:01_ingame_start_latest",
@@ -653,12 +653,12 @@
       "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:03_ingame_move_forward_latest",
       "observed": {
         "action": "up",
-        "direction": 3,
+        "direction": 2,
         "mapIndex": 0,
-        "mapX": 0,
-        "mapY": 3,
+        "mapX": 1,
+        "mapY": 4,
         "result": 1,
-        "tick": 2
+        "tick": 3
       },
       "verified": true,
       "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
@@ -677,13 +677,13 @@
         ],
         "D1C": {
           "door": 0,
-          "elementType": 0,
+          "elementType": 1,
           "firstThing": 3088,
           "mapX": 1,
           "mapY": 4,
           "pit": 0,
           "row": "D1C",
-          "square": 0,
+          "square": 48,
           "teleporter": 0,
           "valid": 1
         },
@@ -713,13 +713,13 @@
         ],
         "D1C": {
           "door": 0,
-          "elementType": 6,
+          "elementType": 0,
           "firstThing": 1089,
           "mapX": 0,
           "mapY": 3,
           "pit": 0,
           "row": "D1C",
-          "square": 198,
+          "square": 4,
           "teleporter": 1,
           "valid": 1
         },
@@ -740,7 +740,7 @@
       "why": "Movement-after-turn/step evidence covers all source-ordered viewport distance rows and confirms D1C resampling from the post-command party state."
     },
     {
-      "citation": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json:move_forward_west",
+      "citation": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json:forward_west_blocked",
       "observed": {
         "D0": [
           "D0L",
@@ -750,14 +750,14 @@
         "D1C": {
           "door": 0,
           "elementType": 0,
-          "firstThing": 65534,
-          "mapX": -1,
+          "firstThing": 1089,
+          "mapX": 0,
           "mapY": 3,
           "pit": 0,
           "row": "D1C",
-          "square": 0,
-          "teleporter": 0,
-          "valid": 0
+          "square": 4,
+          "teleporter": 1,
+          "valid": 1
         },
         "D4": [
           "D4L",
@@ -766,7 +766,7 @@
         ],
         "party": [
           0,
-          0,
+          1,
           3,
           3
         ],
@@ -812,7 +812,7 @@
       "why": "Movement-after-turn/step evidence covers all source-ordered viewport distance rows and confirms D1C resampling from the post-command party state."
     },
     {
-      "citation": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json:blocked_forward_south_wall",
+      "citation": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json:forward_south_corridor",
       "observed": {
         "D0": [
           "D0L",
@@ -821,13 +821,13 @@
         ],
         "D1C": {
           "door": 0,
-          "elementType": 0,
-          "firstThing": 3088,
+          "elementType": 1,
+          "firstThing": 2051,
           "mapX": 1,
-          "mapY": 4,
+          "mapY": 5,
           "pit": 0,
           "row": "D1C",
-          "square": 0,
+          "square": 32,
           "teleporter": 0,
           "valid": 1
         },
@@ -839,7 +839,7 @@
         "party": [
           0,
           1,
-          3,
+          4,
           2
         ],
         "viewportRowCount": 19

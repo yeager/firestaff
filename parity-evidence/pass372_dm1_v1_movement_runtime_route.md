@@ -23,7 +23,7 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 - `m11_game_view.c` — The live game view converts M12 movement inputs to C001..C006 and queues resolved command ids directly, so product movement is not blocked by original-DOS keyboard-buffer delivery. ok=`True`
 - `dm1_v1_input_command_queue_pc34_compat.c` — The compat queue still covers original keyboard rows when an original-shaped keycode is supplied. ok=`True`
 - `dm1_v1_movement_pipeline_pc34_compat.c` — The compat pipeline wires enqueue/dequeue/gate/turn/move/post-move processing under ReDMCSB citations. ok=`True`
-- `test_dm1_v1_input_command_queue_pc34_compat.c` — Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and four-command capacity. ok=`True`
+- `test_dm1_v1_input_command_queue_pc34_compat.c` — Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and the five-command C5 capacity limit (pass387 expanded the cap from four to five). ok=`True`
 
 ## Prior runtime evidence reused
 
@@ -37,10 +37,11 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 - Firestaff runtime route: closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline
 - Original DOS residual: still unclaimed: DOSBox/FIRES keyboard-buffer adapter causing M527/M528 or IODRV_00_GetKeyboardInput to return 0x004B/0x004C/0x004D/0x004F/0x0050/0x0051 in a bounded original run
 - Route tokens audited: `/down`, `/left`, `/right`, and combined quality token `/down/left/right` remain covered by M12 movement input -> C001..C006 queue dispatch.
-- `CMakeLists.txt:466` / `CMakeLists.txt:467` audited as unrelated DM1 V2 movement-command-adapter test wiring; no DM1 V1 route change needed there.
+- `add_executable(test_dm1_v2_movement_command_adapter_pc34)` wiring (located by content, not by line number) audited as unrelated DM1 V2 movement-command-adapter test wiring; no DM1 V1 route change needed there.
 - Decision: do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task
 
 ## Gates
 
 - `ctest --test-dir build -R 'dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock' --output-on-failure` ok=`True`
+- `add_executable(test_dm1_v2_movement_command_adapter_pc34)` wiring present in `CMakeLists.txt` ok=`True`
 - Manifest: `parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json`

@@ -237,6 +237,18 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    /*
+     * Canonical DM1 V1 hall walkaround (LOADSAVE.C MEDIA529 fix):
+     * From start (1,3,SOUTH) the only walkable forward step is south into
+     * (1,4) corridor.  East and west of the start are walls; north of the
+     * start is the closed champion-mirror door at (1,2) (mirror ordinal 1).
+     * After stepping south into (1,4), turning right twice puts the party
+     * at (1,4,NORTH) where mirror ordinal 2 becomes visible on the wall
+     * north (back of the start corridor).  This walks the canonical decode
+     * end-to-end and proves: turn changes direction-only, blocked moves
+     * stay put, and one legal step plus a 180-degree rotation reveals a
+     * different mirror.
+     */
     snapshot(&game, "start_hall_initial_south", M11_GAME_INPUT_REDRAW, &rows[0]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
     snapshot(&game, "turn_left_east_view_changes", result, &rows[1]);
@@ -246,14 +258,19 @@ int main(int argc, char** argv) {
     snapshot(&game, "turn_left_north_front_mirror", result, &rows[3]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
     snapshot(&game, "step_north_mirror_wall_blocked", result, &rows[4]);
-    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
-    snapshot(&game, "turn_left_west_open_lane", result, &rows[5]);
+    /* Pivot back to SOUTH and step into the canonical corridor. */
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
+    /* (1,3,EAST) intermediate */
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
+    snapshot(&game, "turn_right_south_corridor", result, &rows[5]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    snapshot(&game, "step_west_moves_in_hall", result, &rows[6]);
+    snapshot(&game, "step_south_advances_corridor", result, &rows[6]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
-    snapshot(&game, "turn_right_north_from_west_cell", result, &rows[7]);
+    /* (1,4,WEST) intermediate */
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
-    snapshot(&game, "turn_right_east_front_second_mirror", result, &rows[8]);
+    snapshot(&game, "turn_around_face_north_from_corridor", result, &rows[7]);
+    /* Already snapshot at (1,4,NORTH); next step sees mirror 2. */
+    snapshot(&game, "corridor_front_second_mirror", result, &rows[8]);
 
     ok &= expect_int("start map", rows[0].mapIndex, 0);
     ok &= expect_int("start x from DUNGEON header", rows[0].mapX, 1);
@@ -266,12 +283,20 @@ int main(int argc, char** argv) {
     ok &= expect_int("north mirror visible", rows[3].front.mirrorOrdinal, 1);
     ok &= expect_int("north mirror blocked keeps x", rows[4].mapX, 1);
     ok &= expect_int("north mirror blocked keeps y", rows[4].mapY, 3);
-    ok &= expect_int("west lane direction", rows[5].direction, DIR_WEST);
-    ok &= expect_int("west step moves x", rows[6].mapX, 0);
-    ok &= expect_int("west step keeps y", rows[6].mapY, 3);
-    ok &= expect_int("west cell north turn", rows[7].direction, DIR_NORTH);
-    ok &= expect_int("west cell east turn", rows[8].direction, DIR_EAST);
-    ok &= expect_int("second mirror visible from west cell", rows[8].front.mirrorOrdinal, 2);
+    /* row 5: now facing south after two right turns */
+    ok &= expect_int("south corridor direction", rows[5].direction, DIR_SOUTH);
+    ok &= expect_int("south corridor x", rows[5].mapX, 1);
+    ok &= expect_int("south corridor y", rows[5].mapY, 3);
+    /* row 6: forward south succeeded -> (1,4,SOUTH) */
+    ok &= expect_int("south step x", rows[6].mapX, 1);
+    ok &= expect_int("south step y", rows[6].mapY, 4);
+    ok &= expect_int("south step dir", rows[6].direction, DIR_SOUTH);
+    /* row 7: 180-degree rotation -> (1,4,NORTH) */
+    ok &= expect_int("180 turn x", rows[7].mapX, 1);
+    ok &= expect_int("180 turn y", rows[7].mapY, 4);
+    ok &= expect_int("180 turn dir north", rows[7].direction, DIR_NORTH);
+    /* row 8: same place as row 7, with mirror 2 visible on the front cell. */
+    ok &= expect_int("corridor mirror visible", rows[8].front.mirrorOrdinal, 2);
 
     /* Walking and turning must not implicitly click a portrait, open the Hall
      * candidate panel, or resurrect/reincarnate/recruit anyone. */
@@ -291,8 +316,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL viewport/front cell did not change after turn\n");
         ok = 0;
     }
+    /* Forward south at (1,3,SOUTH) advances the front cell from (1,4) to (1,5). */
     if (rows[5].front.mapX == rows[6].front.mapX && rows[5].front.mapY == rows[6].front.mapY) {
-        fprintf(stderr, "FAIL viewport/front cell did not advance after west step\n");
+        fprintf(stderr, "FAIL viewport/front cell did not advance after south step\n");
         ok = 0;
     }
 

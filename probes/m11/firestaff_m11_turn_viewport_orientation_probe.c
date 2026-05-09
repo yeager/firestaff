@@ -253,6 +253,29 @@ int main(int argc, char** argv) {
     dataDir = argv[1];
     outDir = argv[2];
 
+    /*
+     * Canonical DM1 V1 layout (post LOADSAVE.C MEDIA529 fix):
+     *   start (1,3,SOUTH); walls flank east (2,3) and west (0,3) and the
+     *   only legal forward-from-start is south to corridor (1,4).
+     *
+     * Routes exercised:
+     *   row 0 start_south       : (1,3,SOUTH).
+     *   row 1 turn_right_west   : turn right -> (1,3,WEST).
+     *   row 2 forward_west_blocked
+     *                            : forward attempt at (1,3,WEST) is blocked
+     *                              by wall at (0,3); party stays at
+     *                              (1,3,WEST) and the front cell remains the
+     *                              wall (0,3).  This proves CLIKMENU.C
+     *                              F0366 movement-blocker handling on the
+     *                              canonical decode.
+     *   row 3 turn_left_east    : fresh game, turn left -> (1,3,EAST).
+     *   row 4 forward_south_corridor
+     *                            : fresh game, forward south at (1,3,SOUTH)
+     *                              succeeds -> (1,4,SOUTH); front cell
+     *                              advances to (1,5).  This proves the
+     *                              canonical decode actually plays a real
+     *                              forward step.
+     */
     if (!open_game(dataDir, &menu, &game)) {
         fprintf(stderr, "failed to open DM1 game view\n");
         return 1;
@@ -261,7 +284,7 @@ int main(int argc, char** argv) {
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
     snapshot(&game, "turn_right_west", result, &rows[1]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    snapshot(&game, "move_forward_west", result, &rows[2]);
+    snapshot(&game, "forward_west_blocked", result, &rows[2]);
     M11_GameView_Shutdown(&game);
 
     if (!open_game(dataDir, &menu, &game)) {
@@ -273,11 +296,11 @@ int main(int argc, char** argv) {
     M11_GameView_Shutdown(&game);
 
     if (!open_game(dataDir, &menu, &game)) {
-        fprintf(stderr, "failed to reopen DM1 game view for blocked move probe\n");
+        fprintf(stderr, "failed to reopen DM1 game view for forward south probe\n");
         return 1;
     }
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    snapshot(&game, "blocked_forward_south_wall", result, &rows[4]);
+    snapshot(&game, "forward_south_corridor", result, &rows[4]);
 
     if (rows[0].result != M11_GAME_INPUT_REDRAW ||
         rows[1].result != M11_GAME_INPUT_REDRAW ||
@@ -287,9 +310,11 @@ int main(int argc, char** argv) {
 
     if (rows[0].mapIndex != 0 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != DIR_SOUTH) ok = 0;
     if (rows[1].mapIndex != 0 || rows[1].mapX != 1 || rows[1].mapY != 3 || rows[1].direction != DIR_WEST) ok = 0;
-    if (rows[2].mapIndex != 0 || rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != DIR_WEST) ok = 0;
+    /* forward_west_blocked: blocked at (0,3) wall, party stays at (1,3,WEST). */
+    if (rows[2].mapIndex != 0 || rows[2].mapX != 1 || rows[2].mapY != 3 || rows[2].direction != DIR_WEST) ok = 0;
     if (rows[3].mapIndex != 0 || rows[3].mapX != 1 || rows[3].mapY != 3 || rows[3].direction != DIR_EAST) ok = 0;
-    if (rows[4].mapIndex != 0 || rows[4].mapX != 1 || rows[4].mapY != 3 || rows[4].direction != DIR_SOUTH) ok = 0;
+    /* forward_south_corridor: forward south succeeds, party at (1,4,SOUTH). */
+    if (rows[4].mapIndex != 0 || rows[4].mapX != 1 || rows[4].mapY != 4 || rows[4].direction != DIR_SOUTH) ok = 0;
 
     if (rows[0].center.mapX != 1 || rows[0].center.mapY != 4) ok = 0;
     if (rows[0].left.mapX != 2 || rows[0].left.mapY != 4) ok = 0;
@@ -297,19 +322,22 @@ int main(int argc, char** argv) {
     if (rows[1].center.mapX != 0 || rows[1].center.mapY != 3) ok = 0;
     if (rows[1].left.mapX != 0 || rows[1].left.mapY != 4) ok = 0;
     if (rows[1].right.mapX != 0 || rows[1].right.mapY != 2) ok = 0;
-    if (rows[2].center.mapX != -1 || rows[2].center.mapY != 3) ok = 0;
-    if (rows[2].left.mapX != -1 || rows[2].left.mapY != 4) ok = 0;
-    if (rows[2].right.mapX != -1 || rows[2].right.mapY != 2) ok = 0;
+    /* row 2 (blocked at (1,3,WEST)): same lane geometry as row 1. */
+    if (rows[2].center.mapX != 0 || rows[2].center.mapY != 3) ok = 0;
+    if (rows[2].left.mapX != 0 || rows[2].left.mapY != 4) ok = 0;
+    if (rows[2].right.mapX != 0 || rows[2].right.mapY != 2) ok = 0;
     if (rows[3].center.mapX != 2 || rows[3].center.mapY != 3) ok = 0;
     if (rows[3].left.mapX != 2 || rows[3].left.mapY != 2) ok = 0;
     if (rows[3].right.mapX != 2 || rows[3].right.mapY != 4) ok = 0;
-    if (rows[4].center.mapX != 1 || rows[4].center.mapY != 4) ok = 0;
-    if (rows[4].left.mapX != 2 || rows[4].left.mapY != 4) ok = 0;
-    if (rows[4].right.mapX != 0 || rows[4].right.mapY != 4) ok = 0;
+    /* row 4 (forward south succeeded, party at (1,4,SOUTH)): front=(1,5). */
+    if (rows[4].center.mapX != 1 || rows[4].center.mapY != 5) ok = 0;
+    if (rows[4].left.mapX != 2 || rows[4].left.mapY != 5) ok = 0;
+    if (rows[4].right.mapX != 0 || rows[4].right.mapY != 5) ok = 0;
 
+    /* All sampled cells are within the 18x19 canonical map. */
     if (!rows[0].left.valid || !rows[0].center.valid || !rows[0].right.valid ||
         !rows[1].left.valid || !rows[1].center.valid || !rows[1].right.valid ||
-        rows[2].left.valid || rows[2].center.valid || rows[2].right.valid ||
+        !rows[2].left.valid || !rows[2].center.valid || !rows[2].right.valid ||
         !rows[3].left.valid || !rows[3].center.valid || !rows[3].right.valid ||
         !rows[4].left.valid || !rows[4].center.valid || !rows[4].right.valid) ok = 0;
 
@@ -317,8 +345,9 @@ int main(int argc, char** argv) {
         rows[3].viewportRowCount != 19 || rows[4].viewportRowCount != 19) ok = 0;
     if (rows[0].viewportRows[15].mapX != 1 || rows[0].viewportRows[15].mapY != 4) ok = 0;
     if (rows[1].viewportRows[15].mapX != 0 || rows[1].viewportRows[15].mapY != 3) ok = 0;
-    if (rows[2].viewportRows[15].mapX != -1 || rows[2].viewportRows[15].mapY != 3) ok = 0;
-    if (rows[4].viewportRows[15].mapX != 1 || rows[4].viewportRows[15].mapY != 4) ok = 0;
+    /* Row 2 stays at (1,3,WEST), so the D1C front-cell sample equals row 1's. */
+    if (rows[2].viewportRows[15].mapX != 0 || rows[2].viewportRows[15].mapY != 3) ok = 0;
+    if (rows[4].viewportRows[15].mapX != 1 || rows[4].viewportRows[15].mapY != 5) ok = 0;
 
     if (!write_outputs(outDir, rows, 5)) ok = 0;
     M11_GameView_Shutdown(&game);

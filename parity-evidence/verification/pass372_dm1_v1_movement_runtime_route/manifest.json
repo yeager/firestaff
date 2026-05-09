@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-post-main-movement-viewport-matrix-20260508",
+  "branch": "land-20260509",
   "checks": [
     {
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
@@ -104,9 +104,8 @@
     },
     {
       "file": "CMakeLists.txt",
-      "kind": "cmakelists_466_467_audit",
-      "lines": "466-467",
-      "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34 test_dm1_v2_movement_command_adapter_pc34.c",
+      "kind": "cmakelists_movement_command_adapter_audit",
+      "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
       "ok": true
     },
     {
@@ -115,12 +114,11 @@
       "regex": "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock"
     }
   ],
-  "cmakeLists466_467": {
-    "lines": "466-467",
-    "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34 test_dm1_v2_movement_command_adapter_pc34.c",
+  "cmakeListsMovementCommandAdapter": {
+    "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  11: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #11: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  13: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #13: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  46: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #46: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 133: dm1_v1_input_command_queue_source_lock\n4/4 Test #133: dm1_v1_input_command_queue_source_lock .....   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
+  "ctestTail": "Test project /Users/bosse/.openclaw/data/firestaff-land-20260509-0721/build\n    Start  19: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #19: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  21: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #21: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  58: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #58: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 154: dm1_v1_input_command_queue_source_lock\n4/4 Test #154: dm1_v1_input_command_queue_source_lock .....   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.03 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -184,21 +182,21 @@
       "path": "dm1_v1_movement_pipeline_pc34_compat.c"
     },
     {
-      "claim": "Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and four-command capacity.",
+      "claim": "Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and the five-command C5 capacity limit (pass387 expanded the cap from four to five).",
       "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
       "markers": [
         "i34e keypad 4 turns left",
         "i34e keypad 5 moves forward",
         "pc34 io2 shifted up arrow normalizes to forward",
         "pc34 shifted backward arrow strafes right",
-        "redmcsb fifth command is dropped"
+        "redmcsb sixth command is dropped at C5 limit"
       ],
       "missingMarkers": [],
       "ok": true,
       "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "0bb88925aed0c74fac43d1712355b23c5dfb7a80",
+  "head": "27f66ba9c4244c4f16f544428a282d32a3b6bfbc",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -217,7 +215,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -244,7 +242,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "claim": "The game loop drains buffered keyboard characters through F0361, then processes the command queue through F0380.",
@@ -258,7 +256,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "I34E movement keyboard table binds K/L/M/O/P/Q to C001..C006.",
@@ -276,7 +274,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0361 scans primary then secondary keyboard tables and enqueues the matched command.",
@@ -291,7 +289,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0380 locks/dequeues the queue, gates movement ticks, and dispatches turns to F0365 and steps to F0366.",
@@ -307,7 +305,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0365 turns the party and fires leave/enter sensors around F0284_CHAMPION_SetPartyDirection.",
@@ -320,7 +318,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "F0366 maps C003..C006 to relative step deltas, validates collision, moves, and applies movement timing.",
@@ -336,7 +334,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "After dungeon load, secondary keyboard input is installed to the movement table.",
@@ -349,10 +347,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-08T09:14:07.929165+00:00"
+  "timestampUtc": "2026-05-09T07:57:45.600433+00:00"
 }

@@ -316,10 +316,18 @@ def verify_route_evidence() -> list[dict[str, Any]]:
         raise SystemExit(f"missing required route evidence: {ROUTE_EVIDENCE}")
     doc = json.loads(ROUTE_EVIDENCE.read_text(encoding="utf-8"))
     snapshots = {row["capture"]: row for row in doc.get("snapshots", [])}
+    # Canonical DM1 V1 layout (LOADSAVE.C MEDIA529 fix in
+    # memory_dungeon_dat_pc34_compat.c): from start (1,3,SOUTH) the only
+    # walkable forward step is south to (1,4); west (0,3) and east (2,3)
+    # are walls.  The capture-route probe rotates back to SOUTH between
+    # snapshots 02 and 03 so the recorded forward step lands on (1,4,SOUTH)
+    # and exercises a real movement tick.  Tick advances by one for the
+    # turn-right at step 02, by one for the silent rotate-back-to-SOUTH
+    # before step 03, and by one for the forward step itself.
     expected = [
         ("01_ingame_start_latest", "start", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2, "tick": 0}),
         ("02_ingame_turn_right_latest", "right", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 3, "tick": 1}),
-        ("03_ingame_move_forward_latest", "up", {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 3, "tick": 2}),
+        ("03_ingame_move_forward_latest", "up", {"mapIndex": 0, "mapX": 1, "mapY": 4, "direction": 2, "tick": 3}),
     ]
     checks: list[dict[str, Any]] = []
     for capture, action, fields in expected:
@@ -369,8 +377,8 @@ def source_derived_golden_metadata() -> dict[str, Any]:
             {"snapshot": "start_south", "party": [0, 1, 3, 2], "left": [2, 4], "center": [1, 4], "right": [0, 4]},
             {"snapshot": "turn_right_west", "party": [0, 1, 3, 3], "left": [0, 4], "center": [0, 3], "right": [0, 2]},
             {"snapshot": "turn_left_east", "party": [0, 1, 3, 1], "left": [2, 2], "center": [2, 3], "right": [2, 4]},
-            {"snapshot": "move_forward_west", "party": [0, 0, 3, 3], "left": [-1, 4], "center": [-1, 3], "right": [-1, 2]},
-            {"snapshot": "blocked_forward_south_wall", "party": [0, 1, 3, 2], "left": [2, 4], "center": [1, 4], "right": [0, 4]},
+            {"snapshot": "forward_west_blocked", "party": [0, 1, 3, 3], "left": [0, 4], "center": [0, 3], "right": [0, 2]},
+            {"snapshot": "forward_south_corridor", "party": [0, 1, 4, 2], "left": [2, 5], "center": [1, 5], "right": [0, 5]},
         ],
         "movement_blockers": {
             "wall": "blocked when M034_SQUARE_TYPE(square) == C00_ELEMENT_WALL",
@@ -500,10 +508,10 @@ def verify_firestaff() -> list[dict[str, Any]]:
             "D0C",
             "rows[0].result != M11_GAME_INPUT_REDRAW",
             "rows[3].result != M11_GAME_INPUT_REDRAW",
-            "move_forward_west",
-            "blocked_forward_south_wall",
-            "rows[2].mapX != 0 || rows[2].mapY != 3",
-            "rows[4].mapX != 1 || rows[4].mapY != 3",
+            "forward_west_blocked",
+            "forward_south_corridor",
+            "rows[2].mapX != 1 || rows[2].mapY != 3",
+            "rows[4].mapX != 1 || rows[4].mapY != 4",
             "viewportRowCount != 19",
         ],
         "Firestaff gates that successful turn and step inputs request redraw and now samples all D4/D3/D2/D1/D0 viewport row coordinates from post-command party state.",
@@ -520,12 +528,18 @@ def verify_turn_viewport_evidence() -> list[dict[str, Any]]:
     if doc.get("viewportRowOrder") != "D4L,D4R,D4C,D3L2,D3R2,D3L,D3R,D3C,D2L2,D2R2,D2L,D2R,D2C,D1L,D1R,D1C,D0L,D0R,D0C":
         raise SystemExit("turn viewport evidence row order mismatch")
     snapshots = {row["name"]: row for row in doc.get("snapshots", [])}
+    # Canonical DM1 V1 layout (LOADSAVE.C MEDIA529 fix): from start
+    # (1,3,SOUTH) the west step is blocked by wall (0,3); only the south
+    # forward step lands on a walkable corridor cell.  The probe now
+    # records two canonical-correct snapshots: forward_west_blocked stays
+    # at (1,3,WEST) with the front cell (D1C) at the (0,3) wall, and
+    # forward_south_corridor advances to (1,4,SOUTH) with D1C at (1,5).
     expected = {
         "start_south": (1, 3, 2, (1, 4)),
         "turn_right_west": (1, 3, 3, (0, 3)),
-        "move_forward_west": (0, 3, 3, (-1, 3)),
+        "forward_west_blocked": (1, 3, 3, (0, 3)),
         "turn_left_east": (1, 3, 1, (2, 3)),
-        "blocked_forward_south_wall": (1, 3, 2, (1, 4)),
+        "forward_south_corridor": (1, 4, 2, (1, 5)),
     }
     checks: list[dict[str, Any]] = []
     for name, (map_x, map_y, direction, d1c) in expected.items():

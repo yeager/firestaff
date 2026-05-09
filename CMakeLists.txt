@@ -522,6 +522,20 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_canonical_movement_probe
     )
 
+    # DM1 V1 playable-route gate: forward/blocked/turn deltas with hash and
+    # state changes proving the canonical DUNGEON.DAT layout actually plays.
+    add_executable(firestaff_dm1_v1_playable_route_probe
+        probes/dm1/firestaff_dm1_v1_playable_route_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_playable_route_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_playable_route_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_playable_route_probe
+        COMMAND firestaff_dm1_v1_playable_route_probe
+    )
+
     add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
         probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c
     )

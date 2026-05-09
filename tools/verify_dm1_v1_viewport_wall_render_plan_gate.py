@@ -77,12 +77,25 @@ WALL_SPECS: dict[str, dict[str, Any]] = {
     "D0R":  {"native": "DM1_WALL_D0R",  "parity": "DM1_WALL_D0L",  "zone": 717, "flip": True, "center": False, "returns": True,  "alcove": False, "source": "DUNVIEW.C:8126-8139"},
 }
 
+# Canonical DM1 V1 layout (LOADSAVE.C MEDIA529 fix, see
+# memory_dungeon_dat_pc34_compat.c) changes which world squares fall into
+# each viewport row from the start cells.  The pass127 turn-viewport
+# probe was reshaped to test:
+#   - start_south            party (1,3,SOUTH)  walls east+west of start
+#   - turn_right_west        party (1,3,WEST)   front cell is wall (0,3)
+#   - forward_west_blocked   party (1,3,WEST)   forward into (0,3) wall is
+#                                                blocked: same view as turn_right_west
+#   - turn_left_east         party (1,3,EAST)   front cell is wall (2,3)
+#   - forward_south_corridor party (1,4,SOUTH)  forward south to corridor
+# These wall-row sets are derived from the canonical pass127 evidence by
+# re-running render_events() against the post-fix viewport row geometry;
+# any future layout change should re-derive them the same way.
 EXPECTED_BY_SNAPSHOT = {
-    "start_south": ["D4L", "D4R", "D3R2", "D3L", "D3C", "D2R2", "D2L", "D2R", "D1C", "D0L"],
-    "turn_right_west": ["D4L", "D4R", "D4C", "D3L2", "D3R2", "D3L", "D3R", "D3C", "D2L2", "D2R2", "D2L", "D2R", "D2C", "D1R", "D0L", "D0R"],
-    "move_forward_west": ["D4L", "D4R", "D4C", "D3L2", "D3R2", "D3L", "D3R", "D3C", "D2L2", "D2R2", "D2L", "D2R", "D2C", "D1L", "D1R", "D1C", "D0R"],
-    "turn_left_east": ["D4R", "D4C", "D3L2", "D3R2", "D2L", "D2R", "D2C", "D1C", "D0L", "D0R"],
-    "blocked_forward_south_wall": ["D4L", "D4R", "D3R2", "D3L", "D3C", "D2R2", "D2L", "D2R", "D1C", "D0L"],
+    "start_south": ["D3L2", "D3R2", "D3L", "D3R", "D2L2", "D2R2", "D2L", "D1L", "D1R", "D0L", "D0R", "D4R"],
+    "turn_right_west": ["D3L2", "D3R2", "D3L", "D3R", "D3C", "D2L2", "D2R2", "D2L", "D2R", "D2C", "D1L", "D1R", "D1C", "D4L", "D4R", "D4C"],
+    "forward_west_blocked": ["D3L2", "D3R2", "D3L", "D3R", "D3C", "D2L2", "D2R2", "D2L", "D2R", "D2C", "D1L", "D1R", "D1C", "D4L", "D4R", "D4C"],
+    "turn_left_east": ["D3L2", "D2L2", "D2R2", "D2L", "D2R", "D2C", "D1L", "D1R", "D1C", "D4R", "D4C"],
+    "forward_south_corridor": ["D3R2", "D3R", "D2L2", "D2R2", "D2L", "D2R", "D1L", "D0L", "D0R", "D4L", "D4R", "D4C"],
 }
 
 

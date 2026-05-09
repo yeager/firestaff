@@ -1188,6 +1188,16 @@ int main(int argc, char** argv) {
                                                      PROBE_DM1_VIEWPORT_W,
                                                      PROBE_DM1_VIEWPORT_H);
 
+        /* Canonical DM1 V1 layout (post LOADSAVE.C MEDIA529 fix): start at
+         * (1,3,SOUTH).  Walls flank east (2,3) and west (0,3); only forward
+         * south into corridor (1,4) is legal.  We exercise a real turn for
+         * INV_GV_06B (turn-right -> face WEST) by hashing the aperture before
+         * and after; then turn back left to SOUTH and step forward into the
+         * corridor for INV_GV_06C/06D (PARTY MOVED + viewport hash change).
+         * This proves the canonical playable route through the release-mode
+         * harness without depending on the buggy pre-fix decode where (0,3)
+         * was walkable.
+         */
         (void)M11_GameView_HandleInput(&releaseViewport, M12_MENU_INPUT_RIGHT);
         memset(releaseTurned, 0, sizeof(releaseTurned));
         M11_GameView_Draw(&releaseViewport, releaseTurned, 320, 200);
@@ -1201,11 +1211,14 @@ int main(int argc, char** argv) {
                      releaseTurnedViewportHash != releaseInitialViewportHash,
                      "release-mode viewport aperture changes after a real turn, not only status/debug panels");
 
+        /* Restore original facing (SOUTH) before the forward step. */
+        (void)M11_GameView_HandleInput(&releaseViewport, M12_MENU_INPUT_LEFT);
+
         probe_record(&tally,
                      "INV_GV_06C",
                      M11_GameView_HandleInput(&releaseViewport, M12_MENU_INPUT_UP) == M11_GAME_INPUT_REDRAW &&
                          strcmp(releaseViewport.lastOutcome, "PARTY MOVED") == 0,
-                     "release-mode forward input advances through the real movement tick after a turn");
+                     "release-mode forward input advances through the real movement tick into the canonical south corridor");
         memset(releaseMoved, 0, sizeof(releaseMoved));
         M11_GameView_Draw(&releaseViewport, releaseMoved, 320, 200);
         releaseMovedViewportHash = probe_hash_rect(releaseMoved, 320,
@@ -1215,7 +1228,8 @@ int main(int argc, char** argv) {
                                                    PROBE_DM1_VIEWPORT_H);
         probe_record(&tally,
                      "INV_GV_06D",
-                     releaseMovedViewportHash != releaseTurnedViewportHash,
+                     releaseMovedViewportHash != releaseTurnedViewportHash &&
+                         releaseMovedViewportHash != releaseInitialViewportHash,
                      "release-mode viewport aperture changes after forward movement, preventing a static front-wall frame");
         M11_GameView_Shutdown(&releaseViewport);
     }
