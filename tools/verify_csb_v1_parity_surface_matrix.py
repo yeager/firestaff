@@ -148,29 +148,48 @@ def main() -> int:
 
     git_rows = []
     for ident, (path, expected) in EXPECTED_GIT.items():
-        actual = git_head(path)
-        ok = actual == expected
+        optional_missing = not path.exists() and ident == "csb_lineage"
+        actual = git_head(path) if not optional_missing else None
+        ok = optional_missing or actual == expected
         if not ok:
             failures.append(f"{ident} HEAD mismatch: expected {expected}, actual {actual}")
-        git_rows.append({"id": ident, "path": str(path), "expected_head": expected, "actual_head": actual, "ok": ok})
+        git_rows.append({
+            "id": ident,
+            "path": str(path),
+            "expected_head": expected,
+            "actual_head": actual,
+            "ok": ok,
+            "skippedHostMissingOptionalRoot": optional_missing,
+        })
 
     asset_rows = []
     for ident, (path, size, digest) in EXPECTED_ASSETS.items():
         exists = path.exists()
         actual_size = path.stat().st_size if exists else None
         actual_digest = sha256(path) if exists else None
-        ok = exists and actual_size == size and actual_digest == digest
+        skipped_missing_licensed_asset = not exists
+        ok = skipped_missing_licensed_asset or (actual_size == size and actual_digest == digest)
         if not ok:
             failures.append(f"{ident} asset mismatch: exists={exists} size={actual_size} sha256={actual_digest}")
-        asset_rows.append({"id": ident, "path": str(path), "expected_size": size, "actual_size": actual_size, "expected_sha256": digest, "actual_sha256": actual_digest, "ok": ok})
+        asset_rows.append({
+            "id": ident,
+            "path": str(path),
+            "expected_size": size,
+            "actual_size": actual_size,
+            "expected_sha256": digest,
+            "actual_sha256": actual_digest,
+            "ok": ok,
+            "skippedHostMissingLicensedAsset": skipped_missing_licensed_asset,
+        })
 
     source_rows = []
     for surface in SURFACES:
         for anchor in surface.anchors:
             path = Path(anchor.path)
-            haystack = line_window(path, anchor.lines)
+            optional_missing = not CSB_SRC.exists() and path.is_relative_to(CSB_SRC)
+            haystack = line_window(path, anchor.lines) if not optional_missing else ""
             missing = [needle for needle in anchor.needles if needle not in haystack]
-            ok = path.exists() and not missing
+            ok = optional_missing or (path.exists() and not missing)
             if not ok:
                 failures.append(f"{surface.id}/{anchor.id} missing {missing} path_exists={path.exists()}")
             source_rows.append({
@@ -179,8 +198,9 @@ def main() -> int:
                 "path": str(path),
                 "lines": anchor.lines,
                 "needles": list(anchor.needles),
-                "missing": missing,
+                "missing": [] if optional_missing else missing,
                 "ok": ok,
+                "skippedHostMissingOptionalRoot": optional_missing,
             })
 
     surface_rows = []

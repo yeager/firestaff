@@ -32,7 +32,9 @@ int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
     int changed;
-    const int cardW = (1920 - 2 * 48 - 22 * 4) / 5;
+    const int entryCount = M12_StartupMenu_GetEntryCount();
+    const int cardCount = entryCount + 1; /* brand card + entries */
+    const int cardW = (1920 - 2 * 48 - 22 * (cardCount - 1)) / cardCount;
     const int csbCardCenterX = 48 + 2 * (cardW + 22) + cardW / 2;
     const int cardCenterY = (170 + (1080 - 130)) / 2;
     const int launchCenterX = 960;
