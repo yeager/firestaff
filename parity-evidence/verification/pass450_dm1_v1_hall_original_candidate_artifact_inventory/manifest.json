@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T13:13:31.198407+00:00",
+  "timestampUtc": "2026-05-09T13:15:45.471616+00:00",
   "status": "BLOCKED_PASS450_ORIGINAL_PC34_HALL_CANDIDATE_FRAMES_NOT_PROMOTABLE",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-pass450-hall-original-frames-20260509-1509",
+  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/firestaff-pass450-hall-original-frames-20260509-1509",
   "branch": "worker/pass450-hall-original-frame-evidence-20260509",
-  "head": "7c22c8bbe7f50bd83438922fe6b2f05e778e49eb",
+  "head": "064591f4669c1fc012686f8c5f7bdc54559b6ecb",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {

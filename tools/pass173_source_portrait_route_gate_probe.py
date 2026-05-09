@@ -7,7 +7,7 @@ sensor 16 on wall square (1,4), then gates on an actual dungeon_gameplay frame a
 only then clicks the ReDMCSB portrait center x=111,y=82 followed by C160/C161.
 """
 from __future__ import annotations
-import json, shutil, subprocess, sys, time
+import json, os, shutil, subprocess, sys, time
 from pathlib import Path
 from typing import Any
 from PIL import Image, ImageChops, ImageStat
@@ -18,9 +18,11 @@ from tools.pass118_state_aware_original_route_driver import wait_window, capture
 from tools.pass80_original_frame_classifier import sha256  # noqa: E402
 
 STAGE = Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-DOSBOX = "/usr/bin/dosbox"
+DOSBOX = os.environ.get("FIRESTAFF_DOSBOX", shutil.which("dosbox") or "/usr/bin/dosbox")
 OUT_ROOT = Path("parity-evidence/verification/pass173_source_portrait_route_gate_probe")
-RUN_BASE_ROOT = Path.home()/".openclaw/data/firestaff-n2-runs"
+DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/".openclaw/data/firestaff-n2-runs"
+RUN_BASE_ROOT = Path(os.environ.get("FIRESTAFF_PASS173_RUN_BASE", os.environ.get("FIRESTAFF_ARTIFACT_ROOT", str(DEFAULT_RUN_BASE_ROOT))))
 STATIC_NO_PARTY_HASHES={"48ed3743ab6a","082b4d249740"}
 CROPS={"viewport":(0,0,224,136),"right_panel":(224,0,320,136),"lower_panel":(0,136,320,200),"candidate_buttons":(70,80,225,148)}
 SOURCE_ROOT="~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"

@@ -1,0 +1,29 @@
+{
+  "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
+  "timestampUtc": "2026-05-09T13:15:45.546498+00:00",
+  "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
+  "repo": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/firestaff-pass450-hall-original-frames-20260509-1509",
+  "branch": "worker/pass450-hall-original-frame-evidence-20260509",
+  "head": "064591f4669c1fc012686f8c5f7bdc54559b6ecb",
+  "target": "tools/pass173_source_portrait_route_gate_probe.py",
+  "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
+  "externalParentExists": true,
+  "envOverrides": [
+    "FIRESTAFF_DOSBOX",
+    "FIRESTAFF_PASS173_RUN_BASE",
+    "FIRESTAFF_ARTIFACT_ROOT"
+  ],
+  "fallbackRunBase": "~/.openclaw/data/firestaff-n2-runs only when the N1 external artifact parent is absent and no env override is supplied",
+  "pyCompile": {
+    "cmd": [
+      "python3",
+      "-m",
+      "py_compile",
+      "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/firestaff-pass450-hall-original-frames-20260509-1509/tools/pass173_source_portrait_route_gate_probe.py"
+    ],
+    "returncode": 0,
+    "outputTail": ""
+  },
+  "missing": [],
+  "errors": []
+}
