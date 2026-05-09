@@ -7,17 +7,17 @@
         "03_ingame_move_forward_original_viewport_224x136.ppm",
         "05_ingame_after_cast_original_viewport_224x136.ppm"
       ],
-      "dir": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/verification-screens/pass112-n2-route-probe",
+      "dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe",
       "raw_count": 6,
       "raw_duplicate_sha256_counts_gt1": {
         "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0": 3
       },
-      "raw_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/verification-screens/pass112-n2-route-probe/raw_manifest.tsv",
+      "raw_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe/raw_manifest.tsv",
       "viewport_224x136_count": 6,
       "viewport_duplicate_sha256_counts_gt1": {
         "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844": 3
       },
-      "viewport_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
+      "viewport_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
       "viewport_missing_materialized_files": 6,
       "viewport_sha256": [
         "358136006c6d53d112d1cfea3d4bd0fa0902df0ad8b7130cf68778e298a24aa9",
@@ -34,13 +34,13 @@
         "03_ingame_move_forward_original_viewport_224x136.ppm",
         "05_ingame_after_cast_original_viewport_224x136.ppm"
       ],
-      "dir": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/verification-screens/pass112-n2-stable-hud-route",
+      "dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route",
       "labels_count": 6,
       "raw_count": 6,
       "raw_duplicate_sha256_counts_gt1": {
         "ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c": 4
       },
-      "raw_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/verification-screens/pass112-n2-stable-hud-route/raw_manifest.tsv",
+      "raw_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route/raw_manifest.tsv",
       "raw_missing_materialized_files": 6
     },
     "status": "MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING"
@@ -103,7 +103,7 @@
     ],
     "missing_tools": [],
     "pass206_status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
-    "path": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json",
+    "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json",
     "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 shot:party_hud kp5 wait:700 shot kp5 wait:700 shot f1 wait:700 shot:spell_panel one wait:700 shot i wait:700 shot:inventory_panel",
     "viewport_crop_ppm_count": 0
   },
@@ -254,8 +254,8 @@
       "ok": true
     }
   ],
-  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass207_dm1_v1_original_movement_viewport_blocker_gate.v1",
   "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
   "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"

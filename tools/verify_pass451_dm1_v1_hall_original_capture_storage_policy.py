@@ -22,7 +22,11 @@ MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 TARGET = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
 EXTERNAL_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
-N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_ROOTS = [
+    Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"),
+    Path.home() / "openclaw-artifacts/dm1-hall-dosbox-20260509",
+    Path.home() / ".openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+]
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 
 REQUIRED_NEEDLES = [
@@ -36,28 +40,37 @@ REQUIRED_NEEDLES = [
 
 
 def audit_n2_artifact_root() -> dict[str, Any]:
-    manifest_path = N2_HALL_ARTIFACT_ROOT / "manifest.json"
-    row: dict[str, Any] = {
-        "root": str(N2_HALL_ARTIFACT_ROOT),
-        "exists": N2_HALL_ARTIFACT_ROOT.is_dir(),
-        "manifestPath": str(manifest_path),
-        "expectedStatus": N2_HALL_ARTIFACT_STATUS,
-    }
-    errors: list[str] = []
-    if not manifest_path.is_file():
-        errors.append(f"missing {manifest_path}")
-    else:
-        try:
-            data = json.loads(manifest_path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            data = {}
-            errors.append(f"manifest parse failed: {exc}")
-        row.update({"status": data.get("status"), "entryCount": len(data.get("entries", [])) if isinstance(data.get("entries"), list) else None})
-        if data.get("status") != N2_HALL_ARTIFACT_STATUS:
-            errors.append(f"status mismatch: {data.get('status')} != {N2_HALL_ARTIFACT_STATUS}")
-    row["ok"] = not errors
-    row["errors"] = errors
-    return row
+    candidates: list[dict[str, Any]] = []
+    for root in N2_HALL_ARTIFACT_ROOTS:
+        manifest_candidates = [root / "manifest.json", root / "final_candidate_frames" / "manifest.json"]
+        row: dict[str, Any] = {
+            "root": str(root),
+            "exists": root.is_dir(),
+            "manifestCandidates": [str(path) for path in manifest_candidates],
+            "expectedStatus": N2_HALL_ARTIFACT_STATUS,
+        }
+        errors: list[str] = []
+        manifest_path = next((path for path in manifest_candidates if path.is_file()), None)
+        if manifest_path is None:
+            errors.append("missing manifest.json or final_candidate_frames/manifest.json")
+        else:
+            try:
+                data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except Exception as exc:
+                data = {}
+                errors.append(f"manifest parse failed: {exc}")
+            row.update({
+                "manifestPath": str(manifest_path),
+                "status": data.get("status"),
+                "entryCount": len(data.get("entries", [])) if isinstance(data.get("entries"), list) else None,
+            })
+            if data.get("status") != N2_HALL_ARTIFACT_STATUS:
+                errors.append(f"status mismatch: {data.get('status')} != {N2_HALL_ARTIFACT_STATUS}")
+        row["ok"] = not errors
+        row["errors"] = errors
+        candidates.append(row)
+    selected = next((row for row in candidates if row["ok"]), candidates[0])
+    return {**selected, "candidates": candidates}
 
 def run(cmd: list[str]) -> dict[str, Any]:
     proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

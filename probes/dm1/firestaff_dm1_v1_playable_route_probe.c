@@ -49,7 +49,7 @@
  */
 
 #define DEFAULT_DM1_DUNGEON_DAT \
-    "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
 
 static int expect_int(const char* label, int got, int want)
 {
