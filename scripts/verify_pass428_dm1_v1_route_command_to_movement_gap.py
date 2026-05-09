@@ -77,6 +77,23 @@ def source_audit() -> dict:
         "{ C004_COMMAND_MOVE_RIGHT,    0x0051 }",
     ], "COMMAND PC-34 movement keyboard table")
     require_order(command, [
+        "void F0359_COMMAND_ProcessClick_CPSC",
+        "if ((P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP)",
+        "L2287_i_MaximumRegularCommandsInQueue = C7_UNKNOWN;",
+        "L2287_i_MaximumRegularCommandsInQueue = C5_UNKNOWN;",
+        "L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0441_ps_PrimaryMouseInput",
+        "L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput",
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;",
+        "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;",
+        "G0435_B_CommandQueueLocked = C0_FALSE;",
+    ], "F0359 mouse queue write and primary-before-secondary hit routing")
+    require_order(command, [
+        "STATICFUNCTION void F0360_COMMAND_ProcessPendingClick",
+        "if (G0436_B_PendingClickPresent)",
+        "G0436_B_PendingClickPresent = C0_FALSE;",
+        "F0359_COMMAND_ProcessClick_CPSC(G0437_i_PendingClickX, G0438_i_PendingClickY, G0439_i_PendingClickButtonsStatus);",
+    ], "F0360 pending-click replay hook")
+    require_order(command, [
         "void F0361_COMMAND_ProcessKeyPress",
         "G0435_B_CommandQueueLocked = C1_TRUE;",
         "G2153_i_QueuedCommandsCount < C5_UNKNOWN",
@@ -157,6 +174,8 @@ def source_audit() -> dict:
     return {
         "IO2.C:arrow_normalization": [line(io2, "switch (L2944_ui_ - 0x1248)"), line(io2, "return L2944_ui_;")],
         "COMMAND.C:movement_keyboard_table": [677, 684],
+        "COMMAND.C:F0359_COMMAND_ProcessClick_CPSC": [1452, 1662],
+        "COMMAND.C:F0360_COMMAND_ProcessPendingClick": [1692, 1707],
         "COMMAND.C:F0361_COMMAND_ProcessKeyPress": [1709, 1813],
         "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": [2045, 2156],
         "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": [142, 174],
@@ -182,6 +201,8 @@ def firestaff_audit() -> dict:
         "case 0xAB34: case 0x007F: case 0x9BFF: case 0x004B:",
         "case 0xAB35: case 0x9B41: case 0x9B54: case 0x004C:",
         "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
+        "queue->pendingClickPresent = 1;",
+        "process_pending_click(queue);",
         "result.movementDisabledGate = 1;",
         "result.dequeued = 1;",
         "result.dispatchedTurn = 1;",

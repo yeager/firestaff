@@ -5,6 +5,8 @@ Status: `PASS428_ROUTE_COMMAND_TO_MOVEMENT_GAP_CLOSED`
 ## ReDMCSB anchors
 - `IO2.C:arrow_normalization` — `[47, 61]`
 - `COMMAND.C:movement_keyboard_table` — `[677, 684]`
+- `COMMAND.C:F0359_COMMAND_ProcessClick_CPSC` — `[1452, 1662]`
+- `COMMAND.C:F0360_COMMAND_ProcessPendingClick` — `[1692, 1707]`
 - `COMMAND.C:F0361_COMMAND_ProcessKeyPress` — `[1709, 1813]`
 - `COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC` — `[2045, 2156]`
 - `CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty` — `[142, 174]`
