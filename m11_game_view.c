@@ -8461,6 +8461,14 @@ enum {
     M11_GFX_DOOR_BUTTON_BASE = 453, /* 8x9 */
     M11_GFX_DOOR_MASK_DESTROYED = 439, /* M649_GRAPHIC_DOOR_MASK_DESTROYED */
 
+    /* ReDMCSB I34E DUNVIEW.C F0095 materializes each wall set from
+     * M646_GRAPHIC_FIRST_WALL_SET + wallSet * M647_WALL_SET_GRAPHIC_COUNT.
+     * The 40-record block includes door side/frame strips, wall panels,
+     * and stairs side/front bitmaps; keep the formula explicit so nonzero
+     * map wall sets do not accidentally collapse to wall-set 0 assets. */
+    M11_GFX_DM1_WALLSET_FIRST = 86,
+    M11_GFX_DM1_WALLSET_COUNT = 40,
+
     /* DM1 floor pit graphics. */
     M11_GFX_FLOOR_PIT_D3L2 = 49,
     M11_GFX_FLOOR_PIT_D3L  = 50,
@@ -8935,11 +8943,16 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex) {
+    return graphicIndex >= (unsigned int)M11_GFX_DM1_WALLSET_FIRST &&
+           graphicIndex < (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +
+                                         M11_GFX_DM1_WALLSET_COUNT);
+}
+
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex) {
     int wallSet = 0;
-    if (wallSet0GraphicIndex < (unsigned int)M11_GFX_DOOR_SIDE_D0 ||
-        wallSet0GraphicIndex > (unsigned int)M11_GFX_DM1_STAIRS_SIDE_D0L) {
+    if (!m11_is_dm1_wallset_materialized_graphic(wallSet0GraphicIndex)) {
         return wallSet0GraphicIndex;
     }
     if (state && state->world.dungeon && state->world.dungeon->maps &&
@@ -8948,8 +8961,9 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
         wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
     }
     if (wallSet < 0) wallSet = 0;
-    return (unsigned int)(M11_GFX_DOOR_SIDE_D0 + wallSet * 40 +
-                          ((int)wallSet0GraphicIndex - M11_GFX_DOOR_SIDE_D0));
+    return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +
+                          wallSet * M11_GFX_DM1_WALLSET_COUNT +
+                          ((int)wallSet0GraphicIndex - M11_GFX_DM1_WALLSET_FIRST));
 }
 
 static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
