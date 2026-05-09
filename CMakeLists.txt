@@ -1144,6 +1144,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_title_launcher_handoff_gate.py
         )
         add_test(
+            NAME pass456_dm1_v1_door_title_end_priority_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass456_dm1_v1_door_title_end_priority_gate.py
+        )
+        add_test(
             NAME v1_champion_recruit_source_path
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_champion_recruit_source_path.py
         )

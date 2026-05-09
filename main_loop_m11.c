@@ -634,7 +634,6 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     }
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    (void)timing;
 
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
@@ -681,12 +680,16 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
          * bank has more visible frames than the source zoom loop, so use a
          * deliberate 50 ms presentation cadence here instead of racing the
          * launcher at full frame speed. */
-        SDL_Delay(50);
+        if (timing.vblankBeforeEachZoomStep) {
+            SDL_Delay(20);
+        } else {
+            SDL_Delay(50);
+        }
         if (M11_Render_PumpEvents()) {
             break;
         }
     }
-    SDL_Delay(500);
+    SDL_Delay((timing.postZoomVblankCount + timing.finalFadeGuardVblankCount) * 20U);
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
