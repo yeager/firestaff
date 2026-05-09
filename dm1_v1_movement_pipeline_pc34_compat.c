@@ -37,6 +37,182 @@
  *   G0311_i_ProjectileDisabledMovementTicks independently once per tick.
  */
 
+
+static int pipeline_sft_index_for_square(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    int squareIdx;
+    int total = 0;
+    int m;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return -1;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return -1;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return -1;
+    if (!dungeon->tiles[mapIndex].squareData) return -1;
+    squareIdx = mapX * map->height + mapY;
+    if (!(dungeon->tiles[mapIndex].squareData[squareIdx] & DUNGEON_SQUARE_MASK_THING_LIST)) return -1;
+
+    for (m = 0; m < mapIndex; ++m) {
+        int sq;
+        int count = dungeon->maps[m].width * dungeon->maps[m].height;
+        if (!dungeon->tiles[m].squareData) return -1;
+        for (sq = 0; sq < count; ++sq) {
+            if (dungeon->tiles[m].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
+        }
+    }
+    {
+        int sq;
+        int count = map->width * map->height;
+        for (sq = 0; sq <= squareIdx && sq < count; ++sq) {
+            if (dungeon->tiles[mapIndex].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
+        }
+    }
+    return total - 1;
+}
+
+static unsigned short pipeline_next_decoded_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingRef)
+{
+    int type;
+    int index;
+
+    if (!things || thingRef == THING_NONE || thingRef == THING_ENDOFLIST) return THING_NONE;
+    type = THING_GET_TYPE(thingRef);
+    index = THING_GET_INDEX(thingRef);
+
+    switch (type) {
+    case THING_TYPE_DOOR:
+        return (index >= 0 && index < things->doorCount) ? things->doors[index].next : THING_NONE;
+    case THING_TYPE_TELEPORTER:
+        return (index >= 0 && index < things->teleporterCount) ? things->teleporters[index].next : THING_NONE;
+    case THING_TYPE_TEXTSTRING:
+        return (index >= 0 && index < things->textStringCount) ? things->textStrings[index].next : THING_NONE;
+    case THING_TYPE_SENSOR:
+        return (index >= 0 && index < things->sensorCount) ? things->sensors[index].next : THING_NONE;
+    case THING_TYPE_GROUP:
+        return (index >= 0 && index < things->groupCount) ? things->groups[index].next : THING_NONE;
+    case THING_TYPE_WEAPON:
+        return (index >= 0 && index < things->weaponCount) ? things->weapons[index].next : THING_NONE;
+    case THING_TYPE_ARMOUR:
+        return (index >= 0 && index < things->armourCount) ? things->armours[index].next : THING_NONE;
+    case THING_TYPE_SCROLL:
+        return (index >= 0 && index < things->scrollCount) ? things->scrolls[index].next : THING_NONE;
+    case THING_TYPE_POTION:
+        return (index >= 0 && index < things->potionCount) ? things->potions[index].next : THING_NONE;
+    case THING_TYPE_CONTAINER:
+        return (index >= 0 && index < things->containerCount) ? things->containers[index].next : THING_NONE;
+    case THING_TYPE_JUNK:
+        return (index >= 0 && index < things->junkCount) ? things->junks[index].next : THING_NONE;
+    case THING_TYPE_PROJECTILE:
+        return (index >= 0 && index < things->projectileCount) ? things->projectiles[index].next : THING_NONE;
+    case THING_TYPE_EXPLOSION:
+        return (index >= 0 && index < things->explosionCount) ? things->explosions[index].next : THING_NONE;
+    default:
+        return THING_NONE;
+    }
+}
+
+
+static void pipeline_set_decoded_thing_next(
+    struct DungeonThings_Compat* things,
+    unsigned short thingRef,
+    unsigned short nextThing)
+{
+    int type;
+    int index;
+
+    if (!things || thingRef == THING_NONE || thingRef == THING_ENDOFLIST) return;
+    type = THING_GET_TYPE(thingRef);
+    index = THING_GET_INDEX(thingRef);
+
+    switch (type) {
+    case THING_TYPE_DOOR:
+        if (index >= 0 && index < things->doorCount) things->doors[index].next = nextThing;
+        break;
+    case THING_TYPE_TELEPORTER:
+        if (index >= 0 && index < things->teleporterCount) things->teleporters[index].next = nextThing;
+        break;
+    case THING_TYPE_TEXTSTRING:
+        if (index >= 0 && index < things->textStringCount) things->textStrings[index].next = nextThing;
+        break;
+    case THING_TYPE_SENSOR:
+        if (index >= 0 && index < things->sensorCount) things->sensors[index].next = nextThing;
+        break;
+    case THING_TYPE_GROUP:
+        if (index >= 0 && index < things->groupCount) things->groups[index].next = nextThing;
+        break;
+    case THING_TYPE_WEAPON:
+        if (index >= 0 && index < things->weaponCount) things->weapons[index].next = nextThing;
+        break;
+    case THING_TYPE_ARMOUR:
+        if (index >= 0 && index < things->armourCount) things->armours[index].next = nextThing;
+        break;
+    case THING_TYPE_SCROLL:
+        if (index >= 0 && index < things->scrollCount) things->scrolls[index].next = nextThing;
+        break;
+    case THING_TYPE_POTION:
+        if (index >= 0 && index < things->potionCount) things->potions[index].next = nextThing;
+        break;
+    case THING_TYPE_CONTAINER:
+        if (index >= 0 && index < things->containerCount) things->containers[index].next = nextThing;
+        break;
+    case THING_TYPE_JUNK:
+        if (index >= 0 && index < things->junkCount) things->junks[index].next = nextThing;
+        break;
+    case THING_TYPE_PROJECTILE:
+        if (index >= 0 && index < things->projectileCount) things->projectiles[index].next = nextThing;
+        break;
+    case THING_TYPE_EXPLOSION:
+        if (index >= 0 && index < things->explosionCount) things->explosions[index].next = nextThing;
+        break;
+    default:
+        break;
+    }
+}
+
+static int pipeline_delete_group_on_square_before_enter_sensors(
+    const struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short* outDeletedThing)
+{
+    int sftIdx;
+    unsigned short thingRef;
+    unsigned short previous = THING_NONE;
+    int safety = 0;
+
+    if (outDeletedThing) *outDeletedThing = THING_ENDOFLIST;
+    if (!dungeon || !things || !things->loaded || !things->squareFirstThings) return 0;
+
+    sftIdx = pipeline_sft_index_for_square(dungeon, mapIndex, mapX, mapY);
+    if (sftIdx < 0 || sftIdx >= things->squareFirstThingCount) return 0;
+
+    thingRef = things->squareFirstThings[sftIdx];
+    while (thingRef != THING_NONE && thingRef != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short nextThing = pipeline_next_decoded_thing(things, thingRef);
+        if (THING_GET_TYPE(thingRef) == THING_TYPE_GROUP) {
+            if (previous == THING_NONE) {
+                things->squareFirstThings[sftIdx] = nextThing;
+            } else {
+                pipeline_set_decoded_thing_next(things, previous, nextThing);
+            }
+            if (outDeletedThing) *outDeletedThing = thingRef;
+            return 1;
+        }
+        previous = thingRef;
+        thingRef = nextThing;
+    }
+    return 0;
+}
+
 void DM1_V1_MovementPipeline_InitPc34Compat(
     struct Dm1V1MovementPipelinePc34Compat* pipeline)
 {
@@ -68,7 +244,7 @@ int DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
 int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     struct Dm1V1MovementPipelinePc34Compat* pipeline,
     const struct DungeonDatState_Compat* dungeon,
-    const struct DungeonThings_Compat* things,
+    struct DungeonThings_Compat* things,
     struct PartyState_Compat* party,
     const int footwearIcons[CHAMPION_MAX_PARTY],
     struct Dm1V1MovementPipelineResultPc34Compat* outResult)
@@ -137,15 +313,21 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
 
             /* Source lock: MOVESENS.C:438-606 mutates the party through
              * teleporter/pit chains before MOVESENS.C:799-818 runs party
-             * leave/enter sensors.  The command core validates and applies
-             * the initial legal step; the full pipeline owns this F0267
-             * post-move ordering and must publish sensors for the final
-             * square, not for an intermediate pit/teleporter square.
+             * leave/enter sensors.  MOVESENS.C:810-818 also deletes a
+             * group already on the final party square before firing the
+             * destination enter sensor.  The command core validates and
+             * applies the initial legal step; the full pipeline owns this
+             * F0267 post-move ordering and must publish sensors for the
+             * final square, not for an intermediate pit/teleporter square.
              */
             (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
                 dungeon, things, outResult->core.sourceMapIndex,
                 outResult->core.sourceMapX, outResult->core.sourceMapY,
                 SENSOR_EVENT_WALK_OFF, &outResult->core.leaveEffects);
+            outResult->postMoveDestinationGroupDeleted =
+                pipeline_delete_group_on_square_before_enter_sensors(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    &outResult->postMoveDeletedGroupThing);
             (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
                 dungeon, things, party->mapIndex, party->mapX, party->mapY,
                 SENSOR_EVENT_WALK_ON, &outResult->core.enterEffects);
@@ -222,7 +404,7 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     outResult->provenance.commandAcceptedEvidence =
         "COMMAND.C:2075-2099 queue/gate; COMMAND.C:2118-2127 dequeue; COMMAND.C:2150-2156 movement dispatch";
     outResult->provenance.movementAppliedEvidence =
-        "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; MOVESENS.C:438-606 resolves open teleporter/pit chains and party HP side effects before sensors; MOVESENS.C:799-818 runs source leave/final enter sensors; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
+        "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; MOVESENS.C:438-606 resolves open teleporter/pit chains and party HP side effects before sensors; MOVESENS.C:810-818 deletes destination group before final enter sensors; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
     outResult->provenance.viewportPresentEvidence =
         "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state; DRAWVIEW.C:721-722 requests viewport blit and waits for vblank; DRAWVIEW.C:1056-1068 blits G0296 viewport to screen";
 
@@ -252,7 +434,7 @@ const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
            "CLIKMENU.C:325-346 F0267 move-result call and G0310/G0311 cooldown write; "
            "DUNGEON.C:1389-1391 F0150 relative coordinate math; "
            "MOVESENS.C:316-328 F0267 signature/source-destination contract, "
-           "MOVESENS.C:433-435 movement/projectile impact precheck, MOVESENS.C:475-535 open/scoped teleporter chain and party rotation, MOVESENS.C:538-606 open non-imaginary pit fall and party damage/rope reset, MOVESENS.C:438-606 party coordinate teleporter/pit chain before sensors, MOVESENS.C:760-783 scent/G0362_l_LastPartyMovementTime, MOVESENS.C:799-818 F0276 source leave and final destination enter sensors, MOVESENS.C:830-887 group/party occupancy interlock and active-group refresh/defer, MOVESENS.C:893-897 projectile/explosion destination sensor exception; "
+           "MOVESENS.C:433-435 movement/projectile impact precheck, MOVESENS.C:475-535 open/scoped teleporter chain and party rotation, MOVESENS.C:538-606 open non-imaginary pit fall and party damage/rope reset, MOVESENS.C:438-606 party coordinate teleporter/pit chain before sensors, MOVESENS.C:760-783 scent/G0362_l_LastPartyMovementTime, MOVESENS.C:799-818 F0276 source leave and final destination enter sensors, MOVESENS.C:810-818 destination group deletion before enter sensors, MOVESENS.C:830-887 group/party occupancy interlock and active-group refresh/defer, MOVESENS.C:893-897 projectile/explosion destination sensor exception; "
            "CHAMPION.C:1180-1215 F0310 movement ticks; "
            "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state, GAMELOOP.C:150-155 cooldown decrement; "
            "DUNVIEW.C:8446-8542 F0128 back-to-front viewport wall/object draw order, "

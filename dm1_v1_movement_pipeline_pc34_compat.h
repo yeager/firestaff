@@ -77,6 +77,10 @@ struct Dm1V1MovementPipelineResultPc34Compat {
     struct PostMoveResolution_Compat postMove;
     int postMoveResolved;
 
+    /* MOVESENS.C:810-818 party destination group deletion before enter sensors. */
+    int postMoveDestinationGroupDeleted;
+    unsigned short postMoveDeletedGroupThing;
+
     /* Updated timing state (caller should copy back) */
     int newDisabledMovementTicks;
     int newProjectileDisabledMovementTicks;
@@ -144,7 +148,7 @@ int DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
 int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     struct Dm1V1MovementPipelinePc34Compat* pipeline,
     const struct DungeonDatState_Compat* dungeon,
-    const struct DungeonThings_Compat* things,
+    struct DungeonThings_Compat* things,
     struct PartyState_Compat* party,
     const int footwearIcons[CHAMPION_MAX_PARTY],
     struct Dm1V1MovementPipelineResultPc34Compat* outResult);

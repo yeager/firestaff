@@ -737,25 +737,36 @@ static void test_post_move_environment_side_effects(void)
          * square sensor. */
         {
             struct DungeonSensor_Compat sensors[2];
+            struct DungeonGroup_Compat groups[1];
             memset(sensors, 0, sizeof(sensors));
+            memset(groups, 0, sizeof(groups));
             sensors[0].next = THING_ENDOFLIST;
             sensors[0].sensorType = 13;
             sensors[0].sensorData = 11;
             sensors[1].next = THING_ENDOFLIST;
             sensors[1].sensorType = 13;
             sensors[1].sensorData = 22;
+            groups[0].next = thing_ref(THING_TYPE_SENSOR, 1);
             things.sensors = sensors;
             things.sensorCount = 2;
+            things.groups = groups;
+            things.groupCount = 1;
             teleporters[0].next = thing_ref(THING_TYPE_SENSOR, 0);
             set_sq(tsquares, 6, 1, 4,
                 sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
-            firstThings[0] = thing_ref(THING_TYPE_SENSOR, 1);
+            firstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
 
             setup_party(&party, 2, 2, DIR_EAST, 1);
             DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
             DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
             DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
                 &pipeline, &tdungeon, &things, &party, NULL, &result);
+            EXPECT_INT("post_teleporter_group_delete_before_enter",
+                result.postMoveDestinationGroupDeleted, 1);
+            EXPECT_INT("post_teleporter_deleted_group_thing",
+                result.postMoveDeletedGroupThing, thing_ref(THING_TYPE_GROUP, 0));
+            EXPECT_INT("post_teleporter_group_unlinked_before_enter",
+                firstThings[0], thing_ref(THING_TYPE_SENSOR, 1));
             EXPECT_INT("post_teleporter_sensor_order_final_enter_count", result.core.enterEffects.count, 1);
             EXPECT_INT("post_teleporter_sensor_order_final_enter_text", result.core.enterEffects.effects[0].textIndex, 22);
             EXPECT_INT("post_teleporter_sensor_order_not_intermediate", result.core.enterEffects.effects[0].textIndex == 11, 0);
