@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T18:31:04.364852+00:00",
-  "status": "PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD",
+  "timestampUtc": "2026-05-09T18:48:32.411340+00:00",
+  "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "branch": "land-20260509",
-  "head": "17b31f11f00298084bb0a7aeea953ba09d4b095e",
+  "head": "09b369b3550e2b62233d36335214e5d30ea2ecca",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3748,6 +3748,20 @@
     "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py",
     "postCaptureVerificationStep": "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
   },
-  "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 still records comparator completeness and per-terminal HUD scope.",
+  "terminalHudCompleteness": {
+    "complete": true,
+    "requiredScenes": [
+      "hud_status_after_cancel",
+      "hud_status_after_resurrect",
+      "hud_status_after_reincarnate"
+    ],
+    "availableScenes": {
+      "hud_status_after_cancel": true,
+      "hud_status_after_resurrect": true,
+      "hud_status_after_reincarnate": true
+    },
+    "scope": "inventory completeness only; pixel-delta parity remains pass449 comparator work"
+  },
+  "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 records comparator deltas.",
   "errors": []
 }

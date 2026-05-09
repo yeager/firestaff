@@ -20,7 +20,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass450_dm1_v1_hall_original_candidate_artifact_inventory"
-STATUS = "PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD"
+STATUS = "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -404,8 +404,11 @@ def write_report(manifest: dict[str, Any]) -> None:
     for scene, ok in manifest['correctedAvailableScenes'].items():
         lines.append(f"- `{scene}` available={ok}")
     lines += ["", "## Remaining promotable scenes"]
-    for scene in manifest["missingPromotableScenes"]:
-        lines.append(f"- `{scene}`")
+    if manifest["missingPromotableScenes"]:
+        for scene in manifest["missingPromotableScenes"]:
+            lines.append(f"- `{scene}`")
+    else:
+        lines.append("- none; corrected terminal original frames and terminal HUD frames are inventoried")
     env = manifest["captureEnvironment"]
     lines += [
         "",
@@ -423,6 +426,11 @@ def write_report(manifest: dict[str, Any]) -> None:
         f"- reason: {env['blockingReason']}",
         f"- next step: `{env['nextExecutableStep']}`",
         f"- post-capture verification: `{env['postCaptureVerificationStep']}`",
+        "",
+        "## Terminal HUD completeness",
+        f"- complete: `{manifest['terminalHudCompleteness']['complete']}`",
+        f"- available: `{manifest['terminalHudCompleteness']['availableScenes']}`",
+        f"- scope: {manifest['terminalHudCompleteness']['scope']}",
         "",
     ]
     REPORT.write_text("\n".join(lines), encoding="utf-8")
@@ -454,7 +462,7 @@ def main() -> int:
     manifest = {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
-        "status": "FAIL_PASS450_SOURCE_OR_DATA_LOCK" if errors else STATUS,
+        "status": "FAIL_PASS450_SOURCE_OR_DATA_LOCK" if errors else ("PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES" if missing else STATUS),
         "repo": str(ROOT),
         "branch": run_git(["branch", "--show-current"]),
         "head": run_git(["rev-parse", "HEAD"]),
@@ -477,7 +485,13 @@ def main() -> int:
         "correctedAvailableScenes": corrected_available,
         "missingPromotableScenes": missing,
         "captureEnvironment": env,
-        "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 still records comparator completeness and per-terminal HUD scope.",
+        "terminalHudCompleteness": {
+            "complete": not missing,
+            "requiredScenes": ["hud_status_after_cancel", "hud_status_after_resurrect", "hud_status_after_reincarnate"],
+            "availableScenes": {k: v for k, v in corrected_available.items() if k.startswith("hud_status_after_")},
+            "scope": "inventory completeness only; pixel-delta parity remains pass449 comparator work",
+        },
+        "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 records comparator deltas.",
         "errors": errors,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

@@ -1,6 +1,6 @@
 # pass450_dm1_v1_hall_original_candidate_artifact_inventory
 
-- status: `PARTIAL_PASS450_CORRECTED_CANDIDATE_CANCEL_RESURRECT_REINCARNATE_AVAILABLE_REMAINING_PER_TERMINAL_HUD`
+- status: `PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED`
 - parity claim: **not made**
 - frame rows inventoried: 30
 
@@ -73,6 +73,7 @@
 - `hud_status_after_reincarnate` available=True
 
 ## Remaining promotable scenes
+- none; corrected terminal original frames and terminal HUD frames are inventoried
 
 ## Capture tooling readiness
 - local host capture ready: `True`
@@ -88,3 +89,8 @@
 - reason: capture-ready
 - next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py`
 - post-capture verification: `python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`
+
+## Terminal HUD completeness
+- complete: `True`
+- available: `{'hud_status_after_cancel': True, 'hud_status_after_resurrect': True, 'hud_status_after_reincarnate': True}`
+- scope: inventory completeness only; pixel-delta parity remains pass449 comparator work
