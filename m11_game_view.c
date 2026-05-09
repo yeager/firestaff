@@ -10,6 +10,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -4579,6 +4580,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
         state->showDebugHUD = (dbg && dbg[0] == '1') ? 1 : 0;
     }
     state->candidateMirrorOrdinal = -1;
+    state->candidateMirrorPartyIndex = -1;
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
@@ -5189,8 +5191,67 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
 }
 
+static int m11_front_mirror_record_already_in_party(const M11_GameViewState* state,
+                                                     int mirrorOrdinal) {
+    struct ChampionState_Compat champion;
+    if (!state || !state->mirrorCatalogAvailable || mirrorOrdinal < 0) return 0;
+    F0600_CHAMPION_InitEmpty_Compat(&champion);
+    if (!F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(&state->mirrorCatalog,
+                                                       mirrorOrdinal,
+                                                       &champion)) {
+        return 0;
+    }
+    return F0626_PARTY_ContainsChampionName_Compat(&state->world.party,
+                                                   champion.name);
+}
+
+static void m11_apply_reincarnation_to_candidate(M11_GameViewState* state,
+                                                 int championIndex) {
+    struct ChampionState_Compat* champ;
+    uint8_t rngValues[12];
+    ReincarnationResult_Compat r;
+    int i;
+
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return;
+
+    /* ReDMCSB REVIVE.C F0282 (DM1 V1 MEDIA265_S20E): reincarnation clears
+     * skills, halves health/stamina/mana, then distributes 12 RANDOM(7)
+     * statistic increments. Firestaff uses a deterministic local stream for
+     * this runtime gate; the pure F0864 helper owns the source-locked math. */
+    for (i = 0; i < 12; ++i) {
+        rngValues[i] = (uint8_t)((state->world.gameTick +
+                                  (unsigned int)championIndex * 3u +
+                                  (unsigned int)i) % 7u);
+    }
+    r = F0864_RESURRECTION_ComputeReincarnation_Compat(
+        (int16_t)champ->hp.maximum, (int16_t)champ->hp.current,
+        (int16_t)champ->stamina.maximum, (int16_t)champ->stamina.current,
+        (int16_t)champ->mana.maximum, (int16_t)champ->mana.current,
+        rngValues);
+
+    champ->hp.maximum = (unsigned short)r.newMaxHealth;
+    champ->hp.current = (unsigned short)r.newCurrentHealth;
+    champ->hp.shifted = (unsigned short)(champ->hp.maximum << 1);
+    champ->stamina.maximum = (unsigned short)r.newMaxStamina;
+    champ->stamina.current = (unsigned short)r.newCurrentStamina;
+    champ->stamina.shifted = (unsigned short)(champ->stamina.maximum << 1);
+    champ->mana.maximum = (unsigned short)r.newMaxMana;
+    champ->mana.current = (unsigned short)r.newCurrentMana;
+    champ->mana.shifted = (unsigned short)(champ->mana.maximum << 1);
+    for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
+        champ->skillLevels[i] = 0;
+        champ->skillExperience[i] = 0;
+    }
+    for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+        champ->attributes[i] = (unsigned short)(champ->attributes[i] + r.statIncrements[i]);
+    }
+}
+
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     int mirrorOrdinal;
+    int previousPartyCount;
     char mirrorName[16];
     char mirrorTitle[32];
 
@@ -5205,13 +5266,26 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
                                 "NO ROOM FOR ANOTHER CHAMPION");
         return 0;
     }
+    if (m11_front_mirror_record_already_in_party(state, mirrorOrdinal)) {
+        m11_set_status(state, "MIRROR", "DISABLED");
+        m11_set_inspect_readout(state, "CHAMPION MIRROR",
+                                "THIS MIRROR HAS ALREADY JOINED THE PARTY");
+        return 0;
+    }
+
+    previousPartyCount = state->world.party.championCount;
+    if (M11_GameView_RecruitChampionByMirrorOrdinal(state, mirrorOrdinal) != 1) {
+        return 0;
+    }
 
     state->candidateMirrorOrdinal = mirrorOrdinal;
+    state->candidateMirrorPartyIndex = previousPartyCount;
     state->candidateMirrorPanelActive = 1;
     (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
     (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
                                                mirrorTitle, sizeof(mirrorTitle));
+    m11_refresh_hash(state);
     m11_set_status(state, "MIRROR", "RESURRECT OR REINCARNATE");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle),
              "MIRROR: %s", mirrorName[0] ? mirrorName : "CHAMPION");
@@ -5225,7 +5299,7 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
 
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
-    int result;
+    int championIndex;
     char mirrorName[16];
 
     mirrorName[0] = '\0';
@@ -5233,34 +5307,47 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
-        m11_set_status(state, "MIRROR", "PARTY FULL");
+    championIndex = state->candidateMirrorPartyIndex;
+    if (championIndex < 0 || championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[championIndex].present) {
         return 0;
     }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
-    result = M11_GameView_RecruitChampionByMirrorOrdinal(
-        state, state->candidateMirrorOrdinal);
-    if (result == 1) {
-        state->candidateMirrorPanelActive = 0;
-        state->candidateMirrorOrdinal = -1;
-        m11_refresh_hash(state);
-        m11_set_status(state, "MIRROR", reincarnate ? "REINCARNATED" : "RESURRECTED");
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
-                 "%s JOINS", mirrorName[0] ? mirrorName : "CHAMPION");
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "%s ADDED TO THE PARTY FROM THE SOURCE MIRROR RECORD",
-                 mirrorName[0] ? mirrorName : "CHAMPION");
-    }
-    return result;
-}
-
-int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
-    if (!state || !state->active || !state->candidateMirrorPanelActive) {
-        return 0;
+    if (reincarnate) {
+        m11_apply_reincarnation_to_candidate(state, championIndex);
     }
     state->candidateMirrorPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
+    state->candidateMirrorPartyIndex = -1;
+    m11_refresh_hash(state);
+    m11_set_status(state, "MIRROR", reincarnate ? "REINCARNATED" : "RESURRECTED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+             "%s JOINS", mirrorName[0] ? mirrorName : "CHAMPION");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "%s ADDED TO THE PARTY FROM THE SOURCE MIRROR RECORD",
+             mirrorName[0] ? mirrorName : "CHAMPION");
+    return 1;
+}
+
+int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
+    int championIndex;
+    if (!state || !state->active || !state->candidateMirrorPanelActive) {
+        return 0;
+    }
+    championIndex = state->candidateMirrorPartyIndex;
+    if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
+        (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
+                                                   championIndex);
+        if (state->world.party.championCount <= 0) {
+            state->world.party.activeChampionIndex = -1;
+        }
+    }
+    state->candidateMirrorPanelActive = 0;
+    state->candidateMirrorOrdinal = -1;
+    state->candidateMirrorPartyIndex = -1;
+    m11_refresh_hash(state);
     m11_set_status(state, "MIRROR", "CANCELLED");
     m11_set_inspect_readout(state, "CHAMPION MIRROR",
                             "SELECTION CANCELLED");

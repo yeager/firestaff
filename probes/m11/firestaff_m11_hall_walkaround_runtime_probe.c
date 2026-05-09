@@ -34,6 +34,7 @@ typedef struct HallStepProbe {
     int direction;
     int championCount;
     int candidateMirrorOrdinal;
+    int candidateMirrorPartyIndex;
     int candidateMirrorPanelActive;
     char lastAction[32];
     char lastOutcome[64];
@@ -150,6 +151,7 @@ static void snapshot(M11_GameViewState* game, const char* name, int result, Hall
     out->direction = game->world.party.direction;
     out->championCount = game->world.party.championCount;
     out->candidateMirrorOrdinal = game->candidateMirrorOrdinal;
+    out->candidateMirrorPartyIndex = game->candidateMirrorPartyIndex;
     out->candidateMirrorPanelActive = game->candidateMirrorPanelActive;
     snprintf(out->lastAction, sizeof(out->lastAction), "%s", game->lastAction);
     snprintf(out->lastOutcome, sizeof(out->lastOutcome), "%s", game->lastOutcome);
@@ -181,24 +183,24 @@ static int write_outputs(const char* outDir, const HallStepProbe* rows, int rowC
         return 0;
     }
     fprintf(md, "# DM1 V1 Hall walkaround runtime probe\n\n");
-    fprintf(md, "Source lock: LOADSAVE.C:1940-1944 initial party position; COMMAND.C:2150-2156 turn/step dispatch; CLIKMENU.C:142-173 turn path; CLIKMENU.C:264-328 movement blockers; GAMELOOP.C:80-90 viewport redraw; DUNGEON.C:2608-2612 and MOVESENS.C:1501-1503 isolate champion portrait/candidate routes.\n\n");
-    fprintf(md, "| step | result | tick | pos | dir | champions | candidate | front map | front element | front thing | mirror | action | outcome |\n");
+    fprintf(md, "Source lock: LOADSAVE.C:1940-1944 initial party position; COMMAND.C:2150-2156 turn/step dispatch; CLIKMENU.C:142-173 turn path; CLIKMENU.C:264-328 movement blockers; GAMELOOP.C:80-90 viewport redraw; DUNGEON.C:2608-2612 and MOVESENS.C:1501-1503 isolate champion portrait/candidate routes; REVIVE.C:272-276 appends candidate, 744-785 cancels/removes, 785-835 confirms/disables/reincarnates.\n\n");
+    fprintf(md, "| step | result | tick | pos | dir | champions | candidate ord/index/panel | front map | front element | front thing | mirror | action | outcome |\n");
     fprintf(md, "| --- | ---: | ---: | --- | --- | ---: | --- | --- | --- | ---: | ---: | --- | --- |\n");
-    fprintf(js, "{\n  \"schema\": \"dm1_v1_hall_walkaround_runtime_probe.v1\",\n  \"sourceLock\": \"LOADSAVE.C:1940-1944; COMMAND.C:2150-2156; CLIKMENU.C:142-173,264-328; GAMELOOP.C:80-90; DUNGEON.C:2608-2612; MOVESENS.C:1501-1503\",\n  \"steps\": [\n");
+    fprintf(js, "{\n  \"schema\": \"dm1_v1_hall_walkaround_runtime_probe.v1\",\n  \"sourceLock\": \"LOADSAVE.C:1940-1944; COMMAND.C:2150-2156; CLIKMENU.C:142-173,264-328; GAMELOOP.C:80-90; DUNGEON.C:2608-2612; MOVESENS.C:1501-1503; REVIVE.C:272-276,744-835\",\n  \"steps\": [\n");
     for (i = 0; i < rowCount; ++i) {
         const HallStepProbe* r = &rows[i];
-        fprintf(md, "| %s | %d | %u | %d,%d,%d | %d/%s | %d | %d/%d | %d,%d | %s | 0x%04X | %d | %s | %s |\n",
+        fprintf(md, "| %s | %d | %u | %d,%d,%d | %d/%s | %d | %d/%d/%d | %d,%d | %s | 0x%04X | %d | %s | %s |\n",
                 r->name, r->result, r->tick, r->mapIndex, r->mapX, r->mapY,
                 r->direction, dir_name(r->direction), r->championCount,
-                r->candidateMirrorOrdinal, r->candidateMirrorPanelActive,
+                r->candidateMirrorOrdinal, r->candidateMirrorPartyIndex, r->candidateMirrorPanelActive,
                 r->front.mapX, r->front.mapY,
                 r->front.valid ? element_name(r->front.elementType) : "OUT_OF_BOUNDS",
                 (unsigned int)r->front.firstThing, r->front.mirrorOrdinal,
                 r->lastAction, r->lastOutcome);
         fprintf(js,
-                "    {\"name\":\"%s\",\"result\":%d,\"tick\":%u,\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d,\"championCount\":%d,\"candidateMirrorOrdinal\":%d,\"candidateMirrorPanelActive\":%d,\"front\":{\"valid\":%d,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"firstThingType\":%d,\"mirrorOrdinal\":%d},\"lastAction\":\"%s\",\"lastOutcome\":\"%s\"}%s\n",
+                "    {\"name\":\"%s\",\"result\":%d,\"tick\":%u,\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d,\"championCount\":%d,\"candidateMirrorOrdinal\":%d,\"candidateMirrorPartyIndex\":%d,\"candidateMirrorPanelActive\":%d,\"front\":{\"valid\":%d,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"firstThingType\":%d,\"mirrorOrdinal\":%d},\"lastAction\":\"%s\",\"lastOutcome\":\"%s\"}%s\n",
                 r->name, r->result, r->tick, r->mapIndex, r->mapX, r->mapY, r->direction,
-                r->championCount, r->candidateMirrorOrdinal, r->candidateMirrorPanelActive,
+                r->championCount, r->candidateMirrorOrdinal, r->candidateMirrorPartyIndex, r->candidateMirrorPanelActive,
                 r->front.valid, r->front.mapX, r->front.mapY, (unsigned int)r->front.square,
                 r->front.elementType, (unsigned int)r->front.firstThing, r->front.firstThingType,
                 r->front.mirrorOrdinal, r->lastAction, r->lastOutcome, i == rowCount - 1 ? "" : ",");
@@ -216,14 +218,31 @@ static int open_game(const char* dataDir, M12_StartupMenuState* menu, M11_GameVi
     return M11_GameView_OpenSelectedMenuEntry(game, menu);
 }
 
+static int navigate_to_corridor_second_mirror(M11_GameViewState* game) {
+    if (!game || !game->active) return 0;
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_LEFT);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_LEFT);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_RIGHT);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_RIGHT);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_UP);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_RIGHT);
+    (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_RIGHT);
+    return game->world.party.mapIndex == 0 && game->world.party.mapX == 1 &&
+           game->world.party.mapY == 4 && game->world.party.direction == DIR_NORTH &&
+           M11_GameView_GetFrontMirrorOrdinal(game) == 2;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     const char* outDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
-    HallStepProbe rows[9];
+    M12_StartupMenuState menu2;
+    M11_GameViewState game2;
+    HallStepProbe rows[15];
     int ok = 1;
     int result;
+    int hpBeforeReincarnate = 0;
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s DATA_DIR OUT_DIR\n", argv[0]);
@@ -322,7 +341,66 @@ int main(int argc, char** argv) {
         ok = 0;
     }
 
-    if (!write_outputs(outDir, rows, 9)) ok = 0;
+    /* Hall candidate panel runtime parity. ReDMCSB F0280 appends the
+     * candidate before the Resurrect/Reincarnate/Cancel panel opens;
+     * F0282 Cancel removes that just-appended champion, while Resurrect and
+     * Reincarnate keep the champion and disable the mirror route. */
+    result = M11_GameView_SelectFrontMirrorCandidate(&game);
+    snapshot(&game, "select_second_mirror_candidate_appends_party", result, &rows[9]);
+    ok &= expect_int("select candidate result", rows[9].result, 1);
+    ok &= expect_int("select candidate count appended", rows[9].championCount, 1);
+    ok &= expect_int("select candidate mirror ordinal", rows[9].candidateMirrorOrdinal, 2);
+    ok &= expect_int("select candidate party index", rows[9].candidateMirrorPartyIndex, 0);
+    ok &= expect_int("select candidate panel active", rows[9].candidateMirrorPanelActive, 1);
+    ok &= expect_int("select candidate active leader", game.world.party.activeChampionIndex, 0);
+
+    result = M11_GameView_CancelMirrorCandidate(&game);
+    snapshot(&game, "cancel_candidate_removes_appended_party_member", result, &rows[10]);
+    ok &= expect_int("cancel candidate result", rows[10].result, 1);
+    ok &= expect_int("cancel candidate count removed", rows[10].championCount, 0);
+    ok &= expect_int("cancel clears ordinal", rows[10].candidateMirrorOrdinal, -1);
+    ok &= expect_int("cancel clears party index", rows[10].candidateMirrorPartyIndex, -1);
+    ok &= expect_int("cancel clears panel", rows[10].candidateMirrorPanelActive, 0);
+
+    result = M11_GameView_SelectFrontMirrorCandidate(&game);
+    snapshot(&game, "select_again_for_resurrect", result, &rows[11]);
+    ok &= expect_int("select again result", rows[11].result, 1);
+    ok &= expect_int("select again count", rows[11].championCount, 1);
+
+    result = M11_GameView_ConfirmMirrorCandidate(&game, 0);
+    snapshot(&game, "resurrect_keeps_candidate_and_disables_reselect", result, &rows[12]);
+    ok &= expect_int("resurrect result", rows[12].result, 1);
+    ok &= expect_int("resurrect keeps champion", rows[12].championCount, 1);
+    ok &= expect_int("resurrect clears ordinal", rows[12].candidateMirrorOrdinal, -1);
+    ok &= expect_int("resurrect clears panel", rows[12].candidateMirrorPanelActive, 0);
+
+    result = M11_GameView_SelectFrontMirrorCandidate(&game);
+    snapshot(&game, "resurrected_mirror_reselect_blocked", result, &rows[13]);
+    ok &= expect_int("reselect disabled result", rows[13].result, 0);
+    ok &= expect_int("reselect disabled count stable", rows[13].championCount, 1);
+    ok &= expect_int("reselect disabled panel closed", rows[13].candidateMirrorPanelActive, 0);
+
+    memset(&game2, 0, sizeof(game2));
+    if (!open_game(dataDir, &menu2, &game2) || !navigate_to_corridor_second_mirror(&game2)) {
+        fprintf(stderr, "FAIL could not reopen/navigate fresh game for reincarnate route\n");
+        ok = 0;
+        memset(&rows[14], 0, sizeof(rows[14]));
+        rows[14].name = "reincarnate_candidate_halves_vitals";
+    } else {
+        result = M11_GameView_SelectFrontMirrorCandidate(&game2);
+        ok &= expect_int("reincarnate select result", result, 1);
+        hpBeforeReincarnate = game2.world.party.champions[0].hp.maximum;
+        result = M11_GameView_ConfirmMirrorCandidate(&game2, 1);
+        snapshot(&game2, "reincarnate_candidate_halves_vitals", result, &rows[14]);
+        ok &= expect_int("reincarnate result", rows[14].result, 1);
+        ok &= expect_int("reincarnate keeps champion", rows[14].championCount, 1);
+        ok &= expect_int("reincarnate max hp halved", game2.world.party.champions[0].hp.maximum, hpBeforeReincarnate / 2);
+        ok &= expect_int("reincarnate current hp half of new max", game2.world.party.champions[0].hp.current, game2.world.party.champions[0].hp.maximum / 2);
+        ok &= expect_int("reincarnate fighter skill cleared", game2.world.party.champions[0].skillLevels[0], 0);
+    }
+
+    if (!write_outputs(outDir, rows, 15)) ok = 0;
+    M11_GameView_Shutdown(&game2);
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 hall walkaround runtime probe\n", ok ? "PASS" : "FAIL");
     return ok ? 0 : 1;

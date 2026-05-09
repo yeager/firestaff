@@ -108,9 +108,12 @@ typedef struct {
     int mirrorCatalogAvailable;
     /* Source-backed champion mirror candidate panel.  Mirrors the
      * G0299_ui_CandidateChampionOrdinal + M568_PANEL_RESURRECT_REINCARNATE
-     * flow at M11 state level: selecting a front-cell mirror records
-     * its DUNGEON.DAT mirror ordinal, then confirm/cancel consumes it. */
+     * flow at M11 state level: selecting a front-cell mirror appends the
+     * candidate champion to the party immediately (F0280), records its
+     * DUNGEON.DAT mirror ordinal/party index, then confirm/cancel consumes
+     * or removes the candidate (F0282). */
     int candidateMirrorOrdinal;
+    int candidateMirrorPartyIndex;
     int candidateMirrorPanelActive;
     M11_MessageLog messageLog;
     int resting;
