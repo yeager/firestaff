@@ -1,0 +1,382 @@
+{
+  "captureContract": [
+    {
+      "label": "initial_tuple",
+      "requires": [
+        "pass466 initial state",
+        "pass472 N2 canonical path"
+      ],
+      "stop": "fresh Hall/map tuple decoded from canonical DUNGEON.DAT before movement"
+    },
+    {
+      "label": "post_turn",
+      "primitive": "turn_left or turn_right",
+      "stop": "after CLIKMENU.C F0365 mutates G0308_i_PartyDirection and sensors are processed"
+    },
+    {
+      "label": "post_step",
+      "primitive": "move_forward/back/left/right",
+      "stop": "after CLIKMENU.C F0366 calls F0267 and sets G0310_i_DisabledMovementTicks"
+    },
+    {
+      "label": "post_viewport_present",
+      "stop": "after DUNVIEW.C F0128 draws G0296 for tuple and DRAWVIEW.C F0097 blits C007_ZONE_VIEWPORT"
+    },
+    {
+      "label": "wall_comparator_input",
+      "stop": "use only fresh 224x136 viewport crops from post_viewport_present with locked data hashes; pass376/pass304 frames remain review-only unless recaptured under this contract"
+    }
+  ],
+  "clickPrimitives": [
+    {
+      "box": [
+        234,
+        261,
+        125,
+        145
+      ],
+      "command": "C001",
+      "label": "turn_left",
+      "xy": [
+        247,
+        135
+      ]
+    },
+    {
+      "box": [
+        263,
+        289,
+        125,
+        145
+      ],
+      "command": "C003",
+      "label": "move_forward",
+      "xy": [
+        276,
+        135
+      ]
+    },
+    {
+      "box": [
+        291,
+        318,
+        125,
+        145
+      ],
+      "command": "C002",
+      "label": "turn_right",
+      "xy": [
+        304,
+        135
+      ]
+    },
+    {
+      "box": [
+        234,
+        261,
+        147,
+        167
+      ],
+      "command": "C006",
+      "label": "move_left",
+      "xy": [
+        247,
+        157
+      ]
+    },
+    {
+      "box": [
+        263,
+        289,
+        147,
+        167
+      ],
+      "command": "C005",
+      "label": "move_backward",
+      "xy": [
+        276,
+        157
+      ]
+    },
+    {
+      "box": [
+        291,
+        318,
+        147,
+        167
+      ],
+      "command": "C004",
+      "label": "move_right",
+      "xy": [
+        304,
+        157
+      ]
+    },
+    {
+      "box": [
+        0,
+        223,
+        33,
+        168
+      ],
+      "command": "C080",
+      "fromPass": "pass466",
+      "label": "hall_portrait_c080",
+      "xy": [
+        111,
+        82
+      ]
+    }
+  ],
+  "errors": [],
+  "generatedUtc": "2026-05-09T23:00:22.682548+00:00",
+  "lockedData": [
+    {
+      "actual": {
+        "bytes": 363417,
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+      },
+      "exists": true,
+      "expected": {
+        "bytes": 363417,
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+      },
+      "name": "GRAPHICS.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
+    },
+    {
+      "actual": {
+        "bytes": 33357,
+        "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+      },
+      "exists": true,
+      "expected": {
+        "bytes": 33357,
+        "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+      },
+      "name": "DUNGEON.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+    }
+  ],
+  "ok": true,
+  "pass": "pass473_dm1_v1_movement_viewport_wall_capture_contract",
+  "priorGates": [
+    {
+      "exists": true,
+      "label": "pass449",
+      "ok": true,
+      "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json",
+      "sha256": "8632df2b810d8b14ea077f77b6157764154bbd52c1ea6ed1d3bf6a42602c133c",
+      "status": "BLOCKED_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING"
+    },
+    {
+      "exists": true,
+      "label": "pass450",
+      "ok": true,
+      "path": "parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/manifest.json",
+      "sha256": "6e615f388cfe68bf31c07d9d12f53a8a53ed69ebb157c6b2bf4ebe59ba041576",
+      "status": "PASS_WITH_BLOCKERS"
+    },
+    {
+      "exists": true,
+      "label": "pass451",
+      "ok": true,
+      "path": "parity-evidence/verification/pass451_dm1_v1_hall_original_capture_storage_policy/manifest.json",
+      "sha256": "12416ea1703ecc4d02b77f1eb39a870326fc3f02bc69280ffc084d755684b549",
+      "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY"
+    },
+    {
+      "exists": true,
+      "label": "pass466",
+      "ok": true,
+      "path": "parity-evidence/verification/pass466_dm1_v1_initial_hall_c080_source_stop_capture_path/manifest.json",
+      "sha256": "54a9227355e5237300ffceb8c9c9a3e6b4527cac5992255df080dabf2b5a33ec",
+      "status": "PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE"
+    },
+    {
+      "exists": true,
+      "label": "pass472_inputs",
+      "ok": true,
+      "path": "parity-evidence/verification/pass451_dm1_v1_hall_original_capture_storage_policy/manifest.json",
+      "sha256": "12416ea1703ecc4d02b77f1eb39a870326fc3f02bc69280ffc084d755684b549",
+      "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY"
+    }
+  ],
+  "probes": [
+    {
+      "cmd": [
+        "./build/firestaff_dm1_v1_canonical_movement_probe"
+      ],
+      "output_tail": "probe=firestaff_dm1_v1_canonical_movement_probe\ndungeon=/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0366 MOVESENS.C,F0267 GROUP.C\n[map-load] start map=0 x=1 y=3 dir=2 startType=5 frontType=1 westType=0 map0=18x19\n[legal-step] handled=1 step=1 blocked=0 resultCode=0 new=(0,1,4,2) anyMove=1 cooldown=1\n[legal-turn] handled=1 turn=1 blocked=0 resultCode=4 pos=(0,1,3,1) anyTurn=1\n[blocked-step] handled=1 step=0 blocked=1 resultCode=1 pos=(0,1,3,2) anyMove=0 queue=0\nresult=PASS\n",
+      "returncode": 0
+    },
+    {
+      "cmd": [
+        "./build/firestaff_dm1_v1_playable_route_probe"
+      ],
+      "output_tail": "probe=firestaff_dm1_v1_playable_route_probe\ndungeon=/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0365,F0366 MOVESENS.C,F0267 LOADSAVE.C,MEDIA529\n[start] map=0 x=1 y=3 dir=2 hash=3966301240\n[fwd1] resultCode=0 pos=(0,1,4,2) hash=299312333 blocked=0 anyMove=1\n[fwd2] resultCode=0 pos=(0,1,5,2) hash=664914492\n[turnR] turn=1 pos=(0,1,5,3) hash=124127646\n[fwd3] resultCode=0 pos=(0,0,5,3) hash=2625304315\n[blocked] resultCode=1 pos=(0,1,3,3) blocked=1 anyMove=0 hash=1202440230\nresult=PASS\n",
+      "returncode": 0
+    }
+  ],
+  "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sources": [
+    {
+      "claim": "PC34 live capture can use absolute left-click centers for movement and viewport commands; arbitrary xdotool points are not evidence.",
+      "exists": true,
+      "file": "COMMAND.C",
+      "id": "pc34_absolute_movement_click_boxes",
+      "lines": "106-114",
+      "missing": [],
+      "needles": [
+        "G0448_as_Graphic561_SecondaryMouseInput_Movement",
+        "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145",
+        "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145",
+        "C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145",
+        "C006_COMMAND_MOVE_LEFT,             234, 261, 147, 167",
+        "C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167",
+        "C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "I34E source dispatch maps mouse input through the same movement/viewport command space.",
+      "exists": true,
+      "file": "COMMAND.C",
+      "id": "i34e_zone_movement_dispatch",
+      "lines": "397-403",
+      "missing": [],
+      "needles": [
+        "C001_COMMAND_TURN_LEFT",
+        "C068_ZONE_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C070_ZONE_MOVE_FORWARD",
+        "C002_COMMAND_TURN_RIGHT",
+        "C069_ZONE_TURN_RIGHT",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C007_ZONE_VIEWPORT"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "Capture labels are source-valid only after the queued command reaches turn/step handlers, not at click/highlight time.",
+      "exists": true,
+      "file": "COMMAND.C",
+      "id": "command_queue_reaches_turn_step_handlers",
+      "lines": "2045-2156",
+      "missing": [],
+      "needles": [
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "F0360_COMMAND_ProcessPendingClick",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "Turn captures must stop after source direction mutation and sensor re-entry, before the next label is accepted.",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "id": "turn_mutates_direction_before_capture",
+      "lines": "142-174",
+      "missing": [],
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "Step captures must stop after legality, move-result, and cooldown mutation; blocked moves are a separate non-movement label.",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "id": "step_mutates_position_and_cooldown_before_capture",
+      "lines": "180-347",
+      "missing": [],
+      "needles": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "Movement/viewport labels must bind to source relative-step vectors, not emulator visual guesses.",
+      "exists": true,
+      "file": "DUNGEON.C",
+      "id": "relative_step_vector_source",
+      "lines": "1371-1392",
+      "missing": [],
+      "needles": [
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "G0233_ai_Graphic559_DirectionToStepEastCount",
+        "G0234_ai_Graphic559_DirectionToStepNorthCount",
+        "Simulate turning right"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C"
+    },
+    {
+      "claim": "Wall evidence must be captured after the viewport base is cleared and wall/door bitmaps are composited into G0296.",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "id": "viewport_base_and_wall_composite",
+      "lines": "2962-3110",
+      "missing": [],
+      "needles": [
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "G0296_puc_Bitmap_Viewport",
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap",
+        "F0102_DUNGEONVIEW_DrawDoorBitmap",
+        "F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "The comparable viewport is the F0128 draw for the mutated direction/X/Y tuple followed by presentation.",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "id": "f0128_draws_tuple_to_viewport",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "The 224x136 crop must be taken after the PC34 viewport present seam, not from setup echo or pre-blit bitmap artifacts.",
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "id": "pc34_viewport_present_seam",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "G0296_puc_Bitmap_Viewport",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "status": "PASS473_SOURCE_STOP_CLICK_PRIMITIVE_CAPTURE_CONTRACT_READY"
+}
