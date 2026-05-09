@@ -25,7 +25,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate"
-STATUS = "BLOCKED_PASS449_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_FRAMEBUFFER_ARTIFACTS_MISSING"
+STATUS = "PARTIAL_PASS449_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -214,6 +214,8 @@ COMPARATOR_RESULT = VERIFY_DIR / "hall_candidate_framebuffer_compare.json"
 N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
+CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+CORRECTED_HALL_RUN = "probe-initial-south-corrected"
 FIRESTAFF_HALL_FRAME_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs")
 FIRESTAFF_HALL_FRAME_MANIFEST = FIRESTAFF_HALL_FRAME_ROOT / "hall_candidate_framebuffer_manifest.json"
 
@@ -364,17 +366,20 @@ def crop_png(src: Path, dst: Path, xywh: list[int]) -> None:
 
 
 def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """Stage the one currently pairable panel_visible frame into the comparator tree.
+    """Stage currently pairable Hall frames into the comparator tree.
 
-    Only panel_visible is materialized from current external artifacts. Every
-    other label remains an explicit missing entry in the manifest until a later
-    original capture lane produces source-bound true-stop frames.
+    The old N2 panel-visible context is retained as historical evidence, but
+    the corrected initial-south DOSBox run now supplies source-routed original
+    candidate_select/panel_visible and C160 terminal HUD frames. Cancel and
+    reincarnate remain explicit missing entries until a matching corrected run
+    exists.
     """
     result: dict[str, Any] = {
         "status": "NOT_MATERIALIZED",
         "firestaffRoot": str(FIRESTAFF_HALL_FRAME_ROOT),
         "firestaffManifest": str(FIRESTAFF_HALL_FRAME_MANIFEST),
         "originalRoot": str(N2_HALL_ARTIFACT_ROOT),
+        "correctedOriginalRoot": str(CORRECTED_HALL_ARTIFACT_ROOT),
         "materialized": [],
         "missing": [],
         "errors": [],
@@ -384,6 +389,11 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
         return result
     if not N2_HALL_ARTIFACT_ROOT.is_dir():
         result["errors"].append(f"missing original frame root: {N2_HALL_ARTIFACT_ROOT}")
+        return result
+    corrected_run_dir = CORRECTED_HALL_ARTIFACT_ROOT / CORRECTED_HALL_RUN
+    corrected_keylog = corrected_run_dir / "original-viewpoint-route-keys.log"
+    if not corrected_run_dir.is_dir():
+        result["errors"].append(f"missing corrected original run: {corrected_run_dir}")
         return result
 
     original_manifest_path = N2_HALL_ARTIFACT_ROOT / "manifest.json"
@@ -417,17 +427,32 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
             source = FIRESTAFF_HALL_FRAME_ROOT / "firestaff" / scene / f"{artifact}.png"
             if source.is_file():
                 copy_png(source, expected_frame_path("firestaff", scene, artifact))
-    copy_png(original_src, expected_frame_path("original", "panel_visible", "fullframe"))
-    crop_png(original_src, expected_frame_path("original", "panel_visible", "panel_crop"), REGIONS["panel_crop"]["xywh"])
+    corrected_sources = {
+        "candidate_select": corrected_run_dir / "image0002-raw.png",
+        "panel_visible": corrected_run_dir / "image0002-raw.png",
+        "resurrect_confirm": corrected_run_dir / "image0003-raw.png",
+        "hud_status_after": corrected_run_dir / "image0003-raw.png",
+    }
+    for scene, src in corrected_sources.items():
+        if not src.is_file():
+            result["errors"].append(f"missing corrected original source for {scene}: {src}")
+    if result["errors"]:
+        return result
+    for scene, src in corrected_sources.items():
+        copy_png(src, expected_frame_path("original", scene, "fullframe"))
+        if scene in REGIONS["panel_crop"]["requiredFor"]:
+            crop_png(src, expected_frame_path("original", scene, "panel_crop"), REGIONS["panel_crop"]["xywh"])
+        if scene in REGIONS["hud_status_crop"]["requiredFor"]:
+            crop_png(src, expected_frame_path("original", scene, "hud_status_crop"), REGIONS["hud_status_crop"]["xywh"])
     original_source = original_manifest.get("source_provenance", {}) if isinstance(original_manifest, dict) else {}
     original_provenance = {
-        "stop": "DOSBox-X captured Hall/front-mirror visible frame; not candidate transition true-stop",
-        "route": "N2 route in original manifest ending at 03_panel_visible_north_front_mirror before no-transition candidate click",
-        "partyTuple": "captured route inferred by pass452: map=0 x=1 y=3 dir=NORTH; candidateOrdinal missing/not transitioned",
-        "commandTranscriptSha256": sha(original_manifest_path) if original_manifest_path.is_file() else "missing",
-        "artifactManifest": str(original_manifest_path),
+        "stop": "corrected DOSBox-X initial-south Hall run; click:111,82 enters C127/F0280 candidate path, click:130,115 enters C160/F0282 resurrect path",
+        "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click PC 130,115",
+        "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+        "commandTranscriptSha256": sha(corrected_keylog) if corrected_keylog.is_file() else "missing",
+        "artifactManifest": str(CORRECTED_HALL_ARTIFACT_ROOT / "pass455_dm1_v1_hall_corrected_click_primitive_capture.json"),
         "sourceProvenance": original_source,
-        "parityUse": "panel_visible comparator input only; no candidate panel transition or full pixel parity claim",
+        "parityUse": "corrected original candidate/resurrect comparator input; cancel and reincarnate still require separate corrected captures",
     }
 
     scenes: dict[str, Any] = {}
@@ -444,8 +469,11 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
                         provenance = firestaff_scene.get("firestaff", {}).get(artifact, {}).get("captureProvenance", {})
                     else:
                         provenance = dict(original_provenance)
+                        provenance["terminalAction"] = scene
                         if artifact == "panel_crop":
-                            provenance["derivedFrom"] = str(original_src)
+                            provenance["derivedFrom"] = str(corrected_sources.get(scene, original_src))
+                        elif artifact == "hud_status_crop":
+                            provenance["derivedFrom"] = str(corrected_sources.get(scene, original_src))
                     scenes[scene][side][artifact] = frame_entry(path, provenance)
                     result["materialized"].append(rel(path))
                 else:
@@ -456,7 +484,7 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
     manifest = {
         "schema": "pass449_hall_candidate_framebuffer_manifest.schema.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
-        "status": "PARTIAL_PANEL_VISIBLE_ONLY_REMAINING_LABELS_MISSING",
+        "status": "PARTIAL_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE_MISSING",
         "originalDataProvenance": {
             row["filename"]: {
                 "variant": row["variant"],
@@ -469,17 +497,18 @@ def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) 
         "externalArtifactRoots": {
             "firestaff": str(FIRESTAFF_HALL_FRAME_ROOT),
             "original": str(N2_HALL_ARTIFACT_ROOT),
+            "correctedOriginal": str(CORRECTED_HALL_ARTIFACT_ROOT),
         },
         "scenes": scenes,
         "nonClaims": [
             "full pixel parity",
-            "candidate_select/cancel/resurrect_confirm/reincarnate_confirm original parity",
-            "HUD/status parity",
+            "cancel/reincarnate original parity",
+            "full HUD/status parity for every terminal action",
         ],
     }
     FRAMEBUFFER_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     FRAMEBUFFER_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    result["status"] = "MATERIALIZED_FIRESTAFF_AVAILABLE_AND_ORIGINAL_PANEL_VISIBLE_ONLY"
+    result["status"] = "MATERIALIZED_CORRECTED_ORIGINAL_CANDIDATE_AND_RESURRECT_AVAILABLE"
     result["manifest"] = rel(FRAMEBUFFER_MANIFEST)
     return result
 
@@ -696,11 +725,11 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
     if not missing and not errors:
         status = "COMPARE_COMPLETE"
     elif comparisons and not errors:
-        status = "PARTIAL_COMPARE_PANEL_VISIBLE_AVAILABLE_REMAINING_LABELS_MISSING"
+        status = "PARTIAL_COMPARE_CORRECTED_CANDIDATE_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
     elif comparisons:
         status = "PARTIAL_COMPARE_WITH_ERRORS"
     else:
-        status = "BLOCKED_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING"
+        status = "PENDING_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING"
     result = {
         "schema": "pass449_hall_candidate_framebuffer_comparator.v1",
         "status": status,
@@ -954,7 +983,7 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines += [
         "",
         "## Remaining blocker",
-        "A hash-locked N2 original `03_panel_visible_north_front_mirror` frame/crop is now available for Hall/front-mirror visible context. It does not prove candidate panel transition or pixel parity. Original candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing/no-transition, and pass173 images remain review clues only.",
+        "Corrected original `candidate_select`, `panel_visible`, `resurrect_confirm` and `hud_status_after` inputs are now staged from the initial-south run. Remaining original capture work is `cancel`, `reincarnate_confirm` and per-terminal HUD completeness.",
         "",
         "## Non-claims",
         "No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.",
@@ -996,7 +1025,7 @@ def main() -> int:
             "hallFullSourceLock": existing_gate,
             "resurrectReincarnateCancelRoutes": panel_gate,
         },
-        "activeBlocker": "N2 provides a hash-locked original Hall/front-mirror visible frame (03_panel_visible_north_front_mirror), but source-bound/promotable original candidate_select/cancel/resurrect_confirm/reincarnate_confirm/HUD true-stop frames plus Firestaff-paired comparator inputs remain missing/no-transition",
+        "activeBlocker": "Corrected original candidate_select, panel_visible, resurrect_confirm and hud_status_after inputs are now staged; remaining original captures are cancel and reincarnate_confirm plus per-terminal HUD completeness.",
         "notClaimed": ["pixel parity", "candidate panel framebuffer parity", "HUD/status framebuffer parity"],
         "errors": errors,
     }

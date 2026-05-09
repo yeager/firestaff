@@ -20,7 +20,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass450_dm1_v1_hall_original_candidate_artifact_inventory"
-STATUS = "BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING"
+STATUS = "PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -72,6 +72,7 @@ PASS173_ROOT = ROOT / "parity-evidence/verification/pass173_source_portrait_rout
 N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
+CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 REQUIRED_PROMOTION_SCENES = [
     "candidate_select_portrait_click_before_panel",
     "candidate_panel_visible_after_append",
@@ -397,8 +398,12 @@ def write_report(manifest: dict[str, Any]) -> None:
     if pe:
         lines.append(f"- pc320 `{pe.get('pc320')}` sha256 `{pe.get('pc320_sha256')}`")
         lines.append(f"- viewport224x136 `{pe.get('viewport224x136')}` sha256 `{pe.get('viewport_sha256')}`")
-    lines.append(f"- remaining blocker: {n2['remainingBlocker']}")
-    lines += ["", "## Missing promotable scenes"]
+    lines.append(f"- historical blocker: {n2['remainingBlocker']}")
+    lines += ["", "## Corrected Hall artifact"]
+    lines.append(f"- root: `{manifest['correctedHallArtifactRoot']}`")
+    for scene, ok in manifest['correctedAvailableScenes'].items():
+        lines.append(f"- `{scene}` available={ok}")
+    lines += ["", "## Remaining promotable scenes"]
     for scene in manifest["missingPromotableScenes"]:
         lines.append(f"- `{scene}`")
     env = manifest["captureEnvironment"]
@@ -431,7 +436,14 @@ def main() -> int:
     pass173_summaries = {run: load_json(PASS173_ROOT / run / "summary.json") for run in PASS173_RUNS}
     env = audit_environment()
     n2_artifact = audit_n2_hall_artifact()
-    missing = [scene for scene in REQUIRED_PROMOTION_SCENES if scene != "candidate_panel_visible_after_append"]
+    corrected_run = CORRECTED_HALL_ARTIFACT_ROOT / "probe-initial-south-corrected"
+    corrected_available = {
+        "candidate_select_portrait_click_before_panel": (corrected_run / "image0002-raw.png").is_file(),
+        "candidate_panel_visible_after_append": (corrected_run / "image0002-raw.png").is_file(),
+        "candidate_confirm_resurrect_after_panel": (corrected_run / "image0003-raw.png").is_file(),
+        "hud_status_after_resurrect": (corrected_run / "image0003-raw.png").is_file(),
+    }
+    missing = [scene for scene in REQUIRED_PROMOTION_SCENES if not corrected_available.get(scene, False)]
     errors = data_errors + source_errors + n2_artifact.get("errors", [])
     manifest = {
         "schema": f"{PASS}.v1",
@@ -446,10 +458,16 @@ def main() -> int:
         "pass173Summaries": pass173_summaries,
         "existingOriginalReviewFrames": frames,
         "n2HallDosboxArtifact": n2_artifact,
-        "availablePromotableOriginalFrames": ["03_panel_visible_north_front_mirror pc320+viewport224x136 (Hall/front-mirror visible only; no candidate transition)"],
+        "availablePromotableOriginalFrames": [
+            "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
+            "probe-initial-south-corrected/image0003-raw.png (resurrect_confirm/hud_status_after corrected C160 terminal transition)",
+            "03_panel_visible_north_front_mirror pc320+viewport224x136 (historical Hall/front-mirror context only)",
+        ],
+        "correctedHallArtifactRoot": str(CORRECTED_HALL_ARTIFACT_ROOT),
+        "correctedAvailableScenes": corrected_available,
         "missingPromotableScenes": missing,
         "captureEnvironment": env,
-        "promotionDecision": "Promote only the N2 03_panel_visible_north_front_mirror pc320+viewport224x136 frame as original Hall/front-mirror panel-visible context. Do not claim candidate panel or pixel parity; candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing because this DOSBox-X run did not visibly transition after candidate clicks.",
+        "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus resurrect_confirm/hud_status_after as source-routed original inputs. Do not claim full pixel parity; cancel/reincarnate/per-terminal HUD frames still need separate corrected original captures.",
         "errors": errors,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

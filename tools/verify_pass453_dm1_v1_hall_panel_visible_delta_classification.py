@@ -20,6 +20,8 @@ ARTIFACT_MANIFEST = Path(
 )
 EXPECTED_CLASSIFICATION = "FIRESTAFF_FRAME_STATE_MISMATCH_PANEL_NOT_VISIBLE"
 EXPECTED_HEAD = "9497681d4e2c92c79d20f4d643d4e7f4dcc316c0"
+PASS455_MANIFEST = ROOT / "parity-evidence/verification/pass455_dm1_v1_hall_corrected_click_primitive_capture/manifest.json"
+OUT_MD = ROOT / "parity-evidence/pass453_dm1_v1_hall_panel_visible_delta_classification.md"
 EXTERNAL_HASH_LOCKS = {
     "dm1_pc34_english_graphics": {
         "path": Path(
@@ -108,10 +110,18 @@ def main() -> int:
         if not Path(artifact).exists():
             return fail(f"missing generated diagnostic artifact: {artifact}")
 
-    print(
-        "PASS pass453_dm1_v1_hall_panel_visible_delta_classification: "
-        "FIRESTAFF_PANEL_VISIBLE_FRAME_STATE_MISMATCH_NO_PIXEL_PARITY_CLAIM"
+    pass455 = json.loads(PASS455_MANIFEST.read_text(encoding="utf-8")) if PASS455_MANIFEST.exists() else {}
+    superseded = pass455.get("status") == "PASS_PASS455_CORRECTED_CLICK_PRIMITIVE_AND_CANDIDATE_TRANSITION_PROVEN"
+    status = "SUPERSEDED_BY_PASS455_CORRECTED_CANDIDATE_TRANSITION" if superseded else "DIAGNOSTIC_FIRESTAFF_PANEL_VISIBLE_FRAME_STATE_MISMATCH_NO_PIXEL_PARITY_CLAIM"
+    OUT_MD.write_text(
+        "# Pass453 DM1 V1 Hall panel-visible delta classification\n\n"
+        f"Status: `{status}`.\n\n"
+        "This remains a diagnostic classification only, not a pixel-parity claim. "
+        "When pass455 is green, the old Firestaff-side stale panel-visible diagnostic is superseded by corrected initial-south candidate-transition evidence.\n\n"
+        f"Evidence artifact: `{ARTIFACT_MANIFEST}`\n",
+        encoding="utf-8",
     )
+    print(f"PASS pass453_dm1_v1_hall_panel_visible_delta_classification: {status}")
     return 0
 
 

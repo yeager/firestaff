@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-09T17:00:52.587859+00:00",
-  "status": "BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING",
+  "timestampUtc": "2026-05-09T17:32:02.560660+00:00",
+  "status": "PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "branch": "land-20260509",
-  "head": "962a2ffd69552b80f3ddc1259aae759d7dc8e58d",
+  "head": "bcab0e9f17936396b25d094d129a3b7f28cb6649",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3684,15 +3684,21 @@
     "errors": []
   },
   "availablePromotableOriginalFrames": [
-    "03_panel_visible_north_front_mirror pc320+viewport224x136 (Hall/front-mirror visible only; no candidate transition)"
+    "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
+    "probe-initial-south-corrected/image0003-raw.png (resurrect_confirm/hud_status_after corrected C160 terminal transition)",
+    "03_panel_visible_north_front_mirror pc320+viewport224x136 (historical Hall/front-mirror context only)"
   ],
+  "correctedHallArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+  "correctedAvailableScenes": {
+    "candidate_select_portrait_click_before_panel": true,
+    "candidate_panel_visible_after_append": true,
+    "candidate_confirm_resurrect_after_panel": true,
+    "hud_status_after_resurrect": true
+  },
   "missingPromotableScenes": [
-    "candidate_select_portrait_click_before_panel",
     "candidate_cancel_after_panel",
-    "candidate_confirm_resurrect_after_panel",
     "candidate_confirm_reincarnate_after_panel",
     "hud_status_after_cancel",
-    "hud_status_after_resurrect",
     "hud_status_after_reincarnate"
   ],
   "captureEnvironment": {
@@ -3739,6 +3745,6 @@
     "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py",
     "postCaptureVerificationStep": "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
   },
-  "promotionDecision": "Promote only the N2 03_panel_visible_north_front_mirror pc320+viewport224x136 frame as original Hall/front-mirror panel-visible context. Do not claim candidate panel or pixel parity; candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing because this DOSBox-X run did not visibly transition after candidate clicks.",
+  "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus resurrect_confirm/hud_status_after as source-routed original inputs. Do not claim full pixel parity; cancel/reincarnate/per-terminal HUD frames still need separate corrected original captures.",
   "errors": []
 }

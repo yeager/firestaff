@@ -1,6 +1,6 @@
 # pass450_dm1_v1_hall_original_candidate_artifact_inventory
 
-- status: `BLOCKED_PASS450_PANEL_VISIBLE_ORIGINAL_FRAME_AVAILABLE_REMAINING_HALL_FRAMES_MISSING`
+- status: `PARTIAL_PASS450_CORRECTED_CANDIDATE_AND_RESURRECT_AVAILABLE_REMAINING_CANCEL_REINCARNATE`
 - parity claim: **not made**
 - frame rows inventoried: 30
 
@@ -59,15 +59,19 @@
 - DUNGEON.DAT sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`; GRAPHICS.DAT sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`; TITLE sha256 `adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745`
 - pc320 `pc320/03_panel_visible_north_front_mirror_pc320.png` sha256 `766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0`
 - viewport224x136 `viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png` sha256 `66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f`
-- remaining blocker: candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.
+- historical blocker: candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.
 
-## Missing promotable scenes
-- `candidate_select_portrait_click_before_panel`
+## Corrected Hall artifact
+- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
+- `candidate_select_portrait_click_before_panel` available=True
+- `candidate_panel_visible_after_append` available=True
+- `candidate_confirm_resurrect_after_panel` available=True
+- `hud_status_after_resurrect` available=True
+
+## Remaining promotable scenes
 - `candidate_cancel_after_panel`
-- `candidate_confirm_resurrect_after_panel`
 - `candidate_confirm_reincarnate_after_panel`
 - `hud_status_after_cancel`
-- `hud_status_after_resurrect`
 - `hud_status_after_reincarnate`
 
 ## Capture tooling readiness
