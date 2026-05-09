@@ -450,6 +450,65 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
     check_int("floor_field_order.no_d1_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
 }
 
+
+static void test_wall_source_row_clip_occlusion_gate(void)
+{
+    DM1_WallFrame frame = { 2, 5, 3, 6, 10, 8, 4, 1 };
+    DM1_ViewportBlitClipGate gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, 10, 8);
+    check_int("wall_clip_gate.151713.visible", gate.visible ? 1 : 0, 1);
+    check_int("wall_clip_gate.151713.src_x", gate.src_x, 4);
+    check_int("wall_clip_gate.151713.src_y", gate.src_y, 1);
+    check_int("wall_clip_gate.151713.dst_x", gate.dst_x, 2);
+    check_int("wall_clip_gate.151713.dst_y", gate.dst_y, 3);
+    check_int("wall_clip_gate.151713.width", gate.width, 4);
+    check_int("wall_clip_gate.151713.height", gate.height, 4);
+    check_int("wall_clip_gate.151713.source", strstr(gate.source_lines, "COORD.C:2390-2409") != NULL, 1);
+
+    frame = (DM1_WallFrame){ 222, 230, 134, 140, 20, 20, 1, 2 };
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, 20, 20);
+    check_int("wall_clip_gate.1337626.viewport_visible", gate.visible ? 1 : 0, 1);
+    check_int("wall_clip_gate.1337626.dst_x", gate.dst_x, 222);
+    check_int("wall_clip_gate.1337626.dst_y", gate.dst_y, 134);
+    check_int("wall_clip_gate.1337626.width", gate.width, 2);
+    check_int("wall_clip_gate.1337626.height", gate.height, 2);
+
+    frame = (DM1_WallFrame){ 0, 9, 0, 9, 10, 8, 8, 7 };
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, 10, 8);
+    check_int("wall_clip_gate.2098602.source_visible", gate.visible ? 1 : 0, 1);
+    check_int("wall_clip_gate.2098602.width", gate.width, 2);
+    check_int("wall_clip_gate.2098602.height", gate.height, 1);
+
+    frame = (DM1_WallFrame){ 0, 3, 0, 3, 4, 4, 4, 0 };
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, 4, 4);
+    check_int("wall_clip_gate.occluded_source_row", gate.visible ? 1 : 0, 0);
+
+    frame = (DM1_WallFrame){ 224, 230, 0, 3, 8, 8, 0, 0 };
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, 8, 8);
+    check_int("wall_clip_gate.occluded_viewport", gate.visible ? 1 : 0, 0);
+}
+
+static void test_wall_draw_uses_clip_gate_source_offsets(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[10 * 8];
+    DM1_Viewport3DState state;
+    DM1_WallFrame frame = { 2, 5, 3, 6, 10, 8, 4, 1 };
+    memset(viewport, 0, sizeof(viewport));
+    for (int i = 0; i < (int)sizeof(bitmap); ++i) bitmap[i] = (uint8_t)(i + 1);
+    bitmap[1 * 10 + 4] = 10;
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_draw_wall(&state, bitmap, &frame);
+    check_int("wall_clip_draw.transparent_skips_first", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 0);
+    check_int("wall_clip_draw.source_offset_next", viewport[3 * DM1_VIEWPORT_WIDTH + 3], bitmap[1 * 10 + 5]);
+    check_int("wall_clip_draw.source_offset_last_row", viewport[6 * DM1_VIEWPORT_WIDTH + 5], bitmap[4 * 10 + 7]);
+    check_int("wall_clip_draw.outside_left_untouched", viewport[3 * DM1_VIEWPORT_WIDTH + 1], 0);
+
+    memset(viewport, 0, sizeof(viewport));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_draw_wall_opaque(&state, bitmap, &frame);
+    check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
+}
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -470,6 +529,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
+    check_int("source_evidence.wall_source_clip_gate", strstr(e, "COORD.C:2390-2409") != NULL, 1);
+    check_int("source_evidence.wall_empty_blit_gate", strstr(e, "IMAGE3.C:866-889") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
     check_int("source_evidence.command_dispatch", strstr(e, "COMMAND.C:2045-2156") != NULL, 1);
     check_int("source_evidence.next_redraw", strstr(e, "GAMELOOP.C:55-90") != NULL, 1);
@@ -481,6 +542,8 @@ int main(void)
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
+    test_wall_source_row_clip_occlusion_gate();
+    test_wall_draw_uses_clip_gate_source_offsets();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
     test_door_front_occlusion_split_passes();
