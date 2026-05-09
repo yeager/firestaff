@@ -40,7 +40,7 @@ int main(void) {
     printf("zoneCount=%u\n", TOUCHCLICK_Compat_GetZoneCount());
     printf("championNameHandEvidence=%s\n", champion_name_hand_routes_GetEvidence());
     printf("championNameHandRouteCount=%u\n", champion_name_hand_routes_GetRouteCount());
-    if (TOUCHCLICK_Compat_GetZoneCount() != 103u) ok = 0;
+    if (TOUCHCLICK_Compat_GetZoneCount() != 104u) ok = 0;
 
     if (!expect_zone(0u, 1u, 68u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 125, 28, 21, "movement.turn_left")) ok = 0;
     if (!expect_zone(1u, 3u, 70u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 263, 125, 27, 21, "movement.forward")) ok = 0;
@@ -56,6 +56,7 @@ int main(void) {
     if (!expect_zone(77u, 57u, 536u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 202, 33, 16, 16, "inventory.backpack_line1_9")) ok = 0;
     if (!expect_zone(78u, 58u, 537u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117, 59, 16, 16, "inventory.chest_1")) ok = 0;
     if (!expect_zone(87u, 71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 12, 13, 16, 16, "inventory.eye")) ok = 0;
+    if (!expect_zone(103u, 147u, 0u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0, 198, 2, 2, "system.freeze_game")) ok = 0;
 
     if (!action_area_routes_GetTouchMatrixInvariant()) ok = 0;
     if (!champion_name_hand_routes_GetInvariant()) ok = 0;
@@ -82,12 +83,16 @@ int main(void) {
     if (champion_name_hand_routes_ResolveStatusBoxClick(0u, 50, 20, 0u, &championDispatch)) ok = 0;
     if (!spell_area_routes_GetInvariant()) ok = 0;
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
-    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u) || !has_zone(160u, 570u) || !has_zone(161u, 571u) || !has_zone(162u, 573u) || !has_zone(7u, 187u) || !has_zone(12u, 151u) || !has_zone(125u, 113u) || !has_zone(128u, 116u)) ok = 0;
+    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u) || !has_zone(160u, 570u) || !has_zone(161u, 571u) || !has_zone(162u, 573u) || !has_zone(7u, 187u) || !has_zone(12u, 151u) || !has_zone(125u, 113u) || !has_zone(128u, 116u) || !has_zone(147u, 0u)) ok = 0;
 
     if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(25, 11, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
         hit.commandId != 12u || hit.zoneIndex != 151u || strcmp(hit.groupName, "champion0.status_box") != 0) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(25, 11, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) ||
         hit.commandId != 7u || hit.zoneIndex != 151u || strcmp(hit.groupName, "champion0.toggle_box") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(50, 20, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
+        hit.commandId != 7u || hit.zoneIndex != 187u || strcmp(hit.groupName, "champion0.bar_graphs_toggle") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(1, 199, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
+        hit.commandId != 147u || hit.zoneIndex != 0u || strcmp(hit.groupName, "system.freeze_game") != 0) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(264, 126, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
         hit.commandId != 3u || hit.zoneIndex != 70u || strcmp(hit.groupName, "movement.forward") != 0) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(111, 82, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||

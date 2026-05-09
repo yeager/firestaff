@@ -129,7 +129,8 @@ static const TouchClickZonePc34Compat kTouchClickZones[] = {
     {125u, 113u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     281,   0,  19,  14, "champion.icon_top_left", "COMMAND.C:388 maps C125 top-left champion icon to C113; layout-696 C112/C113 gives x=281 y=0 w=19 h=14" },
     {126u, 114u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     301,   0,  19,  14, "champion.icon_top_right", "COMMAND.C:389 maps C126 top-right champion icon to C114; layout-696 C112/C114 gives x=301 y=0 w=19 h=14" },
     {127u, 115u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     301,  15,  19,  14, "champion.icon_bottom_right", "COMMAND.C:390 maps C127 bottom-right champion icon to C115; layout-696 C112/C115 gives x=301 y=15 w=19 h=14" },
-    {128u, 116u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     281,  15,  19,  14, "champion.icon_bottom_left", "COMMAND.C:391 maps C128 bottom-left champion icon to C116; layout-696 C112/C116 gives x=281 y=15 w=19 h=14" }
+    {128u, 116u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     281,  15,  19,  14, "champion.icon_bottom_left", "COMMAND.C:391 maps C128 bottom-left champion icon to C116; layout-696 C112/C116 gives x=281 y=15 w=19 h=14" },
+    {147u,   0u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,       0, 198,   2,   2, "system.freeze_game", "COMMAND.C:394 maps C147 freeze-game to an absolute screen box x=0..1 y=198..199 in G0447 primary interface table" }
 };
 
 
@@ -145,11 +146,11 @@ typedef struct TouchClickSourceOrderedRoutePc34Compat {
  * model only that active interface+movement seam; action/spell/inventory child
  * tables remain separate dispatch-time subroutes. */
 static const TouchClickSourceOrderedRoutePc34Compat kPrimaryInterfaceSourceOrder[] = {
+    { 7u, 151u }, { 8u, 152u }, { 9u, 153u }, { 10u, 154u },
+    { 7u, 187u }, { 8u, 188u }, { 9u, 189u }, { 10u, 190u },
     { 12u, 151u }, { 13u, 152u }, { 14u, 153u }, { 15u, 154u },
     { 125u, 113u }, { 126u, 114u }, { 127u, 115u }, { 128u, 116u },
-    { 7u, 187u }, { 8u, 188u }, { 9u, 189u }, { 10u, 190u },
-    { 7u, 151u }, { 8u, 152u }, { 9u, 153u }, { 10u, 154u },
-    { 100u, 13u }, { 111u, 11u }
+    { 100u, 13u }, { 111u, 11u }, { 147u, 0u }
 };
 
 static const TouchClickSourceOrderedRoutePc34Compat kSecondaryMovementSourceOrder[] = {
@@ -384,5 +385,5 @@ int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
 }
 
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C:1693-1722 defines source viewport origin/extent (x=0 y=33 w=224 h=136); COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
+    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables, including COMMAND.C:394 fixed absolute freeze-game box; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C:1693-1722 defines source viewport origin/extent (x=0 y=33 w=224 h=136); COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
 }
