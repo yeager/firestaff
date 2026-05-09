@@ -194,6 +194,16 @@ first, then visual parity, then typography / honesty.
 - **Evidence:** `parity-evidence/pass113_original_party_state_followup.md`, `parity-evidence/pass113_original_party_state_probe.md`, and `tools/pass113_original_party_state_probe.py`.
 - **Next unblocker:** determine or manually capture the original runtime Hall-of-Champions movement/recruitment input path to reach `(9,2)` facing east and recruit/open Elija before attempting HUD/spell/inventory overlay references. Do not promote direct-start/no-party captures as parity references.
 
+## Current Firestaff-side movement/viewport/wall closure sweep — **CLOSED / SOURCE-LOCKED (pass 398 + pass 404/410 + pass 423, refreshed 2026-05-09)**
+- **Area:** `BEHAVIOR` / `VISUAL` / Firestaff-side movement-to-redraw and wall occlusion.
+- **Status:** These are not active V1 blockers on the Firestaff side anymore; they are closed by source-audited gates. They do **not** close the original-runtime capture/true-stop blocker above.
+- **Closed evidence:**
+  - Runtime redraw chain: `parity-evidence/pass398_runtime_redraw_blocker.md` and `scripts/verify_pass398_runtime_redraw_blocker.py` prove queued input reaches movement/turn mutation, sets `viewportDirty`, returns `M11_GAME_INPUT_REDRAW`, and immediately redraws through `M11_GameView_Draw`. ReDMCSB anchors: `COMMAND.C:F0361`/`F0380`, `CLIKMENU.C:F0365`/`F0366`, `GAMELOOP.C:F0002`, `DUNVIEW.C:F0128`.
+  - Center-blocker side contents: `parity-evidence/pass404_dm1_v1_side_contents_center_blocker_occlusion_gate.md` and `tools/verify_pass404_dm1_v1_side_contents_center_blocker_occlusion_gate.py` prove side contents and deferred side explosions stop at the nearest non-open center wall/door before drawing item/creature/projectile/explosion primitives. ReDMCSB audit: `DUNVIEW.C:F0128` side-before-center sequence at `DUNVIEW.C:8491-8533`; CSBWin corroboration: `Viewport.cpp:331-342`, `DrawViewport` loop at `6762`.
+  - Input command reserve slots: pass 423 keeps regular commands capped at the source `C5` threshold while release/stop commands can use the reserved queue slots (`DEFS.H:3261-3264`, `COMMAND.C:1304-1377`, `COMMAND.C:1506-1511`, `COMMAND.C:1744`); covered by `test_dm1_v1_input_command_queue_pc34_compat`.
+- **Verifier hooks:** `pass404_dm1_v1_side_contents_center_blocker_occlusion_gate` is now registered in CTest; pass398 remains the heavier runtime verifier because it configures/builds and launches the product probe.
+- **Still true-stop:** original FIRES semantic capture/debugger promotion remains blocked by the current original-runtime lane; do not promote pixel parity from these Firestaff-side closures alone.
+
 ## 4. Viewport region −28×−18 px vs DM1 original — **LOCKED (pass 40)**
 - **Area:** `VISUAL`
 - **Status:** Drift explicitly locked as a V1 `KNOWN_DIFF` with a

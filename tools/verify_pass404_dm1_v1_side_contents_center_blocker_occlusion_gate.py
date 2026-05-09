@@ -12,9 +12,16 @@ side cells over it.
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime, timezone
+import json
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+PASS = "pass404_dm1_v1_side_contents_center_blocker_occlusion_gate"
+OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+MANIFEST = OUT_DIR / "manifest.json"
+REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 SRC = ROOT / "m11_game_view.c"
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp"
@@ -113,7 +120,15 @@ def require_csbwin_order() -> str:
     return f"Viewport.cpp:{line_no(text, first)}-{line_no(text, last)} and DrawViewport loop at {line_no(text, loop)}"
 
 
+def run(cmd: list[str]) -> str:
+    p = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+    if p.returncode != 0:
+        raise AssertionError(f"command failed {' '.join(cmd)}: {p.stdout[-1000:]}")
+    return p.stdout.strip()
+
+
 def main() -> int:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     redmcsb_anchor = require_redmcsb_order()
     csbwin_anchor = require_csbwin_order()
     text = SRC.read_text(encoding="utf-8")
@@ -136,11 +151,50 @@ def main() -> int:
     ], "side explosion center-blocker occlusion")
     ok.append(f"side explosion gate before deferred side explosion draw: m11_game_view.c:{line_no(text, start)}")
 
+    status = "PASS404_DM1_V1_SIDE_CONTENTS_CENTER_BLOCKER_OCCLUSION_PROVEN"
+    manifest = {
+        "schema": f"{PASS}.v1",
+        "timestampUtc": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "branch": run(["git", "branch", "--show-current"]),
+        "head": run(["git", "rev-parse", "HEAD"]),
+        "sourceAudit": {
+            "ReDMCSB": redmcsb_anchor,
+            "CSBWinCorroboration": csbwin_anchor,
+        },
+        "firestaffGuards": ok,
+        "closedBlocker": "side contents / side explosions no longer repaint same-depth-or-farther cells past the nearest non-open center wall/door",
+        "notClaimed": ["original pixel parity", "new original DOS runtime capture", "full creature/ornament coordinate parity"],
+    }
+    MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    lines = [
+        "# Pass404 — DM1 V1 side contents center-blocker occlusion gate",
+        "",
+        f"Status: `{status}`",
+        "",
+        "## ReDMCSB-first source audit",
+        f"- ReDMCSB square draw order: `{redmcsb_anchor}`",
+        f"- CSBWin corroboration: `{csbwin_anchor}`",
+        "",
+        "## Firestaff guards",
+    ]
+    lines += [f"- `{line}`" for line in ok]
+    lines += [
+        "",
+        "## Verdict",
+        "- Closed blocker: side contents and deferred side explosions are bounded by the nearest non-open center wall/door before drawing item/creature/projectile/explosion primitives.",
+        "- Scope guard: source/order closure only; no original pixel-parity or DOS runtime capture claim.",
+        "",
+        f"Manifest: `parity-evidence/verification/{PASS}/manifest.json`",
+    ]
+    REPORT.write_text("\n".join(lines) + "\n")
     print("PASS pass404-dm1-v1-side-contents-center-blocker-occlusion-gate")
     print(f"- ReDMCSB square draw order: {redmcsb_anchor}")
     print(f"- CSBWin relative-cell corroboration: {csbwin_anchor}")
     for line in ok:
         print(f"- {line}")
+    print(f"- report: {REPORT.relative_to(ROOT)}")
+    print(f"- manifest: {MANIFEST.relative_to(ROOT)}")
     return 0
 
 

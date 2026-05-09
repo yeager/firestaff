@@ -1135,6 +1135,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py
         )
         add_test(
+            NAME pass404_dm1_v1_side_contents_center_blocker_occlusion_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass404_dm1_v1_side_contents_center_blocker_occlusion_gate.py
+        )
+        add_test(
             NAME firestaff_completion_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_firestaff_completion_matrix.py
         )
