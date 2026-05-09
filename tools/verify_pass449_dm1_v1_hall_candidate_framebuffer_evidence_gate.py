@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import struct
 import subprocess
 from datetime import datetime, timezone
@@ -213,6 +214,8 @@ COMPARATOR_RESULT = VERIFY_DIR / "hall_candidate_framebuffer_compare.json"
 N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
+FIRESTAFF_HALL_FRAME_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs")
+FIRESTAFF_HALL_FRAME_MANIFEST = FIRESTAFF_HALL_FRAME_ROOT / "hall_candidate_framebuffer_manifest.json"
 
 REGIONS = {
     "fullframe": {"xywh": [0, 0, 320, 200], "requiredFor": REQUIRED_SCENES},
@@ -324,6 +327,163 @@ def expected_frame_path(side: str, scene: str, artifact: str) -> Path:
     return FRAMEBUFFER_INPUT_DIR / side / scene / f"{artifact}.png"
 
 
+def frame_entry(path: Path, provenance: dict[str, Any]) -> dict[str, Any]:
+    dims = png_dims(path)
+    if dims is None:
+        raise ValueError(f"not a PNG or missing dimensions: {path}")
+    return {
+        "path": rel(path),
+        "sha256": sha(path),
+        "bytes": path.stat().st_size,
+        "width": dims[0],
+        "height": dims[1],
+        "captureProvenance": provenance,
+    }
+
+
+def missing_entry(scene: str, side: str, artifact: str, blocker: str) -> dict[str, Any]:
+    return {
+        "missing": True,
+        "path": rel(expected_frame_path(side, scene, artifact)),
+        "blocker": blocker,
+    }
+
+
+def copy_png(src: Path, dst: Path) -> None:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+
+
+def crop_png(src: Path, dst: Path, xywh: list[int]) -> None:
+    from PIL import Image
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    x, y, w, h = xywh
+    with Image.open(src) as image:
+        image.crop((x, y, x + w, y + h)).save(dst)
+
+
+def materialize_available_panel_visible_inputs(data_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Stage the one currently pairable panel_visible frame into the comparator tree.
+
+    Only panel_visible is materialized from current external artifacts. Every
+    other label remains an explicit missing entry in the manifest until a later
+    original capture lane produces source-bound true-stop frames.
+    """
+    result: dict[str, Any] = {
+        "status": "NOT_MATERIALIZED",
+        "firestaffRoot": str(FIRESTAFF_HALL_FRAME_ROOT),
+        "firestaffManifest": str(FIRESTAFF_HALL_FRAME_MANIFEST),
+        "originalRoot": str(N2_HALL_ARTIFACT_ROOT),
+        "materialized": [],
+        "missing": [],
+        "errors": [],
+    }
+    if not FIRESTAFF_HALL_FRAME_ROOT.is_dir():
+        result["errors"].append(f"missing Firestaff frame root: {FIRESTAFF_HALL_FRAME_ROOT}")
+        return result
+    if not N2_HALL_ARTIFACT_ROOT.is_dir():
+        result["errors"].append(f"missing original frame root: {N2_HALL_ARTIFACT_ROOT}")
+        return result
+
+    original_manifest_path = N2_HALL_ARTIFACT_ROOT / "manifest.json"
+    try:
+        original_manifest = json.loads(original_manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        result["errors"].append(f"original manifest read/parse failed: {exc}")
+        original_manifest = {}
+    try:
+        firestaff_manifest = json.loads(FIRESTAFF_HALL_FRAME_MANIFEST.read_text(encoding="utf-8"))
+    except Exception as exc:
+        result["errors"].append(f"Firestaff manifest read/parse failed: {exc}")
+        firestaff_manifest = {}
+
+    entries = original_manifest.get("entries", []) if isinstance(original_manifest.get("entries"), list) else []
+    original_entry = next((entry for entry in entries if str(entry.get("pc320", "")).startswith(f"pc320/{N2_PROMOTABLE_LABEL}")), None)
+    if not original_entry:
+        result["errors"].append(f"missing original panel_visible entry {N2_PROMOTABLE_LABEL}")
+        return result
+
+    original_src = N2_HALL_ARTIFACT_ROOT / original_entry["pc320"]
+    if not original_src.is_file():
+        result["errors"].append(f"missing source PNG: {original_src}")
+    if result["errors"]:
+        return result
+
+    for scene in REQUIRED_SCENES:
+        for artifact, spec in REGIONS.items():
+            if scene not in spec["requiredFor"]:
+                continue
+            source = FIRESTAFF_HALL_FRAME_ROOT / "firestaff" / scene / f"{artifact}.png"
+            if source.is_file():
+                copy_png(source, expected_frame_path("firestaff", scene, artifact))
+    copy_png(original_src, expected_frame_path("original", "panel_visible", "fullframe"))
+    crop_png(original_src, expected_frame_path("original", "panel_visible", "panel_crop"), REGIONS["panel_crop"]["xywh"])
+    original_source = original_manifest.get("source_provenance", {}) if isinstance(original_manifest, dict) else {}
+    original_provenance = {
+        "stop": "DOSBox-X captured Hall/front-mirror visible frame; not candidate transition true-stop",
+        "route": "N2 route in original manifest ending at 03_panel_visible_north_front_mirror before no-transition candidate click",
+        "partyTuple": "captured route inferred by pass452: map=0 x=1 y=3 dir=NORTH; candidateOrdinal missing/not transitioned",
+        "commandTranscriptSha256": sha(original_manifest_path) if original_manifest_path.is_file() else "missing",
+        "artifactManifest": str(original_manifest_path),
+        "sourceProvenance": original_source,
+        "parityUse": "panel_visible comparator input only; no candidate panel transition or full pixel parity claim",
+    }
+
+    scenes: dict[str, Any] = {}
+    for scene in REQUIRED_SCENES:
+        scenes[scene] = {"scene": scene, "semanticStop": SCENE_CONTRACT[scene], "firestaff": {}, "original": {}}
+        for side in ("firestaff", "original"):
+            for artifact, spec in REGIONS.items():
+                if scene not in spec["requiredFor"]:
+                    continue
+                path = expected_frame_path(side, scene, artifact)
+                if path.is_file():
+                    if side == "firestaff":
+                        firestaff_scene = firestaff_manifest.get("scenes", {}).get(scene, {}) if isinstance(firestaff_manifest, dict) else {}
+                        provenance = firestaff_scene.get("firestaff", {}).get(artifact, {}).get("captureProvenance", {})
+                    else:
+                        provenance = dict(original_provenance)
+                        if artifact == "panel_crop":
+                            provenance["derivedFrom"] = str(original_src)
+                    scenes[scene][side][artifact] = frame_entry(path, provenance)
+                    result["materialized"].append(rel(path))
+                else:
+                    blocker = "awaiting source-bound original true-stop capture and/or paired Firestaff export"
+                    scenes[scene][side][artifact] = missing_entry(scene, side, artifact, blocker)
+                    result["missing"].append(f"{scene}.{side}.{artifact}")
+
+    manifest = {
+        "schema": "pass449_hall_candidate_framebuffer_manifest.schema.v1",
+        "timestampUtc": datetime.now(timezone.utc).isoformat(),
+        "status": "PARTIAL_PANEL_VISIBLE_ONLY_REMAINING_LABELS_MISSING",
+        "originalDataProvenance": {
+            row["filename"]: {
+                "variant": row["variant"],
+                "file": row["path"],
+                "sha256": row["sha256"],
+                "bytes": row["bytes"],
+            }
+            for row in data_rows
+        },
+        "externalArtifactRoots": {
+            "firestaff": str(FIRESTAFF_HALL_FRAME_ROOT),
+            "original": str(N2_HALL_ARTIFACT_ROOT),
+        },
+        "scenes": scenes,
+        "nonClaims": [
+            "full pixel parity",
+            "candidate_select/cancel/resurrect_confirm/reincarnate_confirm original parity",
+            "HUD/status parity",
+        ],
+    }
+    FRAMEBUFFER_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    FRAMEBUFFER_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    result["status"] = "MATERIALIZED_FIRESTAFF_AVAILABLE_AND_ORIGINAL_PANEL_VISIBLE_ONLY"
+    result["manifest"] = rel(FRAMEBUFFER_MANIFEST)
+    return result
+
+
 def build_framebuffer_manifest_schema() -> dict[str, Any]:
     provenance_schema = {
         "required": ["variant", "file", "sha256", "bytes"],
@@ -417,16 +577,22 @@ def validate_manifest_hash_entry(manifest: dict[str, Any], scene: str, side: str
     required_path = rel(path)
     if entry.get("path") != required_path:
         errors.append(f"manifest path mismatch scenes.{scene}.{side}.{artifact}.path: {entry.get('path')} != {required_path}")
-    if path.exists():
-        actual_sha = sha(path)
-        actual_bytes = path.stat().st_size
-        dims = png_dims(path)
-        if entry.get("sha256") != actual_sha:
-            errors.append(f"manifest sha mismatch scenes.{scene}.{side}.{artifact}: {entry.get('sha256')} != {actual_sha}")
-        if entry.get("bytes") != actual_bytes:
-            errors.append(f"manifest bytes mismatch scenes.{scene}.{side}.{artifact}: {entry.get('bytes')} != {actual_bytes}")
-        if entry.get("width") != dims[0] or entry.get("height") != dims[1]:
-            errors.append(f"manifest dims mismatch scenes.{scene}.{side}.{artifact}: {entry.get('width')}x{entry.get('height')} != {dims}")
+    if not path.exists():
+        if not entry.get("missing") or not entry.get("blocker"):
+            errors.append(f"manifest missing marker absent for scenes.{scene}.{side}.{artifact}")
+        return errors
+    if entry.get("missing"):
+        errors.append(f"manifest marks existing artifact missing: scenes.{scene}.{side}.{artifact}")
+        return errors
+    actual_sha = sha(path)
+    actual_bytes = path.stat().st_size
+    dims = png_dims(path)
+    if entry.get("sha256") != actual_sha:
+        errors.append(f"manifest sha mismatch scenes.{scene}.{side}.{artifact}: {entry.get('sha256')} != {actual_sha}")
+    if entry.get("bytes") != actual_bytes:
+        errors.append(f"manifest bytes mismatch scenes.{scene}.{side}.{artifact}: {entry.get('bytes')} != {actual_bytes}")
+    if not dims or entry.get("width") != dims[0] or entry.get("height") != dims[1]:
+        errors.append(f"manifest dims mismatch scenes.{scene}.{side}.{artifact}: {entry.get('width')}x{entry.get('height')} != {dims}")
     for key in ("path", "sha256", "bytes", "width", "height", "captureProvenance"):
         if key not in entry:
             errors.append(f"manifest missing scenes.{scene}.{side}.{artifact}.{key}")
@@ -478,12 +644,12 @@ def run_framebuffer_comparisons() -> tuple[list[dict[str, Any]], list[str]]:
         for artifact, spec in REGIONS.items():
             if scene not in spec["requiredFor"]:
                 continue
+            firestaff = expected_frame_path("firestaff", scene, artifact)
+            original = expected_frame_path("original", scene, artifact)
+            if not firestaff.exists() or not original.exists():
+                continue
             try:
-                row = compare_png_pair(
-                    expected_frame_path("firestaff", scene, artifact),
-                    expected_frame_path("original", scene, artifact),
-                    spec["xywh"][2:4],
-                )
+                row = compare_png_pair(firestaff, original, spec["xywh"][2:4])
                 row.update({"scene": scene, "region": artifact, "xywh": spec["xywh"]})
                 rows.append(row)
             except Exception as exc:
@@ -495,9 +661,10 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
     schema = build_framebuffer_manifest_schema()
     FRAMEBUFFER_SCHEMA_PATH.parent.mkdir(parents=True, exist_ok=True)
     FRAMEBUFFER_SCHEMA_PATH.write_text(json.dumps(schema, indent=2) + "\n", encoding="utf-8")
+    materialized = materialize_available_panel_visible_inputs(data_rows)
     artifacts = expected_framebuffer_artifacts()
     missing = [row["missingBlocker"] for row in artifacts if row.get("missingBlocker")]
-    errors: list[str] = []
+    errors: list[str] = list(materialized.get("errors", []))
     manifest_data: dict[str, Any] | None = None
     if not FRAMEBUFFER_MANIFEST.exists():
         missing.insert(0, f"missing framebuffer manifest: {rel(FRAMEBUFFER_MANIFEST)}")
@@ -524,12 +691,16 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
                 for artifact, spec in REGIONS.items():
                     if scene in spec["requiredFor"]:
                         errors += validate_manifest_hash_entry(manifest_data, scene, side, artifact, expected_frame_path(side, scene, artifact))
-    comparisons: list[dict[str, Any]] = []
-    compare_errors: list[str] = []
+    comparisons, compare_errors = run_framebuffer_comparisons()
+    errors += compare_errors
     if not missing and not errors:
-        comparisons, compare_errors = run_framebuffer_comparisons()
-        errors += compare_errors
-    status = "COMPARE_COMPLETE" if not missing and not errors else "BLOCKED_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING"
+        status = "COMPARE_COMPLETE"
+    elif comparisons and not errors:
+        status = "PARTIAL_COMPARE_PANEL_VISIBLE_AVAILABLE_REMAINING_LABELS_MISSING"
+    elif comparisons:
+        status = "PARTIAL_COMPARE_WITH_ERRORS"
+    else:
+        status = "BLOCKED_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING"
     result = {
         "schema": "pass449_hall_candidate_framebuffer_comparator.v1",
         "status": status,
@@ -537,12 +708,13 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
         "schemaPath": rel(FRAMEBUFFER_SCHEMA_PATH),
         "scenes": REQUIRED_SCENES,
         "regions": REGIONS,
+        "materialization": materialized,
         "expectedArtifacts": artifacts,
         "missing": missing,
         "errors": errors,
         "compareExecuted": bool(comparisons),
         "comparisons": comparisons,
-        "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Pixel parity for a region is differingPixels == 0 with matching original data provenance.",
+        "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Partial panel_visible comparisons are diagnostic only; pixel parity for a region is differingPixels == 0 with matching original data provenance and source-bound matching state.",
     }
     COMPARATOR_RESULT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result
@@ -754,6 +926,12 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines.append(f"- schema: `{manifest['captureContract']['schemaPath']}`")
     lines.append(f"- comparator result: `{rel(COMPARATOR_RESULT)}` status=`{manifest['framebufferComparator']['status']}`")
     lines.append("- required original data provenance: `GRAPHICS.DAT` and `DUNGEON.DAT` must include exact variant, file/path, bytes, and SHA256; filename-only identity is rejected.")
+    materialization = manifest["framebufferComparator"].get("materialization", {})
+    lines.append(f"- materialization: `{materialization.get('status')}` from Firestaff root `{materialization.get('firestaffRoot')}` and original root `{materialization.get('originalRoot')}`")
+    if manifest["framebufferComparator"].get("comparisons"):
+        lines.append("- partial comparisons executed (diagnostic only; no full pixel parity claim):")
+        for cmp_row in manifest["framebufferComparator"]["comparisons"]:
+            lines.append(f"  - `{cmp_row['scene']}` `{cmp_row['region']}` differingPixels={cmp_row['differingPixels']}/{cmp_row['totalPixels']} maxChannelDelta={cmp_row['maxChannelDelta']} meanAbsDeltaRgb={cmp_row['meanAbsDeltaRgb']}")
     for row in manifest["framebufferComparator"]["expectedArtifacts"]:
         lines.append(f"- `{row['scene']}` `{row['side']}` `{row['artifact']}` path=`{row['path']}` hashField=`{row['requiredSha256Field']}` exists={row['exists']}")
     n2 = manifest["n2PanelVisibleOriginalArtifact"]
