@@ -8410,15 +8410,12 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
 
 /* Known GRAPHICS.DAT indices for rendering assets in CSB PC 3.4. */
 enum {
-    /* Wall texture sets (256x32) */
-    M11_GFX_WALL_SET_0 = 42,
-    M11_GFX_WALL_SET_1 = 43,
-    M11_GFX_WALL_SET_2 = 44,
-    M11_GFX_WALL_SET_3 = 45,
-
-    /* Floor tiles (32x32) */
-    M11_GFX_FLOOR_SET_0 = 76,
-    M11_GFX_FLOOR_SET_1 = 77,
+    /* Legacy debug-HUD atlas strips.  Greatstone/ReDMCSB identify 42..48
+     * as packed item sheets and 76..77 as teleporter/fluxcage; normal DM1
+     * viewport rendering must use M11_GFX_FIRST_FLOOR_SET and
+     * M11_GFX_DM1_WALLSET_FIRST instead. */
+    M11_GFX_LEGACY_DEBUG_ITEM_SHEET_0 = 42,
+    M11_GFX_LEGACY_DEBUG_TELEPORTER = 76,
 
     /* Legacy Firestaff misnomer: graphic 0 is not a DM1 dungeon
      * viewport background; it is a UI/panel graphic.  Normal V1 must
@@ -8442,19 +8439,21 @@ enum {
     M11_GFX_FLOOR_PANEL   = 78,  /* 224x97  — floor set 0 floor */
     M11_GFX_CEILING_PANEL = 79,  /* 224x39  — floor set 0 ceiling */
 
-    /* Door frame graphics at depth (perspective-scaled sizes) */
-    M11_GFX_DOOR_FRAME_D3   = 70,  /*  36x49  — far depth */
-    M11_GFX_DOOR_FRAME_D3W  = 71,  /*  83x49  — far depth wide */
-    M11_GFX_DOOR_PILLAR_D3  = 72,  /*   8x52  — thin pillar */
-    M11_GFX_DOOR_FRAME_D2   = 73,  /*  78x74  — mid depth */
-    M11_GFX_DOOR_FRAME_D1   = 74,  /*  60x111 — near depth */
-    M11_GFX_DOOR_FRAME_D0   = 75,  /*  33x136 — nearest side strip */
-    M11_GFX_DOOR_SIDE_D0    = 86,  /*  32x123 */
-    M11_GFX_DOOR_SIDE_D1    = 87,  /*  25x94  */
-    M11_GFX_DOOR_SIDE_D2    = 88,  /*  18x65  */
-    M11_GFX_DOOR_SIDE_D3    = 89,  /*  10x42  */
-    M11_GFX_DOOR_FRAME_TOP_D1 = 91, /* 102x4 */
-    M11_GFX_DOOR_FRAME_TOP_D2 = 92, /* 70x3 */
+    /* Door frame graphics live inside the DM1 wall-set block.  Do not use
+     * graphics 70..75 here: those are wall masks, so drawing them as door
+     * frames visibly swaps in the wrong assets around doors. */
+    M11_GFX_DOOR_FRAME_D3   = 89, /* M657_GRAPHIC_WALLSET_0_DOOR_FRAME_LEFT_D3C */
+    M11_GFX_DOOR_FRAME_D3W  = 90, /* M658_GRAPHIC_WALLSET_0_DOOR_FRAME_LEFT_D3L */
+    M11_GFX_DOOR_PILLAR_D3  = 90, /* legacy alias: far-side D3 frame strip */
+    M11_GFX_DOOR_FRAME_D2   = 88, /* M656_GRAPHIC_WALLSET_0_DOOR_FRAME_LEFT_D2C */
+    M11_GFX_DOOR_FRAME_D1   = 87, /* M655_GRAPHIC_WALLSET_0_DOOR_FRAME_LEFT_D1C */
+    M11_GFX_DOOR_FRAME_D0   = 86, /* M654_GRAPHIC_WALLSET_0_DOOR_FRAME_FRONT_D0C */
+    M11_GFX_DOOR_SIDE_D0    = 86,
+    M11_GFX_DOOR_SIDE_D1    = 87,
+    M11_GFX_DOOR_SIDE_D2    = 88,
+    M11_GFX_DOOR_SIDE_D3    = 89,
+    M11_GFX_DOOR_FRAME_TOP_D1 = 91, /* M659_GRAPHIC_WALLSET_0_DOOR_FRAME_TOP_D1LCR */
+    M11_GFX_DOOR_FRAME_TOP_D2 = 92, /* M660_GRAPHIC_WALLSET_0_DOOR_FRAME_TOP_D2LCR */
     M11_GFX_DOOR_SET0_D3    = 246, /* 44x38 */
     M11_GFX_DOOR_SET0_D2    = 247, /* 64x61 */
     M11_GFX_DOOR_SET0_D1    = 248, /* 96x88 */
@@ -8656,6 +8655,13 @@ enum {
     M11_GFX_DAMAGE_TO_CHAMPION_SMALL  = 15, /* C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL (45×7) */
     M11_GFX_DAMAGE_TO_CHAMPION_BIG    = 16  /* C016_GRAPHIC_DAMAGE_TO_CHAMPION_BIG (32×29) */
 };
+
+_Static_assert(M11_GFX_DOOR_FRAME_D3 >= M11_GFX_DM1_WALLSET_FIRST,
+               "DM1 door frames are wall-set graphics, not mask graphics 70..75");
+_Static_assert(M11_GFX_DOOR_FRAME_TOP_D2 == 92,
+               "DM1 wall-set 0 top door frames end at graphic 92");
+_Static_assert(M11_GFX_FLOOR_PANEL == 78 && M11_GFX_CEILING_PANEL == 79,
+               "DM1 floor/ceiling graphics must remain 78/79");
 
 #define M11_GFX_DIALOG_BOX 17 /* C000_GRAPHIC_DIALOG_BOX, viewport-sized 224×136 */
 
@@ -18409,7 +18415,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         int mapFloorSet = m11_current_map_floor_set(state);
         for (d = 2; d >= 0; --d) {
             const M11_AssetSlot* wallSlot;
-            unsigned int wallIdx = (unsigned int)(M11_GFX_WALL_SET_0 + (mapWallSet & 3));
+            unsigned int wallIdx = (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +
+                                                  mapWallSet * M11_GFX_DM1_WALLSET_COUNT +
+                                                  (M11_GFX_WALLSET0_D1C - M11_GFX_DM1_WALLSET_FIRST));
             wallSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, wallIdx);
             if (wallSlot && wallSlot->width > 0 && wallSlot->height > 0) {
                 int ceilH = frames[d + 1].y - frames[d].y;
@@ -18443,7 +18451,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 if (floorH > 2) {
                     const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        (unsigned int)(M11_GFX_FLOOR_SET_0 + (mapFloorSet & 1)));
+                        (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
+                                       mapFloorSet * M11_GFX_FLOOR_SET_GRAPHIC_COUNT));
                     if (floorSlot && floorSlot->width > 0 && floorSlot->height > 0) {
                         M11_AssetLoader_BlitScaled(floorSlot, framebuffer,
                             framebufferWidth, framebufferHeight,
