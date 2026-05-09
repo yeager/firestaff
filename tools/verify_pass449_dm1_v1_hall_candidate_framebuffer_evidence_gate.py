@@ -801,6 +801,21 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
             "bucketMismatches": len(hud_mismatch_rows),
             "zeroDeltaRows": len([row for row in hud_rows if row["differingPixels"] == 0]),
         },
+        "semanticStopAlignment": {
+            "status": "FIRESTAFF_HUD_STATUS_SIDE_NEEDS_SOURCE_STOP_ALIGNMENT",
+            "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
+            "affectedRows": ["cancel.hud_status_crop", "resurrect_confirm.hud_status_crop", "reincarnate_confirm.hud_status_crop"],
+            "sourceRefs": [
+                "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
+                "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
+                "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991"
+            ],
+            "firestaffRefs": [
+                "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
+                "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398"
+            ],
+            "nextVerifier": "replace or mask Firestaff terminal HUD/status crops with source-stop-aligned frames before reinterpreting pass449 pixel deltas"
+        },
         "rows": rows,
         "repeatedInputHashGroups": repeated,
         "nonClaims": [
