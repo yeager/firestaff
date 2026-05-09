@@ -1480,6 +1480,14 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     endif()
 endif()
 
+# ── DM1 V1 input→command→movement pipeline source-lock gate ──────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass423_dm1_v1_input_command_movement_pipeline_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 movement legality completion-matrix gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
