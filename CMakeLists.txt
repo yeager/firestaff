@@ -458,6 +458,17 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_walls_occlusion_blockers_probe
     )
 
+    add_executable(firestaff_dm1_v1_side_contents_center_blocker_probe
+        probes/dm1/firestaff_dm1_v1_side_contents_center_blocker_probe.c
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_side_contents_center_blocker_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_side_contents_center_blocker_probe
+        COMMAND firestaff_dm1_v1_side_contents_center_blocker_probe ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
     add_executable(firestaff_dm1_v1_wall_composition_contract_probe
         probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c
     )
