@@ -24,12 +24,16 @@ RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206
 ADDR = {
     # FIRES.MAP link 22DD:0020 + corrected loader delta 0736.
     "F0781_MouseHandler": "2A13:0020",
+    # IO.C:705 compare site. Break before the cmp so BP has been established by
+    # the F0781 prologue and [bp+0A] is the actual MouseEvent argument.
+    "F0781_EventCmp": "2A13:002F",
     "F0781_ConditionalAfterCmp": "2A13:0033",
     # FIRES.MAP link 1BC1:030D + corrected loader delta 0736.
     "F0359_COMMAND_ProcessClick_CPSC": "22F7:030D",
 }
 CLICK_ROUTE = "click:276,135 wait:900 click:248,135 wait:900 click:304,135 wait:900"
 CODE_LINE_RE = re.compile(r"\b(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\s+[0-9A-F]{2,}\s*[a-z][a-z0-9]+", re.I)
+EVENT_CMP_RE = re.compile(r"(?:cmp\s+word\s+)?\[bp\+0A\][^=]*=([0-9A-F]{4})", re.I)
 
 def run(cmd: list[str], **kw: Any) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kw)
@@ -112,10 +116,28 @@ def drive(display: str, win: str, route: str, log: list[dict[str, Any]], running
 def classify(post: str) -> dict[str, Any]:
     c=p385.clean(post); lines=p385.code_lines(c)[-18:]
     kind="other"; entry=None
+    last_addr=p385.last_code_addr(c)
     for name,target in ADDR.items():
-        if any(line.upper().startswith(target) for line in lines) or target in c.upper():
+        if last_addr == target:
             kind=name; entry=target; break
-    return {"kind":kind,"entryAddr":entry,"addr":p385.last_code_addr(c),"postRunningCodeLines":lines,"postRunningExcerpt":c[-2200:]}
+    if kind == "other":
+        for name,target in ADDR.items():
+            if any(line.upper().startswith(target) for line in lines) or target in c.upper():
+                kind=name; entry=target; break
+    return {"kind":kind,"entryAddr":entry,"addr":last_addr,"postRunningCodeLines":lines,"postRunningExcerpt":c[-2200:]}
+
+def parse_event_from_cmp_text(text: str) -> int | None:
+    m = EVENT_CMP_RE.search(text or "")
+    return int(m.group(1), 16) if m else None
+
+def annotate_event(row: dict[str, Any]) -> None:
+    event = parse_event_from_cmp_text(row.get("postRunningExcerpt", ""))
+    if event is None:
+        event = parse_event_from_cmp_text(row.get("stepTail", ""))
+    if event is not None:
+        row["eventValueBeforeIOConditional"] = event
+        row["eventValueHexBeforeIOConditional"] = f"0x{event:04X}"
+        row["ioConditionalAllowsF0359"] = event < 0x20
 
 def monitor(child: pexpect.spawn, seconds:int, transcript:list[str], cmdlog:list[dict[str,Any]], stops:list[dict[str,Any]], running:threading.Event, stop:threading.Event)->bool:
     deadline=time.time()+seconds; buf=""; saw=False
@@ -128,18 +150,19 @@ def monitor(child: pexpect.spawn, seconds:int, transcript:list[str], cmdlog:list
                 running.clear(); post=c.split("(Running)",1)[-1]
                 row={"t":time.time(),"runningMarkerSeen":True,"promptReappearedAfterRunning":True,**classify(post)}; stops.append(row)
                 if row.get("kind") == "F0781_MouseHandler":
-                    # Capture callback parameters around BP and single-step the IO.C event branch.
-                    for cmd in ["CPU", "D SS:0FB0", "T", "CPU", "BPLIST"]:
+                    # Entry is before the prologue, so do not sample [bp+0A] here.
+                    # Drop this entry breakpoint and continue to the cmp breakpoint.
+                    for cmd in ["CPU", "BPDEL " + ADDR["F0781_MouseHandler"], "BPLIST"]:
+                        p385.dbg(child, cmd, cmdlog, transcript)
+                elif row.get("kind") in ("F0781_EventCmp", "F0781_ConditionalAfterCmp"):
+                    # At the cmp site the F0781 prologue has established BP; this
+                    # is the first reliable MouseEvent argument sample.
+                    for cmd in ["CPU", "T", "CPU", "BPLIST"]:
                         p385.dbg(child, cmd, cmdlog, transcript)
                     tail = p385.clean("\n".join(transcript))[-5000:]
-                    row["singleStepCommands"] = ["CPU", "D SS:0FB0", "T", "CPU", "BPLIST"]
+                    row["singleStepCommands"] = ["CPU", "T", "CPU", "BPLIST"]
                     row["stepTail"] = tail
-                    m = re.search(r"cmp\s+word \[bp\+0A\],0020[^\n=]*=([0-9A-F]{4})", row.get("postRunningExcerpt", ""), re.I)
-                    if m:
-                        event = int(m.group(1), 16)
-                        row["eventValueBeforeIOConditional"] = event
-                        row["eventValueHexBeforeIOConditional"] = f"0x{event:04X}"
-                        row["ioConditionalAllowsF0359"] = event < 0x20
+                    annotate_event(row)
                     row["steppedToAddr"] = p385.last_code_addr(tail)
                 else:
                     for cmd in ["CPU", "BPLIST"]:
@@ -166,7 +189,7 @@ def runtime_probe(seconds:int, route:str)->dict[str,Any]:
             p385.drive(display,win,p385.LOAD_PREFIX,routelog)
             if not p385.pause_to_prompt(child,display,win,cmdlog,transcript,"post-load mouse seam arm point"):
                 return {"ran":True,"durationSeconds":round(time.time()-start,3),"stage":"post-load arm","blocker":"no debugger prompt at arm point","routeLog":routelog,"commandLog":cmdlog,"stops":stops}
-            for cmd in ["BPDEL *", "BP " + ADDR["F0781_MouseHandler"], "BP " + ADDR["F0359_COMMAND_ProcessClick_CPSC"], "BPLIST"]:
+            for cmd in ["BPDEL *", "BP " + ADDR["F0781_MouseHandler"], "BP " + ADDR["F0781_EventCmp"], "BP " + ADDR["F0359_COMMAND_ProcessClick_CPSC"], "BPLIST"]:
                 p385.dbg(child,cmd,cmdlog,transcript)
             bplist=p385.clean(cmdlog[-1].get("excerpt","")).upper(); retained_at_arm={n:(a in bplist) for n,a in ADDR.items()}
             arm_time=time.time(); running=threading.Event(); stop=threading.Event(); child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"run after pass464 mouse seam arm"})
@@ -189,13 +212,15 @@ def runtime_probe(seconds:int, route:str)->dict[str,Any]:
 def classify_result(source,runtime):
     kinds=[st.get("kind") for st in runtime.get("stops",[])] if runtime.get("ran") else []
     f0781=[st for st in runtime.get("stops",[]) if st.get("kind")=="F0781_MouseHandler"] if runtime.get("ran") else []
-    first=f0781[0] if f0781 else {}
+    event_rows=[st for st in runtime.get("stops",[]) if st.get("kind")=="F0781_EventCmp"] if runtime.get("ran") else []
+    first=event_rows[0] if event_rows else (f0781[0] if f0781 else {})
     event=first.get("eventValueBeforeIOConditional")
     preds={
         "sourceAuditOk":all(r.get("ok") for r in source),
         "runtimeRan":runtime.get("ran") is True,
         "routeInputAfterArming":runtime.get("routeInputAfterArming") is True,
         "f0781Hit":"F0781_MouseHandler" in kinds,
+        "f0781EventCmpHit":"F0781_EventCmp" in kinds,
         "f0359Hit":"F0359_COMMAND_ProcessClick_CPSC" in kinds,
         "eventValueBeforeIOConditional":event,
         "ioConditionalAllowsF0359": first.get("ioConditionalAllowsF0359"),
@@ -206,6 +231,8 @@ def classify_result(source,runtime):
     if preds["f0359Hit"]: return "PASS_PASS464_F0359_REACHED", preds, "F0359_COMMAND_ProcessClick_CPSC stopped after F0781"
     if preds["f0781Hit"] and preds.get("ioConditionalAllowsF0359") is False:
         return "PASS_PASS464_F0781_EVENT_SKIPS_F0359", preds, "F0781 reached, but the callback event value is >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION at the IO.C conditional, so this callback skips F0359"
+    if preds["f0781Hit"] and preds.get("ioConditionalAllowsF0359") is True:
+        return "BLOCKED_PASS464_F0781_ALLOWED_F0359_NOT_HIT", preds, "F0781 reached with a command-class mouse event, but the bounded run did not stop at F0359"
     if preds["f0781Hit"]: return "BLOCKED_PASS464_F0781_EVENT_BRANCH_NOT_PROVEN", preds, "F0781 reached, but event branch/step evidence was not proven"
     return "BLOCKED_PASS464_CLICK_NOT_REACHING_F0781", preds, "client-relative clicks were posted after arming, but F0781 did not hit"
 

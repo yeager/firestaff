@@ -1,8 +1,8 @@
 # Pass464 — DM1 V1 mouse callback event branch
 
-Status: `PASS_PASS464_F0781_EVENT_SKIPS_F0359`
+Status: `BLOCKED_PASS464_F0781_EVENT_BRANCH_NOT_PROVEN`
 
-F0781 reached, but the callback event value is >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION at the IO.C conditional, so this callback skips F0359
+F0781 reached, but event branch/step evidence was not proven
 
 ## ReDMCSB source audit
 
@@ -30,12 +30,12 @@ F0781 reached, but the callback event value is >= C32_MOUSE_EVENT_CHANGE_SCREEN_
 - Method: fresh-entry original runtime; arm F0781 mouse callback and F0359 click queue entry; drive client-relative movement-panel clicks; strict stops require (Running)->prompt
 - Route input after arming: `True`
 - Stops: `['F0781_MouseHandler', 'other']`
-- Retained at arm: `{'F0781_MouseHandler': True, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': True}`
-- Retained final: `{'F0781_MouseHandler': False, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': False}`
+- Retained at arm: `{'F0781_MouseHandler': True, 'F0781_EventCmp': True, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': True}`
+- Retained final: `{'F0781_MouseHandler': True, 'F0781_EventCmp': True, 'F0781_ConditionalAfterCmp': False, 'F0359_COMMAND_ProcessClick_CPSC': True}`
 
 ## Conclusion
 
-- F0781 reached, but the callback event value is >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION at the IO.C conditional, so this callback skips F0359
+- F0781 reached, but event branch/step evidence was not proven
 
 ## Artifacts
 
