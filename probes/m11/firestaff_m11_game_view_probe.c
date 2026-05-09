@@ -178,6 +178,7 @@ static unsigned short m11_find_group_on_square_for_probe(
 typedef struct {
     int total;
     int passed;
+    int skipped;
 } ProbeTally;
 
 static void probe_record(ProbeTally* tally,
@@ -190,6 +191,26 @@ static void probe_record(ProbeTally* tally,
         printf("PASS %s %s\n", id, message);
     } else {
         printf("FAIL %s %s\n", id, message);
+    }
+}
+
+static void probe_skip(ProbeTally* tally,
+                       const char* id,
+                       const char* message) {
+    tally->total += 1;
+    tally->skipped += 1;
+    printf("SKIP %s %s\n", id, message);
+}
+
+static void probe_record_asset_required(ProbeTally* tally,
+                                        const char* id,
+                                        int assetsAvailable,
+                                        int ok,
+                                        const char* message) {
+    if (assetsAvailable) {
+        probe_record(tally, id, ok, message);
+    } else {
+        probe_skip(tally, id, message);
     }
 }
 
@@ -509,7 +530,7 @@ int main(int argc, char** argv) {
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
     M11_GameViewState syntheticView;
-    ProbeTally tally = {0, 0};
+    ProbeTally tally = {0, 0, 0};
     unsigned char framebuffer[320 * 200];
     unsigned char turnedFramebuffer[320 * 200];
     unsigned char movedFramebuffer[320 * 200];
@@ -2999,143 +3020,132 @@ int main(int argc, char** argv) {
                                     "34_focused_d1c_teleporter_vga");
         }
 
-        probe_record(&tally, "INV_GV_38A",
-                     haveAssets && memcmp(baseFb, pitFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38A", haveAssets,
+                                    memcmp(baseFb, pitFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C normal pit source blit changes the corridor frame");
-        probe_record(&tally, "INV_GV_38X",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, pitFb,
+        probe_record_asset_required(&tally, "INV_GV_38X", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, pitFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C normal pit clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38B",
-                     haveAssets && memcmp(pitFb, invisiblePitFb, sizeof(pitFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38B", haveAssets,
+                                    memcmp(pitFb, invisiblePitFb, sizeof(pitFb)) != 0,
                      "focused viewport: D1C invisible pit variant differs from normal pit");
-        probe_record(&tally, "INV_GV_38Y",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, invisiblePitFb,
+        probe_record_asset_required(&tally, "INV_GV_38Y", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, invisiblePitFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C invisible pit clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38C",
-                     haveAssets && memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38C", haveAssets,
+                                    memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C stairs zone blit changes the corridor frame");
-        probe_record(&tally, "INV_GV_38Z",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, stairsFb,
+        probe_record_asset_required(&tally, "INV_GV_38Z", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, stairsFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C stairs clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38D",
-                     haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38D", haveAssets,
+                                    memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C teleporter field zone blit changes the corridor frame");
-        probe_record(&tally, "INV_GV_38AA",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, teleporterFb,
+        probe_record_asset_required(&tally, "INV_GV_38AA", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, teleporterFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C teleporter field clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38L",
-                     haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38L", haveAssets,
+                                    memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C Trolin creature sprite changes the corridor frame");
-        probe_record(&tally, "INV_GV_38AB",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, creatureFb,
+        probe_record_asset_required(&tally, "INV_GV_38AB", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, creatureFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C Trolin creature clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38R",
-                     haveAssets && memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
+        probe_record_asset_required(&tally, "INV_GV_38R", haveAssets,
+                                    memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
                      memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
                      "focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames");
-        probe_record(&tally, "INV_GV_38S",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, sideCreatureFb,
+        probe_record_asset_required(&tally, "INV_GV_38S", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, sideCreatureFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: extreme C3200 side creature clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38AI",
-                     haveAssets && memcmp(baseFb, sideExplosionFb, sizeof(baseFb)) != 0 &&
+        probe_record_asset_required(&tally, "INV_GV_38AI", haveAssets,
+                                    memcmp(baseFb, sideExplosionFb, sizeof(baseFb)) != 0 &&
                      memcmp(sideCreatureFb, sideExplosionFb, sizeof(sideCreatureFb)) != 0,
                      "focused viewport: D1L side-cell fireball explosion changes the corridor frame");
-        probe_record(&tally, "INV_GV_38AJ",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, sideExplosionFb,
+        probe_record_asset_required(&tally, "INV_GV_38AJ", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, sideExplosionFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1L side-cell fireball explosion clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38M",
-                     haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38M", haveAssets,
+                                    memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
-        probe_record(&tally, "INV_GV_38T",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, projectileFb,
+        probe_record_asset_required(&tally, "INV_GV_38T", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, projectileFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C fireball projectile clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38Q",
-                     haveAssets && memcmp(baseFb, lightningFb, sizeof(baseFb)) != 0 &&
+        probe_record_asset_required(&tally, "INV_GV_38Q", haveAssets,
+                                    memcmp(baseFb, lightningFb, sizeof(baseFb)) != 0 &&
                      memcmp(projectileFb, lightningFb, sizeof(projectileFb)) != 0,
                      "focused viewport: D1C lightning projectile differs from empty and fireball frames");
-        probe_record(&tally, "INV_GV_38U",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, lightningFb,
+        probe_record_asset_required(&tally, "INV_GV_38U", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, lightningFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C lightning projectile clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38N",
-                     haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38N", haveAssets,
+                                    memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C dagger object sprite changes the corridor frame");
-        probe_record(&tally, "INV_GV_38V",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, objectFb,
+        probe_record_asset_required(&tally, "INV_GV_38V", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, objectFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C dagger object clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38O",
-                     haveAssets && memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38O", haveAssets,
+                                    memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C object sprite with G0209 native-index gap changes the corridor frame");
-        probe_record(&tally, "INV_GV_38W",
-                     haveAssets &&
-                     probe_count_diffs_outside_rect(baseFb, multiObjectFb,
+        probe_record_asset_required(&tally, "INV_GV_38W", haveAssets,
+                                    probe_count_diffs_outside_rect(baseFb, multiObjectFb,
                                                     320, 200,
                                                     PROBE_DM1_VIEWPORT_X,
                                                     PROBE_DM1_VIEWPORT_Y,
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C multi-object pile clips inside the DM1 viewport rectangle");
-        probe_record(&tally, "INV_GV_38P",
-                     haveAssets && memcmp(objectFb, multiObjectFb, sizeof(objectFb)) != 0,
+        probe_record_asset_required(&tally, "INV_GV_38P", haveAssets,
+                                    memcmp(objectFb, multiObjectFb, sizeof(objectFb)) != 0,
                      "focused viewport: D1C multi-object pile differs from single-object frame");
 
         /* Broader source-zone coverage: verify every currently-wired
@@ -3428,22 +3438,22 @@ int main(int argc, char** argv) {
                          memcmp(d1lWallFb, d1lWallOccludedFb, sizeof(d1lWallFb)) == 0,
                          "focused viewport: near D1L wall occludes farther D2L side creature contents");
         } else {
-            probe_record(&tally, "INV_GV_38E", 0,
-                         "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38F", 0,
-                         "focused viewport: invisible pit zone matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38G", 0,
-                         "focused viewport: stairs zone matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38H", 0,
-                         "focused viewport: teleporter zone matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38I", 0,
-                         "focused viewport: floor ornament matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38J", 0,
-                         "focused viewport: footprints floor ornament requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38K", 0,
-                         "focused viewport: wall ornament matrix requires GRAPHICS.DAT assets");
-            probe_record(&tally, "INV_GV_38AK", 0,
-                         "focused viewport: D1L side occlusion requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38E",
+                       "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38F",
+                       "focused viewport: invisible pit zone matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38G",
+                       "focused viewport: stairs zone matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38H",
+                       "focused viewport: teleporter zone matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38I",
+                       "focused viewport: floor ornament matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38J",
+                       "focused viewport: footprints floor ornament requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38K",
+                       "focused viewport: wall ornament matrix requires GRAPHICS.DAT assets");
+            probe_skip(&tally, "INV_GV_38AK",
+                       "focused viewport: D1L side occlusion requires GRAPHICS.DAT assets");
         }
 
         if (haveAssets) {
@@ -11513,6 +11523,10 @@ int main(int argc, char** argv) {
 
     M11_GameView_Shutdown(&gameView);
 
-    printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
-    return (tally.passed == tally.total) ? 0 : 1;
+    printf("# summary: %d/%d invariants passed", tally.passed, tally.total);
+    if (tally.skipped > 0) {
+        printf(" (%d asset-dependent skipped)", tally.skipped);
+    }
+    printf("\n");
+    return (tally.passed + tally.skipped == tally.total) ? 0 : 1;
 }

@@ -106,8 +106,12 @@ PROBE_SCREENSHOT_DIR="$OUT_DIR" FIRESTAFF_DATA="$DATA_DIR" "$PROBE_BIN" "$DATA_D
 SUMMARY=$(grep '^# summary: ' "$LOG" | tail -n 1)
 PASSED=$(printf '%s\n' "$SUMMARY" | awk '{print $3}' | cut -d/ -f1)
 TOTAL=$(printf '%s\n' "$SUMMARY" | awk '{print $3}' | cut -d/ -f2)
+SKIPPED=$(printf '%s\n' "$SUMMARY" | sed -n 's/.*(\([0-9][0-9]*\) asset-dependent skipped).*/\1/p')
+if [ -z "$SKIPPED" ]; then
+    SKIPPED=0
+fi
 
 echo "M11 game-view probe: $SUMMARY"
-if [ "$PASSED" != "$TOTAL" ]; then
+if [ $((PASSED + SKIPPED)) -ne "$TOTAL" ]; then
     exit 1
 fi
