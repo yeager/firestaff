@@ -747,6 +747,11 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
     """
     rows: list[dict[str, Any]] = []
     hash_groups: dict[str, list[dict[str, str]]] = {}
+    semantic_stop_masked = {
+        "cancel.hud_status_crop",
+        "resurrect_confirm.hud_status_crop",
+        "reincarnate_confirm.hud_status_crop",
+    }
     for cmp_row in comparisons:
         firestaff_path = ROOT / cmp_row["firestaff"]
         original_path = ROOT / cmp_row["original"]
@@ -769,6 +774,8 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
             classification = "fullframe_large_delta_likely_scene_state_or_palette_family"
         else:
             classification = "nonzero_delta_unclassified"
+        row_key = f"{cmp_row['scene']}.{cmp_row['region']}"
+        masked_reason = "firestaff_hud_status_semantic_stop_misaligned" if row_key in semantic_stop_masked else None
         rows.append({
             "scene": cmp_row["scene"],
             "region": cmp_row["region"],
@@ -776,6 +783,8 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
             "totalPixels": cmp_row["totalPixels"],
             "deltaPercent": cmp_row["deltaPercent"],
             "classification": classification,
+            "parityEligible": masked_reason is None,
+            "parityMaskReason": masked_reason,
             "firestaffVisual": fs_stats,
             "originalVisual": og_stats,
         })
@@ -802,7 +811,7 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
             "zeroDeltaRows": len([row for row in hud_rows if row["differingPixels"] == 0]),
         },
         "semanticStopAlignment": {
-            "status": "FIRESTAFF_HUD_STATUS_SIDE_NEEDS_SOURCE_STOP_ALIGNMENT",
+            "status": "FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT",
             "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
             "affectedRows": ["cancel.hud_status_crop", "resurrect_confirm.hud_status_crop", "reincarnate_confirm.hud_status_crop"],
             "sourceRefs": [
@@ -814,7 +823,14 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
                 "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
                 "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398"
             ],
-            "nextVerifier": "replace or mask Firestaff terminal HUD/status crops with source-stop-aligned frames before reinterpreting pass449 pixel deltas"
+            "maskedRows": sorted(semantic_stop_masked),
+            "maskPolicy": "exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist",
+            "nextVerifier": "replace Firestaff terminal HUD/status crops with source-stop-aligned frames, then remove this mask and reinterpret pass449 pixel deltas"
+        },
+        "parityEligibilitySummary": {
+            "eligibleRows": len([row for row in rows if row["parityEligible"]]),
+            "maskedRows": len([row for row in rows if not row["parityEligible"]]),
+            "maskedRowKeys": sorted(semantic_stop_masked),
         },
         "rows": rows,
         "repeatedInputHashGroups": repeated,
@@ -1113,6 +1129,12 @@ def write_report(manifest: dict[str, Any]) -> None:
         lines.append(f"  - highest-impact finding: {delta.get('highestImpactFinding')}")
         summary = delta.get("hudStatusSummary", {})
         lines.append(f"  - HUD/status summary: rows={summary.get('rows')} bucketMismatches={summary.get('bucketMismatches')} zeroDeltaRows={summary.get('zeroDeltaRows')}")
+        eligibility = delta.get("parityEligibilitySummary", {})
+        if eligibility:
+            lines.append(f"  - parity eligibility: eligibleRows={eligibility.get('eligibleRows')} maskedRows={eligibility.get('maskedRows')} maskedRowKeys={eligibility.get('maskedRowKeys')}")
+        alignment = delta.get("semanticStopAlignment", {})
+        if alignment:
+            lines.append(f"  - semantic-stop mask: `{alignment.get('status')}` policy={alignment.get('maskPolicy')}")
         lines.append("  - source refs: `REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294`, `REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807`, `PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385`, `COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991`")
     for row in manifest["framebufferComparator"]["expectedArtifacts"]:
         lines.append(f"- `{row['scene']}` `{row['side']}` `{row['artifact']}` path=`{row['path']}` hashField=`{row['requiredSha256Field']}` exists={row['exists']}")

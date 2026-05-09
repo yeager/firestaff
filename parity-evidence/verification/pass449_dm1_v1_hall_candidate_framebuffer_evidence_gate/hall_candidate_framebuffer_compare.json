@@ -1218,7 +1218,7 @@
       "zeroDeltaRows": 1
     },
     "semanticStopAlignment": {
-      "status": "FIRESTAFF_HUD_STATUS_SIDE_NEEDS_SOURCE_STOP_ALIGNMENT",
+      "status": "FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT",
       "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
       "affectedRows": [
         "cancel.hud_status_crop",
@@ -1234,7 +1234,22 @@
         "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
         "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398"
       ],
-      "nextVerifier": "replace or mask Firestaff terminal HUD/status crops with source-stop-aligned frames before reinterpreting pass449 pixel deltas"
+      "maskedRows": [
+        "cancel.hud_status_crop",
+        "reincarnate_confirm.hud_status_crop",
+        "resurrect_confirm.hud_status_crop"
+      ],
+      "maskPolicy": "exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist",
+      "nextVerifier": "replace Firestaff terminal HUD/status crops with source-stop-aligned frames, then remove this mask and reinterpret pass449 pixel deltas"
+    },
+    "parityEligibilitySummary": {
+      "eligibleRows": 12,
+      "maskedRows": 3,
+      "maskedRowKeys": [
+        "cancel.hud_status_crop",
+        "reincarnate_confirm.hud_status_crop",
+        "resurrect_confirm.hud_status_crop"
+      ]
     },
     "rows": [
       {
@@ -1244,6 +1259,8 @@
         "totalPixels": 64000,
         "deltaPercent": 92.132812,
         "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
           "bytes": 5716,
@@ -1378,6 +1395,8 @@
         "totalPixels": 10560,
         "deltaPercent": 77.405303,
         "classification": "hud_status_capture_state_bucket_mismatch",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
           "bytes": 906,
@@ -1512,6 +1531,8 @@
         "totalPixels": 64000,
         "deltaPercent": 92.132812,
         "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
           "bytes": 5716,
@@ -1646,6 +1667,8 @@
         "totalPixels": 10512,
         "deltaPercent": 92.199391,
         "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
           "bytes": 2387,
@@ -1780,6 +1803,8 @@
         "totalPixels": 64000,
         "deltaPercent": 86.204688,
         "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
           "bytes": 12249,
@@ -1914,6 +1939,8 @@
         "totalPixels": 10512,
         "deltaPercent": 98.049848,
         "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "b359516dc0f56d81cb45e91c213dc56615a46a350ddde7e94b0d65a5a5604163",
           "bytes": 3794,
@@ -2048,6 +2075,8 @@
         "totalPixels": 10560,
         "deltaPercent": 68.418561,
         "classification": "hud_status_capture_state_bucket_mismatch",
+        "parityEligible": false,
+        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
         "firestaffVisual": {
           "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
           "bytes": 110,
@@ -2145,6 +2174,8 @@
         "totalPixels": 64000,
         "deltaPercent": 29.879687,
         "classification": "nonzero_delta_unclassified",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "78b121af09ae96ce773dca76d3090e82df677ff6c71a39cdd2995d82359802fe",
           "bytes": 13005,
@@ -2279,6 +2310,8 @@
         "totalPixels": 10512,
         "deltaPercent": 53.424658,
         "classification": "nonzero_delta_unclassified",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
           "bytes": 3734,
@@ -2413,6 +2446,8 @@
         "totalPixels": 10560,
         "deltaPercent": 19.450758,
         "classification": "hud_status_capture_state_bucket_mismatch",
+        "parityEligible": false,
+        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
         "firestaffVisual": {
           "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
           "bytes": 906,
@@ -2510,6 +2545,8 @@
         "totalPixels": 64000,
         "deltaPercent": 87.892188,
         "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "eee7c1db698dd1dabdb215ca56e31cf5e12ead77aa81895f40d5cf0eb3a8a03a",
           "bytes": 13004,
@@ -2644,6 +2681,8 @@
         "totalPixels": 10512,
         "deltaPercent": 98.021309,
         "classification": "panel_crop_large_delta_needs_source_state_alignment",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
           "bytes": 3734,
@@ -2778,6 +2817,8 @@
         "totalPixels": 10560,
         "deltaPercent": 77.405303,
         "classification": "hud_status_capture_state_bucket_mismatch",
+        "parityEligible": false,
+        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
         "firestaffVisual": {
           "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
           "bytes": 906,
@@ -2912,6 +2953,8 @@
         "totalPixels": 64000,
         "deltaPercent": 26.2875,
         "classification": "nonzero_delta_unclassified",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
           "bytes": 12249,
@@ -3046,6 +3089,8 @@
         "totalPixels": 10560,
         "deltaPercent": 0.0,
         "classification": "zero_delta_recorded_no_parity_promotion",
+        "parityEligible": true,
+        "parityMaskReason": null,
         "firestaffVisual": {
           "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
           "bytes": 110,
