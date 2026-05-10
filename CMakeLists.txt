@@ -1671,6 +1671,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+
+# ── DM1 V1 wall occlusion merge-readiness gate ─────────────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass490_dm1_v1_wall_occlusion_merge_readiness
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass490_dm1_v1_wall_occlusion_merge_readiness.py
+    )
+endif()
+
 # ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
