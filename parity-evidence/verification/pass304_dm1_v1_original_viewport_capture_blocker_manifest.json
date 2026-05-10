@@ -18,7 +18,7 @@
       "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_224x136_manifest.tsv"
     ],
-    "reason": "required pass304 route labels have captured crop hashes and pass308 capture coverage is true; pass312 binds the original runtime command/party-tuple/F0128 state oracle. Duplicate hashes remain semantic evidence only until comparator use.",
+    "reason": "tracked original viewport manifests do not contain every route label for the pass127/pass304 required snapshot names; crops cannot be bound to the required party tuple/F0128 state.",
     "requiredLabelHits": [
       {
         "filename": "01_ingame_start_original_viewport_224x136.ppm",
@@ -33,14 +33,6 @@
         "height": 136,
         "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
         "routeLabel": "turn_right_west",
-        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
-        "width": 224
-      },
-      {
-        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
-        "height": 136,
-        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
-        "routeLabel": "move_forward_west",
         "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
         "width": 224
       },
@@ -67,17 +59,9 @@
         "routeLabel": "start_south",
         "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
         "width": 224
-      },
-      {
-        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
-        "height": 136,
-        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
-        "routeLabel": "blocked_forward_south_wall",
-        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
-        "width": 224
       }
     ],
-    "routeLabelCoverage": true,
+    "routeLabelCoverage": false,
     "uniqueCropSha256": [
       "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
       "358136006c6d53d112d1cfea3d4bd0fa0902df0ad8b7130cf68778e298a24aa9",
@@ -87,8 +71,34 @@
       "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
       "ea845264f9229fed624079892da4c51653b7a101b2c0fa3f95aea4a4621f7edb"
     ],
-    "usableForPromotion": true
+    "usableForPromotion": false
   },
+  "missingOriginalCaptureContractSnapshots": [
+    {
+      "name": "forward_west_blocked",
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "reason": "current render-plan snapshot has no original-DOSBox capture batch/label contract in SNAPSHOT_CAPTURE",
+      "renderEventCount": 16,
+      "wallBitmapEventCount": 13
+    },
+    {
+      "name": "forward_south_corridor",
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 4
+      },
+      "reason": "current render-plan snapshot has no original-DOSBox capture batch/label contract in SNAPSHOT_CAPTURE",
+      "renderEventCount": 12,
+      "wallBitmapEventCount": 9
+    }
+  ],
   "nextCaptureCommands": {
     "batchA_start_right_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-A \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:move_forward_west wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
     "batchB_start_left": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-B \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp4 wait:1200 shot:turn_left_east wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
@@ -100,7 +110,7 @@
     "decoded full GRAPHICS.DAT bitmap byte dump publication"
   ],
   "pass": "pass304_dm1_v1_original_viewport_capture_blocker_manifest",
-  "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
+  "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion also requires missingOriginalCaptureContractSnapshots to be empty, requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices to be empty, and matched original-vs-Firestaff viewport comparator to pass.",
   "requiredDecodedGraphicsDatRecords": {
     "allManifestedGraphicIndices": [
       78,
@@ -219,10 +229,10 @@
       },
       "pixelRegionsReady": true,
       "reason": "initial pass127 tuple before movement input",
-      "renderEventCount": 10,
+      "renderEventCount": 12,
       "requiredShotLabel": "start_south",
       "routeFromFreshGameplay": [],
-      "wallBitmapEventCount": 8
+      "wallBitmapEventCount": 11
     },
     {
       "captureBatch": "A",
@@ -243,23 +253,20 @@
       "wallBitmapEventCount": 13
     },
     {
-      "captureBatch": "A",
-      "name": "move_forward_west",
+      "captureBatch": null,
+      "name": "forward_west_blocked",
       "party": {
         "direction": 3,
         "mapIndex": 0,
-        "mapX": 0,
+        "mapX": 1,
         "mapY": 3
       },
       "pixelRegionsReady": true,
-      "reason": "after west-facing step, tuple is mapX=0,mapY=3,dir=3/WEST",
-      "renderEventCount": 17,
-      "requiredShotLabel": "move_forward_west",
-      "routeFromFreshGameplay": [
-        "right",
-        "up"
-      ],
-      "wallBitmapEventCount": 14
+      "reason": "BLOCKED: missing original capture batch/label contract",
+      "renderEventCount": 16,
+      "requiredShotLabel": null,
+      "routeFromFreshGameplay": null,
+      "wallBitmapEventCount": 13
     },
     {
       "captureBatch": "B",
@@ -272,30 +279,28 @@
       },
       "pixelRegionsReady": true,
       "reason": "branch from the fresh start tuple; cannot be reached after batch A without reset/state restore",
-      "renderEventCount": 10,
+      "renderEventCount": 11,
       "requiredShotLabel": "turn_left_east",
       "routeFromFreshGameplay": [
         "left"
       ],
-      "wallBitmapEventCount": 8
+      "wallBitmapEventCount": 9
     },
     {
-      "captureBatch": "C",
-      "name": "blocked_forward_south_wall",
+      "captureBatch": null,
+      "name": "forward_south_corridor",
       "party": {
         "direction": 2,
         "mapIndex": 0,
         "mapX": 1,
-        "mapY": 3
+        "mapY": 4
       },
       "pixelRegionsReady": true,
-      "reason": "blocked step from start keeps mapX=1,mapY=3,dir=2/SOUTH while advancing the command tick",
-      "renderEventCount": 10,
-      "requiredShotLabel": "blocked_forward_south_wall",
-      "routeFromFreshGameplay": [
-        "up"
-      ],
-      "wallBitmapEventCount": 8
+      "reason": "BLOCKED: missing original capture batch/label contract",
+      "renderEventCount": 12,
+      "requiredShotLabel": null,
+      "routeFromFreshGameplay": null,
+      "wallBitmapEventCount": 9
     }
   ],
   "sourceInputs": {
@@ -365,5 +370,5 @@
     "partyTupleF0128StateOracle": true,
     "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND"
   },
-  "status": "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY"
+  "status": "BLOCKED_ORIGINAL_PC34_CAPTURE_CONTRACT_DRIFT"
 }

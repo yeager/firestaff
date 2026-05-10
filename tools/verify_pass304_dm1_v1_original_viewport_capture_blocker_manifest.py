@@ -109,14 +109,18 @@ def load_existing_original_crops() -> list[dict[str, object]]:
         labels: dict[str, str] = {}
         if label_manifest.exists():
             with label_manifest.open(newline="") as f:
-                for row in csv.DictReader(f, delimiter="\t"):
+                for row in csv.DictReader(f, delimiter="	"):
                     labels[row.get("filename", "")] = row.get("route_label", "")
         with manifest.open(newline="") as f:
-            for row in csv.DictReader(f, delimiter="\t"):
+            manifest_lines = [line for line in f if line.strip() and not line.startswith("#")]
+            for row in csv.DictReader(manifest_lines, delimiter="	"):
+                filename = row.get("filename")
+                if not filename:
+                    continue
                 rows.append({
                     "manifest": str(manifest.relative_to(REPO)),
-                    "filename": row["filename"],
-                    "routeLabel": labels.get(row["filename"], ""),
+                    "filename": filename,
+                    "routeLabel": labels.get(filename, ""),
                     "width": int(row["width"]),
                     "height": int(row["height"]),
                     "sha256": row["sha256"],
@@ -158,6 +162,7 @@ def main() -> int:
     graphics_index = json.loads(GRAPHICS_INDEX.read_text())
     wall_graphics_index = json.loads(WALL_GRAPHICS_INDEX.read_text())
     snapshots = []
+    missing_capture_contract_snapshots = []
     needed_wall_indices: set[int] = set()
     for snap in render["comparedSnapshots"]:
         events = snap["renderEvents"]
@@ -167,7 +172,21 @@ def main() -> int:
             idx = pr.get("wallSetGraphicIndex")
             if isinstance(idx, int):
                 needed_wall_indices.add(idx)
-        spec = SNAPSHOT_CAPTURE[snap["name"]]
+        spec = SNAPSHOT_CAPTURE.get(snap["name"])
+        if spec is None:
+            missing_capture_contract_snapshots.append({
+                "name": snap["name"],
+                "party": snap["party"],
+                "renderEventCount": len(events),
+                "wallBitmapEventCount": len(wall_events),
+                "reason": "current render-plan snapshot has no original-DOSBox capture batch/label contract in SNAPSHOT_CAPTURE",
+            })
+            spec = {
+                "captureBatch": None,
+                "routeFromFreshGameplay": None,
+                "requiredShotLabel": None,
+                "reason": "BLOCKED: missing original capture batch/label contract",
+            }
         snapshots.append({
             "name": snap["name"],
             "party": snap["party"],
@@ -183,11 +202,11 @@ def main() -> int:
     pass308 = json.loads(PASS308.read_text())
     pass312 = json.loads(PASS312.read_text())
     existing = load_existing_original_crops()
-    required_labels = {s["requiredShotLabel"] for s in snapshots}
+    required_labels = {s["requiredShotLabel"] for s in snapshots if s["requiredShotLabel"]}
     exact_label_hits = [r for r in existing if r["routeLabel"] in required_labels]
     candidate_hashes = sorted({r["sha256"] for r in existing})
     labels_found = {str(r["routeLabel"]) for r in exact_label_hits}
-    route_label_coverage = required_labels <= labels_found
+    route_label_coverage = bool(required_labels) and not missing_capture_contract_snapshots and required_labels <= labels_found
     capture_coverage = pass308.get("coverage", {})
     state_oracle = pass312.get("promotionDecision", {})
     state_oracle_ok = state_oracle.get("partyTupleF0128StateOracle") is True
@@ -196,7 +215,9 @@ def main() -> int:
     wall_manifested_graphics = {int(r["graphicIndex"]) for r in wall_graphics_index["records"]}
     manifested_graphics = entry_manifested_graphics | wall_manifested_graphics
     missing_wall_indices = sorted(needed_wall_indices - manifested_graphics)
-    if not capture_ok:
+    if missing_capture_contract_snapshots:
+        status = "BLOCKED_ORIGINAL_PC34_CAPTURE_CONTRACT_DRIFT"
+    elif not capture_ok:
         status = "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
     elif not state_oracle_ok:
         status = "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED"
@@ -245,6 +266,7 @@ def main() -> int:
             "requiredFormat": "PPM and PNG; PPM SHA-256 is comparator/hash source of truth",
         },
         "requiredRouteStates": snapshots,
+        "missingOriginalCaptureContractSnapshots": missing_capture_contract_snapshots,
         "requiredOriginalAssets": {name: file_record(path) for name, path in ASSET_PATHS.items()},
         "requiredDecodedGraphicsDatRecords": {
             "manifestedEntryGraphicIndices": sorted(entry_manifested_graphics),
@@ -279,7 +301,7 @@ def main() -> int:
             "batchB_start_left": command_for_batch("B", ["kp4"], ["start_south", "turn_left_east"]),
             "batchC_start_blocked_forward": command_for_batch("C", ["kp8"], ["start_south", "blocked_forward_south_wall"]),
         },
-        "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
+        "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion also requires missingOriginalCaptureContractSnapshots to be empty, requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices to be empty, and matched original-vs-Firestaff viewport comparator to pass.",
     }
     OUT.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT.relative_to(REPO)}")
