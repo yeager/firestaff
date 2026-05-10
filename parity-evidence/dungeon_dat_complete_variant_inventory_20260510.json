@@ -1,0 +1,4568 @@
+{
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/",
+  "fetched_at_utc": "2026-05-10T11:12:08Z",
+  "model_note": "qwen3.6:35b, not Qwen 3.6 Plus; 65k context",
+  "counts": {
+    "candidate_files": 5,
+    "distinct_sha256": 3,
+    "symlinks": 1,
+    "variant_families": 3,
+    "greatstone_dungeon_resources": 0,
+    "greatstone_matched_resources": 0,
+    "redmcsb_source_files_with_dungeon_refs": 99
+  },
+  "files": [
+    {
+      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "relative_path": "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "filename": "DUNGEON.DAT",
+      "is_symlink": false,
+      "symlink_target": null,
+      "size_bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "inferred_game": "DM1",
+      "inferred_platform": "PC DOS",
+      "inferred_version": "unknown",
+      "inferred_language": "English",
+      "variant_family": "DM1 PC34 EN",
+      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "confidence": "high",
+      "blockers": []
+    },
+    {
+      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "filename": "DUNGEON.DAT",
+      "is_symlink": false,
+      "symlink_target": null,
+      "size_bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "inferred_game": "DM1",
+      "inferred_platform": "PC DOS",
+      "inferred_version": "unknown",
+      "inferred_language": "English",
+      "variant_family": "DM1 PC34 EN",
+      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "confidence": "high",
+      "blockers": []
+    },
+    {
+      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "filename": "DUNGEONG.DAT",
+      "is_symlink": false,
+      "symlink_target": null,
+      "size_bytes": 33705,
+      "sha256": "b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817",
+      "inferred_game": "DM1",
+      "inferred_platform": "PC DOS",
+      "inferred_version": "unknown",
+      "inferred_language": "German",
+      "variant_family": "DM1 PC34 GE",
+      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "confidence": "high",
+      "blockers": []
+    },
+    {
+      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "filename": "DUNGEONF.DAT",
+      "is_symlink": false,
+      "symlink_target": null,
+      "size_bytes": 33687,
+      "sha256": "290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571",
+      "inferred_game": "DM1",
+      "inferred_platform": "PC DOS",
+      "inferred_version": "unknown",
+      "inferred_language": "French",
+      "variant_family": "DM1 PC34 FR",
+      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "confidence": "high",
+      "blockers": []
+    },
+    {
+      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "relative_path": "_canonical/dm1/DUNGEON.DAT",
+      "filename": "DUNGEON.DAT",
+      "is_symlink": true,
+      "symlink_target": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "size_bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "inferred_game": "DM1",
+      "inferred_platform": "PC DOS",
+      "inferred_version": "unknown",
+      "inferred_language": "English",
+      "variant_family": "DM1 PC34 EN",
+      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "confidence": "high",
+      "blockers": []
+    }
+  ],
+  "sha256_groups": [
+    {
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "files": [
+        "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+        "_canonical/dm1/DUNGEON.DAT"
+      ]
+    }
+  ],
+  "variant_families": {
+    "DM1 PC34 EN": [
+      "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "_canonical/dm1/DUNGEON.DAT"
+    ],
+    "DM1 PC34 GE": [
+      "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT"
+    ],
+    "DM1 PC34 FR": [
+      "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT"
+    ]
+  },
+  "greatstone_cross_reference": [],
+  "redmcsb_references": [
+    {
+      "file": "asset_status_m12.c",
+      "line": 70,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT\","
+    },
+    {
+      "file": "asset_status_m12.c",
+      "line": 71,
+      "term_matched": "dungeonf\\.dat",
+      "snippet": "\"DUNGEONF.DAT\","
+    },
+    {
+      "file": "asset_status_m12.c",
+      "line": 72,
+      "term_matched": "dungeong\\.dat",
+      "snippet": "\"DUNGEONG.DAT\","
+    },
+    {
+      "file": "asset_status_m12.c",
+      "line": 74,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "\"CSB.DAT\","
+    },
+    {
+      "file": "asset_status_m12.c",
+      "line": 76,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DM2DUNGEON.DAT\","
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_extracted_frontends_probe.c",
+      "line": 14872,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_m11_pass38_door_animation_probe.c",
+      "line": 59,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass38_door_animation_probe.c",
+      "line": 65,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "firestaff_m11_pass38_door_animation_probe.c",
+      "line": 93,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass38_door_animation_probe.c",
+      "line": 99,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int square_state(const struct DungeonDatState_Compat* d, int map, int mx, int my) {"
+    },
+    {
+      "file": "firestaff_m11_pass38_door_animation_probe.c",
+      "line": 104,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 87,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 782,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Block T \u2014 Real DUNGEON.DAT spot-check (#45)"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 785,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 790,
+      "term_matched": "dungeon_load",
+      "snippet": "if (F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon) == 1"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 791,
+      "term_matched": "dungeon_load",
+      "snippet": "&& F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon) == 1"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 792,
+      "term_matched": "dungeon_load",
+      "snippet": "&& F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things) == 1) {"
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 832,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## Real DUNGEON.DAT spot-check\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 850,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## Real DUNGEON.DAT spot-check\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 859,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## Real DUNGEON.DAT spot-check\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 860,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"- could not load DUNGEON.DAT at %s (skipped)\\n\\n\","
+    },
+    {
+      "file": "firestaff_m10_runtime_dynamics_probe.c",
+      "line": 864,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "CHECK(ok, \"45: Real DUNGEON.DAT generator sensor spawns successfully\");"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.c",
+      "line": 1,
+      "term_matched": "dungeon_load",
+      "snippet": "#include \"dm1_v1_dungeon_loader_pc34_compat.h\""
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.c",
+      "line": 19,
+      "term_matched": "m11_dl_load",
+      "snippet": "bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path) {"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.c",
+      "line": 24,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (fread(&state->header, sizeof(M11_DL_DungeonHeader), 1, f) != 1) {"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.c",
+      "line": 72,
+      "term_matched": "DungeonHeader",
+      "snippet": "memset(&state->header, 0, sizeof(M11_DL_DungeonHeader));"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 11,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "static const char* dm1_default_dungeon_dat_path(void) {"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 15,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(path, sizeof(path), \"%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 223,
+      "term_matched": "DungeonDatState",
+      "snippet": "DM1_V2_DungeonDatState dungeon;"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 233,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "if (!path) path = dm1_default_dungeon_dat_path();"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 239,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "CHECK(dm1_v2_vp_dungeon_dat_init(&dungeon, bytes, size) == 1);"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 256,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "CHECK(dm1_v2_vp_dungeon_dat_get_square_raw(&dungeon, 0, 1, 3, &raw) == 1);"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 259,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "CHECK(dm1_v2_vp_dungeon_dat_get_square_raw(&dungeon, 0, 1, 4, &raw) == 1);"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "line": 262,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "CHECK(dm1_v2_vp_dungeon_dat_get_square_raw(&dungeon, 0, 0, 6, &raw) == 1);"
+    },
+    {
+      "file": "diag_offsets.c",
+      "line": 7,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "diag_offsets.c",
+      "line": 12,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "if (argc < 2) { fprintf(stderr, \"Usage: %s <DUNGEON.DAT>\\n\", argv[0]); return 1; }"
+    },
+    {
+      "file": "diag_offsets.c",
+      "line": 13,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) { fprintf(stderr, \"FAIL\\n\"); return 1; }"
+    },
+    {
+      "file": "firestaff_m11_pass32_sensor_addremove_probe.c",
+      "line": 58,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m11_pass32_sensor_addremove_probe.c",
+      "line": 74,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon.maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 193,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 779,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*  Block L \u2014 DUNGEON.DAT spot-check (invariant 43)"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 782,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 789,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 791,
+      "term_matched": "dungeon_load",
+      "snippet": "} else if (!F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 794,
+      "term_matched": "dungeon_load",
+      "snippet": "} else if (!F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 811,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n- groups examined: %d\\n\""
+    },
+    {
+      "file": "firestaff_m10_magic_probe.c",
+      "line": 816,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT spot-check: every group creatureType <= 26\");"
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 20,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT content.  This matches the \"bounded new probe/check\""
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 51,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 67,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 102,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 110,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int step_forward(const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass30_movement_legality_probe.c",
+      "line": 125,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1b.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 4,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Scans dataDir/custom/ for subdirectories containing a DUNGEON.DAT,"
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 8,
+      "term_matched": "DungeonHeader",
+      "snippet": "* Depends on: memory_dungeon_dat_pc34_compat.h (DungeonHeader_Compat)."
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 25,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Minimum plausible DUNGEON.DAT: header (44) + at least 1 map desc (16). */"
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 29,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Validate a DUNGEON.DAT file by reading its 44-byte header."
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 35,
+      "term_matched": "DungeonHeader",
+      "snippet": "struct DungeonHeader_Compat dh;"
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 99,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Returns 1 if added, 0 if skipped (no DUNGEON.DAT or list full)."
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 115,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(entry->path, CUSTOM_DUNGEON_PATH_MAX, \"%s/%s/DUNGEON.DAT\","
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 118,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Check DUNGEON.DAT exists and get size */"
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 121,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(entry->path, CUSTOM_DUNGEON_PATH_MAX, \"%s/%s/dungeon.dat\","
+    },
+    {
+      "file": "custom_dungeon_m12.c",
+      "line": 124,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "return 0;  /* No DUNGEON.DAT found */"
+    },
+    {
+      "file": "firestaff_m11_pass39_creature_walkability_probe.c",
+      "line": 57,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass39_creature_walkability_probe.c",
+      "line": 64,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "firestaff_m11_pass39_creature_walkability_probe.c",
+      "line": 106,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass39_creature_walkability_probe.c",
+      "line": 113,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 90,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 98,
+      "term_matched": "DungeonDatState",
+      "snippet": "dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 109,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(3, sizeof(*dungeon->maps));"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 198,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 203,
+      "term_matched": "DungeonDatState",
+      "snippet": "dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 214,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 255,
+      "term_matched": "dungeon\\.dat",
+      "snippet": ": \"./DUNGEON.DAT\";"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 357,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*  Category C \u2014 Construct from DUNGEON.DAT (4)"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 362,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "CHECK(rc == 1, \"11: F0882 with real DUNGEON.DAT returns 1\");"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 900,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*  Category M \u2014 Real DUNGEON.DAT end-to-end (2)"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 909,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "CHECK(0, \"47: DUNGEON.DAT init failed \u2014 end-to-end invariant skipped\");"
+    },
+    {
+      "file": "firestaff_m10_tick_orchestrator_probe.c",
+      "line": 931,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"47: real DUNGEON.DAT \u2014 save+resume matches straight\");"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 309,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_dungeon_dat_init(DM1_V2_DungeonDatState* outState,"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 335,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "MAP.RawMapDataByteOffset. The canonical PC34 DUNGEON.DAT stores a trailing"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 364,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_dungeon_dat_get_square_raw(const DM1_V2_DungeonDatState* state,"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 402,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state,"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 423,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "if (!dm1_v2_vp_dungeon_dat_get_square_raw(state, mapIndex, x, y, &raw)) return 0;"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 432,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Real DM1 PC34 start: DUNGEON.DAT offset 8 decodes to map0 x=1 y=3 dir=2."
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 435,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "a full DUNGEON.DAT square decoder is landed. */"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "line": 441,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT offset 8 + DEFS.H:989-998 + LOADSAVE.C:1940-1945 + pass173 front-wall sensor audit\","
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 747,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1106,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1243,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1262,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1301,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1354,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1428,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1433,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1453,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 1646,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 7664,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 7668,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_combined_frontends_probe.c",
+      "line": 14736,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 739,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1098,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1235,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1254,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1293,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1346,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1420,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1425,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1445,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 1638,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 7658,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_sanitized_amalgam.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "dm1_v1_save_load.c",
+      "line": 262,
+      "term_matched": "LoadDungeon",
+      "snippet": "*  10. Read dungeon via F0434_IsLoadDungeonSuccessful_CPSC"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 174,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 665,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 672,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 674,
+      "term_matched": "dungeon_load",
+      "snippet": "} else if (!F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 677,
+      "term_matched": "dungeon_load",
+      "snippet": "} else if (!F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 693,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"## DUNGEON.DAT integration\\n\\n- groups examined: %d\\n- all creatureType <= %d: %s\\n\\n\","
+    },
+    {
+      "file": "firestaff_m10_combat_probe.c",
+      "line": 696,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT integration: every group creatureType <= 26\");"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 34,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void setup_dungeon(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 35,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 87,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 88,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1011,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "return FSP_JoinPath(out, outSize, dataDir, \"DUNGEON.DAT\");"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1014,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "return FSP_JoinPath(out, outSize, dataDir, \"CSB.DAT\");"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1017,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "return FSP_JoinPath(out, outSize, dataDir, \"DM2DUNGEON.DAT\");"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1075,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int m11_map_square_base(const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1093,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1137,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 1212,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 2414,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* targetMap;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 2744,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 2797,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 3514,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 3865,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 4640,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "m11_set_status(state, \"BOOT\", \"FAILED TO LOAD DUNGEON.DAT\");"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7122,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT metadata.  In the original, the metadata follows the"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7130,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dun;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7131,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* m;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7161,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Reconstruct the DUNGEON.DAT path from the GRAPHICS.DAT path"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7181,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(datPath, sizeof(datPath), \"%.*s/DUNGEON.DAT\", dirLen, gfxPath);"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7183,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(datPath, sizeof(datPath), \"DUNGEON.DAT\");"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7187,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(datPath, sizeof(datPath), \"%.*s/dungeon.dat\", dirLen, gfxPath);"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 7197,
+      "term_matched": "dungeon_load",
+      "snippet": "* F0501_DUNGEON_LoadTileData_Compat). */"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 14661,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 18281,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* mapDesc) {"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 19632,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* mapDesc = NULL;"
+    },
+    {
+      "file": "m11_game_view.c",
+      "line": 20495,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* mapDesc = NULL;"
+    },
+    {
+      "file": "firestaff_m11_pass31_door_action_probe.c",
+      "line": 13,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* not depend on DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m11_pass31_door_action_probe.c",
+      "line": 42,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass31_door_action_probe.c",
+      "line": 48,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "firestaff_m11_pass31_door_action_probe.c",
+      "line": 82,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass31_door_action_probe.c",
+      "line": 89,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 34,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 44,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 52,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* m = &dungeon->maps[mi];"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 73,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 81,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 88,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 91,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_sensor_execution_probe.c",
+      "line": 95,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &dungeon, &things)) {"
+    },
+    {
+      "file": "dm1_v1_room_transition_pc34_compat.c",
+      "line": 88,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* DUNGEON.DAT / current-map data consequences."
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 11,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1123,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1482,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1619,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1638,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1677,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1730,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1804,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1809,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 1829,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 2022,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 8579,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_core_amalgam.c",
+      "line": 8583,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 56,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void setup_dungeon(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 57,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 81,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void setup_two_level_stairs_dungeon(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 82,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat maps[2],"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 88,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "memset(maps, 0, sizeof(struct DungeonMapDesc_Compat) * 2);"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 153,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 154,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 190,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 191,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 224,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 225,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 254,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 255,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 290,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 291,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 336,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 337,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 371,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 372,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 396,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 397,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 432,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 433,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 462,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 463,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 488,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 489,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 526,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 527,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat maps[2];"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 589,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 590,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 655,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 656,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat maps[2];"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 690,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat tdungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 691,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat tmap;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 788,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 789,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 820,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 821,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_probe_with_image_frontend.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.c",
+      "line": 138,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 9,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 27,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 69,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 75,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* sourceMap;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 92,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* targetMap = &dungeon->maps[i];"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 108,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 113,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 143,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 239,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 244,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 292,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 298,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 406,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 412,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 493,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 500,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 655,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 659,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 707,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 729,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 774,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* targetMap;"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 821,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "line": 827,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "firestaff_m11_pass44_party_group_collision_probe.c",
+      "line": 41,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m11_pass44_party_group_collision_probe.c",
+      "line": 57,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));"
+    },
+    {
+      "file": "firestaff_m11_pass44_party_group_collision_probe.c",
+      "line": 72,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass44_party_group_collision_probe.c",
+      "line": 78,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 6,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* M10 Phase 7 probe: decode and verify \"things\" from DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 12,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 16,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 25,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 30,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 34,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 41,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &state, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 56,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"# DUNGEON.DAT Things Probe\\n\\n\");"
+    },
+    {
+      "file": "firestaff_m10_dungeon_things_probe.c",
+      "line": 351,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state.maps[tp->targetMapIndex];"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 739,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1098,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1235,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1254,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1293,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1346,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1420,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1425,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1445,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 1638,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 7658,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_flattened_amalgam.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step1.c",
+      "line": 14531,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_base_frontend_probe.c",
+      "line": 20,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "base_frontend_pc34.c",
+      "line": 13,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 95,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "line": 122,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 16,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*   - Real DUNGEON.DAT integration: one real creature group"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 160,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 179,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"- Real DUNGEON.DAT integration spot-check\\n\\n\");"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 833,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*  Block J \u2014 loop guard + real DUNGEON.DAT spot-check (39-40)"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 879,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* DUNGEON.DAT spot-check: find first group of a fully-implemented"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 882,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 889,
+      "term_matched": "dungeon_load",
+      "snippet": "if (F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon) &&"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 890,
+      "term_matched": "dungeon_load",
+      "snippet": "F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon) &&"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 891,
+      "term_matched": "dungeon_load",
+      "snippet": "F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 927,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n- groupCount: %d\\n- found creatureType: %d\\n- IDLE->WANDER OK: %s\\n\\n\","
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 934,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"## DUNGEON.DAT integration\\n\\n- could not load DUNGEON.DAT at %s\\n\\n\", dungeonPath);"
+    },
+    {
+      "file": "firestaff_m10_creature_ai_probe.c",
+      "line": 937,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT spot-check: real group with fully-implemented type -> IDLE+visible(d=3) transitions to WANDER; outNextTick "
+    },
+    {
+      "file": "diag_things.c",
+      "line": 7,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "diag_things.c",
+      "line": 11,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "if (argc < 2) { fprintf(stderr, \"Usage: %s <DUNGEON.DAT>\\n\", argv[0]); return 1; }"
+    },
+    {
+      "file": "diag_things.c",
+      "line": 13,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) { fprintf(stderr, \"FAIL header\\n\"); return 1; }"
+    },
+    {
+      "file": "diag_things.c",
+      "line": 14,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &state)) { fprintf(stderr, \"FAIL tiles\\n\"); return 1; }"
+    },
+    {
+      "file": "diag_things.c",
+      "line": 15,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &state, &things)) { fprintf(stderr, \"FAIL things\\n\"); return 1; }"
+    },
+    {
+      "file": "firestaff_m11_pass37_sensor_runtime_wiring_probe.c",
+      "line": 75,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m11_pass37_sensor_runtime_wiring_probe.c",
+      "line": 77,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat maps[1];"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* M10 Phase 7 probe: decode text strings from DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 10,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 14,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 24,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 28,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 32,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &state, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_text_probe.c",
+      "line": 47,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"# DUNGEON.DAT Text Strings Probe\\n\\n\");"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 39,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m) {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 52,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m) {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 65,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m) {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 90,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0500_DUNGEON_LoadDatHeader_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 92,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state)"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 143,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "state->maps = (struct DungeonMapDesc_Compat*)calloc("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 144,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "state->header.mapCount, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 150,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state->maps[i];"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 184,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state)"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 209,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0502_DUNGEON_LoadTileData_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 211,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state)"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 236,
+      "term_matched": "dungeon_load",
+      "snippet": "* F0504_DUNGEON_LoadThingData_Compat below uses the same text-before-"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 265,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state->maps[i];"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 312,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state)"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 585,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0504_DUNGEON_LoadThingData_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.c",
+      "line": 587,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state,"
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 68,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 698,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Block K \u2014 Loop guard + DUNGEON.DAT spot-check (3 invariants)"
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 740,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 743,
+      "term_matched": "dungeon_load",
+      "snippet": "if (F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon) == 1) {"
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 767,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 773,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 774,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"- could not load DUNGEON.DAT at %s (skipped)\\n\\n\","
+    },
+    {
+      "file": "firestaff_m10_champion_lifecycle_probe.c",
+      "line": 779,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"K3: Real DUNGEON.DAT: champion 0 food/water sign-extended into [0, 2048] range\");"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_auto_flat_probe.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 42,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 47,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 180,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 246,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.c",
+      "line": 30,
+      "term_matched": "dungeon_load",
+      "snippet": "\"dm1_v1_dungeon_loader_pc34_compat\","
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.c",
+      "line": 108,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "if (config->dungeon_dat_path) {"
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.c",
+      "line": 109,
+      "term_matched": "load_dungeon",
+      "snippet": "if (!m11_dd_load_dungeon(&engine->dungeonData,"
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.c",
+      "line": 110,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "config->dungeon_dat_path)) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2a.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "data_validator_m12.c",
+      "line": 158,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "{\"csb\", \"HCSB.DAT\", \"708e113c869ab922633e885aa72a3c77\", \"CSB Amiga Utility Disk English Release 1 Release X and Atari ST"
+    },
+    {
+      "file": "data_validator_m12.c",
+      "line": 159,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "{\"csb\", \"HCSB.DAT\", \"7496b3b8b9ff6e2368eac9a16be8230b\", \"CSB Amiga Utility Disk English Release 2/3 HCSB.DAT\"},"
+    },
+    {
+      "file": "data_validator_m12.c",
+      "line": 164,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "{\"csb\", \"HCSB.DAT\", \"bbf3ada2da9722577feea4fa213b32f1\", \"CSB Amiga Utility Disk French Release HCSB.DAT\"},"
+    },
+    {
+      "file": "data_validator_m12.c",
+      "line": 166,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "{\"csb\", \"HCSB.DAT\", \"9e0da6c5a569859c6191201dcc6e6aae\", \"CSB Amiga Utility Disk German Release HCSB.DAT\"},"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 55,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 60,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 114,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 204,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 255,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 305,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 409,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 415,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.c",
+      "line": 448,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "line": 262,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* the ReDMCSB TITLE path just because GRAPHICS.DAT/DUNGEON.DAT were found"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "line": 734,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "menuState->messageLine2 = \"CHECK DUNGEON.DAT\";"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 10,
+      "term_matched": "DungeonDatState",
+      "snippet": "* (DungeonDatState_Compat) which handles the column-major byte"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 11,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* layout of DUNGEON.DAT square data."
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 52,
+      "term_matched": "LoadDungeon",
+      "snippet": "int M12_MapViewer_LoadDungeon(M12_MapViewerState* mv, const char* path) {"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 59,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &mv->dungeon)) {"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 64,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(path, &mv->dungeon)) {"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 183,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* mapDesc;"
+    },
+    {
+      "file": "map_viewer_m12.c",
+      "line": 281,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* mapDesc;"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 11,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 22,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 28,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 41,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 109,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 131,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 137,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 152,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 234,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.c",
+      "line": 368,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.c",
+      "line": 43,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.c",
+      "line": 175,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.c",
+      "line": 180,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.c",
+      "line": 266,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.c",
+      "line": 325,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* from DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 10,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 56,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 69,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 73,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 77,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_doors_sensors_probe.c",
+      "line": 83,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &state, &things)) {"
+    },
+    {
+      "file": "memory_runtime_dynamics_pc34_compat.c",
+      "line": 592,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT). For Phase 19's pure path the caller pre-filters"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_expanded_probe_step2b.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_m11_pass418_door_closing_obstruction_probe.c",
+      "line": 36,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int square_state(const struct DungeonDatState_Compat* d, int x, int y) {"
+    },
+    {
+      "file": "firestaff_m11_pass418_door_closing_obstruction_probe.c",
+      "line": 39,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void build_fixture(struct DungeonDatState_Compat* dungeon, unsigned char* squares) {"
+    },
+    {
+      "file": "firestaff_m11_pass418_door_closing_obstruction_probe.c",
+      "line": 44,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));"
+    },
+    {
+      "file": "firestaff_m11_pass418_door_closing_obstruction_probe.c",
+      "line": 55,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void free_fixture(struct DungeonDatState_Compat* dungeon) {"
+    },
+    {
+      "file": "firestaff_m11_pass418_door_closing_obstruction_probe.c",
+      "line": 85,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 6,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* M10 Phase 6 probe: decode and verify tile (square) data from DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 15,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 25,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 29,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 34,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 50,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"# DUNGEON.DAT Tile/Square Probe\\n\\n\");"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 55,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state.maps[i];"
+    },
+    {
+      "file": "firestaff_m10_dungeon_tile_probe.c",
+      "line": 263,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state.maps[i];"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "line": 57,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "line": 58,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "line": 163,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "line": 232,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "line": 233,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 744,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1103,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1240,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1259,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1298,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1351,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1425,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1430,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1450,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 1643,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 7661,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_experimental_probe.c",
+      "line": 7665,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 157,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 175,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"- Loop-guard (100 configs \u00d7 200 ticks) and real DUNGEON.DAT spot-check\\n\\n\");"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1429,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*  Block P \u2014 Real DUNGEON.DAT spot-check (invariant 49)"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1432,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1441,
+      "term_matched": "dungeon_load",
+      "snippet": "if (F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon)"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1442,
+      "term_matched": "dungeon_load",
+      "snippet": "&& F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1519,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n\""
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1530,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"## DUNGEON.DAT integration\\n\\n- could not load DUNGEON.DAT at %s\\n\\n\","
+    },
+    {
+      "file": "firestaff_m10_projectile_probe.c",
+      "line": 1534,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"Real DUNGEON.DAT: kinetic eastbound projectile from Level-1 party start hits first wall at computed distance (<=10 tick"
+    },
+    {
+      "file": "test_dm1_v1_movement_core_pc34_compat.c",
+      "line": 66,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void setup_dungeon(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_movement_core_pc34_compat.c",
+      "line": 67,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "test_dm1_v1_movement_core_pc34_compat.c",
+      "line": 100,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "test_dm1_v1_movement_core_pc34_compat.c",
+      "line": 132,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "test_dm1_v1_movement_core_pc34_compat.c",
+      "line": 133,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_pc34_repro_probe.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* from DUNGEON.DAT."
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 10,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 45,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 58,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 62,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 66,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_monsters_items_probe.c",
+      "line": 72,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &state, &things)) {"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 745,
+      "term_matched": "DungeonHeader",
+      "snippet": "DUNGEON_HEADER* G0278_ps_DungeonHeader;"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1104,
+      "term_matched": "DungeonHeader",
+      "snippet": "for (L0255_i_TargetMapIndex = 0; L0255_i_TargetMapIndex < G0278_ps_DungeonHeader->MapCount; L0255_i_TargetMapIndex++) {"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1241,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (G0283_pT_SquareFirstThings[G0278_ps_DungeonHeader->SquareFirstThingCount - 1] != C0xFFFF_THING_NONE) {"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1260,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(L0267_pT_Thing), M772_CAST_PC(L0267_pT_Thing + 1), M543_BYTE_COUNT_INT((G0278_ps_Dunge"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1299,
+      "term_matched": "DungeonHeader",
+      "snippet": "F0007_MAIN_CopyBytes(M772_CAST_PC(AL0275_pT_Thing + 1), M772_CAST_PC(AL0275_pT_Thing), M543_BYTE_COUNT_INT(((AL0272_ui_S"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1352,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (((L0279_ui_MapIndex = G0294_auc_LastDiscardedThingMapIndex[P0295_ui_ThingType]) == G0309_i_PartyMapIndex) && (++L027"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1426,
+      "term_matched": "DungeonHeader",
+      "snippet": "if ((L0279_ui_MapIndex == G0309_i_PartyMapIndex) || (G0278_ps_DungeonHeader->MapCount <= 1)) {"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1431,
+      "term_matched": "DungeonHeader",
+      "snippet": "if (++L0279_ui_MapIndex >= G0278_ps_DungeonHeader->MapCount) {"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1451,
+      "term_matched": "DungeonHeader",
+      "snippet": "L0290_i_ThingCount = G0278_ps_DungeonHeader->ThingCount[M007_GET(P0296_ui_ThingType, MASK0x7FFF_THING_TYPE)];"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 1644,
+      "term_matched": "DungeonHeader",
+      "snippet": "return ((((P0301_ui_Value1 * 31417) >> 1) + (P0302_ui_Value2 * 11) + G0278_ps_DungeonHeader->OrnamentRandomSeed) >> 2) %"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 7662,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 7666,
+      "term_matched": "load_dungeon",
+      "snippet": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "firestaff_combined_with_real_byteops_probe.c",
+      "line": 14791,
+      "term_matched": "load_dungeon",
+      "snippet": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 49,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Compute fingerprint of a DUNGEON.DAT file on disk. 0 on failure. */"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 499,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* keep_dungeon = world->dungeon;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 775,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* keep_dungeon = world->dungeon;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 825,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon = NULL;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 832,
+      "term_matched": "DungeonDatState",
+      "snippet": "dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 836,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, dungeon)) goto fail;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 837,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(dungeonPath, dungeon)) goto fail;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 838,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(dungeonPath, dungeon, things)) goto fail;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 968,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 973,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.c",
+      "line": 1001,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 10,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*   1. Initial party position matches DUNGEON.DAT header"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 24,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 36,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 44,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 48,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0502_DUNGEON_LoadTileData_Compat(argv[1], &dungeon)) {"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 53,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0504_DUNGEON_LoadThingData_Compat(argv[1], &dungeon, &things)) {"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 219,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map0 = &dungeon.maps[0];"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 243,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* mapN = &dungeon.maps[mi];"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 338,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* m = &dungeon.maps[party.mapIndex];"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 409,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Test 7: DUNGEON.DAT champion mirror text identity parse */"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 438,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Test 8: DUNGEON.DAT TextString-to-champion parser integration */"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 454,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT TextString parser finds STAMM/BLADECASTER mirror record\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 457,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Test 9: DUNGEON.DAT champion mirror enumeration/recruitment helpers */"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 467,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT mirror parser counts many champion records\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 469,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT mirror parser finds STAMM by packed Name[8]\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 471,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DUNGEON.DAT mirror parser rejects unknown packed Name[8]\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 473,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"Party can recruit champion identity from DUNGEON.DAT TextString index\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 503,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Test 10: DUNGEON.DAT champion mirror collection helpers */"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 525,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"DM1 DUNGEON.DAT exposes 24 champion mirror records\");"
+    },
+    {
+      "file": "firestaff_m10_movement_champions_probe.c",
+      "line": 744,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* mapN = &dungeon.maps[mi];"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.c",
+      "line": 5,
+      "term_matched": "dungeon_load",
+      "snippet": "* dm1_v1_dungeon_loader, dm1_v1_group_management, dm1_v1_event_timer,"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.c",
+      "line": 28,
+      "term_matched": "load_dungeon",
+      "snippet": "bool m11_dd_load_dungeon(M11_DD_DungeonData *dd, const char *dungeon_dat_path)"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.c",
+      "line": 30,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "if (!dd || !dungeon_dat_path) return false;"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.c",
+      "line": 31,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "if (!m11_dl_load_from_file(&dd->dungeon, dungeon_dat_path)) return false;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 6,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* M10 Phase 5 probe: read and verify DUNGEON.DAT header + map descriptors."
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Usage: probe <DUNGEON.DAT path> <output_dir>"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 24,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat state;"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 34,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 38,
+      "term_matched": "dungeon_load",
+      "snippet": "if (!F0500_DUNGEON_LoadDatHeader_Compat(argv[1], &state)) {"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 56,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(report, \"# DUNGEON.DAT Header Probe\\n\\n\");"
+    },
+    {
+      "file": "firestaff_m10_dungeon_header_probe.c",
+      "line": 81,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* m = &state.maps[i];"
+    },
+    {
+      "file": "firestaff_m10_savegame_probe.c",
+      "line": 361,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"Usage: %s <DUNGEON.DAT> <output_dir>\\n\", argv[0]);"
+    },
+    {
+      "file": "firestaff_m10_savegame_probe.c",
+      "line": 366,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "(void)dungeonPath; /* Phase 15 doesn't need DUNGEON.DAT for any invariant. */"
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.h",
+      "line": 68,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "const char *dungeon_dat_path;    /* Path to DUNGEON.DAT */"
+    },
+    {
+      "file": "dm1_v1_engine_pc34_compat.h",
+      "line": 126,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*   5. Dungeon data load (DUNGEON.DAT + GRAPHICS.DAT)"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 151,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 165,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 184,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 202,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 217,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_collision_door_pc34_compat.h",
+      "line": 231,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.h",
+      "line": 75,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.h",
+      "line": 134,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_sensor_execution_pc34_compat.h",
+      "line": 160,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.h",
+      "line": 143,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.h",
+      "line": 161,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.h",
+      "line": 184,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_door_action_pc34_compat.h",
+      "line": 266,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "map_viewer_m12.h",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT.  Each tile is displayed as a character symbol"
+    },
+    {
+      "file": "map_viewer_m12.h",
+      "line": 15,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "*   2. M12_MapViewer_LoadDungeon()  \u2014 parse DUNGEON.DAT via the M10"
+    },
+    {
+      "file": "map_viewer_m12.h",
+      "line": 62,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat  dungeon;"
+    },
+    {
+      "file": "map_viewer_m12.h",
+      "line": 108,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Load a DUNGEON.DAT file and parse header + tile data."
+    },
+    {
+      "file": "map_viewer_m12.h",
+      "line": 111,
+      "term_matched": "LoadDungeon",
+      "snippet": "int M12_MapViewer_LoadDungeon(M12_MapViewerState* mv, const char* path);"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.h",
+      "line": 45,
+      "term_matched": "dungeon_load",
+      "snippet": "#include \"dm1_v1_dungeon_loader_pc34_compat.h\""
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.h",
+      "line": 76,
+      "term_matched": "dungeon_load",
+      "snippet": "/* \u2500 Dungeon structure (from dungeon_loader) \u2500 */"
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.h",
+      "line": 121,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Load dungeon from DUNGEON.DAT and populate the store."
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.h",
+      "line": 122,
+      "term_matched": "m11_dl_load",
+      "snippet": "* Calls m11_dl_load_from_file internally, sets currentMapIndex to 0."
+    },
+    {
+      "file": "dm1_v1_dungeon_data_pc34_compat.h",
+      "line": 125,
+      "term_matched": "load_dungeon",
+      "snippet": "bool m11_dd_load_dungeon(M11_DD_DungeonData *dd, const char *dungeon_dat_path);"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.h",
+      "line": 23,
+      "term_matched": "DungeonDatState",
+      "snippet": "* (D1) GameWorld_Compat holds POINTERS to DungeonDatState_Compat and"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.h",
+      "line": 26,
+      "term_matched": "DungeonDatState",
+      "snippet": "*      layer inline (`DungeonDatState_Compat dungeon;`) but those types"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.h",
+      "line": 198,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "memory_tick_orchestrator_pc34_compat.h",
+      "line": 200,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "uint32_t dungeonFingerprint;   /* CRC32 of DUNGEON.DAT contents */"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 1,
+      "term_matched": "dungeon_load",
+      "snippet": "#ifndef FIRESTAFF_DM1_V1_DUNGEON_LOADER_PC34_COMPAT_H"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 2,
+      "term_matched": "dungeon_load",
+      "snippet": "#define FIRESTAFF_DM1_V1_DUNGEON_LOADER_PC34_COMPAT_H"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 50,
+      "term_matched": "DungeonHeader",
+      "snippet": "} M11_DL_DungeonHeader;"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 59,
+      "term_matched": "DungeonHeader",
+      "snippet": "M11_DL_DungeonHeader header;"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 68,
+      "term_matched": "m11_dl_load",
+      "snippet": "bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path);"
+    },
+    {
+      "file": "dm1_v1_dungeon_loader_pc34_compat.h",
+      "line": 77,
+      "term_matched": "dungeon_load",
+      "snippet": "#endif /* FIRESTAFF_DM1_V1_DUNGEON_LOADER_PC34_COMPAT_H */"
+    },
+    {
+      "file": "dm1_v1_save_load.h",
+      "line": 151,
+      "term_matched": "LoadDungeon",
+      "snippet": "*   - Reads dungeon via F0434_IsLoadDungeonSuccessful_CPSC"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "line": 96,
+      "term_matched": "DungeonDatState",
+      "snippet": "} DM1_V2_DungeonDatState;"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "line": 195,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_dungeon_dat_init(DM1_V2_DungeonDatState* outState, const uint8_t* bytes, int byteCount);"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "line": 196,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_dungeon_dat_get_square_raw(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, uint8_t*"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "line": 198,
+      "term_matched": "DungeonDatState",
+      "snippet": "int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, int "
+    },
+    {
+      "file": "custom_dungeon_m12.h",
+      "line": 7,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Scans a \"custom/\" subdirectory under the data dir for DUNGEON.DAT"
+    },
+    {
+      "file": "custom_dungeon_m12.h",
+      "line": 8,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* files.  Each immediate subdirectory containing a DUNGEON.DAT is"
+    },
+    {
+      "file": "custom_dungeon_m12.h",
+      "line": 40,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "char path[CUSTOM_DUNGEON_PATH_MAX];           /* full path to DUNGEON.DAT */"
+    },
+    {
+      "file": "custom_dungeon_m12.h",
+      "line": 42,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "long fileSize;                                /* DUNGEON.DAT size (bytes) */"
+    },
+    {
+      "file": "custom_dungeon_m12.h",
+      "line": 62,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Scan dataDir/custom/ for subdirectories containing DUNGEON.DAT."
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 87,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Fields marked [DUNGEON.DAT] come from the initial dungeon data."
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 92,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "int            portraitIndex;           /* [DUNGEON.DAT] sensor data for mirror */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 93,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  name[CHAMPION_NAME_LENGTH]; /* [DUNGEON.DAT] packed 8-char name */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 94,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  title[CHAMPION_TITLE_LENGTH]; /* [DUNGEON.DAT] packed title */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 95,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  sex;                     /* [DUNGEON.DAT] champion sex byte ('M'/'F') */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 96,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  mirrorStatsText[CHAMPION_MIRROR_FIELD_LENGTH];  /* [DUNGEON.DAT] encoded stat text */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 97,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  mirrorSkillsText[CHAMPION_MIRROR_FIELD_LENGTH]; /* [DUNGEON.DAT] encoded skill text */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 98,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "unsigned char  mirrorInventoryText[CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH]; /* [DUNGEON.DAT] encoded inventory text */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 101,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Attributes: base values [DUNGEON.DAT], current [RUNTIME] */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 104,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Skill levels [DUNGEON.DAT initial, RUNTIME modified] */"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 179,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Initialise party state from DUNGEON.DAT header."
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 186,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 231,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Parse a DUNGEON.DAT champion mirror text string into identity fields."
+    },
+    {
+      "file": "memory_champion_state_pc34_compat.h",
+      "line": 241,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "/* Decode a DUNGEON.DAT TextString thing by index and parse it as a champion"
+    },
+    {
+      "file": "m11_game_view.h",
+      "line": 113,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT mirror ordinal/party index, then confirm/cancel consumes"
+    },
+    {
+      "file": "m11_game_view.h",
+      "line": 133,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* table stored in the DUNGEON.DAT metadata area.  The ordinal"
+    },
+    {
+      "file": "m11_game_view.h",
+      "line": 136,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* here, loaded lazily from DUNGEON.DAT the first time a map is"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 7,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT header seam for ReDMCSB PC 3.4 (I34E)."
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 33,
+      "term_matched": "DungeonHeader",
+      "snippet": "struct DungeonHeader_Compat {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 44,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 97,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat {"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 98,
+      "term_matched": "DungeonHeader",
+      "snippet": "struct DungeonHeader_Compat   header;"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 99,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* maps;   /* [header.mapCount] */"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 110,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0500_DUNGEON_LoadDatHeader_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 112,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state);"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 118,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state);"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 131,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Load tile (square) data for all maps from DUNGEON.DAT."
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 132,
+      "term_matched": "dungeon_load",
+      "snippet": "* Must be called after F0500_DUNGEON_LoadDatHeader_Compat succeeds."
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 135,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0502_DUNGEON_LoadTileData_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 137,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state);"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 143,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state);"
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 425,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* and text data from DUNGEON.DAT."
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 429,
+      "term_matched": "dungeon_load",
+      "snippet": "int F0504_DUNGEON_LoadThingData_Compat("
+    },
+    {
+      "file": "memory_dungeon_dat_pc34_compat.h",
+      "line": 431,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* state,"
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.h",
+      "line": 150,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "dm1_v1_movement_command_core_pc34_compat.h",
+      "line": 63,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 101,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 136,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 144,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 175,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 195,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 232,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "memory_movement_pc34_compat.h",
+      "line": 253,
+      "term_matched": "DungeonDatState",
+      "snippet": "const struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/m12/firestaff_m12_startup_menu_probe.c",
+      "line": 238,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(dungeonPath, sizeof(dungeonPath), \"%s/DUNGEON.DAT\", dataDir);"
+    },
+    {
+      "file": "probes/m12/firestaff_m12_startup_menu_probe.c",
+      "line": 240,
+      "term_matched": "CSB\\.DAT",
+      "snippet": "snprintf(csbDungeonPath, sizeof(csbDungeonPath), \"%s/CSB.DAT\", dataDir);"
+    },
+    {
+      "file": "probes/m12/firestaff_m12_startup_menu_probe.c",
+      "line": 242,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(dm2DungeonPath, sizeof(dm2DungeonPath), \"%s/DM2DUNGEON.DAT\", dataDir);"
+    },
+    {
+      "file": "probes/m12/firestaff_m12_settings_smoke.c",
+      "line": 150,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(dungeonPath, sizeof(dungeonPath), \"%s/DUNGEON.DAT\", dataDir);"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_v2_initial_4k_capture.c",
+      "line": 15,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_v2_initial_4k_capture.c",
+      "line": 30,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void probe_set_square(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_v2_initial_4k_capture.c",
+      "line": 41,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_v2_initial_4k_capture.c",
+      "line": 65,
+      "term_matched": "DungeonDatState",
+      "snippet": "dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_v2_initial_4k_capture.c",
+      "line": 70,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c",
+      "line": 80,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int map_square_base(const struct DungeonDatState_Compat* dungeon, int mapIndex) {"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c",
+      "line": 91,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c",
+      "line": 108,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c",
+      "line": 36,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void setup_dungeon(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c",
+      "line": 38,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c",
+      "line": 202,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c",
+      "line": 204,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 278,
+      "term_matched": "DungeonDatState",
+      "snippet": "static void probe_set_square(struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 358,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 376,
+      "term_matched": "DungeonDatState",
+      "snippet": "dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 385,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 859,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"M11 game view builds champion mirror catalog from DUNGEON.DAT at start\");"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 906,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map = &mirrorView.world.dungeon->maps[mapIdx];"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 3497,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* pDungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 3511,
+      "term_matched": "DungeonDatState",
+      "snippet": "pDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*pDungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 3514,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "pDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 3988,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* sDungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4002,
+      "term_matched": "DungeonDatState",
+      "snippet": "sDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*sDungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4005,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "sDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4159,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* xDungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4171,
+      "term_matched": "DungeonDatState",
+      "snippet": "xDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*xDungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4174,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "xDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4358,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* pDungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4364,
+      "term_matched": "DungeonDatState",
+      "snippet": "pDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*pDungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 4366,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "pDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*pDungeon->maps));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 11187,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* fDungeon;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 11202,
+      "term_matched": "DungeonDatState",
+      "snippet": "fDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*fDungeon));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_game_view_probe.c",
+      "line": 11205,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "fDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*fDungeon->maps));"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 23,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* the original DUNGEON.DAT into the same source-backed GameWorld_Compat layer"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 112,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int map_square_base(const struct DungeonDatState_Compat* dungeon, int mapIndex) {"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 123,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 154,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 275,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(md, \"This is a deterministic source-state anchor from `DUNGEON.DAT` + `GRAPHICS.DAT`; it does not use DOSBox inp"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 277,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(md, \"- DUNGEON.DAT: `%s`\\n\", dungeonPath);"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 335,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(md, \"- %s: DUNGEON.DAT loaded into GameWorld_Compat\\n\", world->dungeon && world->dungeon->loaded ? \"PASS\" : \"FAI"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 364,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "if (!resolve_data_file(dungeonPath, sizeof(dungeonPath), argv[1], \"DUNGEON.DAT\", \"dungeon.dat\")) {"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_viewport_state_probe.c",
+      "line": 365,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"FAIL: DUNGEON.DAT not found under %s\\n\", argv[1]);"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c",
+      "line": 79,
+      "term_matched": "DungeonDatState",
+      "snippet": "static int map_square_base(const struct DungeonDatState_Compat* dungeon, int mapIndex) {"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c",
+      "line": 90,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c",
+      "line": 107,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_playable_route_probe.c",
+      "line": 13,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* DUNGEON.DAT layout fix: from canonical start (map=0,x=1,y=3,dir=2)"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_playable_route_probe.c",
+      "line": 29,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* - LOADSAVE.C:1997/2032 MEDIA529 DUNGEON.DAT layout (TextData *before*"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_playable_route_probe.c",
+      "line": 52,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "\"/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_movement_core_probe.c",
+      "line": 50,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_movement_core_probe.c",
+      "line": 51,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_movement_core_probe.c",
+      "line": 118,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_movement_core_probe.c",
+      "line": 119,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c",
+      "line": 10,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "* Focused regression gate for DM1 V1 canonical DUNGEON.DAT startup movement."
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c",
+      "line": 21,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "#define DEFAULT_DM1_DUNGEON_DAT \"/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c",
+      "line": 34,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "const struct DungeonMapDesc_Compat* map;"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 65,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat* dungeon,"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 66,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat* map,"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 170,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 180,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 191,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 240,
+      "term_matched": "DungeonDatState",
+      "snippet": "struct DungeonDatState_Compat dungeon;"
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c",
+      "line": 241,
+      "term_matched": "DungeonMapDesc",
+      "snippet": "struct DungeonMapDesc_Compat map;"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 7,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "static const char* dm1_default_dungeon_dat_path(void) {"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 11,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "snprintf(path, sizeof(path), \"%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 42,
+      "term_matched": "DungeonDatState",
+      "snippet": "DM1_V2_DungeonDatState dungeon;"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 45,
+      "term_matched": "dungeon_dat_path",
+      "snippet": "if (!dungeonPath) dungeonPath = dm1_default_dungeon_dat_path();"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 48,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"failed to read DUNGEON.DAT: %s\\n\", dungeonPath);"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 51,
+      "term_matched": "dm1_v2_vp_dungeon_dat",
+      "snippet": "if (!dm1_v2_vp_dungeon_dat_init(&dungeon, bytes, size)) {"
+    },
+    {
+      "file": "tools/dm1_v2_export_entry_viewport_png.c",
+      "line": 52,
+      "term_matched": "dungeon\\.dat",
+      "snippet": "fprintf(stderr, \"failed to decode DUNGEON.DAT: %s\\n\", dungeonPath);"
+    }
+  ],
+  "blockers": [
+    "Greatstone inventory JSON not found at any candidate path. Cross-reference unavailable.",
+    "Missing: CSB.DAT (CSB (Chaos Strikes Back)) \u2014 no local copy found.",
+    "Missing: DM2DUNGEON.DAT (DM2 (Skullkeep)) \u2014 no local copy found.",
+    "Missing: HCSB.DAT (CSB utility disk dungeon data) \u2014 no local copy found."
+  ],
+  "recommended_next_actions": [
+    "Acquire actual DUNGEON.DAT files (PC 3.4 EN/FR/GE) and place in canonical anchors directory.",
+    "Acquire CSB.DAT (Amiga) and DM2DUNGEON.DAT for cross-game parity.",
+    "Obtain Greatstone dungeon_map resource inventory JSON for cross-reference.",
+    "Verify ReDMCSB source archive (ReDMCSB_WIP20210206) is available for source audit.",
+    "Run inventory again after files are acquired to populate SHA256 groups and variant families."
+  ]
+}
