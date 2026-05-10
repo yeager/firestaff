@@ -269,21 +269,21 @@ int TOUCHCLICK_Compat_HitTest(int screenX, int screenY, TouchClickZonePc34Compat
     return TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, 0u, outZone);
 }
 
-int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX,
-                                                 int physicalY,
-                                                 int surfaceW,
-                                                 int surfaceH,
-                                                 int* outScreenX,
-                                                 int* outScreenY) {
-    const int sourceW = 320;
-    const int sourceH = 200;
+static int TOUCHCLICK_Compat_NormalizeLetterboxedPointPc34Compat(int physicalX,
+                                                                 int physicalY,
+                                                                 int surfaceW,
+                                                                 int surfaceH,
+                                                                 int sourceW,
+                                                                 int sourceH,
+                                                                 int* outX,
+                                                                 int* outY) {
     int drawW;
     int drawH;
     int drawX;
     int drawY;
     int localX;
     int localY;
-    if (!outScreenX || !outScreenY || surfaceW <= 0 || surfaceH <= 0) return 0;
+    if (!outX || !outY || surfaceW <= 0 || surfaceH <= 0 || sourceW <= 0 || sourceH <= 0) return 0;
 
     if ((long long)surfaceW * sourceH <= (long long)surfaceH * sourceW) {
         drawW = surfaceW;
@@ -298,20 +298,56 @@ int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX,
     drawY = (surfaceH - drawH) / 2;
     if (physicalX < drawX || physicalY < drawY ||
         physicalX >= drawX + drawW || physicalY >= drawY + drawH) {
-        *outScreenX = 0;
-        *outScreenY = 0;
+        *outX = 0;
+        *outY = 0;
         return 0;
     }
 
     localX = physicalX - drawX;
     localY = physicalY - drawY;
-    *outScreenX = (int)(((long long)localX * sourceW) / drawW);
-    *outScreenY = (int)(((long long)localY * sourceH) / drawH);
-    if (*outScreenX < 0) *outScreenX = 0;
-    if (*outScreenY < 0) *outScreenY = 0;
-    if (*outScreenX >= sourceW) *outScreenX = sourceW - 1;
-    if (*outScreenY >= sourceH) *outScreenY = sourceH - 1;
+    *outX = (int)(((long long)localX * sourceW) / drawW);
+    *outY = (int)(((long long)localY * sourceH) / drawH);
+    if (*outX < 0) *outX = 0;
+    if (*outY < 0) *outY = 0;
+    if (*outX >= sourceW) *outX = sourceW - 1;
+    if (*outY >= sourceH) *outY = sourceH - 1;
     return 1;
+}
+
+int TOUCHCLICK_Compat_GetSourceViewportRect(int* outX, int* outY, int* outW, int* outH) {
+    if (!outX || !outY || !outW || !outH) return 0;
+    *outX = 0;
+    *outY = 33;
+    *outW = 224;
+    *outH = 136;
+    return 1;
+}
+
+int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX,
+                                                 int physicalY,
+                                                 int surfaceW,
+                                                 int surfaceH,
+                                                 int* outScreenX,
+                                                 int* outScreenY) {
+    return TOUCHCLICK_Compat_NormalizeLetterboxedPointPc34Compat(
+        physicalX, physicalY, surfaceW, surfaceH, 320, 200, outScreenX, outScreenY);
+}
+
+int TOUCHCLICK_Compat_NormalizeScaledViewportPoint(int physicalX,
+                                                   int physicalY,
+                                                   int surfaceW,
+                                                   int surfaceH,
+                                                   int* outViewportX,
+                                                   int* outViewportY) {
+    int viewportX;
+    int viewportY;
+    int viewportW;
+    int viewportH;
+    if (!TOUCHCLICK_Compat_GetSourceViewportRect(&viewportX, &viewportY, &viewportW, &viewportH)) return 0;
+    (void)viewportX;
+    (void)viewportY;
+    return TOUCHCLICK_Compat_NormalizeLetterboxedPointPc34Compat(
+        physicalX, physicalY, surfaceW, surfaceH, viewportW, viewportH, outViewportX, outViewportY);
 }
 
 int TOUCHCLICK_Compat_HitTestScaledScreenPoint(int physicalX,
@@ -336,11 +372,17 @@ int TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(int viewportX,
                                                        unsigned int buttonMask,
                                                        TouchClickDispatchPc34Compat* outDispatch) {
     TouchClickZonePc34Compat zone;
-    const int sourceViewportX = 0;
-    const int sourceViewportY = 33;
+    int sourceViewportX;
+    int sourceViewportY;
+    int sourceViewportW;
+    int sourceViewportH;
     if (!outDispatch) return 0;
     memset(outDispatch, 0, sizeof(*outDispatch));
     if (buttonMask == 0u) return 0;
+    if (!TOUCHCLICK_Compat_GetSourceViewportRect(&sourceViewportX, &sourceViewportY,
+                                                 &sourceViewportW, &sourceViewportH)) return 0;
+    (void)sourceViewportW;
+    (void)sourceViewportH;
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(viewportX, viewportY,
                                               TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
                                               buttonMask, &zone)) {
@@ -384,6 +426,25 @@ int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
     return 1;
 }
 
+int TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(int physicalX,
+                                                       int physicalY,
+                                                       int surfaceW,
+                                                       int surfaceH,
+                                                       unsigned int buttonMask,
+                                                       TouchClickDispatchPc34Compat* outDispatch) {
+    int viewportX;
+    int viewportY;
+    if (!outDispatch) return 0;
+    memset(outDispatch, 0, sizeof(*outDispatch));
+    if (buttonMask == 0u) return 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledViewportPoint(physicalX, physicalY,
+                                                        surfaceW, surfaceH,
+                                                        &viewportX, &viewportY)) {
+        return 0;
+    }
+    return TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(viewportX, viewportY, buttonMask, outDispatch);
+}
+
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables, including COMMAND.C:394 fixed absolute freeze-game box; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C:1693-1722 defines source viewport origin/extent (x=0 y=33 w=224 h=136); COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
+    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables, including COMMAND.C:394 fixed absolute freeze-game box; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C plus source constants define source viewport origin/extent (x=0 y=33 w=224 h=136); scaled viewport touch points normalize through the same letterboxed integer mapping as scaled full-screen points; COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
 }

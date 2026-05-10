@@ -83,11 +83,21 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
         copy_zone_to_dispatch(screenX, screenY, event->buttonMask, &zone, outDispatch);
         return 1;
 
-    case TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT: {
+    case TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT:
+    case TOUCH_POINTER_SPACE_SCALED_VIEWPORT_PC34_COMPAT: {
         TouchClickDispatchPc34Compat clickDispatch;
-        if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(event->x, event->y,
-                                                               event->buttonMask,
-                                                               &clickDispatch)) return 0;
+        int mapped;
+        if (event->space == TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT) {
+            mapped = TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(event->x, event->y,
+                                                                       event->buttonMask,
+                                                                       &clickDispatch);
+        } else {
+            mapped = TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(event->x, event->y,
+                                                                        event->surfaceW, event->surfaceH,
+                                                                        event->buttonMask,
+                                                                        &clickDispatch);
+        }
+        if (!mapped) return 0;
         outDispatch->shouldDispatchClick = 1;
         outDispatch->screenX = clickDispatch.screenX;
         outDispatch->screenY = clickDispatch.screenY;
@@ -122,5 +132,5 @@ int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
 }
 
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
+    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local and scaled-viewport touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
 }

@@ -40,10 +40,13 @@ int TOUCHCLICK_Compat_HitTest(int screenX, int screenY, TouchClickZonePc34Compat
 int TOUCHCLICK_Compat_HitTestWithButton(int screenX, int screenY, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(int screenX, int screenY, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_HitTestInCoordMode(int x, int y, TouchClickCoordModePc34Compat coordMode, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
+int TOUCHCLICK_Compat_GetSourceViewportRect(int* outX, int* outY, int* outW, int* outH);
 int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, int* outScreenX, int* outScreenY);
+int TOUCHCLICK_Compat_NormalizeScaledViewportPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, int* outViewportX, int* outViewportY);
 int TOUCHCLICK_Compat_HitTestScaledScreenPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(int viewportX, int viewportY, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
+int TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void);
 
 #endif

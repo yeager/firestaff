@@ -124,6 +124,18 @@ int main(void) {
                          162u, 573u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
                          "panel.cancel")) ok = 0;
 
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_VIEWPORT_PC34_COMPAT;
+    event.x = 68;
+    event.y = 52;
+    event.surfaceW = 448;
+    event.surfaceH = 272;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
+        !expect_dispatch(&dispatch, 34, 59, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         30u, 509u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
+                         "inventory.head")) ok = 0;
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
     event.space = TOUCH_POINTER_SPACE_SCALED_SCREEN_PC34_COMPAT;
@@ -150,6 +162,26 @@ int main(void) {
     if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
     if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
         queued.command != 71 || queued.x != 12 || queued.y != 46) ok = 0;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_VIEWPORT_PC34_COMPAT;
+    event.x = 68;
+    event.y = 52;
+    event.surfaceW = 448;
+    event.surfaceH = 272;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
+        queued.command != 30 || queued.x != 34 || queued.y != 59) ok = 0;
+
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT;
+    event.x = 12;
+    event.y = 13;
+    event.surfaceW = 0;
+    event.surfaceH = 0;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     queue.locked = 1;

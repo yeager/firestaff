@@ -34,6 +34,10 @@ int main(void) {
     ChampionNameHandRoutePc34Compat championRoute;
     int normX = -1;
     int normY = -1;
+    int viewportX = -1;
+    int viewportY = -1;
+    int viewportW = -1;
+    int viewportH = -1;
     int ok = 1;
     printf("probe=firestaff_touch_click_zone_matrix\n");
     printf("sourceEvidence=%s\n", TOUCHCLICK_Compat_GetSourceEvidence());
@@ -146,6 +150,8 @@ int main(void) {
         strcmp(dispatch.groupName, "panel.cancel") != 0) ok = 0;
     if (TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &dispatch)) ok = 0;
 
+    if (!TOUCHCLICK_Compat_GetSourceViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
+        viewportX != 0 || viewportY != 33 || viewportW != 224 || viewportH != 136) ok = 0;
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(352, 180, 1280, 720, &normX, &normY) || normX != 80 || normY != 50) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestScaledScreenPoint(1056, 450, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 70u) ok = 0;
     if (TOUCHCLICK_Compat_HitTestScaledScreenPoint(20, 20, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit)) ok = 0;
@@ -165,7 +171,20 @@ int main(void) {
         strcmp(dispatch.groupName, "champion0.toggle_box") != 0) ok = 0;
     if (TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(20, 20, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch)) ok = 0;
     if (TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(1056, 450, 1280, 720, 0u, &dispatch)) ok = 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledViewportPoint(34, 26, 224, 136, &normX, &normY) || normX != 34 || normY != 26) ok = 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledViewportPoint(80, 106, 448, 272, &normX, &normY) || normX != 40 || normY != 53) ok = 0;
+    if (!TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(34, 26, 224, 136, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 34 || dispatch.screenY != 59 ||
+        dispatch.buttonStatus != TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT ||
+        dispatch.commandId != 30u || dispatch.zoneIndex != 509u ||
+        strcmp(dispatch.groupName, "inventory.head") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(80, 106, 448, 272, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 40 || dispatch.screenY != 86 ||
+        dispatch.commandId != 31u || dispatch.zoneIndex != 510u ||
+        strcmp(dispatch.groupName, "inventory.torso") != 0) ok = 0;
+    if (TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(1, 1, 224, 136, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch)) ok = 0;
 
+    printf("sourceViewportRect=%d,%d,%d,%d\n", viewportX, viewportY, viewportW, viewportH);
     printf("normalizedScaledPoint=%d,%d\n", normX, normY);
     printf("actionAreaTouchMatrixInvariantOk=%u\n", action_area_routes_GetTouchMatrixInvariant());
     printf("championNameHandRoutesInvariantOk=%u\n", champion_name_hand_routes_GetInvariant());
