@@ -99,6 +99,7 @@ def source_audit() -> dict[str, object]:
     defs = read(RED / "DEFS.H", "latin-1")
     title = read(RED / "TITLE.C", "latin-1")
     endgame = read(RED / "ENDGAME.C", "latin-1")
+    anim = read(RED / "ANIM.C", "latin-1")
     data = read(RED / "DATA.C", "latin-1")
 
     require_order(dunview, [
@@ -136,6 +137,16 @@ def source_audit() -> dict[str, object]:
         "F0022_MAIN_Delay(300)",
         "AL1409_i_VerticalBlankCount = 900",
     ], "ReDMCSB end animation/restart cadence")
+    require_order(anim, [
+        "typedef struct {",
+        "ANIMDESC",
+        "F9008_OpenPRIM",
+        "L4760_[0] = (P4236_->Parameter != 0)",
+        "if (P4236_->Parameter ==",
+        "void F1209_",
+        "void F1210_",
+        "VDEO_13_WaitVerticalBlank",
+    ], "ReDMCSB ANIM/ENDA control-flow audit")
     require(data, "G0012_ai_Graphic562_Box_Endgame_TheEnd", "ReDMCSB THE END box")
 
     return {
@@ -143,11 +154,16 @@ def source_audit() -> dict[str, object]:
         "DUNVIEW.C:F0110_line": line_of(dunview, "F0110_DUNGEONVIEW_DrawDoorButton"),
         "TITLE.C:F0437_line": line_of(title, "F0437_STARTEND_DrawTitle"),
         "ENDGAME.C:F0444_line": line_re(endgame, r"^void\s+F0444_STARTEND_Endgame\s*\("),
+        "ANIM.C:ANIMDESC_line": line_of(anim, "} ANIMDESC;"),
+        "ANIM.C:F1208_line": line_of(anim, "void F1208_"),
+        "ANIM.C:F1209_line": line_of(anim, "void F1209_"),
+        "ANIM.C:F1210_line": line_of(anim, "void F1210_"),
         "DATA.C:the_end_box_line": line_of(data, "G0012_ai_Graphic562_Box_Endgame_TheEnd"),
         "slice_sha256": {
             "DUNVIEW.C:button_table": slice_digest(RED / "DUNVIEW.C", line_of(dunview, "G0208_aaauc_Graphic558_DoorButtonCoordinateSets"), line_of(dunview, "OBJECT_ASPECT G0209_as_Graphic558_ObjectAspects") - 1),
             "TITLE.C:F0437_window": slice_digest(RED / "TITLE.C", line_of(title, "F0437_STARTEND_DrawTitle"), min(len(title.splitlines()), line_of(title, "F0469_MEMORY_FreeAtHeapTop") + 4)),
             "ENDGAME.C:F0444_window": slice_digest(RED / "ENDGAME.C", line_of(endgame, "F0444_STARTEND_Endgame"), line_of(endgame, "F0445_STARTEND_FuseSequenceUpdate") - 1),
+            "ANIM.C:desc_open_end_hooks": slice_digest(RED / "ANIM.C", line_of(anim, "typedef struct { /* Amiga"), line_of(anim, "void F1211_") - 1),
         },
     }
 
@@ -198,6 +214,14 @@ def firestaff_audit() -> dict[str, object]:
         "M11_GameView_GetV1EndgameQuitBox",
     ]:
         require(view, needle, "Firestaff end runtime seam")
+    require_order(function_body(view, "M11_GameView_GetV1EndgameTheEndZone"), [
+        "*outX = 120",
+        "*outY = 95",
+        "*outW = 80",
+        "*outH = 14",
+    ], "Firestaff THE END runtime box source coordinates")
+    require(endgame, "step.x = 120u; step.y = 95u; step.width = 80u; step.height = 14u",
+            "Firestaff THE END source schedule box")
 
     return {
         "door_layer_order_locked": True,

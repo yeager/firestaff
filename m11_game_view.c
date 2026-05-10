@@ -17152,8 +17152,11 @@ int M11_GameView_GetV1EndgameTheEndZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
+    /* ReDMCSB ENDGAME.C:455-456 blits THE END through
+     * DATA.C:G0012_ai_Graphic562_Box_Endgame_TheEnd = {120,199,95,108}.
+     * Keep the runtime seam on the same top-left and 80x14 extent. */
     if (outX) *outX = 120;
-    if (outY) *outY = 122;
+    if (outY) *outY = 95;
     if (outW) *outW = 80;
     if (outH) *outH = 14;
     return 1;

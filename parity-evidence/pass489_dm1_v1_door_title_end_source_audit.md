@@ -9,6 +9,10 @@ Manifest: `parity-evidence/verification/pass489_dm1_v1_door_title_end_source_aud
 - `DUNVIEW.C:F0110_line`: `4119`
 - `TITLE.C:F0437_line`: `12`
 - `ENDGAME.C:F0444_line`: `94`
+- `ANIM.C:ANIMDESC_line`: `442`
+- `ANIM.C:F1208_line`: `481`
+- `ANIM.C:F1209_line`: `482`
+- `ANIM.C:F1210_line`: `483`
 - `DATA.C:the_end_box_line`: `18`
 
 ## Non-claims
