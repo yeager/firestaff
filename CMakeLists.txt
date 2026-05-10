@@ -832,6 +832,17 @@ if(BUILD_TESTING)
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
     )
+    add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
+        test_dm1_v1_viewport_hand_overlay_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_hand_overlay_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_hand_overlay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_hand_overlay_pc34_compat
+        COMMAND test_dm1_v1_viewport_hand_overlay_pc34_compat
+    )
     add_executable(test_dm1_v1_champion_panel_hud_pc34_compat
         test_dm1_v1_champion_panel_hud_pc34_compat.c
         dm1_v1_champion_panel_hud_pc34_compat.c
@@ -1019,6 +1030,10 @@ if(BUILD_TESTING)
         add_test(
             NAME pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py
+        )
+        add_test(
+            NAME v1_viewport_hand_overlay_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_hand_overlay_gate.py
         )
         add_test(
             NAME v1_viewport_distance_row_clip_gate
