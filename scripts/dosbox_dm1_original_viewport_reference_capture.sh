@@ -150,20 +150,21 @@ need_stage() {
 }
 
 need_image_tool() {
-    if command -v magick >/dev/null 2>&1; then
+    # Prefer Pillow for deterministic crop normalization. Some ImageMagick 6
+    # convert builds reject extensionless PPM outputs used below, while the
+    # Pillow path writes both PPM and PNG explicitly.
+    if python3 - <<PY >/dev/null 2>&1
+from PIL import Image
+PY
+    then
+        echo pillow
+    elif command -v magick >/dev/null 2>&1; then
         echo magick
     elif command -v convert >/dev/null 2>&1; then
         echo convert
     else
-        if python3 - <<'PY' >/dev/null 2>&1
-from PIL import Image
-PY
-        then
-            echo pillow
-        else
-            echo "ERROR: ImageMagick (magick/convert) or Python Pillow is required for PNG->PPM viewport crop normalization." >&2
-            exit 4
-        fi
+        echo "ERROR: ImageMagick (magick/convert) or Python Pillow is required for PNG->PPM viewport crop normalization." >&2
+        exit 4
     fi
 }
 
