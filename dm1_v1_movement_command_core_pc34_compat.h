@@ -47,6 +47,7 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int movementBlocked;
     int blockedByGroup;
     int inputDiscardRequested;
+    int blockedMovementVblankWaitRequested;
     int stopWaitingForPlayerInput;
     int viewportRedrawRequested;
     int sourceMapIndex;

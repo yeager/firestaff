@@ -244,6 +244,10 @@ static void test_wall_blocks_movement(void)
     EXPECT("wall_rc", rc == 1);
     EXPECT("wall_blocked", result.core.movementBlocked == 1);
     EXPECT("wall_step", result.core.stepApplied == 0);
+    EXPECT_INT("wall_blocked_vblank_wait_requested", result.blockedMovementVblankWaitRequested, 1);
+    EXPECT_INT("wall_blocked_vblank_wait_count", result.blockedMovementVblankWaitCount, 1);
+    EXPECT_INT("wall_blocked_keeps_input_wait", result.blockedMovementKeepsInputWaitArmed, 1);
+    EXPECT_INT("wall_blocked_no_viewport_dirty", result.viewportDirty, 0);
     EXPECT_INT("wall_x", party.mapX, 5);
     EXPECT_INT("wall_y", party.mapY, 5);
 }
@@ -270,6 +274,7 @@ static void test_door_passability(void)
     DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
         &pipeline, &dungeon, NULL, &party, NULL, &result);
     EXPECT("door_closed_blocked", result.core.movementBlocked == 1);
+    EXPECT_INT("door_closed_vblank_wait_requested", result.blockedMovementVblankWaitRequested, 1);
     EXPECT_INT("door_closed_y", party.mapY, 5);
 
     /* Door state 0 = open (passes) */
@@ -281,6 +286,7 @@ static void test_door_passability(void)
     DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
         &pipeline, &dungeon, NULL, &party, NULL, &result);
     EXPECT("door_open_passed", result.core.stepApplied == 1);
+    EXPECT_INT("door_open_no_blocked_vblank_wait", result.blockedMovementVblankWaitRequested, 0);
     EXPECT_INT("door_open_y", party.mapY, 4);
 }
 
@@ -424,6 +430,7 @@ static void test_source_evidence(void)
     EXPECT("evidence_has_COMMAND", strstr(ev, "COMMAND.C") != NULL);
     EXPECT("evidence_has_MOVESENS", strstr(ev, "MOVESENS") != NULL);
     EXPECT("evidence_has_GAMELOOP", strstr(ev, "GAMELOOP") != NULL);
+    EXPECT("evidence_has_blocked_vblank", strstr(ev, "one PC-34 blocked-movement VBlank") != NULL);
 }
 
 /* ---- Test: compat provenance chain without fake original evidence ---- */
@@ -454,6 +461,7 @@ static void test_command_movement_viewport_provenance(void)
     EXPECT("prov_command_evidence", strstr(result.provenance.commandAcceptedEvidence, "COMMAND.C:2075-2099") != NULL);
     EXPECT("prov_movement_evidence", strstr(result.provenance.movementAppliedEvidence, "CLIKMENU.C:325-328") != NULL);
     EXPECT("prov_viewport_evidence", strstr(result.provenance.viewportPresentEvidence, "DRAWVIEW.C:721-722") != NULL);
+    EXPECT("prov_blocked_wait_evidence", strstr(result.provenance.viewportPresentEvidence, "CLIKMENU.C:317-323") != NULL);
 }
 
 /* ---- Test: backward step ---- */

@@ -380,6 +380,13 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
         outResult->postMove.transitioned;
     outResult->anyTurnOccurred = outResult->core.turnApplied;
     outResult->viewportDirty = outResult->core.viewportRedrawRequested;
+    outResult->blockedMovementVblankWaitRequested =
+        outResult->core.blockedMovementVblankWaitRequested;
+    outResult->blockedMovementVblankWaitCount =
+        outResult->core.blockedMovementVblankWaitRequested ? 1 : 0;
+    outResult->blockedMovementKeepsInputWaitArmed =
+        outResult->core.blockedMovementVblankWaitRequested &&
+        !outResult->core.stopWaitingForPlayerInput;
 
     /* Phase 5: Source-locked provenance trace.
      *
@@ -406,7 +413,7 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     outResult->provenance.movementAppliedEvidence =
         "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; MOVESENS.C:438-606 resolves open teleporter/pit chains and party HP side effects before sensors; MOVESENS.C:810-818 deletes destination group before final enter sensors; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
     outResult->provenance.viewportPresentEvidence =
-        "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state; DRAWVIEW.C:721-722 requests viewport blit and waits for vblank; DRAWVIEW.C:1056-1068 blits G0296 viewport to screen";
+        "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state; DRAWVIEW.C:721-722 requests viewport blit and waits for vblank; DRAWVIEW.C:1056-1068 blits G0296 viewport to screen; CLIKMENU.C:317-323 blocked movement instead discards input, waits one PC-34 VBlank, and keeps G0321 false";
 
     pipeline->gameTick++;
     return 1;
@@ -430,7 +437,7 @@ const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
            "COMMAND.C:2118-2127 F0380 dequeue/unlock/replay, COMMAND.C:2150-2156 F0380 dispatches F0365/F0366; "
            "CLIKMENU.C:142-174 F0365 turn + sensor leave/enter, "
            "CLIKMENU.C:224-233 F0366 movement-arrow forward/right deltas, "
-           "CLIKMENU.C:264-276 stairs special cases, CLIKMENU.C:278-323 wall/door/fakewall/group collision and discard, "
+           "CLIKMENU.C:264-276 stairs special cases, CLIKMENU.C:278-323 wall/door/fakewall/group collision, discard, one PC-34 blocked-movement VBlank, and G0321 false, "
            "CLIKMENU.C:325-346 F0267 move-result call and G0310/G0311 cooldown write; "
            "DUNGEON.C:1389-1391 F0150 relative coordinate math; "
            "MOVESENS.C:316-328 F0267 signature/source-destination contract, "

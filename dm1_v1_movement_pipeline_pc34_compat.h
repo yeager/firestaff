@@ -91,6 +91,12 @@ struct Dm1V1MovementPipelineResultPc34Compat {
     int anyTurnOccurred;
     int viewportDirty;
 
+    /* CLIKMENU.C:317-323 PC-34 blocked step stalls one VBlank and
+     * keeps the input wait armed instead of publishing a redraw. */
+    int blockedMovementVblankWaitRequested;
+    int blockedMovementVblankWaitCount;
+    int blockedMovementKeepsInputWaitArmed;
+
     /* Source-locked compat trace for command→movement→viewport provenance. */
     struct Dm1V1MovementPipelineProvenancePc34Compat provenance;
 };
