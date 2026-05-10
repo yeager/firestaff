@@ -94,6 +94,7 @@ extern "C" {
 #define DM1_DOOR_CLICK_TOGGLED_CLOSED   2  /* Door was open, now closing */
 #define DM1_DOOR_CLICK_DESTROYED        3  /* Door is destroyed, no change */
 #define DM1_DOOR_CLICK_NO_DOOR          4  /* Front cell is not a door */
+#define DM1_DOOR_CLICK_NO_BUTTON        5  /* Front door has no DOOR->Button */
 
 /* ---- Collision query result ---- */
 struct Dm1V1CollisionResult {
@@ -125,6 +126,7 @@ struct Dm1V1DoorInteractionResult {
     int previousDoorState;          /* Door state before interaction */
     int newDoorState;               /* Door state after interaction (-1 if no change) */
     int doorVertical;               /* 1 if vertical orientation */
+    int doorHasButton;              /* 1 if decoded DOOR->Button gate passed */
     int hasSensorOnSquare;          /* 1 if front cell also has a sensor thing list */
     struct DoorToggleResult_Compat  toggleDetail;   /* Full compat toggle result */
     struct ClickOnWallResult_Compat clickDetail;    /* Full compat click routing */
@@ -196,7 +198,8 @@ int DM1_V1_Collision_DetectPit(
  *
  * Pure function — does NOT mutate dungeon state.
  *
- * Source: CLIKVIEW.C:F0372, MOVESENS.C:F0275.
+ * Source: CLIKVIEW.C:F0377:365-385 (front DOOR->Button gate),
+ * CLIKVIEW.C:F0372, MOVESENS.C:F0275.
  */
 int DM1_V1_Door_ProcessClick(
     const struct DungeonDatState_Compat* dungeon,
