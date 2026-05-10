@@ -73,36 +73,11 @@
     ],
     "usableForPromotion": false
   },
-  "missingOriginalCaptureContractSnapshots": [
-    {
-      "name": "forward_west_blocked",
-      "party": {
-        "direction": 3,
-        "mapIndex": 0,
-        "mapX": 1,
-        "mapY": 3
-      },
-      "reason": "current render-plan snapshot has no original-DOSBox capture batch/label contract in SNAPSHOT_CAPTURE",
-      "renderEventCount": 16,
-      "wallBitmapEventCount": 13
-    },
-    {
-      "name": "forward_south_corridor",
-      "party": {
-        "direction": 2,
-        "mapIndex": 0,
-        "mapX": 1,
-        "mapY": 4
-      },
-      "reason": "current render-plan snapshot has no original-DOSBox capture batch/label contract in SNAPSHOT_CAPTURE",
-      "renderEventCount": 12,
-      "wallBitmapEventCount": 9
-    }
-  ],
+  "missingOriginalCaptureContractSnapshots": [],
   "nextCaptureCommands": {
-    "batchA_start_right_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-A \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:move_forward_west wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "batchA_start_right_forward_blocked": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-A \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:forward_west_blocked wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
     "batchB_start_left": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-B \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp4 wait:1200 shot:turn_left_east wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
-    "batchC_start_blocked_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-C \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp8 wait:1200 shot:blocked_forward_south_wall wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "batchC_start_forward_south_corridor": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-C \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp8 wait:1200 shot:forward_south_corridor wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
     "knownBlocker": "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle."
   },
   "notClaimed": [
@@ -253,7 +228,7 @@
       "wallBitmapEventCount": 13
     },
     {
-      "captureBatch": null,
+      "captureBatch": "A",
       "name": "forward_west_blocked",
       "party": {
         "direction": 3,
@@ -262,10 +237,13 @@
         "mapY": 3
       },
       "pixelRegionsReady": true,
-      "reason": "BLOCKED: missing original capture batch/label contract",
+      "reason": "after a right turn from the fresh start tuple, the forward-west step targets the wall at x=0,y=3 and is blocked; source keeps mapX=1,mapY=3,dir=3/WEST",
       "renderEventCount": 16,
-      "requiredShotLabel": null,
-      "routeFromFreshGameplay": null,
+      "requiredShotLabel": "forward_west_blocked",
+      "routeFromFreshGameplay": [
+        "right",
+        "up"
+      ],
       "wallBitmapEventCount": 13
     },
     {
@@ -287,7 +265,7 @@
       "wallBitmapEventCount": 9
     },
     {
-      "captureBatch": null,
+      "captureBatch": "C",
       "name": "forward_south_corridor",
       "party": {
         "direction": 2,
@@ -296,10 +274,12 @@
         "mapY": 4
       },
       "pixelRegionsReady": true,
-      "reason": "BLOCKED: missing original capture batch/label contract",
+      "reason": "fresh start forward step is legal and advances to mapX=1,mapY=4,dir=2/SOUTH; the next comparable center cell is the south corridor",
       "renderEventCount": 12,
-      "requiredShotLabel": null,
-      "routeFromFreshGameplay": null,
+      "requiredShotLabel": "forward_south_corridor",
+      "routeFromFreshGameplay": [
+        "up"
+      ],
       "wallBitmapEventCount": 9
     }
   ],
@@ -370,5 +350,5 @@
     "partyTupleF0128StateOracle": true,
     "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND"
   },
-  "status": "BLOCKED_ORIGINAL_PC34_CAPTURE_CONTRACT_DRIFT"
+  "status": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
 }

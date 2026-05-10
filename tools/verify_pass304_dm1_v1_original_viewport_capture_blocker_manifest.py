@@ -47,11 +47,11 @@ SNAPSHOT_CAPTURE = {
         "requiredShotLabel": "turn_right_west",
         "reason": "COMMAND.C turn-right dispatch mutates direction 2/SOUTH -> 3/WEST",
     },
-    "move_forward_west": {
+    "forward_west_blocked": {
         "captureBatch": "A",
         "routeFromFreshGameplay": ["right", "up"],
-        "requiredShotLabel": "move_forward_west",
-        "reason": "after west-facing step, tuple is mapX=0,mapY=3,dir=3/WEST",
+        "requiredShotLabel": "forward_west_blocked",
+        "reason": "after a right turn from the fresh start tuple, the forward-west step targets the wall at x=0,y=3 and is blocked; source keeps mapX=1,mapY=3,dir=3/WEST",
     },
     "turn_left_east": {
         "captureBatch": "B",
@@ -59,11 +59,11 @@ SNAPSHOT_CAPTURE = {
         "requiredShotLabel": "turn_left_east",
         "reason": "branch from the fresh start tuple; cannot be reached after batch A without reset/state restore",
     },
-    "blocked_forward_south_wall": {
+    "forward_south_corridor": {
         "captureBatch": "C",
         "routeFromFreshGameplay": ["up"],
-        "requiredShotLabel": "blocked_forward_south_wall",
-        "reason": "blocked step from start keeps mapX=1,mapY=3,dir=2/SOUTH while advancing the command tick",
+        "requiredShotLabel": "forward_south_corridor",
+        "reason": "fresh start forward step is legal and advances to mapX=1,mapY=4,dir=2/SOUTH; the next comparable center cell is the south corridor",
     },
 }
 
@@ -297,9 +297,9 @@ def main() -> int:
         },
         "nextCaptureCommands": {
             "knownBlocker": "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle.",
-            "batchA_start_right_forward": command_for_batch("A", ["kp6", "kp8"], ["start_south", "turn_right_west", "move_forward_west"]),
+            "batchA_start_right_forward_blocked": command_for_batch("A", ["kp6", "kp8"], ["start_south", "turn_right_west", "forward_west_blocked"]),
             "batchB_start_left": command_for_batch("B", ["kp4"], ["start_south", "turn_left_east"]),
-            "batchC_start_blocked_forward": command_for_batch("C", ["kp8"], ["start_south", "blocked_forward_south_wall"]),
+            "batchC_start_forward_south_corridor": command_for_batch("C", ["kp8"], ["start_south", "forward_south_corridor"]),
         },
         "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion also requires missingOriginalCaptureContractSnapshots to be empty, requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices to be empty, and matched original-vs-Firestaff viewport comparator to pass.",
     }
