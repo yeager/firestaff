@@ -1663,6 +1663,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 door-button viewport occlusion source-lock gate ─────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass486_dm1_v1_door_button_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass486_dm1_v1_door_button_occlusion_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 movement legality completion-matrix gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
