@@ -1786,3 +1786,28 @@ if(BUILD_TESTING)
         )
     endif()
 endif()
+
+
+# ── DM1 V1 ENDGAME source animation/capture schedule gate ─────────────
+if(BUILD_TESTING)
+    add_executable(test_endgame_frontend_pc34_compat_integration
+        test_endgame_frontend_pc34_compat_integration.c
+        endgame_frontend_pc34_compat.c
+        bitmap_call_pc34_compat.c
+        image_expand_pc34_compat.c
+        image_backend_pc34_compat.c
+    )
+    target_compile_definitions(test_endgame_frontend_pc34_compat_integration PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_endgame_frontend_pc34_compat_integration PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME endgame_frontend_source_animation_schedule
+        COMMAND test_endgame_frontend_pc34_compat_integration
+    )
+endif()
