@@ -1671,6 +1671,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 original click-route capture blocker gate ───────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass487_dm1_v1_original_click_capture_blocker
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass487_dm1_v1_original_click_capture_blocker.py
+    )
+endif()
+
 # ── DM1 V1 input→F0365/F0366 runtime follow-up gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
