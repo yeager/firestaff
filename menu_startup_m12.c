@@ -384,6 +384,8 @@ typedef enum {
     M12_TEXT_ADD_VERIFIED_RETAIL_HASHES,
     M12_TEXT_GAME_DATA_NOT_FOUND,
     M12_TEXT_CHECK_FIRESTAFF_DATA_DIR,
+    M12_TEXT_ORIGINAL_FILES_NOT_FOUND,
+    M12_TEXT_COPY_RETAIL_FILES_INTO,
     M12_TEXT_ART_SLOT_READY,
     M12_TEXT_ART_SLOT_EMPTY,
     M12_TEXT_DROP_ART_INTO_SLOT,
@@ -441,6 +443,8 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     "ADD VERIFIED RETAIL HASHES",
     "GAME DATA NOT FOUND",
     "CHECK FIRESTAFF DATA DIR",
+    "ORIGINAL FILES NOT FOUND",
+    "COPY YOUR RETAIL GAME FILES INTO:",
     "ART SLOT READY",
     "ART SLOT EMPTY",
     "DROP ART INTO SLOT",
@@ -1030,6 +1034,17 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     }
 }
 
+
+static void m12_show_missing_original_files_popup(M12_StartupMenuState* state) {
+    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return;
+    }
+    state->view = M12_MENU_VIEW_MESSAGE;
+    state->messageLine1 = m12_text(state, M12_TEXT_ORIGINAL_FILES_NOT_FOUND);
+    state->messageLine2 = m12_text(state, M12_TEXT_COPY_RETAIL_FILES_INTO);
+    state->messageLine3 = M12_AssetStatus_GetDataDir(&state->assetStatus);
+}
+
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL);
 }
@@ -1065,6 +1080,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    m12_show_missing_original_files_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;

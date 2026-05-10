@@ -249,6 +249,17 @@ int main(void) {
         return 2;
     }
 
+    portable_setenv("LANG", "C", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    probe_record(&tally,
+                 "INV_M12_00_ORIGINALS_POPUP",
+                 state.view == M12_MENU_VIEW_MESSAGE &&
+                     state.launchRequested == 0 &&
+                     state.messageLine1 && strcmp(state.messageLine1, "ORIGINAL FILES NOT FOUND") == 0 &&
+                     state.messageLine2 && strcmp(state.messageLine2, "COPY YOUR RETAIL GAME FILES INTO:") == 0 &&
+                     state.messageLine3 && strcmp(state.messageLine3, dataDir) == 0,
+                 "empty originals directory opens a startup popup that tells the user where to copy retail files");
+
     make_file_with_text(graphicsPath, "ok");
     make_file_with_text(dungeonPath, "ok");
 

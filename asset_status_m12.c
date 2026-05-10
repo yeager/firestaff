@@ -65,6 +65,20 @@ static const M12_GameVersionSpec g_games[] = {
     {"nexus1", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])}
 };
 
+static const char* const g_originalCandidateNames[] = {
+    "GRAPHICS.DAT",
+    "DUNGEON.DAT",
+    "DUNGEONF.DAT",
+    "DUNGEONG.DAT",
+    "CSBGRAPH.DAT",
+    "CSB.DAT",
+    "DM2GRAPHICS.DAT",
+    "DM2DUNGEON.DAT",
+    "SKULLKEEP.GFX",
+    "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
+    NULL
+};
+
 static int m12_game_index_from_id(const char* gameId) {
     size_t i;
     if (!gameId) {
@@ -298,6 +312,42 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
     return count;
 }
 
+
+static int m12_root_has_original_candidate(const char* root) {
+    char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
+    size_t i;
+    if (!root || root[0] == '\0') {
+        return 0;
+    }
+    for (i = 0U; g_originalCandidateNames[i] != NULL; ++i) {
+        FILE* fp;
+        if (!FSP_JoinPath(path, sizeof(path), root, g_originalCandidateNames[i])) {
+            continue;
+        }
+        fp = fopen(path, "rb");
+        if (fp) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_scan_original_candidates(M12_AssetStatus* status,
+                                         const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                         size_t rootCount) {
+    size_t rootIndex;
+    if (!status) {
+        return;
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        if (m12_root_has_original_candidate(roots[rootIndex])) {
+            status->originalFileCandidateFound = 1;
+            return;
+        }
+    }
+}
+
 static int m12_try_match_version(const char* root,
                                  const M12_VersionSpec* spec,
                                  char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
@@ -393,6 +443,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     } else if (rootCount > 0U) {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[0]);
     }
+    m12_scan_original_candidates(status, roots, rootCount);
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot);
     }
@@ -416,6 +467,10 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
         return status->nexusAvailable;
     }
     return 0;
+}
+
+int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status) {
+    return status && status->originalFileCandidateFound ? 1 : 0;
 }
 
 int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
