@@ -71,6 +71,61 @@ static void test_redmcsb_g0163_wall_frames(void)
     }
 }
 
+
+static void test_redmcsb_g0163_wall_frames_resolve_clip_gate(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int visible;
+        int src_x;
+        int src_y;
+        int dst_x;
+        int dst_y;
+        int width;
+        int height;
+        const char *id;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3C, 1, 18, 0,  74,25,  46, 51, "D3C" },
+        { DM1_VIEW_SQUARE_D3L, 1, 32, 0,   0,25,  32, 51, "D3L" },
+        { DM1_VIEW_SQUARE_D3R, 1,  0, 0, 139,25,  64, 51, "D3R" },
+        { DM1_VIEW_SQUARE_D2C, 1, 16, 0,  60,20,  56, 71, "D2C" },
+        { DM1_VIEW_SQUARE_D2L, 1, 61, 0,   0,20,  11, 71, "D2L" },
+        { DM1_VIEW_SQUARE_D2R, 1,  0, 0, 149,20,  72, 71, "D2R" },
+        { DM1_VIEW_SQUARE_D1C, 1, 48, 0,  32, 9,  80,111, "D1C" },
+        { DM1_VIEW_SQUARE_D1L, 0,  0, 0,   0, 0,   0,  0, "D1L" },
+        { DM1_VIEW_SQUARE_D1R, 1,  0, 0, 160, 9,  64,111, "D1R" },
+        { DM1_VIEW_SQUARE_D0C, 0,  0, 0,   0, 0,   0,  0, "D0C" },
+        { DM1_VIEW_SQUARE_D0L, 1,  0, 0,   0, 0,  16,136, "D0L" },
+        { DM1_VIEW_SQUARE_D0R, 1,  0, 0, 192, 0,  16,136, "D0R" },
+    };
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(expected[i].square);
+        char id[96];
+        snprintf(id, sizeof(id), "G0163.clip.%s.frame", expected[i].id);
+        check_nonnull(id, frame);
+        if (!frame) continue;
+        DM1_ViewportBlitClipGate gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+        snprintf(id, sizeof(id), "G0163.clip.%s.visible", expected[i].id);
+        check_int(id, gate.visible ? 1 : 0, expected[i].visible);
+        snprintf(id, sizeof(id), "G0163.clip.%s.source_lock", expected[i].id);
+        check_int(id, gate.source_lines && strstr(gate.source_lines, "DUNVIEW.C:3053-3058") && strstr(gate.source_lines, "COORD.C:2390-2409") && strstr(gate.source_lines, "IMAGE3.C:866-889"), 1);
+        if (!expected[i].visible) continue;
+        snprintf(id, sizeof(id), "G0163.clip.%s.src_x", expected[i].id);
+        check_int(id, gate.src_x, expected[i].src_x);
+        snprintf(id, sizeof(id), "G0163.clip.%s.src_y", expected[i].id);
+        check_int(id, gate.src_y, expected[i].src_y);
+        snprintf(id, sizeof(id), "G0163.clip.%s.dst_x", expected[i].id);
+        check_int(id, gate.dst_x, expected[i].dst_x);
+        snprintf(id, sizeof(id), "G0163.clip.%s.dst_y", expected[i].id);
+        check_int(id, gate.dst_y, expected[i].dst_y);
+        snprintf(id, sizeof(id), "G0163.clip.%s.width", expected[i].id);
+        check_int(id, gate.width, expected[i].width);
+        snprintf(id, sizeof(id), "G0163.clip.%s.height", expected[i].id);
+        check_int(id, gate.height, expected[i].height);
+    }
+}
+
 static void test_redmcsb_f0128_draw_order(void)
 {
     static const DM1_ViewSquareIndex expected_squares[] = {
@@ -540,6 +595,7 @@ static void test_source_evidence_mentions_visual_lane(void)
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
+    test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
     test_wall_source_row_clip_occlusion_gate();
