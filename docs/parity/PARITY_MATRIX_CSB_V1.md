@@ -1,6 +1,6 @@
 # CSB V1 parity matrix
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane. This matrix is a source/evidence contract only; it does not enable CSB launch, rendering, gameplay, save compatibility, or original-overlay claims.
 
@@ -17,7 +17,7 @@ Primary references stay local on N2:
 |---|---:|---|---|---|
 | `reference_inventory` | 8/10 | `SOURCE_LOCKED_PARTIAL` | CSB-specific source and original payload identities must be fixed before launch/runtime work counts. | Fill remaining platform/version inventory gaps without substituting Amiga/Atari assets. |
 | `definition_matrix` | 10/10 | `MATCHED_DEFINITION_ONLY` | This document plus `csb_v1_parity_surface_matrix` define the CSB V1 DoD surfaces and non-claims. | Keep the matrix verified whenever completion points change. |
-| `launch_smoke` | 1/10 | `POSITIVE_BLOCKER_RENDER_SMOKE` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the DM1-only startup gate. Current proof is a positive front-door render smoke plus a deliberate runtime blocker: matched CSB assets can render options/blocker surfaces, but cannot request runtime launch. | Add an experimental CSB launch-intent fixture only after an explicit media manifest and loader contract covers paired dungeon/game/save/graphics payloads; do not enable production CSB launch. |
+| `launch_smoke` | 1/10 | `POSITIVE_BLOCKER_RENDER_SMOKE` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the DM1-only startup gate. Current proof is a positive front-door render smoke plus a deliberate runtime blocker: matched CSB assets can render options/blocker surfaces, but cannot request runtime launch. | The experimental CSB launch-intent fixture now consumes the explicit Atari ST media manifest and source workflow anchors while keeping production CSB intent invalid; next proof must add runtime/capture handling before launch is enabled. |
 | `core_input_movement` | 0/15 | `BLOCKED_RUNTIME` | CSB input must prove mode-specific mouse/keyboard routing from CSB state, including Utility/reincarnate/adventuring modes. | Add CSB state-backed input/movement fixtures. |
 | `viewport_ui_render` | 0/20 | `BLOCKED_CAPTURE` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. | Build capture/overlay fixtures and compare against Firestaff output. |
 | `gameplay_systems` | 0/15 | `BLOCKED_RUNTIME` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points; it needs CSB source/runtime gates. | Land narrow CSB gameplay source/runtime gates. |
@@ -27,6 +27,7 @@ Primary references stay local on N2:
 ## CSB front-door render smoke and launch blocker gate
 
 - `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and blocker-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 0` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 0`. This is a positive front-door render smoke with a deliberate runtime blocker: it prevents matched CSB assets from falling into the DM1-only runtime while preserving diagnostic game/version identity.
+- `csb_v1_experimental_launch_intent_fixture` is an evidence-only fixture for the future CSB launch-intent contract. It consumes `csb_v1_atari_asset_pair_manifest.json`, requires the selected Atari ST `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT`, audits ReDMCSB primary CSB dungeon/new-adventure gates, and verifies `menu_startup_m12.c` still keeps production launch support DM1-only. It explicitly keeps `valid_intent_allowed=false` and makes no runtime/render/gameplay claim.
 
 ## Source-lock anchors audited by the verifier
 
@@ -48,6 +49,8 @@ Primary references stay local on N2:
 ```sh
 python3 -m py_compile tools/verify_csb_v1_completion_matrix.py
 python3 tools/verify_csb_v1_completion_matrix.py
+python3 -m py_compile tools/verify_csb_v1_experimental_launch_intent_fixture.py
+python3 tools/verify_csb_v1_experimental_launch_intent_fixture.py
 python3 tools/verify_firestaff_completion_matrix.py
 python3 tools/firestaff_completion_status.py
 ```

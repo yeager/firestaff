@@ -97,7 +97,7 @@ SOURCE_ANCHORS = (
     Anchor(
         "firestaff_csb_launch_still_gated",
         str(ROOT / "menu_startup_m12.c"),
-        "1180-1222",
+        "1235-1260",
         ("strcmp(gameId, \"csb\") == 0", "return gameId && strcmp(gameId, \"dm1\") == 0;"),
         "Firestaff currently catalogs CSB but m12_game_supported remains DM1-only.",
     ),
@@ -126,6 +126,23 @@ def git_head(path: Path) -> str | None:
         return None
 
 
+def display_path(path: Path) -> str:
+    text = str(path)
+    replacements = (
+        (str(ORIG), "<firestaff-original-games>"),
+        (str(CSB_SRC), "<csb-source>/CSB/src"),
+        (str(CSBWIN), "<csbwin-source>/CSBWin"),
+        (str(REDMCSB.parent.parent.parent), "<redmcsb-source>/ReDMCSB_WIP20210206"),
+        (str(ROOT), "<firestaff-repo>"),
+    )
+    for prefix, repl in replacements:
+        if text == prefix:
+            return repl
+        if text.startswith(prefix + "/"):
+            return repl + text[len(prefix):]
+    return text
+
+
 def line_window(path: Path, window: str) -> str:
     start, end = [int(x) for x in window.split("-")]
     try:
@@ -144,7 +161,7 @@ def main() -> int:
         ok = actual == expected
         if not ok:
             failures.append(f"{ident} HEAD mismatch: expected {expected}, actual {actual}")
-        git_rows.append({"id": ident, "path": str(path), "expected_head": expected, "actual_head": actual, "ok": ok})
+        git_rows.append({"id": ident, "path": display_path(path), "expected_head": expected, "actual_head": actual, "ok": ok})
 
     asset_rows = []
     for ident, (path, size, digest, role) in EXPECTED_ASSETS.items():
@@ -157,7 +174,7 @@ def main() -> int:
         asset_rows.append({
             "id": ident,
             "role": role,
-            "path": str(path),
+            "path": display_path(path),
             "expected_size": size,
             "actual_size": actual_size,
             "expected_sha256": digest,
@@ -174,6 +191,7 @@ def main() -> int:
         if not ok:
             failures.append(f"{anchor.id} missing {missing} path_exists={path.exists()}")
         row = asdict(anchor)
+        row["path"] = display_path(path)
         row.update({"missing": missing, "ok": ok})
         source_rows.append(row)
 

@@ -17,7 +17,7 @@ Scope: evidence-only manifest for the selected Atari ST CSB V1 lane. This pass d
   - `CEDTINCH.C:5-63` gates Make New Adventure on loaded game/champions and CSB save-header/dungeon IDs.
 - CSBWin source `<csbwin-source>/CSBWin`, HEAD `2f63d10d9b8c155e0be17888271d394255ce1bac`.
   - `Game/readme.txt:1-30` confirms the workflow boundary: enter dungeon, choose prison, then Make New Adventure.
-- Firestaff boundary: `menu_startup_m12.c:1180-1222` still catalogs `csb` but `m12_game_supported()` remains DM1-only.
+- Firestaff boundary: `menu_startup_m12.c:1235-1260` still catalogs `csb` but `m12_game_supported()` remains DM1-only.
 
 ## Manifested assets
 
