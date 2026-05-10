@@ -17,6 +17,40 @@ static int dm1_v1_is_step_command(int command)
     return command >= DM1_V1_COMMAND_MOVE_FORWARD && command <= DM1_V1_COMMAND_MOVE_LEFT;
 }
 
+static int dm1_v1_normalize_cell(int cell)
+{
+    return cell & 3;
+}
+
+static void dm1_v1_record_blocked_wall_or_door_damage_request(
+    const struct PartyState_Compat* party,
+    int movementArrowIndex,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    int firstCell;
+
+    if (!party || !outResult || party->championCount <= 0) {
+        return;
+    }
+
+    /* Source lock: CLIKMENU.C:285-299 handles a wall/closed-door/closed
+     * fake-wall block by calling F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage
+     * with attack=1, allowed wounds torso|legs (0x0008|0x0010), and
+     * C2_ATTACK_SELF for the two leading party cells computed from the
+     * movement arrow plus party direction.  The combat layer owns random
+     * defense/wound materialization; this command seam records the request
+     * exactly where F0366 makes it, before input discard and the PC-34
+     * blocked-movement VBlank wait.
+     */
+    firstCell = dm1_v1_normalize_cell(movementArrowIndex + party->direction + 2);
+    outResult->blockedByWallOrDoorDamageRequested = 1;
+    outResult->blockedByWallOrDoorDamageAttack = 1;
+    outResult->blockedByWallOrDoorDamageAttackTypeSelf = 2;
+    outResult->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;
+    outResult->blockedByWallOrDoorDamageFirstCell = firstCell;
+    outResult->blockedByWallOrDoorDamageSecondCell = dm1_v1_normalize_cell(firstCell + 1);
+}
+
 static int dm1_v1_compute_step_stamina_cost(const struct ChampionState_Compat* champion)
 {
     int maxLoad;
@@ -223,6 +257,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
     if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {
         outResult->movementBlocked = 1;
+        if (outResult->movement.resultCode == MOVE_BLOCKED_WALL ||
+            outResult->movement.resultCode == MOVE_BLOCKED_DOOR) {
+            dm1_v1_record_blocked_wall_or_door_damage_request(party, action, outResult);
+        }
         outResult->inputDiscardRequested = 1;
         outResult->blockedMovementVblankWaitRequested = 1;
         DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
@@ -304,7 +342,7 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
     return "ReDMCSB Toolchains/Common/Source source lock: "
            "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099 locks/empty-checks/movement-disabled gate, 2118-2127 dequeues, 2150-2156 dispatches turn/move; "
-           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party via F0267 then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:176-179 stairs sensor-order comment, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255 living-champion stamina decrement before movement resolution, 224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard/group-adjacent reaction/one PC-34 blocked-movement VBlank/keep input wait armed, 325-346 move-result and cooldown; CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048 clamps stamina and damages on underflow; "
+           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party via F0267 then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:176-179 stairs sensor-order comment, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255 living-champion stamina decrement before movement resolution, 224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/self-damage-and-wounds request/discard/group-adjacent reaction/one PC-34 blocked-movement VBlank/keep input wait armed, 325-346 move-result and cooldown; CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048 clamps stamina and damages on underflow; "
            "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391 applies forward/right deltas; "
            "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
            "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update, 799-818 party walk-off/walk-on sensor processing.";

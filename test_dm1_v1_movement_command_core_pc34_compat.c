@@ -170,6 +170,12 @@ int main(void)
     ok &= expect_int("blocked movement still decrements stamina", party.champions[0].stamina.current, 99);
     ok &= expect_int("blocked movement records stamina cost", result.staminaCost[0], 1);
     ok &= expect_int("blocked movement flushes queued input", (int)queue.count, 0);
+    ok &= expect_int("blocked wall requests self damage seam", result.blockedByWallOrDoorDamageRequested, 1);
+    ok &= expect_int("blocked wall damage attack is one", result.blockedByWallOrDoorDamageAttack, 1);
+    ok &= expect_int("blocked wall damage attack type self", result.blockedByWallOrDoorDamageAttackTypeSelf, 2);
+    ok &= expect_int("blocked wall damage wounds torso legs", result.blockedByWallOrDoorDamageAllowedWounds, 0x0018);
+    ok &= expect_int("blocked forward north first target cell", result.blockedByWallOrDoorDamageFirstCell, DIR_SOUTH);
+    ok &= expect_int("blocked forward north second target cell", result.blockedByWallOrDoorDamageSecondCell, DIR_WEST);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -286,6 +292,20 @@ int main(void)
     ok &= expect_int("pc34 core blocked up arrow discards followup", (int)queue.count, 0);
     ok &= expect_int("pc34 core blocked up arrow skips turn", result.turnApplied, 0);
     ok &= expect_int("pc34 core blocked up arrow keeps y", party.mapY, 2);
+    ok &= expect_int("pc34 core blocked up arrow damage request", result.blockedByWallOrDoorDamageRequested, 1);
+    ok &= expect_int("pc34 core blocked up arrow first cell", result.blockedByWallOrDoorDamageFirstCell, DIR_SOUTH);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    party.championCount = 0;
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, 0));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core empty party blocked wall queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core empty party blocked wall processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, 0, 390, 380, footwear, &result), 1);
+    ok &= expect_int("pc34 core empty party has no damage request", result.blockedByWallOrDoorDamageRequested, 0);
 
     printf("dm1V1MovementCommandCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;

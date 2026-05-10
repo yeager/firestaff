@@ -47,6 +47,12 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int stepApplied;
     int movementBlocked;
     int blockedByGroup;
+    int blockedByWallOrDoorDamageRequested;
+    int blockedByWallOrDoorDamageAttack;
+    int blockedByWallOrDoorDamageAttackTypeSelf;
+    unsigned short blockedByWallOrDoorDamageAllowedWounds;
+    int blockedByWallOrDoorDamageFirstCell;
+    int blockedByWallOrDoorDamageSecondCell;
     int groupReactionPartyAdjacentRequested;
     int inputDiscardRequested;
     int blockedMovementVblankWaitRequested;
