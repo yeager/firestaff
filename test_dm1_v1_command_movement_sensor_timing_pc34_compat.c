@@ -514,6 +514,7 @@ int main(void)
         ok &= expect_int("core group block processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
         ok &= expect_int("core group block detected", core.blockedByGroup, 1);
+        ok &= expect_int("core group block requests adjacent reaction", core.groupReactionPartyAdjacentRequested, 1);
         ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
         ok &= expect_int("core group block still applies pre-resolution stamina", party.champions[0].stamina.current, 98);

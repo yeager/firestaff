@@ -24,7 +24,8 @@ extern "C" {
  *   dequeued step command before stairs/blocker resolution, resolves relative step destination, takes
  *   stairs immediately on turn/backward/current-square and target-square
  *   stairs consequences, rejects walls/closed doors/closed real
- *   fake-walls/groups, calls F0267_MOVE for source/destination/sensor
+ *   fake-walls/groups, requests the party-adjacent group reaction on
+ *   group blocks, calls F0267_MOVE for source/destination/sensor
  *   mutation, applies movement cooldown only after accepted non-stairs party
  *   movement, and releases input wait after accepted command effects.
  * - MOVESENS.C:752-783 timestamps true party square changes; MOVESENS.C:1553-1794
@@ -46,6 +47,7 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int stepApplied;
     int movementBlocked;
     int blockedByGroup;
+    int groupReactionPartyAdjacentRequested;
     int inputDiscardRequested;
     int blockedMovementVblankWaitRequested;
     int stopWaitingForPlayerInput;
