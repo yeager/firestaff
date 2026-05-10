@@ -1,0 +1,164 @@
+{
+  "inputs": {
+    "pass487": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+    "pass495": "parity-evidence/verification/pass495_dm1_v1_f0365_f0366_runtime_static_boundary/manifest.json",
+    "pass497": "parity-evidence/verification/pass497_dm1_v1_original_capture_next_blocker/manifest.json"
+  },
+  "narrowedBlocker": "Original DM1 V1 capture is blocked specifically at the post-gameplay, post-command state-delta boundary: the next evidence must connect a real F0380-dequeued movement/turn command through F0365/F0366 to the subsequent F0128 composition and F0097/VIDRV present, and must not collapse to the repeated static 48ed gameplay frame.",
+  "nonClaims": [
+    "no new original runtime debugger stop was captured by this verifier",
+    "no original-vs-Firestaff pixel parity promotion",
+    "no promotion of pass487/pass492 static frames",
+    "no claim that source movement handlers are defective"
+  ],
+  "observedBlockerState": {
+    "classes": [
+      "entrance_menu",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ],
+    "f0365F0366RuntimeStopsPreviouslyProven": true,
+    "f0365F0366StaticCaptureStillBlocked": true,
+    "filenameLabelDriftRows": 5,
+    "firstFrameStillEntranceMenu": true,
+    "pass487Status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+    "pass495Status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
+    "pass497NextBlockerMentionsStateDelta": true,
+    "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+    "postEntryGameplayHashRepeated": true,
+    "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+    "postEntryRegionStatsRepeated": true
+  },
+  "ok": true,
+  "problems": [],
+  "promotionPredicate": {
+    "rejectAsNonPromotable": [
+      "host click/key route labels without F0380/F0365/F0366 evidence",
+      "BPLIST or setup echoes without strict post-Running stops",
+      "repeated 48ed static gameplay captures after entry",
+      "filenames whose labels drift from the route action",
+      "F0128/F0097 address bindings without a command-state predecessor"
+    ],
+    "requiredForNextPromotableOriginalCapture": [
+      "post-gameplay command observed through F0380 pop/load/decrement",
+      "matching F0365 turn or F0366 move handler observed after that command",
+      "G0321 stop-wait transition and game-time tick allow the wait loop to exit",
+      "later F0128 consumes the resulting direction/map-X/map-Y tuple",
+      "F0097/VIDRV present boundary is reached for the same shot",
+      "raw viewport/fullframe hash or region fingerprint differs from the repeated 48ed static gameplay frame, unless the command is explicitly proven blocked/no-op by source state"
+    ]
+  },
+  "requiredObserved": {
+    "f0365_f0366_runtime_stop_chain_already_closed": true,
+    "next_blocker_state_delta_text_present": true,
+    "pass487_ok": true,
+    "pass495_ok": true,
+    "pass497_ok": true,
+    "static_no_state_delta_currently_present": true
+  },
+  "schema": "firestaff.parity.pass498_dm1_v1_original_post_command_state_delta_boundary.v1",
+  "sourceAudit": [
+    {
+      "claim": "A promotable post-command frame must be after the wait loop exits and the next outer-loop F0128 consumes the updated party tuple.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_redraw_before_wait_then_command_wait_wrap",
+      "lines": "90,164,215-219",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "The source-visible state delta must be tied to a real dequeued command, not just host click/key labels.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pop_load_dispatches_turn_or_step",
+      "lines": "2045-2156",
+      "missing": [],
+      "needles": [
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+        "G2153_i_QueuedCommandsCount--;",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "Accepted turn commands must prove the F0365 stop-wait write and party-direction mutation before the redraw boundary.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "f0365_turn_mutates_direction_and_stops_wait",
+      "lines": "142-174",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "Accepted move commands must prove the F0366 destination/move-result path, not a repeated static gameplay capture.",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366_step_computes_destination_and_stops_wait",
+      "lines": "180-347",
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "The post-command state delta becomes capture-eligible only once F0128 composes G0296 for the updated direction/X/Y tuple.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_composes_viewport_from_party_tuple",
+      "lines": "8318-8610",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "A screenshot/viewport crop is promotable only at or after the F0097/VIDRV present boundary after the matching F0128.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_present_boundary",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE;",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA",
+  "timestampUtc": "2026-05-10T09:31:59.485475+00:00"
+}
