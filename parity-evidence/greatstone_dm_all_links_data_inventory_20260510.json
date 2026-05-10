@@ -1,0 +1,1987 @@
+{
+  "source": "http://greatstone.free.fr/dm/g_dm.html",
+  "fetched_at_utc": "2026-05-10T11:00:15.476585+00:00",
+  "model_note": "qwen3.6:35b, not Qwen 3.6 Plus; 65k context",
+  "counts": {
+    "normal_links": 134,
+    "loadIntoFrame_links": 77,
+    "allowed_resource_urls": 82,
+    "resource_pages_fetched_200": 82,
+    "resource_pages_404_or_error": 0,
+    "valuable_resources": 81,
+    "high_value_resources": 65
+  },
+  "resources": [
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/d_mapfile.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "unknown",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "documentation",
+      "original_filename": "d_mapfile.html",
+      "greatstone_db_path": "d_mapfile.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes pak data; exposes ftl data; exposes article data; documentation reference",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/d_ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "unknown",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "documentation",
+      "original_filename": "d_ftl.html",
+      "greatstone_db_path": "d_ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes pak data; exposes ftl data; exposes article data; documentation reference",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/d_pak.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "unknown",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "documentation",
+      "original_filename": "d_pak.html",
+      "greatstone_db_path": "d_pak.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes pak data; exposes ftl data; exposes article data; documentation reference",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/d_items.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "unknown",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "documentation",
+      "original_filename": "d_items.html",
+      "greatstone_db_path": "d_items.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes pak data; exposes ftl data; exposes article data; documentation reference",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/d_articles.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "unknown",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "documentation",
+      "original_filename": "d_articles.html",
+      "greatstone_db_path": "d_articles.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes tile data; exposes pak data; exposes ftl data; exposes article data; documentation reference",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_en/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_en/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_en/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_en/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_en/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_en/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_fr_original/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_fr_original/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_fr_original/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_fr_original/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_fr_original/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_fr_original/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_ge_rainbow/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_ge_rainbow/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_ge_rainbow/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_ge_rainbow/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_20_ge_rainbow/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "20",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_20_ge_rainbow/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_21_en/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "21",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_21_en/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_21_en/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "21",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_21_en/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_21_en/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "21",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_21_en/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_en/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_en/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_en/dungeon.dat.kid/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_en/dungeon.dat.kid/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_en/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_en/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_en/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_en/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_ge/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_ge/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_ge/dungeon.dat.kid/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_ge/dungeon.dat.kid/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_ge/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_ge/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_22_ge/swoosh/swoosh.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "22",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swoosh.html",
+      "greatstone_db_path": "db_data/dm_amiga_22_ge/swoosh/swoosh.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/dungeonf.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/dungeonf.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/dungeong.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/dungeong.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/appa.ftl/appa.ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ftl_insert_disk",
+      "original_filename": "appa.ftl.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/appa.ftl/appa.ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/APPA.FTL",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/APPA.FTL"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/appb.ftl/appb.ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ftl_choose_language",
+      "original_filename": "appb.ftl.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/appb.ftl/appb.ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/APPB.FTL",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/APPB.FTL"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/cnfg.ftl/cnfg.ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ftl_error",
+      "original_filename": "cnfg.ftl.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/cnfg.ftl/cnfg.ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/CNFG.FTL",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/CNFG.FTL"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/kaos.ftl/kaos.ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ftl_code",
+      "original_filename": "kaos.ftl.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/kaos.ftl/kaos.ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/KAOS.FTL"
+      ],
+      "local_sha256": "da21534cd9c00bdf0ca9875a18630a8babfff9f43f4a23bda3e1a2608f891693",
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/swsh.ftl/swsh.ftl.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ftl_logo",
+      "original_filename": "swsh.ftl.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/swsh.ftl/swsh.ftl.html",
+      "firestaff_value": "medium",
+      "firestaff_value_reason": "exposes palette data; exposes ftl data",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/SWSH.FTL",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/SWSH.FTL"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/titl.dat/titl.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "36",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "title_animation",
+      "original_filename": "titl.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_36_caps/titl.dat/titl.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "title_animation page; exposes palette data; exposes encoded image data; exposes delta layer data",
+      "local_matching_candidate_paths": [
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/TITL.DAT",
+        "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/TITL.DAT"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_atari_12_meynaf/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "12",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_amiga_atari_12_meynaf/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_amiga_atari_12_meynaf/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Amiga",
+      "version": "12",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_amiga_atari_12_meynaf/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Amiga",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_apple2gs_en/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Apple II GS",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_apple2gs_en/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Apple II GS",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_apple2gs_en/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Apple II GS",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_apple2gs_en/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Apple II GS",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_demo/demo.dat/demo.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "unknown",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "demo_graphics",
+      "original_filename": "demo.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_demo/demo.dat/demo.dat.html",
+      "firestaff_value": "low",
+      "firestaff_value_reason": "catalogue entry",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_10_stx/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "10",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_10_stx/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_10_stx/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "10",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_10_stx/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_11_en_ford/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "11",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_11_en_ford/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_11_en_ford/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "11",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_11_en_ford/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_12_en_stx/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "12",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_12_en_stx/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_12_en_stx/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "12",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_12_en_stx/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_12_ge_stx/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "12",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_12_ge_stx/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_12_ge_stx/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "12",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_12_ge_stx/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_13_fr_stx/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "13",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_13_fr_stx/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_13_fr_stx/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "13",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_13_fr_stx/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_en_42crew/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_en_42crew/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_en_42crew/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_en_42crew/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_en_ad097/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_atari_en_ad097/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_atari_en_ad097/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "Atari ST",
+      "version": "unknown",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_atari_en_ad097/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for Atari ST",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_fmtowns_20_enjp/dungeon.dat.en/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "FM Towns",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_fmtowns_20_enjp/dungeon.dat.en/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for FM Towns",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_fmtowns_20_enjp/dungeon.dat.jp/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "FM Towns",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_fmtowns_20_enjp/dungeon.dat.jp/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for FM Towns",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_fmtowns_20_enjp/graphics.dat.en/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "FM Towns",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_fmtowns_20_enjp/graphics.dat.en/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for FM Towns",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_fmtowns_20_enjp/graphics.dat.jp/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "FM Towns",
+      "version": "20",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_fmtowns_20_enjp/graphics.dat.jp/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for FM Towns",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc98_20_jp/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC-98",
+      "version": "20",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_pc98_20_jp/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for PC-98",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc98_20_jp/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC-98",
+      "version": "20",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_pc98_20_jp/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for PC-98",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_pc_34/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_pc_34/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "song",
+      "original_filename": "song.dat.html",
+      "greatstone_db_path": "db_data/dm_pc_34/song.dat/song.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/DATA/SONG.DAT",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/SONG.DAT"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/title/title.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "title_animation",
+      "original_filename": "title.html",
+      "greatstone_db_path": "db_data/dm_pc_34/title/title.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; title_animation page; exposes palette data; exposes encoded image data; exposes delta layer data",
+      "local_matching_candidate_paths": [
+        "_canonical/dm1/TITLE"
+      ],
+      "local_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/end/end.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ending_animation",
+      "original_filename": "end.html",
+      "greatstone_db_path": "db_data/dm_pc_34/end/end.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; ending_animation page; exposes palette data; exposes encoded image data; exposes delta layer data",
+      "local_matching_candidate_paths": [
+        "_canonical/dm2/Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip"
+      ],
+      "local_sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228",
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/dungeon.dat.en/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/dungeon.dat.en/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/dungeon.dat.fr/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "French",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/dungeon.dat.fr/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/dungeon.dat.ge/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "German",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/dungeon.dat.ge/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/song.dat/song.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "song",
+      "original_filename": "song.dat.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/song.dat/song.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource",
+      "local_matching_candidate_paths": [
+        "_extracted/dm-pc34/DungeonMasterPC34/DATA/SONG.DAT",
+        "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/SONG.DAT"
+      ],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/title/title.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "title_animation",
+      "original_filename": "title.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/title/title.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource; title_animation page; exposes palette data; exposes encoded image data; exposes delta layer data",
+      "local_matching_candidate_paths": [
+        "_canonical/dm1/TITLE"
+      ],
+      "local_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_pc_34_multi/end/end.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "PC",
+      "version": "3.4",
+      "language": "unknown",
+      "notes_from_listing": "",
+      "resource_type": "ending_animation",
+      "original_filename": "end.html",
+      "greatstone_db_path": "db_data/dm_pc_34_multi/end/end.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "PC 3.4 resource; PC 3.4 multilingual resource; ending_animation page; exposes palette data; exposes encoded image data; exposes delta layer data",
+      "local_matching_candidate_paths": [
+        "_canonical/dm2/Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip"
+      ],
+      "local_sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228",
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_en_ntsc/dungeon/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_snes_10_en_ntsc/dungeon/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for SNES",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_en_ntsc/smc/smc.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "rom_page",
+      "original_filename": "smc.html",
+      "greatstone_db_path": "db_data/dm_snes_10_en_ntsc/smc/smc.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "ROM image reference; exposes palette data; exposes tile data; exposes coordinate data",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_en_pal/dungeon/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_snes_10_en_pal/dungeon/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for SNES",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_en_pal/smc/smc.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "English",
+      "notes_from_listing": "",
+      "resource_type": "rom_page",
+      "original_filename": "smc.html",
+      "greatstone_db_path": "db_data/dm_snes_10_en_pal/smc/smc.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "ROM image reference; exposes palette data; exposes tile data; exposes coordinate data",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_jp_ntsc/dungeon/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_snes_10_jp_ntsc/dungeon/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for SNES",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_10_jp_ntsc/smc/smc.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "10",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "rom_page",
+      "original_filename": "smc.html",
+      "greatstone_db_path": "db_data/dm_snes_10_jp_ntsc/smc/smc.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "ROM image reference; exposes palette data; exposes tile data; exposes coordinate data",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_11_jp_ntsc/dungeon/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "11",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_snes_11_jp_ntsc/dungeon/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for SNES",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_snes_11_jp_ntsc/smc/smc.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "SNES",
+      "version": "11",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "rom_page",
+      "original_filename": "smc.html",
+      "greatstone_db_path": "db_data/dm_snes_11_jp_ntsc/smc/smc.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "ROM image reference; exposes palette data; exposes tile data; exposes coordinate data",
+      "local_matching_candidate_paths": [],
+      "local_sha256": null,
+      "blockers": [
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_x68k_30_jp/dungeon.dat/dungeon.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "X68000",
+      "version": "30",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "dungeon_map",
+      "original_filename": "dungeon.html",
+      "greatstone_db_path": "db_data/dm_x68k_30_jp/dungeon.dat/dungeon.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "dungeon_map for X68000",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Dungeon.DAT"
+      ],
+      "local_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "blockers": [
+        "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate without SHA256 and variant name.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    },
+    {
+      "normalized_url": "http://greatstone.free.fr/dm/db_data/dm_x68k_30_jp/graphics.dat/graphics.dat.html",
+      "source_page_url": "http://greatstone.free.fr/dm/g_dm.html",
+      "fetch_status": "200",
+      "game": "DM",
+      "platform": "X68000",
+      "version": "30",
+      "language": "Japanese",
+      "notes_from_listing": "",
+      "resource_type": "graphics_atlas",
+      "original_filename": "graphics.dat.html",
+      "greatstone_db_path": "db_data/dm_x68k_30_jp/graphics.dat/graphics.dat.html",
+      "firestaff_value": "high",
+      "firestaff_value_reason": "graphics_atlas for X68000",
+      "local_matching_candidate_paths": [
+        "_canonical/csb/amiga-Graphics.DAT"
+      ],
+      "local_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "blockers": [
+        "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+        "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical."
+      ]
+    }
+  ],
+  "youtube_references": [
+    {
+      "url": "http://www.youtube.com/watch?v=Q5hPgGy4KBo",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=Q5hPgGy4KBo",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=fzSVEiXaAic",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=_jLXN_drrh8",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=BHZ3xxznucQ",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=Q5hPgGy4KBo",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=fzSVEiXaAic",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=_jLXN_drrh8",
+      "context": "normal link"
+    },
+    {
+      "url": "http://www.youtube.com/watch?v=BHZ3xxznucQ",
+      "context": "normal link"
+    }
+  ],
+  "documentation_links": [
+    "http://greatstone.free.fr/dm/d_mapfile.html",
+    "http://greatstone.free.fr/dm/d_ftl.html",
+    "http://greatstone.free.fr/dm/d_pak.html",
+    "http://greatstone.free.fr/dm/d_items.html",
+    "http://greatstone.free.fr/dm/d_articles.html"
+  ],
+  "high_value_firestaff_targets": [
+    "db_data/dm_amiga_20_en/dungeon.dat/dungeon.html (Amiga) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_20_en/graphics.dat/graphics.dat.html (Amiga) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_20_fr_original/dungeon.dat/dungeon.html (Amiga) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_20_fr_original/graphics.dat/graphics.dat.html (Amiga) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_20_ge_rainbow/dungeon.dat/dungeon.html (Amiga) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_20_ge_rainbow/graphics.dat/graphics.dat.html (Amiga) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_21_en/dungeon.dat/dungeon.html (Amiga) v21 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_21_en/graphics.dat/graphics.dat.html (Amiga) v21 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_22_en/dungeon.dat/dungeon.html (Amiga) v22 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_22_en/dungeon.dat.kid/dungeon.html (Amiga) v22 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_22_en/graphics.dat/graphics.dat.html (Amiga) v22 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_22_ge/dungeon.dat/dungeon.html (Amiga) v22 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_22_ge/dungeon.dat.kid/dungeon.html (Amiga) v22 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_22_ge/graphics.dat/graphics.dat.html (Amiga) v22 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_36_caps/dungeon.dat/dungeon.html (Amiga) v36 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_36_caps/dungeonf.dat/dungeon.html (Amiga) v36 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_36_caps/dungeong.dat/dungeon.html (Amiga) v36 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_36_caps/graphics.dat/graphics.dat.html (Amiga) v36 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_amiga_36_caps/titl.dat/titl.dat.html (Amiga) v36",
+    "db_data/dm_amiga_atari_12_meynaf/dungeon.dat/dungeon.html (Amiga) v12 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_amiga_atari_12_meynaf/graphics.dat/graphics.dat.html (Amiga) v12 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_apple2gs_en/dungeon.dat/dungeon.html (Apple II GS) [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_apple2gs_en/graphics.dat/graphics.dat.html (Apple II GS) [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_10_stx/dungeon.dat/dungeon.html (Atari ST) v10 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_10_stx/graphics.dat/graphics.dat.html (Atari ST) v10 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_11_en_ford/dungeon.dat/dungeon.html (Atari ST) v11 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_11_en_ford/graphics.dat/graphics.dat.html (Atari ST) v11 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_12_en_stx/dungeon.dat/dungeon.html (Atari ST) v12 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_12_en_stx/graphics.dat/graphics.dat.html (Atari ST) v12 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_12_ge_stx/dungeon.dat/dungeon.html (Atari ST) v12 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_12_ge_stx/graphics.dat/graphics.dat.html (Atari ST) v12 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_13_fr_stx/dungeon.dat/dungeon.html (Atari ST) v13 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_13_fr_stx/graphics.dat/graphics.dat.html (Atari ST) v13 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_en_42crew/dungeon.dat/dungeon.html (Atari ST) [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_en_42crew/graphics.dat/graphics.dat.html (Atari ST) [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_atari_en_ad097/dungeon.dat/dungeon.html (Atari ST) [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_atari_en_ad097/graphics.dat/graphics.dat.html (Atari ST) [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_fmtowns_20_enjp/dungeon.dat.en/dungeon.html (FM Towns) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_fmtowns_20_enjp/dungeon.dat.jp/dungeon.html (FM Towns) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_fmtowns_20_enjp/graphics.dat.en/graphics.dat.html (FM Towns) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_fmtowns_20_enjp/graphics.dat.jp/graphics.dat.html (FM Towns) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_pc98_20_jp/dungeon.dat/dungeon.html (PC-98) v20 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_pc98_20_jp/graphics.dat/graphics.dat.html (PC-98) v20 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_pc_34/dungeon.dat/dungeon.html (PC) v3.4 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_pc_34/graphics.dat/graphics.dat.html (PC) v3.4 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_pc_34/song.dat/song.dat.html (PC) v3.4",
+    "db_data/dm_pc_34/title/title.html (PC) v3.4 [LOCAL SHA256: adc7f1916eeef343...]",
+    "db_data/dm_pc_34/end/end.html (PC) v3.4 [LOCAL SHA256: a32818cd1e691b37...]",
+    "db_data/dm_pc_34_multi/dungeon.dat.en/dungeon.html (PC) v3.4 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_pc_34_multi/dungeon.dat.fr/dungeon.html (PC) v3.4 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_pc_34_multi/dungeon.dat.ge/dungeon.html (PC) v3.4 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html (PC) v3.4 [LOCAL SHA256: 3af5396fa32af08a...]",
+    "db_data/dm_pc_34_multi/song.dat/song.dat.html (PC) v3.4",
+    "db_data/dm_pc_34_multi/title/title.html (PC) v3.4 [LOCAL SHA256: adc7f1916eeef343...]",
+    "db_data/dm_pc_34_multi/end/end.html (PC) v3.4 [LOCAL SHA256: a32818cd1e691b37...]",
+    "db_data/dm_snes_10_en_ntsc/dungeon/dungeon.html (SNES) v10 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_snes_10_en_ntsc/smc/smc.html (SNES) v10",
+    "db_data/dm_snes_10_en_pal/dungeon/dungeon.html (SNES) v10 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_snes_10_en_pal/smc/smc.html (SNES) v10",
+    "db_data/dm_snes_10_jp_ntsc/dungeon/dungeon.html (SNES) v10 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_snes_10_jp_ntsc/smc/smc.html (SNES) v10",
+    "db_data/dm_snes_11_jp_ntsc/dungeon/dungeon.html (SNES) v11 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_snes_11_jp_ntsc/smc/smc.html (SNES) v11",
+    "db_data/dm_x68k_30_jp/dungeon.dat/dungeon.html (X68000) v30 [LOCAL SHA256: 3cafd2fb9f255df9...]",
+    "db_data/dm_x68k_30_jp/graphics.dat/graphics.dat.html (X68000) v30 [LOCAL SHA256: 3af5396fa32af08a...]"
+  ],
+  "blockers": [
+    "PC 3.4 multilingual uses separate dungeon files: dungeon.dat EN, dungeonf.dat FR, dungeong.dat GE. Never equate them without SHA256 and variant name.",
+    "graphics.dat variants must be hash-locked by filename, platform, language, and SHA256 before comparing asset indices or palettes.",
+    "Greatstone path labels can be documentation/catalogue labels, not proof that local binary files are identical.",
+    "404 pages are not absence of original data; they only mean the web catalogue page was not reachable now."
+  ]
+}
