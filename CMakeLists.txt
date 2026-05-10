@@ -855,6 +855,26 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_hud_source_lock
         COMMAND test_dm1_v1_champion_panel_hud_pc34_compat
     )
+
+    add_executable(test_dm1_v1_viewport_status_bar_layout_pc34_compat
+        src/test/test_dm1_v1_viewport_status_bar_layout_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_viewport_status_bar_layout_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/test
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_status_bar_layout_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_status_bar_layout_pc34_compat
+        COMMAND test_dm1_v1_viewport_status_bar_layout_pc34_compat
+    )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME dm1_v1_viewport_status_bar_layout_redmcsb_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_status_bar_layout_gate.py
+        )
+    endif()
     add_test(
         NAME dm1_v1_command_movement_sensor_timing_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
