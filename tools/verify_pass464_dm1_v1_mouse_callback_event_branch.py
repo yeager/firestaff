@@ -71,6 +71,17 @@ def source_audit() -> list[dict[str, Any]]:
             "L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput",
             "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command",
         ]),
+        ("COMMAND.C", "f0380_dequeue_to_f0366", [
+            "void F0380_COMMAND_ProcessQueue_CPSC",
+            "G0435_B_CommandQueueLocked = C1_TRUE;",
+            "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT))",
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
+        ]),
+        ("CLIKMENU.C", "f0366_move_party_handler", [
+            "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+            "REGISTER BOOLEAN L1117_B_MovementBlocked;",
+            "int16_t L1124_i_FirstDamagedChampionIndex;",
+        ]),
     ]
     rows=[]
     for fn, section, needles in specs:
@@ -92,8 +103,14 @@ def click_at_logged(display: str, win: str, x: int, y: int) -> dict[str, Any]:
     aspect=320/200; cw,ch=gw,gw/aspect
     if ch>gh: ch,cw=gh,gh*aspect
     px=int(round((gw-cw)/2+((x+.5)/320)*cw)); py=int(round((gh-ch)/2+((y+.5)/200)*ch))
-    r=p385.xdo(display, ["mousemove", "--window", win, str(px), str(py), "click", "1"])
-    return {"client":[x,y],"screen":[px,py],"rc":r.returncode,"out":r.stdout[-160:]}
+    move = p385.xdo(display, ["mousemove", "--window", win, str(px), str(py)])
+    down = p385.xdo(display, ["mousedown", "--window", win, "1"])
+    # ReDMCSB IBMIO.C:802-807 only calls the game mouse handler when raw
+    # button status changes. Keep down/up as separate observable transitions
+    # instead of relying on xdotool compact click helper inside DOSBox/Xvfb.
+    time.sleep(0.12)
+    up = p385.xdo(display, ["mouseup", "--window", win, "1"])
+    return {"client":[x,y],"screen":[px,py],"rc":max(move.returncode, down.returncode, up.returncode),"out":(move.stdout+down.stdout+up.stdout)[-160:],"primitive":"mousemove_mousedown_wait_mouseup"}
 
 def drive(display: str, win: str, route: str, log: list[dict[str, Any]], running: threading.Event, stop: threading.Event) -> None:
     p385.xdo(display, ["windowactivate", "--sync", win]); p385.xdo(display, ["windowfocus", "--sync", win])
