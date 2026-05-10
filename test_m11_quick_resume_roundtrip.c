@@ -9,6 +9,15 @@ unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
+
+static int m12_test_setenv(const char* name, const char* value) {
+#ifdef _WIN32
+    return _putenv_s(name, value);
+#else
+    return setenv(name, value, 1);
+#endif
+}
+
 static int expect(int cond, const char* msg) {
     if (!cond) {
         fprintf(stderr, "FAIL: %s\n", msg);
@@ -38,8 +47,8 @@ int main(void) {
         return 1;
     }
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav", saveTemplate);
-    setenv("FIRESTAFF_QUICKSAVE_PATH", savePath, 1);
-    setenv("HOME", saveTemplate, 1);
+    m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
+    m12_test_setenv("HOME", saveTemplate);
 
     memset(&spec, 0, sizeof(spec));
     spec.title = "DUNGEON MASTER";

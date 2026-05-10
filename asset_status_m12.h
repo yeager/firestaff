@@ -31,12 +31,14 @@ typedef struct {
     int csbAvailable;
     int dm2Available;
     int nexusAvailable;
+    int originalFileCandidateFound;
     M12_AssetVersionStatus versions[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId);
+int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status);
 int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId);
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId);
 size_t M12_AssetStatus_GameVerifiedFileCount(const char* gameId);

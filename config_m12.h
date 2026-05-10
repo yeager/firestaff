@@ -25,6 +25,12 @@ typedef struct {
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;
+    int inputModeIndex;       /* 0 = auto, 1 = keyboard/mouse, 2 = touch, 3 = gamepad */
+    int touchControlsIndex;   /* 0 = off, 1 = minimal, 2 = full, 3 = large */
+    int movementModeIndex;    /* 0 = original, 1 = fast, 2 = smooth */
+    int viewportStyleIndex;   /* 0 = original, 1 = expanded, 2 = widescreen frame */
+    int debugOverlayIndex;    /* 0 = off, 1 = coordinates, 2 = queue, 3 = draw order */
+    int developerGatesIndex;  /* 0 = off, 1 = quick, 2 = full */
     int windowWidth;
     int windowHeight;
     int audioMasterVolume;

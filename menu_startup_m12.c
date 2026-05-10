@@ -38,7 +38,14 @@ enum {
     M12_SETTINGS_ROW_INTEGER_SCALING,
     M12_SETTINGS_ROW_SCALING_FILTER,
     M12_SETTINGS_ROW_VSYNC,
+    M12_SETTINGS_ROW_VIEWPORT_STYLE,
+    M12_SETTINGS_ROW_INPUT_MODE,
     M12_SETTINGS_ROW_WASD_MOVEMENT,
+    M12_SETTINGS_ROW_TOUCH_CONTROLS,
+    M12_SETTINGS_ROW_MOVEMENT_MODE,
+    M12_SETTINGS_ROW_DATA_STATUS,
+    M12_SETTINGS_ROW_DEBUG_OVERLAY,
+    M12_SETTINGS_ROW_DEVELOPER_GATES,
     M12_SETTINGS_ROW_AUDIO_MASTER,
     M12_SETTINGS_ROW_AUDIO_MUSIC,
     M12_SETTINGS_ROW_AUDIO_SFX,
@@ -89,6 +96,12 @@ static const char* g_toggleModes[] = {"OFF", "ON"};
 static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
 static const char* g_rendererBackendLabels[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
 static const char* g_rendererBackendAvailable[] = {"AVAILABLE", "AVAILABLE", "AVAILABLE", "UNAVAILABLE", "UNAVAILABLE"};
+static const char* g_viewportStyleLabels[] = {"ORIGINAL", "EXPANDED", "WIDESCREEN"};
+static const char* g_inputModeLabels[] = {"AUTO", "KEYBOARD+MOUSE", "TOUCH", "GAMEPAD"};
+static const char* g_touchControlsLabels[] = {"OFF", "MINIMAL", "FULL", "LARGE"};
+static const char* g_movementModeLabels[] = {"ORIGINAL", "FAST", "SMOOTH"};
+static const char* g_debugOverlayLabels[] = {"OFF", "COORDS", "QUEUE", "DRAW ORDER"};
+static const char* g_developerGatesLabels[] = {"OFF", "QUICK", "FULL"};
 static const char* g_colorblindModes[] = {"OFF", "DEUT", "PROT", "TRIT"};
 static const char* g_themeLabels[] = {"CLASSIC", "DARK", "AMIGA", "CGA"};
 static const char* g_bgPresetLabels[] = {"STATIC", "DUNGEON", "TORCH", "STARS"};
@@ -371,6 +384,8 @@ typedef enum {
     M12_TEXT_ADD_VERIFIED_RETAIL_HASHES,
     M12_TEXT_GAME_DATA_NOT_FOUND,
     M12_TEXT_CHECK_FIRESTAFF_DATA_DIR,
+    M12_TEXT_ORIGINAL_FILES_NOT_FOUND,
+    M12_TEXT_COPY_RETAIL_FILES_INTO,
     M12_TEXT_ART_SLOT_READY,
     M12_TEXT_ART_SLOT_EMPTY,
     M12_TEXT_DROP_ART_INTO_SLOT,
@@ -428,6 +443,8 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     "ADD VERIFIED RETAIL HASHES",
     "GAME DATA NOT FOUND",
     "CHECK FIRESTAFF DATA DIR",
+    "ORIGINAL FILES NOT FOUND",
+    "COPY YOUR RETAIL GAME FILES INTO:",
     "ART SLOT READY",
     "ART SLOT EMPTY",
     "DROP ART INTO SLOT",
@@ -914,6 +931,12 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
     config.wasdMovementEnabled = state->settings.wasdMovementEnabled;
+    config.inputModeIndex = state->settings.inputModeIndex;
+    config.touchControlsIndex = state->settings.touchControlsIndex;
+    config.movementModeIndex = state->settings.movementModeIndex;
+    config.viewportStyleIndex = state->settings.viewportStyleIndex;
+    config.debugOverlayIndex = state->settings.debugOverlayIndex;
+    config.developerGatesIndex = state->settings.developerGatesIndex;
     config.audioMasterVolume = state->settings.audioMasterVolume;
     config.audioMusicVolume = state->settings.audioMusicVolume;
     config.audioSfxVolume = state->settings.audioSfxVolume;
@@ -967,6 +990,18 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->settings.wasdMovementEnabled = config.wasdMovementEnabled ? 1 : 0;
+    state->settings.inputModeIndex = m12_clamp_index(config.inputModeIndex,
+                                                     (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])));
+    state->settings.touchControlsIndex = m12_clamp_index(config.touchControlsIndex,
+                                                         (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])));
+    state->settings.movementModeIndex = m12_clamp_index(config.movementModeIndex,
+                                                        (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])));
+    state->settings.viewportStyleIndex = m12_clamp_index(config.viewportStyleIndex,
+                                                         (int)(sizeof(g_viewportStyleLabels) / sizeof(g_viewportStyleLabels[0])));
+    state->settings.debugOverlayIndex = m12_clamp_index(config.debugOverlayIndex,
+                                                        (int)(sizeof(g_debugOverlayLabels) / sizeof(g_debugOverlayLabels[0])));
+    state->settings.developerGatesIndex = m12_clamp_index(config.developerGatesIndex,
+                                                          (int)(sizeof(g_developerGatesLabels) / sizeof(g_developerGatesLabels[0])));
     state->settings.audioMasterVolume = m12_clamp_index(config.audioMasterVolume, 129);
     state->settings.audioMusicVolume = m12_clamp_index(config.audioMusicVolume, 129);
     state->settings.audioSfxVolume = m12_clamp_index(config.audioSfxVolume, 129);
@@ -997,6 +1032,17 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);
     }
+}
+
+
+static void m12_show_missing_original_files_popup(M12_StartupMenuState* state) {
+    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return;
+    }
+    state->view = M12_MENU_VIEW_MESSAGE;
+    state->messageLine1 = m12_text(state, M12_TEXT_ORIGINAL_FILES_NOT_FOUND);
+    state->messageLine2 = m12_text(state, M12_TEXT_COPY_RETAIL_FILES_INTO);
+    state->messageLine3 = M12_AssetStatus_GetDataDir(&state->assetStatus);
 }
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
@@ -1034,6 +1080,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    m12_show_missing_original_files_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;
@@ -1080,8 +1127,78 @@ static const char* m12_settings_value_vsync(const M12_StartupMenuState* state) {
     return m12_tr(state, g_toggleModes[state->settings.vsyncIndex]);
 }
 
+static const char* m12_settings_value_viewport_style(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.viewportStyleIndex,
+                                        (int)(sizeof(g_viewportStyleLabels) / sizeof(g_viewportStyleLabels[0])))
+                      : 0;
+    return m12_tr(state, g_viewportStyleLabels[index]);
+}
+
+static const char* m12_settings_value_input_mode(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.inputModeIndex,
+                                        (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])))
+                      : 0;
+    return m12_tr(state, g_inputModeLabels[index]);
+}
+
 static const char* m12_settings_value_wasd_movement(const M12_StartupMenuState* state) {
     return m12_tr(state, g_toggleModes[state->settings.wasdMovementEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_touch_controls(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.touchControlsIndex,
+                                        (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])))
+                      : 0;
+    return m12_tr(state, g_touchControlsLabels[index]);
+}
+
+static const char* m12_settings_value_movement_mode(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.movementModeIndex,
+                                        (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])))
+                      : 0;
+    return m12_tr(state, g_movementModeLabels[index]);
+}
+
+static const char* m12_settings_value_data_status(const M12_StartupMenuState* state) {
+    int ready = 0;
+    int known = 0;
+    int gi;
+    if (!state) {
+        return "UNKNOWN";
+    }
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, gi);
+        if (!entry || !entry->gameId) {
+            continue;
+        }
+        if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+            known += 1;
+            if (entry->available) {
+                ready += 1;
+            }
+        }
+    }
+    if (ready > 0) {
+        return "HASHED READY";
+    }
+    if (known > 0) {
+        return "HASHED BLOCKED";
+    }
+    return "MISSING DATA";
+}
+
+static const char* m12_settings_value_debug_overlay(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.debugOverlayIndex,
+                                        (int)(sizeof(g_debugOverlayLabels) / sizeof(g_debugOverlayLabels[0])))
+                      : 0;
+    return m12_tr(state, g_debugOverlayLabels[index]);
+}
+
+static const char* m12_settings_value_developer_gates(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.developerGatesIndex,
+                                        (int)(sizeof(g_developerGatesLabels) / sizeof(g_developerGatesLabels[0])))
+                      : 0;
+    return m12_tr(state, g_developerGatesLabels[index]);
 }
 
 static const char* m12_settings_value_percent(int value) {
@@ -1159,7 +1276,14 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_tr(state, "PIXEL SNAP");
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_tr(state, "FILTER");
         case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
+        case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_tr(state, "VIEWPORT STYLE");
+        case M12_SETTINGS_ROW_INPUT_MODE: return m12_tr(state, "INPUT MODE");
         case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_tr(state, "WASD MOVEMENT");
+        case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_tr(state, "TOUCH CONTROLS");
+        case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_tr(state, "MOVEMENT MODE");
+        case M12_SETTINGS_ROW_DATA_STATUS: return m12_tr(state, "ORIGINAL DATA");
+        case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_tr(state, "DEBUG OVERLAY");
+        case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_tr(state, "DEVELOPER GATES");
         case M12_SETTINGS_ROW_AUDIO_MASTER: return m12_tr(state, "MASTER VOLUME");
         case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_tr(state, "MUSIC VOLUME");
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_tr(state, "SFX VOLUME");
@@ -1184,7 +1308,14 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_settings_value_integer_scaling(state);
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_settings_value_scaling_filter(state);
         case M12_SETTINGS_ROW_VSYNC: return m12_settings_value_vsync(state);
+        case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_settings_value_viewport_style(state);
+        case M12_SETTINGS_ROW_INPUT_MODE: return m12_settings_value_input_mode(state);
         case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_settings_value_wasd_movement(state);
+        case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_settings_value_touch_controls(state);
+        case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_settings_value_movement_mode(state);
+        case M12_SETTINGS_ROW_DATA_STATUS: return m12_settings_value_data_status(state);
+        case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_settings_value_debug_overlay(state);
+        case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_settings_value_developer_gates(state);
         case M12_SETTINGS_ROW_AUDIO_MASTER: return m12_settings_value_audio_master(state);
         case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_settings_value_audio_music(state);
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_settings_value_audio_sfx(state);
@@ -1206,11 +1337,17 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_GRAPHICS) {
         return m12_tr(state, "PRESENTATION");
     }
-    if (row <= M12_SETTINGS_ROW_VSYNC) {
-        return m12_tr(state, "DISPLAY / RENDERER");
+    if (row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) {
+        return m12_tr(state, "RENDERER");
     }
-    if (row <= M12_SETTINGS_ROW_WASD_MOVEMENT) {
+    if (row <= M12_SETTINGS_ROW_MOVEMENT_MODE) {
         return m12_tr(state, "INPUT");
+    }
+    if (row <= M12_SETTINGS_ROW_DATA_STATUS) {
+        return m12_tr(state, "DATA");
+    }
+    if (row <= M12_SETTINGS_ROW_DEVELOPER_GATES) {
+        return m12_tr(state, "DEBUG");
     }
     if (row <= M12_SETTINGS_ROW_AUDIO_MUTED) {
         return m12_tr(state, "AUDIO");
@@ -1225,7 +1362,9 @@ static int m12_settings_group_starts(int row) {
     return row == M12_SETTINGS_ROW_LANGUAGE ||
            row == M12_SETTINGS_ROW_GRAPHICS ||
            row == M12_SETTINGS_ROW_RENDERER_BACKEND ||
-           row == M12_SETTINGS_ROW_WASD_MOVEMENT ||
+           row == M12_SETTINGS_ROW_INPUT_MODE ||
+           row == M12_SETTINGS_ROW_DATA_STATUS ||
+           row == M12_SETTINGS_ROW_DEBUG_OVERLAY ||
            row == M12_SETTINGS_ROW_AUDIO_MASTER ||
            row == M12_SETTINGS_ROW_FONT_SCALE ||
            row == M12_SETTINGS_ROW_THEME;
@@ -1334,6 +1473,18 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     state->settings.vsyncIndex = m12_clamp_index(state->settings.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->settings.wasdMovementEnabled = state->settings.wasdMovementEnabled ? 1 : 0;
+    state->settings.inputModeIndex = m12_clamp_index(state->settings.inputModeIndex,
+                                                     (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])));
+    state->settings.touchControlsIndex = m12_clamp_index(state->settings.touchControlsIndex,
+                                                         (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])));
+    state->settings.movementModeIndex = m12_clamp_index(state->settings.movementModeIndex,
+                                                        (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])));
+    state->settings.viewportStyleIndex = m12_clamp_index(state->settings.viewportStyleIndex,
+                                                         (int)(sizeof(g_viewportStyleLabels) / sizeof(g_viewportStyleLabels[0])));
+    state->settings.debugOverlayIndex = m12_clamp_index(state->settings.debugOverlayIndex,
+                                                        (int)(sizeof(g_debugOverlayLabels) / sizeof(g_debugOverlayLabels[0])));
+    state->settings.developerGatesIndex = m12_clamp_index(state->settings.developerGatesIndex,
+                                                          (int)(sizeof(g_developerGatesLabels) / sizeof(g_developerGatesLabels[0])));
     state->settings.audioMasterVolume = m12_clamp_index(state->settings.audioMasterVolume, 129);
     state->settings.audioMusicVolume = m12_clamp_index(state->settings.audioMusicVolume, 129);
     state->settings.audioSfxVolume = m12_clamp_index(state->settings.audioSfxVolume, 129);
@@ -1474,11 +1625,49 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
+        case M12_SETTINGS_ROW_VIEWPORT_STYLE:
+            state->settings.viewportStyleIndex = m12_cycle_index(
+                state->settings.viewportStyleIndex,
+                delta,
+                (int)(sizeof(g_viewportStyleLabels) / sizeof(g_viewportStyleLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_INPUT_MODE:
+            state->settings.inputModeIndex = m12_cycle_index(
+                state->settings.inputModeIndex,
+                delta,
+                (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])));
+            break;
         case M12_SETTINGS_ROW_WASD_MOVEMENT:
             state->settings.wasdMovementEnabled = m12_cycle_index(
                 state->settings.wasdMovementEnabled,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_TOUCH_CONTROLS:
+            state->settings.touchControlsIndex = m12_cycle_index(
+                state->settings.touchControlsIndex,
+                delta,
+                (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_MOVEMENT_MODE:
+            state->settings.movementModeIndex = m12_cycle_index(
+                state->settings.movementModeIndex,
+                delta,
+                (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_DATA_STATUS:
+            break;
+        case M12_SETTINGS_ROW_DEBUG_OVERLAY:
+            state->settings.debugOverlayIndex = m12_cycle_index(
+                state->settings.debugOverlayIndex,
+                delta,
+                (int)(sizeof(g_debugOverlayLabels) / sizeof(g_debugOverlayLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_DEVELOPER_GATES:
+            state->settings.developerGatesIndex = m12_cycle_index(
+                state->settings.developerGatesIndex,
+                delta,
+                (int)(sizeof(g_developerGatesLabels) / sizeof(g_developerGatesLabels[0])));
             break;
         case M12_SETTINGS_ROW_AUDIO_MASTER:
             state->settings.audioMasterVolume = m12_cycle_index(
@@ -3020,9 +3209,11 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 const char* group = m12_settings_group_label(state, row);
                 int groupId = row;
                 if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
-                else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VSYNC) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
-                else if (row > M12_SETTINGS_ROW_VSYNC && row <= M12_SETTINGS_ROW_WASD_MOVEMENT) groupId = M12_SETTINGS_ROW_WASD_MOVEMENT;
-                else if (row > M12_SETTINGS_ROW_WASD_MOVEMENT && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
+                else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
+                else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_MOVEMENT_MODE) groupId = M12_SETTINGS_ROW_INPUT_MODE;
+                else if (row > M12_SETTINGS_ROW_MOVEMENT_MODE && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+                else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
+                else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
                 else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
                 if (groupId != lastGroup) {
@@ -4289,9 +4480,11 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
         for (row = firstRow; row < M12_SETTINGS_ROW_COUNT && row < firstRow + visibleRows; ++row) {
             int groupId = row;
             if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
-            else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VSYNC) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
-            else if (row > M12_SETTINGS_ROW_VSYNC && row <= M12_SETTINGS_ROW_WASD_MOVEMENT) groupId = M12_SETTINGS_ROW_WASD_MOVEMENT;
-            else if (row > M12_SETTINGS_ROW_WASD_MOVEMENT && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
+            else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
+            else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_MOVEMENT_MODE) groupId = M12_SETTINGS_ROW_INPUT_MODE;
+            else if (row > M12_SETTINGS_ROW_MOVEMENT_MODE && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+            else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
+            else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
             else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
             if (groupId != lastGroup) {

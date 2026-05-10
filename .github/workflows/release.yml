@@ -79,7 +79,11 @@ jobs:
             echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            if [ -f "RELEASE_${GITHUB_REF_NAME#v}.md" ]; then
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_${GITHUB_REF_NAME#v}.md" >> "$GITHUB_ENV"
+            else
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            fi
           fi
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -126,7 +130,11 @@ jobs:
             echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            if [ -f "RELEASE_${GITHUB_REF_NAME#v}.md" ]; then
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_${GITHUB_REF_NAME#v}.md" >> "$GITHUB_ENV"
+            else
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            fi
           fi
       - name: Install dependencies
         run: |
