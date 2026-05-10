@@ -12,6 +12,8 @@
  * - COMMAND.C:396-405 is the movement/viewport/right-button mouse table.
  * - COMMAND.C:2296-2324 dispatches C083 inventory toggle, C111 action parent,
  *   and C080 dungeon-view click after the queue returns those command IDs.
+ * - INPUT.C:641-664 forwards raw left/right button masks 0x0002/0x0001
+ *   and screen coordinates to F0359_COMMAND_ProcessClick_CPSC.
  * - STARTUP2.C:1179-1182 installs primary interface + secondary movement
  *   mouse/keyboard tables; this shim deliberately emits click coordinates and
  *   button masks, not synthesized keys.
@@ -132,5 +134,5 @@ int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
 }
 
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local and scaled-viewport touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
+    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; INPUT.C:641-664 forwards raw left/right button masks to the click processor; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local and scaled-viewport touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
 }

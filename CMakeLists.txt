@@ -399,6 +399,19 @@ if(BUILD_TESTING)
         COMMAND firestaff_m11_touch_live_dispatch_gate_probe
     )
 
+    add_executable(firestaff_m11_touch_mouse_queue_runtime_probe
+        probes/m11/firestaff_m11_touch_mouse_queue_runtime_probe.c
+    )
+    target_include_directories(firestaff_m11_touch_mouse_queue_runtime_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(firestaff_m11_touch_mouse_queue_runtime_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m11_touch_mouse_queue_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME pass491_touch_pointer_mouse_queue_runtime_gate
+        COMMAND firestaff_m11_touch_mouse_queue_runtime_probe
+    )
+
     add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
         test_inventory_panel_slot_routes_pc34_compat_integration.c
     )
