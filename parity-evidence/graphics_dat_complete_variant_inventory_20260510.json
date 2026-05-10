@@ -1,0 +1,361 @@
+{
+  "metadata": {
+    "title": "GRAPHICS.DAT Complete Variant Inventory",
+    "date": "2026-05-10",
+    "source": "ReDMCSB WIP20210206 + original game data on N2",
+    "scope": "All GRAPHICS.DAT variants under /home/trv2/.openclaw/data/firestaff-original-games/DM/",
+    "total_files_found": 8,
+    "distinct_variants": 5,
+    "canonical_symlinks": 3
+  },
+  "redmcsb_source": {
+    "base_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "primary_files": [
+      {
+        "file": "MEMORY.C",
+        "role": "Core GRAPHICS.DAT I/O",
+        "functions": [
+          "F0477_MEMORY_OpenGraphicsDat_CPSDF",
+          "F0478_MEMORY_CloseGraphicsDat",
+          "F0479_MEMORY_ReadGraphicsDatHeader",
+          "F0467_MEMORY_GetGraphicOffset"
+        ]
+      },
+      {
+        "file": "DATA.C",
+        "role": "Mandatory graphic index tables",
+        "tables": [
+          "G0018_ai_Graphic562_MandatoryGraphicIndices",
+          "G0018_ai_Graphic699_MandatoryGraphicIndices",
+          "G0018_ai_Graphic720_MandatoryGraphicIndices"
+        ]
+      },
+      {
+        "file": "DEFS.H",
+        "role": "Graphic index constants, count constants, format flag",
+        "constants": [
+          "C000_GRAPHIC_CHAMPION",
+          "M514_GRAPHIC_COUNT",
+          "M531_MANDATORY_GRAPHIC_COUNT",
+          "M534_LOADABLE_GRAPHIC_COUNT",
+          "G2065_GraphicsDatFileFormat"
+        ]
+      },
+      {
+        "file": "UTILITY.H",
+        "role": "Global variable declarations",
+        "globals": [
+          "G0636_ppuc_Graphics",
+          "G0633_l_GraphicsDatFileSize",
+          "G0630_i_GraphicsDatFileHandle",
+          "G2065_GraphicsDatFileFormat"
+        ]
+      },
+      {
+        "file": "TOWNSGLB.H",
+        "role": "Platform-specific memory layout for GRAPHICS.DAT globals (NEC PC-98)"
+      },
+      {
+        "file": "IMAGE.C",
+        "role": "Graphic decompression",
+        "functions": ["F0355_IMAGE_GetImage"]
+      },
+      {
+        "file": "DUNVIEW.C",
+        "role": "Dungeon view rendering; references graphic indices for floor/wall/stairs/door sets"
+      },
+      {
+        "file": "INSTALL.C",
+        "role": "Installation/initialization",
+        "constants": ["C41_ERROR_UNABLE_TO_OPEN_GRAPHICS_DAT"]
+      }
+    ],
+    "key_globals": [
+      {
+        "name": "G0636_ppuc_Graphics",
+        "type": "uint32_t*[]",
+        "purpose": "Per-graphic offset table (4 entries per graphic in new format: offset, compressed size, width, height)"
+      },
+      {
+        "name": "G0630_i_GraphicsDatFileHandle",
+        "type": "int32_t",
+        "purpose": "File handle for GRAPHICS.DAT"
+      },
+      {
+        "name": "G0631_i_GraphicsDatFileReferenceCount",
+        "type": "int32_t",
+        "purpose": "Reference count for open GRAPHICS.DAT"
+      },
+      {
+        "name": "G0633_l_GraphicsDatFileSize",
+        "type": "int32_t",
+        "purpose": "Total file size"
+      },
+      {
+        "name": "G2065_GraphicsDatFileFormat",
+        "type": "BOOLEAN",
+        "purpose": "1 = new format (v3.x), 0 = old format (v1.x/v2.x)"
+      }
+    ],
+    "header_formats": {
+      "old_format": {
+        "version": "v1.x/v2.x",
+        "format_flag": "G2065_GraphicsDatFileFormat == 0",
+        "header": "uint16_t graphic count",
+        "per_graphic_entry": "2 x int32_t (offset, compressed size)",
+        "total_header_size": "4 + 8 * graphic_count bytes"
+      },
+      "new_format": {
+        "version": "v3.x",
+        "format_flag": "G2065_GraphicsDatFileFormat == 1",
+        "header": "uint16_t format ID (0x8001 = format 1)",
+        "per_graphic_entry": "4 x int32_t (offset, compressed size, width, height)",
+        "total_header_size": "4 + 16 * graphic_count bytes"
+      }
+    },
+    "graphic_index_ranges": {
+      "dm1_pc_v1_v2": {
+        "format": "old",
+        "first_graphic": "C000_GRAPHIC_CHAMPION = 0",
+        "floor_set_count": "C002_FLOOR_SET_GRAPHIC_COUNT = 2",
+        "wall_set_count": "M647_WALL_SET_GRAPHIC_COUNT = 13 (or 40 depending on version)",
+        "stairs_count": "C018_STAIRS_GRAPHIC_COUNT = 18",
+        "door_set_count": "C003_DOOR_SET_GRAPHIC_COUNT = 3",
+        "mandatory_count": "M531_MANDATORY_GRAPHIC_COUNT = 69-74 (version-dependent)",
+        "loadable_count": "M534_LOADABLE_GRAPHIC_COUNT = 550-575 (version-dependent)",
+        "total_count": "M514_GRAPHIC_COUNT = 563 (DM1 PC v1.x)"
+      },
+      "csb_pc_v3": {
+        "format": "new",
+        "first_graphic": "C000_GRAPHIC_CHAMPION = 0",
+        "first_wall_ornament": "M615_GRAPHIC_FIRST_WALL_ORNAMENT = 52",
+        "first_sound": "M719_GRAPHIC_FIRST_SOUND = 408",
+        "mandatory_count": "M531_MANDATORY_GRAPHIC_COUNT = 70-74 (version-dependent)",
+        "loadable_count": "M534_LOADABLE_GRAPHIC_COUNT = 563-721 (version-dependent)",
+        "total_count": "M514_GRAPHIC_COUNT = 563-721 (version-dependent)"
+      }
+    }
+  },
+  "variants": [
+    {
+      "id": "dm1-pc34-en",
+      "name": "DM1 PC v3.4 — English",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "filename": "GRAPHICS.DAT",
+      "game": "Dungeon Master (DM1)",
+      "platform": "PC (DOS)",
+      "version": "v3.4",
+      "language": "English",
+      "size_bytes": 363417,
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "header_bytes_hex": "01 80",
+      "header_interpretation": "Little-endian 0x8001 = new format, format ID 1",
+      "format": "new",
+      "format_id": 1,
+      "format_flag": "G2065_GraphicsDatFileFormat == 1",
+      "notes": "Primary DM1 PC variant. ReDMCSB source directly maps this format."
+    },
+    {
+      "id": "dm1-pc34-multilingual",
+      "name": "DM1 PC v3.4 — Multilingual",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
+      "canonical_symlink": null,
+      "filename": "GRAPHICS.DAT",
+      "game": "Dungeon Master (DM1)",
+      "platform": "PC (DOS)",
+      "version": "v3.4 (multilingual/EU release)",
+      "language": "Multilingual (EU)",
+      "size_bytes": 398925,
+      "sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
+      "header_bytes_hex": "01 80",
+      "header_interpretation": "Little-endian 0x8001 = new format, format ID 1",
+      "format": "new",
+      "format_id": 1,
+      "format_flag": "G2065_GraphicsDatFileFormat == 1",
+      "notes": "35,508 bytes larger than English variant. Likely contains additional localized text graphics."
+    },
+    {
+      "id": "csb-amiga-fr",
+      "name": "CSB Amiga — French",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
+      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
+      "filename": "Graphics.DAT",
+      "game": "Chaos Strikes Back (CSB)",
+      "platform": "Amiga",
+      "version": "v3.3 (French, hacked by Meynaf)",
+      "language": "French",
+      "size_bytes": 435076,
+      "sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "header_bytes_hex": "80 01",
+      "header_interpretation": "Little-endian 0x0180 = 384, old format with 384 graphics",
+      "format": "old",
+      "graphic_count": 384,
+      "format_flag": "G2065_GraphicsDatFileFormat == 0",
+      "notes": "Amiga-specific variant. 384 graphics in old format. Not directly compatible with PC offset table layout."
+    },
+    {
+      "id": "csb-atari",
+      "name": "CSB Atari ST",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+      "filename": "GRAPHICS.DAT",
+      "game": "Chaos Strikes Back (CSB)",
+      "platform": "Atari ST",
+      "version": "Unknown (2009-02-22 PP)",
+      "language": "Unknown",
+      "size_bytes": 319080,
+      "sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "header_bytes_hex": "02 33",
+      "header_interpretation": "Little-endian 0x3302 = 13058, or big-endian 0x0233 = 563",
+      "format": "old",
+      "graphic_count": 563,
+      "endian": "big-endian (Atari ST native)",
+      "format_flag": "G2065_GraphicsDatFileFormat == 0",
+      "notes": "Atari ST is big-endian. Header word 0x0233 (BE) = 563 graphics, matching M514_GRAPHIC_COUNT = 563 for DM1 PC v1.x. May be a DM1-era Atari ST file repackaged as CSB, or CSB reusing DM1's graphic count."
+    },
+    {
+      "id": "spanish-unknown",
+      "name": "Spanish GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/Spanish GRAPHICS.DAT",
+      "canonical_symlink": null,
+      "filename": "Spanish GRAPHICS.DAT",
+      "game": "Unknown (likely DM1 or CSB)",
+      "platform": "PC (DOS)",
+      "version": "Unknown",
+      "language": "Spanish",
+      "size_bytes": 8641331,
+      "sha256": "b9701912d4c464a39960a52b167ec29056c6b2010d69abba226619a472b7f188",
+      "header_bytes_hex": "05 80",
+      "header_interpretation": "Little-endian 0x8005 = new format, format ID 5",
+      "format": "new",
+      "format_id": 5,
+      "format_flag": "G2065_GraphicsDatFileFormat == 1 (but format ID 5 is undocumented)",
+      "notes": "Significantly larger than other variants (8.6 MB vs. 319-435 KB). Format ID 5 is not documented in ReDMCSB source. May contain uncompressed or differently compressed assets. Requires further investigation.",
+      "blocker": "Format ID 5 is unknown. ReDMCSB source does not handle this format."
+    }
+  ],
+  "hash_comparison": {
+    "symlink_groups": [
+      {
+        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "note": "Same inode (symlink)"
+      },
+      {
+        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
+        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
+        "sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+        "note": "Same inode (symlink)"
+      },
+      {
+        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+        "sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+        "note": "Same inode (symlink)"
+      }
+    ],
+    "distinct_variants": [
+      {
+        "id": "dm1-pc34-en",
+        "size_bytes": 363417,
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "format": "new (0x8001)"
+      },
+      {
+        "id": "dm1-pc34-multilingual",
+        "size_bytes": 398925,
+        "sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
+        "format": "new (0x8001)"
+      },
+      {
+        "id": "csb-amiga-fr",
+        "size_bytes": 435076,
+        "sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+        "format": "old (384 graphics)"
+      },
+      {
+        "id": "csb-atari",
+        "size_bytes": 319080,
+        "sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+        "format": "old (563 graphics, big-endian)"
+      },
+      {
+        "id": "spanish-unknown",
+        "size_bytes": 8641331,
+        "sha256": "b9701912d4c464a39960a52b167ec29056c6b2010d69abba226619a472b7f188",
+        "format": "new (format ID 5)"
+      }
+    ],
+    "note": "All 5 distinct variants have unique SHA256 hashes and sizes. No duplicates outside of symlinks."
+  },
+  "variant_asset_inventory": {
+    "dm1-pc34-new-format": {
+      "variants": ["dm1-pc34-en", "dm1-pc34-multilingual"],
+      "format": "new (0x8001)",
+      "format_flag": "G2065_GraphicsDatFileFormat == 1",
+      "offset_table": "G0636_ppuc_Graphics: 4 x int32 per graphic (offset, compressed size, width, height)",
+      "mandatory_indices": "G0018_ai_Graphic699_MandatoryGraphicIndices (70 entries) or G0018_ai_Graphic720_MandatoryGraphicIndices (73 entries)",
+      "mandatory_count": "M531_MANDATORY_GRAPHIC_COUNT = 70-74 (version-gated)",
+      "loadable_count": "M534_LOADABLE_GRAPHIC_COUNT = 563-721 (version-gated)",
+      "key_indices": {
+        "0": "C000_GRAPHIC_CHAMPION",
+        "52": "M615_GRAPHIC_FIRST_WALL_ORNAMENT",
+        "408": "M719_GRAPHIC_FIRST_SOUND"
+      },
+      "notes": "English and multilingual variants share the same format ID and likely the same graphic index layout. Multilingual variant is 35,508 bytes larger, suggesting additional localized text graphics or higher-resolution assets. Without decoding the full offset table, exact per-index differences cannot be determined."
+    },
+    "csb-amiga-old-format": {
+      "variants": ["csb-amiga-fr"],
+      "format": "old",
+      "graphic_count": 384,
+      "format_flag": "G2065_GraphicsDatFileFormat == 0",
+      "offset_table": "G0636_ppuc_Graphics: 2 x int32 per graphic (offset, compressed size)",
+      "notes": "Amiga-specific variant. Different color depth, resolution, and possibly different asset layout than PC. Cannot safely compare indices with PC variants without Amiga-specific decoding."
+    },
+    "csb-atari-old-format": {
+      "variants": ["csb-atari"],
+      "format": "old",
+      "graphic_count": 563,
+      "endian": "big-endian (Atari ST native)",
+      "format_flag": "G2065_GraphicsDatFileFormat == 0",
+      "offset_table": "G0636_ppuc_Graphics: 2 x int32 per graphic (offset, compressed size)",
+      "notes": "563 graphics matches M514_GRAPHIC_COUNT = 563 for DM1 PC v1.x. File is labeled as CSB but may be DM1-era. Cannot safely compare indices with PC variants without Atari-specific decoding."
+    },
+    "spanish-format-5": {
+      "variants": ["spanish-unknown"],
+      "format": "new (format ID 5)",
+      "format_flag": "G2065_GraphicsDatFileFormat == 1 (but format ID 5 is undocumented)",
+      "notes": "Format ID 5 is not documented in ReDMCSB source. 8.6 MB size suggests uncompressed or differently compressed assets. Cannot safely determine graphic count, index layout, or asset classes without format ID 5 decoding.",
+      "blocker": "Format ID 5 is unknown. ReDMCSB source does not handle this format."
+    }
+  },
+  "gaps_and_blockers": [
+    {
+      "id": "format-id-5",
+      "title": "Format ID 5 (Spanish GRAPHICS.DAT)",
+      "description": "ReDMCSB source only documents format ID 1. Format ID 5 is unknown and cannot be decoded with current source. The file is 8.6 MB (24x larger than other variants), suggesting a fundamentally different storage format."
+    },
+    {
+      "id": "platform-specific",
+      "title": "Platform-specific variants (Amiga, Atari ST)",
+      "description": "These use old format with different graphic counts (384 and 563 respectively). ReDMCSB source is PC-centric and may not handle platform-specific offset table layouts. Cannot safely compare indices across platforms without platform-specific decoding."
+    },
+    {
+      "id": "csb-atari-identity",
+      "title": "CSB Atari ST identity",
+      "description": "The Atari ST file has 563 graphics (matching DM1 PC v1.x count), but is labeled as CSB. Unclear whether this is a DM1-era file repackaged as CSB, or CSB reusing DM1's graphic count. Requires content analysis to confirm."
+    },
+    {
+      "id": "asset-class-mapping",
+      "title": "Per-graphic asset class mapping",
+      "description": "ReDMCSB source defines mandatory graphic indices in DATA.C (G0018_ai_Graphic* tables), but these are version-gated. Without knowing the exact version of each GRAPHICS.DAT variant, the correct index table cannot be selected."
+    },
+    {
+      "id": "compression-format",
+      "title": "Compression format",
+      "description": "ReDMCSB uses F0355_IMAGE_GetImage for decompression, but the compression algorithm is not documented in the source. Cannot extract individual assets without implementing the decompression routine."
+    }
+  ]
+}
