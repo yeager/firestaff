@@ -368,8 +368,6 @@ if(BUILD_TESTING)
     add_executable(test_m11_quick_resume_roundtrip
         test_m11_quick_resume_roundtrip.c
     )
-    # Repeat firestaff_m12 after firestaff_m11 for static linkers;
-    # m11 game-view objects call back into m12 menu/config helpers.
     target_link_libraries(test_m11_quick_resume_roundtrip PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_quick_resume_roundtrip PRIVATE -Wall -Wextra -O2)
