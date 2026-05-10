@@ -2054,6 +2054,10 @@ if(BUILD_TESTING)
             NAME pass457_dm1_v1_title_runtime_cadence_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass457_dm1_v1_title_runtime_cadence_gate.py
         )
+        add_test(
+            NAME pass462_dm1_v1_title_end_original_capture_parity
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass462_dm1_v1_title_end_original_capture_parity.py
+        )
     endif()
 endif()
 
