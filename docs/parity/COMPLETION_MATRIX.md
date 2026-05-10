@@ -23,7 +23,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 |---|---:|---:|---|---|
 | DM1 V1 | 58% | 58/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
 | DM1 V2 | 27% | 27/100 | `in_progress_verified_partial` | V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete. |
-| CSB V1 | 19% | 19/100 | `inventory_and_launch_blocker` | Need a positive CSB V1 launch/render smoke and runtime/capture gates; current launch evidence is a deliberate negative blocker, not playable CSB.<br>Do not infer CSB runtime/render/gameplay parity from DM1. |
+| CSB V1 | 19% | 19/100 | `inventory_and_launch_blocker` | Positive front-door render smoke exists, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.<br>Do not infer CSB runtime/render/gameplay parity from DM1. |
 | CSB V2 | 0% | 0/100 | `not_started` | No CSB V2 matrix or gates. |
 | DM2 V1 | 7% | 7/100 | `inventory_only` | Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB. |
 | DM2 V2 | 0% | 0/100 | `not_started` | No DM2 V2 matrix or gates. |
@@ -64,7 +64,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 |---|---:|---|
 | `reference_inventory` | 8/10 | CSB source/runtime archives and source-lock boundary guard exist. |
 | `definition_matrix` | 10/10 | docs/parity/PARITY_MATRIX_CSB_V1.md defines the full CSB V1 DoD matrix with acceptance labels, required proof boundaries, and verifier-backed source anchors; parity surface matrix remains evidence-only. |
-| `launch_smoke` | 1/10 | `csb_v1_launch_blocker_m12` proves the hash-matched CSB launcher path stays blocked: diagnostics identify CSB/version, but no runtime launch request or valid intent is produced. |
+| `launch_smoke` | 1/10 | `csb_v1_launch_blocker_m12` proves the hash-matched CSB launcher path renders options/blocker surfaces and stays blocked: diagnostics identify CSB/version, but no runtime launch request or valid intent is produced. |
 | `core_input_movement` | 0/15 | No CSB V1 movement/input completion gates. |
 | `viewport_ui_render` | 0/20 | No CSB V1 render/UI completion gates. |
 | `gameplay_systems` | 0/15 | No CSB V1 gameplay completion gates. |

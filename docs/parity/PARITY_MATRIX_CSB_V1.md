@@ -17,16 +17,16 @@ Primary references stay local on N2:
 |---|---:|---|---|---|
 | `reference_inventory` | 8/10 | `SOURCE_LOCKED_PARTIAL` | CSB-specific source and original payload identities must be fixed before launch/runtime work counts. | Fill remaining platform/version inventory gaps without substituting Amiga/Atari assets. |
 | `definition_matrix` | 10/10 | `MATCHED_DEFINITION_ONLY` | This document plus `csb_v1_parity_surface_matrix` define the CSB V1 DoD surfaces and non-claims. | Keep the matrix verified whenever completion points change. |
-| `launch_smoke` | 1/10 | `NEGATIVE_LAUNCH_BLOCKER` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the DM1-only startup gate. Current proof is only the negative launcher blocker: matched CSB assets cannot request runtime launch. | Add a positive experimental launch-intent/render probe; do not enable production CSB launch. |
+| `launch_smoke` | 1/10 | `POSITIVE_BLOCKER_RENDER_SMOKE` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the DM1-only startup gate. Current proof is a positive front-door render smoke plus a deliberate runtime blocker: matched CSB assets can render options/blocker surfaces, but cannot request runtime launch. | Add an experimental CSB launch-intent fixture only after an explicit media manifest and loader contract covers paired dungeon/game/save/graphics payloads; do not enable production CSB launch. |
 | `core_input_movement` | 0/15 | `BLOCKED_RUNTIME` | CSB input must prove mode-specific mouse/keyboard routing from CSB state, including Utility/reincarnate/adventuring modes. | Add CSB state-backed input/movement fixtures. |
 | `viewport_ui_render` | 0/20 | `BLOCKED_CAPTURE` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. | Build capture/overlay fixtures and compare against Firestaff output. |
 | `gameplay_systems` | 0/15 | `BLOCKED_RUNTIME` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points; it needs CSB source/runtime gates. | Land narrow CSB gameplay source/runtime gates. |
 | `audio_timing` | 0/10 | `BLOCKED_RUNTIME` | CSB audio/timing must prove trigger cadence and overlap from CSB references. | Add CSB-specific audio/timing source and runtime evidence. |
 | `original_overlay_regression` | 0/10 | `BLOCKED_CAPTURE` | Representative CSB original overlays are required before regression points count. | Produce original-vs-Firestaff overlay regression fixtures. |
 
-## New launch blocker gate
+## CSB front-door render smoke and launch blocker gate
 
-- `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks the CSB launch row, and verifies `launchRequested == 0` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 0`. This is a deliberate negative smoke: it prevents matched CSB assets from falling into the DM1-only runtime while preserving diagnostic game/version identity.
+- `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and blocker-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 0` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 0`. This is a positive front-door render smoke with a deliberate runtime blocker: it prevents matched CSB assets from falling into the DM1-only runtime while preserving diagnostic game/version identity.
 
 ## Source-lock anchors audited by the verifier
 

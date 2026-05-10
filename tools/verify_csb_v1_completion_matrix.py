@@ -22,7 +22,7 @@ CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 CRITERIA = {
     "reference_inventory": (8, "SOURCE_LOCKED_PARTIAL"),
     "definition_matrix": (10, "MATCHED_DEFINITION_ONLY"),
-    "launch_smoke": (1, "NEGATIVE_LAUNCH_BLOCKER"),
+    "launch_smoke": (1, "POSITIVE_BLOCKER_RENDER_SMOKE"),
     "core_input_movement": (0, "BLOCKED_RUNTIME"),
     "viewport_ui_render": (0, "BLOCKED_CAPTURE"),
     "gameplay_systems": (0, "BLOCKED_RUNTIME"),
@@ -115,7 +115,7 @@ def main() -> int:
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
         "source_anchors": source_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
-        "completion_impact": {"target": "CSB V1", "before_percent": 18, "after_percent": 19, "launch_blocker_delta": 1},
+        "completion_impact": {"target": "CSB V1", "before_percent": 18, "after_percent": 19, "launch_blocker_delta": 1, "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"},
         "non_claims": NON_CLAIMS,
         "failures": failures,
     }
