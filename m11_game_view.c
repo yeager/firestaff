@@ -11,6 +11,8 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
+#include "dm1_v1_endgame_system_pc34_compat.h"
+#include "memory_runtime_dynamics_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -14401,6 +14403,198 @@ static int m11_action_projectile_impact_attack(const M11_GameViewState* state,
     return raw;
 }
 
+
+static int m11_party_front_square(const M11_GameViewState* state,
+                                  int* outMapIndex,
+                                  int* outX,
+                                  int* outY) {
+    int dx = 0, dy = 0;
+    if (!state || !outMapIndex || !outX || !outY) return 0;
+    m11_creature_step_for_dir(state->world.party.direction, &dx, &dy);
+    *outMapIndex = state->world.party.mapIndex;
+    *outX = state->world.party.mapX + dx;
+    *outY = state->world.party.mapY + dy;
+    return 1;
+}
+
+static int m11_spawn_centered_explosion(M11_GameViewState* state,
+                                        int explosionType,
+                                        int attack,
+                                        int mapIndex,
+                                        int mapX,
+                                        int mapY) {
+    struct ExplosionCreateInput_Compat eIn;
+    struct TimelineEvent_Compat eFirst;
+    int slot = -1;
+    if (!state) return 0;
+    memset(&eIn, 0, sizeof(eIn));
+    eIn.explosionType = explosionType;
+    eIn.attack = attack;
+    eIn.mapIndex = mapIndex;
+    eIn.mapX = mapX;
+    eIn.mapY = mapY;
+    eIn.cell = EXPLOSION_CELL_CENTERED;
+    eIn.centered = 1;
+    eIn.currentTick = (int)state->world.gameTick;
+    eIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    eIn.ownerIndex = state->world.party.activeChampionIndex;
+    eIn.creatorProjectileSlot = -1;
+    return F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
+                                         &slot, &eFirst);
+}
+
+static int m11_find_creature_ai_on_square(const M11_GameViewState* state,
+                                          int mapIndex,
+                                          int mapX,
+                                          int mapY) {
+    int i;
+    if (!state) return -1;
+    for (i = 0; i < state->world.creatureAICount &&
+                i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
+        const struct CreatureAIState_Compat* ai = &state->world.creatureAI[i];
+        if (ai->groupMapIndex == mapIndex && ai->groupMapX == mapX &&
+            ai->groupMapY == mapY) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int m11_creature_type_on_square(const M11_GameViewState* state,
+                                       int mapIndex,
+                                       int mapX,
+                                       int mapY) {
+    unsigned short groupThing;
+    int gIdx;
+    if (!state || !state->world.things) return -1;
+    groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
+    if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST) return -1;
+    gIdx = THING_GET_INDEX(groupThing);
+    if (gIdx < 0 || gIdx >= state->world.things->groupCount) return -1;
+    return (int)state->world.things->groups[gIdx].creatureType;
+}
+
+static void m11_set_group_type_on_square(M11_GameViewState* state,
+                                         int mapIndex,
+                                         int mapX,
+                                         int mapY,
+                                         int creatureType) {
+    unsigned short groupThing;
+    int gIdx;
+    int aiIdx;
+    if (!state || !state->world.things) return;
+    groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
+    if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST) {
+        gIdx = THING_GET_INDEX(groupThing);
+        if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
+            state->world.things->groups[gIdx].creatureType = (unsigned char)creatureType;
+            state->world.things->groups[gIdx].health[0] = 10000;
+        }
+    }
+    aiIdx = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+    if (aiIdx >= 0) state->world.creatureAI[aiIdx].creatureType = creatureType;
+}
+
+static int m11_count_fluxcages_around_square(M11_GameViewState* state,
+                                             int mapIndex,
+                                             int mapX,
+                                             int mapY,
+                                             int present[4]) {
+    static const int dx[4] = {-1, +1, 0, 0};
+    static const int dy[4] = {0, 0, -1, +1};
+    int i, count = 0;
+    if (!state || !present) return 0;
+    for (i = 0; i < 4; ++i) {
+        int c = 0;
+        (void)F0871_RUNTIME_CountFluxcagesOnSquare_Compat(&state->world.explosions,
+                                                          mapIndex,
+                                                          mapX + dx[i],
+                                                          mapY + dy[i],
+                                                          &c);
+        present[i] = (c > 0) ? 1 : 0;
+        count += present[i];
+    }
+    return count;
+}
+
+static int m11_lord_chaos_has_escape_square(M11_GameViewState* state,
+                                            int mapIndex,
+                                            int mapX,
+                                            int mapY,
+                                            const int present[4]) {
+    static const int dx[4] = {-1, +1, 0, 0};
+    static const int dy[4] = {0, 0, -1, +1};
+    int i;
+    if (!state || !present) return 0;
+    for (i = 0; i < 4; ++i) {
+        if (present[i]) continue;
+        if (m11_square_walkable_for_creature(&state->world, mapIndex,
+                                            mapX + dx[i], mapY + dy[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int m11_perform_fluxcage_action(M11_GameViewState* state,
+                                       const char* champName) {
+    int mapIndex, mapX, mapY;
+    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+    if (!m11_spawn_centered_explosion(state, C050_EXPLOSION_FLUXCAGE, 255,
+                                      mapIndex, mapX, mapY)) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: FLUXCAGE FIZZLES",
+                      (unsigned int)state->world.gameTick);
+        return 0;
+    }
+    m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                  "T%u: %s CREATES A FLUXCAGE",
+                  (unsigned int)state->world.gameTick, champName);
+    return 1;
+}
+
+static int m11_perform_fuse_action(M11_GameViewState* state,
+                                   const char* champName) {
+    int mapIndex, mapX, mapY;
+    int flux[4] = {0, 0, 0, 0};
+    int creatureType;
+    int escapeAvailable;
+    DM1EndgameFuseActionResult result;
+    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+    (void)m11_spawn_centered_explosion(state, C003_EXPLOSION_HARM_NON_MATERIAL, 255,
+                                       mapIndex, mapX, mapY);
+    creatureType = m11_creature_type_on_square(state, mapIndex, mapX, mapY);
+    (void)m11_count_fluxcages_around_square(state, mapIndex, mapX, mapY, flux);
+    escapeAvailable = m11_lord_chaos_has_escape_square(state, mapIndex, mapX, mapY, flux);
+    memset(&result, 0, sizeof(result));
+    DM1_Endgame_EvaluateFuseAction(mapX, mapY, 9999, 9999,
+                                   creatureType, flux, escapeAvailable,
+                                   &result);
+    if (!result.lordChaosPresent) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: %s FUSES NOTHING",
+                      (unsigned int)state->world.gameTick, champName);
+        return 0;
+    }
+    if (result.lordChaosEscaped) {
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      "T%u: LORD CHAOS SLIPS THE FLUXCAGE",
+                      (unsigned int)state->world.gameTick);
+        return 1;
+    }
+    if (!result.fuseSequenceTriggered) return 0;
+
+    m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
+                                 DM1_CREATURE_GREY_LORD_ID);
+    state->world.magic.magicalLightAmount = 200;
+    state->world.gameWon = 1;
+    m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                  "T%u: %s FUSES CHAOS AND ORDER",
+                  (unsigned int)state->world.gameTick, champName);
+    m11_set_status(state, "ENDGAME", "FUSE COMPLETE");
+    return 1;
+}
+
 /* ---------------------------------------------------------------
  * V1 projectile tick advance — drives F0811 per live projectile.
  *
@@ -15641,6 +15835,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                                        M11_AUDIO_MARKER_COMBAT);
             return spawned;
         }
+        case 35: /* FLUXCAGE */
+            return m11_perform_fluxcage_action(state, champName);
+        case 43: /* FUSE */
+            return m11_perform_fuse_action(state, champName);
         case 27: { /* INVOKE */
             /* F0407 case C027_ACTION_INVOKE: kineticEnergy =
              * RANDOM(128)+100 and the explosion type is chosen
@@ -15851,7 +16049,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * Non-melee actions run through m11_perform_non_melee_action
      * for the bounded V1 slice (FLIP / HEAL / LIGHT / FREEZE
      * LIFE / SPELLSHIELD / FIRESHIELD / BLOCK / PARRY / WAR CRY /
-     * BLOW HORN / CALM / BRANDISH / CONFUSE / SHOOT), which
+     * BLOW HORN / CALM / BRANDISH / CONFUSE / SHOOT /
+     * FLUXCAGE / FUSE), which
      * applies real source-backed effects against the GameWorld
      * (MagicState, freezeLifeTicks, champion HP/mana) before we
      * advance a time-passes tick.  Actions outside that slice
