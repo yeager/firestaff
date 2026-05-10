@@ -316,6 +316,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass395_touch_queue_integration.py
         )
         add_test(
+            NAME dm1_v1_touch_original_mouse_ui_action_zones_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_touch_original_mouse_ui_action_zones_source_lock.py
+        )
+        add_test(
             NAME dm1_v1_viewport_door_wall_ornament_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_door_wall_ornament_source_lock.py
         )
