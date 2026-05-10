@@ -31,6 +31,7 @@ int main(void) {
     TouchPointerDispatchPc34Compat dispatch;
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1InputQueueProcessResultPc34Compat result;
+    const unsigned int bothButtons = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT | TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT;
     int ok = 1;
 
     printf("probe=firestaff_touch_mouse_queue_runtime\n");
@@ -55,6 +56,66 @@ int main(void) {
     result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
     if (!result.dequeued || !result.dispatchedMove || result.dispatchedTurn || queue.count != 0u) ok = 0;
 
+    event.space = TOUCH_POINTER_SPACE_SCREEN_320X200_PC34_COMPAT;
+    event.x = 25;
+    event.y = 11;
+    event.surfaceW = 0;
+    event.surfaceH = 0;
+    event.buttonMask = bothButtons;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    memset(&dispatch, 0, sizeof(dispatch));
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (!dispatch.shouldDispatchClick || dispatch.commandId != DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0 ||
+        dispatch.zoneIndex != 151u || dispatch.screenX != 25 || dispatch.screenY != 11 ||
+        dispatch.buttonStatus != bothButtons ||
+        !expect_queued(&queue, DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 25, 11)) ok = 0;
+
+    event.x = 264;
+    event.y = 126;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    memset(&dispatch, 0, sizeof(dispatch));
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (!dispatch.shouldDispatchClick || dispatch.commandId != DM1_V1_COMMAND_MOVE_FORWARD ||
+        dispatch.zoneIndex != 70u || dispatch.screenX != 264 || dispatch.screenY != 126 ||
+        dispatch.buttonStatus != bothButtons ||
+        !expect_queued(&queue, DM1_V1_COMMAND_MOVE_FORWARD, 264, 126)) ok = 0;
+
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_SCREEN_PC34_COMPAT;
+    event.x = 1056;
+    event.y = 450;
+    event.surfaceW = 1280;
+    event.surfaceH = 720;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    memset(&dispatch, 0, sizeof(dispatch));
+    if (TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (!dispatch.shouldDispatchClick || dispatch.commandId != DM1_V1_COMMAND_MOVE_FORWARD ||
+        !expect_pending_mouse_click(&queue, DM1_V1_COMMAND_MOVE_FORWARD, 275, 125,
+                                    TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT)) ok = 0;
+
+    event.space = TOUCH_POINTER_SPACE_SCREEN_320X200_PC34_COMPAT;
+    event.x = 25;
+    event.y = 11;
+    event.surfaceW = 0;
+    event.surfaceH = 0;
+    event.buttonMask = bothButtons;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    memset(&dispatch, 0, sizeof(dispatch));
+    if (TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (!dispatch.shouldDispatchClick || dispatch.commandId != DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0 ||
+        !expect_pending_mouse_click(&queue, DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 25, 11,
+                                    (int)bothButtons)) ok = 0;
+
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_SCREEN_PC34_COMPAT;
+    event.x = 1056;
+    event.y = 450;
+    event.surfaceW = 1280;
+    event.surfaceH = 720;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     queue.locked = 1;
     memset(&dispatch, 0, sizeof(dispatch));
@@ -87,6 +148,7 @@ int main(void) {
     if (TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch) ||
         queue.count != 0u || queue.pendingClickPresent) ok = 0;
 
+    printf("touchBothButtonSourceOrderOk=%u\n", ok ? 1u : 0u);
     printf("touchMouseQueueRuntimeInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
