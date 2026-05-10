@@ -1671,6 +1671,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass489_dm1_v1_door_title_end_source_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass489_dm1_v1_door_title_end_source_audit_gate.py
+    )
+endif()
+
 # ── DM1 V1 original click-route capture blocker gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
