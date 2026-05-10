@@ -37,7 +37,13 @@
     "firstFrameStillEntranceMenu": true,
     "postEntryGameplayHashRepeated": true,
     "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
-    "routeLabelsAreNotSourceStateProof": true
+    "postEntryStaticNoStateDelta": true,
+    "routeLabelsAreNotSourceStateProof": true,
+    "staticGameplayProvenance": [
+      "pass113/pass118 classify the same 48ed3743ab6a frame family as direct-start/no-party or party-control-not-ready gameplay",
+      "pass487 route labels after entry all collapse to this hash, so clicks are not yielding source-visible movement/control deltas"
+    ],
+    "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop"
   },
   "classes": [
     "entrance_menu",
@@ -49,7 +55,7 @@
   ],
   "classifier": "verification-screens/pass487-n2-original-pc34-click-primitives-route/pass80_original_frame_classifier.json",
   "classifierSha256": "becd572b1b7385e9a086264892de54193ffd6e30d33500f3f1e04e9a629cbbae",
-  "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry gameplay hash, and non-semantic capture filenames",
+  "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry static/no-state-delta gameplay hash, and non-semantic capture filenames",
   "duplicateSha256Counts": {
     "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
   },
@@ -95,12 +101,46 @@
   "nonClaims": [
     "no original-vs-Firestaff pixel parity",
     "no promotion of pass487 frames as overlay references",
-    "no source/runtime movement-state stop proven"
+    "no proof that F0365/F0366 movement processing stopped; evidence points to static no-state-delta capture after entrance"
   ],
   "ok": true,
   "problems": [],
   "runDir": "verification-screens/pass487-n2-original-pc34-click-primitives-route",
   "sourceRefs": [
+    {
+      "file": "COMMAND.C",
+      "lines": "63-72,341-353",
+      "missing": [],
+      "needles": [
+        "C200_COMMAND_ENTRANCE_ENTER_DUNGEON",
+        "C407_ZONE_ENTRANCE_ENTER",
+        "M566_COMMAND_ENTRANCE_RESUME"
+      ],
+      "ok": true
+    },
+    {
+      "file": "ENTRANCE.C",
+      "lines": "739-747,850-883,939-944",
+      "missing": [],
+      "needles": [
+        "G0441_ps_PrimaryMouseInput = G0445_as_Graphic561_PrimaryMouseInput_Entrance",
+        "G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE",
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "F0438_STARTEND_OpenEntranceDoors"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2428-2456",
+      "missing": [],
+      "needles": [
+        "C200_COMMAND_ENTRANCE_ENTER_DUNGEON",
+        "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON",
+        "M566_COMMAND_ENTRANCE_RESUME"
+      ],
+      "ok": true
+    },
     {
       "file": "COMMAND.C",
       "lines": "106-114",

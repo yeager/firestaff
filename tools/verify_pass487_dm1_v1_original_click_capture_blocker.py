@@ -37,7 +37,14 @@ EXPECTED_FILENAME_FRAGMENTS = {
 }
 ENTRANCE_MENU_SHA256 = "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
 STATIC_POST_ENTRY_GAMEPLAY_SHA256 = "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+STATIC_POST_ENTRY_GAMEPLAY_PROVENANCE = [
+    "pass113/pass118 classify the same 48ed3743ab6a frame family as direct-start/no-party or party-control-not-ready gameplay",
+    "pass487 route labels after entry all collapse to this hash, so clicks are not yielding source-visible movement/control deltas",
+]
 SOURCE_REFS = [
+    {"file": "COMMAND.C", "lines": "63-72,341-353", "needles": ["C200_COMMAND_ENTRANCE_ENTER_DUNGEON", "C407_ZONE_ENTRANCE_ENTER", "M566_COMMAND_ENTRANCE_RESUME"]},
+    {"file": "ENTRANCE.C", "lines": "739-747,850-883,939-944", "needles": ["G0441_ps_PrimaryMouseInput = G0445_as_Graphic561_PrimaryMouseInput_Entrance", "G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE", "F0380_COMMAND_ProcessQueue_CPSC", "F0438_STARTEND_OpenEntranceDoors"]},
+    {"file": "COMMAND.C", "lines": "2428-2456", "needles": ["C200_COMMAND_ENTRANCE_ENTER_DUNGEON", "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON", "M566_COMMAND_ENTRANCE_RESUME"]},
     {"file": "COMMAND.C", "lines": "106-114", "needles": ["C001_COMMAND_TURN_LEFT", "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT", "C006_COMMAND_MOVE_LEFT", "C005_COMMAND_MOVE_BACKWARD", "C004_COMMAND_MOVE_RIGHT"]},
     {"file": "COMMAND.C", "lines": "2045-2156", "needles": ["F0380_COMMAND_ProcessQueue_CPSC", "F0365_COMMAND_ProcessTypes1To2_TurnParty", "F0366_COMMAND_ProcessTypes3To6_MoveParty"]},
     {"file": "CLIKMENU.C", "lines": "142-174", "needles": ["F0365_COMMAND_ProcessTypes1To2_TurnParty", "F0284_CHAMPION_SetPartyDirection"]},
@@ -137,6 +144,9 @@ def main() -> int:
         "postEntryGameplayHashRepeated": post_entry_hashes == [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5,
         "postEntryGameplaySha256": STATIC_POST_ENTRY_GAMEPLAY_SHA256,
         "routeLabelsAreNotSourceStateProof": True,
+        "postEntryStaticNoStateDelta": post_entry_hashes == [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5,
+        "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop",
+        "staticGameplayProvenance": STATIC_POST_ENTRY_GAMEPLAY_PROVENANCE,
         "filenameLabelDrift": drift_rows,
     }
     problems = []
@@ -163,9 +173,9 @@ def main() -> int:
         "duplicateSha256Counts": classifier.get("duplicate_sha256_counts", {}),
         "blockerFindings": blocker_findings,
         "sourceRefs": source_rows,
-        "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry gameplay hash, and non-semantic capture filenames",
+        "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry static/no-state-delta gameplay hash, and non-semantic capture filenames",
         "problems": problems,
-        "nonClaims": ["no original-vs-Firestaff pixel parity", "no promotion of pass487 frames as overlay references", "no source/runtime movement-state stop proven"],
+        "nonClaims": ["no original-vs-Firestaff pixel parity", "no promotion of pass487 frames as overlay references", "no proof that F0365/F0366 movement processing stopped; evidence points to static no-state-delta capture after entrance"],
     }
     VERIFY_DIR.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -181,11 +191,13 @@ def main() -> int:
         f"- classes: `{', '.join(classes)}`",
         f"- first raw SHA: `{first_hash}`",
         f"- duplicate hashes: `{payload['duplicateSha256Counts']}`",
-        "- decision: route mechanism partially unblocked; source-state labeling remains blocked by entrance/menu first frame plus repeated post-entry gameplay frames.",
+        "- decision: route mechanism partially unblocked; source-state labeling remains blocked by entrance/menu first frame plus repeated post-entry static/no-state-delta gameplay frames.",
         "",
         "## Blocker findings",
         f"- first frame is still entrance/menu: `{blocker_findings['firstFrameStillEntranceMenu']}`",
         f"- post-entry gameplay frames repeat static hash: `{blocker_findings['postEntryGameplayHashRepeated']}`",
+        f"- true-stop classification: `{blocker_findings['trueStopClassification']}`",
+        f"- static/no-state-delta provenance: `{'; '.join(STATIC_POST_ENTRY_GAMEPLAY_PROVENANCE)}`",
         f"- filename/route-label drift rows: `{len(drift_rows)}`",
         "",
         "## Source references audited",
@@ -197,7 +209,7 @@ def main() -> int:
         "## Gates",
         "- `scripts/dosbox_dm1_original_viewport_reference_capture.sh --run` on N2 with six labeled shots",
         "- `python3 tools/pass80_original_frame_classifier.py verification-screens/pass487-n2-original-pc34-click-primitives-route --fail-on-duplicates` retained the expected duplicate-frame blocker",
-        "- `python3 tools/verify_pass487_dm1_v1_original_click_capture_blocker.py` records entrance/menu first-frame, repeated gameplay hash, and filename/route-label drift blockers",
+        "- `python3 tools/verify_pass487_dm1_v1_original_click_capture_blocker.py` records entrance/menu first-frame, repeated gameplay hash, true-stop classification, and filename/route-label drift blockers",
         "- this verifier records the blocker instead of promoting stale/duplicate frames",
         "",
         "## Non-claims",
