@@ -35,7 +35,7 @@ no strict mouse event sample
 
 ## Runtime predicates
 - sampled events: `[]` / `[]`
-- stops: `['other']`
+- stops: `[]`
 - F0359 hit: `False`; F0380 hit: `False`; F0377 hit: `False`; F0280 hit: `False`
 
 ## Artifacts

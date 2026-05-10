@@ -63,8 +63,8 @@ def pc_to_window(display:str, win:str, x:int,y:int)->tuple[int,int,dict[str,Any]
 def xmouse(display, win, action, px=None, py=None):
  args=["windowactivate","--sync",win]; p385.xdo(display,args)
  if action=="move": return p385.xdo(display,["mousemove","--window",win,str(px),str(py)])
- if action=="down": return p385.xdo(display,["mousedown","--window",win,"1"])
- if action=="up": return p385.xdo(display,["mouseup","--window",win,"1"])
+ if action=="down": return p385.xdo(display,["mousemove","--window",win,str(px),str(py),"mousedown","1"])
+ if action=="up": return p385.xdo(display,["mousemove","--window",win,str(px),str(py),"mouseup","1"])
  raise ValueError(action)
 
 def classify(post:str)->dict[str,Any]:
@@ -115,7 +115,8 @@ def run_probe(seconds:int, x:int,y:int)->dict[str,Any]:
    for cmd in ["BPDEL *", *("BP "+ADDR[n] for n in initial_bp_names), "BPLIST"]: p385.dbg(child,cmd,cmdlog,transcript)
    bplist=p385.clean(cmdlog[-1].get("excerpt","")).upper(); retained={n:(ADDR[n] in bplist) for n in ADDR}
    child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"run armed for explicit mousedown"}); time.sleep(.4)
-   r=xmouse(display,win,"down"); clicklog.append({"t":time.time(),"action":"mousedown","rc":r.returncode})
+   r=xmouse(display,win,"down",px,py); clicklog.append({"t":time.time(),"action":"mousedown","rc":r.returncode,"window":[px,py]})
+   r=xmouse(display,win,"move",px+2,py); clicklog.append({"t":time.time(),"action":"held_jitter_move","rc":r.returncode,"window":[px+2,py]})
    released=False; downstream_armed=False; deadline=time.time()+seconds
    while time.time()<deadline:
     row=wait_stop(child,transcript,timeout=min(8,max(1,int(deadline-time.time()))))
@@ -127,12 +128,12 @@ def run_probe(seconds:int, x:int,y:int)->dict[str,Any]:
       for ccmd in ["BP "+ADDR["F0380_COMMAND_ProcessQueue_CPSC"], "BP "+ADDR["F0377_COMMAND_ProcessType80_ClickInDungeonView"], "BP "+ADDR["F0280_CHAMPION_AddCandidateChampionToParty"], "BPLIST"]: p385.dbg(child,ccmd,cmdlog,transcript)
       downstream_armed=True
      if not released:
-      r=xmouse(display,win,"up"); clicklog.append({"t":time.time(),"action":"mouseup_after_f0359_stop","rc":r.returncode}); released=True
+      r=xmouse(display,win,"up",px,py); clicklog.append({"t":time.time(),"action":"mouseup_after_f0359_stop","rc":r.returncode,"window":[px,py]}); released=True
     child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"continue after stop","kind":row.get("kind")})
     if any(s.get("kind")=="F0377_COMMAND_ProcessType80_ClickInDungeonView" for s in stops) or any(s.get("kind")=="F0280_CHAMPION_AddCandidateChampionToParty" for s in stops):
      if released: pass
    if not released:
-    r=xmouse(display,win,"up"); clicklog.append({"t":time.time(),"action":"mouseup_final","rc":r.returncode})
+    r=xmouse(display,win,"up",px,py); clicklog.append({"t":time.time(),"action":"mouseup_final","rc":r.returncode,"window":[px,py]})
    p385.pause_to_prompt(child,display,win,cmdlog,transcript,"final sample"); p385.dbg(child,"BPLIST",cmdlog,transcript)
    return {"ran":True,"durationSeconds":round(time.time()-start,3),"boundedSeconds":seconds,"method":"unarmed entrance-to-dungeon and mouse preposition, then explicit xdotool mousedown/mouseup with original-runtime BPs","clickPc":[x,y],"retainedAtArm":retained,"routeLog":routelog,"clickLog":clicklog,"stops":stops,"commandLog":cmdlog}
   finally:
