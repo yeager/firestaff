@@ -3364,6 +3364,12 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                                        ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
                                        : 1);
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        /* Spell casting consumes a real game tick outside m11_apply_tick();
+         * age the live DM1-V1 movement cooldown mirror the same way
+         * GAMELOOP.C:150-155 does before F0380 command polling.
+         */
+        DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+            &state->dm1V1MovementPipeline);
         F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult);
         state->lastWorldHash = state->lastTickResult.worldHashPost;
         M11_GameView_ProcessTickEmissions(state);

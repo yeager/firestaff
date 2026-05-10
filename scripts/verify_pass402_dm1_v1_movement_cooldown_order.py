@@ -5,7 +5,9 @@ ReDMCSB PC-34 GAMELOOP.C ages G0310/G0311 before the input wait loop calls
 F0380. Firestaff live M11 bridge must therefore decrement old cooldowns
 before DM1_V1_MovementPipeline_ProcessOneTickPc34Compat and must not decrement
 again after that call, otherwise a newly written F0366 step cooldown loses one
-tick in the same input tick.
+tick in the same input tick.  Non-movement real ticks that bypass the
+DM1-V1 command pipeline must also age the live cooldown mirror once before
+calling the runtime tick orchestrator.
 """
 from pathlib import Path
 import json
@@ -27,6 +29,20 @@ def index_or_die(haystack: str, needle: str, label: str) -> int:
 def line_of(text: str, index: int) -> int:
     return text.count("\n", 0, index) + 1
 
+
+def function_slice(text: str, start_marker: str, end_marker: str, label: str) -> tuple[int, str]:
+    start = index_or_die(text, start_marker, label)
+    end = index_or_die(text[start + 1:], end_marker, f"end of {label}") + start + 1
+    return start, text[start:end]
+
+def assert_cooldown_before_orch(text: str, start_marker: str, end_marker: str, label: str) -> tuple[int, int]:
+    start, body = function_slice(text, start_marker, end_marker, label)
+    dec = index_or_die(body, "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat", f"{label} cooldown decrement")
+    orch = index_or_die(body, "F0884_ORCH_AdvanceOneTick_Compat", f"{label} orchestrator tick")
+    if not dec < orch:
+        die(f"{label} must decrement movement cooldown before F0884_ORCH_AdvanceOneTick_Compat")
+    return line_of(text, start + dec), line_of(text, start + orch)
+
 m11 = read("m11_game_view.c")
 func_start = index_or_die(m11, "static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,\n                                           M12_MenuInput input,\n                                           const char* actionLabel) {", "m11 pipeline tick definition")
 func_end = index_or_die(m11[func_start + 1:], "static int m11_apply_tick", "next m11 function") + func_start + 1
@@ -42,6 +58,13 @@ if func.find("DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat", process) !=
     die("m11 bridge must not decrement movement cooldown after ProcessOneTick")
 comment = "by this successful step must not be decremented in the same tick"
 index_or_die(func, comment, "same-tick cooldown preservation comment")
+
+spell_tick_lines = assert_cooldown_before_orch(
+    m11,
+    "int M11_GameView_CastSpell(M11_GameViewState* state) {",
+    "static void m11_apply_survival_drain",
+    "M11_GameView_CastSpell",
+)
 
 pipeline = read("dm1_v1_movement_pipeline_pc34_compat.c")
 index_or_die(pipeline, "COMMAND.C:2045-2156 F0380_COMMAND_ProcessQueue_CPSC", "pipeline F0380 source lock")
@@ -60,7 +83,8 @@ out = {
             line_of(m11, func_start + pre_dec),
             line_of(m11, func_start + process),
             line_of(m11, func_start + reset),
-        ]
+        ],
+        "m11_game_view.c:M11_GameView_CastSpell": list(spell_tick_lines),
     },
     "redmcsbAnchors": {
         "CHAMPION.C:F0310_CHAMPION_GetMovementTicks": [1180, 1215],
