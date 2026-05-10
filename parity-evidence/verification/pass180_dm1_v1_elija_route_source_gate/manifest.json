@@ -71,7 +71,7 @@
   "problems": [],
   "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "remaining_blocker": "original-runtime input/address route still must prove a non-static party-control capture; no pixel parity claim is made here",
-  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-original-route-blocker-fix-20260510-1508",
+  "repo": "/home/trv2/work/firestaff",
   "route_plan": {
     "candidate_runtime_route_tokens": "wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 shot:at_elija",
     "honesty": "Candidate tokens are not promoted as original-runtime evidence until pass113/pass80 classify a non-static party-control capture.",
