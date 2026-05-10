@@ -205,6 +205,7 @@ def runtime_probe(seconds:int, route:str)->dict[str,Any]:
             xvfb.terminate();
             try: xvfb.wait(timeout=5)
             except Exception: xvfb.kill()
+            OUT.mkdir(parents=True, exist_ok=True)
             (OUT/(PASS+"_runtime.clean.txt")).write_text(p385.clean("\n".join(transcript)),encoding="utf-8",errors="replace")
             (OUT/(PASS+"_route_keylog.json")).write_text(json.dumps(routelog,indent=2),encoding="utf-8")
             (OUT/(PASS+"_command_log.json")).write_text(json.dumps(cmdlog,indent=2),encoding="utf-8")
