@@ -26,7 +26,7 @@ F0781 was reached, but sampled MouseEvent values were all >= C32_MOUSE_EVENT_CHA
   - line 1658: `G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command`
 - `COMMAND.C` `f0380_dequeue_to_f0366` ok=`True` missing=`[]`
   - line 2045: `void F0380_COMMAND_ProcessQueue_CPSC`
-  - line 12: `G0435_B_CommandQueueLocked = C1_TRUE;`
+  - line 2095: `L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;`
   - line 2154: `if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT))`
   - line 2155: `F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);`
 - `CLIKMENU.C` `f0366_move_party_handler` ok=`True` missing=`[]`

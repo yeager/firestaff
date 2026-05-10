@@ -73,7 +73,7 @@ def source_audit() -> list[dict[str, Any]]:
         ]),
         ("COMMAND.C", "f0380_dequeue_to_f0366", [
             "void F0380_COMMAND_ProcessQueue_CPSC",
-            "G0435_B_CommandQueueLocked = C1_TRUE;",
+            "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
             "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT))",
             "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
         ]),
