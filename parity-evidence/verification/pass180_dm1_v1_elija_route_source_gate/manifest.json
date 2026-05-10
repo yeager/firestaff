@@ -1,0 +1,153 @@
+{
+  "greatstone_contract": {
+    "citations": [
+      "0000.DUNGEON [Dungeon].xml:69-72",
+      "0000.DUNGEON [Dungeon].xml:8542-8598",
+      "0000.DUNGEON [Dungeon].xml:8602-8626"
+    ],
+    "floor_corridor": [
+      {
+        "is_floor": true,
+        "line": 8542,
+        "x": 3,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8550,
+        "x": 4,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8558,
+        "x": 5,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8566,
+        "x": 6,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8574,
+        "x": 7,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8582,
+        "x": 8,
+        "y": 2
+      },
+      {
+        "is_floor": true,
+        "line": 8590,
+        "x": 9,
+        "y": 2
+      }
+    ],
+    "portrait": {
+      "champion_id_0": true,
+      "elija_line": 8615,
+      "map": 0,
+      "position_3": true,
+      "side": "West/BottomRight",
+      "type_127": true,
+      "wall_line": 8602,
+      "x": 10,
+      "y": 2
+    },
+    "start": {
+      "facing": "East",
+      "map": 0,
+      "x": 3,
+      "y": 2
+    }
+  },
+  "greatstone_zip": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip",
+  "problems": [],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "remaining_blocker": "original-runtime input/address route still must prove a non-static party-control capture; no pixel parity claim is made here",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-original-route-blocker-fix-20260510-1508",
+  "route_plan": {
+    "candidate_runtime_route_tokens": "wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 kp8 wait:500 shot:at_elija",
+    "honesty": "Candidate tokens are not promoted as original-runtime evidence until pass113/pass80 classify a non-static party-control capture.",
+    "portrait_interaction": {
+      "champion": "Elija",
+      "champion_id": 0,
+      "map": 0,
+      "side": "West/BottomRight",
+      "x": 10,
+      "y": 2
+    },
+    "semantic_route": [
+      {
+        "facing": "East",
+        "step": 0,
+        "x": 3,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 1,
+        "x": 4,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 2,
+        "x": 5,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 3,
+        "x": 6,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 4,
+        "x": 7,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 5,
+        "x": 8,
+        "y": 2
+      },
+      {
+        "facing": "East",
+        "step": 6,
+        "x": 9,
+        "y": 2
+      }
+    ],
+    "target_stand": {
+      "facing": "East",
+      "step": 6,
+      "x": 9,
+      "y": 2
+    }
+  },
+  "schema": "pass180_dm1_v1_elija_route_source_gate.v1",
+  "source_contracts": [
+    {
+      "citation": "LOADSAVE.C:1940-1944",
+      "id": "new-game-state-decoded-from-dungeon-header",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citation": "DUNGEON.C:35-44,1371-1391",
+      "id": "east-facing-forward-vector",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "PASS_SOURCE_LOCKED_ROUTE_RUNTIME_INPUT_STILL_BLOCKED"
+}
