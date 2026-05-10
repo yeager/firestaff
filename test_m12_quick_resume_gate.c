@@ -7,6 +7,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+
+static int m12_test_setenv(const char* name, const char* value) {
+#ifdef _WIN32
+    return _putenv_s(name, value);
+#else
+    return setenv(name, value, 1);
+#endif
+}
+
 static int expect(int cond, const char* msg) {
     if (!cond) {
         fprintf(stderr, "FAIL: %s\n", msg);
@@ -58,7 +67,7 @@ int main(void) {
         perror("mkdtemp");
         return 1;
     }
-    setenv("HOME", tmpTemplate, 1);
+    m12_test_setenv("HOME", tmpTemplate);
 
     M12_Config_SetLastSavePath("");
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");

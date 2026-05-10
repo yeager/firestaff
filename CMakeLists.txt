@@ -360,7 +360,7 @@ if(BUILD_TESTING)
     add_executable(test_m11_quick_resume_roundtrip
         test_m11_quick_resume_roundtrip.c
     )
-    target_link_libraries(test_m11_quick_resume_roundtrip PRIVATE firestaff_m12)
+    target_link_libraries(test_m11_quick_resume_roundtrip PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_quick_resume_roundtrip PRIVATE -Wall -Wextra -O2)
     endif()
