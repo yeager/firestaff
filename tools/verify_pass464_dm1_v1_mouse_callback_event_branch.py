@@ -210,10 +210,14 @@ def runtime_probe(seconds:int, route:str)->dict[str,Any]:
             (OUT/(PASS+"_command_log.json")).write_text(json.dumps(cmdlog,indent=2),encoding="utf-8")
 
 def classify_result(source,runtime):
-    kinds=[st.get("kind") for st in runtime.get("stops",[])] if runtime.get("ran") else []
-    f0781=[st for st in runtime.get("stops",[]) if st.get("kind") in ("F0781_MouseHandler", "F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")] if runtime.get("ran") else []
-    event_rows=[st for st in runtime.get("stops",[]) if st.get("kind") in ("F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")] if runtime.get("ran") else []
+    stops = runtime.get("stops", []) if runtime.get("ran") else []
+    kinds=[st.get("kind") for st in stops]
+    f0781=[st for st in stops if st.get("kind") in ("F0781_MouseHandler", "F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")]
+    event_rows=[st for st in stops if st.get("kind") in ("F0781_EventCmp", "F0781_ConditionalAfterCmp") or str(st.get("addr", "")).startswith("2A13:003")]
     first=event_rows[0] if event_rows else (f0781[0] if f0781 else {})
+    sampled_events=[st.get("eventValueBeforeIOConditional") for st in event_rows if isinstance(st.get("eventValueBeforeIOConditional"), int)]
+    f0359_allowed_events=[event for event in sampled_events if event < 0x20]
+    change_region_events=[event for event in sampled_events if event >= 0x20]
     event=first.get("eventValueBeforeIOConditional")
     preds={
         "sourceAuditOk":all(r.get("ok") for r in source),
@@ -223,12 +227,17 @@ def classify_result(source,runtime):
         "f0781EventCmpHit":bool(event_rows),
         "f0359Hit":"F0359_COMMAND_ProcessClick_CPSC" in kinds,
         "eventValueBeforeIOConditional":event,
+        "sampledEventsBeforeIOConditional":sampled_events,
+        "f0359AllowedEventCount":len(f0359_allowed_events),
+        "changeRegionOrPointerEventCount":len(change_region_events),
         "ioConditionalAllowsF0359": first.get("ioConditionalAllowsF0359"),
         "steppedToAddr": first.get("steppedToAddr"),
     }
     if not preds["sourceAuditOk"]: return "FAIL_PASS464_SOURCE_AUDIT", preds, "source audit missing required ReDMCSB anchors"
     if not preds["runtimeRan"]: return "BLOCKED_PASS464_RUNTIME_NOT_RUN", preds, runtime.get("blocker","runtime did not run")
     if preds["f0359Hit"]: return "PASS_PASS464_F0359_REACHED", preds, "F0359_COMMAND_ProcessClick_CPSC stopped after F0781"
+    if preds["f0781Hit"] and sampled_events and not f0359_allowed_events:
+        return "BLOCKED_PASS464_ONLY_CHANGE_SCREEN_REGION_CALLBACK", preds, "F0781 was reached, but sampled MouseEvent values were all >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION, so IO.C:705 intentionally skips F0359"
     if preds["f0781Hit"]:
         return "BLOCKED_PASS464_F0781_EVENT_SAMPLE_UNSTABLE", preds, "F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path"
     return "BLOCKED_PASS464_CLICK_NOT_REACHING_F0781", preds, "client-relative clicks were posted after arming, but F0781 did not hit"
@@ -244,7 +253,13 @@ def main():
         for needle,line in row.get("lineHits",{}).items(): lines.append(f"  - line {line}: `{needle}`")
     rel_out = OUT.relative_to(ROOT)
     lines += ["", "## Runtime", "", f"- Method: {runtime.get('method')}", f"- Route input after arming: `{runtime.get('routeInputAfterArming')}`", f"- Stops: `{[stop.get('kind') for stop in runtime.get('stops', [])]}`", f"- Retained at arm: `{runtime.get('retainedAtArm')}`", f"- Retained final: `{runtime.get('retainedFinal')}`", "", "## Conclusion", ""]
-    if status == "BLOCKED_PASS464_F0781_REACHED_F0359_NOT_PROVEN":
+    if status == "BLOCKED_PASS464_ONLY_CHANGE_SCREEN_REGION_CALLBACK":
+        lines += [
+            "- xdotool/SDL delivery reached the original game mouse callback seam (`F0781_MouseHandler`) after arming.",
+            "- The sampled callback values were change-screen-region/pointer events (`MouseEvent >= 0x20`), so the source branch at `IO.C:705` correctly skipped `F0359_COMMAND_ProcessClick_CPSC`.",
+            "- Next action: fix the live N2 click primitive so a bounded run samples `C02_MOUSE_EVENT_LEFT_BUTTON_DOWN`/`C04_MOUSE_EVENT_LEFT_BUTTON_UP` before claiming Hall candidate transition parity.",
+        ]
+    elif status == "BLOCKED_PASS464_F0781_REACHED_F0359_NOT_PROVEN":
         lines += ["- xdotool/SDL click delivery reached the original game mouse callback seam (`F0781_MouseHandler`) after arming.", "- The bounded run did not prove transition into `F0359_COMMAND_ProcessClick_CPSC`; next action is to single-step from `2A13:0020`/`2A13:0033` and inspect the callback parameters/event value before the conditional at `IO.C:705`."]
     else:
         lines.append(f"- {summary}")

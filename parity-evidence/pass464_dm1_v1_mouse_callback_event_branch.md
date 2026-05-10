@@ -1,8 +1,8 @@
 # Pass464 — DM1 V1 mouse callback event branch
 
-Status: `BLOCKED_PASS464_F0781_EVENT_SAMPLE_UNSTABLE`
+Status: `BLOCKED_PASS464_ONLY_CHANGE_SCREEN_REGION_CALLBACK`
 
-F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path
+F0781 was reached, but sampled MouseEvent values were all >= C32_MOUSE_EVENT_CHANGE_SCREEN_REGION, so IO.C:705 intentionally skips F0359
 
 ## ReDMCSB source audit
 
@@ -35,7 +35,9 @@ F0781 branch-region was reached, but the debugger event sample is not stable eno
 
 ## Conclusion
 
-- F0781 branch-region was reached, but the debugger event sample is not stable enough to prove either the change-screen-region skip or the F0359 call path
+- xdotool/SDL delivery reached the original game mouse callback seam (`F0781_MouseHandler`) after arming.
+- The sampled callback values were change-screen-region/pointer events (`MouseEvent >= 0x20`), so the source branch at `IO.C:705` correctly skipped `F0359_COMMAND_ProcessClick_CPSC`.
+- Next action: fix the live N2 click primitive so a bounded run samples `C02_MOUSE_EVENT_LEFT_BUTTON_DOWN`/`C04_MOUSE_EVENT_LEFT_BUTTON_UP` before claiming Hall candidate transition parity.
 
 ## Artifacts
 
