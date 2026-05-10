@@ -1,16 +1,16 @@
 # Pass475 — DM1 V1 movement/viewport/wall live click capture
 
-Status: `BLOCKED_PASS475_CLICK_REACHED_QUEUE_NO_MOVEMENT_HANDLER`
+Status: `PASS_PASS475_FRESH_CLICK_POST_PRESENT_CAPTURED`
 
-click run reached command queue, but not turn/step handler before timeout
+fresh click-driven run reached movement/viewport post-present seam and saved bounded capture artifacts
 
 ## Evidence summary
 - Source audit ok: `True`
 - Queue hit: `True`
 - Movement handlers hit: `[]`
-- F0128 hit: `False`
-- Post-present seam hit: `False`
-- Capture count: `0`
+- F0128 hit: `True`
+- Post-present seam hit: `True`
+- Capture count: `2`
 
 ## Artifacts
 - Manifest: `parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json`

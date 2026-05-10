@@ -87,7 +87,11 @@ def import_crop(display:str, win:str, label:str)->dict[str,Any]:
 def run_probe(seconds:int)->dict[str,Any]:
  missing=[t for t in ["dosbox-debug","Xvfb","xdotool","import"] if not shutil.which(t)]
  if missing: return {"ran":False,"blocker":"missing tools: "+", ".join(missing)}
- OUT.mkdir(parents=True,exist_ok=True); transcript=[]; cmdlog=[]; routelog=[]; clicklog=[]; stops=[]; captures=[]; start=time.time()
+ OUT.mkdir(parents=True,exist_ok=True)
+ for old_artifact in OUT.glob("*"):
+  if old_artifact.is_file():
+   old_artifact.unlink()
+ transcript=[]; cmdlog=[]; routelog=[]; clicklog=[]; stops=[]; captures=[]; start=time.time()
  with tempfile.TemporaryDirectory(prefix="firestaff-pass475-") as td:
   stage=Path(td)/"dos"; shutil.copytree(p385.ORIG,stage); conf=Path(td)/"dosbox.conf"; p385.write_conf(conf,stage)
   display=f":{150+(os.getpid()%40)}"; xvfb=subprocess.Popen(["Xvfb",display,"-screen","0","1024x768x24"],stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT); time.sleep(.6)
