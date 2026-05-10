@@ -1,0 +1,183 @@
+{
+  "nextBlocker": "Capture/replay must prove a source-visible post-command state delta before overlay promotion: after entering gameplay, each movement/turn click needs a capture tied to the exact command completion/redraw boundary with either a new raw hash/region fingerprint or debugger/runtime proof that F0365/F0366 and the F0128/F0097 present path ran for that shot. The current pass487/pass492 evidence reaches gameplay but repeats the 48ed static no-state-delta frame five times and has filename/route-label drift, so those frames remain blocker evidence only.",
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity",
+    "no promotion of pass487/pass492 frames as overlay references",
+    "no claim that movement processors are broken; the blocker is capture/route-state proof"
+  ],
+  "observed": {
+    "classes": [
+      "entrance_menu",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ],
+    "duplicateSha256Counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
+    },
+    "filenameLabelDriftRows": 5,
+    "firstFrameSha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+    "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+  },
+  "ok": true,
+  "pass487Decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry static/no-state-delta gameplay hash, and non-semantic capture filenames",
+  "pass487Manifest": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+  "pass487Status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+  "problems": [],
+  "required": {
+    "entrance_first_frame": true,
+    "pass487_ok": true,
+    "post_entry_region_repeat": true,
+    "post_entry_static_hash": true,
+    "route_label_drift_present": true
+  },
+  "sourceLocks": [
+    {
+      "id": "entrance-click-enters-load-dungeon",
+      "meaning": "entrance primary mouse table maps the enter box to C200; the entrance loop processes the command queue; C200 sets G0298_B_NewGame=C001_MODE_LOAD_DUNGEON and the doors open",
+      "missing": [],
+      "needles": [
+        [
+          "COMMAND.C",
+          "C200_COMMAND_ENTRANCE_ENTER_DUNGEON"
+        ],
+        [
+          "ENTRANCE.C",
+          "G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE"
+        ],
+        [
+          "COMMAND.C",
+          "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON"
+        ],
+        [
+          "ENTRANCE.C",
+          "F0438_STARTEND_OpenEntranceDoors"
+        ]
+      ],
+      "ok": true,
+      "refs": [
+        "COMMAND.C:63-72",
+        "ENTRANCE.C:739-747",
+        "ENTRANCE.C:850-883",
+        "COMMAND.C:2428-2456",
+        "ENTRANCE.C:939-944"
+      ]
+    },
+    {
+      "id": "movement-click-primitives-are-real-pc34-zones",
+      "meaning": "PC34 movement mouse zones are fixed: turn left/right, forward/back/strafe, and dungeon-view click",
+      "missing": [],
+      "needles": [
+        [
+          "COMMAND.C",
+          "C001_COMMAND_TURN_LEFT"
+        ],
+        [
+          "COMMAND.C",
+          "C003_COMMAND_MOVE_FORWARD"
+        ],
+        [
+          "COMMAND.C",
+          "C005_COMMAND_MOVE_BACKWARD"
+        ],
+        [
+          "COMMAND.C",
+          "C080_COMMAND_CLICK_IN_DUNGEON_VIEW"
+        ]
+      ],
+      "ok": true,
+      "refs": [
+        "COMMAND.C:106-114"
+      ]
+    },
+    {
+      "id": "queued-commands-must-hit-f0365-or-f0366-before-state-delta",
+      "meaning": "F0380 drains the command queue and dispatches turns to F0365 and moves to F0366; F0365 changes party direction and F0366 computes movement and calls F0267",
+      "missing": [],
+      "needles": [
+        [
+          "COMMAND.C",
+          "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+        ],
+        [
+          "COMMAND.C",
+          "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+        ],
+        [
+          "CLIKMENU.C",
+          "F0284_CHAMPION_SetPartyDirection"
+        ],
+        [
+          "CLIKMENU.C",
+          "F0267_MOVE_GetMoveResult_CPSCE"
+        ]
+      ],
+      "ok": true,
+      "refs": [
+        "COMMAND.C:2045-2156",
+        "CLIKMENU.C:142-174",
+        "CLIKMENU.C:180-347"
+      ]
+    },
+    {
+      "id": "movement-state-delta-is-source-visible",
+      "meaning": "relative movement updates map coordinates; F0267 writes G0306/G0307 on successful party movement/teleporter/pit transitions and can draw intermediate viewport frames while falling",
+      "missing": [],
+      "needles": [
+        [
+          "DUNGEON.C",
+          "G0233_ai_Graphic559_DirectionToStepEastCount"
+        ],
+        [
+          "MOVESENS.C",
+          "G0306_i_PartyMapX = P0560_i_DestinationMapX"
+        ],
+        [
+          "MOVESENS.C",
+          "G0307_i_PartyMapY = P0561_i_DestinationMapY"
+        ],
+        [
+          "MOVESENS.C",
+          "F0128_DUNGEONVIEW_Draw_CPSF"
+        ]
+      ],
+      "ok": true,
+      "refs": [
+        "DUNGEON.C:1371-1392",
+        "MOVESENS.C:316-843"
+      ]
+    },
+    {
+      "id": "viewport-redraw-is-presentable-after-state-delta",
+      "meaning": "viewport draw rebuilds floor/ceiling and wall layers into G0296, then F0097 requests/presents the viewport; repeated identical 48ed frames are capture/route-state failure, not overlay evidence",
+      "missing": [],
+      "needles": [
+        [
+          "DUNVIEW.C",
+          "F0098_DUNGEONVIEW_DrawFloorAndCeiling"
+        ],
+        [
+          "DUNVIEW.C",
+          "F0128_DUNGEONVIEW_Draw_CPSF"
+        ],
+        [
+          "DRAWVIEW.C",
+          "G0296_puc_Bitmap_Viewport"
+        ],
+        [
+          "DRAWVIEW.C",
+          "VIDRV_09_BlitViewPort"
+        ]
+      ],
+      "ok": true,
+      "refs": [
+        "DUNVIEW.C:2962-3000",
+        "DUNVIEW.C:8318-8618",
+        "DRAWVIEW.C:709-858"
+      ]
+    }
+  ],
+  "status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED"
+}
