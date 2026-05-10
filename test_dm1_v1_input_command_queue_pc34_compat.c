@@ -20,6 +20,40 @@ int main(void)
     printf("probe=dm1_v1_input_command_queue_pc34_compat\n");
     printf("sourceEvidence=%s\n", DM1_V1_InputCommandQueue_SourceEvidencePc34Compat());
 
+    /* Source lock: ReDMCSB COMMAND.C:579-610 is the active I34E/I34M
+     * primary interface keyboard table. F0361 searches it before the
+     * secondary movement table at COMMAND.C:677-684. */
+    {
+        const int keyCodes[6] = { 0x0002, 0x0003, 0x0004, 0x0005, 0x081F, 0x0001 };
+        const int commands[6] = {
+            DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0,
+            DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_1,
+            DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_2,
+            DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_3,
+            DM1_V1_COMMAND_SAVE_GAME,
+            DM1_V1_COMMAND_FREEZE_GAME
+        };
+        const char* labels[6] = {
+            "i34e primary key champion 0",
+            "i34e primary key champion 1",
+            "i34e primary key champion 2",
+            "i34e primary key champion 3",
+            "i34e primary key save game",
+            "i34e primary key freeze game"
+        };
+        int i;
+        for (i = 0; i < 6; ++i) {
+            DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+            ok &= expect_int(labels[i], DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, keyCodes[i], 0, 0, 0 }), 1);
+            result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+            ok &= expect_int(labels[i], result.command, commands[i]);
+            ok &= expect_int(labels[i], result.dequeued, 1);
+            ok &= expect_int(labels[i], result.dispatchedMove, 0);
+            ok &= expect_int(labels[i], result.dispatchedTurn, 0);
+        }
+    }
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("enqueue keypad forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
@@ -234,6 +268,25 @@ int main(void)
         DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
             DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 15, 16, 0), 0);
     ok &= expect_int("reserved overflow counted dropped", (int)queue.droppedFullCount, 2);
+
+    /* Source lock: ReDMCSB COMMAND.C:1304-1377 F0357 discards normal
+     * queued input after a blocked movement but preserves C129 release
+     * and C254 stop-pressing commands by compacting them in source order. */
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("discard setup normal move", DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue,
+        DM1_V1_COMMAND_MOVE_FORWARD, 1, 2), 1);
+    ok &= expect_int("discard setup release", DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
+        DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 3, 4, 0), 1);
+    ok &= expect_int("discard setup turn", DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue,
+        DM1_V1_COMMAND_TURN_LEFT, 5, 6), 1);
+    ok &= expect_int("discard setup stop pressing", DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
+        DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL, 7, 8, 0), 1);
+    DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(&queue);
+    ok &= expect_int("discard preserves two reserved", (int)queue.count, 2);
+    ok &= expect_int("discard first reserved release", queue.commands[0].command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+    ok &= expect_int("discard first reserved x", queue.commands[0].x, 3);
+    ok &= expect_int("discard second reserved stop", queue.commands[1].command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+    ok &= expect_int("discard second reserved y", queue.commands[1].y, 8);
 
     /* Source lock: ReDMCSB COMMAND.C:2095-2100 gates only movement
      * commands whose relative direction matches the pending projectile

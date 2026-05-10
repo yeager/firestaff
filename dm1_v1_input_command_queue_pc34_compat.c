@@ -5,6 +5,7 @@
  * - COMMAND.C:72-84 and 375-405 source-order active mouse tables: G0447 primary interface is searched before G0448 movement/viewport/right-button secondary.
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
  * - COMMAND.C:252-260 / 272-305 legacy ST/Amiga movement keyboard rows still covered for shared-route probes.
+ * - COMMAND.C:579-610 MEDIA707_I34E_I34M primary interface keyboard rows use 0x0002..0x0005, 0x081F, and 1.
  * - COMMAND.C:636-685 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
  * - IO2.C:27-61 F0540_INPUT_Crawcin reads IODRV_00_GetKeyboardInput and normalizes shifted PC-34 arrow scancodes to the same 0x004B/0x004C/0x004D/0x004F/0x0050/0x0051 command-table codes.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
@@ -36,6 +37,25 @@ static int is_move_command(int command)
 static int command_for_key(int keyCode)
 {
     switch (keyCode) {
+    /* Source lock: COMMAND.C:579-610 searches G0458 primary interface
+     * keyboard rows before G0459 secondary movement rows in F0361.
+     */
+    case 0x0002:
+        return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0;
+    case 0x0003:
+        return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_1;
+    case 0x0004:
+        return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_2;
+    case 0x0005:
+        return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_3;
+    case 0x081F:
+        return DM1_V1_COMMAND_SAVE_GAME;
+    case 0x0001:
+        return DM1_V1_COMMAND_FREEZE_GAME;
+
+    /* PC-34/I34E movement rows from COMMAND.C:677-684 plus the
+     * host-facing keypad/arrow aliases already used by Firestaff probes.
+     */
     case 0xAB34: case 0x007F: case 0x9BFF: case 0x004B:
         return DM1_V1_COMMAND_TURN_LEFT;
     case 0xAB36: case 0x9B3F: case 0x9B6F: case 0x004D:
@@ -181,19 +201,31 @@ void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Co
 
 void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
 {
+    unsigned int readIndex;
+    unsigned int writeIndex = 0u;
     if (!queue) {
         return;
     }
 
     /* Source lock: CLIKMENU.C:317-323 calls F0357_COMMAND_DiscardAllInput
      * after a blocked party step. COMMAND.C:1304-1377 flushes buffered input
-     * and clears the command queue, preserving only later-platform release/
-     * stop-pressing commands that this DM1 V1 PC-34 seam does not model.
+     * and compacts only C129_COMMAND_RELEASE_CHAMPION_ICON and
+     * C254_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL into the queue.
      */
-    queue->locked = 0;
-    queue->count = 0;
+    queue->locked = 1;
+    for (readIndex = 0u; readIndex < queue->count; ++readIndex) {
+        if (is_reserved_release_command(queue->commands[readIndex].command)) {
+            if (writeIndex != readIndex) {
+                queue->commands[writeIndex] = queue->commands[readIndex];
+            }
+            writeIndex++;
+        }
+    }
+    queue->count = writeIndex;
     queue->pendingClickPresent = 0;
     queue->pendingClickCommand = DM1_V1_COMMAND_NONE;
+    queue->locked = 0;
+    process_pending_click(queue);
 }
 
 int DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
@@ -310,5 +342,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,72-84,106-121,252-260,272-305,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,72-84,106-121,252-260,272-305,579-610,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }
