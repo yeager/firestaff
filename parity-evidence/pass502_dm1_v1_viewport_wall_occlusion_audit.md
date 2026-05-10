@@ -41,4 +41,3 @@ Required next evidence before parity promotion:
 2. Capture the matching Firestaff frame from the same map/x/y/direction and wall/door state.
 3. Record the Firestaff runtime path reaching the F0128-to-F0097 present boundary for that frame.
 4. Attach a pixel/crop comparison manifest without promoting static repeated screenshots or source-only evidence.
-
