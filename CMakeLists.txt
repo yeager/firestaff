@@ -1671,6 +1671,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 input→F0365/F0366 runtime follow-up gate ─────────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass475_dm1_v1_f0365_f0366_runtime_followup
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass475_dm1_v1_f0365_f0366_runtime_followup.py
+    )
+endif()
+
 # ── DM1 V1 movement legality completion-matrix gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
