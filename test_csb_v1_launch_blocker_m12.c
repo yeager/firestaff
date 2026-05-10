@@ -1,7 +1,9 @@
 #include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
+#include "menu_startup_render_modern_m12.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void force_csb_available(M12_StartupMenuState* state) {
@@ -28,6 +30,27 @@ static int expect(int cond, const char* msg) {
     return 1;
 }
 
+static int render_smoke_nonblank(const M12_StartupMenuState* state, const char* label) {
+    const int w = M12_ModernMenu_NativeWidth();
+    const int h = M12_ModernMenu_NativeHeight();
+    const size_t bytes = (size_t)w * (size_t)h * 4u;
+    unsigned char* rgba = (unsigned char*)malloc(bytes);
+    int distinct;
+    if (!rgba) {
+        fprintf(stderr, "FAIL: %s render buffer allocation\n", label);
+        return 0;
+    }
+    memset(rgba, 0, bytes);
+    M12_ModernMenu_Render(state, rgba, w, h);
+    distinct = M12_ModernMenu_CountDistinctColors(rgba, w, h, 128);
+    free(rgba);
+    if (distinct < 3) {
+        fprintf(stderr, "FAIL: %s render should produce nonblank startup/menu pixels\n", label);
+        return 0;
+    }
+    return 1;
+}
+
 int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -47,6 +70,7 @@ int main(void) {
     if (!expect(changed == 1, "CSB card direct click should change menu state")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "CSB card direct click should enter game options")) return 1;
     if (!expect(state.activatedIndex == 1, "CSB direct click should activate CSB")) return 1;
+    if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB Launch direct click should be handled")) return 1;
@@ -54,12 +78,13 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "CSB launch blocker should show message")) return 1;
     if (!expect(state.messageLine1 && strcmp(state.messageLine1, "RUNTIME NOT READY") == 0,
                 "CSB launch blocker should explain runtime is not ready")) return 1;
+    if (!render_smoke_nonblank(&state, "CSB blocker message")) return 1;
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     if (!expect(intent.valid == 0, "CSB launch intent remains invalid even when version is matched")) return 1;
     if (!expect(intent.gameId && strcmp(intent.gameId, "csb") == 0, "CSB intent should still identify CSB for diagnostics")) return 1;
 
-    puts("ok: CSB V1 hash-matched launcher path is source-locked as blocked, not launched");
-    puts("sourceEvidence=CSB/src README:1-30 required payloads; CSBWin Game/readme.txt:1-30 Utility/Make-New-Adventure flow; menu_startup_m12.c DM1-only handoff guard");
+    puts("ok: CSB V1 hash-matched launcher path renders options/blocker views and stays blocked");
+    puts("sourceEvidence=ReDMCSB CSB startup/utility payload strings require dungeon/graphics plus CSB save-game handling; menu_startup_m12.c DM1-only handoff guard");
     return 0;
 }
