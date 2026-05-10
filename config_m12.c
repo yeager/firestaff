@@ -222,6 +222,12 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
     config->wasdMovementEnabled = 1;
+    config->inputModeIndex = 0;
+    config->touchControlsIndex = 0;
+    config->movementModeIndex = 0;
+    config->viewportStyleIndex = 0;
+    config->debugOverlayIndex = 0;
+    config->developerGatesIndex = 0;
     config->windowWidth = 960;
     config->windowHeight = 540;
     config->audioMasterVolume = 128;
@@ -308,6 +314,30 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "wasd_movement_enabled")) {
         config->wasdMovementEnabled = m12_parse_int(value, config->wasdMovementEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "input_mode_index")) {
+        config->inputModeIndex = m12_parse_int(value, config->inputModeIndex);
+        return;
+    }
+    if (m12_string_equals(key, "touch_controls_index")) {
+        config->touchControlsIndex = m12_parse_int(value, config->touchControlsIndex);
+        return;
+    }
+    if (m12_string_equals(key, "movement_mode_index")) {
+        config->movementModeIndex = m12_parse_int(value, config->movementModeIndex);
+        return;
+    }
+    if (m12_string_equals(key, "viewport_style_index")) {
+        config->viewportStyleIndex = m12_parse_int(value, config->viewportStyleIndex);
+        return;
+    }
+    if (m12_string_equals(key, "debug_overlay_index")) {
+        config->debugOverlayIndex = m12_parse_int(value, config->debugOverlayIndex);
+        return;
+    }
+    if (m12_string_equals(key, "developer_gates_index")) {
+        config->developerGatesIndex = m12_parse_int(value, config->developerGatesIndex);
         return;
     }
     if (m12_string_equals(key, "window_width")) {
@@ -471,6 +501,12 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
     fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);
     fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
+    fprintf(fp, "input_mode_index = %d\n", config->inputModeIndex);
+    fprintf(fp, "touch_controls_index = %d\n", config->touchControlsIndex);
+    fprintf(fp, "movement_mode_index = %d\n", config->movementModeIndex);
+    fprintf(fp, "viewport_style_index = %d\n", config->viewportStyleIndex);
+    fprintf(fp, "debug_overlay_index = %d\n", config->debugOverlayIndex);
+    fprintf(fp, "developer_gates_index = %d\n", config->developerGatesIndex);
     fprintf(fp, "window_width = %d\n", config->windowWidth);
     fprintf(fp, "window_height = %d\n", config->windowHeight);
     fprintf(fp, "audio_master_volume = %d\n", config->audioMasterVolume);

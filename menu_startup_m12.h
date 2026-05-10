@@ -95,6 +95,12 @@ typedef struct {
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;
+    int inputModeIndex;
+    int touchControlsIndex;
+    int movementModeIndex;
+    int viewportStyleIndex;
+    int debugOverlayIndex;
+    int developerGatesIndex;
     int audioMasterVolume;
     int audioMusicVolume;
     int audioSfxVolume;
