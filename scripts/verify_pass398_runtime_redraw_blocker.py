@@ -22,7 +22,7 @@ PASS = "pass398_runtime_redraw_blocker"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-SCRIPT = "enter,down,down,down,down,down,down,enter,right,up"
+SCRIPT = "enter,down,down,down,down,down,down,enter,right"
 
 
 def read(path: Path, enc: str = "latin-1") -> str:

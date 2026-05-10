@@ -42,3 +42,7 @@ That stale run is now superseded by the corrected initial-south rerun when `corr
 - images: `6` / unique `3`
 - candidate index: `1`
 - terminal index: `2`
+
+## Pass500 cleanup verdict
+
+Pass500 cleanup: stale wrong-facing route blocker remains superseded by corrected initial-south rerun; current unresolved work is tracked by pass487/pass497/pass498, not this manifest.

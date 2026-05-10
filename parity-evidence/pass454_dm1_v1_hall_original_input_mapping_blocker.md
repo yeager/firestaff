@@ -20,3 +20,7 @@ The original hall-true-stop fresh-entry logs used stale coordinate mapping. The 
 ## Resolution
 
 The stale hall-true-stop mapping blocker is superseded by the corrected rerun. Candidate framebuffer promotion remains owned by pass455/pass449, not by this diagnostic gate.
+
+## Pass500 cleanup verdict
+
+Pass500 cleanup: stale coordinate-mapping blocker remains superseded by corrected rerun; current unresolved work is tracked by pass487/pass497/pass498, not this manifest.

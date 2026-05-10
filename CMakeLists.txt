@@ -1717,6 +1717,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 movement/viewport blocker-cleanup source-lock gate ─────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
