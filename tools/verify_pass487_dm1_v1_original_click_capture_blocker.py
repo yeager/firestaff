@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +27,16 @@ EXPECTED_LABELS = [
     "move_backward_click",
     "turn_left_2_click",
 ]
+EXPECTED_FILENAME_FRAGMENTS = {
+    "party_ready_click_gate": "ingame_start",
+    "turn_left_click": "turn_left",
+    "turn_right_click": "turn_right",
+    "move_forward_click": "move_forward",
+    "move_backward_click": "move_backward",
+    "turn_left_2_click": "turn_left",
+}
+ENTRANCE_MENU_SHA256 = "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+STATIC_POST_ENTRY_GAMEPLAY_SHA256 = "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
 SOURCE_REFS = [
     {"file": "COMMAND.C", "lines": "106-114", "needles": ["C001_COMMAND_TURN_LEFT", "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT", "C006_COMMAND_MOVE_LEFT", "C005_COMMAND_MOVE_BACKWARD", "C004_COMMAND_MOVE_RIGHT"]},
     {"file": "COMMAND.C", "lines": "2045-2156", "needles": ["F0380_COMMAND_ProcessQueue_CPSC", "F0365_COMMAND_ProcessTypes1To2_TurnParty", "F0366_COMMAND_ProcessTypes3To6_MoveParty"]},
@@ -70,6 +79,33 @@ def labels() -> list[dict[str, str]]:
     return rows
 
 
+
+def capture_timestamp() -> str | None:
+    path = RUN_DIR / "raw_manifest.tsv"
+    if not path.exists():
+        return None
+    stamps: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines()[1:]:
+        parts = line.split("\t")
+        if len(parts) >= 4 and parts[3]:
+            stamps.append(parts[3])
+    return max(stamps) if stamps else None
+
+
+def filename_label_drift(label_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    drift = []
+    for row in label_rows:
+        expected = EXPECTED_FILENAME_FRAGMENTS.get(row["label"])
+        filename = row["filename"]
+        if expected and expected not in filename:
+            drift.append({
+                "index": row["index"],
+                "label": row["label"],
+                "filename": filename,
+                "expectedFilenameFragment": expected,
+            })
+    return drift
+
 def audit_sources() -> list[dict[str, object]]:
     rows = []
     for ref in SOURCE_REFS:
@@ -91,12 +127,26 @@ def main() -> int:
     classes = [c.get("classification") for c in captures]
     hashes = [c.get("sha256") for c in captures]
     source_rows = audit_sources()
+    drift_rows = filename_label_drift(label_rows)
+    first_hash = hashes[0] if hashes else None
+    post_entry_hashes = hashes[1:]
+    blocker_findings = {
+        "firstFrameStillEntranceMenu": classes[:1] == ["entrance_menu"] and first_hash == ENTRANCE_MENU_SHA256,
+        "firstFrameSha256": first_hash,
+        "expectedEntranceMenuSha256": ENTRANCE_MENU_SHA256,
+        "postEntryGameplayHashRepeated": post_entry_hashes == [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5,
+        "postEntryGameplaySha256": STATIC_POST_ENTRY_GAMEPLAY_SHA256,
+        "routeLabelsAreNotSourceStateProof": True,
+        "filenameLabelDrift": drift_rows,
+    }
     problems = []
     if seen_labels != EXPECTED_LABELS:
         problems.append(f"labels mismatch: {seen_labels}")
     if classes[:1] != ["entrance_menu"] or classes[1:] != ["dungeon_gameplay"] * 5:
         problems.append(f"unexpected classes: {classes}")
-    if len(set(hashes[1:])) != 1:
+    if first_hash != ENTRANCE_MENU_SHA256:
+        problems.append(f"first frame sha mismatch: {first_hash}")
+    if post_entry_hashes != [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5:
         problems.append("post-entry gameplay frames are not the expected repeated blocker hash")
     if not classifier.get("problems") or "duplicate" not in " ".join(classifier.get("problems", [])).lower():
         problems.append("classifier did not retain duplicate-frame blocker")
@@ -104,15 +154,16 @@ def main() -> int:
     payload = {
         "status": STATUS,
         "ok": not problems,
-        "generatedUtc": datetime.now(timezone.utc).isoformat(),
+        "generatedUtc": capture_timestamp(),
         "runDir": str(RUN_DIR.relative_to(ROOT)),
         "classifier": str(classifier_path.relative_to(ROOT)),
         "classifierSha256": sha(classifier_path),
         "labels": label_rows,
         "classes": classes,
         "duplicateSha256Counts": classifier.get("duplicate_sha256_counts", {}),
+        "blockerFindings": blocker_findings,
         "sourceRefs": source_rows,
-        "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by menu first frame and repeated post-entry gameplay hash",
+        "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry gameplay hash, and non-semantic capture filenames",
         "problems": problems,
         "nonClaims": ["no original-vs-Firestaff pixel parity", "no promotion of pass487 frames as overlay references", "no source/runtime movement-state stop proven"],
     }
@@ -128,8 +179,14 @@ def main() -> int:
         "## Classification",
         f"- labels: `{', '.join(seen_labels)}`",
         f"- classes: `{', '.join(classes)}`",
+        f"- first raw SHA: `{first_hash}`",
         f"- duplicate hashes: `{payload['duplicateSha256Counts']}`",
-        "- decision: route mechanism partially unblocked; source-state labeling remains blocked by repeated post-entry gameplay frames.",
+        "- decision: route mechanism partially unblocked; source-state labeling remains blocked by entrance/menu first frame plus repeated post-entry gameplay frames.",
+        "",
+        "## Blocker findings",
+        f"- first frame is still entrance/menu: `{blocker_findings['firstFrameStillEntranceMenu']}`",
+        f"- post-entry gameplay frames repeat static hash: `{blocker_findings['postEntryGameplayHashRepeated']}`",
+        f"- filename/route-label drift rows: `{len(drift_rows)}`",
         "",
         "## Source references audited",
     ]
@@ -140,6 +197,7 @@ def main() -> int:
         "## Gates",
         "- `scripts/dosbox_dm1_original_viewport_reference_capture.sh --run` on N2 with six labeled shots",
         "- `python3 tools/pass80_original_frame_classifier.py verification-screens/pass487-n2-original-pc34-click-primitives-route --fail-on-duplicates` retained the expected duplicate-frame blocker",
+        "- `python3 tools/verify_pass487_dm1_v1_original_click_capture_blocker.py` records entrance/menu first-frame, repeated gameplay hash, and filename/route-label drift blockers",
         "- this verifier records the blocker instead of promoting stale/duplicate frames",
         "",
         "## Non-claims",

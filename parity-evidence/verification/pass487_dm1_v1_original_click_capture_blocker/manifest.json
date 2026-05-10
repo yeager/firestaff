@@ -1,4 +1,44 @@
 {
+  "blockerFindings": {
+    "expectedEntranceMenuSha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+    "filenameLabelDrift": [
+      {
+        "expectedFilenameFragment": "turn_left",
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "index": "02",
+        "label": "turn_left_click"
+      },
+      {
+        "expectedFilenameFragment": "turn_right",
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "index": "03",
+        "label": "turn_right_click"
+      },
+      {
+        "expectedFilenameFragment": "move_forward",
+        "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "index": "04",
+        "label": "move_forward_click"
+      },
+      {
+        "expectedFilenameFragment": "move_backward",
+        "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "index": "05",
+        "label": "move_backward_click"
+      },
+      {
+        "expectedFilenameFragment": "turn_left",
+        "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "index": "06",
+        "label": "turn_left_2_click"
+      }
+    ],
+    "firstFrameSha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+    "firstFrameStillEntranceMenu": true,
+    "postEntryGameplayHashRepeated": true,
+    "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+    "routeLabelsAreNotSourceStateProof": true
+  },
   "classes": [
     "entrance_menu",
     "dungeon_gameplay",
@@ -9,11 +49,11 @@
   ],
   "classifier": "verification-screens/pass487-n2-original-pc34-click-primitives-route/pass80_original_frame_classifier.json",
   "classifierSha256": "becd572b1b7385e9a086264892de54193ffd6e30d33500f3f1e04e9a629cbbae",
-  "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by menu first frame and repeated post-entry gameplay hash",
+  "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry gameplay hash, and non-semantic capture filenames",
   "duplicateSha256Counts": {
     "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
   },
-  "generatedUtc": "2026-05-10T05:37:10.489448+00:00",
+  "generatedUtc": "2026-05-10T05:32:47.072363Z",
   "labels": [
     {
       "filename": "01_ingame_start_original_viewport_224x136.ppm",

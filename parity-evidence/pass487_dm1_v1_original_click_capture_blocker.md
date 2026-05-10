@@ -7,8 +7,14 @@ Fresh N2 DOSBox capture using source-locked PC34 click centers reached gameplay 
 ## Classification
 - labels: `party_ready_click_gate, turn_left_click, turn_right_click, move_forward_click, move_backward_click, turn_left_2_click`
 - classes: `entrance_menu, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay`
+- first raw SHA: `17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8`
 - duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 5}`
-- decision: route mechanism partially unblocked; source-state labeling remains blocked by repeated post-entry gameplay frames.
+- decision: route mechanism partially unblocked; source-state labeling remains blocked by entrance/menu first frame plus repeated post-entry gameplay frames.
+
+## Blocker findings
+- first frame is still entrance/menu: `True`
+- post-entry gameplay frames repeat static hash: `True`
+- filename/route-label drift rows: `5`
 
 ## Source references audited
 - `COMMAND.C:106-114` ok=True
@@ -23,6 +29,7 @@ Fresh N2 DOSBox capture using source-locked PC34 click centers reached gameplay 
 ## Gates
 - `scripts/dosbox_dm1_original_viewport_reference_capture.sh --run` on N2 with six labeled shots
 - `python3 tools/pass80_original_frame_classifier.py verification-screens/pass487-n2-original-pc34-click-primitives-route --fail-on-duplicates` retained the expected duplicate-frame blocker
+- `python3 tools/verify_pass487_dm1_v1_original_click_capture_blocker.py` records entrance/menu first-frame, repeated gameplay hash, and filename/route-label drift blockers
 - this verifier records the blocker instead of promoting stale/duplicate frames
 
 ## Non-claims
