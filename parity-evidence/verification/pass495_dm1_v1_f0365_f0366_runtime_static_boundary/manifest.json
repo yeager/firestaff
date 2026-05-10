@@ -1,0 +1,110 @@
+{
+  "decision": "Do not spend more Firestaff-route work on F0365/F0366; that seam is closed. The active blocker is original capture promotion: pass487/pass494 still classify the fresh click capture as entrance-first plus repeated static/no-state-delta post-entry frames, not source-visible movement state evidence.",
+  "firestaffRouteEvidence": {
+    "evidence": "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md",
+    "ok": true,
+    "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED"
+  },
+  "nextUnblocker": "Capture or trace a fresh original run where the labeled post-entry frames are non-duplicate and source-bound to F0380 pop/load plus F0365/F0366 dispatch/stop evidence, then rerun pass80/pass487-family promotion gates.",
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity promotion",
+    "no claim that pass487 static post-entry frames prove movement processor stops",
+    "no new DOSBox/FIRES runtime capture was performed by this pass"
+  ],
+  "ok": true,
+  "problems": [],
+  "runtimeStopEvidence": {
+    "f0380EntryBreakpointObservedAfterQueueWrite": false,
+    "interpretation": "F0380 entry itself is diagnostic here; the promoted predicate is the post-queue-write pop/load/decrement plus F0365/F0366 dispatch stop chain.",
+    "manifest": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/manifest.json",
+    "observedPredicates": {
+      "f0361HitAfterArm": true,
+      "f0365OrF0366DispatchObserved": true,
+      "f0380PopLoadAfterQueueWriteObserved": true,
+      "g2153DecrementPopLoadObserved": true,
+      "g2153IncrementObserved": true,
+      "postGameplayRuntimeRan": true,
+      "sourceAuditOk": true
+    },
+    "ok": true,
+    "requiredPredicates": {
+      "f0361HitAfterArm": true,
+      "f0365OrF0366DispatchObserved": true,
+      "f0380PopLoadAfterQueueWriteObserved": true,
+      "g2153DecrementPopLoadObserved": true,
+      "g2153IncrementObserved": true,
+      "postGameplayRuntimeRan": true,
+      "sourceAuditOk": true
+    },
+    "status": "PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN"
+  },
+  "schema": "firestaff.parity.pass495_dm1_v1_f0365_f0366_runtime_static_boundary.v1",
+  "sourceAudit": [
+    {
+      "claim": "the game loop drains keyboard input, runs F0380, and exits the wait loop only after stop/tick state permits the next draw",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_wait_wrap",
+      "lines": "150-219",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "PC34/I34E movement keys resolve to C001/C002 turn and C003..C006 movement command ids",
+      "file": "COMMAND.C",
+      "function": "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+      "id": "pc34_movement_key_table",
+      "lines": "636-685",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "keyboard input is table-resolved into G0432_as_CommandQueue before F0380 consumes it",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "keyboard_queue_write",
+      "lines": "1709-1813",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "F0380 gates movement cooldown, pop-loads one queued command, then dispatches turns to F0365 and steps to F0366",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pop_load_dispatch",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "accepted turns set stop-wait and mutate party direction through the source turn handler",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "f0365_turn_stop",
+      "lines": "142-174",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "accepted steps compute a relative destination, commit through F0267, and set movement cooldown; blocked steps discard input before the commit path",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366_step_stop_or_block",
+      "lines": "180-347",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "staticDuplicateEvidence": {
+    "firstFrameStillEntranceMenu": true,
+    "manifest": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+    "ok": true,
+    "postEntryGameplayHashRepeated": true,
+    "postEntryStaticNoStateDelta": true,
+    "status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+    "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop"
+  },
+  "status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
+  "timestampUtc": "2026-05-10T08:33:14.036053+00:00"
+}
