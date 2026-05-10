@@ -113,6 +113,28 @@ def filename_label_drift(label_rows: list[dict[str, str]]) -> list[dict[str, str
             })
     return drift
 
+
+def route_capture_rows(label_rows: list[dict[str, str]], captures: list[dict[str, object]]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for row, capture in zip(label_rows, captures):
+        expected = EXPECTED_FILENAME_FRAGMENTS.get(row["label"])
+        filename = row["filename"]
+        sha256 = capture.get("sha256")
+        rows.append({
+            "index": row["index"],
+            "routeLabel": row["label"],
+            "labelFilename": filename,
+            "expectedFilenameFragment": expected,
+            "filenameMatchesRouteLabel": bool(expected and expected in filename),
+            "rawCaptureFile": capture.get("file"),
+            "classification": capture.get("classification"),
+            "sha256": sha256,
+            "isRepeatedPostEntryStaticHash": sha256 == STATIC_POST_ENTRY_GAMEPLAY_SHA256,
+            "reason": capture.get("reason"),
+        })
+    return rows
+
+
 def audit_sources() -> list[dict[str, object]]:
     rows = []
     for ref in SOURCE_REFS:
@@ -135,8 +157,11 @@ def main() -> int:
     hashes = [c.get("sha256") for c in captures]
     source_rows = audit_sources()
     drift_rows = filename_label_drift(label_rows)
+    route_rows = route_capture_rows(label_rows, captures)
     first_hash = hashes[0] if hashes else None
     post_entry_hashes = hashes[1:]
+    post_entry_region_fingerprints = [json.dumps(c.get("regions", {}), sort_keys=True) for c in captures[1:]]
+    repeated_post_entry_regions = bool(post_entry_region_fingerprints) and len(set(post_entry_region_fingerprints)) == 1
     blocker_findings = {
         "firstFrameStillEntranceMenu": classes[:1] == ["entrance_menu"] and first_hash == ENTRANCE_MENU_SHA256,
         "firstFrameSha256": first_hash,
@@ -145,6 +170,8 @@ def main() -> int:
         "postEntryGameplaySha256": STATIC_POST_ENTRY_GAMEPLAY_SHA256,
         "routeLabelsAreNotSourceStateProof": True,
         "postEntryStaticNoStateDelta": post_entry_hashes == [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5,
+        "postEntryRegionStatsRepeated": repeated_post_entry_regions,
+        "routeCaptureRows": route_rows,
         "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop",
         "staticGameplayProvenance": STATIC_POST_ENTRY_GAMEPLAY_PROVENANCE,
         "filenameLabelDrift": drift_rows,
@@ -152,12 +179,16 @@ def main() -> int:
     problems = []
     if seen_labels != EXPECTED_LABELS:
         problems.append(f"labels mismatch: {seen_labels}")
+    if len(captures) != len(label_rows):
+        problems.append(f"capture/label count mismatch: {len(captures)} captures vs {len(label_rows)} labels")
     if classes[:1] != ["entrance_menu"] or classes[1:] != ["dungeon_gameplay"] * 5:
         problems.append(f"unexpected classes: {classes}")
     if first_hash != ENTRANCE_MENU_SHA256:
         problems.append(f"first frame sha mismatch: {first_hash}")
     if post_entry_hashes != [STATIC_POST_ENTRY_GAMEPLAY_SHA256] * 5:
         problems.append("post-entry gameplay frames are not the expected repeated blocker hash")
+    if not repeated_post_entry_regions:
+        problems.append("post-entry gameplay region statistics are not the expected repeated no-delta fingerprint")
     if not classifier.get("problems") or "duplicate" not in " ".join(classifier.get("problems", [])).lower():
         problems.append("classifier did not retain duplicate-frame blocker")
     problems += [f"source lock failed {r['file']}:{r['lines']}" for r in source_rows if not r["ok"]]
@@ -172,6 +203,7 @@ def main() -> int:
         "classes": classes,
         "duplicateSha256Counts": classifier.get("duplicate_sha256_counts", {}),
         "blockerFindings": blocker_findings,
+        "routeCaptureRows": route_rows,
         "sourceRefs": source_rows,
         "decision": "route mechanism partially unblocked: fresh N2 click primitives reach gameplay; parity promotion remains blocked by entrance/menu first frame, repeated post-entry static/no-state-delta gameplay hash, and non-semantic capture filenames",
         "problems": problems,
@@ -199,6 +231,13 @@ def main() -> int:
         f"- true-stop classification: `{blocker_findings['trueStopClassification']}`",
         f"- static/no-state-delta provenance: `{'; '.join(STATIC_POST_ENTRY_GAMEPLAY_PROVENANCE)}`",
         f"- filename/route-label drift rows: `{len(drift_rows)}`",
+        f"- post-entry region stats repeat: `{repeated_post_entry_regions}`",
+        "",
+        "## Route/capture mapping",
+    ]
+    for row in route_rows:
+        lines.append(f"- `{row['index']}` `{row['routeLabel']}` -> `{row['classification']}` `{row['sha256']}` filenameMatchesRouteLabel={row['filenameMatchesRouteLabel']}")
+    lines += [
         "",
         "## Source references audited",
     ]

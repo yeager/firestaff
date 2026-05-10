@@ -17,6 +17,15 @@ Fresh N2 DOSBox capture using source-locked PC34 click centers reached gameplay 
 - true-stop classification: `static_no_state_delta_after_entrance_not_movement_processor_stop`
 - static/no-state-delta provenance: `pass113/pass118 classify the same 48ed3743ab6a frame family as direct-start/no-party or party-control-not-ready gameplay; pass487 route labels after entry all collapse to this hash, so clicks are not yielding source-visible movement/control deltas`
 - filename/route-label drift rows: `5`
+- post-entry region stats repeat: `True`
+
+## Route/capture mapping
+- `01` `party_ready_click_gate` -> `entrance_menu` `17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8` filenameMatchesRouteLabel=True
+- `02` `turn_left_click` -> `dungeon_gameplay` `48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397` filenameMatchesRouteLabel=False
+- `03` `turn_right_click` -> `dungeon_gameplay` `48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397` filenameMatchesRouteLabel=False
+- `04` `move_forward_click` -> `dungeon_gameplay` `48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397` filenameMatchesRouteLabel=False
+- `05` `move_backward_click` -> `dungeon_gameplay` `48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397` filenameMatchesRouteLabel=False
+- `06` `turn_left_2_click` -> `dungeon_gameplay` `48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397` filenameMatchesRouteLabel=False
 
 ## Source references audited
 - `COMMAND.C:63-72,341-353` ok=True

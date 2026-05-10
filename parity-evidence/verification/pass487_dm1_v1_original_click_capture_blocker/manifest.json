@@ -37,7 +37,82 @@
     "firstFrameStillEntranceMenu": true,
     "postEntryGameplayHashRepeated": true,
     "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+    "postEntryRegionStatsRepeated": true,
     "postEntryStaticNoStateDelta": true,
+    "routeCaptureRows": [
+      {
+        "classification": "entrance_menu",
+        "expectedFilenameFragment": "ingame_start",
+        "filenameMatchesRouteLabel": true,
+        "index": "01",
+        "isRepeatedPostEntryStaticHash": false,
+        "labelFilename": "01_ingame_start_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0001-raw.png",
+        "reason": "dungeon entrance/menu controls still occupy the right column",
+        "routeLabel": "party_ready_click_gate",
+        "sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "expectedFilenameFragment": "turn_left",
+        "filenameMatchesRouteLabel": false,
+        "index": "02",
+        "isRepeatedPostEntryStaticHash": true,
+        "labelFilename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0002-raw.png",
+        "reason": "viewport content with mostly dark in-game right column",
+        "routeLabel": "turn_left_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "expectedFilenameFragment": "turn_right",
+        "filenameMatchesRouteLabel": false,
+        "index": "03",
+        "isRepeatedPostEntryStaticHash": true,
+        "labelFilename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0003-raw.png",
+        "reason": "viewport content with mostly dark in-game right column",
+        "routeLabel": "turn_right_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "expectedFilenameFragment": "move_forward",
+        "filenameMatchesRouteLabel": false,
+        "index": "04",
+        "isRepeatedPostEntryStaticHash": true,
+        "labelFilename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0004-raw.png",
+        "reason": "viewport content with mostly dark in-game right column",
+        "routeLabel": "move_forward_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "expectedFilenameFragment": "move_backward",
+        "filenameMatchesRouteLabel": false,
+        "index": "05",
+        "isRepeatedPostEntryStaticHash": true,
+        "labelFilename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0005-raw.png",
+        "reason": "viewport content with mostly dark in-game right column",
+        "routeLabel": "move_backward_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "expectedFilenameFragment": "turn_left",
+        "filenameMatchesRouteLabel": false,
+        "index": "06",
+        "isRepeatedPostEntryStaticHash": true,
+        "labelFilename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0006-raw.png",
+        "reason": "viewport content with mostly dark in-game right column",
+        "routeLabel": "turn_left_2_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      }
+    ],
     "routeLabelsAreNotSourceStateProof": true,
     "staticGameplayProvenance": [
       "pass113/pass118 classify the same 48ed3743ab6a frame family as direct-start/no-party or party-control-not-ready gameplay",
@@ -105,6 +180,80 @@
   ],
   "ok": true,
   "problems": [],
+  "routeCaptureRows": [
+    {
+      "classification": "entrance_menu",
+      "expectedFilenameFragment": "ingame_start",
+      "filenameMatchesRouteLabel": true,
+      "index": "01",
+      "isRepeatedPostEntryStaticHash": false,
+      "labelFilename": "01_ingame_start_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0001-raw.png",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "routeLabel": "party_ready_click_gate",
+      "sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expectedFilenameFragment": "turn_left",
+      "filenameMatchesRouteLabel": false,
+      "index": "02",
+      "isRepeatedPostEntryStaticHash": true,
+      "labelFilename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0002-raw.png",
+      "reason": "viewport content with mostly dark in-game right column",
+      "routeLabel": "turn_left_click",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expectedFilenameFragment": "turn_right",
+      "filenameMatchesRouteLabel": false,
+      "index": "03",
+      "isRepeatedPostEntryStaticHash": true,
+      "labelFilename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0003-raw.png",
+      "reason": "viewport content with mostly dark in-game right column",
+      "routeLabel": "turn_right_click",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expectedFilenameFragment": "move_forward",
+      "filenameMatchesRouteLabel": false,
+      "index": "04",
+      "isRepeatedPostEntryStaticHash": true,
+      "labelFilename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0004-raw.png",
+      "reason": "viewport content with mostly dark in-game right column",
+      "routeLabel": "move_forward_click",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expectedFilenameFragment": "move_backward",
+      "filenameMatchesRouteLabel": false,
+      "index": "05",
+      "isRepeatedPostEntryStaticHash": true,
+      "labelFilename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0005-raw.png",
+      "reason": "viewport content with mostly dark in-game right column",
+      "routeLabel": "move_backward_click",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expectedFilenameFragment": "turn_left",
+      "filenameMatchesRouteLabel": false,
+      "index": "06",
+      "isRepeatedPostEntryStaticHash": true,
+      "labelFilename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "rawCaptureFile": "verification-screens/pass487-n2-original-pc34-click-primitives-route/image0006-raw.png",
+      "reason": "viewport content with mostly dark in-game right column",
+      "routeLabel": "turn_left_2_click",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+    }
+  ],
   "runDir": "verification-screens/pass487-n2-original-pc34-click-primitives-route",
   "sourceRefs": [
     {
