@@ -1,8 +1,8 @@
 # Pass474 — DM1 V1 live mouse down/up C080 probe
 
-Status: `BLOCKED_PASS474_NO_MOUSE_EVENT_SAMPLE`
+Status: `BLOCKED_PASS474_MOUSE_EVENT_SAMPLED_NO_F0359`
 
-no strict mouse event sample
+mouse callback sampled events but did not reach F0359 in bounded run
 
 ## ReDMCSB source audit
 - `IO.C` `callback_gate` ok=`True`
@@ -34,8 +34,8 @@ no strict mouse event sample
   - line 127: `G0305_ui_PartyChampionCount`
 
 ## Runtime predicates
-- sampled events: `[]` / `[]`
-- stops: `[]`
+- sampled events: `['C32_MOUSE_EVENT_CHANGE_SCREEN_REGION']` / `['0x20']`
+- stops: `['F0781_EventCmp']`
 - F0359 hit: `False`; F0380 hit: `False`; F0377 hit: `False`; F0280 hit: `False`
 
 ## Artifacts

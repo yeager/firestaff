@@ -105,24 +105,22 @@ def run_probe(seconds:int, x:int,y:int)->dict[str,Any]:
    p385.drive(display,win,p385.LOAD_PREFIX,routelog)
    if not p385.pause_to_prompt(child,display,win,cmdlog,transcript,"post load-prefix"):
     return {"ran":True,"blocker":"no prompt after load prefix","routeLog":routelog,"commandLog":cmdlog,"stops":stops}
-   child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"enter dungeon before mouse-arm"})
-   p385.drive(display,win,p385.LOAD_SUFFIX,routelog)
-   px,py,geom=pc_to_window(display,win,x,y); r=xmouse(display,win,"move",px,py); clicklog.append({"t":time.time(),"action":"preposition","rc":r.returncode,**geom})
-   time.sleep(.4)
-   if not p385.pause_to_prompt(child,display,win,cmdlog,transcript,"prepositioned mouse-arm"):
-    return {"ran":True,"blocker":"no prompt at prepositioned arm point","routeLog":routelog,"clickLog":clicklog,"commandLog":cmdlog,"stops":stops}
+   px,py,geom=pc_to_window(display,win,x,y); clicklog.append({"t":time.time(),"action":"target_geometry",**geom})
    initial_bp_names=["F0781_EventCmp","F0359_COMMAND_ProcessClick_CPSC"]
    for cmd in ["BPDEL *", *("BP "+ADDR[n] for n in initial_bp_names), "BPLIST"]: p385.dbg(child,cmd,cmdlog,transcript)
    bplist=p385.clean(cmdlog[-1].get("excerpt","")).upper(); retained={n:(ADDR[n] in bplist) for n in ADDR}
-   child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"run armed for explicit mousedown"}); time.sleep(.4)
-   r=xmouse(display,win,"down",px,py); clicklog.append({"t":time.time(),"action":"mousedown","rc":r.returncode,"window":[px,py]})
+   child.send("\x1bOt"); cmdlog.append({"t":time.time(),"control":"F5","purpose":"run armed through dungeon entry before explicit mousedown"})
+   p385.drive(display,win,p385.LOAD_SUFFIX,routelog)
+   r=xmouse(display,win,"down",px,py); clicklog.append({"t":time.time(),"action":"mousemove_mousedown","rc":r.returncode,"window":[px,py]})
    r=xmouse(display,win,"move",px+2,py); clicklog.append({"t":time.time(),"action":"held_jitter_move","rc":r.returncode,"window":[px+2,py]})
-   released=False; downstream_armed=False; deadline=time.time()+seconds
+   released=False; downstream_armed=False; post_c32_jitter=False; deadline=time.time()+seconds
    while time.time()<deadline:
     row=wait_stop(child,transcript,timeout=min(8,max(1,int(deadline-time.time()))))
     if not row: break
     row["t"]=time.time(); stops.append(row)
     for ccmd in ["CPU","BPLIST"]: p385.dbg(child,ccmd,cmdlog,transcript)
+    if row.get("kind")=="F0781_EventCmp" and row.get("eventValue")==32 and not post_c32_jitter:
+     r=xmouse(display,win,"move",px+6,py); clicklog.append({"t":time.time(),"action":"held_post_c32_jitter_move","rc":r.returncode,"window":[px+6,py]}); post_c32_jitter=True
     if row.get("kind")=="F0359_COMMAND_ProcessClick_CPSC":
      if not downstream_armed:
       for ccmd in ["BP "+ADDR["F0380_COMMAND_ProcessQueue_CPSC"], "BP "+ADDR["F0377_COMMAND_ProcessType80_ClickInDungeonView"], "BP "+ADDR["F0280_CHAMPION_AddCandidateChampionToParty"], "BPLIST"]: p385.dbg(child,ccmd,cmdlog,transcript)
