@@ -7450,7 +7450,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * DM1 can have multiple creature groups on a single square; the
      * viewport draws them stacked/offset.  We also keep the legacy
      * single creatureType field pointing at the first group. */
-    if (cell.summary.groups > 0 && state->world.things && state->world.things->groups) {
+    if (cell.summary.groups > 0 && state->world.things && state->world.things->groups &&
+        cell.elementType != DUNGEON_ELEMENT_WALL) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
@@ -7477,8 +7478,16 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
 
     /* Extract floor item types and subtypes for sprite rendering.
      * Collect up to M11_MAX_CELL_ITEMS items for multi-item scatter.
-     * The first one also populates the legacy single-item fields. */
-    if (cell.summary.items > 0 && state->world.things) {
+     * The first one also populates the legacy single-item fields.
+     *
+     * WALL squares contain champion alcove items that must NOT be
+     * rendered as floor items.  ReDMCSB DUNVIEW.C F0115 line 4920
+     * gates item drawing on sub-cell matching and alcove flags;
+     * here we skip extraction for WALL element types entirely.
+     * This prevents alcove armour/weapons from appearing as
+     * phantom floor sprites at game start (Hall of Champions). */
+    if (cell.summary.items > 0 && state->world.things &&
+        cell.elementType != DUNGEON_ELEMENT_WALL) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
