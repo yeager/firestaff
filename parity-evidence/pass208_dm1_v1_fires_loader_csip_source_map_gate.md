@@ -4,9 +4,9 @@ Classification: `blocked/decompressed-runtime-address-map-required`
 Exact remaining blocker: Stock FIRES is LZEXE v0.91; this pass proves the compressed loader entry CS:IP and source seams, but no decompressed FIRES memory dump or TLINK FIRES.MAP artifact is present on N2, so source symbols cannot yet be converted to stock runtime CS:IP breakpoints.
 
 ## Loader facts
-- Stock original FIRES: `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES` size `94779` sha256 `ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb`.
+- Stock original FIRES: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES` size `94779` sha256 `ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb`.
 - ReDMCSB bundled original I34E FIRES matches stock: `True`.
-- ReDMCSB rebuilt/reference I34E FIRES is available: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES` size `94841` sha256 `3e59c1a8d4dec64c3cac1fd06a064077754cd012bef8d627cca969cad32311d0`.
+- ReDMCSB rebuilt/reference I34E FIRES is available: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES` size `94841` sha256 `3e59c1a8d4dec64c3cac1fd06a064077754cd012bef8d627cca969cad32311d0`.
 - Stock MZ/LZEXE signature at relocation table: `LZ91`.
 - Stock compressed loader entry CS:IP: `1665:000e` relative to DOS load-image base (`PSP+0x10`); linear offset `0x1665e`.
 - Stack at loader entry: `29d2:0080`.
@@ -20,7 +20,7 @@ Exact remaining blocker: Stock FIRES is LZEXE v0.91; this pass proves the compre
 - PASS `viewport_buffer_composed` — `DUNVIEW.C:8608-8616`; symbols: `F0097_DUNGEONVIEW_DrawViewport`, `F0098_DUNGEONVIEW_DrawFloorAndCeiling`
 
 ## Link/map evidence
-- I34E link order file: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK` (36 objects).
+- I34E link order file: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK` (36 objects).
 - First objects: `GAMELOOP.OBJ`, `PROJEXPL.OBJ`, `DIALOG.OBJ`, `DUNGEON.OBJ`, `MENUDRAW.OBJ`, `GROUP.OBJ`, `MEMORY.OBJ`, `OBJECT.OBJ`.
 - Existing `*.MAP` artifacts under ReDMCSB tree: `0`.
 - Expected map if the PC toolchain build is run: `\BUILD\I34E\FIRES.MAP` (from `MKII.BAT` TLINK line for `@\SOURCE\I34E.LNK`).

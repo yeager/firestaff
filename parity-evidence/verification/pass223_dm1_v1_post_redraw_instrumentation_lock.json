@@ -6,8 +6,8 @@
     ],
     "json_only": true
   },
-  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
   "required_chain": [
     "command_accepted_queue_dispatch",
     "turn_handler_applies_direction_and_releases_wait OR step_handler_resolves_destination_and_releases_wait",

@@ -76,27 +76,17 @@
     "no original-vs-Firestaff pixel parity",
     "no promotion of static repeated screenshots"
   ],
-  "ok": true,
+  "ok": false,
   "priorGates": [
     "pass496_dm1_v1_wall_occlusion_spec_matrix",
     "pass490_dm1_v1_wall_occlusion_merge_readiness",
     "dm1_v1_viewport_3d_occlusion_metadata_gate"
   ],
-  "probeRun": {
-    "cmd": [
-      "ctest",
-      "--test-dir",
-      "/home/trv2/work/firestaff/build",
-      "-R",
-      "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
-      "--output-on-failure"
-    ],
-    "ok": true,
-    "returncode": 0,
-    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  34: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #34: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 203: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #203: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.11 sec\n    Start 208: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #208: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.14 sec\n    Start 209: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #209: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.33 sec\n"
-  },
+  "probeRun": null,
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
-  "problems": [],
+  "problems": [
+    "missing build directory for compiled probe test"
+  ],
   "promotionPredicate": "Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is ok, the compiled Firestaff wall-composition probe passes, and a runtime/capture lane reaches the F0128 to F0097 present boundary for the same viewport. This gate is source/probe coverage only.",
   "schema": "firestaff.parity.pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.v1",
   "sourceLocks": [
@@ -168,6 +158,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-05-10T10:35:27.316836+00:00"
+  "status": "FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE",
+  "timestampUtc": "2026-05-12T06:38:08.525262+00:00"
 }

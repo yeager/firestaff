@@ -30,30 +30,43 @@
     "labels_exists": true
   },
   "pass223_input": "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json",
-  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
   "runtime_api_audit": {
     "classification": "blocked/missing-original-runtime-state-hook-api",
     "dosbox_version": {
       "argv": [
-        "/opt/homebrew/bin/dosbox",
+        "/usr/bin/dosbox",
         "-version"
       ],
       "output_head": [
-        "2026-05-09 20:48:33.917 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
-        "dosbox-staging, version 0.82.2 ()",
         "",
-        "Copyright (C) 2020-2024  The DOSBox Staging Team",
-        "License: GNU GPL-2.0-or-later <https://www.gnu.org/licenses/gpl-2.0.html>",
+        "DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.",
         "",
-        "This is free software, and you are welcome to change and redistribute it under",
-        "certain conditions; please read the COPYING file thoroughly before doing so.",
-        "There is NO WARRANTY, to the extent permitted by law."
+        "DOSBox is written by the DOSBox Team (See AUTHORS file))",
+        "DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
       ],
       "returncode": 0
     },
     "dosbox_x_version": {
-      "missing": "dosbox-x"
+      "argv": [
+        "/usr/bin/dosbox-x",
+        "-version"
+      ],
+      "output_head": [
+        "",
+        "DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.",
+        "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
+        "",
+        "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
+      ],
+      "returncode": 1
     },
     "existing_runner_api_files": [
       {
@@ -91,16 +104,27 @@
       }
     ],
     "gdb_version": {
-      "missing": "gdb"
+      "argv": [
+        "/usr/bin/gdb",
+        "--version"
+      ],
+      "output_head": [
+        "GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1",
+        "Copyright (C) 2024 Free Software Foundation, Inc.",
+        "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>",
+        "This is free software: you are free to change and redistribute it.",
+        "There is NO WARRANTY, to the extent permitted by law."
+      ],
+      "returncode": 0
     },
     "hook_capable": false,
     "host_tools": {
-      "dosbox": "/opt/homebrew/bin/dosbox",
-      "dosbox-debug": null,
-      "dosbox-x": null,
-      "gdb": null,
-      "xdotool": null,
-      "xvfb-run": null
+      "dosbox": "/usr/bin/dosbox",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "gdb": "/usr/bin/gdb",
+      "xdotool": "/usr/bin/xdotool",
+      "xvfb-run": "/usr/bin/xvfb-run"
     }
   },
   "runtime_trace_schema": {

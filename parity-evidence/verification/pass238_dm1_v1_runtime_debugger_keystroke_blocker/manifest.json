@@ -44,9 +44,9 @@
   "classification": "blocked/direct-f0380-dequeue-hit-required",
   "inputs": {
     "fires_exenew_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
-    "pass237_manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
-    "runtime_image": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "pass237_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "manual_keystroke_runbook": [
     "Create a scratch DOS directory outside the repo; copy the stock DM1 PC34 files and copy the local verified FIRES.EXENEW fixture as FIRES.EXE (do not commit it).",
@@ -62,7 +62,7 @@
   "pass278_runtime_control": {
     "f0128_runtime_hit_seen": true,
     "f0380_dequeue_hit_seen": false,
-    "manifest": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
+    "manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
   },
   "promoted_symbol_map_entries": [
     {
@@ -80,10 +80,10 @@
       "DEBUG: Set interrupt breakpoint",
       "BPLIST INT 21"
     ],
-    "transcript": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt"
+    "transcript": "/home/trv2/work/firestaff/parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt"
   },
   "tools": {
-    "dosbox-debug": null,
-    "dosbox-x": null
+    "dosbox-debug": "/usr/bin/dosbox-debug",
+    "dosbox-x": "/usr/bin/dosbox-x"
   }
 }

@@ -1,11 +1,11 @@
 {
   "schema": "pass212_dm1_v1_original_route_sync_probe.v1",
-  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+  "status": "BLOCKED_ROUTE_CAPTURE_SYNC",
   "superseded_by_later_batch_capture": {
-    "superseded": true,
-    "reason": "pass304/pass308 captured the focused route-label set; remaining blocker is original runtime state-oracle proof",
-    "pass304Status": "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY",
-    "pass304RouteLabelCoverage": true,
+    "superseded": false,
+    "reason": "later route-label capture coverage incomplete",
+    "pass304Status": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
+    "pass304RouteLabelCoverage": false,
     "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
     "pass308Coverage": {
       "requiredLabelCoverage": true,

@@ -1,6 +1,6 @@
 # Pass244 — DM1 V1 QEMU/FreeDOS DUNVIEW path
 
-Status: `BLOCKED_QEMU_FREEDOS_DUNVIEW_BOOT_OR_BATCH_NO_LOG`
+Status: `BLOCKED_QEMU_FREEDOS_DUNVIEW_COMPLETED_ZERO_OR_MISSING_OBJ`
 
 ## Result
 
@@ -22,11 +22,11 @@ QEMU+FreeDOS now has a reproducible partitioned hard-disk route that starts the 
 
 ## N2-local run metadata only
 
-- Run dir: `/Users/bosse/.openclaw/data/firestaff-qemu-dunview-20260506g`.
-- Disk image exists/size: `False` / `None` bytes.
-- Host start/end: `None` / `None`.
-- QEMU log present: `False`; lines: `None`; chars: `None`.
-- First compiler error: `None`.
+- Run dir: `/home/trv2/.openclaw/data/firestaff-qemu-dunview-20260506g`.
+- Disk image exists/size: `True` / `268435456` bytes.
+- Host start/end: `2026-05-06T13:34:50+00:00` / `2026-05-06T13:42:57+00:00`.
+- QEMU log present: `True`; lines: `22`; chars: `1220`.
+- First compiler error: `Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn`.
 - `DUNVIEW.OBJ` mdir present: `False`.
 - `FIRES.MAP` mdir present: `False`.
 

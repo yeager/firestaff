@@ -1,6 +1,6 @@
 # Pass227 — DM1 V1 original-runtime hook/API design
 
-Status: `BLOCKED_HOOK_DESIGN_PREREQUISITE_MISSING`
+Status: `PASS_ORIGINAL_RUNTIME_HOOK_DESIGN_READY`
 
 Scope: JSON-only design spike for the missing stock-runtime state hook. It produces no PNG/PPM artifacts and makes no pixel-parity claim.
 
@@ -112,7 +112,7 @@ Use the existing N2 original stage plus DOSBox-X/dosbox-debug as the first imple
 
 ## Asset/tool audit
 
-- tools: `{'dosbox': '/opt/homebrew/bin/dosbox', 'dosbox-debug': None, 'dosbox-x': None, 'xvfb-run': None, 'xdotool': None, 'gdb': None, 'objdump': '/usr/bin/objdump', 'strings': '/usr/bin/strings'}`
+- tools: `{'dosbox': '/usr/bin/dosbox', 'dosbox-debug': '/usr/bin/dosbox-debug', 'dosbox-x': '/usr/bin/dosbox-x', 'xvfb-run': '/usr/bin/xvfb-run', 'xdotool': '/usr/bin/xdotool', 'gdb': '/usr/bin/gdb', 'objdump': '/usr/bin/objdump', 'strings': '/usr/bin/strings'}`
 - `DM.EXE` exists=`True` sha256=`4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4`
 - `FIRES` exists=`True` sha256=`ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb`
 - `VGA` exists=`True` sha256=`4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b`

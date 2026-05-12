@@ -1,27 +1,73 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-09T18:48:32.480654+00:00",
+  "timestampUtc": "2026-05-12T06:36:46.489007+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
-  "branch": "land-20260509",
-  "head": "09b369b3550e2b62233d36335214e5d30ea2ecca",
+  "repo": "/home/trv2/work/firestaff",
+  "branch": "release-prep",
+  "head": "e60b0878f4ff123d142ebaca93ab2340632d9ded",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
-  "externalParentExists": true,
+  "externalParentExists": false,
   "envOverrides": [
     "FIRESTAFF_DOSBOX",
     "FIRESTAFF_PASS173_RUN_BASE",
     "FIRESTAFF_ARTIFACT_ROOT"
   ],
   "n2HallDosboxArtifactRoot": {
-    "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "root": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509",
     "exists": true,
-    "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
+    "manifestCandidates": [
+      "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+      "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+    ],
     "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+    "manifestPath": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json",
     "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
     "entryCount": 11,
     "ok": true,
-    "errors": []
+    "errors": [],
+    "candidates": [
+      {
+        "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+        "exists": false,
+        "manifestCandidates": [
+          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+        ],
+        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "ok": false,
+        "errors": [
+          "missing manifest.json or final_candidate_frames/manifest.json"
+        ]
+      },
+      {
+        "root": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509",
+        "exists": true,
+        "manifestCandidates": [
+          "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+        ],
+        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "manifestPath": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json",
+        "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "entryCount": 11,
+        "ok": true,
+        "errors": []
+      },
+      {
+        "root": "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+        "exists": false,
+        "manifestCandidates": [
+          "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+        ],
+        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "ok": false,
+        "errors": [
+          "missing manifest.json or final_candidate_frames/manifest.json"
+        ]
+      }
+    ]
   },
   "fallbackRunBase": "~/.openclaw/data/firestaff-n2-runs only when the N1 external artifact parent is absent and no env override is supplied",
   "pyCompile": {
@@ -29,7 +75,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/tools/pass173_source_portrait_route_gate_probe.py"
+      "/home/trv2/work/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

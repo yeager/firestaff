@@ -33,7 +33,7 @@
       "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF"
     ]
   },
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 dungeon-view source-evidenced asset bindings",
   "status": "passed"
 }

@@ -1,6 +1,6 @@
 {
   "schema": "pass449_hall_candidate_framebuffer_comparator.v1",
-  "status": "COMPARE_COMPLETE",
+  "status": "PENDING_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING",
   "manifestPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
   "schemaPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json",
   "scenes": [
@@ -59,46 +59,16 @@
     }
   },
   "materialization": {
-    "status": "MATERIALIZED_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
+    "status": "NOT_MATERIALIZED",
     "firestaffRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
     "firestaffManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
     "originalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
     "correctedOriginalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
-    "materialized": [
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
-      "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png"
-    ],
+    "materialized": [],
     "missing": [],
-    "errors": [],
-    "manifest": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json"
+    "errors": [
+      "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+    ]
   },
   "expectedArtifacts": [
     {
@@ -118,13 +88,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 5716,
-      "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff candidate_select fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png and manifest hash field scenes.candidate_select.firestaff.fullframe.sha256"
     },
     {
       "scene": "candidate_select",
@@ -143,13 +108,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 906,
-      "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff candidate_select hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png and manifest hash field scenes.candidate_select.firestaff.hud_status_crop.sha256"
     },
     {
       "scene": "candidate_select",
@@ -168,13 +128,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 25550,
-      "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original candidate_select fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png and manifest hash field scenes.candidate_select.original.fullframe.sha256"
     },
     {
       "scene": "candidate_select",
@@ -193,13 +148,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 3133,
-      "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing original candidate_select hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png and manifest hash field scenes.candidate_select.original.hud_status_crop.sha256"
     },
     {
       "scene": "panel_visible",
@@ -218,13 +168,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 5716,
-      "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff panel_visible fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png and manifest hash field scenes.panel_visible.firestaff.fullframe.sha256"
     },
     {
       "scene": "panel_visible",
@@ -243,13 +188,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 2387,
-      "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff panel_visible panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png and manifest hash field scenes.panel_visible.firestaff.panel_crop.sha256"
     },
     {
       "scene": "panel_visible",
@@ -268,13 +208,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 25550,
-      "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original panel_visible fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png and manifest hash field scenes.panel_visible.original.fullframe.sha256"
     },
     {
       "scene": "panel_visible",
@@ -293,13 +228,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 3744,
-      "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing original panel_visible panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png and manifest hash field scenes.panel_visible.original.panel_crop.sha256"
     },
     {
       "scene": "cancel",
@@ -318,13 +248,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 12249,
-      "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff cancel fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png and manifest hash field scenes.cancel.firestaff.fullframe.sha256"
     },
     {
       "scene": "cancel",
@@ -343,13 +268,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 3794,
-      "sha256": "b359516dc0f56d81cb45e91c213dc56615a46a350ddde7e94b0d65a5a5604163",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff cancel panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png and manifest hash field scenes.cancel.firestaff.panel_crop.sha256"
     },
     {
       "scene": "cancel",
@@ -368,13 +288,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 110,
-      "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff cancel hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png and manifest hash field scenes.cancel.firestaff.hud_status_crop.sha256"
     },
     {
       "scene": "cancel",
@@ -393,13 +308,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 16168,
-      "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original cancel fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png and manifest hash field scenes.cancel.original.fullframe.sha256"
     },
     {
       "scene": "cancel",
@@ -418,13 +328,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 1571,
-      "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing original cancel panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png and manifest hash field scenes.cancel.original.panel_crop.sha256"
     },
     {
       "scene": "cancel",
@@ -443,13 +348,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 3133,
-      "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing original cancel hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png and manifest hash field scenes.cancel.original.hud_status_crop.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -468,13 +368,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 13005,
-      "sha256": "78b121af09ae96ce773dca76d3090e82df677ff6c71a39cdd2995d82359802fe",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff resurrect_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png and manifest hash field scenes.resurrect_confirm.firestaff.fullframe.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -493,13 +388,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 3734,
-      "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff resurrect_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png and manifest hash field scenes.resurrect_confirm.firestaff.panel_crop.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -518,13 +408,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 906,
-      "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff resurrect_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png and manifest hash field scenes.resurrect_confirm.firestaff.hud_status_crop.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -543,13 +428,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 13095,
-      "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original resurrect_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png and manifest hash field scenes.resurrect_confirm.original.fullframe.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -568,13 +448,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 3744,
-      "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing original resurrect_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png and manifest hash field scenes.resurrect_confirm.original.panel_crop.sha256"
     },
     {
       "scene": "resurrect_confirm",
@@ -593,13 +468,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 110,
-      "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing original resurrect_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png and manifest hash field scenes.resurrect_confirm.original.hud_status_crop.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -618,13 +488,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 13004,
-      "sha256": "eee7c1db698dd1dabdb215ca56e31cf5e12ead77aa81895f40d5cf0eb3a8a03a",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff reincarnate_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png and manifest hash field scenes.reincarnate_confirm.firestaff.fullframe.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -643,13 +508,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 3734,
-      "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff reincarnate_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png and manifest hash field scenes.reincarnate_confirm.firestaff.panel_crop.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -668,13 +528,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 906,
-      "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff reincarnate_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png and manifest hash field scenes.reincarnate_confirm.firestaff.hud_status_crop.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -693,13 +548,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 16168,
-      "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original reincarnate_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png and manifest hash field scenes.reincarnate_confirm.original.fullframe.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -718,13 +568,8 @@
         144,
         73
       ],
-      "exists": true,
-      "bytes": 1571,
-      "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-      "pngDims": [
-        144,
-        73
-      ]
+      "exists": false,
+      "missingBlocker": "missing original reincarnate_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png and manifest hash field scenes.reincarnate_confirm.original.panel_crop.sha256"
     },
     {
       "scene": "reincarnate_confirm",
@@ -743,13 +588,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 3133,
-      "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing original reincarnate_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png and manifest hash field scenes.reincarnate_confirm.original.hud_status_crop.sha256"
     },
     {
       "scene": "hud_status_after",
@@ -768,13 +608,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 12249,
-      "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff hud_status_after fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png and manifest hash field scenes.hud_status_after.firestaff.fullframe.sha256"
     },
     {
       "scene": "hud_status_after",
@@ -793,13 +628,8 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 110,
-      "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing firestaff hud_status_after hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png and manifest hash field scenes.hud_status_after.firestaff.hud_status_crop.sha256"
     },
     {
       "scene": "hud_status_after",
@@ -818,13 +648,8 @@
         320,
         200
       ],
-      "exists": true,
-      "bytes": 13095,
-      "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-      "pngDims": [
-        320,
-        200
-      ]
+      "exists": false,
+      "missingBlocker": "missing original hud_status_after fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png and manifest hash field scenes.hud_status_after.original.fullframe.sha256"
     },
     {
       "scene": "hud_status_after",
@@ -843,2553 +668,52 @@
         320,
         33
       ],
-      "exists": true,
-      "bytes": 110,
-      "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-      "pngDims": [
-        320,
-        33
-      ]
+      "exists": false,
+      "missingBlocker": "missing original hud_status_after hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png and manifest hash field scenes.hud_status_after.original.hud_status_crop.sha256"
     }
   ],
-  "missing": [],
-  "errors": [],
-  "compareExecuted": true,
-  "comparisons": [
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
-      "firestaffSha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
-      "originalSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 58965,
-      "totalPixels": 64000,
-      "deltaPercent": 92.132812,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 104.878286,
-      "scene": "candidate_select",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
-      "firestaffSha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
-      "originalSha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "dimensions": [
-        320,
-        33
-      ],
-      "differingPixels": 8174,
-      "totalPixels": 10560,
-      "deltaPercent": 77.405303,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 80.297191,
-      "scene": "candidate_select",
-      "region": "hud_status_crop",
-      "xywh": [
-        0,
-        0,
-        320,
-        33
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
-      "firestaffSha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
-      "originalSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 58965,
-      "totalPixels": 64000,
-      "deltaPercent": 92.132812,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 104.878286,
-      "scene": "panel_visible",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
-      "firestaffSha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
-      "originalSha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-      "dimensions": [
-        144,
-        73
-      ],
-      "differingPixels": 9692,
-      "totalPixels": 10512,
-      "deltaPercent": 92.199391,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 114.116787,
-      "scene": "panel_visible",
-      "region": "panel_crop",
-      "xywh": [
-        80,
-        85,
-        144,
-        73
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
-      "firestaffSha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
-      "originalSha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 55171,
-      "totalPixels": 64000,
-      "deltaPercent": 86.204688,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 113.14426,
-      "scene": "cancel",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
-      "firestaffSha256": "b359516dc0f56d81cb45e91c213dc56615a46a350ddde7e94b0d65a5a5604163",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
-      "originalSha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-      "dimensions": [
-        144,
-        73
-      ],
-      "differingPixels": 10307,
-      "totalPixels": 10512,
-      "deltaPercent": 98.049848,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 138.575786,
-      "scene": "cancel",
-      "region": "panel_crop",
-      "xywh": [
-        80,
-        85,
-        144,
-        73
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-      "firestaffSha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
-      "originalSha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "dimensions": [
-        320,
-        33
-      ],
-      "differingPixels": 7225,
-      "totalPixels": 10560,
-      "deltaPercent": 68.418561,
-      "maxChannelDelta": 219,
-      "meanAbsDeltaRgb": 77.220644,
-      "scene": "cancel",
-      "region": "hud_status_crop",
-      "xywh": [
-        0,
-        0,
-        320,
-        33
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
-      "firestaffSha256": "78b121af09ae96ce773dca76d3090e82df677ff6c71a39cdd2995d82359802fe",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
-      "originalSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 19123,
-      "totalPixels": 64000,
-      "deltaPercent": 29.879687,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 23.652687,
-      "scene": "resurrect_confirm",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
-      "firestaffSha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
-      "originalSha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-      "dimensions": [
-        144,
-        73
-      ],
-      "differingPixels": 5616,
-      "totalPixels": 10512,
-      "deltaPercent": 53.424658,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 36.04414,
-      "scene": "resurrect_confirm",
-      "region": "panel_crop",
-      "xywh": [
-        80,
-        85,
-        144,
-        73
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-      "firestaffSha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
-      "originalSha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-      "dimensions": [
-        320,
-        33
-      ],
-      "differingPixels": 2054,
-      "totalPixels": 10560,
-      "deltaPercent": 19.450758,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 20.088226,
-      "scene": "resurrect_confirm",
-      "region": "hud_status_crop",
-      "xywh": [
-        0,
-        0,
-        320,
-        33
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
-      "firestaffSha256": "eee7c1db698dd1dabdb215ca56e31cf5e12ead77aa81895f40d5cf0eb3a8a03a",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
-      "originalSha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 56251,
-      "totalPixels": 64000,
-      "deltaPercent": 87.892188,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 113.955302,
-      "scene": "reincarnate_confirm",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
-      "firestaffSha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
-      "originalSha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-      "dimensions": [
-        144,
-        73
-      ],
-      "differingPixels": 10304,
-      "totalPixels": 10512,
-      "deltaPercent": 98.021309,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 138.434519,
-      "scene": "reincarnate_confirm",
-      "region": "panel_crop",
-      "xywh": [
-        80,
-        85,
-        144,
-        73
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-      "firestaffSha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
-      "originalSha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-      "dimensions": [
-        320,
-        33
-      ],
-      "differingPixels": 8174,
-      "totalPixels": 10560,
-      "deltaPercent": 77.405303,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 80.297191,
-      "scene": "reincarnate_confirm",
-      "region": "hud_status_crop",
-      "xywh": [
-        0,
-        0,
-        320,
-        33
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
-      "firestaffSha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
-      "originalSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-      "dimensions": [
-        320,
-        200
-      ],
-      "differingPixels": 16824,
-      "totalPixels": 64000,
-      "deltaPercent": 26.2875,
-      "maxChannelDelta": 255,
-      "meanAbsDeltaRgb": 19.831958,
-      "scene": "hud_status_after",
-      "region": "fullframe",
-      "xywh": [
-        0,
-        0,
-        320,
-        200
-      ]
-    },
-    {
-      "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
-      "firestaffSha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-      "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png",
-      "originalSha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-      "dimensions": [
-        320,
-        33
-      ],
-      "differingPixels": 0,
-      "totalPixels": 10560,
-      "deltaPercent": 0.0,
-      "maxChannelDelta": 0,
-      "meanAbsDeltaRgb": 0.0,
-      "scene": "hud_status_after",
-      "region": "hud_status_crop",
-      "xywh": [
-        0,
-        0,
-        320,
-        33
-      ]
-    }
+  "missing": [
+    "missing framebuffer manifest: parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+    "missing firestaff candidate_select fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png and manifest hash field scenes.candidate_select.firestaff.fullframe.sha256",
+    "missing firestaff candidate_select hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png and manifest hash field scenes.candidate_select.firestaff.hud_status_crop.sha256",
+    "missing original candidate_select fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png and manifest hash field scenes.candidate_select.original.fullframe.sha256",
+    "missing original candidate_select hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png and manifest hash field scenes.candidate_select.original.hud_status_crop.sha256",
+    "missing firestaff panel_visible fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png and manifest hash field scenes.panel_visible.firestaff.fullframe.sha256",
+    "missing firestaff panel_visible panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png and manifest hash field scenes.panel_visible.firestaff.panel_crop.sha256",
+    "missing original panel_visible fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png and manifest hash field scenes.panel_visible.original.fullframe.sha256",
+    "missing original panel_visible panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png and manifest hash field scenes.panel_visible.original.panel_crop.sha256",
+    "missing firestaff cancel fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png and manifest hash field scenes.cancel.firestaff.fullframe.sha256",
+    "missing firestaff cancel panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png and manifest hash field scenes.cancel.firestaff.panel_crop.sha256",
+    "missing firestaff cancel hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png and manifest hash field scenes.cancel.firestaff.hud_status_crop.sha256",
+    "missing original cancel fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png and manifest hash field scenes.cancel.original.fullframe.sha256",
+    "missing original cancel panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png and manifest hash field scenes.cancel.original.panel_crop.sha256",
+    "missing original cancel hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png and manifest hash field scenes.cancel.original.hud_status_crop.sha256",
+    "missing firestaff resurrect_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png and manifest hash field scenes.resurrect_confirm.firestaff.fullframe.sha256",
+    "missing firestaff resurrect_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png and manifest hash field scenes.resurrect_confirm.firestaff.panel_crop.sha256",
+    "missing firestaff resurrect_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png and manifest hash field scenes.resurrect_confirm.firestaff.hud_status_crop.sha256",
+    "missing original resurrect_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png and manifest hash field scenes.resurrect_confirm.original.fullframe.sha256",
+    "missing original resurrect_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png and manifest hash field scenes.resurrect_confirm.original.panel_crop.sha256",
+    "missing original resurrect_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png and manifest hash field scenes.resurrect_confirm.original.hud_status_crop.sha256",
+    "missing firestaff reincarnate_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png and manifest hash field scenes.reincarnate_confirm.firestaff.fullframe.sha256",
+    "missing firestaff reincarnate_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png and manifest hash field scenes.reincarnate_confirm.firestaff.panel_crop.sha256",
+    "missing firestaff reincarnate_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png and manifest hash field scenes.reincarnate_confirm.firestaff.hud_status_crop.sha256",
+    "missing original reincarnate_confirm fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png and manifest hash field scenes.reincarnate_confirm.original.fullframe.sha256",
+    "missing original reincarnate_confirm panel_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png and manifest hash field scenes.reincarnate_confirm.original.panel_crop.sha256",
+    "missing original reincarnate_confirm hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png and manifest hash field scenes.reincarnate_confirm.original.hud_status_crop.sha256",
+    "missing firestaff hud_status_after fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png and manifest hash field scenes.hud_status_after.firestaff.fullframe.sha256",
+    "missing firestaff hud_status_after hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png and manifest hash field scenes.hud_status_after.firestaff.hud_status_crop.sha256",
+    "missing original hud_status_after fullframe; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png and manifest hash field scenes.hud_status_after.original.fullframe.sha256",
+    "missing original hud_status_after hud_status_crop; expected parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png and manifest hash field scenes.hud_status_after.original.hud_status_crop.sha256"
   ],
+  "errors": [
+    "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+  ],
+  "compareExecuted": false,
+  "comparisons": [],
   "deltaBuckets": {
     "schema": "pass449_hall_candidate_framebuffer_delta_buckets.v1",
-    "status": "DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM",
-    "highestImpactFinding": "HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.",
-    "sourceRefs": [
-      "REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294",
-      "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
-      "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
-      "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991"
-    ],
-    "hudStatusSummary": {
-      "rows": 5,
-      "bucketMismatches": 4,
-      "zeroDeltaRows": 1
-    },
-    "semanticStopAlignment": {
-      "status": "FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT",
-      "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
-      "affectedRows": [
-        "cancel.hud_status_crop",
-        "resurrect_confirm.hud_status_crop",
-        "reincarnate_confirm.hud_status_crop"
-      ],
-      "firestaffRouteBlocker": {
-        "status": "BLOCKED_FIRESTAFF_SOURCE_STOP_INPUTS_NOT_GENERATED",
-        "finding": "The available Firestaff pass449 export drives the corridor-facing front-mirror helper path, while the corrected original terminal captures are keyed to the initial-Hall C080 portrait/candidate click route. Re-running the exporter against the currently modeled front-mirror helper only reproduces the same all-black/gray HUD buckets, so replacing these rows needs an M11 C080 initial-Hall candidate click/source-stop capture path rather than another crop copy.",
-        "requiredBeforeUnmask": [
-          "Firestaff capture route starts from the same initial Hall party tuple as the corrected original terminal captures",
-          "the C080 portrait/candidate click reaches the candidate panel without the corridor second-mirror helper",
-          "terminal C160/C161/C162 frames are captured at their source-stop-aligned redraw boundary before pass449 HUD rows are made parity-eligible"
-        ],
-        "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
-        "inspectedFirestaffArtifacts": [
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
-        ]
-      },
-      "sourceRefs": [
-        "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
-        "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
-        "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991",
-        "CLIKVIEW.C:F0377_ClickInDungeonView:356-390",
-        "DUNGEON.C:F0128_DrawDungeonView:2608-2612",
-        "MOVESENS.C:F0263_ProcessSensor:1501-1503"
-      ],
-      "firestaffRefs": [
-        "m11_game_view.c:m11_process_v1_c080_click:7786-7834",
-        "m11_game_view.c:M11_GameView_SelectFrontMirrorCandidate:5292-5339",
-        "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
-        "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398",
-        "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c:288-397"
-      ],
-      "maskedRows": [
-        "cancel.hud_status_crop",
-        "reincarnate_confirm.hud_status_crop",
-        "resurrect_confirm.hud_status_crop"
-      ],
-      "maskPolicy": "exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist",
-      "nextVerifier": "add/gate the Firestaff initial-Hall C080 candidate-click capture path, export terminal HUD/status crops from that route, then remove this mask and reinterpret pass449 pixel deltas"
-    },
-    "parityEligibilitySummary": {
-      "eligibleRows": 12,
-      "maskedRows": 3,
-      "maskedRowKeys": [
-        "cancel.hud_status_crop",
-        "reincarnate_confirm.hud_status_crop",
-        "resurrect_confirm.hud_status_crop"
-      ]
-    },
-    "rows": [
-      {
-        "scene": "candidate_select",
-        "region": "fullframe",
-        "differingPixels": 58965,
-        "totalPixels": 64000,
-        "deltaPercent": 92.132812,
-        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-          "bytes": 5716,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 15,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 33624,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 20810,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 2753,
-              "rgb": [
-                0,
-                219,
-                219
-              ]
-            },
-            {
-              "count": 2126,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 813,
-              "rgb": [
-                255,
-                0,
-                0
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-          "bytes": 25550,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 16,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 17502,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 7817,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 6921,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 6266,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 5570,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "candidate_select",
-        "region": "hud_status_crop",
-        "differingPixels": 8174,
-        "totalPixels": 10560,
-        "deltaPercent": 77.405303,
-        "classification": "hud_status_capture_state_bucket_mismatch",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-          "bytes": 906,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 10,
-          "nonDominantBBox": [
-            0,
-            0,
-            297,
-            29
-          ],
-          "topColors": [
-            {
-              "count": 8506,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 1289,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 302,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 182,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            },
-            {
-              "count": 142,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-          "bytes": 3133,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 11,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            33
-          ],
-          "topColors": [
-            {
-              "count": 3335,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 2510,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 1824,
-              "rgb": [
-                146,
-                109,
-                73
-              ]
-            },
-            {
-              "count": 791,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            },
-            {
-              "count": 575,
-              "rgb": [
-                219,
-                182,
-                146
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "panel_visible",
-        "region": "fullframe",
-        "differingPixels": 58965,
-        "totalPixels": 64000,
-        "deltaPercent": 92.132812,
-        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-          "bytes": 5716,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 15,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 33624,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 20810,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 2753,
-              "rgb": [
-                0,
-                219,
-                219
-              ]
-            },
-            {
-              "count": 2126,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 813,
-              "rgb": [
-                255,
-                0,
-                0
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-          "bytes": 25550,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 16,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 17502,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 7817,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 6921,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 6266,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 5570,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "panel_visible",
-        "region": "panel_crop",
-        "differingPixels": 9692,
-        "totalPixels": 10512,
-        "deltaPercent": 92.199391,
-        "classification": "panel_crop_large_delta_needs_source_state_alignment",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
-          "bytes": 2387,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 15,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4632,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 2295,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 741,
-              "rgb": [
-                255,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 376,
-              "rgb": [
-                0,
-                219,
-                0
-              ]
-            },
-            {
-              "count": 369,
-              "rgb": [
-                255,
-                182,
-                0
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-          "bytes": 3744,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "mixed",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 6,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4171,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 2380,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 1766,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 966,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 769,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "cancel",
-        "region": "fullframe",
-        "differingPixels": 55171,
-        "totalPixels": 64000,
-        "deltaPercent": 86.204688,
-        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-          "bytes": 12249,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 10,
-          "nonDominantBBox": [
-            0,
-            33,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 31345,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13405,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 8550,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4283,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 2259,
-              "rgb": [
-                0,
-                219,
-                219
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-          "bytes": 16168,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 16,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 32513,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 6752,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 6099,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 3582,
-              "rgb": [
-                146,
-                109,
-                73
-              ]
-            },
-            {
-              "count": 2278,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "cancel",
-        "region": "panel_crop",
-        "differingPixels": 10307,
-        "totalPixels": 10512,
-        "deltaPercent": 98.049848,
-        "classification": "panel_crop_large_delta_needs_source_state_alignment",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "b359516dc0f56d81cb45e91c213dc56615a46a350ddde7e94b0d65a5a5604163",
-          "bytes": 3794,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "mixed",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 8,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4355,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 3107,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 1631,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 740,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 470,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-          "bytes": 1571,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 5,
-          "nonDominantBBox": [
-            0,
-            0,
-            131,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 8102,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 1560,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 453,
-              "rgb": [
-                146,
-                73,
-                0
-              ]
-            },
-            {
-              "count": 360,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            },
-            {
-              "count": 37,
-              "rgb": [
-                255,
-                0,
-                0
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "cancel",
-        "region": "hud_status_crop",
-        "differingPixels": 7225,
-        "totalPixels": 10560,
-        "deltaPercent": 68.418561,
-        "classification": "hud_status_capture_state_bucket_mismatch",
-        "parityEligible": false,
-        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
-        "firestaffVisual": {
-          "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-          "bytes": 110,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "all_black",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 1,
-          "nonDominantBBox": null,
-          "topColors": [
-            {
-              "count": 10560,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-          "bytes": 3133,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 11,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            33
-          ],
-          "topColors": [
-            {
-              "count": 3335,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 2510,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 1824,
-              "rgb": [
-                146,
-                109,
-                73
-              ]
-            },
-            {
-              "count": 791,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            },
-            {
-              "count": 575,
-              "rgb": [
-                219,
-                182,
-                146
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "resurrect_confirm",
-        "region": "fullframe",
-        "differingPixels": 19123,
-        "totalPixels": 64000,
-        "deltaPercent": 29.879687,
-        "classification": "nonzero_delta_unclassified",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "78b121af09ae96ce773dca76d3090e82df677ff6c71a39cdd2995d82359802fe",
-          "bytes": 13005,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 12,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 29043,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13549,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 8590,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4593,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 3201,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-          "bytes": 13095,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 7,
-          "nonDominantBBox": [
-            0,
-            33,
-            320,
-            169
-          ],
-          "topColors": [
-            {
-              "count": 34621,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13144,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 6995,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4586,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 1894,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "resurrect_confirm",
-        "region": "panel_crop",
-        "differingPixels": 5616,
-        "totalPixels": 10512,
-        "deltaPercent": 53.424658,
-        "classification": "nonzero_delta_unclassified",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-          "bytes": 3734,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "mixed",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 7,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4357,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 3116,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 1639,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 753,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 470,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-          "bytes": 3744,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "mixed",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 6,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4171,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 2380,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 1766,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 966,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 769,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "resurrect_confirm",
-        "region": "hud_status_crop",
-        "differingPixels": 2054,
-        "totalPixels": 10560,
-        "deltaPercent": 19.450758,
-        "classification": "hud_status_capture_state_bucket_mismatch",
-        "parityEligible": false,
-        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
-        "firestaffVisual": {
-          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-          "bytes": 906,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 10,
-          "nonDominantBBox": [
-            0,
-            0,
-            297,
-            29
-          ],
-          "topColors": [
-            {
-              "count": 8506,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 1289,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 302,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 182,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            },
-            {
-              "count": 142,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-          "bytes": 110,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "all_black",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 1,
-          "nonDominantBBox": null,
-          "topColors": [
-            {
-              "count": 10560,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "reincarnate_confirm",
-        "region": "fullframe",
-        "differingPixels": 56251,
-        "totalPixels": 64000,
-        "deltaPercent": 87.892188,
-        "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "eee7c1db698dd1dabdb215ca56e31cf5e12ead77aa81895f40d5cf0eb3a8a03a",
-          "bytes": 13004,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 12,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 29038,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13549,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 8590,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4593,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 3201,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-          "bytes": 16168,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 16,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 32513,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 6752,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 6099,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 3582,
-              "rgb": [
-                146,
-                109,
-                73
-              ]
-            },
-            {
-              "count": 2278,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "reincarnate_confirm",
-        "region": "panel_crop",
-        "differingPixels": 10304,
-        "totalPixels": 10512,
-        "deltaPercent": 98.021309,
-        "classification": "panel_crop_large_delta_needs_source_state_alignment",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-          "bytes": 3734,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "mixed",
-          "dominantRgb": [
-            182,
-            182,
-            182
-          ],
-          "uniqueColors": 7,
-          "nonDominantBBox": [
-            0,
-            0,
-            144,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 4357,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 3116,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 1639,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 753,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 470,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-          "bytes": 1571,
-          "pngDims": [
-            144,
-            73
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 5,
-          "nonDominantBBox": [
-            0,
-            0,
-            131,
-            73
-          ],
-          "topColors": [
-            {
-              "count": 8102,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 1560,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 453,
-              "rgb": [
-                146,
-                73,
-                0
-              ]
-            },
-            {
-              "count": 360,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            },
-            {
-              "count": 37,
-              "rgb": [
-                255,
-                0,
-                0
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "reincarnate_confirm",
-        "region": "hud_status_crop",
-        "differingPixels": 8174,
-        "totalPixels": 10560,
-        "deltaPercent": 77.405303,
-        "classification": "hud_status_capture_state_bucket_mismatch",
-        "parityEligible": false,
-        "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
-        "firestaffVisual": {
-          "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-          "bytes": 906,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 10,
-          "nonDominantBBox": [
-            0,
-            0,
-            297,
-            29
-          ],
-          "topColors": [
-            {
-              "count": 8506,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 1289,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            },
-            {
-              "count": 302,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 182,
-              "rgb": [
-                255,
-                255,
-                255
-              ]
-            },
-            {
-              "count": 142,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-          "bytes": 3133,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "original_brown_hall_top_band",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 11,
-          "nonDominantBBox": [
-            0,
-            0,
-            320,
-            33
-          ],
-          "topColors": [
-            {
-              "count": 3335,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 2510,
-              "rgb": [
-                182,
-                146,
-                109
-              ]
-            },
-            {
-              "count": 1824,
-              "rgb": [
-                146,
-                109,
-                73
-              ]
-            },
-            {
-              "count": 791,
-              "rgb": [
-                109,
-                36,
-                0
-              ]
-            },
-            {
-              "count": 575,
-              "rgb": [
-                219,
-                182,
-                146
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "hud_status_after",
-        "region": "fullframe",
-        "differingPixels": 16824,
-        "totalPixels": 64000,
-        "deltaPercent": 26.2875,
-        "classification": "nonzero_delta_unclassified",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-          "bytes": 12249,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 10,
-          "nonDominantBBox": [
-            0,
-            33,
-            320,
-            200
-          ],
-          "topColors": [
-            {
-              "count": 31345,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13405,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 8550,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4283,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 2259,
-              "rgb": [
-                0,
-                219,
-                219
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-          "bytes": 13095,
-          "pngDims": [
-            320,
-            200
-          ],
-          "visualBucket": "firestaff_gray_status_hud",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 7,
-          "nonDominantBBox": [
-            0,
-            33,
-            320,
-            169
-          ],
-          "topColors": [
-            {
-              "count": 34621,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            },
-            {
-              "count": 13144,
-              "rgb": [
-                182,
-                182,
-                182
-              ]
-            },
-            {
-              "count": 6995,
-              "rgb": [
-                146,
-                146,
-                146
-              ]
-            },
-            {
-              "count": 4586,
-              "rgb": [
-                109,
-                109,
-                109
-              ]
-            },
-            {
-              "count": 1894,
-              "rgb": [
-                73,
-                73,
-                73
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "scene": "hud_status_after",
-        "region": "hud_status_crop",
-        "differingPixels": 0,
-        "totalPixels": 10560,
-        "deltaPercent": 0.0,
-        "classification": "zero_delta_recorded_no_parity_promotion",
-        "parityEligible": true,
-        "parityMaskReason": null,
-        "firestaffVisual": {
-          "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-          "bytes": 110,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "all_black",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 1,
-          "nonDominantBBox": null,
-          "topColors": [
-            {
-              "count": 10560,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            }
-          ]
-        },
-        "originalVisual": {
-          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-          "bytes": 110,
-          "pngDims": [
-            320,
-            33
-          ],
-          "visualBucket": "all_black",
-          "dominantRgb": [
-            0,
-            0,
-            0
-          ],
-          "uniqueColors": 1,
-          "nonDominantBBox": null,
-          "topColors": [
-            {
-              "count": 10560,
-              "rgb": [
-                0,
-                0,
-                0
-              ]
-            }
-          ]
-        }
-      }
-    ],
-    "repeatedInputHashGroups": [
-      {
-        "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "resurrect_confirm",
-            "region": "hud_status_crop",
-            "visualBucket": "all_black"
-          },
-          {
-            "side": "original",
-            "scene": "hud_status_after",
-            "region": "hud_status_crop",
-            "visualBucket": "all_black"
-          }
-        ]
-      },
-      {
-        "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "cancel",
-            "region": "fullframe",
-            "visualBucket": "original_brown_hall_top_band"
-          },
-          {
-            "side": "original",
-            "scene": "reincarnate_confirm",
-            "region": "fullframe",
-            "visualBucket": "original_brown_hall_top_band"
-          }
-        ]
-      },
-      {
-        "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "resurrect_confirm",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "original",
-            "scene": "hud_status_after",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          }
-        ]
-      },
-      {
-        "sha256": "94a1652f52e5f8319a0781b8537c283de33388cee9436684cd04328c6fbb012e",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "candidate_select",
-            "region": "hud_status_crop",
-            "visualBucket": "original_brown_hall_top_band"
-          },
-          {
-            "side": "original",
-            "scene": "cancel",
-            "region": "hud_status_crop",
-            "visualBucket": "original_brown_hall_top_band"
-          },
-          {
-            "side": "original",
-            "scene": "reincarnate_confirm",
-            "region": "hud_status_crop",
-            "visualBucket": "original_brown_hall_top_band"
-          }
-        ]
-      },
-      {
-        "sha256": "99f7ab812b729ff4270b751350c87e27257ddb081b5bbc2d71ef87d4ba524ebf",
-        "uses": [
-          {
-            "side": "firestaff",
-            "scene": "cancel",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "firestaff",
-            "scene": "hud_status_after",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          }
-        ]
-      },
-      {
-        "sha256": "9ad8252c3da16d40b62fa7180c93c45759c9af0c2b7f9f86586c28e9c382f285",
-        "uses": [
-          {
-            "side": "firestaff",
-            "scene": "candidate_select",
-            "region": "hud_status_crop",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "firestaff",
-            "scene": "resurrect_confirm",
-            "region": "hud_status_crop",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "firestaff",
-            "scene": "reincarnate_confirm",
-            "region": "hud_status_crop",
-            "visualBucket": "firestaff_gray_status_hud"
-          }
-        ]
-      },
-      {
-        "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
-        "uses": [
-          {
-            "side": "firestaff",
-            "scene": "candidate_select",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "firestaff",
-            "scene": "panel_visible",
-            "region": "fullframe",
-            "visualBucket": "firestaff_gray_status_hud"
-          }
-        ]
-      },
-      {
-        "sha256": "a33c7ca1875c81491c2464df77ca8be5eb616e98bace7dc36b1229448538d5e3",
-        "uses": [
-          {
-            "side": "firestaff",
-            "scene": "resurrect_confirm",
-            "region": "panel_crop",
-            "visualBucket": "mixed"
-          },
-          {
-            "side": "firestaff",
-            "scene": "reincarnate_confirm",
-            "region": "panel_crop",
-            "visualBucket": "mixed"
-          }
-        ]
-      },
-      {
-        "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "panel_visible",
-            "region": "panel_crop",
-            "visualBucket": "mixed"
-          },
-          {
-            "side": "original",
-            "scene": "resurrect_confirm",
-            "region": "panel_crop",
-            "visualBucket": "mixed"
-          }
-        ]
-      },
-      {
-        "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "cancel",
-            "region": "panel_crop",
-            "visualBucket": "firestaff_gray_status_hud"
-          },
-          {
-            "side": "original",
-            "scene": "reincarnate_confirm",
-            "region": "panel_crop",
-            "visualBucket": "firestaff_gray_status_hud"
-          }
-        ]
-      },
-      {
-        "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
-        "uses": [
-          {
-            "side": "original",
-            "scene": "candidate_select",
-            "region": "fullframe",
-            "visualBucket": "original_brown_hall_top_band"
-          },
-          {
-            "side": "original",
-            "scene": "panel_visible",
-            "region": "fullframe",
-            "visualBucket": "original_brown_hall_top_band"
-          }
-        ]
-      },
-      {
-        "sha256": "f45e141ab17805b77fc773fbdaeb32020a71de21b45be7fffeb79854f0e1ece9",
-        "uses": [
-          {
-            "side": "firestaff",
-            "scene": "cancel",
-            "region": "hud_status_crop",
-            "visualBucket": "all_black"
-          },
-          {
-            "side": "firestaff",
-            "scene": "hud_status_after",
-            "region": "hud_status_crop",
-            "visualBucket": "all_black"
-          }
-        ]
-      }
-    ],
-    "nonClaims": [
-      "no full pixel parity claim",
-      "no HUD/status parity claim for non-zero rows",
-      "classification describes comparator input/state buckets, not renderer equivalence"
-    ]
+    "status": "NO_COMPARISONS_TO_CLASSIFY",
+    "rows": []
   },
   "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Partial panel_visible comparisons are diagnostic only; pixel parity for a region is differingPixels == 0 with matching original data provenance and source-bound matching state."
 }

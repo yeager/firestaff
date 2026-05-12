@@ -1,5 +1,5 @@
 {
-  "branch": "land-20260509",
+  "branch": "release-prep",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -83,7 +83,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/usr/bin/python3",
           "tools/verify_firestaff_completion_matrix.py"
         ],
         "outputTail": "firestaff completion matrix verifier OK\n",
@@ -95,23 +95,23 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/usr/bin/python3",
           "tools/firestaff_completion_status.py"
         ],
-        "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=19% | points=19/100 | status=inventory_and_launch_blocker | primaryBlocker=Need a positive CSB V1 launch/render smoke and runtime/capture gates; current launch evidence is a deliberate negative blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+        "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=19% | points=19/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke exists, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
         "returncode": 0
       }
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "09b369b3550e2b62233d36335214e5d30ea2ecca",
+  "head": "e60b0878f4ff123d142ebaca93ab2340632d9ded",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "DOS keyboard-buffer true-stop proof"
   ],
   "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
   "sourceLocks": [
     {
@@ -126,7 +126,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "transparent wall, opaque wall, and door bitmap routines target the viewport bitmap",
@@ -141,7 +141,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "contents are replayed by ordered cell nibbles rather than by a flat depth sort",
@@ -156,7 +156,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "D3 wall/door branches draw wall layers, door passes, and return/occlude as source order dictates",
@@ -171,7 +171,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "center wall/door branches layer opaque wall/door graphics before ordered contents",
@@ -186,7 +186,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "main viewport pass redraws floor/ceiling, replays visible squares far-to-near, then requests viewport presentation",
@@ -204,7 +204,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "viewport redraw request is presented and synchronized after composition",
@@ -218,10 +218,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-09T18:49:01.987089+00:00"
+  "timestampUtc": "2026-05-12T06:36:51.731767+00:00"
 }

@@ -49,7 +49,3 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 The old movement/viewport route blocker is retired as an active blocker by pass304/pass308 batch capture coverage. The remaining active blocker is state-oracle proof for binding original runtime party tuple/F0128 to those route labels; no pixel parity is claimed.
 
 Non-claims: no <private-host> use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.
-
-## Pass500 cleanup verdict
-
-Pass500 cleanup: superseded manifest. Current original-capture decision is tracked by pass487/pass497/pass498 and BLOCKER_dm1_v1_movement_viewport_original_runtime.md.
