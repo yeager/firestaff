@@ -1,0 +1,92 @@
+{
+  "status": "PASS",
+  "scope": "DM1 V1 movement core lane: input -> command -> turning/collision -> timing/sensors",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbCitations": [
+    {
+      "file": "COMMAND.C",
+      "lines": "106-121",
+      "claim": "mouse movement rows map visible arrows and dungeon viewport to command ids"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "677-685",
+      "claim": "PC-34 keyboard movement rows map keypad/arrow codes to turn and step commands"
+    },
+    {
+      "file": "IO2.C",
+      "lines": "5-61",
+      "claim": "PC input normalizes shifted extended movement keys before command-table lookup"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 locks the queue, keeps gated movement queued, dequeues one command, then dispatches turns and steps"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "F0365 turning sets stop-wait, handles stairs as a special case, otherwise applies direction change with sensor boundaries"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 steps charge stamina before resolution, blocks walls/doors/fakewalls/groups before F0267, and applies cooldown only after accepted movement"
+    },
+    {
+      "file": "DUNGEON.C",
+      "lines": "1371-1440",
+      "claim": "relative forward/right deltas are applied from direction tables before current-map square lookup"
+    },
+    {
+      "file": "CHAMPION.C",
+      "lines": "1180-1215",
+      "claim": "movement cadence is derived from load, feet wounds, and Boots of Speed"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "316-443",
+      "claim": "F0267 owns the source/destination move-result contract and projectile-impact precheck"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "738-818",
+      "claim": "accepted party moves record result/timing/scent then run source leave and destination enter sensor passes"
+    }
+  ],
+  "firestaffEvidence": [
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "PC-34 input rows, queue lock, gated movement retention, pending-click replay, and blocked-input discard"
+    },
+    {
+      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "F0380-to-F0365/F0366 seam: turns bypass movement gates, steps apply stamina/collision/group blocking/timing"
+    },
+    {
+      "file": "memory_movement_pc34_compat.c",
+      "claim": "pure movement legality and target-square result semantics behind F0366"
+    },
+    {
+      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "claim": "post-step cadence mirrors F0310/F0366 timing side effects"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "behavior coverage for queued input through turn/step dispatch, collision, stamina, timing, and sensor order"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "claim": "integration coverage for PC-34 movement queue, collision, turn, sensor, and timing edges"
+    }
+  ],
+  "nonScope": "viewport/wall rendering code intentionally excluded",
+  "requiredRuntimeGates": [
+    "dm1_v1_input_command_queue_pc34_compat",
+    "dm1_v1_movement_command_core_pc34_compat",
+    "dm1_v1_movement_timing_pc34_compat",
+    "dm1_v1_command_movement_sensor_timing_pc34_compat",
+    "dm1_v1_movement_command_gate_source_lock",
+    "dm1_v1_command_movement_sensor_timing_source_lock"
+  ]
+}
