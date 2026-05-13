@@ -1,0 +1,83 @@
+{
+  "inputManifests": {
+    "pass387": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/manifest.json",
+    "pass391": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/manifest.json",
+    "pass487": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+    "pass495": "parity-evidence/verification/pass495_dm1_v1_f0365_f0366_runtime_static_boundary/manifest.json",
+    "pass497": "parity-evidence/verification/pass497_dm1_v1_original_capture_next_blocker/manifest.json",
+    "pass498": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json"
+  },
+  "narrowedBlocker": "Movement/key-route processing is source/runtime proven through F0380 and F0365/F0366; original capture is still blocked at post-command state-delta-to-redraw evidence because the current post-entry frames repeat sha256 48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397.",
+  "nonClaims": [
+    "no new DOSBox/FIRES run",
+    "no pixel parity promotion",
+    "no viewport wall draw-order claim"
+  ],
+  "ok": true,
+  "problems": [],
+  "promotionRule": [
+    "F0361 queue write and G2153 increment",
+    "F0380 pop/load/decrement for same command",
+    "F0365 turn or F0366 movement handling after dequeue",
+    "later redraw/present over mutated direction/X/Y tuple, or explicit source-proven blocked/no-op",
+    "reject repeated 48ed static gameplay frames and route-label-only filenames"
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "requiredObserved": {
+    "pass387_keyboard_queue_write_proven": true,
+    "pass391_f0365_or_f0366_dispatch_observed": true,
+    "pass391_f0380_pop_load_after_queue_write": true,
+    "pass391_g2153_decrement_observed": true,
+    "pass487_repeated_post_entry_hash_current": true,
+    "pass495_runtime_chain_closed": true,
+    "pass498_static_no_state_delta_current": true
+  },
+  "schema": "firestaff.parity.pass508_dm1_v1_key_route_state_delta_gate.v1",
+  "secondaryReferences": {
+    "canonicalDm1Sha256": {
+      "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    "csbwinMoveObject": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Code11f52.cpp",
+    "greatstoneSummary": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md"
+  },
+  "sourceAudit": [
+    {
+      "claim": "PC34/I34E keyboard rows map route keys to C001/C002 turns and C003..C006 movement commands.",
+      "file": "COMMAND.C",
+      "lines": "636-685"
+    },
+    {
+      "claim": "F0361 resolves keyboard input and writes the command queue before F0380 consumes it.",
+      "file": "COMMAND.C",
+      "lines": "1709-1813"
+    },
+    {
+      "claim": "F0380 rejects gated movement before dequeue, otherwise pop-loads exactly one command and dispatches turns/steps.",
+      "file": "COMMAND.C",
+      "lines": "2045-2156"
+    },
+    {
+      "claim": "F0365 accepted turns set stop-wait and mutate party direction.",
+      "file": "CLIKMENU.C",
+      "lines": "142-174"
+    },
+    {
+      "claim": "F0366 computes movement, blocks before commit, or commits via F0267 and applies cooldown after success.",
+      "file": "CLIKMENU.C",
+      "lines": "180-347"
+    },
+    {
+      "claim": "F0267 records destination map tuple and movement timing/scent state after accepted party movement.",
+      "file": "MOVESENS.C",
+      "lines": "738-780"
+    },
+    {
+      "claim": "The next promotable capture must be after stop/tick lets the loop redraw from the updated party tuple.",
+      "file": "GAMELOOP.C",
+      "lines": "90-219"
+    }
+  ],
+  "status": "PASS508_DM1_V1_KEY_ROUTE_STATE_DELTA_GATE_LOCKED"
+}
