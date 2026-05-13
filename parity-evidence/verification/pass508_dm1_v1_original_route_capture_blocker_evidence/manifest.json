@@ -1,0 +1,259 @@
+{
+  "blocker": "Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.",
+  "inputs": {
+    "pass304": "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json",
+    "pass308": "parity-evidence/verification/pass308_original_capture_execution_manifest.json",
+    "pass435": "parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json",
+    "pass487": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+    "pass497": "parity-evidence/verification/pass497_dm1_v1_original_capture_next_blocker/manifest.json",
+    "pass498": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json"
+  },
+  "nextEvidenceRequired": [
+    "capture each route shot at or after the F0097/VIDRV present boundary following the matching command",
+    "record the F0380 command id/X/Y and the F0365 or F0366 handler reached for that shot",
+    "record the later F0128 direction/X/Y tuple consumed for the same shot",
+    "reject repeated 48ed static gameplay hashes unless source state proves the command was intentionally blocked/no-op"
+  ],
+  "nonClaims": [
+    "no DOSBox run launched",
+    "no original-vs-Firestaff pixel parity",
+    "no promotion of pass487 static frames",
+    "no movement or viewport implementation change"
+  ],
+  "observed": {
+    "filenameLabelDriftRows": 5,
+    "pass304RouteLabelCoverage": null,
+    "pass304Status": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
+    "pass308Coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    },
+    "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
+    "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+    "pass487Classes": [
+      "entrance_menu",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ],
+    "pass487DuplicateSha256Counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
+    },
+    "pass487RouteRows": [
+      {
+        "classification": "entrance_menu",
+        "filenameMatchesRouteLabel": true,
+        "index": "01",
+        "isRepeatedPostEntryStaticHash": false,
+        "routeLabel": "party_ready_click_gate",
+        "sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "filenameMatchesRouteLabel": false,
+        "index": "02",
+        "isRepeatedPostEntryStaticHash": true,
+        "routeLabel": "turn_left_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "filenameMatchesRouteLabel": false,
+        "index": "03",
+        "isRepeatedPostEntryStaticHash": true,
+        "routeLabel": "turn_right_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "filenameMatchesRouteLabel": false,
+        "index": "04",
+        "isRepeatedPostEntryStaticHash": true,
+        "routeLabel": "move_forward_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "filenameMatchesRouteLabel": false,
+        "index": "05",
+        "isRepeatedPostEntryStaticHash": true,
+        "routeLabel": "move_backward_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "filenameMatchesRouteLabel": false,
+        "index": "06",
+        "isRepeatedPostEntryStaticHash": true,
+        "routeLabel": "turn_left_2_click",
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      }
+    ],
+    "pass487Status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+    "pass497NextBlocker": "Capture/replay must prove a source-visible post-command state delta before overlay promotion: after entering gameplay, each movement/turn click needs a capture tied to the exact command completion/redraw boundary with either a new raw hash/region fingerprint or debugger/runtime proof that F0365/F0366 and the F0128/F0097 present path ran for that shot. The current pass487/pass492 evidence reaches gameplay but repeats the 48ed static no-state-delta frame five times and has filename/route-label drift, so those frames remain blocker evidence only.",
+    "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+    "pass498NarrowedBlocker": "Original DM1 V1 capture is blocked specifically at the post-gameplay, post-command state-delta boundary: the next evidence must connect a real F0380-dequeued movement/turn command through F0365/F0366 to the subsequent F0128 composition and F0097/VIDRV present, and must not collapse to the repeated static 48ed gameplay frame.",
+    "pass498Status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA",
+    "postEntryRegionStatsRepeated": true,
+    "postEntryRowsRepeatStaticHash": true,
+    "postEntryStaticSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+    "rawHashCounts": {
+      "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8": 1,
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
+    }
+  },
+  "ok": true,
+  "problems": [],
+  "required": {
+    "pass304_still_blocks_route_promotion": true,
+    "pass308_records_execution_without_state_oracle": true,
+    "pass435_semantic_route_not_ready": true,
+    "pass487_reaches_gameplay_but_static": true,
+    "pass497_next_blocker_locked": true,
+    "pass498_boundary_locked": true,
+    "source_audit_ok": true
+  },
+  "schema": "firestaff.parity.pass508_dm1_v1_original_route_capture_blocker_evidence.v1",
+  "sourceAudit": [
+    {
+      "claim": "the entrance click route is real source input, not a synthetic label",
+      "file": "COMMAND.C",
+      "id": "entrance_enter_command_reaches_load_dungeon",
+      "lines": "63-72,2428-2456",
+      "missing": [],
+      "needles": [
+        "C200_COMMAND_ENTRANCE_ENTER_DUNGEON",
+        "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON",
+        "M566_COMMAND_ENTRANCE_RESUME"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "entrance waits on F0380 and opens doors only after G0298 changes",
+      "file": "ENTRANCE.C",
+      "id": "entrance_loop_processes_queue_and_opens_doors",
+      "lines": "739-747,850-883,939-944",
+      "missing": [],
+      "needles": [
+        "G0441_ps_PrimaryMouseInput = G0445_as_Graphic561_PrimaryMouseInput_Entrance",
+        "G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "F0438_STARTEND_OpenEntranceDoors();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
+    },
+    {
+      "claim": "movement/viewport click coordinates must map to these PC34 zones",
+      "file": "COMMAND.C",
+      "id": "pc34_movement_click_zones",
+      "lines": "106-114",
+      "missing": [],
+      "needles": [
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C002_COMMAND_TURN_RIGHT",
+        "C005_COMMAND_MOVE_BACKWARD",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "a promotable shot must prove the dequeued command, not only host labels",
+      "file": "COMMAND.C",
+      "id": "queue_dispatch_to_turn_or_move",
+      "lines": "2045-2156",
+      "missing": [],
+      "needles": [
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+        "L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;",
+        "G2153_i_QueuedCommandsCount--;",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "turn shots need F0365 direction mutation before the redraw",
+      "file": "CLIKMENU.C",
+      "id": "turn_handler_mutates_direction",
+      "lines": "142-174",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "move shots need F0366 destination/move-result evidence before the redraw",
+      "file": "CLIKMENU.C",
+      "id": "move_handler_computes_destination",
+      "lines": "180-347",
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "the next promotable frame is after command wait exits and the next F0128 consumes the tuple",
+      "file": "GAMELOOP.C",
+      "id": "game_loop_next_redraw_boundary",
+      "lines": "90,164,215-219",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "F0128 must compose G0296 for the same direction/X/Y tuple",
+      "file": "DUNVIEW.C",
+      "id": "viewport_composition_and_present",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "the crop/pixel seam must be the PC34 viewport present path",
+      "file": "DRAWVIEW.C",
+      "id": "pc34_viewport_blit_present",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0296_puc_Bitmap_Viewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE_TIGHTENED"
+}

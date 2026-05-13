@@ -1877,6 +1877,12 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass487_dm1_v1_original_click_capture_blocker.py
     )
 endif()
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass508_dm1_v1_original_route_capture_blocker_evidence
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass508_dm1_v1_original_route_capture_blocker_evidence.py
+    )
+endif()
 
 # ── DM1 V1 original capture route-label filename fixture ───────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
