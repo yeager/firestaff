@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-movement-parity-gap-20260513-codex",
+  "branch": "push-main-20260513-openai-fix",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:706-818",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "a4657d6207259823a2189fe539d70744a7ebe119",
+  "head": "7f31dd3e8a03e9248cd92cef2aa030f9d6831c73",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-05-13T06:14:57.617437+00:00"
+  "timestampUtc": "2026-05-13T09:59:37.463913+00:00"
 }
