@@ -1,0 +1,24 @@
+{
+  "branch": "worker/dm1v1-movement-core-integration-20260513-codex",
+  "firestaffGuards": {
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:154-339",
+    "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:191-266",
+    "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:25-52",
+    "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
+  },
+  "head": "9beae3aab26122cd806671777495858faa790241",
+  "notClaimed": [
+    "combat RNG/wound materialization parity for the pending damage request",
+    "representative original DOS overlay capture parity",
+    "viewport/walls rendering completion"
+  ],
+  "primarySource": "ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+  "runtimeOutputFirstLine": "probe=dm1_v1_movement_command_core_pc34_compat",
+  "schema": "pass505_dm1_v1_blocked_movement_side_effect_source_lock.v1",
+  "sourceAudit": {
+    "F0366": "CLIKMENU.C:180-349",
+    "blockedSideEffects": "CLIKMENU.C:237-322"
+  },
+  "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
+  "timestampUtc": "2026-05-13T07:45:21.206530+00:00"
+}
