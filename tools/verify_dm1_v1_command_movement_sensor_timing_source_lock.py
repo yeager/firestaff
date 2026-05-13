@@ -89,6 +89,7 @@ def main() -> int:
     fire_queue = read(ROOT / 'dm1_v1_input_command_queue_pc34_compat.c')
     fire_timing = read(ROOT / 'dm1_v1_movement_timing_pc34_compat.c')
     fire_lifecycle = read(ROOT / 'memory_champion_lifecycle_pc34_compat.c')
+    fire_core = read(ROOT / 'dm1_v1_movement_command_core_pc34_compat.c')
     fire_move = read(ROOT / 'memory_movement_pc34_compat.c')
     fire_sensor = read(ROOT / 'memory_sensor_execution_pc34_compat.c')
     probe = read(ROOT / 'test_dm1_v1_command_movement_sensor_timing_pc34_compat.c')
@@ -207,8 +208,27 @@ def main() -> int:
         'G0397_i_MoveResultMapX = P0560_i_DestinationMapX;',
         'G0362_l_LastPartyMovementTime = G0313_ul_GameTime;',
         'F0276_SENSOR_ProcessThingAdditionOrRemoval(P0558_i_SourceMapX, P0559_i_SourceMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C0_FALSE);',
+        'if ((P0557_T_Thing = F0175_GROUP_GetThing(G0306_i_PartyMapX, G0307_i_PartyMapY)) != C0xFFFE_THING_ENDOFLIST)',
         'F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C1_TRUE);',
-    ], 'MOVESENS result/timing/sensor order')
+    ], 'MOVESENS result/timing/sensor order with destination-group delete')
+    empty_party_group_start = clik.index('if (G0305_ui_PartyChampionCount == 0)')
+    empty_party_positions = require_order_positions(clik, [
+        'if (G0305_ui_PartyChampionCount == 0)',
+        '} else {',
+        'if (L1117_B_MovementBlocked)',
+        'F0175_GROUP_GetThing(L1121_i_MapX, L1122_i_MapY)',
+        'F0209_GROUP_ProcessEvents29to41',
+    ], 'CLIKMENU empty-party skips group collision branch', empty_party_group_start)
+    a, b = exact_lines(clik, empty_party_positions)
+    citations.append(f'empty-party group collision bug: CLIKMENU.C:{a}-{b}')
+    destination_group_delete_positions = require_order_positions(moves, [
+        'if ((P0557_T_Thing = F0175_GROUP_GetThing(G0306_i_PartyMapX, G0307_i_PartyMapY)) != C0xFFFE_THING_ENDOFLIST)',
+        'F0188_GROUP_DropGroupPossessions(G0306_i_PartyMapX, G0307_i_PartyMapY, P0557_T_Thing, C01_MODE_PLAY_IF_PRIORITIZED);',
+        'F0189_GROUP_Delete(G0306_i_PartyMapX, G0307_i_PartyMapY);',
+        'F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C1_TRUE);',
+    ], 'MOVESENS deletes destination group before party enter sensors')
+    a, b = exact_lines(moves, destination_group_delete_positions)
+    citations.append(f'destination group deletion before enter sensors: MOVESENS.C:{a}-{b}')
     require_order(gameloop, [
         'F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);',
         'G0310_i_DisabledMovementTicks--;',
@@ -244,7 +264,7 @@ def main() -> int:
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat'), ['F0841_LIFECYCLE_ComputeMoveTicks_Compat(load, maxLoad, wounds, footwearIcon)'], 'Firestaff movement timing champion tick wrapper'),
         (find_function(fire_lifecycle, 'F0841_LIFECYCLE_ComputeMoveTicks_Compat'), ['if ((int)maxLoad > (int)load)', 'ticks = 2', 'ticks = 4 +', 'LIFECYCLE_ICON_BOOT_OF_SPEED', 'ticks -= 1'], 'Firestaff champion movement ticks'),
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat'), ['DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat', 'projectileDisabledMovementTicks = 0', 'scentRecorded = 1', 'lastPartyMovementTime = currentGameTick'], 'Firestaff successful-step timing'),
-        (find_function(read(ROOT / 'dm1_v1_movement_command_core_pc34_compat.c'), 'DM1_V1_MovementCommandCore_ProcessOnePc34Compat'), ['viewportRedrawRequested = 1', 'stopWaitingForPlayerInput = 1', 'inputDiscardRequested = 1', 'movementBlocked = 1'], 'Firestaff command core redraw/input-release seam'),
+        (find_function(fire_core, 'DM1_V1_MovementCommandCore_ProcessOnePc34Compat'), ['viewportRedrawRequested = 1', 'stopWaitingForPlayerInput = 1', 'inputDiscardRequested = 1', 'movementBlocked = 1', 'F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat'], 'Firestaff command core redraw/input-release seam'),
     ]:
         for needle in checks:
             if needle not in body:
@@ -276,6 +296,10 @@ def main() -> int:
         'core blocked wall skips viewport',
         'core group block skips viewport',
         'core multi-command viewport redraw count',
+        'empty-party group collision bug not blocked',
+        'empty-party group collision bug step applied',
+        'empty-party group collision bug no scent',
+        'empty-party group collision bug minimum cooldown',
     ]:
         if needle not in probe:
             raise AssertionError(f'probe coverage missing {needle!r}')

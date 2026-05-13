@@ -31,7 +31,7 @@
     {
       "file": "CLIKMENU.C",
       "lines": "180-347",
-      "claim": "F0366 steps charge stamina before resolution, blocks walls/doors/fakewalls/groups before F0267, and applies cooldown only after accepted movement"
+      "claim": "F0366 steps charge stamina before resolution, blocks walls/doors/fakewalls/groups before F0267 for non-empty parties, preserves BUG0_85 by skipping group collision when the party is empty, and applies cooldown only after accepted movement"
     },
     {
       "file": "DUNGEON.C",
@@ -65,7 +65,7 @@
     },
     {
       "file": "memory_movement_pc34_compat.c",
-      "claim": "pure movement legality and target-square result semantics behind F0366"
+      "claim": "pure movement legality and target-square result semantics behind F0366, including the empty-party group-collision bug"
     },
     {
       "file": "dm1_v1_movement_timing_pc34_compat.c",
@@ -77,7 +77,7 @@
     },
     {
       "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
-      "claim": "integration coverage for PC-34 movement queue, collision, turn, sensor, and timing edges"
+      "claim": "integration coverage for PC-34 movement queue, collision, turn, sensor, timing edges, and BUG0_85 empty-party group passage"
     }
   ],
   "nonScope": "viewport/wall rendering code intentionally excluded",
