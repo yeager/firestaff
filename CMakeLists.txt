@@ -1776,6 +1776,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 viewport wall draw-order evidence gate -----------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass503_dm1_v1_viewport_wall_draw_order_evidence
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass503_dm1_v1_viewport_wall_draw_order_evidence.py
+    )
+endif()
+
 # ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

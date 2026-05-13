@@ -1,0 +1,217 @@
+{
+  "csbRoot": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
+  "csbwinRoot": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+  "dm1Anchors": [
+    {
+      "bytes": 363417,
+      "exists": true,
+      "name": "GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "exists": true,
+      "name": "DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "bytes": 12002,
+      "exists": true,
+      "name": "TITLE",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    {
+      "bytes": 1962,
+      "exists": true,
+      "name": "README.md",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "sha256": "e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc"
+    }
+  ],
+  "dm1CanonicalRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "dmOriginalsRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "firestaffChecks": [
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "firestaff-draw-order-table",
+      "line": 82,
+      "needle": "static const DM1_ViewportDrawStep s_draw_order[]",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "firestaff-wall-spec-table",
+      "line": 194,
+      "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "firestaff-thing-layer-table",
+      "line": 112,
+      "needle": "static const DM1_ViewportThingLayerSpec s_thing_layers[]",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "firestaff-door-front-occlusion-table",
+      "line": 135,
+      "needle": "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]",
+      "ok": true
+    },
+    {
+      "file": "tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py",
+      "id": "pass496-matrix-gate-present",
+      "line": 15,
+      "needle": "SOURCE_CHECKS = [",
+      "ok": true
+    },
+    {
+      "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
+      "id": "pass502-blocker-doc-present",
+      "line": 38,
+      "needle": "Required next evidence before parity promotion:",
+      "ok": true
+    }
+  ],
+  "greatstoneAtlasRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity promotion",
+    "no runtime capture promotion",
+    "no movement-core edits"
+  ],
+  "ok": true,
+  "problems": [],
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass503_dm1_v1_viewport_wall_draw_order_evidence.v1",
+  "secondaryReferences": [
+    {
+      "claim": "Greatstone local atlas is present as data-extraction context for DM/CSB graphics and dungeon assets.",
+      "file": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/pages.json",
+      "id": "greatstone-local-atlas-index",
+      "lineRange": "1-120",
+      "missing": [],
+      "ok": true,
+      "sha256": "6df8f29eaf946fd57aeb47ab482b9f48219592afd93cc17be1b89b13f0d33d19"
+    },
+    {
+      "claim": "CSBWin carries a table-driven viewport cell/draw-order model with door-facing two-phase object/door/object rows.",
+      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "id": "csbwin-viewport-cell-script-order",
+      "lineRange": "935-1938",
+      "missing": [],
+      "ok": true,
+      "sha256": "eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9"
+    },
+    {
+      "claim": "CSBWin DrawViewport summarizes each relative cell and interprets the selected draw script in cell order.",
+      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "id": "csbwin-drawviewport-present-loop",
+      "lineRange": "6694-6819",
+      "missing": [],
+      "ok": true,
+      "sha256": "eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9"
+    },
+    {
+      "claim": "CSB lineage source mirrors the same viewport cell/draw-order and door-facing script structure.",
+      "file": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp",
+      "id": "csb-source-viewport-cell-script-order",
+      "lineRange": "935-1938",
+      "missing": [],
+      "ok": true,
+      "sha256": "2acaeec457166e4af8e18009de3b9081f773761fa5d8913cce0ccacb8c8ea12c"
+    },
+    {
+      "claim": "DM originals include a local PC34-vs-Greatstone manifest for asset provenance cross-checking.",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
+      "id": "dm-originals-manifest-pc34-greatstone-diff",
+      "lineRange": "1-220",
+      "missing": [],
+      "ok": true,
+      "sha256": "cbc6c5cc6af064c5d428cfe9494e688b6aebcc49cb8a9fc277d9a00b0bb4970a"
+    }
+  ],
+  "sourceChecks": [
+    {
+      "claim": "Viewport composition replays source square functions from far to near before presentation.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128-far-to-near-square-replay",
+      "lineRange": "8318-8543",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "Per-cell content order is objects, creatures, projectiles, then explosions/fluxcage.",
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "id": "f0115-cell-layering-contract",
+      "lineRange": "4547-4582",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "Wall and door panels write into G0296 with explicit transparent or opaque routes.",
+      "file": "DUNVIEW.C",
+      "function": "F0100/F0101/F0102/F0765 wall and door blits",
+      "id": "wall-blit-routes-into-viewport-buffer",
+      "lineRange": "3048-3180",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "D3 walls occlude by drawing wall zones and returning, except front alcoves that intentionally hand contents to F0115.",
+      "file": "DUNVIEW.C",
+      "function": "F0676/F0677/F0116/F0117/F0118 D3 wall branches",
+      "id": "d3-wall-return-and-alcove-exception",
+      "lineRange": "6226-6836",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "D2, D1, and D0 wall paths preserve the same wall-return/alcove exception pattern.",
+      "file": "DUNVIEW.C",
+      "function": "F0678/F0679/F0119-F0127 near wall branches",
+      "id": "d2-d1-d0-wall-return-contract",
+      "lineRange": "6837-8308",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "Front doors draw rear contents, door/frame, then front contents.",
+      "file": "DUNVIEW.C",
+      "function": "F0124_DUNGEONVIEW_DrawSquareD1C",
+      "id": "front-door-two-pass-occlusion",
+      "lineRange": "7873-7938",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "claim": "DUNVIEW composition buffer G0296 is presented by DRAWVIEW after vblank/present gating.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport-present-boundary",
+      "lineRange": "709-858",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
+    }
+  ],
+  "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
+}
