@@ -11,6 +11,11 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 - `COMMAND.C:2045-2156` `F0380_COMMAND_ProcessQueue_CPSC` — ok=`True`; queued input must be observed through F0380 pop/load before turn commands branch to F0365 or movement commands branch to F0366
 - `CLIKMENU.C:142-174` `F0365_COMMAND_ProcessTypes1To2_TurnParty` — ok=`True`; turn commands must be observed reaching F0365, where stop-wait is set and party direction mutates
 - `CLIKMENU.C:180-347` `F0366_COMMAND_ProcessTypes3To6_MoveParty` — ok=`True`; move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed
+- `INPUT.C:197-204` `F0536_INPUT_Initialize` — ok=`True`; the original PC34 entrance route starts from source-defined mouse coordinates, so host click coordinates must be treated as route evidence until runtime state confirms gameplay
+- `STARTUP2.C:1179-1183` `F0462_START_StartGame_CPSEF` — ok=`True`; post-load capture shots are meaningful only after the original installs interface and movement input tables for both mouse and keyboard routes
+- `STARTUP2.C:1441-1457,1507-1531` `F0435/F0441/F0462 startup flow` — ok=`True`; the reusable capture route must pass entrance/load/start and discard stale setup input before semantic shots are promotable
+- `CLIKVIEW.C:367-385,407-431` `F0377_COMMAND_ProcessType80_ClickInDungeonView` — ok=`True`; dungeon-view mouse captures are semantic only when clicks resolve through source clickable boxes and resulting door/sensor actions, not by filename labels
+- `DUNVIEW.C:3722-3725,4163-4212` `F0107/F0110 dungeon clickable materialization` — ok=`True`; viewport click hitboxes used by original capture are materialized while drawing G0296, so crop labels must be tied to the same draw/update boundary
 - `DUNVIEW.C:8318-8611` `F0128_DUNGEONVIEW_Draw_CPSF` — ok=`True`; viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple
 - `DRAWVIEW.C:709-858` `F0097_DUNGEONVIEW_DrawViewport` — ok=`True`; the capture seam must be the PC34 viewport present path, not setup/menu echo
 
@@ -60,7 +65,7 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 Run the route capture, then strict crop manifest, then this gate again. These are actionability checks only; they do not claim pixel parity.
 
 ```bash
-OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports
 python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py
 ```

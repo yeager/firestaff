@@ -71,6 +71,71 @@ SOURCE_ANCHORS: list[dict[str, Any]] = [
         "claim": "move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed",
     },
     {
+        "id": "input_entrance_click_origin",
+        "file": "INPUT.C",
+        "function": "F0536_INPUT_Initialize",
+        "lines": "197-204",
+        "needles": [
+            "G1038_i_MouseX = 250 * 2; /* Coordinates of Resume button on entrance screen */",
+            "G1038_i_MouseX = 250 * 2; /* Coordinates of Enter button on entrance screen */",
+            "F0073_MOUSE_BuildPointerScreenArea(G1038_i_MouseX >> 1, G1039_i_MouseY >> 1);",
+        ],
+        "claim": "the original PC34 entrance route starts from source-defined mouse coordinates, so host click coordinates must be treated as route evidence until runtime state confirms gameplay",
+    },
+    {
+        "id": "startup_mouse_keyboard_tables",
+        "file": "STARTUP2.C",
+        "function": "F0462_START_StartGame_CPSEF",
+        "lines": "1179-1183",
+        "needles": [
+            "G0441_ps_PrimaryMouseInput = G0447_as_Graphic561_PrimaryMouseInput_Interface;",
+            "G0442_ps_SecondaryMouseInput = G0448_as_Graphic561_SecondaryMouseInput_Movement;",
+            "G0443_ps_PrimaryKeyboardInput = G0458_as_Graphic561_PrimaryKeyboardInput_Interface;",
+            "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;",
+        ],
+        "claim": "post-load capture shots are meaningful only after the original installs interface and movement input tables for both mouse and keyboard routes",
+    },
+    {
+        "id": "startup_entrance_load_start_then_discard",
+        "file": "STARTUP2.C",
+        "function": "F0435/F0441/F0462 startup flow",
+        "lines": "1441-1457,1507-1531",
+        "needles": [
+            "F0441_STARTEND_ProcessEntrance();",
+            "while (F0435_STARTEND_LoadGame() != C01_LOAD_GAME_SUCCESS)",
+            "F0477_MEMORY_OpenGraphicsDat_CPSDF();",
+            "F0462_START_StartGame_CPSEF();",
+            "F0357_COMMAND_DiscardAllInput();",
+        ],
+        "claim": "the reusable capture route must pass entrance/load/start and discard stale setup input before semantic shots are promotable",
+    },
+    {
+        "id": "dungeon_clickable_wall_or_door_button",
+        "file": "CLIKVIEW.C",
+        "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "lines": "367-385,407-431",
+        "needles": [
+            "F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y - 33)",
+            "F0268_SENSOR_AddEvent(C10_EVENT_DOOR, L1155_i_MapX, L1156_i_MapY, 0, C02_EFFECT_TOGGLE, G0313_ul_GameTime + 1);",
+            "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++)",
+            "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();",
+        ],
+        "claim": "dungeon-view mouse captures are semantic only when clicks resolve through source clickable boxes and resulting door/sensor actions, not by filename labels",
+    },
+    {
+        "id": "dunview_clickable_box_materialization",
+        "file": "DUNVIEW.C",
+        "function": "F0107/F0110 dungeon clickable materialization",
+        "lines": "3722-3725,4163-4212",
+        "needles": [
+            "F0007_MAIN_CopyBytes(AL0090_puc_CoordinateSet, G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], sizeof(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]));",
+            "L0111_puc_CoordinateSet = G0208_aaauc_Graphic558_DoorButtonCoordinateSets",
+            "F0791_DUNGEONVIEW_DrawBitmapXX(AL0112_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+            "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]",
+        ],
+        "claim": "viewport click hitboxes used by original capture are materialized while drawing G0296, so crop labels must be tied to the same draw/update boundary",
+    },
+    {
         "id": "f0128_viewport_tuple_composition",
         "file": "DUNVIEW.C",
         "function": "F0128_DUNGEONVIEW_Draw_CPSF",
@@ -219,21 +284,37 @@ def duplicate_groups(rows: list[dict[str, Any]], key: str) -> dict[str, list[str
 
 
 def unblock_commands() -> dict[str, Any]:
+    # Keep this route aligned with EXPECTED_SEQUENCE. The previous contract used
+    # only movement keypad events while requiring spell_panel and inventory
+    # classes, which made every rerun non-promotable before it started.
     route_capture = (
         "OUT_DIR=$PWD/verification-screens/pass376-original-route "
         "DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
         "DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' "
         "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 "
         "DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 "
-        "shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 "
-        "shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 "
-        "shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" "
+        "shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 "
+        "shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 "
+        "shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" "
         "xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
     )
     return {
         "semantic_route_capture": route_capture,
         "crop_manifest_strict": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
         "readiness_gate": "python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py",
+        "route_contract": {
+            "expected_classes": EXPECTED_SEQUENCE,
+            "expected_labels": [
+                "party_hud",
+                "turn_left_after_vblank",
+                "turn_right_after_vblank",
+                "spell_panel",
+                "post_spell_redraw",
+                "inventory_panel",
+            ],
+            "required_driver_tokens": ["kp4", "kp6", "f1", "f4"],
+            "reason": "the capture command must drive both movement and UI states because the readiness gate requires spell_panel and inventory classifications",
+        },
         "promotion_requires": [
             "six raw 320x200 frames classified as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory",
             "no duplicate raw frame hashes",
@@ -294,6 +375,30 @@ def quarantine_pass376_artifacts(classifier: dict[str, Any], crops: dict[str, An
     }
 
 
+def command_contract_audit(next_unblock: dict[str, Any]) -> dict[str, Any]:
+    command = next_unblock.get("semantic_route_capture", "")
+    contract = next_unblock.get("route_contract", {})
+    labels = []
+    if "DM1_ORIGINAL_ROUTE_EVENTS=\"" in command:
+        route = command.split("DM1_ORIGINAL_ROUTE_EVENTS=\"", 1)[1].split("\"", 1)[0]
+        tokens = route.split()
+        labels = [tok.split(":", 1)[1] for tok in tokens if tok.startswith("shot:")]
+    else:
+        route = ""
+        tokens = []
+    missing_labels = [label for label in contract.get("expected_labels", []) if label not in labels]
+    missing_tokens = [tok for tok in contract.get("required_driver_tokens", []) if tok not in tokens]
+    return {
+        "ok": not missing_labels and not missing_tokens and len(labels) == 6,
+        "route": route,
+        "shot_labels": labels,
+        "missing_labels": missing_labels,
+        "missing_required_driver_tokens": missing_tokens,
+        "expected_classes": contract.get("expected_classes", []),
+        "expected_labels": contract.get("expected_labels", []),
+    }
+
+
 def blocker_list(data: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     if not all(row["ok"] for row in data["source_audit"]):
@@ -336,6 +441,8 @@ def blocker_list(data: dict[str, Any]) -> list[str]:
 
     if crops.get("rows_all_224x136") is not True:
         blockers.append("pass376 crop manifest is not exactly six 224x136 viewport crops")
+    if data.get("next_unblock_contract", {}).get("ok") is not True:
+        blockers.append("pass435 next unblock command contract is internally inconsistent")
 
     return blockers
 
@@ -458,6 +565,7 @@ def main() -> int:
         "not_claimed": ["DOSBox/live original capture during this gate", "original-vs-Firestaff pixel parity", "semantic route promotion while pass376 artifacts are quarantined"],
     }
     data["pass376_quarantine"] = quarantine_pass376_artifacts(data["classifier"], data["crop_manifest"])
+    data["next_unblock_contract"] = command_contract_audit(data["next_unblock"])
     data["route_rows"] = build_route_rows(data["route_labels"], data["classifier"], data["crop_manifest"])
     data["raw_duplicate_route_indices"] = duplicate_groups(data["route_rows"], "raw_sha256")
     data["crop_duplicate_route_indices"] = duplicate_groups(data["route_rows"], "crop_sha256")

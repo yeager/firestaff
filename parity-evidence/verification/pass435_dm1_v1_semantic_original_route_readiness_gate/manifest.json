@@ -1703,7 +1703,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "push-main-20260513-openai-fix",
+      "branch": "worker/laneC-pass435-original-route-unblock-20260513-codex",
       "crop_artifacts": {
         "files": [
           {
@@ -1836,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "caad71a0716c8429538cfd03ef6f52701300ed02",
+      "head": "7f31dd3e8a03e9248cd92cef2aa030f9d6831c73",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1844,7 +1844,7 @@
         "HUD/overlay parity"
       ],
       "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-      "repo": "/home/trv2/work/firestaff",
+      "repo": "/home/trv2/work/firestaff-worktrees/laneC-pass435-original-route-unblock-20260513-codex",
       "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
       "source_audit": [
         {
@@ -1907,7 +1907,7 @@
       ],
       "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-05-13T11:00:33.808276+00:00",
+      "timestamp_utc": "2026-05-13T07:52:37.757251+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -1974,7 +1974,62 @@
       "pass434 remains green and runtime evidence still proves F0380 -> F0365/F0366 -> G0321 -> later F0128"
     ],
     "readiness_gate": "python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py",
-    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+    "route_contract": {
+      "expected_classes": [
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "spell_panel",
+        "dungeon_gameplay",
+        "inventory"
+      ],
+      "expected_labels": [
+        "party_hud",
+        "turn_left_after_vblank",
+        "turn_right_after_vblank",
+        "spell_panel",
+        "post_spell_redraw",
+        "inventory_panel"
+      ],
+      "reason": "the capture command must drive both movement and UI states because the readiness gate requires spell_panel and inventory classifications",
+      "required_driver_tokens": [
+        "kp4",
+        "kp6",
+        "f1",
+        "f4"
+      ]
+    },
+    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+  },
+  "next_unblock_contract": {
+    "expected_classes": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "spell_panel",
+      "dungeon_gameplay",
+      "inventory"
+    ],
+    "expected_labels": [
+      "party_hud",
+      "turn_left_after_vblank",
+      "turn_right_after_vblank",
+      "spell_panel",
+      "post_spell_redraw",
+      "inventory_panel"
+    ],
+    "missing_labels": [],
+    "missing_required_driver_tokens": [],
+    "ok": true,
+    "route": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel",
+    "shot_labels": [
+      "party_hud",
+      "turn_left_after_vblank",
+      "turn_right_after_vblank",
+      "spell_panel",
+      "post_spell_redraw",
+      "inventory_panel"
+    ]
   },
   "not_claimed": [
     "DOSBox/live original capture during this gate",
@@ -2026,7 +2081,7 @@
       "05"
     ]
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/laneC-pass435-original-route-unblock-20260513-codex",
   "route_labels": {
     "exists": true,
     "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
@@ -2200,6 +2255,91 @@
       "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
+      "claim": "the original PC34 entrance route starts from source-defined mouse coordinates, so host click coordinates must be treated as route evidence until runtime state confirms gameplay",
+      "exists": true,
+      "file": "INPUT.C",
+      "function": "F0536_INPUT_Initialize",
+      "id": "input_entrance_click_origin",
+      "lines": "197-204",
+      "missing": [],
+      "needles": [
+        "G1038_i_MouseX = 250 * 2; /* Coordinates of Resume button on entrance screen */",
+        "G1038_i_MouseX = 250 * 2; /* Coordinates of Enter button on entrance screen */",
+        "F0073_MOUSE_BuildPointerScreenArea(G1038_i_MouseX >> 1, G1039_i_MouseY >> 1);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/INPUT.C"
+    },
+    {
+      "claim": "post-load capture shots are meaningful only after the original installs interface and movement input tables for both mouse and keyboard routes",
+      "exists": true,
+      "file": "STARTUP2.C",
+      "function": "F0462_START_StartGame_CPSEF",
+      "id": "startup_mouse_keyboard_tables",
+      "lines": "1179-1183",
+      "missing": [],
+      "needles": [
+        "G0441_ps_PrimaryMouseInput = G0447_as_Graphic561_PrimaryMouseInput_Interface;",
+        "G0442_ps_SecondaryMouseInput = G0448_as_Graphic561_SecondaryMouseInput_Movement;",
+        "G0443_ps_PrimaryKeyboardInput = G0458_as_Graphic561_PrimaryKeyboardInput_Interface;",
+        "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+    },
+    {
+      "claim": "the reusable capture route must pass entrance/load/start and discard stale setup input before semantic shots are promotable",
+      "exists": true,
+      "file": "STARTUP2.C",
+      "function": "F0435/F0441/F0462 startup flow",
+      "id": "startup_entrance_load_start_then_discard",
+      "lines": "1441-1457,1507-1531",
+      "missing": [],
+      "needles": [
+        "F0441_STARTEND_ProcessEntrance();",
+        "while (F0435_STARTEND_LoadGame() != C01_LOAD_GAME_SUCCESS)",
+        "F0477_MEMORY_OpenGraphicsDat_CPSDF();",
+        "F0462_START_StartGame_CPSEF();",
+        "F0357_COMMAND_DiscardAllInput();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+    },
+    {
+      "claim": "dungeon-view mouse captures are semantic only when clicks resolve through source clickable boxes and resulting door/sensor actions, not by filename labels",
+      "exists": true,
+      "file": "CLIKVIEW.C",
+      "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+      "id": "dungeon_clickable_wall_or_door_button",
+      "lines": "367-385,407-431",
+      "missing": [],
+      "needles": [
+        "F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y - 33)",
+        "F0268_SENSOR_AddEvent(C10_EVENT_DOOR, L1155_i_MapX, L1156_i_MapY, 0, C02_EFFECT_TOGGLE, G0313_ul_GameTime + 1);",
+        "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++)",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C"
+    },
+    {
+      "claim": "viewport click hitboxes used by original capture are materialized while drawing G0296, so crop labels must be tied to the same draw/update boundary",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0107/F0110 dungeon clickable materialization",
+      "id": "dunview_clickable_box_materialization",
+      "lines": "3722-3725,4163-4212",
+      "missing": [],
+      "needles": [
+        "F0007_MAIN_CopyBytes(AL0090_puc_CoordinateSet, G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], sizeof(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]));",
+        "L0111_puc_CoordinateSet = G0208_aaauc_Graphic558_DoorButtonCoordinateSets",
+        "F0791_DUNGEONVIEW_DrawBitmapXX(AL0112_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
       "claim": "viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple",
       "exists": true,
       "file": "DUNVIEW.C",
@@ -2239,5 +2379,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-05-13T12:06:21.198443+00:00"
+  "timestampUtc": "2026-05-13T07:52:37.857469+00:00"
 }
