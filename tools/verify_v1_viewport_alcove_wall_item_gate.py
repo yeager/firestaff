@@ -92,9 +92,23 @@ def main() -> int:
         "cell->floorItemCount <= 0",
         "C0x0000_CELL_ORDER_ALCOVE",
         "C04_VIEW_CELL_ALCOVE",
+        "M018_OPPOSITE(direction)",
         "for (ii = 0; ii < cell->floorItemCount; ++ii)",
+        "cell->floorItemCells[ii] != alcoveCellRelativeToParty",
         "m11_draw_item_sprite(state, framebuffer, fbW, fbH,",
     ], "Firestaff alcove wall-item pass")
+
+    sample_start = fire.find("static int m11_sample_viewport_cell")
+    if sample_start < 0:
+        raise AssertionError("missing m11_sample_viewport_cell")
+    sample_body = fire[sample_start:fire.find("/* Extract door ornament ordinal */", sample_start)]
+    require_in_order(sample_body, [
+        "Do not filter WALL squares here",
+        "if (cell.summary.items > 0 && state->world.things)",
+        "cell.floorItemCells[cell.floorItemCount]",
+    ], "Firestaff wall-item extraction for alcove pass")
+    if "cell.summary.items > 0 && state->world.things &&\n        cell.elementType != DUNGEON_ELEMENT_WALL" in sample_body:
+        raise AssertionError("wall items are still filtered before alcove rendering")
 
     _, wall_body = find_function(fire, "m11_draw_dm1_wall_ornaments")
     require_in_order(wall_body, [

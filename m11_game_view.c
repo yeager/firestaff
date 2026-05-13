@@ -7476,18 +7476,15 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Extract floor item types and subtypes for sprite rendering.
+    /* Extract item types and subtypes for sprite rendering.
      * Collect up to M11_MAX_CELL_ITEMS items for multi-item scatter.
      * The first one also populates the legacy single-item fields.
      *
-     * WALL squares contain champion alcove items that must NOT be
-     * rendered as floor items.  ReDMCSB DUNVIEW.C F0115 line 4920
-     * gates item drawing on sub-cell matching and alcove flags;
-     * here we skip extraction for WALL element types entirely.
-     * This prevents alcove armour/weapons from appearing as
-     * phantom floor sprites at game start (Hall of Champions). */
-    if (cell.summary.items > 0 && state->world.things &&
-        cell.elementType != DUNGEON_ELEMENT_WALL) {
+     * Do not filter WALL squares here.  ReDMCSB DUNVIEW.C F0115 draws
+     * alcove objects from WALL squares through the special
+     * C04_VIEW_CELL_ALCOVE path; floor/open-square renderers gate on
+     * element type, and the alcove renderer filters by sub-cell. */
+    if (cell.summary.items > 0 && state->world.things) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
@@ -9847,6 +9844,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                                            const M11_DM1ZoneBlit* blit,
                                            int sourceZoneRow) {
     int ii;
+    const int alcoveCellRelativeToParty = 2;
     if (!state || !cell || !blit || cell->floorItemCount <= 0) {
         return;
     }
@@ -9854,10 +9852,12 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
     /* ReDMCSB DUNVIEW.C F0121/F0124 draw the wall ornament first; when
      * F0107 reports an alcove, they immediately call F0115 with
      * C0x0000_CELL_ORDER_ALCOVE.  F0115 then uses C04_VIEW_CELL_ALCOVE
-     * instead of requiring an open floor square, so wall-cell items are
-     * visible in square/Vi/arched alcoves. */
+     * and M011_CELL(thing) == M018_OPPOSITE(direction) instead of
+     * requiring an open floor square, so only the object on the alcove
+     * sub-cell is visible in square/Vi/arched alcoves. */
     for (ii = 0; ii < cell->floorItemCount; ++ii) {
-        if (cell->floorItemTypes[ii] < 0) {
+        if (cell->floorItemTypes[ii] < 0 ||
+            cell->floorItemCells[ii] != alcoveCellRelativeToParty) {
             continue;
         }
         if (!m11_draw_item_sprite(state, framebuffer, fbW, fbH,
