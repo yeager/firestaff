@@ -917,6 +917,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME pass505_dm1_v1_blocked_movement_collision_timing_gap
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_pass505_dm1_v1_blocked_movement_collision_timing_gap.py
+    )
+
+    add_test(
         NAME pass351_dm1_v1_live_viewport_redraw_parity_sweep
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py
     )

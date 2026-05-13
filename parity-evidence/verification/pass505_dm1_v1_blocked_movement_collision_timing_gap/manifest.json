@@ -1,0 +1,57 @@
+{
+  "branch": "worker/dm1v1-movement-followup-20260513-1534-codex",
+  "closedGap": "blocked step/collision timing: a dequeued step can spend stamina and then be blocked, but blocked collision discards queued follow-up input, requests one vblank wait, keeps input wait armed, and returns before F0267 sensor/timestamp/cooldown/viewport side effects",
+  "firestaffAudit": {
+    "commandCore": "blocked wall/door/fakewall/group returns before successful timing/sensor/viewport path",
+    "focusedCTest": "dm1_v1_command_movement_sensor_timing_pc34_compat"
+  },
+  "head": "2fa9d625659d19e443005c2169fc963e687cd3ca",
+  "notClaimed": [
+    "new original DOS runtime breakpoint hit",
+    "pixel parity",
+    "creature reaction timeline materialization beyond source-locked request flag"
+  ],
+  "originalDataAudit": {
+    "canonicalDm1DungeonDat": {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    "canonicalDm1GraphicsDat": {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    "greatstoneMapOrOverviewAnchor": {
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html",
+      "sha256": "7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c"
+    },
+    "greatstoneOverview": {
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html",
+      "sha256": "7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c"
+    },
+    "greatstonePc34DiffManifest": {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
+      "sha256": "506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494"
+    }
+  },
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass505_dm1_v1_blocked_movement_collision_timing_gap.v1",
+  "sourceAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": [
+      180,
+      351
+    ],
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": [
+      2045,
+      2829
+    ],
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": [
+      316,
+      910
+    ],
+    "VBLANK.C:F0693_WaitVerticalBlank": [
+      626,
+      646
+    ]
+  },
+  "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_COLLISION_TIMING_SOURCE_LOCKED"
+}
