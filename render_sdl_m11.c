@@ -38,6 +38,7 @@ typedef struct {
     int windowW;
     int windowH;
     int scaleMode;
+    int displayAspectMode;
     int paletteLevel;
     int windowMode;
     int integerScaling;
@@ -93,6 +94,10 @@ static int m11_validate_window_mode(int mode) {
     return mode == M11_WINDOW_MODE_WINDOWED ||
            mode == M11_WINDOW_MODE_MAXIMIZED ||
            mode == M11_WINDOW_MODE_FULLSCREEN;
+}
+
+static int m11_validate_display_aspect(int mode) {
+    return mode == M11_DISPLAY_ASPECT_4_3 || mode == M11_DISPLAY_ASPECT_16_9;
 }
 
 static int m11_window_mode_from_sdl_window(void) {
@@ -190,43 +195,56 @@ static int m11_recreate_texture_if_needed(int logicalWidth,
     return M11_RENDER_OK;
 }
 
-static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
+int M11_Render_ComputePresentationRect(int windowW,
+                                       int windowH,
+                                       int contentW,
+                                       int contentH,
+                                       int scaleMode,
+                                       int integerScaling,
+                                       int displayAspectMode,
+                                       int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH) {
     int x = 0;
     int y = 0;
-    int w = g_state.windowW;
-    int h = g_state.windowH;
-    int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
-    int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
+    int w = windowW;
+    int h = windowH;
+    int ratioW = displayAspectMode == M11_DISPLAY_ASPECT_4_3 ? 4 : 16;
+    int ratioH = displayAspectMode == M11_DISPLAY_ASPECT_4_3 ? 3 : 9;
 
-    if (g_state.windowW <= 0 || g_state.windowH <= 0) {
+    if (contentW <= 0 || contentH <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (!m11_validate_scale(scaleMode) || !m11_validate_display_aspect(displayAspectMode)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+
+    if (windowW <= 0 || windowH <= 0) {
         w = M11_FB_WIDTH;
         h = M11_FB_HEIGHT;
     } else {
-        switch (g_state.scaleMode) {
+        switch (scaleMode) {
             case M11_SCALE_1X:
             case M11_SCALE_2X:
             case M11_SCALE_3X:
             case M11_SCALE_4X: {
-                int factor = g_state.scaleMode + 1;
+                int factor = scaleMode + 1;
                 w = contentW * factor;
                 h = contentH * factor;
                 break;
             }
             case M11_SCALE_FIT: {
-                int fitW = g_state.windowW;
-                int fitH = (fitW * contentH) / contentW;
-                if (fitH > g_state.windowH) {
-                    fitH = g_state.windowH;
-                    fitW = (fitH * contentW) / contentH;
+                int fitW = windowW;
+                int fitH = (fitW * ratioH) / ratioW;
+                if (fitH > windowH) {
+                    fitH = windowH;
+                    fitW = (fitH * ratioW) / ratioH;
                 }
-                if (g_state.integerScaling) {
-                    int factorW = g_state.windowW / contentW;
-                    int factorH = g_state.windowH / contentH;
+                if (integerScaling && (contentW * ratioH) == (contentH * ratioW)) {
+                    int factorW = windowW / contentW;
+                    int factorH = windowH / contentH;
                     int factor = factorW < factorH ? factorW : factorH;
-                    /* Integer snapping must not enlarge content beyond the
-                     * actual window.  A 1920x1080 launcher inside the default
-                     * 960x540 window has no integral >=1 scale, so keep the
-                     * fractional FIT result instead of forcing 1x and clipping. */
                     if (factor >= 1) {
                         fitW = contentW * factor;
                         fitH = contentH * factor;
@@ -240,18 +258,39 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
             }
             case M11_SCALE_STRETCH:
             default:
-                w = g_state.windowW;
-                h = g_state.windowH;
+                w = windowW;
+                h = (w * ratioH) / ratioW;
+                if (h > windowH) {
+                    h = windowH;
+                    w = (h * ratioW) / ratioH;
+                }
                 break;
         }
     }
 
-    x = (g_state.windowW - w) / 2;
-    y = (g_state.windowH - h) / 2;
+    x = (windowW - w) / 2;
+    y = (windowH - h) / 2;
     if (outX) *outX = x;
     if (outY) *outY = y;
     if (outW) *outW = w;
     if (outH) *outH = h;
+    return M11_RENDER_OK;
+}
+
+static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
+    int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
+    int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
+    (void)M11_Render_ComputePresentationRect(g_state.windowW,
+                                             g_state.windowH,
+                                             contentW,
+                                             contentH,
+                                             g_state.scaleMode,
+                                             g_state.integerScaling,
+                                             g_state.displayAspectMode,
+                                             outX,
+                                             outY,
+                                             outW,
+                                             outH);
 }
 
 static int m11_apply_window_mode(int windowMode) {
@@ -452,6 +491,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.windowW = windowWidth;
     g_state.windowH = windowHeight;
     g_state.scaleMode = scaleMode;
+    g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 1;
@@ -496,6 +536,7 @@ void M11_Render_Shutdown(void) {
     g_state.windowW = 0;
     g_state.windowH = 0;
     g_state.paletteLevel = 0;
+    g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.integerScaling = 1;
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
@@ -893,6 +934,21 @@ int M11_Render_CycleScaleMode(void) {
     }
     g_state.scaleMode = next;
     return g_state.scaleMode;
+}
+
+int M11_Render_SetDisplayAspectMode(int aspectMode) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_display_aspect(aspectMode)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    g_state.displayAspectMode = aspectMode;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetDisplayAspectMode(void) {
+    return g_state.displayAspectMode;
 }
 
 int M11_Render_ToggleFullscreen(void) {

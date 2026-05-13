@@ -646,6 +646,10 @@ if(BUILD_TESTING)
         dm1_v2_settings_pc34.c
     )
     target_link_libraries(test_dm1_v2_settings_pc34 PRIVATE firestaff_m12)
+    add_executable(test_m11_display_aspect_present_rect
+        test_m11_display_aspect_present_rect.c
+    )
+    target_link_libraries(test_m11_display_aspect_present_rect PRIVATE firestaff_m11)
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
         dm1_v2_viewport_renderer_pc34.c
@@ -662,6 +666,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_lighting_dynamic_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
@@ -723,6 +728,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_settings_pc34
         COMMAND test_dm1_v2_settings_pc34
+    )
+    add_test(
+        NAME m11_display_aspect_present_rect
+        COMMAND test_m11_display_aspect_present_rect
     )
     add_test(
         NAME dm1_v2_settings_source_lock

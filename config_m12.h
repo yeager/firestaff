@@ -21,6 +21,7 @@ typedef struct {
     int rendererBackendIndex;
     int windowModeIndex;
     int scaleModeIndex;
+    int displayAspectMode;   /* 0 = 4:3, 1 = 16:9 */
     int integerScaling;
     int scalingFilterIndex;
     int vsyncIndex;

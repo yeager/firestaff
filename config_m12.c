@@ -218,6 +218,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->rendererBackendIndex = 0;
     config->windowModeIndex = 1;
     config->scaleModeIndex = 4;
+    config->displayAspectMode = 1;
     config->integerScaling = 1;
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
@@ -298,6 +299,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "scale_mode_index")) {
         config->scaleModeIndex = m12_parse_int(value, config->scaleModeIndex);
+        return;
+    }
+    if (m12_string_equals(key, "display_aspect_mode")) {
+        config->displayAspectMode = m12_parse_int(value, config->displayAspectMode) == 0 ? 0 : 1;
         return;
     }
     if (m12_string_equals(key, "integer_scaling")) {
@@ -497,6 +502,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "renderer_backend_index = %d\n", config->rendererBackendIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
     fprintf(fp, "scale_mode_index = %d\n", config->scaleModeIndex);
+    fprintf(fp, "display_aspect_mode = %d\n", config->displayAspectMode == 0 ? 0 : 1);
     fprintf(fp, "integer_scaling = %d\n", config->integerScaling ? 1 : 0);
     fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
     fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);

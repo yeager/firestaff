@@ -35,6 +35,7 @@ enum {
     M12_SETTINGS_ROW_RENDERER_BACKEND,
     M12_SETTINGS_ROW_WINDOW_MODE,
     M12_SETTINGS_ROW_SCALE_MODE,
+    M12_SETTINGS_ROW_DISPLAY_ASPECT,
     M12_SETTINGS_ROW_INTEGER_SCALING,
     M12_SETTINGS_ROW_SCALING_FILTER,
     M12_SETTINGS_ROW_VSYNC,
@@ -92,6 +93,7 @@ static const char* g_languageNames[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTS
 static const char* g_cheatsToggle[] = {"OFF", "ON"};
 static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
 static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", "FIT", "STRETCH"};
+static const char* g_displayAspectModes[] = {"4:3", "16:9"};
 static const char* g_toggleModes[] = {"OFF", "ON"};
 static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
 static const char* g_rendererBackendLabels[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
@@ -927,6 +929,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.rendererBackendIndex = state->settings.rendererBackendIndex;
     config.windowModeIndex = state->settings.windowModeIndex;
     config.scaleModeIndex = state->settings.scaleModeIndex;
+    config.displayAspectMode = state->settings.displayAspectMode;
     config.integerScaling = state->settings.integerScaling;
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
@@ -984,6 +987,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     state->settings.scaleModeIndex = m12_clamp_index(config.scaleModeIndex,
                                                      (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+    state->settings.displayAspectMode = m12_clamp_index(config.displayAspectMode,
+                                                        (int)(sizeof(g_displayAspectModes) / sizeof(g_displayAspectModes[0])));
     state->settings.integerScaling = config.integerScaling ? 1 : 0;
     state->settings.scalingFilterIndex = m12_clamp_index(config.scalingFilterIndex,
                                                          (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
@@ -1113,6 +1118,13 @@ static const char* m12_settings_value_window_mode(const M12_StartupMenuState* st
 
 static const char* m12_settings_value_scale_mode(const M12_StartupMenuState* state) {
     return m12_tr(state, g_scaleModes[state->settings.scaleModeIndex]);
+}
+
+static const char* m12_settings_value_display_aspect(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.displayAspectMode,
+                                        (int)(sizeof(g_displayAspectModes) / sizeof(g_displayAspectModes[0])))
+                      : 1;
+    return m12_tr(state, g_displayAspectModes[index]);
 }
 
 static const char* m12_settings_value_integer_scaling(const M12_StartupMenuState* state) {
@@ -1273,6 +1285,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_RENDERER_BACKEND: return m12_text(state, M12_TEXT_RENDERER_BACKEND);
         case M12_SETTINGS_ROW_WINDOW_MODE: return m12_text(state, M12_TEXT_WINDOW_MODE);
         case M12_SETTINGS_ROW_SCALE_MODE: return m12_tr(state, "SCALE");
+        case M12_SETTINGS_ROW_DISPLAY_ASPECT: return m12_tr(state, "DISPLAY FORMAT");
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_tr(state, "PIXEL SNAP");
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_tr(state, "FILTER");
         case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
@@ -1305,6 +1318,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_RENDERER_BACKEND: return m12_settings_value_renderer_backend(state);
         case M12_SETTINGS_ROW_WINDOW_MODE: return m12_settings_value_window_mode(state);
         case M12_SETTINGS_ROW_SCALE_MODE: return m12_settings_value_scale_mode(state);
+        case M12_SETTINGS_ROW_DISPLAY_ASPECT: return m12_settings_value_display_aspect(state);
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_settings_value_integer_scaling(state);
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_settings_value_scaling_filter(state);
         case M12_SETTINGS_ROW_VSYNC: return m12_settings_value_vsync(state);
@@ -1467,6 +1481,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     state->settings.scaleModeIndex = m12_clamp_index(state->settings.scaleModeIndex,
                                                      (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+    state->settings.displayAspectMode = m12_clamp_index(state->settings.displayAspectMode,
+                                                        (int)(sizeof(g_displayAspectModes) / sizeof(g_displayAspectModes[0])));
     state->settings.integerScaling = state->settings.integerScaling ? 1 : 0;
     state->settings.scalingFilterIndex = m12_clamp_index(state->settings.scalingFilterIndex,
                                                          (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
@@ -1606,6 +1622,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.scaleModeIndex,
                 delta,
                 (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_DISPLAY_ASPECT:
+            state->settings.displayAspectMode = m12_cycle_index(
+                state->settings.displayAspectMode,
+                delta,
+                (int)(sizeof(g_displayAspectModes) / sizeof(g_displayAspectModes[0])));
             break;
         case M12_SETTINGS_ROW_INTEGER_SCALING:
             state->settings.integerScaling = m12_cycle_index(

@@ -86,6 +86,9 @@ extern "C" {
 #define M11_VSYNC_OFF                0
 #define M11_VSYNC_ON                 1
 
+#define M11_DISPLAY_ASPECT_4_3       0
+#define M11_DISPLAY_ASPECT_16_9      1
+
 /* Lifecycle */
 int  M11_Render_Init(int windowWidth, int windowHeight, int scaleMode);
 void M11_Render_Shutdown(void);
@@ -138,6 +141,19 @@ int  M11_Render_GetWindowHeight(void);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);
 int  M11_Render_CycleScaleMode(void);
+int  M11_Render_SetDisplayAspectMode(int aspectMode);
+int  M11_Render_GetDisplayAspectMode(void);
+int  M11_Render_ComputePresentationRect(int windowW,
+                                        int windowH,
+                                        int contentW,
+                                        int contentH,
+                                        int scaleMode,
+                                        int integerScaling,
+                                        int displayAspectMode,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH);
 int  M11_Render_ToggleFullscreen(void);
 int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
 int  M11_Render_MapWindowToFramebuffer(int windowX,

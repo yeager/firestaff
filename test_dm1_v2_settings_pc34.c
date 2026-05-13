@@ -72,6 +72,7 @@ int main(void) {
     CHECK(cfg.dm1V2DynamicLightingEnabled == 0);
     CHECK(cfg.dm1V2AccessibilityTouchEnabled == 1);
     CHECK(cfg.dm1V2AspectMode == 1);
+    cfg.displayAspectMode = 0;
     CHECK(M12_Config_Save(&cfg) == 1);
 
     CHECK(file_contains(path, "dm1_v2_scale_percent = 250"));
@@ -79,6 +80,7 @@ int main(void) {
     CHECK(file_contains(path, "dm1_v2_dynamic_lighting_enabled = 0"));
     CHECK(file_contains(path, "dm1_v2_accessibility_touch_enabled = 1"));
     CHECK(file_contains(path, "dm1_v2_aspect_mode = 1"));
+    CHECK(file_contains(path, "display_aspect_mode = 0"));
 
     CHECK(M12_Config_Load(&loaded, NULL) == 1);
     dm1_v2_settings_from_m12_config(&roundtrip, &loaded);
@@ -87,6 +89,7 @@ int main(void) {
     CHECK(roundtrip.dynamicLightingEnabled == 0);
     CHECK(roundtrip.accessibilityTouchEnabled == 1);
     CHECK(roundtrip.aspectMode == DM1_V2_ASPECT_WIDESCREEN_16_9);
+    CHECK(loaded.displayAspectMode == 0);
     CHECK(strcmp(dm1_v2_settings_aspect_id(roundtrip.aspectMode), "16:9-widescreen") == 0);
 
     cfg.dm1V2ScalePercent = 999;

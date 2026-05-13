@@ -153,6 +153,9 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     if (M11_Render_GetScaleMode() != menuState->settings.scaleModeIndex) {
         M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
     }
+    if (M11_Render_GetDisplayAspectMode() != menuState->settings.displayAspectMode) {
+        M11_Render_SetDisplayAspectMode(menuState->settings.displayAspectMode);
+    }
     if (M11_Render_GetIntegerScaling() != menuState->settings.integerScaling) {
         M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
     }

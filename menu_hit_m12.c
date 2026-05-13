@@ -41,7 +41,7 @@
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
 /* Settings view row count. Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
-#define M12_HIT_SETTINGS_ROW_COUNT  9
+#define M12_HIT_SETTINGS_ROW_COUNT  27
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */

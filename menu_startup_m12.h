@@ -91,6 +91,7 @@ typedef struct {
     int rendererBackendIndex;
     int windowModeIndex;
     int scaleModeIndex;
+    int displayAspectMode;
     int integerScaling;
     int scalingFilterIndex;
     int vsyncIndex;
