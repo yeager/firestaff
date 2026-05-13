@@ -1,0 +1,31 @@
+{
+  "branch": "worker/dm1v1-movement-followup-20260513-1234-codex",
+  "currentMovementBlocker": {
+    "blockerResolvedHere": "Required runtime executable was built in this worktree and pass406 re-ran clean.",
+    "id": "pass406_dm1_v1_movement_legality_completion_gate",
+    "manifest": "parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json",
+    "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN"
+  },
+  "redmcsbAudit": {
+    "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": "CLIKMENU.C:142-174",
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2156",
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": "MOVESENS.C:316-999",
+    "MOVESENS.C:F0276_SENSOR_ProcessThingAdditionOrRemoval": "MOVESENS.C:1553-1794"
+  },
+  "schema": "pass504_dm1_v1_movement_followup_source_lock.v1",
+  "scopeGuard": [
+    "DM1 V1 movement only",
+    "No viewport/walls, CSB, DM2, Nexus, or pass435 capture files changed",
+    "No original DOS pixel overlay parity claim"
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceSliceSha256": {
+    "F0267": "4efad370cbbbc11e9d9183dd39e45b376be8f11a818ea9063b087ac154bf8795",
+    "F0276": "ce62bb9a0bc176a164b4b7fedcb7f56ec534413802878644d0bb848ef12d5d29",
+    "F0365": "d5e124631c6babe987bd2eef9640afa6c71112b5c1aef3cb26f9c9d3350de9f4",
+    "F0366": "fae5ba49d72bf21e08c7e770e4fc49049fe9ac3745a0adfbc36e389c747f911d",
+    "F0380": "079f53db0324b4ccec72d7b17d747bcdbe8fb34044b84f5948d5ce9fde97cf58"
+  },
+  "status": "PASS504_DM1_V1_MOVEMENT_FOLLOWUP_SOURCE_LOCKED"
+}
