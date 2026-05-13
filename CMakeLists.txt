@@ -1218,6 +1218,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_alcove_wall_item_gate.py
         )
         add_test(
+            NAME pass505_dm1_v1_alcove_item_c2548_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass505_dm1_v1_alcove_item_c2548_blocker.py
+        )
+        add_test(
             NAME v1_viewport_pit_floor_ornament_bug64_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_pit_floor_ornament_bug64_gate.py
         )
