@@ -1931,8 +1931,6 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass504_dm1_v1_original_route_state_delta_diversity_blocker.py
     )
 endif()
-    )
-endif()
 
 # ── DM1 V1 movement legality completion-matrix gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
@@ -1964,8 +1962,6 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass507_dm1_v1_movement_stairs_group_timing_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass507_dm1_v1_movement_stairs_group_timing_source_lock.py
-    )
-endif()
     )
 endif()
 
