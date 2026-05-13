@@ -315,11 +315,16 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
              * teleporter/pit chains before MOVESENS.C:799-818 runs party
              * leave/enter sensors.  MOVESENS.C:810-818 also deletes a
              * group already on the final party square before firing the
-             * destination enter sensor.  The command core validates and
-             * applies the initial legal step; the full pipeline owns this
-             * F0267 post-move ordering and must publish sensors for the
+             * destination enter sensor.  The command core initially validates and
+             * applies the legal adjacent step; when F0267 post-move
+             * chaining changes the final party tuple, discard those
+             * preliminary adjacent-square sensor effects and replay the
+             * source/final pair in original F0267 order.  The full pipeline
+             * owns this F0267 post-move ordering and must publish sensors for the
              * final square, not for an intermediate pit/teleporter square.
              */
+            memset(&outResult->core.leaveEffects, 0, sizeof(outResult->core.leaveEffects));
+            memset(&outResult->core.enterEffects, 0, sizeof(outResult->core.enterEffects));
             (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
                 dungeon, things, outResult->core.sourceMapIndex,
                 outResult->core.sourceMapX, outResult->core.sourceMapY,

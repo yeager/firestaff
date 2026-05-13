@@ -771,10 +771,11 @@ static void test_post_move_environment_side_effects(void)
          * MOVESENS.C:799-818 fires party leave/enter sensors.  A successful
          * step onto an open teleporter must therefore publish the final
          * target square enter sensor, not the intermediate teleporter
-         * square sensor. */
+         * square sensor, even if the teleporter square carries its own sensor. */
         {
             struct DungeonSensor_Compat sensors[2];
             struct DungeonGroup_Compat groups[1];
+            int teleporterCompactSftIndex = 1;
             memset(sensors, 0, sizeof(sensors));
             memset(groups, 0, sizeof(groups));
             sensors[0].next = THING_ENDOFLIST;
@@ -789,12 +790,15 @@ static void test_post_move_environment_side_effects(void)
             things.groups = groups;
             things.groupCount = 1;
             teleporters[0].next = thing_ref(THING_TYPE_SENSOR, 0);
+            firstThings[teleporterCompactSftIndex] = thing_ref(THING_TYPE_TELEPORTER, 0);
             set_sq(tsquares, 6, 1, 4,
                 sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
             firstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
 
             setup_party(&party, 2, 2, DIR_EAST, 1);
             DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+            EXPECT_INT("post_teleporter_intermediate_sft_sensor",
+                firstThings[teleporterCompactSftIndex], thing_ref(THING_TYPE_TELEPORTER, 0));
             DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
             DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
                 &pipeline, &tdungeon, &things, &party, NULL, &result);
