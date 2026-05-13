@@ -1,0 +1,210 @@
+{
+  "assetRefs": {
+    "canonicalDm1DungeonDat": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "size": 33357
+    },
+    "canonicalDm1GraphicsDat": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "size": 363417
+    },
+    "canonicalDm1Readme": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "sha256": "e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc",
+      "size": 1962
+    },
+    "canonicalDm1Title": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "size": 12002
+    },
+    "greatstoneOverview": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html",
+      "sha256": "7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c",
+      "size": 27323
+    },
+    "greatstonePc34DiffManifest": {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
+      "sha256": "506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494",
+      "size": 487068
+    }
+  },
+  "completionBoundary": {
+    "completionPercent": 58,
+    "coreInputMovement": [
+      13,
+      "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
+    ],
+    "originalOverlayRegression": [
+      0,
+      "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+    ],
+    "primaryBlockers": [
+      "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
+      "Representative original runtime movement/HUD/viewport overlay parity missing."
+    ]
+  },
+  "decision": "The next landable DM1 V1 movement step is a fresh original-runtime route transcript, not another Firestaff movement implementation patch: prove keyboard-buffer token -> F0361 queue write -> F0380 pop -> F0365/F0366 state delta -> F0267 tuple/timing for steps -> F0128/F0097 post-command viewport boundary, then attach route-labeled original captures.",
+  "gates": {
+    "firestaff_completion_matrix": {
+      "cmd": [
+        "python3",
+        "tools/verify_firestaff_completion_matrix.py"
+      ],
+      "outputTail": "firestaff completion matrix verifier OK\n",
+      "returncode": 0
+    }
+  },
+  "nextLandingStep": {
+    "id": "original_runtime_keyboard_buffer_to_post_command_viewport_transcript",
+    "requiredArtifacts": [
+      "per-token original PC/I34E keyboard-buffer value from IO2/F0540 or equivalent memory watch",
+      "F0361 queue write record: command id, G0432 slot, G0434 last index, G2153 increment",
+      "F0380 pop record: same command id, G0433 first index, G2153 decrement",
+      "handler record: F0365 direction mutation or F0366 target/collision/stairs outcome",
+      "for successful steps: F0267 committed map index, X, Y, direction/cell, and last-movement-time side effect",
+      "post-command F0128/F0097 boundary record tied to the same tuple",
+      "route-labeled original viewport/HUD captures whose filenames match route labels and whose hashes are not repeated unless source trace proves a no-op/block"
+    ],
+    "smallestVerificationGate": "one turn, one blocked step, and one successful step with the above records is enough for a follow-up promotable evidence pass; pixel parity can remain out of scope."
+  },
+  "nonClaims": [
+    "no new DOSBox/FIRES capture was launched",
+    "no original-vs-Firestaff pixel parity is claimed",
+    "no completion percentage change is claimed",
+    "no viewport/wall implementation is modified"
+  ],
+  "ok": true,
+  "priorGates": {
+    "pass504_keyboard_buffer_state_delta_blocker": {
+      "expectedStatus": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json",
+      "status": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED"
+    },
+    "pass505_blocked_collision_timing": {
+      "expectedStatus": "PASS505_DM1_V1_BLOCKED_MOVEMENT_COLLISION_TIMING_SOURCE_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass505_dm1_v1_blocked_movement_collision_timing_gap/manifest.json",
+      "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_COLLISION_TIMING_SOURCE_LOCKED"
+    },
+    "pass506_stairs_side_effects": {
+      "expectedStatus": "PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
+      "ok": true,
+      "path": "parity-evidence/verification/pass506_dm1_v1_stairs_movement_side_effect_source_lock/manifest.json",
+      "status": "PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
+    },
+    "pass508_key_route_state_delta": {
+      "expectedStatus": "PASS508_DM1_V1_KEY_ROUTE_STATE_DELTA_GATE_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass508_dm1_v1_key_route_state_delta_gate/manifest.json",
+      "status": "PASS508_DM1_V1_KEY_ROUTE_STATE_DELTA_GATE_LOCKED"
+    },
+    "pass509_keyboard_buffer_blocker": {
+      "expectedStatus": "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json",
+      "status": "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED"
+    },
+    "pass510_route_label_filename_fixture": {
+      "expectedStatus": "PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE",
+      "ok": true,
+      "path": "parity-evidence/verification/pass510_dm1_v1_original_capture_route_label_filename_fixture/manifest.json",
+      "status": "PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE"
+    }
+  },
+  "problems": [],
+  "schema": "firestaff.parity.pass511_dm1_v1_movement_original_route_contract.v1",
+  "sourceAudit": [
+    {
+      "claim": "PC/I34E route evidence must start with original keyboard-buffer tokens that map arrow scancodes to DM command chars, not host-only labels.",
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin",
+      "id": "pc_keyboard_buffer_to_dm_command_chars",
+      "lines": "5-61",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "the original route transcript has to cross keyboard-buffer drain, F0361 queue write, F0380 processing, and wait-loop boundary.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_drains_keyboard_then_processes_queue",
+      "lines": "164-219",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "a semantic route label needs a real original queue write to G0432/G2153.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "f0361_queue_write_requires_active_table",
+      "lines": "1734-1812",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "movement proof must bind the queued token to original F0380 pop and F0365/F0366 dispatch.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pop_dispatches_turn_or_step",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "turn/step evidence must show source-owned state delta, collision/stairs outcome, and movement cooldown boundary.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_and_step_mutate_party_state",
+      "lines": "142-347",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "successful step proof must include committed tuple and timing/scent side effects.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "f0267_commits_tuple_sensors_and_last_movement_time",
+      "lines": "738-818",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "claim": "overlay capture is movement-meaningful only after F0128 draws from the changed direction/X/Y tuple.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "post_command_viewport_boundary",
+      "lines": "8318-8611",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "the route transcript must land at viewport present seam before screenshots can become overlay evidence.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present_boundary",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
+}
