@@ -1,0 +1,347 @@
+{
+  "claim": "DM1 V1 wall drawing keeps ReDMCSB source-offset/source-row clipping represented in the local wall clip gate and wall-row blitters.",
+  "dm1CanonicalAnchors": [
+    {
+      "bytes": 363417,
+      "name": "GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "name": "DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    }
+  ],
+  "firestaffChecks": [
+    {
+      "file": "/home/trv2/work/firestaff-worktrees/dm1v1-viewport-walls-source-audit-20260513-codex/dm1_v1_viewport_3d_pc34_compat.c",
+      "hits": [
+        {
+          "line": 638,
+          "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
+        },
+        {
+          "line": 644,
+          "needle": "gate.source_lines = \"DUNVIEW.C:3053-3058,3198-3204; COORD.C:2390-2409; IMAGE3.C:866-889\";"
+        },
+        {
+          "line": 650,
+          "needle": "int src_x = frame->blit_x;"
+        },
+        {
+          "line": 651,
+          "needle": "int src_y = frame->blit_y;"
+        },
+        {
+          "line": 658,
+          "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
+        },
+        {
+          "line": 665,
+          "needle": "if (src_x + width > source_width) width = source_width - src_x;"
+        },
+        {
+          "line": 671,
+          "needle": "gate.src_x = (int16_t)src_x;"
+        },
+        {
+          "line": 676,
+          "needle": "gate.height = (int16_t)height;"
+        }
+      ],
+      "id": "local_clip_gate_contract",
+      "lines": "638-677",
+      "sha256": "10896ee22641cababef940cb0416d2eeaa963ea325e1f216cd0c184950f98042"
+    },
+    {
+      "file": "/home/trv2/work/firestaff-worktrees/dm1v1-viewport-walls-source-audit-20260513-codex/dm1_v1_viewport_3d_pc34_compat.c",
+      "hits": [
+        {
+          "line": 376,
+          "needle": "void dm1_viewport_3d_draw_wall("
+        },
+        {
+          "line": 382,
+          "needle": "dm1_viewport_3d_resolve_wall_blit_clip_gate"
+        },
+        {
+          "line": 390,
+          "needle": "const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;"
+        },
+        {
+          "line": 391,
+          "needle": "uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride + gate.dst_x;"
+        },
+        {
+          "line": 395,
+          "needle": "if (pixel != COLOR_TRANSPARENT)"
+        }
+      ],
+      "id": "local_transparent_wall_rows_use_clip_gate",
+      "lines": "376-399",
+      "sha256": "10896ee22641cababef940cb0416d2eeaa963ea325e1f216cd0c184950f98042"
+    },
+    {
+      "file": "/home/trv2/work/firestaff-worktrees/dm1v1-viewport-walls-source-audit-20260513-codex/dm1_v1_viewport_3d_pc34_compat.c",
+      "hits": [
+        {
+          "line": 410,
+          "needle": "void dm1_viewport_3d_draw_wall_opaque("
+        },
+        {
+          "line": 416,
+          "needle": "dm1_viewport_3d_resolve_wall_blit_clip_gate"
+        },
+        {
+          "line": 424,
+          "needle": "const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;"
+        },
+        {
+          "line": 426,
+          "needle": "memcpy(dst_row, src_row, (size_t)gate.width);"
+        }
+      ],
+      "id": "local_opaque_wall_rows_use_clip_gate",
+      "lines": "410-427",
+      "sha256": "10896ee22641cababef940cb0416d2eeaa963ea325e1f216cd0c184950f98042"
+    },
+    {
+      "file": "/home/trv2/work/firestaff-worktrees/dm1v1-viewport-walls-source-audit-20260513-codex/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "hits": [
+        {
+          "line": 560,
+          "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
+        },
+        {
+          "line": 565,
+          "needle": "check_int(\"wall_clip_gate.151713.src_x\", gate.src_x, 4);"
+        },
+        {
+          "line": 589,
+          "needle": "check_int(\"wall_clip_gate.occluded_source_row\", gate.visible ? 1 : 0, 0);"
+        },
+        {
+          "line": 596,
+          "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
+        },
+        {
+          "line": 608,
+          "needle": "check_int(\"wall_clip_draw.source_offset_next\""
+        },
+        {
+          "line": 615,
+          "needle": "check_int(\"wall_clip_draw.opaque_copies_transparent_color\""
+        }
+      ],
+      "id": "local_clip_tests_cover_source_and_viewport_occlusion",
+      "lines": "560-615",
+      "sha256": "55394296f534b06d81e831d5c4114cb98ed402936b4c107b945379ab9907718c"
+    }
+  ],
+  "nonClaims": [
+    "No new original runtime screenshot was captured.",
+    "No pixel-parity promotion is claimed.",
+    "CSBWin/CSB are lineage references only; ReDMCSB remains primary."
+  ],
+  "redmcsbPrimaryChecks": [
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 436,
+          "needle": "unsigned char G0161_auc_Graphic558_Box_WallBitmap_D3LCR[4];"
+        },
+        {
+          "line": 437,
+          "needle": "unsigned char G0162_auc_Graphic558_Box_WallBitmap_D2LCR[4];"
+        },
+        {
+          "line": 438,
+          "needle": "unsigned char G0711_auc_Graphic558_Frame_Wall_D3L2[8];"
+        },
+        {
+          "line": 439,
+          "needle": "unsigned char G0712_auc_Graphic558_Frame_Wall_D3R2[8];"
+        },
+        {
+          "line": 440,
+          "needle": "unsigned char G0163_aauc_Graphic558_Frame_Walls[12][8];"
+        }
+      ],
+      "id": "wall_frame_source_offsets",
+      "lines": "436-440",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 3048,
+          "needle": "void F0100_DUNGEONVIEW_DrawWallSetBitmap("
+        },
+        {
+          "line": 3055,
+          "needle": "P0106_puc_Frame[C6_X]"
+        },
+        {
+          "line": 3055,
+          "needle": "P0106_puc_Frame[C7_Y]"
+        },
+        {
+          "line": 3055,
+          "needle": "C10_COLOR_FLESH"
+        },
+        {
+          "line": 3065,
+          "needle": "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency("
+        },
+        {
+          "line": 3072,
+          "needle": "CM1_COLOR_NO_TRANSPARENCY"
+        }
+      ],
+      "id": "transparent_and_opaque_wall_blit_routes",
+      "lines": "3048-3076",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 3394,
+          "needle": "STATICFUNCTION void F0791_DUNGEONVIEW_DrawBitmapXX("
+        },
+        {
+          "line": 3423,
+          "needle": "F0635_(P0101_puc_Bitmap_Source, G2032_ai_XYZ, P2081_i_ZoneIndex, &L2447_i_Width, &L2448_i_Height)"
+        },
+        {
+          "line": 3427,
+          "needle": "if ((L2449_i_ > L2450_i_) && M007_GET(P2082_i_Flip, MASK0x0001_FLIP_HORIZONTAL))"
+        },
+        {
+          "line": 3435,
+          "needle": "L2447_i_Width += L2449_i_;"
+        },
+        {
+          "line": 3438,
+          "needle": "if ((L2449_i_ > L2450_i_) && M007_GET(P2082_i_Flip, MASK0x0002_FLIP_VERTICAL))"
+        },
+        {
+          "line": 3446,
+          "needle": "L2448_i_Height += L2449_i_;"
+        },
+        {
+          "line": 3464,
+          "needle": "F0132_VIDEO_Blit(P0101_puc_Bitmap_Source, P0102_puc_Bitmap_Destination, G2032_ai_XYZ"
+        }
+      ],
+      "id": "f0791_source_row_clip_and_flip_adjustment",
+      "lines": "3394-3470",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8446,
+          "needle": "F0153_DUNGEON_GetRelativeSquareType(P0183_i_Direction, 3, -2"
+        },
+        {
+          "line": 8469,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 8491,
+          "needle": "F0116_DUNGEONVIEW_DrawSquareD3L"
+        },
+        {
+          "line": 8521,
+          "needle": "F0121_DUNGEONVIEW_DrawSquareD2C"
+        },
+        {
+          "line": 8533,
+          "needle": "F0124_DUNGEONVIEW_DrawSquareD1C"
+        },
+        {
+          "line": 8542,
+          "needle": "F0127_DUNGEONVIEW_DrawSquareD0C"
+        }
+      ],
+      "id": "far_to_near_wall_square_replay",
+      "lines": "8446-8542",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    }
+  ],
+  "schema": "pass512_dm1_v1_viewport_wall_clip_source_audit.v1",
+  "secondaryReferenceChecks": [
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/pages.json",
+      "hits": [
+        {
+          "line": 7,
+          "needle": "Swoosh Construction Kit"
+        },
+        {
+          "line": 8,
+          "needle": "graphics.dat"
+        },
+        {
+          "line": 8,
+          "needle": "dungeon.dat"
+        }
+      ],
+      "id": "greatstone_pc34_context_index",
+      "sha256": "6df8f29eaf946fd57aeb47ab482b9f48219592afd93cc17be1b89b13f0d33d19"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "hits": [
+        {
+          "line": 379,
+          "needle": "StdDrawRoomObjects"
+        },
+        {
+          "line": 952,
+          "needle": "roomSTONE"
+        },
+        {
+          "line": 1819,
+          "needle": "StdDrawDoor"
+        },
+        {
+          "line": 1820,
+          "needle": "DrawOrder349"
+        }
+      ],
+      "id": "csbwin_viewport_script_lineage",
+      "sha256": "eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp",
+      "hits": [
+        {
+          "line": 379,
+          "needle": "StdDrawRoomObjects"
+        },
+        {
+          "line": 952,
+          "needle": "roomSTONE"
+        },
+        {
+          "line": 1819,
+          "needle": "StdDrawDoor"
+        },
+        {
+          "line": 1820,
+          "needle": "DrawOrder349"
+        }
+      ],
+      "id": "csb_viewport_script_lineage",
+      "sha256": "2acaeec457166e4af8e18009de3b9081f773761fa5d8913cce0ccacb8c8ea12c"
+    }
+  ],
+  "status": "passed"
+}
