@@ -1,0 +1,369 @@
+{
+  "claims": [
+    "ReDMCSB selects flipped wall/footprint bitmaps from the party map X/Y/direction parity at F0128 entry.",
+    "ReDMCSB uses swapped L/R wallset entries during that frame and restores native wallset pointers before presentation cleanup.",
+    "Firestaff's normal renderer has a matching party tuple predicate and separate center/side wall flip paths."
+  ],
+  "failures": [],
+  "firestaffAudit": [
+    {
+      "hits": [
+        {
+          "line": 9054,
+          "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
+        },
+        {
+          "line": 9056,
+          "needle": "return (state->world.party.mapX +"
+        },
+        {
+          "line": 9057,
+          "needle": "state->world.party.mapY +"
+        },
+        {
+          "line": 9058,
+          "needle": "state->world.party.direction) & 1;"
+        }
+      ],
+      "id": "firestaff_party_tuple_flip_predicate",
+      "lines": "9052-9059",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass510-20260513-codex/m11_game_view.c",
+      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sourceFile": "m11_game_view.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 9109,
+          "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
+        },
+        {
+          "line": 9118,
+          "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
+        },
+        {
+          "line": 9121,
+          "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
+        },
+        {
+          "line": 9122,
+          "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
+        }
+      ],
+      "id": "firestaff_wallset_variant_binding_before_draw",
+      "lines": "9109-9123",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass510-20260513-codex/m11_game_view.c",
+      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sourceFile": "m11_game_view.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 9670,
+          "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
+        },
+        {
+          "line": 9675,
+          "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
+        },
+        {
+          "line": 9676,
+          "needle": "if (flipWalls) {"
+        },
+        {
+          "line": 9683,
+          "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
+        },
+        {
+          "line": 9687,
+          "needle": "} else {"
+        },
+        {
+          "line": 9688,
+          "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
+        }
+      ],
+      "id": "firestaff_center_wall_flip_path",
+      "lines": "9664-9690",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass510-20260513-codex/m11_game_view.c",
+      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sourceFile": "m11_game_view.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 10236,
+          "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
+        },
+        {
+          "line": 10264,
+          "needle": "size_t partner = i ^ 1;"
+        },
+        {
+          "line": 10265,
+          "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
+        },
+        {
+          "line": 10266,
+          "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
+        },
+        {
+          "line": 10267,
+          "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
+        },
+        {
+          "line": 10273,
+          "needle": "} else {"
+        },
+        {
+          "line": 10274,
+          "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
+        }
+      ],
+      "id": "firestaff_side_wall_lr_swap_path",
+      "lines": "10232-10280",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass510-20260513-codex/m11_game_view.c",
+      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sourceFile": "m11_game_view.c",
+      "status": "PASS"
+    }
+  ],
+  "gates": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"
+      ],
+      "outputTail": "- C07_WALL_D2R -> C100_GRAPHIC_WALLSET_0_D2R index=100 neg=-12 STARTUP2.C:632/989\n- C08_WALL_D2L -> C101_GRAPHIC_WALLSET_0_D2L index=101 neg=-11 STARTUP2.C:633/990\n- C09_WALL_D2C -> C102_GRAPHIC_WALLSET_0_D2C index=102 neg=-10 STARTUP2.C:634/991\n- C10_WALL_D3R2 -> C103_GRAPHIC_WALLSET_0_D3R2 index=103 neg=-4 STARTUP2.C:625/982\n- C11_WALL_D3L2 -> M663_GRAPHIC_WALLSET_0_D3L2 index=104 neg=-3 STARTUP2.C:626/983\n- C12_WALL_D3R -> C105_GRAPHIC_WALLSET_0_D3R index=105 neg=-7 STARTUP2.C:627/984\n- C13_WALL_D3L -> C106_GRAPHIC_WALLSET_0_D3L index=106 neg=-6 STARTUP2.C:628/985\n- C14_WALL_D3C -> C107_GRAPHIC_WALLSET_0_D3C index=107 neg=-5 STARTUP2.C:629/986",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
+      ],
+      "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",
+      "passed": true,
+      "returncode": 0
+    }
+  ],
+  "nonClaims": [
+    "no original DOSBox runtime capture",
+    "no original-vs-Firestaff pixel parity",
+    "no movement/pass435 ownership"
+  ],
+  "ok": true,
+  "redmcsbSourceAudit": [
+    {
+      "hits": [
+        {
+          "line": 183,
+          "needle": "int16_t G2107_WallSet[15]"
+        },
+        {
+          "line": 186,
+          "needle": "-17,  /* Wall D0R */"
+        },
+        {
+          "line": 187,
+          "needle": "-16,  /* Wall D0L */"
+        },
+        {
+          "line": 191,
+          "needle": "-9,   /* Wall D2R2 */"
+        },
+        {
+          "line": 192,
+          "needle": "-8,   /* Wall D2L2 */"
+        },
+        {
+          "line": 196,
+          "needle": "-4,   /* Wall D3R2 */"
+        },
+        {
+          "line": 197,
+          "needle": "-3,   /* Wall D3L2 */"
+        },
+        {
+          "line": 200,
+          "needle": "-5 }; /* Wall D3C */"
+        }
+      ],
+      "id": "redmcsb_wallset_native_slots",
+      "lines": "183-200",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 2429,
+          "needle": "F1000_(G2107_WallSet[C14_WALL_D3C], G3048_WallSetFlipped[C14_WALL_D3C]);"
+        },
+        {
+          "line": 2432,
+          "needle": "F1000_(G2107_WallSet[C01_WALL_D0L], G3048_WallSetFlipped[C00_WALL_D0R]);"
+        },
+        {
+          "line": 2433,
+          "needle": "F1000_(G2107_WallSet[C00_WALL_D0R], G3048_WallSetFlipped[C01_WALL_D0L]);"
+        },
+        {
+          "line": 2434,
+          "needle": "F1000_(G2107_WallSet[C12_WALL_D3R], G3048_WallSetFlipped[C13_WALL_D3L]);"
+        },
+        {
+          "line": 2435,
+          "needle": "F1000_(G2107_WallSet[C13_WALL_D3L], G3048_WallSetFlipped[C12_WALL_D3R]);"
+        },
+        {
+          "line": 2442,
+          "needle": "F1000_(G2107_WallSet[C05_WALL_D2R2], G3048_WallSetFlipped[C06_WALL_D2L2]);"
+        },
+        {
+          "line": 2443,
+          "needle": "F1000_(G2107_WallSet[C06_WALL_D2L2], G3048_WallSetFlipped[C05_WALL_D2R2]);"
+        }
+      ],
+      "id": "redmcsb_flipped_wallset_pair_table",
+      "lines": "2427-2443",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 8357,
+          "needle": "G0076_B_UseFlippedWallAndFootprintsBitmaps = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001"
+        },
+        {
+          "line": 8367,
+          "needle": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);"
+        },
+        {
+          "line": 8368,
+          "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2108_Floor, C701_ZONE_VIEWPORT_FLOOR_AREA, G0076_B_UseFlippedWallAndFootprintsBitmaps = MASK0x0001_FLIP_HORIZONTAL);"
+        },
+        {
+          "line": 8413,
+          "needle": "F0007_MAIN_CopyBytes(M772_CAST_PC(G3048_WallSetFlipped), M772_CAST_PC(G2107_WallSet), sizeof(G2107_WallSet));"
+        }
+      ],
+      "id": "redmcsb_f0128_flip_select_and_swap",
+      "lines": "8354-8414",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 8544,
+          "needle": "if (L0223_B_FlipWalls) {"
+        },
+        {
+          "line": 8561,
+          "needle": "G3011_i_WallSet_Wall_D3C = G3060_i_WallSet_Wall_D3C;"
+        },
+        {
+          "line": 8570,
+          "needle": "G3014_i_WallSet_Wall_D0L = G3069_i_WallSet_Wall_D0L;"
+        },
+        {
+          "line": 8571,
+          "needle": "G3015_i_WallSet_Wall_D0R = G3070_i_WallSet_Wall_D0R;"
+        },
+        {
+          "line": 8578,
+          "needle": "F0007_MAIN_CopyBytes(M772_CAST_PC(G3071_WallSetNotFlipped), M772_CAST_PC(G2107_WallSet), sizeof(G2107_WallSet));"
+        }
+      ],
+      "id": "redmcsb_f0128_restore_native_wallset",
+      "lines": "8543-8579",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6697,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 6708,
+          "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C, G0076_B_UseFlippedWallAndFootprintsBitmaps);"
+        },
+        {
+          "line": 6714,
+          "needle": "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C);"
+        }
+      ],
+      "id": "redmcsb_center_walls_use_flip_flag",
+      "lines": "6697-6714",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass510_dm1_v1_viewport_wall_parity_flip_source_lock.v1",
+  "secondaryReferences": [
+    {
+      "exists": true,
+      "id": "dm1_pc34_graphics",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "use": "canonical PC34 wall bitmap source"
+    },
+    {
+      "exists": true,
+      "id": "dm1_pc34_dungeon",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "use": "canonical DM1 V1 dungeon/map wallset source"
+    },
+    {
+      "exists": true,
+      "id": "greatstone_index",
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md",
+      "sha256": "b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d",
+      "use": "local Greatstone atlas index"
+    },
+    {
+      "exists": true,
+      "id": "csbwin_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "sha256": "89418e01b0a8eef330451320d19078a3510cbc699f635c8af22820365e4ceb23",
+      "use": "local CSBWin lineage reference"
+    },
+    {
+      "exists": true,
+      "id": "csb_lineage_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "sha256": "8842aa9caa32cfab0873576bc19ddf9aaced2decc2493d8a58f0d67a4a871cdb",
+      "use": "local CSB lineage reference"
+    }
+  ],
+  "status": "PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED"
+}

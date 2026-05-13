@@ -1858,6 +1858,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 viewport wall parity flip source-lock gate ----------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass510_dm1_v1_viewport_wall_parity_flip_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass510_dm1_v1_viewport_wall_parity_flip_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
