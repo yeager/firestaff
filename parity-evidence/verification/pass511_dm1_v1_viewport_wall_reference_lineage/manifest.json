@@ -1,0 +1,290 @@
+{
+  "blockers": [
+    "No new original same-viewport runtime capture was produced.",
+    "No Firestaff-vs-original pixel parity promotion is claimed.",
+    "Exact ReDMCSB per-square replay is still represented as guarded metadata/batched renderer checks."
+  ],
+  "claims": [
+    "ReDMCSB is the authoritative DM1 V1 viewport wall/occlusion source.",
+    "CSBWin and CSB lineage references carry the same wall decoration/alcove concepts, but are secondary only.",
+    "Canonical DM1 PC34 GRAPHICS.DAT and DUNGEON.DAT are hash-locked."
+  ],
+  "dm1Anchors": [
+    {
+      "bytes": 363417,
+      "name": "GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "name": "DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    }
+  ],
+  "failures": [],
+  "prerequisiteGates": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"
+      ],
+      "outputTail": "- C07_WALL_D2R -> C100_GRAPHIC_WALLSET_0_D2R index=100 neg=-12 STARTUP2.C:632/989\n- C08_WALL_D2L -> C101_GRAPHIC_WALLSET_0_D2L index=101 neg=-11 STARTUP2.C:633/990\n- C09_WALL_D2C -> C102_GRAPHIC_WALLSET_0_D2C index=102 neg=-10 STARTUP2.C:634/991\n- C10_WALL_D3R2 -> C103_GRAPHIC_WALLSET_0_D3R2 index=103 neg=-4 STARTUP2.C:625/982\n- C11_WALL_D3L2 -> M663_GRAPHIC_WALLSET_0_D3L2 index=104 neg=-3 STARTUP2.C:626/983\n- C12_WALL_D3R -> C105_GRAPHIC_WALLSET_0_D3R index=105 neg=-7 STARTUP2.C:627/984\n- C13_WALL_D3L -> C106_GRAPHIC_WALLSET_0_D3L index=106 neg=-6 STARTUP2.C:628/985\n- C14_WALL_D3C -> C107_GRAPHIC_WALLSET_0_D3C index=107 neg=-5 STARTUP2.C:629/986",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
+      ],
+      "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",
+      "passed": true,
+      "returncode": 0
+    }
+  ],
+  "redmcsbChecks": [
+    {
+      "file": "DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8318,
+          "needle": "void F0128_DUNGEONVIEW_Draw_CPSF("
+        },
+        {
+          "line": 8338,
+          "needle": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+        },
+        {
+          "line": 8491,
+          "needle": "F0116_DUNGEONVIEW_DrawSquareD3L"
+        },
+        {
+          "line": 8521,
+          "needle": "F0121_DUNGEONVIEW_DrawSquareD2C"
+        },
+        {
+          "line": 8533,
+          "needle": "F0124_DUNGEONVIEW_DrawSquareD1C"
+        },
+        {
+          "line": 8542,
+          "needle": "F0127_DUNGEONVIEW_DrawSquareD0C"
+        },
+        {
+          "line": 8610,
+          "needle": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+        }
+      ],
+      "id": "f0128_far_to_near_then_present",
+      "lines": "8318-8610",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "hits": [
+        {
+          "line": 7727,
+          "needle": "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C"
+        },
+        {
+          "line": 7784,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7837,
+          "needle": "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency"
+        },
+        {
+          "line": 7843,
+          "needle": "C0x0000_CELL_ORDER_ALCOVE"
+        },
+        {
+          "line": 7873,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7875,
+          "needle": "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT"
+        },
+        {
+          "line": 7905,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor"
+        },
+        {
+          "line": 7910,
+          "needle": "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
+        }
+      ],
+      "id": "f0124_d1c_alcove_and_door_occlusion",
+      "lines": "7727-7938",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "hits": [
+        {
+          "line": 4547,
+          "needle": "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 4562,
+          "needle": "If the first nibble is 0, then the function call is to draw objects in an alcove on a wall square."
+        },
+        {
+          "line": 4820,
+          "needle": "/* Draw objects */"
+        },
+        {
+          "line": 5201,
+          "needle": "/* Draw creatures */"
+        },
+        {
+          "line": 5646,
+          "needle": "T0115129_DrawProjectiles:"
+        },
+        {
+          "line": 5916,
+          "needle": "/* Draw explosions */"
+        }
+      ],
+      "id": "f0115_layer_order",
+      "lines": "4547-5933",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "hits": [
+        {
+          "line": 709,
+          "needle": "void F0097_DUNGEONVIEW_DrawViewport"
+        },
+        {
+          "line": 721,
+          "needle": "G0324_B_DrawViewportRequested = C1_TRUE"
+        },
+        {
+          "line": 722,
+          "needle": "M526_WaitVerticalBlank();"
+        },
+        {
+          "line": 857,
+          "needle": "VIDRV_09_BlitViewPort"
+        }
+      ],
+      "id": "drawview_viewport_present_boundary",
+      "lines": "709-858",
+      "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
+    }
+  ],
+  "redmcsbPrimarySourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass511_dm1_v1_viewport_wall_reference_lineage.v1",
+  "secondaryLineageChecks": [
+    {
+      "file": "CSBCode.cpp",
+      "hits": [
+        {
+          "line": 3124,
+          "needle": "i16 DrawWallDecoration"
+        },
+        {
+          "line": 3213,
+          "needle": "pWDP = &d.wallDecorationPosition[graphicRectIndex][relativePosition];"
+        },
+        {
+          "line": 3214,
+          "needle": "isAlcove = IsAlcove(graphicIndex)"
+        },
+        {
+          "line": 4547,
+          "needle": "bool IsAlcove"
+        },
+        {
+          "line": 4554,
+          "needle": "D0W = d.AlcoveGraphicIndices[D7W];"
+        }
+      ],
+      "id": "csbwin_wall_decoration_alcove_lineage",
+      "root": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "sha256": "47e2fa49e8e812884f343f48ef25324f5c601bc7216224882498120ff8534041"
+    },
+    {
+      "file": "Code390e.cpp",
+      "hits": [
+        {
+          "line": 66,
+          "needle": "ReadWallBitmaps(d.pCurLevelDesc->wallGraphicSet());"
+        },
+        {
+          "line": 195,
+          "needle": "fillMemory(d.AlcoveGraphicIndices, 3, -1, 2);"
+        },
+        {
+          "line": 217,
+          "needle": "d.AlcoveGraphicIndices[D0W] = D5W;"
+        },
+        {
+          "line": 237,
+          "needle": "pWDP = &d.wallDecorationPosition[D0W][0];"
+        }
+      ],
+      "id": "csbwin_level_wall_bitmap_binding",
+      "root": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "sha256": "12c3eec8022a26c0d02badfd4b7511cabab63c376f4725b8906e8cbcbe989170"
+    },
+    {
+      "file": "src/CSBCode.cpp",
+      "hits": [
+        {
+          "line": 3115,
+          "needle": "i16 DrawWallDecoration"
+        },
+        {
+          "line": 3204,
+          "needle": "pWDP = &d.wallDecorationPosition[graphicRectIndex][relativePosition];"
+        },
+        {
+          "line": 3205,
+          "needle": "isAlcove = IsAlcove(graphicIndex)"
+        },
+        {
+          "line": 4547,
+          "needle": "bool IsAlcove"
+        },
+        {
+          "line": 4554,
+          "needle": "D0W = d.AlcoveGraphicIndices[D7W];"
+        }
+      ],
+      "id": "csb_lineage_wall_decoration_alcove",
+      "root": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
+      "sha256": "24a38f71b98611c46175b6e1945e96c02398db9b4463939b07c39a576dae8eef"
+    },
+    {
+      "file": "src/Code390e.cpp",
+      "hits": [
+        {
+          "line": 66,
+          "needle": "ReadWallBitmaps(d.pCurLevelDesc->wallGraphicSet());"
+        },
+        {
+          "line": 195,
+          "needle": "fillMemory(d.AlcoveGraphicIndices, 3, -1, 2);"
+        },
+        {
+          "line": 217,
+          "needle": "d.AlcoveGraphicIndices[D0W] = D5W;"
+        },
+        {
+          "line": 237,
+          "needle": "pWDP = &d.wallDecorationPosition[D0W][0];"
+        }
+      ],
+      "id": "csb_lineage_level_wall_bitmap_binding",
+      "root": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
+      "sha256": "ebd3c61bdef96bc7e2360fc7a3c0ba229a08c84373db4a3cb59aba02a1fe7a96"
+    }
+  ],
+  "status": "passed"
+}

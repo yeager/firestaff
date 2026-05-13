@@ -1836,6 +1836,10 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass509_dm1_v1_wallset_startup_binding
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass509_dm1_v1_wallset_startup_binding.py
     )
+    add_test(
+        NAME pass511_dm1_v1_viewport_wall_reference_lineage
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass511_dm1_v1_viewport_wall_reference_lineage.py
+    )
 endif()
 
 # ── DM1 V1 viewport/wall runtime-readiness evidence gate ──────────
