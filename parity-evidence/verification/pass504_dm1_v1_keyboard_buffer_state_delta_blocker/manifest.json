@@ -1,0 +1,116 @@
+{
+  "inputs": {
+    "pass386": "parity-evidence/verification/pass386_dm1_v1_keyboard_vs_click_command_dispatch/manifest.json",
+    "pass498": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json"
+  },
+  "localAudit": [
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "needle": "case 0xAB35: case 0x9B41: case 0x9B54: case 0x004C:",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "needle": "result.movementDisabledGate = 1;",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "needle": "pc34 table up arrow moves forward",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "needle": "redmcsb queue holds five commands",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "needle": "projectile matching direction keeps command queued",
+      "ok": true
+    }
+  ],
+  "narrowedBlocker": "Keyboard-buffer transcripts are still non-promotable until they prove M528 key extraction, F0361 table match plus G0432/G2153 queue write, and the following F0380 pop/decrement/dispatch before the post-command F0128/F0097 state-delta frame.",
+  "nonClaims": [
+    "no original runtime capture was run",
+    "no viewport/pixel parity promotion",
+    "no claim that F0365/F0366 source handlers are defective"
+  ],
+  "ok": true,
+  "pass386Predicates": {
+    "clickDispatchReached": false,
+    "clickF0128Observed": true,
+    "clickF0380Hit": true,
+    "clickRouteRanAfterArm": true,
+    "clickStopWaitWriteObserved": true,
+    "keyboardDispatchReached": false,
+    "keyboardF0361Hit": true,
+    "keyboardQueueCountChanged": false,
+    "keyboardRouteRanAfterArm": true
+  },
+  "problems": [],
+  "promotionPredicate": [
+    "capture/log the concrete M528_GetCharacterInKeyboardBuffer value after M527 reports non-empty",
+    "prove that value matches COMMAND.C G0459 PC-34 table row before F0361 exits",
+    "prove F0361 writes G0432 and increments G2153_i_QueuedCommandsCount",
+    "prove the next F0380 sees non-zero G2153, loads the same command, decrements G2153, then dispatches F0365/F0366",
+    "only then bind the following F0128/F0097 frame to the changed direction/X/Y state"
+  ],
+  "rejectAsNonPromotable": [
+    "route keylog labels without M528/F0361 key-code value",
+    "F0361 entry stop with no G0432 write and no G2153 increment",
+    "F0380 stop where G2153_i_QueuedCommandsCount is zero or movement-disabled gate bypasses dispatch",
+    "F0128/F0097 frame evidence without the preceding F0380 pop/decrement/dispatch chain"
+  ],
+  "schema": "firestaff.parity.pass504_dm1_v1_keyboard_buffer_state_delta_blocker.v1",
+  "sourceAudit": [
+    {
+      "claim": "PC-34 keyboard evidence starts with an actual Crawcin value after IO2 normalization, not a route-label transcript.",
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin",
+      "lines": "27-61",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "F0361 can only queue movement when the drained keyboard code matches the PC-34 secondary keyboard table.",
+      "file": "COMMAND.C",
+      "function": "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+      "lines": "677-684",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "A keyboard transcript must prove a matching F0361 queue write and G2153 increment; F0361 entry alone is not enough.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "lines": "1709-1813",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "The state delta starts only after F0380 proves non-empty pop/decrement and dispatches to F0365/F0366.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "The runtime chain is keyboard-buffer drain, F0361 queueing, F0380 processing, then wait-loop exit.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "lines": "164-219",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED",
+  "timestampUtc": "2026-05-13T12:19:22.735273+00:00"
+}
