@@ -1806,6 +1806,16 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 wall-set startup binding source-lock gate ──────────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass509_dm1_v1_wallset_startup_binding
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass509_dm1_v1_wallset_startup_binding.py
+    )
+endif()
+    )
+endif()
+
 # ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
