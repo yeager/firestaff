@@ -1,0 +1,102 @@
+{
+  "firestaffEvidence": [
+    {
+      "claim": "existing movement gate/evidence remains present",
+      "path": "tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py"
+    },
+    {
+      "claim": "existing movement gate/evidence remains present",
+      "path": "tools/verify_pass507_dm1_v1_movement_stairs_group_timing_source_lock.py"
+    },
+    {
+      "claim": "existing movement gate/evidence remains present",
+      "path": "parity-evidence/pass507_dm1_v1_movement_stairs_group_timing_source_lock.md"
+    }
+  ],
+  "greatstoneAnchor": {
+    "diff": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
+    "indexedPages": [
+      "http://greatstone.free.fr/dm/g_dm.html",
+      "http://greatstone.free.fr/dm/index.html"
+    ],
+    "pc34DungeonUrl": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html",
+    "pc34GraphicsUrl": "http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html",
+    "summary": {
+      "note": "Graphics names/order come from GreatStone HTML image labels; local inventory is matched by exact SHA256 variant and zero-based item index/count. DUNGEON.DAT is matched by exact SHA256 and GreatStone map-page order/count.",
+      "pc34_dungeon_maps": 14,
+      "pc34_graphics_items": 713,
+      "pc34_multi_graphics_items": 748,
+      "result": "PASS",
+      "total_mismatches": 0
+    }
+  },
+  "greatstoneRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+  "notClaimed": [
+    "original DOS keyboard-buffer transcript",
+    "representative original movement/HUD/viewport overlay parity",
+    "viewport/wall or pass435 route promotion"
+  ],
+  "originalDm1Anchors": [
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    }
+  ],
+  "originalsRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceAudit": [
+    {
+      "claim": "PC-34 shifted cursor input is normalized into K/L/M/P command-table codes before command enqueue.",
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin",
+      "id": "pc34-key-normalization",
+      "lines": "27-61"
+    },
+    {
+      "claim": "Mouse movement arrows and PC-34 keyboard rows map to C001/C002 turn and C003..C006 movement commands.",
+      "file": "COMMAND.C",
+      "function": "G0448/G0459 movement input tables",
+      "id": "movement-input-tables",
+      "lines": "106-121,636-685"
+    },
+    {
+      "claim": "F0380 gates disabled movement before dequeue, then dispatches turn or move commands.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "queue-gate-dispatch",
+      "lines": "2045-2156"
+    },
+    {
+      "claim": "Turn changes party direction through sensor leave/enter; step resolves deltas, blockers, F0267 movement, and cooldown timing.",
+      "file": "CLIKMENU.C",
+      "function": "F0365/F0366 turn and movement handlers",
+      "id": "turn-and-step-handlers",
+      "lines": "142-347"
+    },
+    {
+      "claim": "Relative stepping applies forward deltas, then a simulated-right-turn strafe delta.",
+      "file": "DUNGEON.C",
+      "function": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "id": "relative-delta",
+      "lines": "1371-1391"
+    },
+    {
+      "claim": "Accepted party movement records the result tuple, scent/timing state, and source-before-destination sensor order.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "movement-result-sensors",
+      "lines": "738-818"
+    }
+  ],
+  "schema": "firestaff.parity.pass509_dm1_v1_movement_n2_reference_anchor.v1",
+  "scope": "DM1 V1 movement input->command->movement source-lock reference anchoring",
+  "status": "PASS509_DM1_V1_MOVEMENT_N2_REFERENCE_ANCHORED"
+}
