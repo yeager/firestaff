@@ -36,8 +36,8 @@
     {
       "file": "m11_game_view.c",
       "function": "m11_draw_party_panel",
-      "start": 18775,
-      "end": 19059
+      "start": 19127,
+      "end": 19410
     }
   ],
   "redmcsbMarkers": [

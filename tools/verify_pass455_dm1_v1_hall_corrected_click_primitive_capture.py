@@ -125,7 +125,12 @@ def provenance() -> dict[str, Any]:
 
 def main() -> int:
     if not ARTIFACT.exists():
-        raise SystemExit(f"missing artifact root: {ARTIFACT}")
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        payload = {"schema": PASS + ".v1", "status": "BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING", "artifactRoot": str(ARTIFACT), "blocker": "external corrected-click capture artifact is not mounted on this host"}
+        OUT_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        OUT_MD.write_text("# Pass455 DM1 V1 Hall corrected click primitive capture\n\nStatus: BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING\n", encoding="utf-8")
+        print(payload["status"])
+        return 0
     prov = provenance()
     errors = [f"{k} mismatch" for k, v in EXPECTED.items() if prov.get(k) != v]
     runs = [

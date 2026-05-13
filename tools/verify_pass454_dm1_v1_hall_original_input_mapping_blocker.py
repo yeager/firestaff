@@ -171,7 +171,18 @@ def image_hashes_for_attempt(manifest: dict[str, Any], name: str) -> dict[str, A
 
 def build() -> dict[str, Any]:
     if not ARTIFACT_MANIFEST.exists():
-        raise SystemExit(f"missing artifact manifest: {ARTIFACT_MANIFEST}")
+        return {
+            "schema": PASS + ".v1",
+            "status": "BLOCKED_EXTERNAL_HALL_TRUE_STOP_ARTIFACT_MISSING",
+            "errors": [],
+            "artifactManifest": str(ARTIFACT_MANIFEST),
+            "artifactManifestSha256": "missing",
+            "blocker": "external hall true-stop artifact is not mounted on this host",
+            "diagnosis": "External hall true-stop artifact is not mounted on this host.",
+            "badClicks": [],
+            "correctedRerun": {"ok": False, "requestedPcClicks": [], "imageCount": 0, "uniqueImageSha256Count": 0},
+            "nextExecutableAction": None,
+        }
     manifest = json.loads(ARTIFACT_MANIFEST.read_text(encoding="utf-8"))
     provenance = manifest.get("provenance", {})
     errors: list[str] = []
@@ -315,14 +326,16 @@ def write_report(data: dict[str, Any]) -> None:
 def main() -> int:
     data = build()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    EXTERNAL_OUT_DIR.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    EXTERNAL_JSON.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    if ARTIFACT_MANIFEST.exists():
+        EXTERNAL_OUT_DIR.mkdir(parents=True, exist_ok=True)
+        EXTERNAL_JSON.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     write_report(data)
     print(f"{data['status']} {PASS}")
     print(f"wrote {OUT_JSON}")
     print(f"wrote {OUT_MD}")
-    print(f"wrote {EXTERNAL_JSON}")
+    if ARTIFACT_MANIFEST.exists():
+        print(f"wrote {EXTERNAL_JSON}")
     if data["errors"]:
         return 1
     return 0

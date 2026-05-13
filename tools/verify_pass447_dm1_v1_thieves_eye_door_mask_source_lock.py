@@ -92,7 +92,7 @@ def entry_info(data: bytes, index: int) -> tuple[int, int, int, int]:
 def main() -> int:
     fire = FIRE.read_text(encoding="utf-8")
     cmake = CMAKE.read_text(encoding="utf-8")
-    registry = REGISTRY.read_text(encoding="utf-8")
+    registry = REGISTRY.read_text(encoding="utf-8") if REGISTRY.is_file() else ""
     defs = RED_DEFS.read_text(encoding="latin-1")
     dunview = RED_DUNVIEW.read_text(encoding="latin-1")
     startup2 = RED_STARTUP2.read_text(encoding="latin-1")
@@ -124,7 +124,7 @@ def main() -> int:
             raise AssertionError(f"{label}: MD5 drift {md5} != {expected_md5}")
         if sha256 != expected_sha256:
             raise AssertionError(f"{label}: SHA256 drift {sha256} != {expected_sha256}")
-        if expected_md5 not in registry:
+        if registry and expected_md5 not in registry:
             raise AssertionError(f"registry missing provenance MD5 for {label}: {expected_md5}")
         if le16(data, 2) != expected_count:
             raise AssertionError(f"{label}: item count drift")

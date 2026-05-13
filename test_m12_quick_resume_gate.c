@@ -38,6 +38,7 @@ static void force_dm1_available(M12_StartupMenuState* state) {
     state->gameOptions[0].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
 }
 
 static int write_fake_quicksave(const char* path) {

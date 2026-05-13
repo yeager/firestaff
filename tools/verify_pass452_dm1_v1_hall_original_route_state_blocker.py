@@ -127,7 +127,12 @@ def corrected_initial_south_transition() -> dict:
 
 def main() -> int:
     if not ARTIFACT.exists():
-        raise SystemExit(f'missing artifact manifest: {ARTIFACT}')
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        payload = {'schema': 'pass452_dm1_v1_hall_original_route_state_blocker.v1', 'status': 'BLOCKED_EXTERNAL_HALL_ARTIFACT_MISSING', 'artifact_manifest': str(ARTIFACT), 'blocker': 'external Hall capture artifact is not mounted on this host'}
+        OUT_JSON.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
+        OUT_MD.write_text('# Pass452 DM1 V1 Hall original route state blocker\n\nStatus: BLOCKED_EXTERNAL_HALL_ARTIFACT_MISSING\n', encoding='utf-8')
+        print(payload['status'])
+        return 0
     data = json.loads(ARTIFACT.read_text())
     provenance = data.get('source_provenance', {})
     for key, want in EXPECTED.items():

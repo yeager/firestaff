@@ -237,7 +237,7 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
         "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.",
     }
     if not root.is_dir():
-        row.update({"ok": False, "errors": [f"missing N2 Hall artifact root {root}"]})
+        row.update({"ok": False, "errors": [], "externalArtifactMissing": f"missing N2 Hall artifact root {root}"})
         return row
     errors: list[str] = []
     try:

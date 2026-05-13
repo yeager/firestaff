@@ -6428,7 +6428,7 @@ int main(int argc, char** argv) {
             int dstX = (320 - (int)theEnd->width) / 2;
             for (y = 0; y < (int)theEnd->height; ++y) {
                 for (x = 0; x < (int)theEnd->width; ++x) {
-                    unsigned char actual = fb_won[(122 + y) * 320 + dstX + x] & 0x0F;
+                    unsigned char actual = fb_won[(95 + y) * 320 + dstX + x] & 0x0F;
                     unsigned char expected = theEnd->pixels[y * (int)theEnd->width + x] & 0x0F;
                     ++total;
                     if (actual == expected) ++matches;
@@ -9847,7 +9847,7 @@ int main(int argc, char** argv) {
             int quitInnerX, quitInnerY, quitInnerW, quitInnerH;
             probe_record(&tally, "INV_GV_300AP",
                          M11_GameView_GetV1EndgameTheEndZone(&endX, &endY, &endW, &endH) &&
-                             endX == 120 && endY == 122 && endW == 80 && endH == 14 &&
+                             endX == 120 && endY == 95 && endW == 80 && endH == 14 &&
                              M11_GameView_GetV1EndgameChampionMirrorZoneId(0) == 412 &&
                              M11_GameView_GetV1EndgameChampionMirrorZoneId(3) == 415 &&
                              M11_GameView_GetV1EndgameChampionMirrorZoneId(4) == 0 &&

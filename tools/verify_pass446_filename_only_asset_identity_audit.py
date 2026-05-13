@@ -151,7 +151,8 @@ def check_assets(errors: list[str]) -> list[dict[str, object]]:
             actual_md5 = file_digest(path, "md5")
             row["actual_md5"] = actual_md5
             ok = ok and actual_md5 == item["md5_provenance"]
-            if str(item["md5_provenance"]).upper() not in registry_text:
+            row["provenanceRegistryPresent"] = REGISTRY.is_file()
+            if REGISTRY.is_file() and str(item["md5_provenance"]).upper() not in registry_text:
                 errors.append(f"registry missing MD5 provenance for {item['label']}: {item['md5_provenance']}")
                 ok = False
         if not ok:

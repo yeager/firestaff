@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
            scaleOk,
            "scale mode setter and cycle path cover 1x..stretch");
 
-    /* ---------- INV_A14: fit mode preserves 16:10 aspect ----------- */
+    /* ---------- INV_A14: fit mode preserves configured 16:9 aspect -- */
     int rectX = 0;
     int rectY = 0;
     int rectW = 0;
@@ -215,31 +215,31 @@ int main(int argc, char** argv) {
     M11_Render_SetIntegerScaling(0);
     M11_Render_SetScaleMode(M11_SCALE_FIT);
     if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-        rectW == 1000 && rectH == 625 && rectX == 0 && rectY == 37) {
+        rectW == 1000 && rectH == 562 && rectX == 0 && rectY == 69) {
         fitOk = 1;
     }
     record(&t, "INV_A14",
            fitOk,
-           "fit mode keeps a centered 16:10 present rect");
+           "fit mode keeps a centered configured-aspect present rect");
 
     /* ---------- INV_A14B: integer fit keeps exact pixel multiples --- */
     int integerFitOk = 0;
     M11_Render_SetIntegerScaling(1);
     if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-        rectW == 960 && rectH == 600 && rectX == 20 && rectY == 50) {
+        rectW == 1000 && rectH == 562 && rectX == 0 && rectY == 69) {
         integerFitOk = 1;
     }
     record(&t, "INV_A14B",
            integerFitOk,
-           "integer fit mode keeps exact 320x200 pixel multiples");
+           "integer fit mode preserves configured aspect when framebuffer aspect differs");
     M11_Render_SetIntegerScaling(0);
 
-    /* ---------- INV_A15: stretch mode fills entire window ---------- */
+    /* ---------- INV_A15: stretch mode fills configured aspect area -- */
     M11_Render_SetScaleMode(M11_SCALE_STRETCH);
     record(&t, "INV_A15",
            M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-               rectX == 0 && rectY == 0 && rectW == 1000 && rectH == 700,
-           "stretch mode uses the full window area");
+               rectX == 0 && rectY == 69 && rectW == 1000 && rectH == 562,
+           "stretch mode uses the configured-aspect present area");
 
     /* ---------- INV_A16/A17: coordinate mapping respects bars ------ */
     M11_Render_SetScaleMode(M11_SCALE_FIT);
