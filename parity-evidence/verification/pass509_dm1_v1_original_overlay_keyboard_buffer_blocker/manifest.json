@@ -1,0 +1,203 @@
+{
+  "inputs": {
+    "pass435": "parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json",
+    "pass497": "parity-evidence/verification/pass497_dm1_v1_original_capture_next_blocker/manifest.json",
+    "pass498": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json"
+  },
+  "narrowedBlocker": "Original DM1 V1 overlay/capture remains blocked at the keyboard-buffer and overlay-boundary seam: a replacement route must prove every keyboard-driven overlay token survives F0357 buffer discard, writes through F0361 into G0432/G2153, is popped by F0380, and reaches the matching post-command F0128/F0097 present boundary. Host route labels, repeated 48ed gameplay frames, and duplicate pass376/pass487 artifacts are blocker evidence only.",
+  "nonClaims": [
+    "no DOSBox launch by this verifier",
+    "no original-vs-Firestaff pixel parity",
+    "no promotion of pass376/pass487 screenshots",
+    "no claim that Firestaff movement or viewport implementation is wrong"
+  ],
+  "observed": {
+    "pass376Quarantine": {
+      "artifact_set": "pass376-original-route/pass376-original-dm1-viewports",
+      "crop_duplicate_sha256_counts": {
+        "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": 2,
+        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 4
+      },
+      "crop_path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+      "decision": "quarantine as non-promotable historical evidence; do not use for semantic original-route readiness or pixel parity until a replacement six-state route is captured",
+      "expected_sequence": [
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "spell_panel",
+        "dungeon_gameplay",
+        "inventory"
+      ],
+      "quarantined": true,
+      "raw_classes": [
+        "dungeon_gameplay",
+        "wall_closeup",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "wall_closeup",
+        "dungeon_gameplay"
+      ],
+      "raw_duplicate_sha256_counts": {
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+      },
+      "raw_path": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+      "reason": "raw classifier did not pass; raw classifier sequence does not match semantic promotion sequence; raw route repeats screenshot hashes; viewport crops repeat hashes"
+    },
+    "pass435Blockers": [
+      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
+    ],
+    "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+    "pass497NextBlocker": "Capture/replay must prove a source-visible post-command state delta before overlay promotion: after entering gameplay, each movement/turn click needs a capture tied to the exact command completion/redraw boundary with either a new raw hash/region fingerprint or debugger/runtime proof that F0365/F0366 and the F0128/F0097 present path ran for that shot. The current pass487/pass492 evidence reaches gameplay but repeats the 48ed static no-state-delta frame five times and has filename/route-label drift, so those frames remain blocker evidence only.",
+    "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+    "pass498ObservedBlockerState": {
+      "classes": [
+        "entrance_menu",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay"
+      ],
+      "f0365F0366RuntimeStopsPreviouslyProven": true,
+      "f0365F0366StaticCaptureStillBlocked": true,
+      "filenameLabelDriftRows": 5,
+      "firstFrameStillEntranceMenu": true,
+      "pass487Status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+      "pass495Status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
+      "pass497NextBlockerMentionsStateDelta": true,
+      "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+      "postEntryGameplayHashRepeated": true,
+      "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "postEntryRegionStatsRepeated": true
+    },
+    "pass498Status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA"
+  },
+  "ok": true,
+  "problems": [],
+  "promotionPredicate": [
+    "record a strict original-runtime stop or equivalent memory watch showing F0357 did not flush the route token before overlay capture",
+    "for each keyboard token, show F0361 writes G0432_as_CommandQueue and increments G2153_i_QueuedCommandsCount",
+    "show the same token is later popped by F0380 with G2153 decrement and first-index advance",
+    "show the matching command reaches F0365/F0366 or the source-owned overlay handler before the shot label is captured",
+    "show the following F0128/F0097 viewport present boundary or an explicit source-owned overlay present boundary for that same shot",
+    "reject repeated raw/crop hashes unless source/runtime proves the command was intentionally blocked or no-op"
+  ],
+  "requiredObserved": {
+    "filenameRouteLabelDriftStillPresent": true,
+    "pass435QuarantinesHistoricalArtifacts": true,
+    "pass435StillBlocksSemanticRoute": true,
+    "pass497LocksStateDeltaBlocker": true,
+    "pass498NarrowsToPostCommandBoundary": true,
+    "staticRepeatedGameplayFrameStillPresent": true
+  },
+  "schema": "firestaff.parity.pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.v1",
+  "sourceAudit": [
+    {
+      "claim": "route keys are drained into F0361 before F0380 and before the wait loop exits",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_drains_keyboard_before_queue_dispatch",
+      "lines": "164-219",
+      "missing": [],
+      "needles": [
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "while (M527_IsCharacterInKeyboardBuffer())",
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "panel/rest/frozen transitions can flush pending keyboard input before it reaches the command queue",
+      "file": "COMMAND.C",
+      "function": "F0357_COMMAND_DiscardAllInput",
+      "id": "discard_all_input_flushes_raw_keyboard_buffer",
+      "lines": "1304-1326",
+      "missing": [],
+      "needles": [
+        "void F0357_COMMAND_DiscardAllInput",
+        "while (M527_IsCharacterInKeyboardBuffer())",
+        "M528_GetCharacterInKeyboardBuffer();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "discard keeps only release/eye-mouth queue entries, so packed keyboard tokens cannot be assumed to survive overlay boundaries",
+      "file": "COMMAND.C",
+      "function": "F0357_COMMAND_DiscardAllInput",
+      "id": "discard_all_input_preserves_only_specific_mouse_commands",
+      "lines": "1327-1375",
+      "missing": [],
+      "needles": [
+        "G0435_B_CommandQueueLocked = C1_TRUE;",
+        "C129_COMMAND_RELEASE_CHAMPION_ICON",
+        "C254_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL",
+        "G0434_i_CommandQueueLastIndex = L2285_i_DestinationCommandQueueIndex;",
+        "F0360_COMMAND_ProcessPendingClick();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "keyboard-driven overlay routes need evidence of F0361 queue write, not only host key labels",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "keyboard_queue_write_requires_active_table_and_capacity",
+      "lines": "1734-1812",
+      "missing": [],
+      "needles": [
+        "if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL)",
+        "G0435_B_CommandQueueLocked = C1_TRUE;",
+        "if (G2153_i_QueuedCommandsCount < C5_UNKNOWN)",
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;",
+        "G2153_i_QueuedCommandsCount++;",
+        "F0360_COMMAND_ProcessPendingClick();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "capture must be after a real F0380 pop/decrement/unlock path for the relevant route token",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "queue_pop_dispatch_boundary",
+      "lines": "2045-2127",
+      "missing": [],
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "G0435_B_CommandQueueLocked = C1_TRUE;",
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+        "G2153_i_QueuedCommandsCount--;",
+        "if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE)",
+        "F0360_COMMAND_ProcessPendingClick();"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "a route frame is overlay-eligible only when command-state reaches viewport compose/present",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "overlay_viewport_present_requires_f0128_f0097",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "G0296_puc_Bitmap_Viewport",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED",
+  "timestampUtc": "2026-05-13T12:13:45.947050+00:00"
+}

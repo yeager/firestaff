@@ -1766,6 +1766,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original overlay keyboard-buffer blocker gate -------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass509_dm1_v1_original_overlay_keyboard_buffer_blocker
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.py
+    )
+endif()
+
 # ── DM1 V1 wall occlusion spec-matrix gate ───────────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
