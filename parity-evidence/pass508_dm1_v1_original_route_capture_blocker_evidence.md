@@ -2,7 +2,7 @@
 
 Status: PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE_TIGHTENED
 
-Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.
+Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay from the hash-locked N2 PC34 asset set, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.
 
 ## ReDMCSB source anchors
 
@@ -15,6 +15,19 @@ Original DM1 V1 overlay/crop promotion remains blocked only at source-visible po
 - GAMELOOP.C:90,164,215-219 - ok=True; the next promotable frame is after command wait exits and the next F0128 consumes the tuple
 - DUNVIEW.C:8318-8611 - ok=True; F0128 must compose G0296 for the same direction/X/Y tuple
 - DRAWVIEW.C:709-858 - ok=True; the crop/pixel seam must be the PC34 viewport present path
+
+## N2 original asset locks
+
+- pc34_executable: ok=True; bytes=11471; sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4; capture route must launch the N2-local PC34 executable variant
+- pc34_dungeon_dat: ok=True; bytes=33357; sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85; route state and map tuple evidence must bind to this exact dungeon.dat
+- pc34_graphics_dat: ok=True; bytes=363417; sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e; viewport/crop evidence must bind to this exact graphics.dat
+- pc34_title: ok=True; bytes=12002; sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745; startup/entrance handoff must bind to this exact TITLE asset
+
+## Greatstone local reference
+
+- atlasRoot: /home/trv2/.openclaw/data/firestaff-greatstone-atlas
+- pagesIndexExists=True; filesIndexExists=True; pc34DiffManifestExists=True; pc34DiffManifestSha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
+- Greatstone remains a local secondary atlas/provenance reference; ReDMCSB source and N2-local PC34 asset hashes are the promotion boundary.
 
 ## Current evidence
 

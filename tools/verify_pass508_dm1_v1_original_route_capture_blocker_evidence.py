@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -8,6 +9,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIGINAL_PC34 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+GREATSTONE_ATLAS = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
+GREATSTONE_DIFF = Path.home() / ".openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json"
 VERIFY_DIR = ROOT / "parity-evidence/verification/pass508_dm1_v1_original_route_capture_blocker_evidence"
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence/pass508_dm1_v1_original_route_capture_blocker_evidence.md"
@@ -31,6 +35,12 @@ SOURCE_LOCKS = [
     {"id": "viewport_composition_and_present", "file": "DUNVIEW.C", "lines": "8318-8611", "needles": ["void F0128_DUNGEONVIEW_Draw_CPSF", "P0183_i_Direction", "P0184_i_MapX", "P0185_i_MapY", "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"], "claim": "F0128 must compose G0296 for the same direction/X/Y tuple"},
     {"id": "pc34_viewport_blit_present", "file": "DRAWVIEW.C", "lines": "709-858", "needles": ["void F0097_DUNGEONVIEW_DrawViewport", "G0296_puc_Bitmap_Viewport", "F0638_GetZone(C007_ZONE_VIEWPORT", "VIDRV_09_BlitViewPort"], "claim": "the crop/pixel seam must be the PC34 viewport present path"},
 ]
+ASSET_LOCKS = [
+    {"id": "pc34_executable", "path": ORIGINAL_PC34 / "DM.EXE", "variant": "dm-pc34/DungeonMasterPC34", "claim": "capture route must launch the N2-local PC34 executable variant"},
+    {"id": "pc34_dungeon_dat", "path": ORIGINAL_PC34 / "DATA/DUNGEON.DAT", "variant": "dm-pc34/DungeonMasterPC34 DATA", "claim": "route state and map tuple evidence must bind to this exact dungeon.dat"},
+    {"id": "pc34_graphics_dat", "path": ORIGINAL_PC34 / "DATA/GRAPHICS.DAT", "variant": "dm-pc34/DungeonMasterPC34 DATA", "claim": "viewport/crop evidence must bind to this exact graphics.dat"},
+    {"id": "pc34_title", "path": ORIGINAL_PC34 / "TITLE", "variant": "dm-pc34/DungeonMasterPC34", "claim": "startup/entrance handoff must bind to this exact TITLE asset"},
+]
 
 def norm(text: str) -> str:
     return " ".join(text.split())
@@ -46,6 +56,15 @@ def source_window(path: Path, spec: str) -> str:
         chunks.append("\n".join(lines[start - 1:end]))
     return "\n".join(chunks)
 
+def sha256(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 def audit_sources():
     rows = []
     for lock in SOURCE_LOCKS:
@@ -54,6 +73,37 @@ def audit_sources():
         missing = [needle for needle in lock["needles"] if norm(needle) not in norm(text)]
         rows.append({**lock, "path": str(path), "ok": path.exists() and not missing, "missing": missing})
     return rows
+
+def audit_assets():
+    rows = []
+    for lock in ASSET_LOCKS:
+        path = lock["path"]
+        rows.append({
+            **lock,
+            "path": str(path),
+            "exists": path.exists(),
+            "bytes": path.stat().st_size if path.exists() else None,
+            "sha256": sha256(path),
+            "ok": path.exists() and path.is_file(),
+        })
+    return rows
+
+def audit_greatstone():
+    pages = GREATSTONE_ATLAS / "index/pages.json"
+    files = GREATSTONE_ATLAS / "index/files.json"
+    diff = GREATSTONE_DIFF
+    return {
+        "atlasRoot": str(GREATSTONE_ATLAS),
+        "pagesIndex": str(pages),
+        "filesIndex": str(files),
+        "pc34DiffManifest": str(diff),
+        "pagesIndexExists": pages.exists(),
+        "filesIndexExists": files.exists(),
+        "pc34DiffManifestExists": diff.exists(),
+        "pc34DiffManifestSha256": sha256(diff),
+        "ok": GREATSTONE_ATLAS.exists() and pages.exists() and files.exists() and diff.exists(),
+        "claim": "Greatstone remains a local secondary atlas/provenance reference; ReDMCSB source and N2-local PC34 asset hashes are the promotion boundary.",
+    }
 
 def read_json(path: Path):
     if not path.exists():
@@ -82,8 +132,12 @@ def build():
         "filenameLabelDriftRows": len(blockers.get("filenameLabelDrift", [])), "pass497NextBlocker": p497.get("nextBlocker"), "pass498NarrowedBlocker": p498.get("narrowedBlocker"),
     }
     source_audit = audit_sources()
+    asset_audit = audit_assets()
+    greatstone_audit = audit_greatstone()
     required = {
         "source_audit_ok": all(row["ok"] for row in source_audit),
+        "asset_audit_ok": all(row["ok"] for row in asset_audit),
+        "greatstone_local_reference_ok": greatstone_audit["ok"],
         "pass304_still_blocks_route_promotion": p304.get("status") == "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
         "pass308_records_execution_without_state_oracle": p308.get("status") == "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
         "pass435_semantic_route_not_ready": p435.get("status") == "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
@@ -93,7 +147,7 @@ def build():
     }
     problems = [name for name, ok in required.items() if not ok]
     problems.extend("source lock failed {0}:{1} {2}".format(row["file"], row["lines"], row["missing"]) for row in source_audit if not row["ok"])
-    return {"schema": "firestaff.parity.pass508_dm1_v1_original_route_capture_blocker_evidence.v1", "status": STATUS if not problems else "FAIL_PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE", "ok": not problems, "sourceRoot": str(RED), "sourceAudit": source_audit, "inputs": {"pass304": str(PASS304.relative_to(ROOT)), "pass308": str(PASS308.relative_to(ROOT)), "pass435": str(PASS435.relative_to(ROOT)), "pass487": str(PASS487.relative_to(ROOT)), "pass497": str(PASS497.relative_to(ROOT)), "pass498": str(PASS498.relative_to(ROOT))}, "observed": observed, "required": required, "blocker": "Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.", "nextEvidenceRequired": ["capture each route shot at or after the F0097/VIDRV present boundary following the matching command", "record the F0380 command id/X/Y and the F0365 or F0366 handler reached for that shot", "record the later F0128 direction/X/Y tuple consumed for the same shot", "reject repeated 48ed static gameplay hashes unless source state proves the command was intentionally blocked/no-op"], "nonClaims": ["no DOSBox run launched", "no original-vs-Firestaff pixel parity", "no promotion of pass487 static frames", "no movement or viewport implementation change"], "problems": problems}
+    return {"schema": "firestaff.parity.pass508_dm1_v1_original_route_capture_blocker_evidence.v1", "status": STATUS if not problems else "FAIL_PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE", "ok": not problems, "sourceRoot": str(RED), "sourceAudit": source_audit, "originalAssetAudit": asset_audit, "greatstoneAudit": greatstone_audit, "inputs": {"pass304": str(PASS304.relative_to(ROOT)), "pass308": str(PASS308.relative_to(ROOT)), "pass435": str(PASS435.relative_to(ROOT)), "pass487": str(PASS487.relative_to(ROOT)), "pass497": str(PASS497.relative_to(ROOT)), "pass498": str(PASS498.relative_to(ROOT))}, "observed": observed, "required": required, "blocker": "Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay from the hash-locked N2 PC34 asset set, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.", "nextEvidenceRequired": ["capture each route shot at or after the F0097/VIDRV present boundary following the matching command", "record the F0380 command id/X/Y and the F0365 or F0366 handler reached for that shot", "record the later F0128 direction/X/Y tuple consumed for the same shot", "reject repeated 48ed static gameplay hashes unless source state proves the command was intentionally blocked/no-op"], "nonClaims": ["no DOSBox run launched", "no original-vs-Firestaff pixel parity", "no promotion of pass487 static frames", "no movement or viewport implementation change"], "problems": problems}
 
 def write_report(data):
     lines = [
@@ -108,6 +162,18 @@ def write_report(data):
     ]
     for row in data["sourceAudit"]:
         lines.append("- {file}:{lines} - ok={ok}; {claim}".format(**row))
+    lines += ["", "## N2 original asset locks", ""]
+    for row in data["originalAssetAudit"]:
+        lines.append("- {id}: ok={ok}; bytes={bytes}; sha256={sha256}; {claim}".format(**row))
+    gs = data["greatstoneAudit"]
+    lines += [
+        "",
+        "## Greatstone local reference",
+        "",
+        "- atlasRoot: {0}".format(gs["atlasRoot"]),
+        "- pagesIndexExists={0}; filesIndexExists={1}; pc34DiffManifestExists={2}; pc34DiffManifestSha256={3}".format(gs["pagesIndexExists"], gs["filesIndexExists"], gs["pc34DiffManifestExists"], gs["pc34DiffManifestSha256"]),
+        "- {0}".format(gs["claim"]),
+    ]
     observed = data["observed"]
     lines += [
         "",
