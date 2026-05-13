@@ -288,6 +288,10 @@ if(BUILD_TESTING)
             NAME csb_v1_experimental_launch_intent_fixture
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_experimental_launch_intent_fixture.py
         )
+        add_test(
+            NAME csb_v1_quickplay_load_route_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_quickplay_load_route_source_lock.py
+        )
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration

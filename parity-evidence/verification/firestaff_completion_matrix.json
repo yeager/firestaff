@@ -146,8 +146,8 @@
           "docs/parity/PARITY_MATRIX_CSB_V1.md now defines the full CSB V1 DoD matrix with acceptance labels, required proof boundaries, and verifier-backed source anchors; parity surface matrix remains evidence-only."
         ],
         "launch_smoke": [
-          1,
-          "CSB V1 hash-matched launcher path is now gated by csb_v1_launch_blocker_m12: the menu can identify CSB and its matched version, render options/blocker surfaces, and still avoids launch/valid intent until CSB runtime support exists."
+          2,
+          "CSB V1 hash-matched launcher path is gated by csb_v1_launch_blocker_m12, and csb_v1_quickplay_load_route_source_lock source-locks the reference QuickPlay/load route as playback/load setup rather than Firestaff production launch entitlement."
         ],
         "core_input_movement": [
           0,
@@ -172,11 +172,11 @@
       },
       "status": "inventory_and_launch_blocker",
       "primaryBlockers": [
-        "Positive front-door render smoke exists, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.",
+        "Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.",
         "Do not infer CSB runtime/render/gameplay parity from DM1."
       ],
-      "completionPercent": 19,
-      "points": 19,
+      "completionPercent": 20,
+      "points": 20,
       "maxPoints": 100
     },
     {

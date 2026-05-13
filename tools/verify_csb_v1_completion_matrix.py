@@ -24,7 +24,7 @@ CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 CRITERIA = {
     "reference_inventory": (8, "SOURCE_LOCKED_PARTIAL"),
     "definition_matrix": (10, "MATCHED_DEFINITION_ONLY"),
-    "launch_smoke": (1, "POSITIVE_BLOCKER_RENDER_SMOKE"),
+    "launch_smoke": (2, "POSITIVE_BLOCKER_RENDER_SMOKE"),
     "core_input_movement": (0, "BLOCKED_RUNTIME"),
     "viewport_ui_render": (0, "BLOCKED_CAPTURE"),
     "gameplay_systems": (0, "BLOCKED_RUNTIME"),
@@ -46,6 +46,9 @@ ANCHORS = [
     (CSB_SRC / "Chaos.cpp", "500-625", ["CSBGAME", "CSBGAME2", "csbgame.dat", "csbgame.bak"]),
     (CSB_SRC / "Mouse.cpp", "1410-1425", ["keyboardMode == 2", "Reincarnate mode"]),
     (CSB_SRC / "Graphics.cpp", "1740-1915", ["graphics.dat", "Cannot find 'graphics.dat'", "CSBgraphics.dat"]),
+    (CSB_SRC / "CSBwin.cpp", "502-508", ["IDC_QuickPlay", "PlayfileIsOpen", "OPT_QUICKPLAY"]),
+    (CSB_SRC / "SaveGame.cpp", "1591-1607", ["GAMESTATE_ResumeSavedGame", "InsertDisk", "dungeonName", "Signature"]),
+    (CSB_SRC / "SaveGame.cpp", "2046-2075", ["openGraphicsFile", "InitializeTimers", "HandleMouseEvents"]),
     (CSBWIN / "Game/readme.txt", "1-30", ["Enter the dungeon", "choose prison", "Make New Adventure"]),
     (CSBWIN / "SaveGame.cpp", "160-190", ["dungeonDatIndex", "NumWordsInTextArray"]),
     (CSBWIN / "Mouse.cpp", "1600-1668", ["HandleClickInViewport", "d.ClockRunning"]),
@@ -133,8 +136,8 @@ def main() -> int:
         score = csb.get("scores", {}).get("definition_matrix")
         if score is None or score[0] != 10:
             failures.append(f"CSB V1 definition_matrix completion credit must be 10/10, got {score}")
-        if csb.get("completionPercent") != 19 or csb.get("points") != 19:
-            failures.append(f"CSB V1 completion should be 19/100 after launch blocker gate, got {csb.get('completionPercent')}/{csb.get('points')}")
+        if csb.get("completionPercent") != 20 or csb.get("points") != 20:
+            failures.append(f"CSB V1 completion should be 20/100 after QuickPlay/load source-lock gate, got {csb.get('completionPercent')}/{csb.get('points')}")
 
     result = {
         "schema": "firestaff.csb_v1_completion_matrix.v1",
@@ -144,7 +147,7 @@ def main() -> int:
         "source_anchors": source_rows,
         "reference_anchors": reference_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
-        "completion_impact": {"target": "CSB V1", "before_percent": 18, "after_percent": 19, "launch_blocker_delta": 1, "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"},
+        "completion_impact": {"target": "CSB V1", "before_percent": 19, "after_percent": 20, "quickplay_load_source_lock_delta": 1, "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"},
         "non_claims": NON_CLAIMS,
         "failures": failures,
     }

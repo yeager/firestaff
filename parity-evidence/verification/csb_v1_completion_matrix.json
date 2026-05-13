@@ -15,7 +15,7 @@
     },
     {
       "id": "launch_smoke",
-      "score": 1,
+      "score": 2,
       "status": "POSITIVE_BLOCKER_RENDER_SMOKE"
     },
     {
@@ -208,6 +208,43 @@
       "skippedHostMissingOptionalRoot": false
     },
     {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "lines": "502-508",
+      "needles": [
+        "IDC_QuickPlay",
+        "PlayfileIsOpen",
+        "OPT_QUICKPLAY"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "lines": "1591-1607",
+      "needles": [
+        "GAMESTATE_ResumeSavedGame",
+        "InsertDisk",
+        "dungeonName",
+        "Signature"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "lines": "2046-2075",
+      "needles": [
+        "openGraphicsFile",
+        "InitializeTimers",
+        "HandleMouseEvents"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
       "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
       "lines": "1-30",
       "needles": [
@@ -304,9 +341,9 @@
   },
   "completion_impact": {
     "target": "CSB V1",
-    "before_percent": 18,
-    "after_percent": 19,
-    "launch_blocker_delta": 1,
+    "before_percent": 19,
+    "after_percent": 20,
+    "quickplay_load_source_lock_delta": 1,
     "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"
   },
   "non_claims": [

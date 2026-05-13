@@ -1,0 +1,163 @@
+{
+  "schema": "firestaff.csb_v1_quickplay_load_route_source_lock.v1",
+  "pass": true,
+  "scope": "CSB V1 launch-surface source-lock evidence only; no Firestaff runtime launch claim.",
+  "source_anchors": [
+    {
+      "id": "redmcsb_save_file_router_csbgame",
+      "role": "primary",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC8.C",
+      "lines": "101-118",
+      "needles": [
+        "M746_FILE_ID_SAVE_CSBGAME_DAT",
+        "C13_DUNGEON_CSB_GAME",
+        "C12_DUNGEON_CSB_PRISON",
+        "M745_FILE_ID_SAVE_DMSAVE_DAT"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_make_new_adventure_requires_csb_game",
+      "role": "primary",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "49-64",
+      "needles": [
+        "F1996_",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C13_DUNGEON_CSB_GAME",
+        "C1_TRUE"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_lineage_quickplay_playfile_gate",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "lines": "502-508",
+      "needles": [
+        "IDC_QuickPlay",
+        "PlayfileIsOpen",
+        "UIM_SETOPTION",
+        "OPT_QUICKPLAY"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_lineage_quickplay_menu_enable",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "lines": "1207-1216",
+      "needles": [
+        "PlayfileIsOpen",
+        "EnableMenuItem",
+        "IDC_QuickPlay",
+        "MF_ENABLED"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csbwin_quickplay_playfile_gate",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "lines": "536-542",
+      "needles": [
+        "IDC_QuickPlay",
+        "PlayfileIsOpen",
+        "UIM_SETOPTION",
+        "OPT_QUICKPLAY"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csbwin_quickplay_menu_enable",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "lines": "1236-1242",
+      "needles": [
+        "PlayfileIsOpen",
+        "EnableMenuItem",
+        "IDC_QuickPlay",
+        "MF_ENABLED"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_game_state_constants",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSB.h",
+      "lines": "42-48",
+      "needles": [
+        "GAMESTATE_ResumeSavedGame",
+        "GAMESTATE_AtPrisonDoor",
+        "GAMESTATE_EnterPrison"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_load_dungeon_signature",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "lines": "1591-1607",
+      "needles": [
+        "GAMESTATE_ResumeSavedGame",
+        "InsertDisk",
+        "dungeonName",
+        "Signature"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_load_graphics_timers_mouse",
+      "role": "secondary",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "lines": "2046-2075",
+      "needles": [
+        "openGraphicsFile",
+        "InitializeTimers",
+        "InitializeItem16",
+        "HandleMouseEvents"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "git_refs": [
+    {
+      "id": "csb_lineage",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src",
+      "expected_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "actual_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "ok": true
+    },
+    {
+      "id": "csbwin_lineage",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "expected_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "actual_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "ok": true
+    }
+  ],
+  "completion_impact": {
+    "target": "CSB V1",
+    "criterion": "launch_smoke",
+    "before_score": 1,
+    "after_score": 2,
+    "before_completion_percent": 19,
+    "after_completion_percent": 20
+  },
+  "non_claims": [
+    "QuickPlay is source-locked as replay playback setup, not as a Firestaff production CSB launch route.",
+    "No Firestaff CSB runtime, capture, gameplay, save compatibility, or pixel parity is enabled or claimed.",
+    "The remaining launch blocker is true CSB runtime/capture handling after the guarded M12 front door."
+  ],
+  "remaining_blocker": "Production CSB runtime/capture handling remains blocked after the guarded M12 front door.",
+  "failures": []
+}
