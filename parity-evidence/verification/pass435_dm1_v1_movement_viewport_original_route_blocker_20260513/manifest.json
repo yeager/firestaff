@@ -1,0 +1,63 @@
+{
+  "status": "BLOCKED_DUPLICATE_ORIGINAL_MOVEMENT_ROUTE",
+  "scope": "N2-only pass435/pass434/pass376 original overlay/capture readiness evidence for movement/viewport/walls",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass435-route-capture-unblock-20260513-codex",
+  "attemptDir": "verification-screens/pass435-20260513-movement-route-attempt",
+  "routeLabels": [
+    "movement_initial",
+    "movement_turn_left",
+    "movement_turn_right",
+    "movement_forward",
+    "movement_turn_right_2",
+    "movement_turn_left_2"
+  ],
+  "classifier": {
+    "command": "python3 tools/pass80_original_frame_classifier.py verification-screens/pass435-20260513-movement-route-attempt --expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay --fail-on-duplicates",
+    "pass": false,
+    "classes": [
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay"
+    ],
+    "duplicateSha256Counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+      "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+    },
+    "problems": [
+      "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "duplicate raw frames detected: 2 unique sha256 value(s) repeat"
+    ]
+  },
+  "originalAssets": {
+    "DM.EXE": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+    "DATA/GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "DATA/DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+  },
+  "requiredReferencesPresent": [
+    "~/.openclaw/data/firestaff-redmcsb-source/",
+    "~/.openclaw/data/firestaff-greatstone-atlas/",
+    "~/.openclaw/data/firestaff-csbwin-source/CSBWin/",
+    "~/.openclaw/data/firestaff-csb-source/CSB/",
+    "~/.openclaw/data/firestaff-original-games/DM/"
+  ],
+  "redmcsbAnchors": [
+    "COMMAND.C:2045-2156 F0380 dispatches C001/C002 to F0365 and C003-C006 to F0366",
+    "CLIKMENU.C:142-174 F0365 mutates G0308_i_PartyDirection for accepted turns",
+    "CLIKMENU.C:180-347 F0366 resolves target square and calls F0267 for movement state",
+    "DUNGEON.C:1371 F0150 computes relative movement coordinates",
+    "LOADSAVE.C:1941-1943 loads initial party X/Y/direction from InitialPartyLocation",
+    "DUNVIEW.C:8318-8611 composes G0296 and presents via F0097",
+    "DRAWVIEW.C:709-858 resolves C007_ZONE_VIEWPORT and calls VIDRV_09_BlitViewPort"
+  ],
+  "decision": "The original route/capture blocker is route-state diversity/post-command state-delta evidence. The current route is executable but non-promotable because it repeats two raw frame hashes.",
+  "nonClaims": [
+    "original-vs-Firestaff pixel parity",
+    "viewport wall parity promotion",
+    "movement implementation change",
+    "claim that original movement handlers are defective"
+  ]
+}
