@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-movement-keyroute-20260513-openai",
+  "branch": "integrate-main-20260513-dm1v1-batch2",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:706-818",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "c03952ff1f5ded8114aa6308d88106f9a69bddcc",
+  "head": "e218f151c0e2c75c33388b11aa8a86160cc03d03",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-05-13T11:49:59.623904+00:00"
+  "timestampUtc": "2026-05-13T14:36:07.143379+00:00"
 }

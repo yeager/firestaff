@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-movement-stairs-source-lock-20260513-codex",
+  "branch": "integrate-main-20260513-dm1v1-batch2",
   "firestaffGuards": {
     "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",

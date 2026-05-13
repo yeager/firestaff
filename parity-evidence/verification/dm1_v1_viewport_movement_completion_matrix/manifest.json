@@ -1,4 +1,45 @@
 {
+  "buildSteps": [
+    {
+      "cmd": [
+        "cmake",
+        "--build",
+        "/home/trv2/work/firestaff/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "test_dm1_v1_movement_core_pc34_compat",
+        "test_m11_v1_turning_presentation_pc34_compat",
+        "test_dm1_v1_movement_pipeline_pc34_compat",
+        "-j2"
+      ],
+      "outputTail": [
+        "[100%] Linking C executable test_m11_v1_turning_presentation_pc34_compat",
+        "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
+        "[ 90%] Built target firestaff_m10",
+        "[ 90%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o",
+        "[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/test_dm1_v1_movement_pipeline_pc34_compat.c.o",
+        "[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_creature_render_pc34_compat.c.o",
+        "[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_viewport_renderer_pc34.c.o",
+        "[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_dungeon_world_pc34_compat.c.o",
+        "[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_movement_engine_pc34.c.o",
+        "[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_game_state_pc34_compat.c.o",
+        "[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_champion_stats_pc34_compat.c.o",
+        "[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_inventory_pc34_compat.c.o",
+        "[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_spell_casting_pc34_compat.c.o",
+        "[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_stairs_level_pc34_compat.c.o",
+        "[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_text_message_pc34_compat.c.o",
+        "[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_sound_pc34_compat.c.o",
+        "[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_teleporter_pit_pc34_compat.c.o",
+        "[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_light_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat",
+        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  ],
   "chainedGates": [
     {
       "cmd": [
@@ -116,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:4952-5035; main_loop_m11.c:1635-1647; dm1_v1_movement_pipeline_pc34_compat.c:244-420",
+        "- Firestaff: m11_game_view.c:4952-5035; main_loop_m11.c:1638-1650; dm1_v1_movement_pipeline_pc34_compat.c:244-420",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -376,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-13T10:58:29.338697+00:00"
+  "timestampUtc": "2026-05-13T14:35:54.218376+00:00"
 }

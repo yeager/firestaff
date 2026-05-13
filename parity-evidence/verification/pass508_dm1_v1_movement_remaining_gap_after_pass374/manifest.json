@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "codex/dm1v1-movement-core-evidence-20260513",
+  "branch": "integrate-main-20260513-dm1v1-batch2",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
@@ -124,7 +124,7 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-core-evidence-20260513-codex",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
   "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
 }

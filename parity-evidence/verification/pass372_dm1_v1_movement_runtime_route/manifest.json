@@ -1,5 +1,5 @@
 {
-  "branch": "push-main-20260513-openai-fix",
+  "branch": "integrate-main-20260513-dm1v1-batch2",
   "checks": [
     {
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  22: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #22: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  24: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #24: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  62: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #62: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 179: dm1_v1_input_command_queue_source_lock\n4/4 Test #179: dm1_v1_input_command_queue_source_lock .....   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.09 sec",
+  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  22: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #22: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  24: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #24: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  63: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #63: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 184: dm1_v1_input_command_queue_source_lock\n4/4 Test #184: dm1_v1_input_command_queue_source_lock .....   Passed    0.08 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.09 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "a1e417bb7c29979a35de9005a2dc1eaa232b919e",
+  "head": "e218f151c0e2c75c33388b11aa8a86160cc03d03",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -352,5 +352,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-13T12:06:15.526102+00:00"
+  "timestampUtc": "2026-05-13T14:36:02.637029+00:00"
 }

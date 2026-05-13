@@ -24,7 +24,7 @@ Lane: movement-related verifiers, parity evidence, and CTest wiring only. No vie
 - dm1_v1_input_command_queue_pc34_compat.c:286 - F0380 move gate/replay/dispatch seam.
 - memory_movement_pc34_compat.c:200 - relative step delta seam.
 - memory_movement_pc34_compat.c:820 - empty-party exception and group block seam.
-- dm1_v1_movement_command_core_pc34_compat.c:154 - stamina/stairs/group/input-discard/timing command seam.
+- dm1_v1_movement_command_core_pc34_compat.c:179 - stamina/stairs/group/input-discard/timing command seam.
 - dm1_v1_movement_timing_pc34_compat.c:59 - successful-step timing seam.
 - memory_sensor_execution_pc34_compat.c:324 - source-ordered enter/leave sensor walking.
 - test_dm1_v1_movement_core_pc34_compat.c - covers queue gates, tile blockers, pits, and empty-party group bug.

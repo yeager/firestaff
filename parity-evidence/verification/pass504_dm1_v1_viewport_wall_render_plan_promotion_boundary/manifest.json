@@ -37,7 +37,7 @@
       ],
       "returncode": 0,
       "stderrTail": "",
-      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass504-20260513-codex/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
+      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/trv2/work/firestaff/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
     }
   ],
   "promotionBlocker": "Do not claim pixel parity until one exact original DM1 V1 viewport frame and matching Firestaff frame are captured for the same map/x/y/direction/wall-door state and tied to the F0128-to-F0097 present boundary.",
