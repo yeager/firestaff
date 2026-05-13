@@ -198,7 +198,7 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
 def parse_expected(value: str | None) -> list[str] | None:
     if value is None:
         return None
-    if value == "pass77":
+    if value in {"pass77", "pass84", "pass84-overlay", "overlay"}:
         return PASS77_EXPECTED
     if value in {"pass94", "pass94-diagnostic"}:
         return PASS94_DIAGNOSTIC_EXPECTED
@@ -328,6 +328,8 @@ def run_self_test() -> int:
             failures.append(f"{name}: got {got}, expected {expected} ({reason})")
     if parse_expected("pass210-movement") != PASS210_MOVEMENT_EXPECTED:
         failures.append("pass210-movement preset did not resolve to the strict gameplay-only expected sequence")
+    if parse_expected("pass84-overlay") != PASS77_EXPECTED:
+        failures.append("pass84-overlay preset did not resolve to the six-shot overlay expected sequence")
     if failures:
         print(json.dumps({"pass": False, "failures": failures}, indent=2))
         return 1
@@ -340,7 +342,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("attempt_dir", type=Path, nargs="?", help="directory containing DOSBox imageNNNN-raw.png captures")
     ap.add_argument("--out-json", type=Path, default=None)
     ap.add_argument("--out-md", type=Path, default=None)
-    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or preset: 'pass77', 'pass94-diagnostic', 'pass210-movement'")
+    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or preset: 'pass77'/'pass84-overlay', 'pass94-diagnostic', 'pass210-movement'")
     ap.add_argument("--fail-on-duplicates", action="store_true", help="strict promotion gate: treat repeated raw frame sha256 values as a failing problem instead of a warning")
     ap.add_argument("--self-test", action="store_true", help="run classifier guard tests without reading PNG files")
     args = ap.parse_args(argv)

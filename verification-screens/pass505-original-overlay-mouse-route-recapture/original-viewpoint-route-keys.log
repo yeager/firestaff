@@ -1,0 +1,29 @@
+route-token wait:7000
+route-token enter
+route-token wait:1500
+route-token one
+route-token wait:1500
+route-token click:276,140
+left-click-mapped 276,140 -> window-relative 553,281 window=640x400 origin=320,312
+route-token wait:1500
+route-token one
+route-token wait:1500
+route-token shot:party_hud
+route-token kp5
+route-token wait:900
+route-token shot
+route-token kp5
+route-token wait:900
+route-token shot
+route-token click:250,80
+left-click-mapped 250,80 -> window-relative 501,161 window=640x400 origin=320,312
+route-token wait:900
+route-token shot:spell_panel
+route-token click:250,120
+left-click-mapped 250,120 -> window-relative 501,241 window=640x400 origin=320,312
+route-token wait:900
+route-token shot
+route-token rclick:300,190
+right-click-mapped 300,190 -> window-relative 601,381 window=640x400 origin=320,312
+route-token wait:900
+route-token shot:inventory_panel

@@ -1,0 +1,15 @@
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+X connection to :111 broken (explicit kill or server shutdown).
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dosbox-original-viewports.conf
+MIXER:No Sound Mode Selected.
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_000.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_001.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_002.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_003.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_004.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/original-overlay-capture-codex-20260513/verification-screens/pass505-original-overlay-mouse-route-recapture/dm_005.png

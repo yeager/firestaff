@@ -58,7 +58,7 @@ Labeled shot tokens:
   pixel parity or validate that the original runtime reached that state.
 
 Outputs:
-  raw screenshots: ${OUT_DIR}/image*.png (DOSBox Staging raw 320x200 if capture succeeds)
+  raw screenshots: ${OUT_DIR}/image*.png (raw 320x200; exact DOSBox 640x400 2x captures are normalized to 320x200)
   crops:           ${CROP_DIR}/*.ppm and *.png
 
 Optional environment:
@@ -567,7 +567,7 @@ manifest = Path(sys.argv[2])
 paths = sorted(out.glob("image*.png"))
 if not paths:
     # DOSBox 0.74 names screenshots after the running program/screen instead of
-    # imageNNNN.png.  Normalize those raw 320x200 captures into the stable
+    # imageNNNN.png.  Normalize those raw 320x200, or exact 640x400 2x, captures into the stable
     # image000N-raw.png names expected by the downstream pass70/pass84 tools.
     candidates = sorted(
         [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")],
@@ -591,6 +591,20 @@ with manifest.open("w") as f:
         if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
             raise SystemExit(f"ERROR: not a PNG with IHDR: {path}")
         w, h = struct.unpack(">II", data[16:24])
+        if (w, h) == (640, 400):
+            try:
+                from PIL import Image
+            except Exception as exc:
+                raise SystemExit(f"ERROR: {path} is a 640x400 DOSBox 2x capture; Python Pillow is required to normalize it to original 320x200: {exc}")
+            im = Image.open(path).convert("RGB")
+            resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+            im.resize((320, 200), resample).save(path)
+            data = path.read_bytes()
+            if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+                raise SystemExit(f"ERROR: normalized 2x capture is not a PNG with IHDR: {path}")
+            w, h = struct.unpack(">II", data[16:24])
+        if (w, h) != (320, 200):
+            raise SystemExit(f"ERROR: expected raw screenshot 320x200, got {w}x{h} for {path}")
         st = path.stat()
         iso = datetime.fromtimestamp(st.st_mtime_ns / 1_000_000_000, timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
         f.write(f"{i:02d}\t{path}\t{st.st_mtime_ns}\t{iso}\t{hashlib.sha256(data).hexdigest()}\t{st.st_size}\t{w}\t{h}\n")
