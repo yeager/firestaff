@@ -627,17 +627,29 @@ PY
         fi
     fi
     printf 'index\tfilename\troute_label\troute_token\n' > "${SHOT_LABEL_MANIFEST}"
-    local i=0 src label route_label route_token ppm png
+    local i=0 src legacy_label label route_label route_token ppm png
     while IFS= read -r src; do
         if [[ $i -ge ${#labels[@]} ]]; then
             break
         fi
-        label="${labels[$i]}"
+        legacy_label="${labels[$i]}"
         route_label="${route_shot_labels[$i]:-}"
         if [[ -n "$route_label" ]]; then
             route_token="shot:${route_label}"
+            label="$(python3 - "$((i + 1))" "$route_label" <<'PY'
+import re
+import sys
+idx = int(sys.argv[1])
+route_label = sys.argv[2]
+stem = re.sub(r"[^a-z0-9_-]+", "_", route_label.lower()).strip("_")
+if not stem:
+    raise SystemExit("ERROR: empty normalized route label")
+print(f"{idx:02d}_{stem}_original_viewport_224x136")
+PY
+)"
         else
             route_token="shot"
+            label="${legacy_label}"
         fi
         ppm="${CROP_DIR}/${label}.ppm"
         png="${CROP_DIR}/${label}.png"

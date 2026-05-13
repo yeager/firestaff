@@ -1,0 +1,188 @@
+{
+  "decision": "capture-route filename drift is fixed: shot labels now name normalized crop artifacts, so pass304/pass435/pass487 can reason over required labels without hard-coded legacy filename mismatch",
+  "fixture": {
+    "actualCropManifestFilenames": [
+      "01_start_south_original_viewport_224x136.ppm",
+      "02_turn_right_west_original_viewport_224x136.ppm",
+      "03_forward_west_blocked_original_viewport_224x136.ppm",
+      "04_turn_left_east_original_viewport_224x136.ppm",
+      "05_forward_south_corridor_original_viewport_224x136.ppm",
+      "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
+    ],
+    "actualLabelManifestFilenames": [
+      "01_start_south_original_viewport_224x136.ppm",
+      "02_turn_right_west_original_viewport_224x136.ppm",
+      "03_forward_west_blocked_original_viewport_224x136.ppm",
+      "04_turn_left_east_original_viewport_224x136.ppm",
+      "05_forward_south_corridor_original_viewport_224x136.ppm",
+      "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
+    ],
+    "allCropsMatchFilenames": true,
+    "allLabelsMatchFilenames": true,
+    "cropRows": [
+      {
+        "bytes": "91407",
+        "filename": "01_start_south_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "bca4a8490fcf54fbe4659d05215ec7c2cbe5959f1b43e75684857aa614ce7578",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "02_turn_right_west_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "8432feffde0dcad3787beb0abcb38bc60c5f9d552a15b7965e5c6509562ea3f8",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "03_forward_west_blocked_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "2826c6f4273d6448c29726cf2b9d21bb6a6fd12288a4144783182038da274023",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "04_turn_left_east_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "120c9f18dc24ced69a40a8e1f8e03ead51a7f55c46e6892feb9ae3a7588b27f5",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "05_forward_south_corridor_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "a811b4c343107e7c4a3da707136815ec0f75f8c3710485679d962cf0260e0203",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "06_post_redraw_after_vblank_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "83670e512fda5da076a2b4040310e1da422ac724f18432301b07048d6b9b55a1",
+        "width": "224"
+      }
+    ],
+    "expectedFilenames": [
+      "01_start_south_original_viewport_224x136.ppm",
+      "02_turn_right_west_original_viewport_224x136.ppm",
+      "03_forward_west_blocked_original_viewport_224x136.ppm",
+      "04_turn_left_east_original_viewport_224x136.ppm",
+      "05_forward_south_corridor_original_viewport_224x136.ppm",
+      "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
+    ],
+    "legacyFilenameDrift": [],
+    "normalizerReportedSuccess": true,
+    "returncode": 0,
+    "routeEvents": "wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:forward_west_blocked kp4 wait:1200 shot:turn_left_east kp8 wait:1200 shot:forward_south_corridor wait:600 shot:post_redraw_after_vblank",
+    "routeLabels": [
+      "start_south",
+      "turn_right_west",
+      "forward_west_blocked",
+      "turn_left_east",
+      "forward_south_corridor",
+      "post_redraw_after_vblank"
+    ],
+    "stdoutLineCount": 16
+  },
+  "greatstonePc34Manifest": {
+    "exists": true,
+    "note": "Graphics names/order come from GreatStone HTML image labels; local inventory is matched by exact SHA256 variant and zero-based item index/count. DUNGEON.DAT is matched by exact SHA256 and GreatStone map-page order/count.",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
+    "pc34DungeonMaps": 14,
+    "pc34GraphicsItems": 713,
+    "result": "PASS",
+    "sha256": "506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494",
+    "totalMismatches": 0
+  },
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity",
+    "no proof of a fresh semantic six-state DOSBox route",
+    "no tracked screenshot promotion"
+  ],
+  "ok": true,
+  "originalAssets": [
+    {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+      "size": 11471
+    },
+    {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "size": 33357
+    },
+    {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "size": 363417
+    },
+    {
+      "exists": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "size": 12002
+    }
+  ],
+  "problems": [],
+  "scope": "normalization fixture for original capture route labels; no DOSBox launch and no pixel parity claim",
+  "sourceRefs": [
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "missing": [],
+      "needles": [
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "why": "queued route input must dispatch through the original command processor before movement/turn labels are semantic"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174,180-347",
+      "missing": [],
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement"
+      ],
+      "ok": true,
+      "why": "turn/move route labels name the state mutations implemented here"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lines": "8318-8618",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "ok": true,
+      "why": "captured viewport crops are only meaningful after this tuple-specific draw path"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "G0296_puc_Bitmap_Viewport",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "why": "the capture seam must be the PC34 viewport present path, not menu/setup echoes"
+    }
+  ],
+  "status": "PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE"
+}

@@ -1832,6 +1832,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 original capture route-label filename fixture ───────────
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass510_dm1_v1_original_capture_route_label_filename_fixture
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass510_dm1_v1_original_capture_route_label_filename_fixture.py
+    )
+endif()
+
 # ── DM1 V1 input→F0365/F0366 runtime follow-up gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
