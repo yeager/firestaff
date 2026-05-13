@@ -83,6 +83,57 @@
       "skippedHostMissingOptionalRoot": false
     },
     {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCU.C",
+      "lines": "5-77",
+      "needles": [
+        "F7272_IsDungeonValid",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
+      "lines": "11-18",
+      "needles": [
+        "0HCSB.HTC",
+        "0HCSB.DAT",
+        "1CSBGAME.DAT",
+        "1CSBGAME.BAK"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
+      "lines": "300-386",
+      "needles": [
+        "G3638_i_IORequestIndex_CSBGAME",
+        "C4_CSBGAME_DAT",
+        "C13_DUNGEON_CSB_GAME",
+        "C1_PLATFORM_ATARI_ST"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FLOPPYST.C",
+      "lines": "7-18",
+      "needles": [
+        "Support for two floppy disk drives",
+        "A:\\\\CSBGAME.DAT",
+        "A:\\\\CSBGAME.BAK"
+      ],
+      "missing": [],
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
+    },
+    {
       "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "lines": "380-390",
       "needles": [
@@ -98,8 +149,10 @@
       "lines": "4547-5205",
       "needles": [
         "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
-        "/* Draw objects */",
-        "/* Draw creatures */"
+        "draw each object found",
+        "Draw one creature",
+        "Draw only projectiles",
+        "Draw only explosions"
       ],
       "missing": [],
       "ok": true,
@@ -198,6 +251,50 @@
       "missing": [],
       "ok": true,
       "skippedHostMissingOptionalRoot": false
+    }
+  ],
+  "reference_anchors": [
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/README.md",
+      "lines": "1-34",
+      "needles": [
+        "atari-DUNGEON.DAT",
+        "atari-GRAPHICS.DAT",
+        "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+        "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html",
+      "lines": "272-291",
+      "needles": [
+        "Chaos Strikes Back",
+        "Atari",
+        "2.0 (en) [hard-disk]",
+        "dungeon.dat",
+        "graphics.dat",
+        "hcsb.dat",
+        "hcsb.htc"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html",
+      "lines": "306-323",
+      "needles": [
+        "Chaos Strikes Back",
+        "Atari",
+        "2.0 (en)",
+        "mini.dat",
+        "dungeon&nbsp;maps&nbsp;and&nbsp;savegame",
+        "hcsb.dat",
+        "hcsb.htc"
+      ],
+      "missing": [],
+      "ok": true
     }
   ],
   "surface_matrix": {

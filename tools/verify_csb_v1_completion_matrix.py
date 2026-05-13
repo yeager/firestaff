@@ -17,6 +17,8 @@ SURFACE = ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
+ORIGINAL_CSB = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/csb"
+GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html"
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 
 CRITERIA = {
@@ -34,8 +36,12 @@ ANCHORS = [
     (REDMCSB / "DEFS.H", "468-523", ["CSB_SAVE_HEADER", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C12_DUNGEON_CSB_PRISON", "C13_DUNGEON_CSB_GAME"]),
     (REDMCSB / "CEDTINC8.C", "101-118", ["M745_FILE_ID_SAVE_DMSAVE_DAT", "M746_FILE_ID_SAVE_CSBGAME_DAT", "C12_DUNGEON_CSB_PRISON"]),
     (REDMCSB / "CEDTINCH.C", "5-64", ["F7086_IsReadyToMakeNewAdventure", "F7272_IsDungeonValid", "C13_DUNGEON_CSB_GAME"]),
+    (REDMCSB / "CEDTINCU.C", "5-77", ["F7272_IsDungeonValid", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C12_DUNGEON_CSB_PRISON", "C13_DUNGEON_CSB_GAME"]),
+    (REDMCSB / "HINTLOAD.C", "11-18", ["0HCSB.HTC", "0HCSB.DAT", "1CSBGAME.DAT", "1CSBGAME.BAK"]),
+    (REDMCSB / "HINTLOAD.C", "300-386", ["G3638_i_IORequestIndex_CSBGAME", "C4_CSBGAME_DAT", "C13_DUNGEON_CSB_GAME", "C1_PLATFORM_ATARI_ST"]),
+    (REDMCSB / "FLOPPYST.C", "7-18", ["Support for two floppy disk drives", "A:\\\\CSBGAME.DAT", "A:\\\\CSBGAME.BAK"]),
     (REDMCSB / "DUNVIEW.C", "380-390", ["full dungeon view", "ThievesEye_ViewportVisibleArea"]),
-    (REDMCSB / "DUNVIEW.C", "4547-5205", ["F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF", "/* Draw objects */", "/* Draw creatures */"]),
+    (REDMCSB / "DUNVIEW.C", "4547-5205", ["F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF", "draw each object found", "Draw one creature", "Draw only projectiles", "Draw only explosions"]),
     (CSB_SRC / "README", "1-30", ["dungeon.dat", "hcsb.dat", "graphics.dat", "config.txt"]),
     (CSB_SRC / "Chaos.cpp", "500-625", ["CSBGAME", "CSBGAME2", "csbgame.dat", "csbgame.bak"]),
     (CSB_SRC / "Mouse.cpp", "1410-1425", ["keyboardMode == 2", "Reincarnate mode"]),
@@ -44,6 +50,13 @@ ANCHORS = [
     (CSBWIN / "SaveGame.cpp", "160-190", ["dungeonDatIndex", "NumWordsInTextArray"]),
     (CSBWIN / "Mouse.cpp", "1600-1668", ["HandleClickInViewport", "d.ClockRunning"]),
     (CSBWIN / "data.cpp", "1740-1755", ["keyboardMode=1", "adventuring"]),
+]
+
+
+REFERENCE_ANCHORS = [
+    (ORIGINAL_CSB / "README.md", "1-34", ["atari-DUNGEON.DAT", "atari-GRAPHICS.DAT", "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba", "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af"]),
+    (GREATSTONE, "272-291", ["Chaos Strikes Back", "Atari", "2.0 (en) [hard-disk]", "dungeon.dat", "graphics.dat", "hcsb.dat", "hcsb.htc"]),
+    (GREATSTONE, "306-323", ["Chaos Strikes Back", "Atari", "2.0 (en)", "mini.dat", "dungeon&nbsp;maps&nbsp;and&nbsp;savegame", "hcsb.dat", "hcsb.htc"]),
 ]
 
 NON_CLAIMS = [
@@ -90,6 +103,21 @@ def main() -> int:
             "skippedHostMissingOptionalRoot": optional_missing,
         })
 
+    reference_rows = []
+    for path, span, needles in REFERENCE_ANCHORS:
+        haystack = line_window(path, span)
+        missing = [needle for needle in needles if needle not in haystack]
+        ok = path.exists() and not missing
+        if not ok:
+            failures.append(f"reference anchor {path}:{span} missing {missing} exists={path.exists()}")
+        reference_rows.append({
+            "path": str(path),
+            "lines": span,
+            "needles": needles,
+            "missing": missing,
+            "ok": ok,
+        })
+
     surface = json.loads(SURFACE.read_text(encoding="utf-8")) if SURFACE.exists() else {}
     if surface.get("schema") != "firestaff.csb_v1_parity_surface_matrix.v1" or not surface.get("pass"):
         failures.append("CSB V1 surface matrix evidence is missing or failing")
@@ -114,6 +142,7 @@ def main() -> int:
         "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no runtime parity claim.",
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
         "source_anchors": source_rows,
+        "reference_anchors": reference_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
         "completion_impact": {"target": "CSB V1", "before_percent": 18, "after_percent": 19, "launch_blocker_delta": 1, "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"},
         "non_claims": NON_CLAIMS,
@@ -121,7 +150,7 @@ def main() -> int:
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} impact=+1 point")
+    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} reference_anchors={len(reference_rows)} impact=+1 point")
     for failure in failures:
         print(f"- {failure}")
     return 0 if result["pass"] else 1

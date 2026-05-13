@@ -34,9 +34,13 @@ Primary references stay local on N2:
 - ReDMCSB `DEFS.H` lines 468-523: CSB save header format and CSB dungeon identifiers.
 - ReDMCSB `CEDTINC8.C` lines 101-118: save-file routing separates `DMSAVE.DAT` and `CSBGAME.DAT`.
 - ReDMCSB `CEDTINCH.C` lines 5-64: Make-New-Adventure gate requires a valid CSB game dungeon.
+- ReDMCSB `CEDTINCU.C` lines 5-77: `F7272_IsDungeonValid` switches on save-header format and accepts CSB prison/game IDs only through CSB-aware validation criteria.
+- ReDMCSB `HINTLOAD.C` lines 11-18 and 300-386: Atari CSB hint/runtime loader names `HCSB.HTC`, `HCSB.DAT`, `CSBGAME.DAT`, `CSBGAME.BAK`, opens `CSBGAME.DAT`, and requires `C13_DUNGEON_CSB_GAME` plus `C1_PLATFORM_ATARI_ST`.
+- ReDMCSB `FLOPPYST.C` lines 7-18: Atari CSB save filenames are `A:\CSBGAME.DAT` and `A:\CSBGAME.BAK`, separate from DM save naming.
 - ReDMCSB `DUNVIEW.C` lines 380-390 and 4547-5205: viewport boxes and object/creature/projectile/explosion draw stack inherited by the CSB parity surface contract.
 - CSB lineage `Chaos.cpp`, `Mouse.cpp`, `Graphics.cpp`, and `README`: Utility flow, mode routing, graphics payload boundaries, and required runtime files.
 - CSBWin `Game/readme.txt`, `SaveGame.cpp`, `Mouse.cpp`, and `data.cpp`: play workflow, dungeon index usage, viewport/inventory mouse partition, and keyboard modes.
+- Reference anchors: original N2 canonical CSB README locks `atari-DUNGEON.DAT` / `atari-GRAPHICS.DAT` hashes; Greatstone `g_csb.html` lines 272-323 confirm Atari CSB 2.0/2.1 entries separate `dungeon.dat`, `graphics.dat`, `mini.dat`, `hcsb.dat`, and `hcsb.htc`. These are supporting references only; ReDMCSB remains primary.
 
 ## Non-claims
 

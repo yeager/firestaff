@@ -169,9 +169,11 @@
     {
       "id": "firestaff_csb_launch_still_gated",
       "path": "<firestaff-repo>/menu_startup_m12.c",
-      "lines": "1235-1260",
+      "lines": "225-1412",
       "needles": [
-        "strcmp(gameId, \"csb\") == 0",
+        ".gameId = \"csb\"",
+        "static int m12_game_supported",
+        "Only DM1 is launch-supported",
         "return gameId && strcmp(gameId, \"dm1\") == 0;"
       ],
       "why": "Firestaff currently catalogs CSB but m12_game_supported remains DM1-only.",
