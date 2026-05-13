@@ -15,7 +15,7 @@
     "review_pair_metadata_materialized": true,
     "semantic_clean_original_required": true
   },
-  "branch": "release-prep",
+  "branch": "push-main-20260513-openai-fix",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
@@ -78,13 +78,13 @@
       "exists": true,
       "expected_status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
       "missing_to_promote": null,
-      "ok": false,
+      "ok": true,
       "pass86_pass": null,
       "pass86_problems": null,
       "path": "parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json",
       "role": "Firestaff movement/capture side is not the active route blocker",
       "semantic_promotion_ok": null,
-      "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE"
+      "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED"
     }
   },
   "firestaff_artifacts": [
@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "7eced833be595d4f758ebd1bb533a6fc3b77c3af",
+  "head": "a1e417bb7c29979a35de9005a2dc1eaa232b919e",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -335,6 +335,6 @@
     }
   ],
   "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-05-13T05:41:08.600784+00:00"
+  "status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
+  "timestamp_utc": "2026-05-13T12:06:15.841435+00:00"
 }
