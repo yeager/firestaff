@@ -1,0 +1,130 @@
+{
+  "afterEvidence": [
+    "pass373",
+    "pass374"
+  ],
+  "branch": "codex/dm1v1-movement-core-evidence-20260513",
+  "currentEvidenceChecks": [
+    {
+      "id": "pass373-live-route-wall-redraw-green",
+      "ok": true,
+      "path": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
+      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
+    },
+    {
+      "id": "pass374-completion-credit-green",
+      "ok": true,
+      "path": "parity-evidence/verification/pass374_dm1_v1_completion_viewport_wall_credit/manifest.json",
+      "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED"
+    },
+    {
+      "id": "completion-matrix-current-after-pass374",
+      "observed": {
+        "completionPercent": 58,
+        "core_input_movement": 13,
+        "original_overlay_regression": 0,
+        "points": 58,
+        "viewport_ui_render": 12
+      },
+      "ok": true
+    },
+    {
+      "coreNote": "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof.",
+      "id": "completion-notes-name-next-gap",
+      "ok": true,
+      "originalOverlayNote": "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+    },
+    {
+      "id": "docs-carry-narrowed-nonclaim",
+      "ok": true
+    },
+    {
+      "id": "prior-original-route-blocker-consulted",
+      "ok": true,
+      "path": "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate/manifest.json",
+      "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"
+    }
+  ],
+  "gates": [
+    {
+      "cmd": [
+        "python3",
+        "tools/verify_firestaff_completion_matrix.py"
+      ],
+      "outputTail": "firestaff completion matrix verifier OK\n",
+      "returncode": 0
+    },
+    {
+      "cmd": [
+        "python3",
+        "tools/firestaff_completion_status.py"
+      ],
+      "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=19% | points=19/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke exists, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+      "returncode": 0
+    }
+  ],
+  "redmcsbSourceAudit": [
+    {
+      "claim": "original route proof must show keyboard/click queue reaching the turn/move dispatch boundary",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380-dequeues-and-dispatches-route-keys",
+      "lines": "2045-2156",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "turn overlay proof must bind original capture to source direction mutation",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "f0365-turn-mutates-direction-before-redraw",
+      "lines": "142-179",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "step overlay proof must bind original capture to destination legality, F0267 movement, stamina, cooldown, and input-wait release",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366-step-legality-move-result-and-cooldown",
+      "lines": "180-347",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "movement parity must observe committed original party tuple and timing side effects",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "f0267-commits-party-tuple-and-scent-timing",
+      "lines": "738-818",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "original overlay comparison must use post-command viewport redraw from mutated source party state",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "f0002-redraws-viewport-from-mutated-party-state",
+      "lines": "35-97,215-219",
+      "missingMarkers": [],
+      "ok": true
+    }
+  ],
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "remainingGap": {
+    "id": "original_runtime_movement_overlay_and_keyboard_buffer_transcript",
+    "missingArtifacts": [
+      "DOS PC/I34E keyboard-buffer/F0380 route transcript for representative movement keys",
+      "representative original movement/HUD/viewport overlay captures tied to pre/post party tuple"
+    ],
+    "missingTools": [],
+    "notClaimed": [
+      "pixel-perfect movement/HUD/viewport parity",
+      "original overlay regression",
+      "binary-level direct F0380 body proof"
+    ]
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-core-evidence-20260513-codex",
+  "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
+  "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
+}
