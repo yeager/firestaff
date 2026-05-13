@@ -45,7 +45,7 @@ SOURCE_CHECKS = [
     ("csb_new_adventure_flow", CSB_SRC / "Chaos.cpp", 1, 40, ["Create New Adventure", "prison savegame", "Make New Adventure"]),
     ("csb_csbgame_slots", CSB_SRC / "Chaos.cpp", 500, 625, ["CSBGAME", "CSBGAME2", "csbgame.dat", "csbgame.bak"]),
     ("csbwin_play_workflow", CSBWIN / "Game/readme.txt", 1, 30, ["Enter the dungeon", "choose prison", "Make New Adventure"]),
-    ("firestaff_csb_launch_still_gated", ROOT / "menu_startup_m12.c", 1180, 1222, ["strcmp(gameId, \"csb\") == 0", "return gameId && strcmp(gameId, \"dm1\") == 0;"]),
+    ("firestaff_csb_launch_still_gated", ROOT / "menu_startup_m12.c", 1390, 1413, ["strcmp(gameId, \"csb\") == 0", "return gameId && strcmp(gameId, \"dm1\") == 0;"]),
 ]
 
 NON_CLAIMS = [
@@ -86,6 +86,25 @@ def line_window(path: Path, start: int, end: int) -> str:
     return "\n".join(text.splitlines()[start - 1:end])
 
 
+def display_path(path: Path) -> str:
+    mapping = [
+        (CSB_SRC, "<csb-source>/CSB/src"),
+        (CSBWIN, "<csbwin-source>/CSBWin"),
+        (REDMCSB.parent.parent.parent, "<redmcsb-source>/ReDMCSB_WIP20210206"),
+        (ORIG, "<firestaff-original-games>"),
+        (ROOT, "<firestaff-repo>"),
+    ]
+    resolved = path.absolute()
+    for base, label in mapping:
+        try:
+            rel = resolved.relative_to(base.absolute())
+        except ValueError:
+            continue
+        rel_text = str(rel)
+        return label if rel_text == "." else f"{label}/{rel_text}"
+    return str(path)
+
+
 def main() -> int:
     failures: list[str] = []
     git_rows = []
@@ -94,7 +113,7 @@ def main() -> int:
         ok = actual == expected
         if not ok:
             failures.append(f"{ident} HEAD mismatch: expected {expected}, actual {actual}")
-        git_rows.append({"id": ident, "path": str(path), "expected_head": expected, "actual_head": actual, "ok": ok})
+        git_rows.append({"id": ident, "path": display_path(path), "expected_head": expected, "actual_head": actual, "ok": ok})
 
     file_rows = []
     for ident, (path, size, digest) in EXPECTED_FILES.items():
@@ -104,7 +123,7 @@ def main() -> int:
         ok = exists and actual_size == size and actual_digest == digest
         if not ok:
             failures.append(f"{ident} mismatch: exists={exists} size={actual_size} sha256={actual_digest}")
-        file_rows.append({"id": ident, "path": str(path), "expected_size": size, "actual_size": actual_size, "expected_sha256": digest, "actual_sha256": actual_digest, "ok": ok})
+        file_rows.append({"id": ident, "path": display_path(path), "expected_size": size, "actual_size": actual_size, "expected_sha256": digest, "actual_sha256": actual_digest, "ok": ok})
 
     source_rows = []
     for ident, path, start, end, needles in SOURCE_CHECKS:
@@ -113,7 +132,7 @@ def main() -> int:
         ok = path.exists() and not missing
         if not ok:
             failures.append(f"{ident} missing: {missing} path_exists={path.exists()}")
-        source_rows.append({"id": ident, "path": str(path), "lines": f"{start}-{end}", "needles": needles, "missing": missing, "ok": ok})
+        source_rows.append({"id": ident, "path": display_path(path), "lines": f"{start}-{end}", "needles": needles, "missing": missing, "ok": ok})
 
     result = {
         "schema": "firestaff.csb_v1_source_lock_inventory.v1",

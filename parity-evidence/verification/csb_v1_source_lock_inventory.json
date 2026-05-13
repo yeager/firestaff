@@ -199,7 +199,7 @@
     {
       "id": "firestaff_csb_launch_still_gated",
       "path": "<firestaff-repo>/menu_startup_m12.c",
-      "lines": "1180-1222",
+      "lines": "1390-1413",
       "needles": [
         "strcmp(gameId, \"csb\") == 0",
         "return gameId && strcmp(gameId, \"dm1\") == 0;"
