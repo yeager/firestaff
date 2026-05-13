@@ -1,0 +1,103 @@
+{
+  "firestaffChecks": [
+    {
+      "file": "m11_game_view.c",
+      "id": "sample-view-cell-preserves-wall-square-items",
+      "lines": "7351-7722"
+    },
+    {
+      "file": "m11_game_view.c",
+      "id": "alcove-pass-filters-to-source-subcell",
+      "lines": "9839-9882"
+    },
+    {
+      "file": "m11_game_view.c",
+      "id": "wall-ornament-before-alcove-item-pass",
+      "lines": "9920-10043"
+    }
+  ],
+  "notClaimed": [
+    "pixel parity",
+    "new original runtime capture",
+    "movement-route ownership"
+  ],
+  "pass": "pass506_dm1_v1_alcove_wall_item_occlusion_evidence",
+  "redmcsbChecks": [
+    {
+      "file": "DUNVIEW.C",
+      "id": "alcove-global-ornament-identities",
+      "lines": "834-837",
+      "needles": [
+        "unsigned char G0192_auc_Graphic558_AlcoveOrnamentIndices[C003_ALCOVE_ORNAMENT_COUNT] = {",
+        "1,   /* Square Alcove */",
+        "2,   /* Vi Altar */",
+        "3 }; /* Arched Alcove */"
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "f0107-draws-wall-ornament-and-classifies-alcove",
+      "lines": "3502-3933",
+      "needles": [
+        "STATICFUNCTION BOOLEAN F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(",
+        "AL0088_i_NativeBitmapIndex = G0101_as_CurrentMapWallOrnamentsInfo[AP0116_i_WallOrnamentIndex].NativeBitmapIndex;",
+        "L0096_B_IsAlcove = F0149_DUNGEON_IsWallOrnamentAnAlcove(AP0116_i_WallOrnamentIndex);",
+        "F0791_DUNGEONVIEW_DrawBitmapXX(AL0091_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "return L0096_B_IsAlcove;"
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "f0115-zero-nibble-alcove-cell",
+      "lines": "4562-4823",
+      "needles": [
+        "If the first nibble is 0, then the function call is to draw objects in an alcove on a wall square.",
+        "L0135_B_DrawAlcoveObjects = !(L0130_ul_RemainingViewCellOrdinalsToProcess = P0146_ui_OrderedViewCellOrdinals);",
+        "/* Draw objects */",
+        "AL0126_i_ViewCell = C04_VIEW_CELL_ALCOVE; /* Index of coordinates to draw objects in alcoves */",
+        "L0139_i_Cell = M018_OPPOSITE(P0142_i_Direction);"
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "d2r-front-alcove-switches-to-alcove-order",
+      "lines": "7119-7121",
+      "needles": [
+        "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0210_ai_SquareAspect[M553_LEFT_WALL_ORNAMENT_ORDINAL], M581_VIEW_WALL_D2R_LEFT);",
+        "if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0210_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M584_VIEW_WALL_D2R_FRONT))",
+        "L0209_i_Order = C0x0000_CELL_ORDER_ALCOVE;"
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "d1c-wall-then-alcove-f0115",
+      "lines": "7840-7843",
+      "needles": [
+        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C04_WALL_D1C], C712_ZONE_WALL_D1C);",
+        "if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);"
+      ]
+    },
+    {
+      "file": "DUNGEON.C",
+      "id": "f0149-current-map-alcove-index-test",
+      "lines": "1330-1346",
+      "needles": [
+        "BOOLEAN F0149_DUNGEON_IsWallOrnamentAnAlcove(",
+        "if (G0267_ai_CurrentMapAlcoveOrnamentIndices[L0247_i_Counter] == P0252_i_WallOrnamentIndex)",
+        "return C1_TRUE;",
+        "return C0_FALSE;"
+      ]
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence",
+  "sourceHashes": {
+    "CMakeLists.txt": "bc726eaed8689e3701987bdcbff4baa39d42d97c470d91eaea6fa1293b465fa3",
+    "DUNGEON.C": "57b2aba28bab373ce1cd0e09b906def30b7754210a7634595029c0611d79259c",
+    "DUNVIEW.C": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+    "evidence": "122191ec472ad49a9dce4c4814b69489dd191e8be13105ef325940e4f5d89fd9",
+    "m11_game_view.c": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f"
+  },
+  "status": "passed"
+}

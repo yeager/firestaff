@@ -1,0 +1,124 @@
+{
+  "localLocks": [
+    {
+      "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
+      "id": "pass502_precise_blocker",
+      "line": 40,
+      "needle": "Capture one canonical DM1 V1 original viewport frame for a wall/door occlusion case.",
+      "ok": true
+    },
+    {
+      "file": "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py",
+      "id": "pass500_source_gate",
+      "line": 230,
+      "needle": "pass500-dm1-v1-viewport-walls-blocker-cleanup-source-lock",
+      "ok": true
+    },
+    {
+      "file": "tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py",
+      "id": "pass499_runtime_predicate",
+      "line": 156,
+      "needle": "same viewport",
+      "ok": true
+    },
+    {
+      "file": "tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py",
+      "id": "wall_spec_matrix",
+      "line": 15,
+      "needle": "SOURCE_CHECKS",
+      "ok": true
+    },
+    {
+      "file": "probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "id": "wall_contract_probe",
+      "line": 66,
+      "needle": "wallCompositionMatrix source=",
+      "ok": true
+    }
+  ],
+  "nonClaims": [
+    "no new original runtime capture",
+    "no original-vs-Firestaff pixel parity promotion",
+    "no movement-core change"
+  ],
+  "ok": true,
+  "preciseBlocker": "Viewport/walls source and Firestaff spec/probe evidence are locked, but parity still lacks one same-frame original DM1 V1 and Firestaff wall/door occlusion capture tied to the F0128 composition and F0097 present boundary.",
+  "problems": [],
+  "promotionPredicate": [
+    "canonical original DM1 V1 viewport crop for a wall/door occlusion case",
+    "matching Firestaff crop from the same map/x/y/direction and wall/door state",
+    "runtime trace or manifest proving Firestaff reached F0128 then F0097/VIDRV for that exact frame",
+    "hash/region evidence showing the crop is not a repeated static gameplay frame",
+    "explicit identification of wall return versus alcove/door two-pass exception when applicable"
+  ],
+  "schema": "firestaff.parity.pass504_dm1_v1_viewport_wall_same_frame_blocker.v1",
+  "sourceLocks": [
+    {
+      "claim": "The comparison frame must be tied to the authoritative DUNVIEW far-to-near composition pass.",
+      "id": "f0128_builds_viewport_far_to_near",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "source": {
+        "file": "DUNVIEW.C",
+        "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+        "lines": "8318-8543",
+        "sliceSha256": "929f36006a4ce1fbb10519b690eb7bdde6d17acf35b1a4ab8fedc507f7709244"
+      }
+    },
+    {
+      "claim": "Wall/door occlusion proof must bind to the routes that write into G0296, not only local metadata.",
+      "id": "wall_and_door_blit_paths_into_g0296",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "source": {
+        "file": "DUNVIEW.C",
+        "function": "F0100/F0101/F0102/F0765 viewport blits",
+        "lines": "3048-3180",
+        "sliceSha256": "93bc2421e4eb59b2159bcc407e63ed5f2a9991f8e77c1a26e400fbc89113888c"
+      }
+    },
+    {
+      "claim": "Same-frame proof must keep object/creature/projectile layering attached to the source cell-order pass.",
+      "id": "cell_content_order_inside_wall_squares",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "source": {
+        "file": "DUNVIEW.C",
+        "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "lines": "4547-5885",
+        "sliceSha256": "7d2cd53f5585f91d06d055a43469f31242da530aa5be89501959ff5e056d085b"
+      }
+    },
+    {
+      "claim": "Center/side walls occlude normal content, with explicit alcove replay exceptions that the frame must identify.",
+      "id": "d3_d2_d1_wall_return_and_alcove_exceptions",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "source": {
+        "file": "DUNVIEW.C",
+        "function": "F0116-F0124 wall branches",
+        "lines": "6361-7959",
+        "sliceSha256": "b324aee8f94fbe31d983eeb448bf85d16e124f3509d3a35e420b07365ee86c4c"
+      }
+    },
+    {
+      "claim": "A promotable screenshot/crop must be after this present boundary for the same F0128-built buffer.",
+      "id": "f0097_presents_composed_viewport",
+      "missing": [],
+      "ok": true,
+      "outOfOrder": [],
+      "source": {
+        "file": "DRAWVIEW.C",
+        "function": "F0097_DUNGEONVIEW_DrawViewport",
+        "lines": "709-858",
+        "sliceSha256": "cab0eceeb9ea0074fcfe4dfa200f3893fe49ce979ee135615f2265f87c3d3abf"
+      }
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER_LOCKED"
+}
