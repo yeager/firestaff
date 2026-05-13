@@ -106,6 +106,31 @@ static void dm1_v1_apply_pre_step_stamina_cost(
     }
 }
 
+static int dm1_v1_party_source_square_is_stairs(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct PartyState_Compat* party)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+
+    if (!dungeon || !party || !dungeon->tilesLoaded || !dungeon->tiles) {
+        return 0;
+    }
+    if (party->mapIndex < 0 || party->mapIndex >= (int)dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &dungeon->maps[party->mapIndex];
+    if (party->mapX < 0 || party->mapX >= map->width ||
+        party->mapY < 0 || party->mapY >= map->height ||
+        !dungeon->tiles[party->mapIndex].squareData) {
+        return 0;
+    }
+
+    squareByte = dungeon->tiles[party->mapIndex].squareData[
+        party->mapX * map->height + party->mapY];
+    return ((squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5) == DUNGEON_ELEMENT_STAIRS;
+}
+
 static void dm1_v1_apply_stairs_transition_result(
     struct PartyState_Compat* party,
     const struct StairsTransitionResult_Compat* stairs,
@@ -311,9 +336,18 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         return 1;
     }
 
-    (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        dungeon, things, party->mapIndex, party->mapX, party->mapY,
-        SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
+    /* Source lock: CLIKMENU.C:325-328 calls F0267 with a non-square source
+     * when the party steps from stairs to a normal square.  That suppresses
+     * source-stairs WALK_OFF processing while preserving the destination
+     * WALK_ON pass and the normal post-step cooldown path.
+     */
+    if (dm1_v1_party_source_square_is_stairs(dungeon, party)) {
+        outResult->sourceStairsWalkOffSkipped = 1;
+    } else {
+        (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+            dungeon, things, party->mapIndex, party->mapX, party->mapY,
+            SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
+    }
 
     party->mapIndex = outResult->movement.newMapIndex;
     party->mapX = outResult->movement.newMapX;

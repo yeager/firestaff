@@ -588,6 +588,28 @@ static void test_stairs_step_consequence(void)
     EXPECT_INT("stairs_backward_x_not_south", party.mapX, 2);
     EXPECT_INT("stairs_backward_y_not_south", party.mapY, 2);
     EXPECT_INT("stairs_backward_no_cooldown", pipeline.disabledMovementTicks, 0);
+
+    /* CLIKMENU.C:325-328: moving from a stairs square to a non-stairs
+     * square calls F0267 with CM1_MAPX_NOT_ON_A_SQUARE as the source.
+     * That skips source-stairs walk-off processing, still applies the
+     * destination walk-on pass, and continues into normal G0310 cooldown.
+     */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+
+    EXPECT("stairs_source_forward_regular_step", result.core.stepApplied == 1);
+    EXPECT("stairs_source_forward_no_transition", result.core.stairTransitionApplied == 0);
+    EXPECT("stairs_source_forward_skip_source_walk_off", result.core.sourceStairsWalkOffSkipped == 1);
+    EXPECT_INT("stairs_source_forward_map", party.mapIndex, 0);
+    EXPECT_INT("stairs_source_forward_x", party.mapX, 2);
+    EXPECT_INT("stairs_source_forward_y", party.mapY, 1);
+    EXPECT("stairs_source_forward_sets_cooldown", pipeline.disabledMovementTicks > 0);
 }
 
 
