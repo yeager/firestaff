@@ -216,19 +216,19 @@
           "--data-dir",
           "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
           "--script",
-          "enter,down,down,down,down,down,down,enter,right,up"
+          "enter,down,down,down,down,down,down,enter,right"
         ],
         "outputTail": "",
         "returncode": 0
       },
-      "script": "enter,down,down,down,down,down,down,enter,right,up"
+      "script": "enter,down,down,down,down,down,down,enter,right"
     },
     {
       "expected": "launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1",
       "kind": "live_runtime_redraw_state",
       "observed": {
         "active": 1,
-        "gameTick": 19,
+        "gameTick": 18,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -241,28 +241,28 @@
         },
         "pipeline": {
           "anyMovementOccurred": 0,
-          "anyTurnOccurred": 0,
-          "command": 3,
+          "anyTurnOccurred": 1,
+          "command": 2,
           "dequeued": 1,
-          "movementBlocked": 1,
+          "movementBlocked": 0,
           "stepApplied": 0,
-          "turnApplied": 0,
-          "viewportDirty": 0
+          "turnApplied": 1,
+          "viewportDirty": 1
         },
         "redraw": {
           "inputRedrawAfterViewportDirtyCount": 1,
-          "inputRedrawDrawCount": 2,
-          "lastInputRedrawAfterViewportDirty": 0
+          "inputRedrawDrawCount": 1,
+          "lastInputRedrawAfterViewportDirty": 1
         },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": false
+      "ok": true
     }
   ],
   "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "7f31dd3e8a03e9248cd92cef2aa030f9d6831c73",
+  "head": "339448c8a44ce42b0cf6c9ba34000e8492225b0d",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -330,7 +330,7 @@
   "repo": "/home/trv2/work/firestaff",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
-  "script": "enter,down,down,down,down,down,down,enter,right,up",
+  "script": "enter,down,down,down,down,down,down,enter,right",
   "sourceLocks": [
     {
       "claim": "viewport floor/ceiling base is drawn into G0296/G0087 before wall passes",
@@ -443,6 +443,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-05-13T09:59:35.602416+00:00"
+  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
+  "timestampUtc": "2026-05-13T10:58:47.577599+00:00"
 }
