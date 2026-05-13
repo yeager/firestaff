@@ -1,0 +1,130 @@
+{
+  "decision": "Runtime capture cannot be promoted yet. The fresh N2 original route produced two viewport states, so the capture path is not totally static, but the six post-entry labels still collapse to duplicate 4/2 hashes and no same-run source stops bind those frames to F0380/F0365/F0366 followed by F0128/F0097. No paired Firestaff frame for the same direction/X/Y/wall state is present.",
+  "derived": {
+    "pairedFirestaffCapturePresent": false,
+    "rawUniqueHashCount": 2,
+    "routeHasFullPerLabelStateDelta": false,
+    "routeHasSomeDiversity": true,
+    "routeLabelCount": 6,
+    "sourceBoundStopsPresent": false,
+    "viewportCropUniqueHashCount": 2
+  },
+  "freshOriginalAttempt": {
+    "attemptDir": "/tmp/pass505-dm1v1-original-route-attempt",
+    "captureCount": 6,
+    "classCounts": {
+      "dungeon_gameplay": 4,
+      "wall_closeup": 2
+    },
+    "classifier": "python3 tools/pass80_original_frame_classifier.py /tmp/pass505-dm1v1-original-route-attempt",
+    "commandShape": "N2 PC34 route with enter/click/kp4/kp6/kp8/kp4/kp6 and six labeled shots",
+    "cropFilenames": [
+      "01_ingame_start_original_viewport_224x136.ppm",
+      "02_ingame_turn_right_original_viewport_224x136.ppm",
+      "03_ingame_move_forward_original_viewport_224x136.ppm",
+      "04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "05_ingame_after_cast_original_viewport_224x136.ppm",
+      "06_ingame_inventory_panel_original_viewport_224x136.ppm"
+    ],
+    "dateUtc": "2026-05-13",
+    "dimensionsSeen": {
+      "320x200": 6
+    },
+    "host": "N2 firestaff-worker",
+    "interpretation": "The attempt reaches original gameplay and produces two visible viewport states, but six semantic labels collapse to 4/2 duplicate raw and viewport-crop hashes. The filenames are generic crop slots that drift from the route labels, and the attempt does not include source-bound F0380/F0365/F0366/F0128/F0097 stops.",
+    "rawSha256Counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+      "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+    },
+    "routeLabels": [
+      "readiness_preflight",
+      "turn_left_after_vblank",
+      "turn_right_after_vblank",
+      "forward_after_vblank",
+      "turn_left_2_after_vblank",
+      "post_redraw_after_vblank"
+    ],
+    "viewportCropSha256Counts": {
+      "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": 2,
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 4
+    }
+  },
+  "inputs": {
+    "pass487Manifest": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
+    "pass498Manifest": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json",
+    "pass502Report": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md"
+  },
+  "nextUnblocker": "Capture one original frame and one Firestaff frame for the same map/X/Y/direction and wall/door state, with the original run proving F0380 pop/load -> F0365/F0366 state mutation -> later F0128 tuple composition -> F0097/VIDRV present for that shot. Until then, pass502 stays source/probe evidence only.",
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity",
+    "no promotion of pass505 images as reference artifacts",
+    "no claim that F0365/F0366 are broken",
+    "no DANNESBURK input or paths used"
+  ],
+  "ok": true,
+  "problems": [],
+  "required": {
+    "fresh_attempt_has_some_route_diversity": true,
+    "fresh_attempt_lacks_paired_firestaff_capture": true,
+    "fresh_attempt_lacks_source_bound_runtime_stops": true,
+    "fresh_attempt_reaches_gameplay_or_wall": true,
+    "fresh_attempt_still_lacks_full_state_delta": true,
+    "pass487_static_blocker_ok": true,
+    "pass498_boundary_ok": true,
+    "pass502_same_viewport_requirement_present": true,
+    "redmcsb_source_audit_ok": true
+  },
+  "schema": "firestaff.parity.pass505_dm1_v1_same_viewport_capture_blocker.v1",
+  "sourceAudit": [
+    {
+      "claim": "A post-command screenshot is promotable only after the command wait boundary permits the next draw.",
+      "file": "GAMELOOP.C",
+      "id": "game_loop_next_f0128_after_input_wait",
+      "lines": "90,164,215-219",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "Host labels are insufficient; the original run must prove a real dequeued turn/move command.",
+      "file": "COMMAND.C",
+      "id": "f0380_dequeues_to_f0365_f0366",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "Accepted turns mutate party direction before the next viewport draw.",
+      "file": "CLIKMENU.C",
+      "id": "f0365_turn_state_delta",
+      "lines": "142-174",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "Accepted steps must be tied to destination/move-result state, not only a captured wall closeup.",
+      "file": "CLIKMENU.C",
+      "id": "f0366_move_state_delta",
+      "lines": "180-347",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The original frame must bind to the same direction/X/Y tuple used for viewport composition.",
+      "file": "DUNVIEW.C",
+      "id": "f0128_uses_party_tuple_then_presents",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The compared screenshot must be at or after the G0296 viewport present boundary.",
+      "file": "DRAWVIEW.C",
+      "id": "f0097_viewport_present_boundary",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS505_SAME_VIEWPORT_CAPTURE_BLOCKER_LOCKED"
+}

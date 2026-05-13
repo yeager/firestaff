@@ -1886,6 +1886,16 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 same-viewport original/Firestaff capture blocker gate ───
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass505_dm1_v1_same_viewport_capture_blocker
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass505_dm1_v1_same_viewport_capture_blocker.py
+    )
+endif()
+    )
+endif()
+
 # ── DM1 V1 input→F0365/F0366 runtime follow-up gate ─────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
