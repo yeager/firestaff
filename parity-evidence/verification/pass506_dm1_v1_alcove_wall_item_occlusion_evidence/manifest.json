@@ -93,7 +93,7 @@
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence",
   "sourceHashes": {
-    "CMakeLists.txt": "bc726eaed8689e3701987bdcbff4baa39d42d97c470d91eaea6fa1293b465fa3",
+    "CMakeLists.txt": "a1f061557167e472d5bdba02fedea2fa6e62b88e7ac5f79650db585e6c412487",
     "DUNGEON.C": "57b2aba28bab373ce1cd0e09b906def30b7754210a7634595029c0611d79259c",
     "DUNVIEW.C": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
     "evidence": "122191ec472ad49a9dce4c4814b69489dd191e8be13105ef325940e4f5d89fd9",

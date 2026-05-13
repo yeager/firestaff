@@ -21,7 +21,7 @@
       "ok": true
     }
   ],
-  "branch": "integrate-main-20260513-dm1v1-batch2",
+  "branch": "integrate-main-20260513-blockers",
   "buildDir": "/home/trv2/.openclaw/data/firestaff-builds/pass383-verify",
   "ctestTail": "Internal ctest changing into directory: /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\nTest project /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\n    Start 29: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #29: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 63: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #63: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.01 sec\n",
   "proofs": [
@@ -82,7 +82,7 @@
     {
       "claim": "Firestaff exposes explicit per-loop cooldown decrement seam",
       "file": "dm1_v1_movement_pipeline_pc34_compat.c",
-      "line": 422,
+      "line": 427,
       "ok": true
     },
     {
