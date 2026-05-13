@@ -1928,6 +1928,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+
+# -- DM1 V1 movement cross-reference audit blocker gate ----------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass512_dm1_v1_movement_cross_reference_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass512_dm1_v1_movement_cross_reference_audit.py
+    )
+endif()
+
 # -- DM1 V1 movement follow-up source-lock gate ---------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
