@@ -30,8 +30,8 @@ Scope: PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 t
 
 ## Gates
 
-- `cmake --build /home/trv2/work/firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /home/trv2/work/firestaff/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
+- `cmake --build /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
+- `ctest --test-dir /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
 - `git diff --check` — rc 0
 
 ## Not claimed

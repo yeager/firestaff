@@ -1,4 +1,37 @@
 {
+  "buildSteps": [
+    {
+      "cmd": [
+        "cmake",
+        "--build",
+        "/home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "test_dm1_v1_movement_core_pc34_compat",
+        "test_m11_v1_turning_presentation_pc34_compat",
+        "test_dm1_v1_movement_pipeline_pc34_compat",
+        "-j2"
+      ],
+      "outputTail": [
+        "[100%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[ 97%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
+        "[ 97%] Built target firestaff_m10",
+        "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
+        "[ 93%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  ],
   "chainedGates": [
     {
       "cmd": [
@@ -46,22 +79,11 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "Traceback (most recent call last):",
-        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 156, in <module>",
-        "    raise SystemExit(main())",
-        "                     ^^^^^^",
-        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 124, in main",
-        "    tests = [run(cmd) for cmd in TEST_COMMANDS]",
-        "             ^^^^^^^^",
-        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 111, in run",
-        "    raise AssertionError(f\"command failed {' '.join(cmd)}:\\n{proc.stdout[-4000:]}\")",
-        "AssertionError: command failed cmake --build /home/trv2/work/firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2:",
-        "Error: /home/trv2/work/firestaff/build is not a directory",
-        ""
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
-      "passed": false,
-      "returncode": 1,
-      "status": null
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
     },
     {
       "cmd": [
@@ -106,10 +128,14 @@
       "expectedStatus": null,
       "id": "pass406_movement_legality_completion_gate",
       "outputTail": [
-        "FAIL pass406_dm1_v1_movement_legality_completion_gate: [Errno 2] No such file or directory: '/home/trv2/work/firestaff/build/test_dm1_v1_movement_core_pc34_compat'"
+        "PASS pass406_dm1_v1_movement_legality_completion_gate",
+        "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
+        "- Firestaff: memory_movement_pc34_compat.c:405-490, 706-818",
+        "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
+        "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
       ],
-      "passed": false,
-      "returncode": 1,
+      "passed": true,
+      "returncode": 0,
       "status": null
     },
     {
@@ -121,11 +147,15 @@
       "expectedStatus": null,
       "id": "pass406_game_loop_redraw_cadence",
       "outputTail": [
-        "FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/home/trv2/work/firestaff/build/test_m11_v1_turning_presentation_pc34_compat'"
+        "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
+        "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
+        "- Firestaff: m11_game_view.c:4952-5035; main_loop_m11.c:1635-1647; dm1_v1_movement_pipeline_pc34_compat.c:244-420",
+        "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
+        "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
-      "passed": false,
-      "returncode": 1,
-      "status": null
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"
     },
     {
       "cmd": [
@@ -218,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /home/trv2/work/firestaff/m11_game_view.c:10128",
-        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/m11_game_view.c:18614",
+        "- Firestaff field rows/zones: /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/m11_game_view.c:10128",
+        "- Firestaff source viewport draw order: /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/m11_game_view.c:18614",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -246,8 +276,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /home/trv2/work/firestaff/m11_game_view.c:13247",
-        "- Firestaff palette apply: /home/trv2/work/firestaff/m11_game_view.c:8838",
+        "- Firestaff palette compute: /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/m11_game_view.c:13247",
+        "- Firestaff palette apply: /home/trv2/work/firestaff-worktrees/dm1v1-movement-parity-gap-20260513-codex/m11_game_view.c:8835",
         "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -276,7 +306,7 @@
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
-  "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
+  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
   "expectedBlockerGates": [
     {
       "cmd": [
@@ -302,7 +332,7 @@
     }
   ],
   "gate": "dm1_v1_viewport_movement_completion_matrix",
-  "passed": false,
+  "passed": true,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
@@ -379,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-12T06:36:46.088412+00:00"
+  "timestampUtc": "2026-05-13T06:14:58.574704+00:00"
 }

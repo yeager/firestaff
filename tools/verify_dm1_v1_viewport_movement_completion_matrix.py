@@ -26,6 +26,7 @@ DEFAULT_SOURCE = Path(os.environ.get(
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "dm1_v1_viewport_movement_completion_matrix"
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / "dm1_v1_viewport_movement_completion_matrix.md"
+BUILD_DIR = ROOT / "build"
 
 SOURCE_ROWS: list[dict[str, Any]] = [
     {
@@ -182,6 +183,16 @@ EXPECTED_BLOCKER_GATES: list[dict[str, Any]] = [
 ]
 
 
+REQUIRED_BUILD_TARGETS = [
+    "test_dm1_v1_input_command_queue_pc34_compat",
+    "test_dm1_v1_movement_command_core_pc34_compat",
+    "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+    "test_dm1_v1_movement_core_pc34_compat",
+    "test_m11_v1_turning_presentation_pc34_compat",
+    "test_dm1_v1_movement_pipeline_pc34_compat",
+]
+
+
 def compact(text: str) -> str:
     return " ".join(text.split())
 
@@ -236,6 +247,26 @@ def parse_status(output: str) -> str | None:
     return m.group(1) if m else None
 
 
+def run_checked(cmd: list[str], timeout: int = 900) -> dict[str, Any]:
+    proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+    return {
+        "cmd": cmd,
+        "passed": proc.returncode == 0,
+        "returncode": proc.returncode,
+        "outputTail": proc.stdout.splitlines()[-20:],
+    }
+
+
+def ensure_required_build() -> list[dict[str, Any]]:
+    steps: list[dict[str, Any]] = []
+    if not (BUILD_DIR / "CMakeCache.txt").is_file():
+        steps.append(run_checked(["cmake", "-S", str(ROOT), "-B", str(BUILD_DIR)]))
+        if not steps[-1]["passed"]:
+            return steps
+    steps.append(run_checked(["cmake", "--build", str(BUILD_DIR), "--target", *REQUIRED_BUILD_TARGETS, "-j2"]))
+    return steps
+
+
 def run_gate(entry: dict[str, Any], source: Path) -> dict[str, Any]:
     cmd = list(entry["cmd"])
     if entry["id"] == "pass381_movement_viewport_walls_source_lock":
@@ -276,7 +307,7 @@ def write_report(payload: dict[str, Any]) -> None:
         status = " status `" + str(row["status"]) + "`" if row.get("status") else ""
         lines.append("- `" + ("PASS" if row["passed"] else "FAIL") + "` `" + row["id"] + "` rc=`" + str(row["returncode"]) + "`" + status + ": " + row["covers"])
         if not row["passed"]:
-            lines.extend(f"  - {x}" for x in row["outputTail"][-8:])
+            lines.extend(f"  - {x}".rstrip() for x in row["outputTail"][-8:] if x.strip())
     lines += ["", "## Expected blockers"]
     for row in payload["expectedBlockerGates"]:
         lines.append("- `" + ("CONFIRMED" if row["passed"] else "UNEXPECTED") + "` `" + row["id"] + "` expected `" + str(row.get("expectedStatus")) + "` observed `" + str(row.get("status")) + "`: " + row["covers"])
@@ -301,11 +332,16 @@ def main() -> int:
     args = parser.parse_args()
 
     source_ok, source_results = verify_source_rows(args.source)
+    build_steps: list[dict[str, Any]] = []
     chain_results: list[dict[str, Any]] = []
     blocker_results: list[dict[str, Any]] = []
     chain_ok = True
     blocker_ok = True
     if not args.skip_chained:
+        build_steps = ensure_required_build()
+        chain_ok = all(step["passed"] for step in build_steps)
+        if not chain_ok:
+            chain_results.extend({"id": "prepare_required_build", "covers": "configure/build movement targets required by chained gates", "expectedStatus": None, "status": None, **step} for step in build_steps)
         for entry in CHAINED_GATES:
             result = run_gate(entry, args.source)
             chain_ok = chain_ok and result["passed"]
@@ -323,6 +359,7 @@ def main() -> int:
         "sourceRoot": str(args.source),
         "passed": ok,
         "sourceRows": source_results,
+        "buildSteps": build_steps,
         "chainedGates": chain_results,
         "expectedBlockerGates": blocker_results,
         "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed." if ok else "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
