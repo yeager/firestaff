@@ -1,12 +1,12 @@
 {
-  "branch": "worker/dm1v1-movement-core-integration-20260513-codex",
+  "branch": "worker/dm1v1-movement-stairs-source-lock-20260513-codex",
   "firestaffGuards": {
-    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:154-339",
-    "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:191-266",
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:216-291",
     "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:25-52",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
   },
-  "head": "9beae3aab26122cd806671777495858faa790241",
+  "head": "6a83dc3a531f56f6a73e5b5e427ec03550278de2",
   "notClaimed": [
     "combat RNG/wound materialization parity for the pending damage request",
     "representative original DOS overlay capture parity",
@@ -20,5 +20,5 @@
     "blockedSideEffects": "CLIKMENU.C:237-322"
   },
   "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
-  "timestampUtc": "2026-05-13T07:45:21.206530+00:00"
+  "timestampUtc": "2026-05-13T08:46:07.619763+00:00"
 }
