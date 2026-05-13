@@ -599,6 +599,8 @@ size_t dm1_viewport_3d_wall_draw_spec_count(void);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
+bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
+uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 
 /* Decode F0115's packed cell-order nibbles (DUNVIEW.C:4561-4564). */
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);

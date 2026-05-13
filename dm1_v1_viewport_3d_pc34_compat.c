@@ -720,6 +720,20 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
     return spec->native_wall;
 }
 
+bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove)
+{
+    if (!spec) return true;
+    if (!front_alcove) return true;
+    return !spec->front_alcove_reveals_contents;
+}
+
+uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove)
+{
+    return dm1_viewport_3d_wall_occludes_floor_items(spec, front_alcove)
+        ? 0xffffu
+        : 0x0000u;
+}
+
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order)
 {
     DM1_ViewportCellOrder out;
