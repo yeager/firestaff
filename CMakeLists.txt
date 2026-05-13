@@ -1226,6 +1226,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass507_dm1_v1_viewport_wall_alcove_draw_order_source_lock.py
         )
         add_test(
+            NAME pass506_dm1_v1_alcove_wall_item_occlusion_evidence
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass506_dm1_v1_alcove_wall_item_occlusion_evidence.py
+        )
+        add_test(
             NAME v1_viewport_pit_floor_ornament_bug64_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_pit_floor_ornament_bug64_gate.py
         )
