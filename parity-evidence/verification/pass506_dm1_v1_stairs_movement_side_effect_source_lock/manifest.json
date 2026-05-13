@@ -1,0 +1,33 @@
+{
+  "branch": "worker/dm1v1-movement-stairs-source-lock-20260513-codex",
+  "firestaffGuards": {
+    "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
+    "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",
+    "pipelineTest": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+    "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "runtimeOutputLastLine": "163 passed, 0 failed"
+  },
+  "notClaimed": [
+    "viewport/capture parity",
+    "stairs artwork rendering",
+    "new original DOS runtime trace"
+  ],
+  "primarySources": {
+    "CLIKMENU.C": {
+      "F0364_COMMAND_TakeStairs": "124-140",
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": "142-174",
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": "180-349",
+      "backwardOnStairsShortCircuit": "264-269",
+      "sourceStairsNormalStep": "325-345",
+      "takeStairsOrder": "135-139",
+      "targetStairsConsequence": "269-278",
+      "turnOnStairsShortCircuit": "156-172"
+    },
+    "DUNGEON.C": {
+      "F0154_DUNGEON_GetLocationAfterLevelChange": "1508-1559",
+      "F0155_DUNGEON_GetStairsExitDirection": "1560-1582"
+    }
+  },
+  "schema": "pass506_dm1_v1_stairs_movement_side_effect_source_lock.v1",
+  "status": "PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
+}

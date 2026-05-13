@@ -1912,6 +1912,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 stairs movement side-effect source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass506_dm1_v1_stairs_movement_side_effect_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass506_dm1_v1_stairs_movement_side_effect_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
