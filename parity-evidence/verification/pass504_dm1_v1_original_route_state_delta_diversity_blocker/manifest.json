@@ -1,0 +1,261 @@
+{
+  "blockerReasons": [
+    "current route classes do not match the expected six-state semantic sequence",
+    "current raw route captures contain duplicate frame hashes",
+    "current viewport crops contain duplicate hashes"
+  ],
+  "generatedBy": "tools/verify_pass504_dm1_v1_original_route_state_delta_diversity_blocker.py",
+  "inputs": {
+    "classifier": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+    "cropManifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "pass435": "parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json",
+    "pass498": "parity-evidence/verification/pass498_dm1_v1_original_post_command_state_delta_boundary/manifest.json"
+  },
+  "nonClaims": [
+    "no DOSBox/original runtime was launched by pass504",
+    "no original-vs-Firestaff pixel parity promotion",
+    "no claim that movement or viewport source handlers are broken"
+  ],
+  "observed": {
+    "artifacts": {
+      "actualClasses": [
+        "dungeon_gameplay",
+        "wall_closeup",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "wall_closeup",
+        "dungeon_gameplay"
+      ],
+      "classSequenceMatches": false,
+      "cropCount": 6,
+      "cropDuplicateRouteIndices": {
+        "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": [
+          2,
+          5
+        ],
+        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+          1,
+          3,
+          4,
+          6
+        ]
+      },
+      "cropDuplicateSha256Counts": {
+        "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": 2,
+        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 4
+      },
+      "cropRowsAll224x136": true,
+      "expectedSequence": [
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "spell_panel",
+        "dungeon_gameplay",
+        "inventory"
+      ],
+      "rawCaptureCount": 6,
+      "rawDuplicateRouteIndices": {
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": [
+          1,
+          3,
+          4,
+          6
+        ],
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": [
+          2,
+          5
+        ]
+      },
+      "rawDuplicateSha256Counts": {
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+      },
+      "routeRows": [
+        {
+          "actualClass": "dungeon_gameplay",
+          "classMatches": true,
+          "cropFile": "01_ingame_start_original_viewport_224x136.ppm",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "expectedClass": "dungeon_gameplay",
+          "index": 1,
+          "rawFile": "verification-screens/pass376-original-route/image0001-raw.png",
+          "rawSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "actualClass": "wall_closeup",
+          "classMatches": false,
+          "cropFile": "02_ingame_turn_right_original_viewport_224x136.ppm",
+          "cropSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+          "expectedClass": "dungeon_gameplay",
+          "index": 2,
+          "rawFile": "verification-screens/pass376-original-route/image0002-raw.png",
+          "rawSha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "actualClass": "dungeon_gameplay",
+          "classMatches": true,
+          "cropFile": "03_ingame_move_forward_original_viewport_224x136.ppm",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "expectedClass": "dungeon_gameplay",
+          "index": 3,
+          "rawFile": "verification-screens/pass376-original-route/image0003-raw.png",
+          "rawSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "actualClass": "dungeon_gameplay",
+          "classMatches": false,
+          "cropFile": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "expectedClass": "spell_panel",
+          "index": 4,
+          "rawFile": "verification-screens/pass376-original-route/image0004-raw.png",
+          "rawSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "actualClass": "wall_closeup",
+          "classMatches": false,
+          "cropFile": "05_ingame_after_cast_original_viewport_224x136.ppm",
+          "cropSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+          "expectedClass": "dungeon_gameplay",
+          "index": 5,
+          "rawFile": "verification-screens/pass376-original-route/image0005-raw.png",
+          "rawSha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "actualClass": "dungeon_gameplay",
+          "classMatches": false,
+          "cropFile": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "expectedClass": "inventory",
+          "index": 6,
+          "rawFile": "verification-screens/pass376-original-route/image0006-raw.png",
+          "rawSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        }
+      ]
+    },
+    "pass435Blockers": [
+      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
+    ],
+    "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
+    "pass498NarrowedBlocker": "Original DM1 V1 capture is blocked specifically at the post-gameplay, post-command state-delta boundary: the next evidence must connect a real F0380-dequeued movement/turn command through F0365/F0366 to the subsequent F0128 composition and F0097/VIDRV present, and must not collapse to the repeated static 48ed gameplay frame.",
+    "pass498Status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA"
+  },
+  "ok": true,
+  "remainingBlocker": "Original route-state diversity is still blocked at the post-command state-delta proof boundary. The current pass376/pass435 artifacts are useful as quarantined regression inputs, but they do not prove that distinct raw/cropped states came after source-visible F0380 -> F0365/F0366 -> G0321 -> F0128/F0097 transitions.",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass504-route-state-delta-followup-20260513-openai",
+  "requiredNextEvidence": [
+    "capture route begins from a verified post-entry gameplay state, not an entrance/setup echo",
+    "each command label is backed by original F0380 queue pop/load/decrement evidence",
+    "turn commands prove F0365 and direction mutation; movement commands prove F0366 or source-visible blocked/no-op handling",
+    "G0321 stop-wait and game-time tick let the wait loop exit before the sampled frame",
+    "the sampled frame is after the later F0128 and F0097/VIDRV present boundary for the same command",
+    "six raw 320x200 frames and six 224x136 viewport crops are class-matching and non-duplicate by hash"
+  ],
+  "schema": "firestaff.parity.pass504_dm1_v1_original_route_state_delta_diversity_blocker.v1",
+  "sourceAudit": [
+    {
+      "exists": true,
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "outer_loop_draws_then_waits_for_command_delta",
+      "lines": "90,164,215-219",
+      "meaning": "A useful screenshot must be after F0380 has changed state and the next outer-loop F0128 redraw consumes that new party tuple.",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "exists": true,
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pops_queue_and_dispatches_turn_or_move",
+      "lines": "2045-2156",
+      "meaning": "Route labels are not evidence unless the original run proves this queue pop/load and the matching F0365/F0366 branch.",
+      "missing": [],
+      "needles": [
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+        "G2153_i_QueuedCommandsCount--",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "f0365_turn_sets_stop_wait_and_mutates_direction",
+      "lines": "142-174",
+      "meaning": "A turn state delta must show the stop-wait write and the party-direction mutation.",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366_move_sets_stop_wait_and_can_cancel_on_block",
+      "lines": "180-323",
+      "meaning": "A movement capture must distinguish accepted movement from source-visible blocked/no-op movement.",
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_builds_viewport_from_direction_x_y",
+      "lines": "8318-8610",
+      "meaning": "The frame diversity check is only meaningful if the frame came from this updated direction/X/Y composition.",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_pc34_present_boundary",
+      "lines": "709-858",
+      "meaning": "A crop belongs after the PC34 viewport present boundary, not after setup/menu echo.",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS504_ORIGINAL_ROUTE_STATE_DELTA_DIVERSITY_NOT_PROVEN"
+}
