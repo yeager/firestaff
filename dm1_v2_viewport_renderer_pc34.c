@@ -592,18 +592,30 @@ int dm1_v2_vp_emit_d0_d3_draw_list(const DM1_V2_ViewportCompositionInput* input,
         }
 
         if (square->element == DM1_V2_ELEMENT_DOOR_FRONT) {
+            const char* floorRef = "DUNVIEW.C:6721-6816";
+            const char* pass1Ref = "DUNVIEW.C:6761-6769";
+            const char* doorRef = "DUNVIEW.C:6721-6816";
+            const char* pass2Ref = "DUNVIEW.C:6816";
+            if (viewSquare == DM1_V2_VIEW_SQUARE_D1C) {
+                /* Source-lock: ReDMCSB DUNVIEW.C:7873-7937 draws D1C door-front
+                   floor ornament, back objects, door frame/door, then front objects. */
+                floorRef = "DUNVIEW.C:7873-7874";
+                pass1Ref = "DUNVIEW.C:7875";
+                doorRef = "DUNVIEW.C:7877-7910";
+                pass2Ref = "DUNVIEW.C:7910-7937";
+            }
             if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
                                      DM1_V2_DRAW_FLOOR_ORNAMENT, viewSquare, depth, lateral,
-                                     square->element, order, "DUNVIEW.C:6721-6816")) return 0;
+                                     square->element, order, floorRef)) return 0;
             if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
                                      DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES, viewSquare, depth, lateral,
-                                     square->element, order, "DUNVIEW.C:6761-6769")) return 0;
+                                     square->element, order, pass1Ref)) return 0;
             if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
                                      DM1_V2_DRAW_DOOR_FRONT, viewSquare, depth, lateral,
-                                     square->element, order, "DUNVIEW.C:6721-6816")) return 0;
+                                     square->element, order, doorRef)) return 0;
             if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
                                      DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES, viewSquare, depth, lateral,
-                                     square->element, order, "DUNVIEW.C:6816")) return 0;
+                                     square->element, order, pass2Ref)) return 0;
             continue;
         }
 

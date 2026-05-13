@@ -746,6 +746,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_wall_occlusion_source_lock.py
     )
     add_test(
+        NAME dm1_v2_viewport_d1c_door_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_d1c_door_occlusion_source_lock.py
+    )
+    add_test(
         NAME dm1_v2_dungeon_view_asset_bindings_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_dungeon_view_asset_bindings.py
     )

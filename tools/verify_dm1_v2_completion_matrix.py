@@ -32,6 +32,7 @@ REQUIRED_CTEST_NAMES = {
     "dm1_v2_runtime_shell_pc34",
     "dm1_v2_runtime_shell_source_lock",
     "dm1_v2_viewport_wall_occlusion_source_lock",
+    "dm1_v2_viewport_d1c_door_occlusion_source_lock",
     "dm1_v2_dungeon_view_asset_bindings_source_lock",
     "dm1_v2_viewport_composition_source_lock",
     "dm1_v2_d0_d3_draw_list_comparator_gate",
