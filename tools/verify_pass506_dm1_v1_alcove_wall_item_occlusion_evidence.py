@@ -29,9 +29,9 @@ def require_in_order(text: str, markers: list[str], label: str) -> list[int]:
     positions = []
     last = -1
     for marker in markers:
-        pos = require(text, marker, label)
-        if pos <= last:
-            raise AssertionError(f'{label}: {marker!r} is out of order')
+        pos = text.find(marker, last + 1)
+        if pos < 0:
+            raise AssertionError(f'{label}: missing {marker!r}')
         positions.append(pos)
         last = pos
     return positions
@@ -71,7 +71,7 @@ def main() -> int:
         {'id': 'd2r-front-alcove-switches-to-alcove-order', 'needles': ['F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0210_ai_SquareAspect[M553_LEFT_WALL_ORNAMENT_ORDINAL], M581_VIEW_WALL_D2R_LEFT);', 'if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0210_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M584_VIEW_WALL_D2R_FRONT))', 'L0209_i_Order = C0x0000_CELL_ORDER_ALCOVE;'], 'ordered': True},
         {'id': 'd1c-wall-then-alcove-f0115', 'needles': ['F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C04_WALL_D1C], C712_ZONE_WALL_D1C);', 'if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))', 'F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);'], 'ordered': True},
     ]))
-    red_checks.extend(check_file_needles(RED_ROOT / 'DUNGEON.C', [{'id': 'f0149-current-map-alcove-index-test', 'needles': ['BOOLEAN F0149_DUNGEON_IsWallOrnamentAnAlcove(', 'if (G0267_ai_CurrentMapAlcoveOrnamentIndices[L0247_i_Counter] == P0252_i_WallOrnamentIndex)', 'return C1_TRUE;', 'return C0_FALSE;'], 'ordered': False}]))
+    red_checks.extend(check_file_needles(RED_ROOT / 'DUNGEON.C', [{'id': 'f0149-current-map-alcove-index-test', 'needles': ['BOOLEAN F0149_DUNGEON_IsWallOrnamentAnAlcove(', 'if (G0267_ai_CurrentMapAlcoveOrnamentIndices[L0247_i_Counter] == P0252_i_WallOrnamentIndex)', 'return C1_TRUE;', 'return C0_FALSE;'], 'ordered': True}]))
     fire_checks = []
     sample_start, _, sample_body = find_function(fire, 'm11_sample_viewport_cell')
     require_in_order(sample_body, ['Do not filter WALL squares here.', 'if (cell.summary.items > 0 && state->world.things)', 'cell.floorItemCells[cell.floorItemCount]'], 'Firestaff item extraction keeps wall-square items for alcoves')
