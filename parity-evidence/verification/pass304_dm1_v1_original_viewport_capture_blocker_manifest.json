@@ -16,6 +16,7 @@
       "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass304-original-pc34-wall-comparator-batch-B/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass487-n2-original-pc34-click-primitives-route/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_224x136_manifest.tsv"
     ],
     "reason": "tracked original viewport manifests do not contain every route label for the pass127/pass304 required snapshot names; crops cannot be bound to the required party tuple/F0128 state.",
