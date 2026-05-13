@@ -1846,6 +1846,16 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 viewport wall render-plan promotion boundary gate --------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass504_dm1_v1_viewport_wall_render_plan_promotion_boundary
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass504_dm1_v1_viewport_wall_render_plan_promotion_boundary.py
+    )
+endif()
+    )
+endif()
+
 # ── DM1 V1 door/TITLE/end source-audit closure gate ───────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

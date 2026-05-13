@@ -1,0 +1,269 @@
+{
+  "failures": [],
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity promotion",
+    "no new runtime capture",
+    "no movement-core edits",
+    "no pass435 capture-route edits"
+  ],
+  "ok": true,
+  "pass502Blocker": {
+    "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
+    "missingRequiredText": [],
+    "promotionRule": "same-viewport original and Firestaff capture remains required before pixel parity",
+    "sha256": "01f2853d902134b4458bf213b46f93e7a610734875621f773491ca9588616429"
+  },
+  "pass503SourceLocks": {
+    "file": "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json",
+    "requiredSourceIdsPresent": true,
+    "sha256": "792e7a944addb4eeacff71e95d34f916ff6ea30dc0de760407a50fa2202d730a",
+    "sourceCheckCount": 7,
+    "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
+  },
+  "prerequisites": [
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass503_dm1_v1_viewport_wall_draw_order_evidence.py"
+      ],
+      "returncode": 0,
+      "stderrTail": "",
+      "stdoutTail": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE\nmanifest=parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json\nreport=parity-evidence/pass503_dm1_v1_viewport_wall_draw_order_evidence.md\n"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_dm1_v1_viewport_wall_render_plan_gate.py"
+      ],
+      "returncode": 0,
+      "stderrTail": "",
+      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/trv2/work/firestaff-worktrees/laneB-dm1v1-viewport-walls-pass504-20260513-codex/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
+    }
+  ],
+  "promotionBlocker": "Do not claim pixel parity until one exact original DM1 V1 viewport frame and matching Firestaff frame are captured for the same map/x/y/direction/wall-door state and tied to the F0128-to-F0097 present boundary.",
+  "renderPlanBoundary": {
+    "file": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
+    "nonClaim": "original pixel parity, screenshot comparison, or decoded GRAPHICS.DAT byte equality",
+    "sha256": "8b6c449315970e4cf9f4eb92d508b6c0f849341249a0b2b7db4248b9e5689b62",
+    "snapshotSummaries": [
+      {
+        "d4ObjectRows": [
+          "D4R"
+        ],
+        "eventCount": 12,
+        "name": "start_south",
+        "orderedRows": [
+          "D4R",
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D1L",
+          "D1R",
+          "D0L",
+          "D0R"
+        ],
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "wallRows": [
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D1L",
+          "D1R",
+          "D0L",
+          "D0R"
+        ]
+      },
+      {
+        "d4ObjectRows": [
+          "D4L",
+          "D4R",
+          "D4C"
+        ],
+        "eventCount": 16,
+        "name": "turn_right_west",
+        "orderedRows": [
+          "D4L",
+          "D4R",
+          "D4C",
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D3C",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ],
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "wallRows": [
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D3C",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ]
+      },
+      {
+        "d4ObjectRows": [
+          "D4L",
+          "D4R",
+          "D4C"
+        ],
+        "eventCount": 16,
+        "name": "forward_west_blocked",
+        "orderedRows": [
+          "D4L",
+          "D4R",
+          "D4C",
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D3C",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ],
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "wallRows": [
+          "D3L2",
+          "D3R2",
+          "D3L",
+          "D3R",
+          "D3C",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ]
+      },
+      {
+        "d4ObjectRows": [
+          "D4R",
+          "D4C"
+        ],
+        "eventCount": 11,
+        "name": "turn_left_east",
+        "orderedRows": [
+          "D4R",
+          "D4C",
+          "D3L2",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ],
+        "party": {
+          "direction": 1,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "wallRows": [
+          "D3L2",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D2C",
+          "D1L",
+          "D1R",
+          "D1C"
+        ]
+      },
+      {
+        "d4ObjectRows": [
+          "D4L",
+          "D4R",
+          "D4C"
+        ],
+        "eventCount": 12,
+        "name": "forward_south_corridor",
+        "orderedRows": [
+          "D4L",
+          "D4R",
+          "D4C",
+          "D3R2",
+          "D3R",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D1L",
+          "D0L",
+          "D0R"
+        ],
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 4
+        },
+        "wallRows": [
+          "D3R2",
+          "D3R",
+          "D2L2",
+          "D2R2",
+          "D2L",
+          "D2R",
+          "D1L",
+          "D0L",
+          "D0R"
+        ]
+      }
+    ],
+    "status": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
+    "unsupportedWallRows": []
+  },
+  "schema": "firestaff.parity.pass504_dm1_v1_viewport_wall_render_plan_promotion_boundary.v1",
+  "status": "PASS504_DM1_V1_VIEWPORT_WALL_RENDER_PLAN_PROMOTION_BOUNDARY"
+}
