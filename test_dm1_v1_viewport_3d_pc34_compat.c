@@ -237,6 +237,57 @@ static void test_pc34_wall_bitmap_selection(void)
     check_int("PC34.wall_select.null_flip", flip ? 1 : 0, 0);
 }
 
+static void test_wall_item_occlusion_alcove_exception(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int alcove_reveals;
+        const char *source_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 0, "6264" },
+        { DM1_VIEW_SQUARE_D3R2, 0, "6331" },
+        { DM1_VIEW_SQUARE_D3L,  1, "6437" },
+        { DM1_VIEW_SQUARE_D3R,  1, "6573" },
+        { DM1_VIEW_SQUARE_D3C,  1, "6720" },
+        { DM1_VIEW_SQUARE_D2L2, 0, "6862" },
+        { DM1_VIEW_SQUARE_D2R2, 0, "6893" },
+        { DM1_VIEW_SQUARE_D2L,  1, "6973" },
+        { DM1_VIEW_SQUARE_D2R,  1, "7166" },
+        { DM1_VIEW_SQUARE_D2C,  1, "7312" },
+        { DM1_VIEW_SQUARE_D1L,  0, "7460" },
+        { DM1_VIEW_SQUARE_D1R,  0, "7628" },
+        { DM1_VIEW_SQUARE_D1C,  1, "7843" },
+        { DM1_VIEW_SQUARE_D0L,  0, "8038" },
+        { DM1_VIEW_SQUARE_D0R,  0, "8144" },
+    };
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportWallDrawSpec *spec =
+            dm1_viewport_3d_get_wall_draw_spec_for_square(expected[i].square);
+        char id[112];
+
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.spec", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.normal_blocks", i);
+        check_int(id, dm1_viewport_3d_wall_occludes_floor_items(spec, false) ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.normal_order", i);
+        check_int(id, dm1_viewport_3d_wall_item_cell_order(spec, false), 0xffff);
+
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.alcove_blocks", i);
+        check_int(id, dm1_viewport_3d_wall_occludes_floor_items(spec, true) ? 1 : 0, expected[i].alcove_reveals ? 0 : 1);
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.alcove_order", i);
+        check_int(id, dm1_viewport_3d_wall_item_cell_order(spec, true), expected[i].alcove_reveals ? 0x0000 : 0xffff);
+
+        snprintf(id, sizeof(id), "wall_item_occlusion.%zu.source", i);
+        check_int(id, strstr(spec->occlusion_source_lines, expected[i].source_line) != NULL, 1);
+    }
+
+    check_int("wall_item_occlusion.null_blocks", dm1_viewport_3d_wall_occludes_floor_items(NULL, true) ? 1 : 0, 1);
+    check_int("wall_item_occlusion.null_order", dm1_viewport_3d_wall_item_cell_order(NULL, true), 0xffff);
+}
+
 static void test_parity_flip_restore(void)
 {
     unsigned char viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -598,6 +649,7 @@ int main(void)
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
+    test_wall_item_occlusion_alcove_exception();
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
     test_f0115_cell_order_and_layer_z_order();
