@@ -1,0 +1,32 @@
+{
+  "branch": "main",
+  "closedGap": "successful movement dequeues one command, retains later queued input, runs destination sensor consequences, then applies cooldown; blocked movement dequeues the attempted move, discards nonreserved queued input, runs no movement sensor consequences, and does not assign successful-step cooldown.",
+  "firestaffGuards": {
+    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "runtimeExecutable": "build-pass545-final/test_dm1_v1_movement_command_core_pc34_compat",
+    "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
+  },
+  "head": "a65b1f1151567ef3c7e9240e0207503650082a24",
+  "notClaimed": [
+    "viewport wall drawing changes",
+    "new DOS runtime capture",
+    "full mutation of deferred sensor-list rotation beyond existing pass510 metadata"
+  ],
+  "schema": "firestaff.parity.pass545_dm1_v1_movement_queue_sensor_consequences.v1",
+  "sourceAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "COMMAND.C:F0357_COMMAND_DiscardAllInput": "COMMAND.C:1305-1378",
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2829",
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": "MOVESENS.C:316-910",
+    "MOVESENS.C:F0276_SENSOR_ProcessThingAdditionOrRemoval": "MOVESENS.C:1553-1794",
+    "blockedDiscardSuccessBoundarySpan": "CLIKMENU.C:293-345",
+    "discardReservedPendingSpan": "COMMAND.C:1327-1375",
+    "moveSensorLeaveEnterSpan": "MOVESENS.C:801-818",
+    "queueRetainPopDispatchSpan": "COMMAND.C:2084-2155",
+    "sensorRotationDeferSpan": "MOVESENS.C:1785-1793"
+  },
+  "status": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
+  "timestampUtc": "2026-05-14T22:25:18.916206+00:00"
+}

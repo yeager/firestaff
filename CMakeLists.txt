@@ -2056,6 +2056,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 movement queue and sensor consequence source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass545_dm1_v1_movement_queue_sensor_consequences
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass545_dm1_v1_movement_queue_sensor_consequences.py
+    )
+endif()
+
 # DM1 V1 stairs movement side-effect source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

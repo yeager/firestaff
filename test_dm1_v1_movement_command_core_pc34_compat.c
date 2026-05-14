@@ -82,6 +82,30 @@ static void setup_party(struct PartyState_Compat* party)
     party->champions[1].direction = DIR_EAST;
 }
 
+static unsigned short make_thing_ref(int type, int index, int cell)
+{
+    return (unsigned short)(((cell & 3) << 14) | ((type & 15) << 10) | (index & 0x03FF));
+}
+
+static void setup_single_text_sensor(
+    struct DungeonThings_Compat* things,
+    unsigned short* firstThings,
+    struct DungeonSensor_Compat* sensors,
+    int textIndex)
+{
+    memset(things, 0, sizeof(*things));
+    memset(sensors, 0, sizeof(*sensors));
+    firstThings[0] = make_thing_ref(THING_TYPE_SENSOR, 0, 0);
+    sensors[0].next = THING_ENDOFLIST;
+    sensors[0].sensorType = 13;
+    sensors[0].sensorData = (unsigned short)textIndex;
+    things->loaded = 1;
+    things->squareFirstThings = firstThings;
+    things->squareFirstThingCount = 1;
+    things->sensors = sensors;
+    things->sensorCount = 1;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -341,6 +365,55 @@ int main(void)
     ok &= expect_int("pass544 blocked collision preserves pending stop command", queue.commands[1].command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
     ok &= expect_int("pass544 blocked collision release x preserved", queue.commands[0].x, 11);
     ok &= expect_int("pass544 blocked collision pending stop x preserved", queue.commands[1].x, 12);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+        setup_single_text_sensor(&things, firstThings, sensors, 37);
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass545 successful movement front command queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass545 successful movement trailing turn retained source queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass545 successful movement processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 420, 400, footwear, &result), 1);
+        ok &= expect_int("pass545 successful movement dequeued only front command", result.queue.dequeued, 1);
+        ok &= expect_int("pass545 successful movement applied step", result.stepApplied, 1);
+        ok &= expect_int("pass545 successful movement retains trailing command", (int)queue.count, 1);
+        ok &= expect_int("pass545 successful movement trailing command is turn right", queue.commands[0].command, DM1_V1_COMMAND_TURN_RIGHT);
+        ok &= expect_int("pass545 successful movement no discard requested", result.inputDiscardRequested, 0);
+        ok &= expect_int("pass545 successful movement leaves source sensor effects empty", result.leaveEffects.count, 0);
+        ok &= expect_int("pass545 successful movement destination sensor fires once", result.enterEffects.count, 1);
+        ok &= expect_int("pass545 successful movement destination sensor kind text", result.enterEffects.effects[0].kind, SENSOR_EFFECT_SHOW_TEXT);
+        ok &= expect_int("pass545 successful movement destination sensor text index", result.enterEffects.effects[0].textIndex, 37);
+        ok &= expect_int("pass545 successful movement sets cooldown after sensors", result.timing.disabledMovementTicks, 2);
+    }
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, DUNGEON_SQUARE_MASK_THING_LIST));
+        setup_single_text_sensor(&things, firstThings, sensors, 41);
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass545 blocked movement front command queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass545 blocked movement trailing turn queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass545 blocked movement processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 430, 420, footwear, &result), 1);
+        ok &= expect_int("pass545 blocked movement dequeued front command", result.queue.dequeued, 1);
+        ok &= expect_int("pass545 blocked movement reports blocked", result.movementBlocked, 1);
+        ok &= expect_int("pass545 blocked movement discards trailing command", (int)queue.count, 0);
+        ok &= expect_int("pass545 blocked movement requests discard", result.inputDiscardRequested, 1);
+        ok &= expect_int("pass545 blocked movement leaves sensor effects empty", result.leaveEffects.count, 0);
+        ok &= expect_int("pass545 blocked movement destination sensor not fired", result.enterEffects.count, 0);
+        ok &= expect_int("pass545 blocked movement no cooldown after blocked", result.timing.disabledMovementTicks, 0);
+    }
 
 
     printf("dm1V1MovementCommandCoreInvariantOk=%u\n", ok ? 1u : 0u);
