@@ -1,11 +1,11 @@
 {
-  "branch": "integrate-main-20260513-blockers",
+  "branch": "main",
   "closedGap": "blocked step/collision timing: a dequeued step can spend stamina and then be blocked, but blocked collision discards queued follow-up input, requests one vblank wait, keeps input wait armed, and returns before F0267 sensor/timestamp/cooldown/viewport side effects",
   "firestaffAudit": {
     "commandCore": "blocked wall/door/fakewall/group returns before successful timing/sensor/viewport path",
     "focusedCTest": "dm1_v1_command_movement_sensor_timing_pc34_compat"
   },
-  "head": "ff4362a10b2eedbb98e4f07c61098a47795865e0",
+  "head": "bfed9958e9de22d528b93d7e8803281ae2db55a9",
   "notClaimed": [
     "new original DOS runtime breakpoint hit",
     "pixel parity",
