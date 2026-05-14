@@ -278,8 +278,10 @@ typedef struct {
     DM1_ViewSquareIndex square;
     uint16_t rear_cell_order;
     uint16_t front_cell_order;
+    const char *floor_source_lines;
     const char *rear_pass_source_lines;
     const char *frame_source_lines;
+    const char *button_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
 } DM1_ViewportDoorFrontOcclusionSpec;

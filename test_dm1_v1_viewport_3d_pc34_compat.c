@@ -436,15 +436,17 @@ static void test_door_front_occlusion_split_passes(void)
 {
     static const struct {
         DM1_ViewSquareIndex square;
+        const char *floor_line;
         const char *rear_line;
         const char *frame_line;
+        const char *button_line;
         const char *door_line;
         const char *front_line;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L, "6444", "6446", "6457", "6459" },
-        { DM1_VIEW_SQUARE_D3C, "6723", "6725", "6744", "6746" },
-        { DM1_VIEW_SQUARE_D2C, "7315", "7317", "7339", "7341" },
-        { DM1_VIEW_SQUARE_D1C, "7875", "7877", "7905", "7937" },
+        { DM1_VIEW_SQUARE_D3L, "6443", "6444", "6446", NULL,   "6457", "6459" },
+        { DM1_VIEW_SQUARE_D3C, "6722", "6723", "6725", "6737", "6744", "6746" },
+        { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341" },
+        { DM1_VIEW_SQUARE_D1C, "7874", "7875", "7877", "7901", "7905", "7937" },
     };
 
     check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 4);
@@ -461,6 +463,8 @@ static void test_door_front_occlusion_split_passes(void)
         check_int("door_front_occlusion.front_order", spec->front_cell_order, 0x0349);
         rear = dm1_viewport_3d_decode_cell_order(spec->rear_cell_order);
         front = dm1_viewport_3d_decode_cell_order(spec->front_cell_order);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.floor_line", i);
+        check_int(id, strstr(spec->floor_source_lines, expected[i].floor_line) != NULL, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_pass", i);
         check_int(id, rear.door_pass, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_cells", i);
@@ -473,6 +477,10 @@ static void test_door_front_occlusion_split_passes(void)
         check_int(id, strstr(spec->rear_pass_source_lines, expected[i].rear_line) != NULL, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.frame_line", i);
         check_int(id, strstr(spec->frame_source_lines, expected[i].frame_line) != NULL, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.button_line", i);
+        check_int(id, expected[i].button_line
+            ? (spec->button_source_lines != NULL && strstr(spec->button_source_lines, expected[i].button_line) != NULL)
+            : (spec->button_source_lines == NULL), 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.door_line", i);
         check_int(id, strstr(spec->door_source_lines, expected[i].door_line) != NULL, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_line", i);
@@ -699,6 +707,7 @@ static void test_source_evidence_mentions_visual_lane(void)
         strstr(e, "DUNVIEW.C:8185-8240") != NULL && strstr(e, "draw before common F0115") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
+    check_int("source_evidence.d1c_door_button_occlusion", strstr(e, "frame/button/door") != NULL, 1);
     check_int("source_evidence.side_occlusion", strstr(e, "side-door/stairs-side F0115 cell-order occlusion") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.wall_source_clip_gate", strstr(e, "COORD.C:2390-2409") != NULL, 1);
