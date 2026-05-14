@@ -1,0 +1,224 @@
+{
+  "firestaffChecks": [
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D3R, 0x4312",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DUNVIEW.C:6624-6638 teleporter field after F0115",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D2L, 0x3421",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DUNVIEW.C:7033-7048 teleporter field after F0115",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D2R, 0x4312",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DUNVIEW.C:7226-7240 teleporter field after F0115",
+      "status": "PASS"
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "floor_field_order_spec_count(), 8",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "no input or movement queue edits",
+    "no original DOS pixel parity claim",
+    "no DANNESBURK use"
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 6514,
+          "needle": "case C19_ELEMENT_STAIRS_FRONT:"
+        },
+        {
+          "line": 6544,
+          "needle": "goto T0117016;"
+        },
+        {
+          "line": 6603,
+          "needle": "case C02_ELEMENT_PIT:"
+        },
+        {
+          "line": 6615,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 6616,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 6618,
+          "needle": "L0202_i_Order = C0x4312_CELL_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT;"
+        },
+        {
+          "line": 6620,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+        },
+        {
+          "line": 6622,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 6628,
+          "needle": "if (L0203_ai_SquareAspect[C0_ELEMENT] == C05_ELEMENT_TELEPORTER)"
+        },
+        {
+          "line": 6631,
+          "needle": "F0113_DUNGEONVIEW_DrawField"
+        },
+        {
+          "line": 6634,
+          "needle": "C706_ZONE_WALL_D3R"
+        }
+      ],
+      "missing": [],
+      "source": "DUNVIEW.C:6514-6638",
+      "square": "D3R",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6914,
+          "needle": "case C19_ELEMENT_STAIRS_FRONT:"
+        },
+        {
+          "line": 6944,
+          "needle": "goto T0119018;"
+        },
+        {
+          "line": 7005,
+          "needle": "case C02_ELEMENT_PIT:"
+        },
+        {
+          "line": 7015,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 7016,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 7018,
+          "needle": "L0207_i_Order = C0x3421_CELL_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT;"
+        },
+        {
+          "line": 7020,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+        },
+        {
+          "line": 7023,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit"
+        },
+        {
+          "line": 7031,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 7037,
+          "needle": "if (L0208_ai_SquareAspect[C0_ELEMENT] == C05_ELEMENT_TELEPORTER)"
+        },
+        {
+          "line": 7040,
+          "needle": "F0113_DUNGEONVIEW_DrawField"
+        },
+        {
+          "line": 7046,
+          "needle": "C710_ZONE_WALL_D2L"
+        }
+      ],
+      "missing": [],
+      "source": "DUNVIEW.C:6914-7048",
+      "square": "D2L",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7065,
+          "needle": "case C19_ELEMENT_STAIRS_FRONT:"
+        },
+        {
+          "line": 7095,
+          "needle": "goto T0120027;"
+        },
+        {
+          "line": 7198,
+          "needle": "case C02_ELEMENT_PIT:"
+        },
+        {
+          "line": 7208,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 7209,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 7211,
+          "needle": "L0209_i_Order = C0x4312_CELL_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT;"
+        },
+        {
+          "line": 7213,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+        },
+        {
+          "line": 7215,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit"
+        },
+        {
+          "line": 7224,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 7230,
+          "needle": "if (L0210_ai_SquareAspect[C0_ELEMENT] == C05_ELEMENT_TELEPORTER)"
+        },
+        {
+          "line": 7233,
+          "needle": "F0113_DUNGEONVIEW_DrawField"
+        },
+        {
+          "line": 7239,
+          "needle": "C711_ZONE_WALL_D2R"
+        }
+      ],
+      "missing": [],
+      "source": "DUNVIEW.C:7065-7240",
+      "square": "D2R",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass517_dm1_v1_d3_d2_field_occlusion_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS517_DM1_V1_D3_D2_FIELD_OCCLUSION_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass517-dm1v1-d3-d2-field-occlusion-20260515/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
