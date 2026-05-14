@@ -313,6 +313,7 @@ typedef struct {
     bool floor_ornament_before_things;
     bool objects_creatures_projectiles_before_explosions;
     bool field_after_things;
+    bool d0c_foreground_before_things;
     bool wall_case_returns_before_things;
     const char *function_name;
     const char *stairs_source_lines;
