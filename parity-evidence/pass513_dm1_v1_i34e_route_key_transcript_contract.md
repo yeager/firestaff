@@ -72,6 +72,22 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - capturePath
 - captureSha256
 
+## Machine-checkable transcript validation
+
+- Optional promotion gate: FIRESTAFF_PASS513_TRANSCRIPT=path/to/transcript.json python3 tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
+- Provided: False
+- Validation status: not_provided
+- Minimum turnRows: 1
+- Minimum successfulStepRows: 1
+- Minimum blockedOrNoopRows: 1
+- Binding: M527 non-empty before M528 read
+- Binding: M528/F0540 normalized value equals a COMMAND.C I34E movement table code
+- Binding: F0361 writes that command into G0432 and increments G2153
+- Binding: F0380 pops the same command and decrements G2153
+- Binding: F0365 or F0366 is reached for that command
+- Binding: F0128/F0097 consumes and presents the matching post-command party tuple before capture
+- Binding: capturePath exists and captureSha256 matches the captured bytes
+
 ## Reject as non-promotable
 
 - route labels without rawKeyCode plus normalizedKeyCode plus M528 value
