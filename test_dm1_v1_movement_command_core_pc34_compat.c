@@ -404,11 +404,24 @@ int main(void)
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
         ok &= expect_int("pass545 blocked movement trailing turn queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass546 blocked movement reserved release queued",
+            DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 31, 42), 1);
+        queue.locked = 1;
+        ok &= expect_int("pass546 blocked movement pending stop captured",
+            DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+                &queue, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL, 32, 43, DM1_V1_BUTTON_LEFT), 0);
+        ok &= expect_int("pass546 blocked movement pending present before dispatch", queue.pendingClickPresent, 1);
         ok &= expect_int("pass545 blocked movement processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 430, 420, footwear, &result), 1);
         ok &= expect_int("pass545 blocked movement dequeued front command", result.queue.dequeued, 1);
         ok &= expect_int("pass545 blocked movement reports blocked", result.movementBlocked, 1);
-        ok &= expect_int("pass545 blocked movement discards trailing command", (int)queue.count, 0);
+        ok &= expect_int("pass545 blocked movement discards trailing command but preserves reserved", (int)queue.count, 2);
+        ok &= expect_int("pass546 blocked movement pending replayed once", (int)queue.pendingReplayCount, 1);
+        ok &= expect_int("pass546 blocked movement pending cleared", queue.pendingClickPresent, 0);
+        ok &= expect_int("pass546 blocked movement preserves release command", queue.commands[0].command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+        ok &= expect_int("pass546 blocked movement preserves pending stop command", queue.commands[1].command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+        ok &= expect_int("pass546 blocked movement release x preserved", queue.commands[0].x, 31);
+        ok &= expect_int("pass546 blocked movement pending stop x preserved", queue.commands[1].x, 32);
         ok &= expect_int("pass545 blocked movement requests discard", result.inputDiscardRequested, 1);
         ok &= expect_int("pass545 blocked movement leaves sensor effects empty", result.leaveEffects.count, 0);
         ok &= expect_int("pass545 blocked movement destination sensor not fired", result.enterEffects.count, 0);
