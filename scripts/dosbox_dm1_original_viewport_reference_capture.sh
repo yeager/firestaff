@@ -30,6 +30,7 @@ RAW_MANIFEST="${OUT_DIR}/raw_manifest.tsv"
 CROP_MANIFEST="${OUT_DIR}/original_viewport_224x136_manifest.tsv"
 CROP_DIR="${OUT_DIR}/viewport_224x136"
 SIZE_LOG="${OUT_DIR}/artifact-sizes.txt"
+PASS513_SCAFFOLD="${OUT_DIR}/pass513_i34e_route_key_transcript_scaffold.json"
 
 usage() {
     cat <<EOF
@@ -79,6 +80,7 @@ Optional environment:
                     toggle routes such as C011/C083, not a parity claim by itself.
   manifest:        ${CROP_MANIFEST}
   shot labels:     ${SHOT_LABEL_MANIFEST}
+  pass513 scaffold:${PASS513_SCAFFOLD}
 
 Linux/N2 note:
   On Linux, run --run under an X server, for example:
@@ -728,6 +730,15 @@ with manifest.open("w") as f:
         f.write(f"original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
 PY
     ls -lh "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
+    if [[ -n "${ROUTE_EVENTS}" ]]; then
+        python3 "${REPO}/tools/pass513_i34e_route_transcript_scaffold.py" \
+            --repo-root "${REPO}" \
+            --route-events "${ROUTE_EVENTS}" \
+            --raw-manifest "${RAW_MANIFEST}" \
+            --crop-manifest "${CROP_MANIFEST}" \
+            --shot-labels "${SHOT_LABEL_MANIFEST}" \
+            --out "${PASS513_SCAFFOLD}"
+    fi
     echo "[pass-70] normalized original viewport crops: ${CROP_MANIFEST}"
 }
 
