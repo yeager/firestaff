@@ -1,0 +1,49 @@
+{
+  "firestaffChecks": [
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D1L, 0x0032",
+      "status": "PASS"
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D1R, 0x0041",
+      "status": "PASS"
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "floor_field_order_spec_count(), 10",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "no input or movement queue edits",
+    "no original DOS pixel parity claim",
+    "no DANNESBURK use"
+  ],
+  "redmcsbChecks": [
+    {
+      "source": "DUNVIEW.C:7391-7557",
+      "square": "D1L",
+      "status": "PASS"
+    },
+    {
+      "source": "DUNVIEW.C:7559-7725",
+      "square": "D1R",
+      "status": "PASS"
+    }
+  ],
+  "schema": "pass518_dm1_v1_d1_side_field_occlusion_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS518_DM1_V1_D1_SIDE_FIELD_OCCLUSION_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

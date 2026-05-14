@@ -32,7 +32,7 @@
     },
     {
       "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "needle": "floor_field_order_spec_count(), 8",
+      "needle": "floor_field_order_spec_count(), 10",
       "status": "PASS"
     }
   ],

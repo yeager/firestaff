@@ -570,10 +570,12 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         { DM1_VIEW_SQUARE_D2L,  "F0119_DUNGEONVIEW_DrawSquareD2L", 0x3421, 1, "6914-6944", "7005-7015", "7031", "7033-7048", "6945-6973", 0 },
         { DM1_VIEW_SQUARE_D2R,  "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", 0x4312, 1, "7065-7095", "7198-7208", "7224", "7226-7240", "7097-7166", 0 },
         { DM1_VIEW_SQUARE_D2C,  "F0121_DUNGEONVIEW_DrawSquareD2C", 0x3421, 1, "7260-7288", "7343-7353", "7367-7368", "7370-7388", "7289-7312", 0 },
+        { DM1_VIEW_SQUARE_D1L,  "F0122_DUNGEONVIEW_DrawSquareD1L", 0x0032, 1, "7405-7435", "7510-7520", "7535-7536", "7538-7555", "7436-7460", 0 },
+        { DM1_VIEW_SQUARE_D1R,  "F0123_DUNGEONVIEW_DrawSquareD1R", 0x0041, 1, "7573-7603", "7678-7688", "7703-7704", "7706-7722", "7604-7628", 0 },
         { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8294", "8295-8308", "8185-8240", 1 },
     };
 
-    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 8);
+    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 10);
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportFloorFieldOrderSpec *spec =
             dm1_viewport_3d_get_floor_field_order_spec_for_square(expected[i].square);
@@ -610,8 +612,8 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         snprintf(id, sizeof(id), "floor_field_order.%zu.wall_source", i);
         check_int(id, strstr(spec->wall_return_source_lines, expected[i].wall_return_line) != NULL, 1);
     }
-    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(8) == NULL, 1);
-    check_int("floor_field_order.no_d1_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
+    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(10) == NULL, 1);
+    check_int("floor_field_order.no_d0_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0L) == NULL, 1);
 }
 
 
