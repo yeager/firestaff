@@ -177,6 +177,8 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original-viewpoint-route-keys.log size=873
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys.swift size=6062
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys_xdotool.sh size=3995
+- verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys.swift size=6062
+- verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys.swift size=5604
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys_xdotool.sh size=3664
 

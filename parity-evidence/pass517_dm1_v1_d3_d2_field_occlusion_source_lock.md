@@ -47,7 +47,7 @@ Status: passed
 
 ## Verification
 
-- /home/trv2/work/firestaff-worktrees/pass517-dm1v1-d3-d2-field-occlusion-20260515/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.d1c_door_front_occlusion == 1
 PASS source_evidence.side_occlusion == 1
