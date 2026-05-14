@@ -53,7 +53,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 | `definition_matrix` | 6/10 | dm1_v2_completion_matrix/status artifacts exist but explicitly do not prove completion. |
 | `launch_smoke` | 5/10 | Some V2 shell/scaffold gates exist; full launcher/preview smoke is unproven. |
 | `core_input_movement` | 4/15 | Movement/camera scaffolds exist; source-locked V2 semantics incomplete. |
-| `viewport_ui_render` | 4/20 | Viewport/wall/upscale scaffolds exist; full V2 render/material/UI gates absent. |
+| `viewport_ui_render` | 4/20 | Viewport/wall/upscale scaffolds plus V2 manifest-shape gates exist; full V2 render/material/UI gates remain absent. |
 | `gameplay_systems` | 0/15 | No complete V2 gameplay-system parity gates. |
 | `audio_timing` | 0/10 | No V2 audio/timing completion gates. |
 | `original_overlay_regression` | 0/10 | No V2 representative original-overlay regression proof. |

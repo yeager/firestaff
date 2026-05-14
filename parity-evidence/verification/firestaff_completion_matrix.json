@@ -111,7 +111,7 @@
         ],
         "viewport_ui_render": [
           4,
-          "Viewport/wall/upscale scaffolds exist; full V2 render/material/UI gates absent."
+          "Viewport/wall/upscale scaffolds plus V2 manifest-shape gates exist; full V2 render/material/UI gates remain absent."
         ],
         "gameplay_systems": [
           0,

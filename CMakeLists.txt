@@ -277,6 +277,14 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_v2_upscale_dry_run.py
         )
         add_test(
+            NAME dm1_v2_asset_manifest_validator
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_v2_manifests.py
+        )
+        add_test(
+            NAME dm1_v2_asset_manifest_validator_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_v2_manifests.py --self-test
+        )
+        add_test(
             NAME csb_v1_parity_surface_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )

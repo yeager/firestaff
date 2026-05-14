@@ -27,6 +27,8 @@
     "visual/transition": 1
   },
   "currentCTestNamesPresent": [
+    "dm1_v2_asset_manifest_validator",
+    "dm1_v2_asset_manifest_validator_self_test",
     "dm1_v2_d0_d3_draw_list_comparator_gate",
     "dm1_v2_dungeon_view_asset_bindings_source_lock",
     "dm1_v2_entry_bitmap_materialization_blocker_gate",
@@ -231,6 +233,8 @@
   ],
   "moduleCount": 35,
   "requiredCTestNames": [
+    "dm1_v2_asset_manifest_validator",
+    "dm1_v2_asset_manifest_validator_self_test",
     "dm1_v2_d0_d3_draw_list_comparator_gate",
     "dm1_v2_dungeon_view_asset_bindings_source_lock",
     "dm1_v2_entry_bitmap_materialization_blocker_gate",

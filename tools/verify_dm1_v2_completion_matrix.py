@@ -28,6 +28,8 @@ REQUIRED_MODULES = {
 
 REQUIRED_CTEST_NAMES = {
     "dm1_v2_upscale_dry_run_validator",
+    "dm1_v2_asset_manifest_validator",
+    "dm1_v2_asset_manifest_validator_self_test",
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_runtime_shell_pc34",
     "dm1_v2_runtime_shell_source_lock",
