@@ -429,6 +429,109 @@ int main(void)
     }
 
 
+    /* Pass547: blocked door/fakewall/group command lifecycle.
+     * Source lock: CLIKMENU.C:282-288 marks closed doors and closed real
+     * fakewalls as movement blockers; CLIKMENU.C:311-313 marks groups as
+     * blockers and requests the party-adjacent reaction.  All three blocked
+     * paths converge through CLIKMENU.C:317-323, discarding input and doing the
+     * PC-34 VBlank wait while leaving G0321_B_StopWaitingForPlayerInput false
+     * and never reaching the successful-step cooldown/sensor path at
+     * CLIKMENU.C:325-346 / MOVESENS.C:799-818.
+     */
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        setup_single_text_sensor(&things, firstThings, sensors, 51);
+        set_square(squares, 5, 2, 1,
+            square_type(DUNGEON_ELEMENT_DOOR, 2 | DUNGEON_SQUARE_MASK_THING_LIST));
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass547 closed door front command queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 closed door trailing turn queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 closed door processed",
+            DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+                &queue, &dungeon, &things, &party, 0, 0, 0, 440, 430, footwear, &result), 1);
+        ok &= expect_int("pass547 closed door reports door block", result.movement.resultCode, MOVE_BLOCKED_DOOR);
+        ok &= expect_int("pass547 closed door movement blocked", result.movementBlocked, 1);
+        ok &= expect_int("pass547 closed door damage request", result.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("pass547 closed door discards trailing input", (int)queue.count, 0);
+        ok &= expect_int("pass547 closed door leaves input wait armed", result.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("pass547 closed door no cooldown", result.timing.disabledMovementTicks, 0);
+        ok &= expect_int("pass547 closed door no sensor effects", result.leaveEffects.count + result.enterEffects.count, 0);
+        ok &= expect_int("pass547 closed door no group reaction", result.groupReactionPartyAdjacentRequested, 0);
+    }
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        setup_single_text_sensor(&things, firstThings, sensors, 52);
+        set_square(squares, 5, 2, 1,
+            square_type(DUNGEON_ELEMENT_FAKEWALL, DUNGEON_SQUARE_MASK_THING_LIST));
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass547 closed fakewall front command queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 closed fakewall trailing turn queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 closed fakewall processed",
+            DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+                &queue, &dungeon, &things, &party, 0, 0, 0, 450, 440, footwear, &result), 1);
+        ok &= expect_int("pass547 closed fakewall reports wall block", result.movement.resultCode, MOVE_BLOCKED_WALL);
+        ok &= expect_int("pass547 closed fakewall damage request", result.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("pass547 closed fakewall discards trailing input", (int)queue.count, 0);
+        ok &= expect_int("pass547 closed fakewall leaves input wait armed", result.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("pass547 closed fakewall no cooldown", result.timing.disabledMovementTicks, 0);
+        ok &= expect_int("pass547 closed fakewall no sensor effects", result.leaveEffects.count + result.enterEffects.count, 0);
+        ok &= expect_int("pass547 closed fakewall no group reaction", result.groupReactionPartyAdjacentRequested, 0);
+    }
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonGroup_Compat groups[1];
+        memset(&things, 0, sizeof(things));
+        memset(groups, 0, sizeof(groups));
+        set_square(squares, 5, 2, 1,
+            square_type(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+        firstThings[0] = make_thing_ref(THING_TYPE_GROUP, 0, 0);
+        groups[0].next = THING_ENDOFLIST;
+        things.loaded = 1;
+        things.squareFirstThings = firstThings;
+        things.squareFirstThingCount = 1;
+        things.groups = groups;
+        things.groupCount = 1;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass547 group front command queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 group trailing turn queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass547 group processed",
+            DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+                &queue, &dungeon, &things, &party, 0, 0, 0, 460, 450, footwear, &result), 1);
+        ok &= expect_int("pass547 group movement blocked", result.movementBlocked, 1);
+        ok &= expect_int("pass547 group marked", result.blockedByGroup, 1);
+        ok &= expect_int("pass547 group reaction requested", result.groupReactionPartyAdjacentRequested, 1);
+        ok &= expect_int("pass547 group no wall damage request", result.blockedByWallOrDoorDamageRequested, 0);
+        ok &= expect_int("pass547 group discards trailing input", (int)queue.count, 0);
+        ok &= expect_int("pass547 group leaves input wait armed", result.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("pass547 group no cooldown", result.timing.disabledMovementTicks, 0);
+        ok &= expect_int("pass547 group no sensor effects", result.leaveEffects.count + result.enterEffects.count, 0);
+        ok &= expect_int("pass547 group keeps source x", party.mapX, 2);
+        ok &= expect_int("pass547 group keeps source y", party.mapY, 2);
+    }
+
+
     printf("dm1V1MovementCommandCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
