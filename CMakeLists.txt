@@ -1826,6 +1826,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 PC/I34E runtime transcript capture path gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass514_dm1_v1_i34e_runtime_transcript_capture_path
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py
+    )
+endif()
+
 # ── DM1 V1 wall occlusion spec-matrix gate ───────────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
