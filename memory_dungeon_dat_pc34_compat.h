@@ -176,6 +176,7 @@ const char* F0503_DUNGEON_GetElementName_Compat(int elementType);
 #define THING_NONE       0xFFFFu
 #define THING_ENDOFLIST  0xFFFEu
 
+#define THING_GET_CELL(t)  (((t) >> 14) & 0x0003u)
 #define THING_GET_TYPE(t)  (((t) & 0x3C00u) >> 10)
 #define THING_GET_INDEX(t) ((t) & 0x03FFu)
 

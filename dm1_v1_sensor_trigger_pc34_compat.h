@@ -139,6 +139,8 @@ struct FloorSensorContext_Compat {
  *  Wall sensor context
  * ================================================================ */
 struct WallSensorContext_Compat {
+    int mapX;
+    int mapY;
     int cell;
     int leaderHandObjectType;
     int leaderEmptyHanded;
@@ -176,6 +178,7 @@ struct SensorTriggerResultList_Compat {
     int rotationMapX;
     int rotationMapY;
     int rotationCell;
+    int rotationDeferredUntilAfterResultCount;
 };
 
 /* ================================================================

@@ -119,6 +119,7 @@ struct SensorOnSquare_Compat {
     int targetMapY;
     int targetCell;
     int isLocal;                 /* 1 if localEffect, 0 if remote */
+    int cell;                    /* Thing cell from M011_CELL(sensor thing) */
     int totalSensorsOnSquare;    /* How many sensors chained on this square */
 };
 

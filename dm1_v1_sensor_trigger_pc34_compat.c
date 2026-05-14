@@ -572,7 +572,7 @@ int F0726_SENSOR_ProcessWallClick_Compat(
     struct SensorTriggerResultList_Compat* outList)
 {
     int i;
-    int remainingPerCell;
+    int remainingByCell[4] = { 0, 0, 0, 0 };
 
     if (!outList) return 0;
     memset(outList, 0, sizeof(*outList));
@@ -582,14 +582,15 @@ int F0726_SENSOR_ProcessWallClick_Compat(
 
     if (!sensors || !sensorData || !ctx) return 0;
 
-    /* Source: F0275 — first pass counts sensors per cell.
-     * We approximate by counting matching-cell sensors. */
-    remainingPerCell = 0;
+    /* Source: MOVESENS.C:F0275 first pass counts sensors per cell before
+     * processing.  The later C011/C012 gates test the remaining count for
+     * the clicked cell only, so unrelated sensors on other cells must not
+     * postpone or suppress this cell's last-sensor action.
+     */
     for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
         if (sensors[i].found) {
-            /* In F0275, cell matching is checked: L0752_ui_Cell = M011_CELL(thing)
-             * For simplicity, we count all sensors and decrement as we process. */
-            remainingPerCell++;
+            int cell = sensors[i].cell & 3;
+            remainingByCell[cell]++;
         }
     }
 
@@ -602,11 +603,13 @@ int F0726_SENSOR_ProcessWallClick_Compat(
         sIdx = sensors[i].sensorIndex;
         if (sIdx < 0 || sIdx >= sensorDataCount) continue;
 
-        remainingPerCell--;
-
-        /* Build local context with remaining count */
+        /* Build local context with remaining same-cell count. */
         localCtx = *ctx;
-        localCtx.sensorCountInCell = remainingPerCell;
+        localCtx.cell = sensors[i].cell & 3;
+        if (remainingByCell[localCtx.cell] > 0) {
+            remainingByCell[localCtx.cell]--;
+        }
+        localCtx.sensorCountInCell = remainingByCell[localCtx.cell];
 
         memset(&result, 0, sizeof(result));
         if (!F0723_SENSOR_EvaluateWall_Compat(&sensorData[sIdx], &localCtx, &result))
@@ -631,9 +634,10 @@ int F0726_SENSOR_ProcessWallClick_Compat(
                 sensorData[sIdx].sensorType == DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE) {
                 outList->rotationPending = 1;
                 outList->rotationEffect = DM1_EFFECT_TOGGLE;
-                outList->rotationMapX = 0; /* Caller should set from sensor's square */
-                outList->rotationMapY = 0;
-                outList->rotationCell = ctx->cell;
+                outList->rotationMapX = ctx->mapX;
+                outList->rotationMapY = ctx->mapY;
+                outList->rotationCell = localCtx.cell;
+                outList->rotationDeferredUntilAfterResultCount = outList->count + 1;
             }
 
             outList->results[outList->count++] = result;

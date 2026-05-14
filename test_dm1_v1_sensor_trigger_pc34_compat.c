@@ -571,7 +571,7 @@ static void test_process_wall_click(void) {
 
     /* Sensor 0: click (type 1), TOGGLE */
     sensorData[0] = make_sensor(1, 0, DM1_EFFECT_TOGGLE, 0, 0, 1, 0, 0, 10, 11, 0);
-    /* Sensor 1: launcher (type 7) — should NOT trigger on click */
+    /* Sensor 1: launcher (type 7) -- should NOT trigger on click */
     sensorData[1] = make_sensor(7, 0, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 0, 0, 0);
 
     sensors[0].found = 1; sensors[0].sensorIndex = 0;
@@ -587,6 +587,47 @@ static void test_process_wall_click(void) {
     CHECK(results.count == 1, "Wall click: only 1 of 2 sensors triggered");
     CHECK(results.results[0].resolvedEffect == DM1_EFFECT_TOGGLE, "Wall click: TOGGLE effect");
     CHECK(results.results[0].targetMapX == 10, "Wall click: target X=10");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0726: wall sensor rotation is per-cell and deferred
+ *  Source: MOVESENS.C:F0275 counts sensors per cell at 1368-1384,
+ *  C011 schedules F0270 at 1429-1454, and F0271 applies the pending
+ *  rotation after the full sensor scan at 1549.
+ * ---------------------------------------------------------------- */
+static void test_process_wall_click_rotation_per_cell_deferred(void) {
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    struct DungeonSensor_Compat sensorData[2];
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResultList_Compat results;
+
+    memset(sensors, 0, sizeof(sensors));
+    memset(sensorData, 0, sizeof(sensorData));
+
+    sensorData[0] = make_sensor(11, 8, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 4, 5, 0);
+    sensorData[1] = make_sensor(1, 0, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 6, 7, 0);
+
+    sensors[0].found = 1; sensors[0].sensorIndex = 0; sensors[0].cell = 0;
+    sensors[1].found = 1; sensors[1].sensorIndex = 1; sensors[1].cell = 1;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.mapX = 12;
+    ctx.mapY = 9;
+    ctx.cell = 0;
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderHandObjectType = 8;
+    ctx.leaderIndex = 0;
+
+    F0726_SENSOR_ProcessWallClick_Compat(sensors, 2, sensorData, 2, &ctx, &results);
+    CHECK(results.count == 2, "Wall rotate: unrelated later cell does not suppress C011 last-in-cell trigger");
+    CHECK(results.results[0].sensorIndex == 0, "Wall rotate: C011 result remains first");
+    CHECK(results.results[1].sensorIndex == 1, "Wall rotate: later sensor still processes before deferred rotation");
+    CHECK(results.rotationPending == 1, "Wall rotate: rotation pending");
+    CHECK(results.rotationEffect == DM1_EFFECT_TOGGLE, "Wall rotate: deferred rotation effect is TOGGLE");
+    CHECK(results.rotationMapX == 12, "Wall rotate: rotation source X preserved");
+    CHECK(results.rotationMapY == 9, "Wall rotate: rotation source Y preserved");
+    CHECK(results.rotationCell == 0, "Wall rotate: rotation cell preserved");
+    CHECK(results.rotationDeferredUntilAfterResultCount == 1, "Wall rotate: rotation is scheduled after triggering sensor");
 }
 
 /* ----------------------------------------------------------------
@@ -677,6 +718,7 @@ int main(void) {
     test_effect_dispatch();
     test_process_floor_square();
     test_process_wall_click();
+    test_process_wall_click_rotation_per_cell_deferred();
     test_floor_version_checker();
     test_floor_disabled();
     test_floor_group_generator_skipped();

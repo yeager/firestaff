@@ -298,6 +298,7 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
                 out->sensorType = sensor->sensorType;
                 out->sensorData = sensor->sensorData;
                 out->isLocal = sensor->localEffect;
+                out->cell = THING_GET_CELL(thingRef);
                 if (!sensor->localEffect) {
                     out->targetMapX = sensor->targetMapX;
                     out->targetMapY = sensor->targetMapY;
