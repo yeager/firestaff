@@ -1170,6 +1170,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass448_dm1_v1_dungeon_hash_provenance.py
         )
         add_test(
+            NAME pass512_dm1_v1_original_dungeon_packet_boundary
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass512_dm1_v1_original_dungeon_packet_boundary.py
+        )
+        add_test(
             NAME pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py
         )
