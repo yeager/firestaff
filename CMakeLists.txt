@@ -300,6 +300,10 @@ if(BUILD_TESTING)
             NAME csb_v1_quickplay_load_route_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_quickplay_load_route_source_lock.py
         )
+        add_test(
+            NAME csb_v1_m11_runtime_capture_boundary
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_m11_runtime_capture_boundary.py
+        )
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration
