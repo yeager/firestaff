@@ -2011,6 +2011,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+
+# DM1 V1 blocked collision queue lifecycle source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass544_dm1_v1_blocked_collision_queue_lifecycle
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass544_dm1_v1_blocked_collision_queue_lifecycle.py
+    )
+endif()
+
 # DM1 V1 stairs movement side-effect source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

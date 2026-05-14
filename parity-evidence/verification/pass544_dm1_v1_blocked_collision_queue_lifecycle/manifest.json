@@ -1,0 +1,33 @@
+{
+  "branch": "main",
+  "firestaffGuards": {
+    "blockedCollisionSpan": "dm1_v1_movement_command_core_pc34_compat.c:203-361",
+    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
+    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:215-228",
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "queueProcessSpan": "dm1_v1_input_command_queue_pc34_compat.c:303-324",
+    "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
+    "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
+  },
+  "head": "77c0608a2cfac656f8cd06c7ca20cbf07ed57667",
+  "notClaimed": [
+    "new original DOS runtime capture",
+    "viewport or wall pixel parity",
+    "damage RNG/wound materialization beyond the recorded blocked-collision request"
+  ],
+  "primarySourceAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "COMMAND.C:F0357_COMMAND_DiscardAllInput": "COMMAND.C:1305-1378",
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2829",
+    "blockedCollisionDiscardVblankReturn": "CLIKMENU.C:269-323",
+    "blockedReturnsBeforeSuccessfulCooldown": "CLIKMENU.C:293-345",
+    "dequeuePendingReplayMoveDispatch": "COMMAND.C:2095-2155",
+    "discardPreservesReservedAndReplaysPending": "COMMAND.C:1327-1375"
+  },
+  "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
+  "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
+  "timestampUtc": "2026-05-14T19:22:41.270763+00:00",
+  "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
+  "worktree": "/home/trv2/work/firestaff"
+}

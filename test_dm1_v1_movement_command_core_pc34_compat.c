@@ -307,6 +307,42 @@ int main(void)
         &queue, &dungeon, &things, &party, 0, 0, 0, 390, 380, footwear, &result), 1);
     ok &= expect_int("pc34 core empty party has no damage request", result.blockedByWallOrDoorDamageRequested, 0);
 
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, 0));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pass544 blocked collision front move queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pass544 blocked collision trailing turn queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+    ok &= expect_int("pass544 blocked collision reserved release queued",
+        DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 11, 22), 1);
+    queue.locked = 1;
+    ok &= expect_int("pass544 blocked collision pending stop captured",
+        DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+            &queue, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL, 12, 23, DM1_V1_BUTTON_LEFT), 0);
+    ok &= expect_int("pass544 blocked collision pending present before dispatch", queue.pendingClickPresent, 1);
+    ok &= expect_int("pass544 blocked collision processed after cooldown clear", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, 0, 400, 390, footwear, &result), 1);
+    ok &= expect_int("pass544 blocked collision move dequeued before F0366", result.queue.dequeued, 1);
+    ok &= expect_int("pass544 blocked collision dispatched to move handler", result.queue.dispatchedMove, 1);
+    ok &= expect_int("pass544 blocked collision reports wall", result.movement.resultCode, MOVE_BLOCKED_WALL);
+    ok &= expect_int("pass544 blocked collision reports movement blocked", result.movementBlocked, 1);
+    ok &= expect_int("pass544 blocked collision flush requested", result.inputDiscardRequested, 1);
+    ok &= expect_int("pass544 blocked collision one blocked vblank requested", result.blockedMovementVblankWaitRequested, 1);
+    ok &= expect_int("pass544 blocked collision no successful step cooldown", result.timing.disabledMovementTicks, 0);
+    ok &= expect_int("pass544 blocked collision keeps input wait armed", result.stopWaitingForPlayerInput, 0);
+    ok &= expect_int("pass544 blocked collision pending replayed once", (int)queue.pendingReplayCount, 1);
+    ok &= expect_int("pass544 blocked collision pending cleared", queue.pendingClickPresent, 0);
+    ok &= expect_int("pass544 blocked collision keeps only reserved commands", (int)queue.count, 2);
+    ok &= expect_int("pass544 blocked collision drops nonreserved trailing turn", queue.commands[0].command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+    ok &= expect_int("pass544 blocked collision preserves pending stop command", queue.commands[1].command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+    ok &= expect_int("pass544 blocked collision release x preserved", queue.commands[0].x, 11);
+    ok &= expect_int("pass544 blocked collision pending stop x preserved", queue.commands[1].x, 12);
+
+
     printf("dm1V1MovementCommandCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
