@@ -24,7 +24,7 @@
     {
       "file": "LOADSAVE.C",
       "lines": "1940-1944",
-      "point": "new-game initial Hall state comes from DungeonHeader InitialPartyLocation; existing decoder/gates resolve PC34 to map0 x=1 y=3 dir=South",
+      "point": "legacy Hall-route assumption came from DungeonHeader InitialPartyLocation decoding to map0 x=1 y=3 dir=South; this must not be reused as proof that normal Firestaff DM1 launch starts in Hall of Champions",
       "must": [
         "G0298_B_NewGame",
         "G0306_i_PartyMapX",
@@ -107,12 +107,13 @@
     }
   ],
   "route_state_diagnosis": {
-    "source_initial_state": {
+    "legacy_hall_route_state": {
       "map": 0,
       "x": 1,
       "y": 3,
       "dir": "South"
     },
+    "normal_launch_baseline": "SUPERSEDED_BY_2026_05_14_WEBCHAT_SCREENSHOTS_NOT_HALL_OF_CHAMPIONS",
     "source_front_c127_at_initial_state": {
       "map": 0,
       "x": 1,

@@ -1,7 +1,8 @@
 # pass450_dm1_v1_hall_completion_audit_matrix
 
 - status: `PASS_WITH_BLOCKERS`
-- scope: DM1 V1 Hall of Champions only
+- scope: DM1 V1 Hall of Champions route only; not ordinary DM1 launch baseline
+- scope correction: 2026-05-14 webchat screenshots supersede using Hall of Champions as the normal Firestaff DM1 start baseline; this audit is Hall/resurrection-route evidence only.
 - evidence-backed completion: **80.0%** (8/10 matrix rows non-blocked)
 - parity claim: **not 100%**; original PC34 Hall candidate framebuffer/HUD parity remains blocked.
 - redmcsb: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
@@ -34,7 +35,7 @@
 
 ## Pass449 framebuffer comparator artifacts
 - `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json` exists=True sha256 `d9367fde120d531f90eae9a928b2054360dc6c00a21e99a5f420ba14d61f1fb2` bytes `10677`
-- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` exists=True sha256 `8a4ea7049cb66335ae57124b716420acb910979192b05e0f6bd8f8f071e1655a` bytes `98094`
+- `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` exists=True sha256 `fab844308b382c99e206db8c863ed40ccc9ef249b18d47b2aa732be27e451d2c` bytes `98363`
 
 ## Hall runtime probe artifacts
 - `parity-evidence/verification/pass450_dm1_v1_hall_completion_audit_matrix/hall_runtime_probe/dm1_v1_hall_walkaround_runtime_probe.json` exists=True sha256 `d785fffc6e0ce676d69203b663c577879931e2e60e7db8d5d0af6941991453f4` bytes `6268`

@@ -32,7 +32,7 @@ SOURCE_LOCKS = [
     {
         'file': 'LOADSAVE.C',
         'lines': '1940-1944',
-        'point': 'new-game initial Hall state comes from DungeonHeader InitialPartyLocation; existing decoder/gates resolve PC34 to map0 x=1 y=3 dir=South',
+        'point': 'legacy Hall-route assumption came from DungeonHeader InitialPartyLocation decoding to map0 x=1 y=3 dir=South; this must not be reused as proof that normal Firestaff DM1 launch starts in Hall of Champions',
         'must': ['G0298_B_NewGame', 'G0306_i_PartyMapX', 'G0307_i_PartyMapY', 'G0308_i_PartyDirection', 'G0309_i_PartyMapIndex = 0'],
     },
     {
@@ -163,7 +163,8 @@ def main() -> int:
         'route_labels': route_labels,
         'source_locks': SOURCE_LOCKS,
         'route_state_diagnosis': {
-            'source_initial_state': {'map': 0, 'x': 1, 'y': 3, 'dir': 'South'},
+            'legacy_hall_route_state': {'map': 0, 'x': 1, 'y': 3, 'dir': 'South'},
+            'normal_launch_baseline': 'SUPERSEDED_BY_2026_05_14_WEBCHAT_SCREENSHOTS_NOT_HALL_OF_CHAMPIONS',
             'source_front_c127_at_initial_state': {'map': 0, 'x': 1, 'y': 4, 'sensor': 16, 'type': 'C127_SENSOR_WALL_CHAMPION_PORTRAIT'},
             'captured_click_state_inferred_from_manifest': {'map': 0, 'x': 1, 'y': 3, 'dir': 'North'},
             'why_no_candidate_transition': 'the source portrait point was clicked after the capture route turned left twice and the intervening east step was blocked; F0372/F0275 therefore touches the north front wall, not the initial south C127 champion portrait wall at (1,4)',
@@ -204,14 +205,16 @@ def main() -> int:
         '',
         '## Diagnosis',
         '',
-        'The N2 capture did prove a stock PC34 Hall/front-mirror visible artifact, but it clicked after this manifest route:',
+        'The N2 capture did prove a stock PC34 Hall/front-mirror visible artifact for a Hall-specific route, but 2026-05-14 webchat screenshots supersede using Hall of Champions as the normal Firestaff DM1 start baseline. This gate must not be cited as proof that ordinary DM1 launch starts in Hall of Champions. The stale Hall route clicked after this manifest route:',
         '',
     ]
     for label in route_labels:
         lines.append(f'- {label}')
     lines += [
         '',
-        'That route is not the source-locked initial C127 click state.  From the fresh game the party starts at map0 `(1,3)` facing **South**, already facing the C127 champion portrait sensor on `(1,4)`.  The capture then turned left to East, attempted an East step that was blocked, and turned left again to **North** before clicking x111/y82.  Since turns do not move the party and blocked steps do not move it, the click touched the north front wall, not the initial south C127 wall.',
+        'That route is not a valid normal-start baseline. It is only a legacy Hall-specific route-state diagnosis: party map0 `(1,3)` facing **South**, facing the C127 champion portrait sensor on `(1,4)`. The capture then turned left to East, attempted an East step that was blocked, and turned left again to **North** before clicking x111/y82. Since turns do not move the party and blocked steps do not move it, the click touched the north front wall, not the south C127 wall.',
+        '',
+        'Correction 2026-05-14: Daniel provided webchat screenshot evidence that Firestaff DM1 does **not** begin in Hall of Champions. Treat Hall-route evidence as a bounded resurrection/champion-route lane only, never as the expected ordinary DM1 launch frame.',
         '',
         'That stale run is now superseded by the corrected initial-south rerun when `corrected_initial_south_transition.ok` is true. The diagnosis remains in the evidence record so the bad route is not reused.',
         '',

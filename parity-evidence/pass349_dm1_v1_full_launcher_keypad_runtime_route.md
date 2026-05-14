@@ -2,6 +2,8 @@
 
 Status: `FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED`
 
+Correction 2026-05-14: this pass proves launcher handoff and keypad delivery into a live DM1 V1 viewport route. It must not be cited as proof that ordinary Firestaff DM1 starts in Hall of Champions. Daniel provided webchat screenshot evidence that the observed Firestaff DM1 start is not Hall of Champions; Hall-specific route notes remain bounded to champion/resurrection-route work.
+
 ## Scope
 
 Proves the full product launcher path, not only the direct M11 game-view harness: `firestaff --script` launches DM1 V1 from the outer M12 launcher, then `key:kp*` keypad script tokens are delivered through SDL event polling into the active DM1 V1 live viewport route and the source-locked compat movement pipeline.
@@ -35,7 +37,7 @@ Route meaning:
 2. Six `down` tokens select the V1 launch row.
 3. Second `enter` requests runtime launch through M12.
 4. `key:kp4,key:kp4,key:kp4` are SDL keypad events that turn from south → east → north → west.
-5. `key:kp5` moves forward west in the Hall of Champions, changing party position from `(1,3)` to `(0,3)`.
+5. `key:kp5` moves forward west in the legacy Hall-route fixture, changing party position from `(1,3)` to `(0,3)`.
 6. `key:kp6` turns right to north and leaves the last pipeline result as a viewport-dirty turn command.
 
 The verifier records `full_launcher_keypad_runtime_probe.json` from the running `firestaff` binary via `FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON`. Observed final state:

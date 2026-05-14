@@ -4,6 +4,10 @@
 Read-only audit gate for the Hall of Champions only. It consolidates existing
 source/runtime/framebuffer evidence after the route, runtime, panel,
 sensor-disable, and pass449 work, and records exactly what remains blocked.
+
+Important: this is a bounded Hall/resurrection-route audit. 2026-05-14
+webchat screenshots supersede the old assumption that ordinary Firestaff DM1
+launch starts in Hall of Champions.
 """
 from __future__ import annotations
 
@@ -186,7 +190,7 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
         "manifestPath": str(manifest_path),
         "expectedStatus": N2_HALL_ARTIFACT_STATUS,
         "promotableLabel": N2_PROMOTABLE_LABEL,
-        "use": "original Hall/front-mirror visible context only; no full pixel parity claim",
+        "use": "original Hall/front-mirror visible context only; no full pixel parity claim and no normal DM1 start-baseline claim",
     }
     errors: list[str] = []
     if not root.is_dir():
@@ -255,7 +259,7 @@ def build_manifest() -> dict[str, Any]:
         "repo": str(ROOT),
         "head": run(["git", "rev-parse", "HEAD"])["outputTail"].strip(),
         "redmcsbRoot": str(REDMCSB),
-        "scope": "DM1 V1 Hall of Champions only",
+        "scope": "DM1 V1 Hall of Champions route only; not ordinary DM1 launch baseline",
         "completionPercentageEvidenceBacked": round((verified / total) * 100, 1),
         "completionNumerator": verified,
         "completionDenominator": total,
@@ -290,6 +294,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         "",
         f"- status: `{manifest['status']}`",
         f"- scope: {manifest['scope']}",
+        "- scope correction: 2026-05-14 webchat screenshots supersede using Hall of Champions as the normal Firestaff DM1 start baseline; this audit is Hall/resurrection-route evidence only.",
         f"- evidence-backed completion: **{manifest['completionPercentageEvidenceBacked']}%** ({manifest['completionNumerator']}/{manifest['completionDenominator']} matrix rows non-blocked)",
         "- parity claim: **not 100%**; original PC34 Hall candidate framebuffer/HUD parity remains blocked.",
         f"- redmcsb: `{manifest['redmcsbRoot']}`",
