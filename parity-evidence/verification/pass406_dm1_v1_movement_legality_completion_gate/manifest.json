@@ -1,5 +1,5 @@
 {
-  "branch": "integrate-main-20260513-blockers",
+  "branch": "main",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:706-818",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "ff4362a10b2eedbb98e4f07c61098a47795865e0",
+  "head": "656a969ef6902c80bbefea8095ead0fb2f5a4560",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-05-13T16:00:45.714802+00:00"
+  "timestampUtc": "2026-05-14T23:53:18.794713+00:00"
 }

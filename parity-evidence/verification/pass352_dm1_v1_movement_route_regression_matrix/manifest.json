@@ -1,5 +1,5 @@
 {
-  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "branch": "main",
   "checks": [
     {
       "kind": "evidence_file",
@@ -250,7 +250,7 @@
           "test_dm1_v1_movement_pipeline_pc34_compat",
           "-j2"
         ],
-        "outputTail": "firestaff_m11.dir/dm1_v1_save_load_system_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_blit_fill_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_dialog_scroll_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_click_routing_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_engine_pc34_compat.c.o\n[ 88%] Linking C static library libfirestaff_m11.a\n[ 88%] Built target firestaff_m11\n[ 88%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_render_modern_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/menu_hit_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/config_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/bestiary_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/data_validator_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/changelog_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/theme_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/animated_bg_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/input_remap_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/save_browser_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/custom_dungeon_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/item_encyclopedia_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/campaign_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/spell_reference_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/map_viewer_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/music_jukebox_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/gamepad_config_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/touch_layout_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/presentation_preview_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/screenshot_gallery_m12.c.o\n[100%] Linking C static library libfirestaff_m12.a\n[100%] Built target firestaff_m12\n[100%] Building C object CMakeFiles/firestaff.dir/firestaff_main_m11.c.o\n[100%] Linking C executable firestaff\n[100%] Built target firestaff\n[100%] Built target firestaff_m10\n[100%] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n[ 93%] Built target firestaff_m10\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/test_dm1_v1_movement_pipeline_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_creature_render_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_viewport_renderer_pc34.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_dungeon_world_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_movement_engine_pc34.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_game_state_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_champion_stats_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_inventory_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_spell_casting_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_stairs_level_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_text_message_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_sound_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_teleporter_pit_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_light_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat\n",
+        "outputTail": "/config_m12.c.o\n[ 92%] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o\n[ 92%] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o\n[ 92%] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o\n[ 92%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o\n[ 92%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/bestiary_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/data_validator_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/changelog_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/theme_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/animated_bg_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/input_remap_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/save_browser_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/custom_dungeon_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/item_encyclopedia_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/campaign_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/spell_reference_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/map_viewer_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/music_jukebox_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/gamepad_config_m12.c.o\n[100%] Building C object CMakeFiles/firestaff_m12.dir/touch_layout_m12.c.o\n[100%] Building C object CMakeFiles/firestaff_m12.dir/presentation_preview_m12.c.o\n[100%] Building C object CMakeFiles/firestaff_m12.dir/screenshot_gallery_m12.c.o\n[100%] Linking C static library libfirestaff_m12.a\n[100%] Built target firestaff_m12\n[100%] Building C object CMakeFiles/firestaff.dir/firestaff_main_m11.c.o\n[100%] Linking C executable firestaff\n[100%] Built target firestaff\n[100%] Built target firestaff_m10\n[100%] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n[ 90%] Built target firestaff_m10\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/test_dm1_v1_movement_pipeline_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_creature_render_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_viewport_renderer_pc34.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_dungeon_world_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_movement_engine_pc34.c.o\n/home/trv2/work/firestaff/dm1_v2_viewport_renderer_pc34.c: In function \u2018dm1_v2_vp_emit_d0_d3_draw_list\u2019:\n/home/trv2/work/firestaff/dm1_v2_viewport_renderer_pc34.c:581:67: warning: array subscript [0, 3] is outside array bounds of \u2018const DM1_V2_ViewportSquareInput[4][3]\u2019 [-Warray-bounds=]\n  581 |         const DM1_V2_ViewportSquareInput* square = &input->squares[depth][lateralIndex];\n      |                                                     ~~~~~~~~~~~~~~^~~~~~~\nIn file included from /home/trv2/work/firestaff/dm1_v2_viewport_renderer_pc34.c:1:\n/home/trv2/work/firestaff/dm1_v2_viewport_renderer_pc34.h:63:32: note: while referencing \u2018squares\u2019\n   63 |     DM1_V2_ViewportSquareInput squares[4][3]; /* depth D0-D3, lateral L/C/R */\n      |                                ^~~~~~~\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_game_state_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_champion_stats_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_inventory_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_spell_casting_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_stairs_level_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_text_message_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_sound_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_teleporter_pit_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_light_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat\n",
         "returncode": 0
       }
     },
@@ -261,7 +261,7 @@
         "cmd": [
           "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/test_dm1_v1_input_command_queue_pc34_compat"
         ],
-        "outputTail": "probe=dm1_v1_input_command_queue_pc34_compat\nsourceEvidence=COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19\ndm1V1InputCommandQueueInvariantOk=1\n",
+        "outputTail": "probe=dm1_v1_input_command_queue_pc34_compat\nsourceEvidence=COMMAND.C:6,72-84,106-121,252-260,272-305,579-610,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19\ndm1V1InputCommandQueueInvariantOk=1\n",
         "returncode": 0
       }
     },
@@ -272,7 +272,7 @@
         "cmd": [
           "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/test_dm1_v1_movement_pipeline_pc34_compat"
         ],
-        "outputTail": "DM1 V1 Movement Pipeline Integration Tests\nSource: MOVESENS.C, COMMAND.C, CLIKMENU.C, CHAMPION.C, GAMELOOP.C\n\n\n138 passed, 0 failed\n",
+        "outputTail": "DM1 V1 Movement Pipeline Integration Tests\nSource: MOVESENS.C, COMMAND.C, CLIKMENU.C, CHAMPION.C, GAMELOOP.C\n\n\n180 passed, 0 failed\n",
         "returncode": 0
       }
     },
@@ -281,7 +281,7 @@
       "kind": "runtime_route",
       "observed": {
         "active": 1,
-        "gameTick": 11,
+        "gameTick": 20,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -289,7 +289,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -302,11 +302,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/script_tokens_runtime_probe.json",
       "result": {
         "cmd": [
@@ -334,7 +339,7 @@
       "kind": "runtime_route",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -342,7 +347,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -355,11 +360,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/arrow_key_symbols_runtime_probe.json",
       "result": {
         "cmd": [
@@ -387,7 +397,7 @@
       "kind": "runtime_route",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -395,7 +405,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -408,11 +418,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_aliases_runtime_probe.json",
       "result": {
         "cmd": [
@@ -440,7 +455,7 @@
       "kind": "runtime_route",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -448,7 +463,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -461,11 +476,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_hyphen_aliases_runtime_probe.json",
       "result": {
         "cmd": [
@@ -507,7 +527,7 @@
       "viewportDirty": 1
     }
   },
-  "head": "1f57c034a026d07224ba1a4ecb9c08563e5656ef",
+  "head": "656a969ef6902c80bbefea8095ead0fb2f5a4560",
   "notClaimed": [
     "DOSBox/original FIRES debugger hit",
     "pixel parity",
@@ -523,7 +543,7 @@
       "case": "script_tokens",
       "observed": {
         "active": 1,
-        "gameTick": 11,
+        "gameTick": 20,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -531,7 +551,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -544,11 +564,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/script_tokens_runtime_probe.json",
       "result": {
         "cmd": [
@@ -575,7 +600,7 @@
       "case": "arrow_key_symbols",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -583,7 +608,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -596,11 +621,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/arrow_key_symbols_runtime_probe.json",
       "result": {
         "cmd": [
@@ -627,7 +657,7 @@
       "case": "pc34_numpad_aliases",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -635,7 +665,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -648,11 +678,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_aliases_runtime_probe.json",
       "result": {
         "cmd": [
@@ -679,7 +714,7 @@
       "case": "pc34_numpad_hyphen_aliases",
       "observed": {
         "active": 1,
-        "gameTick": 10,
+        "gameTick": 19,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -687,7 +722,7 @@
           "championCount": 0,
           "direction": 0,
           "mapIndex": 0,
-          "mapX": 0,
+          "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
@@ -700,11 +735,16 @@
           "turnApplied": 1,
           "viewportDirty": 1
         },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 4,
+          "inputRedrawDrawCount": 5,
+          "lastInputRedrawAfterViewportDirty": 1
+        },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": true,
+      "ok": false,
       "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_hyphen_aliases_runtime_probe.json",
       "result": {
         "cmd": [
@@ -845,6 +885,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
-  "timestampUtc": "2026-05-07T20:41:23.634745+00:00"
+  "status": "BLOCKED_PASS352_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX",
+  "timestampUtc": "2026-05-14T23:53:04.027315+00:00"
 }
