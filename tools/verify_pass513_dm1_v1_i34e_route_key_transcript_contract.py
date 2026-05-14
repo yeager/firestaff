@@ -43,6 +43,7 @@ ACCEPTED_KEY_ROWS = [
     {"normalizedKeyCode":"0x0051","ascii":"Q","command":"C004_COMMAND_MOVE_RIGHT","handler":"F0366"},
 ]
 REJECT_AS_NON_PROMOTABLE = ["route labels without rawKeyCode plus normalizedKeyCode plus M528 value","F0361 entry/exit records without G0432 slot, G0434 delta, and G2153 increment","F0380 records where G2153 is zero, command is gated by movement cooldown, or no matching pop/decrement occurs","state-delta screenshots lacking the preceding F0365/F0366 handler and F0128/F0097 boundary","repeated capture hashes unless the transcript proves a source-owned blocked/no-op route"]
+SCAFFOLD_RUNTIME_FIELDS = ["m527WasNonEmpty","f0361QueueSlot","g0434Before","g0434After","g2153BeforeEnqueue","g2153AfterEnqueue","g0433Before","g0433After","g2153BeforePop","g2153AfterPop","partyBeforeMap","partyBeforeX","partyBeforeY","partyBeforeDir","partyAfterMap","partyAfterX","partyAfterY","partyAfterDir","blockedOrNoopReason","f0128Direction","f0128MapX","f0128MapY","f0097Presented"]
 REQUIRED_TRANSCRIPT_COUNTS = {"turnRows": 1, "successfulStepRows": 1, "blockedOrNoopRows": 1}
 
 def compact(text: str) -> str: return " ".join(text.split())
@@ -136,8 +137,30 @@ def transcript_rows(payload: Any) -> list[dict[str, Any]]:
             if isinstance(rows, list):
                 return rows
     return []
+def scaffold_missing_runtime_fields(payload: Any, rows: list[dict[str, Any]]) -> list[str]:
+    missing: set[str] = set()
+    if isinstance(payload, dict):
+        schema = str(payload.get("schema", ""))
+        status = str(payload.get("status", ""))
+        if "scaffold" in schema.lower() or "SCAFFOLD_ONLY" in status:
+            missing.update(SCAFFOLD_RUNTIME_FIELDS)
+        for field in payload.get("missingOriginalRuntimeFields", []):
+            if isinstance(field, str):
+                missing.add(field)
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("scaffoldOnly"):
+            missing.update(SCAFFOLD_RUNTIME_FIELDS)
+        for field in row.get("missingOriginalRuntimeFields", []):
+            if isinstance(field, str):
+                missing.add(field)
+    missing.discard("routeId")
+    missing.discard("sampleIndex")
+    missing.discard("inputSource")
+    return sorted(missing)
 def validate_transcript(path_text: str | None) -> dict[str, Any]:
-    result: dict[str, Any] = {"provided": bool(path_text), "path": path_text, "ok": False, "status": "not_provided", "problems": [], "rowCount": 0, "counts": {"turnRows": 0, "successfulStepRows": 0, "blockedOrNoopRows": 0}}
+    result: dict[str, Any] = {"provided": bool(path_text), "path": path_text, "ok": False, "status": "not_provided", "problems": [], "rowCount": 0, "scaffoldOnly": False, "missingRuntimeFields": [], "counts": {"turnRows": 0, "successfulStepRows": 0, "blockedOrNoopRows": 0}}
     if not path_text:
         return result
     path = Path(path_text)
@@ -158,11 +181,21 @@ def validate_transcript(path_text: str | None) -> dict[str, Any]:
     result["rowCount"] = len(rows)
     if not rows:
         result["problems"].append("transcript must be a JSON array or object with rows/transcriptRows/samples")
+    scaffold_missing = scaffold_missing_runtime_fields(payload, rows)
+    if scaffold_missing:
+        result["scaffoldOnly"] = True
+        result["status"] = "scaffold_only"
+        result["missingRuntimeFields"] = scaffold_missing
+        result["problems"].append("transcript is scaffold-only; replace with debugger-observed original PC/I34E runtime fields: " + ", ".join(scaffold_missing))
     seen_hashes: dict[str, list[int]] = {}
     for index, row in enumerate(rows):
         prefix = f"row[{index}]"
         if not isinstance(row, dict):
             result["problems"].append(f"{prefix}: row is not an object")
+            continue
+        row_scaffold_missing = scaffold_missing_runtime_fields({}, [row])
+        if row_scaffold_missing:
+            result["problems"].append(f"{prefix}: scaffold-only row lacks debugger-observed fields {row_scaffold_missing}")
             continue
         missing = [field for field in REQUIRED_TRANSCRIPT_FIELDS if field not in row]
         if missing:
@@ -224,7 +257,7 @@ def validate_transcript(path_text: str | None) -> dict[str, Any]:
             if repeated_without_blocker:
                 result["problems"].append(f"capture hash {digest} repeats in rows {indexes}; repeats require blockedOrNoopReason on every repeated row")
     result["ok"] = not result["problems"]
-    result["status"] = "promotable" if result["ok"] else "non_promotable"
+    result["status"] = "promotable" if result["ok"] else ("scaffold_only" if result["scaffoldOnly"] else "non_promotable")
     return result
 def build_payload() -> dict[str, Any]:
     source = audit_source(); priors = prior_gate_rows(); candidates = transcript_candidates(); problems = []
