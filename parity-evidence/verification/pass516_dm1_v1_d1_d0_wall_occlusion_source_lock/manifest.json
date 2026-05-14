@@ -1,0 +1,356 @@
+{
+  "firestaffChecks": [
+    {
+      "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
+      "hits": [
+        {
+          "line": 216,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 216,
+          "needle": "DUNVIEW.C:7459-7460 side ornament then return"
+        },
+        {
+          "line": 217,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 217,
+          "needle": "DUNVIEW.C:7627-7628 side ornament then return"
+        },
+        {
+          "line": 218,
+          "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
+        },
+        {
+          "line": 218,
+          "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
+        },
+        {
+          "line": 219,
+          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
+        },
+        {
+          "line": 219,
+          "needle": "DUNVIEW.C:8036-8038 wall case returns"
+        },
+        {
+          "line": 220,
+          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
+          "line": 220,
+          "needle": "DUNVIEW.C:8142-8144 wall case returns"
+        }
+      ],
+      "id": "local-d1-d0-wall-specs-present",
+      "lines": "216-220",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f547f47708868f64e1c1183ff4c227d4745644bf39ca980db58dfd12c796f18c",
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.",
+      "hits": [
+        {
+          "line": 147,
+          "needle": "DM1_VIEW_SQUARE_D1L, 0x0032"
+        },
+        {
+          "line": 148,
+          "needle": "DM1_VIEW_SQUARE_D1R, 0x0041"
+        },
+        {
+          "line": 149,
+          "needle": "DM1_VIEW_SQUARE_D0L, 0x0002"
+        },
+        {
+          "line": 150,
+          "needle": "DM1_VIEW_SQUARE_D0R, 0x0001"
+        }
+      ],
+      "id": "local-side-occlusion-d1-d0-cell-orders-present",
+      "lines": "147-150",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f547f47708868f64e1c1183ff4c227d4745644bf39ca980db58dfd12c796f18c",
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
+      "hits": [
+        {
+          "line": 190,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 191,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 192,
+          "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
+        },
+        {
+          "line": 193,
+          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
+        },
+        {
+          "line": 194,
+          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
+          "line": 240,
+          "needle": "test_wall_item_occlusion_alcove_exception"
+        }
+      ],
+      "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
+      "lines": "190-284",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "06bc958292e1ce26c5f23394428e61d823f1fdca6c232f11092d35f13ce1c201",
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "localReferences": [
+    {
+      "bytes": 363417,
+      "exists": true,
+      "id": "dm1-graphics.dat",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "exists": true,
+      "id": "dm1-dungeon.dat",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "bytes": 12002,
+      "exists": true,
+      "id": "dm1-title",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    {
+      "bytes": 1962,
+      "exists": true,
+      "id": "dm1-readme.md",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "sha256": "e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc"
+    }
+  ],
+  "redmcsbChecks": [
+    {
+      "claim": "F0128 draws D1L, D1R, D1C, then D0L, D0R, and finally D0C.",
+      "hits": [
+        {
+          "line": 8525,
+          "needle": "F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8529,
+          "needle": "F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8533,
+          "needle": "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8537,
+          "needle": "F0125_DUNGEONVIEW_DrawSquareD0L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8541,
+          "needle": "F0126_DUNGEONVIEW_DrawSquareD0R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8542,
+          "needle": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+        }
+      ],
+      "id": "f0128-d1-then-d0-near-order",
+      "lines": "8524-8542",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D1L wall draws the D1L side zone, tests only the facing ornament, then returns before open-cell content.",
+      "hits": [
+        {
+          "line": 7436,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7446,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C02_WALL_D1R], C713_ZONE_WALL_D1L);"
+        },
+        {
+          "line": 7454,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C03_WALL_D1L], C713_ZONE_WALL_D1L);"
+        },
+        {
+          "line": 7459,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0214_ai_SquareAspect[M551_RIGHT_WALL_ORNAMENT_ORDINAL], M585_VIEW_WALL_D1L_RIGHT);"
+        },
+        {
+          "line": 7460,
+          "needle": "return;"
+        }
+      ],
+      "id": "f0122-d1l-side-wall-return",
+      "lines": "7436-7460",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D1R mirrors D1L: opposite bitmap when flipped, D1R zone, ornament probe, then return.",
+      "hits": [
+        {
+          "line": 7604,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7614,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C03_WALL_D1L], C714_ZONE_WALL_D1R);"
+        },
+        {
+          "line": 7622,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C02_WALL_D1R], C714_ZONE_WALL_D1R);"
+        },
+        {
+          "line": 7627,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0216_ai_SquareAspect[M553_LEFT_WALL_ORNAMENT_ORDINAL], M586_VIEW_WALL_D1R_LEFT);"
+        },
+        {
+          "line": 7628,
+          "needle": "return;"
+        }
+      ],
+      "id": "f0123-d1r-side-wall-return",
+      "lines": "7604-7628",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D1C front wall is opaque/centered and reveals contained content only for the explicit front-alcove exception.",
+      "hits": [
+        {
+          "line": 7834,
+          "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C04_WALL_D1C], C712_ZONE_WALL_D1C, G0076_B_UseFlippedWallAndFootprintsBitmaps);"
+        },
+        {
+          "line": 7840,
+          "needle": "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C04_WALL_D1C], C712_ZONE_WALL_D1C);"
+        },
+        {
+          "line": 7842,
+          "needle": "if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))"
+        },
+        {
+          "line": 7843,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);"
+        }
+      ],
+      "id": "f0124-d1c-front-wall-alcove-exception",
+      "lines": "7828-7844",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D0 side-wall cases return before the side-lane teleporter-field tail; open D0 lanes use one back cell only.",
+      "hits": [
+        {
+          "line": 8007,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 8017,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C00_WALL_D0R], C716_ZONE_WALL_D0L);"
+        },
+        {
+          "line": 8033,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C01_WALL_D0L], C716_ZONE_WALL_D0L);"
+        },
+        {
+          "line": 8038,
+          "needle": "return;"
+        },
+        {
+          "line": 8059,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M610_VIEW_SQUARE_D0L]], C716_ZONE_WALL_D0L);"
+        },
+        {
+          "line": 8117,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 8127,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C01_WALL_D0L], C717_ZONE_WALL_D0R);"
+        },
+        {
+          "line": 8139,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C00_WALL_D0R], C717_ZONE_WALL_D0R);"
+        },
+        {
+          "line": 8144,
+          "needle": "return;"
+        },
+        {
+          "line": 8159,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);"
+        }
+      ],
+      "id": "f0125-f0126-d0-side-walls-return-before-field",
+      "lines": "8007-8159",
+      "missing": [],
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass516 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

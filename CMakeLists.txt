@@ -1902,6 +1902,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 D1/D0 side-front wall occlusion source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass516_dm1_v1_d1_d0_wall_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
