@@ -130,9 +130,11 @@ SOURCE_CHECKS: list[dict[str, Any]] = [
             "G0324_B_DrawViewportRequested = C1_TRUE",
             "M526_WaitVerticalBlank();",
             "G0296_puc_Bitmap_Viewport",
+            "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);",
+            "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);",
         ],
         "ordered": True,
-        "claim": "DUNVIEW composition buffer G0296 is presented by DRAWVIEW after vblank/present gating.",
+        "claim": "DUNVIEW composition buffer G0296 is presented by DRAWVIEW after vblank/present gating through the PC34 viewport zone and video-driver blit route.",
     },
 ]
 
@@ -211,6 +213,20 @@ def line_no(text: str, needle: str) -> int | None:
     return None
 
 
+def window_needle_lines(path: Path, line_range: str, needles: list[str]) -> dict[str, int | None]:
+    start, end = (int(part) for part in line_range.split("-", 1))
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    window = lines[start - 1:end]
+    result: dict[str, int | None] = {}
+    for needle in needles:
+        result[needle] = None
+        for offset, line in enumerate(window, start):
+            if needle in line:
+                result[needle] = offset
+                break
+    return result
+
+
 def check_source(spec: dict[str, Any]) -> dict[str, Any]:
     path = RED / spec["file"]
     window = slice_text(path, spec["lines"])
@@ -232,6 +248,7 @@ def check_source(spec: dict[str, Any]) -> dict[str, Any]:
         "lineRange": spec["lines"],
         "sha256": sha256(path),
         "claim": spec["claim"],
+        "needleLines": window_needle_lines(path, spec["lines"], spec["needles"]),
         "missing": missing,
         "outOfOrder": out_of_order,
     }
@@ -315,6 +332,8 @@ def main() -> int:
     report = ["# Pass503 - DM1 V1 viewport wall draw-order evidence", "", f"Status: {status}", "", "## ReDMCSB source locks"]
     for row in source_results:
         report.append(f"- {row['file']} {row['function']} lines {row['lineRange']} ok={row['ok']}: {row['claim']}")
+        for needle, line in row["needleLines"].items():
+            report.append(f"  - line {line}: {needle}")
     report += ["", "## Firestaff hooks", ""]
     for row in local_results:
         report.append(f"- {row['file']} line {row['line']} ok={row['ok']}: {row['id']}")

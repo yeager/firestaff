@@ -142,6 +142,17 @@
       "id": "f0128-far-to-near-square-replay",
       "lineRange": "8318-8543",
       "missing": [],
+      "needleLines": {
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling();": 8338,
+        "F0116_DUNGEONVIEW_DrawSquareD3L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);": 8491,
+        "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);": 8499,
+        "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);": 8521,
+        "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);": 8533,
+        "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);": 8542,
+        "F0676_DrawD3L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);": 8482,
+        "M598_VIEW_SQUARE_D4L": 8469,
+        "void F0128_DUNGEONVIEW_Draw_CPSF(": 8318
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
@@ -153,6 +164,14 @@
       "id": "f0115-cell-layering-contract",
       "lineRange": "4547-4582",
       "missing": [],
+      "needleLines": {
+        "Draw one creature at the cell being processed": 4573,
+        "Draw only explosions at specified cell": 4580,
+        "Draw only projectiles at specified cell": 4576,
+        "If a Fluxcage is present, draw the fluxcage": 4582,
+        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(": 4547,
+        "draw each object found": 4570
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
@@ -164,6 +183,14 @@
       "id": "wall-blit-routes-into-viewport-buffer",
       "lineRange": "3048-3180",
       "missing": [],
+      "needleLines": {
+        "CM1_COLOR_NO_TRANSPARENCY": 3072,
+        "F0132_VIDEO_Blit(P0105_puc_Bitmap, G0296_puc_Bitmap_Viewport": 3055,
+        "STATICFUNCTION void F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(": 3159,
+        "void F0100_DUNGEONVIEW_DrawWallSetBitmap(": 3048,
+        "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(": 3065,
+        "void F0102_DUNGEONVIEW_DrawDoorBitmap(": 3082
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
@@ -175,6 +202,16 @@
       "id": "d3-wall-return-and-alcove-exception",
       "lineRange": "6226-6836",
       "missing": [],
+      "needleLines": {
+        "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C10_WALL_D3R2], C703_ZONE_WALL_D3R2);": 6326,
+        "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C11_WALL_D3L2], C702_ZONE_WALL_D3L2);": 6259,
+        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C);": 6714,
+        "L0200_i_Order = C0x0000_CELL_ORDER_ALCOVE;": 6434,
+        "STATICFUNCTION void F0116_DUNGEONVIEW_DrawSquareD3L(": 6361,
+        "STATICFUNCTION void F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(": 6642,
+        "void F0676_DrawD3L2(": 6226,
+        "void F0677_DrawD3R2(": 6293
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
@@ -186,6 +223,17 @@
       "id": "d2-d1-d0-wall-return-contract",
       "lineRange": "6837-8308",
       "missing": [],
+      "needleLines": {
+        "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C06_WALL_D2L2]": 6854,
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);": 7843,
+        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C09_WALL_D2C], C709_ZONE_WALL_D2C);": 7306,
+        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C(": 7244,
+        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C(": 7727,
+        "STATICFUNCTION void F0125_DUNGEONVIEW_DrawSquareD0L(": 7960,
+        "STATICFUNCTION void F0126_DUNGEONVIEW_DrawSquareD0R(": 8064,
+        "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C(": 8164,
+        "STATICFUNCTION void F0678_DrawD2L2(": 6837
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
@@ -197,17 +245,32 @@
       "id": "front-door-two-pass-occlusion",
       "lineRange": "7873-7938",
       "missing": [],
+      "needleLines": {
+        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT": 7875,
+        "F0111_DUNGEONVIEW_DrawDoor(L0218_ai_SquareAspect[M557_DOOR_THING_INDEX]": 7905,
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING]": 7875,
+        "L0217_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT;": 7910,
+        "case C17_ELEMENT_DOOR_FRONT:": 7873
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
     },
     {
-      "claim": "DUNVIEW composition buffer G0296 is presented by DRAWVIEW after vblank/present gating.",
+      "claim": "DUNVIEW composition buffer G0296 is presented by DRAWVIEW after vblank/present gating through the PC34 viewport zone and video-driver blit route.",
       "file": "DRAWVIEW.C",
       "function": "F0097_DUNGEONVIEW_DrawViewport",
       "id": "viewport-present-boundary",
       "lineRange": "709-858",
       "missing": [],
+      "needleLines": {
+        "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);": 857,
+        "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);": 850,
+        "G0296_puc_Bitmap_Viewport": 721,
+        "G0324_B_DrawViewportRequested = C1_TRUE": 721,
+        "M526_WaitVerticalBlank();": 722,
+        "void F0097_DUNGEONVIEW_DrawViewport(": 709
+      },
       "ok": true,
       "outOfOrder": [],
       "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
