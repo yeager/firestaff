@@ -2064,6 +2064,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 movement sensor rotation defer source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass510_dm1_v1_movement_sensor_rotation_defer_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass510_dm1_v1_movement_sensor_rotation_defer_source_lock.py
+    )
+endif()
+
+
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
