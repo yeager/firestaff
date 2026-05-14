@@ -482,6 +482,58 @@ static void test_door_front_occlusion_split_passes(void)
     check_int("door_front_occlusion.no_side_door_spec", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
 }
 
+static void test_side_door_stairs_occlusion_cell_orders(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        uint16_t order;
+        unsigned char cells[3];
+        unsigned char count;
+        const char *function_name;
+        const char *branch_line;
+        const char *f0115_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L, 0x0321, { 1, 2, 3 }, 3, "F0116_DUNGEONVIEW_DrawSquareD3L", "6438", "6480" },
+        { DM1_VIEW_SQUARE_D3R, 0x0412, { 2, 1, 4 }, 3, "F0117_DUNGEONVIEW_DrawSquareD3R", "6574", "6621" },
+        { DM1_VIEW_SQUARE_D2L, 0x0342, { 2, 4, 3 }, 3, "F0119_DUNGEONVIEW_DrawSquareD2L", "6974", "7027" },
+        { DM1_VIEW_SQUARE_D2R, 0x0431, { 1, 3, 4 }, 3, "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "7167", "7219" },
+        { DM1_VIEW_SQUARE_D1L, 0x0032, { 2, 3, 0 }, 2, "F0122_DUNGEONVIEW_DrawSquareD1L", "7461", "7536" },
+        { DM1_VIEW_SQUARE_D1R, 0x0041, { 1, 4, 0 }, 2, "F0123_DUNGEONVIEW_DrawSquareD1R", "7629", "7704" },
+        { DM1_VIEW_SQUARE_D0L, 0x0002, { 2, 0, 0 }, 1, "F0125_DUNGEONVIEW_DrawSquareD0L", "8000", "8005" },
+        { DM1_VIEW_SQUARE_D0R, 0x0001, { 1, 0, 0 }, 1, "F0126_DUNGEONVIEW_DrawSquareD0R", "8110", "8115" },
+    };
+
+    check_int("side_occlusion.count", (int)dm1_viewport_3d_side_occlusion_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportSideOcclusionSpec *spec =
+            dm1_viewport_3d_get_side_occlusion_spec_for_square(expected[i].square);
+        DM1_ViewportCellOrder decoded;
+        char id[128];
+        snprintf(id, sizeof(id), "side_occlusion.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "side_occlusion.%zu.function", i);
+        check_int(id, strcmp(spec->function_name, expected[i].function_name) == 0, 1);
+        snprintf(id, sizeof(id), "side_occlusion.%zu.order", i);
+        check_int(id, spec->cell_order, expected[i].order);
+        decoded = dm1_viewport_3d_decode_cell_order(spec->cell_order);
+        snprintf(id, sizeof(id), "side_occlusion.%zu.not_door_pass", i);
+        check_int(id, decoded.door_pass, 0);
+        snprintf(id, sizeof(id), "side_occlusion.%zu.count", i);
+        check_int(id, decoded.cell_count, expected[i].count);
+        for (unsigned char c = 0; c < expected[i].count; ++c) {
+            snprintf(id, sizeof(id), "side_occlusion.%zu.cell.%u", i, c);
+            check_int(id, decoded.cells[c], expected[i].cells[c]);
+        }
+        snprintf(id, sizeof(id), "side_occlusion.%zu.branch_source", i);
+        check_int(id, strstr(spec->branch_source_lines, expected[i].branch_line) != NULL, 1);
+        snprintf(id, sizeof(id), "side_occlusion.%zu.f0115_source", i);
+        check_int(id, strstr(spec->f0115_source_lines, expected[i].f0115_line) != NULL, 1);
+    }
+    check_int("side_occlusion.out_of_range", dm1_viewport_3d_get_side_occlusion_spec(8) == NULL, 1);
+    check_int("side_occlusion.no_center_spec", dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_VIEW_SQUARE_D2C) == NULL, 1);
+}
+
 static void test_post_command_redraw_contract(void)
 {
     const DM1_ViewportPostCommandRedrawSpec *spec = dm1_viewport_3d_post_command_redraw_spec();
@@ -634,6 +686,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.d0c_field_order", strstr(e, "DUNVIEW.C:8241-8308") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
+    check_int("source_evidence.side_occlusion", strstr(e, "side-door/stairs-side F0115 cell-order occlusion") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.wall_source_clip_gate", strstr(e, "COORD.C:2390-2409") != NULL, 1);
     check_int("source_evidence.wall_empty_blit_gate", strstr(e, "IMAGE3.C:866-889") != NULL, 1);
@@ -655,6 +708,7 @@ int main(void)
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
     test_door_front_occlusion_split_passes();
+    test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();

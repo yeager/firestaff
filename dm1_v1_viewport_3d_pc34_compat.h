@@ -284,6 +284,18 @@ typedef struct {
     const char *front_pass_source_lines;
 } DM1_ViewportDoorFrontOcclusionSpec;
 
+/* Side-door/stairs-side branches do not draw a door bitmap in front of the
+ * cell contents.  ReDMCSB still routes them through F0115 with a square-
+ * specific packed cell order, which defines which side sub-cells are visible
+ * around the side wall/stairs silhouette. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    uint16_t cell_order;
+    const char *function_name;
+    const char *branch_source_lines;
+    const char *f0115_source_lines;
+} DM1_ViewportSideOcclusionSpec;
+
 typedef struct {
     bool command_mutates_before_draw;
     bool redraw_uses_party_tuple;
@@ -614,6 +626,9 @@ int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectile
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+size_t dm1_viewport_3d_side_occlusion_spec_count(void);
+const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec(size_t index);
+const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_ViewSquareIndex square);
 size_t dm1_viewport_3d_floor_field_order_spec_count(void);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square);

@@ -139,6 +139,17 @@ static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[] =
     { DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349, "DUNVIEW.C:7874-7875 pass1 rear cells before frame", "DUNVIEW.C:7877-7902 top/side frame and button draw", "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament", "DUNVIEW.C:7910-7937 pass2 front cells after door" },
 };
 
+static const DM1_ViewportSideOcclusionSpec s_side_occlusion_specs[] = {
+    { DM1_VIEW_SQUARE_D3L, 0x0321, "F0116_DUNGEONVIEW_DrawSquareD3L", "DUNVIEW.C:6438-6441 door-side/stairs-side branch", "DUNVIEW.C:6478-6480 floor ornament then F0115 with C0x0321" },
+    { DM1_VIEW_SQUARE_D3R, 0x0412, "F0117_DUNGEONVIEW_DrawSquareD3R", "DUNVIEW.C:6574-6577 door-side/stairs-side branch", "DUNVIEW.C:6619-6621 floor ornament then F0115 with C0x0412" },
+    { DM1_VIEW_SQUARE_D2L, 0x0342, "F0119_DUNGEONVIEW_DrawSquareD2L", "DUNVIEW.C:6974-6986 stairs-side falls through to door-side order", "DUNVIEW.C:7017-7027 floor ornament/ceiling pit then F0115 with C0x0342" },
+    { DM1_VIEW_SQUARE_D2R, 0x0431, "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "DUNVIEW.C:7167-7179 stairs-side falls through to door-side order", "DUNVIEW.C:7209-7219 floor ornament/ceiling pit then F0115 with C0x0431" },
+    { DM1_VIEW_SQUARE_D1L, 0x0032, "F0122_DUNGEONVIEW_DrawSquareD1L", "DUNVIEW.C:7461-7491 stairs-side falls through to door-side order", "DUNVIEW.C:7524-7536 floor ornament/ceiling pit then F0115 with C0x0032" },
+    { DM1_VIEW_SQUARE_D1R, 0x0041, "F0123_DUNGEONVIEW_DrawSquareD1R", "DUNVIEW.C:7629-7659 stairs-side falls through to door-side order", "DUNVIEW.C:7692-7704 floor ornament/ceiling pit then F0115 with C0x0041" },
+    { DM1_VIEW_SQUARE_D0L, 0x0002, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8000-8005 door-side/teleporter branch", "DUNVIEW.C:8005 F0115 with C0x0002" },
+    { DM1_VIEW_SQUARE_D0R, 0x0001, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8110-8115 door-side/teleporter branch", "DUNVIEW.C:8115 F0115 with C0x0001" },
+};
+
 static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     true,
     true,
@@ -824,6 +835,25 @@ const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusi
     return NULL;
 }
 
+size_t dm1_viewport_3d_side_occlusion_spec_count(void)
+{
+    return sizeof(s_side_occlusion_specs) / sizeof(s_side_occlusion_specs[0]);
+}
+
+const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_side_occlusion_spec_count()) return NULL;
+    return &s_side_occlusion_specs[index];
+}
+
+const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_side_occlusion_spec_count(); ++i) {
+        if (s_side_occlusion_specs[i].square == square) return &s_side_occlusion_specs[i];
+    }
+    return NULL;
+}
+
 size_t dm1_viewport_3d_floor_field_order_spec_count(void)
 {
     return sizeof(s_floor_field_order_specs) / sizeof(s_floor_field_order_specs[0]);
@@ -887,6 +917,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7874-7937 D1C door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"
