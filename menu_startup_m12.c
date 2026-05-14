@@ -867,6 +867,7 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         return;
     }
     state->quickResumeAvailable = 0;
+    state->quickResumeLaunchRequested = 0;
     state->quickResumeGameId[0] = '\0';
     state->quickResumeSavePath[0] = '\0';
 
@@ -1080,6 +1081,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->museumPageIndex = 0;
     M12_Changelog_Init(&state->changelog);
     state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
     state->messageLine1 = "";
@@ -1863,6 +1865,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     /* Launch row — V3 blocks launch with coming-soon message */
                     if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
                         state->launchRequested = 0;
+                        state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
                         state->messageLine2 = m12_tr(state, "COMING SOON");
@@ -1895,6 +1898,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->launchRequested = 1;
+                        state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
                         state->messageLine2 = (state->activatedIndex >= 0 &&
@@ -2069,12 +2073,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
                     if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
                         state->launchRequested = 0;
+                        state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = "V3 MODERN/3D";
                         state->messageLine2 = "COMING SOON";
                         state->messageLine3 = "ESC RETURNS TO MENU";
                     } else {
                         state->launchRequested = 1;
+                        state->quickResumeLaunchRequested = 1;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = "RESUMING SAVE";
                         state->messageLine2 = state->entries[qrSlot].title;
@@ -2087,6 +2093,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->messageLine3 = "ESC RETURNS TO MENU";
                 }
             } else {
+                state->quickResumeLaunchRequested = 0;
                 m12_activate_selected(state);
             }
             break;
@@ -5327,6 +5334,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
     if (state->quickResumeAvailable &&
+        state->quickResumeLaunchRequested &&
         state->quickResumeSavePath[0] != '\0' &&
         state->quickResumeGameId[0] != '\0' &&
         intent.gameId &&

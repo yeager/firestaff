@@ -225,6 +225,7 @@ typedef struct M12_StartupMenuState {
     /* Quick resume: if a quicksave exists for a game, allow direct
      * continue from the main menu without navigating game options. */
     int quickResumeAvailable;
+    int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
 } M12_StartupMenuState;

@@ -95,6 +95,20 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, savePath) == 0,
                 "Resume launch intent must carry exact save path")) return 1;
 
-    puts("ok: no-save disables Resume; valid DM1 quicksave enables Resume and carries save path");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    force_dm1_available(&state);
+    state.selectedIndex = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 0, "normal DM1 accept opens game options first")) return 1;
+    if (!expect(state.quickResumeLaunchRequested == 0,
+                "normal DM1 accept must not arm quick Resume")) return 1;
+    state.launchRequested = 1;
+    state.activatedIndex = 0;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1, "normal DM1 launch intent should still be valid")) return 1;
+    if (!expect(intent.savePath == NULL,
+                "normal DM1 launch must not inherit quick Resume save path")) return 1;
+
+    puts("ok: quick Resume only carries save path for explicit Continue, never normal DM1 launch");
     return 0;
 }
