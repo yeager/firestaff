@@ -974,6 +974,14 @@ int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectile
     return (spec->view_depth << 1) - (view_cell >> 1);
 }
 
+bool dm1_viewport_3d_projectile_visible_after_wall_case(const DM1_ViewportWallDrawSpec *wall,
+                                                        bool front_alcove)
+{
+    if (!wall) return true;
+    if (!wall->wall_case_returns) return true;
+    return front_alcove && wall->front_alcove_reveals_contents;
+}
+
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
 {
     return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);

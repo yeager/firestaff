@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -485,6 +486,78 @@ static void test_projectile_occlusion_zone_mapping(void)
     check_int("projectile_occlusion.null_zone", dm1_viewport_3d_projectile_zone_for_cell(NULL, 0), -1);
 }
 
+
+static void test_projectile_wall_zone_movement_visibility_gate(void)
+{
+    struct ProjectileInstance_Compat projectile;
+    struct CellContentDigest_Compat digest;
+    struct ProjectileInstance_Compat next;
+    struct ProjectileTickResult_Compat result;
+    const DM1_ViewportWallDrawSpec *plain_wall =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2L2);
+    const DM1_ViewportWallDrawSpec *alcove_wall =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D3L);
+    const DM1_ViewportProjectileOcclusionSpec *d1c_projectiles =
+        dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C);
+    int blocker = -1;
+
+    memset(&projectile, 0, sizeof(projectile));
+    projectile.slotIndex = 3;
+    projectile.projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile.ownerIndex = 0;
+    projectile.mapIndex = 0;
+    projectile.mapX = 10;
+    projectile.mapY = 10;
+    projectile.cell = 0;
+    projectile.direction = 0;
+    projectile.kineticEnergy = 40;
+    projectile.attack = 20;
+    projectile.stepEnergy = 5;
+    projectile.firstMoveGraceFlag = 0;
+    projectile.attackTypeCode = COMBAT_ATTACK_NORMAL;
+    projectile.reserved3 = 1;
+
+    memset(&digest, 0, sizeof(digest));
+    digest.sourceMapIndex = 0;
+    digest.sourceMapX = 10;
+    digest.sourceMapY = 10;
+    digest.sourceSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    digest.destMapIndex = 0;
+    digest.destMapX = 10;
+    digest.destMapY = 9;
+    digest.destSquareType = PROJECTILE_ELEMENT_WALL;
+    digest.destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    digest.destTeleporterNewDirection = -1;
+
+    check_int("projectile_wall_zone.d1c_projectile_zone_cell0",
+              dm1_viewport_3d_projectile_zone_for_cell(d1c_projectiles, 0), 2932);
+    check_int("projectile_wall_zone.inspect_wall_blocker",
+              F0814_PROJECTILE_InspectDestination_Compat(&digest, &blocker), 1);
+    check_int("projectile_wall_zone.blocker_is_wall", blocker, PROJECTILE_BLOCKER_WALL);
+    check_int("projectile_wall_zone.advance_reports_wall_hit",
+              F0811_PROJECTILE_Advance_Compat(&projectile, &digest, 77, NULL, &next, &result), 1);
+    check_int("projectile_wall_zone.wall_hit_result", result.resultKind, PROJECTILE_RESULT_HIT_WALL);
+    check_int("projectile_wall_zone.wall_hit_despawns", result.despawn, 1);
+    check_int("projectile_wall_zone.wall_hit_not_committed_to_destination", result.newMapY, 10);
+
+    check_nonnull("projectile_wall_zone.plain_wall_nonnull", plain_wall);
+    if (plain_wall) {
+        check_int("projectile_wall_zone.plain_wall_case_returns", plain_wall->wall_case_returns ? 1 : 0, 1);
+        check_int("projectile_wall_zone.plain_wall_hides_projectile",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(plain_wall, false) ? 1 : 0, 0);
+    }
+
+    check_nonnull("projectile_wall_zone.alcove_wall_nonnull", alcove_wall);
+    if (alcove_wall) {
+        check_int("projectile_wall_zone.alcove_without_front_hides",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(alcove_wall, false) ? 1 : 0, 0);
+        check_int("projectile_wall_zone.front_alcove_reveals_projectile_layer",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(alcove_wall, true) ? 1 : 0, 1);
+    }
+}
+
 static void test_door_front_occlusion_split_passes(void)
 {
     static const struct {
@@ -833,6 +906,7 @@ int main(void)
     test_wall_draw_uses_clip_gate_source_offsets();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
+    test_projectile_wall_zone_movement_visibility_gate();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

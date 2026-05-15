@@ -1,0 +1,144 @@
+{
+  "local_needles": [
+    {
+      "file": "memory_projectile_pc34_compat.c",
+      "needle": "PROJECTILE_BLOCKER_WALL",
+      "ok": true
+    },
+    {
+      "file": "memory_projectile_pc34_compat.c",
+      "needle": "dispatch = PROJECTILE_RESULT_HIT_WALL",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "dm1_viewport_3d_projectile_visible_after_wall_case",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "return front_alcove && wall->front_alcove_reveals_contents;",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "test_projectile_wall_zone_movement_visibility_gate",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "PROJECTILE_SUBTYPE_KINETIC_ARROW",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "projectile_wall_zone.wall_hit_result",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "projectile_wall_zone.plain_wall_hides_projectile",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "projectile_wall_zone.front_alcove_reveals_projectile_layer",
+      "ok": true
+    }
+  ],
+  "non_claims": [
+    "does not read or hash DUNGEON.DAT/GRAPHICS.DAT",
+    "does not claim pixel parity",
+    "does not launch original DOS runtime"
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass566_dm1_v1_projectile_wall_zone_gate.v1",
+  "source_audit": [
+    {
+      "claim": "cross-square projectiles and thrown objects test wall-equivalent destination squares before F0267 moves the projectile thing",
+      "file": "PROJEXPL.C",
+      "function": "F0219_PROJECTILE_ProcessEvents48To49",
+      "id": "projectile_wall_travel_blocker",
+      "lines": "717-727",
+      "missing": [],
+      "needles": [
+        "L0522_B_ProjectileMovesToOtherSquare",
+        "F0151_DUNGEON_GetSquare",
+        "C00_ELEMENT_WALL",
+        "C06_ELEMENT_FAKEWALL",
+        "MASK0x0001_FAKEWALL_IMAGINARY | MASK0x0004_FAKEWALL_OPEN",
+        "C03_ELEMENT_STAIRS",
+        "F0217_PROJECTILE_HasImpactOccured(M034_SQUARE_TYPE(AL0516_ui_Square)"
+      ],
+      "ok": true
+    },
+    {
+      "claim": "only non-wall resolved projectiles reach F0267 dungeon movement; same-square closed doors are handled separately",
+      "file": "PROJEXPL.C",
+      "function": "F0219_PROJECTILE_ProcessEvents48To49",
+      "id": "projectile_move_commit_after_blocker",
+      "lines": "729-745",
+      "missing": [],
+      "needles": [
+        "L0515_T_ProjectileThingNewCell = M015_THING_WITH_NEW_CELL",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0397_i_MoveResultMapX",
+        "C04_ELEMENT_DOOR",
+        "F0217_PROJECTILE_HasImpactOccured(C04_ELEMENT_DOOR"
+      ],
+      "ok": true
+    },
+    {
+      "claim": "dungeon movement also checks projectile impacts for party/group movers before committing movement",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "party_group_projectile_impact_precheck",
+      "lines": "432-435",
+      "missing": [],
+      "needles": [
+        "If moving the party or a creature on the party map from a dungeon square then check for a projectile impact",
+        "F0266_MOVE_IsKilledByProjectileImpact",
+        "return C1_TRUE"
+      ],
+      "ok": true
+    },
+    {
+      "claim": "visible projectiles are drawn only through F0115's row/cell zone map after cell clipping",
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "id": "viewport_projectile_zone_map",
+      "lines": "370-373,5645-5683,5710-5715,5881-5883",
+      "missing": [],
+      "needles": [
+        "G2028_ac_ViewSquareIndexTo",
+        "T0115129_DrawProjectiles",
+        "if ((L2479_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex]) < 0)",
+        "if ((L2475_i_ViewDepth == 3) && (AL0126_i_ViewCell <= C01_VIEW_CELL_FRONT_RIGHT))",
+        "if ((L2475_i_ViewDepth == 0) && (AL0126_i_ViewCell >= C02_VIEW_CELL_BACK_RIGHT))",
+        "L2474_i_ZoneIndex = C2900_ZONE_ + ((unsigned int16_t)L2479_i_ * 4) + AL0126_i_ViewCell",
+        "AL0150_ui_ProjectileScaleIndex = (L2475_i_ViewDepth << 1) - (AL0126_i_ViewCell >> 1)",
+        "F0791_DUNGEONVIEW_DrawBitmapXX"
+      ],
+      "ok": true
+    },
+    {
+      "claim": "a plain wall case returns before the F0115 thing/projectile layer; only a front alcove branches into F0115",
+      "file": "DUNVIEW.C",
+      "function": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+      "id": "viewport_wall_case_return_or_alcove",
+      "lines": "6697-6720,6811-6816",
+      "missing": [],
+      "needles": [
+        "case C00_ELEMENT_WALL",
+        "F0792_DUNGEONVIEW_DrawBitmapYYY",
+        "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF",
+        "goto T0118028",
+        "return;",
+        "T0118028:",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+      ],
+      "ok": true
+    }
+  ],
+  "status": "PASS"
+}
