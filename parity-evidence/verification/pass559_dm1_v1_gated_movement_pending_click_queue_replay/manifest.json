@@ -1,0 +1,25 @@
+{
+  "branch": "main",
+  "firestaffGuards": {
+    "DM1_V1_InputCommandQueue_ProcessOnePc34Compat": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "gatedMovementReturnsAfterPendingReplay": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
+    "runtimeExecutable": "build/test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+    "runtimeOutputLastLine": "dm1V1CommandMovementSensorTimingIntegrationOk=1",
+    "runtimeRegression": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:pass559 labels"
+  },
+  "head": "main",
+  "notClaimed": [
+    "new original DOSBox runtime capture",
+    "viewport pixel parity",
+    "new movement engine behavior beyond gated queue replay order"
+  ],
+  "primarySourceAudit": {
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2829",
+    "COMMAND.C:gatedMovementPendingClickReplayBeforeDequeue": "COMMAND.C:2095-2121"
+  },
+  "schema": "firestaff.parity.pass559_dm1_v1_gated_movement_pending_click_queue_replay.v1",
+  "scope": "DM1 V1 PC-34 movement cooldown gate plus pending-click replay queue order",
+  "status": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
+  "timestampUtc": "2026-05-15T11:06:39.412533+00:00",
+  "worktree": "."
+}

@@ -359,6 +359,30 @@ int main(void)
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pass559 gated forward key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    queue.locked = 1;
+    ok &= expect_int("pass559 locked pending right-strafe stored", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 300, 155, DM1_V1_BUTTON_LEFT }), 0);
+    queue.locked = 0;
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 2, 0, 0);
+    ok &= expect_int("pass559 gated movement replays pending click", queueResult.pendingReplayCount, 1);
+    ok &= expect_int("pass559 gated movement not dequeued", queueResult.dequeued, 0);
+    ok &= expect_int("pass559 gated movement leaves original command first", queue.commands[0].command, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("pass559 gated movement appends pending click behind it", queue.commands[1].command, DM1_V1_COMMAND_MOVE_RIGHT);
+    ok &= expect_int("pass559 gated movement queue count after replay", (int)queue.count, 2);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 0, 0);
+    ok &= expect_int("pass559 expired gate releases original movement first", queueResult.dequeued, 1);
+    ok &= expect_int("pass559 expired gate command is original movement", queueResult.command, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("pass559 pending click remains queued second", (int)queue.count, 1);
+    ok &= expect_int("pass559 pending click now at front", queue.commands[0].command, DM1_V1_COMMAND_MOVE_RIGHT);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 0, 0);
+    ok &= expect_int("pass559 pending click dequeues after original movement", queueResult.dequeued, 1);
+    ok &= expect_int("pass559 pending click command id", queueResult.command, DM1_V1_COMMAND_MOVE_RIGHT);
+    ok &= expect_int("pass559 pending click queue empty", (int)queue.count, 0);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("turn key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
     queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 9, 0, 0);
