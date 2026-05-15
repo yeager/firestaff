@@ -1878,6 +1878,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original movement/viewport runtime transcript gate --------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass564_dm1_v1_original_movement_viewport_transcript_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass564_dm1_v1_original_movement_viewport_transcript_gate.py
+    )
+endif()
+
 # -- DM1 V1 original overlay/capture bounded progress gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
