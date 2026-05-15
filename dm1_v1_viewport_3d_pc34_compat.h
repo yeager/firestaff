@@ -298,6 +298,22 @@ typedef struct {
     const char *f0115_source_lines;
 } DM1_ViewportSideOcclusionSpec;
 
+/* D0C door-side Thieves Eye occlusion contract.  ReDMCSB composes the
+ * hole-in-wall graphic into a temporary D0C door-frame bitmap before blitting
+ * that temporary frame, then falls through to the common D0C F0115 thing pass.
+ */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    uint16_t cell_order;
+    uint16_t door_frame_zone;
+    uint16_t hole_zone;
+    const char *branch_source_lines;
+    const char *copy_source_lines;
+    const char *hole_source_lines;
+    const char *frame_blit_source_lines;
+    const char *f0115_source_lines;
+} DM1_ViewportThievesEyeDoorFrameOcclusionSpec;
+
 typedef struct {
     bool command_mutates_before_draw;
     bool redraw_uses_party_tuple;
@@ -654,6 +670,9 @@ const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusi
 size_t dm1_viewport_3d_side_occlusion_spec_count(void);
 const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec(size_t index);
 const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+size_t dm1_viewport_3d_thieves_eye_door_frame_occlusion_spec_count(void);
+const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec(size_t index);
+const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_ViewSquareIndex square);
 size_t dm1_viewport_3d_floor_field_order_spec_count(void);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square);

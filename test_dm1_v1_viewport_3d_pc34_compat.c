@@ -606,6 +606,27 @@ static void test_side_door_stairs_occlusion_cell_orders(void)
     check_int("side_occlusion.no_center_spec", dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_VIEW_SQUARE_D2C) == NULL, 1);
 }
 
+static void test_d0c_thieves_eye_door_frame_occlusion_order(void)
+{
+    const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *spec =
+        dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C);
+
+    check_int("d0c_thieves_eye.count", (int)dm1_viewport_3d_thieves_eye_door_frame_occlusion_spec_count(), 1);
+    check_nonnull("d0c_thieves_eye.spec", spec);
+    if (!spec) return;
+    check_int("d0c_thieves_eye.square", (int)spec->square, (int)DM1_VIEW_SQUARE_D0C);
+    check_int("d0c_thieves_eye.cell_order", spec->cell_order, 0x0021);
+    check_int("d0c_thieves_eye.door_frame_zone", spec->door_frame_zone, 728);
+    check_int("d0c_thieves_eye.hole_zone", spec->hole_zone, 736);
+    check_int("d0c_thieves_eye.branch_source", strstr(spec->branch_source_lines, "8185-8188") != NULL, 1);
+    check_int("d0c_thieves_eye.copy_source", strstr(spec->copy_source_lines, "8199-8201") != NULL, 1);
+    check_int("d0c_thieves_eye.hole_source", strstr(spec->hole_source_lines, "8206-8210") != NULL, 1);
+    check_int("d0c_thieves_eye.frame_blit_source", strstr(spec->frame_blit_source_lines, "8215-8216") != NULL, 1);
+    check_int("d0c_thieves_eye.f0115_source", strstr(spec->f0115_source_lines, "8294") != NULL, 1);
+    check_int("d0c_thieves_eye.out_of_range",
+        dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec(1) == NULL, 1);
+}
+
 static void test_post_command_redraw_contract(void)
 {
     const DM1_ViewportPostCommandRedrawSpec *spec = dm1_viewport_3d_post_command_redraw_spec();
@@ -788,6 +809,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.d1_side_door_front_occlusion", strstr(e, "DUNVIEW.C:7493-7536") != NULL && strstr(e, "DUNVIEW.C:7661-7704") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
     check_int("source_evidence.d1c_door_button_occlusion", strstr(e, "frame/button/door") != NULL, 1);
+    check_int("source_evidence.d0c_thieves_eye_frame_occlusion",
+        strstr(e, "DUNVIEW.C:8185-8216") != NULL && strstr(e, "copy front frame, composite hole") != NULL, 1);
     check_int("source_evidence.side_occlusion", strstr(e, "side-door/stairs-side F0115 cell-order occlusion") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.wall_source_clip_gate", strstr(e, "COORD.C:2390-2409") != NULL, 1);
@@ -813,6 +836,7 @@ int main(void)
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();
+    test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
     test_post_command_redraw_contract();
