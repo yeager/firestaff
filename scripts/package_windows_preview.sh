@@ -7,7 +7,7 @@ VERSION="${VERSION:-0.2.5-preview}"
 STAGE_DIR="$ROOT/release/windows-stage/Firestaff-${VERSION}-windows"
 ZIP_PATH="$ROOT/release/Firestaff-${VERSION}-windows.zip"
 README_SRC="$ROOT/README.md"
-RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/RELEASE_0_2_5_PREVIEW.md}"
+RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff.exe"
 
 if [[ ! -x "$BIN_SRC" ]]; then

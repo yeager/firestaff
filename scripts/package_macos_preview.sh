@@ -16,7 +16,7 @@ DMG_DIR="$ROOT/release"
 DMG_PATH="$DMG_DIR/Firestaff-${VERSION}.dmg"
 ZIP_PATH="$DMG_DIR/Firestaff-${VERSION}.zip"
 README_SRC="$ROOT/README.md"
-RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/RELEASE_0_1_5_MAC_PREVIEW.md}"
+RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff"
 SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
 
