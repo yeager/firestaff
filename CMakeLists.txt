@@ -322,6 +322,18 @@ if(BUILD_TESTING)
         COMMAND test_touch_click_zone_matrix_pc34_compat_integration
     )
 
+    add_executable(test_action_area_routes_pc34_compat_integration
+        test_action_area_routes_pc34_compat_integration.c
+    )
+    target_link_libraries(test_action_area_routes_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_action_area_routes_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME action_area_routes_pc34_compat
+        COMMAND test_action_area_routes_pc34_compat_integration
+    )
+
     add_executable(test_touch_pointer_input_pc34_compat_integration
         test_touch_pointer_input_pc34_compat_integration.c
     )
