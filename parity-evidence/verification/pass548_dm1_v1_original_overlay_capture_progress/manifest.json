@@ -1,18 +1,8 @@
 {
-  "blocker": "bounded original live capture did not return before timeout; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+  "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
   "branch": "main",
-  "head": "0469b869eb691259f19a4a642bf177b20d6113e8",
-  "liveAttempt": {
-    "attempted": true,
-    "command": "python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
-    "durationSeconds": 12.005,
-    "expectedManifest": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json",
-    "returncode": -15,
-    "stdoutPath": "parity-evidence/verification/pass548_dm1_v1_original_overlay_capture_progress/pass548_live_attempt_stdout.txt",
-    "stdoutTail": "",
-    "timedOut": true,
-    "timeoutSeconds": 12
-  },
+  "head": "df2a407f446b8b57b574fdc365c1a5b829f0fad2",
+  "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
     "no runtime or gameplay behavior changed",
@@ -147,6 +137,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS548_LIVE_CAPTURE_TIMEOUT",
-  "timestampUtc": "2026-05-15T00:02:46.049324+00:00"
+  "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
+  "timestampUtc": "2026-05-15T05:30:51.732626+00:00"
 }

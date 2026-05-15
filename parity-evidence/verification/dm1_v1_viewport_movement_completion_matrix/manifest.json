@@ -15,17 +15,25 @@
         "-j2"
       ],
       "outputTail": [
+        "[  2%] Linking C static library libfirestaff_m10.a",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[ 97%] Built target firestaff_m10",
+        "[100%] Linking C executable test_m11_v1_turning_presentation_pc34_compat",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
         "[ 90%] Built target firestaff_m10",
+        "[ 90%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o",
+        "[ 93%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -409,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-14T23:53:19.737172+00:00"
+  "timestampUtc": "2026-05-15T05:30:47.669602+00:00"
 }

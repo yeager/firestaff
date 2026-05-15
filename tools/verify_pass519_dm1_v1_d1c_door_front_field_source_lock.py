@@ -45,8 +45,8 @@ LOCAL = [
         "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
         "DUNVIEW.C:7910-7937 pass2 front cells after door",
     ]),
-    ("firestaff-d1c-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "435-483", [
-        "{ DM1_VIEW_SQUARE_D1C, \"7875\", \"7877\", \"7905\", \"7937\" },",
+    ("firestaff-d1c-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "435-490", [
+        "{ DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\" },",
         "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, 0x0218);",
         "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, 0x0349);",
         "rear.cells[0] == 1 && rear.cells[1] == 2",
