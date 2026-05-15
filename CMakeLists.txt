@@ -865,6 +865,10 @@ if(BUILD_TESTING)
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
     )
+    add_test(
+        NAME pass563_dm1_v1_projectile_travel_blockers_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_projectile_travel_blockers_source_lock.py
+    )
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
         test_dm1_v1_viewport_hand_overlay_pc34_compat.c
     )

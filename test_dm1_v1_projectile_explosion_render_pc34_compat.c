@@ -369,6 +369,116 @@ static void test_spell_graphic_indices(void) {
 }
 
 
+static struct ProjectileInstance_Compat make_travel_projectile(int category, int subtype) {
+    struct ProjectileInstance_Compat p;
+    memset(&p, 0, sizeof(p));
+    p.slotIndex = 7;
+    p.projectileCategory = category;
+    p.projectileSubtype = subtype;
+    p.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    p.mapIndex = 0;
+    p.mapX = 2;
+    p.mapY = 2;
+    p.cell = 0;
+    p.direction = 0;
+    p.kineticEnergy = 40;
+    p.attack = 24;
+    p.stepEnergy = 4;
+    p.reserved3 = 1;
+    return p;
+}
+
+static struct CellContentDigest_Compat make_travel_digest(int destSquareType) {
+    struct CellContentDigest_Compat d;
+    memset(&d, 0, sizeof(d));
+    d.sourceMapIndex = 0;
+    d.sourceMapX = 2;
+    d.sourceMapY = 2;
+    d.sourceSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    d.destMapIndex = 0;
+    d.destMapX = 2;
+    d.destMapY = 1;
+    d.destSquareType = destSquareType;
+    d.destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    d.destTeleporterNewDirection = -1;
+    return d;
+}
+
+static void test_projectile_travel_blockers(void) {
+    struct ProjectileInstance_Compat p;
+    struct ProjectileInstance_Compat next;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat result;
+    int blocker = -1;
+
+    printf("  projectile travel blockers...\n");
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_MAGICAL, PROJECTILE_SUBTYPE_FIREBALL);
+    d = make_travel_digest(PROJECTILE_ELEMENT_WALL);
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "wall inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_WALL, "wall inspect blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 100, NULL, &next, &result), 1, "wall advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_WALL, "wall hit result");
+    ASSERT_EQ(result.despawn, 1, "wall hit despawns");
+    ASSERT_EQ(result.emittedExplosion, 1, "fireball wall hit creates explosion");
+
+    d = make_travel_digest(PROJECTILE_ELEMENT_FAKEWALL);
+    d.destFakeWallIsImaginaryOrOpen = 0;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "closed fakewall inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_WALL, "closed fakewall blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 101, NULL, &next, &result), 1, "closed fakewall advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_WALL, "closed fakewall hit result");
+    ASSERT_EQ(result.despawn, 1, "closed fakewall despawns");
+
+    d.destFakeWallIsImaginaryOrOpen = 1;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "open fakewall inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_OPEN, "open fakewall no blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 102, NULL, &next, &result), 1, "open fakewall advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_FLEW, "open fakewall flies");
+    ASSERT_EQ(result.despawn, 0, "open fakewall keeps projectile");
+
+    d = make_travel_digest(PROJECTILE_ELEMENT_STAIRS);
+    d.sourceSquareType = PROJECTILE_ELEMENT_STAIRS;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "stairs inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_STAIRS, "stairs-to-stairs blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 103, NULL, &next, &result), 1, "stairs advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_WALL, "stairs-to-stairs impacts as wall");
+    ASSERT_EQ(result.despawn, 1, "stairs-to-stairs despawns");
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_KINETIC, PROJECTILE_SUBTYPE_KINETIC_ARROW);
+    d = make_travel_digest(PROJECTILE_ELEMENT_DOOR);
+    d.destDoorState = PROJECTILE_DOOR_STATE_CLOSED_HALF;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "closed door inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_CLOSED_DOOR, "closed door blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 104, NULL, &next, &result), 1, "closed door advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "closed door hit result");
+    ASSERT_EQ(result.despawn, 1, "closed door despawns");
+    ASSERT_EQ(result.emittedDoorDestructionEvent, 1, "closed door emits attack event");
+
+    d.destDoorState = PROJECTILE_DOOR_STATE_CLOSED_ONE_FOURTH;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "one-fourth door inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_OPEN, "one-fourth door no blocker");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 105, NULL, &next, &result), 1, "one-fourth door advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_FLEW, "one-fourth door flies");
+    ASSERT_EQ(result.despawn, 0, "one-fourth door keeps projectile");
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_MAGICAL, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL);
+    d.destDoorState = PROJECTILE_DOOR_STATE_CLOSED_FULL;
+    d.destDoorAllowsProjectilePassThrough = 1;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "pass-through door inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_CLOSED_DOOR, "pass-through door still classified closed");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 106, NULL, &next, &result), 1, "pass-through door advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_FLEW, "allowed magical projectile flies through");
+    ASSERT_EQ(result.despawn, 0, "allowed magical projectile not consumed");
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_MAGICAL, PROJECTILE_SUBTYPE_OPEN_DOOR);
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 107, NULL, &next, &result), 1, "open-door projectile advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "open-door projectile still hits pass-through door");
+    ASSERT_EQ(result.despawn, 1, "open-door projectile consumed");
+}
+
+
+
 /* ── Main ────────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -389,6 +499,7 @@ int main(void) {
     test_draw_order();
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
+    test_projectile_travel_blockers();
 
     if (g_failures == 0) {
         printf("All tests passed.\n");
