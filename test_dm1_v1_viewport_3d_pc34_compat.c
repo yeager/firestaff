@@ -372,6 +372,9 @@ static void test_floor_ceiling_bands_and_zones(void)
     check_int("PC34.zone.ceiling", DM1_PC34_ZONE_VIEWPORT_CEILING_AREA, 700);
     check_int("PC34.zone.floor", DM1_PC34_ZONE_VIEWPORT_FLOOR_AREA, 701);
     check_int("PC34.zone.wall_d0r", DM1_PC34_ZONE_WALL_D0R, 717);
+    check_int("PC34.zone.door_frame_left_d2c", DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C, 724);
+    check_int("PC34.zone.door_frame_right_d2c", DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C, 725);
+    check_int("PC34.zone.door_frame_top_d2c", DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C, 730);
 }
 
 
@@ -878,6 +881,10 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.d0c_foreground_before_things",
         strstr(e, "DUNVIEW.C:8185-8240") != NULL && strstr(e, "draw before common F0115") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
+    check_int("source_evidence.d2c_front_order",
+        strstr(e, "DUNVIEW.C:7289-7312") != NULL &&
+        strstr(e, "DUNVIEW.C:7353-7387") != NULL &&
+        strstr(e, "DEFS.H:4082-4088") != NULL, 1);
     check_int("source_evidence.far_door_front_occlusion", strstr(e, "DUNVIEW.C:6270-6286") != NULL && strstr(e, "DUNVIEW.C:6337-6353") != NULL, 1);
     check_int("source_evidence.d1_side_door_front_occlusion", strstr(e, "DUNVIEW.C:7493-7536") != NULL && strstr(e, "DUNVIEW.C:7661-7704") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);

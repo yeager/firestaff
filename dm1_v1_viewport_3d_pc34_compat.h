@@ -409,6 +409,11 @@ typedef struct {
 #define DM1_PC34_ZONE_WALL_D0L              716
 #define DM1_PC34_ZONE_WALL_D0R              717
 
+/* PC34/I34E D2C front-door frame zones from ReDMCSB DEFS.H:4082-4088. */
+#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
+#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
+#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
+
 typedef struct {
     uint8_t left_x;     /* Viewport-relative clip left X (pixel) */
     uint8_t right_x;    /* Viewport-relative clip right boundary */
