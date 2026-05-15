@@ -774,6 +774,9 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.floor_field_order", strstr(e, "stairs/pit/floor-ornament/F0115/teleporter-field order") != NULL, 1);
     check_int("source_evidence.d0c_field_order", strstr(e, "8241-8308") != NULL, 1);
     check_int("source_evidence.d3r_field_order", strstr(e, "6514-6638") != NULL, 1);
+    check_int("source_evidence.d3r2_field_order", strstr(e, "6304-6356") != NULL, 1);
+    check_int("source_evidence.d2l2_no_thing_pass", strstr(e, "6846-6865") != NULL && strstr(e, "no F0115 thing pass") != NULL, 1);
+    check_int("source_evidence.d2r2_no_thing_pass", strstr(e, "6877-6896") != NULL && strstr(e, "no F0115 thing pass") != NULL, 1);
     check_int("source_evidence.d2l_field_order", strstr(e, "6914-7048") != NULL, 1);
     check_int("source_evidence.d2r_field_order", strstr(e, "7065-7240") != NULL, 1);
     check_int("source_evidence.d0c_foreground_before_things",
