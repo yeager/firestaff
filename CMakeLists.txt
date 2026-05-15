@@ -1918,6 +1918,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 viewport F0128 draw-order source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass557_dm1_v1_viewport_f0128_draw_order_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass557_dm1_v1_viewport_f0128_draw_order_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 wall-set startup binding source-lock gate ──────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

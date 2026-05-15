@@ -1,0 +1,359 @@
+{
+  "firestaffViewport3dSha256": "72e53a30b3daaec72c7dc51dcf4288287eb5496adbfce2d9a8feb3462759a9c4",
+  "nonClaims": [
+    "no pixel parity promotion",
+    "no runtime capture promotion",
+    "no renderer behavior change"
+  ],
+  "ok": true,
+  "pairs": [
+    {
+      "firestaff": {
+        "call": "F0115:D4L objects",
+        "depth": 4,
+        "index": 0,
+        "lateral": -1,
+        "square": "DM1_VIEW_SQUARE_D4L"
+      },
+      "index": 0,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "depth": 4,
+        "lateral": -1,
+        "sourceLine": 8469,
+        "square": "DM1_VIEW_SQUARE_D4L"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0115:D4R objects",
+        "depth": 4,
+        "index": 1,
+        "lateral": 1,
+        "square": "DM1_VIEW_SQUARE_D4R"
+      },
+      "index": 1,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "depth": 4,
+        "lateral": 1,
+        "sourceLine": 8473,
+        "square": "DM1_VIEW_SQUARE_D4R"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0115:D4C objects",
+        "depth": 4,
+        "index": 2,
+        "lateral": 0,
+        "square": "DM1_VIEW_SQUARE_D4C"
+      },
+      "index": 2,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "depth": 4,
+        "lateral": 0,
+        "sourceLine": 8477,
+        "square": "DM1_VIEW_SQUARE_D4C"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0676_DrawD3L2",
+        "depth": 3,
+        "index": 3,
+        "lateral": -2,
+        "square": "DM1_VIEW_SQUARE_D3L2"
+      },
+      "index": 3,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0676_DrawD3L2",
+        "depth": 3,
+        "lateral": -2,
+        "sourceLine": 8482,
+        "square": "DM1_VIEW_SQUARE_D3L2"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0677_DrawD3R2",
+        "depth": 3,
+        "index": 4,
+        "lateral": 2,
+        "square": "DM1_VIEW_SQUARE_D3R2"
+      },
+      "index": 4,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0677_DrawD3R2",
+        "depth": 3,
+        "lateral": 2,
+        "sourceLine": 8486,
+        "square": "DM1_VIEW_SQUARE_D3R2"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0116_DUNGEONVIEW_DrawSquareD3L",
+        "depth": 3,
+        "index": 5,
+        "lateral": -1,
+        "square": "DM1_VIEW_SQUARE_D3L"
+      },
+      "index": 5,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0116_DUNGEONVIEW_DrawSquareD3L",
+        "depth": 3,
+        "lateral": -1,
+        "sourceLine": 8491,
+        "square": "DM1_VIEW_SQUARE_D3L"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0117_DUNGEONVIEW_DrawSquareD3R",
+        "depth": 3,
+        "index": 6,
+        "lateral": 1,
+        "square": "DM1_VIEW_SQUARE_D3R"
+      },
+      "index": 6,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0117_DUNGEONVIEW_DrawSquareD3R",
+        "depth": 3,
+        "lateral": 1,
+        "sourceLine": 8495,
+        "square": "DM1_VIEW_SQUARE_D3R"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+        "depth": 3,
+        "index": 7,
+        "lateral": 0,
+        "square": "DM1_VIEW_SQUARE_D3C"
+      },
+      "index": 7,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+        "depth": 3,
+        "lateral": 0,
+        "sourceLine": 8499,
+        "square": "DM1_VIEW_SQUARE_D3C"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0678_DrawD2L2",
+        "depth": 2,
+        "index": 8,
+        "lateral": -2,
+        "square": "DM1_VIEW_SQUARE_D2L2"
+      },
+      "index": 8,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0678_DrawD2L2",
+        "depth": 2,
+        "lateral": -2,
+        "sourceLine": 8504,
+        "square": "DM1_VIEW_SQUARE_D2L2"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0679_DrawD2R2",
+        "depth": 2,
+        "index": 9,
+        "lateral": 2,
+        "square": "DM1_VIEW_SQUARE_D2R2"
+      },
+      "index": 9,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0679_DrawD2R2",
+        "depth": 2,
+        "lateral": 2,
+        "sourceLine": 8508,
+        "square": "DM1_VIEW_SQUARE_D2R2"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0119_DUNGEONVIEW_DrawSquareD2L",
+        "depth": 2,
+        "index": 10,
+        "lateral": -1,
+        "square": "DM1_VIEW_SQUARE_D2L"
+      },
+      "index": 10,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0119_DUNGEONVIEW_DrawSquareD2L",
+        "depth": 2,
+        "lateral": -1,
+        "sourceLine": 8513,
+        "square": "DM1_VIEW_SQUARE_D2L"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF",
+        "depth": 2,
+        "index": 11,
+        "lateral": 1,
+        "square": "DM1_VIEW_SQUARE_D2R"
+      },
+      "index": 11,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF",
+        "depth": 2,
+        "lateral": 1,
+        "sourceLine": 8517,
+        "square": "DM1_VIEW_SQUARE_D2R"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0121_DUNGEONVIEW_DrawSquareD2C",
+        "depth": 2,
+        "index": 12,
+        "lateral": 0,
+        "square": "DM1_VIEW_SQUARE_D2C"
+      },
+      "index": 12,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0121_DUNGEONVIEW_DrawSquareD2C",
+        "depth": 2,
+        "lateral": 0,
+        "sourceLine": 8521,
+        "square": "DM1_VIEW_SQUARE_D2C"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0122_DUNGEONVIEW_DrawSquareD1L",
+        "depth": 1,
+        "index": 13,
+        "lateral": -1,
+        "square": "DM1_VIEW_SQUARE_D1L"
+      },
+      "index": 13,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0122_DUNGEONVIEW_DrawSquareD1L",
+        "depth": 1,
+        "lateral": -1,
+        "sourceLine": 8525,
+        "square": "DM1_VIEW_SQUARE_D1L"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0123_DUNGEONVIEW_DrawSquareD1R",
+        "depth": 1,
+        "index": 14,
+        "lateral": 1,
+        "square": "DM1_VIEW_SQUARE_D1R"
+      },
+      "index": 14,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0123_DUNGEONVIEW_DrawSquareD1R",
+        "depth": 1,
+        "lateral": 1,
+        "sourceLine": 8529,
+        "square": "DM1_VIEW_SQUARE_D1R"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0124_DUNGEONVIEW_DrawSquareD1C",
+        "depth": 1,
+        "index": 15,
+        "lateral": 0,
+        "square": "DM1_VIEW_SQUARE_D1C"
+      },
+      "index": 15,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0124_DUNGEONVIEW_DrawSquareD1C",
+        "depth": 1,
+        "lateral": 0,
+        "sourceLine": 8533,
+        "square": "DM1_VIEW_SQUARE_D1C"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0125_DUNGEONVIEW_DrawSquareD0L",
+        "depth": 0,
+        "index": 16,
+        "lateral": -1,
+        "square": "DM1_VIEW_SQUARE_D0L"
+      },
+      "index": 16,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0125_DUNGEONVIEW_DrawSquareD0L",
+        "depth": 0,
+        "lateral": -1,
+        "sourceLine": 8537,
+        "square": "DM1_VIEW_SQUARE_D0L"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0126_DUNGEONVIEW_DrawSquareD0R",
+        "depth": 0,
+        "index": 17,
+        "lateral": 1,
+        "square": "DM1_VIEW_SQUARE_D0R"
+      },
+      "index": 17,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0126_DUNGEONVIEW_DrawSquareD0R",
+        "depth": 0,
+        "lateral": 1,
+        "sourceLine": 8541,
+        "square": "DM1_VIEW_SQUARE_D0R"
+      }
+    },
+    {
+      "firestaff": {
+        "call": "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "depth": 0,
+        "index": 18,
+        "lateral": 0,
+        "square": "DM1_VIEW_SQUARE_D0C"
+      },
+      "index": 18,
+      "ok": true,
+      "redmcsb": {
+        "call": "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "depth": 0,
+        "lateral": 0,
+        "sourceLine": 8542,
+        "square": "DM1_VIEW_SQUARE_D0C"
+      }
+    }
+  ],
+  "problems": [],
+  "redmcsbDunviewSha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass557_dm1_v1_viewport_f0128_draw_order_source_lock.v1",
+  "sourceLock": "DUNVIEW.C F0128 F0150 relative-coordinate calls through F0127 draw sequence",
+  "status": "PASS_PASS557_DM1_V1_VIEWPORT_F0128_DRAW_ORDER_SOURCE_LOCK"
+}
