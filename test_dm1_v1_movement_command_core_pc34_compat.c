@@ -294,11 +294,36 @@ int main(void)
         &queue, &dungeon, &things, &party, 0, 2, DIR_NORTH, 372, 350, footwear, &result), 1);
     ok &= expect_int("pc34 core projectile gate observed", result.queue.movementDisabledGate, 1);
     ok &= expect_int("pc34 core projectile gate keeps command queued", (int)queue.count, 1);
+
+    /* Pass542 lane A: ReDMCSB F0380 unlocks and replays one pending click
+     * after the movement-disabled gate returns, before any movement command is
+     * dequeued.  The held C003 step must stay at the front; the replayed
+     * secondary movement click appends behind it and is not allowed to turn the
+     * party until the step cooldown gate clears.
+     */
+    queue.locked = 1;
+    ok &= expect_int("pass542 pending click captured during movement gate",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 300, 130, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("pass542 pending click command is turn right", queue.pendingClickCommand, DM1_V1_COMMAND_TURN_RIGHT);
+    queue.locked = 0;
+    ok &= expect_int("pass542 cooldown gate with pending click", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 2, DIR_NORTH, 373, 350, footwear, &result), 1);
+    ok &= expect_int("pass542 cooldown gate did not dequeue held step", result.queue.dequeued, 0);
+    ok &= expect_int("pass542 cooldown gate replayed pending once", result.queue.pendingReplayCount, 1);
+    ok &= expect_int("pass542 cooldown gate keeps held step plus replay", (int)queue.count, 2);
+    ok &= expect_int("pass542 held step remains queue front", queue.commands[0].command, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("pass542 replayed click appends as turn right", queue.commands[1].command, DM1_V1_COMMAND_TURN_RIGHT);
+    ok &= expect_int("pass542 cooldown gate leaves direction unchanged", party.direction, DIR_NORTH);
+    ok &= expect_int("pass542 cooldown gate leaves y unchanged", party.mapY, 2);
+
     ok &= expect_int("pc34 core cooldown expiry releases held move", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         &queue, &dungeon, &things, &party, 0, 0, DIR_NORTH, 374, 350, footwear, &result), 1);
     ok &= expect_int("pc34 core cooldown expiry dequeues", result.queue.dequeued, 1);
     ok &= expect_int("pc34 core cooldown expiry applies step", result.stepApplied, 1);
     ok &= expect_int("pc34 core cooldown expiry decrements y", party.mapY, 1);
+    ok &= expect_int("pass542 replayed turn waits behind released step", (int)queue.count, 1);
+    ok &= expect_int("pass542 replayed turn still queued", queue.commands[0].command, DM1_V1_COMMAND_TURN_RIGHT);
 
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
