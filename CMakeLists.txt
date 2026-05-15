@@ -1090,6 +1090,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_explosion_render_source_lock_gate.py
         )
         add_test(
+            NAME pass582_dm1_v1_explosion_viewport_clip_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass582_dm1_v1_explosion_viewport_clip_source_lock.py --check-only
+        )
+        add_test(
             NAME pass363_dm1_v1_f0115_thing_layer_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass363_dm1_v1_f0115_thing_layer_source_lock.py
         )
