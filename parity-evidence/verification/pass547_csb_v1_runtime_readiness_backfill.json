@@ -1,0 +1,179 @@
+{
+  "schema": "firestaff.pass547_csb_v1_runtime_readiness_backfill.v1",
+  "pass": true,
+  "scope": "CSB V1 source-lock/runtime readiness backfill; blocker-present gate.",
+  "blocker_persists": true,
+  "source_anchors": [
+    {
+      "id": "redmcsb_csb_header_identity",
+      "role": "primary_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "482-523",
+      "needles": [
+        "CSB_SAVE_HEADER",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C1_PLATFORM_ATARI_ST",
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_atari_csb_payload_names",
+      "role": "primary_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
+      "lines": "11-18",
+      "needles": [
+        "0HCSB.HTC",
+        "0HCSB.DAT",
+        "1CSBGAME.DAT",
+        "1CSBGAME.BAK"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_atari_csb_saved_game_load",
+      "role": "primary_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
+      "lines": "300-390",
+      "needles": [
+        "G3638_i_IORequestIndex_CSBGAME",
+        "G3637_apc_FileNames[C4_CSBGAME_DAT]",
+        "F1914_LoadAndDeobfuscateSavedGameHeader",
+        "C0x01_SAVE_HEADER_FORMAT_DUNGEON_MASTER",
+        "C13_DUNGEON_CSB_GAME",
+        "C1_PLATFORM_ATARI_ST",
+        "GameLoaded = C1_TRUE"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_make_new_adventure_runtime_gate",
+      "role": "primary_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-63",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "GameLoaded",
+        "G7114_LoadedChampionCount",
+        "F1996_",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_csb_dungeon_validation_switch",
+      "role": "primary_source",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCU.C",
+      "lines": "5-77",
+      "needles": [
+        "F7272_IsDungeonValid",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_m12_launch_guard_still_blocks_csb",
+      "role": "firestaff_guard",
+      "path": "/home/trv2/work/firestaff-worktrees/csbv1-runtime-readiness-backfill-passC-20260515-codex/menu_startup_m12.c",
+      "lines": "1408-1414",
+      "needles": [
+        "Only DM1 is launch-supported",
+        "strcmp(gameId, \"dm1\") == 0"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_m11_original_handoff_is_dm1_title_first",
+      "role": "firestaff_blocker",
+      "path": "/home/trv2/work/firestaff-worktrees/csbv1-runtime-readiness-backfill-passC-20260515-codex/main_loop_m11.c",
+      "lines": "196-270",
+      "needles": [
+        "m11_find_title_dat_for_intro",
+        "M12_AssetStatus_GetVersionCount(\"dm1\")",
+        "_canonical/dm1/TITLE"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_m11_runtime_open_runs_original_dm1_handoff",
+      "role": "firestaff_blocker",
+      "path": "/home/trv2/work/firestaff-worktrees/csbv1-runtime-readiness-backfill-passC-20260515-codex/main_loop_m11.c",
+      "lines": "698-728",
+      "needles": [
+        "m11_open_requested_launch",
+        "m11_play_redmcsb_title_intro_if_available",
+        "M11_GameView_OpenSelectedMenuEntry",
+        "m11_play_redmcsb_entrance_transition"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest",
+      "role": "firestaff_blocker",
+      "path": "/home/trv2/work/firestaff-worktrees/csbv1-runtime-readiness-backfill-passC-20260515-codex/m11_game_view.c",
+      "lines": "1003-1015",
+      "needles": [
+        "m11_resolve_builtin_dungeon_path",
+        "strcmp(gameId, \"csb\") == 0",
+        "\"CSB.DAT\""
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_current_ingame_capture_fixture_is_dm1",
+      "role": "firestaff_blocker",
+      "path": "/home/trv2/work/firestaff-worktrees/csbv1-runtime-readiness-backfill-passC-20260515-codex/verification-screens/capture_firestaff_ingame_series.c",
+      "lines": "213-218",
+      "needles": [
+        "M12_StartupMenu_InitWithDataDir",
+        "M11_GameView_OpenSelectedMenuEntry",
+        "failed to open DM1 game view"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "asset_manifest": {
+    "path": "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json",
+    "checks": {
+      "manifest_pass": true,
+      "asset_pair_ready": true,
+      "runtime_support_payloads_ready": true,
+      "launch_intent_allowed_false": true,
+      "atari_dungeon_dat_present": true,
+      "firestaff_builtin_csb_dat_not_source_locked_asset": true
+    }
+  },
+  "completion": {
+    "path": "parity-evidence/verification/firestaff_completion_matrix.json",
+    "checks": {
+      "csb_v1_still_20_percent": true,
+      "csb_v1_still_20_points": true,
+      "runtime_criteria_zero": true
+    }
+  },
+  "required_runtime_replacements": [
+    "CSB-specific launch handoff after M12 instead of the DM1 TITLE/entrance path.",
+    "CSB Atari source-locked DUNGEON.DAT/GRAPHICS.DAT plus HCSB/MINI/save payload handling instead of the current CSB.DAT built-in branch.",
+    "CSB-specific deterministic capture fixture before viewport/UI/render or overlay points can move from 0."
+  ],
+  "non_claims": [
+    "This readiness backfill does not enable CSB launch, runtime, capture, rendering, gameplay, save compatibility, or pixel parity.",
+    "The PASS condition means the runtime blocker is precisely documented and still present.",
+    "CSB V1 completion remains 20/100 until CSB-specific runtime/capture evidence replaces the guarded DM1-shaped path."
+  ],
+  "failures": []
+}

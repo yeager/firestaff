@@ -29,6 +29,7 @@ Primary references stay local on N2:
 - `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and blocker-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 0` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 0`. This is a positive front-door render smoke with a deliberate runtime blocker: it prevents matched CSB assets from falling into the DM1-only runtime while preserving diagnostic game/version identity.
 - `csb_v1_experimental_launch_intent_fixture` is an evidence-only fixture for the future CSB launch-intent contract. It consumes `csb_v1_atari_asset_pair_manifest.json`, requires the selected Atari ST `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT`, audits ReDMCSB primary CSB dungeon/new-adventure gates, and verifies `menu_startup_m12.c` still keeps production launch support DM1-only. It explicitly keeps `valid_intent_allowed=false` and makes no runtime/render/gameplay claim.
 - `csb_v1_quickplay_load_route_source_lock` source-locks the CSB/CSBWin reference QuickPlay route as replay playback only (`PlayfileIsOpen()` gates `OPT_QUICKPLAY`) and the shared load path as dungeon/signature/graphics/timer setup (`_ReadEntireGame`, `openGraphicsFile`, `HandleMouseEvents`). It also audits ReDMCSB primary CSB save/new-adventure routing so this launch evidence cannot be misread as production CSB runtime support in Firestaff.
+- pass547_csb_v1_runtime_readiness_backfill source-locks the remaining runtime/capture readiness blocker: ReDMCSB requires a CSB-specific save/header/runtime lane while Firestaff still blocks CSB launch before the downstream DM1-shaped M11 title/entrance handoff, CSB.DAT built-in resolver, and DM1 capture fixture. It keeps CSB V1 at 20/100 and makes no launch/runtime/render claim.
 
 ## Source-lock anchors audited by the verifier
 
@@ -60,6 +61,8 @@ python3 tools/verify_csb_v1_experimental_launch_intent_fixture.py
 python3 tools/verify_firestaff_completion_matrix.py
 python3 -m py_compile tools/verify_csb_v1_quickplay_load_route_source_lock.py
 python3 tools/verify_csb_v1_quickplay_load_route_source_lock.py
+python3 -m py_compile tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
+python3 tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
 python3 tools/firestaff_completion_status.py
 ```
 
