@@ -16,6 +16,12 @@
  *   only when the party really changes square and has at least one champion.
  * - GAMELOOP.C:150-155 decrements G0310_i_DisabledMovementTicks and
  *   G0311_i_ProjectileDisabledMovementTicks independently once per game loop.
+ * - GAMELOOP.C:47-50 sets the per-input wait window; PC-34/I34E uses 12
+ *   vertical blanks.
+ * - GAMELOOP.C:164-219 drains queued keyboard input, processes one queue slot,
+ *   and repeats until input stops waiting and game time is ticking.
+ * - IO.C:772-778 and 1015-1019 advance the input wait VBlank counter and set
+ *   G0321_B_StopWaitingForPlayerInput; they do not decrement movement cooldowns.
  */
 
 uint16_t DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat(
@@ -94,7 +100,22 @@ void DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
     }
 }
 
+int DM1_V1_MovementTiming_InputWaitMaxVBlanksPc34Compat(void)
+{
+    return DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT;
+}
+
+int DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(int accumulatedVBlanks)
+{
+    return accumulatedVBlanks >= DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT;
+}
+
+int DM1_V1_MovementTiming_VBlankWaitDecrementsMovementCooldownPc34Compat(void)
+{
+    return 0;
+}
+
 const char* DM1_V1_MovementTiming_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:2095-2100,2118-2127; CLIKMENU.C:256-269,330-346; CHAMPION.C:1180-1215,2065-2191; MOVESENS.C:752-775; GAMELOOP.C:150-155";
+    return "COMMAND.C:2095-2100,2118-2127; CLIKMENU.C:142-174,237-269,317-346; CHAMPION.C:1180-1215,2065-2191; MOVESENS.C:752-775; GAMELOOP.C:47-50,150-155,164-219; IO.C:772-778,1015-1019";
 }

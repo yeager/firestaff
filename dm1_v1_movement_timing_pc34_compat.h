@@ -17,6 +17,8 @@ struct Dm1V1MovementTimingResultPc34Compat {
     int scentDelayTicks;
 };
 
+#define DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT 12
+
 uint16_t DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat(
     uint16_t load,
     uint16_t maxLoad,
@@ -39,6 +41,11 @@ struct Dm1V1MovementTimingResultPc34Compat DM1_V1_MovementTiming_ApplySuccessful
 void DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
     int* disabledMovementTicks,
     int* projectileDisabledMovementTicks);
+
+int DM1_V1_MovementTiming_InputWaitMaxVBlanksPc34Compat(void);
+int DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(
+    int accumulatedVBlanks);
+int DM1_V1_MovementTiming_VBlankWaitDecrementsMovementCooldownPc34Compat(void);
 
 const char* DM1_V1_MovementTiming_SourceEvidencePc34Compat(void);
 
