@@ -1,0 +1,379 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 143,
+          "needle": "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7314 floor ornament under rear pass"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7315 pass1 rear cells before frame"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7317-7333 top/side frame and button draw"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7332-7334 optional button before door panel"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7339 F0111 door bitmap/ornament"
+        },
+        {
+          "line": 143,
+          "needle": "DUNVIEW.C:7341 pass2 front cells after door"
+        }
+      ],
+      "id": "firestaff-d2c-door-front-metadata",
+      "lines": "135-145",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 235,
+          "needle": "DM1_VIEW_SQUARE_D2C, 0x3421"
+        },
+        {
+          "line": 237,
+          "needle": "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path"
+        },
+        {
+          "line": 238,
+          "needle": "DUNVIEW.C:7343-7353 pit bitmap before floor ornament"
+        },
+        {
+          "line": 239,
+          "needle": "DUNVIEW.C:7355-7357 order then F0108 floor ornament"
+        },
+        {
+          "line": 240,
+          "needle": "DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff"
+        },
+        {
+          "line": 241,
+          "needle": "DUNVIEW.C:7370-7388 teleporter field after F0115"
+        },
+        {
+          "line": 242,
+          "needle": "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115"
+        }
+      ],
+      "id": "firestaff-d2c-floor-field-metadata",
+      "lines": "235-242",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 295,
+          "needle": "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C"
+        },
+        {
+          "line": 295,
+          "needle": "DM1_PC34_ZONE_WALL_D2C"
+        },
+        {
+          "line": 295,
+          "needle": "DUNVIEW.C:7299-7306"
+        },
+        {
+          "line": 295,
+          "needle": "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return"
+        }
+      ],
+      "id": "firestaff-d2c-wall-metadata",
+      "lines": "285-296",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 402,
+          "needle": "#define DM1_PC34_ZONE_WALL_D2C"
+        },
+        {
+          "line": 413,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724"
+        },
+        {
+          "line": 414,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725"
+        },
+        {
+          "line": 415,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
+        }
+      ],
+      "id": "firestaff-d2c-zone-defines",
+      "lines": "392-415",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.h",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 513,
+          "needle": "{ DM1_VIEW_SQUARE_D2C, \"7314\", \"7315\", \"7317\", \"7332\", \"7339\", \"7341\", 0x0218, 0x0349, {1, 2}, {4, 3} },"
+        },
+        {
+          "line": 519,
+          "needle": "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);"
+        },
+        {
+          "line": 538,
+          "needle": "rear.cells[0] == expected[i].rear_cells[0]"
+        },
+        {
+          "line": 542,
+          "needle": "front.cells[0] == expected[i].front_cells[0]"
+        }
+      ],
+      "id": "firestaff-d2c-runtime-test",
+      "lines": "513-552",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 1097,
+          "needle": "DUNVIEW.C:7260-7388 D2C stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
+        },
+        {
+          "line": 1110,
+          "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
+        },
+        {
+          "line": 1113,
+          "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
+        },
+        {
+          "line": 1114,
+          "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
+        },
+        {
+          "line": 1115,
+          "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
+        }
+      ],
+      "id": "firestaff-d2c-source-evidence",
+      "lines": "1097-1115",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No renderer runtime behavior change.",
+    "No input, movement queue, or capture code changed.",
+    "No original DOS pixel parity claim.",
+    "No CSB, DM2, or DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 8513,
+          "needle": "F0119_DUNGEONVIEW_DrawSquareD2L"
+        },
+        {
+          "line": 8517,
+          "needle": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF"
+        },
+        {
+          "line": 8521,
+          "needle": "F0121_DUNGEONVIEW_DrawSquareD2C"
+        }
+      ],
+      "id": "f0128-d2c-position",
+      "lines": "8510-8522",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7289,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7300,
+          "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C09_WALL_D2C], C709_ZONE_WALL_D2C"
+        },
+        {
+          "line": 7308,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0212_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M583_VIEW_WALL_D2C_FRONT)"
+        },
+        {
+          "line": 7309,
+          "needle": "L0211_i_Order = C0x0000_CELL_ORDER_ALCOVE;"
+        },
+        {
+          "line": 7310,
+          "needle": "goto T0121016;"
+        },
+        {
+          "line": 7312,
+          "needle": "return;"
+        }
+      ],
+      "id": "d2c-front-wall-alcove-return",
+      "lines": "7289-7312",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7313,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7314,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0212_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M592_VIEW_FLOOR_D2C);"
+        },
+        {
+          "line": 7315,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0212_ai_SquareAspect[M550_FIRST_THING], P0162_i_Direction, P0163_i_MapX, P0164_i_MapY, M603_VIEW_SQUARE_D2C, C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT);"
+        },
+        {
+          "line": 7328,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2115_DoorFrameTopD2LCR, C730_ZONE_DOOR_FRAME_TOP_D2C);"
+        },
+        {
+          "line": 7329,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2118_DoorFrameLeftD2C, C724_ZONE_DOOR_FRAME_LEFT_D2C);"
+        },
+        {
+          "line": 7330,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2118_DoorFrameLeftD2C, C725_ZONE_DOOR_FRAME_RIGHT_D2C);"
+        },
+        {
+          "line": 7333,
+          "needle": "F0110_DUNGEONVIEW_DrawDoorButton(M000_INDEX_TO_ORDINAL(C0_DOOR_BUTTON), C2_VIEW_DOOR_BUTTON_D2C);"
+        },
+        {
+          "line": 7339,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0212_ai_SquareAspect[M557_DOOR_THING_INDEX], L0212_ai_SquareAspect[M556_DOOR_STATE], G0694_ai_DoorNativeBitmapIndex_Front_D2LCR, C1_VIEW_DOOR_ORNAMENT_D2LCR, M628_ZONE_DOOR_D2C);"
+        },
+        {
+          "line": 7341,
+          "needle": "L0211_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT;"
+        },
+        {
+          "line": 7342,
+          "needle": "goto T0121016;"
+        }
+      ],
+      "id": "d2c-door-front-two-pass-order",
+      "lines": "7313-7342",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7353,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 7354,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 7356,
+          "needle": "L0211_i_Order = C0x3421_CELL_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT;"
+        },
+        {
+          "line": 7357,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0212_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M592_VIEW_FLOOR_D2C);"
+        },
+        {
+          "line": 7365,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit(C065_GRAPHIC_CEILING_PIT_D2C, C865_ZONE_CEILING_PIT_D2C"
+        },
+        {
+          "line": 7368,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0212_ai_SquareAspect[M550_FIRST_THING], P0162_i_Direction, P0163_i_MapX, P0164_i_MapY, M603_VIEW_SQUARE_D2C, L0211_i_Order);"
+        },
+        {
+          "line": 7386,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M603_VIEW_SQUARE_D2C]], C709_ZONE_WALL_D2C);"
+        }
+      ],
+      "id": "d2c-open-pit-teleporter-tail",
+      "lines": "7353-7388",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 4049,
+          "needle": "#define C709_ZONE_WALL_D2C"
+        },
+        {
+          "line": 4082,
+          "needle": "#define C724_ZONE_DOOR_FRAME_LEFT_D2C"
+        },
+        {
+          "line": 4083,
+          "needle": "#define C725_ZONE_DOOR_FRAME_RIGHT_D2C"
+        },
+        {
+          "line": 4088,
+          "needle": "#define C730_ZONE_DOOR_FRAME_TOP_D2C"
+        }
+      ],
+      "id": "pc34-i34e-d2c-zones",
+      "lines": "4049-4088",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass570_dm1_v1_d2c_front_order_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS570_DM1_V1_D2C_FRONT_ORDER_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass570-dm1v1-d2c-front-order-source-lock-20260515-bosse/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass570-dm1v1-d2c-front-order-source-lock-20260515-bosse/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass570 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
