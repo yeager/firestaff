@@ -1,0 +1,169 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 136,
+          "needle": "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349"
+        },
+        {
+          "line": 136,
+          "needle": "DUNVIEW.C:6270 floor ornament under far rear pass"
+        },
+        {
+          "line": 137,
+          "needle": "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439"
+        },
+        {
+          "line": 137,
+          "needle": "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
+        }
+      ],
+      "id": "firestaff-far-door-front-metadata",
+      "lines": "135-145",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 450,
+          "needle": "DM1_VIEW_SQUARE_D3L2, \"6270\""
+        },
+        {
+          "line": 451,
+          "needle": "DM1_VIEW_SQUARE_D3R2, \"6337\""
+        },
+        {
+          "line": 461,
+          "needle": "door_front_occlusion_spec_count(), 9"
+        },
+        {
+          "line": 718,
+          "needle": "source_evidence.far_door_front_occlusion"
+        }
+      ],
+      "id": "firestaff-far-door-front-runtime-test",
+      "lines": "435-725",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 967,
+          "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
+        },
+        {
+          "line": 968,
+          "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
+        }
+      ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "960-972",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No input or movement queue edits.",
+    "No renderer pixel parity claim.",
+    "No original DOS runtime capture claim.",
+    "No DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 6269,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 6271,
+          "needle": "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT"
+        },
+        {
+          "line": 6272,
+          "needle": "C3700_ZONE_DOOR_D3L2"
+        },
+        {
+          "line": 6273,
+          "needle": "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
+        },
+        {
+          "line": 6274,
+          "needle": "goto T0676017;"
+        },
+        {
+          "line": 6286,
+          "needle": "C14_VIEW_SQUARE_D3L2, L2483_i_Order"
+        }
+      ],
+      "id": "d3l2-far-door-front-split",
+      "lines": "6269-6286",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6336,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 6338,
+          "needle": "C0x0128_CELL_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT"
+        },
+        {
+          "line": 6339,
+          "needle": "C3710_ZONE_DOOR_D3R2"
+        },
+        {
+          "line": 6340,
+          "needle": "C0x0439_CELL_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT"
+        },
+        {
+          "line": 6341,
+          "needle": "goto T0677018;"
+        },
+        {
+          "line": 6353,
+          "needle": "C15_VIEW_SQUARE_D3R2, L2485_i_Order"
+        }
+      ],
+      "id": "d3r2-mirrored-far-door-front-split",
+      "lines": "6336-6353",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass561_dm1_v1_far_door_front_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass561-dm1v1-far-door-front-source-lock-20260515-bosse/build-pass561/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass561-dm1v1-far-door-front-source-lock-20260515-bosse/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass561 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
