@@ -2159,6 +2159,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 blocked movement lifecycle source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass551_dm1_v1_blocked_movement_lifecycle
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass551_dm1_v1_blocked_movement_lifecycle.py
+    )
+endif()
+
 # DM1 V1 movement queue and sensor consequence source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

@@ -490,12 +490,47 @@ int main(void)
         ok &= expect_int("core blocked wall code", core.movement.resultCode, MOVE_BLOCKED_WALL);
         ok &= expect_int("core blocked wall skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core blocked wall skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core blocked wall keeps input wait armed", core.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("core blocked wall requests blocked vblank", core.blockedMovementVblankWaitRequested, 1);
         ok &= expect_int("core blocked wall still applies pre-resolution stamina", party.champions[0].stamina.current, 98);
         ok &= expect_int("core blocked wall records stamina cost", core.staminaCost[0], 2);
+        ok &= expect_int("core blocked wall records damage request", core.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("core blocked wall first damaged cell", core.blockedByWallOrDoorDamageFirstCell, 2);
+        ok &= expect_int("core blocked wall second damaged cell", core.blockedByWallOrDoorDamageSecondCell, 3);
         ok &= expect_int("core blocked wall discards input", core.inputDiscardRequested, 1);
         ok &= expect_int("core blocked wall clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core blocked wall keeps x", party.mapX, 1);
         ok &= expect_int("core blocked wall keeps y", party.mapY, 1);
+    }
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_DOOR, 2);
+    {
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("core blocked door queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core blocked door release queued", DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+            &queue, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 281, 1, DM1_V1_BUTTON_LEFT), 1);
+        ok &= expect_int("core blocked door stop queued", DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+            &queue, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL, 0, 0, DM1_V1_BUTTON_LEFT), 1);
+        ok &= expect_int("core blocked door followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
+        ok &= expect_int("core blocked door processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        ok &= expect_int("core blocked door dequeued", core.queue.dequeued, 1);
+        ok &= expect_int("core blocked door marked", core.movementBlocked, 1);
+        ok &= expect_int("core blocked door code", core.movement.resultCode, MOVE_BLOCKED_DOOR);
+        ok &= expect_int("core blocked door skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
+        ok &= expect_int("core blocked door skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core blocked door keeps input wait armed", core.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("core blocked door requests blocked vblank", core.blockedMovementVblankWaitRequested, 1);
+        ok &= expect_int("core blocked door records damage request", core.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("core blocked door preserves release/stop only", (int)queue.count, 2);
+        ok &= expect_int("core blocked door keeps release first", queue.commands[0].command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+        ok &= expect_int("core blocked door keeps stop second", queue.commands[1].command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+        ok &= expect_int("core blocked door keeps x", party.mapX, 1);
+        ok &= expect_int("core blocked door keeps y", party.mapY, 1);
     }
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
@@ -517,8 +552,11 @@ int main(void)
         ok &= expect_int("core group block requests adjacent reaction", core.groupReactionPartyAdjacentRequested, 1);
         ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core group block keeps input wait armed", core.stopWaitingForPlayerInput, 0);
+        ok &= expect_int("core group block requests blocked vblank", core.blockedMovementVblankWaitRequested, 1);
         ok &= expect_int("core group block still applies pre-resolution stamina", party.champions[0].stamina.current, 98);
         ok &= expect_int("core group block records stamina cost", core.staminaCost[0], 2);
+        ok &= expect_int("core group block does not request wall damage", core.blockedByWallOrDoorDamageRequested, 0);
         ok &= expect_int("core group block clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
     }
