@@ -334,6 +334,16 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportDrawStep;
 
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int16_t map_x;
+    int16_t map_y;
+    int8_t rel_depth;
+    int8_t rel_lateral;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportResolvedDrawStep;
+
 /* Source-locked PC34/I34E wall bitmap selection for a wall square.
  *
  * ReDMCSB PC34 selects the opposite left/right bitmap and requests
@@ -610,6 +620,18 @@ DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_W
 /* Source-locked F0128 visible-square draw order metadata. */
 size_t dm1_viewport_3d_draw_order_count(void);
 const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index);
+int dm1_viewport_3d_resolve_relative_map_xy(int direction,
+                                            int rel_depth,
+                                            int rel_lateral,
+                                            int origin_x,
+                                            int origin_y,
+                                            int16_t *out_x,
+                                            int16_t *out_y);
+int dm1_viewport_3d_resolve_draw_order_step(size_t index,
+                                            int direction,
+                                            int origin_x,
+                                            int origin_y,
+                                            DM1_ViewportResolvedDrawStep *out_step);
 size_t dm1_viewport_3d_wall_draw_spec_count(void);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);

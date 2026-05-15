@@ -744,6 +744,84 @@ const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index)
     return &s_draw_order[index];
 }
 
+int dm1_viewport_3d_resolve_relative_map_xy(int direction,
+                                            int rel_depth,
+                                            int rel_lateral,
+                                            int origin_x,
+                                            int origin_y,
+                                            int16_t *out_x,
+                                            int16_t *out_y)
+{
+    int normalized;
+    int forward_dx;
+    int forward_dy;
+    int right_dx;
+    int right_dy;
+    int x;
+    int y;
+
+    if (!out_x || !out_y) return 0;
+
+    /* Source lock: ReDMCSB DUNGEON.C:1371-1421
+     * F0150 applies the forward vector for P0254, then simulates a right
+     * turn and applies P0255. DUNVIEW.C:8466-8542 calls F0150 for each F0128
+     * visible square offset before dispatching the corresponding draw helper.
+     */
+    normalized = direction & 0x0003;
+    switch (normalized) {
+    case 0:
+        forward_dx = 0;
+        forward_dy = -1;
+        right_dx = 1;
+        right_dy = 0;
+        break;
+    case 1:
+        forward_dx = 1;
+        forward_dy = 0;
+        right_dx = 0;
+        right_dy = 1;
+        break;
+    case 2:
+        forward_dx = 0;
+        forward_dy = 1;
+        right_dx = -1;
+        right_dy = 0;
+        break;
+    default:
+        forward_dx = -1;
+        forward_dy = 0;
+        right_dx = 0;
+        right_dy = -1;
+        break;
+    }
+
+    x = origin_x + rel_depth * forward_dx + rel_lateral * right_dx;
+    y = origin_y + rel_depth * forward_dy + rel_lateral * right_dy;
+    *out_x = (int16_t)x;
+    *out_y = (int16_t)y;
+    return 1;
+}
+
+int dm1_viewport_3d_resolve_draw_order_step(size_t index,
+                                            int direction,
+                                            int origin_x,
+                                            int origin_y,
+                                            DM1_ViewportResolvedDrawStep *out_step)
+{
+    const DM1_ViewportDrawStep *step = dm1_viewport_3d_get_draw_order_step(index);
+    if (!step || !out_step) return 0;
+    memset(out_step, 0, sizeof(*out_step));
+    out_step->square = step->square;
+    out_step->rel_depth = step->rel_depth;
+    out_step->rel_lateral = step->rel_lateral;
+    out_step->redmcsb_function = step->redmcsb_function;
+    out_step->source_lines = "DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542";
+    return dm1_viewport_3d_resolve_relative_map_xy(
+        direction, step->rel_depth, step->rel_lateral, origin_x, origin_y,
+        &out_step->map_x, &out_step->map_y);
+}
+
+
 size_t dm1_viewport_3d_wall_draw_spec_count(void)
 {
     return sizeof(s_wall_draw_specs) / sizeof(s_wall_draw_specs[0]);
@@ -988,6 +1066,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:8064 F0126_DUNGEONVIEW_DrawSquareD0R\n"
         "  DUNVIEW.C:8164 F0127_DUNGEONVIEW_DrawSquareD0C\n"
         "  DUNVIEW.C:8318 F0128_DUNGEONVIEW_Draw_CPSF\n"
+        "  DUNGEON.C:1371-1421 F0150 resolves F0128 relative depth/lateral offsets to map X/Y\n"
         "  COMMAND.C:2045-2156 F0380 command dispatch before next main-loop redraw\n"
         "  GAMELOOP.C:55-90 next loop iteration redraws F0128 from post-command G0308/G0306/G0307 party tuple\n"
         "  DRAWVIEW.C:709-722 F0097 requests viewport blit and waits for vertical blank\n"

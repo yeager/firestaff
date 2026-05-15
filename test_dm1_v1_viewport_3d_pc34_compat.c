@@ -164,6 +164,59 @@ static void test_redmcsb_f0128_draw_order(void)
     check_int("F0128.draw_order.out_of_range", dm1_viewport_3d_get_draw_order_step(19) == NULL, 1);
 }
 
+static void test_f0128_draw_order_resolves_relative_map_coordinates(void)
+{
+    static const struct {
+        int x;
+        int y;
+    } expected_north[] = {
+        {  9, 16 }, { 11, 16 }, { 10, 16 },
+        {  8, 17 }, { 12, 17 },
+        {  9, 17 }, { 11, 17 }, { 10, 17 },
+        {  8, 18 }, { 12, 18 },
+        {  9, 18 }, { 11, 18 }, { 10, 18 },
+        {  9, 19 }, { 11, 19 }, { 10, 19 },
+        {  9, 20 }, { 11, 20 }, { 10, 20 },
+    };
+    DM1_ViewportResolvedDrawStep resolved;
+    int16_t x = 0;
+    int16_t y = 0;
+
+    check_int("F0150.viewport_relative.null_x", dm1_viewport_3d_resolve_relative_map_xy(0, 1, 0, 10, 20, NULL, &y), 0);
+    check_int("F0150.viewport_relative.null_y", dm1_viewport_3d_resolve_relative_map_xy(0, 1, 0, 10, 20, &x, NULL), 0);
+
+    for (size_t i = 0; i < dm1_viewport_3d_draw_order_count(); ++i) {
+        char id[96];
+        check_int("F0150.viewport_relative.resolve", dm1_viewport_3d_resolve_draw_order_step(i, 0, 10, 20, &resolved), 1);
+        snprintf(id, sizeof(id), "F0150.viewport_relative.%02zu.x", i);
+        check_int(id, resolved.map_x, expected_north[i].x);
+        snprintf(id, sizeof(id), "F0150.viewport_relative.%02zu.y", i);
+        check_int(id, resolved.map_y, expected_north[i].y);
+        snprintf(id, sizeof(id), "F0150.viewport_relative.%02zu.source", i);
+        check_int(id, strstr(resolved.source_lines, "DUNGEON.C:1371-1421") != NULL, 1);
+    }
+
+    check_int("F0150.viewport_relative.east", dm1_viewport_3d_resolve_relative_map_xy(1, 3, -1, 10, 20, &x, &y), 1);
+    check_int("F0150.viewport_relative.east.x", x, 13);
+    check_int("F0150.viewport_relative.east.y", y, 19);
+
+    check_int("F0150.viewport_relative.south", dm1_viewport_3d_resolve_relative_map_xy(2, 3, -1, 10, 20, &x, &y), 1);
+    check_int("F0150.viewport_relative.south.x", x, 11);
+    check_int("F0150.viewport_relative.south.y", y, 23);
+
+    check_int("F0150.viewport_relative.west", dm1_viewport_3d_resolve_relative_map_xy(3, 3, -1, 10, 20, &x, &y), 1);
+    check_int("F0150.viewport_relative.west.x", x, 7);
+    check_int("F0150.viewport_relative.west.y", y, 21);
+
+    check_int("F0150.viewport_relative.normalize", dm1_viewport_3d_resolve_relative_map_xy(5, 3, -1, 10, 20, &x, &y), 1);
+    check_int("F0150.viewport_relative.normalize.x", x, 13);
+    check_int("F0150.viewport_relative.normalize.y", y, 19);
+
+    check_int("F0150.viewport_relative.out_of_range", dm1_viewport_3d_resolve_draw_order_step(19, 0, 10, 20, &resolved), 0);
+    check_int("F0150.viewport_relative.null_result", dm1_viewport_3d_resolve_draw_order_step(0, 0, 10, 20, NULL), 0);
+}
+
+
 
 static void test_pc34_wall_bitmap_selection(void)
 {
@@ -699,6 +752,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     if (!e) return;
     check_int("source_evidence.g0163", strstr(e, "G0163_aauc_Graphic558_Frame_Walls") != NULL, 1);
     check_int("source_evidence.f0128", strstr(e, "DUNVIEW.C:8318 F0128_DUNGEONVIEW_Draw_CPSF") != NULL, 1);
+    check_int("source_evidence.f0150", strstr(e, "DUNGEON.C:1371-1421 F0150") != NULL, 1);
     check_int("source_evidence.g2107", strstr(e, "G2107_WallSet[15]") != NULL, 1);
     check_int("source_evidence.pc34_side", strstr(e, "PC34 parity side-wall selection") != NULL, 1);
     check_int("source_evidence.pc34_d2_side", strstr(e, "F0678/F0679 PC34 D2L2/D2R2") != NULL, 1);
@@ -733,6 +787,7 @@ int main(void)
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
+    test_f0128_draw_order_resolves_relative_map_coordinates();
     test_pc34_wall_bitmap_selection();
     test_wall_item_occlusion_alcove_exception();
     test_wall_source_row_clip_occlusion_gate();
