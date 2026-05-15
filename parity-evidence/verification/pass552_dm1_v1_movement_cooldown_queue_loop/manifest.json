@@ -1,0 +1,32 @@
+{
+  "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
+  "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
+  "timestampUtc": "2026-05-15T01:46:34.390128+00:00",
+  "branch": "worker/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex",
+  "head": "df2a407f446b8b57b574fdc365c1a5b829f0fad2",
+  "worktree": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex",
+  "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
+  "primarySourceAudit": {
+    "GAMELOOP.C:cooldownInputQueueLoop": "GAMELOOP.C:150-219",
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2829",
+    "COMMAND.C:disabledMoveQueueRetention": "COMMAND.C:2095-2155",
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "CLIKMENU.C:successfulStepCooldown": "CLIKMENU.C:272-346"
+  },
+  "firestaffGuards": {
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "queueRetentionSpan": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
+    "cooldownDecrement": "dm1_v1_movement_timing_pc34_compat.c:85-95",
+    "cooldownDecrementSpan": "dm1_v1_movement_timing_pc34_compat.c:89-93",
+    "regression": "test_dm1_v1_movement_timing_pc34_compat"
+  },
+  "runtimeProbe": {
+    "command": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex/build-pass552/test_dm1_v1_movement_timing_pc34_compat",
+    "statusNeedle": "dm1V1MovementTimingInvariantOk=1"
+  },
+  "notClaimed": [
+    "new original DOSBox runtime capture",
+    "viewport or wall pixel parity",
+    "new movement engine behavior beyond the cooldown queue loop evidence"
+  ]
+}
