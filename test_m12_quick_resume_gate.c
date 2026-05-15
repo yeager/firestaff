@@ -84,7 +84,18 @@ int main(void) {
     if (!expect(state.quickResumeAvailable == 1, "valid DM1 quicksave must enable quick Resume")) return 1;
     if (!expect(strcmp(state.quickResumeGameId, "dm1") == 0, "quick Resume should identify dm1")) return 1;
     if (!expect(strcmp(state.quickResumeSavePath, savePath) == 0, "quick Resume should retain save path")) return 1;
+    if (!expect(state.selectedIndex == 0,
+                "valid quick Resume must not steal default Enter from DM1 new-game launch")) return 1;
 
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 0, "default Enter on DM1 opens game options, not quick Resume")) return 1;
+    if (!expect(state.quickResumeLaunchRequested == 0,
+                "default Enter on DM1 must not arm quick Resume")) return 1;
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS,
+                "default Enter on DM1 should enter the normal launch path")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    force_dm1_available(&state);
     state.selectedIndex = -1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1, "Resume accept should request launch")) return 1;

@@ -1074,7 +1074,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
                          M12_AssetStatus_GetDataDir(&state->assetStatus),
                          (unsigned int)time(NULL));
     m12_probe_quick_resume(state);
-    state->selectedIndex = state->quickResumeAvailable ? -1 : 0;
+    state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
