@@ -1,0 +1,151 @@
+{
+  "claims": [
+    "N2-local original DM1 PC 3.4 stage is present and hash-locked.",
+    "DOSBox/Xvfb/xdotool route prerequisites are available.",
+    "The diagnostic route has exactly six labeled shots and bounded 320x200 clicks.",
+    "No screenshot, overlay, original-runtime state delta, or pixel parity claim is made by this verifier."
+  ],
+  "nextCommand": "OUT_DIR=$PWD/verification-screens/pass566-original-overlay-diagnostic DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=5000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:1200 shot:pre_enter_menu click:260,50 wait:1200 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+  "originalFiles": [
+    {
+      "bytes": 363417,
+      "key": "canonical_GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "variant": "DM1 PC 3.4 canonical"
+    },
+    {
+      "bytes": 33357,
+      "key": "canonical_DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM1 PC 3.4 canonical"
+    },
+    {
+      "bytes": 12002,
+      "key": "canonical_TITLE",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "variant": "DM1 PC 3.4 canonical"
+    },
+    {
+      "bytes": 11471,
+      "key": "stage_DM.EXE",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+      "variant": "DM1 PC 3.4 DOS original stage"
+    },
+    {
+      "bytes": 363417,
+      "key": "stage_GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "variant": "DM1 PC 3.4 DOS original stage"
+    },
+    {
+      "bytes": 33357,
+      "key": "stage_DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM1 PC 3.4 DOS original stage"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "route": {
+    "expectedDiagnosticClasses": [
+      "title_or_menu",
+      "entrance_menu",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ],
+    "routeEvents": "wait:7000 shot:title enter wait:1200 shot:pre_enter_menu click:260,50 wait:1200 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe",
+    "shotLabels": [
+      "title",
+      "pre_enter_menu",
+      "after_enter_click",
+      "forward_1",
+      "forward_2",
+      "left_turn_probe"
+    ]
+  },
+  "sourceAnchors": [
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "function": "G0459_as_Graphic561_PrimaryKeyboardInput_DungeonView",
+      "lines": [
+        677,
+        683
+      ],
+      "sliceSha256": "6c016310f582724fbf316c6123783745aca03b3cdc4aafe15bfeacda1524bf25"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "lines": [
+        2120,
+        2156
+      ],
+      "sliceSha256": "e22651cd2b51e0e11975a9fc7a81dd6be2e662569d78f280e13ae9cc26597308"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "lines": [
+        142,
+        174
+      ],
+      "sliceSha256": "d5e124631c6babe987bd2eef9640afa6c71112b5c1aef3cb26f9c9d3350de9f4"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": [
+        180,
+        346
+      ],
+      "sliceSha256": "e82430ecb6ee61b2a8db4d22097a157efe76c18d1f6cac7cd7adcbf9fec06647"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "function": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "lines": [
+        1371,
+        1391
+      ],
+      "sliceSha256": "20cc8c02c9d98acc87c68d5f705e4f7c4b3970d396ddc30d90ae068c9020ff6d"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "lines": [
+        8318,
+        8543
+      ],
+      "sliceSha256": "929f36006a4ce1fbb10519b690eb7bdde6d17acf35b1a4ab8fedc507f7709244"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "lines": [
+        709,
+        858
+      ],
+      "sliceSha256": "cab0eceeb9ea0074fcfe4dfa200f3893fe49ce979ee135615f2265f87c3d3abf"
+    }
+  ],
+  "status": "PASS566_DM1_V1_ORIGINAL_OVERLAY_CAPTURE_READINESS",
+  "tools": {
+    "dosbox": "/usr/bin/dosbox",
+    "python3": "/usr/bin/python3",
+    "xdotool": "/usr/bin/xdotool",
+    "xvfb-run": "/usr/bin/xvfb-run"
+  }
+}
