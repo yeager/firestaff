@@ -1834,6 +1834,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original overlay/capture bounded progress gate -------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass548_dm1_v1_original_overlay_capture_progress
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass548_dm1_v1_original_overlay_capture_progress.py
+    )
+endif()
+
 # ── DM1 V1 wall occlusion spec-matrix gate ───────────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

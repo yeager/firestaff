@@ -1,0 +1,152 @@
+{
+  "blocker": "bounded original live capture did not return before timeout; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+  "branch": "main",
+  "head": "0469b869eb691259f19a4a642bf177b20d6113e8",
+  "liveAttempt": {
+    "attempted": true,
+    "command": "python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+    "durationSeconds": 12.005,
+    "expectedManifest": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json",
+    "returncode": -15,
+    "stdoutPath": "parity-evidence/verification/pass548_dm1_v1_original_overlay_capture_progress/pass548_live_attempt_stdout.txt",
+    "stdoutTail": "",
+    "timedOut": true,
+    "timeoutSeconds": 12
+  },
+  "nonClaims": [
+    "no original frame promoted as parity evidence",
+    "no runtime or gameplay behavior changed",
+    "no push"
+  ],
+  "pass475Snapshot": {
+    "exists": false,
+    "path": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json"
+  },
+  "prerequisites": {
+    "dmExeExists": true,
+    "liveVerifier": "tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py",
+    "liveVerifierExists": true,
+    "missing": [],
+    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "tools": {
+      "Xvfb": "/usr/bin/Xvfb",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "xdotool": "/usr/bin/xdotool"
+    }
+  },
+  "progress": [
+    "reduced original overlay/capture progress to one bounded N2 command",
+    "records timeout/no-manifest as a concrete blocker instead of promotable pixels",
+    "keeps movement/viewport/walls source anchors tied to ReDMCSB lines"
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass548_dm1_v1_original_overlay_capture_progress.v1",
+  "sourceAudit": [
+    {
+      "file": "COMMAND.C",
+      "label": "pc34_movement_click_boxes",
+      "lineHits": {
+        "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145": 108,
+        "C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145": 110,
+        "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145": 109,
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168": 114,
+        "G0448_as_Graphic561_SecondaryMouseInput_Movement": 35
+      },
+      "lineRange": [
+        35,
+        114
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "label": "queue_pop_to_turn_step_handlers",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "lineRange": [
+        2045,
+        2155
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "label": "turn_and_step_party_tuple_mutation",
+      "lineHits": {
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": 269,
+        "F0267_MOVE_GetMoveResult_CPSCE": 135,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lineRange": [
+        135,
+        269
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "label": "successful_step_tuple_commit",
+      "lineHits": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;": 443
+      },
+      "lineRange": [
+        316,
+        443
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "label": "viewport_wall_composition_and_present_call",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling": 2962,
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap": 3048,
+        "F0102_DUNGEONVIEW_DrawDoorBitmap": 3082,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lineRange": [
+        2962,
+        8610
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "label": "pc34_viewport_present_overlay_boundary",
+      "lineHits": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "G0296_puc_Bitmap_Viewport": 721,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "lineRange": [
+        709,
+        857
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS548_LIVE_CAPTURE_TIMEOUT",
+  "timestampUtc": "2026-05-15T00:02:46.049324+00:00"
+}
