@@ -2061,7 +2061,6 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass562_dm1_v1_d2_far_side_wall_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
-
 # -- DM1 V1 D1 side wall source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
@@ -2069,6 +2068,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py
     )
     set_tests_properties(pass563_dm1_v1_d1_side_wall_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
+# -- DM1 V1 D1 side door-front source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass565_dm1_v1_d1_side_door_front_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py
+    )
+    set_tests_properties(pass565_dm1_v1_d1_side_door_front_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────

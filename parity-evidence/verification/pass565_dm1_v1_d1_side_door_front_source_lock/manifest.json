@@ -1,0 +1,189 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 144,
+          "needle": "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039"
+        },
+        {
+          "line": 144,
+          "needle": "DUNVIEW.C:7508-7536 pass2 front-right cell after door"
+        },
+        {
+          "line": 145,
+          "needle": "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"
+        },
+        {
+          "line": 145,
+          "needle": "DUNVIEW.C:7676-7704 pass2 front-left cell after door"
+        }
+      ],
+      "id": "firestaff-d1-side-door-front-metadata",
+      "lines": "135-148",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 511,
+          "needle": "DM1_VIEW_SQUARE_D1L"
+        },
+        {
+          "line": 511,
+          "needle": "0x0028, 0x0039"
+        },
+        {
+          "line": 512,
+          "needle": "DM1_VIEW_SQUARE_D1R"
+        },
+        {
+          "line": 512,
+          "needle": "0x0018, 0x0049"
+        },
+        {
+          "line": 516,
+          "needle": "door_front_occlusion.count"
+        },
+        {
+          "line": 516,
+          "needle": "11"
+        },
+        {
+          "line": 554,
+          "needle": "door_front_occlusion.d1l_side_door_front_spec"
+        }
+      ],
+      "id": "firestaff-d1-side-door-front-runtime-test",
+      "lines": "508-555",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 1083,
+          "needle": "DUNVIEW.C:7493-7536"
+        },
+        {
+          "line": 1084,
+          "needle": "DUNVIEW.C:7661-7704"
+        }
+      ],
+      "id": "firestaff-d1-side-door-front-source-evidence",
+      "lines": "1080-1085",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No movement/input/capture changes.",
+    "No renderer pixel parity claim.",
+    "No original DOS runtime capture claim.",
+    "No DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 7492,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7493,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0214_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M594_VIEW_FLOOR_D1L);"
+        },
+        {
+          "line": 7494,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0214_ai_SquareAspect[M550_FIRST_THING], P0165_i_Direction, P0166_i_MapX, P0167_i_MapY, M607_VIEW_SQUARE_D1L, C0x0028_CELL_ORDER_DOORPASS1_BACKRIGHT);"
+        },
+        {
+          "line": 7503,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2111_DoorFrameTopD1L, C732_ZONE_DOOR_FRAME_TOP_D1L);"
+        },
+        {
+          "line": 7506,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0214_ai_SquareAspect[M557_DOOR_THING_INDEX], L0214_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M630_ZONE_DOOR_D1L);"
+        },
+        {
+          "line": 7508,
+          "needle": "L0213_i_Order = C0x0039_CELL_ORDER_DOORPASS2_FRONTRIGHT;"
+        },
+        {
+          "line": 7536,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0214_ai_SquareAspect[M550_FIRST_THING], P0165_i_Direction, P0166_i_MapX, P0167_i_MapY, M607_VIEW_SQUARE_D1L, L0213_i_Order);"
+        }
+      ],
+      "id": "d1l-door-front-split",
+      "lines": "7492-7536",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7660,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7661,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0216_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M596_VIEW_FLOOR_D1R);"
+        },
+        {
+          "line": 7662,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0216_ai_SquareAspect[M550_FIRST_THING], P0168_i_Direction, P0169_i_MapX, P0170_i_MapY, M608_VIEW_SQUARE_D1R, C0x0018_CELL_ORDER_DOORPASS1_BACKLEFT);"
+        },
+        {
+          "line": 7671,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2110_DoorFrameTopD1R, C734_ZONE_DOOR_FRAME_TOP_D1R);"
+        },
+        {
+          "line": 7674,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0216_ai_SquareAspect[M557_DOOR_THING_INDEX], L0216_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M632_ZONE_DOOR_D1R);"
+        },
+        {
+          "line": 7676,
+          "needle": "L0215_i_Order = C0x0049_CELL_ORDER_DOORPASS2_FRONTLEFT;"
+        },
+        {
+          "line": 7704,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0216_ai_SquareAspect[M550_FIRST_THING], P0168_i_Direction, P0169_i_MapX, P0170_i_MapY, M608_VIEW_SQUARE_D1R, L0215_i_Order);"
+        }
+      ],
+      "id": "d1r-door-front-split",
+      "lines": "7660-7704",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass565_dm1_v1_d1_side_door_front_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass565 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
