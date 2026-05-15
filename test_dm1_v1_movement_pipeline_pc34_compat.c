@@ -602,6 +602,36 @@ static void test_stairs_step_consequence(void)
     EXPECT_INT("stairs_backward_y_not_south", party.mapY, 2);
     EXPECT_INT("stairs_backward_no_cooldown", pipeline.disabledMovementTicks, 0);
 
+    /* COMMAND.C:2095-2107 gates movement commands before dequeue/dispatch.
+     * Even the F0366 backward-on-stairs shortcut cannot fire while G0310 is
+     * non-zero: the command remains queued, the stairs transition is skipped,
+     * and no pre-step stamina is spent.
+     */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    set_sq(level1, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    party.champions[0].stamina.current = 20;
+    party.champions[0].stamina.maximum = 20;
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    pipeline.disabledMovementTicks = 7;
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB32));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+
+    EXPECT("stairs_backward_cooldown_gate", result.core.queue.movementDisabledGate == 1);
+    EXPECT_INT("stairs_backward_cooldown_queued", pipeline.commandQueue.count, 1);
+    EXPECT_INT("stairs_backward_cooldown_not_dequeued", result.core.queue.dequeued, 0);
+    EXPECT_INT("stairs_backward_cooldown_no_transition", result.core.stairTransitionApplied, 0);
+    EXPECT_INT("stairs_backward_cooldown_no_stamina", result.core.staminaAffectedCount, 0);
+    EXPECT_INT("stairs_backward_cooldown_stamina_unchanged",
+        party.champions[0].stamina.current, 20);
+    EXPECT_INT("stairs_backward_cooldown_map_unchanged", party.mapIndex, 0);
+    EXPECT_INT("stairs_backward_cooldown_x_unchanged", party.mapX, 2);
+    EXPECT_INT("stairs_backward_cooldown_y_unchanged", party.mapY, 2);
+    EXPECT_INT("stairs_backward_cooldown_kept", pipeline.disabledMovementTicks, 7);
+
     /* CLIKMENU.C:325-328: moving from a stairs square to a non-stairs
      * square calls F0267 with CM1_MAPX_NOT_ON_A_SQUARE as the source.
      * That skips source-stairs walk-off processing, still applies the

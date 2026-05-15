@@ -1,0 +1,59 @@
+{
+  "branch": "worker/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex",
+  "firestaffAudit": {
+    "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
+      "claim": "gated movement returns before queue pop",
+      "focusedLines": "303-318",
+      "lines": [
+        286,
+        328
+      ]
+    },
+    "dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_ProcessOnePc34Compat": {
+      "claim": "non-dequeued command returns before stamina/stairs/timing",
+      "focusedLines": "206-364",
+      "lines": [
+        182,
+        376
+      ]
+    },
+    "testExecutable": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex/build-pass578/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testOutputLastLine": "229 passed, 0 failed"
+  },
+  "head": "f74c469f24bdcff0e5adc74f66e0a7c7bce163f0",
+  "nonClaims": [
+    "does not replace pass571 turn no-step timing",
+    "does not cover pass571 front-command queue/pending replay",
+    "no original DOS runtime capture"
+  ],
+  "schema": "firestaff.parity.pass578_dm1_v1_stairs_backstep_cooldown_gate.v1",
+  "sourceAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": {
+      "claim": "backward-on-stairs F0364 shortcut only runs after F0380 dispatch and returns before normal cooldown",
+      "focusedLines": "256-345",
+      "lines": [
+        180,
+        349
+      ]
+    },
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": {
+      "claim": "G0310/G0311 movement gate precedes dequeue and F0366 dispatch",
+      "focusedLines": "2095-2155",
+      "lines": [
+        2045,
+        2829
+      ]
+    },
+    "DUNGEON.C:F0151_DUNGEON_GetSquare": {
+      "claim": "current-square stairs classification is map data; invalid reads fall back to wall",
+      "focusedLines": "1440-1475",
+      "lines": [
+        1423,
+        1479
+      ]
+    }
+  },
+  "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
+  "timestampUtc": "2026-05-15T21:29:48.093455+00:00",
+  "worktree": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex"
+}
