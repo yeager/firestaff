@@ -2048,6 +2048,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 side-wall occlusion/source-row clipping focused gate -------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass576_dm1_v1_side_wall_occlusion_source_row_clipping
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass576_dm1_v1_side_wall_occlusion_source_row_clipping.py
+    )
+endif()
+
 # -- DM1 V1 D1/D0 side-front wall occlusion source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
