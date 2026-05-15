@@ -1,0 +1,174 @@
+{
+  "blocker": null,
+  "branch": "worker/pass562-dm1v1-pass560-keyboard-next-boundary-20260515-bosse",
+  "canonicalDm1": {
+    "files": {
+      "DUNGEON.DAT": {
+        "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "observedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "ok": true,
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+      },
+      "GRAPHICS.DAT": {
+        "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "observedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "ok": true,
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
+      }
+    },
+    "ok": true,
+    "root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+  },
+  "decision": {
+    "candidates": [
+      {
+        "blockedByMissingRuntimeProof": true,
+        "name": "C254/IO_DRIVER slot decode",
+        "reason": "Pass560 source-locks C254 publication and reports no runtime C254/vector/slot artifact; IO2 cannot be interpreted until slot 0/1 are decoded.",
+        "sourceLocked": true
+      },
+      {
+        "blockedByMissingRuntimeProof": true,
+        "name": "IO2/F0540 dispatch",
+        "reason": "F0540 and F0539 are downstream consumers of G2162_IODriver slot 0/1, so this is the next boundary only after C254 slot decode succeeds.",
+        "sourceLocked": true
+      },
+      {
+        "blockedByMissingRuntimeProof": true,
+        "name": "F0361 enqueue",
+        "reason": "F0361 receives the M528 key after IO2 has read and normalized it; probing enqueue before C254/IO2 would collapse two boundaries.",
+        "sourceLocked": true
+      }
+    ],
+    "nextProbeContract": [
+      "in one bounded N2 runtime, after IO startup, read IVT C254 at 0000:03F8",
+      "decode C254 as non-null G8101_apc_IOInterruptVector",
+      "decode table slot 0 as F8090_ and slot 1 as F8091_ before any IO2/F0540 claim",
+      "only after that, continue to F0539/F0540 hit/value and then F0361 enqueue/G2153 increment"
+    ],
+    "selected": "C254/IO_DRIVER slot decode",
+    "selectedStatus": "PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED"
+  },
+  "pass560": {
+    "blocker": "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380.",
+    "exists": true,
+    "nextRequiredRuntimeProbe": [
+      "read INT 09 and verify S8A_Vector after F8088_",
+      "read C254 and decode G8101_apc_IOInterruptVector",
+      "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_",
+      "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"
+    ],
+    "ok": true,
+    "path": "parity-evidence/verification/pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding/manifest.json",
+    "runtimeBinding": {
+      "ok": false,
+      "provided": false,
+      "status": "not_provided"
+    },
+    "status": "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED"
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/pass562-dm1v1-pass560-keyboard-next-boundary-20260515-bosse",
+  "schema": "pass562_dm1_v1_pass560_keyboard_next_boundary.v1",
+  "sourceAudit": [
+    {
+      "boundary": "C254/IO_DRIVER slot decode",
+      "claim": "C254 publishes an IO_DRIVER table whose slots 0 and 1 are the keyboard read/present API.",
+      "file": "IBMIO.C",
+      "id": "c254_table_slots_zero_one_are_keyboard_api",
+      "lineRangeObserved": [
+        2378,
+        2381
+      ],
+      "lines": "2378-2381",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "boundary": "C254/IO_DRIVER slot decode",
+      "claim": "The IO driver installs C254 before the child game runs.",
+      "file": "IBMIO.C",
+      "id": "c254_vector_is_installed_before_child_game",
+      "lineRangeObserved": [
+        2550,
+        2552
+      ],
+      "lines": "2550-2552",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "boundary": "C254/IO_DRIVER slot decode",
+      "claim": "The game binds G2162_IODriver from interrupt C254.",
+      "file": "CEDT026.C",
+      "id": "game_binds_g2162_from_c254",
+      "lineRangeObserved": [
+        235,
+        238
+      ],
+      "lines": "235-238",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDT026.C"
+    },
+    {
+      "boundary": "IO2/F0540 dispatch",
+      "claim": "F0540 is downstream of slot 0 and normalizes PC34 arrow scancodes to movement-table codes.",
+      "file": "IO2.C",
+      "id": "f0540_reads_slot0_then_maps_pc34_arrows",
+      "lineRangeObserved": [
+        27,
+        61
+      ],
+      "lines": "27-61",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "boundary": "IO2/F0540 dispatch",
+      "claim": "F0539 keyboard-present is downstream of IO_DRIVER slot 1.",
+      "file": "IO2.C",
+      "id": "f0539_reads_slot1_keyboard_presence",
+      "lineRangeObserved": [
+        179,
+        184
+      ],
+      "lines": "179-184",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "boundary": "F0361 enqueue",
+      "claim": "The game loop calls F0361 only after M527/M528 have consumed IO_DRIVER input.",
+      "file": "GAMELOOP.C",
+      "id": "main_loop_orders_io2_before_f0361_then_f0380",
+      "lineRangeObserved": [
+        164,
+        219
+      ],
+      "lines": "164-168,215-219",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "boundary": "F0361 enqueue",
+      "claim": "F0361 is the enqueue boundary after F0540 has returned a movement-table code.",
+      "file": "COMMAND.C",
+      "id": "f0361_writes_keyboard_command_queue",
+      "lineRangeObserved": [
+        1753,
+        1768
+      ],
+      "lines": "1753-1768",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED"
+}
