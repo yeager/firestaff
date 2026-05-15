@@ -935,6 +935,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME pass564_dm1_v1_movement_collision_timing_cluster
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass564_dm1_v1_movement_collision_timing_cluster.py
+    )
+
+    add_test(
         NAME pass394_dm1_v1_dispatch_to_movement_state
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_pass394_dm1_v1_dispatch_to_movement_state.py
     )

@@ -1,0 +1,81 @@
+{
+  "schema": "firestaff.pass564.dm1_v1_movement_collision_timing_cluster.v1",
+  "status": "pass",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "relative movement, collision blockers, party coordinate update, cooldown install/decrement, queued command behavior",
+  "sourceAnchors": [
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 queue lock, movement cooldown gate, dequeue, pending replay, turn/step dispatch"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "F0365 turn/stairs/current-square sensor boundary"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 stamina, relative step, blockers, discard, F0267, cooldown install"
+    },
+    {
+      "file": "DUNGEON.C",
+      "lines": "1371-1391",
+      "claim": "F0150 relative forward/right coordinate math"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "438-444",
+      "claim": "F0267 immediate party coordinate update"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "738-783",
+      "claim": "F0267 move-result globals, scent, G0362 timing"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "799-822",
+      "claim": "F0267 source leave, destination group deletion, destination enter/defer"
+    },
+    {
+      "file": "CHAMPION.C",
+      "lines": "1180-1215",
+      "claim": "F0310 movement ticks formula"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "150-155",
+      "claim": "G0310/G0311 independent per-loop decrement"
+    }
+  ],
+  "firestaffAnchors": [
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "queued-command gate and pending replay"
+    },
+    {
+      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "turn/step dispatch, blockers, coordinate update, cooldown"
+    },
+    {
+      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "claim": "movement ticks, G0362 update, cooldown decrement"
+    },
+    {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "focused command core coverage"
+    },
+    {
+      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "claim": "pipeline cooldown decrement/release coverage"
+    }
+  ],
+  "ctests": [
+    "dm1_v1_movement_command_core_pc34_compat",
+    "dm1_v1_movement_pipeline_pc34_compat",
+    "pass564_dm1_v1_movement_collision_timing_cluster"
+  ],
+  "dataFilesRead": []
+}
