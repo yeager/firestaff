@@ -126,6 +126,7 @@ int main(void)
     ok &= expect_contains("source evidence command queue dispatch", sourceEvidence, "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099");
     ok &= expect_contains("source evidence move party stamina", sourceEvidence, "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255");
     ok &= expect_contains("source evidence stamina clamp", sourceEvidence, "CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048");
+    ok &= expect_contains("source evidence projectile direction gate", sourceEvidence, "blocks projectile cooldown only when G0312 matches normalized absolute movement direction");
     ok &= expect_contains("source evidence move party blockers", sourceEvidence, "224-233 arrow deltas");
     ok &= expect_contains("source evidence relative movement", sourceEvidence, "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391");
     ok &= expect_contains("source evidence party rotation", sourceEvidence, "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130");
@@ -293,12 +294,30 @@ int main(void)
         &queue, &dungeon, &things, &party, 0, 2, DIR_NORTH, 372, 350, footwear, &result), 1);
     ok &= expect_int("pc34 core projectile gate observed", result.queue.movementDisabledGate, 1);
     ok &= expect_int("pc34 core projectile gate keeps command queued", (int)queue.count, 1);
-
     ok &= expect_int("pc34 core cooldown expiry releases held move", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         &queue, &dungeon, &things, &party, 0, 0, DIR_NORTH, 374, 350, footwear, &result), 1);
     ok &= expect_int("pc34 core cooldown expiry dequeues", result.queue.dequeued, 1);
     ok &= expect_int("pc34 core cooldown expiry applies step", result.stepApplied, 1);
     ok &= expect_int("pc34 core cooldown expiry decrements y", party.mapY, 1);
+
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core projectile nonmatching direction queues forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction processes move", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 2, DIR_EAST, 373, 350, footwear, &result), 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction not gated", result.queue.movementDisabledGate, 0);
+    ok &= expect_int("pc34 core projectile nonmatching direction dequeues", result.queue.dequeued, 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction dispatches move", result.queue.dispatchedMove, 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction applies step", result.stepApplied, 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction clears projectile cooldown", result.timing.projectileDisabledMovementTicks, 0);
+    ok &= expect_int("pc34 core projectile nonmatching direction consumes queue", (int)queue.count, 0);
+    ok &= expect_int("pc34 core projectile nonmatching direction leaves x", party.mapX, 2);
+    ok &= expect_int("pc34 core projectile nonmatching direction decrements y", party.mapY, 1);
+    ok &= expect_int("pc34 core projectile nonmatching direction sets cooldown", result.timing.disabledMovementTicks, 2);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
