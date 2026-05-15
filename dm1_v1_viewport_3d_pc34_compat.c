@@ -1066,6 +1066,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:8064 F0126_DUNGEONVIEW_DrawSquareD0R\n"
         "  DUNVIEW.C:8164 F0127_DUNGEONVIEW_DrawSquareD0C\n"
         "  DUNVIEW.C:8318 F0128_DUNGEONVIEW_Draw_CPSF\n"
+        "  DUNGEON.C:1371-1421 F0150 resolves F0128 relative depth/lateral offsets to map X/Y\n"
         "  COMMAND.C:2045-2156 F0380 command dispatch before next main-loop redraw\n"
         "  GAMELOOP.C:55-90 next loop iteration redraws F0128 from post-command G0308/G0306/G0307 party tuple\n"
         "  DRAWVIEW.C:709-722 F0097 requests viewport blit and waits for vertical blank\n"
