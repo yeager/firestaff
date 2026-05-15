@@ -1,0 +1,190 @@
+{
+  "branch": "worker/dm1v1-original-capture-gate-20260515-codex",
+  "decision": "Original DM1 V1 movement/viewport/wall capture remains blocked until one bounded canonical PC34 run records C254 slot decode, IO2 movement key, F0361 enqueue, F0380 pop, F0365/F0366 dispatch, party tuple mutation or intentional blocked-step proof, then F0128 draw and F0097 viewport present for the same route token.",
+  "head": "1b3dfab9c58b08722335bc4e35745824d8d97a7b",
+  "nonClaims": [
+    "no DOSBox runtime transcript is fabricated by this gate",
+    "no original screenshot or pixel parity is promoted without the required transcript",
+    "no Firestaff movement or viewport runtime behavior is changed",
+    "no DANNESBURK input touched",
+    "no push"
+  ],
+  "pass563": {
+    "path": "parity-evidence/verification/pass563_dm1_v1_pc34_original_c254_boundary/manifest.json",
+    "status": "BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED"
+  },
+  "proofPredicates": {
+    "pass563LocksC254Blocker": true,
+    "pass563Present": true,
+    "runtimeTranscriptPromotable": false,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-original-capture-gate-20260515-codex",
+  "requiredRuntimeSequence": [
+    "c254_vector_decoded",
+    "io_driver_slot0_f8090_slot1_f8091",
+    "io2_f0540_movement_key",
+    "f0361_enqueue_g0432_g2153_increment",
+    "f0380_pop_g2153_decrement",
+    "f0365_or_f0366_dispatch",
+    "party_tuple_mutated_or_confirmed_blocked",
+    "f0128_draw_tuple",
+    "f0097_viewport_present"
+  ],
+  "runtimeTranscript": {
+    "ok": false,
+    "provided": false,
+    "status": "not_provided"
+  },
+  "schema": "pass564_dm1_v1_original_movement_viewport_transcript_gate.v1",
+  "sourceAudit": [
+    {
+      "claim": "The runtime transcript must bind input drain and F0380 dispatch to the next loop draw that consumes G0308/G0306/G0307.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_draws_tuple_before_wait_and_dispatches_queue_inside_wait",
+      "lineHits": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90,
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 164,
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "lineRange": [
+        90,
+        219
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "A movement key is source-visible only after C254 slot0/slot1 are decoded and IO2 returns the normalized movement code.",
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin / F0539_INPUT_Cconis",
+      "id": "pc34_keyboard_read_goes_through_c254_io_driver_slot0_slot1",
+      "lineHits": {
+        "L2944_ui_ = 'K';": 55,
+        "L2944_ui_ = 'L';": 49,
+        "L2944_ui_ = 'M';": 58,
+        "L2944_ui_ = 'P';": 52,
+        "L2944_ui_ = (*(G2162_IODriver->IODRV_00_GetKeyboardInput))();": 37,
+        "return (*(G2162_IODriver->IODRV_01_IsKeyboardInputPresent))();": 184,
+        "switch (L2944_ui_ - 0x1248)": 47
+      },
+      "lineRange": [
+        37,
+        184
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "The transcript must show the IO2 key reaches F0361 and writes G0432/G2153.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "f0361_enqueues_keyboard_command_and_count",
+      "lineHits": {
+        "F0360_COMMAND_ProcessPendingClick();": 1086,
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G2153_i_QueuedCommandsCount++;": 1357,
+        "void F0361_COMMAND_ProcessKeyPress": 1709
+      },
+      "lineRange": [
+        1086,
+        1765
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "The transcript must show a non-empty queue pop and source dispatch before any viewport capture is promoted.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pops_queue_and_dispatches_turn_or_step",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "G2153_i_QueuedCommandsCount--;": 2121,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "lineRange": [
+        2045,
+        2155
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "Movement/turn parity requires source-visible party tuple mutation, not only queued input.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_and_step_mutate_party_state",
+      "lineHits": {
+        "F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY": 135,
+        "F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(G0308_i_PartyDirection +": 172,
+        "G0306_i_PartyMapX = L1121_i_MapX;": 273,
+        "G0307_i_PartyMapY = L1122_i_MapY;": 274,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lineRange": [
+        135,
+        274
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "A promoted original frame must be after F0128 composes the viewport for the mutated tuple and hands it to F0097.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_composes_viewport_and_calls_f0097_present",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "G0296_puc_Bitmap_Viewport": 2101,
+        "P0183_i_Direction": 8320,
+        "P0184_i_MapX": 8320,
+        "P0185_i_MapY": 8320,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lineRange": [
+        2101,
+        8610
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "Viewport/wall capture needs the present-side F0097 boundary, not only F0128 entry.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_presents_viewport_zone",
+      "lineHits": {
+        "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))": 857,
+        "C007_ZONE_VIEWPORT": 842,
+        "F0704_();": 814,
+        "F0705_();": 859,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "lineRange": [
+        709,
+        859
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+  "timestampUtc": "2026-05-15T11:18:01.273677+00:00"
+}
