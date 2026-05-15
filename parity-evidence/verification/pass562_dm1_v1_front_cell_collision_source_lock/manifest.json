@@ -1,0 +1,28 @@
+{
+  "branch": "worker/n2-dm1v1-front-cell-collision-source-lock-20260515",
+  "firestaffGuards": {
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:405-490",
+    "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat": "memory_movement_pc34_compat.c:820-890",
+    "commandCoreBlockerSlice": "dm1_v1_movement_command_core_pc34_compat.c:263-352",
+    "runtimeExecutable": "test_dm1_v1_movement_command_core_pc34_compat (source assertions; executable build verified separately when link gate is available)"
+  },
+  "head": "0292a0c92e0c733d6a7c5189debc24ee4f56ee04",
+  "notClaimed": [
+    "original DOS overlay pixel parity",
+    "combat RNG/wound materialization",
+    "viewport wall rendering completion"
+  ],
+  "redmcsbAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-349",
+    "CLIKMENU.C:frontCellCollisionSlice": "CLIKMENU.C:256-328",
+    "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": "DUNGEON.C:1371-1421",
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": "MOVESENS.C:316-999",
+    "MOVESENS.C:acceptedMoveCommitSlice": "MOVESENS.C:738-818"
+  },
+  "runtimeOutputFirstLine": "static-runtime-assertions-source-locked",
+  "schema": "pass562_dm1_v1_front_cell_collision_source_lock.v1",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED",
+  "timestampUtc": "2026-05-15T11:59:29.933326+00:00"
+}

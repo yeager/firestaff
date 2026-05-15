@@ -1886,6 +1886,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 front-cell collision source-lock gate -----------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass562_dm1_v1_front_cell_collision_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass562_dm1_v1_front_cell_collision_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 wall occlusion spec-matrix gate ───────────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
