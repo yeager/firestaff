@@ -1,0 +1,248 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 261,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 261,
+          "needle": "DM1_PC34_ZONE_WALL_D1L"
+        },
+        {
+          "line": 261,
+          "needle": "DUNVIEW.C:7445-7455"
+        },
+        {
+          "line": 261,
+          "needle": "DUNVIEW.C:7459-7460 side ornament then return"
+        },
+        {
+          "line": 262,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 262,
+          "needle": "DM1_PC34_ZONE_WALL_D1R"
+        },
+        {
+          "line": 262,
+          "needle": "DUNVIEW.C:7613-7623"
+        },
+        {
+          "line": 262,
+          "needle": "DUNVIEW.C:7627-7628 side ornament then return"
+        }
+      ],
+      "id": "firestaff-d1-side-wall-metadata",
+      "lines": "250-265",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 190,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 190,
+          "needle": "DM1_PC34_ZONE_WALL_D1L"
+        },
+        {
+          "line": 190,
+          "needle": "\"7460\""
+        },
+        {
+          "line": 191,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 191,
+          "needle": "DM1_PC34_ZONE_WALL_D1R"
+        },
+        {
+          "line": 191,
+          "needle": "\"7628\""
+        }
+      ],
+      "id": "firestaff-d1-side-wall-runtime-test",
+      "lines": "185-195",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 963,
+          "needle": "DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
+        },
+        {
+          "line": 964,
+          "needle": "DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
+        },
+        {
+          "line": 984,
+          "needle": "DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L"
+        },
+        {
+          "line": 985,
+          "needle": "DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R"
+        }
+      ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "960-985",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No input, capture, or pass514 work.",
+    "No renderer pixel parity claim.",
+    "No original DOS runtime capture claim.",
+    "No CSB/DM2 behavior claim.",
+    "No DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 4053,
+          "needle": "#define C713_ZONE_WALL_D1L"
+        },
+        {
+          "line": 4054,
+          "needle": "#define C714_ZONE_WALL_D1R"
+        }
+      ],
+      "id": "defs-pc34-d1-side-wall-zones",
+      "lines": "4052-4054",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 8521,
+          "needle": "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8524,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8525,
+          "needle": "F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8528,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8529,
+          "needle": "F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8532,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8533,
+          "needle": "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        }
+      ],
+      "id": "f0128-d1-row-left-right-before-center",
+      "lines": "8518-8533",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7436,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7446,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C02_WALL_D1R], C713_ZONE_WALL_D1L);"
+        },
+        {
+          "line": 7454,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C03_WALL_D1L], C713_ZONE_WALL_D1L);"
+        },
+        {
+          "line": 7459,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0214_ai_SquareAspect[M551_RIGHT_WALL_ORNAMENT_ORDINAL], M585_VIEW_WALL_D1L_RIGHT);"
+        },
+        {
+          "line": 7460,
+          "needle": "return;"
+        }
+      ],
+      "id": "d1l-wall-branch-draws-zone-and-returns",
+      "lines": "7436-7460",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7604,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7614,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C03_WALL_D1L], C714_ZONE_WALL_D1R);"
+        },
+        {
+          "line": 7622,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C02_WALL_D1R], C714_ZONE_WALL_D1R);"
+        },
+        {
+          "line": 7627,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0216_ai_SquareAspect[M553_LEFT_WALL_ORNAMENT_ORDINAL], M586_VIEW_WALL_D1R_LEFT);"
+        },
+        {
+          "line": 7628,
+          "needle": "return;"
+        }
+      ],
+      "id": "d1r-wall-branch-mirrors-zone-and-returns",
+      "lines": "7604-7628",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass563_dm1_v1_d1_side_wall_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS563_DM1_V1_D1_SIDE_WALL_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass563-dm1v1-d1-side-wall-source-lock-20260515-bosse/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass563-dm1v1-d1-side-wall-source-lock-20260515-bosse/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass563 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
