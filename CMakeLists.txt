@@ -1958,6 +1958,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 door composition occlusion source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass542_laneB_dm1_v1_door_composition_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass542_laneB_dm1_v1_door_composition_occlusion_source_lock.py
+    )
+endif()
+
 # ── DM1 V1 wall-set startup binding source-lock gate ──────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

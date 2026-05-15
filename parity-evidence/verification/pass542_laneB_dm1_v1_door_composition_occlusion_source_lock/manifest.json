@@ -1,0 +1,37 @@
+{
+  "claims": [
+    "F0109 draws door ornaments into G0074 temporary door bitmap, not straight into the viewport.",
+    "F0111 copies the native door panel into G0074, applies base/destroyed/Thieves Eye ornaments or masks, then blits G0074 to G0296 viewport.",
+    "Firestaff viewport metadata records this door-surface composition seam alongside door-front occlusion ranges."
+  ],
+  "firestaff": {
+    "door_front_occlusion_anchors_checked": 3,
+    "file": "dm1_v1_viewport_3d_pc34_compat.c"
+  },
+  "nonClaims": [
+    "No movement core change.",
+    "No capture pipeline change.",
+    "No original-runtime or pixel-parity promotion."
+  ],
+  "redmcsb": {
+    "f0109_lines": [
+      4013,
+      4217
+    ],
+    "f0111_base_ornament_line": 4262,
+    "f0111_lines": [
+      4218,
+      4340
+    ],
+    "f0111_pc34_copy_line": 4260,
+    "f0111_thieves_eye_line": 4294,
+    "f0111_viewport_blit_line": 4334,
+    "slice_sha256": {
+      "DUNVIEW.C:4013-4117": "de3b933f9177bbc24170d30294812e892f96c3be0ed93f3fa85ff70fc6ab7d26",
+      "DUNVIEW.C:4218-4339": "0b4026932517b4c8d13ab52b8106d58464389497b9cc14f9b3c846e4cfa9ee8c"
+    }
+  },
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass542_laneB_dm1_v1_door_composition_occlusion_source_lock.v1",
+  "status": "PASS542_LANEB_DM1_V1_DOOR_COMPOSITION_OCCLUSION_SOURCE_LOCKED"
+}
