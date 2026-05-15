@@ -1,0 +1,149 @@
+{
+  "blocker": "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380.",
+  "branch": "worker/passA-dm1v1-kbd-runtime-binding-20260515-bosse",
+  "head": "df2a407f446b8b57b574fdc365c1a5b829f0fad2",
+  "nextRequiredRuntimeProbe": [
+    "read INT 09 and verify S8A_Vector after F8088_",
+    "read C254 and decode G8101_apc_IOInterruptVector",
+    "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_",
+    "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"
+  ],
+  "repo": "/home/trv2/work/firestaff-worktrees/passA-dm1v1-kbd-runtime-binding-20260515-bosse",
+  "runtimeBinding": {
+    "ok": false,
+    "provided": false,
+    "status": "not_provided"
+  },
+  "schema": "pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding.v1",
+  "sourceAudit": [
+    {
+      "claim": "PC34 IO startup saves INT 09 and installs S8A_Vector as the raw keyboard interrupt handler.",
+      "file": "IBMIO.C",
+      "function": "F8088_ / S8A_Vector",
+      "id": "pc34_irq09_installs_raw_keyboard_isr",
+      "lineRangeObserved": [
+        381,
+        414
+      ],
+      "lines": "381-390,399-414",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The raw INT 09 handler queues accepted make scancodes, acknowledges the keyboard/PIC path, or chains to the saved vector.",
+      "file": "IBMIO.C",
+      "function": "S8A_Vector",
+      "id": "pc34_irq09_buffers_scancodes_and_acks_pic",
+      "lineRangeObserved": [
+        527,
+        623
+      ],
+      "lines": "527-529,581-611,623-623",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "PC34 IO shutdown restores the saved INT 09 vector.",
+      "file": "IBMIO.C",
+      "function": "F8089_",
+      "id": "pc34_irq09_restore",
+      "lineRangeObserved": [
+        629,
+        643
+      ],
+      "lines": "629-643",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The game-facing keyboard API is IO_DRIVER slot 0/1, not the INT 09 vector itself.",
+      "file": "IBMIO.C",
+      "function": "F8090_ / F8091_ / G8101_apc_IOInterruptVector",
+      "id": "io_driver_slot0_slot1_are_keyboard_runtime_api",
+      "lineRangeObserved": [
+        646,
+        2381
+      ],
+      "lines": "646-680,2378-2381",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The IO driver publishes the G8101 table through C254 before child game execution and removes hooks after return.",
+      "file": "IBMIO.C",
+      "function": "main IO driver loop",
+      "id": "io_driver_table_is_published_on_c254",
+      "lineRangeObserved": [
+        2550,
+        2586
+      ],
+      "lines": "2550-2552,2582-2586",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The game-side keyboard-present path is driven from G2162_IODriver loaded from C254.",
+      "file": "CEDT026.C",
+      "function": "F0539_INPUT_Cconis / startup",
+      "id": "game_binds_g2162_from_c254",
+      "lineRangeObserved": [
+        217,
+        238
+      ],
+      "lines": "217-220,238-238",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDT026.C"
+    },
+    {
+      "claim": "I34E movement input enters via IO_DRIVER slot 0/1 and only then becomes the K/L/M/P movement-table codes.",
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin / F0539_INPUT_Cconis",
+      "id": "i34e_crawcin_reads_slot0_then_normalizes_arrows",
+      "lineRangeObserved": [
+        27,
+        184
+      ],
+      "lines": "27-61,179-184",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "The game loop consumes the bound IO_DRIVER keyboard API before command-queue dispatch.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "main_loop_drains_m527_m528_to_f0361_before_f0380",
+      "lineRangeObserved": [
+        164,
+        219
+      ],
+      "lines": "164-219",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "Runtime movement promotion requires F0361 enqueue/count increment and F0380 pop/count decrement/dispatch.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress / F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0361_f0380_enqueue_dequeue_contract",
+      "lineRangeObserved": [
+        1734,
+        2156
+      ],
+      "lines": "1734-1768,2075-2127,2150-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED",
+  "timestampUtc": "2026-05-15T05:22:47.012422+00:00"
+}

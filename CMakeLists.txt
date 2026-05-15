@@ -1842,6 +1842,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 PC34 keyboard interrupt/runtime binding gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding.py
+    )
+endif()
+
 # -- DM1 V1 original overlay/capture bounded progress gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
