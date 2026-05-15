@@ -1778,6 +1778,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         test_dm1_v1_viewport_3d_pc34_compat.c
         dm1_v1_viewport_3d_pc34_compat.c
     )
+    target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -1793,6 +1794,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         add_test(
             NAME dm1_v1_viewport_wall_render_plan_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_wall_render_plan_gate.py
+        )
+        add_test(
+            NAME dm1_v1_projectile_wall_zone_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_wall_zone_gate.py
         )
     endif()
 endif()
