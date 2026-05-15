@@ -1958,6 +1958,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 mirrored door-front source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass560_dm1_v1_mirrored_door_front_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py
+    )
+    set_tests_properties(pass560_dm1_v1_mirrored_door_front_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

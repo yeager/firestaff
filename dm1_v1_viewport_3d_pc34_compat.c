@@ -134,7 +134,10 @@ static const DM1_ViewportProjectileOcclusionSpec s_projectile_occlusion_specs[] 
 
 static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[] = {
     { DM1_VIEW_SQUARE_D3L, 0x0218, 0x0349, "DUNVIEW.C:6443 floor ornament under rear pass", "DUNVIEW.C:6444 pass1 rear cells before left frame", "DUNVIEW.C:6446-6454 left/right frame draw", NULL, "DUNVIEW.C:6457 F0111 door bitmap/ornament", "DUNVIEW.C:6459 pass2 front cells after door" },
+    { DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439, "DUNVIEW.C:6579 floor ornament under mirrored rear pass", "DUNVIEW.C:6580 pass1 rear cells before right frame", "DUNVIEW.C:6582-6590 mirrored frame draw", "DUNVIEW.C:6592-6593 optional button before door panel", "DUNVIEW.C:6598-6599 F0111 door bitmap/ornament", "DUNVIEW.C:6601 pass2 front cells after door" },
     { DM1_VIEW_SQUARE_D3C, 0x0218, 0x0349, "DUNVIEW.C:6722 floor ornament under rear pass", "DUNVIEW.C:6723 pass1 rear cells before frame", "DUNVIEW.C:6725-6739 side frame and button draw", "DUNVIEW.C:6737-6739 optional button before door panel", "DUNVIEW.C:6744 F0111 door bitmap/ornament", "DUNVIEW.C:6746 pass2 front cells after door" },
+    { DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349, "DUNVIEW.C:6988 floor ornament under rear pass", "DUNVIEW.C:6989 pass1 rear cells before top frame", "DUNVIEW.C:6991-6998 top frame draw", NULL, "DUNVIEW.C:7000-7001 F0111 door bitmap/ornament", "DUNVIEW.C:7003 pass2 front cells after door" },
+    { DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439, "DUNVIEW.C:7181 floor ornament under mirrored rear pass", "DUNVIEW.C:7182 pass1 rear cells before top frame", "DUNVIEW.C:7184-7191 mirrored top frame draw", NULL, "DUNVIEW.C:7193-7194 F0111 door bitmap/ornament", "DUNVIEW.C:7196 pass2 front cells after door" },
     { DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349, "DUNVIEW.C:7314 floor ornament under rear pass", "DUNVIEW.C:7315 pass1 rear cells before frame", "DUNVIEW.C:7317-7333 top/side frame and button draw", "DUNVIEW.C:7332-7334 optional button before door panel", "DUNVIEW.C:7339 F0111 door bitmap/ornament", "DUNVIEW.C:7341 pass2 front cells after door" },
     { DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349, "DUNVIEW.C:7874 floor ornament under rear pass", "DUNVIEW.C:7874-7875 pass1 rear cells before frame", "DUNVIEW.C:7877-7902 top/side frame and button draw", "DUNVIEW.C:7901-7902 optional button before door panel", "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament", "DUNVIEW.C:7910-7937 pass2 front cells after door" },
 };
@@ -959,7 +962,10 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order\n"
         "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:6579-6601 D3R mirrored door-front occlusion: rear pass, frame/button/door, front pass\n"
         "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:6988-7003 D2L door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:7181-7196 D2R mirrored door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7874-7937 D1C door-front occlusion: floor underlay, rear pass, frame/button/door, front pass\n"
         "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"

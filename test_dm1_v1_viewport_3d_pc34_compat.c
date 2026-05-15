@@ -442,14 +442,21 @@ static void test_door_front_occlusion_split_passes(void)
         const char *button_line;
         const char *door_line;
         const char *front_line;
+        uint16_t rear_order;
+        uint16_t front_order;
+        unsigned char rear_cells[2];
+        unsigned char front_cells[2];
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L, "6443", "6444", "6446", NULL,   "6457", "6459" },
-        { DM1_VIEW_SQUARE_D3C, "6722", "6723", "6725", "6737", "6744", "6746" },
-        { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341" },
-        { DM1_VIEW_SQUARE_D1C, "7874", "7875", "7877", "7901", "7905", "7937" },
+        { DM1_VIEW_SQUARE_D3L, "6443", "6444", "6446", NULL,   "6457", "6459", 0x0218, 0x0349, {1, 2}, {4, 3} },
+        { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
+        { DM1_VIEW_SQUARE_D3C, "6722", "6723", "6725", "6737", "6744", "6746", 0x0218, 0x0349, {1, 2}, {4, 3} },
+        { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
+        { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
+        { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341", 0x0218, 0x0349, {1, 2}, {4, 3} },
+        { DM1_VIEW_SQUARE_D1C, "7874", "7875", "7877", "7901", "7905", "7937", 0x0218, 0x0349, {1, 2}, {4, 3} },
     };
 
-    check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 4);
+    check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 7);
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportDoorFrontOcclusionSpec *spec =
             dm1_viewport_3d_get_door_front_occlusion_spec_for_square(expected[i].square);
@@ -459,8 +466,8 @@ static void test_door_front_occlusion_split_passes(void)
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.nonnull", i);
         check_nonnull(id, spec);
         if (!spec) continue;
-        check_int("door_front_occlusion.rear_order", spec->rear_cell_order, 0x0218);
-        check_int("door_front_occlusion.front_order", spec->front_cell_order, 0x0349);
+        check_int("door_front_occlusion.rear_order", spec->rear_cell_order, expected[i].rear_order);
+        check_int("door_front_occlusion.front_order", spec->front_cell_order, expected[i].front_order);
         rear = dm1_viewport_3d_decode_cell_order(spec->rear_cell_order);
         front = dm1_viewport_3d_decode_cell_order(spec->front_cell_order);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.floor_line", i);
@@ -468,11 +475,11 @@ static void test_door_front_occlusion_split_passes(void)
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_pass", i);
         check_int(id, rear.door_pass, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_cells", i);
-        check_int(id, rear.cell_count == 2 && rear.cells[0] == 1 && rear.cells[1] == 2, 1);
+        check_int(id, rear.cell_count == 2 && rear.cells[0] == expected[i].rear_cells[0] && rear.cells[1] == expected[i].rear_cells[1], 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_pass", i);
         check_int(id, front.door_pass, 2);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_cells", i);
-        check_int(id, front.cell_count == 2 && front.cells[0] == 4 && front.cells[1] == 3, 1);
+        check_int(id, front.cell_count == 2 && front.cells[0] == expected[i].front_cells[0] && front.cells[1] == expected[i].front_cells[1], 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_line", i);
         check_int(id, strstr(spec->rear_pass_source_lines, expected[i].rear_line) != NULL, 1);
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.frame_line", i);
@@ -486,7 +493,7 @@ static void test_door_front_occlusion_split_passes(void)
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_line", i);
         check_int(id, strstr(spec->front_pass_source_lines, expected[i].front_line) != NULL, 1);
     }
-    check_int("door_front_occlusion.out_of_range", dm1_viewport_3d_get_door_front_occlusion_spec(4) == NULL, 1);
+    check_int("door_front_occlusion.out_of_range", dm1_viewport_3d_get_door_front_occlusion_spec(7) == NULL, 1);
     check_int("door_front_occlusion.no_side_door_spec", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
 }
 
