@@ -4,19 +4,19 @@
     {
       "bytes": 363417,
       "name": "GRAPHICS.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "$OPENCLAW_DATA/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
       "bytes": 33357,
       "name": "DUNGEON.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "$OPENCLAW_DATA/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     }
   ],
   "firestaffChecks": [
     {
-      "file": "/home/trv2/work/firestaff-worktrees/dm1-v1-viewport-wall-gap-235316a8/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 718,
@@ -56,7 +56,7 @@
       "sha256": "9a44930a91c1d4fe8713636b7e79b3038bf1d83b9af566aecf1a5b08139e1d11"
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/dm1-v1-viewport-wall-gap-235316a8/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 456,
@@ -84,7 +84,7 @@
       "sha256": "9a44930a91c1d4fe8713636b7e79b3038bf1d83b9af566aecf1a5b08139e1d11"
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/dm1-v1-viewport-wall-gap-235316a8/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 490,
@@ -108,7 +108,7 @@
       "sha256": "9a44930a91c1d4fe8713636b7e79b3038bf1d83b9af566aecf1a5b08139e1d11"
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/dm1-v1-viewport-wall-gap-235316a8/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 700,
@@ -147,7 +147,7 @@
   ],
   "redmcsbPrimaryChecks": [
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "$OPENCLAW_DATA/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 436,
@@ -175,7 +175,7 @@
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "$OPENCLAW_DATA/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 3048,
@@ -207,7 +207,7 @@
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "$OPENCLAW_DATA/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 3394,
@@ -243,7 +243,7 @@
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "$OPENCLAW_DATA/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8446,
@@ -278,7 +278,7 @@
   "schema": "pass512_dm1_v1_viewport_wall_clip_source_audit.v1",
   "secondaryReferenceChecks": [
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/pages.json",
+      "file": "$OPENCLAW_DATA/firestaff-greatstone-atlas/index/pages.json",
       "hits": [
         {
           "line": 7,
@@ -297,7 +297,7 @@
       "sha256": "6df8f29eaf946fd57aeb47ab482b9f48219592afd93cc17be1b89b13f0d33d19"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "file": "$OPENCLAW_DATA/firestaff-csbwin-source/CSBWin/Viewport.cpp",
       "hits": [
         {
           "line": 379,
@@ -320,7 +320,7 @@
       "sha256": "eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp",
+      "file": "$OPENCLAW_DATA/firestaff-csb-source/CSB/src/Viewport.cpp",
       "hits": [
         {
           "line": 379,

@@ -15,9 +15,9 @@ Status: passed
 - test_dm1_v1_viewport_3d_pc34_compat.c:700-755 local_clip_tests_cover_source_and_viewport_occlusion
 
 ## Secondary references
-- /home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/pages.json greatstone_pc34_context_index
-- /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp csbwin_viewport_script_lineage
-- /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp csb_viewport_script_lineage
+- $OPENCLAW_DATA/firestaff-greatstone-atlas/index/pages.json greatstone_pc34_context_index
+- $OPENCLAW_DATA/firestaff-csbwin-source/CSBWin/Viewport.cpp csbwin_viewport_script_lineage
+- $OPENCLAW_DATA/firestaff-csb-source/CSB/src/Viewport.cpp csb_viewport_script_lineage
 
 ## DM1 canonical anchors
 - GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes 363417
