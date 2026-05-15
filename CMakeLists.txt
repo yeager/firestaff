@@ -1834,6 +1834,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 pass514/pass556 IO blocker classifier --------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass558_dm1_v1_pass514_io_blocker_classifier
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass558_dm1_v1_pass514_io_blocker_classifier.py
+    )
+endif()
+
 # -- DM1 V1 original overlay/capture bounded progress gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
