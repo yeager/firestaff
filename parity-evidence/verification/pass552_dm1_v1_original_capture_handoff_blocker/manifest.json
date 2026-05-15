@@ -1,0 +1,296 @@
+{
+  "blocker": "Fresh original capture handoff is blocked before pass548 overlay capture: pass388 proves the armed route reaches F0380, but it does not prove F0361 entry, G0432/G2153 enqueue, positive queue count before F0380 pop, or dispatch. pass548 therefore correctly remains non-promotable while its bounded live capture times out/no pass475 manifest is available.",
+  "branch": "worker/dm1v1-original-capture-blocker-20260515-pass514-388-548-capture-bosse",
+  "head": "df2a407f446b8b57b574fdc365c1a5b829f0fad2",
+  "inputArtifacts": {
+    "pass388": {
+      "blocker": "runtime reached F0380 with G2153 byte sampled as zero and no G2153 write/watchpoint under producer-side arming",
+      "exists": true,
+      "liveAttempt": null,
+      "path": "parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/manifest.json",
+      "proofPredicates": {
+        "clickProducerEntryHit": false,
+        "dispatchReached": false,
+        "f0380QueueCountPositiveImmediatelyBefore": false,
+        "f0380QueueCountSamples": [
+          0,
+          0
+        ],
+        "f0380Reached": true,
+        "keyboardProducerEntryHit": false,
+        "pendingClickWriteObserved": false,
+        "pendingReplayHit": false,
+        "queueCountWriteObserved": false,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+        "routeInputAfterArmingSucceeded": true,
+        "routesRanAfterArmingWithBreakpointsRetained": true
+      },
+      "status": "BLOCKED_PASS388_B_ORIGINAL_ROUTE_NEVER_HITS_ENQUEUE_BRANCH"
+    },
+    "pass514": {
+      "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+      "exists": true,
+      "liveAttempt": null,
+      "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
+      "proofPredicates": {
+        "captureAttemptedThisRun": false,
+        "dispatchReached": false,
+        "f0361QueueCountPathAlreadyProven": true,
+        "f0380QueuePositiveBeforePop": false,
+        "f0380ReachedInN2DebuggerPath": true,
+        "keyboardProducerEntryHit": false,
+        "prerequisitesOk": true,
+        "queueCountWriteObserved": false,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+        "routeInputAfterArmingSucceeded": true,
+        "sourceAuditOk": true
+      },
+      "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380"
+    },
+    "pass548": {
+      "blocker": "bounded original live capture did not return before timeout; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+      "exists": true,
+      "liveAttempt": {
+        "attempted": true,
+        "command": "python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+        "durationSeconds": 12.005,
+        "expectedManifest": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json",
+        "returncode": -15,
+        "stdoutPath": "parity-evidence/verification/pass548_dm1_v1_original_overlay_capture_progress/pass548_live_attempt_stdout.txt",
+        "stdoutTail": "",
+        "timedOut": true,
+        "timeoutSeconds": 12
+      },
+      "path": "parity-evidence/verification/pass548_dm1_v1_original_overlay_capture_progress/manifest.json",
+      "proofPredicates": null,
+      "status": "BLOCKED_PASS548_LIVE_CAPTURE_TIMEOUT"
+    }
+  },
+  "nextTightProbe": "Instrument F0540/M528 value plus F0361 entry and G0432/G2153 writes in the same armed window before rerunning pass548/pass475 overlay capture.",
+  "nonClaims": [
+    "no movement implementation changed",
+    "no viewport rendering changed",
+    "no original pixel/frame promoted",
+    "no push"
+  ],
+  "prerequisites": {
+    "dmExeExists": true,
+    "missingTools": [],
+    "n2ReferenceRoots": [
+      "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+      "/home/trv2/.openclaw/data/firestaff-redmcsb-source",
+      "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
+      "/home/trv2/.openclaw/data/firestaff-original-games/DM"
+    ],
+    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "originalStageExists": true,
+    "tools": {
+      "Xvfb": "/usr/bin/Xvfb",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "xdotool": "/usr/bin/xdotool"
+    }
+  },
+  "promotionRequirement": [
+    "observe PC/I34E raw/normalized key value",
+    "observe F0361 table match plus G0432 slot/G0434/G2153 enqueue delta",
+    "observe F0380 positive count, pop/decrement, and F0365/F0366 dispatch",
+    "observe party tuple before/after or a source-typed blocked/no-op reason",
+    "observe F0128 tuple consumption and F0097/VIDRV present boundary",
+    "then allow overlay/frame capture to promote pixels"
+  ],
+  "proofPredicates": {
+    "pass388BreakpointsRetainedAndControlReached": true,
+    "pass388DispatchReached": false,
+    "pass388F0380QueuePositiveBeforePop": false,
+    "pass388F0380Reached": true,
+    "pass388KeyboardProducerEntryHit": false,
+    "pass388QueueCountWriteObserved": false,
+    "pass388RouteInputAfterArmingSucceeded": true,
+    "pass514UnifiedCaptureAttempted": false,
+    "pass548LiveTimedOut": true,
+    "pass548Pass475SnapshotExists": false,
+    "prerequisitesOk": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-original-capture-blocker-20260515-pass514-388-548-capture-bosse",
+  "schema": "pass552_dm1_v1_original_capture_handoff_blocker.v1",
+  "sourceAudit": [
+    {
+      "file": "IO2.C",
+      "function": "F0540_INPUT_Crawcin",
+      "id": "i34e_raw_key_normalization",
+      "lineHits": {
+        "L2944_ui_ = 'K'": 55,
+        "L2944_ui_ = 'L'": 49,
+        "L2944_ui_ = 'M'": 58,
+        "L2944_ui_ = 'P'": 52,
+        "L2944_ui_ = (*(G2162_IODriver->IODRV_00_GetKeyboardInput))();": 37,
+        "switch (L2944_ui_ - 0x1248)": 47
+      },
+      "lineRange": [
+        27,
+        61
+      ],
+      "meaning": "PC/I34E shifted arrow scan codes normalize to the same command-key bytes used by the movement table.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+      "id": "i34e_movement_keyboard_table",
+      "lineHits": {
+        "{ C001_COMMAND_TURN_LEFT,     0x004B }": 678,
+        "{ C002_COMMAND_TURN_RIGHT,    0x004D }": 680,
+        "{ C003_COMMAND_MOVE_FORWARD,  0x004C }": 679,
+        "{ C004_COMMAND_MOVE_RIGHT,    0x0051 }": 683,
+        "{ C005_COMMAND_MOVE_BACKWARD, 0x0050 }": 642,
+        "{ C006_COMMAND_MOVE_LEFT,     0x004F }": 681
+      },
+      "lineRange": [
+        636,
+        685
+      ],
+      "meaning": "The command transcript must prove K/L/M/O/P/Q bytes, not host-side route labels.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "f0361_keyboard_enqueue",
+      "lineHits": {
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G0435_B_CommandQueueLocked = C1_TRUE;": 1737,
+        "G2153_i_QueuedCommandsCount++;": 1767,
+        "if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL)": 1734,
+        "if (P0728_KeyCode == L1112_ps_KeyboardInput->Code)": 1759,
+        "while (L1111_i_Command = L1112_ps_KeyboardInput->Command)": 1754
+      },
+      "lineRange": [
+        1709,
+        1813
+      ],
+      "meaning": "A fresh capture must show the keyboard byte entering F0361 and creating a queue slot/count delta.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "gameloop_keyboard_before_f0380",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "lineRange": [
+        164,
+        219
+      ],
+      "meaning": "The source route order is keyboard-buffer drain, then F0380 queue processing.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_pop_dispatch",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "G2153_i_QueuedCommandsCount--;": 2121,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084
+      },
+      "lineRange": [
+        2045,
+        2156
+      ],
+      "meaning": "F0380 is only promotable when the queue count is positive and the pop/decrement/dispatch path is observed.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_step_party_handlers",
+      "lineHits": {
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": 269,
+        "F0267_MOVE_GetMoveResult_CPSCE": 272,
+        "F0284_CHAMPION_SetPartyDirection": 172,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lineRange": [
+        142,
+        347
+      ],
+      "meaning": "After F0380 dispatch, the capture must bind turn/step handlers to party-tuple changes or blocked/no-op reason.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "successful_step_tuple_commit",
+      "lineHits": {
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;": 443
+      },
+      "lineRange": [
+        316,
+        450
+      ],
+      "meaning": "Successful forward/side/backward captures need the MOVESENS coordinate commit or a source-typed blocker.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "draw_to_present_boundary",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lineRange": [
+        8318,
+        8611
+      ],
+      "meaning": "A frame/crop must be tied to F0128 consuming the party tuple and calling the present boundary.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "pc34_viewport_present",
+      "lineHits": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "G0296_puc_Bitmap_Viewport": 721,
+        "VIDRV_09_BlitViewPort": 857
+      },
+      "lineRange": [
+        709,
+        858
+      ],
+      "meaning": "Promotable original pixels require the PC/I34E viewport blit boundary, not just an earlier draw call.",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS552_FRESH_CAPTURE_HANDOFF_STOPS_AT_EMPTY_F0380",
+  "timestampUtc": "2026-05-15T01:42:21.955389+00:00"
+}
