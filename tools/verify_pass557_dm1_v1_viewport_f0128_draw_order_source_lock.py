@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib, json, re, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = RED / "DUNVIEW.C"
 LOCAL = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
 MANIFEST = ROOT / "parity-evidence/verification/pass557_dm1_v1_viewport_f0128_draw_order_source_lock/manifest.json"

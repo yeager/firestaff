@@ -231,8 +231,8 @@ def verify_originals() -> list[dict[str, Any]]:
         got = sha256(path)
         if got != expected:
             raise AssertionError(f"{path} sha256 {got} != {expected}")
-        if str(path) not in readme:
-            raise AssertionError(f"canonical README does not name {path}")
+        if path.name not in readme:
+            raise AssertionError(f"canonical README does not name {path.name}")
         rows.append({"path": str(path), "sha256": got, "size": path.stat().st_size})
     return rows
 

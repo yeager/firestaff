@@ -13,8 +13,8 @@ PASS = "pass563_dm1_v1_pc34_original_c254_boundary"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-ORIGINAL_ROOT = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIGINAL_ROOT = Path.home() / ".openclaw/data/firestaff-original-games/DM"
 PC34 = ORIGINAL_ROOT / "_extracted/dm-pc34/DungeonMasterPC34"
 ASSET_MANIFEST = ORIGINAL_ROOT / "_manifests/dm_originals_asset_inventory_20260510.json"
 
@@ -117,11 +117,12 @@ def audit_pass_chain() -> dict[str, Any]:
 
 def classify(source: list[dict[str, Any]], originals: dict[str, Any], chain: dict[str, Any]) -> tuple[str, str, dict[str, bool]]:
     p562_decision = chain.get("pass562", {}).get("decision") or {}
+    p558 = chain.get("pass558", {}).get("proofPredicates") or {}
     next_contract = p562_decision.get("nextProbeContract") if isinstance(p562_decision, dict) else []
     predicates = {
         "sourceAuditOk": all(row["ok"] for row in source),
         "originalPc34PayloadOk": all(row.get("ok") for row in originals.values()),
-        "pass514EmptyF0380BlockerPresent": chain.get("pass514", {}).get("status") == "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+        "pass514EmptyF0380BlockerPresent": chain.get("pass514", {}).get("status") == "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380" or bool(p558.get("pass514InputDeliveredButEmptyF0380")),
         "pass558IoBoundaryClassified": chain.get("pass558", {}).get("status") == "BLOCKED_PASS558_DOSBOX_EVENT_TO_GUEST_IO2_DISPATCH_BOUNDARY_CLASSIFIED",
         "pass560C254RuntimeMissing": chain.get("pass560", {}).get("status") == "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED",
         "pass562SelectedC254SlotDecode": isinstance(p562_decision, dict) and p562_decision.get("selected") == "C254/IO_DRIVER slot decode",

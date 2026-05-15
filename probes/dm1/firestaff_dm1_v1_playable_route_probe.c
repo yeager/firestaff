@@ -48,8 +48,14 @@
  * to face WEST and try forward into (0,3) wall).
  */
 
-#define DEFAULT_DM1_DUNGEON_DAT \
-    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+static const char* default_dm1_dungeon_dat(void)
+{
+    static char path[1024];
+    const char* home = getenv("HOME");
+    if (!home || home[0] == '\0') home = "/home/trv2";
+    snprintf(path, sizeof(path), "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
+    return path;
+}
 
 static int expect_int(const char* label, int got, int want)
 {
@@ -109,7 +115,7 @@ int main(int argc, char** argv)
     uint32_t hashAfterTurn = 0, hashAfterFwd3 = 0, hashAfterBlocked = 0;
     int ok = 1;
 
-    if (!dungeonPath || dungeonPath[0] == '\0') dungeonPath = DEFAULT_DM1_DUNGEON_DAT;
+    if (!dungeonPath || dungeonPath[0] == '\0') dungeonPath = default_dm1_dungeon_dat();
 
     printf("probe=firestaff_dm1_v1_playable_route_probe\n");
     printf("dungeon=%s\n", dungeonPath);

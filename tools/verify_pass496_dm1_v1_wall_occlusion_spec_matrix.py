@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
+SRC = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 DUNVIEW = SRC / 'DUNVIEW.C'
 LOCAL_C = ROOT / 'dm1_v1_viewport_3d_pc34_compat.c'
 LOCAL_PROBE = ROOT / 'probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c'

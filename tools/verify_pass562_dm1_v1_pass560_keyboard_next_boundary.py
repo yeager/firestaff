@@ -15,10 +15,10 @@ MANIFEST = OUT / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
 RED_COMMON = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    Path.home()
+    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
-CANONICAL_DM1 = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+CANONICAL_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
 PASS560_MANIFEST = (
     ROOT
     / "parity-evidence/verification/pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding/manifest.json"
