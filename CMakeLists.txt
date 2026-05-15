@@ -1870,6 +1870,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 passable door movement/timing source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass549_dm1_v1_passable_door_movement_timing
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass549_dm1_v1_passable_door_movement_timing.py
+    )
+endif()
+
 # ── DM1 V1 wall occlusion spec-matrix gate ───────────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

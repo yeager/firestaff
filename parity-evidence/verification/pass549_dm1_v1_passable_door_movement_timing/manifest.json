@@ -1,0 +1,28 @@
+{
+  "branch": "worker/dm1v1-door-passable-movement-pass549-20260515-codex",
+  "firestaffGuards": {
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:405-490",
+    "acceptedMovementToTiming": "dm1_v1_movement_command_core_pc34_compat.c:283-371",
+    "doorFallthroughToMoveOk": "memory_movement_pc34_compat.c:470-488",
+    "runtimeExecutable": "build-pass549/test_dm1_v1_movement_command_core_pc34_compat",
+    "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
+  },
+  "head": "1de7e21cdf0786e345689dd731c8813be9efb20c",
+  "notClaimed": [
+    "new original DOS runtime capture",
+    "pass514/pass388 capture follow-up",
+    "door animation or pixel parity",
+    "creature/projectile door behavior"
+  ],
+  "primarySourceAudit": {
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "DEFS.H door constants": "DEFS.H:1039-1044",
+    "doorPassabilityToSuccessPath": "CLIKMENU.C:282-346"
+  },
+  "schema": "firestaff.parity.pass549_dm1_v1_passable_door_movement_timing.v1",
+  "status": "PASS549_DM1_V1_PASSABLE_DOOR_MOVEMENT_TIMING_LOCKED",
+  "timestampUtc": "2026-05-15T00:48:35.470566+00:00",
+  "whyNotPass547Duplicate": "pass547 locks blocked closed-door/fake-wall/group convergence. Pass549 locks the opposite door-state branch: one-fourth and destroyed doors are accepted movement, keep queued follow-up input, process destination sensors, set movement cooldown, clear projectile cooldown, and request viewport redraw.",
+  "worktree": "/home/trv2/work/firestaff-worktrees/dm1v1-door-passable-movement-pass549-20260515-codex"
+}

@@ -331,6 +331,76 @@ int main(void)
         &queue, &dungeon, &things, &party, 0, 0, 0, 390, 380, footwear, &result), 1);
     ok &= expect_int("pc34 core empty party has no damage request", result.blockedByWallOrDoorDamageRequested, 0);
 
+    /* Pass549: passable door states are accepted movement, not blocked
+     * collision.  Source lock: CLIKMENU.C:282-284 blocks a door only when
+     * M036_DOOR_STATE is neither C0_OPEN, C1_CLOSED_ONE_FOURTH, nor
+     * C5_DESTROYED.  Accepted door movement then reaches the normal
+     * CLIKMENU.C:325-346 / MOVESENS.C:F0267 success path.
+     */
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        setup_single_text_sensor(&things, firstThings, sensors, 53);
+        set_square(squares, 5, 2, 1,
+            square_type(DUNGEON_ELEMENT_DOOR, 1 | DUNGEON_SQUARE_MASK_THING_LIST));
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass549 one-fourth door front command queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass549 one-fourth door trailing turn queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+        ok &= expect_int("pass549 one-fourth door processed",
+            DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+                &queue, &dungeon, &things, &party, 0, 0, 0, 410, 400, footwear, &result), 1);
+        ok &= expect_int("pass549 one-fourth door is accepted movement", result.stepApplied, 1);
+        ok &= expect_int("pass549 one-fourth door not blocked", result.movementBlocked, 0);
+        ok &= expect_int("pass549 one-fourth door result ok", result.movement.resultCode, MOVE_OK);
+        ok &= expect_int("pass549 one-fourth door moves into target x", party.mapX, 2);
+        ok &= expect_int("pass549 one-fourth door moves into target y", party.mapY, 1);
+        ok &= expect_int("pass549 one-fourth door keeps trailing queued input", (int)queue.count, 1);
+        ok &= expect_int("pass549 one-fourth door releases input wait", result.stopWaitingForPlayerInput, 1);
+        ok &= expect_int("pass549 one-fourth door requests viewport", result.viewportRedrawRequested, 1);
+        ok &= expect_int("pass549 one-fourth door has no damage request", result.blockedByWallOrDoorDamageRequested, 0);
+        ok &= expect_int("pass549 one-fourth door destination sensor", result.enterEffects.count, 1);
+        ok &= expect_int("pass549 one-fourth door sensor text", result.enterEffects.effects[0].textIndex, 53);
+        ok &= expect_int("pass549 one-fourth door sets cooldown", result.timing.disabledMovementTicks, 2);
+        ok &= expect_int("pass549 one-fourth door records scent", result.timing.scentRecorded, 1);
+        ok &= expect_int("pass549 one-fourth door updates last movement", (int)result.timing.lastPartyMovementTime, 410);
+        ok &= expect_int("pass549 one-fourth door clears projectile cooldown", result.timing.projectileDisabledMovementTicks, 0);
+    }
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    setup_party(&party);
+    {
+        unsigned short firstThings[1];
+        struct DungeonSensor_Compat sensors[1];
+        setup_single_text_sensor(&things, firstThings, sensors, 54);
+        set_square(squares, 5, 2, 1,
+            square_type(DUNGEON_ELEMENT_DOOR, 5 | DUNGEON_SQUARE_MASK_THING_LIST));
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("pass549 destroyed door front command queued",
+            DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+        ok &= expect_int("pass549 destroyed door processed",
+            DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+                &queue, &dungeon, &things, &party, 0, 0, 0, 420, 410, footwear, &result), 1);
+        ok &= expect_int("pass549 destroyed door is accepted movement", result.stepApplied, 1);
+        ok &= expect_int("pass549 destroyed door not blocked", result.movementBlocked, 0);
+        ok &= expect_int("pass549 destroyed door result ok", result.movement.resultCode, MOVE_OK);
+        ok &= expect_int("pass549 destroyed door moves into target y", party.mapY, 1);
+        ok &= expect_int("pass549 destroyed door releases input wait", result.stopWaitingForPlayerInput, 1);
+        ok &= expect_int("pass549 destroyed door requests viewport", result.viewportRedrawRequested, 1);
+        ok &= expect_int("pass549 destroyed door has no damage request", result.blockedByWallOrDoorDamageRequested, 0);
+        ok &= expect_int("pass549 destroyed door destination sensor", result.enterEffects.count, 1);
+        ok &= expect_int("pass549 destroyed door sensor text", result.enterEffects.effects[0].textIndex, 54);
+        ok &= expect_int("pass549 destroyed door sets cooldown", result.timing.disabledMovementTicks, 2);
+        ok &= expect_int("pass549 destroyed door records scent", result.timing.scentRecorded, 1);
+        ok &= expect_int("pass549 destroyed door updates last movement", (int)result.timing.lastPartyMovementTime, 420);
+    }
+
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
