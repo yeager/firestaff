@@ -6,6 +6,7 @@ RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchai
 MANIFEST=ROOT/"parity-evidence/verification/pass562_dm1_v1_d2_far_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass562_dm1_v1_d2_far_side_wall_source_lock.md"
 STATUS="PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED"
+TEST_BINARY=ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat"
 SRC=[
 ("defs-pc34-d2-far-side-zones","DEFS.H","4042-4049",["#define C707_ZONE_WALL_D2L2","#define C708_ZONE_WALL_D2R2"]),
 ("d2l2-wall-and-field-branch","DUNVIEW.C","6836-6865",["STATICFUNCTION void F0678_DrawD2L2(","case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C05_WALL_D2R2], C707_ZONE_WALL_D2L2);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C06_WALL_D2L2]","C707_ZONE_WALL_D2L2);","return;","case C05_ELEMENT_TELEPORTER:","C09_VIEW_SQUARE_D2L2]], C707_ZONE_WALL_D2L2);"]),
@@ -37,7 +38,7 @@ def main(check=False):
     red=audit(SRC); loc=audit(LOCAL); failed=[r["id"] for r in red+loc if r["status"]!="PASS"]
     if check:
         print("PASS pass562 check-only" if not failed else "FAIL pass562 check-only: "+",".join(failed)); return 0 if not failed else 1
-    runtime=run([str(ROOT/"build-pass562"/"test_dm1_v1_viewport_3d_pc34_compat")]); check_run=run([sys.executable,str(Path(__file__).resolve()),"--check-only"])
+    runtime=run([str(TEST_BINARY)]); check_run=run([sys.executable,str(Path(__file__).resolve()),"--check-only"])
     ok=not failed and runtime["passed"] and check_run["passed"]
     manifest={"schema":"pass562_dm1_v1_d2_far_side_wall_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCK","redmcsbRoot":str(RED),"redmcsbChecks":red,"firestaffChecks":loc,"verificationRuns":[runtime,check_run],"nonClaims":["No input, capture, or pass514 work.","No renderer pixel parity claim.","No original DOS runtime capture claim.","No CSB/DM2 behavior claim.","No DANNESBURK use."]}
     MANIFEST.parent.mkdir(parents=True,exist_ok=True); REPORT.parent.mkdir(parents=True,exist_ok=True); MANIFEST.write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")

@@ -1967,6 +1967,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass560_dm1_v1_mirrored_door_front_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
+# -- DM1 V1 far door-front source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass561_dm1_v1_far_door_front_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py
+    )
+    set_tests_properties(pass561_dm1_v1_far_door_front_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
 # -- DM1 V1 D2 far-side wall source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

@@ -55,7 +55,7 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Verification
 
-- /home/trv2/work/firestaff-worktrees/pass562-dm1v1-d2-far-side-source-lock-20260515-bosse/build-pass562/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.d0c_foreground_before_things == 1
 PASS source_evidence.door_front_occlusion == 1
@@ -73,7 +73,7 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass562-dm1v1-d2-far-side-source-lock-20260515-bosse/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=0
 ~~~
 PASS pass562 check-only
 ~~~

@@ -6,6 +6,7 @@ RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolch
 MANIFEST = ROOT / "parity-evidence/verification/pass561_dm1_v1_far_door_front_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass561_dm1_v1_far_door_front_source_lock.md"
 STATUS = "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED"
+TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
 SRC = [
     ("d3l2-far-door-front-split", "DUNVIEW.C", "6269-6286", ["case C17_ELEMENT_DOOR_FRONT:", "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT", "C3700_ZONE_DOOR_D3L2", "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT", "goto T0676017;", "C14_VIEW_SQUARE_D3L2, L2483_i_Order"]),
     ("d3r2-mirrored-far-door-front-split", "DUNVIEW.C", "6336-6353", ["case C17_ELEMENT_DOOR_FRONT:", "C0x0128_CELL_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT", "C3710_ZONE_DOOR_D3R2", "C0x0439_CELL_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT", "goto T0677018;", "C15_VIEW_SQUARE_D3R2, L2485_i_Order"]),
@@ -41,7 +42,7 @@ def main(check=False):
     failed=[r["id"] for r in red+loc if r["status"]!="PASS"]
     if check:
         print("PASS pass561 check-only" if not failed else "FAIL pass561 check-only: "+",".join(failed)); return 0 if not failed else 1
-    runtime=run([str(ROOT/"build-pass561"/"test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime=run([str(TEST_BINARY)])
     check_run=run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
     ok=not failed and runtime["passed"] and check_run["passed"]
     manifest={"schema":"pass561_dm1_v1_far_door_front_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCK","redmcsbRoot":str(RED),"redmcsbChecks":red,"firestaffChecks":loc,"verificationRuns":[runtime,check_run],"nonClaims":["No input or movement queue edits.","No renderer pixel parity claim.","No original DOS runtime capture claim.","No DANNESBURK use."]}

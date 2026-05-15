@@ -9,6 +9,7 @@ RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolch
 MANIFEST = ROOT / "parity-evidence/verification/pass560_dm1_v1_mirrored_door_front_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass560_dm1_v1_mirrored_door_front_source_lock.md"
 STATUS = "PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCKED"
+TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
 
 SRC = [
     ("d3r-mirrored-door-front-split", "DUNVIEW.C", "6578-6602", [
@@ -56,7 +57,7 @@ LOCAL = [
         "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
         "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
-        "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 7);",
+        "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 9);",
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),
@@ -112,7 +113,7 @@ def main(check=False):
         print("PASS pass560 check-only" if not failed else "FAIL pass560 check-only: " + ",".join(failed))
         return 0 if not failed else 1
 
-    runtime = run([str(ROOT / "build-pass560" / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(TEST_BINARY)])
     check_run = run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
     ok = not failed and runtime["passed"] and check_run["passed"]
     manifest = {
