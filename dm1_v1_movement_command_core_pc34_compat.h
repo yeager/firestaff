@@ -65,6 +65,7 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int stairTransitionApplied;
     int stairSourceLeaveProcessed;
     int stairTargetLeaveProcessed;
+    int stairDestinationEnterDeferred;
     int sourceStairsWalkOffSkipped;
 };
 

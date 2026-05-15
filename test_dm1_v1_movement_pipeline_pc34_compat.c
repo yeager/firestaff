@@ -564,6 +564,8 @@ static void test_stairs_step_consequence(void)
     EXPECT("stairs_into_no_regular_step", result.core.stepApplied == 0);
     EXPECT("stairs_into_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
     EXPECT("stairs_into_target_walk_off", result.core.stairTargetLeaveProcessed == 1);
+    EXPECT("stairs_into_destination_enter_deferred", result.core.stairDestinationEnterDeferred == 1);
+    EXPECT_INT("stairs_into_no_immediate_destination_enter", result.core.enterEffects.count, 0);
     EXPECT("stairs_into_movement_flag", result.anyMovementOccurred == 1);
     EXPECT_INT("stairs_into_map", party.mapIndex, 1);
     EXPECT_INT("stairs_into_x", party.mapX, 2);
@@ -589,6 +591,8 @@ static void test_stairs_step_consequence(void)
     EXPECT("stairs_backward_transition", result.core.stairTransitionApplied == 1);
     EXPECT("stairs_backward_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
     EXPECT("stairs_backward_no_target_walk_off", result.core.stairTargetLeaveProcessed == 0);
+    EXPECT("stairs_backward_destination_enter_deferred", result.core.stairDestinationEnterDeferred == 1);
+    EXPECT_INT("stairs_backward_no_immediate_destination_enter", result.core.enterEffects.count, 0);
     EXPECT_INT("stairs_backward_stamina_affected", result.core.staminaAffectedCount, 1);
     EXPECT_INT("stairs_backward_stamina_cost", result.core.staminaCost[0], 1);
     EXPECT_INT("stairs_backward_stamina_decremented_before_short_circuit",
@@ -619,6 +623,38 @@ static void test_stairs_step_consequence(void)
     EXPECT_INT("stairs_source_forward_x", party.mapX, 2);
     EXPECT_INT("stairs_source_forward_y", party.mapY, 1);
     EXPECT("stairs_source_forward_sets_cooldown", pipeline.disabledMovementTicks > 0);
+
+    /* CLIKMENU.C:167-169: turn commands standing on stairs take the stairs
+     * before F0284_CHAMPION_SetPartyDirection.  F0364 removes the party from
+     * the source stairs square with a destination-not-on-square F0267 call;
+     * MOVESENS.C:819-822 then defers cross-map arrival to the new-party-map
+     * path instead of firing an immediate destination walk-on sensor.
+     */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    set_sq(level1, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    setup_party(&party, 2, 2, DIR_WEST, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    pipeline.disabledMovementTicks = 7;
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB36));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+
+    EXPECT("stairs_turn_transition", result.core.stairTransitionApplied == 1);
+    EXPECT("stairs_turn_marked_turn", result.core.turnApplied == 1);
+    EXPECT("stairs_turn_no_regular_step", result.core.stepApplied == 0);
+    EXPECT("stairs_turn_bypasses_movement_gate", result.core.queue.dequeued == 1);
+    EXPECT("stairs_turn_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
+    EXPECT("stairs_turn_no_target_walk_off", result.core.stairTargetLeaveProcessed == 0);
+    EXPECT("stairs_turn_destination_enter_deferred", result.core.stairDestinationEnterDeferred == 1);
+    EXPECT_INT("stairs_turn_no_immediate_destination_enter", result.core.enterEffects.count, 0);
+    EXPECT_INT("stairs_turn_no_step_stamina", result.core.staminaAffectedCount, 0);
+    EXPECT_INT("stairs_turn_map", party.mapIndex, 1);
+    EXPECT_INT("stairs_turn_x", party.mapX, 2);
+    EXPECT_INT("stairs_turn_y", party.mapY, 2);
+    EXPECT_INT("stairs_turn_keeps_existing_cooldown", pipeline.disabledMovementTicks, 7);
+    EXPECT("stairs_turn_viewport_dirty", result.viewportDirty == 1);
 }
 
 
