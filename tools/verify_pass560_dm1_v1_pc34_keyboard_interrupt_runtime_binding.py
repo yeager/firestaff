@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import json, os, subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +70,7 @@ def main():
         status = "BLOCKED_PASS560_RUNTIME_BINDING_INCOMPLETE"; blocker = "Runtime binding artifact exists but does not prove INT09=S8A_Vector, C254=G8101_apc_IOInterruptVector, IO_DRIVER slot0=F8090_, slot1=F8091_, M528 movement value, F0361 enqueue, and F0380 pop."
     else:
         status = "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED"; blocker = "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380."
-    manifest = {"schema": f"{PASS}.v1", "timestampUtc": datetime.now(timezone.utc).isoformat(), "status": status, "repo": str(ROOT), "branch": sh(["git","branch","--show-current"]), "head": sh(["git","rev-parse","HEAD"]), "sourceRoot": str(RED_COMMON), "sourceAudit": source, "runtimeBinding": runtime, "blocker": blocker, "nextRequiredRuntimeProbe": ["read INT 09 and verify S8A_Vector after F8088_", "read C254 and decode G8101_apc_IOInterruptVector", "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_", "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"]}
+    manifest = {"schema": f"{PASS}.v1", "status": status, "repo": str(ROOT), "branch": sh(["git","branch","--show-current"]), "sourceRoot": str(RED_COMMON), "sourceAudit": source, "runtimeBinding": runtime, "blocker": blocker, "nextRequiredRuntimeProbe": ["read INT 09 and verify S8A_Vector after F8088_", "read C254 and decode G8101_apc_IOInterruptVector", "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_", "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"]}
     MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     lines = ["# Pass560 - DM1 V1 PC34 keyboard interrupt/runtime binding", "", f"- Status: {status}", f"- Manifest: {MANIFEST.relative_to(ROOT)}", "", "## ReDMCSB anchors"]
     for row in source:
