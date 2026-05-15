@@ -1071,6 +1071,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  GAMELOOP.C:55-90 next loop iteration redraws F0128 from post-command G0308/G0306/G0307 party tuple\n"
         "  DRAWVIEW.C:709-722 F0097 requests viewport blit and waits for vertical blank\n"
         "  DUNVIEW.C:8446-8542 F0128 back-to-front viewport wall/object draw order\n"
+        "  DUNVIEW.C:8478-8541 F0128 wall distance buckets replay D3 side/front, D2 side/front, D1 side/front, then D0 side walls\n"
         "  DUNVIEW.C:8577-8579 F0128 restores G3071_WallSetNotFlipped to G2107_WallSet\n"
         "  DUNVIEW.C:8609-8610 F0128 calls F0097_DUNGEONVIEW_DrawViewport after wall order completes\n"
         "  DRAWVIEW.C:721-722 F0097 viewport blit request/vblank wait\n"

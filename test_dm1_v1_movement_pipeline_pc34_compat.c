@@ -622,6 +622,20 @@ static void test_stairs_step_consequence(void)
 }
 
 
+static int viewport_draw_order_index_for_square(DM1_ViewSquareIndex square)
+{
+    size_t i;
+
+    for (i = 0; i < dm1_viewport_3d_draw_order_count(); ++i) {
+        const DM1_ViewportDrawStep* step = dm1_viewport_3d_get_draw_order_step(i);
+        if (step && step->square == square) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+
 /* ---- Test: consolidated command→movement→viewport wall-order source lock ---- */
 static void test_command_movement_viewport_wall_order_source_lock(void)
 {
@@ -682,10 +696,32 @@ static void test_command_movement_viewport_wall_order_source_lock(void)
     step = dm1_viewport_3d_get_draw_order_step(18);
     EXPECT("cmd_move_view.draw_order.18", step && step->square == DM1_VIEW_SQUARE_D0C && strstr(step->source_lines, "8542") != NULL);
 
+    EXPECT_INT("cmd_move_view.wall_bucket.d3l2", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D3L2), 3);
+    EXPECT_INT("cmd_move_view.wall_bucket.d3r2", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D3R2), 4);
+    EXPECT_INT("cmd_move_view.wall_bucket.d3l", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D3L), 5);
+    EXPECT_INT("cmd_move_view.wall_bucket.d3r", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D3R), 6);
+    EXPECT_INT("cmd_move_view.wall_bucket.d3c", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D3C), 7);
+    EXPECT_INT("cmd_move_view.wall_bucket.d2l2", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D2L2), 8);
+    EXPECT_INT("cmd_move_view.wall_bucket.d2r2", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D2R2), 9);
+    EXPECT_INT("cmd_move_view.wall_bucket.d2l", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D2L), 10);
+    EXPECT_INT("cmd_move_view.wall_bucket.d2r", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D2R), 11);
+    EXPECT_INT("cmd_move_view.wall_bucket.d2c", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D2C), 12);
+    EXPECT_INT("cmd_move_view.wall_bucket.d1l", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D1L), 13);
+    EXPECT_INT("cmd_move_view.wall_bucket.d1r", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D1R), 14);
+    EXPECT_INT("cmd_move_view.wall_bucket.d1c", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D1C), 15);
+    EXPECT_INT("cmd_move_view.wall_bucket.d0l", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D0L), 16);
+    EXPECT_INT("cmd_move_view.wall_bucket.d0r", viewport_draw_order_index_for_square(DM1_VIEW_SQUARE_D0R), 17);
+
     wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D3L2);
     EXPECT("cmd_move_view.wall.d3l2", wall && wall->native_wall == DM1_WALL_D3L2 && wall->parity_wall == DM1_WALL_D3R2 && wall->wall_case_returns);
+    wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D3C);
+    EXPECT("cmd_move_view.wall.d3c_front", wall && wall->center_wall && wall->front_alcove_reveals_contents && strstr(wall->source_lines, "6707-6714") != NULL);
     wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2C);
     EXPECT("cmd_move_view.wall.d2c", wall && wall->center_wall && wall->front_alcove_reveals_contents && strstr(wall->occlusion_source_lines, "7312") != NULL);
+    wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D1L);
+    EXPECT("cmd_move_view.wall.d1l_side", wall && !wall->center_wall && wall->wall_case_returns && strstr(wall->source_lines, "7445-7455") != NULL);
+    wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D0R);
+    EXPECT("cmd_move_view.wall.d0r_side", wall && !wall->center_wall && wall->wall_case_returns && strstr(wall->occlusion_source_lines, "8144") != NULL);
 }
 
 /* ---- Test: F0267 post-move environment side effects: pit + teleporter ---- */
