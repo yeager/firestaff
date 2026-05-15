@@ -155,6 +155,15 @@ static const DM1_ViewportSideOcclusionSpec s_side_occlusion_specs[] = {
     { DM1_VIEW_SQUARE_D0R, 0x0001, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8110-8115 door-side/teleporter branch", "DUNVIEW.C:8115 F0115 with C0x0001" },
 };
 
+static const DM1_ViewportThievesEyeDoorFrameOcclusionSpec s_thieves_eye_door_frame_occlusion_specs[] = {
+    { DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736,
+      "DUNVIEW.C:8185-8188 D0C door-side branch checks Event73Count_ThievesEye",
+      "DUNVIEW.C:8199-8201 copies G2116_DoorFrameFrontD0C into temporary bitmap and initializes M711 hole graphic",
+      "DUNVIEW.C:8206-8210 resolves C736_ZONE_THIEVES_EYE_HOLE_IN_DOOR_FRAME and blits the hole into the temporary frame",
+      "DUNVIEW.C:8215-8216 blits temporary frame to C728_ZONE_DOOR_FRAME_D0C before D0C common F0115",
+      "DUNVIEW.C:8240,8294 break then common F0115 with C0x0021" },
+};
+
 static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     true,
     true,
@@ -899,6 +908,25 @@ const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec_for
     return NULL;
 }
 
+size_t dm1_viewport_3d_thieves_eye_door_frame_occlusion_spec_count(void)
+{
+    return sizeof(s_thieves_eye_door_frame_occlusion_specs) / sizeof(s_thieves_eye_door_frame_occlusion_specs[0]);
+}
+
+const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_thieves_eye_door_frame_occlusion_spec_count()) return NULL;
+    return &s_thieves_eye_door_frame_occlusion_specs[index];
+}
+
+const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_thieves_eye_door_frame_occlusion_spec_count(); ++i) {
+        if (s_thieves_eye_door_frame_occlusion_specs[i].square == square) return &s_thieves_eye_door_frame_occlusion_specs[i];
+    }
+    return NULL;
+}
+
 size_t dm1_viewport_3d_floor_field_order_spec_count(void)
 {
     return sizeof(s_floor_field_order_specs) / sizeof(s_floor_field_order_specs[0]);
@@ -972,6 +1000,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:7181-7196 D2R mirrored door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7874-7937 D1C door-front occlusion: floor underlay, rear pass, frame/button/door, front pass\n"
+        "  DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115\n"
         "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns\n"

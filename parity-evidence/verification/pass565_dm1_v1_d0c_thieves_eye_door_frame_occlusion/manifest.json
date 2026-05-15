@@ -1,0 +1,194 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 159,
+          "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
+        },
+        {
+          "line": 160,
+          "needle": "DUNVIEW.C:8185-8188"
+        },
+        {
+          "line": 161,
+          "needle": "DUNVIEW.C:8199-8201"
+        },
+        {
+          "line": 162,
+          "needle": "DUNVIEW.C:8206-8210"
+        },
+        {
+          "line": 163,
+          "needle": "DUNVIEW.C:8215-8216"
+        },
+        {
+          "line": 164,
+          "needle": "DUNVIEW.C:8240,8294"
+        }
+      ],
+      "id": "firestaff-d0c-thieves-eye-metadata",
+      "lines": "155-180",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 554,
+          "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
+        },
+        {
+          "line": 557,
+          "needle": "dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)"
+        },
+        {
+          "line": 564,
+          "needle": "spec->door_frame_zone, 728"
+        },
+        {
+          "line": 565,
+          "needle": "spec->hole_zone, 736"
+        },
+        {
+          "line": 569,
+          "needle": "8215-8216"
+        },
+        {
+          "line": 570,
+          "needle": "8294"
+        }
+      ],
+      "id": "firestaff-d0c-thieves-eye-test",
+      "lines": "554-573",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 1003,
+          "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
+        },
+        {
+          "line": 1003,
+          "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
+        }
+      ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "1000-1004",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No original DOS runtime capture claim.",
+    "No pixel parity or renderer-completeness claim.",
+    "No D1C thieves-eye door-mask change; pass447 remains separate.",
+    "No DANNESBURK, Sonnet, q3.6/Qwen, push, or external action."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 8186,
+          "needle": "case C16_ELEMENT_DOOR_SIDE:"
+        },
+        {
+          "line": 8188,
+          "needle": "if (G0407_s_Party.Event73Count_ThievesEye)"
+        },
+        {
+          "line": 8200,
+          "needle": "F0616_CopyBitmap(F0631_GetBitmapPointer(G2116_DoorFrameFrontD0C), G0074_puc_Bitmap_Temporary);"
+        },
+        {
+          "line": 8201,
+          "needle": "F0630_InitBitmapStruct2(M711_NEGGRAPHIC_HOLE_IN_WALL, &L2495_s_Struct2);"
+        },
+        {
+          "line": 8207,
+          "needle": "F0635_(NULL, L2496_ai_XYZ, C736_ZONE_THIEVES_EYE_HOLE_IN_DOOR_FRAME, &L2495_s_Struct2.Width, &L2495_s_Struct2.Height);"
+        },
+        {
+          "line": 8210,
+          "needle": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(L2495_s_Struct2.s2m1), M772_CAST_PC(G0074_puc_Bitmap_Temporary), L2496_ai_XYZ"
+        },
+        {
+          "line": 8216,
+          "needle": "F0656_BlitBitmapToViewportZoneIndexWithTransparency(G0074_puc_Bitmap_Temporary, C728_ZONE_DOOR_FRAME_D0C, C10_COLOR_FLESH);"
+        }
+      ],
+      "id": "d0c-door-side-thieves-eye-frame-branch",
+      "lines": "8185-8216",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 8216,
+          "needle": "F0656_BlitBitmapToViewportZoneIndexWithTransparency(G0074_puc_Bitmap_Temporary, C728_ZONE_DOOR_FRAME_D0C, C10_COLOR_FLESH);"
+        },
+        {
+          "line": 8240,
+          "needle": "break;"
+        },
+        {
+          "line": 8294,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0222_ai_SquareAspect[M550_FIRST_THING], P0180_i_Direction, P0181_i_MapX, P0182_i_MapY, M609_VIEW_SQUARE_D0C, C0x0021_CELL_ORDER_BACKLEFT_BACKRIGHT);"
+        }
+      ],
+      "id": "d0c-common-f0115-after-frame",
+      "lines": "8215-8295",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 4086,
+          "needle": "#define C728_ZONE_DOOR_FRAME_D0C"
+        },
+        {
+          "line": 4095,
+          "needle": "#define C736_ZONE_THIEVES_EYE_HOLE_IN_DOOR_FRAME"
+        }
+      ],
+      "id": "pc34-i34e-zone-ids",
+      "lines": "4084-4095",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.v1",
+  "status": "passed",
+  "statusToken": "PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass565-dm1v1-wall-occlusion-source-lock-20260515-bosse/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d2r_field_order == 1\nPASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass565-dm1v1-wall-occlusion-source-lock-20260515-bosse/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass565 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
