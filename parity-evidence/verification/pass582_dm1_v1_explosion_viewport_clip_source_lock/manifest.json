@@ -1,0 +1,146 @@
+{
+  "claim": "D0C explosions use source zone C004; non-D0C explosion bitmaps are viewport-clipped before blit.",
+  "firestaffChecks": [
+    {
+      "label": "m11_game_view.c D0C explosion pattern helper",
+      "needles": [
+        "int M11_GameView_GetV1ExplosionPatternD0CZoneId(void)",
+        "return 4;",
+        "int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX",
+        "if (outX) *outX = 0;",
+        "if (outY) *outY = 0;",
+        "if (outW) *outW = 32;",
+        "if (outH) *outH = 29;"
+      ],
+      "ordered": false
+    },
+    {
+      "label": "m11_game_view.c deferred explosion pass",
+      "needles": [
+        "static void m11_draw_dm1_deferred_explosion_pass",
+        "DUNVIEW.C:5915 exits the packed-cell",
+        "m11_draw_dm1_deferred_center_explosion",
+        "m11_draw_dm1_deferred_side_explosion"
+      ],
+      "ordered": false
+    },
+    {
+      "label": "m11 game-view probe covers C004 helper",
+      "needles": [
+        "M11_GameView_GetV1ExplosionPatternD0CZoneId() == 4",
+        "M11_GameView_GetV1ExplosionPatternD0CZone(&expX, &expY, &expW, &expH)",
+        "expX == 0 && expY == 0 && expW == 32 && expH == 29",
+        "\"explosion pattern and viewport-centered text zones expose layout-696 C004/C006 geometry\""
+      ],
+      "ordered": false
+    },
+    {
+      "label": "CMake registration",
+      "needles": [
+        "NAME pass582_dm1_v1_explosion_viewport_clip_source_lock",
+        "verify_pass582_dm1_v1_explosion_viewport_clip_source_lock.py"
+      ],
+      "ordered": false
+    }
+  ],
+  "nonClaims": [
+    "Does not duplicate pass579/pass557 D4-before-nearer-wall ordering.",
+    "Does not claim original DOS pixel parity.",
+    "Does not use Greatstone as primary evidence.",
+    "No renderer behavior change in this pass."
+  ],
+  "redmcsbChecks": [
+    {
+      "claim": "D0C explosions use C004 explosion-pattern path into G0296_puc_Bitmap_Viewport.",
+      "file": "DUNVIEW.C",
+      "lines": "6028-6071",
+      "needles": [
+        "if (AP0145_i_ViewSquareExplosionIndex == C12_VIEW_SQUARE_D0C_EXPLOSION)",
+        "AL0128_puc_Bitmap = F0489_MEMORY_GetNativeBitmapOrGraphic(AL0127_i_ExplosionAspectIndex + M636_GRAPHIC_FIRST_EXPLOSION_PATTERN)",
+        "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(AL0128_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "F0638_GetZone(C004_ZONE_EXPLOSION_PATTERN_D0C, L2481_ai_XYZ)",
+        "G2073_C224_ViewportPixelWidth",
+        "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT)"
+      ],
+      "ordered": true
+    },
+    {
+      "claim": "Non-D0C explosions select coordinates and scale before fetching the scaled explosion bitmap.",
+      "file": "DUNVIEW.C",
+      "lines": "6079-6137",
+      "needles": [
+        "if (L0196_B_RebirthExplosion)",
+        "G0227_aai_Graphic558_RebirthStep2ExplosionCoordinates",
+        "if (L0191_ps_Explosion->Centered)",
+        "G0225_aai_Graphic558_CenteredExplosionCoordinates",
+        "G0226_aaai_Graphic558_ExplosionCoordinates",
+        "L0194_i_ExplosionScale",
+        "F0114_DUNGEONVIEW_GetExplosionBitmap(AL0127_i_ExplosionAspectIndex, L0194_i_ExplosionScale"
+      ],
+      "ordered": false
+    },
+    {
+      "claim": "Explosion bitmap boxes are clipped to the 224x136 viewport and empty clips are skipped.",
+      "file": "DUNVIEW.C",
+      "lines": "6147-6174",
+      "needles": [
+        "M771_BOX_BOTTOM(L0145_auc_Box) = F0024_MAIN_GetMinimumValue(135",
+        "AL0127_i_Y = F0025_MAIN_GetMaximumValue(0",
+        "if (AL0127_i_Y >= 136)",
+        "M769_BOX_RIGHT(L0145_auc_Box) = AL0127_i_X",
+        "M768_BOX_LEFT(L0145_auc_Box) = F0026_MAIN_GetBoundedValue(0",
+        "if (M769_BOX_RIGHT(L0145_auc_Box) <= M768_BOX_LEFT(L0145_auc_Box))",
+        "L0136_i_ByteWidth = M077_NORMALIZED_BYTE_WIDTH(L0136_i_ByteWidth)"
+      ],
+      "ordered": true
+    },
+    {
+      "claim": "PC34/I34E final explosion draw uses computed zone index and viewport destination.",
+      "file": "DUNVIEW.C",
+      "lines": "6192-6194",
+      "needles": [
+        "F0791_DUNGEONVIEW_DrawBitmapXX(AL0128_puc_Bitmap, G0296_puc_Bitmap_Viewport, L2474_i_ZoneIndex, L0143_B_FlipHorizontal, C10_COLOR_FLESH"
+      ],
+      "ordered": false
+    },
+    {
+      "claim": "C004 is the source zone id for the D0C explosion pattern.",
+      "file": "DEFS.H",
+      "lines": "3747-3753",
+      "needles": [
+        "#define C004_ZONE_EXPLOSION_PATTERN_D0C",
+        "#define C007_ZONE_VIEWPORT"
+      ],
+      "ordered": true
+    },
+    {
+      "claim": "MEDIA720 F0635 clips zones and rejects empty clips before callers blit.",
+      "file": "COORD.C",
+      "lines": "2389-2410",
+      "needles": [
+        "L2302_i_ = M704_ZONE_LEFT(L2307_ai_XYZ) - M704_ZONE_LEFT(P2130_pi_XYZ)",
+        "M708_ZONE_WIDTH(P2130_pi_XYZ) = F0024_MAIN_GetMinimumValue",
+        "M709_ZONE_HEIGHT(P2130_pi_XYZ) = F0024_MAIN_GetMinimumValue",
+        "if ((M708_ZONE_WIDTH(P2130_pi_XYZ) <= 0) || (M709_ZONE_HEIGHT(P2130_pi_XYZ) <= 0))",
+        "return NULL"
+      ],
+      "ordered": true
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass582_dm1_v1_explosion_viewport_clip_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS582_DM1_V1_EXPLOSION_VIEWPORT_CLIP_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/projectile-explosion-row-clip-pass582-b27520b8/tools/verify_pass582_dm1_v1_explosion_viewport_clip_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "status=PASS582_DM1_V1_EXPLOSION_VIEWPORT_CLIP_SOURCE_LOCKED\nanchors=DUNVIEW.C:6028-6071,DUNVIEW.C:6079-6137,DUNVIEW.C:6147-6174,DUNVIEW.C:6192-6194,DEFS.H:3747-3753,COORD.C:2389-2410",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
