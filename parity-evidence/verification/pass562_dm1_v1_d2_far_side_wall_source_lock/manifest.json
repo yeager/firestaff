@@ -1,0 +1,223 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [
+        {
+          "line": 256,
+          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
+        },
+        {
+          "line": 256,
+          "needle": "DM1_PC34_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 256,
+          "needle": "DUNVIEW.C:6849-6858"
+        },
+        {
+          "line": 256,
+          "needle": "DUNVIEW.C:6848-6862 wall case returns"
+        },
+        {
+          "line": 257,
+          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
+        },
+        {
+          "line": 257,
+          "needle": "DM1_PC34_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 257,
+          "needle": "DUNVIEW.C:6880-6889"
+        },
+        {
+          "line": 257,
+          "needle": "DUNVIEW.C:6882-6893 wall case returns"
+        }
+      ],
+      "id": "firestaff-d2-far-side-wall-metadata",
+      "lines": "250-260",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 185,
+          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
+        },
+        {
+          "line": 185,
+          "needle": "DM1_PC34_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 185,
+          "needle": "\"6862\""
+        },
+        {
+          "line": 186,
+          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
+        },
+        {
+          "line": 186,
+          "needle": "DM1_PC34_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 186,
+          "needle": "\"6893\""
+        }
+      ],
+      "id": "firestaff-d2-far-side-runtime-test",
+      "lines": "180-190",
+      "missing": [],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 977,
+          "needle": "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
+        }
+      ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "972-979",
+      "missing": [],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No input, capture, or pass514 work.",
+    "No renderer pixel parity claim.",
+    "No original DOS runtime capture claim.",
+    "No CSB/DM2 behavior claim.",
+    "No DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 4047,
+          "needle": "#define C707_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 4048,
+          "needle": "#define C708_ZONE_WALL_D2R2"
+        }
+      ],
+      "id": "defs-pc34-d2-far-side-zones",
+      "lines": "4042-4049",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6837,
+          "needle": "STATICFUNCTION void F0678_DrawD2L2("
+        },
+        {
+          "line": 6848,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 6851,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C05_WALL_D2R2], C707_ZONE_WALL_D2L2);"
+        },
+        {
+          "line": 6854,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C06_WALL_D2L2]"
+        },
+        {
+          "line": 6858,
+          "needle": "C707_ZONE_WALL_D2L2);"
+        },
+        {
+          "line": 6862,
+          "needle": "return;"
+        },
+        {
+          "line": 6863,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 6864,
+          "needle": "C09_VIEW_SQUARE_D2L2]], C707_ZONE_WALL_D2L2);"
+        }
+      ],
+      "id": "d2l2-wall-and-field-branch",
+      "lines": "6836-6865",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6868,
+          "needle": "STATICFUNCTION void F0679_DrawD2R2("
+        },
+        {
+          "line": 6879,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 6882,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C06_WALL_D2L2], C708_ZONE_WALL_D2R2);"
+        },
+        {
+          "line": 6885,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C05_WALL_D2R2]"
+        },
+        {
+          "line": 6889,
+          "needle": "C708_ZONE_WALL_D2R2);"
+        },
+        {
+          "line": 6893,
+          "needle": "return;"
+        },
+        {
+          "line": 6894,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 6895,
+          "needle": "C10_VIEW_SQUARE_D2R2]], C708_ZONE_WALL_D2R2);"
+        }
+      ],
+      "id": "d2r2-mirrored-wall-and-field-branch",
+      "lines": "6868-6895",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass562_dm1_v1_d2_far_side_wall_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-worktrees/pass562-dm1v1-d2-far-side-source-lock-20260515-bosse/build-pass562/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass562-dm1v1-d2-far-side-source-lock-20260515-bosse/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass562 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
