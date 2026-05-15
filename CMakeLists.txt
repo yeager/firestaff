@@ -2283,6 +2283,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 forward collision/timing source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass580_dm1_v1_forward_collision_timing
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass580_dm1_v1_forward_collision_timing.py
+    )
+endif()
+
 # DM1 V1 gated movement pending-click replay source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
