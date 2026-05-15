@@ -1862,6 +1862,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 PC34 original C254 boundary -------------------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass563_dm1_v1_pc34_original_c254_boundary
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_pc34_original_c254_boundary.py
+    )
+endif()
+
 # -- DM1 V1 original overlay/capture bounded progress gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

@@ -1,0 +1,282 @@
+{
+  "branch": "worker/pass563-dm1v1-pc34-original-c254-boundary-20260515",
+  "decision": "DM1 V1 original overlay/capture is still blocked at the canonical PC34 C254/IO_DRIVER slot runtime decode: the exact N2 PC34 DM.EXE/DATA payload is hash-locked, ReDMCSB routes I34E input through C254 slot0/slot1 before IO2/F0361, pass514/pass558 classify the empty-F0380 symptom, pass560 has not captured C254 at runtime, and pass562 correctly selects C254 slot decode as the next bounded runtime probe.",
+  "head": "738e2b911937f369c18cd13794e1603fa11dc214",
+  "nonClaims": [
+    "no new original runtime capture",
+    "no pixel parity promotion",
+    "no movement behavior change",
+    "no DANNESBURK input touched",
+    "no push"
+  ],
+  "originalAudit": {
+    "DATA/DUNGEON.DAT": {
+      "exists": true,
+      "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    "DATA/GRAPHICS.DAT": {
+      "exists": true,
+      "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    "DM.EXE": {
+      "exists": true,
+      "expectedSha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"
+    },
+    "manifest": {
+      "exists": true,
+      "mentionsCanonicalPc34": true,
+      "mentionsN2CanonicalDungeonHash": true,
+      "mentionsN2CanonicalGraphicsHash": true,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json",
+      "usesDannesburkAsInput": false
+    }
+  },
+  "originalRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "passChain": {
+    "pass514": {
+      "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+      "decision": null,
+      "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
+      "present": true,
+      "proofPredicates": {
+        "captureAttemptedThisRun": false,
+        "dispatchReached": false,
+        "f0361QueueCountPathAlreadyProven": true,
+        "f0380QueuePositiveBeforePop": false,
+        "f0380ReachedInN2DebuggerPath": true,
+        "keyboardProducerEntryHit": false,
+        "prerequisitesOk": true,
+        "queueCountWriteObserved": false,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+        "routeInputAfterArmingSucceeded": true,
+        "sourceAuditOk": true
+      },
+      "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380"
+    },
+    "pass558": {
+      "blocker": null,
+      "decision": "Classified current DM1 V1 original capture unblocker as DOSBox window/event-queue to guest keyboard interrupt/IO2 dispatch boundary: ReDMCSB requires GAMELOOP M527/M528 to call IO2 presence/read before F0361 can enqueue, pass514 reaches F0380 with no enqueue/count write, pass556 resolves the IO2 driver slots but observes no IO2 read/presence after route input, and pass557 rules out host route-key generation as the first failing boundary.",
+      "path": "parity-evidence/verification/pass558_dm1_v1_pass514_io_blocker_classifier/manifest.json",
+      "present": true,
+      "proofPredicates": {
+        "pass514F0380Reached": true,
+        "pass514InputDeliveredButEmptyF0380": true,
+        "pass514ManifestPresent": true,
+        "pass514QueueCountWriteMissing": true,
+        "pass514RouteInputAfterArmingSucceeded": true,
+        "pass556F0380ReachedAfterRouteInput": true,
+        "pass556IoDriverSlotsResolved": true,
+        "pass556ManifestPresent": true,
+        "pass556NoIo2ReadOrPresenceAfterRoute": true,
+        "pass557HostRouteSucceeded": true,
+        "pass557ManifestPresent": true,
+        "pass557RulesOutHostRouteGeneration": true,
+        "sourceAuditOk": true
+      },
+      "status": "BLOCKED_PASS558_DOSBOX_EVENT_TO_GUEST_IO2_DISPATCH_BOUNDARY_CLASSIFIED"
+    },
+    "pass560": {
+      "blocker": "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380.",
+      "decision": null,
+      "path": "parity-evidence/verification/pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding/manifest.json",
+      "present": true,
+      "proofPredicates": null,
+      "status": "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED"
+    },
+    "pass562": {
+      "blocker": null,
+      "decision": {
+        "candidates": [
+          {
+            "blockedByMissingRuntimeProof": true,
+            "name": "C254/IO_DRIVER slot decode",
+            "reason": "Pass560 source-locks C254 publication and reports no runtime C254/vector/slot artifact; IO2 cannot be interpreted until slot 0/1 are decoded.",
+            "sourceLocked": true
+          },
+          {
+            "blockedByMissingRuntimeProof": true,
+            "name": "IO2/F0540 dispatch",
+            "reason": "F0540 and F0539 are downstream consumers of G2162_IODriver slot 0/1, so this is the next boundary only after C254 slot decode succeeds.",
+            "sourceLocked": true
+          },
+          {
+            "blockedByMissingRuntimeProof": true,
+            "name": "F0361 enqueue",
+            "reason": "F0361 receives the M528 key after IO2 has read and normalized it; probing enqueue before C254/IO2 would collapse two boundaries.",
+            "sourceLocked": true
+          }
+        ],
+        "nextProbeContract": [
+          "in one bounded N2 runtime, after IO startup, read IVT C254 at 0000:03F8",
+          "decode C254 as non-null G8101_apc_IOInterruptVector",
+          "decode table slot 0 as F8090_ and slot 1 as F8091_ before any IO2/F0540 claim",
+          "only after that, continue to F0539/F0540 hit/value and then F0361 enqueue/G2153 increment"
+        ],
+        "selected": "C254/IO_DRIVER slot decode",
+        "selectedStatus": "PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED"
+      },
+      "path": "parity-evidence/verification/pass562_dm1_v1_pass560_keyboard_next_boundary/manifest.json",
+      "present": true,
+      "proofPredicates": null,
+      "status": "PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED"
+    }
+  },
+  "proofPredicates": {
+    "originalPc34PayloadOk": true,
+    "pass514EmptyF0380BlockerPresent": true,
+    "pass558IoBoundaryClassified": true,
+    "pass560C254RuntimeMissing": true,
+    "pass562ProbeContractNamesSlots": true,
+    "pass562SelectedC254SlotDecode": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/pass563-dm1v1-pc34-original-c254-boundary-20260515-codex",
+  "schema": "pass563_dm1_v1_pc34_original_c254_boundary.v1",
+  "sourceAudit": [
+    {
+      "claim": "DM1 PC/I34E consumes keyboard-present/read before F0361 enqueue and F0380 dispatch.",
+      "file": "GAMELOOP.C",
+      "id": "pc34_game_loop_consumes_io_before_queue_dispatch",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "lineRange": [
+        166,
+        215
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "I34E keyboard macros are IO2 calls backed by IO_DRIVER slot 0/1 through C254.",
+      "file": "DEFS.H",
+      "id": "i34e_keyboard_macros_bind_to_io2",
+      "lineHits": {
+        "#define C254_DM_IO_INTERRUPT    254": 4335,
+        "#define M527_IsCharacterInKeyboardBuffer()                               F0539_INPUT_Cconis()": 3143,
+        "#define M528_GetCharacterInKeyboardBuffer()                              F0540_INPUT_Crawcin()": 3144,
+        "BOOLEAN (*IODRV_01_IsKeyboardInputPresent)();": 4294,
+        "int16_t (*IODRV_00_GetKeyboardInput)();": 4293
+      },
+      "lineRange": [
+        3143,
+        4335
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
+    },
+    {
+      "claim": "F0540/F0539 are downstream of decoded IO_DRIVER slot 0/1, not raw host input.",
+      "file": "IO2.C",
+      "id": "io2_slot0_slot1_dispatch",
+      "lineHits": {
+        "BOOLEAN F0539_INPUT_Cconis(": 179,
+        "L2944_ui_ = (*(G2162_IODriver->IODRV_00_GetKeyboardInput))();": 37,
+        "int16_t F0540_INPUT_Crawcin(": 5,
+        "return (*(G2162_IODriver->IODRV_01_IsKeyboardInputPresent))();": 184,
+        "switch (L2944_ui_ - 0x1248)": 47
+      },
+      "lineRange": [
+        5,
+        184
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "IBMIO first receives raw IRQ09 scancodes and buffers accepted keys.",
+      "file": "IBMIO.C",
+      "id": "ibmio_installs_keyboard_irq09_and_buffers_scancodes",
+      "lineHits": {
+        "F8087_(G8085_ | (G8062_ & 0x1EFF));": 528,
+        "G8082_++;": 360,
+        "G8083_[G8077_] = P3278_i_;": 358,
+        "asm     S8A_Vector:": 399,
+        "asm     in      al, 60h": 412,
+        "asm     mov     ax, 2509h": 389,
+        "asm     mov     ax, 3509h": 381,
+        "asm     mov     dx, offset S8A_Vector": 388
+      },
+      "lineRange": [
+        358,
+        528
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The game-facing boundary is C254 -> G8101 table -> F8090/F8091.",
+      "file": "IBMIO.C",
+      "id": "ibmio_publishes_game_facing_c254_io_driver_table",
+      "lineHits": {
+        "(char*)F8090_, /*  0 */": 2379,
+        "(char*)F8091_, /*  1 */": 2380,
+        "F8088_();": 2552,
+        "F8089_();": 2586,
+        "setvect(C254_DM_IO_INTERRUPT, (void interrupt (*)())&G8101_apc_IOInterruptVector);": 2550
+      },
+      "lineRange": [
+        2379,
+        2586
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+    },
+    {
+      "claim": "The child game binds G2162_IODriver from C254 before using IO2 keyboard-present/read.",
+      "file": "CEDT026.C",
+      "id": "game_binds_g2162_from_c254",
+      "lineHits": {
+        "G2162_IODriver = G2161_IODriver = (IO_DRIVER*)getvect(C254_DM_IO_INTERRUPT);": 238,
+        "return (*(G2162_IODriver->IODRV_01_IsKeyboardInputPresent))();": 220
+      },
+      "lineRange": [
+        220,
+        238
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDT026.C"
+    },
+    {
+      "claim": "F0361 enqueue/count and F0380 pop/count remain downstream proof points after C254 slot decode.",
+      "file": "COMMAND.C",
+      "id": "f0361_f0380_queue_contract",
+      "lineHits": {
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G2153_i_QueuedCommandsCount++;": 1357,
+        "G2153_i_QueuedCommandsCount--;": 2121,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084,
+        "void F0361_COMMAND_ProcessKeyPress": 1709,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "lineRange": [
+        1357,
+        2121
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED",
+  "timestampUtc": "2026-05-15T08:26:19.789765+00:00"
+}
