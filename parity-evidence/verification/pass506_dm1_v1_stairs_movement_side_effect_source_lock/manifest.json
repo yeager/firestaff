@@ -1,11 +1,11 @@
 {
-  "branch": "integrate-main-20260513-blockers",
+  "branch": "worker/dm1v1-movement-stairs-stamina-pass561-20260515-codex",
   "firestaffGuards": {
     "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",
     "pipelineTest": "test_dm1_v1_movement_pipeline_pc34_compat.c",
     "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
-    "runtimeOutputLastLine": "164 passed, 0 failed"
+    "runtimeOutputLastLine": "183 passed, 0 failed"
   },
   "notClaimed": [
     "viewport/capture parity",

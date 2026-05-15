@@ -570,12 +570,16 @@ static void test_stairs_step_consequence(void)
     EXPECT_INT("stairs_into_y", party.mapY, 1);
     EXPECT_INT("stairs_into_no_cooldown", pipeline.disabledMovementTicks, 0);
 
-    /* CLIKMENU.C:264-267: backward while already on stairs consumes the
-     * stairs before any relative backward coordinate step. */
+    /* CLIKMENU.C:237-267: every dequeued step command pays living-champion
+     * stamina before stairs handling; backward while already on stairs then
+     * consumes the stairs before any relative backward coordinate step.
+     */
     setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
     set_sq(level0, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
     set_sq(level1, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
     setup_party(&party, 2, 2, DIR_NORTH, 1);
+    party.champions[0].stamina.current = 20;
+    party.champions[0].stamina.maximum = 20;
     DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
     DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
         key_event(0xAB32));
@@ -585,6 +589,10 @@ static void test_stairs_step_consequence(void)
     EXPECT("stairs_backward_transition", result.core.stairTransitionApplied == 1);
     EXPECT("stairs_backward_source_walk_off", result.core.stairSourceLeaveProcessed == 1);
     EXPECT("stairs_backward_no_target_walk_off", result.core.stairTargetLeaveProcessed == 0);
+    EXPECT_INT("stairs_backward_stamina_affected", result.core.staminaAffectedCount, 1);
+    EXPECT_INT("stairs_backward_stamina_cost", result.core.staminaCost[0], 1);
+    EXPECT_INT("stairs_backward_stamina_decremented_before_short_circuit",
+        party.champions[0].stamina.current, 19);
     EXPECT_INT("stairs_backward_map", party.mapIndex, 1);
     EXPECT_INT("stairs_backward_x_not_south", party.mapX, 2);
     EXPECT_INT("stairs_backward_y_not_south", party.mapY, 2);
