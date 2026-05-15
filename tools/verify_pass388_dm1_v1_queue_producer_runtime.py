@@ -225,7 +225,18 @@ def run_route(label: str, route: str, seconds: int) -> dict[str, Any]:
             dbg(child, "BPLIST", cmdlog, transcript)
             final_bplist = p385.clean(cmdlog[-1].get("excerpt", "")).upper()
             retained_final = {n: (ADDR[n] in final_bplist) for n in ARMED_CODE + ARMED_MEM}
-            route_after_arm = any(r.get("t", 0) > arm_time and not str(r.get("route_item", "")).startswith("wait:") for r in routelog)
+            route_inputs_after_arm = [r for r in routelog if r.get("t", 0) > arm_time and not str(r.get("route_item", "")).startswith("wait:")]
+            route_after_arm = bool(route_inputs_after_arm)
+            route_success_after_arm = any(r.get("rc") == 0 for r in route_inputs_after_arm)
+            route_failures_after_arm = [
+                {
+                    "route_item": r.get("route_item"),
+                    "rc": r.get("rc"),
+                    "out": str(r.get("out", ""))[-240:],
+                }
+                for r in route_inputs_after_arm
+                if r.get("rc") not in (None, 0)
+            ]
             return {
                 "label": label,
                 "ran": True,
@@ -233,6 +244,8 @@ def run_route(label: str, route: str, seconds: int) -> dict[str, Any]:
                 "boundedSeconds": seconds,
                 "route": p385.LOAD_SUFFIX + " " + route,
                 "routeInputAfterArming": route_after_arm,
+                "routeInputAfterArmingSucceeded": route_success_after_arm,
+                "routeInputFailuresAfterArming": route_failures_after_arm,
                 "sawRunning": saw,
                 "retainedAtArm": retained,
                 "retainedFinal": retained_final,
@@ -260,9 +273,13 @@ def summarize(probes: list[dict[str, Any]]) -> tuple[str, dict[str, Any], str | 
     kinds = [s.get("kind") for s in all_stops]
     f0380_samples = [s for s in all_stops if s.get("kind") == "F0380_COMMAND_ProcessQueue_CPSC"]
     f0380_counts = [s.get("bpmCurrentValues", {}).get("G2153_i_QueuedCommandsCount") for s in f0380_samples]
-    route_ok = all(p.get("sawRunning") is True and p.get("routeInputAfterArming") is True and all(p.get("retainedAtArm", {}).values()) for p in probes)
+    route_control_ok = all(p.get("sawRunning") is True and p.get("routeInputAfterArming") is True and all(p.get("retainedAtArm", {}).values()) for p in probes)
+    route_input_ok = all(p.get("routeInputAfterArmingSucceeded") is True for p in probes)
+    route_ok = route_control_ok and route_input_ok
     predicates = {
         "routesRanAfterArmingWithBreakpointsRetained": route_ok,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": route_control_ok,
+        "routeInputAfterArmingSucceeded": route_input_ok,
         "clickProducerEntryHit": "F0359_COMMAND_ProcessClick_CPSC" in kinds,
         "pendingReplayHit": "F0360_COMMAND_ProcessPendingClick" in kinds,
         "keyboardProducerEntryHit": "F0361_COMMAND_ProcessKeyPress" in kinds,
@@ -275,6 +292,8 @@ def summarize(probes: list[dict[str, Any]]) -> tuple[str, dict[str, Any], str | 
     }
     if predicates["f0380QueueCountPositiveImmediatelyBefore"]:
         return "PASS388_A_PRODUCER_MAKES_QUEUE_COUNT_POSITIVE_BEFORE_F0380", predicates, None
+    if route_control_ok and not route_input_ok:
+        return "BLOCKED_PASS388_ROUTE_INPUT_NOT_DELIVERED_AFTER_ARMING", predicates, "debugger arming/control reached the post-load loop with breakpoints retained, but no keyboard route input after arming returned rc=0; this is not proof of an F0380 empty queue"
     if route_ok and predicates["f0380Reached"] and not predicates["queueCountWriteObserved"] and not predicates["dispatchReached"]:
         return "BLOCKED_PASS388_B_ORIGINAL_ROUTE_NEVER_HITS_ENQUEUE_BRANCH", predicates, "runtime reached F0380 with G2153 byte sampled as zero and no G2153 write/watchpoint under producer-side arming"
     return "FAIL_PASS388_RUNTIME_CONTROL_OR_PREDICATE_INCOMPLETE", predicates, "producer/F0380 runtime predicates incomplete"

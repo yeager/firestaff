@@ -170,6 +170,10 @@ def summarize(source: list[dict[str, Any]], prereq: dict[str, Any], capture: dic
         "f0380ReachedInN2DebuggerPath": bool(p388_pred.get("f0380Reached")),
         "f0380QueuePositiveBeforePop": bool(p388_pred.get("f0380QueueCountPositiveImmediatelyBefore")),
         "dispatchReached": bool(p388_pred.get("dispatchReached")),
+        "routeControlReachedAfterArmingWithBreakpointsRetained": bool(p388_pred.get("routeControlReachedAfterArmingWithBreakpointsRetained")),
+        "routeInputAfterArmingSucceeded": bool(p388_pred.get("routeInputAfterArmingSucceeded")),
+        "keyboardProducerEntryHit": bool(p388_pred.get("keyboardProducerEntryHit")),
+        "queueCountWriteObserved": bool(p388_pred.get("queueCountWriteObserved")),
         "captureAttemptedThisRun": bool(capture),
     }
     if not predicates["sourceAuditOk"]:
@@ -177,6 +181,19 @@ def summarize(source: list[dict[str, Any]], prereq: dict[str, Any], capture: dic
     if not predicates["prerequisitesOk"]:
         missing = prereq["missingTools"] + prereq["missingHelpers"]
         return "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE", "missing prerequisite: " + ", ".join(missing), predicates
+    if p388_status == "BLOCKED_PASS388_ROUTE_INPUT_NOT_DELIVERED_AFTER_ARMING":
+        blocker = "keyboard-buffer/F0380 route is narrowed before the empty-queue claim: pass388 retained breakpoints and reached post-load control, but post-arming keyboard input did not deliver successfully, so F0380 empty-queue evidence is not currently valid; exact command: " + CAPTURE_COMMAND
+        return "BLOCKED_PASS514_KEYBOARD_ROUTE_INPUT_NOT_DELIVERED_AFTER_ARMING", blocker, predicates
+    if (
+        predicates["f0361QueueCountPathAlreadyProven"]
+        and predicates["routeInputAfterArmingSucceeded"]
+        and predicates["f0380ReachedInN2DebuggerPath"]
+        and not predicates["keyboardProducerEntryHit"]
+        and not predicates["queueCountWriteObserved"]
+        and not predicates["f0380QueuePositiveBeforePop"]
+    ):
+        blocker = "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: " + CAPTURE_COMMAND
+        return "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380", blocker, predicates
     if predicates["f0361QueueCountPathAlreadyProven"] and predicates["f0380ReachedInN2DebuggerPath"] and not predicates["f0380QueuePositiveBeforePop"]:
         blocker = "smallest N2 debugger path is wired, but unified capture is blocked because the pass388 keyboard route reaches F0380 with G2153 sampled as zero; exact command: " + CAPTURE_COMMAND
         return "BLOCKED_PASS514_F0380_REACHED_WITH_EMPTY_QUEUE", blocker, predicates

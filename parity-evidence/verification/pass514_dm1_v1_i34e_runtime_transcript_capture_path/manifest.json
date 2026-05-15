@@ -1,0 +1,225 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "280C:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "280C:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23B0:40FE",
+    "F0361_COMMAND_ProcessKeyPress": "22F7:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA7:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA7:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",
+    "G0306_i_PartyMapX": "2C23:3C94",
+    "G0307_i_PartyMapY": "2C23:3CE0",
+    "G0308_i_PartyDirection": "2C23:3C92",
+    "G0309_i_PartyMapIndex": "2C23:3C8A",
+    "G0432_as_CommandQueue": "2C23:3E7A",
+    "G0433_i_CommandQueueFirstIndex": "2C23:3EC8",
+    "G0434_i_CommandQueueLastIndex": "2C23:1F08",
+    "G2153_i_QueuedCommandsCount": "2C23:3E78"
+  },
+  "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+  "branch": "main",
+  "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+  "head": "6164d732494851f45e03dcca966f3f87212b3898",
+  "nonClaims": [
+    "no movement behavior changed",
+    "no pass513 scaffold promoted",
+    "no push"
+  ],
+  "prerequisites": {
+    "dmExeExists": true,
+    "missingHelpers": [],
+    "missingTools": [],
+    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "originalStageExists": true,
+    "runtimeHelpers": {
+      "tools/verify_pass385_dm1_v1_corrected_loader_delta_semantic_route.py": true,
+      "tools/verify_pass386_dm1_v1_keyboard_vs_click_command_dispatch.py": true,
+      "tools/verify_pass388_dm1_v1_queue_producer_runtime.py": true
+    },
+    "tools": {
+      "Xvfb": "/usr/bin/Xvfb",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "xdotool": "/usr/bin/xdotool"
+    }
+  },
+  "priorRuntimeEvidence": {
+    "pass387_f0361_queue_write": {
+      "path": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/manifest.json",
+      "proofPredicates": {
+        "anyQueuedCommandCountWriteObserved": true,
+        "breakpointsRetainedAtArm": true,
+        "f0361HitAfterGameplayArm": true,
+        "postGameplayArm": true,
+        "queueCountAtArmZero": true,
+        "queuedCommandCountWriteObserved": true,
+        "routeRanAfterArm": true,
+        "sourceAuditOk": true
+      },
+      "status": "PASS387_KEYBOARD_F0361_QUEUE_WRITE_PROVEN"
+    },
+    "pass388_queue_producer_runtime": {
+      "path": "parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/manifest.json",
+      "proofPredicates": {
+        "clickProducerEntryHit": false,
+        "dispatchReached": false,
+        "f0380QueueCountPositiveImmediatelyBefore": false,
+        "f0380QueueCountSamples": [
+          0,
+          0
+        ],
+        "f0380Reached": true,
+        "keyboardProducerEntryHit": false,
+        "pendingClickWriteObserved": false,
+        "pendingReplayHit": false,
+        "queueCountWriteObserved": false,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+        "routeInputAfterArmingSucceeded": true,
+        "routesRanAfterArmingWithBreakpointsRetained": true
+      },
+      "status": "BLOCKED_PASS388_B_ORIGINAL_ROUTE_NEVER_HITS_ENQUEUE_BRANCH"
+    }
+  },
+  "proofPredicates": {
+    "captureAttemptedThisRun": false,
+    "dispatchReached": false,
+    "f0361QueueCountPathAlreadyProven": true,
+    "f0380QueuePositiveBeforePop": false,
+    "f0380ReachedInN2DebuggerPath": true,
+    "keyboardProducerEntryHit": false,
+    "prerequisitesOk": true,
+    "queueCountWriteObserved": false,
+    "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+    "routeInputAfterArmingSucceeded": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "requiredUnifiedFields": [
+    "F0361 queue slot/count",
+    "F0380 pop/count",
+    "party before/after map/x/y/dir",
+    "F0128 direction/x/y tuple",
+    "F0097 present boundary"
+  ],
+  "runtimeCaptureAttempt": null,
+  "schema": "pass514_dm1_v1_i34e_runtime_transcript_capture_path.v1",
+  "sourceAudit": [
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G2153_i_QueuedCommandsCount++;": 1357,
+        "if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL)": 1734,
+        "void F0361_COMMAND_ProcessKeyPress": 1709
+      },
+      "lineRange": [
+        1357,
+        1765
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "f0361_keyboard_queue_write"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "G2153_i_QueuedCommandsCount--;": 2121,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "lineRange": [
+        2045,
+        2155
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "f0380_pop_count_dispatch"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "lineRange": [
+        166,
+        215
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+      "section": "keyboard_then_f0380_loop_order"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineHits": {
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": 269,
+        "F0267_MOVE_GetMoveResult_CPSCE": 135,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lineRange": [
+        135,
+        269
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "section": "turn_step_party_tuple_handlers"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lineHits": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;": 443
+      },
+      "lineRange": [
+        316,
+        443
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "section": "successful_step_party_tuple_commit"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lineRange": [
+        8318,
+        8610
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "section": "f0128_to_f0097_present_boundary"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "lineHits": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "lineRange": [
+        709,
+        857
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "section": "pc34_f0097_viewport_present"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+  "timestampUtc": "2026-05-15T00:05:05.473453+00:00"
+}

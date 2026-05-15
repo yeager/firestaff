@@ -2,374 +2,454 @@
   {
     "control": "F5",
     "purpose": "run unarmed to load/menu prefix",
-    "t": 1778247156.6814878
+    "t": 1778803332.0659192
   },
   {
     "control": "Alt+Pause",
     "purpose": "post-load arm point",
-    "t": 1778247172.9424024
+    "t": 1778803348.333126
   },
   {
     "cmd": "BPDEL *",
-    "excerpt": "....5]=001028]=2C232A]=04002]=00052A]=040028]=2C23\n-> B_  4006000015255  CS=1B186C10 P102C0000A7785....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
-    "t": 1778247178.7948644
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778803354.1865032
   },
   {
     "cmd": "BP 22F7:030D",
     "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....3_  ....0_  ....D_  \nDEBUG: Set breakpoint at 22F7:030D\n\n-> _            ",
-    "t": 1778247179.6177685
+    "t": 1778803355.010372
   },
   {
     "cmd": "BP 22F7:03F0",
     "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....3_  ....F_  ....0_  \nDEBUG: Set breakpoint at 22F7:03F0\n\n-> _            ",
-    "t": 1778247180.4409158
+    "t": 1778803355.834111
   },
   {
     "cmd": "BP 22F7:0407",
     "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F7:0407\n\n-> _            ",
-    "t": 1778247181.2640154
+    "t": 1778803356.6573799
   },
   {
     "cmd": "BP 22F7:0699",
     "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F7:0699\n\n-> _            ",
-    "t": 1778247182.0884407
+    "t": 1778803357.4811277
   },
   {
     "cmd": "BP 1EA7:010D",
     "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA7:010D\n\n-> _            ",
-    "t": 1778247182.9115462
+    "t": 1778803358.3048985
   },
   {
     "cmd": "BP 1EA7:01AA",
     "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA7:01AA\n\n-> _            ",
-    "t": 1778247183.7357092
+    "t": 1778803359.1285374
   },
   {
     "cmd": "BP 23B0:40FE",
     "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....B_  ....0_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23B0:40FE\n\n-> _            ",
-    "t": 1778247184.5595958
+    "t": 1778803359.9529157
   },
   {
     "cmd": "BPM 2C23:1A7C",
     "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  \nDEBUG: Set memory breakpoint at 2C23:1A7C\n\n-> _             ",
-    "t": 1778247185.383177
+    "t": 1778803360.776707
   },
   {
     "cmd": "BPM 2C23:3E78",
     "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  \nDEBUG: Set memory breakpoint at 2C23:3E78\n\n-> _             ",
-    "t": 1778247186.207327
+    "t": 1778803361.601205
   },
   {
     "cmd": "BPM 2C23:3EC6",
     "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....C_  ....6_  \nDEBUG: Set memory breakpoint at 2C23:3EC6\n\n-> _             ",
-    "t": 1778247187.030794
+    "t": 1778803362.425899
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247187.8539705
+    "t": 1778803363.250444
   },
   {
     "control": "F5",
     "purpose": "run after arm: keyboard",
-    "t": 1778247187.9043097
+    "t": 1778803363.300941
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (01)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247188.9803674
+    "t": 1778803364.3788655
   },
   {
     "cmd": "CPU",
-    "excerpt": "....\n-> C_  ....P_  ....U_  \n44637786: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n44637786: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n44637786: MISC:GDT base=00000000 limit=00000000\n78\n44637786: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247189.8034034
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n44651183: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n44651183: MISC:eflags:00007202 [vm=0 iopl=3 nt=1]\n78\n44651183: MISC:GDT base=00000000 limit=00000000\n78\n44651183: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803365.2028887
   },
   {
     "control": "F5",
     "kind": "g0321_bpm",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247189.8539479
+    "t": 1778803365.2531474
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (01)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247191.2829552
+    "t": 1778803366.6885564
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n45897305: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n45897305: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n45897305: MISC:GDT base=00000000 limit=00000000\n78\n45897305: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247192.1078389
+    "t": 1778803367.512277
   },
   {
     "control": "F5",
     "kind": "F0128_DUNGEONVIEW_Draw_CPSF",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247192.1580436
+    "t": 1778803367.5625215
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247193.3011415
+    "t": 1778803368.7063265
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46286869: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46286869: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46286869: MISC:GDT base=00000000 limit=00000000\n78\n46286869: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247194.125167
+    "t": 1778803369.5301447
   },
   {
     "control": "F5",
     "kind": "g0321_bpm",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247194.1768396
+    "t": 1778803369.5804868
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247195.3024464
+    "t": 1778803370.7063894
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46286899: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46286899: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46286899: MISC:GDT base=00000000 limit=00000000\n78\n46286899: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247196.1266546
+    "t": 1778803371.531138
   },
   {
     "control": "F5",
     "kind": "F0380_COMMAND_ProcessQueue_CPSC",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247196.1783595
+    "t": 1778803371.5814302
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247197.3040144
+    "t": 1778803372.7068956
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287037: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287037: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287037: MISC:GDT base=00000000 limit=00000000\n78\n46287037: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247198.1273625
+    "t": 1778803373.5309474
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247198.1775875
+    "t": 1778803373.581222
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247199.3030133
+    "t": 1778803374.7073326
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287175: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287175: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287175: MISC:GDT base=00000000 limit=00000000\n78\n46287175: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247200.1264977
+    "t": 1778803375.531432
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247200.1767285
+    "t": 1778803375.58169
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247201.3031964
+    "t": 1778803376.7068646
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287313: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287313: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287313: MISC:GDT base=00000000 limit=00000000\n78\n46287313: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247202.1264906
+    "t": 1778803377.5308168
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247202.1767406
+    "t": 1778803377.5810792
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247203.3075025
+    "t": 1778803378.7069414
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287451: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287451: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287451: MISC:GDT base=00000000 limit=00000000\n78\n46287451: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247204.1334398
+    "t": 1778803379.5308056
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247204.1837077
+    "t": 1778803379.5810728
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247205.3090916
+    "t": 1778803380.7067275
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287589: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287589: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287589: MISC:GDT base=00000000 limit=00000000\n78\n46287589: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247206.132274
+    "t": 1778803381.531495
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247206.1824877
+    "t": 1778803381.581808
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247207.308045
+    "t": 1778803382.7085524
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287727: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287727: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287727: MISC:GDT base=00000000 limit=00000000\n78\n46287727: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247208.131497
+    "t": 1778803383.5326254
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247208.1816955
+    "t": 1778803383.5829275
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247209.3076355
+    "t": 1778803384.709107
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46287865: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287865: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287865: MISC:GDT base=00000000 limit=00000000\n78\n46287865: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247210.132006
+    "t": 1778803385.5329459
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247210.1822162
+    "t": 1778803385.5831974
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247211.309155
+    "t": 1778803386.7088506
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288003: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288003: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288003: MISC:GDT base=00000000 limit=00000000\n78\n46288003: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247212.1325436
+    "t": 1778803387.532706
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247212.1828206
+    "t": 1778803387.5830178
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247213.3088355
+    "t": 1778803388.7087054
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288141: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288141: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288141: MISC:GDT base=00000000 limit=00000000\n78\n46288141: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247214.1327748
+    "t": 1778803389.5326555
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247214.183046
+    "t": 1778803389.5830097
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247215.3087096
+    "t": 1778803390.7085335
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288279: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288279: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288279: MISC:GDT base=00000000 limit=00000000\n78\n46288279: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247216.1330888
+    "t": 1778803391.5325809
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247216.1833725
+    "t": 1778803391.5828488
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247217.310009
+    "t": 1778803392.7083495
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288417: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288417: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288417: MISC:GDT base=00000000 limit=00000000\n78\n46288417: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247218.1340137
+    "t": 1778803393.5324078
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247218.18419
+    "t": 1778803393.5827343
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247219.3113577
+    "t": 1778803394.7093284
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288555: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288555: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288555: MISC:GDT base=00000000 limit=00000000\n78\n46288555: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247220.1345844
+    "t": 1778803395.533938
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247220.1848323
+    "t": 1778803395.5842295
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247221.3096356
+    "t": 1778803396.7095845
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288693: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288693: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288693: MISC:GDT base=00000000 limit=00000000\n78\n46288693: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247222.1331062
+    "t": 1778803397.5338175
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247222.183337
+    "t": 1778803397.5840685
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247223.3098898
+    "t": 1778803398.7090836
   },
   {
     "cmd": "CPU",
     "excerpt": "....\n-> C_  ....P_  ....U_  \n46288831: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288831: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288831: MISC:GDT base=00000000 limit=00000000\n78\n46288831: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
-    "t": 1778247224.1336205
+    "t": 1778803399.5331442
   },
   {
     "control": "F5",
     "kind": "other",
     "purpose": "continue after producer/queue stop",
-    "t": 1778247224.183896
-  },
-  {
-    "control": "Alt+Pause",
-    "purpose": "final sample",
-    "t": 1778247224.2682607
+    "t": 1778803399.583437
   },
   {
     "cmd": "BPLIST",
     "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
-    "t": 1778247230.1244643
+    "t": 1778803400.7088811
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288969: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288969: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288969: MISC:GDT base=00000000 limit=00000000\n78\n46288969: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803401.532838
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after producer/queue stop",
+    "t": 1778803401.5831144
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
+    "t": 1778803402.7086086
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289107: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289107: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289107: MISC:GDT base=00000000 limit=00000000\n78\n46289107: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803403.5337381
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after producer/queue stop",
+    "t": 1778803403.5841045
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
+    "t": 1778803404.7104452
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289245: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289245: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289245: MISC:GDT base=00000000 limit=00000000\n78\n46289245: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803405.5345476
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after producer/queue stop",
+    "t": 1778803405.584848
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
+    "t": 1778803406.7098758
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289383: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289383: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289383: MISC:GDT base=00000000 limit=00000000\n78\n46289383: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803407.533529
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after producer/queue stop",
+    "t": 1778803407.5838466
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
+    "t": 1778803408.7091541
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289521: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289521: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289521: MISC:GDT base=00000000 limit=00000000\n78\n46289521: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778803409.532809
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after producer/queue stop",
+    "t": 1778803409.5830755
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "final sample",
+    "t": 1778803409.6696339
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3EC6 (00)\n78\n01. BPMEM 2C23:3E78 (00)\n78\n02. BPMEM 2C23:1A7C (00)\n78\n03. BP 23B0:40FE\n78\n04. BP 1EA7:01AA\n78\n05. BP 1EA7:010D\n78\n06. BP 22F7:0699\n78\n07. BP 22F7:0407\n78\n08. BP 22F7:03F0\n78\n09. BP 22F7:030D\n\n-> _      ",
+    "t": 1778803415.5248718
   }
 ]

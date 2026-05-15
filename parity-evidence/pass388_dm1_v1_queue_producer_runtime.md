@@ -9,6 +9,8 @@ runtime reached F0380 with G2153 byte sampled as zero and no G2153 write/watchpo
 ## Predicate summary
 
 - `routesRanAfterArmingWithBreakpointsRetained`: `True`
+- `routeControlReachedAfterArmingWithBreakpointsRetained`: `True`
+- `routeInputAfterArmingSucceeded`: `True`
 - `clickProducerEntryHit`: `False`
 - `pendingReplayHit`: `False`
 - `keyboardProducerEntryHit`: `False`
