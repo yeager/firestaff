@@ -69,3 +69,39 @@ struct MemoryCacheCompactUsedResult_Compat* outResult          FINAL_SEPARATOR
         }
         return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Cache release/free/defragment (MEMORY.C:1487-1721)
+ *
+ * F0480_CACHE_ReleaseBlock (MEMORY.C:1487-1586):
+ *   - Releases a cache block back to unused pool
+ *   - Updates block pointer in G0655_ppuc_Blocks[graphicIndex]
+ *   - Calls F0472_CACHE_AddUnusedBlock for coalescing
+ *   - If block was derived bitmap: clears derivation chain
+ *
+ * F0481_CACHE_FreeMemory (MEMORY.C:1588-1600):
+ *   - Releases blocks until requested byte count is freed
+ *   - Iterates used list from least recently used
+ *   - Calls F0480_CACHE_ReleaseBlock for each candidate
+ *
+ * F0482_CACHE_Defragment (MEMORY.C:1602-1654):
+ *   - Compacts all used blocks toward low memory
+ *   - Moves each block to first-fit unused slot
+ *   - Updates all pointers in G0655_ppuc_Blocks
+ *   - Coalesces freed space at high end
+ *
+ * F0483_CACHE_GetNewBlock (MEMORY.C:1656-1721):
+ *   - Allocates new block from unused pool
+ *   - If no fit: calls F0481 to free, then F0482 to defrag
+ *   - Returns NULL if cache exhausted after defrag
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_memory_pass601_compact_source_evidence(void)
+{
+    return
+        "MEMORY.C:1487-1586 F0480_CACHE_ReleaseBlock\n"
+        "MEMORY.C:1588-1600 F0481_CACHE_FreeMemory LRU eviction\n"
+        "MEMORY.C:1602-1654 F0482_CACHE_Defragment compact+coalesce\n"
+        "MEMORY.C:1656-1721 F0483_CACHE_GetNewBlock alloc+evict+defrag\n";
+}
+
