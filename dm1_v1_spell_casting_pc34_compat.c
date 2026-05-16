@@ -402,3 +402,30 @@ const char* dm1_spell_name(int spellIndex) {
     if (spellIndex < 0 || spellIndex >= DM1_SPELL_COUNT) return "UNKNOWN";
     return spellNames[spellIndex];
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Spell system source-lock extensions
+ *
+ * COMMAND.C:2304    F0370_COMMAND_ProcessType100_ClickInSpellArea_CPSE
+ * COMMAND.C:2280-2335 spell/action/viewport command dispatch in F0380
+ * CHAMPION.C:715-822  F0303_CHAMPION_GetSkillLevel (4 base skills, modifiers)
+ * CHAMPION.C:823-960  F0304_CHAMPION_AddSkillExperience (XP + stamina regen)
+ * CHAMPION.C:1061-1076 F0305_CHAMPION_GetThrowingStaminaCost
+ * CHAMPION.C:1078-1104 F0306_CHAMPION_GetStaminaAdjustedValue
+ * CHAMPION.C:1106-1122 F0307_CHAMPION_GetStatisticAdjustedAttack
+ * CHAMPION.C:1123-1155 F0308_CHAMPION_IsLucky
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_spell_pass601_spell_source_evidence(void)
+{
+    return
+        "COMMAND.C:2304 F0370_COMMAND_ProcessType100_ClickInSpellArea_CPSE\n"
+        "COMMAND.C:2280-2335 spell/action dispatch in F0380_COMMAND_ProcessQueue\n"
+        "CHAMPION.C:715-822 F0303_CHAMPION_GetSkillLevel\n"
+        "CHAMPION.C:823-960 F0304_CHAMPION_AddSkillExperience\n"
+        "CHAMPION.C:1061-1076 F0305_CHAMPION_GetThrowingStaminaCost\n"
+        "CHAMPION.C:1078-1104 F0306_CHAMPION_GetStaminaAdjustedValue\n"
+        "CHAMPION.C:1106-1122 F0307_CHAMPION_GetStatisticAdjustedAttack\n"
+        "CHAMPION.C:1123-1155 F0308_CHAMPION_IsLucky\n";
+}
+

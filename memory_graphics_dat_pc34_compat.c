@@ -117,3 +117,40 @@ unsigned char*                      destination         FINAL_SEPARATOR
         }
         return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Graphics.dat I/O source-lock (MEMORY.C:1212-1486)
+ *
+ * F0477_MEMORY_OpenGraphicsDat_CPSDF (MEMORY.C:1212-1285):
+ *   - Opens GRAPHICS.DAT file
+ *   - Platform-specific: PC disk, Amiga disk, Atari ST disk
+ *   - Reads and validates file header
+ *
+ * F0478_MEMORY_CloseGraphicsDat_CPSDF (MEMORY.C:1287-1311):
+ *   - Closes GRAPHICS.DAT file handle
+ *
+ * F0479_MEMORY_ReadGraphicsDatHeader (MEMORY.C:1330-1486):
+ *   - Reads graphic entry header from DAT file
+ *   - Decodes dimensions, compression, offset table
+ *   - G0467_MEMORY_GetGraphicOffset for file seek position
+ *
+ * F0535_MEMORY_GetGraphicsDatFileSize (MEMORY.C:1313-1328):
+ *   - Returns file size for validation
+ *
+ * F0484_MEMORY_LoadGraphics_CPSDEF (MEMORY.C:1823-2306):
+ *   - Bulk load + decompress + expand graphics
+ *   - Main graphics loading pipeline for game startup
+ *   - Decompresses RLE/LZ data from GRAPHICS.DAT entries
+ *   - Expands pixel data to display format
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_memory_pass601_gfxdat_source_evidence(void)
+{
+    return
+        "MEMORY.C:1212-1285 F0477_MEMORY_OpenGraphicsDat_CPSDF\n"
+        "MEMORY.C:1287-1311 F0478_MEMORY_CloseGraphicsDat_CPSDF\n"
+        "MEMORY.C:1330-1486 F0479_MEMORY_ReadGraphicsDatHeader\n"
+        "MEMORY.C:1313-1328 F0535_MEMORY_GetGraphicsDatFileSize\n"
+        "MEMORY.C:1823-2306 F0484_MEMORY_LoadGraphics_CPSDEF bulk pipeline\n";
+}
+

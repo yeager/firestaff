@@ -1,7 +1,7 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "decision": "Original DM1 V1 movement/viewport/wall capture remains blocked until one bounded canonical PC34 run records C254 slot decode, IO2 movement key, F0361 enqueue, F0380 pop, F0365/F0366 dispatch, party tuple mutation or intentional blocked-step proof, then F0128 draw and F0097 viewport present for the same route token.",
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "nonClaims": [
     "no DOSBox runtime transcript is fabricated by this gate",
     "no original screenshot or pixel parity is promoted without the required transcript",
@@ -19,7 +19,7 @@
     "runtimeTranscriptPromotable": false,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "requiredRuntimeSequence": [
     "c254_vector_decoded",
     "io_driver_slot0_f8090_slot1_f8091",
@@ -186,5 +186,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
-  "timestampUtc": "2026-05-16T06:44:56.138760+00:00"
+  "timestampUtc": "2026-05-16T07:06:18.589351+00:00"
 }

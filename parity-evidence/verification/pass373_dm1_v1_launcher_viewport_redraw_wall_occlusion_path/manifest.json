@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -172,7 +172,7 @@
         "cmd": [
           "cmake",
           "-S",
-          "/home/trv2/work/firestaff",
+          "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
           "-B",
           "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify",
           "-G",
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -281,7 +281,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/main_loop_m11.c"
+      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/main_loop_m11.c"
     },
     {
       "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
@@ -293,7 +293,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/main_loop_m11.c"
+      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/main_loop_m11.c"
     },
     {
       "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
@@ -307,7 +307,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/m11_game_view.c"
     },
     {
       "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
@@ -324,10 +324,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/m11_game_view.c"
     }
   ],
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
   "script": "enter,down,down,down,down,down,down,enter,right",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-05-16T06:45:47.238585+00:00"
+  "timestampUtc": "2026-05-16T07:07:14.220205+00:00"
 }

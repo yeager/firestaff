@@ -47,3 +47,32 @@ struct MemoryGraphicsDatBitmapPathResult_Compat* outResult          FINAL_SEPARA
         }
         return ownedBitmap;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Bitmap expand/native path (MEMORY.C:2474-2640)
+ *
+ * F0488_MEMORY_ExpandGraphicToBitmap (MEMORY.C:2474-2503):
+ *   - Expands compressed graphic to full bitmap format
+ *   - Handles palette conversion and bit-depth expansion
+ *
+ * F0489_MEMORY_GetNativeBitmapOrGraphic (MEMORY.C:2505-2582):
+ *   - Returns cached bitmap if available
+ *   - Otherwise loads from GRAPHICS.DAT, decompresses, caches
+ *   - If block in cache: increment usage, return pointer
+ *   - If not: F0487_CACHE_GetBlockAndIncrementUsageCount
+ *   - KEY FUNCTION: all viewport/wall/creature rendering goes through this
+ *
+ * F0490_MEMORY_LoadDecompressAndExpandGraphic (MEMORY.C:2583-2640):
+ *   - Full pipeline: open DAT → read header → decompress → expand → cache
+ *   - Called for initial graphic loading and on-demand loading
+ *   - Parameters control whether to copy dimensions, expand, or keep raw
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_memory_pass601_bitmap_source_evidence(void)
+{
+    return
+        "MEMORY.C:2474-2503 F0488_MEMORY_ExpandGraphicToBitmap\n"
+        "MEMORY.C:2505-2582 F0489_MEMORY_GetNativeBitmapOrGraphic render path\n"
+        "MEMORY.C:2583-2640 F0490_MEMORY_LoadDecompressAndExpandGraphic full pipeline\n";
+}
+

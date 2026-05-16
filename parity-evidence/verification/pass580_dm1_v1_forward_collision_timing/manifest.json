@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "firestaffGuards": {
     "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:202-364",
     "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
@@ -11,7 +11,7 @@
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:65-89",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:75-85"
   },
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -33,6 +33,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-05-16T06:44:56.528238+00:00",
-  "worktree": "/home/trv2/work/firestaff"
+  "timestampUtc": "2026-05-16T07:06:20.890529+00:00",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516"
 }

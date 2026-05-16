@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-16T06:44:56.035316+00:00",
+  "timestampUtc": "2026-05-16T07:06:14.090591+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/home/trv2/work/firestaff",
-  "branch": "main",
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": false,
@@ -75,7 +75,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/home/trv2/work/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
+      "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

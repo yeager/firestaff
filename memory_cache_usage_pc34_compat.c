@@ -163,3 +163,32 @@ int                                  blockCapacity FINAL_SEPARATOR
                 }
         }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Cache usage tracking (MEMORY.C:2308-2473)
+ *
+ * F0485_CACHE_ResetUsageCounts (MEMORY.C:2308-2329):
+ *   - Resets all block usage counters to 0
+ *   - Called at game loop boundaries (F0002_MAIN_GameLoop_CPSDF)
+ *
+ * F0486_MEMORY_AddBlockToUsedList (MEMORY.C:2331-2379):
+ *   - Inserts block into used list sorted by usage count
+ *   - Higher usage = more recently used = evicted last
+ *
+ * F0487_CACHE_GetBlockAndIncrementUsageCount (MEMORY.C:2381-2473):
+ *   - Retrieves cached graphic block
+ *   - Increments usage counter
+ *   - If not cached: loads from GRAPHICS.DAT, decompresses, caches
+ *   - Calls F0474_MEMORY_LoadGraphic_CPSDF for disk load
+ *   - Calls F0483_CACHE_GetNewBlock for cache allocation
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_memory_pass601_usage_source_evidence(void)
+{
+    return
+        "MEMORY.C:2308-2329 F0485_CACHE_ResetUsageCounts\n"
+        "MEMORY.C:2331-2379 F0486_MEMORY_AddBlockToUsedList sorted\n"
+        "MEMORY.C:2381-2473 F0487_CACHE_GetBlockAndIncrementUsageCount\n"
+        "MEMORY.C:707-831 F0474_MEMORY_LoadGraphic_CPSDF disk→cache\n";
+}
+

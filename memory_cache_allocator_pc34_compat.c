@@ -50,3 +50,36 @@ struct MemoryCacheAllocatorResult_Compat*  outResult        FINAL_SEPARATOR
         outResult->splitPerformed = allocResult.splitPerformed;
         return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Memory allocator source-lock (MEMORY.C:304-397)
+ *
+ * F0468_MEMORY_Allocate is the central heap allocator:
+ *   - Two allocation types: PERMANENT (bottom-up) and TEMPORARY (top-down)
+ *   - Permanent: bumps G0461_puc_HeapEnd upward
+ *   - Temporary: bumps G0462_puc_HeapTopOfTemporary downward
+ *   - Checks for overlap (out of memory) at MEMORY.C:358
+ *   - Bitmap allocations (MASK0x8000) add 2*sizeof(int16_t) header
+ *   - Returns pointer to usable memory after header
+ *
+ * F0602_GetMinimumOverheadMemoryChunk (MEMORY.C:222-253):
+ *   - Multi-chunk variant: finds chunk with least overhead for allocation
+ *
+ * F0603_AllocateFromTopMemoryChunk (MEMORY.C:255-262):
+ *   - Top-of-chunk allocation for temporary bitmaps
+ *
+ * F0604/F0605 Backup/Restore (MEMORY.C:264-301):
+ *   - Save/restore heap state for transient operations
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_memory_pass601_allocator_source_evidence(void)
+{
+    return
+        "MEMORY.C:304-397 F0468_MEMORY_Allocate permanent/temporary heap\n"
+        "MEMORY.C:222-253 F0602_GetMinimumOverheadMemoryChunk\n"
+        "MEMORY.C:255-262 F0603_AllocateFromTopMemoryChunk\n"
+        "MEMORY.C:264-301 F0604/F0605 backup/restore heap state\n"
+        "MEMORY.C:358 overlap check (out of memory)\n"
+        "MEMORY.C:339 MASK0x8000 bitmap header allocation\n";
+}
+

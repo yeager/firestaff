@@ -15,7 +15,7 @@
     "review_pair_metadata_materialized": true,
     "semantic_clean_original_required": true
   },
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -270,7 +270,7 @@
   "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
   "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
   "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=yes\n02 ingame_turn_right: firestaff=yes original=yes\n03 ingame_move_forward: firestaff=yes original=yes\n04 ingame_spell_panel: firestaff=yes original=yes\n05 ingame_after_cast: firestaff=yes original=yes\n06 ingame_inventory_panel: firestaff=yes original=yes\n",
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
   "source_audit": [
     {
@@ -336,5 +336,5 @@
   ],
   "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-05-16T06:46:10.501536+00:00"
+  "timestamp_utc": "2026-05-16T07:06:16.585397+00:00"
 }

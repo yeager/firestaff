@@ -27,13 +27,8 @@ Closed blocker: Firestaff live M11 movement input now has a source-locked and re
 
 ## Gates
 
-<<<<<<< Updated upstream
-- `cmake --build /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
-=======
-- `cmake --build /home/trv2/work/firestaff/build-main-check --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /home/trv2/work/firestaff/build-main-check --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
->>>>>>> Stashed changes
+- `cmake --build /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
+- `ctest --test-dir /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
 - `git diff --check` — rc 0
 
 ## Still not claimed

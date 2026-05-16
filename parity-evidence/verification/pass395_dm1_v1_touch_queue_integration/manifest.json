@@ -19,7 +19,7 @@
     "g2153IncrementObserved": true,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "reversibleScope": "touch_pointer_input_pc34_compat.{h,c} maps pointer/touch hits to existing DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat; no keyboard synthesis and no replacement dispatcher",
   "sourceAudits": [
     "defs_mouse_payload_buttons",
