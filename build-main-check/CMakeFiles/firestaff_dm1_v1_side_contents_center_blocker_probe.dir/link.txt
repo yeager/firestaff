@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/firestaff_dm1_v1_side_contents_center_blocker_probe.dir/probes/dm1/firestaff_dm1_v1_side_contents_center_blocker_probe.c.o -o firestaff_dm1_v1_side_contents_center_blocker_probe 

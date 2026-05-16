@@ -1,6 +1,0 @@
-CMakeFiles/firestaff_m10.dir/selector_frontend_pc34_compat.c.o: \
- /home/trv2/work/firestaff/selector_frontend_pc34_compat.c \
- /usr/include/stdc-predef.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
- /home/trv2/work/firestaff/selector_frontend_pc34_compat.h \
- /home/trv2/work/firestaff/bitmap_call_pc34_compat.h

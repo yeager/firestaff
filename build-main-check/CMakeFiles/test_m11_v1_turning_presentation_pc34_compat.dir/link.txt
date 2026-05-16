@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_m11_v1_turning_presentation_pc34_compat.dir/test_m11_v1_turning_presentation_pc34_compat.c.o -o test_m11_v1_turning_presentation_pc34_compat  libfirestaff_m10.a 

@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_csb_v1_launch_blocker_m12.dir/test_csb_v1_launch_blocker_m12.c.o -o test_csb_v1_launch_blocker_m12  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

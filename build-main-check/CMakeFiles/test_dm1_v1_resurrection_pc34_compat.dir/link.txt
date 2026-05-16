@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_resurrection_pc34_compat.dir/test_dm1_v1_resurrection_pc34_compat.c.o CMakeFiles/test_dm1_v1_resurrection_pc34_compat.dir/dm1_v1_resurrection_pc34_compat.c.o -o test_dm1_v1_resurrection_pc34_compat 

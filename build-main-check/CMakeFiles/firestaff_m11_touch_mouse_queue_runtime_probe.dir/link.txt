@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/firestaff_m11_touch_mouse_queue_runtime_probe.dir/probes/m11/firestaff_m11_touch_mouse_queue_runtime_probe.c.o -o firestaff_m11_touch_mouse_queue_runtime_probe  libfirestaff_m10.a 

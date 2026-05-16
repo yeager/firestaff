@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_movement_core_pc34_compat.dir/test_dm1_v1_movement_core_pc34_compat.c.o -o test_dm1_v1_movement_core_pc34_compat  libfirestaff_m10.a 

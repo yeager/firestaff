@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_inventory_panel_slot_routes_pc34_compat_integration.dir/test_inventory_panel_slot_routes_pc34_compat_integration.c.o -o test_inventory_panel_slot_routes_pc34_compat_integration  libfirestaff_m10.a 
