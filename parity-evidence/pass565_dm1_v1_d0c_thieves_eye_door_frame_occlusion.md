@@ -48,7 +48,7 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.door_front_occlusion == 1
 PASS source_evidence.d2c_front_order == 1
@@ -68,7 +68,7 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
 ~~~
 PASS pass565 check-only
 ~~~

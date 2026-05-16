@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "checks": [
     {
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  28: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #28: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  30: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #30: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  71: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #71: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 197: dm1_v1_input_command_queue_source_lock\n4/4 Test #197: dm1_v1_input_command_queue_source_lock .....   Passed    0.10 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.12 sec",
+  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build\nTest project /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build\n    Start  28: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #28: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  30: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #30: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  71: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #71: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 197: dm1_v1_input_command_queue_source_lock\n4/4 Test #197: dm1_v1_input_command_queue_source_lock .....   Passed    0.12 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.15 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -215,7 +215,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -352,5 +352,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-05-16T06:46:10.623365+00:00"
+  "timestampUtc": "2026-05-16T07:06:16.305426+00:00"
 }

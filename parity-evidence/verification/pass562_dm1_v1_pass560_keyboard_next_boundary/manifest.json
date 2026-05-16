@@ -1,6 +1,6 @@
 {
   "blocker": null,
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "canonicalDm1": {
     "files": {
       "DUNGEON.DAT": {
@@ -67,7 +67,7 @@
     },
     "status": "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED"
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "schema": "pass562_dm1_v1_pass560_keyboard_next_boundary.v1",
   "sourceAudit": [
     {

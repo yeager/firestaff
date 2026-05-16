@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "firestaffGuards": {
     "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",

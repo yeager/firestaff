@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:706-818",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-05-16T06:47:22.153089+00:00"
+  "timestampUtc": "2026-05-16T07:06:20.717597+00:00"
 }

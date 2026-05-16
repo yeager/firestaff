@@ -571,3 +571,64 @@ int dm1_damage_all_champions(DM1_CombatState* s, int attack,
     }
     return damagedCount;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Extended combat pipeline source-lock
+ *
+ * Source-locked to ReDMCSB CHAMPION.C:
+ *   F0309_CHAMPION_GetMaximumLoad         (1157-1177)
+ *   F0310_CHAMPION_GetMovementTicks       (1180-1215)
+ *   F0320_CHAMPION_ApplyAndDrawPendingDamageAndWounds (1689-1800)
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── F0309: Maximum load ───────────────────────────────────────────── */
+/* CHAMPION.C:1157-1177 max(6, (Strength * 625 + 12500) / 1000) */
+int dm1_combat_get_maximum_load_pc34(int strength)
+{
+    int v = (strength * 625 + 12500) / 1000;
+    return v > 6 ? v : 6;
+}
+
+/* ── F0310: Movement ticks based on load ───────────────────────────── */
+/* CHAMPION.C:1180-1215 BUG0_72: > not >= */
+int dm1_combat_get_movement_ticks_pc34(int load, int max_load)
+{
+    int ticks;
+    if (max_load > load) return 2; /* BUG0_72 */
+    if (max_load <= 0) return 8;
+    ticks = 2 + ((load - max_load) * 6) / max_load;
+    return ticks > 8 ? 8 : ticks;
+}
+
+/* ── F0320: Apply pending damage ───────────────────────────────────── */
+/* CHAMPION.C:1689-1800 */
+void dm1_combat_apply_pending_damage_pc34(DM1_CombatState *state)
+{
+    int i;
+    if (!state) return;
+    for (i = 0; i < DM1_MAX_CHAMPIONS; i++) {
+        int damage = state->pendingDamage[i];
+        if (!state->champions[i].alive || damage == 0) continue;
+        state->pendingDamage[i] = 0;
+        /* CHAMPION.C:1708 wound mask */
+        state->champions[i].wounds |= state->pendingWounds[i];
+        state->pendingWounds[i] = 0;
+        /* CHAMPION.C:1720 subtract health */
+        state->champions[i].currentHealth -= damage;
+        if (state->champions[i].currentHealth <= 0) {
+            state->champions[i].currentHealth = 0;
+            state->champions[i].alive = 0;
+        }
+    }
+}
+
+/* ── Source evidence ───────────────────────────────────────────────── */
+const char *dm1_combat_pass601_source_evidence(void)
+{
+    return
+        "CHAMPION.C:1157-1177 F0309_CHAMPION_GetMaximumLoad\n"
+        "CHAMPION.C:1180-1215 F0310_CHAMPION_GetMovementTicks BUG0_72\n"
+        "CHAMPION.C:1689-1800 F0320_CHAMPION_ApplyAndDrawPendingDamageAndWounds\n"
+        "GROUP.C:769-930 F0190_GROUP_GetDamageCreatureOutcome\n"
+        "GROUP.C:932-990 F0191_GROUP_GetDamageAllCreaturesOutcome\n";
+}

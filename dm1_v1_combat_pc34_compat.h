@@ -199,4 +199,11 @@ int dm1_damage_all_champions(DM1_CombatState* s, int attack,
 }
 #endif
 
+
+/* ── Pass601 extensions ───────────────────────────────────────────── */
+int dm1_combat_get_maximum_load_pc34(int strength);
+int dm1_combat_get_movement_ticks_pc34(int load, int max_load);
+void dm1_combat_apply_pending_damage_pc34(DM1_CombatState *state);
+const char *dm1_combat_pass601_source_evidence(void);
+
 #endif /* FIRESTAFF_DM1_V1_COMBAT_PC34_COMPAT_H */

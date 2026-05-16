@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
-Status: `FAIL`
-Generated: `2026-05-16T06:47:23.105842+00:00`
+Status: `PASS`
+Generated: `2026-05-16T07:06:18.236610+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -16,21 +16,10 @@ Generated: `2026-05-16T06:47:23.105842+00:00`
 
 ## Executable gates
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
-- `FAIL` `pass423_input_command_movement_pipeline_source_lock` rc=`1`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
-  -              ^^^^^^^^
-  -   File "/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py", line 111, in run
-  -     raise AssertionError(f"command failed {' '.join(cmd)}:\n{proc.stdout[-4000:]}")
-  - AssertionError: command failed git diff --check:
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:30: leftover conflict marker
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:33: leftover conflict marker
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:36: leftover conflict marker
+- `PASS` `pass423_input_command_movement_pipeline_source_lock` rc=`0` status `PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
 - `PASS` `pass402_movement_cooldown_order` rc=`0` status `ok`: cooldown ageing before F0380 and no same-tick post-decrement
 - `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
-- `FAIL` `pass406_game_loop_redraw_cadence` rc=`1`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
-  - FAIL pass406_dm1_v1_game_loop_redraw_cadence: command failed git diff --check:
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:30: leftover conflict marker
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:33: leftover conflict marker
-  - parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:36: leftover conflict marker
+- `PASS` `pass406_game_loop_redraw_cadence` rc=`0` status `PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
 - `PASS` `pass395_viewport_walls_source_runtime_lock` rc=`0`: wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract
 - `PASS` `pass405_projectile_explosion_layer_occlusion` rc=`0` status `PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION`: projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards
 - `PASS` `viewport_square_collision_source_lock` rc=`0`: visible viewport cells are map-backed and agree with movement collision square state
@@ -50,6 +39,6 @@ Generated: `2026-05-16T06:47:23.105842+00:00`
   - }
 
 ## Decision
-One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.
+Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.
 
 Manifest: `parity-evidence/verification/dm1_v1_viewport_movement_completion_matrix/manifest.json`

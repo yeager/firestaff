@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
   "firestaffAudit": {
     "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
       "claim": "gated movement returns before queue pop",
@@ -17,10 +17,10 @@
         376
       ]
     },
-    "testExecutable": "/home/trv2/work/firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testExecutable": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "229 passed, 0 failed"
   },
-  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
+  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-16T06:44:57.465253+00:00",
-  "worktree": "/home/trv2/work/firestaff"
+  "timestampUtc": "2026-05-16T07:06:20.991627+00:00",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516"
 }

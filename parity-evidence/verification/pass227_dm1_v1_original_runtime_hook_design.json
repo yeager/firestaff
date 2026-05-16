@@ -257,7 +257,7 @@
     "schema": "dm1_v1_original_runtime_trace.minimal.v1"
   },
   "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
   "schema": "pass227_dm1_v1_original_runtime_hook_design.v1",
   "source_seams": [
     {
