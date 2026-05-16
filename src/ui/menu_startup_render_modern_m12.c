@@ -1311,6 +1311,17 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;
     int isV1 = (mode == M12_PRESENTATION_V1_ORIGINAL);
 
+    /* Dim background so options panel is clearly on top */
+    for (int y = 0; y < c->h; y++) {
+        for (int x = 0; x < c->w; x++) {
+            int idx = (y * c->w + x) * 4;
+            unsigned char *p = c->rgba + idx;
+            p[0] = p[0] / 3;
+            p[1] = p[1] / 3;
+            p[2] = p[2] / 3;
+        }
+    }
+
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
     draw_text(c, 160, 130, "GAME OPTIONS", &h);
@@ -1448,6 +1459,16 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
 
 static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
+    /* Dim the entire background so the message is clearly on top */
+    for (int y = 0; y < c->h; y++) {
+        for (int x = 0; x < c->w; x++) {
+            int idx = (y * c->w + x) * 4;
+            unsigned char *p = c->rgba + idx;
+            p[0] = p[0] / 3;  /* B */
+            p[1] = p[1] / 3;  /* G */
+            p[2] = p[2] / 3;  /* R */
+        }
+    }
     int panelW = 840;
     int panelH = 320;
     int panelX = (c->w - panelW) / 2;
