@@ -55,6 +55,17 @@ if(NOT MSVC)
 endif()
 
 
+
+# ── DM2 V1 static library ──────────────────────────────────────────
+file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
+if(DM2_SOURCES)
+    add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
+    target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── V2 static library (enhanced features) ──────────────────────────
 file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
 add_library(firestaff_v2 STATIC ${V2_SOURCES})
