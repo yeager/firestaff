@@ -1,0 +1,38 @@
+{
+  "branch": "worker-dm1v1-move-source-lock-20260515-221813",
+  "firestaffGuards": {
+    "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:202-364",
+    "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
+    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
+    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:215-228",
+    "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "staminaSideEffects": "dm1_v1_movement_command_core_pc34_compat.c:87-102",
+    "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:59-83",
+    "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:69-79"
+  },
+  "head": "f280fc75692fa6b8dabb9fd370521c9ec911a3fc",
+  "notClaimed": [
+    "new original DOSBox capture",
+    "viewport/touch/rendering parity",
+    "combat RNG or final wound materialization beyond the F0325/F0366 request seams"
+  ],
+  "primarySourceAudit": {
+    "CHAMPION.C:F0325_CHAMPION_DecrementStamina": "CHAMPION.C:2025-2049",
+    "CHAMPION.C:staminaAndNonStaminaEffects": "CHAMPION.C:2040-2048",
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C:180-351",
+    "CLIKMENU.C:forwardCollisionTiming": "CLIKMENU.C:237-345",
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C:2045-2829",
+    "COMMAND.C:queuedDispatchCooldownGate": "COMMAND.C:2075-2155",
+    "GAMELOOP.C:cooldownBeforeInputAndQueue": "GAMELOOP.C:150-215"
+  },
+  "runtimeGates": {
+    "build/test_dm1_v1_movement_command_core_pc34_compat": "dm1V1MovementCommandCoreInvariantOk=1",
+    "build/test_dm1_v1_movement_timing_pc34_compat": "dm1V1MovementTimingInvariantOk=1"
+  },
+  "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
+  "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
+  "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
+  "timestampUtc": "2026-05-15T22:24:03.479173+00:00",
+  "worktree": "/home/trv2/work/firestaff-worktrees/worker-dm1v1-move-source-lock-20260515-221813"
+}
