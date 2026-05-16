@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "dm1_v2_settings_pc34.h"
 
 /* DM1 V2 release-safe settings adapter.
@@ -103,3 +106,65 @@ const char *v21_settings_source_evidence(void) {
     return "V2.1 defaults: EPX 2x, original VGA palette, PC-34 audio\n";
 }
 
+
+/* ── Settings persistence — save/load to INI file ─────────────────── */
+
+int v2_settings_save_to_file(const DM1_V2_Settings *s, const char *path) {
+    FILE *f;
+    if (!s || !path) return -1;
+    f = fopen(path, "w");
+    if (!f) return -1;
+    fprintf(f, "[display]\n");
+    fprintf(f, "scale_percent=%d\n", s->scalePercent);
+    fprintf(f, "smoothing=%d\n", s->smoothingEnabled);
+    fprintf(f, "dynamic_lighting=%d\n", s->dynamicLightingEnabled);
+    fprintf(f, "touch=%d\n", s->accessibilityTouchEnabled);
+    fprintf(f, "aspect_mode=%d\n", (int)s->aspectMode);
+    fprintf(f, "\n[video]\n");
+    fprintf(f, "viewport_scale=%d\n", s->viewport_scale);
+    fprintf(f, "epx=%d\n", s->use_epx);
+    fprintf(f, "bilinear=%d\n", s->use_bilinear);
+    fprintf(f, "palette_enhanced=%d\n", s->palette_enhanced);
+    fprintf(f, "vsync=%d\n", s->vsync);
+    fprintf(f, "fullscreen=%d\n", s->fullscreen);
+    fprintf(f, "\n[audio]\n");
+    fprintf(f, "sound=%d\n", s->sound_enabled);
+    fprintf(f, "music=%d\n", s->music_enabled);
+    fclose(f);
+    return 0;
+}
+
+static int ini_read_int(const char *content, const char *key, int default_val) {
+    char needle[64];
+    const char *p;
+    snprintf(needle, sizeof(needle), "%s=", key);
+    p = strstr(content, needle);
+    if (!p) return default_val;
+    return atoi(p + strlen(needle));
+}
+
+int v2_settings_load_from_file(DM1_V2_Settings *s, const char *path) {
+    FILE *f;
+    char buf[2048];
+    int n;
+    if (!s || !path) return -1;
+    f = fopen(path, "r");
+    if (!f) return -1;
+    n = (int)fread(buf, 1, sizeof(buf) - 1, f);
+    buf[n] = 0;
+    fclose(f);
+    s->scalePercent = ini_read_int(buf, "scale_percent", 200);
+    s->smoothingEnabled = ini_read_int(buf, "smoothing", 0);
+    s->dynamicLightingEnabled = ini_read_int(buf, "dynamic_lighting", 0);
+    s->accessibilityTouchEnabled = ini_read_int(buf, "touch", 0);
+    s->aspectMode = (DM1_V2_AspectMode)ini_read_int(buf, "aspect_mode", 0);
+    s->viewport_scale = ini_read_int(buf, "viewport_scale", 2);
+    s->use_epx = ini_read_int(buf, "epx", 1);
+    s->use_bilinear = ini_read_int(buf, "bilinear", 0);
+    s->palette_enhanced = ini_read_int(buf, "palette_enhanced", 0);
+    s->vsync = ini_read_int(buf, "vsync", 1);
+    s->fullscreen = ini_read_int(buf, "fullscreen", 0);
+    s->sound_enabled = ini_read_int(buf, "sound", 1);
+    s->music_enabled = ini_read_int(buf, "music", 0);
+    return 0;
+}

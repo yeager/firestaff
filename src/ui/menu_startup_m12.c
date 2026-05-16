@@ -5783,3 +5783,109 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
                    version && version->matched ? 1 : 0;
     return intent;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Redesigned menu input handling — hierarchical navigation
+ * Main → Play/Settings/Extras/Quit
+ * Play → Game Select → Game Mode
+ * Escape = back one level
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    M12_NAV_MAIN = 0,
+    M12_NAV_GAME_SELECT,
+    M12_NAV_GAME_MODE,
+    M12_NAV_SETTINGS,
+    M12_NAV_EXTRAS,
+} M12_NavLevel;
+
+static M12_NavLevel g_nav_level = M12_NAV_MAIN;
+
+void m12_redesigned_handle_input(M12_StartupMenuState *state,
+    int key_up, int key_down, int key_left, int key_right,
+    int key_enter, int key_escape)
+{
+    if (!state) return;
+
+    switch (g_nav_level) {
+        case M12_NAV_MAIN:
+            if (key_up && state->mainMenuSelected > 0)
+                state->mainMenuSelected--;
+            if (key_down && state->mainMenuSelected < M12_MAIN_MENU_COUNT - 1)
+                state->mainMenuSelected++;
+            if (key_enter) {
+                switch (state->mainMenuSelected) {
+                    case M12_MAIN_MENU_PLAY:
+                        g_nav_level = M12_NAV_GAME_SELECT;
+                        state->gameSelectSelected = M12_GAME_SELECT_DM1;
+                        break;
+                    case M12_MAIN_MENU_SETTINGS:
+                        g_nav_level = M12_NAV_SETTINGS;
+                        state->view = M12_MENU_VIEW_SETTINGS;
+                        break;
+                    case M12_MAIN_MENU_EXTRAS:
+                        g_nav_level = M12_NAV_EXTRAS;
+                        state->extrasSelected = M12_EXTRAS_MUSEUM;
+                        break;
+                    case M12_MAIN_MENU_QUIT:
+                        state->shouldExit = 1;
+                        break;
+                }
+            }
+            break;
+
+        case M12_NAV_GAME_SELECT:
+            if (key_up && state->gameSelectSelected > 0)
+                state->gameSelectSelected--;
+            if (key_down && state->gameSelectSelected < M12_GAME_SELECT_COUNT - 1)
+                state->gameSelectSelected++;
+            if (key_enter && g_game_select_available[state->gameSelectSelected]) {
+                g_nav_level = M12_NAV_GAME_MODE;
+                state->selectedGameId = state->gameSelectSelected;
+                state->gameModeSelected = M12_GAME_MODE_NEW_V1;
+            }
+            if (key_escape) g_nav_level = M12_NAV_MAIN;
+            break;
+
+        case M12_NAV_GAME_MODE:
+            if (key_up && state->gameModeSelected > 0)
+                state->gameModeSelected--;
+            if (key_down && state->gameModeSelected < M12_GAME_MODE_COUNT - 1)
+                state->gameModeSelected++;
+            if (key_enter && g_game_mode_available[state->gameModeSelected]) {
+                state->launchRequested = 1;
+                /* Map game+mode to launch intent */
+            }
+            if (key_escape) g_nav_level = M12_NAV_GAME_SELECT;
+            break;
+
+        case M12_NAV_SETTINGS:
+            /* Tab navigation: left/right switch tabs, up/down navigate rows */
+            if (key_left && state->settingsTabIndex > 0)
+                state->settingsTabIndex--;
+            if (key_right && state->settingsTabIndex < M12_SETTINGS_TAB_COUNT - 1)
+                state->settingsTabIndex++;
+            if (key_up && state->settingsTabRowIndex > 0)
+                state->settingsTabRowIndex--;
+            if (key_down) state->settingsTabRowIndex++;
+            if (key_escape) { g_nav_level = M12_NAV_MAIN; state->view = M12_MENU_VIEW_MAIN; }
+            break;
+
+        case M12_NAV_EXTRAS:
+            if (key_up && state->extrasSelected > 0)
+                state->extrasSelected--;
+            if (key_down && state->extrasSelected < M12_EXTRAS_COUNT - 1)
+                state->extrasSelected++;
+            if (key_enter && g_extras_available[state->extrasSelected]) {
+                switch (state->extrasSelected) {
+                    case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
+                    case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
+                    default: break; /* Others not implemented yet */
+                }
+            }
+            if (key_escape) g_nav_level = M12_NAV_MAIN;
+            break;
+    }
+}
+
+M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
