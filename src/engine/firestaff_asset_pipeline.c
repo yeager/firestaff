@@ -95,6 +95,7 @@ typedef enum {
     FS_ASSET_LANG_EN = 0,
     FS_ASSET_LANG_FR,
     FS_ASSET_LANG_DE,
+    FS_ASSET_LANG_SV,  /* Swedish (Firestaff original) */
     FS_ASSET_LANG_COUNT
 } FS_AssetLanguage;
 
@@ -102,12 +103,14 @@ static const char *g_dungeon_dat_names[FS_ASSET_LANG_COUNT] = {
     "DUNGEON.DAT",   /* English */
     "DUNGEONF.DAT",  /* French */
     "DUNGEONG.DAT",  /* German */
+    "DUNGEON.DAT",   /* Swedish (uses EN dungeon + SV runtime strings) */
 };
 
 static const char *g_dungeon_dat_names_lower[FS_ASSET_LANG_COUNT] = {
     "dungeon.dat",
     "dungeonf.dat",
     "dungeong.dat",
+    "dungeon.dat",   /* Swedish: EN dungeon data */
 };
 
 int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
