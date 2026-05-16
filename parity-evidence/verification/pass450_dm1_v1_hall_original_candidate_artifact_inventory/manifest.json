@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-16T07:06:14.009434+00:00",
+  "timestampUtc": "2026-05-16T07:56:08.003017+00:00",
   "status": "PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES",
-  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
-  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+  "repo": "/home/trv2/work/firestaff",
+  "branch": "main",
+  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {

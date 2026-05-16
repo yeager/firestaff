@@ -36,3 +36,25 @@ uint64_t v2_stats_get(M11_V2_StatType stat) {
         case M11_V2_STAT_DAMAGE_DEALT: return g_stats.damage_dealt;
         case M11_V2_STAT_DAMAGE_TAKEN: return g_stats.damage_taken;
         case M11_V2_STAT_PLAY_TIME_SECONDS: return g_stats.play_time_seconds
+
+
+void v2_stats_reset(void) {
+    memset(&g_stats, 0, sizeof(g_stats));
+}
+
+int v2_stats_serialize(unsigned char *buf, int bufsize) {
+    if (!buf || bufsize < (int)sizeof(g_stats)) return -1;
+    memcpy(buf, &g_stats, sizeof(g_stats));
+    return (int)sizeof(g_stats);
+}
+
+int v2_stats_deserialize(const unsigned char *buf, int bufsize) {
+    if (!buf || bufsize < (int)sizeof(g_stats)) return -1;
+    memcpy(&g_stats, buf, sizeof(g_stats));
+    return 0;
+}
+
+const M11_V2_GameStats *v2_stats_get_all(void) {
+    return &g_stats;
+}
+

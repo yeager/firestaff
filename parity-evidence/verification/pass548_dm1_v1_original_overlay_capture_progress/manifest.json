@@ -1,7 +1,7 @@
 {
   "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
-  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+  "branch": "main",
+  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -29,7 +29,7 @@
     "records timeout/no-manifest as a concrete blocker instead of promotable pixels",
     "keeps movement/viewport/walls source anchors tied to ReDMCSB lines"
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass548_dm1_v1_original_overlay_capture_progress.v1",
   "sourceAudit": [
     {
@@ -138,5 +138,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
-  "timestampUtc": "2026-05-16T07:06:18.681694+00:00"
+  "timestampUtc": "2026-05-16T07:56:06.926016+00:00"
 }

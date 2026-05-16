@@ -1,11 +1,11 @@
 {
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
+  "branch": "main",
   "closedGap": "blocked step/collision timing: a dequeued step can spend stamina and then be blocked, but blocked collision discards queued follow-up input, requests one vblank wait, keeps input wait armed, and returns before F0267 sensor/timestamp/cooldown/viewport side effects",
   "firestaffAudit": {
     "commandCore": "blocked wall/door/fakewall/group returns before successful timing/sensor/viewport path",
     "focusedCTest": "dm1_v1_command_movement_sensor_timing_pc34_compat"
   },
-  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
   "notClaimed": [
     "new original DOS runtime breakpoint hit",
     "pixel parity",

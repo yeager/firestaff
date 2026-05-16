@@ -24,10 +24,10 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 A debugger hit can be promoted only when the trace includes PSP/load segment, post-LZEXE transfer or map/decompressed-image evidence, symbol segment:offset, and observed hit CS:IP/context for each seam. Static compressed offsets and the MZ loader entry are explicitly rejected.
 
 ## Artifacts
-- Manifest: `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
-- Trace contract: `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
-- Runtime trace template: `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
-- Guarded runbook: `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
+- Manifest: `/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
+- Trace contract: `/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
+- Runtime trace template: `/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
+- Guarded runbook: `/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
 
 ## Non-claims
 - does not claim a loaded/decompressed FIRES runtime image base

@@ -12,4 +12,4 @@ Status: `PASS_DMEXE_FIRES_LOAD_SEGMENT_BRIDGED_NO_RUNTIME_HIT_PROMOTION`
 
 This is a loader-segment bridge only. No `verified_runtime_hit` promotion and no command/movement/viewport chain proof.
 
-Manifest: `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge/manifest.json`
+Manifest: `/home/trv2/work/firestaff/parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge/manifest.json`

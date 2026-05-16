@@ -1,5 +1,5 @@
 {
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
+  "branch": "main",
   "firestaffGuards": {
     "blockedCollisionSpan": "dm1_v1_movement_command_core_pc34_compat.c:206-364",
     "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
@@ -10,7 +10,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
   "notClaimed": [
     "new original DOS runtime capture",
     "viewport or wall pixel parity",
@@ -27,7 +27,7 @@
   },
   "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
   "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
-  "timestampUtc": "2026-05-16T07:06:20.671232+00:00",
+  "timestampUtc": "2026-05-16T07:56:08.431291+00:00",
   "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
-  "worktree": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516"
+  "worktree": "/home/trv2/work/firestaff"
 }

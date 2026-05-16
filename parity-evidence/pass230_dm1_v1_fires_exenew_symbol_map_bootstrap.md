@@ -41,7 +41,7 @@ Exact remaining blocker: FIRES.EXENEW now supplies the decompressed runtime imag
 - The packed loader entry and static compressed offsets remain non-promotable.
 
 ## Artifacts
-- `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
-- `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
-- `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
-- `/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`
+- `/home/trv2/work/firestaff/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
+- `/home/trv2/work/firestaff/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
+- `/home/trv2/work/firestaff/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
+- `/home/trv2/work/firestaff/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`

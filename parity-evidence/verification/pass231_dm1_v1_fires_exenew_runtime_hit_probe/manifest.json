@@ -6,9 +6,9 @@
     "present": false
   },
   "inputs": {
-    "fires_exenew": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
-    "runtime_image": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "fires_exenew": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "non_claims": [
     "does not commit FIRES.EXENEW",

@@ -1,70 +1,21 @@
 {
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
-  "decision": "Classified current DM1 V1 original capture unblocker as DOSBox window/event-queue to guest keyboard interrupt/IO2 dispatch boundary: ReDMCSB requires GAMELOOP M527/M528 to call IO2 presence/read before F0361 can enqueue, pass514 reaches F0380 with no enqueue/count write, pass556 resolves the IO2 driver slots but observes no IO2 read/presence after route input, and pass557 rules out host route-key generation as the first failing boundary.",
+  "branch": "main",
+  "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
-      "decision": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-      "path": "/home/trv2/work/firestaff-worktrees/pass550-dm1v1-pass514-capture-handoff-followup-20260515-codex/parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-      "present": true,
-      "proofPredicates": {
-        "captureAttemptedThisRun": true,
-        "dispatchReached": false,
-        "f0361QueueCountPathAlreadyProven": true,
-        "f0380QueuePositiveBeforePop": false,
-        "f0380ReachedInN2DebuggerPath": true,
-        "keyboardProducerEntryHit": false,
-        "prerequisitesOk": true,
-        "queueCountWriteObserved": false,
-        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
-        "routeInputAfterArmingSucceeded": true,
-        "sourceAuditOk": true
-      },
-      "runtimeBinding": null,
-      "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380"
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+      "present": false
     },
     "pass556": {
-      "decision": "post-arm movement key route ran, but no IO2 presence/read stop was observed after the first route key",
-      "path": "/home/trv2/work/firestaff-worktrees/pass556-dm1v1-pass555-io2-runtime-pointer-binding-20260515-codex/parity-evidence/verification/pass556_dm1_v1_pass555_io2_runtime_pointer_binding/manifest.json",
-      "present": true,
-      "proofPredicates": {
-        "breakpointsRetainedAtArm": true,
-        "f0361HitAfterRouteInput": false,
-        "f0380ReachedAfterRouteInput": true,
-        "interrupt254ResolvedToIoDriverTable": true,
-        "io2PresenceHitAfterRouteInput": false,
-        "io2PresenceHitAnytime": false,
-        "io2ReadHitAfterRouteInput": false,
-        "io2ReadHitAnytime": false,
-        "ioDriverSlotsResolved": true,
-        "postLoadSuffixArm": true,
-        "prerequisitesOk": true,
-        "queueCountWriteObserved": false,
-        "routeInputAfterArmingSucceeded": true,
-        "sourceAuditOk": true
-      },
-      "runtimeBinding": null,
-      "status": "BLOCKED_PASS556_MOVEMENT_KEY_NEVER_REACHES_IO2"
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+      "present": false
     },
     "pass557": {
-      "decision": "pass556 proves post-arm movement xdotool generation succeeded and IO2 presence/read were not hit; pass557 therefore rules out host route generation as the first boundary but still leaves DOSBox window/event queue versus guest interrupt/IO2 dispatch unresolved.",
-      "path": "/home/trv2/work/firestaff-worktrees/pass557-dm1v1-pass556-host-emulator-keyboard-delivery-20260515-codex/parity-evidence/verification/pass557_dm1_v1_pass556_host_emulator_keyboard_delivery_probe/manifest.json",
-      "present": true,
-      "proofPredicates": {
-        "hostRouteSucceeded": true,
-        "hostX11ProbeRan": true,
-        "pass556Io2RuntimeBindingResolved": true,
-        "pass556ManifestPresent": true,
-        "pass556NoIo2PresenceOrReadAfterRoute": true,
-        "pass556RouteInputAfterArmingSucceeded": true,
-        "pass557UsesPass556RouteKeylogFallback": true,
-        "sourceAuditOk": true,
-        "x11MovementKeyPressObserved": false
-      },
-      "runtimeBinding": null,
-      "status": "BLOCKED_PASS557_HOST_ROUTE_GENERATION_PROVEN_NEXT_BOUNDARY_UNRESOLVED"
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+      "present": false
     }
   },
-  "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -80,16 +31,16 @@
     "pass514ManifestPresent": true,
     "pass514QueueCountWriteMissing": true,
     "pass514RouteInputAfterArmingSucceeded": true,
-    "pass556F0380ReachedAfterRouteInput": true,
-    "pass556IoDriverSlotsResolved": true,
-    "pass556ManifestPresent": true,
+    "pass556F0380ReachedAfterRouteInput": false,
+    "pass556IoDriverSlotsResolved": false,
+    "pass556ManifestPresent": false,
     "pass556NoIo2ReadOrPresenceAfterRoute": true,
-    "pass557HostRouteSucceeded": true,
-    "pass557ManifestPresent": true,
-    "pass557RulesOutHostRouteGeneration": true,
+    "pass557HostRouteSucceeded": false,
+    "pass557ManifestPresent": false,
+    "pass557RulesOutHostRouteGeneration": false,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass558_dm1_v1_pass514_io_blocker_classifier.v1",
   "sourceAudit": [
     {
@@ -199,6 +150,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS558_DOSBOX_EVENT_TO_GUEST_IO2_DISPATCH_BOUNDARY_CLASSIFIED",
-  "timestampUtc": "2026-05-16T07:06:18.288305+00:00"
+  "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
+  "timestampUtc": "2026-05-16T07:57:10.319572+00:00"
 }

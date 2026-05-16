@@ -32,3 +32,28 @@ M11_V2_EmitterConfig v2_emitter_preset_get(M11_V2_EmitterPreset preset) {
 int v2_emitter_preset_count(void) {
     return M11_V2_EmitterPreset_COUNT;
 }
+
+
+const char *v2_emitter_preset_name(M11_V2_EmitterPreset preset) {
+    switch (preset) {
+        case TORCH_FLAME: return "Torch Flame";
+        case TORCH_SMOKE: return "Torch Smoke";
+        case SPELL_FIREBALL: return "Spell Fireball";
+        case SPELL_POISON: return "Spell Poison Cloud";
+        case BLOOD_SPLAT: return "Blood Splat";
+        case WATER_DRIP: return "Water Drip";
+        case DUST_PUFF: return "Dust Puff";
+        case MAGIC_SPARKLE: return "Magic Sparkle";
+        default: return "Unknown";
+    }
+}
+
+int v2_emitter_preset_validate(const M11_V2_EmitterConfig *cfg) {
+    if (!cfg) return 0;
+    if (cfg->rate < 0.0f || cfg->rate > 1000.0f) return 0;
+    if (cfg->life <= 0.0f) return 0;
+    if (cfg->count <= 0 || cfg->count > 10000) return 0;
+    if (cfg->size <= 0.0f) return 0;
+    return 1;
+}
+

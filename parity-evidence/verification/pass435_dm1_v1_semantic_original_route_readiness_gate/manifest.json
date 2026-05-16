@@ -1703,7 +1703,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
+      "branch": "main",
       "crop_artifacts": {
         "files": [
           {
@@ -1836,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "0a5319c1d5a416d7395f27f6627ddc7e6b089f70",
+      "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1844,7 +1844,7 @@
         "HUD/overlay parity"
       ],
       "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-      "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+      "repo": "/home/trv2/work/firestaff",
       "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
       "source_audit": [
         {
@@ -1907,7 +1907,7 @@
       ],
       "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-05-16T07:06:18.138196+00:00",
+      "timestamp_utc": "2026-05-16T07:57:08.405932+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -2081,7 +2081,7 @@
       "05"
     ]
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+  "repo": "/home/trv2/work/firestaff",
   "route_labels": {
     "exists": true,
     "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
@@ -2379,5 +2379,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-05-16T07:06:18.207714+00:00"
+  "timestampUtc": "2026-05-16T07:57:08.495284+00:00"
 }

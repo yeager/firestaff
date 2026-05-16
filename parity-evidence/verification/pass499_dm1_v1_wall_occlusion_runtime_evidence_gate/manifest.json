@@ -8,63 +8,63 @@
   },
   "firestaffLocks": [
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
       "line": 285,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
       "line": 860,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
       "line": 871,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
       "line": 135,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_expected_matrix",
       "line": 30,
       "needle": "struct ExpectedWallContract",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_source_output",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "door_contract_probe_output",
       "line": 128,
       "needle": "doorFrontComposition source=",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
       "line": 382,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
       "line": 287,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
@@ -86,14 +86,14 @@
     "cmd": [
       "ctest",
       "--test-dir",
-      "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build",
+      "/home/trv2/work/firestaff/build",
       "-R",
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build\nTest project /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build\n    Start  42: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #42: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 229: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #229: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.14 sec\n    Start 235: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #235: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.22 sec\n    Start 248: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #248: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.10 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.49 sec\n"
+    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  42: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #42: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 229: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #229: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.09 sec\n    Start 235: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #235: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.18 sec\n    Start 248: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #248: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.12 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.41 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -169,5 +169,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-05-16T07:06:19.253209+00:00"
+  "timestampUtc": "2026-05-16T07:56:05.496021+00:00"
 }

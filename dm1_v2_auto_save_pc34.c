@@ -41,3 +41,53 @@ void v2_autosave_disable(void) {
 void v2_autosave_set_interval(uint32_t ticks) {
     g_autosave.interval_ticks = ticks;
 }
+
+
+/* V2 auto-save state serialization */
+int v2_autosave_serialize_state(const M11_V2_AutoSaveConfig *cfg,
+    unsigned char *buf, int bufsize)
+{
+    if (!cfg || !buf || bufsize < 20) return -1;
+    buf[0] = cfg->enabled ? 1 : 0;
+    buf[1] = (unsigned char)(cfg->max_slots & 0xFF);
+    buf[2] = (unsigned char)(cfg->current_slot & 0xFF);
+    buf[3] = 0; /* reserved */
+    /* interval_ticks: little-endian uint32 */
+    buf[4] = (unsigned char)(cfg->interval_ticks & 0xFF);
+    buf[5] = (unsigned char)((cfg->interval_ticks >> 8) & 0xFF);
+    buf[6] = (unsigned char)((cfg->interval_ticks >> 16) & 0xFF);
+    buf[7] = (unsigned char)((cfg->interval_ticks >> 24) & 0xFF);
+    /* last_save_tick */
+    buf[8] = (unsigned char)(cfg->last_save_tick & 0xFF);
+    buf[9] = (unsigned char)((cfg->last_save_tick >> 8) & 0xFF);
+    buf[10] = (unsigned char)((cfg->last_save_tick >> 16) & 0xFF);
+    buf[11] = (unsigned char)((cfg->last_save_tick >> 24) & 0xFF);
+    return 12;
+}
+
+int v2_autosave_deserialize_state(M11_V2_AutoSaveConfig *cfg,
+    const unsigned char *buf, int bufsize)
+{
+    if (!cfg || !buf || bufsize < 12) return -1;
+    cfg->enabled = buf[0] != 0;
+    cfg->max_slots = buf[1];
+    cfg->current_slot = buf[2];
+    cfg->interval_ticks = (uint32_t)buf[4]
+        | ((uint32_t)buf[5] << 8)
+        | ((uint32_t)buf[6] << 16)
+        | ((uint32_t)buf[7] << 24);
+    cfg->last_save_tick = (uint32_t)buf[8]
+        | ((uint32_t)buf[9] << 8)
+        | ((uint32_t)buf[10] << 16)
+        | ((uint32_t)buf[11] << 24);
+    return 0;
+}
+
+bool v2_autosave_is_enabled(void) {
+    return g_autosave.enabled;
+}
+
+int v2_autosave_current_slot(void) {
+    return g_autosave.current_slot;
+}
+

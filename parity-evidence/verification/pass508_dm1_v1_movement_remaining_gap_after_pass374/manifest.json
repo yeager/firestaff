@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "worker/pass601-dm1v1-gameplay-systems-source-lock-20260516-bosse",
+  "branch": "main",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
@@ -124,7 +124,7 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
   "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
 }

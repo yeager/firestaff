@@ -47,8 +47,8 @@
       "id": "local-d1-d0-wall-specs-present",
       "lines": "281-312",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -75,8 +75,8 @@
       "id": "local-side-occlusion-d1-d0-cell-orders-present",
       "lines": "139-171",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -111,7 +111,7 @@
       "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
       "lines": "234-310",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -336,7 +336,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -345,7 +345,7 @@
     {
       "command": [
         "/usr/bin/python3",
-        "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
+        "/home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
       "outputTail": "PASS pass516 check-only",

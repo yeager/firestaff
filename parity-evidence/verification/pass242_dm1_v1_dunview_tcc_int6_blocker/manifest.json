@@ -40,9 +40,9 @@
   },
   "inputs": {
     "mkii_bat": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT",
-    "pass236_error_excerpt": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
-    "pass236_manifest": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
-    "pass236_stdout_tail": "/home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
+    "pass236_error_excerpt": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
+    "pass236_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
+    "pass236_stdout_tail": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
     "toolchains_doc": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Documentation/Toolchains.htm"
   },
   "manual_followup_smoke": {
