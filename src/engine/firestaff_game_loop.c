@@ -32,6 +32,132 @@
 
 static V2_AnimClock g_clock;
 
+
+/* ══════════════════════════════════════════════════════════════════════
+ * #1: V1 viewport rendering — dungeon data → indexed framebuffer
+ *
+ * Flow per render frame:
+ *   1. Read party position + direction from game state
+ *   2. Query dungeon squares in view cone (D0-D3, left/center/right)
+ *   3. Call V1 wall/floor/ceiling draw functions per square
+ *   4. Write to 320x200 indexed framebuffer
+ *   5. EPX upscale (V2.1) or direct present (V1)
+ * ══════════════════════════════════════════════════════════════════════ */
+
+#define FS_FB_W 320
+#define FS_FB_H 200
+#define FS_VP_W 224
+#define FS_VP_H 136
+#define FS_VP_X 0
+#define FS_VP_Y 0
+
+static uint8_t g_framebuffer[FS_FB_W * FS_FB_H];
+static uint32_t g_rgba_buffer[FS_FB_W * 4 * FS_FB_H * 4]; /* up to 4x */
+static uint32_t g_vga_palette[256];
+static int g_palette_loaded = 0;
+
+/* Default DM1 VGA palette (first 16 colors for testing) */
+static void fs_init_default_palette(void) {
+    if (g_palette_loaded) return;
+    g_vga_palette[0]  = 0xFF000000; /* black */
+    g_vga_palette[1]  = 0xFF000088; /* dark blue */
+    g_vga_palette[2]  = 0xFF008800; /* dark green */
+    g_vga_palette[3]  = 0xFF008888; /* dark cyan */
+    g_vga_palette[4]  = 0xFF880000; /* dark red */
+    g_vga_palette[5]  = 0xFF880088; /* dark magenta */
+    g_vga_palette[6]  = 0xFF885500; /* brown */
+    g_vga_palette[7]  = 0xFFAAAAAA; /* light gray */
+    g_vga_palette[8]  = 0xFF555555; /* dark gray */
+    g_vga_palette[9]  = 0xFF5555FF; /* blue */
+    g_vga_palette[10] = 0xFF55FF55; /* green */
+    g_vga_palette[11] = 0xFF55FFFF; /* cyan */
+    g_vga_palette[12] = 0xFFFF5555; /* red */
+    g_vga_palette[13] = 0xFFFF55FF; /* magenta */
+    g_vga_palette[14] = 0xFFFFFF55; /* yellow */
+    g_vga_palette[15] = 0xFFFFFFFF; /* white */
+    /* Fill rest with grays */
+    for (int i = 16; i < 256; i++) {
+        uint8_t v = (uint8_t)(i);
+        g_vga_palette[i] = 0xFF000000 | ((uint32_t)v << 16) | ((uint32_t)v << 8) | v;
+    }
+    g_palette_loaded = 1;
+}
+
+/* Render a simple first-person dungeon view based on party position.
+ * This is the bridge between game state and pixels. */
+static void fs_game_render_viewport(FS_GameState *state) {
+    int x, y, px, py, dir;
+    if (!state) return;
+    px = state->party_x;
+    py = state->party_y;
+    dir = state->party_direction;
+
+    fs_init_default_palette();
+
+    /* Clear framebuffer */
+    memset(g_framebuffer, 0, sizeof(g_framebuffer));
+
+    /* Draw ceiling (top half of viewport = dark gray) */
+    for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
+        for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+            g_framebuffer[y * FS_FB_W + x] = 8; /* dark gray ceiling */
+
+    /* Draw floor (bottom half = brown) */
+    for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
+        for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+            g_framebuffer[y * FS_FB_W + x] = 6; /* brown floor */
+
+    /* Draw walls based on surroundings (simplified) */
+    /* Front wall at D0C if blocked */
+    {
+        int fx = px, fy = py;
+        int dx[] = {0, 1, 0, -1}; /* N, E, S, W */
+        int dy[] = {-1, 0, 1, 0};
+        fx += dx[dir]; fy += dy[dir];
+
+        /* Simple wall detection: draw front wall if position is "wall" */
+        /* In full implementation this queries dungeon.dat via dm1_v1_dungeon_loader */
+        if ((fx + fy) % 3 == 0) { /* placeholder: some squares are walls */
+            /* Draw front wall (gray rectangle in center) */
+            for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
+                for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 7; /* light gray wall */
+        }
+    }
+
+    /* Draw HUD panel (bottom 64 rows) */
+    for (y = FS_VP_H; y < FS_FB_H; y++)
+        for (x = 0; x < FS_FB_W; x++)
+            g_framebuffer[y * FS_FB_W + x] = 1; /* dark blue panel */
+
+    /* Draw compass indicator */
+    {
+        const char *dirs[] = {"N", "E", "S", "W"};
+        int cx = 288, cy = FS_VP_H + 10;
+        (void)dirs; (void)cx; (void)cy; (void)dir;
+        /* Text rendering would go here */
+    }
+
+    /* Draw position text (debug) */
+    /* Would use dm1_v1_text_message for proper rendering */
+}
+
+/* Convert indexed framebuffer to RGBA using palette */
+static void fs_framebuffer_to_rgba(int scale) {
+    if (scale == 1) {
+        for (int i = 0; i < FS_FB_W * FS_FB_H; i++)
+            g_rgba_buffer[i] = g_vga_palette[g_framebuffer[i]];
+    } else {
+        /* EPX-like nearest neighbor for now */
+        int dw = FS_FB_W * scale, dh = FS_FB_H * scale;
+        for (int y = 0; y < dh; y++)
+            for (int x = 0; x < dw; x++) {
+                int sx = x / scale, sy = y / scale;
+                g_rgba_buffer[y * dw + x] = g_vga_palette[g_framebuffer[sy * FS_FB_W + sx]];
+            }
+    }
+}
+
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
     if (!state || !config) return -1;
     memset(state, 0, sizeof(*state));
@@ -123,14 +249,18 @@ void fs_game_tick_v1(FS_GameState *state) {
 void fs_game_render_v2(FS_GameState *state) {
     if (!state) return;
 
-    /* V2 render pipeline:
-     * 1. Get sub-tick for interpolation
-     * 2. V1 engine renders to indexed framebuffer (320x200)
-     * 3. EPX upscale (V2.1) or direct blit (V1)
-     * 4. V2.2 overlays: particles, damage numbers, minimap, weather
-     * 5. HUD panel render
-     * 6. SDL present */
-    (void)v2_anim_clock_sub_tick(&g_clock);
+    float sub_tick = v2_anim_clock_sub_tick(&g_clock);
+    (void)sub_tick;
+    /* 1-2: Render V1 viewport to indexed framebuffer */
+    fs_game_render_viewport(state);
+    /* 3: Convert to RGBA (V1=1x, V2.1=2x, V2.2=4x) */
+    {
+        int scale = (state->config.version == FS_VERSION_V1) ? 1 :
+                    (state->config.version == FS_VERSION_V21) ? 2 : 4;
+        fs_framebuffer_to_rgba(scale);
+    }
+    /* 4-6: SDL present (via bridge) */
+    /* fs_sdl_present_rgba(&g_sdl, g_rgba_buffer, w, h); */
 }
 
 void fs_game_handle_sdl_event(FS_GameState *state, const void *sdl_event) {
@@ -162,10 +292,19 @@ void fs_game_run(FS_GameState *state) {
         v2_anim_clock_render_frame(&g_clock, now_ms);
         fs_game_render_v2(state);
 
-        /* In headless mode (no SDL), break after 100 frames */
-        if (state->frame_count > 100 && !state->config.fullscreen) {
-            break;
+#ifdef HAVE_SDL3
+        /* SDL event poll */
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            fs_game_handle_sdl_event(state, &e);
         }
+        /* Present frame */
+        /* fs_sdl_present_rgba(&g_sdl, g_rgba_buffer, w, h); */
+        SDL_Delay(1); /* yield CPU */
+#else
+        /* Headless: break after 100 frames */
+        if (state->frame_count > 100) break;
+#endif
     }
 
     printf("Firestaff: game loop exited after %u frames\n", state->frame_count);
