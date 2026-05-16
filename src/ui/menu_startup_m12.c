@@ -1991,11 +1991,32 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
-                        state->launchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
-                        state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
-                        state->messageLine2 = m12_selected_version_label(state, gi, 0);
-                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                        /* Auto-select first matched version if available */
+                        int found_match = 0;
+                        {
+                            static const char* const gids[] = {"dm1","csb","dm2","nexus1"};
+                            size_t vc = M12_AssetStatus_GetVersionCount(gids[gi]);
+                            for (size_t vi = 0; vi < vc; vi++) {
+                                const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
+                                    &state->assetStatus, gids[gi], vi);
+                                if (vs && vs->matched) {
+                                    state->gameOptions[gi].versionIndex = (int)vi;
+                                    found_match = 1;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!found_match) {
+                            state->launchRequested = 0;
+                            state->view = M12_MENU_VIEW_MESSAGE;
+                            state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
+                            state->messageLine2 = m12_selected_version_label(state, gi, 0);
+                            state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                        } else {
+                            /* Retry with matched version */
+                            state->launchRequested = 1;
+                            state->quickResumeLaunchRequested = 0;
+                        }
                     } else if (!m12_game_supported(state->entries[gi].gameId)) {
                         /* CSB/DM2/Nexus may have hash-matched catalog entries, but
                          * the current runtime handoff is DM1-only.  Keep the menu
