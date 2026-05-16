@@ -18,6 +18,7 @@ typedef struct {
     int loaded;
 } FS_AssetBundle;
 
+int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char *game_subdir);
 int fs_assets_load_dm1(FS_AssetBundle *bundle, const char *data_dir);
 int fs_assets_load_csb(FS_AssetBundle *bundle, const char *data_dir);
 int fs_assets_load_dm2(FS_AssetBundle *bundle, const char *data_dir);

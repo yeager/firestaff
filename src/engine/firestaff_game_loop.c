@@ -291,15 +291,15 @@ int fs_game_load_assets(FS_GameState *state) {
     printf("Firestaff: loading assets for game %d from %s\n",
         state->config.game, state->config.data_dir ? state->config.data_dir : "(default)");
 
-    /* Load assets with language from settings */
+    /* Load assets per game */
     static FS_GraphicsDat g_gfx_dat;
     static int g_assets_ready = 0;
     {
-        FS_AssetBundle assets;
-        int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());
-        if (state->config.data_dir) {
-            fs_assets_load_dm1_multilang(&assets, state->config.data_dir, (FS_AssetLanguage)asset_lang);
-        }
+        const char *game_subdirs[] = {"dm1", "csb", "dm2", "nexus"};
+        const char *subdir = (state->config.game >= 0 && state->config.game < 4)
+            ? game_subdirs[state->config.game] : "dm1";
+        printf("Firestaff: loading %s assets from %s/%s\n",
+            subdir, state->config.data_dir ? state->config.data_dir : ".", subdir);
     }
 
     /* TODO: call dm1_v1_graphics_loader / dm1_v1_dungeon_loader
@@ -316,9 +316,10 @@ int fs_game_load_assets(FS_GameState *state) {
     /* Load GRAPHICS.DAT and parse bitmap headers */
     if (state->config.data_dir) {
         FS_AssetBundle bundle;
-        int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());
-        if (fs_assets_load_dm1_multilang(&bundle, state->config.data_dir,
-                (FS_AssetLanguage)asset_lang) == 0) {
+        const char *game_subdirs[] = {"dm1", "csb", "dm2", "nexus"};
+        const char *subdir = (state->config.game >= 0 && state->config.game < 4)
+            ? game_subdirs[state->config.game] : "dm1";
+        if (fs_assets_load_game(&bundle, state->config.data_dir, subdir) == 0) {
             fs_gfx_load(&g_gfx_dat, bundle.graphics_data, bundle.graphics_size);
             if (bundle.graphics_data) {
                 fs_gfx_get_palette(&g_gfx_dat, g_vga_palette);

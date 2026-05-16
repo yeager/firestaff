@@ -18,35 +18,46 @@ static int load_file(const char *path, uint8_t **out, int *out_size) {
     return 0;
 }
 
-int fs_assets_load_dm1(FS_AssetBundle *bundle, const char *data_dir) {
+static int try_load_dat(const char *dir, const char *subdir, const char *name,
+    unsigned char **out_data, int *out_size) {
     char path[512];
+    /* Try dir/subdir/NAME first */
+    if (subdir && subdir[0]) {
+        snprintf(path, sizeof(path), "%s/%s/%s", dir, subdir, name);
+        if (load_file(path, out_data, out_size) == 0) return 0;
+    }
+    /* Try dir/NAME */
+    snprintf(path, sizeof(path), "%s/%s", dir, name);
+    if (load_file(path, out_data, out_size) == 0) return 0;
+    return -1;
+}
+
+int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char *game_subdir) {
     if (!bundle || !data_dir) return -1;
     memset(bundle, 0, sizeof(*bundle));
 
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", data_dir);
-    if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0) {
-        /* Try lowercase */
-        snprintf(path, sizeof(path), "%s/graphics.dat", data_dir);
-        if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0)
-            return -1;
+    if (try_load_dat(data_dir, game_subdir, "GRAPHICS.DAT", &bundle->graphics_data, &bundle->graphics_size) < 0) {
+        try_load_dat(data_dir, game_subdir, "graphics.dat", &bundle->graphics_data, &bundle->graphics_size);
     }
 
-    snprintf(path, sizeof(path), "%s/DUNGEON.DAT", data_dir);
-    if (load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-        snprintf(path, sizeof(path), "%s/dungeon.dat", data_dir);
-        load_file(path, &bundle->dungeon_data, &bundle->dungeon_size);
+    if (try_load_dat(data_dir, game_subdir, "DUNGEON.DAT", &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
+        try_load_dat(data_dir, game_subdir, "dungeon.dat", &bundle->dungeon_data, &bundle->dungeon_size);
     }
 
-    bundle->loaded = 1;
-    return 0;
+    bundle->loaded = (bundle->graphics_data != NULL);
+    return bundle->loaded ? 0 : -1;
+}
+
+int fs_assets_load_dm1(FS_AssetBundle *bundle, const char *data_dir) {
+    return fs_assets_load_game(bundle, data_dir, "dm1");
 }
 
 int fs_assets_load_csb(FS_AssetBundle *bundle, const char *data_dir) {
-    return fs_assets_load_dm1(bundle, data_dir); /* Same DAT format */
+    return fs_assets_load_game(bundle, data_dir, "csb");
 }
 
 int fs_assets_load_dm2(FS_AssetBundle *bundle, const char *data_dir) {
-    return fs_assets_load_dm1(bundle, data_dir); /* Similar format */
+    return fs_assets_load_game(bundle, data_dir, "dm2");
 }
 
 void fs_assets_free(FS_AssetBundle *bundle) {
