@@ -11,6 +11,7 @@
  */
 
 #include "render_sdl_m11.h"
+#include <stdio.h>
 
 #include <SDL3/SDL.h>
 
@@ -406,10 +407,12 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+        fprintf(stderr, "SDL3 init failed: %s\n", SDL_GetError());
         return M11_RENDER_ERR_SDL_INIT;
     }
 #else
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+        fprintf(stderr, "SDL2 init failed: %s\n", SDL_GetError());
         return M11_RENDER_ERR_SDL_INIT;
     }
 #endif

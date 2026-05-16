@@ -16,14 +16,26 @@ else()
     # We set per-target below.
 endif()
 
-# ── SDL3 discovery ───────────────────────────────────────────────────
-# Try CMake config first, then fall back to pkg-config.
+# ── SDL discovery (prefer SDL3, fall back to SDL2) ──────────────────
+find_package(PkgConfig REQUIRED)
 find_package(SDL3 QUIET CONFIG)
-if(NOT SDL3_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
-    # Create an alias so the rest of the file can use SDL3::SDL3.
-    if(NOT TARGET SDL3::SDL3)
+if(SDL3_FOUND)
+    message(STATUS "Found SDL3")
+else()
+    pkg_check_modules(SDL3 QUIET IMPORTED_TARGET sdl3)
+endif()
+if(NOT SDL3_FOUND AND NOT TARGET PkgConfig::SDL3)
+    pkg_check_modules(SDL2 QUIET IMPORTED_TARGET sdl2)
+    if(SDL2_FOUND OR TARGET PkgConfig::SDL2)
+        message(STATUS "SDL3 not found, using SDL2")
+        if(NOT TARGET SDL3::SDL3)
+            add_library(SDL3::SDL3 ALIAS PkgConfig::SDL2)
+        endif()
+    else()
+        message(FATAL_ERROR "Neither SDL3 nor SDL2 found")
+    endif()
+else()
+    if(NOT TARGET SDL3::SDL3 AND TARGET PkgConfig::SDL3)
         add_library(SDL3::SDL3 ALIAS PkgConfig::SDL3)
     endif()
 endif()
