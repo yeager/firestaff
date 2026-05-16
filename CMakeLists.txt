@@ -56,6 +56,18 @@ endif()
 
 
 
+
+# ── CSB V2 static library ──────────────────────────────────────────
+file(GLOB CSB_V2_SOURCES CONFIGURE_DEPENDS "src/csb/csb_v2_*.c")
+if(CSB_V2_SOURCES)
+    add_library(firestaff_csb_v2 STATIC ${CSB_V2_SOURCES})
+    target_include_directories(firestaff_csb_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_csb_v2 PUBLIC firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_csb_v2 PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── DM2 V1 static library ──────────────────────────────────────────
 file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 if(DM2_SOURCES)
@@ -63,6 +75,18 @@ if(DM2_SOURCES)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
+
+# ── DM2 V2 static library ──────────────────────────────────────────
+file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c")
+if(DM2_V2_SOURCES)
+    add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
+    target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v2 PRIVATE -Wall -Wextra -O2)
     endif()
 endif()
 
