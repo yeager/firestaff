@@ -676,7 +676,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
+        M11_Render_PresentIndexedWithSpecialPalette(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
         /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
          * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
          * smash straight into the entrance screen.  Bind the runtime delay

@@ -18,10 +18,11 @@
 
 #define VGA_PALETTE_PC34_COLOR_COUNT 16
 #define VGA_PALETTE_PC34_BRIGHTNESS_LEVELS 6
-#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 2
+#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 3
 
 #define VGA_PALETTE_PC34_SPECIAL_CREDITS  0
 #define VGA_PALETTE_PC34_SPECIAL_ENTRANCE 1
+#define VGA_PALETTE_PC34_SPECIAL_TITLE    2
 
 /* Brightest palette (index 0) — title/menu/brightest dungeon */
 extern const unsigned char G9010_auc_VgaPaletteBrightest_Compat[16][3];

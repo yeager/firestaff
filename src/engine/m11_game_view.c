@@ -1009,6 +1009,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
     }
     /* Try dataDir/gameSubdir/DUNGEON.DAT first, then dataDir/DUNGEON.DAT */
     {
+        fprintf(stderr, "DUNGEON RESOLVE: dataDir=[%s] gameId=[%s]\n", dataDir, gameId);
         char subpath[1024];
         const char *subdir = NULL;
         const char *filename = "DUNGEON.DAT";
@@ -1021,12 +1022,14 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);
             if (FSP_JoinPath(out, outSize, dataDir, subpath)) {
                 FILE *test = fopen(out, "rb");
+                fprintf(stderr, "  TRY: [%s] %s\n", out, test ? "FOUND" : "MISS");
                 if (test) { fclose(test); return 1; }
             }
         }
         /* Fallback: dataDir/DUNGEON.DAT */
         if (FSP_JoinPath(out, outSize, dataDir, filename)) {
             FILE *test = fopen(out, "rb");
+            fprintf(stderr, "  FALLBACK: [%s] %s\n", out, test ? "FOUND" : "MISS");
             if (test) { fclose(test); return 1; }
         }
     }
@@ -4656,6 +4659,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
     }
+    fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
     if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
         m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
         return 0;
