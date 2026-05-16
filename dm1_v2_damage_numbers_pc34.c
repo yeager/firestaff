@@ -93,3 +93,62 @@ void v2_damage_render(uint8_t* fb, int w, int h) {
 void v2_damage_clear(void) {
     g_damage_display.count = 0;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.2 Damage Numbers — Floating combat damage display
+ *
+ * Spawns a floating number when damage is dealt/received.
+ * Numbers drift upward and fade out over ~1 second.
+ * Color: red for damage taken, yellow for damage dealt, green for heal.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+#define V22_MAX_FLOATING_NUMBERS 16
+
+typedef struct {
+    int value;
+    float x, y;
+    float vy; /* upward velocity */
+    float alpha; /* 1.0 = full, 0.0 = gone */
+    uint32_t color;
+    int active;
+} V22_FloatingNumber;
+
+static V22_FloatingNumber g_numbers[V22_MAX_FLOATING_NUMBERS];
+
+void v22_damage_spawn(int value, float x, float y, uint32_t color) {
+    int i;
+    for (i = 0; i < V22_MAX_FLOATING_NUMBERS; i++) {
+        if (!g_numbers[i].active) {
+            g_numbers[i].value = value;
+            g_numbers[i].x = x;
+            g_numbers[i].y = y;
+            g_numbers[i].vy = -30.0f; /* drift upward */
+            g_numbers[i].alpha = 1.0f;
+            g_numbers[i].color = color;
+            g_numbers[i].active = 1;
+            return;
+        }
+    }
+}
+
+void v22_damage_tick(float dt) {
+    int i;
+    for (i = 0; i < V22_MAX_FLOATING_NUMBERS; i++) {
+        if (!g_numbers[i].active) continue;
+        g_numbers[i].y += g_numbers[i].vy * dt;
+        g_numbers[i].alpha -= dt; /* fade over 1 second */
+        if (g_numbers[i].alpha <= 0.0f) {
+            g_numbers[i].active = 0;
+        }
+    }
+}
+
+int v22_damage_get_active(const V22_FloatingNumber **out) {
+    if (out) *out = g_numbers;
+    int count = 0;
+    for (int i = 0; i < V22_MAX_FLOATING_NUMBERS; i++) {
+        if (g_numbers[i].active) count++;
+    }
+    return count;
+}
+

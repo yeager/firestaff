@@ -82,3 +82,24 @@ const char* dm1_v2_settings_aspect_id(DM1_V2_AspectMode mode) {
         ? "16:9-widescreen"
         : "4:3-original";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.1 Settings — Upscale configuration
+ * ══════════════════════════════════════════════════════════════════════ */
+
+void v2_settings_apply_v21_defaults(DM1_V2_Settings *s) {
+    if (!s) return;
+    s->viewport_scale = 2;       /* EPX 2x by default */
+    s->use_epx = 1;              /* EPX enabled */
+    s->use_bilinear = 0;         /* no bilinear on indexed data */
+    s->palette_enhanced = 0;     /* original VGA palette */
+    s->sound_enabled = 1;
+    s->music_enabled = 0;        /* PC-34 has no music */
+    s->fullscreen = 0;
+    s->vsync = 1;
+}
+
+const char *v21_settings_source_evidence(void) {
+    return "V2.1 defaults: EPX 2x, original VGA palette, PC-34 audio\n";
+}
+

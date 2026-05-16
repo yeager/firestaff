@@ -18,6 +18,14 @@ typedef struct {
     int dynamicLightingEnabled;
     int accessibilityTouchEnabled;
     DM1_V2_AspectMode aspectMode;
+    int viewport_scale;
+    int use_epx;
+    int use_bilinear;
+    int palette_enhanced;
+    int sound_enabled;
+    int music_enabled;
+    int fullscreen;
+    int vsync;
 } DM1_V2_Settings;
 
 void dm1_v2_settings_defaults(DM1_V2_Settings* settings);

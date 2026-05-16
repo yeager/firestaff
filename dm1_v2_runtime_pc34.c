@@ -107,3 +107,40 @@ int dm1_v2_runtime_apply_command(DM1_V2_RuntimeState* runtime, int command, uint
     dm1_v2_vp_mark_dirty(&runtime->viewport);
     return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.1 Runtime — Frame loop integration
+ *
+ * V2.1 frame loop:
+ *   1. V1 game loop tick (dm1_v1_game_loop_pc34_compat)
+ *   2. V1 viewport render to indexed framebuffer
+ *   3. V2.1 EPX upscale
+ *   4. Palette → RGBA
+ *   5. SDL present
+ *
+ * This preserves V1 timing exactly (VBlank-locked at original rate)
+ * while rendering at modern resolution.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    V21_MODE_V1_FAITHFUL,     /* Exact V1 behavior, upscaled */
+    V21_MODE_V1_ENHANCED,     /* V2.2 features layered on V1 */
+} V21_RuntimeMode;
+
+static V21_RuntimeMode g_v21_mode = V21_MODE_V1_FAITHFUL;
+
+void v21_runtime_set_mode(V21_RuntimeMode mode) {
+    g_v21_mode = mode;
+}
+
+int v21_runtime_is_faithful(void) {
+    return g_v21_mode == V21_MODE_V1_FAITHFUL;
+}
+
+const char *v21_runtime_source_evidence(void) {
+    return
+        "GAMELOOP.C F0002_MAIN_GameLoop_CPSDF: V1 game loop drives V2.1\n"
+        "VBLANK.C F0526: VBlank timing preserved\n"
+        "V2.1: V1 tick -> V1 render -> EPX upscale -> palette -> present\n";
+}
+

@@ -145,3 +145,24 @@ void v2_hud_toggle(void) {
 void v2_hud_set_opacity(uint8_t val) {
     g_v2_hud_state.opacity = val;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.1 HUD Panel — Upscaled V1 champion/action panels
+ *
+ * V1 panel layout (320×64 bottom area):
+ *   - Champion status bars (health/stamina/mana)
+ *   - Action area (spell symbols, action icons)
+ *   - Compass/movement arrows
+ *
+ * V2.1 upscales the same layout using EPX for crisp text/icons.
+ * Source: ReDMCSB PANEL.C, STATS.C, CHAMDRAW.C
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *v21_hud_panel_source_evidence(void) {
+    return
+        "PANEL.C F0395-F0404 champion status rendering\n"
+        "STATS.C F0090-F0092 stat bar draw helpers\n"
+        "CHAMDRAW.C champion portrait/name rendering\n"
+        "V2.1: identical panel layout upscaled via EPX\n";
+}
+

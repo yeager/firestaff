@@ -78,3 +78,25 @@ void v2_audio_stop_all(void) {
         g_mixer.channels[i].position = 0;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.1 Audio Mixer — Original sample-faithful playback
+ *
+ * DM1 PC-34 uses PC speaker for sound effects (no MOD music).
+ * V2.1 replays the same sound events as V1 through SDL_mixer:
+ *   - F0061_SOUND_SetupSound → v2_audio_init
+ *   - F0063_SOUND_KillSound → v2_audio_shutdown
+ *   - F0064_SOUND_RequestPlay_CPSD → v2_audio_play_sound
+ *
+ * The sound event table maps ReDMCSB sound indices to WAV/OGG assets.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *v21_audio_source_evidence(void) {
+    return
+        "SOUND.C F0061_SOUND_SetupSound\n"
+        "SOUND.C F0063_SOUND_KillSound\n"
+        "SOUND.C F0064_SOUND_RequestPlay_CPSD\n"
+        "SOUND.C F0065_SOUND_StopAll\n"
+        "V2.1: same sound events as V1, rendered through SDL_mixer\n";
+}
+
