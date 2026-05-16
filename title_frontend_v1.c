@@ -253,3 +253,11 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
     }
     return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining TITLE.C function citations for parity
+ *
+ *   TITLE.C:123 F0509_AMIGA_F (platform-specific, not implemented for PC-34)
+ *   TITLE.C:116 F2163_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

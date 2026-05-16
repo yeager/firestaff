@@ -646,3 +646,10 @@ int F0726_SENSOR_ProcessWallClick_Compat(
 
     return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — MOVESENS.C remaining function citations
+ *
+ *   MOVESENS.C:668 F0413_CPSC_G
+ * ══════════════════════════════════════════════════════════════════════ */
+

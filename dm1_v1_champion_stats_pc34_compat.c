@@ -184,3 +184,30 @@ const char* m11_skill_name(int skill) {
     if (skill < 0 || skill >= DM1_SKILL_COUNT) return "Unknown";
     return skill_names[skill];
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — STATS.C remaining function citations
+ *
+ *   STATS.C:869 F8022_I
+ *   STATS.C:57 F8024_G
+ *   STATS.C:70 F8025_G
+ *   STATS.C:85 F8026_G
+ *   STATS.C:95 F8027_H
+ *   STATS.C:123 F8028_G
+ *   STATS.C:171 F8029_R
+ *   STATS.C:200 F8030_R
+ *   STATS.C:262 F8032_G
+ *   STATS.C:299 F8033_I
+ *   STATS.C:313 F8034_I
+ *   STATS.C:323 F8035_G
+ *   STATS.C:343 F8036_T
+ *   STATS.C:380 F8037_I
+ *   STATS.C:392 F8038_G
+ *   STATS.C:410 F8039_I
+ *   STATS.C:433 F8040_I
+ *   STATS.C:447 F8041_I
+ *   STATS.C:469 F8042_I
+ *   STATS.C:522 F8043_G
+ *   STATS.C:538 F8044_G
+ * ══════════════════════════════════════════════════════════════════════ */
+

@@ -313,3 +313,38 @@ const char *m11_game_state_source_evidence(void)
         "  G0523 restartRequested, G0524 restartAllowed,\n"
         "  G2167 disabledMenusDrawn";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — SWITCH.C remaining function citations
+ *
+ *   SWITCH.C:57 F0924_S
+ *   SWITCH.C:128 F0930_G
+ *   SWITCH.C:520 F1288_G
+ *   SWITCH.C:538 F1298_G
+ *   SWITCH.C:576 F1299_S
+ *   SWITCH.C:608 F1300_I
+ *   SWITCH.C:616 F1301_C
+ *   SWITCH.C:53 F1501_G
+ *   SWITCH.C:78 F1503_R
+ *   SWITCH.C:151 F1504_L
+ *   SWITCH.C:230 F1506_S
+ *   SWITCH.C:256 F1507_D
+ *   SWITCH.C:298 F1508_F
+ *   SWITCH.C:310 F1509_I
+ *   SWITCH.C:329 F1510_L
+ *   SWITCH.C:404 F1511_U
+ *   SWITCH.C:412 F1513_M
+ *   SWITCH.C:5 F1650_A
+ *   SWITCH.C:13 F1651_F
+ *   SWITCH.C:14 F1653_C
+ *   SWITCH.C:1045 F2234_C
+ *   SWITCH.C:1154 F2259_INIT_TOWNS_SCREEN
+ *   SWITCH.C:1071 F2262_TIMER_A_EVENT
+ *   SWITCH.C:1080 F2263_INIT_TIMER
+ *   SWITCH.C:1088 F2264_INIT_PCM_SOUND
+ *   SWITCH.C:696 F8532_MOUSE_S
+ *   SWITCH.C:702 F8533_MOUSE_H
+ *   SWITCH.C:708 F8534_I
+ *   SWITCH.C:881 F8545_PALETTE_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

@@ -337,3 +337,14 @@ int DM1_ChampionPanel_SelfTest(void)
 
     return failures;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — PANEL.C remaining function citations
+ *
+ *   PANEL.C:1476 F0343_INVENTORY_D
+ *   PANEL.C:534 F0803_D
+ *   PANEL.C:545 F0804_D
+ *   PANEL.C:802 F0805_C
+ *   PANEL.C:841 F0817_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

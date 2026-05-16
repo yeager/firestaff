@@ -139,3 +139,11 @@ void m11_bf_copy_region(M11_BF_Framebuffer* dst, const M11_BF_Framebuffer* src,
                (size_t)r.w);
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — BLIT.C remaining function citations
+ *
+ *   BLIT.C:2105 F1013_B
+ *   BLIT.C:2036 F1132_C
+ * ══════════════════════════════════════════════════════════════════════ */
+

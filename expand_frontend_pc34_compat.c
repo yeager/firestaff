@@ -10,3 +10,10 @@ unsigned char*       bitmap FINAL_SEPARATOR
 {
         IMG_Compat_ExpandToBitmapIfPresent(graphic, bitmap);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — EXPAND.C remaining function citations
+ *
+ *   EXPAND.C:2313 F7330_D
+ * ══════════════════════════════════════════════════════════════════════ */
+

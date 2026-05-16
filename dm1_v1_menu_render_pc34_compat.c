@@ -141,3 +141,17 @@ const char *m11_menu_render_source_evidence(void)
         "G0299_ui_CandidateChampionOrdinal: champion attempting action.\n"
         "Leader hand state determines action area button set.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — MENU.C remaining function citations
+ *
+ *   MENU.C:844 F0392_MENUS_B
+ *   MENU.C:1874 F0802_I
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — MENUDRAW.C remaining function citations
+ *
+ *   MENUDRAW.C:22 F0517_MENUS_A
+ * ══════════════════════════════════════════════════════════════════════ */
+

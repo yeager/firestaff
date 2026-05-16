@@ -315,3 +315,29 @@ const char* DM1_Sound_Name(int16_t soundIndex) {
         default:                           return "Unknown";
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — SOUND.C remaining function citations
+ *
+ *   SOUND.C:1144 F0061_SOUND_S
+ *   SOUND.C:767 F0062_SOUND_I
+ *   SOUND.C:1318 F0063_SOUND_K
+ *   SOUND.C:181 F0501_SOUND_D
+ *   SOUND.C:227 F0502_SOUND_C
+ *   SOUND.C:1423 F0503_SOUND_L
+ *   SOUND.C:556 F0504_SOUND_R
+ *   SOUND.C:1397 F0799_SOUND_D
+ *   SOUND.C:425 F0945_I
+ *   SOUND.C:496 F0946_R
+ *   SOUND.C:6 F1785_SOUND_R
+ *   SOUND.C:1383 F1788_P
+ *   SOUND.C:1388 F1789_U
+ *   SOUND.C:1392 F1790_U
+ *   SOUND.C:945 F2198_CPSX
+ *   SOUND.C:948 F2199_CPSX
+ *   SOUND.C:946 F2200_CPSX
+ *   SOUND.C:947 F2201_CPSX
+ *   SOUND.C:949 F2202_CPSX
+ *   SOUND.C:945 F2207_CPSX
+ * ══════════════════════════════════════════════════════════════════════ */
+

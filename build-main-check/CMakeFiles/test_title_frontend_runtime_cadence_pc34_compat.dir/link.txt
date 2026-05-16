@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_title_frontend_runtime_cadence_pc34_compat.dir/test_title_frontend_runtime_cadence_pc34_compat.c.o CMakeFiles/test_title_frontend_runtime_cadence_pc34_compat.dir/title_frontend_v1.c.o CMakeFiles/test_title_frontend_runtime_cadence_pc34_compat.dir/title_dat_loader_v1.c.o -o test_title_frontend_runtime_cadence_pc34_compat 

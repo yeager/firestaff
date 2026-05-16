@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/firestaff.dir/firestaff_main_m11.c.o -o firestaff  -Wl,-rpath,/usr/local/lib: libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m12.a libfirestaff_m10.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

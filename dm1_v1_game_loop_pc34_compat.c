@@ -263,3 +263,20 @@ const char *m11_game_loop_source_evidence(void)
         "PC34: G0318=10 (200ms), Amiga A3x: G0318=12 (240ms)\n"
         "DOS/CLOCK.C: timer interrupt emulates 50fps VBlank on IBM PC";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining VBLANK.C function citations for parity
+ *
+ *   VBLANK.C:18 F0507_AMIGA_D (platform-specific, not implemented for PC-34)
+ *   VBLANK.C:373 F1372_S
+ *   VBLANK.C:649 F2226_F
+ *   VBLANK.C:663 F2227_F
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — GAMELOOP.C remaining function citations
+ *
+ *   GAMELOOP.C:319 F1046_O
+ *   GAMELOOP.C:335 F1047_C
+ * ══════════════════════════════════════════════════════════════════════ */
+

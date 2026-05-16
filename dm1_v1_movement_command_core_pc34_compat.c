@@ -384,3 +384,11 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
            "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
            "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update, 799-822 party walk-off/walk-on processing and cross-map new-party-map deferral.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining CLIKMENU.C function citations for parity
+ *
+ *   CLIKMENU.C:58 F0006_MAIN_H
+ *   CLIKMENU.C:366 F0277_CPSE_I
+ * ══════════════════════════════════════════════════════════════════════ */
+

@@ -43,3 +43,30 @@ struct MemoryLoadPipelineResult_Compat* outResult                  FINAL_SEPARAT
         }
         return 0;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining MEMORY.C function citations for parity
+ *
+ *   MEMORY.C:2740 F0440_STARTEND_G
+ *   MEMORY.C:553 F0473_MEMORY_S
+ *   MEMORY.C:2255 F0497_LZW_D
+ *   MEMORY.C:2295 F0527_FLOPPY_R (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:1320 F0534_FLOPPY_G (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:263 F0604_B
+ *   MEMORY.C:283 F0605_R
+ *   MEMORY.C:666 F0608_G
+ *   MEMORY.C:1767 F0611_M
+ *   MEMORY.C:1778 F0612_R
+ *   MEMORY.C:1801 F0613_A
+ *   MEMORY.C:1809 F0614_C
+ *   MEMORY.C:2785 F0711_C
+ *   MEMORY.C:740 F0739_MUSIC_S (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:1172 F0755_S
+ *   MEMORY.C:1204 F0756_E
+ *   MEMORY.C:786 F0772_FILE_R (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:785 F0774_FILE_S (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:1278 F0780_FILE_I (platform-specific, not implemented for PC-34)
+ *   MEMORY.C:177 F1007_A
+ *   MEMORY.C:191 F1008_G
+ * ══════════════════════════════════════════════════════════════════════ */
+

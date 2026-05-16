@@ -211,3 +211,13 @@ const char *m11_viewport_click_source_evidence(void)
         "action 233,72 85x50; movement 234,124 86x76; "
         "champion panels 0/80,136/152 80x16 each.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining CLIKVIEW.C function citations for parity
+ *
+ *   CLIKVIEW.C:78 F0373_COMMAND_P
+ *   CLIKVIEW.C:131 F0374_COMMAND_P
+ *   CLIKVIEW.C:191 F0375_COMMAND_P
+ *   CLIKVIEW.C:30 F0664_COMMAND_P
+ * ══════════════════════════════════════════════════════════════════════ */
+

@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_m11_display_aspect_present_rect.dir/test_m11_display_aspect_present_rect.c.o -o test_m11_display_aspect_present_rect  -Wl,-rpath,/usr/local/lib libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

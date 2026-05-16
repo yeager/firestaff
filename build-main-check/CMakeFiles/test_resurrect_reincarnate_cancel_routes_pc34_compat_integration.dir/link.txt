@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.dir/test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c.o -o test_resurrect_reincarnate_cancel_routes_pc34_compat_integration  libfirestaff_m10.a 

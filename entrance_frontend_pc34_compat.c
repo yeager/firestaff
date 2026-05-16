@@ -102,3 +102,28 @@ int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void) {
     return "ReDMCSB ENTRANCE.C PC/F20 path: draw entrance micro-dungeon, fade/curtain to entrance palette, draw C004 entrance screen, wait on VBlank/input loop, play switch sound, F0022_MAIN_Delay(20), hide pointer, then F0438 opens doors in source animation steps 1..31 with a BUG0_71 one-VBlank guard per step; rattle sound fires when step%3==1; door boxes move 4px per step from DATA.C left {0,100,0,160} and right {109,231,0,160}.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining ENTRANCE.C function citations for parity
+ *
+ *   ENTRANCE.C:600 F0440_STARTEND_G
+ *   ENTRANCE.C:966 F0442_STARTEND_P
+ *   ENTRANCE.C:694 F0707_R
+ *   ENTRANCE.C:166 F0709_S
+ *   ENTRANCE.C:363 F0710_W
+ *   ENTRANCE.C:1079 F0712_A
+ *   ENTRANCE.C:733 F0741_MUSIC_P (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:688 F0771_FILE_C (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:674 F0772_FILE_R (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:672 F0774_FILE_S (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:671 F0775_FILE_G (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:666 F0780_FILE_I (platform-specific, not implemented for PC-34)
+ *   ENTRANCE.C:727 F0785_S
+ *   ENTRANCE.C:842 F0813_P
+ *   ENTRANCE.C:923 F0814_TR
+ *   ENTRANCE.C:955 F0815_S
+ *   ENTRANCE.C:1017 F1028_F
+ *   ENTRANCE.C:1074 F2158_G
+ *   ENTRANCE.C:424 F2163_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

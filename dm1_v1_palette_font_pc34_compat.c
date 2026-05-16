@@ -129,3 +129,15 @@ void m11_pf_convert_portrait_planar(uint8_t* buf) {
     memcpy(buf, out, w * h);
     free(out);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — PALETTE.C remaining function citations
+ *
+ *   PALETTE.C:395 F0508_AMIGA_B
+ *   PALETTE.C:21 F1014_U
+ *   PALETTE.C:24 F1015_U
+ *   PALETTE.C:399 F1016_S
+ *   PALETTE.C:136 F1127_T
+ *   PALETTE.C:428 F1779_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

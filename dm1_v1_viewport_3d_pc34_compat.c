@@ -1151,3 +1151,26 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DRAWVIEW.C     F0694_SetMultipleColorsInPalette\n"
         "  DRAWVIEW.C     F0695_SetCreatureReplacementColors\n";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining DUNVIEW.C function citations for parity
+ *
+ *   DUNVIEW.C:1996 F0093_DUNGEONVIEW_A
+ *   DUNVIEW.C:4269 F0131_VIDEO_F
+ *   DUNVIEW.C:6803 F0137_CPSEF_P
+ *   DUNVIEW.C:6074 F0277_CPSE_I
+ *   DUNVIEW.C:2555 F0707_R
+ *   DUNVIEW.C:2936 F0710_W
+ *   DUNVIEW.C:2330 F0809_C
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — DRAWVIEW.C remaining function citations
+ *
+ *   DRAWVIEW.C:1099 F2164_P
+ *   DRAWVIEW.C:556 F2261_P
+ *   DRAWVIEW.C:558 F8156_S
+ *   DRAWVIEW.C:641 F8157_VIDRV_
+ *   DRAWVIEW.C:684 F8232_VIDRV_
+ * ══════════════════════════════════════════════════════════════════════ */
+

@@ -143,3 +143,27 @@ bool m11_sl_slot_occupied(const M11_SL_State* state, uint8_t slot) {
     if (!state || slot >= DM1_SL_MAX_SLOTS) return false;
     return state->slots[slot].occupied;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — LOADSAVE.C remaining function citations
+ *
+ *   LOADSAVE.C:2094 F0079_CPSC_G
+ *   LOADSAVE.C:356 F0414_SAVEUTIL_R
+ *   LOADSAVE.C:1932 F0415_SAVEUTIL_I
+ *   LOADSAVE.C:1632 F0416_SAVEUTIL_I
+ *   LOADSAVE.C:1613 F0418_SAVEUTIL_G
+ *   LOADSAVE.C:2721 F0419_SAVEUTIL_I
+ *   LOADSAVE.C:1626 F0420_SAVEUTIL_I
+ *   LOADSAVE.C:1661 F0422_SAVEUTIL_I
+ *   LOADSAVE.C:2177 F0423_SAVEUTIL_F
+ *   LOADSAVE.C:278 F0432_STARTEND_F
+ *   LOADSAVE.C:308 F0452_FLOPPY_G
+ *   LOADSAVE.C:497 F0453_FLOPPY_I
+ *   LOADSAVE.C:396 F0454_FLOPPY_I
+ *   LOADSAVE.C:1502 F0515_CHAMPION_C
+ *   LOADSAVE.C:1568 F0516_CHAMPION_C
+ *   LOADSAVE.C:373 F0528_FLOPPY_E
+ *   LOADSAVE.C:1483 F0776_FILE_C
+ *   LOADSAVE.C:1851 F2235_MUSIC_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

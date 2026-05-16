@@ -122,3 +122,14 @@ int DIALOG_Compat_GetLayoutRecord(unsigned int zoneIndex, DialogCompatLayoutReco
 const char* DIALOG_Compat_GetSourceScheduleEvidence(void) {
     return "ReDMCSB DIALOG.C source schedule: F0427 expands dialog graphic, prints version, counts choices, patches 1/2/4-choice layouts (3-choice unpatched), prints choice zones, centers messages in C469/C471, blits/draws viewport and fades; F0424 swaps input tables, loops processQueue+VBlank until selected choice, draws click feedback with two VBlank-related refreshes and F0022_MAIN_Delay(5), then restores input tables.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — DIALOG.C remaining function citations
+ *
+ *   DIALOG.C:293 F0424_DIALOG_G
+ *   DIALOG.C:546 F0425_DIALOG_P
+ *   DIALOG.C:561 F0426_DIALOG_I
+ *   DIALOG.C:1086 F0513_DIALOG_D
+ *   DIALOG.C:382 F0529_FLOPPY_I
+ * ══════════════════════════════════════════════════════════════════════ */
+

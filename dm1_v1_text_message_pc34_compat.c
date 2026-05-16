@@ -490,3 +490,19 @@ const M11_TextMessage* m11_text_get_message(const M11_TextState* s, int index) {
     if (!s || index < 0 || index >= s->messageCount) return NULL;
     return &s->messages[index];
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — TEXT.C remaining function citations
+ *
+ *   TEXT.C:1408 F0553_TEXT_MESSAGEAREA_M
+ *   TEXT.C:1919 F0554_TEXT_MESSAGEAREA_D
+ *   TEXT.C:2033 F0555_TEXT_A
+ *   TEXT.C:2054 F0556_TEXT_D
+ *   TEXT.C:1443 F0560_SCROLLER_S
+ *   TEXT.C:1378 F0561_SCROLLER_I
+ *   TEXT.C:73 F0818_I
+ *   TEXT.C:154 F0952_JAPANESE_P
+ *   TEXT.C:2002 F1001_JAPANESE_L
+ *   TEXT.C:112 F1029_I
+ * ══════════════════════════════════════════════════════════════════════ */
+

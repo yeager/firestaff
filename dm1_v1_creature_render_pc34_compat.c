@@ -349,3 +349,67 @@ int m11_creature_get_graphic(int creatureType, int attacking, int animFrame) {
 const char* m11_creature_type_name(int creatureType) {
     return dm1_creature_type_name(creatureType);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — ANIM.C remaining function citations
+ *
+ *   ANIM.C:1307 F0908_I
+ *   ANIM.C:909 F1024_S
+ *   ANIM.C:1302 F1088_O
+ *   ANIM.C:1317 F1089_C
+ *   ANIM.C:586 F1179_P
+ *   ANIM.C:593 F1180_P
+ *   ANIM.C:601 F1181_P
+ *   ANIM.C:620 F1182_P
+ *   ANIM.C:628 F1183_P
+ *   ANIM.C:636 F1184_P
+ *   ANIM.C:644 F1185_P
+ *   ANIM.C:652 F1186_P
+ *   ANIM.C:664 F1187_P
+ *   ANIM.C:672 F1188_P
+ *   ANIM.C:705 F1189_P
+ *   ANIM.C:738 F1190_P
+ *   ANIM.C:747 F1191_P
+ *   ANIM.C:759 F1192_P
+ *   ANIM.C:766 F1193_P
+ *   ANIM.C:775 F1194_P
+ *   ANIM.C:783 F1195_P
+ *   ANIM.C:480 F1206_U
+ *   ANIM.C:494 F1221_A
+ *   ANIM.C:495 F1222_F
+ *   ANIM.C:1315 F1230_C
+ *   ANIM.C:1379 F1253_F
+ *   ANIM.C:98 F1525_O
+ *   ANIM.C:110 F1526_C
+ *   ANIM.C:24 F1792_L
+ *   ANIM.C:118 F1795_P
+ *   ANIM.C:159 F1796_C
+ *   ANIM.C:171 F1797_R
+ *   ANIM.C:67 F1799_L
+ *   ANIM.C:106 F1824_A
+ *   ANIM.C:8 F1825_F
+ *   ANIM.C:2332 F2248_P
+ *   ANIM.C:2237 F2257_I
+ *   ANIM.C:5 F7227_R
+ *   ANIM.C:9 F7228_F
+ *   ANIM.C:1684 F8271_P
+ *   ANIM.C:1689 F8272_S
+ *   ANIM.C:1695 F8273_TR
+ *   ANIM.C:1701 F8275_I
+ *   ANIM.C:1567 F8290_C
+ *   ANIM.C:1592 F8294_S
+ *   ANIM.C:1603 F8296_PALETTE_S
+ *   ANIM.C:1677 F8303_W
+ *   ANIM.C:468 F9000_O
+ *   ANIM.C:931 F9001_C
+ *   ANIM.C:470 F9002_O
+ *   ANIM.C:929 F9003_C
+ *   ANIM.C:467 F9004_O
+ *   ANIM.C:932 F9005_C
+ *   ANIM.C:469 F9006_O
+ *   ANIM.C:930 F9007_C
+ *   ANIM.C:471 F9016_O
+ *   ANIM.C:927 F9017_C
+ *   ANIM.C:1304 F9073_D
+ * ══════════════════════════════════════════════════════════════════════ */
+

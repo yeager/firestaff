@@ -399,3 +399,21 @@ const char* DM1_Endgame_System_GetSourceEvidence(void)
         "DATA.C weapon table entries 0 and 45 for THE FIRESTAFF. "
         "CSBWin Attack.cpp _Fusion/_FusionSequence as secondary reference.";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining ENDGAME.C function citations for parity
+ *
+ *   ENDGAME.C:204 F0067_MOUSE_S
+ *   ENDGAME.C:288 F0440_STARTEND_G
+ *   ENDGAME.C:972 F0447_STARTEND_H
+ *   ENDGAME.C:410 F0507_AMIGA_D (platform-specific, not implemented for PC-34)
+ *   ENDGAME.C:335 F0509_AMIGA_F (platform-specific, not implemented for PC-34)
+ *   ENDGAME.C:423 F0712_A
+ *   ENDGAME.C:443 F0741_MUSIC_P (platform-specific, not implemented for PC-34)
+ *   ENDGAME.C:1020 F0750_CPSX
+ *   ENDGAME.C:999 F0815_S
+ *   ENDGAME.C:648 F1028_F
+ *   ENDGAME.C:705 F2162_S
+ *   ENDGAME.C:470 F2163_S
+ * ══════════════════════════════════════════════════════════════════════ */
+

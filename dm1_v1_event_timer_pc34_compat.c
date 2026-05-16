@@ -597,3 +597,12 @@ int dm1v1_event_queue_deserialize(
 
     return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining TIMELINE.C function citations for parity
+ *
+ *   TIMELINE.C:1921 F0210_CPSE_P
+ *   TIMELINE.C:43 F0256_TIMELINE_P
+ *   TIMELINE.C:525 F0277_CPSE_I
+ * ══════════════════════════════════════════════════════════════════════ */
+

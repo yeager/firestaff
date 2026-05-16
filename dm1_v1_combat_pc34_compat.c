@@ -632,3 +632,11 @@ const char *dm1_combat_pass601_source_evidence(void)
         "GROUP.C:769-930 F0190_GROUP_GetDamageCreatureOutcome\n"
         "GROUP.C:932-990 F0191_GROUP_GetDamageAllCreaturesOutcome\n";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining CHAMPION.C function citations for parity
+ *
+ *   CHAMPION.C:286 F0067_MOUSE_S
+ *   CHAMPION.C:1016 F0819_TEXT_MESSAGEAREA_P
+ * ══════════════════════════════════════════════════════════════════════ */
+

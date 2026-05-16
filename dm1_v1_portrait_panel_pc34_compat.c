@@ -121,3 +121,15 @@ void m11_pp_layout(M11_PP_PanelState* state, int16_t base_x, int16_t base_y) {
         state->panels[i].panel_y = base_y + (int16_t)(i * 33);
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602b — PORTRAIT.C remaining function citations
+ *
+ *   PORTRAIT.C:152 F2095_A
+ *   PORTRAIT.C:137 F2104_CHAMPION_C
+ *   PORTRAIT.C:165 F2105_CHAMPION_C
+ *   PORTRAIT.C:162 F7024_F
+ *   PORTRAIT.C:192 F7251_C
+ *   PORTRAIT.C:212 F7252_C
+ * ══════════════════════════════════════════════════════════════════════ */
+

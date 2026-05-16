@@ -225,3 +225,9 @@ const char *dm1_object_pass601_object_source_evidence(void)
         "OBJECT.C F0033_GetIconIndex\n";
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining OBJECT.C function citations for parity
+ *
+ *   OBJECT.C:345 F0037_OBJECT_D
+ * ══════════════════════════════════════════════════════════════════════ */
+

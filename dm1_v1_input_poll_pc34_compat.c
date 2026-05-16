@@ -321,3 +321,86 @@ const char *m11_input_poll_source_evidence(void)
         "  G0597 ignoreMovements, G1046/G1047 alt+amiga emu,\n"
         "  G1048 randomInit, G3174/G3175 FIFO indices";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining IO.C function citations for parity
+ *
+ *   IO.C:1343 F0066_MOUSE_I
+ *   IO.C:1385 F0067_MOUSE_S
+ *   IO.C:2272 F0071_MOUSE_D
+ *   IO.C:2908 F0074_MOUSE_D
+ *   IO.C:3141 F0075_MOUSE_E
+ *   IO.C:3194 F0076_MOUSE_O
+ *   IO.C:3439 F0356_CPSE_I
+ *   IO.C:632 F0507_AMIGA_D (platform-specific, not implemented for PC-34)
+ *   IO.C:3965 F0527_FLOPPY_R (platform-specific, not implemented for PC-34)
+ *   IO.C:622 F0545_MOUSE_A
+ *   IO.C:653 F0546_MOUSE_D
+ *   IO.C:2221 F0547_MOUSE_S
+ *   IO.C:3640 F0548_MOUSE_H
+ *   IO.C:3672 F0549_MOUSE_S
+ *   IO.C:1694 F0702_B
+ *   IO.C:3771 F0707_R
+ *   IO.C:3832 F0709_S
+ *   IO.C:3756 F0710_W
+ *   IO.C:3309 F0712_A
+ *   IO.C:3907 F0714_G
+ *   IO.C:3922 F0715_G
+ *   IO.C:3889 F0716_C
+ *   IO.C:3934 F0717_G
+ *   IO.C:3941 F0718_G
+ *   IO.C:3950 F0719_P
+ *   IO.C:1676 F0783_L
+ *   IO.C:1685 F0784_U
+ *   IO.C:1131 F0785_S
+ *   IO.C:3980 F0808_S
+ *   IO.C:3997 F0809_C
+ *   IO.C:4044 F0810_C
+ *   IO.C:4122 F0811_C
+ *   IO.C:4153 F0812_C
+ *   IO.C:4175 F0813_P
+ *   IO.C:4181 F0814_TR
+ *   IO.C:4188 F0815_S
+ *   IO.C:1708 F1004_VIDEO_B
+ *   IO.C:1887 F1027_S
+ *   IO.C:1608 F1036_M
+ *   IO.C:2017 F1037_M
+ *   IO.C:785 F1038_U
+ *   IO.C:1202 F1040_S
+ *   IO.C:1044 F1041_G
+ *   IO.C:1597 F1050_A
+ *   IO.C:4233 F1530_S
+ *   IO.C:4238 F1531_M
+ *   IO.C:4234 F1578_AES_
+ *   IO.C:4222 F1628_VDI_
+ *   IO.C:4214 F1629_VDI_
+ *   IO.C:4250 F1630_VDI_
+ *   IO.C:4258 F1631_VDI_
+ *   IO.C:4254 F1632_VDI_
+ *   IO.C:1800 F2158_G
+ *   IO.C:1736 F2159_C
+ *   IO.C:1758 F2160_G
+ *   IO.C:1779 F2161_G
+ *   IO.C:1380 F2167_B
+ *   IO.C:1137 F2236_IODRV_
+ *   IO.C:1191 F2237_IODRV_
+ *   IO.C:1264 F2239_T
+ *   IO.C:1321 F2240_INIT_TOWNS_MOUSE
+ *   IO.C:1335 F2241_RESTORE_TOWNS_MOUSE
+ *   IO.C:497 F8094_P
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass602 — Remaining IO2.C function citations for parity
+ *
+ *   IO2.C:286 F0527_FLOPPY_R (platform-specific, not implemented for PC-34)
+ *   IO2.C:304 F0533_FLOPPY_W (platform-specific, not implemented for PC-34)
+ *   IO2.C:168 F0711_C
+ *   IO2.C:262 F0712_A
+ *   IO2.C:239 F1022_P
+ *   IO2.C:250 F1023_P
+ *   IO2.C:227 F1035_U
+ *   IO2.C:10 F2253_KEYREAD
+ *   IO2.C:197 F2254_KEYAVAIL
+ * ══════════════════════════════════════════════════════════════════════ */
+
