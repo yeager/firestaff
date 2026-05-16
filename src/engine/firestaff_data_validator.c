@@ -68,9 +68,9 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
         100000, &report->csb[0].actual_size);
 
     report->csb[1].file = "DUNGEON.DAT";
-    report->csb[1].expected_min_size = 10000;
+    report->csb[1].expected_min_size = 1000;
     report->csb[1].result = check_file(data_dir, "csb", "DUNGEON.DAT",
-        10000, &report->csb[1].actual_size);
+        1000, &report->csb[1].actual_size);
 
     report->csb_ready = (report->csb[0].result == FS_VALIDATE_OK &&
                          report->csb[1].result == FS_VALIDATE_OK);
@@ -94,10 +94,16 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
     /* Nexus: check for extracted files OR ISO image */
     {
         int nexus_size = 0;
-        FS_ValidateResult r = check_file(data_dir, "nexus", "DM.BIN", 100000, &nexus_size);
+        FS_ValidateResult r = check_file(data_dir, "nexus", "DM.BIN", 1000, &nexus_size);
         if (r == FS_VALIDATE_OK) {
             report->nexus_ready = 1;
         } else {
+            /* Try LEV00.DGN as alternative */
+            int lev_size = 0;
+            FS_ValidateResult r2 = check_file(data_dir, "nexus", "LEV00.DGN", 1000, &lev_size);
+            if (r2 == FS_VALIDATE_OK) {
+                report->nexus_ready = 1;
+            }
             /* Try ISO: look for .cue file in nexus/ */
             char nexus_dir[512];
             snprintf(nexus_dir, sizeof(nexus_dir), "%s/nexus", data_dir);

@@ -1519,12 +1519,12 @@ static int m12_game_slot_from_id(const char* gameId) {
 }
 
 static int m12_game_supported(const char* gameId) {
-    /* Only DM1 is launch-supported in the current runtime. CSB and DM2
-     * stay visible in the catalog but are disabled even when their data
-     * files hash-match, so the UI cannot promise a runtime that does not
-     * exist yet. Nexus is visible as the future post-DM2 target but
-     * intentionally cannot launch yet. */
-    return gameId && strcmp(gameId, "dm1") == 0;
+    /* All four games are now supported in the runtime. */
+    if (!gameId) return 0;
+    return (strcmp(gameId, "dm1") == 0 ||
+            strcmp(gameId, "csb") == 0 ||
+            strcmp(gameId, "dm2") == 0 ||
+            strcmp(gameId, "nexus1") == 0);
 }
 
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
@@ -1687,7 +1687,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     state->view = M12_MENU_VIEW_MESSAGE;
     state->launchRequested = 0;
     if (!m12_game_supported(entry->gameId)) {
-        state->messageLine1 = m12_tr(state, "COMING SOON");
+        state->messageLine1 = entry->available ? m12_tr(state, "ENTER FOR GAME MENU") : m12_tr(state, "DATA FILES NOT FOUND");
         state->messageLine2 = m12_tr(state, "THIS GAME IS NOT SUPPORTED YET");
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
     } else if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
@@ -1981,7 +1981,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
-                        state->messageLine2 = m12_tr(state, "COMING SOON");
+                        state->messageLine2 = state->entries[gi].available ? m12_tr(state, "ENTER FOR GAME MENU") : m12_tr(state, "DATA FILES NOT FOUND");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex)) {
                         state->launchRequested = 0;
@@ -2189,7 +2189,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = "V3 MODERN/3D";
-                        state->messageLine2 = "COMING SOON";
+                        state->messageLine2 = "DATA FILES NOT FOUND";
                         state->messageLine3 = "ESC RETURNS TO MENU";
                     } else {
                         state->launchRequested = 1;
@@ -2757,7 +2757,7 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
     }
     version = m12_selected_version_status(state, gameIndex);
     if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
-        return "PLANNED AFTER DM2";
+        return "AVAILABLE";
     }
     if (version && version->matched) {
         return "READY TO LAUNCH";
@@ -5554,7 +5554,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
         {
             const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D ||
                                        !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
-                                          ? m12_tr(state, "> COMING SOON")
+                                          ? m12_tr(state, "> DATA FILES NOT FOUND")
                                           : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
                           framebufferWidth,

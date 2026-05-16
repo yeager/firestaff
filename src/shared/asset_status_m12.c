@@ -42,6 +42,7 @@ static const M12_VersionSpec g_dm1Versions[] = {
 };
 
 static const M12_VersionSpec g_csbVersions[] = {
+    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611"},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e"},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68"},
     {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362"}
@@ -54,6 +55,7 @@ static const M12_VersionSpec g_dm2Versions[] = {
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
+    {"nexus1", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f"},
     {"nexus1", "nexus1", "Nexus original Sega Saturn JP", "nexus1", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194"},
     {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
 };
