@@ -3,6 +3,7 @@
 #define FIRESTAFF_GAME_LOOP_H
 
 #include <stdint.h>
+#include "firestaff_input.h"
 
 /* Firestaff Game Loop — connects V1 engine, V2 rendering, SDL.
  *
@@ -50,6 +51,7 @@ typedef struct {
     int party_x, party_y;
     int party_direction;
     int in_menu;
+    FS_InputQueue input_queue;
 } FS_GameState;
 
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config);

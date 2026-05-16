@@ -2,6 +2,14 @@
 #include "firestaff_game_loop.h"
 #include "firestaff_l10n.h"
 #include "firestaff_asset_pipeline.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
+#include "firestaff_input.h"
+#include "firestaff_sdl_bridge.h"
+#include "firestaff_save.h"
 #include "dm1_v2_anim_timing.h"
 #include <string.h>
 #include <stdio.h>
@@ -78,13 +86,37 @@ int fs_game_load_assets(FS_GameState *state) {
 void fs_game_tick_v1(FS_GameState *state) {
     if (!state || state->paused) return;
 
-    /* This is where V1 game logic runs — one tick at original speed.
-     * In full implementation:
-     *   dm1_v1_game_loop_tick()
-     *   dm1_v1_event_timer_process()
-     *   dm1_v1_creature_ai_tick()
-     *   dm1_v1_combat_apply_pending_damage()
-     * For now: advance frame count */
+    /* V1 game tick — process one game logic frame */
+    /* 1. Process input queue → V1 command queue */
+    {
+        FS_InputEvent evt;
+        while (fs_input_queue_pop(&state->input_queue, &evt)) {
+            switch (evt.cmd) {
+                case FS_CMD_MOVE_FORWARD:
+                    state->party_y--;
+                    break;
+                case FS_CMD_MOVE_BACKWARD:
+                    state->party_y++;
+                    break;
+                case FS_CMD_TURN_LEFT:
+                    state->party_direction = (state->party_direction + 3) & 3;
+                    break;
+                case FS_CMD_TURN_RIGHT:
+                    state->party_direction = (state->party_direction + 1) & 3;
+                    break;
+                case FS_CMD_MENU:
+                    state->paused = !state->paused;
+                    break;
+                default: break;
+            }
+        }
+    }
+    /* 2. Process timers/events */
+    /* dm1v1_event_process_tick() — when fully wired */
+    /* 3. Creature AI */
+    /* dm1_creature_ai_tick() — when fully wired */
+    /* 4. Apply pending damage */
+    /* dm1_combat_apply_pending_damage_pc34() — when fully wired */
     state->frame_count++;
 }
 

@@ -5890,3 +5890,56 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
 }
 
 M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
+
+/* ── Extras view stubs (#9) ───────────────────────────────────────── */
+
+static void m12_draw_bestiary_stub(unsigned char *fb, int fw, int fh) {
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "BESTIARY", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
+    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
+}
+
+static void m12_draw_spell_reference_stub(unsigned char *fb, int fw, int fh) {
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SPELL REFERENCE", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
+    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
+}
+
+static void m12_draw_map_viewer_stub(unsigned char *fb, int fw, int fh) {
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "MAP VIEWER", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
+    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
+}
+
+static void m12_draw_item_encyclopedia_stub(unsigned char *fb, int fw, int fh) {
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "ITEM ENCYCLOPEDIA", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
+    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
+}
+
+static void m12_draw_screenshot_gallery_stub(unsigned char *fb, int fw, int fh) {
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SCREENSHOT GALLERY", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
+    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
+}
+
+/* ── Accessibility settings (#10) ─────────────────────────────────── */
+
+static M12_ExtSettingsRow m12_accessibility_settings[] = {
+    {"Font Scale",        "100%",     1, 0},
+    {"High Contrast",     "Off",      1, 0},
+    {"Colorblind Mode",   "Off",      1, 0},
+    {"Screen Reader",     "Off",      0, 0},  /* V2.2 */
+    {"Large Cursor",      "Off",      0, 0},  /* V2.2 */
+    {"Reduced Motion",    "Off",      0, 0},  /* V2.2 */
+    {"Button Hold Time",  "Normal",   0, 0},  /* V2.2 */
+    {"Audio Cues",        "On",       0, 0},  /* V2.2 */
+    {NULL, NULL, 0, 0}
+};
+
+/* ── Default to redesigned menu (#11) ─────────────────────────────── */
+
+int m12_should_use_redesigned_menu(void) {
+    return 1; /* Always use redesigned hierarchical menu */
+}
+
