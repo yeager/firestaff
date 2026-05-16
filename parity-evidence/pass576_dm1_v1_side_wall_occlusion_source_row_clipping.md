@@ -132,37 +132,37 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
   - line 762: gate.src_x = (int16_t)src_x;
   - line 763: gate.src_y = (int16_t)src_y;
 
-- PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:178-247)
+- PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:222-248)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.
-  - line 238: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 238: DM1_PC34_ZONE_WALL_D2L2
-  - line 238: "6862"
-  - line 239: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 239: DM1_PC34_ZONE_WALL_D2R2
-  - line 239: "6893"
-  - line 243: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 243: DM1_PC34_ZONE_WALL_D1L
-  - line 243: "7460"
-  - line 244: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 244: DM1_PC34_ZONE_WALL_D1R
-  - line 244: "7628"
-  - line 246: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - line 246: DM1_PC34_ZONE_WALL_D0L
-  - line 246: "8038"
-  - line 247: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - line 247: DM1_PC34_ZONE_WALL_D0R
-  - line 247: "8144"
+  - line 239: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 239: DM1_PC34_ZONE_WALL_D2L2
+  - line 239: "6862"
+  - line 240: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 240: DM1_PC34_ZONE_WALL_D2R2
+  - line 240: "6893"
+  - line 244: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 244: DM1_PC34_ZONE_WALL_D1L
+  - line 244: "7460"
+  - line 245: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 245: DM1_PC34_ZONE_WALL_D1R
+  - line 245: "7628"
+  - line 247: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - line 247: DM1_PC34_ZONE_WALL_D0L
+  - line 247: "8038"
+  - line 248: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - line 248: DM1_PC34_ZONE_WALL_D0R
+  - line 248: "8144"
 
-- PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:723-779)
+- PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:799-855)
   - Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.
-  - line 723: static void test_wall_source_row_clip_occlusion_gate(void)
-  - line 728: wall_clip_gate.151713.src_x
-  - line 729: wall_clip_gate.151713.src_y
-  - line 752: wall_clip_gate.occluded_source_row
-  - line 756: wall_clip_gate.occluded_viewport
-  - line 759: static void test_wall_draw_uses_clip_gate_source_offsets(void)
-  - line 771: wall_clip_draw.source_offset_next
-  - line 778: wall_clip_draw.opaque_copies_transparent_color
+  - line 799: static void test_wall_source_row_clip_occlusion_gate(void)
+  - line 804: wall_clip_gate.151713.src_x
+  - line 805: wall_clip_gate.151713.src_y
+  - line 828: wall_clip_gate.occluded_source_row
+  - line 832: wall_clip_gate.occluded_viewport
+  - line 835: static void test_wall_draw_uses_clip_gate_source_offsets(void)
+  - line 847: wall_clip_draw.source_offset_next
+  - line 854: wall_clip_draw.opaque_copies_transparent_color
 
 ## DM1 Hash Locks
 - PASS DM1 canonical PC34/V1 GRAPHICS.DAT: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417

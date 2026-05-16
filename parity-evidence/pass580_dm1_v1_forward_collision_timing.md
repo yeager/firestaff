@@ -19,8 +19,8 @@ Status: PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED
 - dm1_v1_movement_command_core_pc34_compat.c:182-376 - movementCommandCore
 - dm1_v1_movement_command_core_pc34_compat.c:202-364 - blockedBeforePartyCommit
 - dm1_v1_movement_command_core_pc34_compat.c:87-102 - staminaSideEffects
-- dm1_v1_movement_timing_pc34_compat.c:59-83 - successfulMovementTiming
-- dm1_v1_movement_timing_pc34_compat.c:69-79 - successfulMovementTimingSpan
+- dm1_v1_movement_timing_pc34_compat.c:65-89 - successfulMovementTiming
+- dm1_v1_movement_timing_pc34_compat.c:75-85 - successfulMovementTimingSpan
 
 ## Verification
 - build/test_dm1_v1_movement_command_core_pc34_compat: dm1V1MovementCommandCoreInvariantOk=1

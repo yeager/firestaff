@@ -206,7 +206,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
         "path": ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "178-247",
+        "lines": "222-248",
         "claim": "Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.",
         "ordered": [
             "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
@@ -233,7 +233,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_clip_row_runtime_assertions_are_registered",
         "path": ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "723-779",
+        "lines": "799-855",
         "claim": "Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.",
         "ordered": [
             "static void test_wall_source_row_clip_occlusion_gate(void)",

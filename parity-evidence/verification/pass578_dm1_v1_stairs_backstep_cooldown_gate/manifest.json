@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "firestaffAudit": {
     "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
       "claim": "gated movement returns before queue pop",
@@ -17,10 +17,10 @@
         376
       ]
     },
-    "testExecutable": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex/build-pass578/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testExecutable": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "229 passed, 0 failed"
   },
-  "head": "f74c469f24bdcff0e5adc74f66e0a7c7bce163f0",
+  "head": "2528724afbac2ac389ef6f91af7eb5ee691af7f5",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-15T21:29:48.093455+00:00",
-  "worktree": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-stairs-backstep-cooldown-pass578-20260515-codex"
+  "timestampUtc": "2026-05-16T00:34:30.498468+00:00",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch"
 }

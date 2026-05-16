@@ -102,8 +102,8 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "291-300",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass-side-wall-occlusion-source-row-clipping-20260515-2345/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fb40f505a724302c0c12743976ee6996e2f779ed0d55848608601ac75bdc14ca",
+      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -151,8 +151,8 @@
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "729-768",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass-side-wall-occlusion-source-row-clipping-20260515-2345/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fb40f505a724302c0c12743976ee6996e2f779ed0d55848608601ac75bdc14ca",
+      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -161,83 +161,83 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 238,
+          "line": 239,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 238,
+          "line": 239,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 238,
+          "line": 239,
           "needle": "\"6862\""
         },
         {
-          "line": 239,
+          "line": 240,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 239,
+          "line": 240,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 239,
+          "line": 240,
           "needle": "\"6893\""
         },
         {
-          "line": 243,
+          "line": 244,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 243,
+          "line": 244,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 243,
+          "line": 244,
           "needle": "\"7460\""
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "\"7628\""
         },
         {
-          "line": 246,
+          "line": 247,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 246,
+          "line": 247,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 246,
+          "line": 247,
           "needle": "\"8038\""
         },
         {
-          "line": 247,
+          "line": 248,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 247,
+          "line": 248,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 247,
+          "line": 248,
           "needle": "\"8144\""
         }
       ],
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
-      "lines": "178-247",
+      "lines": "222-248",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass-side-wall-occlusion-source-row-clipping-20260515-2345/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "e3e7d0185957f91e84b34e4ec5ffca4ac465752fbaadac992b68992fe7751c3e",
+      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -246,43 +246,43 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 723,
+          "line": 799,
           "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
         },
         {
-          "line": 728,
+          "line": 804,
           "needle": "wall_clip_gate.151713.src_x"
         },
         {
-          "line": 729,
+          "line": 805,
           "needle": "wall_clip_gate.151713.src_y"
         },
         {
-          "line": 752,
+          "line": 828,
           "needle": "wall_clip_gate.occluded_source_row"
         },
         {
-          "line": 756,
+          "line": 832,
           "needle": "wall_clip_gate.occluded_viewport"
         },
         {
-          "line": 759,
+          "line": 835,
           "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
         },
         {
-          "line": 771,
+          "line": 847,
           "needle": "wall_clip_draw.source_offset_next"
         },
         {
-          "line": 778,
+          "line": 854,
           "needle": "wall_clip_draw.opaque_copies_transparent_color"
         }
       ],
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
-      "lines": "723-779",
+      "lines": "799-855",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass-side-wall-occlusion-source-row-clipping-20260515-2345/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "e3e7d0185957f91e84b34e4ec5ffca4ac465752fbaadac992b68992fe7751c3e",
+      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
