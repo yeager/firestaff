@@ -35,3 +35,46 @@ const char *csb_v1_character_source_evidence(void) {
         "ReDMCSB CHAMPION.C F0284-F0330 shared champion core\n";
 }
 
+
+/* ── CSB DM1 champion import — parse DM1 save format ──────────────── */
+/* #10: Read DM1 save file and extract champion data for CSB.
+ * DM1 save format: header (24 bytes) + champion records (116 bytes each).
+ * Source: CSBWin/SaveGame.cpp DM1 import path */
+
+int csb_v1_character_import_dm1_save(CSB_V1_PartyState *party,
+    const char *dm1_save_path)
+{
+    FILE *f;
+    uint8_t hdr[24], champ[116];
+    int i, count;
+    if (!party || !dm1_save_path) return -1;
+    f = fopen(dm1_save_path, "rb");
+    if (!f) return -1;
+    if (fread(hdr, 1, 24, f) != 24) { fclose(f); return -1; }
+
+    count = hdr[0]; /* number of champions */
+    if (count > CSB_V1_MAX_CHAMPIONS) count = CSB_V1_MAX_CHAMPIONS;
+    party->champion_count = count;
+    party->imported_from_dm1 = 1;
+
+    for (i = 0; i < count; i++) {
+        if (fread(champ, 1, 116, f) != 116) break;
+        /* Parse champion record (DM1 save format) */
+        memcpy(party->champions[i].name, champ, 8);
+        party->champions[i].name[8] = 0;
+        party->champions[i].health = (int16_t)(champ[8] | (champ[9] << 8));
+        party->champions[i].max_health = (int16_t)(champ[10] | (champ[11] << 8));
+        party->champions[i].stamina = (int16_t)(champ[12] | (champ[13] << 8));
+        party->champions[i].max_stamina = (int16_t)(champ[14] | (champ[15] << 8));
+        party->champions[i].mana = (int16_t)(champ[16] | (champ[17] << 8));
+        party->champions[i].max_mana = (int16_t)(champ[18] | (champ[19] << 8));
+        party->champions[i].strength = champ[20];
+        party->champions[i].dexterity = champ[21];
+        party->champions[i].wisdom = champ[22];
+        party->champions[i].vitality = champ[23];
+        party->champions[i].alive = party->champions[i].health > 0;
+    }
+
+    fclose(f);
+    return count;
+}
