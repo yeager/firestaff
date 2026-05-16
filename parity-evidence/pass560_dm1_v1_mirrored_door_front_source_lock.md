@@ -1,6 +1,6 @@
 # Pass560 DM1 V1 mirrored door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front order, including mirrored right-side cell orders for D3R/D2R.
 
@@ -46,21 +46,15 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
   - line 142: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
   - line 142: DUNVIEW.C:7181 floor ornament under mirrored rear pass
 
-- PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:435-491)
-  - line 453: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 455: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
-  - line 456: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 461: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 9);
-  - line 480: rear.cells[0] == expected[i].rear_cells[0]
-  - line 484: front.cells[0] == expected[i].front_cells[0]
+- FAIL firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:435-491)
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.far_door_front_occlusion == 1
 PASS source_evidence.d1c_door_front_occlusion == 1
 PASS source_evidence.d1c_door_button_occlusion == 1
+PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -72,9 +66,9 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass560 check-only
+FAIL pass560 check-only: firestaff-mirrored-door-front-runtime-test
 ~~~
 
 ## Non-Claims

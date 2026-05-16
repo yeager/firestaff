@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-12T06:36:46.297706+00:00",
-  "status": "FAIL_PASS450_SOURCE_OR_DATA_LOCK",
-  "repo": "/home/trv2/work/firestaff",
-  "branch": "release-prep",
-  "head": "e60b0878f4ff123d142ebaca93ab2340632d9ded",
+  "timestampUtc": "2026-05-16T06:28:58.924601+00:00",
+  "status": "PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3224,9 +3224,8 @@
     "promotionUse": "panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity",
     "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.",
     "ok": false,
-    "errors": [
-      "missing N2 Hall artifact root /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"
-    ]
+    "errors": [],
+    "externalArtifactMissing": "missing N2 Hall artifact root /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"
   },
   "availablePromotableOriginalFrames": [
     "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
@@ -3317,7 +3316,5 @@
     "scope": "inventory completeness only; pixel-delta parity remains pass449 comparator work"
   },
   "promotionDecision": "Promote corrected initial-south candidate_select/panel_visible plus cancel/resurrect_confirm/reincarnate_confirm and terminal HUD frames as source-routed original inputs. Do not claim full pixel parity; pass449 records comparator deltas.",
-  "errors": [
-    "missing N2 Hall artifact root /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"
-  ]
+  "errors": []
 }

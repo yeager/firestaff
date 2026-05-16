@@ -1,10 +1,10 @@
 {
   "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
   "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
-  "timestampUtc": "2026-05-15T01:46:34.390128+00:00",
-  "branch": "worker/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex",
-  "head": "df2a407f446b8b57b574fdc365c1a5b829f0fad2",
-  "worktree": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex",
+  "timestampUtc": "2026-05-16T06:29:00.262195+00:00",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
   "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
   "primarySourceAudit": {
     "GAMELOOP.C:cooldownInputQueueLoop": "GAMELOOP.C:150-219",
@@ -16,12 +16,12 @@
   "firestaffGuards": {
     "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
     "queueRetentionSpan": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
-    "cooldownDecrement": "dm1_v1_movement_timing_pc34_compat.c:85-95",
-    "cooldownDecrementSpan": "dm1_v1_movement_timing_pc34_compat.c:89-93",
+    "cooldownDecrement": "dm1_v1_movement_timing_pc34_compat.c:91-101",
+    "cooldownDecrementSpan": "dm1_v1_movement_timing_pc34_compat.c:95-99",
     "regression": "test_dm1_v1_movement_timing_pc34_compat"
   },
   "runtimeProbe": {
-    "command": "/home/trv2/work/firestaff-worktrees/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex/build-pass552/test_dm1_v1_movement_timing_pc34_compat",
+    "command": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_movement_timing_pc34_compat",
     "statusNeedle": "dm1V1MovementTimingInvariantOk=1"
   },
   "notClaimed": [

@@ -2,12 +2,12 @@
   "classification": "blocked/source-symbol-map-and-debugger-hits-required",
   "exact_remaining_blocker": "FIRES.EXENEW now supplies the decompressed runtime image layout, but no N2-local FIRES.MAP/public-symbol table or debugger-observed source seam CS:IP/global addresses bind ReDMCSB functions to the loaded image.",
   "inputs": {
-    "pass208": "/home/trv2/work/firestaff/parity-evidence/verification/pass208_dm1_v1_fires_loader_csip_source_map_gate/manifest.json",
-    "pass210": "/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json",
-    "pass229": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json",
+    "pass208": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass208_dm1_v1_fires_loader_csip_source_map_gate/manifest.json",
+    "pass210": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json",
+    "pass229": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json",
     "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "runtime_image": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "n2_only": true,
   "non_claims": [

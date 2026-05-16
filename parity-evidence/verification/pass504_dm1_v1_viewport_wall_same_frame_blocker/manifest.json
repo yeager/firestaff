@@ -17,7 +17,7 @@
     {
       "file": "tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py",
       "id": "pass499_runtime_predicate",
-      "line": 156,
+      "line": 162,
       "needle": "same viewport",
       "ok": true
     },

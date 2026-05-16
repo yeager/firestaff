@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/home/trv2/work/firestaff/build",
+        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,25 +15,17 @@
         "-j2"
       ],
       "outputTail": [
-        "[  2%] Linking C static library libfirestaff_m10.a",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[ 97%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[ 97%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[ 97%] Built target firestaff_m10",
-        "[100%] Linking C executable test_m11_v1_turning_presentation_pc34_compat",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 90%] Built target firestaff_m10",
-        "[ 90%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o",
-        "[ 93%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat",
+        "[ 93%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -87,7 +79,7 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
       "passed": true,
       "returncode": 0,
@@ -256,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /home/trv2/work/firestaff/m11_game_view.c:10128",
-        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/m11_game_view.c:18614",
+        "- Firestaff field rows/zones: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:10128",
+        "- Firestaff source viewport draw order: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:18614",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -284,8 +276,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /home/trv2/work/firestaff/m11_game_view.c:13247",
-        "- Firestaff palette apply: /home/trv2/work/firestaff/m11_game_view.c:8835",
+        "- Firestaff palette compute: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:13247",
+        "- Firestaff palette apply: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:8835",
         "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -417,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-15T05:30:47.669602+00:00"
+  "timestampUtc": "2026-05-16T06:28:54.470903+00:00"
 }

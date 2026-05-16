@@ -1,6 +1,6 @@
 # pass450_dm1_v1_hall_original_candidate_artifact_inventory
 
-- status: `FAIL_PASS450_SOURCE_OR_DATA_LOCK`
+- status: `PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES`
 - parity claim: **not made**
 - frame rows inventoried: 30
 

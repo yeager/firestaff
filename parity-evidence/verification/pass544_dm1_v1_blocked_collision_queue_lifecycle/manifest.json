@@ -1,8 +1,8 @@
 {
-  "branch": "main",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "firestaffGuards": {
-    "blockedCollisionSpan": "dm1_v1_movement_command_core_pc34_compat.c:203-361",
-    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "blockedCollisionSpan": "dm1_v1_movement_command_core_pc34_compat.c:206-364",
+    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
     "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:215-228",
     "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
@@ -10,7 +10,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "77c0608a2cfac656f8cd06c7ca20cbf07ed57667",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
   "notClaimed": [
     "new original DOS runtime capture",
     "viewport or wall pixel parity",
@@ -27,7 +27,7 @@
   },
   "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
   "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
-  "timestampUtc": "2026-05-14T19:22:41.270763+00:00",
+  "timestampUtc": "2026-05-16T06:28:58.751547+00:00",
   "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
-  "worktree": "/home/trv2/work/firestaff"
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch"
 }

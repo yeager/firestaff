@@ -7,7 +7,7 @@ Status: PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN
 - CLIKMENU.C:237-322 proves the blocked-step order: input wait is armed, living champions spend stamina, legality runs, blocked wall/door/fake-wall damage is requested, input is discarded, PC-34 waits one VBlank, input wait is re-armed by setting G0321_B_StopWaitingForPlayerInput = C0_FALSE, and the function returns before accepted-move/cooldown code.
 
 ## Firestaff executable guards
-- dm1_v1_movement_command_core_pc34_compat.c:216-291 keeps the same command-core blocked branch order.
+- dm1_v1_movement_command_core_pc34_compat.c:219-294 keeps the same command-core blocked branch order.
 - dm1_v1_movement_command_core_pc34_compat.c:25-52 records the source-locked self-damage request seam without claiming combat RNG/wound materialization.
 - build/test_dm1_v1_movement_command_core_pc34_compat asserts blocked movement spends stamina, flushes queued input, does not release wait/redraw, and records the wall/door self-damage request fields.
 

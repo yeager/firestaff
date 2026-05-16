@@ -16,13 +16,13 @@ Scope: source-lock the loop that decrements movement cooldowns before raw input 
 
 - dm1_v1_input_command_queue_pc34_compat.c:286-328 - queueProcessOne
 - dm1_v1_input_command_queue_pc34_compat.c:303-318 - queueRetentionSpan
-- dm1_v1_movement_timing_pc34_compat.c:85-95 - cooldownDecrement
-- dm1_v1_movement_timing_pc34_compat.c:89-93 - cooldownDecrementSpan
+- dm1_v1_movement_timing_pc34_compat.c:91-101 - cooldownDecrement
+- dm1_v1_movement_timing_pc34_compat.c:95-99 - cooldownDecrementSpan
 - test_dm1_v1_movement_timing_pc34_compat - regression
 
 ## Gates
 
-- /home/trv2/work/firestaff-worktrees/dm1v1-movement-cooldown-queue-loop-pass552-20260515-codex/build-pass552/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
+- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
 
 ## Not claimed
 

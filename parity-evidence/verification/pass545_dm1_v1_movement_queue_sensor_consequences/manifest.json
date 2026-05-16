@@ -1,14 +1,14 @@
 {
-  "branch": "main",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "closedGap": "successful movement dequeues one command, retains later queued input, runs destination sensor consequences, then applies cooldown; blocked movement dequeues the attempted move, discards nonreserved queued input, runs no movement sensor consequences, and does not assign successful-step cooldown.",
   "firestaffGuards": {
-    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:179-373",
+    "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
     "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "bfed9958e9de22d528b93d7e8803281ae2db55a9",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
   "notClaimed": [
     "viewport wall drawing changes",
     "new DOS runtime capture",
@@ -28,5 +28,5 @@
     "sensorRotationDeferSpan": "MOVESENS.C:1785-1793"
   },
   "status": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
-  "timestampUtc": "2026-05-14T23:18:13.189507+00:00"
+  "timestampUtc": "2026-05-16T06:28:58.512900+00:00"
 }

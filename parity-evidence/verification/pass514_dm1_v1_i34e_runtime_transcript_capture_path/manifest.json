@@ -17,9 +17,9 @@
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
   "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "branch": "main",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "6164d732494851f45e03dcca966f3f87212b3898",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -92,7 +92,7 @@
     "routeInputAfterArmingSucceeded": true,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
   "requiredUnifiedFields": [
     "F0361 queue slot/count",
     "F0380 pop/count",
@@ -221,5 +221,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
-  "timestampUtc": "2026-05-15T00:05:05.473453+00:00"
+  "timestampUtc": "2026-05-16T06:28:58.566694+00:00"
 }

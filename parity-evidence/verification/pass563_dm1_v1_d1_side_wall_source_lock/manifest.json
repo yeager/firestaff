@@ -1,70 +1,46 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 285,
-          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
-        },
-        {
-          "line": 285,
-          "needle": "DM1_PC34_ZONE_WALL_D1L"
-        },
-        {
-          "line": 285,
-          "needle": "DUNVIEW.C:7445-7455"
-        },
-        {
-          "line": 285,
-          "needle": "DUNVIEW.C:7459-7460 side ornament then return"
-        },
-        {
-          "line": 286,
-          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
-        },
-        {
-          "line": 286,
-          "needle": "DM1_PC34_ZONE_WALL_D1R"
-        },
-        {
-          "line": 286,
-          "needle": "DUNVIEW.C:7613-7623"
-        },
-        {
-          "line": 286,
-          "needle": "DUNVIEW.C:7627-7628 side ornament then return"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d1-side-wall-metadata",
       "lines": "280-290",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
+        "DM1_PC34_ZONE_WALL_D1L",
+        "DUNVIEW.C:7445-7455",
+        "DUNVIEW.C:7459-7460 side ornament then return",
+        "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
+        "DM1_PC34_ZONE_WALL_D1R",
+        "DUNVIEW.C:7613-7623",
+        "DUNVIEW.C:7627-7628 side ornament then return"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 243,
+          "line": 244,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 243,
+          "line": 244,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 243,
+          "line": 244,
           "needle": "\"7460\""
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 244,
+          "line": 245,
           "needle": "\"7628\""
         }
       ],
@@ -75,29 +51,17 @@
       "status": "PASS"
     },
     {
-      "hits": [
-        {
-          "line": 1070,
-          "needle": "DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
-        },
-        {
-          "line": 1071,
-          "needle": "DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
-        },
-        {
-          "line": 1091,
-          "needle": "DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L"
-        },
-        {
-          "line": 1092,
-          "needle": "DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
       "lines": "1068-1093",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115",
+        "DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115",
+        "DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L",
+        "DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -221,28 +185,28 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass563_dm1_v1_d1_side_wall_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS563_DM1_V1_D1_SIDE_WALL_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS563_DM1_V1_D1_SIDE_WALL_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass563-d1wall/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.d0c_foreground_before_things == 1\nPASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass563-d1wall/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py",
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass563 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass563 check-only: firestaff-d1-side-wall-metadata,firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

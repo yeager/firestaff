@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -30,25 +30,21 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
   - line 137: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
   - line 137: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
-- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:435-725)
-  - line 450: DM1_VIEW_SQUARE_D3L2, "6270"
-  - line 451: DM1_VIEW_SQUARE_D3R2, "6337"
-  - line 461: door_front_occlusion_spec_count(), 9
-  - line 718: source_evidence.far_door_front_occlusion
+- FAIL firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:435-725)
+  - line 579: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 580: DM1_VIEW_SQUARE_D3R2, "6337"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:960-972)
-  - line 967: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
-  - line 968: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:960-972)
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.d0c_foreground_before_things == 1
-PASS source_evidence.door_front_occlusion == 1
 PASS source_evidence.far_door_front_occlusion == 1
+PASS source_evidence.d1_side_door_front_occlusion == 1
 PASS source_evidence.d1c_door_front_occlusion == 1
 PASS source_evidence.d1c_door_button_occlusion == 1
+PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -60,7 +56,7 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass561 check-only
+FAIL pass561 check-only: firestaff-far-door-front-runtime-test,firestaff-source-evidence-string
 ~~~
