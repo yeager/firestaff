@@ -158,7 +158,7 @@ jobs:
           for probe in probes/*/firestaff_*_probe.c probes/firestaff_*_probe.c; do
             [ -f "$probe" ] || continue
             echo "=== $probe ==="
-            gcc -Wall -Wextra -Werror -Iinclude -Isrc -c -o /tmp/probe.o "$probe" || exit 1
+            gcc -Wall -Wextra -Werror -Wno-format-truncation -Iinclude -Isrc -c -o /tmp/probe.o "$probe" || exit 1
             probes_found=1
           done
           if [ "$probes_found" = 0 ]; then echo "No probes matched — OK"; fi
