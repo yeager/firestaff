@@ -1,4 +1,5 @@
 #include <stdint.h>
+extern long F0467_MEMORY_GetGraphicOffset_Compat(int format, int count, const unsigned short *sizes, int index);
 
 #include "memory_graphics_dat_header_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"

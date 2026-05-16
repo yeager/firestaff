@@ -64,7 +64,7 @@ void v2_transition_apply(uint8_t* src, uint8_t* dst, int w, int h) {
                     }
                     break;
                 case PIXELATE:
-                    int block_size = 8;
+                    int block_size; block_size = 8;
                     int bx = (x / block_size) * block_size;
                     int by = (y / block_size) * block_size;
                     if ((bx + by) / (w + h) > p) {

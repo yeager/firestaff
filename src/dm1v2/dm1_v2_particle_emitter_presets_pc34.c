@@ -1,3 +1,4 @@
+#include "dm1_v2_particle_system_pc34.h"
 #include "dm1_v2_particle_emitter_presets_pc34.h"
 
 void v2_emitter_preset_init(void) {
