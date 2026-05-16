@@ -8,7 +8,22 @@ typedef enum {
     FS_LANG_SV,    /* Swedish */
     FS_LANG_DE,    /* German */
     FS_LANG_FR,    /* French */
-    FS_LANG_COUNT
+    FS_LANG_ES,    /* Spanish */
+    FS_LANG_IT,    /* Italian */
+    FS_LANG_PT,    /* Portuguese */
+    FS_LANG_NL,    /* Dutch */
+    FS_LANG_PL,    /* Polish */
+    FS_LANG_CS,    /* Czech */
+    FS_LANG_RU,    /* Russian */
+    FS_LANG_JA,    /* Japanese */
+    FS_LANG_KO,    /* Korean */
+    FS_LANG_ZH,    /* Chinese (Simplified) */
+    FS_LANG_DA,    /* Danish */
+    FS_LANG_NO,    /* Norwegian */
+    FS_LANG_FI,    /* Finnish */
+    FS_LANG_HU,    /* Hungarian */
+    FS_LANG_TR,    /* Turkish */
+    FS_LANG_COUNT  /* 20 languages */
 } FS_Language;
 
 typedef enum {

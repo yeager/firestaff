@@ -10,6 +10,7 @@
 #include "firestaff_input.h"
 #include "firestaff_sdl_bridge.h"
 #include "firestaff_save.h"
+#include "firestaff_graphics_dat_reader.h"
 #include "dm1_v2_anim_timing.h"
 #include <string.h>
 #include <stdio.h>
@@ -193,6 +194,7 @@ int fs_game_load_assets(FS_GameState *state) {
         state->config.game, state->config.data_dir ? state->config.data_dir : "(default)");
 
     /* Load assets with language from settings */
+    static FS_GraphicsDat g_gfx_dat;
     {
         FS_AssetBundle assets;
         int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());

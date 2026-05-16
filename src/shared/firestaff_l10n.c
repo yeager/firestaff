@@ -46,7 +46,11 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
 };
 
 static const char *g_lang_names[FS_LANG_COUNT] = {
-    "English", "Svenska", "Deutsch", "Français"
+    "English", "Svenska", "Deutsch", "Français",
+    "Español", "Italiano", "Português", "Nederlands",
+    "Polski", "Čeština", "Русский", "日本語",
+    "한국어", "简体中文", "Dansk", "Norsk",
+    "Suomi", "Magyar", "Türkçe"
 };
 
 void fs_l10n_set_language(FS_Language lang) {
@@ -80,13 +84,13 @@ FS_Language fs_l10n_detect_system_language(void) {
         const char *val = getenv(env_vars[i]);
         if (!val || !val[0]) continue;
         /* Match language prefix: sv, de, fr */
-        if (val[0] == s && val[1] == v) return FS_LANG_SV;
-        if (val[0] == d && val[1] == e) return FS_LANG_DE;
-        if (val[0] == f && val[1] == r) return FS_LANG_FR;
-        if (val[0] == e && val[1] == n) return FS_LANG_EN;
+        if (val[0] == 's' && val[1] == 'v') return FS_LANG_SV;
+        if (val[0] == 'd' && val[1] == 'e') return FS_LANG_DE;
+        if (val[0] == 'f' && val[1] == 'r') return FS_LANG_FR;
+        if (val[0] == 'e' && val[1] == 'n') return FS_LANG_EN;
     }
     return FS_LANG_EN; /* default */
 }
 
 /* Map UI language → asset dungeon.dat language.
- * Swedish doesnt have a DM1 dungeon.dat, falls back to English. IntNetAdmin/ ReDMCSB_WIP20210206/ _media_tmp/ anpr-viewer/ artifacts/ autismapps/ bildordbok/ bildstod-service/ bildstod-writer/ bildstod/ bokstavsresan/ cert-watch/ cldr-viewer/ codex/ commonvoice-status/ crowdin_translation_work/ csbv1-gap/ cve-monitor/ dagboken/ data/ ddtp-bzr/ ddtp-translate/ debian-repo/ desktop-editor/ docs/ elementary-l10n/ emojikitchen/ energimataren/ fedora-l10n/ firestaff-debug/ firestaff-dm1-analysis/ firestaff-land-ready-20260508-2/ firestaff-local/ firestaff-merge-main-20260508/ firestaff-n2-pass84/ firestaff-n2-pool-prompts/ firestaff-passC-edit/ firestaff-safety-20260508-075301/ firestaff-screens/ firestaff-show/ firestaff-v2-gap-manifest/ firestaff-v2-regression-smoke/ firestaff/ firestaff_expected/ firestaff_work/ firewall-manager/ font-preview/ fontforge-pr/ fontforge-repo/ freecad-fork/ github-l10n/ gnome-l10n/ ha-l10n/ hall-/ homebrew-tap/ hunspell-sv/ ilskehanteraren/ inbox-media/ incoming/ kladvaljaren/ klocklararen/ kodi-repo/ kodi-subtitle-translator/ l10n-ci/ l10n-conv/ l10n-glossary/ l10n-lint-repo/ l10n-lint/ l10n-overview-deploy/ l10n-preview/ langpack-inspector/ libretranslate-gui/ libvisio-ng/ libvisio-rs/ linguaedit-website/ linguaedit/ locale-tester/ log-viewer/ mail-attachments/ makebread/ matlagaren/ media-edit/ media/ memory/ mempalace-curated/ mempalace-upstream/ mempalace/ meningsbyggaren/ mousemodev1/ mousev1/ mqtt-dashboard/ mqtt-inspector/ obd2-viewer/ openbve-review/ openclaw-dashboard-plus/ openclaw-studio/ openclaw-sv/ out/ ovningstavlan/ parity-evidence/ pass435-doors/ pass435-explore1/ pass435-forward/ pass435-hall-door/ pass435-junction/ pass435-kp5/ pass435audit/ pauskollen/ pcap-viewer/ pengakollen/ piper-plus/ piper-voices-sv/ plans/ po-diff/ po-translate/ portfolio/ posh-kids/ pptx_env/ process-explorer/ projects/ python-docs-sv/ qt-l10n-dashboard/ raknestod/ references/ regex-tester/ release-work/ releases/ repos/ review-backup-2026-03-14/ routev1/ rpm-repo/ samtalsstod/ screenshots/ scripts/ scummvm-gtk/ signing/ sleepcoach/ smart-home/ snap-l10n/ sonata-swedish/ state/ stegvisaren/ svlang/ swedish-tm/ sysinfo-gtk/ temp_files/ tm-manager/ tmp-axel/ tmp-dl10n/ tmp-dm1/ tmp-firestaff/ tmp-formatjs-pr6200/ tmp-gmail/ tmp-img/ tmp-mempalace-guard/ tmp-mempalace-hardening/ tmp-mempalace-init-yes/ tmp-n2-hall/ tmp-redmcsb-source/ tmp-route-inspect/ tmp/ tmp_firestaff/ tmp_firestaff_controls/ tmp_firestaff_mouse/ tmp_firestaff_route/ tmp_firestaff_spell/ tmp_hall_images/ tools/ tp-lint/ tp-status/ trafficcam/ translations/ tts-tester/ tts-training/ tvtracker/ tx-sync-workspace/ ubuntu-l10n/ ubuntu-repo/ valjaren/ vim-sv/ vim/ visio-viewer-extension/ vsdview-work/ vsdview/ wifi-analyzer/ worktrees/ zanalytics/ zigbee-manager/ zscaler-api-client.wiki/ zscaler-guardian/ zstack/ zstart/
+ * Swedish has no DM1 dungeon.dat, falls back to English. */

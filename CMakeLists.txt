@@ -151,6 +151,14 @@ endif()
 set(M12_SOURCES
     src/ui/menu_startup_m12.c
     src/ui/menu_startup_render_modern_m12.c
+    src/shared/firestaff_l10n.c
+    src/ui/firestaff_bestiary.c
+    src/ui/firestaff_spell_ref.c
+    src/ui/firestaff_item_encyclopedia.c
+    src/ui/firestaff_map_viewer.c
+    src/ui/firestaff_screenshot_gallery.c
+    src/engine/firestaff_dungeon_text.c
+    src/engine/firestaff_graphics_dat_reader.c
     src/ui/menu_hit_m12.c
     src/engine/config_m12.c
     src/shared/asset_status_m12.c

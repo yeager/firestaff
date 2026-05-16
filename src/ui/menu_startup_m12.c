@@ -1,5 +1,8 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "firestaff_bestiary.h"
+#include "firestaff_spell_ref.h"
+#include "firestaff_item_encyclopedia.h"
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"
@@ -5943,3 +5946,39 @@ int m12_should_use_redesigned_menu(void) {
     return 1; /* Always use redesigned hierarchical menu */
 }
 
+
+/* ── Localized menu labels (#5) ───────────────────────────────────── */
+
+const char *m12_localized_main_label(int index) {
+    switch (index) {
+        case 0: return fs_l10n_get(FS_STR_PLAY);
+        case 1: return fs_l10n_get(FS_STR_SETTINGS);
+        case 2: return fs_l10n_get(FS_STR_EXTRAS);
+        case 3: return fs_l10n_get(FS_STR_QUIT);
+        default: return "???";
+    }
+}
+
+const char *m12_localized_tab_label(int tab) {
+    switch (tab) {
+        case 0: return fs_l10n_get(FS_STR_DISPLAY);
+        case 1: return fs_l10n_get(FS_STR_VIDEO);
+        case 2: return fs_l10n_get(FS_STR_AUDIO);
+        case 3: return fs_l10n_get(FS_STR_CONTROLS);
+        case 4: return fs_l10n_get(FS_STR_ACCESSIBILITY);
+        default: return "???";
+    }
+}
+
+const char *m12_localized_extras_label(int index) {
+    switch (index) {
+        case 0: return fs_l10n_get(FS_STR_MUSEUM);
+        case 1: return fs_l10n_get(FS_STR_BESTIARY);
+        case 2: return fs_l10n_get(FS_STR_SPELLS);
+        case 3: return fs_l10n_get(FS_STR_MAP_VIEWER);
+        case 4: return fs_l10n_get(FS_STR_ITEMS);
+        case 5: return fs_l10n_get(FS_STR_CHANGELOG);
+        case 6: return fs_l10n_get(FS_STR_SCREENSHOTS);
+        default: return "???";
+    }
+}
