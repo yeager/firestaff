@@ -11,6 +11,7 @@
  */
 
 #include "title_frontend_v1.h"
+#include "firestaff_graphics_dat_reader.h"
 
 #include <string.h>
 

@@ -22,21 +22,66 @@ static void lzw_reset(M11_GFX_LZWState* lzw) {
 }
 
 /* Read a variable-width code from the input bitstream */
+/* ReDMCSB LZW.C F0495_LZW_GetNextInputCode:
+ * Reads codeBitCount BYTES into a 12-byte chunk buffer,
+ * then extracts codes from bit positions within that chunk.
+ * This is NOT a continuous bitstream — it re-reads a new chunk
+ * every time the chunk is exhausted or code width changes. */
+
+static uint8_t g_lzw_chunk[12];
+static int g_lzw_chunk_bit_idx = 0;
+static int g_lzw_chunk_bit_count = 0;
+static size_t g_lzw_byte_pos = 0;
+static int g_lzw_needs_refill = 1;
+
+static void lzw_input_reset(void) {
+    g_lzw_chunk_bit_idx = 0;
+    g_lzw_chunk_bit_count = 0;
+    g_lzw_byte_pos = 0;
+    g_lzw_needs_refill = 1;
+}
+
 static int lzw_read_code(const uint8_t* input, size_t in_size,
-                          size_t* bit_pos, uint8_t code_bits) {
-    size_t byte_idx = *bit_pos / 8;
-    unsigned bit_off = *bit_pos % 8;
+                          size_t* bit_pos_unused, uint8_t code_bits) {
+    static const uint8_t lsb_masks[9] = {0x00,0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,0xFF};
+    int result, bi, required;
+    const uint8_t* p;
+    (void)bit_pos_unused;
 
-    if (byte_idx + 2 >= in_size && byte_idx >= in_size) return -1;
-
-    /* Assemble up to 24 bits from 3 bytes */
-    uint32_t raw = 0;
-    for (int i = 0; i < 3 && (byte_idx + (size_t)i) < in_size; i++) {
-        raw |= (uint32_t)input[byte_idx + (size_t)i] << (8 * i);
+    /* Refill chunk when exhausted, after flush, or when code width changed */
+    if (g_lzw_needs_refill || g_lzw_chunk_bit_idx >= g_lzw_chunk_bit_count) {
+        int chunk_bytes = code_bits;
+        if (g_lzw_byte_pos + (size_t)chunk_bytes > in_size)
+            chunk_bytes = (int)(in_size - g_lzw_byte_pos);
+        if (chunk_bytes <= 0) return -1;
+        memcpy(g_lzw_chunk, input + g_lzw_byte_pos, chunk_bytes);
+        g_lzw_byte_pos += chunk_bytes;
+        g_lzw_chunk_bit_idx = 0;
+        g_lzw_chunk_bit_count = (chunk_bytes << 3) - (code_bits - 1);
+        g_lzw_needs_refill = 0;
     }
-    raw >>= bit_off;
-    *bit_pos += code_bits;
-    return (int)(raw & ((1u << code_bits) - 1));
+
+    bi = g_lzw_chunk_bit_idx;
+    required = code_bits;
+    p = g_lzw_chunk + (bi >> 3);
+    bi &= 7;
+
+    /* Extract code across byte boundaries (matches ReDMCSB exactly) */
+    result = *p++ >> bi;
+    required -= (8 - bi);
+    bi = 8 - bi;
+
+    if (required >= 8) {
+        result |= (int)(*p++) << bi;
+        bi += 8;
+        required -= 8;
+    }
+    if (required > 0) {
+        result |= (int)(*p & lsb_masks[required]) << bi;
+    }
+
+    g_lzw_chunk_bit_idx += code_bits;
+    return result;
 }
 
 /* Decode a code to bytes, pushing onto decode_stack; return count */
@@ -53,70 +98,77 @@ static int lzw_decode_string(M11_GFX_LZWState* lzw, uint16_t code) {
 int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
                             const uint8_t* input, size_t in_size,
                             uint8_t* output, size_t out_size) {
+    size_t out_pos = 0;
+    int old_code, new_code, i, count;
+    uint8_t first_char;
+
     if (!lzw || !input || !output || in_size == 0 || out_size == 0) return -1;
 
+    /* Reset LZW state */
+    lzw_input_reset();
     lzw_reset(lzw);
-
-    /* Initialize dictionary with single-byte entries */
-    for (int i = 0; i < 256; i++) {
-        lzw->dict_prefix[i] = 0;
+    for (i = 0; i < 256; i++) {
+        lzw->dict_prefix[i] = 0xFFFF;
         lzw->dict_append[i] = (uint8_t)i;
     }
+    lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
+    lzw->code_bits = 9;
 
-    size_t bit_pos = 0;
-    size_t out_pos = 0;
-
-    int old_code = lzw_read_code(input, in_size, &bit_pos, lzw->code_bits);
-    if (old_code < 0 || old_code == DM1_GFX_LZW_END_CODE) return 0;
+    /* First code */
+    old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+    if (old_code < 0) return 0;
     if (old_code == DM1_GFX_LZW_CLEAR_CODE) {
         lzw_reset(lzw);
-        old_code = lzw_read_code(input, in_size, &bit_pos, lzw->code_bits);
-        if (old_code < 0 || old_code == DM1_GFX_LZW_END_CODE) return 0;
+        lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
+        lzw->code_bits = 9;
+        g_lzw_needs_refill = 1;
+        old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+        if (old_code < 0) return 0;
     }
-
     if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
 
     while (out_pos < out_size) {
-        int new_code = lzw_read_code(input, in_size, &bit_pos, lzw->code_bits);
-        if (new_code < 0 || new_code == DM1_GFX_LZW_END_CODE) break;
+        new_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+        if (new_code < 0) break;
 
         if (new_code == DM1_GFX_LZW_CLEAR_CODE) {
             lzw_reset(lzw);
-            old_code = lzw_read_code(input, in_size, &bit_pos, lzw->code_bits);
-            if (old_code < 0 || old_code == DM1_GFX_LZW_END_CODE) break;
+            lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
+            lzw->code_bits = 9;
+            g_lzw_needs_refill = 1;
+            old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+            if (old_code < 0) break;
             if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
             continue;
         }
 
-        int count;
+        if (new_code == DM1_GFX_LZW_END_CODE) break;
+
+        /* Decode string */
         if ((uint16_t)new_code < lzw->next_code) {
             count = lzw_decode_string(lzw, (uint16_t)new_code);
+            first_char = (count > 0) ? lzw->decode_stack[count - 1] : (uint8_t)old_code;
         } else {
-            /* KwKwK special case */
-            lzw->decode_stack[0] = (uint8_t)old_code;
+            /* KwKwK case: new_code == next_code */
             count = lzw_decode_string(lzw, (uint16_t)old_code);
-            /* Shift stack up by 1 and put first char at index count */
-            /* Actually: push the first char of old_code string */
-            uint8_t first_char = lzw->decode_stack[count - 1];
-            lzw->decode_stack[count++] = first_char;
+            first_char = (count > 0) ? lzw->decode_stack[count - 1] : (uint8_t)old_code;
+            if (out_pos < out_size) output[out_pos++] = first_char;
         }
 
-        /* Output decoded string in reverse (stack is LIFO) */
-        for (int i = count - 1; i >= 0 && out_pos < out_size; i--) {
+        /* Output decoded string (stack is reversed) */
+        for (i = count - 1; i >= 0 && out_pos < out_size; i--)
             output[out_pos++] = lzw->decode_stack[i];
-        }
 
-        /* Add new dictionary entry */
+        /* Add to dictionary */
         if (lzw->next_code < DM1_GFX_LZW_MAX_CODE) {
             lzw->dict_prefix[lzw->next_code] = (uint16_t)old_code;
-            /* First char of decoded string for new_code */
-            lzw->dict_append[lzw->next_code] = lzw->decode_stack[count - 1];
+            lzw->dict_append[lzw->next_code] = first_char;
             lzw->next_code++;
 
-            /* Grow code width when needed */
-            if (lzw->next_code >= (1u << lzw->code_bits) &&
-                lzw->code_bits < DM1_GFX_LZW_MAX_BITS) {
+            /* Grow code width */
+            if (lzw->next_code > (uint16_t)((1 << lzw->code_bits) - 1) && lzw->code_bits < 12) {
                 lzw->code_bits++;
+                g_lzw_needs_refill = 1;  /* ReDMCSB refills on width change */
             }
         }
 
