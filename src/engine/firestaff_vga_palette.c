@@ -1,6 +1,7 @@
 
 #include "firestaff_graphics_dat_reader.h"
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 /* Extract VGA palette from GRAPHICS.DAT.

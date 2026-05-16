@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#endif
 
 /* Read one sector's data payload from MODE1/2352 BIN */
 static int read_sector(FILE *fp, uint32_t sector, uint8_t *buf) {

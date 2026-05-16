@@ -1,7 +1,12 @@
 
 #include "firestaff_data_validator.h"
 #include "nexus_v1_iso_reader.h"
+#ifdef _WIN32
+#include <io.h>
+#define strcasecmp _stricmp
+#else
 #include <dirent.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>

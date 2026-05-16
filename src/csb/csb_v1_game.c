@@ -1,7 +1,6 @@
 
 #include "csb_v1_game.h"
-#include "firestaff_dungeon_query.h"
-#include "firestaff_graphics_dat_reader.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -21,7 +20,9 @@ int csb_v1_load_dungeon(CSB_V1_GameState *state) {
     snprintf(path, sizeof(path), "%s/csb/DUNGEON.DAT", state->data_dir);
     printf("CSB: loading dungeon from %s\n", path);
     /* CSB DUNGEON.DAT is only 2098 bytes — likely single level or compressed */
-    return fs_dungeon_load(path);
+    /* TODO: parse CSB DUNGEON.DAT */
+    printf("CSB: would load %s\n", path);
+    return 0;
 }
 
 int csb_v1_import_dm1_save(CSB_V1_GameState *state, const char *dm1_save_path) {

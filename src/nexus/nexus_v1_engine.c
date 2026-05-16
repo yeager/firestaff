@@ -4,7 +4,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <io.h>
+#define strcasecmp _stricmp
+#else
 #include <dirent.h>
+#endif
 
 /* Try to find ISO (CUE/BIN) in data directory */
 static int find_iso(const char *dir, char *cue_path, int max_len) {

@@ -1,6 +1,6 @@
 
 #include "dm2_v1_game.h"
-#include "firestaff_dungeon_query.h"
+/* dungeon query stub */
 #include <string.h>
 #include <stdio.h>
 
@@ -20,7 +20,9 @@ int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
     if (!state || !state->data_dir) return -1;
     snprintf(path, sizeof(path), "%s/dm2/DUNGEON.DAT", state->data_dir);
     printf("DM2: loading dungeon from %s (39 KB)\n", path);
-    return fs_dungeon_load(path);
+    /* TODO: parse DM2 DUNGEON.DAT */
+    printf("DM2: would load %s\n", path);
+    return 0;
 }
 
 int dm2_v1_enter_shop(DM2_V1_GameState *state) {

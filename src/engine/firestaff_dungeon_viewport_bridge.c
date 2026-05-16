@@ -1,6 +1,13 @@
 
 #include "firestaff_dungeon_query.h"
 #include "firestaff_wall_graphics.h"
+
+/* Forward declarations for functions defined elsewhere */
+int fs_dungeon_get_door_type(int x, int y);
+int fs_dungeon_get_door_state(int x, int y);
+int fs_dungeon_get_wall_ornament(int x, int y, int dir);
+int fs_dungeon_get_floor_ornament(int x, int y);
+
 #include "firestaff_graphics_dat_reader.h"
 #include <string.h>
 #include <stdio.h>

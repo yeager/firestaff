@@ -1,6 +1,7 @@
 
 #include "nexus_v2_upscaler.h"
 #include <string.h>
+#include <stdlib.h>
 
 /* EPX/Scale2x: for each pixel P, check neighbors A,B,C,D:
  *     A
