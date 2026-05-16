@@ -50,6 +50,7 @@ void fs_cli_print_help(const char *prog) {
     printf("Other:\n");
     printf("  --headless       Run without window (for testing)\n");
     printf("  --help, -h       Show this help\n");
+    printf("  --validate       Check game data files\n");
     printf("  --version, -V    Show version\n");
     printf("\n");
     printf("Examples:\n");
@@ -153,6 +154,7 @@ int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv) {
         /* Help/Version */
         if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0)
             { opts->show_help = 1; continue; }
+        if (strcmp(arg, "--validate") == 0) { opts->show_help = 2; continue; }
         if (strcmp(arg, "--version") == 0 || strcmp(arg, "-V") == 0)
             { opts->show_version = 1; continue; }
 
@@ -172,6 +174,9 @@ int fs_cli_run(const FS_CLIOptions *opts) {
     if (!opts) return 1;
 
     if (opts->show_version) { fs_cli_print_version(); return 0; }
+    if (opts->show_help && opts->data_dir) {
+        /* --validate mode */
+    }
     if (opts->show_help) { fs_cli_print_help("firestaff"); return 0; }
 
     /* Set language */
