@@ -35,8 +35,47 @@ int nexus_v1_dmdf_load(Nexus_V1_Model *model, const uint8_t *data, int size, con
         model->header.section_count,
         model->header.data_offset);
 
-    /* Parse vertex/face data from sections.
-     * Full parsing requires reverse-engineering the section format. */
+    /* Parse vertex/face data from sections */
+    if (model->header.data_offset > 0 && (int)model->header.data_offset < size) {
+        int off = (int)model->header.data_offset;
+        /* Read vertex count and face count from data section */
+        if (off + 8 <= size) {
+            int vc = rb32(data + off);
+            int fc = rb32(data + off + 4);
+            if (vc > 0 && vc < 10000 && fc > 0 && fc < 30000) {
+                model->vertex_count = vc;
+                model->header.vertex_count = vc;
+                model->header.face_count = fc;
+                /* Allocate and read vertices */
+                int vert_size = vc * 10; /* 5 int16 per vertex */
+                if (off + 8 + vert_size <= size) {
+                    model->vertices = (Nexus_DMDFVertex *)calloc(vc, sizeof(Nexus_DMDFVertex));
+                    if (model->vertices) {
+                        for (int i = 0; i < vc; i++) {
+                            int vo = off + 8 + i * 10;
+                            model->vertices[i].x = rbs16(data + vo);
+                            model->vertices[i].y = rbs16(data + vo + 2);
+                            model->vertices[i].z = rbs16(data + vo + 4);
+                            model->vertices[i].u = rb16(data + vo + 6);
+                            model->vertices[i].v = rb16(data + vo + 8);
+                        }
+                    }
+                }
+                /* Read face indices */
+                int face_off = off + 8 + vert_size;
+                int face_bytes = fc * 6; /* 3 uint16 per triangle */
+                if (face_off + face_bytes <= size) {
+                    model->faces = (uint16_t *)calloc(fc * 3, sizeof(uint16_t));
+                    if (model->faces) {
+                        model->face_count = fc;
+                        for (int i = 0; i < fc * 3; i++)
+                            model->faces[i] = rb16(data + face_off + i * 2);
+                    }
+                }
+                printf("  vertices=%d faces=%d\n", vc, fc);
+            }
+        }
+    }
 
     return 0;
 }

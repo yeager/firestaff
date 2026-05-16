@@ -1,0 +1,96 @@
+# Nexus — sv
+msgid ""
+msgstr ""
+"Language: sv\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Attack"
+msgstr "Anfall"
+
+msgid "Cast Spell"
+msgstr "Kasta trollformel"
+
+msgid "Track %d"
+msgstr ""
+
+msgid "%s has died"
+msgstr "%s har dött"
+
+msgid "Continue"
+msgstr ""
+
+msgid "Defend"
+msgstr "Försvara"
+
+msgid "This door is locked"
+msgstr "Dörren är låst"
+
+msgid "You found the Firestaff!"
+msgstr "Du hittade Firestaff!"
+
+msgid "Congratulations! You have saved the realm!"
+msgstr "Grattis! Du har räddat riket!"
+
+msgid "Your party has perished"
+msgstr "Ditt sällskap har omkommit"
+
+msgid "Hall of Champions"
+msgstr "Hjältarnas sal"
+
+msgid "Health"
+msgstr "Hälsa"
+
+msgid "Inventory full"
+msgstr "Inventariet är fullt"
+
+msgid "A key is required"
+msgstr "En nyckel krävs"
+
+msgid "Level %d"
+msgstr ""
+
+msgid "%s gained a level"
+msgstr "%s gick upp en nivå"
+
+msgid "Load Game"
+msgstr ""
+
+msgid "Mana"
+msgstr "Mana"
+
+msgid "New Game"
+msgstr ""
+
+msgid "Not enough mana"
+msgstr "Inte tillräckligt med mana"
+
+msgid "Recruit"
+msgstr "Rekrytera"
+
+msgid "Reincarnate"
+msgstr "Reinkarnera"
+
+msgid "Rest"
+msgstr ""
+
+msgid "Resurrect"
+msgstr "Återuppväck"
+
+msgid "Save Game"
+msgstr ""
+
+msgid "Select a champion"
+msgstr "Välj en hjälte"
+
+msgid "Spell failed"
+msgstr "Besvärjelsen misslyckades"
+
+msgid "Stamina"
+msgstr "Uthållighet"
+
+msgid "Party is full"
+msgstr "Gruppen är full"
+
+msgid "Use Item"
+msgstr ""
+

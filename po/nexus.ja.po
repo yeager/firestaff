@@ -1,0 +1,96 @@
+# Nexus — ja
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Attack"
+msgstr "攻撃"
+
+msgid "Cast Spell"
+msgstr "呪文を唱える"
+
+msgid "Track %d"
+msgstr ""
+
+msgid "%s has died"
+msgstr "%sは死んだ"
+
+msgid "Continue"
+msgstr ""
+
+msgid "Defend"
+msgstr "防御"
+
+msgid "This door is locked"
+msgstr "この扉は鍵がかかっている"
+
+msgid "You found the Firestaff!"
+msgstr "ファイアスタッフを見つけた！"
+
+msgid "Congratulations! You have saved the realm!"
+msgstr "おめでとう！世界を救った！"
+
+msgid "Your party has perished"
+msgstr "一行は全滅した"
+
+msgid "Hall of Champions"
+msgstr "冒険者の殿堂"
+
+msgid "Health"
+msgstr "体力"
+
+msgid "Inventory full"
+msgstr "持ち物が一杯"
+
+msgid "A key is required"
+msgstr "鍵が必要"
+
+msgid "Level %d"
+msgstr ""
+
+msgid "%s gained a level"
+msgstr "%sはレベルアップした"
+
+msgid "Load Game"
+msgstr ""
+
+msgid "Mana"
+msgstr "マナ"
+
+msgid "New Game"
+msgstr ""
+
+msgid "Not enough mana"
+msgstr "マナが足りない"
+
+msgid "Recruit"
+msgstr "仲間にする"
+
+msgid "Reincarnate"
+msgstr "転生させる"
+
+msgid "Rest"
+msgstr ""
+
+msgid "Resurrect"
+msgstr "復活させる"
+
+msgid "Save Game"
+msgstr ""
+
+msgid "Select a champion"
+msgstr "冒険者を選べ"
+
+msgid "Spell failed"
+msgstr "呪文が失敗した"
+
+msgid "Stamina"
+msgstr "スタミナ"
+
+msgid "Party is full"
+msgstr "パーティーが一杯です"
+
+msgid "Use Item"
+msgstr ""
+

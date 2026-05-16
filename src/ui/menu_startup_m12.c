@@ -1,5 +1,6 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 
 #define FIRESTAFF_VERSION_STRING "v0.6.0"

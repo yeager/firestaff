@@ -48,6 +48,24 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
         }
     }
 
+    /* ENHANCED: try multiple DGN header interpretations */
+    /* Try DM1-style: first 4 bytes = header, then 16-bit square entries */
+    if (size >= 2048 + 4) {
+        /* Alternate: fixed 32x32 grid at offset 0 */
+        int grid_bytes = 32 * 32 * 2;
+        if (size > grid_bytes) {
+            for (int gy = 0; gy < 32; gy++)
+                for (int gx = 0; gx < 32; gx++) {
+                    int off = (gy * 32 + gx) * 2;
+                    level->squares[gy][gx] = rb16(data + off) & 0x1F;
+                }
+            level->width = 32;
+            level->height = 32;
+            level->geometry_offset = grid_bytes;
+            level->geometry_size = size - grid_bytes;
+        }
+    }
+
     printf("Nexus level %d: %dx%d, geometry=%d bytes\n",
         level_index, level->width, level->height, level->geometry_size);
     return 0;

@@ -1,0 +1,96 @@
+# Nexus — fr
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Attack"
+msgstr "Attaque"
+
+msgid "Cast Spell"
+msgstr ""
+
+msgid "Track %d"
+msgstr ""
+
+msgid "%s has died"
+msgstr "%s est mort"
+
+msgid "Continue"
+msgstr ""
+
+msgid "Defend"
+msgstr "Défense"
+
+msgid "This door is locked"
+msgstr ""
+
+msgid "You found the Firestaff!"
+msgstr ""
+
+msgid "Congratulations! You have saved the realm!"
+msgstr ""
+
+msgid "Your party has perished"
+msgstr ""
+
+msgid "Hall of Champions"
+msgstr "Salle des Champions"
+
+msgid "Health"
+msgstr "Santé"
+
+msgid "Inventory full"
+msgstr ""
+
+msgid "A key is required"
+msgstr ""
+
+msgid "Level %d"
+msgstr ""
+
+msgid "%s gained a level"
+msgstr ""
+
+msgid "Load Game"
+msgstr ""
+
+msgid "Mana"
+msgstr "Mana"
+
+msgid "New Game"
+msgstr ""
+
+msgid "Not enough mana"
+msgstr ""
+
+msgid "Recruit"
+msgstr "Recruter"
+
+msgid "Reincarnate"
+msgstr ""
+
+msgid "Rest"
+msgstr ""
+
+msgid "Resurrect"
+msgstr "Ressusciter"
+
+msgid "Save Game"
+msgstr ""
+
+msgid "Select a champion"
+msgstr "Choisissez un champion"
+
+msgid "Spell failed"
+msgstr ""
+
+msgid "Stamina"
+msgstr "Endurance"
+
+msgid "Party is full"
+msgstr ""
+
+msgid "Use Item"
+msgstr ""
+
