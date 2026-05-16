@@ -18,9 +18,9 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "SPELA", "INSTÄLLNINGAR", "EXTRA", "AVSLUTA",
         "VÄLJ SPEL", "Nytt spel (V1 Original)", "Nytt spel (V2.1 Uppskalat)",
         "Nytt spel (V2.2 Förbättrat)", "Fortsätt sparat spel", "Kommer snart",
-        "Tillbaka", "Bildskärm", "Video", "Ljud", "Kontroller", "Tillgänglighet",
+        "Tillbaka", "BILDSKÄRM", "Video", "Ljud", "Kontroller", "Tillgänglighet",
         "Kunskapsmuseet", "Bestiary", "Trollformler", "Kartvisare",
-        "Föremålsencyklopedi", "Ändringslogg", "Skärmbildsgalleri",
+        "FÖREMÅLSENCYKLOPEDI", "ÄNDRINGSLOGG", "SKÄRMBILDSGALLERI",
         "Språk", "På", "Av"
     },
     /* German */

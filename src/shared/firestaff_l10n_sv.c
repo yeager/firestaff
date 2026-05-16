@@ -18,7 +18,7 @@
  * DE: KAMPFER, NINJA, PRIESTER, MAGIER
  * FR: GUERRIER, NINJA, PRETRE, SORCIER */
 static const char *g_sv_base_skill_names[4] = {
-    "KRIGARE", "NINJA", "PRAST", "TROLLKARL"
+    "KRIGARE", "NINJA", "PRÄST", "TROLLKARL"
 };
 
 /* ── Skill level titles (PANEL.C:26-82) ───────────────────────────── */
@@ -27,19 +27,19 @@ static const char *g_sv_base_skill_names[4] = {
  * DE: ANFANGER, NEULING, LEHRLING, ARBEITER, GESELLE, HANDWERKR,
  *     FACHMANN, EXPERTE, ...MEISTER, ERZMEISTR */
 static const char *g_sv_skill_levels[16] = {
-    "NYBDRJARE",    /* NEOPHYTE */
+    "NYBÖRJARE",    /* NEOPHYTE */
     "NOVICE",       /* NOVICE */
-    "LARLING",      /* APPRENTICE */
+    "LÄRLING",      /* APPRENTICE */
     "GESALL",       /* JOURNEYMAN */
-    "HANTVERKRE",   /* CRAFTSMAN */
-    "MSTARE",       /* ARTISAN (short for display) */
+    "HANTVERKARE",   /* CRAFTSMAN */
+    "MÄSTARE",       /* ARTISAN (short for display) */
     "ADEPT",        /* ADEPT */
     "EXPERT",       /* EXPERT */
-    "LO MASTARE",   /* LO MASTER */
-    "UM MASTARE",   /* UM MASTER */
-    "ON MASTARE",   /* ON MASTER */
-    "EE MASTARE",   /* EE MASTER */
-    "STORMSTARE",   /* ARCHMASTER */
+    "LO MÄSTARE",   /* LO MASTER */
+    "UM MÄSTARE",   /* UM MASTER */
+    "ON MÄSTARE",   /* ON MASTER */
+    "EE MÄSTARE",   /* EE MASTER */
+    "STORMÄSTARE",   /* ARCHMASTER */
     NULL, NULL, NULL
 };
 
@@ -48,7 +48,7 @@ static const char *g_sv_skill_levels[16] = {
  * DE: NORDEN, OSTEN, SUEDEN, WESTEN
  * FR: AU NORD, A L'EST, AU SUD, A L'OUEST */
 static const char *g_sv_direction_names[4] = {
-    "NORR", "DSTER", "SDDER", "VASTER"
+    "NORR", "ÖSTER", "SÖDER", "VÄSTER"
 };
 
 /* ── Item attribute strings (PANEL.C:1215-1260) ───────────────────── */
@@ -56,7 +56,7 @@ static const char *g_sv_direction_names[4] = {
  * DE: ESSBAR, VERGIFTET, DEFEKT, VERFLUCHT
  * FR: COMESTIBLE, EMPOISONNE, BRISE, MAUDIT */
 static const char *g_sv_item_attributes[4] = {
-    "ATBAR", "FORGIFTAD", "TRASIG", "FORBANNAD"
+    "ÄTBAR", "FÖRGIFTAD", "TRASIG", "FÖRBANNAD"
 };
 
 /* ── Viewport text (COMMAND.C:2009-2399) ──────────────────────────── */
@@ -73,10 +73,10 @@ static const char *g_sv_viewport_text[] = {
 /* ── Food/water status ────────────────────────────────────────────── */
 static const char *g_sv_food_water[] = {
     "HUNGRIG",    /* STARVING */
-    "TORSTIG",    /* DEHYDRATED */
+    "TÖRSTIG",    /* DEHYDRATED */
     "MAT",        /* FOOD */
     "VATTEN",     /* WATER */
-    "FORGIFTAD",  /* POISONED */
+    "FÖRGIFTAD",  /* POISONED */
     NULL
 };
 
@@ -84,35 +84,35 @@ static const char *g_sv_food_water[] = {
 /* These are bitmaps in original but we provide text equivalents for V2 */
 static const char *g_sv_action_names[] = {
     "HUGG",       /* SWING / N */
-    "STEK",       /* THRUST / N */
-    "SKOT",       /* SHOOT / SCHIESSEN / TIRER */
+    "STÖT",       /* THRUST / N */
+    "SKJUT",       /* SHOOT / SCHIESSEN / TIRER */
     "KAST",       /* THROW / WERFEN / LANCER */
-    "HACK",       /* CHOP / HACK / TAILLER */
+    "HUGGA",       /* CHOP / HACK / TAILLER */
     "SLAG",       /* BASH / SCHLAG / FRAPPER */
-    "BLOCKA",     /* BLOCK / BLOCK / BLOQUER */
+    "BLOCKERA",     /* BLOCK / BLOCK / BLOQUER */
     "SPAR",       /* JAB / STOSSEN / PIQUER */
     "SPARK",      /* KICK / TRITT / COUP DE PIED */
     "VRID",       /* WRENCH / DREHEN */
-    "BRYT",       /* PRISE / HEBELN */
-    "SPRAK",      /* INCANTATION */
+    "BRÄCK",       /* PRISE / HEBELN */
+    "BESVÄRJELSE",      /* INCANTATION */
     "TROLLDOM",   /* DISPELL / BANNEN */
     "BLESS",      /* BLESS / SEGNEN */
-    "KRNA",       /* CURSE / FLUCHEN */
+    "FÖRBANNA",       /* CURSE / FLUCHEN */
     "HELA",       /* HEAL / HEILEN */
     "GIFT",       /* POISON / VERGIFTEN */
-    "BLSTA",      /* BLOW HORN / HORN BLASEN */
+    "BLÅSA",      /* BLOW HORN / HORN BLASEN */
     "SPELA",      /* PLAY FLUTE */
-    "LAS",        /* OPEN LOCK */
-    "STANG",      /* CLOSE LOCK */
+    "LÅS UPP",        /* OPEN LOCK */
+    "STÄNG",      /* CLOSE LOCK */
     NULL
 };
 
 /* ── Entrance hall / champion selection ────────────────────────────── */
 static const char *g_sv_entrance[] = {
-    "VALJ EN CHAMPION",      /* SELECT A CHAMPION */
-    "TRYCK PA SPEGELN",      /* CLICK ON THE MIRROR */
-    "ATERUPPVACK",           /* RESURRECT */
-    "ATERFDD",               /* REINCARNATE */
+    "VÄLJ EN CHAMPION",      /* SELECT A CHAMPION */
+    "TRYCK PÅ SPEGELN",      /* CLICK ON THE MIRROR */
+    "ÅTERUPPVÄCK",           /* RESURRECT */
+    "ÅTERFÖDD",               /* REINCARNATE */
     "FRYST",                 /* FROZEN */
     NULL
 };
