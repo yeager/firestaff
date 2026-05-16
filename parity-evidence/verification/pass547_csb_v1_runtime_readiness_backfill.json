@@ -1,8 +1,8 @@
 {
   "schema": "firestaff.pass547_csb_v1_runtime_readiness_backfill.v1",
-  "pass": true,
+  "pass": false,
   "scope": "CSB V1 source-lock/runtime readiness backfill; blocker-present gate.",
-  "blocker_persists": true,
+  "blocker_persists": false,
   "source_anchors": [
     {
       "id": "redmcsb_csb_header_identity",
@@ -89,8 +89,11 @@
         "Only DM1 is launch-supported",
         "strcmp(gameId, \"dm1\") == 0"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "Only DM1 is launch-supported",
+        "strcmp(gameId, \"dm1\") == 0"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_m11_original_handoff_is_dm1_title_first",
@@ -175,5 +178,7 @@
     "The PASS condition means the runtime blocker is precisely documented and still present.",
     "CSB V1 completion remains 20/100 until CSB-specific runtime/capture evidence replaces the guarded DM1-shaped path."
   ],
-  "failures": []
+  "failures": [
+    "firestaff_m12_launch_guard_still_blocks_csb missing ['Only DM1 is launch-supported', 'strcmp(gameId, \"dm1\") == 0'] path_exists=True"
+  ]
 }

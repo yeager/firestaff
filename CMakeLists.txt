@@ -835,6 +835,12 @@ if(BUILD_TESTING)
     csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
+    csb_v1_dungeon_loader_pc34_compat.c
+    csb_v1_chaos_magic_pc34_compat.c
+    csb_v1_viewport_pc34_compat.c
+    csb_v1_monster_pc34_compat.c
+    csb_v1_character_pc34_compat.c
+    csb_v1_save_load_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
     dm1_v1_inventory_pc34_compat.c
     dm1_v1_spell_casting_pc34_compat.c
@@ -860,6 +866,12 @@ if(BUILD_TESTING)
     csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
+    csb_v1_dungeon_loader_pc34_compat.c
+    csb_v1_chaos_magic_pc34_compat.c
+    csb_v1_viewport_pc34_compat.c
+    csb_v1_monster_pc34_compat.c
+    csb_v1_character_pc34_compat.c
+    csb_v1_save_load_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
     dm1_v1_inventory_pc34_compat.c
     dm1_v1_spell_casting_pc34_compat.c
