@@ -60,9 +60,9 @@
     {
       "kind": "pass373_prerequisite",
       "manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-      "ok": false,
+      "ok": true,
       "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
-      "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
+      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
     },
     {
       "kind": "completion_matrix_credit",
@@ -104,7 +104,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "bdce013c76b9f03b0de19bebe6fe0172aa37b114",
+  "head": "b9af42026d015e1539d065526e10b99fa766ec82",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -222,6 +222,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-05-16T09:56:36.554681+00:00"
+  "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
+  "timestampUtc": "2026-05-16T10:13:46.394288+00:00"
 }
