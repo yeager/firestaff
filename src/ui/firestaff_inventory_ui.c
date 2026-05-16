@@ -34,6 +34,35 @@ void fs_inv_render(const FS_InventoryUI *inv, uint8_t *fb, const uint32_t *palet
     (void)palette;
     if (!inv || !fb) return;
 
+    /* Step 1: Dim the entire screen as overlay backdrop */
+    {
+        int px, py;
+        for (py = 0; py < 200; py++) {
+            for (px = 0; px < 320; px++) {
+                uint8_t c = fb[py * 320 + px];
+                /* Darken: shift palette index toward black (index 0) */
+                fb[py * 320 + px] = (c > 3) ? (c - 3) : 0;
+            }
+        }
+    }
+
+    /* Step 2: Draw semi-opaque panel backgrounds */
+    /* Right panel background */
+    {
+        int px, py;
+        for (py = INV_PANEL_Y; py < INV_PANEL_Y + INV_PANEL_H; py++)
+            for (px = INV_PANEL_X; px < INV_PANEL_X + INV_PANEL_W; px++)
+                fb[py * 320 + px] = 0; /* black background */
+    }
+    /* Bottom panel background */
+    {
+        int px, py;
+        for (py = INV_BOTTOM_Y; py < INV_BOTTOM_Y + INV_BOTTOM_H; py++)
+            for (px = 0; px < 320; px++)
+                fb[py * 320 + px] = 0;
+    }
+
+    /* Step 3: Draw inventory content on top */
     /* Right panel: 4 champion portrait slots */
     for (i = 0; i < inv->champion_count && i < 4; i++) {
         int py = INV_PANEL_Y + i * 34;

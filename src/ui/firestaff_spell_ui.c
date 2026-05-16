@@ -82,6 +82,11 @@ void fs_spell_render(const FS_SpellUI *sp, uint8_t *fb) {
     const char **names = NULL;
     if (!sp || !fb || !sp->visible) return;
 
+    /* Dim lower portion of screen for spell panel overlay */
+    for (py = 150; py < 200; py++)
+        for (px = 0; px < 320; px++)
+            fb[py * 320 + px] = (fb[py * 320 + px] > 3) ? (fb[py * 320 + px] - 3) : 0;
+
     /* Spell panel at bottom: 6 rune buttons */
     switch (sp->state) {
     case SPELL_STATE_POWER: names = g_power_names; break;
