@@ -153,7 +153,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Strict -Wall -Wextra -Werror build
         run: |
-          for probe in firestaff_m10_*_probe.c; do
+          for probe in probes/*/firestaff_m10_*_probe.c probes/firestaff_m10_*_probe.c; do [ -f "$probe" ] || continue; done
+          for probe in probes/*/firestaff_m10_*_probe.c; do
             echo "=== $probe ==="
             gcc -Wall -Wextra -Werror -c -o /tmp/probe.o "$probe" || exit 1
           done
