@@ -192,6 +192,56 @@ typedef struct {
     const char* savePath;  /* Non-NULL when launching via quick resume */
 } M12_LaunchIntent;
 
+
+/* ── Redesigned main menu items (pass604) ─────────────────────────── */
+typedef enum {
+    M12_MAIN_MENU_PLAY = 0,
+    M12_MAIN_MENU_SETTINGS,
+    M12_MAIN_MENU_EXTRAS,
+    M12_MAIN_MENU_QUIT,
+    M12_MAIN_MENU_COUNT
+} M12_MainMenuItem;
+
+/* ── Game selection sub-menu ──────────────────────────────────────── */
+typedef enum {
+    M12_GAME_SELECT_DM1 = 0,
+    M12_GAME_SELECT_CSB,
+    M12_GAME_SELECT_DM2,
+    M12_GAME_SELECT_NEXUS,
+    M12_GAME_SELECT_COUNT
+} M12_GameSelectItem;
+
+/* ── Game mode sub-menu ───────────────────────────────────────────── */
+typedef enum {
+    M12_GAME_MODE_NEW_V1 = 0,
+    M12_GAME_MODE_NEW_V21,
+    M12_GAME_MODE_CONTINUE,
+    M12_GAME_MODE_NEW_V22,
+    M12_GAME_MODE_COUNT
+} M12_GameModeItem;
+
+/* ── Extras sub-menu ──────────────────────────────────────────────── */
+typedef enum {
+    M12_EXTRAS_MUSEUM = 0,
+    M12_EXTRAS_BESTIARY,
+    M12_EXTRAS_SPELLS,
+    M12_EXTRAS_MAP_VIEWER,
+    M12_EXTRAS_ITEMS,
+    M12_EXTRAS_CHANGELOG,
+    M12_EXTRAS_SCREENSHOTS,
+    M12_EXTRAS_COUNT
+} M12_ExtrasItem;
+
+/* ── Settings tabs (renamed for clarity) ──────────────────────────── */
+typedef enum {
+    M12_SETTINGS_TAB2_DISPLAY = 0,
+    M12_SETTINGS_TAB2_VIDEO,
+    M12_SETTINGS_TAB2_AUDIO,
+    M12_SETTINGS_TAB2_CONTROLS,
+    M12_SETTINGS_TAB2_ACCESSIBILITY,
+    M12_SETTINGS_TAB2_COUNT
+} M12_SettingsTab2;
+
 typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[6];
     M12_GameCardArt cardArt[6];
@@ -199,6 +249,11 @@ typedef struct M12_StartupMenuState {
     int settingsSelectedIndex;
     int settingsTabIndex;      /* 0=Display 1=Video 2=Audio 3=Misc */
     int settingsTabRowIndex;   /* selected row within current tab */
+    M12_MainMenuItem mainMenuSelected;
+    M12_GameSelectItem gameSelectSelected;
+    M12_GameModeItem gameModeSelected;
+    M12_ExtrasItem extrasSelected;
+    int selectedGameId; /* which game is selected in game select */
     int shouldExit;
     int launchRequested;
     int activatedIndex;

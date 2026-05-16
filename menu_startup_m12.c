@@ -3286,6 +3286,214 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
  * Tabbed settings view — Display / Video / Audio / Misc
  * Grayed-out items have implemented=0
  * ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+ * pass604 — Redesigned Main Menu
+ *
+ * Hierarchy:
+ *   Main → Play → Game Select → Game Mode
+ *   Main → Settings (tabbed)
+ *   Main → Extras (sub-items)
+ *   Main → Quit
+ *
+ * Design principles:
+ *   - Maximum 4 items visible at any level
+ *   - Clear back navigation (← or Escape)
+ *   - Unavailable items shown grayed with "[Soon]"
+ *   - Active selection highlighted with accent color
+ * ══════════════════════════════════════════════════════════════════════ */
+
+static const char *g_main_menu_labels[M12_MAIN_MENU_COUNT] = {
+    "PLAY", "SETTINGS", "EXTRAS", "QUIT"
+};
+
+static const char *g_main_menu_descriptions[M12_MAIN_MENU_COUNT] = {
+    "Start or continue a game",
+    "Display, video, audio and controls",
+    "Museum, bestiary, spell reference and more",
+    "Exit Firestaff"
+};
+
+static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
+    "Dungeon Master", "Chaos Strikes Back",
+    "Dungeon Master II", "Dungeon Master Nexus"
+};
+
+static const char *g_game_select_tags[M12_GAME_SELECT_COUNT] = {
+    "V1 / V2.1", "V1", "Coming soon", "Coming soon"
+};
+
+static const int g_game_select_available[M12_GAME_SELECT_COUNT] = {
+    1, 1, 0, 0
+};
+
+static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
+    "New Game (V1 Original)",
+    "New Game (V2.1 Upscaled)",
+    "Continue Saved Game",
+    "New Game (V2.2 Enhanced)"
+};
+
+static const int g_game_mode_available[M12_GAME_MODE_COUNT] = {
+    1, 1, 1, 0
+};
+
+static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
+    "Museum of Lore", "Bestiary", "Spell Reference",
+    "Map Viewer", "Item Encyclopedia", "Changelog", "Screenshot Gallery"
+};
+
+static const int g_extras_available[M12_EXTRAS_COUNT] = {
+    1, 0, 0, 0, 0, 1, 0
+};
+
+static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
+    int x, int y, const char *label, const char *tag,
+    int selected, int available, int index)
+{
+    M12_TextStyle labelStyle = g_textSmall;
+    M12_TextStyle tagStyle = g_textSmall;
+    char prefix[4];
+
+    /* Selection indicator */
+    if (selected && available) {
+        m12_fill_rect(fb, fw, fh, x - 4, y - 2, fw / 2, 22, M12_COLOR_NAVY);
+        prefix[0] = '>';
+        prefix[1] = ' ';
+        prefix[2] = 0;
+        labelStyle.color = M12_COLOR_WHITE;
+    } else {
+        prefix[0] = ' ';
+        prefix[1] = ' ';
+        prefix[2] = 0;
+        labelStyle.color = available ? M12_COLOR_LIGHT_GRAY : M12_COLOR_DARK_GRAY;
+    }
+    tagStyle.color = available ? M12_COLOR_LIGHT_CYAN : M12_COLOR_DARK_GRAY;
+
+    /* Draw prefix + label */
+    m12_draw_text(fb, fw, fh, x, y, prefix, &labelStyle);
+    m12_draw_text(fb, fw, fh, x + 16, y, label, &labelStyle);
+
+    /* Draw tag on right side */
+    if (tag) {
+        m12_draw_text(fb, fw, fh, x + fw / 3, y, tag, &tagStyle);
+    }
+}
+
+static void m12_draw_redesigned_main_menu(const M12_StartupMenuState *state,
+    unsigned char *fb, int fw, int fh)
+{
+    int margin = fw / 20;
+    int centerY = fh / 3;
+    int itemH = 28;
+    int i;
+
+    /* Title */
+    m12_draw_text(fb, fw, fh, margin, margin + 10,
+        "FIRESTAFF", &g_textTitleShadow);
+    m12_draw_text(fb, fw, fh, margin, margin + 48,
+        "Dungeon Master Collection", &g_textSmallAccent);
+
+    /* Separator line */
+    m12_fill_rect(fb, fw, fh, margin, centerY - 10, fw - margin * 2, 1, M12_COLOR_DARK_GRAY);
+
+    /* Menu items */
+    for (i = 0; i < M12_MAIN_MENU_COUNT; i++) {
+        int y = centerY + i * itemH;
+        m12_draw_menu_item(fb, fw, fh, margin + 20, y,
+            g_main_menu_labels[i], NULL,
+            (int)state->mainMenuSelected == i, 1, i);
+
+        /* Description under selected item */
+        if ((int)state->mainMenuSelected == i) {
+            M12_TextStyle descStyle = g_textSmall;
+            descStyle.color = M12_COLOR_LIGHT_GRAY;
+            m12_draw_text(fb, fw, fh, margin + 36, y + 14,
+                g_main_menu_descriptions[i], &descStyle);
+        }
+    }
+
+    /* Footer */
+    m12_draw_text(fb, fw, fh, margin, fh - 24,
+        "v0.4.0  |  Up/Down Navigate  |  Enter Select", &g_textSmallMuted);
+}
+
+static void m12_draw_game_select(const M12_StartupMenuState *state,
+    unsigned char *fb, int fw, int fh)
+{
+    int margin = fw / 20;
+    int startY = fh / 4;
+    int itemH = 32;
+    int i;
+
+    m12_draw_text(fb, fw, fh, margin, margin + 10,
+        "SELECT GAME", &g_textMediumShadow);
+
+    for (i = 0; i < M12_GAME_SELECT_COUNT; i++) {
+        int y = startY + i * itemH;
+        m12_draw_menu_item(fb, fw, fh, margin + 20, y,
+            g_game_select_labels[i], g_game_select_tags[i],
+            (int)state->gameSelectSelected == i,
+            g_game_select_available[i], i);
+    }
+
+    m12_draw_text(fb, fw, fh, margin, fh - 24,
+        "Escape Back  |  Up/Down Navigate  |  Enter Select", &g_textSmallMuted);
+}
+
+static void m12_draw_game_mode(const M12_StartupMenuState *state,
+    unsigned char *fb, int fw, int fh)
+{
+    int margin = fw / 20;
+    int startY = fh / 4;
+    int itemH = 32;
+    int i;
+    const char *game_name = "DUNGEON MASTER";
+
+    if (state->selectedGameId == M12_GAME_SELECT_CSB) game_name = "CHAOS STRIKES BACK";
+
+    m12_draw_text(fb, fw, fh, margin, margin + 10,
+        game_name, &g_textMediumShadow);
+
+    for (i = 0; i < M12_GAME_MODE_COUNT; i++) {
+        int y = startY + i * itemH;
+        int avail = g_game_mode_available[i];
+        /* Continue only available if save exists */
+        if (i == M12_GAME_MODE_CONTINUE && !state->quickResumeAvailable) avail = 0;
+        m12_draw_menu_item(fb, fw, fh, margin + 20, y,
+            g_game_mode_labels[i],
+            avail ? NULL : "[Soon]",
+            (int)state->gameModeSelected == i, avail, i);
+    }
+
+    m12_draw_text(fb, fw, fh, margin, fh - 24,
+        "Escape Back  |  Up/Down Navigate  |  Enter Start", &g_textSmallMuted);
+}
+
+static void m12_draw_extras_menu(const M12_StartupMenuState *state,
+    unsigned char *fb, int fw, int fh)
+{
+    int margin = fw / 20;
+    int startY = fh / 5;
+    int itemH = 26;
+    int i;
+
+    m12_draw_text(fb, fw, fh, margin, margin + 10,
+        "EXTRAS", &g_textMediumShadow);
+
+    for (i = 0; i < M12_EXTRAS_COUNT; i++) {
+        int y = startY + i * itemH;
+        m12_draw_menu_item(fb, fw, fh, margin + 20, y,
+            g_extras_labels[i],
+            g_extras_available[i] ? NULL : "[Soon]",
+            (int)state->extrasSelected == i,
+            g_extras_available[i], i);
+    }
+
+    m12_draw_text(fb, fw, fh, margin, fh - 24,
+        "Escape Back  |  Up/Down Navigate  |  Enter Open", &g_textSmallMuted);
+}
+
 static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
     unsigned char *framebuffer, int fw, int fh)
 {
