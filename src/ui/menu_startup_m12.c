@@ -1,5 +1,7 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+
+#define FIRESTAFF_VERSION_STRING "v0.6.0"
 #include "firestaff_bestiary.h"
 #include "firestaff_spell_ref.h"
 #include "firestaff_item_encyclopedia.h"

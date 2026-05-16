@@ -304,9 +304,14 @@ int fs_game_load_assets(FS_GameState *state) {
 
     /* TODO: call dm1_v1_graphics_loader / dm1_v1_dungeon_loader
      * For now, set starting position */
+    /* DM1 Hall of Champions start position.
+     * Source: ReDMCSB ENTRANCE.C — party enters at south end of hall.
+     * Level 0 = entrance/Hall of Champions.
+     * mapX=11, mapY=29, facing North (toward champion mirrors). */
     state->current_level = 0;
-    state->party_x = 5;
-    state->party_y = 5;
+    state->party_x = 11;
+    state->party_y = 29;
+    state->party_direction = 0; /* North */
 
     /* Load GRAPHICS.DAT and parse bitmap headers */
     if (state->config.data_dir) {
