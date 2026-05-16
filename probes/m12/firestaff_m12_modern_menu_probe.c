@@ -132,8 +132,10 @@ static long region_saturation_sum(const unsigned char* rgba, int w, int h,
             if (xx < 0) continue;
             const unsigned char* p = rgba + ((size_t)yy * (size_t)w + (size_t)xx) * 4U;
             int max = p[0], min = p[0];
-            if (p[1] > max) max = p[1]; if (p[2] > max) max = p[2];
-            if (p[1] < min) min = p[1]; if (p[2] < min) min = p[2];
+            if (p[1] > max) max = p[1];
+            if (p[2] > max) max = p[2];
+            if (p[1] < min) min = p[1];
+            if (p[2] < min) min = p[2];
             sum += max - min;
         }
     }
