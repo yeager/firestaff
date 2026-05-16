@@ -88,33 +88,3 @@ void v2_weather_render(const M11_V2_WeatherState* state, uint8_t* framebuffer, i
 void v2_weather_set_wind(M11_V2_WeatherState* state, float x) {
     state->wind_x = x;
 }
-
-/* ══════════════════════════════════════════════════════════════════════
- * V2.2 Weather FX — Atmospheric effects per dungeon zone
- *
- * Dungeon zones can have weather overlays:
- *   - Rain (outdoor/cave entrance areas)
- *   - Fog (deep dungeon)
- *   - Embers (fire areas)
- *   - Dripping water (wet caves)
- * ══════════════════════════════════════════════════════════════════════ */
-
-typedef enum {
-    V22_WEATHER_NONE,
-    V22_WEATHER_RAIN,
-    V22_WEATHER_FOG,
-    V22_WEATHER_EMBERS,
-    V22_WEATHER_DRIP,
-} V22_WeatherType;
-
-static V22_WeatherType g_current_weather = V22_WEATHER_NONE;
-static float g_weather_intensity = 0.5f;
-
-void v22_weather_set(V22_WeatherType type, float intensity) {
-    g_current_weather = type;
-    g_weather_intensity = intensity > 1.0f ? 1.0f : (intensity < 0.0f ? 0.0f : intensity);
-}
-
-V22_WeatherType v22_weather_current(void) { return g_current_weather; }
-float v22_weather_intensity(void) { return g_weather_intensity; }
-

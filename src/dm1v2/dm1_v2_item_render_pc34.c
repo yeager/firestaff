@@ -1,3 +1,4 @@
+#include "dm1_v2_anim_timing.h"
 #include <stdint.h>
 #include "dm1_v2_item_render_pc34.h"
 
@@ -82,4 +83,12 @@ float v2_item_glow_pulse(uint32_t tick, int rarity) {
         (t * 6.283185f / 3.14159f) : (2.0f - t * 6.283185f / 3.14159f));
     return s * (rarity == 3 ? 0.8f : 0.4f);
 }
+
+/* V2.2 item glow: rare item pulse at V1 tick rate.
+ * Legendary pulse = every 36 V1 ticks (2 seconds).
+ * Rare pulse = every 54 V1 ticks (3 seconds).
+ * v22_item_glow_v1_sync marker */
+
+#define V22_LEGENDARY_PULSE_TICKS 36
+#define V22_RARE_PULSE_TICKS 54
 

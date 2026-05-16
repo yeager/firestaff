@@ -1,3 +1,4 @@
+#include "dm1_v2_anim_timing.h"
 #include "dm1_v2_level_transition_pc34.h"
 
 static M11_V2_LevelTransition g_transition;
@@ -149,4 +150,25 @@ int v2_level_transition_tick(float dt) {
 float v2_level_transition_get_progress(void) { return g_level_trans.progress; }
 V2_TransitionType v2_level_transition_get_type(void) { return g_level_trans.type; }
 int v2_level_transition_is_active(void) { return g_level_trans.active; }
+
+/* V2.2 level transitions: duration is measured in V1 ticks.
+ * Stairs = 3 V1 ticks (165ms) — same as V1 movement cooldown.
+ * Pit fall = 6 V1 ticks (330ms).
+ * Teleport = 2 V1 ticks (110ms) — flash + appear.
+ *
+ * v22_transition_v1_sync marker */
+
+#define V22_TRANS_STAIRS_TICKS   3
+#define V22_TRANS_PIT_TICKS      6
+#define V22_TRANS_TELEPORT_TICKS 2
+
+float v22_transition_duration_for_type(int type) {
+    switch (type) {
+        case 1: /* descend */ return V22_TRANS_STAIRS_TICKS * V1_TICK_MS;
+        case 2: /* ascend */  return V22_TRANS_STAIRS_TICKS * V1_TICK_MS;
+        case 3: /* pit */     return V22_TRANS_PIT_TICKS * V1_TICK_MS;
+        case 4: /* teleport */return V22_TRANS_TELEPORT_TICKS * V1_TICK_MS;
+        default: return V1_TICK_MS;
+    }
+}
 

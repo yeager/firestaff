@@ -35,8 +35,12 @@ uint64_t v2_stats_get(M11_V2_StatType stat) {
         case M11_V2_STAT_TRAPS_TRIGGERED: return g_stats.traps_triggered;
         case M11_V2_STAT_DAMAGE_DEALT: return g_stats.damage_dealt;
         case M11_V2_STAT_DAMAGE_TAKEN: return g_stats.damage_taken;
-        case M11_V2_STAT_PLAY_TIME_SECONDS: return g_stats.play_time_seconds
-
+        case M11_V2_STAT_PLAY_TIME_SECONDS: return g_stats.play_time_seconds;
+        case M11_V2_STAT_DEATHS: return g_stats.deaths;
+        case M11_V2_STAT_CHAMPIONS_RESURRECTED: return g_stats.champions_resurrected;
+        default: return 0;
+    }
+}
 
 void v2_stats_reset(void) {
     memset(&g_stats, 0, sizeof(g_stats));
@@ -57,41 +61,3 @@ int v2_stats_deserialize(const unsigned char *buf, int bufsize) {
 const M11_V2_GameStats *v2_stats_get_all(void) {
     return &g_stats;
 }
-
-/* V2.2 Stat Tracker — JSON serialization for display/export */
-
-int v22_stats_to_json(char *buf, int bufsize) {
-    const M11_V2_GameStats *s = v2_stats_get_all();
-    if (!s || !buf || bufsize < 256) return -1;
-    return snprintf(buf, bufsize,
-        "{\n"
-        "  \"total_steps\": %u,\n"
-        "  \"total_kills\": %u,\n"
-        "  \"items_found\": %u,\n"
-        "  \"items_used\": %u,\n"
-        "  \"spells_cast\": %u,\n"
-        "  \"doors_opened\": %u,\n"
-        "  \"traps_triggered\": %u,\n"
-        "  \"damage_dealt\": %llu,\n"
-        "  \"damage_taken\": %llu,\n"
-        "  \"play_time_seconds\": %u,\n"
-        "  \"deaths\": %u,\n"
-        "  \"champions_resurrected\": %u\n"
-        "}",
-        s->total_steps, s->total_kills, s->items_found,
-        s->items_used, s->spells_cast, s->doors_opened,
-        s->traps_triggered, (unsigned long long)s->damage_dealt,
-        (unsigned long long)s->damage_taken,
-        s->play_time_seconds, s->deaths, s->champions_resurrected);
-}
-
-void v22_stats_on_step(void) { v2_stats_increment(M11_V2_STAT_TOTAL_STEPS, 1); }
-void v22_stats_on_kill(void) { v2_stats_increment(M11_V2_STAT_TOTAL_KILLS, 1); }
-void v22_stats_on_spell(void) { v2_stats_increment(M11_V2_STAT_SPELLS_CAST, 1); }
-void v22_stats_on_door(void) { v2_stats_increment(M11_V2_STAT_DOORS_OPENED, 1); }
-void v22_stats_on_damage_dealt(int amount) { v2_stats_increment(M11_V2_STAT_DAMAGE_DEALT, amount); }
-void v22_stats_on_damage_taken(int amount) { v2_stats_increment(M11_V2_STAT_DAMAGE_TAKEN, amount); }
-void v22_stats_on_death(void) { v2_stats_increment(M11_V2_STAT_DEATHS, 1); }
-void v22_stats_on_resurrect(void) { v2_stats_increment(M11_V2_STAT_CHAMPIONS_RESURRECTED, 1); }
-void v22_stats_tick_playtime(void) { v2_stats_increment(M11_V2_STAT_PLAY_TIME_SECONDS, 1); }
-

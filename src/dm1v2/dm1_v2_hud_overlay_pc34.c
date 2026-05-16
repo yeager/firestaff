@@ -1,3 +1,4 @@
+#include "dm1_v2_anim_timing.h"
 #include "dm1_v2_hud_overlay_pc34.h"
 #include <string.h>
 #include <stdio.h>
@@ -164,5 +165,24 @@ const char *v21_hud_panel_source_evidence(void) {
         "STATS.C F0090-F0092 stat bar draw helpers\n"
         "CHAMDRAW.C champion portrait/name rendering\n"
         "V2.1: identical panel layout upscaled via EPX\n";
+}
+
+/* V2.2 HUD: health bar pulse when low, mana glow when charging.
+ * Pulse rate = 2 Hz = every 9 V1 ticks.
+ * All visual feedback synced to V1 timing.
+ * v22_hud_pulse_v1_sync marker */
+
+#define V22_HUD_PULSE_TICKS 9  /* ~0.5 seconds */
+
+static V2_Anim g_health_pulse;
+
+void v22_hud_start_health_pulse(void) {
+    v2_anim_start(&g_health_pulse, 0.6f, 1.0f,
+        V22_HUD_PULSE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
+    g_health_pulse.loops = -1; /* infinite ping-pong */
+}
+
+float v22_hud_health_pulse_alpha(void) {
+    return v2_anim_value(&g_health_pulse);
 }
 

@@ -1,3 +1,4 @@
+#include "dm1_v2_anim_timing.h"
 #include "dm1_v2_smooth_movement_pc34.h"
 #include <math.h>
 
@@ -123,4 +124,35 @@ int v22_smooth_tick(float *out_x, float *out_y, float *out_angle) {
     if (out_angle) *out_angle = g_smooth.from_angle + (g_smooth.to_angle - g_smooth.from_angle) * et;
     return g_smooth.active;
 }
+
+/* V2.2 smooth movement now uses unified V2_Anim timing.
+ * Walk/turn/stairs transitions complete in exactly 1 V1 tick (55ms).
+ * The renderer samples v2_anim_value() at display rate for smooth frames.
+ *
+ * Key: game state snaps instantly (V1 behavior preserved).
+ *      Visual position interpolates from old to new over 1 V1 tick.
+ *
+ * v22_smooth_uses_anim_timing marker */
+
+static V2_Anim g_move_x_anim, g_move_y_anim, g_turn_anim;
+
+void v22_smooth_start_walk_v1sync(float fx, float fy, float tx, float ty) {
+    v2_anim_start_v1_tick(&g_move_x_anim, fx, tx, V2_EASE_OUT_CUBIC);
+    v2_anim_start_v1_tick(&g_move_y_anim, fy, ty, V2_EASE_OUT_CUBIC);
+}
+
+void v22_smooth_start_turn_v1sync(float from_angle, float to_angle) {
+    v2_anim_start_v1_tick(&g_turn_anim, from_angle, to_angle, V2_EASE_OUT_QUAD);
+}
+
+void v22_smooth_update_from_clock(const V2_AnimClock *clock) {
+    if (!clock) return;
+    v2_anim_update(&g_move_x_anim, clock->dt_ms);
+    v2_anim_update(&g_move_y_anim, clock->dt_ms);
+    v2_anim_update(&g_turn_anim, clock->dt_ms);
+}
+
+float v22_smooth_get_x(void) { return v2_anim_value(&g_move_x_anim); }
+float v22_smooth_get_y(void) { return v2_anim_value(&g_move_y_anim); }
+float v22_smooth_get_angle(void) { return v2_anim_value(&g_turn_anim); }
 

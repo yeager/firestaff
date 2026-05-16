@@ -91,36 +91,3 @@ const M11_V2_InventoryItem* v2_inv_get(int idx) {
 int v2_inv_count(void) {
     return g_inv.count;
 }
-
-/* V2 Inventory Sort — automatic item organization */
-
-typedef struct {
-    int slot_index;
-    int item_type;
-    int item_weight;
-    int item_value;
-    char name[32];
-} V2_SortableItem;
-
-static int v2_sort_compare_type(const void *a, const void *b) {
-    const V2_SortableItem *ia = (const V2_SortableItem *)a;
-    const V2_SortableItem *ib = (const V2_SortableItem *)b;
-    if (ia->item_type != ib->item_type) return ia->item_type - ib->item_type;
-    return ia->item_weight - ib->item_weight;
-}
-
-static int v2_sort_compare_weight(const void *a, const void *b) {
-    const V2_SortableItem *ia = (const V2_SortableItem *)a;
-    const V2_SortableItem *ib = (const V2_SortableItem *)b;
-    return ib->item_weight - ia->item_weight; /* heaviest first */
-}
-
-void v2_inventory_sort(V2_SortableItem *items, int count, int sort_mode) {
-    if (!items || count <= 1) return;
-    switch (sort_mode) {
-        case 0: qsort(items, count, sizeof(V2_SortableItem), v2_sort_compare_type); break;
-        case 1: qsort(items, count, sizeof(V2_SortableItem), v2_sort_compare_weight); break;
-        default: break;
-    }
-}
-

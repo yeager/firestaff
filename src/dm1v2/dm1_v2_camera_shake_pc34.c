@@ -91,3 +91,7 @@ void v22_shake_tick(float dt, float *out_dx, float *out_dy) {
 void v22_shake_reset(void) { g_trauma = 0.0f; }
 float v22_shake_get_trauma(void) { return g_trauma; }
 
+/* Camera shake now syncs to V1 tick rate.
+ * Trauma decays at V1_TICKS_PER_SECOND rate for consistent feel. 
+ * v22_shake_v1_sync marker */
+

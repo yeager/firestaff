@@ -1,3 +1,4 @@
+#include "dm1_v2_anim_timing.h"
 #include "dm1_v2_screen_transition_pc34.h"
 
 static M11_V2_Transition g_trans;
@@ -83,3 +84,34 @@ void v2_transition_skip(void) {
     g_trans.progress = 1.0f;
     g_trans.active = false;
 }
+
+/* V2.2 screen transitions: fade duration = V1 tick multiples.
+ *
+ * v22_screen_fade_v1_sync marker */
+
+#define V22_FADE_TICKS 4  /* 4 V1 ticks = 220ms fade */
+
+static V2_Anim g_screen_fade;
+
+void v22_screen_fade_start(int fade_in) {
+    if (fade_in) {
+        v2_anim_start(&g_screen_fade, 0.0f, 1.0f,
+            V22_FADE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
+    } else {
+        v2_anim_start(&g_screen_fade, 1.0f, 0.0f,
+            V22_FADE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
+    }
+}
+
+void v22_screen_fade_update(float dt_ms) {
+    v2_anim_update(&g_screen_fade, dt_ms);
+}
+
+float v22_screen_fade_alpha(void) {
+    return v2_anim_value(&g_screen_fade);
+}
+
+int v22_screen_fade_is_done(void) {
+    return v2_anim_is_done(&g_screen_fade);
+}
+

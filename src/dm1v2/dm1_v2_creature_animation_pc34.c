@@ -159,3 +159,19 @@ int v2_anim_current_frame(const V2_AnimState *state) {
     return state->sequence->frame_indices[state->current_frame];
 }
 
+/* V2.2 creature animation: each frame lasts exactly V1_TICK_MS (55ms).
+ * Between V1 ticks, the renderer cross-fades sprite frames using sub_tick.
+ * This gives smooth creature movement without changing animation speed.
+ *
+ * v22_creature_anim_v1_sync marker */
+
+static float g_creature_crossfade = 0.0f;
+
+void v22_creature_anim_set_crossfade(float sub_tick) {
+    g_creature_crossfade = sub_tick;
+}
+
+float v22_creature_anim_get_crossfade(void) {
+    return g_creature_crossfade;
+}
+

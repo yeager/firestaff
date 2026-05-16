@@ -98,7 +98,7 @@ int v22_screenshot_process(const uint32_t *rgba, int w, int h,
     v2_screenshot_auto_path(path + strlen(path),
         (int)(sizeof(path) - strlen(path)), "firestaff");
 
-    result = v2_screenshot_capture(rgba, w, h, path);
+    result = v2_screenshot_capture((uint8_t*)rgba, w, h, NULL, 0, path);
     if (result == 0) {
         strncpy(g_screenshot_last_path, path, sizeof(g_screenshot_last_path) - 1);
     }

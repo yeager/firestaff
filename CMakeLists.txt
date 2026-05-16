@@ -54,6 +54,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_m10 PRIVATE -std=c99 -O2 -include stddef.h)
 endif()
 
+
+# ── V2 static library (enhanced features) ──────────────────────────
+file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
+add_library(firestaff_v2 STATIC ${V2_SOURCES})
+target_include_directories(firestaff_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_v2 PUBLIC firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_v2 PRIVATE -Wall -Wextra -O2)
+endif()
+
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
@@ -655,17 +665,20 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_movement_viewport_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_runtime_shell_pc34
         tests/test_dm1_v2_runtime_shell_pc34.c
         src/dm1v2/dm1_v2_runtime_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_camera_controller_pc34
         tests/test_dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_movement_command_adapter_pc34
         tests/test_dm1_v2_movement_command_adapter_pc34.c
@@ -674,23 +687,28 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_hud_overlay_pc34
         tests/test_dm1_v2_hud_overlay_pc34.c
         src/dm1v2/dm1_v2_hud_overlay_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_lighting_dynamic_pc34
         tests/test_dm1_v2_lighting_dynamic_pc34.c
         src/dm1v2/dm1_v2_lighting_dynamic_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_item_render_pc34
         tests/test_dm1_v2_item_render_pc34.c
         src/dm1v2/dm1_v2_item_render_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_compile_definitions(test_dm1_v2_item_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(test_dm1_v2_settings_pc34
         tests/test_dm1_v2_settings_pc34.c
         src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_settings_pc34 PRIVATE firestaff_m12)
     add_executable(test_m11_display_aspect_present_rect
