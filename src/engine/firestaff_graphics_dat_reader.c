@@ -211,19 +211,26 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
 
     if (w <= 0 || h <= 0) return -1;
 
-    /* Estimate compressed data size (until next graphic or EOF) */
-    if (index + 1 < gfx->graphic_count)
-        compressed_size = gfx->entries[index + 1].offset - data_off;
-    else
-        compressed_size = gfx->raw_size - data_off;
+    /* Compressed data = comp_size from header */
+    compressed_size = gfx->entries[index].compressed_size;
+    if (compressed_size <= 0) {
+        /* Try distance to next graphic */
+        if (index + 1 < gfx->graphic_count)
+            compressed_size = gfx->entries[index + 1].offset - data_off;
+        else
+            compressed_size = gfx->raw_size - data_off;
+    }
 
     if (compressed_size <= 0 || data_off + compressed_size > gfx->raw_size)
         return -1;
 
-    /* Try RLE decompression */
-    decomp_size = fs_gfx_decompress_lzw(
-        gfx->raw_data + data_off, compressed_size,
-        decomp_buf, sizeof(decomp_buf));
+    /* LZW decompression: output is 4bpp packed = (w*h+1)/2 bytes */
+    {
+        int expected_decomp = (w * h + 1) / 2;
+        decomp_size = fs_gfx_decompress_lzw(
+            gfx->raw_data + data_off, compressed_size,
+            decomp_buf, expected_decomp < (int)sizeof(decomp_buf) ? expected_decomp : (int)sizeof(decomp_buf));
+    }
 
     if (decomp_size <= 0) return -1;
 
