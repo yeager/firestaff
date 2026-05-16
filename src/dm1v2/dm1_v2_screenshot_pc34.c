@@ -1,4 +1,6 @@
 #include "dm1_v2_screenshot_pc34.h"
+extern int v2_screenshot_auto_path(char *buf, int bufsize, const char *prefix);
+extern int v2_screenshot_capture(uint8_t *fb, int w, int h, uint32_t *pal, int pal_size, const char *path);
 #include <stdio.h>
 #include <time.h>
 #include "dm1_v2_screenshot_pc34.h"

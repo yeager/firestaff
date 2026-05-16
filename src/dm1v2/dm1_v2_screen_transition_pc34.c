@@ -1,117 +1,53 @@
 #include "dm1_v2_anim_timing.h"
 #include "dm1_v2_screen_transition_pc34.h"
+#include <string.h>
 
-static M11_V2_Transition g_trans;
-static uint32_t g_rand_state = 12345;
+static V2_Anim g_trans;
+static M11_V2_TransitionType g_trans_kind;
 
-static uint32_t v2_rand(void) {
-    g_rand_state = g_rand_state * 1103515245 + 12345;
-    return (g_rand_state >> 16) & 0x7FFF;
+void v2_screen_transition_start(int kind, float duration_ms) {
+    g_trans_kind = (M11_V2_TransitionType)kind;
+    v2_anim_start(&g_trans, 0.0f, 1.0f, duration_ms, V2_EASE_IN_OUT_QUAD);
 }
 
-void v2_transition_init(void) {
-    memset(&g_trans, 0, sizeof(g_trans));
+void v2_screen_transition_update(float dt_ms) {
+    v2_anim_update(&g_trans, dt_ms);
 }
 
-void v2_transition_start(M11_V2_TransitionType type, float speed, int w, int h) {
-    g_trans.type = type;
-    g_trans.progress = 0.0f;
-    g_trans.speed = speed;
-    g_trans.active = true;
-    g_trans.w = w;
-    g_trans.h = h;
+float v2_screen_transition_progress(void) {
+    return v2_anim_value(&g_trans);
 }
 
-void v2_transition_update(float dt) {
-    if (!g_trans.active) return;
-    g_trans.progress += g_trans.speed * dt;
-    if (g_trans.progress >= 1.0f) {
-        g_trans.progress = 1.0f;
-        g_trans.active = false;
-    }
+int v2_screen_transition_is_done(void) {
+    return v2_anim_is_done(&g_trans);
 }
 
-void v2_transition_apply(uint8_t* src, uint8_t* dst, int w, int h) {
+void v2_screen_transition_apply(const uint8_t *src, uint8_t *dst, int w, int h) {
+    float p = v2_anim_value(&g_trans);
+    int x, y;
     if (!src || !dst) return;
     memcpy(dst, src, w * h);
-
-    if (!g_trans.active && g_trans.progress < 1.0f) return;
-
-    float p = g_trans.progress;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
             int idx = y * w + x;
-            switch (g_trans.type) {
-                case FADE_BLACK:
-                    dst[idx] = (uint8_t)(dst[idx] * (1.0f - p));
-                    break;
-                case FADE_WHITE:
-                    dst[idx] = (uint8_t)(dst[idx] * (1.0f - p) + 255.0f * p);
-                    break;
-                case DISSOLVE:
-                    if ((v2_rand() % 100) < (int)(p * 100)) {
-                        dst[idx] = 0;
-                    }
-                    break;
-                case WIPE_LEFT:
-                    if (x >= (int)(w * p)) {
-                        dst[idx] = 0;
-                    }
-                    break;
-                case WIPE_DOWN:
-                    if (y >= (int)(h * p)) {
-                        dst[idx] = 0;
-                    }
-                    break;
-                case PIXELATE:
-                    int block_size; block_size = 8;
-                    int bx = (x / block_size) * block_size;
-                    int by = (y / block_size) * block_size;
-                    if ((bx + by) / (w + h) > p) {
-                        dst[idx] = 0;
-                    }
-                    break;
+            switch (g_trans_kind) {
+                case FADE_BLACK: if (p > 0.5f) dst[idx] = 0; break;
+                case FADE_WHITE: if (p < 0.5f) dst[idx] = 15; break;
+                case WIPE_LEFT:  if (x < (int)(w * p)) dst[idx] = 0; break;
+                case WIPE_DOWN:  if (y >= (int)(h * p)) dst[idx] = 0; break;
+                case DISSOLVE:   break;
+                case PIXELATE:   break;
             }
         }
     }
 }
 
-bool v2_transition_is_active(void) {
-    return g_trans.active;
-}
-
-void v2_transition_skip(void) {
-    g_trans.progress = 1.0f;
-    g_trans.active = false;
-}
-
-/* V2.2 screen transitions: fade duration = V1 tick multiples.
- *
- * v22_screen_fade_v1_sync marker */
-
-#define V22_FADE_TICKS 4  /* 4 V1 ticks = 220ms fade */
-
 static V2_Anim g_screen_fade;
-
 void v22_screen_fade_start(int fade_in) {
-    if (fade_in) {
-        v2_anim_start(&g_screen_fade, 0.0f, 1.0f,
-            V22_FADE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
-    } else {
-        v2_anim_start(&g_screen_fade, 1.0f, 0.0f,
-            V22_FADE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
-    }
+    float from = fade_in ? 0.0f : 1.0f;
+    float to = fade_in ? 1.0f : 0.0f;
+    v2_anim_start(&g_screen_fade, from, to, 4 * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);
 }
-
-void v22_screen_fade_update(float dt_ms) {
-    v2_anim_update(&g_screen_fade, dt_ms);
-}
-
-float v22_screen_fade_alpha(void) {
-    return v2_anim_value(&g_screen_fade);
-}
-
-int v22_screen_fade_is_done(void) {
-    return v2_anim_is_done(&g_screen_fade);
-}
-
+void v22_screen_fade_update(float dt_ms) { v2_anim_update(&g_screen_fade, dt_ms); }
+float v22_screen_fade_alpha(void) { return v2_anim_value(&g_screen_fade); }
+int v22_screen_fade_is_done(void) { return v2_anim_is_done(&g_screen_fade); }

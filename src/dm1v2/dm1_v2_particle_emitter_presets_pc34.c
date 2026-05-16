@@ -1,4 +1,9 @@
 #include "dm1_v2_particle_system_pc34.h"
+/* Forward declaration for cross-module call */
+extern int v2_particle_emitter_create(float x, float y, float rate,
+    float spread, float life, float size, float gravity,
+    unsigned int color, int max_count);
+
 #include "dm1_v2_particle_emitter_presets_pc34.h"
 
 void v2_emitter_preset_init(void) {
