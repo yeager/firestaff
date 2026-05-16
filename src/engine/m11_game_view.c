@@ -20554,6 +20554,34 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
     }
+    {
+        static int draw_logged = 0;
+        if (!draw_logged) {
+            FILE *dbg = fopen("/tmp/fs-party-pos.txt", "w");
+            if (dbg) {
+                fprintf(dbg, "mapIdx=%d pos=(%d,%d) dir=%d\n",
+                    state->world.party.mapIndex, state->world.party.mapX,
+                    state->world.party.mapY, state->world.party.direction);
+                /* Dump square types around party */
+                if (state->world.dungeon && state->world.dungeon->tilesLoaded &&
+                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+                    struct DungeonMapTiles_Compat *t = &state->world.dungeon->tiles[state->world.party.mapIndex];
+                    struct DungeonMapDesc_Compat *m = &state->world.dungeon->maps[state->world.party.mapIndex];
+                    fprintf(dbg, "map %d: %dx%d\n", state->world.party.mapIndex, m->width, m->height);
+                    for (int y = 0; y < (int)m->height && y < 10; y++) {
+                        fprintf(dbg, "y%02d:", y);
+                        for (int x = 0; x < (int)m->width; x++) {
+                            int sq = t->squareData[x * m->height + y];
+                            fprintf(dbg, " %d", sq >> 5);
+                        }
+                        fprintf(dbg, "\n");
+                    }
+                }
+                fclose(dbg);
+            }
+            draw_logged = 1;
+        }
+    }
     memset(&currentCell, 0, sizeof(currentCell));
     memset(&aheadCell, 0, sizeof(aheadCell));
     if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
