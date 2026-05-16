@@ -358,3 +358,32 @@ void dm1_skill_state_init(DM1_ChampionSkillState* state) {
     if (!state) return;
     memset(state, 0, sizeof(DM1_ChampionSkillState));
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Skill system source-lock extensions
+ *
+ * F0303_CHAMPION_GetSkillLevel (CHAMPION.C:715-822):
+ *   - 4 base skills: Fighter(0), Ninja(1), Priest(2), Wizard(3)
+ *   - 8 derived skills: Swing(4)..Defend(7), Fire(8)..Water(11)
+ *   - Derived skill = max(base_level, specific_level)
+ *   - MASK0x4000_IGNORE_OBJECT_MODIFIERS: raw level only
+ *   - MASK0x8000_IGNORE_TEMPORARY_EXPERIENCE: exclude recent gains
+ *
+ * F0304_CHAMPION_AddSkillExperience (CHAMPION.C:823-960):
+ *   - XP added to base skill accumulator
+ *   - Level-up check: level = floor(sqrt(XP / 500))
+ *   - On level-up: stamina/mana regen, stat adjustments
+ *   - Combat bonus: if attack within 25 ticks, 1.5x XP
+ *   - Combat penalty: if >150 ticks since attack, 0.5x XP
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_skill_pass601_skill_source_evidence(void)
+{
+    return
+        "CHAMPION.C:715-822 F0303_CHAMPION_GetSkillLevel 4base+8derived\n"
+        "CHAMPION.C:823-960 F0304_CHAMPION_AddSkillExperience XP+levelup\n"
+        "CHAMPION.C:866 combat window: G0361_l_LastCreatureAttackTime < GameTime-150\n"
+        "CHAMPION.C:883 recent combat bonus: > GameTime-25 -> 1.5x\n"
+        "CHAMPION.C:905-945 stamina regen on levelup by skill class\n";
+}
+

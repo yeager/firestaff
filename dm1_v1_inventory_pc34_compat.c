@@ -134,3 +134,33 @@ int m11_inventory_get_load(const M11_InventoryState* s, int champ) {
     }
     return s->champions[champ].load;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Inventory system source-lock extensions
+ *
+ * CHAMPION.C:243-268  F0297_CHAMPION_PutObjectInLeaderHand
+ * CHAMPION.C:270-298  F0298_CHAMPION_GetObjectRemovedFromLeaderHand
+ * CHAMPION.C:301-487  F0299_CHAMPION_ApplyObjectModifiersToStatistics
+ * CHAMPION.C:489-560  F0300_CHAMPION_GetObjectRemovedFromSlot
+ * CHAMPION.C:587-660  F0301_CHAMPION_AddObjectInSlot
+ * CHAMPION.C:662-712  F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox
+ *   BUG0_39: Food/Water panel flash when swapping scroll/chest in leader hand
+ *   (F0300 sets MASK0x0800, F0297 triggers F0292 which draws panel prematurely)
+ *
+ * OBJECT.C:121-200    F0032_OBJECT_GetType (thing type extraction)
+ * OBJECT.C:25-120     F0031_OBJECT_LoadNames (object name table)
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_inventory_pass601_inventory_source_evidence(void)
+{
+    return
+        "CHAMPION.C:243-268 F0297_PutObjectInLeaderHand\n"
+        "CHAMPION.C:270-298 F0298_GetObjectRemovedFromLeaderHand\n"
+        "CHAMPION.C:301-487 F0299_ApplyObjectModifiersToStatistics\n"
+        "CHAMPION.C:489-560 F0300_GetObjectRemovedFromSlot\n"
+        "CHAMPION.C:587-660 F0301_AddObjectInSlot\n"
+        "CHAMPION.C:662-712 F0302_ProcessCommands28To65_ClickOnSlotBox BUG0_39\n"
+        "OBJECT.C:121-200 F0032_OBJECT_GetType\n"
+        "OBJECT.C:25-120 F0031_OBJECT_LoadNames\n";
+}
+

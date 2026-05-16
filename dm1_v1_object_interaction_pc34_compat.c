@@ -196,3 +196,32 @@ int m11_obj_is_valid(const M11_ObjectState* s, int objIdx) {
     if (s->objects[objIdx].objectType == DM1_OBJTYPE_NONE) return 0;
     return 1;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Pass601 — Object interaction source-lock extensions
+ *
+ * DUNGEON.C:F0140_DUNGEON_GetObjectWeight     — weight table lookup
+ * DUNGEON.C:F0141_DUNGEON_GetObjectInfoIndex   — info index from thing type
+ * DUNGEON.C:F0143_DUNGEON_GetArmourDefense     — armour defense value
+ * DUNGEON.C:F0156_DUNGEON_GetThingData         — thing→data pointer
+ * DUNGEON.C:F0159_DUNGEON_GetNextThing          — thing list traversal
+ * DUNGEON.C:F0161_DUNGEON_GetSquareFirstThing   — first thing on square
+ * OBJECT.C:F0032_OBJECT_GetType                 — thing type extraction
+ * OBJECT.C:F0033_OBJECT_GetIconIndex            — icon bitmap index
+ * OBJECT.C:F0034_OBJECT_DrawLeaderHandObjectName
+ * OBJECT.C:F0036_OBJECT_ExtractIconFromBitmap
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const char *dm1_object_pass601_object_source_evidence(void)
+{
+    return
+        "DUNGEON.C F0140_GetObjectWeight\n"
+        "DUNGEON.C F0141_GetObjectInfoIndex\n"
+        "DUNGEON.C F0143_GetArmourDefense\n"
+        "DUNGEON.C F0156_GetThingData\n"
+        "DUNGEON.C F0159_GetNextThing\n"
+        "DUNGEON.C F0161_GetSquareFirstThing\n"
+        "OBJECT.C F0032_GetType\n"
+        "OBJECT.C F0033_GetIconIndex\n";
+}
+
