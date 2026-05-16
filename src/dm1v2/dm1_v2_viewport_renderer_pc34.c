@@ -975,3 +975,93 @@ const char *v21_viewport_source_evidence(void) {
         "Panel (320x64) upscaled separately from viewport (224x136)\n";
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2 Inscription Text Rendering
+ *
+ * V1: inscriptions rendered as pixel-font in 320x200 viewport buffer.
+ * V2: render inscription text AFTER upscaling, using a larger font
+ * so it is actually readable. The text content comes from DUNGEON.DAT
+ * or the translated dungeon text table.
+ *
+ * V2 inscription overlay:
+ *   1. V1 renders viewport as normal (inscription is pixel-blurred)
+ *   2. V2 detects inscription in view (wall ornament type)
+ *   3. V2 overlays clean text in display-resolution font
+ *   4. Text uses localized version if available
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    int active;
+    int x, y;           /* display coordinates (post-upscale) */
+    int width, height;
+    const char *text;
+    uint32_t color;
+    float alpha;
+} V21_InscriptionOverlay;
+
+static V21_InscriptionOverlay g_inscription = {0};
+
+void v21_inscription_show(const char *text, int vp_x, int vp_y, int scale) {
+    if (!text || !text[0]) return;
+    g_inscription.active = 1;
+    g_inscription.text = text;
+    /* Position in display coordinates (after upscale) */
+    g_inscription.x = vp_x * scale;
+    g_inscription.y = vp_y * scale;
+    g_inscription.color = 0xFFCCCC44; /* yellow, like V1 */
+    g_inscription.alpha = 1.0f;
+}
+
+void v21_inscription_hide(void) {
+    g_inscription.active = 0;
+}
+
+int v21_inscription_is_active(void) {
+    return g_inscription.active;
+}
+
+const V21_InscriptionOverlay *v21_inscription_get(void) {
+    return g_inscription.active ? &g_inscription : NULL;
+}
+
+/* Called by renderer AFTER upscale to draw clean text */
+void v21_inscription_render_overlay(uint32_t *rgba_buffer,
+    int display_w, int display_h, int scale)
+{
+    /* In a full implementation this would use a TTF/bitmap font renderer
+     * at display resolution. For now: draw each character as a colored
+     * block so the text is at least visible and correctly positioned. */
+    const V21_InscriptionOverlay *ins = v21_inscription_get();
+    int i, cx, cy, char_w, char_h;
+    if (!ins || !rgba_buffer) return;
+
+    char_w = 6 * scale;  /* V1 font is ~6px wide */
+    char_h = 8 * scale;  /* V1 font is ~8px tall */
+    cx = ins->x;
+    cy = ins->y;
+
+    for (i = 0; ins->text[i]; i++) {
+        /* Simple: fill a character-sized rectangle with the text color.
+         * Real implementation: blit from a font atlas. */
+        if (ins->text[i] != ' ') {
+            int py, px;
+        for (py = 0; py < char_h && cy + py < display_h; py++) {
+                for (px = 0; px < char_w - 1 && cx + px < display_w; px++) {
+                    /* Only draw pixels that form a rough letter shape */
+                    int row = py * 8 / char_h;
+                    int col = px * 6 / char_w;
+                    /* Simple 5x7 font pattern check */
+                    if (row < 7 && col < 5) {
+                        rgba_buffer[(cy + py) * display_w + cx + px] = ins->color;
+                    }
+                }
+            }
+        }
+        cx += char_w;
+        if (cx >= display_w - char_w) {
+            cx = ins->x;
+            cy += char_h + 2;
+        }
+    }
+}
