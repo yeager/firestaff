@@ -1,64 +1,118 @@
 # Firestaff — Dungeon Master Collection
 
-A faithful recreation of the classic Dungeon Master series with modern enhancements.
+A faithful recreation and modern enhancement of the classic Dungeon Master series by FTL Games. Play Dungeon Master, Chaos Strikes Back, and Dungeon Master II with original accuracy or modern features — in 20 languages, on macOS, Windows, and Linux.
 
 ## Games
 
-| Game | V1 (Original) | V2.1 (Upscaled) | V2.2 (Enhanced) |
+| Game | V1 Original | V2.1 Upscaled | V2.2 Enhanced |
 |---|---|---|---|
-| **Dungeon Master** | ✅ 62 modules | ✅ EPX pipeline | ✅ 20 features |
-| **Chaos Strikes Back** | ✅ 8 modules | ✅ Viewport | ✅ 4 features |
-| **Dungeon Master II** | ✅ 6 modules | ✅ Indoor+outdoor | ✅ 4 features |
+| **Dungeon Master** | ✅ 62 modules | ✅ EPX 2x/4x | ✅ 20 features |
+| **Chaos Strikes Back** | ✅ 12 modules | ✅ Viewport + DSA | ✅ 4 features |
+| **Dungeon Master II: Skullkeep** | ✅ 10 modules | ✅ Indoor + outdoor | ✅ 4 features |
 | **DM Nexus** | 🔜 Planned | — | — |
 
-## Features
+## Versions
 
 ### V1 — Original Faithful
-- 100% ReDMCSB function parity (40/40 source files)
-- DM1 PC-34 compatible rendering pipeline
-- Original VGA palette, 320×200 resolution
-- V1 game tick rate preserved (55ms / 18.2 Hz)
+Pixel-perfect recreation at native 320x200. All game logic source-locked to ReDMCSB with 100% function coverage across 40 source files. Original VGA 16-color palette. V1 tick rate preserved at 55ms / 18.2 Hz.
 
 ### V2.1 — Upscaled
-- EPX/Scale2x pixel art upscaler (no blurry bilinear)
-- Palette-aware RGBA pipeline
-- 640×400 (2x) or 1280×800 (4x) output
-- Original game logic unchanged
+Same game logic as V1, rendered at higher resolution using EPX/Scale2x — an edge-preserving pixel art scaler. 640x400 or 1280x800 output. No blurry bilinear.
 
 ### V2.2 — Enhanced
-- Smooth movement (interpolated walk/turn/stairs)
-- Dynamic lighting (per-tile, torch flicker)
-- Particle effects (torch, spell, blood, weather)
-- Minimap, journal, message log, damage numbers
-- Camera shake, weather FX, achievements
-- Auto-save, screenshot, input remap, inventory sort
+V1 game logic with visual and quality-of-life enhancements:
 
-### Multi-language
-- English, Swedish, German, French
-- Auto-detects system language (LC_ALL/LANG)
-- Swedish: Firestaff original translation (never existed for DM1)
-- Language-specific DUNGEON.DAT loading (EN/FR/DE)
+- **Smooth movement** — interpolated walk/turn/stairs with ease-out easing
+- **Dynamic lighting** — per-tile propagation with torch flicker
+- **Particle effects** — torch, spell, blood, weather
+- **Camera shake** — trauma-based on damage/explosions
+- **Minimap** — explored dungeon overview
+- **Floating damage numbers** — combat feedback
+- **Weather FX** — rain, fog, embers, drip per zone
+- **Journal** — exploration/event log
+- **Message log** — scrollable combat feed
+- **Achievements, auto-save, screenshot, input remap, inventory sort, tooltips**
+
+All animations use unified timing: exact V1 game speed, smooth visuals at display rate.
+
+## Rendering Pipeline
+
+Real bitmaps from original game files:
+
+```
+GRAPHICS.DAT -> parse 713 graphics
+  -> 4bpp decompress -> DM1 VGA palette -> RGBA
+  -> EPX upscale -> SDL3 present
+
+DUNGEON.DAT -> square types per level
+  -> view cone -> wall bitmap selection -> viewport blit
+```
+
+## 20 Languages
+
+Auto-detects system language. Full UI for all 20:
+
+| | | | | |
+|---|---|---|---|---|
+| English | Svenska | Deutsch | Français | Español |
+| Italiano | Português | Nederlands | Polski | Čeština |
+| Русский | 日本語 | 한국어 | 简体中文 | Dansk |
+| Norsk | Suomi | Magyar | Türkçe | |
+
+Swedish game text is a Firestaff original — includes all skill names, directions, items, actions, and dungeon inscriptions with correct ÅÄÖ.
+
+## CLI
+
+```bash
+firestaff dm1 --v21 --fullscreen --lang sv
+firestaff csb --v1 --scale 4
+firestaff dm2 --v22 --load 3
+firestaff --list-saves
+```
+
+## Start Menu
+
+```
+Main Menu
+  > Play -> Game Select -> Game Mode
+  > Settings -> Display | Video | Audio | Controls | Accessibility
+  > Extras -> Museum | Bestiary | Spells | Maps | Items | Changelog | Gallery
+  > Quit
+```
+
+54 settings across 5 tabs. Unavailable features shown grayed. Persists to INI.
+
+## Extras
+
+- **Bestiary** — 24 creatures with full stats
+- **Spell Reference** — 14 spells with symbol sequences and mana costs
+- **Map Viewer** — dungeon overview with fog-of-war
+- **Item Encyclopedia** — 33 items across 7 categories
+- **Screenshot Gallery** — browse captures
+
+## CSB: Chaos Strikes Back
+
+DSA bytecode interpreter for programmable puzzles. 16 opcodes, 256 flags, per-script stack. DM1 champion import from save files.
+
+## DM2: Skullkeep
+
+Outdoor exploration with day/night cycle and weather. Tech/magic hybrid crafting. NPC companions with loyalty and AI.
 
 ## Project Structure
 
 ```
 src/
-  dm1/        DM1 V1 gameplay (62 files)
-  dm1v2/      DM1 V2 modules (36 files)
-  csb/        CSB V1+V2 (12 files)
-  dm2/        DM2 V1+V2 (10 files)
-  engine/     Game loop, SDL bridge, assets, input, save (10 files)
-  memory/     Memory/cache system (82 files)
-  shared/     Common utilities + localization (80 files)
-  ui/         Menus, themes, touch (7 files)
-  frontend/   Title, entrance, endgame screens (18 files)
-tests/        Test suite (149 files, 304 tests)
-include/      Headers (310 files)
-probes/       Runtime probes (88 files)
-tools/        Python verifiers and build tools
-docs/         Documentation + release notes
-parity-evidence/  ReDMCSB source-lock evidence
+  dm1/       62 files    dm1v2/    36 files
+  csb/       12 files    dm2/      10 files
+  engine/    10 files    memory/   82 files
+  shared/    80 files    ui/       12 files
+  frontend/  18 files
+tests/       304 tests
+include/     310 headers
+probes/      88 probes
 ```
+
+927 source files, 188K lines of C.
 
 ## Building
 
@@ -69,27 +123,18 @@ make -j$(nproc)
 ctest
 ```
 
-Requires: CMake 3.20+, C99 compiler, SDL3 (optional, for windowed mode).
-
-## Testing
-
-```bash
-cd build && ctest -j$(nproc)
-```
-
-304 tests. Known-incomplete tests are marked `WILL_FAIL`.
-
-## Releases
-
-See [GitHub Releases](https://github.com/yeager/firestaff/releases) for
-macOS (DMG), Windows (zip/installer), and Linux (DEB/RPM) builds.
+CMake 3.20+, C99 compiler. SDL3 optional.
 
 ## Source References
 
-- **ReDMCSB** (primary): Complete DM1/CSB reverse-engineered C source
-- **CSBWin** (secondary): BeipDev's CSB Windows port
-- **SKULL.ASM**: DM2 DOS disassembly (522K lines)
-- **Greatstone**: DM1 PC-34 dungeon/graphics atlas
+- **ReDMCSB** — DM1/CSB reverse-engineered C source, 100% function parity
+- **CSBWin** — BeipDev CSB Windows port
+- **SKULL.ASM** — DM2 DOS disassembly, 522K lines
+- **Greatstone** — DM1 PC-34 atlas
+
+## Downloads
+
+[GitHub Releases](https://github.com/yeager/firestaff/releases) — macOS DMG/zip, Windows zip/installer, Linux DEB/RPM.
 
 ## License
 
