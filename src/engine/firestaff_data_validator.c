@@ -84,7 +84,7 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
                          report->dm2[1].result == FS_VALIDATE_OK);
     if (report->dm2_ready) total_ok++;
 
-    /* Nexus: check for extracted files */
+    /* Nexus: check for extracted files OR ISO image */
     {
         int nexus_size = 0;
         FS_ValidateResult r = check_file(data_dir, "nexus", "DM.BIN", 100000, &nexus_size);
