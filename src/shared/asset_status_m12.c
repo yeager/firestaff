@@ -357,20 +357,31 @@ static int m12_try_match_version(const char* root,
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     char md5Hex[M12_ASSET_MD5_CAPACITY];
     size_t i;
+    /* Game subdirectory names to search */
+    static const char* const subdirs[] = {"", "dm1", "csb", "dm2", "nexus", "dm1-multilingual", NULL};
+    int s;
     if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
         return 0;
     }
-    for (i = 0U; spec->names[i] != NULL; ++i) {
-        if (!FSP_JoinPath(path, sizeof(path), root, spec->names[i])) {
-            continue;
+    for (s = 0; subdirs[s] != NULL; ++s) {
+        char subroot[M12_ASSET_DATA_DIR_CAPACITY];
+        if (subdirs[s][0] == 0) {
+            m12_copy_string(subroot, sizeof(subroot), root);
+        } else {
+            snprintf(subroot, sizeof(subroot), "%s/%s", root, subdirs[s]);
         }
-        if (!m12_file_md5_hex(path, md5Hex)) {
-            continue;
-        }
-        if (strcmp(md5Hex, spec->md5) == 0) {
-            m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
-            m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5Hex);
-            return 1;
+        for (i = 0U; spec->names[i] != NULL; ++i) {
+            if (!FSP_JoinPath(path, sizeof(path), subroot, spec->names[i])) {
+                continue;
+            }
+            if (!m12_file_md5_hex(path, md5Hex)) {
+                continue;
+            }
+            if (strcmp(md5Hex, spec->md5) == 0) {
+                m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+                m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5Hex);
+                return 1;
+            }
         }
     }
     return 0;
