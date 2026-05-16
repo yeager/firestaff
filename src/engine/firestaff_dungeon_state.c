@@ -29,6 +29,7 @@ static int g_dungeon_level_w[DQ_MAX_LEVELS];
 static int g_dungeon_level_h[DQ_MAX_LEVELS];
 static int g_current_level = 0;
 static int g_dungeon_loaded = 0;
+static int g_start_x = 0, g_start_y = 0, g_start_dir = 0;
 
 static uint16_t r16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] << 8); }
 
@@ -48,13 +49,35 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     if (!data || size < 20) return -1;
     memset(g_dungeon_grid, 0, sizeof(g_dungeon_grid));
 
-    /* Read global header */
-    /* DM1 PC34: first 14 bytes = global dungeon header */
-    /* Bytes 12-13 = map count (number of levels) */
-    level_count = r16(data + 12);
+    /* Read DUNGEON_HEADER (ReDMCSB DEFS.H):
+     * Offset 0-1: OrnamentRandomSeed
+     * Offset 2-3: RawMapDataByteCount
+     * Offset 4:   MapCount
+     * Offset 5:   Padding
+     * Offset 6-7: TextDataWordCount
+     * Offset 8-9: InitialPartyLocation (bits 0-4=X, 5-9=Y, 10-11=Dir)
+     * Offset 10-11: SquareFirstThingCount
+     * Offset 12+:  ThingCount[16] (32 bytes) */
+    level_count = data[4];
     if (level_count <= 0 || level_count > DQ_MAX_LEVELS)
-        level_count = 14; /* DM1 has 14 levels (0-13) */
-    off = 14;
+        level_count = 14;
+
+    /* Extract initial party location from header */
+    {
+        uint16_t ipl = r16(data + 8);
+        g_start_x = ipl & 0x1F;
+        g_start_y = (ipl >> 5) & 0x1F;
+        g_start_dir = (ipl >> 10) & 0x03;
+        printf("DUNGEON.DAT: start position (%d,%d) facing %s\n",
+            g_start_x, g_start_y,
+            g_start_dir == 0 ? "North" : g_start_dir == 1 ? "East" :
+            g_start_dir == 2 ? "South" : "West");
+    }
+
+    /* Skip header: 12 bytes base + 32 bytes ThingCount = 44 bytes
+     * But actually the map headers follow immediately after */
+    off = 12 + 2 + 16 * 2; /* header + SquareFirstThingCount + ThingCount[16] */
+    if (off > size) off = 14; /* fallback */
 
     printf("DUNGEON.DAT: %d levels, %d bytes\n", level_count, size);
 
@@ -149,3 +172,7 @@ const uint8_t *fs_dungeon_get_grid(void) {
     if (!g_dungeon_loaded) return NULL;
     return &g_dungeon_grid[g_current_level][0][0];
 }
+
+int fs_dungeon_get_start_x(void) { return g_start_x; }
+int fs_dungeon_get_start_y(void) { return g_start_y; }
+int fs_dungeon_get_start_dir(void) { return g_start_dir; }

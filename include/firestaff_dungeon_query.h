@@ -67,5 +67,8 @@ int fs_dungeon_get_floor_ornament(int x, int y);
 int fs_dungeon_get_width(void);
 int fs_dungeon_get_height(void);
 const uint8_t *fs_dungeon_get_grid(void);
+int fs_dungeon_get_start_x(void);
+int fs_dungeon_get_start_y(void);
+int fs_dungeon_get_start_dir(void);
 
 #endif

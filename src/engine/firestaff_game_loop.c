@@ -309,9 +309,19 @@ int fs_game_load_assets(FS_GameState *state) {
      * Level 0 = entrance/Hall of Champions.
      * mapX=11, mapY=29, facing North (toward champion mirrors). */
     state->current_level = 0;
-    state->party_x = 11;
-    state->party_y = 29;
-    state->party_direction = 0; /* North */
+    /* Start position from DUNGEON.DAT header (ReDMCSB LOADSAVE.C:1941-1944) */
+    if (fs_dungeon_get_width() > 0) {
+        state->party_x = fs_dungeon_get_start_x();
+        state->party_y = fs_dungeon_get_start_y();
+        state->party_direction = fs_dungeon_get_start_dir();
+        printf("Start: (%d,%d) facing %d (from DUNGEON.DAT)\n",
+            state->party_x, state->party_y, state->party_direction);
+    } else {
+        state->party_x = 11;
+        state->party_y = 29;
+        state->party_direction = 0;
+        printf("Start: (11,29) facing North (fallback)\n");
+    }
 
     /* Load GRAPHICS.DAT and parse bitmap headers */
     if (state->config.data_dir) {
