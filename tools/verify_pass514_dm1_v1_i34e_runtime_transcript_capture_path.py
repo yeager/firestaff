@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass514_dm1_v1_i34e_runtime_transcript_capture_path"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / (PASS + ".md")
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 
 ADDR = {

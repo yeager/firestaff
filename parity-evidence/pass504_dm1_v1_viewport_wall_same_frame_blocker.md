@@ -16,7 +16,7 @@ Viewport/walls source and Firestaff spec/probe evidence are locked, but parity s
 ## Firestaff evidence locks
 - pass502_precise_blocker ok=True file=parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line=40
 - pass500_source_gate ok=True file=tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py line=230
-- pass499_runtime_predicate ok=True file=tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py line=156
+- pass499_runtime_predicate ok=True file=tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py line=162
 - wall_spec_matrix ok=True file=tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py line=15
 - wall_contract_probe ok=True file=probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c line=66
 

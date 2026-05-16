@@ -974,6 +974,14 @@ int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectile
     return (spec->view_depth << 1) - (view_cell >> 1);
 }
 
+bool dm1_viewport_3d_projectile_visible_after_wall_case(const DM1_ViewportWallDrawSpec *wall,
+                                                        bool front_alcove)
+{
+    if (!wall) return true;
+    if (!wall->wall_case_returns) return true;
+    return front_alcove && wall->front_alcove_reveals_contents;
+}
+
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
 {
     return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);
@@ -1110,6 +1118,9 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7493-7536 D1L door-front occlusion: rear side cell, top frame/door, front side cell\n"
         "  DUNVIEW.C:7661-7704 D1R mirrored door-front occlusion: rear side cell, top frame/door, front side cell\n"
+        "  DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730\n"
+        "  DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw\n"
+        "  DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay\n"
         "  DUNVIEW.C:7874-7937 D1C door-front occlusion: floor underlay, rear pass, frame/button/door, front pass\n"
         "  DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115\n"
         "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"

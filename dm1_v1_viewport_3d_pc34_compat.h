@@ -409,6 +409,11 @@ typedef struct {
 #define DM1_PC34_ZONE_WALL_D0L              716
 #define DM1_PC34_ZONE_WALL_D0R              717
 
+/* PC34/I34E D2C front-door frame zones from ReDMCSB DEFS.H:4082-4088. */
+#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
+#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
+#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
+
 typedef struct {
     uint8_t left_x;     /* Viewport-relative clip left X (pixel) */
     uint8_t right_x;    /* Viewport-relative clip right boundary */
@@ -664,6 +669,8 @@ const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlus
 const DM1_ViewportProjectileOcclusionSpec *dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_ViewSquareIndex square);
 int dm1_viewport_3d_projectile_zone_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell);
 int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell);
+bool dm1_viewport_3d_projectile_visible_after_wall_case(const DM1_ViewportWallDrawSpec *wall,
+                                                        bool front_alcove);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);

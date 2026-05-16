@@ -10,7 +10,7 @@ Status: PASS549_DM1_V1_PASSABLE_DOOR_MOVEMENT_TIMING_LOCKED
 ## Firestaff lock
 
 - memory_movement_pc34_compat.c memory_movement_pc34_compat.c:470-488 preserves doorState != 0 && != 1 && != 5 as the only door block branch, so states 1 and 5 fall through to MOVE_OK.
-- dm1_v1_movement_command_core_pc34_compat.c dm1_v1_movement_command_core_pc34_compat.c:283-371 takes that MOVE_OK into party position mutation, destination sensors, successful-step timing, input-wait release, and viewport redraw.
+- dm1_v1_movement_command_core_pc34_compat.c dm1_v1_movement_command_core_pc34_compat.c:286-374 takes that MOVE_OK into party position mutation, destination sensors, successful-step timing, input-wait release, and viewport redraw.
 - test_dm1_v1_movement_command_core_pc34_compat.c now covers one-fourth and destroyed door front-key commands through accepted movement/timing behavior.
 
 ## Boundary

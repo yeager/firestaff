@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "integrate-main-20260513-blockers",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
@@ -59,7 +59,7 @@
         "python3",
         "tools/firestaff_completion_status.py"
       ],
-      "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=19% | points=19/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke exists, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+      "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=20% | points=20/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
       "returncode": 0
     }
   ],
@@ -124,7 +124,7 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
   "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
 }

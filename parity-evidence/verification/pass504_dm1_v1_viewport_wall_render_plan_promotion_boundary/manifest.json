@@ -16,7 +16,7 @@
   "pass503SourceLocks": {
     "file": "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json",
     "requiredSourceIdsPresent": true,
-    "sha256": "792e7a944addb4eeacff71e95d34f916ff6ea30dc0de760407a50fa2202d730a",
+    "sha256": "f4dd3a1264254c6efc021815256d08aaabbcb7ba94a7d147c4e08df6f8ac9432",
     "sourceCheckCount": 7,
     "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
   },
@@ -37,7 +37,7 @@
       ],
       "returncode": 0,
       "stderrTail": "",
-      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/trv2/work/firestaff/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
+      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
     }
   ],
   "promotionBlocker": "Do not claim pixel parity until one exact original DM1 V1 viewport frame and matching Firestaff frame are captured for the same map/x/y/direction/wall-door state and tied to the F0128-to-F0097 present boundary.",

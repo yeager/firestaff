@@ -169,9 +169,9 @@ def firestaff_audit() -> dict[str, str]:
     ], "F0725 records local floor rotations as deferred list metadata")
 
     require_order(trigger_c, [
-        "remainingPerCell = 0;",
-        "remainingPerCell--;",
-        "localCtx.sensorCountInCell = remainingPerCell;",
+        "remainingByCell[cell]++;",
+        "remainingByCell[localCtx.cell]--;",
+        "localCtx.sensorCountInCell = remainingByCell[localCtx.cell];",
         "if (result.isLocal && result.effectKind == SENSOR_EFFECT_ROTATION)",
         "outList->rotationPending = 1;",
         "if (sensorData[sIdx].sensorType == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE",

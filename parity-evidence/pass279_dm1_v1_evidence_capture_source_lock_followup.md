@@ -64,4 +64,4 @@ Status: `PASS_EVIDENCE_CAPTURE_SOURCE_LOCKED_F0380_RUNTIME_HIT_REMAINS`
 
 Need a stock DM1 PC34 dosbox-debug transcript proving a controlled key/click command is dequeued by `F0380_COMMAND_ProcessQueue_CPSC` at `22F4:0699`, then mutates `G0308` or `G0306/G0307`, and is consumed by `F0128_DUNGEONVIEW_Draw_CPSF` at `23AD:40FE`. Source route, public symbols, capture route, and F0128 hit are no longer the blocker.
 
-Manifest: `/home/trv2/work/firestaff/parity-evidence/verification/pass279_dm1_v1_evidence_capture_source_lock_followup/manifest.json`
+Manifest: `/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass279_dm1_v1_evidence_capture_source_lock_followup/manifest.json`

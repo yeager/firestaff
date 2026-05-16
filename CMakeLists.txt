@@ -322,6 +322,18 @@ if(BUILD_TESTING)
         COMMAND test_touch_click_zone_matrix_pc34_compat_integration
     )
 
+    add_executable(test_action_area_routes_pc34_compat_integration
+        test_action_area_routes_pc34_compat_integration.c
+    )
+    target_link_libraries(test_action_area_routes_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_action_area_routes_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME action_area_routes_pc34_compat
+        COMMAND test_action_area_routes_pc34_compat_integration
+    )
+
     add_executable(test_touch_pointer_input_pc34_compat_integration
         test_touch_pointer_input_pc34_compat_integration.c
     )
@@ -537,6 +549,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_movement_timing_pc34_compat
         COMMAND test_dm1_v1_movement_timing_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_turn_step_timing_gate_pc34_compat
+        test_dm1_v1_turn_step_timing_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_turn_step_timing_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_turn_step_timing_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_turn_step_timing_gate_pc34_compat
+        COMMAND test_dm1_v1_turn_step_timing_gate_pc34_compat
     )
 
     add_executable(test_dm1_v1_command_movement_sensor_timing_pc34_compat
@@ -935,6 +959,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME pass564_dm1_v1_movement_collision_timing_cluster
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass564_dm1_v1_movement_collision_timing_cluster.py
+    )
+
+    add_test(
         NAME pass394_dm1_v1_dispatch_to_movement_state
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_pass394_dm1_v1_dispatch_to_movement_state.py
     )
@@ -1076,6 +1105,10 @@ if(BUILD_TESTING)
         add_test(
             NAME v1_viewport_projectile_explosion_render_source_lock_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_explosion_render_source_lock_gate.py
+        )
+        add_test(
+            NAME pass582_dm1_v1_explosion_viewport_clip_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass582_dm1_v1_explosion_viewport_clip_source_lock.py --check-only
         )
         add_test(
             NAME pass363_dm1_v1_f0115_thing_layer_source_lock
@@ -1430,12 +1463,20 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )
         add_test(
+            NAME dm1_v1_touch_input_source_locked_ui_zones
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_touch_input_source_locked_ui_zones.py
+        )
+        add_test(
             NAME dm1_v1_wall_click_touch_seam_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_wall_click_touch_seam_source_lock.py
         )
         add_test(
             NAME dm1_v1_input_command_queue_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_input_command_queue_source_lock.py
+        )
+        add_test(
+            NAME dm1_v1_turn_step_timing_gate_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_turn_step_timing_gate_source_lock.py
         )
         add_test(
             NAME pass372_dm1_v1_movement_runtime_route
@@ -1762,6 +1803,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         test_dm1_v1_viewport_3d_pc34_compat.c
         dm1_v1_viewport_3d_pc34_compat.c
     )
+    target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -1777,6 +1819,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         add_test(
             NAME dm1_v1_viewport_wall_render_plan_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_wall_render_plan_gate.py
+        )
+        add_test(
+            NAME dm1_v1_projectile_wall_zone_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_wall_zone_gate.py
         )
     endif()
 endif()
@@ -2011,6 +2057,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 side-wall occlusion/source-row clipping focused gate -------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass576_dm1_v1_side_wall_occlusion_source_row_clipping
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass576_dm1_v1_side_wall_occlusion_source_row_clipping.py
+    )
+endif()
+
 # -- DM1 V1 D1/D0 side-front wall occlusion source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
@@ -2086,6 +2140,33 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py
     )
     set_tests_properties(pass565_dm1_v1_d1_side_door_front_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
+# -- DM1 V1 D3/D2 wall ornament draw-order source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock.py
+    )
+    set_tests_properties(pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
+# -- DM1 V1 D2C front-order source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass570_dm1_v1_d2c_front_order_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py
+    )
+    set_tests_properties(pass570_dm1_v1_d2c_front_order_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
+# -- DM1 V1 D0/D1 visible-square draw-order source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock.py
+    )
+    set_tests_properties(pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
@@ -2258,6 +2339,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 forward collision/timing source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass580_dm1_v1_forward_collision_timing
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass580_dm1_v1_forward_collision_timing.py
+    )
+endif()
+
 # DM1 V1 gated movement pending-click replay source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
@@ -2271,6 +2360,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass506_dm1_v1_stairs_movement_side_effect_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass506_dm1_v1_stairs_movement_side_effect_source_lock.py
+    )
+endif()
+
+# DM1 V1 cooldown-gated backward-on-stairs source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass578_dm1_v1_stairs_backstep_cooldown_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass578_dm1_v1_stairs_backstep_cooldown_gate.py
     )
 endif()
 

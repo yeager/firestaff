@@ -28,56 +28,33 @@
     {
       "hits": [
         {
-          "line": 511,
-          "needle": "DM1_VIEW_SQUARE_D1L"
-        },
-        {
-          "line": 511,
-          "needle": "0x0028, 0x0039"
-        },
-        {
-          "line": 512,
-          "needle": "DM1_VIEW_SQUARE_D1R"
-        },
-        {
-          "line": 512,
-          "needle": "0x0018, 0x0049"
-        },
-        {
-          "line": 516,
-          "needle": "door_front_occlusion.count"
-        },
-        {
-          "line": 516,
+          "line": 543,
           "needle": "11"
-        },
-        {
-          "line": 554,
-          "needle": "door_front_occlusion.d1l_side_door_front_spec"
         }
       ],
       "id": "firestaff-d1-side-door-front-runtime-test",
       "lines": "508-555",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D1L",
+        "0x0028, 0x0039",
+        "DM1_VIEW_SQUARE_D1R",
+        "0x0018, 0x0049",
+        "door_front_occlusion.count",
+        "door_front_occlusion.d1l_side_door_front_spec"
+      ],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
-      "hits": [
-        {
-          "line": 1083,
-          "needle": "DUNVIEW.C:7493-7536"
-        },
-        {
-          "line": 1084,
-          "needle": "DUNVIEW.C:7661-7704"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d1-side-door-front-source-evidence",
       "lines": "1080-1085",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:7493-7536",
+        "DUNVIEW.C:7661-7704"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -162,28 +139,28 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d1_side_door_front_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py",
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass565 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass565 check-only: firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

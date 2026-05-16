@@ -1,7 +1,7 @@
 {
-  "branch": "main",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "decision": "DM1 V1 original overlay/capture is still blocked at the canonical PC34 C254/IO_DRIVER slot runtime decode: the exact N2 PC34 DM.EXE/DATA payload is hash-locked, ReDMCSB routes I34E input through C254 slot0/slot1 before IO2/F0361, pass514/pass558 classify the empty-F0380 symptom, pass560 has not captured C254 at runtime, and pass562 correctly selects C254 slot decode as the next bounded runtime probe.",
-  "head": "a63f8ac542ebaef9e207243cb8edbb3d4f6d31c1",
+  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -140,7 +140,7 @@
     "pass562SelectedC254SlotDecode": true,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
   "schema": "pass563_dm1_v1_pc34_original_c254_boundary.v1",
   "sourceAudit": [
     {
@@ -278,5 +278,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED",
-  "timestampUtc": "2026-05-15T19:41:58.593723+00:00"
+  "timestampUtc": "2026-05-16T06:28:57.893088+00:00"
 }

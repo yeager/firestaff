@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -371,6 +372,9 @@ static void test_floor_ceiling_bands_and_zones(void)
     check_int("PC34.zone.ceiling", DM1_PC34_ZONE_VIEWPORT_CEILING_AREA, 700);
     check_int("PC34.zone.floor", DM1_PC34_ZONE_VIEWPORT_FLOOR_AREA, 701);
     check_int("PC34.zone.wall_d0r", DM1_PC34_ZONE_WALL_D0R, 717);
+    check_int("PC34.zone.door_frame_left_d2c", DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C, 724);
+    check_int("PC34.zone.door_frame_right_d2c", DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C, 725);
+    check_int("PC34.zone.door_frame_top_d2c", DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C, 730);
 }
 
 
@@ -483,6 +487,78 @@ static void test_projectile_occlusion_zone_mapping(void)
     check_int("projectile_occlusion.d0l_unsupported", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0L) == NULL, 1);
     check_int("projectile_occlusion.out_of_range", dm1_viewport_3d_get_projectile_occlusion_spec(12) == NULL, 1);
     check_int("projectile_occlusion.null_zone", dm1_viewport_3d_projectile_zone_for_cell(NULL, 0), -1);
+}
+
+
+static void test_projectile_wall_zone_movement_visibility_gate(void)
+{
+    struct ProjectileInstance_Compat projectile;
+    struct CellContentDigest_Compat digest;
+    struct ProjectileInstance_Compat next;
+    struct ProjectileTickResult_Compat result;
+    const DM1_ViewportWallDrawSpec *plain_wall =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2L2);
+    const DM1_ViewportWallDrawSpec *alcove_wall =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D3L);
+    const DM1_ViewportProjectileOcclusionSpec *d1c_projectiles =
+        dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C);
+    int blocker = -1;
+
+    memset(&projectile, 0, sizeof(projectile));
+    projectile.slotIndex = 3;
+    projectile.projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile.ownerIndex = 0;
+    projectile.mapIndex = 0;
+    projectile.mapX = 10;
+    projectile.mapY = 10;
+    projectile.cell = 0;
+    projectile.direction = 0;
+    projectile.kineticEnergy = 40;
+    projectile.attack = 20;
+    projectile.stepEnergy = 5;
+    projectile.firstMoveGraceFlag = 0;
+    projectile.attackTypeCode = COMBAT_ATTACK_NORMAL;
+    projectile.reserved3 = 1;
+
+    memset(&digest, 0, sizeof(digest));
+    digest.sourceMapIndex = 0;
+    digest.sourceMapX = 10;
+    digest.sourceMapY = 10;
+    digest.sourceSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    digest.destMapIndex = 0;
+    digest.destMapX = 10;
+    digest.destMapY = 9;
+    digest.destSquareType = PROJECTILE_ELEMENT_WALL;
+    digest.destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    digest.destTeleporterNewDirection = -1;
+
+    check_int("projectile_wall_zone.d1c_projectile_zone_cell0",
+              dm1_viewport_3d_projectile_zone_for_cell(d1c_projectiles, 0), 2932);
+    check_int("projectile_wall_zone.inspect_wall_blocker",
+              F0814_PROJECTILE_InspectDestination_Compat(&digest, &blocker), 1);
+    check_int("projectile_wall_zone.blocker_is_wall", blocker, PROJECTILE_BLOCKER_WALL);
+    check_int("projectile_wall_zone.advance_reports_wall_hit",
+              F0811_PROJECTILE_Advance_Compat(&projectile, &digest, 77, NULL, &next, &result), 1);
+    check_int("projectile_wall_zone.wall_hit_result", result.resultKind, PROJECTILE_RESULT_HIT_WALL);
+    check_int("projectile_wall_zone.wall_hit_despawns", result.despawn, 1);
+    check_int("projectile_wall_zone.wall_hit_not_committed_to_destination", result.newMapY, 10);
+
+    check_nonnull("projectile_wall_zone.plain_wall_nonnull", plain_wall);
+    if (plain_wall) {
+        check_int("projectile_wall_zone.plain_wall_case_returns", plain_wall->wall_case_returns ? 1 : 0, 1);
+        check_int("projectile_wall_zone.plain_wall_hides_projectile",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(plain_wall, false) ? 1 : 0, 0);
+    }
+
+    check_nonnull("projectile_wall_zone.alcove_wall_nonnull", alcove_wall);
+    if (alcove_wall) {
+        check_int("projectile_wall_zone.alcove_without_front_hides",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(alcove_wall, false) ? 1 : 0, 0);
+        check_int("projectile_wall_zone.front_alcove_reveals_projectile_layer",
+                  dm1_viewport_3d_projectile_visible_after_wall_case(alcove_wall, true) ? 1 : 0, 1);
+    }
 }
 
 static void test_door_front_occlusion_split_passes(void)
@@ -778,6 +854,94 @@ static void test_wall_draw_uses_clip_gate_source_offsets(void)
     check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
 }
 
+
+static void test_d0_d1_visible_square_draw_order_gate(void)
+{
+    static const struct {
+        size_t draw_index;
+        DM1_ViewSquareIndex square;
+        int depth;
+        int lateral;
+        const char *function_name;
+        const char *draw_source;
+    } draw_expected[] = {
+        { 13, DM1_VIEW_SQUARE_D1L, 1, -1, "F0122_DUNGEONVIEW_DrawSquareD1L", "8522-8525" },
+        { 14, DM1_VIEW_SQUARE_D1R, 1,  1, "F0123_DUNGEONVIEW_DrawSquareD1R", "8526-8529" },
+        { 15, DM1_VIEW_SQUARE_D1C, 1,  0, "F0124_DUNGEONVIEW_DrawSquareD1C", "8530-8533" },
+        { 16, DM1_VIEW_SQUARE_D0L, 0, -1, "F0125_DUNGEONVIEW_DrawSquareD0L", "8534-8537" },
+        { 17, DM1_VIEW_SQUARE_D0R, 0,  1, "F0126_DUNGEONVIEW_DrawSquareD0R", "8538-8541" },
+        { 18, DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "8542" },
+    };
+    static const struct {
+        DM1_ViewSquareIndex square;
+        uint16_t side_order;
+        const char *side_source;
+        const char *field_source;
+    } side_expected[] = {
+        { DM1_VIEW_SQUARE_D1L, 0x0032, "7536", "7538-7555" },
+        { DM1_VIEW_SQUARE_D1R, 0x0041, "7704", "7706-7722" },
+        { DM1_VIEW_SQUARE_D0L, 0x0002, "8005", NULL },
+        { DM1_VIEW_SQUARE_D0R, 0x0001, "8115", NULL },
+    };
+    const DM1_ViewportThingLayerSpec *objects =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_OBJECTS);
+    const DM1_ViewportThingLayerSpec *creatures =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_CREATURES);
+    const DM1_ViewportThingLayerSpec *projectiles =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_PROJECTILES);
+    const DM1_ViewportThingLayerSpec *explosions =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_EXPLOSIONS);
+
+    check_int("d0_d1_gate.draw_order_count", (int)dm1_viewport_3d_draw_order_count(), 19);
+    for (size_t i = 0; i < sizeof(draw_expected) / sizeof(draw_expected[0]); ++i) {
+        const DM1_ViewportDrawStep *step = dm1_viewport_3d_get_draw_order_step(draw_expected[i].draw_index);
+        char id[128];
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.nonnull", i);
+        check_nonnull(id, step);
+        if (!step) continue;
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.square", i);
+        check_int(id, (int)step->square, (int)draw_expected[i].square);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.depth", i);
+        check_int(id, step->rel_depth, draw_expected[i].depth);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.lateral", i);
+        check_int(id, step->rel_lateral, draw_expected[i].lateral);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.function", i);
+        check_int(id, strcmp(step->redmcsb_function, draw_expected[i].function_name) == 0, 1);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.source", i);
+        check_int(id, strstr(step->source_lines, draw_expected[i].draw_source) != NULL, 1);
+    }
+
+    for (size_t i = 0; i < sizeof(side_expected) / sizeof(side_expected[0]); ++i) {
+        const DM1_ViewportSideOcclusionSpec *side =
+            dm1_viewport_3d_get_side_occlusion_spec_for_square(side_expected[i].square);
+        char id[128];
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.nonnull", i);
+        check_nonnull(id, side);
+        if (!side) continue;
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.order", i);
+        check_int(id, side->cell_order, side_expected[i].side_order);
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.f0115", i);
+        check_int(id, strstr(side->f0115_source_lines, side_expected[i].side_source) != NULL, 1);
+        if (side_expected[i].field_source) {
+            const DM1_ViewportFloorFieldOrderSpec *field =
+                dm1_viewport_3d_get_floor_field_order_spec_for_square(side_expected[i].square);
+            snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.field_after_things", i);
+            check_int(id, field && field->field_after_things && strstr(field->field_source_lines, side_expected[i].field_source) != NULL, 1);
+        }
+    }
+
+    check_nonnull("d0_d1_gate.d1c_door_front", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C));
+    check_nonnull("d0_d1_gate.d0c_floor_field", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_nonnull("d0_d1_gate.d0c_thieves_eye", dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_nonnull("d0_d1_gate.d1_projectiles", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C));
+    check_nonnull("d0_d1_gate.d0_projectiles", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_int("d0_d1_gate.layers.objects", objects && objects->repeats_per_cell && !objects->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.creatures", creatures && creatures->repeats_per_cell && !creatures->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.projectiles", projectiles && projectiles->repeats_per_cell && !projectiles->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.explosions", explosions && !explosions->repeats_per_cell && explosions->after_all_cells, 1);
+}
+
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -805,6 +969,10 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.d0c_foreground_before_things",
         strstr(e, "DUNVIEW.C:8185-8240") != NULL && strstr(e, "draw before common F0115") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
+    check_int("source_evidence.d2c_front_order",
+        strstr(e, "DUNVIEW.C:7289-7312") != NULL &&
+        strstr(e, "DUNVIEW.C:7353-7387") != NULL &&
+        strstr(e, "DEFS.H:4082-4088") != NULL, 1);
     check_int("source_evidence.far_door_front_occlusion", strstr(e, "DUNVIEW.C:6270-6286") != NULL && strstr(e, "DUNVIEW.C:6337-6353") != NULL, 1);
     check_int("source_evidence.d1_side_door_front_occlusion", strstr(e, "DUNVIEW.C:7493-7536") != NULL && strstr(e, "DUNVIEW.C:7661-7704") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
@@ -833,12 +1001,14 @@ int main(void)
     test_wall_draw_uses_clip_gate_source_offsets();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
+    test_projectile_wall_zone_movement_visibility_gate();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();
     test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
+    test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();
     test_source_evidence_mentions_visual_lane();
 

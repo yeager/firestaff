@@ -111,6 +111,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/pass387_dm1_v1_f0380_queue_pop_eligibility.md size=2792
 - parity-evidence/pass504_dm1_v1_keyboard_buffer_state_delta_blocker.md size=2441
 - parity-evidence/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.md size=3153
+- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=1298
 - parity-evidence/pass93_original_route_key_explore_diagnostic.md size=3781
 - parity-evidence/verification/pass232_command_f0380_source_seam.json size=3267
 - parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt/route_keylog.txt size=305
@@ -154,11 +155,12 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass386_dm1_v1_keyboard_vs_click_command_dispatch/pass386_keyboard_route_keylog.json size=1688
 - parity-evidence/verification/pass387_dm1_v1_f0380_queue_pop_eligibility/manifest.json size=1937
 - parity-evidence/verification/pass387_keyboard_f0361_queue_write/pass387_keyboard_route_keylog.json size=1643
-- parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_click_route_keylog.json size=1908
+- parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_click_route_keylog.json size=1905
 - parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_keyboard_route_keylog.json size=1690
 - parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json size=1951
 - parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
 - parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10551
+- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8545
 - verification-screens/pass112-n2-stable-hud-route/original-viewpoint-route-keys.log size=586
 - verification-screens/pass209-delayed-click-zone-route/original_viewport_route_keys.swift size=5604
 - verification-screens/pass209-delayed-click-zone-route/original_viewport_route_keys_xdotool.sh size=3664
@@ -177,8 +179,6 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original-viewpoint-route-keys.log size=873
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys.swift size=6062
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys_xdotool.sh size=3995
-- verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys.swift size=6062
-- verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys.swift size=5604
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys_xdotool.sh size=3664
 

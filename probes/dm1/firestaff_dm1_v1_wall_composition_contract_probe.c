@@ -97,20 +97,38 @@ static int verify_wall_specs(void)
     return ok;
 }
 
+struct ExpectedDoorFrontContract {
+    DM1_ViewSquareIndex square;
+    uint16_t rear_order;
+    uint16_t front_order;
+    unsigned int rear_pass;
+    unsigned int front_pass;
+    unsigned int rear_count;
+    unsigned int front_count;
+};
+
 static int verify_door_front_orders(void)
 {
-    static const DM1_ViewSquareIndex door_squares[] = {
-        DM1_VIEW_SQUARE_D3L,
-        DM1_VIEW_SQUARE_D3C,
-        DM1_VIEW_SQUARE_D2C,
-        DM1_VIEW_SQUARE_D1C,
+    static const struct ExpectedDoorFrontContract expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D3L,  0x0218, 0x0349, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D3R,  0x0128, 0x0439, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D3C,  0x0218, 0x0349, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D2L,  0x0218, 0x0349, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D2R,  0x0128, 0x0439, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D2C,  0x0218, 0x0349, 1, 2, 2, 2 },
+        { DM1_VIEW_SQUARE_D1L,  0x0028, 0x0039, 1, 2, 1, 1 },
+        { DM1_VIEW_SQUARE_D1R,  0x0018, 0x0049, 1, 2, 1, 1 },
+        { DM1_VIEW_SQUARE_D1C,  0x0218, 0x0349, 1, 2, 2, 2 },
     };
     int ok = 1;
 
-    ok &= expect_int("door front occlusion spec count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 4);
-    printf("doorFrontComposition source=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937\n");
-    for (size_t i = 0; i < sizeof(door_squares) / sizeof(door_squares[0]); ++i) {
-        const DM1_ViewportDoorFrontOcclusionSpec *spec = dm1_viewport_3d_get_door_front_occlusion_spec_for_square(door_squares[i]);
+    ok &= expect_int("door front occlusion spec count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
+    printf("doorFrontComposition source=DUNVIEW.C:6270-6286,6337-6353,6443-6459,6579-6601,6722-6746,6988-7003,7181-7196,7314-7341,7493-7536,7661-7704,7874-7937\n");
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const struct ExpectedDoorFrontContract *want = &expected[i];
+        const DM1_ViewportDoorFrontOcclusionSpec *spec = dm1_viewport_3d_get_door_front_occlusion_spec_for_square(want->square);
         DM1_ViewportCellOrder rear;
         DM1_ViewportCellOrder front;
 
@@ -119,15 +137,15 @@ static int verify_door_front_orders(void)
 
         rear = dm1_viewport_3d_decode_cell_order(spec->rear_cell_order);
         front = dm1_viewport_3d_decode_cell_order(spec->front_cell_order);
-        ok &= expect_int("door rear order", spec->rear_cell_order, 0x0218);
-        ok &= expect_int("door front order", spec->front_cell_order, 0x0349);
-        ok &= expect_int("door rear pass marker", rear.door_pass, 1);
-        ok &= expect_int("door front pass marker", front.door_pass, 2);
-        ok &= expect_int("door rear cell count", rear.cell_count, 2);
-        ok &= expect_int("door front cell count", front.cell_count, 2);
+        ok &= expect_int("door rear order", spec->rear_cell_order, want->rear_order);
+        ok &= expect_int("door front order", spec->front_cell_order, want->front_order);
+        ok &= expect_int("door rear pass marker", rear.door_pass, want->rear_pass);
+        ok &= expect_int("door front pass marker", front.door_pass, want->front_pass);
+        ok &= expect_int("door rear cell count", rear.cell_count, want->rear_count);
+        ok &= expect_int("door front cell count", front.cell_count, want->front_count);
 
         printf("doorSpec square=%d rearOrder=0x%04x frontOrder=0x%04x rearPass=%u frontPass=%u source=%s;%s;%s;%s\n",
-            (int)door_squares[i], spec->rear_cell_order, spec->front_cell_order,
+            (int)want->square, spec->rear_cell_order, spec->front_cell_order,
             rear.door_pass, front.door_pass, spec->rear_pass_source_lines,
             spec->frame_source_lines, spec->door_source_lines, spec->front_pass_source_lines);
     }

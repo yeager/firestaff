@@ -8,13 +8,13 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-CSBWIN = Path("/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin")
-CSB = Path("/home/trv2/.openclaw/data/firestaff-csb-source/CSB")
-DM1 = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
+CSB = Path.home() / ".openclaw/data/firestaff-csb-source/CSB"
+DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
 OUT = ROOT / "parity-evidence/verification/pass511_dm1_v1_viewport_wall_reference_lineage/manifest.json"
 REPORT = ROOT / "parity-evidence/pass511_dm1_v1_viewport_wall_reference_lineage.md"
-ALLOWED = [RED.parent.parent.resolve(), CSBWIN.resolve(), CSB.resolve(), Path("/home/trv2/.openclaw/data/firestaff-original-games/DM").resolve()]
+ALLOWED = [RED.parent.parent.resolve(), CSBWIN.resolve(), CSB.resolve(), (Path.home() / ".openclaw/data/firestaff-original-games/DM").resolve()]
 DM1_HASHES = {
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",

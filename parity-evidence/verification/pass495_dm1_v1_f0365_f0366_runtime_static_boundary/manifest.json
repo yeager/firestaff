@@ -1,7 +1,7 @@
 {
   "decision": "Do not spend more Firestaff-route work on F0365/F0366; that seam is closed. The active blocker is original capture promotion: pass487/pass494 still classify the fresh click capture as entrance-first plus repeated static/no-state-delta post-entry frames, not source-visible movement state evidence.",
   "firestaffRouteEvidence": {
-    "evidence": "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md",
+    "evidence": "parity-evidence/verification/pass475_dm1_v1_f0365_f0366_runtime_followup/manifest.json",
     "ok": true,
     "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED"
   },
@@ -106,5 +106,5 @@
     "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop"
   },
   "status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
-  "timestampUtc": "2026-05-13T11:55:12.481768+00:00"
+  "timestampUtc": "2026-05-16T06:29:00.818040+00:00"
 }

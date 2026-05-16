@@ -13,7 +13,7 @@ PASS = "pass564_dm1_v1_original_movement_viewport_transcript_gate"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 PASS563 = ROOT / "parity-evidence/verification/pass563_dm1_v1_pc34_original_c254_boundary/manifest.json"
 
 SOURCE_LOCKS: list[dict[str, Any]] = [

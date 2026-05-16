@@ -1,11 +1,11 @@
 {
-  "branch": "main",
+  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
   "firestaffGuards": {
     "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",
     "pipelineTest": "test_dm1_v1_movement_pipeline_pc34_compat.c",
     "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
-    "runtimeOutputLastLine": "183 passed, 0 failed"
+    "runtimeOutputLastLine": "229 passed, 0 failed"
   },
   "notClaimed": [
     "viewport/capture parity",

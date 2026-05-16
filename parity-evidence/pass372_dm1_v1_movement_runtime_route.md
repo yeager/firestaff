@@ -1,6 +1,6 @@
 # Pass372 — DM1 V1 movement runtime route
 
-Status: `PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED`
+Status: `BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE`
 
 ## Decision
 
@@ -29,7 +29,7 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 
 - `pass348_dm1_v1_numlock_keypad_blocker_closure` status=`RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED`
 - `pass349_dm1_v1_full_launcher_keypad_runtime_route` status=`FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED`
-- `pass352_dm1_v1_movement_route_regression_matrix` status=`PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED`
+- `pass352_dm1_v1_movement_route_regression_matrix` status=`BLOCKED_PASS352_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX`
 - `pass359_dm1_v1_movement_route_runtime_blocker_followup` status=`PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED`
 
 ## Residual scope

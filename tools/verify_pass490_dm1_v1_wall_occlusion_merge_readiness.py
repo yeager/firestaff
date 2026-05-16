@@ -4,7 +4,7 @@ import json
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
+SRC = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 DUNVIEW = SRC / 'DUNVIEW.C'
 DUNGEON = SRC / 'DUNGEON.C'
 FIRE = ROOT / 'm11_game_view.c'

@@ -11,14 +11,23 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass558_dm1_v1_pass514_io_blocker_classifier"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 PASS514_MANIFEST = ROOT / "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json"
 
 EXTERNAL_EVIDENCE = {
-    "pass550": Path("/home/trv2/work/firestaff-worktrees/pass550-dm1v1-pass514-capture-handoff-followup-20260515-codex/parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json"),
-    "pass556": Path("/home/trv2/work/firestaff-worktrees/pass556-dm1v1-pass555-io2-runtime-pointer-binding-20260515-codex/parity-evidence/verification/pass556_dm1_v1_pass555_io2_runtime_pointer_binding/manifest.json"),
-    "pass557": Path("/home/trv2/work/firestaff-worktrees/pass557-dm1v1-pass556-host-emulator-keyboard-delivery-20260515-codex/parity-evidence/verification/pass557_dm1_v1_pass556_host_emulator_keyboard_delivery_probe/manifest.json"),
+    "pass550": [
+        ROOT / "parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+        Path("/home/trv2/work/firestaff-worktrees/pass550-dm1v1-pass514-capture-handoff-followup-20260515-codex/parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json"),
+    ],
+    "pass556": [
+        ROOT / "parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+        Path("/home/trv2/work/firestaff-worktrees/pass556-dm1v1-pass555-io2-runtime-pointer-binding-20260515-codex/parity-evidence/verification/pass556_dm1_v1_pass555_io2_runtime_pointer_binding/manifest.json"),
+    ],
+    "pass557": [
+        ROOT / "parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+        Path("/home/trv2/work/firestaff-worktrees/pass557-dm1v1-pass556-host-emulator-keyboard-delivery-20260515-codex/parity-evidence/verification/pass557_dm1_v1_pass556_host_emulator_keyboard_delivery_probe/manifest.json"),
+    ],
 }
 
 SOURCE_SPECS = [
@@ -130,7 +139,8 @@ def source_audit() -> list[dict[str, Any]]:
 
 def external_audit() -> dict[str, Any]:
     rows: dict[str, Any] = {}
-    for name, path in EXTERNAL_EVIDENCE.items():
+    for name, paths in EXTERNAL_EVIDENCE.items():
+        path = next((candidate for candidate in paths if candidate.exists()), paths[0])
         payload = read_json(path)
         row: dict[str, Any] = {"path": str(path), "present": payload is not None}
         if payload:
@@ -143,14 +153,16 @@ def external_audit() -> dict[str, Any]:
 
 
 def classify(source: list[dict[str, Any]], pass514: dict[str, Any], external: dict[str, Any]) -> tuple[str, str, dict[str, bool]]:
-    p514 = pass514.get("proofPredicates") or {}
+    pass550 = external.get("pass550", {})
+    effective_pass514 = pass550 if pass550.get("present") else pass514
+    p514 = effective_pass514.get("proofPredicates") or {}
     p556 = external.get("pass556", {}).get("proofPredicates") or {}
     p557 = external.get("pass557", {}).get("proofPredicates") or {}
 
     predicates = {
         "sourceAuditOk": all(row["ok"] for row in source),
         "pass514ManifestPresent": bool(pass514),
-        "pass514InputDeliveredButEmptyF0380": pass514.get("status") == "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+        "pass514InputDeliveredButEmptyF0380": effective_pass514.get("status") == "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
         "pass514RouteInputAfterArmingSucceeded": bool(p514.get("routeInputAfterArmingSucceeded")),
         "pass514F0380Reached": bool(p514.get("f0380ReachedInN2DebuggerPath")),
         "pass514QueueCountWriteMissing": not bool(p514.get("queueCountWriteObserved")),
@@ -198,7 +210,12 @@ def write_report(manifest: dict[str, Any]) -> None:
         "",
     ]
     for row in manifest["sourceAudit"]:
-        lines.append(f"- {row['file']}:{row['lineRange'][0]}-{row['lineRange'][1]} {row['id']}")
+        line_range = row.get("lineRange")
+        if line_range:
+            location = f"{row['file']}:{line_range[0]}-{line_range[1]}"
+        else:
+            location = f"{row['file']}:missing"
+        lines.append(f"- {location} {row['id']}")
     lines.extend(
         [
             "",

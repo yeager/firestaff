@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D1 side door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front order: one rear side cell is drawn before the top frame and door, then one front side cell is drawn after the door.
 
@@ -32,28 +32,28 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
   - line 145: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
   - line 145: DUNVIEW.C:7676-7704 pass2 front-left cell after door
 
-- PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:508-555)
-  - line 511: DM1_VIEW_SQUARE_D1L
-  - line 511: 0x0028, 0x0039
-  - line 512: DM1_VIEW_SQUARE_D1R
-  - line 512: 0x0018, 0x0049
-  - line 516: door_front_occlusion.count
-  - line 516: 11
-  - line 554: door_front_occlusion.d1l_side_door_front_spec
+- FAIL firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:508-555)
+  - line 543: 11
+  - missing: DM1_VIEW_SQUARE_D1L
+  - missing: 0x0028, 0x0039
+  - missing: DM1_VIEW_SQUARE_D1R
+  - missing: 0x0018, 0x0049
+  - missing: door_front_occlusion.count
+  - missing: door_front_occlusion.d1l_side_door_front_spec
 
-- PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1080-1085)
-  - line 1083: DUNVIEW.C:7493-7536
-  - line 1084: DUNVIEW.C:7661-7704
+- FAIL firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1080-1085)
+  - missing: DUNVIEW.C:7493-7536
+  - missing: DUNVIEW.C:7661-7704
 
 ## Verification
 
-- /Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.door_front_occlusion == 1
 PASS source_evidence.far_door_front_occlusion == 1
 PASS source_evidence.d1_side_door_front_occlusion == 1
 PASS source_evidence.d1c_door_front_occlusion == 1
 PASS source_evidence.d1c_door_button_occlusion == 1
+PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -65,9 +65,9 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-d1door/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass565 check-only
+FAIL pass565 check-only: firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence
 ~~~
 
 ## Non-Claims

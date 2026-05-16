@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D0C Thieves Eye door-frame occlusion
 
-Status: passed
+Status: failed
 
 Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door frame into a temporary bitmap, composites the hole-in-wall graphic into that temporary frame, blits the temporary frame to C728, then reaches the common D0C F0115 pass with C0x0021. This is a source-lock only.
 
@@ -34,24 +34,24 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
   - line 165: DUNVIEW.C:8215-8216
   - line 166: DUNVIEW.C:8240,8294
 
-- PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:609-628)
-  - line 609: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 612: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 619: spec->door_frame_zone, 728
-  - line 620: spec->hole_zone, 736
-  - line 624: 8215-8216
-  - line 625: 8294
+- FAIL firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:609-628)
+  - missing: test_d0c_thieves_eye_door_frame_occlusion_order
+  - missing: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - missing: spec->door_frame_zone, 728
+  - missing: spec->hole_zone, 736
+  - missing: 8215-8216
+  - missing: 8294
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1112-1115)
-  - line 1114: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 1114: copy front frame, composite hole, blit temporary frame before common F0115
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1112-1115)
+  - missing: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - missing: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
-- /Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-wallocc/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.d0c_foreground_before_things == 1
 PASS source_evidence.door_front_occlusion == 1
+PASS source_evidence.d2c_front_order == 1
 PASS source_evidence.far_door_front_occlusion == 1
 PASS source_evidence.d1_side_door_front_occlusion == 1
 PASS source_evidence.d1c_door_front_occlusion == 1
@@ -68,7 +68,7 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/openclaw-release-work/firestaff-blocker-pass565-wallocc/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=1
 ~~~
-PASS pass565 check-only
+FAIL pass565 check-only: firestaff-d0c-thieves-eye-test, firestaff-source-evidence-string
 ~~~

@@ -8,7 +8,7 @@ Status: PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED
 - MOVESENS.C:738-818 proves accepted movement commits move-result globals and leave/enter sensors.
 
 ## Firestaff guard
-- dm1_v1_movement_command_core_pc34_compat.c:263-352 keeps blockers before party tuple commit.
+- dm1_v1_movement_command_core_pc34_compat.c:266-355 keeps blockers before party tuple commit.
 - memory_movement_pc34_compat.c:405-490 owns wall/door/fake-wall legality.
 - memory_movement_pc34_compat.c:820-890 owns the champion-count gated group blocker.
 - test_dm1_v1_movement_command_core_pc34_compat.c asserts closed door, closed fake-wall, and group blocked-command behavior.
