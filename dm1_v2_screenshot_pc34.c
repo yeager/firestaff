@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <time.h>
 #include "dm1_v2_screenshot_pc34.h"
 #include <stdio.h>
 #include <string.h>

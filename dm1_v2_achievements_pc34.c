@@ -98,3 +98,49 @@ const char* v2_achievement_get_notification(void) {
     g_notif_count--;
     return msg;
 }
+
+/* V2 Achievements — unlock tracking and notification */
+
+#define V2_ACH_MAX 64
+
+typedef struct {
+    const char *name;
+    const char *description;
+    int unlocked;
+    uint32_t unlock_tick;
+} V2_Achievement;
+
+static V2_Achievement g_achievements[V2_ACH_MAX];
+static int g_ach_count = 0;
+static int g_ach_last_unlocked = -1;
+
+int v2_achievement_register(const char *name, const char *desc) {
+    if (g_ach_count >= V2_ACH_MAX) return -1;
+    g_achievements[g_ach_count].name = name;
+    g_achievements[g_ach_count].description = desc;
+    g_achievements[g_ach_count].unlocked = 0;
+    g_achievements[g_ach_count].unlock_tick = 0;
+    return g_ach_count++;
+}
+
+int v2_achievement_unlock(int id, uint32_t tick) {
+    if (id < 0 || id >= g_ach_count || g_achievements[id].unlocked) return 0;
+    g_achievements[id].unlocked = 1;
+    g_achievements[id].unlock_tick = tick;
+    g_ach_last_unlocked = id;
+    return 1;
+}
+
+int v2_achievement_is_unlocked(int id) {
+    if (id < 0 || id >= g_ach_count) return 0;
+    return g_achievements[id].unlocked;
+}
+
+int v2_achievement_last_unlocked(void) { return g_ach_last_unlocked; }
+int v2_achievement_total(void) { return g_ach_count; }
+int v2_achievement_unlocked_count(void) {
+    int i, c = 0;
+    for (i = 0; i < g_ach_count; i++) if (g_achievements[i].unlocked) c++;
+    return c;
+}
+

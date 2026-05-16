@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "dm1_v2_item_render_pc34.h"
 
 /*
@@ -52,3 +53,33 @@ const char* dm1_v2_item_render_source_evidence(void) {
            "Firestaff dm1_v1_viewport_floor_ceiling_items_pc34_compat.h F0115 draw order; "
            "V2 hand routes via dm1_v2_hud_interaction_pc34.";
 }
+
+/* V2 Item Render — enhanced item sprites with glow/rarity effects */
+
+typedef struct {
+    int icon_index;
+    int rarity; /* 0=common, 1=uncommon, 2=rare, 3=legendary */
+    uint32_t glow_color;
+    float glow_intensity;
+    int stack_count;
+} V2_ItemRenderInfo;
+
+uint32_t v2_item_rarity_color(int rarity) {
+    switch (rarity) {
+        case 0: return 0xFFFFFFFF; /* white */
+        case 1: return 0xFF00FF00; /* green */
+        case 2: return 0xFF0088FF; /* blue */
+        case 3: return 0xFFFF8800; /* orange */
+        default: return 0xFFFFFFFF;
+    }
+}
+
+float v2_item_glow_pulse(uint32_t tick, int rarity) {
+    if (rarity < 2) return 0.0f;
+    float t = (float)(tick % 60) / 60.0f;
+    /* Sinusoidal pulse for rare+ items */
+    float s = 0.5f + 0.5f * (float)((t * 6.283185f < 3.14159f) ?
+        (t * 6.283185f / 3.14159f) : (2.0f - t * 6.283185f / 3.14159f));
+    return s * (rarity == 3 ? 0.8f : 0.4f);
+}
+

@@ -109,3 +109,53 @@ bool v2_creature_anim_is_playing(int creature_id) {
     }
     return false;
 }
+
+/* V2 Creature Animation — sprite frame sequencing */
+
+#define V2_ANIM_MAX_FRAMES 16
+
+typedef struct {
+    int frame_indices[V2_ANIM_MAX_FRAMES];
+    int frame_count;
+    float frame_duration; /* seconds per frame */
+    int loop;
+} V2_AnimSequence;
+
+typedef struct {
+    const V2_AnimSequence *sequence;
+    float timer;
+    int current_frame;
+    int finished;
+} V2_AnimState;
+
+void v2_anim_start(V2_AnimState *state, const V2_AnimSequence *seq) {
+    if (!state || !seq) return;
+    state->sequence = seq;
+    state->timer = 0;
+    state->current_frame = 0;
+    state->finished = 0;
+}
+
+int v2_anim_tick(V2_AnimState *state, float dt) {
+    if (!state || !state->sequence || state->finished) return -1;
+    state->timer += dt;
+    if (state->timer >= state->sequence->frame_duration) {
+        state->timer -= state->sequence->frame_duration;
+        state->current_frame++;
+        if (state->current_frame >= state->sequence->frame_count) {
+            if (state->sequence->loop) {
+                state->current_frame = 0;
+            } else {
+                state->current_frame = state->sequence->frame_count - 1;
+                state->finished = 1;
+            }
+        }
+    }
+    return state->sequence->frame_indices[state->current_frame];
+}
+
+int v2_anim_current_frame(const V2_AnimState *state) {
+    if (!state || !state->sequence) return 0;
+    return state->sequence->frame_indices[state->current_frame];
+}
+

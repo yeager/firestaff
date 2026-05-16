@@ -108,3 +108,45 @@ void v2_level_trans_render_overlay(uint8_t* fb, int w, int h) {
             break;
     }
 }
+
+/* V2 Level Transition — animated descent/ascent effect */
+
+typedef enum {
+    V2_TRANS_NONE,
+    V2_TRANS_DESCEND,
+    V2_TRANS_ASCEND,
+    V2_TRANS_PIT_FALL,
+    V2_TRANS_TELEPORT,
+} V2_TransitionType;
+
+static struct {
+    V2_TransitionType type;
+    float progress; /* 0..1 */
+    float speed;
+    int from_level, to_level;
+    int active;
+} g_level_trans = {0};
+
+void v2_level_transition_start(V2_TransitionType type, int from, int to, float speed) {
+    g_level_trans.type = type;
+    g_level_trans.from_level = from;
+    g_level_trans.to_level = to;
+    g_level_trans.progress = 0;
+    g_level_trans.speed = speed > 0 ? speed : 1.0f;
+    g_level_trans.active = 1;
+}
+
+int v2_level_transition_tick(float dt) {
+    if (!g_level_trans.active) return 0;
+    g_level_trans.progress += g_level_trans.speed * dt;
+    if (g_level_trans.progress >= 1.0f) {
+        g_level_trans.progress = 1.0f;
+        g_level_trans.active = 0;
+    }
+    return g_level_trans.active;
+}
+
+float v2_level_transition_get_progress(void) { return g_level_trans.progress; }
+V2_TransitionType v2_level_transition_get_type(void) { return g_level_trans.type; }
+int v2_level_transition_is_active(void) { return g_level_trans.active; }
+
