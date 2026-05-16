@@ -31,5 +31,14 @@ int fs_gfx_get_bitmap(const FS_GraphicsDat *gfx, int index,
     uint8_t *out_pixels, int max_size, int *out_w, int *out_h);
 int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out);
 
+
+int fs_gfx_decompress_rle(const uint8_t *src, int src_size,
+    uint8_t *dst, int dst_size);
+int fs_gfx_expand_4bpp(const uint8_t *packed, int packed_size,
+    uint8_t *indexed, int max_pixels);
+int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
+    uint8_t *out_indexed, int max_pixels, int *out_w, int *out_h);
+
 #endif
+
 

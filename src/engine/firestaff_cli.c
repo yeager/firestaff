@@ -34,10 +34,8 @@ void fs_cli_print_help(const char *prog) {
     printf("  --no-vsync       Disable VSync\n");
     printf("\n");
     printf("Language:\n");
-    printf("  --lang en        English (default)\n");
-    printf("  --lang sv        Swedish\n");
-    printf("  --lang de        German\n");
-    printf("  --lang fr        French\n");
+    printf("  --lang CODE      Set language. Codes:\n");
+    printf("    en sv de fr es it pt nl pl cs ru ja ko zh da no fi hu tr\n");
     printf("  --lang auto      Detect from system (default)\n");
     printf("\n");
     printf("Data:\n");
@@ -76,7 +74,22 @@ static int match_lang(const char *arg) {
     if (strcmp(arg, "sv") == 0) return 1;
     if (strcmp(arg, "de") == 0) return 2;
     if (strcmp(arg, "fr") == 0) return 3;
-    if (strcmp(arg, "auto") == 0) return -1; /* will auto-detect */
+    if (strcmp(arg, "es") == 0) return 4;
+    if (strcmp(arg, "it") == 0) return 5;
+    if (strcmp(arg, "pt") == 0) return 6;
+    if (strcmp(arg, "nl") == 0) return 7;
+    if (strcmp(arg, "pl") == 0) return 8;
+    if (strcmp(arg, "cs") == 0) return 9;
+    if (strcmp(arg, "ru") == 0) return 10;
+    if (strcmp(arg, "ja") == 0) return 11;
+    if (strcmp(arg, "ko") == 0) return 12;
+    if (strcmp(arg, "zh") == 0) return 13;
+    if (strcmp(arg, "da") == 0) return 14;
+    if (strcmp(arg, "no") == 0) return 15;
+    if (strcmp(arg, "fi") == 0) return 16;
+    if (strcmp(arg, "hu") == 0) return 17;
+    if (strcmp(arg, "tr") == 0) return 18;
+    if (strcmp(arg, "auto") == 0) return -1;
     return -1;
 }
 

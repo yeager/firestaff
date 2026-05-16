@@ -85,3 +85,116 @@ int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
     return 256;
 }
 
+
+
+/* ══════════════════════════════════════════════════════════════════════
+ * DM1 GRAPHICS.DAT bitmap decompression
+ *
+ * Source: ReDMCSB MEMORY.C F0474_MEMORY_LoadGraphic_CPSDF
+ *
+ * Format: each graphic is stored as either:
+ *   1. Raw (uncompressed): width * height bytes, 4bpp packed to 8bpp
+ *   2. RLE compressed: run-length encoded with escape byte
+ *
+ * The 4bpp format packs two pixels per byte (high nibble = left pixel).
+ * PC-34 GRAPHICS.DAT uses a simple compression where:
+ *   - Byte 0x00-0x7F: literal run of N+1 bytes
+ *   - Byte 0x80-0xFF: repeat next byte (N-0x80+1) times
+ * ══════════════════════════════════════════════════════════════════════ */
+
+int fs_gfx_decompress_rle(const uint8_t *src, int src_size,
+    uint8_t *dst, int dst_size)
+{
+    int si = 0, di = 0;
+    while (si < src_size && di < dst_size) {
+        uint8_t cmd = src[si++];
+        if (cmd < 0x80) {
+            /* Literal run: copy cmd+1 bytes */
+            int count = cmd + 1;
+            for (int i = 0; i < count && si < src_size && di < dst_size; i++)
+                dst[di++] = src[si++];
+        } else {
+            /* Repeat run: repeat next byte (cmd-0x80+1) times */
+            int count = (cmd & 0x7F) + 1;
+            if (si >= src_size) break;
+            uint8_t val = src[si++];
+            for (int i = 0; i < count && di < dst_size; i++)
+                dst[di++] = val;
+        }
+    }
+    return di;
+}
+
+/* Expand 4bpp packed to 8bpp indexed (2 pixels per source byte) */
+int fs_gfx_expand_4bpp(const uint8_t *packed, int packed_size,
+    uint8_t *indexed, int max_pixels)
+{
+    int pi = 0, ii = 0;
+    while (pi < packed_size && ii + 1 < max_pixels) {
+        indexed[ii++] = (packed[pi] >> 4) & 0x0F;
+        indexed[ii++] = packed[pi] & 0x0F;
+        pi++;
+    }
+    return ii;
+}
+
+/* Full extraction: header + decompress + expand */
+int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
+    uint8_t *out_indexed, int max_pixels,
+    int *out_w, int *out_h)
+{
+    int w, h, off, data_off, compressed_size;
+    uint8_t decomp_buf[65536];
+    int decomp_size;
+
+    if (!gfx || !gfx->loaded || index < 0 || index >= gfx->graphic_count)
+        return -1;
+
+    w = gfx->entries[index].width;
+    h = gfx->entries[index].height;
+    off = gfx->entries[index].offset;
+    data_off = off + 4; /* skip width/height */
+
+    if (out_w) *out_w = w;
+    if (out_h) *out_h = h;
+
+    if (w <= 0 || h <= 0) return -1;
+
+    /* Estimate compressed data size (until next graphic or EOF) */
+    if (index + 1 < gfx->graphic_count)
+        compressed_size = gfx->entries[index + 1].offset - data_off;
+    else
+        compressed_size = gfx->raw_size - data_off;
+
+    if (compressed_size <= 0 || data_off + compressed_size > gfx->raw_size)
+        return -1;
+
+    /* Try RLE decompression */
+    decomp_size = fs_gfx_decompress_rle(
+        gfx->raw_data + data_off, compressed_size,
+        decomp_buf, sizeof(decomp_buf));
+
+    if (decomp_size <= 0) return -1;
+
+    /* Check if data is 4bpp packed */
+    int expected_4bpp = (w * h + 1) / 2;
+    int expected_8bpp = w * h;
+
+    if (!out_indexed) return expected_8bpp;
+
+    if (decomp_size >= expected_8bpp) {
+        /* Already 8bpp or raw */
+        int copy = expected_8bpp < max_pixels ? expected_8bpp : max_pixels;
+        memcpy(out_indexed, decomp_buf, copy);
+        return copy;
+    } else if (decomp_size >= expected_4bpp) {
+        /* 4bpp packed — expand */
+        return fs_gfx_expand_4bpp(decomp_buf, decomp_size,
+            out_indexed, max_pixels);
+    }
+
+    /* Fallback: copy what we have */
+    int copy = decomp_size < max_pixels ? decomp_size : max_pixels;
+    memcpy(out_indexed, decomp_buf, copy);
+    return copy;
+}
