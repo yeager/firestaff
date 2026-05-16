@@ -1,5 +1,7 @@
 
 #include "firestaff_data_validator.h"
+#include "nexus_v1_iso_reader.h"
+#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -88,7 +90,31 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
     {
         int nexus_size = 0;
         FS_ValidateResult r = check_file(data_dir, "nexus", "DM.BIN", 100000, &nexus_size);
-        report->nexus_ready = (r == FS_VALIDATE_OK);
+        if (r == FS_VALIDATE_OK) {
+            report->nexus_ready = 1;
+        } else {
+            /* Try ISO: look for .cue file in nexus/ */
+            char nexus_dir[512];
+            snprintf(nexus_dir, sizeof(nexus_dir), "%s/nexus", data_dir);
+            DIR *d = opendir(nexus_dir);
+            if (d) {
+                struct dirent *ent;
+                while ((ent = readdir(d)) != NULL) {
+                    int len = (int)strlen(ent->d_name);
+                    if (len > 4 && strcasecmp(ent->d_name + len - 4, ".cue") == 0) {
+                        char cue_path[512];
+                        snprintf(cue_path, sizeof(cue_path), "%s/%s", nexus_dir, ent->d_name);
+                        Nexus_ISOReader iso;
+                        if (nexus_iso_open_cue(&iso, cue_path) > 0) {
+                            report->nexus_ready = nexus_iso_is_nexus(&iso);
+                            nexus_iso_close(&iso);
+                        }
+                        break;
+                    }
+                }
+                closedir(d);
+            }
+        }
         if (report->nexus_ready) total_ok++;
     }
 

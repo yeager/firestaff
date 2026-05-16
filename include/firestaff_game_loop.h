@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include "firestaff_input.h"
+#include "nexus_v1_engine.h"
 
 /* Firestaff Game Loop — connects V1 engine, V2 rendering, SDL.
  *
@@ -52,6 +53,7 @@ typedef struct {
     int party_direction;
     int in_menu;
     FS_InputQueue input_queue;
+    Nexus_V1_Engine nexus_engine;
 } FS_GameState;
 
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config);
