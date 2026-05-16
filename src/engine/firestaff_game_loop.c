@@ -98,15 +98,39 @@ static void fs_game_render_viewport(FS_GameState *state) {
     /* Clear framebuffer */
     memset(g_framebuffer, 0, sizeof(g_framebuffer));
 
-    /* Draw ceiling (top half of viewport = dark gray) */
-    for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
-        for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-            g_framebuffer[y * FS_FB_W + x] = 8; /* dark gray ceiling */
-
-    /* Draw floor (bottom half = brown) */
-    for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
-        for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-            g_framebuffer[y * FS_FB_W + x] = 6; /* brown floor */
+    /* Blit viewport background from GRAPHICS.DAT #0 (224x136) */
+    if (g_assets_ready) {
+        static uint8_t gfx_extract_bg[224 * 136];
+        static int bg_loaded = 0;
+        if (!bg_loaded) {
+            int bw = 0, bh = 0;
+            if (fs_gfx_get_bitmap(&g_gfx_dat, 0, gfx_extract_bg,
+                    sizeof(gfx_extract_bg), &bw, &bh) > 0) {
+                bg_loaded = 1;
+            }
+        }
+        if (bg_loaded) {
+            for (y = 0; y < FS_VP_H && y < 136; y++)
+                for (x = 0; x < FS_VP_W && x < 224; x++)
+                    g_framebuffer[(FS_VP_Y + y) * FS_FB_W + FS_VP_X + x] =
+                        gfx_extract_bg[y * 224 + x];
+        } else {
+            /* Fallback: gray ceiling + brown floor */
+            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 8;
+            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 6;
+        }
+    } else {
+        for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
+            for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                g_framebuffer[y * FS_FB_W + x] = 8;
+        for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
+            for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                g_framebuffer[y * FS_FB_W + x] = 6;
+    }
 
     /* Draw walls using real GRAPHICS.DAT bitmaps when available */
     {

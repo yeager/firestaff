@@ -15,55 +15,117 @@ static uint16_t r16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] 
 static uint32_t r32(const uint8_t *p) { return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24); }
 
 int fs_gfx_load(FS_GraphicsDat *gfx, const uint8_t *data, int size) {
-    int i, count, header_size;
+    int i, off;
+    uint16_t sig, count;
     if (!gfx || !data || size < 6) return -1;
     memset(gfx, 0, sizeof(*gfx));
     gfx->raw_data = data;
     gfx->raw_size = size;
 
-    count = r16(data);
-    if (count > FS_GFX_MAX_GRAPHICS) count = FS_GFX_MAX_GRAPHICS;
-    gfx->graphic_count = count;
-    header_size = 2 + count * 4;
+    /* DM1 PC-34 GRAPHICS.DAT confirmed format:
+     * New format (sig & 0x8000): sig(2) + count(2) + comp[count](2each) +
+     *   decomp[count](2each) + wh[count](4each)
+     * Old format: count(2) + comp[count](2each) then seek per graphic for w/h */
+    sig = r16(data);
+    if (sig & 0x8000) {
+        /* New format */
+        count = r16(data + 2);
+        if (count > FS_GFX_MAX_GRAPHICS) count = FS_GFX_MAX_GRAPHICS;
+        gfx->graphic_count = count;
 
-    for (i = 0; i < count && 2 + i * 4 + 4 <= size; i++) {
-        uint32_t off = r32(data + 2 + i * 4);
-        gfx->entries[i].offset = (int)off;
-        if ((int)off + 4 <= size) {
+        /* Read compressed sizes */
+        off = 4;
+        for (i = 0; i < count && off + 2 <= size; i++) {
+            gfx->entries[i].compressed_size = r16(data + off);
+            off += 2;
+        }
+        /* Skip decompressed sizes (same offset stride) */
+        off += count * 2;
+        /* Read width/height pairs */
+        for (i = 0; i < count && off + 4 <= size; i++) {
             gfx->entries[i].width = r16(data + off);
             gfx->entries[i].height = r16(data + off + 2);
+            off += 4;
+        }
+        /* Compute data offsets from compressed sizes */
+        {
+            int data_start = off;
+            int cur = data_start;
+            for (i = 0; i < count; i++) {
+                gfx->entries[i].offset = cur;
+                cur += gfx->entries[i].compressed_size;
+            }
+        }
+    } else {
+        /* Old format */
+        count = sig;
+        if (count > FS_GFX_MAX_GRAPHICS) count = FS_GFX_MAX_GRAPHICS;
+        gfx->graphic_count = count;
+        off = 2;
+        for (i = 0; i < count && off + 2 <= size; i++) {
+            gfx->entries[i].compressed_size = r16(data + off);
+            off += 2;
+        }
+        /* Old format: w/h embedded at start of each graphic data */
+        {
+            int cur = off;
+            for (i = 0; i < count; i++) {
+                gfx->entries[i].offset = cur;
+                if (cur + 4 <= size) {
+                    gfx->entries[i].width = r16(data + cur);
+                    gfx->entries[i].height = r16(data + cur + 2);
+                }
+                cur += gfx->entries[i].compressed_size;
+            }
         }
     }
 
     gfx->loaded = 1;
-    printf("GRAPHICS.DAT: %d graphics loaded\n", count);
+    printf("GRAPHICS.DAT: %d graphics, format %s\n",
+        count, (sig & 0x8000) ? "new" : "old");
     return count;
 }
+
 
 int fs_gfx_get_bitmap(const FS_GraphicsDat *gfx, int index,
     uint8_t *out_pixels, int max_size, int *out_w, int *out_h)
 {
-    int w, h, pixel_size, off;
+    int w, h, off, comp_size, byte_width, i;
     if (!gfx || !gfx->loaded || index < 0 || index >= gfx->graphic_count)
         return -1;
 
-    off = gfx->entries[index].offset;
     w = gfx->entries[index].width;
     h = gfx->entries[index].height;
+    off = gfx->entries[index].offset;
+    comp_size = gfx->entries[index].compressed_size;
 
     if (out_w) *out_w = w;
     if (out_h) *out_h = h;
+    if (w <= 0 || h <= 0 || comp_size <= 0) return -1;
+    if (!out_pixels) return w * h;
+    if (w * h > max_size) return -1;
 
-    /* Simplified: copy raw pixel data (real format needs decompression) */
-    pixel_size = w * h;
-    if (pixel_size > max_size || off + 4 + pixel_size > gfx->raw_size)
-        return -1;
+    /* PC-34: data is 4bpp (2 pixels per byte), uncompressed.
+     * byte_width = (w + 1) / 2; total = byte_width * h */
+    byte_width = (w + 1) / 2;
+    if (off + byte_width * h > gfx->raw_size) {
+        /* Compressed data shorter than expected — use what we have */
+        byte_width = comp_size / h;
+        if (byte_width <= 0) return -1;
+    }
 
-    if (out_pixels)
-        memcpy(out_pixels, gfx->raw_data + off + 4, pixel_size);
+    /* Expand 4bpp to 8bpp indexed */
+    memset(out_pixels, 0, w * h);
+    for (i = 0; i < byte_width * h && off + i < gfx->raw_size; i++) {
+        int pi = i * 2;
+        uint8_t byte = gfx->raw_data[off + i];
+        if (pi < w * h) out_pixels[pi] = (byte >> 4) & 0x0F;
+        if (pi + 1 < w * h) out_pixels[pi + 1] = byte & 0x0F;
+    }
 
-    return pixel_size;
+    return w * h;
 }
+
 
 int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
     /* DM1 VGA palette is at a fixed offset or embedded.
