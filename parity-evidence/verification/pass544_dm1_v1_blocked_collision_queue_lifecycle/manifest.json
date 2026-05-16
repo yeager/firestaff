@@ -27,7 +27,7 @@
   },
   "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
   "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
-  "timestampUtc": "2026-05-16T08:49:54.663502+00:00",
+  "timestampUtc": "2026-05-16T08:54:19.818695+00:00",
   "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
   "worktree": "/home/trv2/work/firestaff"
 }

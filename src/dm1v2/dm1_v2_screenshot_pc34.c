@@ -75,3 +75,37 @@ int v2_screenshot_capture(uint8_t* fb, int w, int h, uint32_t* palette, int pale
     fclose(f);
     return 0;
 }
+
+/* V2.2 Screenshot — key binding integration */
+
+static int g_screenshot_pending = 0;
+static char g_screenshot_last_path[256] = {0};
+
+void v22_screenshot_request(void) { g_screenshot_pending = 1; }
+
+int v22_screenshot_is_pending(void) { return g_screenshot_pending; }
+
+int v22_screenshot_process(const uint32_t *rgba, int w, int h,
+    const char *save_dir)
+{
+    char path[256];
+    int result;
+    if (!g_screenshot_pending) return 0;
+    g_screenshot_pending = 0;
+
+    if (!save_dir) save_dir = ".";
+    snprintf(path, sizeof(path), "%s/", save_dir);
+    v2_screenshot_auto_path(path + strlen(path),
+        (int)(sizeof(path) - strlen(path)), "firestaff");
+
+    result = v2_screenshot_capture(rgba, w, h, path);
+    if (result == 0) {
+        strncpy(g_screenshot_last_path, path, sizeof(g_screenshot_last_path) - 1);
+    }
+    return result;
+}
+
+const char *v22_screenshot_last_path(void) {
+    return g_screenshot_last_path[0] ? g_screenshot_last_path : NULL;
+}
+

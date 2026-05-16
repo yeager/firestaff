@@ -144,3 +144,72 @@ const char *v21_runtime_source_evidence(void) {
         "V2.1: V1 tick -> V1 render -> EPX upscale -> palette -> present\n";
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.2 Runtime Integration — enhanced feature tick
+ *
+ * Called once per frame when V2.2 mode is active.
+ * Coordinates all enhanced subsystems.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+
+/* Forward declarations for V2.2 subsystems (linked when available) */
+__attribute__((weak)) void v22_light_rebuild_map(void) {}
+__attribute__((weak)) int v22_smooth_tick(float*,float*,float*) { return 0; }
+__attribute__((weak)) void v22_shake_tick(float dt,float*dx,float*dy) { (void)dt;if(dx)*dx=0;if(dy)*dy=0; }
+__attribute__((weak)) void v2_particle_tick(float dt) { (void)dt; }
+__attribute__((weak)) void v22_damage_tick(float dt) { (void)dt; }
+__attribute__((weak)) void v2_msglog_tick(float dt) { (void)dt; }
+__attribute__((weak)) void v22_stats_tick_playtime(void) {}
+__attribute__((weak)) int v2_level_transition_tick(float dt) { (void)dt; return 0; }
+
+void v22_runtime_enhanced_tick(float dt) {
+    /* 1. Dynamic lighting — rebuild light map */
+    v22_light_rebuild_map();
+
+    /* 2. Smooth movement interpolation */
+    v22_smooth_tick(NULL, NULL, NULL);
+
+    /* 3. Camera shake */
+    {
+        float dx, dy;
+        v22_shake_tick(dt, &dx, &dy);
+        (void)dx; (void)dy; /* applied by renderer */
+    }
+
+    /* 4. Particle system update */
+    v2_particle_tick(dt);
+
+    /* 5. Damage numbers fade */
+    v22_damage_tick(dt);
+
+    /* 6. Weather effects */
+    /* Weather is per-zone, updated on zone change */
+
+    /* 7. Message log fade */
+    v2_msglog_tick(dt);
+
+    /* 8. Stat tracker — tick playtime every second */
+    {
+        static float playtime_acc = 0;
+        playtime_acc += dt;
+        if (playtime_acc >= 1.0f) {
+            playtime_acc -= 1.0f;
+            v22_stats_tick_playtime();
+        }
+    }
+
+    /* 9. Level transition animation */
+    v2_level_transition_tick(dt);
+
+    /* 10. Screenshot capture (if pending) */
+    /* Done by caller after render, not during tick */
+}
+
+int v22_runtime_enhanced_is_active(void) {
+    return !v21_runtime_is_faithful();
+}
+
+const char *v22_runtime_version_string(void) {
+    return "DM1 V2.2 Enhanced";
+}
+

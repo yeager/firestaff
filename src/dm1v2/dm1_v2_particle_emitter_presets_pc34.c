@@ -57,3 +57,36 @@ int v2_emitter_preset_validate(const M11_V2_EmitterConfig *cfg) {
     return 1;
 }
 
+/* V2.2 Emitter Presets — create emitter from preset with position */
+
+typedef enum {
+    V22_BLEND_ADDITIVE = 0,
+    V22_BLEND_ALPHA,
+    V22_BLEND_MULTIPLY,
+} V22_BlendMode;
+
+static V22_BlendMode g_preset_blend[M11_V2_EmitterPreset_COUNT] = {
+    V22_BLEND_ADDITIVE,  /* TORCH_FLAME */
+    V22_BLEND_ALPHA,     /* TORCH_SMOKE */
+    V22_BLEND_ADDITIVE,  /* SPELL_FIREBALL */
+    V22_BLEND_ALPHA,     /* SPELL_POISON */
+    V22_BLEND_ALPHA,     /* BLOOD_SPLAT */
+    V22_BLEND_ALPHA,     /* WATER_DRIP */
+    V22_BLEND_ALPHA,     /* DUST_PUFF */
+    V22_BLEND_ADDITIVE,  /* MAGIC_SPARKLE */
+};
+
+V22_BlendMode v22_emitter_preset_blend(M11_V2_EmitterPreset preset) {
+    if (preset < 0 || preset >= M11_V2_EmitterPreset_COUNT)
+        return V22_BLEND_ALPHA;
+    return g_preset_blend[preset];
+}
+
+int v22_emitter_create_from_preset(M11_V2_EmitterPreset preset,
+    float x, float y)
+{
+    M11_V2_EmitterConfig cfg = v2_emitter_preset_get(preset);
+    return v2_particle_emitter_create(x, y, cfg.rate, cfg.spread,
+        cfg.life, cfg.size, cfg.gravity, cfg.color, cfg.count);
+}
+
