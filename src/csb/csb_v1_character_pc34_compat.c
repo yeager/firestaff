@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdint.h>
 
 #include "csb_v1_character_pc34_compat.h"
 #include <string.h>
