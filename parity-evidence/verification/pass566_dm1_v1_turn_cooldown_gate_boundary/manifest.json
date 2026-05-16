@@ -1,0 +1,40 @@
+{
+  "branch": "main",
+  "closedGap": "turn commands C001/C002 bypass G0310/G0311 movement-disabled gating and do not run step stamina/collision/cooldown, while C003..C006 step commands remain queued until the cooldown gate clears",
+  "firestaffAudit": {
+    "commandCore": "DM1_V1_MovementCommandCore_ProcessOnePc34Compat returns from the turn branch before step stamina/collision/cooldown",
+    "focusedTests": [
+      "dm1_v1_input_command_queue_pc34_compat",
+      "dm1_v1_movement_command_core_pc34_compat"
+    ],
+    "queueCore": "DM1_V1_InputCommandQueue_ProcessOnePc34Compat gates only move commands, never C001/C002 turns"
+  },
+  "notClaimed": [
+    "new original DOS runtime breakpoint transcript",
+    "new pixel capture parity",
+    "full creature AI reaction timing beyond command-gate boundary"
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass566_dm1_v1_turn_cooldown_gate_boundary.v1",
+  "sourceAudit": {
+    "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": [
+      142,
+      174
+    ],
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": [
+      2045,
+      2829
+    ],
+    "COMMAND.C:F0380_step_only_gate": [
+      2095,
+      2096,
+      2151,
+      2155
+    ],
+    "GAMELOOP.C:cooldown_decrement_before_F0380": [
+      150,
+      215
+    ]
+  },
+  "status": "PASS566_DM1_V1_TURN_COOLDOWN_GATE_BOUNDARY_LOCKED"
+}
