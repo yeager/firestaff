@@ -339,6 +339,13 @@ int fs_game_load_assets(FS_GameState *state) {
                 if (bundle.dungeon_data && bundle.dungeon_size > 0) {
                     fs_dungeon_load_dat(bundle.dungeon_data, bundle.dungeon_size);
                     fs_dungeon_set_level(state->current_level);
+                    /* Set start position from DUNGEON.DAT header AFTER loading */
+                    state->party_x = fs_dungeon_get_start_x();
+                    state->party_y = fs_dungeon_get_start_y();
+                    state->party_direction = fs_dungeon_get_start_dir();
+                    printf("Firestaff: start (%d,%d) facing %d from DUNGEON.DAT
+",
+                        state->party_x, state->party_y, state->party_direction);
                 }
                 printf("Firestaff: %d graphics loaded from GRAPHICS.DAT\n",
                     g_gfx_dat.graphic_count);

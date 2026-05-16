@@ -1007,14 +1007,28 @@ static int m11_resolve_builtin_dungeon_path(char* out,
     if (!out || !dataDir || !gameId) {
         return 0;
     }
-    if (strcmp(gameId, "dm1") == 0) {
-        return FSP_JoinPath(out, outSize, dataDir, "DUNGEON.DAT");
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return FSP_JoinPath(out, outSize, dataDir, "CSB.DAT");
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return FSP_JoinPath(out, outSize, dataDir, "DM2DUNGEON.DAT");
+    /* Try dataDir/gameSubdir/DUNGEON.DAT first, then dataDir/DUNGEON.DAT */
+    {
+        char subpath[1024];
+        const char *subdir = NULL;
+        const char *filename = "DUNGEON.DAT";
+        if (strcmp(gameId, "dm1") == 0) subdir = "dm1";
+        else if (strcmp(gameId, "csb") == 0) { subdir = "csb"; }
+        else if (strcmp(gameId, "dm2") == 0) { subdir = "dm2"; }
+        else if (strcmp(gameId, "nexus1") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
+
+        if (subdir) {
+            snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);
+            if (FSP_JoinPath(out, outSize, dataDir, subpath)) {
+                FILE *test = fopen(out, "rb");
+                if (test) { fclose(test); return 1; }
+            }
+        }
+        /* Fallback: dataDir/DUNGEON.DAT */
+        if (FSP_JoinPath(out, outSize, dataDir, filename)) {
+            FILE *test = fopen(out, "rb");
+            if (test) { fclose(test); return 1; }
+        }
     }
     return 0;
 }
