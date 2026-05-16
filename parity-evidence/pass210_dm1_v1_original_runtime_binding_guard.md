@@ -7,7 +7,7 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 - Stock FIRES: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES` size `94779` sha256 `ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb`.
 - LZEXE signature at relocation table: `LZ91`.
 - Compressed loader entry: `1665:000e`; interpretation: `LZEXE loader entry only; not a decompressed FIRES runtime text address`.
-- ReDMCSB `*.MAP` artifacts found: `192`.
+- ReDMCSB `*.MAP` artifacts found: `208`.
 - Candidate FIRES runtime dumps found: `1`.
 - FIRES-like original binaries inventoried: `7`.
 - Unpack/link tools found: `4`.
