@@ -708,16 +708,52 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rect(c, x + w/2 - 16, y + h - 54, 32, 42, ink);
         fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
     } else {
-        /* Saturn/Nexus portal: black monolith, purple scanlines, orbit rings. */
-        fill_rect(c, x + w/2 - 38, y + 34, 76, h - 68, rgb(10, 8, 24));
-        stroke_rounded_rect(c, x + w/2 - 42, y + 30, 84, h - 60, 12, accent);
-        for (int yy = y + 52; yy < y + h - 52; yy += 12) {
-            fill_rect(c, x + w/2 - 30, yy, 60, 2, disabled ? muted_rgb(accent) : accent);
+        /* Saturn/Nexus — 3D dungeon stairway descending into darkness. */
+        /* Background: deep space gradient */
+        for (int gy = y + 12; gy < y + h - 16; gy++) {
+            int t = (gy - y) * 255 / h;
+            M12_RGB bg = rgb(8 + t/20, 4 + t/30, 24 + t/8);
+            if (disabled) bg = muted_rgb(bg);
+            fill_rect(c, x + 8, gy, w - 16, 1, bg);
         }
-        fill_rect(c, x + 26, y + h/2 - 3, w - 52, 6, rgb(34, 28, 74));
-        fill_rect(c, x + 42, y + h/2 - 20, w - 84, 4, accent);
-        fill_rect(c, x + 42, y + h/2 + 18, w - 84, 4, accent);
-        fill_rect(c, x + w/2 - 8, y + 22, 16, 16, COLOR_ACCENT_HI());
+        /* Saturn ring ellipse */
+        for (int a = -40; a <= 40; a++) {
+            int rx = x + w/2 + a;
+            int ry1 = y + 36 + (a*a)/400;
+            int ry2 = y + 40 + (a*a)/400;
+            if (rx >= x+4 && rx < x+w-4) {
+                blend_pixel(c, rx, ry1, accent, 180);
+                blend_pixel(c, rx, ry2, accent, 120);
+            }
+        }
+        /* Central monolith/obelisk */
+        fill_rect(c, x + w/2 - 20, y + 44, 40, h - 84, rgb(18, 14, 32));
+        stroke_rounded_rect(c, x + w/2 - 22, y + 42, 44, h - 80, 4, accent);
+        /* Descending stairway lines inside monolith */
+        for (int s = 0; s < 6; s++) {
+            int sy = y + 56 + s * 14;
+            int sw = 28 - s * 3;
+            int sx = x + w/2 - sw/2;
+            M12_RGB stair_c = rgb(60 - s*8, 50 - s*6, 80 - s*8);
+            if (disabled) stair_c = muted_rgb(stair_c);
+            fill_rect(c, sx, sy, sw, 4, stair_c);
+        }
+        /* Glowing runes on sides */
+        for (int r = 0; r < 4; r++) {
+            int ry = y + 50 + r * 22;
+            blend_pixel(c, x + w/2 - 28, ry, COLOR_ACCENT_HI(), 200);
+            blend_pixel(c, x + w/2 + 27, ry, COLOR_ACCENT_HI(), 200);
+            blend_pixel(c, x + w/2 - 29, ry+1, accent, 140);
+            blend_pixel(c, x + w/2 + 28, ry+1, accent, 140);
+        }
+        /* Kanji-style mark at top */
+        fill_rect(c, x + w/2 - 6, y + 24, 12, 3, COLOR_ACCENT_HI());
+        fill_rect(c, x + w/2 - 2, y + 20, 4, 10, COLOR_ACCENT_HI());
+        /* Floor perspective lines */
+        for (int fl = -3; fl <= 3; fl++) {
+            int fx = x + w/2 + fl * 12;
+            fill_rect(c, fx, y + h - 36, 2, 14, rgb(40, 34, 60));
+        }
     }
 
     if (!generated) {
