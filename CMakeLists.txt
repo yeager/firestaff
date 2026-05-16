@@ -79,6 +79,17 @@ if(DM2_SOURCES)
 endif()
 
 
+
+# ── Nexus V1 static library ────────────────────────────────────────
+file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
+if(NEXUS_SOURCES)
+    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES})
+    target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── DM2 V2 static library ──────────────────────────────────────────
 file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c")
 if(DM2_V2_SOURCES)
