@@ -2814,7 +2814,7 @@ int main(int argc, char** argv) {
         unsigned char objectFb[320 * 200];
         unsigned char objectGapFb[320 * 200];
         unsigned char multiObjectFb[320 * 200];
-        char gfxPath[512];
+        char gfxPath[2048];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
 
@@ -11450,7 +11450,7 @@ int main(int argc, char** argv) {
                              * cue-fallback the baseline probe captures. */
                             {
                                 const char* gfxRoot = getenv("FIRESTAFF_DATA");
-                                char gfxPath[512];
+                                char gfxPath[2048];
                                 if (gfxRoot && gfxRoot[0]) {
                                     snprintf(gfxPath, sizeof(gfxPath),
                                              "%s/GRAPHICS.DAT", gfxRoot);
