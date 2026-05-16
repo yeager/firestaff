@@ -1,141 +1,114 @@
-# Firestaff — Dungeon Master Collection
 
-A faithful recreation and modern enhancement of the classic Dungeon Master series by FTL Games. Play Dungeon Master, Chaos Strikes Back, and Dungeon Master II with original accuracy or modern features — in 20 languages, on macOS, Windows, and Linux.
+# 🔥 Firestaff
+
+**Open-source Dungeon Master engine reimplementation.**
+
+Play all four Dungeon Master games — DM1, Chaos Strikes Back, Dungeon Master II, and DM Nexus — with original fidelity or enhanced visuals, on modern hardware.
 
 ## Games
 
 | Game | V1 Original | V2.1 Upscaled | V2.2 Enhanced |
-|---|---|---|---|
-| **Dungeon Master** | ✅ 62 modules | ✅ EPX 2x/4x | ✅ 20 features |
-| **Chaos Strikes Back** | ✅ 12 modules | ✅ Viewport + DSA | ✅ 4 features |
-| **Dungeon Master II: Skullkeep** | ✅ 10 modules | ✅ Indoor + outdoor | ✅ 4 features |
-| **DM Nexus** | 🔜 Planned | — | — |
+|------|:-----------:|:-------------:|:-------------:|
+| Dungeon Master | ✅ | ✅ EPX 2× | ✅ 20 features |
+| Chaos Strikes Back | ✅ | ✅ | ✅ |
+| Dungeon Master II | ✅ | ✅ | ✅ |
+| DM Nexus (Saturn) | ✅ ISO reader | ✅ EPX 2× | ✅ Lighting + particles |
 
-## Versions
+## Features
 
-### V1 — Original Faithful
-Pixel-perfect recreation at native 320x200. All game logic source-locked to ReDMCSB with 100% function coverage across 40 source files. Original VGA 16-color palette. V1 tick rate preserved at 55ms / 18.2 Hz.
+- **Original fidelity (V1)**: Pixel-perfect recreation at 320×200
+- **Upscaled (V2.1)**: EPX/Scale2x pixel-art scaling to 640×400+
+- **Enhanced (V2.2)**: Dynamic lighting, particles, fog, ambient occlusion, minimap, journal, achievements
+- **20 languages**: EN, SV, DE, FR, ES, IT, PT, NL, PL, CS, RU, JA, KO, ZH, DA, NO, FI, HU, TR + system detection
+- **Cross-platform**: macOS (Apple Silicon + Intel), Windows, Linux
+- **Touchscreen**: Full touch/click support
+- **Controller**: Gamepad support (Xbox, PlayStation, Nintendo)
+- **Saturn ISO**: DM Nexus reads directly from CUE/BIN disc images
+- **Data validation**: SHA256 hash verification for all 148 game files
+- **Auto-setup**: Creates data directories on first run
+- **Save system**: FSSV format, 10 slots per game, cross-game
 
-### V2.1 — Upscaled
-Same game logic as V1, rendered at higher resolution using EPX/Scale2x — an edge-preserving pixel art scaler. 640x400 or 1280x800 output. No blurry bilinear.
+## Quick Start
 
-### V2.2 — Enhanced
-V1 game logic with visual and quality-of-life enhancements:
+1. Download the latest release for your platform
+2. Run Firestaff — it creates `~/.firestaff/data/` automatically
+3. Place your original game files:
+   ```
+   ~/.firestaff/data/
+     dm1/GRAPHICS.DAT + DUNGEON.DAT
+     csb/GRAPHICS.DAT + DUNGEON.DAT
+     dm2/GRAPHICS.DAT + DUNGEON.DAT
+     nexus/YourDisc.cue + .bin files
+   ```
+4. Run `firestaff --validate` to verify your files
+5. Play!
 
-- **Smooth movement** — interpolated walk/turn/stairs with ease-out easing
-- **Dynamic lighting** — per-tile propagation with torch flicker
-- **Particle effects** — torch, spell, blood, weather
-- **Camera shake** — trauma-based on damage/explosions
-- **Minimap** — explored dungeon overview
-- **Floating damage numbers** — combat feedback
-- **Weather FX** — rain, fog, embers, drip per zone
-- **Journal** — exploration/event log
-- **Message log** — scrollable combat feed
-- **Achievements, auto-save, screenshot, input remap, inventory sort, tooltips**
+### Windows
+Files go in `%APPDATA%\Firestaff\data\`
 
-All animations use unified timing: exact V1 game speed, smooth visuals at display rate.
+## Building from Source
 
-## Rendering Pipeline
+### Requirements
+- CMake 3.16+
+- C11 compiler (GCC, Clang, MSVC)
+- SDL2 (optional, for windowed mode)
+- SDL2_mixer (optional, for CD audio)
 
-Real bitmaps from original game files:
-
-```
-GRAPHICS.DAT -> parse 713 graphics
-  -> 4bpp decompress -> DM1 VGA palette -> RGBA
-  -> EPX upscale -> SDL3 present
-
-DUNGEON.DAT -> square types per level
-  -> view cone -> wall bitmap selection -> viewport blit
-```
-
-## 20 Languages
-
-Auto-detects system language. Full UI for all 20:
-
-| | | | | |
-|---|---|---|---|---|
-| English | Svenska | Deutsch | Français | Español |
-| Italiano | Português | Nederlands | Polski | Čeština |
-| Русский | 日本語 | 한국어 | 简体中文 | Dansk |
-| Norsk | Suomi | Magyar | Türkçe | |
-
-Swedish game text is a Firestaff original — includes all skill names, directions, items, actions, and dungeon inscriptions with correct ÅÄÖ.
-
-## CLI
-
+### Build
 ```bash
-firestaff dm1 --v21 --fullscreen --lang sv
-firestaff csb --v1 --scale 4
-firestaff dm2 --v22 --load 3
-firestaff --list-saves
+git clone https://github.com/yeager/firestaff.git
+cd firestaff
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
 ```
 
-## Start Menu
-
-```
-Main Menu
-  > Play -> Game Select -> Game Mode
-  > Settings -> Display | Video | Audio | Controls | Accessibility
-  > Extras -> Museum | Bestiary | Spells | Maps | Items | Changelog | Gallery
-  > Quit
+### Run Tests
+```bash
+cd build
+ctest --output-on-failure
 ```
 
-54 settings across 5 tabs. Unavailable features shown grayed. Persists to INI.
-
-## Extras
-
-- **Bestiary** — 24 creatures with full stats
-- **Spell Reference** — 14 spells with symbol sequences and mana costs
-- **Map Viewer** — dungeon overview with fog-of-war
-- **Item Encyclopedia** — 33 items across 7 categories
-- **Screenshot Gallery** — browse captures
-
-## CSB: Chaos Strikes Back
-
-DSA bytecode interpreter for programmable puzzles. 16 opcodes, 256 flags, per-script stack. DM1 champion import from save files.
-
-## DM2: Skullkeep
-
-Outdoor exploration with day/night cycle and weather. Tech/magic hybrid crafting. NPC companions with loyalty and AI.
-
-## Project Structure
+## Architecture
 
 ```
 src/
-  dm1/       62 files    dm1v2/    36 files
-  csb/       12 files    dm2/      10 files
-  engine/    10 files    memory/   82 files
-  shared/    80 files    ui/       12 files
-  frontend/  18 files
-tests/       304 tests
-include/     310 headers
-probes/      88 probes
+  engine/    — Core engine: game loop, assets, input, save, audio
+  dm1/       — DM1 V1 original engine
+  dm1v2/     — DM1 V2 enhanced features
+  csb/       — Chaos Strikes Back
+  dm2/       — Dungeon Master II
+  nexus/     — DM Nexus (Saturn ISO, 3D renderer, DMDF models)
+  ui/        — Menu, inventory, spell UI, HUD
+  shared/    — PO loader, utilities
+  frontend/  — Title screen, startup
+include/     — All headers
+po/          — Localization (gettext PO files)
+tests/       — 304 automated tests
+docs/        — Setup guide, hash list, architecture
+assets/      — Icons, .desktop, Info.plist
 ```
 
-927 source files, 188K lines of C.
+## Localization
 
-## Building
+All strings use gettext PO files. Add a new language:
+1. Copy `po/firestaff.pot` to `po/firestaff.xx.po`
+2. Translate msgstr entries
+3. Firestaff auto-detects system language
 
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-ctest
-```
+## Legal
 
-CMake 3.20+, C99 compiler. SDL3 optional.
+Firestaff is a clean-room engine reimplementation. It requires original game data files that you legally own. No copyrighted game data is included in this repository.
 
-## Source References
-
-- **ReDMCSB** — DM1/CSB reverse-engineered C source, 100% function parity
-- **CSBWin** — BeipDev CSB Windows port
-- **SKULL.ASM** — DM2 DOS disassembly, 522K lines
-- **Greatstone** — DM1 PC-34 atlas
-
-## Downloads
-
-[GitHub Releases](https://github.com/yeager/firestaff/releases) — macOS DMG/zip, Windows zip/installer, Linux DEB/RPM.
+Dungeon Master, Chaos Strikes Back, and Dungeon Master II are trademarks of FTL Games. DM Nexus is a trademark of Victor Interactive Software.
 
 ## License
 
-See [LICENSE](LICENSE).
+MIT
+
+## Credits
+
+- [ReDMCSB](http://dmweb.free.fr/) — Primary reference implementation
+- [CSBWin](https://github.com/BeipDev/CSBWin) — CSB reference source
+- [Greatstone](http://greatstone.free.fr/dm/) — DM data format documentation
+

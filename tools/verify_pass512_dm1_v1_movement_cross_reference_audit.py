@@ -1,3 +1,4 @@
+# NOTE: Updated line ranges after v0.9.0 merge
 #!/usr/bin/env python3
 from __future__ import annotations
 

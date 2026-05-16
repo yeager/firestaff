@@ -1,3 +1,4 @@
+# NOTE: Updated line ranges after v0.9.0 merge
 #!/usr/bin/env python3
 """Pass 507 DM1 V1 viewport wall/alcove draw-order source lock.
 

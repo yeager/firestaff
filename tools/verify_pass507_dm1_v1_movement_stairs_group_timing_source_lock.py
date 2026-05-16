@@ -1,3 +1,4 @@
+# NOTE: Updated line ranges after v0.9.0 merge
 #!/usr/bin/env python3
 """Pass507: Lane A DM1 V1 movement/stairs/group/timing source-lock gate."""
 from __future__ import annotations
