@@ -55,4 +55,17 @@ static inline void fs_dungeon_compute_view_cone(
     }
 }
 
+
+/* Load DUNGEON.DAT and parse level grids */
+int fs_dungeon_load_dat(const uint8_t *data, int size);
+void fs_dungeon_set_level(int level);
+int fs_dungeon_get_square_type(int x, int y);
+int fs_dungeon_get_door_type(int x, int y);
+int fs_dungeon_get_door_state(int x, int y);
+int fs_dungeon_get_wall_ornament(int x, int y, int dir);
+int fs_dungeon_get_floor_ornament(int x, int y);
+int fs_dungeon_get_width(void);
+int fs_dungeon_get_height(void);
+const uint8_t *fs_dungeon_get_grid(void);
+
 #endif

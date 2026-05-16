@@ -325,6 +325,11 @@ int fs_game_load_assets(FS_GameState *state) {
                 fs_gfx_get_palette(&g_gfx_dat, g_vga_palette);
                 g_palette_loaded = 1;
                 g_assets_ready = 1;
+                /* Load DUNGEON.DAT */
+                if (bundle.dungeon_data && bundle.dungeon_size > 0) {
+                    fs_dungeon_load_dat(bundle.dungeon_data, bundle.dungeon_size);
+                    fs_dungeon_set_level(state->current_level);
+                }
                 printf("Firestaff: %d graphics loaded from GRAPHICS.DAT\n",
                     g_gfx_dat.graphic_count);
             }
