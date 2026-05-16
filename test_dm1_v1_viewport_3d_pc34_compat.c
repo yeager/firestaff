@@ -854,6 +854,94 @@ static void test_wall_draw_uses_clip_gate_source_offsets(void)
     check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
 }
 
+
+static void test_d0_d1_visible_square_draw_order_gate(void)
+{
+    static const struct {
+        size_t draw_index;
+        DM1_ViewSquareIndex square;
+        int depth;
+        int lateral;
+        const char *function_name;
+        const char *draw_source;
+    } draw_expected[] = {
+        { 13, DM1_VIEW_SQUARE_D1L, 1, -1, "F0122_DUNGEONVIEW_DrawSquareD1L", "8522-8525" },
+        { 14, DM1_VIEW_SQUARE_D1R, 1,  1, "F0123_DUNGEONVIEW_DrawSquareD1R", "8526-8529" },
+        { 15, DM1_VIEW_SQUARE_D1C, 1,  0, "F0124_DUNGEONVIEW_DrawSquareD1C", "8530-8533" },
+        { 16, DM1_VIEW_SQUARE_D0L, 0, -1, "F0125_DUNGEONVIEW_DrawSquareD0L", "8534-8537" },
+        { 17, DM1_VIEW_SQUARE_D0R, 0,  1, "F0126_DUNGEONVIEW_DrawSquareD0R", "8538-8541" },
+        { 18, DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "8542" },
+    };
+    static const struct {
+        DM1_ViewSquareIndex square;
+        uint16_t side_order;
+        const char *side_source;
+        const char *field_source;
+    } side_expected[] = {
+        { DM1_VIEW_SQUARE_D1L, 0x0032, "7536", "7538-7555" },
+        { DM1_VIEW_SQUARE_D1R, 0x0041, "7704", "7706-7722" },
+        { DM1_VIEW_SQUARE_D0L, 0x0002, "8005", NULL },
+        { DM1_VIEW_SQUARE_D0R, 0x0001, "8115", NULL },
+    };
+    const DM1_ViewportThingLayerSpec *objects =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_OBJECTS);
+    const DM1_ViewportThingLayerSpec *creatures =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_CREATURES);
+    const DM1_ViewportThingLayerSpec *projectiles =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_PROJECTILES);
+    const DM1_ViewportThingLayerSpec *explosions =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_EXPLOSIONS);
+
+    check_int("d0_d1_gate.draw_order_count", (int)dm1_viewport_3d_draw_order_count(), 19);
+    for (size_t i = 0; i < sizeof(draw_expected) / sizeof(draw_expected[0]); ++i) {
+        const DM1_ViewportDrawStep *step = dm1_viewport_3d_get_draw_order_step(draw_expected[i].draw_index);
+        char id[128];
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.nonnull", i);
+        check_nonnull(id, step);
+        if (!step) continue;
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.square", i);
+        check_int(id, (int)step->square, (int)draw_expected[i].square);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.depth", i);
+        check_int(id, step->rel_depth, draw_expected[i].depth);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.lateral", i);
+        check_int(id, step->rel_lateral, draw_expected[i].lateral);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.function", i);
+        check_int(id, strcmp(step->redmcsb_function, draw_expected[i].function_name) == 0, 1);
+        snprintf(id, sizeof(id), "d0_d1_gate.draw.%zu.source", i);
+        check_int(id, strstr(step->source_lines, draw_expected[i].draw_source) != NULL, 1);
+    }
+
+    for (size_t i = 0; i < sizeof(side_expected) / sizeof(side_expected[0]); ++i) {
+        const DM1_ViewportSideOcclusionSpec *side =
+            dm1_viewport_3d_get_side_occlusion_spec_for_square(side_expected[i].square);
+        char id[128];
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.nonnull", i);
+        check_nonnull(id, side);
+        if (!side) continue;
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.order", i);
+        check_int(id, side->cell_order, side_expected[i].side_order);
+        snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.f0115", i);
+        check_int(id, strstr(side->f0115_source_lines, side_expected[i].side_source) != NULL, 1);
+        if (side_expected[i].field_source) {
+            const DM1_ViewportFloorFieldOrderSpec *field =
+                dm1_viewport_3d_get_floor_field_order_spec_for_square(side_expected[i].square);
+            snprintf(id, sizeof(id), "d0_d1_gate.side.%zu.field_after_things", i);
+            check_int(id, field && field->field_after_things && strstr(field->field_source_lines, side_expected[i].field_source) != NULL, 1);
+        }
+    }
+
+    check_nonnull("d0_d1_gate.d1c_door_front", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C));
+    check_nonnull("d0_d1_gate.d0c_floor_field", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_nonnull("d0_d1_gate.d0c_thieves_eye", dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_nonnull("d0_d1_gate.d1_projectiles", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C));
+    check_nonnull("d0_d1_gate.d0_projectiles", dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C));
+    check_int("d0_d1_gate.layers.objects", objects && objects->repeats_per_cell && !objects->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.creatures", creatures && creatures->repeats_per_cell && !creatures->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.projectiles", projectiles && projectiles->repeats_per_cell && !projectiles->after_all_cells, 1);
+    check_int("d0_d1_gate.layers.explosions", explosions && !explosions->repeats_per_cell && explosions->after_all_cells, 1);
+}
+
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -920,6 +1008,7 @@ int main(void)
     test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
+    test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();
     test_source_evidence_mentions_visual_lane();
 
