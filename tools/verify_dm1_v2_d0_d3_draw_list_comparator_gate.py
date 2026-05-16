@@ -120,7 +120,7 @@ def main() -> int:
         if initial_state != {'mapIndex': 0, 'mapX': 1, 'mapY': 3, 'direction': 2, 'rawLE': '0x0861'}:
             errors.append(f'DM1 entry state mismatch: {initial_state}')
 
-    c_text = (ROOT / 'dm1_v2_viewport_renderer_pc34.c').read_text(encoding='utf-8', errors='replace')
+    c_text = (ROOT / 'src/dm1v2/dm1_v2_viewport_renderer_pc34.c').read_text(encoding='utf-8', errors='replace')
     order_start = c_text.find('static DM1_V2_ViewSquare dm1_v2_vp_square_id')
     order_end = c_text.find('static int dm1_v2_vp_push_draw')
     order_window = c_text[order_start:order_end]

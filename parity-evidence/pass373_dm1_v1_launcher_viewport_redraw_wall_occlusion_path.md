@@ -1,10 +1,10 @@
 # Pass373 — DM1 V1 launcher viewport redraw wall/occlusion path
 
-Status: `BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH`
+Status: `PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED`
 
 ## Verdict
 
-The path is still blocked; inspect the manifest checks for the first failing source/runtime gate.
+The full Firestaff launcher route-token path reaches a live DM1 V1 turn, marks the viewport dirty, and source-locks the consequent redraw path into the normal V1 wall/door/occlusion renderer stack.
 
 ## Runtime proof
 
@@ -33,10 +33,10 @@ The path is still blocked; inspect the manifest checks for the first failing sou
 ## Gates
 
 - firestaff_viewport_order_lock ok=True
-- prior_wall_occlusion_gate ok=False
 - prior_wall_occlusion_gate ok=True
 - prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=False
+- prior_wall_occlusion_gate ok=True
+- prior_wall_occlusion_gate ok=True
 - cmake_configure ok=True
 - cmake_build_firestaff ok=True
 - launcher_route_runtime_probe ok=True

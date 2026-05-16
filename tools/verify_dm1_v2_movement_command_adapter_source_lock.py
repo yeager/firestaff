@@ -45,19 +45,19 @@ REQUIRED = [
 ]
 
 FIRESTAFF_REQUIRED = [
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'COMMAND.C:2045-2155'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:142-174'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:180-390'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:35-44'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:1371-1391'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.c', 'GAMELOOP.C:164-219'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.h', 'DM1_V2_MOVEMENT_COMMAND_TURN_LEFT = 1'),
-    (ROOT / 'dm1_v2_movement_command_adapter_pc34.h', 'DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT = 6'),
-    (ROOT / 'test_dm1_v2_movement_command_adapter_pc34.c', 'COMMAND.C dispatches C001/C002'),
-    (ROOT / 'test_dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:224-233'),
-    (ROOT / 'test_dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:1389-1391'),
-    (ROOT / 'dm1_v2_runtime_pc34.c', 'DM1_V2_COMMAND_MOVE_RIGHT 5'),
-    (ROOT / 'dm1_v2_runtime_pc34.c', 'DM1_V2_COMMAND_MOVE_LEFT 6'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'COMMAND.C:2045-2155'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:142-174'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:180-390'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:35-44'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:1371-1391'),
+    (ROOT / 'src/dm1v2/dm1_v2_movement_command_adapter_pc34.c', 'GAMELOOP.C:164-219'),
+    (ROOT / 'include/dm1_v2_movement_command_adapter_pc34.h', 'DM1_V2_MOVEMENT_COMMAND_TURN_LEFT = 1'),
+    (ROOT / 'include/dm1_v2_movement_command_adapter_pc34.h', 'DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT = 6'),
+    (ROOT / 'tests/test_dm1_v2_movement_command_adapter_pc34.c', 'COMMAND.C dispatches C001/C002'),
+    (ROOT / 'tests/test_dm1_v2_movement_command_adapter_pc34.c', 'CLIKMENU.C:224-233'),
+    (ROOT / 'tests/test_dm1_v2_movement_command_adapter_pc34.c', 'DUNGEON.C:1389-1391'),
+    (ROOT / 'src/dm1v2/dm1_v2_runtime_pc34.c', 'DM1_V2_COMMAND_MOVE_RIGHT 5'),
+    (ROOT / 'src/dm1v2/dm1_v2_runtime_pc34.c', 'DM1_V2_COMMAND_MOVE_LEFT 6'),
 ]
 
 errors = []

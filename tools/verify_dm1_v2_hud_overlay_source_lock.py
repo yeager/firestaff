@@ -16,12 +16,12 @@ REQUIRED_SOURCE = [
 ]
 
 REQUIRED_FIRESTAFF = [
-    (ROOT / 'dm1_v2_hud_overlay_pc34.c', 'presentation-only'),
-    (ROOT / 'dm1_v2_hud_overlay_pc34.c', 'TIMELINE.C:F0260'),
-    (ROOT / 'dm1_v2_hud_overlay_pc34.c', 'PANEL.C:F0354'),
-    (ROOT / 'dm1_v2_hud_overlay_pc34.c', 'direction is a 0..3 logical value'),
-    (ROOT / 'test_dm1_v2_hud_overlay_pc34.c', 'north compass needle'),
-    (ROOT / 'test_dm1_v2_hud_overlay_pc34.c', 'clamp high to east'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'presentation-only'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'TIMELINE.C:F0260'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'PANEL.C:F0354'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'direction is a 0..3 logical value'),
+    (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'north compass needle'),
+    (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'clamp high to east'),
 ]
 
 errors = []

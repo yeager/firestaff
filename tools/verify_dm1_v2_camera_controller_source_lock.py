@@ -31,10 +31,10 @@ REQUIRED = [
     (SOURCE / 'GAMELOOP.C', 'F0380_COMMAND_ProcessQueue_CPSC', 215),
 ]
 FIRESTAFF = [
-    (ROOT / 'dm1_v2_camera_controller_pc34.c', 'presentation-only'),
-    (ROOT / 'dm1_v2_camera_controller_pc34.c', 'DUNGEON.C:1371-1391'),
-    (ROOT / 'dm1_v2_camera_controller_pc34.c', 'GAMELOOP.C:90'),
-    (ROOT / 'test_dm1_v2_camera_controller_pc34.c', 'dm1_v2_camera_begin_move'),
+    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'presentation-only'),
+    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'DUNGEON.C:1371-1391'),
+    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'GAMELOOP.C:90'),
+    (ROOT / 'tests/test_dm1_v2_camera_controller_pc34.c', 'dm1_v2_camera_begin_move'),
 ]
 errors=[]; anchors=[]
 for path, needle, line in REQUIRED:

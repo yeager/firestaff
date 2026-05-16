@@ -32,10 +32,10 @@ REQUIRED = [
     (SOURCE / 'DUNGEON.C', 'G0233_ai_Graphic559_DirectionToStepEastCount', 1389),
 ]
 FIRESTAFF_REQUIRED = [
-    (ROOT / 'dm1_v2_runtime_pc34.c', 'GAMELOOP.C:215'),
-    (ROOT / 'dm1_v2_runtime_pc34.c', 'DUNGEON.C:1371-1391'),
-    (ROOT / 'dm1_v2_runtime_pc34.h', 'DM1_V2_RuntimeState'),
-    (ROOT / 'test_dm1_v2_runtime_shell_pc34.c', 'dm1_v2_runtime_apply_command'),
+    (ROOT / 'src/dm1v2/dm1_v2_runtime_pc34.c', 'GAMELOOP.C:215'),
+    (ROOT / 'src/dm1v2/dm1_v2_runtime_pc34.c', 'DUNGEON.C:1371-1391'),
+    (ROOT / 'include/dm1_v2_runtime_pc34.h', 'DM1_V2_RuntimeState'),
+    (ROOT / 'tests/test_dm1_v2_runtime_shell_pc34.c', 'dm1_v2_runtime_apply_command'),
 ]
 
 errors = []

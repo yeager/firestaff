@@ -21,14 +21,14 @@ Lane: movement-related verifiers, parity evidence, and CTest wiring only. No vie
 - GAMELOOP.C:150-215 - Main loop ages movement/projectile cooldown before processing queued commands.
 
 ## Firestaff coverage
-- dm1_v1_input_command_queue_pc34_compat.c:286 - F0380 move gate/replay/dispatch seam.
-- memory_movement_pc34_compat.c:200 - relative step delta seam.
-- memory_movement_pc34_compat.c:820 - empty-party exception and group block seam.
-- dm1_v1_movement_command_core_pc34_compat.c:182 - stamina/stairs/group/input-discard/timing command seam.
-- dm1_v1_movement_timing_pc34_compat.c:65 - successful-step timing seam.
-- memory_sensor_execution_pc34_compat.c:325 - source-ordered enter/leave sensor walking.
-- test_dm1_v1_movement_core_pc34_compat.c - covers queue gates, tile blockers, pits, and empty-party group bug.
-- test_dm1_v1_command_movement_sensor_timing_pc34_compat.c - covers blocked side-effect suppression, group collision, empty-party bug, and timing cooldowns.
+- src/dm1/dm1_v1_input_command_queue_pc34_compat.c:286 - F0380 move gate/replay/dispatch seam.
+- src/memory/memory_movement_pc34_compat.c:200 - relative step delta seam.
+- src/memory/memory_movement_pc34_compat.c:820 - empty-party exception and group block seam.
+- src/dm1/dm1_v1_movement_command_core_pc34_compat.c:182 - stamina/stairs/group/input-discard/timing command seam.
+- src/dm1/dm1_v1_movement_timing_pc34_compat.c:65 - successful-step timing seam.
+- src/memory/memory_sensor_execution_pc34_compat.c:325 - source-ordered enter/leave sensor walking.
+- tests/test_dm1_v1_movement_core_pc34_compat.c - covers queue gates, tile blockers, pits, and empty-party group bug.
+- tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c - covers blocked side-effect suppression, group collision, empty-party bug, and timing cooldowns.
 
 ## Chained static gates
 - dm1_v1_command_movement_sensor_timing_source_lock rc=0

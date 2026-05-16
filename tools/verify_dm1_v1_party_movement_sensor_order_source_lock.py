@@ -43,8 +43,8 @@ def main() -> int:
     moves = read(RED / 'MOVESENS.C', 'latin-1')
     clik = read(RED / 'CLIKMENU.C', 'latin-1')
     command = read(RED / 'COMMAND.C', 'latin-1')
-    sensor = read(ROOT / 'memory_sensor_execution_pc34_compat.c')
-    probe = read(ROOT / 'test_dm1_v1_command_movement_sensor_timing_pc34_compat.c')
+    sensor = read(ROOT / 'src/memory/memory_sensor_execution_pc34_compat.c')
+    probe = read(ROOT / 'tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c')
 
     move_func = moves.index('BOOLEAN F0267_MOVE_GetMoveResult_CPSCE')
     move_party_positions = require_order(moves, [

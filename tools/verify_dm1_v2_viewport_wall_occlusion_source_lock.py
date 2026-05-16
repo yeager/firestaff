@@ -21,15 +21,15 @@ REQUIRED = [
 ]
 
 FIRESTAFF_REQUIRED = [
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_ELEMENT_WALL 0'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_VIEW_SQUARE_D3C'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_use_flipped_wall_bitmaps'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_square_occludes_beyond'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:8357'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6697-6720'),
-    (ROOT / 'dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6816'),
-    (ROOT / 'test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_wall_occlusion_source_lock'),
-    (ROOT / 'test_dm1_v2_movement_viewport_pc34.c', 'DM1_V2_ELEMENT_DOOR_FRONT'),
+    (ROOT / 'include/dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_ELEMENT_WALL 0'),
+    (ROOT / 'include/dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_VIEW_SQUARE_D3C'),
+    (ROOT / 'include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_use_flipped_wall_bitmaps'),
+    (ROOT / 'include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_square_occludes_beyond'),
+    (ROOT / 'src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:8357'),
+    (ROOT / 'src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6697-6720'),
+    (ROOT / 'src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6816'),
+    (ROOT / 'tests/test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_wall_occlusion_source_lock'),
+    (ROOT / 'tests/test_dm1_v2_movement_viewport_pc34.c', 'DM1_V2_ELEMENT_DOOR_FRONT'),
 ]
 
 errors: list[str] = []

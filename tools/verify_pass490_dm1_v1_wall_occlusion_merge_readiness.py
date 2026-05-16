@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 DUNVIEW = SRC / 'DUNVIEW.C'
 DUNGEON = SRC / 'DUNGEON.C'
-FIRE = ROOT / 'm11_game_view.c'
+FIRE = ROOT / 'src/engine/m11_game_view.c'
 REPORT = ROOT / 'parity-evidence/pass490_dm1_v1_wall_occlusion_merge_readiness.md'
 MANIFEST = ROOT / 'parity-evidence/verification/pass490_dm1_v1_wall_occlusion_merge_readiness/manifest.json'
 

@@ -55,17 +55,17 @@ SOURCE_RANGES = [
 
 FIRESTAFF_FILES = [
     {
-        'path': ROOT / 'm11_v1_turning_presentation_pc34_compat.c',
+        'path': ROOT / 'src/engine/m11_v1_turning_presentation_pc34_compat.c',
         'claim': 'guarded V1 presentation turning seam stores one-step 90-degree endpoint render semantics with no wall block check',
         'needles': ['M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL', 'COMMAND.C:2150-2152', 'CLIKMENU.C:171-173', 'result.quarterTurnSteps = 1', 'result.animationFrames = 1', 'result.intermediateFrames = 0', 'result.wallBlockCheck = 0', 'result.waitsForViewportVBlank = 1', 'poses[i].cell = m11_normalize_direction(poses[i].cell + result.delta)', 'poses[i].direction = m11_normalize_direction(poses[i].direction + result.delta)'],
     },
     {
-        'path': ROOT / 'dm1_v1_movement_command_core_pc34_compat.c',
+        'path': ROOT / 'src/dm1/dm1_v1_movement_command_core_pc34_compat.c',
         'claim': 'turn dispatch uses guarded M11 V1 seam and handles stairs-before-turn source sequence',
         'needles': ['CLIKMENU.C:167-169 consumes a turn command on a stairs', 'F0705_MOVEMENT_ResolveStairsTransition_Compat', 'm11_v1_turning_apply_party_original_presentation_pc34_compat', 'M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL', 'CHAMPION.C:117-130'],
     },
     {
-        'path': ROOT / 'test_m11_v1_turning_presentation_pc34_compat.c',
+        'path': ROOT / 'tests/test_m11_v1_turning_presentation_pc34_compat.c',
         'claim': 'ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation',
         'needles': ['right one source step per ninety', 'right single rendered endpoint frame', 'right no intermediate yaw frames', 'right has no wall block check', 'non-v1 presentation guard no-op', 'champion0 direction rotated'],
     },

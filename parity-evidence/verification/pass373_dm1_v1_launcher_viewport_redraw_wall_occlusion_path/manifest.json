@@ -107,14 +107,14 @@
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "/usr/bin/python3",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
-        "outputTail": "status=FAIL_PASS361_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE reason=Command '['/usr/bin/python3', 'tools/verify_pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep.py']' returned non-zero exit status 1.\n",
-        "returncode": 1
+        "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
+        "returncode": 0
       }
     },
     {
@@ -155,14 +155,14 @@
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "/usr/bin/python3",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "Traceback (most recent call last):\n  File \"/home/trv2/work/firestaff/tools/verify_v1_viewport_side_wall_occlusion_gate.py\", line 222, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/trv2/work/firestaff/tools/verify_v1_viewport_side_wall_occlusion_gate.py\", line 73, in main\n    text = SRC.read_text(encoding='utf-8')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/home/trv2/work/firestaff/m11_game_view.c'\n",
-        "returncode": 1
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:9884, 9909\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:12428\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:10199\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:9920\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:10630\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:10726\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:10804\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:18614\n",
+        "returncode": 0
       }
     },
     {
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "2dab762c546edc723f3d665e3d4045d2bef3377f",
+  "head": "bdce013c76b9f03b0de19bebe6fe0172aa37b114",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -443,6 +443,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-05-16T08:54:03.253493+00:00"
+  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
+  "timestampUtc": "2026-05-16T09:57:33.723166+00:00"
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
-FIRE = ROOT / 'm11_game_view.c'
+FIRE = ROOT / 'src/engine/m11_game_view.c'
 CMAKE = ROOT / 'CMakeLists.txt'
 EVIDENCE = ROOT / 'parity-evidence/pass506_dm1_v1_alcove_wall_item_occlusion_evidence.md'
 OUT_DIR = ROOT / 'parity-evidence/verification/pass506_dm1_v1_alcove_wall_item_occlusion_evidence'

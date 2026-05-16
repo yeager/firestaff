@@ -1625,7 +1625,7 @@ if(BUILD_TESTING)
     # Launcher smoke (needs game data + built firestaff binary)
     add_test(
         NAME m11_launcher_smoke
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_firestaff_m11_launcher_smoke.sh
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/probes/run_firestaff_m11_launcher_smoke.sh
     )
     set_tests_properties(m11_launcher_smoke PROPERTIES
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;FIRESTAFF_BIN=${CMAKE_CURRENT_BINARY_DIR}/firestaff;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
@@ -1636,7 +1636,7 @@ if(BUILD_TESTING)
     # pixel-perfect art parity.
     add_test(
         NAME m11_ingame_capture_smoke
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_firestaff_m11_ingame_capture_smoke.sh
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/probes/run_firestaff_m11_ingame_capture_smoke.sh
     )
     set_tests_properties(m11_ingame_capture_smoke PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"

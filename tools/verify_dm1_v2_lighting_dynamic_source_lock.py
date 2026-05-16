@@ -17,11 +17,11 @@ REQUIRED_SOURCE = [
 ]
 
 REQUIRED_FIRESTAFF = [
-    (ROOT / 'dm1_v2_lighting_dynamic_pc34.c', 'presentation-only'),
-    (ROOT / 'dm1_v2_lighting_dynamic_pc34.c', 'PANEL.C:F0337_INVENTORY_SetDungeonViewPalette'),
-    (ROOT / 'dm1_v2_lighting_dynamic_pc34.c', 'additive light map/fog overlay'),
-    (ROOT / 'test_dm1_v2_lighting_dynamic_pc34.c', 'half radius => squared falloff'),
-    (ROOT / 'test_dm1_v2_lighting_dynamic_pc34.c', 'additive overlay clamps'),
+    (ROOT / 'src/dm1v2/dm1_v2_lighting_dynamic_pc34.c', 'presentation-only'),
+    (ROOT / 'src/dm1v2/dm1_v2_lighting_dynamic_pc34.c', 'PANEL.C:F0337_INVENTORY_SetDungeonViewPalette'),
+    (ROOT / 'src/dm1v2/dm1_v2_lighting_dynamic_pc34.c', 'additive light map/fog overlay'),
+    (ROOT / 'tests/test_dm1_v2_lighting_dynamic_pc34.c', 'half radius => squared falloff'),
+    (ROOT / 'tests/test_dm1_v2_lighting_dynamic_pc34.c', 'additive overlay clamps'),
 ]
 
 errors = []
