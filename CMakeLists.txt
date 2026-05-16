@@ -2523,6 +2523,19 @@ if(BUILD_TESTING)
     )
 endif()
 
+
+# ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
+add_executable(firestaff_gfx_extract_proof
+    probes/dm1/firestaff_gfx_extract_proof.c
+)
+target_link_libraries(firestaff_gfx_extract_proof PRIVATE firestaff_m10)
+target_include_directories(firestaff_gfx_extract_proof PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_gfx_extract_proof PRIVATE -Wall -Wextra -O2)
+endif()
+
+
+
 # ── Known failing tests (WILL_FAIL = expected failure) ──
 set_tests_properties(pass372_dm1_v1_movement_runtime_route PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass377_dm1_v1_paired_diff_artifact_blocker PROPERTIES WILL_FAIL TRUE)

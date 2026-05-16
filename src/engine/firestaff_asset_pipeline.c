@@ -91,13 +91,7 @@ void fs_assets_expand_vga_palette(const uint8_t *vga_6bit, uint32_t *rgba_out, i
  *         PC34 Multilingual: EUDATA/DUNGEON.DAT, DUNGEONF.DAT, DUNGEONG.DAT
  * ══════════════════════════════════════════════════════════════════════ */
 
-typedef enum {
-    FS_ASSET_LANG_EN = 0,
-    FS_ASSET_LANG_FR,
-    FS_ASSET_LANG_DE,
-    FS_ASSET_LANG_SV,  /* Swedish (Firestaff original) */
-    FS_ASSET_LANG_COUNT
-} FS_AssetLanguage;
+
 
 static const char *g_dungeon_dat_names[FS_ASSET_LANG_COUNT] = {
     "DUNGEON.DAT",   /* English */

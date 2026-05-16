@@ -108,21 +108,46 @@ static void fs_game_render_viewport(FS_GameState *state) {
         for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
             g_framebuffer[y * FS_FB_W + x] = 6; /* brown floor */
 
-    /* Draw walls based on surroundings (simplified) */
-    /* Front wall at D0C if blocked */
+    /* Draw walls using real GRAPHICS.DAT bitmaps when available */
     {
         int fx = px, fy = py;
-        int dx[] = {0, 1, 0, -1}; /* N, E, S, W */
-        int dy[] = {-1, 0, 1, 0};
-        fx += dx[dir]; fy += dy[dir];
+        int ddx[] = {0, 1, 0, -1};
+        int ddy[] = {-1, 0, 1, 0};
+        fx += ddx[dir]; fy += ddy[dir];
 
-        /* Simple wall detection: draw front wall if position is "wall" */
-        /* In full implementation this queries dungeon.dat via dm1_v1_dungeon_loader */
-        if ((fx + fy) % 3 == 0) { /* placeholder: some squares are walls */
-            /* Draw front wall (gray rectangle in center) */
-            for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
-                for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 7; /* light gray wall */
+        if ((fx + fy) % 3 == 0) {
+            if (g_assets_ready) {
+                /* Blit real wall bitmap from GRAPHICS.DAT */
+                /* Wall set graphics start around index 30-60 in DM1 */
+                /* D1C front wall = graphic index varies by wall set */
+                static uint8_t wall_pixels[16384];
+                int ww = 0, wh = 0;
+                int wall_gfx_idx = 33; /* D1C front wall in default set */
+                int got = fs_gfx_extract_bitmap(&g_gfx_dat, wall_gfx_idx,
+                    wall_pixels, sizeof(wall_pixels), &ww, &wh);
+                if (got > 0 && ww > 0 && wh > 0) {
+                    /* Blit wall bitmap centered in viewport */
+                    int ox = FS_VP_X + (FS_VP_W - ww) / 2;
+                    int oy = FS_VP_Y + (FS_VP_H - wh) / 2;
+                    for (int by = 0; by < wh && oy + by < FS_VP_Y + FS_VP_H; by++) {
+                        for (int bx = 0; bx < ww && ox + bx < FS_VP_X + FS_VP_W; bx++) {
+                            uint8_t pixel = wall_pixels[by * ww + bx];
+                            if (pixel != 0) /* skip transparent */
+                                g_framebuffer[(oy + by) * FS_FB_W + (ox + bx)] = pixel;
+                        }
+                    }
+                } else {
+                    /* Fallback: solid gray wall */
+                    for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
+                        for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
+                            g_framebuffer[y * FS_FB_W + x] = 7;
+                }
+            } else {
+                /* No assets: solid gray wall */
+                for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
+                    for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
+                        g_framebuffer[y * FS_FB_W + x] = 7;
+            }
         }
     }
 
@@ -195,6 +220,7 @@ int fs_game_load_assets(FS_GameState *state) {
 
     /* Load assets with language from settings */
     static FS_GraphicsDat g_gfx_dat;
+    static int g_assets_ready = 0;
     {
         FS_AssetBundle assets;
         int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());
@@ -208,6 +234,24 @@ int fs_game_load_assets(FS_GameState *state) {
     state->current_level = 0;
     state->party_x = 5;
     state->party_y = 5;
+
+    /* Load GRAPHICS.DAT and parse bitmap headers */
+    if (state->config.data_dir) {
+        FS_AssetBundle bundle;
+        int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());
+        if (fs_assets_load_dm1_multilang(&bundle, state->config.data_dir,
+                (FS_AssetLanguage)asset_lang) == 0) {
+            fs_gfx_load(&g_gfx_dat, bundle.graphics_data, bundle.graphics_size);
+            if (bundle.graphics_data) {
+                fs_gfx_get_palette(&g_gfx_dat, g_vga_palette);
+                g_palette_loaded = 1;
+                g_assets_ready = 1;
+                printf("Firestaff: %d graphics loaded from GRAPHICS.DAT\n",
+                    g_gfx_dat.graphic_count);
+            }
+        }
+    }
+
     return 0;
 }
 
