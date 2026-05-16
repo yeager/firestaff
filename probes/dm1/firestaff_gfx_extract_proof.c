@@ -42,7 +42,10 @@ int main(int argc, char **argv) {
     memset(&header, 0, sizeof(header));
 
     printf("Loading %s...\n", gfx_path);
-    if (!F0479_MEMORY_LoadGraphicsDatHeader_Compat(gfx_path, &state, &header)) {
+    memset(&state, 0, sizeof(state));
+    memset(&header, 0, sizeof(header));
+    if (!F0479_MEMORY_LoadGraphicsDatHeader_Compat(gfx_path, &state, &header)
+        || header.graphicCount == 0 || !header.widthHeight) {
         fprintf(stderr, "Failed to parse GRAPHICS.DAT\n");
         return 1;
     }

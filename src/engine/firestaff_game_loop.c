@@ -11,6 +11,8 @@
 #include "firestaff_sdl_bridge.h"
 #include "firestaff_save.h"
 #include "firestaff_graphics_dat_reader.h"
+#include "firestaff_wall_graphics.h"
+#include "firestaff_dungeon_query.h"
 #include "dm1_v2_anim_timing.h"
 #include <string.h>
 #include <stdio.h>
@@ -58,7 +60,15 @@ static uint32_t g_vga_palette[256];
 static int g_palette_loaded = 0;
 
 /* Default DM1 VGA palette (first 16 colors for testing) */
-static void fs_init_default_palette(void) {
+static extern const uint32_t g_dm1_vga_palette[16];
+extern void fs_dm1_get_full_palette(uint32_t *out256);
+
+void fs_init_default_palette(void) {
+    if (g_palette_loaded) return;
+    /* Use real DM1 VGA palette */
+    fs_dm1_get_full_palette(g_vga_palette);
+    g_palette_loaded = 1;
+    return; /* skip hardcoded palette below */
     if (g_palette_loaded) return;
     g_vga_palette[0]  = 0xFF000000; /* black */
     g_vga_palette[1]  = 0xFF000088; /* dark blue */
@@ -132,6 +142,23 @@ static void fs_game_render_viewport(FS_GameState *state) {
                 g_framebuffer[y * FS_FB_W + x] = 6;
     }
 
+    /* Compute view cone from party position */
+    FS_ViewCone view_cone;
+    memset(&view_cone, 0, sizeof(view_cone));
+    /* TODO: wire to real dungeon data when DUNGEON.DAT is loaded */
+    /* For now: generate a simple maze pattern */
+    {
+        static uint8_t test_dungeon[32*32];
+        static int maze_init = 0;
+        if (!maze_init) {
+            for (int my = 0; my < 32; my++)
+                for (int mx = 0; mx < 32; mx++)
+                    test_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
+            maze_init = 1;
+        }
+        fs_dungeon_compute_view_cone(test_dungeon, 32, 32, px, py, dir, &view_cone);
+    }
+
     /* Draw walls using real GRAPHICS.DAT bitmaps when available */
     {
         int fx = px, fy = py;
@@ -139,7 +166,7 @@ static void fs_game_render_viewport(FS_GameState *state) {
         int ddy[] = {-1, 0, 1, 0};
         fx += ddx[dir]; fy += ddy[dir];
 
-        if ((fx + fy) % 3 == 0) {
+        if (view_cone.has_wall[0][1]) { /* D0 center has wall */
             if (g_assets_ready) {
                 /* Blit real wall bitmap from GRAPHICS.DAT */
                 /* Wall set graphics start around index 30-60 in DM1 */
@@ -175,10 +202,32 @@ static void fs_game_render_viewport(FS_GameState *state) {
         }
     }
 
-    /* Draw HUD panel (bottom 64 rows) */
-    for (y = FS_VP_H; y < FS_FB_H; y++)
-        for (x = 0; x < FS_FB_W; x++)
-            g_framebuffer[y * FS_FB_W + x] = 1; /* dark blue panel */
+    /* Draw HUD panel from GRAPHICS.DAT #1 (320x200, use bottom 64 rows) */
+    if (g_assets_ready) {
+        static uint8_t gfx_extract_hud[320 * 200];
+        static int hud_loaded = 0;
+        if (!hud_loaded) {
+            int hw = 0, hh = 0;
+            if (fs_gfx_get_bitmap(&g_gfx_dat, 1, gfx_extract_hud,
+                    sizeof(gfx_extract_hud), &hw, &hh) > 0 && hw == 320) {
+                hud_loaded = 1;
+            }
+        }
+        if (hud_loaded) {
+            for (y = FS_VP_H; y < FS_FB_H; y++)
+                for (x = 0; x < FS_FB_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] =
+                        gfx_extract_hud[y * 320 + x];
+        } else {
+            for (y = FS_VP_H; y < FS_FB_H; y++)
+                for (x = 0; x < FS_FB_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 1;
+        }
+    } else {
+        for (y = FS_VP_H; y < FS_FB_H; y++)
+            for (x = 0; x < FS_FB_W; x++)
+                g_framebuffer[y * FS_FB_W + x] = 1;
+    }
 
     /* Draw compass indicator */
     {
