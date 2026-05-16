@@ -18,8 +18,8 @@ CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 MENUDRAW_C = REDMCSB_SOURCE / "MENUDRAW.C"
 IO2_C = REDMCSB_SOURCE / "IO2.C"
 DEFS_H = REDMCSB_SOURCE / "DEFS.H"
-COMPAT_C = ROOT / "dm1_v1_input_command_queue_pc34_compat.c"
-TEST_C = ROOT / "test_dm1_v1_input_command_queue_pc34_compat.c"
+COMPAT_C = ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c"
+TEST_C = ROOT / "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
 
 
 def lines(path: Path) -> list[str]:
@@ -141,16 +141,16 @@ def verify_firestaff() -> list[str]:
     ]:
         if marker not in c:
             raise AssertionError(f"compat source evidence missing {marker}")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"#define\s+DM1_V1_QUEUE_MAX_REGULAR\s+5u")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9BFF.*0x004B.*DM1_V1_COMMAND_TURN_LEFT")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B6F.*0x004D.*DM1_V1_COMMAND_TURN_RIGHT")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B60.*0x0051.*DM1_V1_COMMAND_MOVE_RIGHT")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B54.*0x004C.*DM1_V1_COMMAND_MOVE_FORWARD")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B53.*0x0050.*DM1_V1_COMMAND_MOVE_BACKWARD")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B61.*0x004F.*DM1_V1_COMMAND_MOVE_LEFT")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"queue->pendingClickPresent\s*=\s*1;.*queue->pendingClickButtons.*queue->pendingClickCommand")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"process_pending_click\(queue\).*result\.movementDisabledGate\s*=\s*1")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"result\.dispatchedTurn\s*=\s*1;.*result\.dispatchedMove\s*=\s*1;")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"#define\s+DM1_V1_QUEUE_MAX_REGULAR\s+5u")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9BFF.*0x004B.*DM1_V1_COMMAND_TURN_LEFT")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B6F.*0x004D.*DM1_V1_COMMAND_TURN_RIGHT")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B60.*0x0051.*DM1_V1_COMMAND_MOVE_RIGHT")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B54.*0x004C.*DM1_V1_COMMAND_MOVE_FORWARD")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B53.*0x0050.*DM1_V1_COMMAND_MOVE_BACKWARD")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B61.*0x004F.*DM1_V1_COMMAND_MOVE_LEFT")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"queue->pendingClickPresent\s*=\s*1;.*queue->pendingClickButtons.*queue->pendingClickCommand")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"process_pending_click\(queue\).*result\.movementDisabledGate\s*=\s*1")
+    require_regex("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", c, r"result\.dispatchedTurn\s*=\s*1;.*result\.dispatchedMove\s*=\s*1;")
     for needle in [
         "locked mouse becomes pending", "movement gate set", "movement not dequeued",
         "pending replayed", "forward dequeued after gate clears", "turn dispatched",

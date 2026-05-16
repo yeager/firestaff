@@ -12,15 +12,15 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
-FIRESTAFF_SRC = ROOT / "m11_game_view.c"
+FIRESTAFF_SRC = ROOT / "src/engine/m11_game_view.c"
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_inventory_chest_actionhand_redmcsb_gate.json"
 
 SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "start": 498, "end": 631},
     {"file": "CHEST.C", "start": 2, "end": 46},
     {"file": "CHAMPION.C", "start": 587, "end": 640},
-    {"file": "m11_game_view.c", "start": 19831, "end": 19834},
-    {"file": "m11_game_view.c", "start": 20030, "end": 20048},
+    {"file": "src/engine/m11_game_view.c", "start": 19831, "end": 19834},
+    {"file": "src/engine/m11_game_view.c", "start": 20030, "end": 20048},
 ]
 
 
@@ -167,8 +167,8 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("m11_game_view.c", 19831, 19834, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("m11_game_view.c", 20030, 20048, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_draw_dm_object_icon_index", "return;"])
+    require_excerpt("src/engine/m11_game_view.c", 19831, 19834, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 20030, 20048, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_draw_dm_object_icon_index", "return;"])
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",
         *(f"Firestaff slot seam {name}: line {line_no(text, slot_start + pos)}" for name, pos in slot_markers),

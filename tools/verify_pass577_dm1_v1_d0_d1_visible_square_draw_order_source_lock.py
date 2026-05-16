@@ -133,7 +133,7 @@ REDMCSB_CHECKS = [
 ]
 
 LOCAL_CHECKS = [
-    ("firestaff_combined_c_test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", 858, 1012, [
+    ("firestaff_combined_c_test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", 858, 1012, [
         "static void test_d0_d1_visible_square_draw_order_gate(void)",
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
@@ -146,7 +146,7 @@ LOCAL_CHECKS = [
         "dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C)",
         "test_d0_d1_visible_square_draw_order_gate();",
     ]),
-    ("firestaff_metadata_tables", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", 80, 170, [
+    ("firestaff_metadata_tables", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", 80, 170, [
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
         "DM1_VIEW_SQUARE_D1C, 1,  0",

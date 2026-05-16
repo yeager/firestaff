@@ -30,12 +30,12 @@ checks: list[tuple[pathlib.Path, str, str]] = [
     (REDMCSB / "DRAWVIEW.C", r"F0097_DUNGEONVIEW_DrawViewport", "DRAWVIEW.C defines the viewport redraw/request path"),
     (REDMCSB / "DRAWVIEW.C", r"C007_ZONE_VIEWPORT", "DRAWVIEW.C blits the viewport to C007_ZONE_VIEWPORT"),
     (REDMCSB / "DRAWVIEW.C", r"M526_WaitVerticalBlank\(\).*viewport", "DRAWVIEW.C waits VBlank after requesting viewport draw"),
-    (ROOT / "m11_game_view.c", r"M11_GameView_GetV1ViewportZoneId[\s\S]*return 7;", "Firestaff exposes source C007 viewport zone id"),
-    (ROOT / "m11_game_view.c", r"Source runtime bridge[\s\S]*G4055_s_LeaderHandObject", "Firestaff documents G4055-equivalent leader-hand bridge"),
-    (ROOT / "m11_game_view.c", r"M11_GameView_SetV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*1", "Firestaff sets dedicated leader-hand object state"),
-    (ROOT / "m11_game_view.c", r"M11_GameView_ClearV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*0", "Firestaff clears dedicated leader-hand object state"),
-    (ROOT / "m11_game_view.h", r"G4055_s_LeaderHandObject[\s\S]*distinct from any champion inventory", "Firestaff header preserves G4055 as separate from champion slots"),
-    (ROOT / "m11_game_view.h", r"M11_GameView_GetV1MouseCommandForPoint", "Firestaff exposes bounded source-backed mouse command resolver"),
+    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_GetV1ViewportZoneId[\s\S]*return 7;", "Firestaff exposes source C007 viewport zone id"),
+    (ROOT / "src/engine/m11_game_view.c", r"Source runtime bridge[\s\S]*G4055_s_LeaderHandObject", "Firestaff documents G4055-equivalent leader-hand bridge"),
+    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_SetV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*1", "Firestaff sets dedicated leader-hand object state"),
+    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_ClearV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*0", "Firestaff clears dedicated leader-hand object state"),
+    (ROOT / "include/m11_game_view.h", r"G4055_s_LeaderHandObject[\s\S]*distinct from any champion inventory", "Firestaff header preserves G4055 as separate from champion slots"),
+    (ROOT / "include/m11_game_view.h", r"M11_GameView_GetV1MouseCommandForPoint", "Firestaff exposes bounded source-backed mouse command resolver"),
 ]
 
 failed = False

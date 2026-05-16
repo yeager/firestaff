@@ -10,8 +10,8 @@ Status: PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS
 - DRAWVIEW.C:847-858 F0097_DUNGEONVIEW_DrawViewport status=PASS
 
 ## Firestaff readiness
-- m11_game_view.c normal_renderer_batches_with_near_replay_guard status=PASS
-- m11_game_view.c wall_alcove_item_source_cell_gate status=PASS
+- src/engine/m11_game_view.c normal_renderer_batches_with_near_replay_guard status=PASS
+- src/engine/m11_game_view.c wall_alcove_item_source_cell_gate status=PASS
 
 ## Secondary local references
 - dm1_pc34_graphics /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e

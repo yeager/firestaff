@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 HEADER = ROOT / "src/test/dm1_v1_viewport_status_bar_layout_pc34_compat.h"
 TEST = ROOT / "src/test/test_dm1_v1_viewport_status_bar_layout_pc34_compat.c"
-M11 = ROOT / "m11_game_view.c"
+M11 = ROOT / "src/engine/m11_game_view.c"
 ZONES = ROOT / "data/zones_h_reconstruction.json"
 
 

@@ -22,15 +22,15 @@ SOURCE_LOCKS = [
     ("MOVESENS.C", 316, 326, ["F0267_MOVE_GetMoveResult_CPSCE"]),
 ]
 PRODUCT_MARKERS = [
-    ("m11_game_view.h", "struct Dm1V1MovementPipelinePc34Compat dm1V1MovementPipeline"),
-    ("m11_game_view.h", "struct Dm1V1MovementPipelineResultPc34Compat lastDm1V1MovementPipelineResult"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline)"),
-    ("m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
-    ("m11_game_view.c", "DM1_V1_COMMAND_MOVE_FORWARD"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
-    ("m11_game_view.c", "lastDm1V1MovementPipelineResult.viewportDirty"),
-    ("m11_game_view.c", "return M11_GAME_INPUT_REDRAW"),
+    ("include/m11_game_view.h", "struct Dm1V1MovementPipelinePc34Compat dm1V1MovementPipeline"),
+    ("include/m11_game_view.h", "struct Dm1V1MovementPipelineResultPc34Compat lastDm1V1MovementPipelineResult"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline)"),
+    ("src/engine/m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
+    ("src/engine/m11_game_view.c", "DM1_V1_COMMAND_MOVE_FORWARD"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
+    ("src/engine/m11_game_view.c", "lastDm1V1MovementPipelineResult.viewportDirty"),
+    ("src/engine/m11_game_view.c", "return M11_GAME_INPUT_REDRAW"),
 ]
 EXPECTED_HALL = {
     "start_hall_initial_south": {"mapX": 1, "mapY": 3, "direction": 2},

@@ -17,9 +17,9 @@ Status: `PASS428_ROUTE_COMMAND_TO_MOVEMENT_GAP_CLOSED`
 - `GAMELOOP.C:cooldown_decrement_before_input_wait` — `[150, 155]`
 
 ## Firestaff seams
-- `dm1_v1_input_command_queue_pc34_compat.c` — maps PC-34 key/route events to C001..C006, retains movement commands while cooldown-gated, dequeues only after gate clears, and discards after blocked step
-- `dm1_v1_movement_command_core_pc34_compat.c` — dispatches dequeued turns to F0365-equivalent direction/sensor effects and steps to F0366-equivalent stamina, collision, group, timing, redraw effects
-- `dm1_v1_movement_pipeline_pc34_compat.c` — writes cooldown/last-movement timing only after accepted step; M11 bridge decrements old cooldowns before F0380-compatible processing
+- `src/dm1/dm1_v1_input_command_queue_pc34_compat.c` — maps PC-34 key/route events to C001..C006, retains movement commands while cooldown-gated, dequeues only after gate clears, and discards after blocked step
+- `src/dm1/dm1_v1_movement_command_core_pc34_compat.c` — dispatches dequeued turns to F0365-equivalent direction/sensor effects and steps to F0366-equivalent stamina, collision, group, timing, redraw effects
+- `src/dm1/dm1_v1_movement_pipeline_pc34_compat.c` — writes cooldown/last-movement timing only after accepted step; M11 bridge decrements old cooldowns before F0380-compatible processing
 - `tests` — ['test_dm1_v1_movement_command_core_pc34_compat', 'test_dm1_v1_command_movement_sensor_timing_pc34_compat', 'test_dm1_v1_movement_pipeline_pc34_compat']
 
 Manifest: `parity-evidence/verification/pass428_dm1_v1_route_command_to_movement_gap/manifest.json`

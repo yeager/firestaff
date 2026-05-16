@@ -28,9 +28,9 @@ def main() -> int:
     command = read(SRC / "COMMAND.C")
     clickmenu = read(SRC / "CLIKMENU.C")
     movesens = read(SRC / "MOVESENS.C")
-    queue = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
-    core = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c")
-    test = read(ROOT / "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c")
+    queue = read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
+    core = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c")
+    test = read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c")
 
     require(command, "G0435_B_CommandQueueLocked = C1_TRUE;", "F0380/F0357 lock command queue")
     require(command, "if (G2153_i_QueuedCommandsCount == 0)", "F0380 empty queue check before dequeue")

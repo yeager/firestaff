@@ -25,7 +25,7 @@ Evidence chain:
 import os, sys, re
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "m11_game_view.c")
+                   "src/engine/m11_game_view.c")
 
 def read(path):
     with open(path) as f:

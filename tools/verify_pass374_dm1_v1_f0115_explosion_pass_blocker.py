@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VIEW = ROOT / "m11_game_view.c"
+VIEW = ROOT / "src/engine/m11_game_view.c"
 EVIDENCE = ROOT / "parity-evidence/pass374_dm1_v1_f0115_explosion_pass_blocker.md"
 REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
 

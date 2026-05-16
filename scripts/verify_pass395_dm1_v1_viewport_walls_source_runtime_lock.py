@@ -16,9 +16,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-LOCAL_C = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
-LOCAL_H = ROOT / "dm1_v1_viewport_3d_pc34_compat.h"
-LOCAL_TEST = ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c"
+LOCAL_C = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
+LOCAL_H = ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h"
+LOCAL_TEST = ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c"
 
 CHECKS: list[dict[str, Any]] = [
     {

@@ -13,7 +13,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json"
-SRC = REPO / "m11_game_view.c"
+SRC = REPO / "src/engine/m11_game_view.c"
 
 EXPECTED_SHA = "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
 EXPECTED = {

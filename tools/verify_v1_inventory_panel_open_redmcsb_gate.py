@@ -18,7 +18,7 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
-FIRESTAFF_SRC = ROOT / "m11_game_view.c"
+FIRESTAFF_SRC = ROOT / "src/engine/m11_game_view.c"
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_inventory_panel_open_redmcsb_gate.json"
 
 SOURCE_RANGES = [
@@ -51,14 +51,14 @@ SOURCE_RANGES = [
         "assertion": "Inventory champion slots map to C08_SLOT_BOX_INVENTORY_FIRST_SLOT + slot, render to G0296_puc_Bitmap_Viewport, choose empty/object icon, and finish through F0038_OBJECT_DrawIconInSlotBox.",
     },
     {
-        "file": "m11_game_view.c",
+        "file": "src/engine/m11_game_view.c",
         "start": 19775,
         "end": 19835,
         "function": "m11_draw_inv_slot",
         "assertion": "Firestaff occupied slots draw 16x16 DM object icons inside original 18x18 slot boxes when assets are available.",
     },
     {
-        "file": "m11_game_view.c",
+        "file": "src/engine/m11_game_view.c",
         "start": 19991,
         "end": 20048,
         "function": "m11_draw_inventory_panel",
@@ -282,8 +282,8 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("m11_game_view.c", 19775, 19835, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
-    require_excerpt("m11_game_view.c", 19991, 20048, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
+    require_excerpt("src/engine/m11_game_view.c", 19775, 19835, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 19991, 20048, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",

@@ -26,10 +26,10 @@ def require_order(text: str, markers: list[str], label: str) -> None:
 
 
 def main() -> int:
-    main_loop = (ROOT / "main_loop_m11.c").read_text(encoding="utf-8")
-    frontend_c = (ROOT / "title_frontend_v1.c").read_text(encoding="utf-8")
-    frontend_h = (ROOT / "title_frontend_v1.h").read_text(encoding="utf-8")
-    test_c = (ROOT / "test_title_frontend_runtime_cadence_pc34_compat.c").read_text(encoding="utf-8")
+    main_loop = (ROOT / "src/engine/main_loop_m11.c").read_text(encoding="utf-8")
+    frontend_c = (ROOT / "src/frontend/title_frontend_v1.c").read_text(encoding="utf-8")
+    frontend_h = (ROOT / "include/title_frontend_v1.h").read_text(encoding="utf-8")
+    test_c = (ROOT / "tests/test_title_frontend_runtime_cadence_pc34_compat.c").read_text(encoding="utf-8")
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     red = RED.read_text(encoding="latin-1")
 

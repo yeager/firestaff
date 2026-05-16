@@ -15,16 +15,16 @@ REQUIRED_SOURCE = [
 ]
 
 REQUIRED_FIRESTAFF = [
-    (ROOT / "dm1_v2_settings_pc34.c", "ReDMCSB primary anchor DUNVIEW.C:F0128_DUNGEONVIEW_Draw_CPSF"),
-    (ROOT / "dm1_v2_settings_pc34.c", "V2 settings may scale/present that picture"),
-    (ROOT / "dm1_v2_settings_pc34.c", "V1 behavior is not read from these fields"),
-    (ROOT / "dm1_v2_settings_pc34.c", "DM1_V2_ASPECT_ORIGINAL_4_3"),
-    (ROOT / "dm1_v2_settings_pc34.c", "DM1_V2_ASPECT_WIDESCREEN_16_9"),
-    (ROOT / "test_dm1_v2_settings_pc34.c", "V1 remains the default presentation mode"),
-    (ROOT / "test_dm1_v2_settings_pc34.c", "dm1_v2_scale_percent = 250"),
-    (ROOT / "config_m12.c", "config->graphicsIndex = 0"),
-    (ROOT / "config_m12.c", "config->dm1V2ScalePercent = 100"),
-    (ROOT / "config_m12.c", "dm1_v2_aspect_mode"),
+    (ROOT / "src/dm1v2/dm1_v2_settings_pc34.c", "ReDMCSB primary anchor DUNVIEW.C:F0128_DUNGEONVIEW_Draw_CPSF"),
+    (ROOT / "src/dm1v2/dm1_v2_settings_pc34.c", "V2 settings may scale/present that picture"),
+    (ROOT / "src/dm1v2/dm1_v2_settings_pc34.c", "V1 behavior is not read from these fields"),
+    (ROOT / "src/dm1v2/dm1_v2_settings_pc34.c", "DM1_V2_ASPECT_ORIGINAL_4_3"),
+    (ROOT / "src/dm1v2/dm1_v2_settings_pc34.c", "DM1_V2_ASPECT_WIDESCREEN_16_9"),
+    (ROOT / "tests/test_dm1_v2_settings_pc34.c", "V1 remains the default presentation mode"),
+    (ROOT / "tests/test_dm1_v2_settings_pc34.c", "dm1_v2_scale_percent = 250"),
+    (ROOT / "src/engine/config_m12.c", "config->graphicsIndex = 0"),
+    (ROOT / "src/engine/config_m12.c", "config->dm1V2ScalePercent = 100"),
+    (ROOT / "src/engine/config_m12.c", "dm1_v2_aspect_mode"),
     (ROOT / "CMakeLists.txt", "NAME dm1_v2_settings_pc34"),
     (ROOT / "CMakeLists.txt", "NAME dm1_v2_settings_source_lock"),
 ]

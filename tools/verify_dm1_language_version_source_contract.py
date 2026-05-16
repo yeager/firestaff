@@ -55,9 +55,9 @@ def require_all(haystack: str, needles: list[str], label: str) -> None:
 
 def verify(redmcsb_source: Path, repo: Path) -> dict[str, object]:
     dm_c = redmcsb_source / "DM.C"
-    menu_c = repo / "menu_startup_m12.c"
-    config_c = repo / "config_m12.c"
-    config_h = repo / "config_m12.h"
+    menu_c = repo / "src/ui/menu_startup_m12.c"
+    config_c = repo / "src/engine/config_m12.c"
+    config_h = repo / "include/config_m12.h"
     for path in (dm_c, menu_c, config_c, config_h):
         if not path.exists():
             raise SystemExit(f"missing required file: {path}")

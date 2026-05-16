@@ -16,7 +16,7 @@ PIPELINE_LOG = VERIFY_DIR / "pipeline_test.log"
 
 REQUIRED_FILES = [
     EVIDENCE, MANIFEST, RUNTIME_JSON, RUNTIME_MD, RUNTIME_LOG, PIPELINE_LOG,
-    ROOT / "main_loop_m11.c", ROOT / "m11_game_view.c",
+    ROOT / "src/engine/main_loop_m11.c", ROOT / "src/engine/m11_game_view.c",
     ROOT / "probes" / "m11" / "firestaff_m11_hall_walkaround_runtime_probe.c",
     RED / "COMMAND.C", RED / "CLIKMENU.C", RED / "MOVESENS.C", RED / "INPUT.C", RED / "IO2.C",
 ]
@@ -46,12 +46,12 @@ RANGE_MARKERS = [
 ]
 
 FIRESTAFF_NEEDLES = {
-    "main_loop_m11.c": [
+    "src/engine/main_loop_m11.c": [
         'strncmp(token, "up", len) == 0', "return M12_MENU_INPUT_UP;",
         'strncmp(token, "left", len) == 0', "return M12_MENU_INPUT_LEFT;",
         'strncmp(token, "right", len) == 0', "return M12_MENU_INPUT_RIGHT;",
     ],
-    "m11_game_view.c": [
+    "src/engine/m11_game_view.c": [
         "case M12_MENU_INPUT_UP:", 'label = "FORWARD";', "case M12_MENU_INPUT_LEFT:",
         "command = CMD_TURN_LEFT;", "case M12_MENU_INPUT_RIGHT:", "command = CMD_TURN_RIGHT;",
         "return M11_GAME_INPUT_REDRAW;",

@@ -17,9 +17,9 @@ OUT = ROOT / "parity-evidence/verification/dm1_v1_hall_mirror_sensor_disable_sou
 
 SRC = {name: REDMCSB / name for name in ["REVIVE.C", "DUNGEON.C", "MOVESENS.C", "CLIKVIEW.C"]}
 FIRESTAFF = {
-    "dm1_v1_resurrection_pc34_compat.h": ROOT / "dm1_v1_resurrection_pc34_compat.h",
-    "dm1_v1_resurrection_pc34_compat.c": ROOT / "dm1_v1_resurrection_pc34_compat.c",
-    "test_dm1_v1_resurrection_pc34_compat.c": ROOT / "test_dm1_v1_resurrection_pc34_compat.c",
+    "include/dm1_v1_resurrection_pc34_compat.h": ROOT / "include/dm1_v1_resurrection_pc34_compat.h",
+    "src/dm1/dm1_v1_resurrection_pc34_compat.c": ROOT / "src/dm1/dm1_v1_resurrection_pc34_compat.c",
+    "tests/test_dm1_v1_resurrection_pc34_compat.c": ROOT / "tests/test_dm1_v1_resurrection_pc34_compat.c",
 }
 
 
@@ -91,18 +91,18 @@ def main() -> int:
     ]
 
     implementation_checks = [
-        require_text(FIRESTAFF["dm1_v1_resurrection_pc34_compat.h"], [
+        require_text(FIRESTAFF["include/dm1_v1_resurrection_pc34_compat.h"], [
             "MirrorThing_Compat",
             "F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat",
             "first C03 sensor thing",
             "not search for C127",
         ], "Firestaff exposes a bounded pure helper for the literal first-sensor disable semantics."),
-        require_text(FIRESTAFF["dm1_v1_resurrection_pc34_compat.c"], [
+        require_text(FIRESTAFF["src/dm1/dm1_v1_resurrection_pc34_compat.c"], [
             "if (things[i].thingType == DM1_THING_TYPE_SENSOR)",
             "out.disabledOldSensorType = things[i].sensorType",
             "out.disabledNewSensorType = DM1_SENSOR_DISABLED",
         ], "Implementation skips non-sensors and returns the first sensor's old type plus disabled result."),
-        require_text(FIRESTAFF["test_dm1_v1_resurrection_pc34_compat.c"], [
+        require_text(FIRESTAFF["tests/test_dm1_v1_resurrection_pc34_compat.c"], [
             "test_mirror_sensor_disable_order",
             "textstring before sensor is skipped",
             "first sensor type is disabled even when not C127",

@@ -13,15 +13,15 @@ MANIFEST = ROOT / "parity-evidence" / "verification" / "pass342_dm1_v1_redmcsb_f
 REQUIRED_FILES = [
     EVIDENCE,
     MANIFEST,
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.c",
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.h",
-    ROOT / "dm1_v1_movement_command_core_pc34_compat.c",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.c",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.h",
-    ROOT / "dm1_v1_movement_timing_pc34_compat.c",
-    ROOT / "memory_movement_pc34_compat.c",
-    ROOT / "memory_sensor_execution_pc34_compat.c",
-    ROOT / "main_loop_m11.c",
+    ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
+    ROOT / "include/dm1_v1_input_command_queue_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+    ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+    ROOT / "include/dm1_v1_movement_pipeline_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c",
+    ROOT / "src/memory/memory_movement_pc34_compat.c",
+    ROOT / "src/memory/memory_sensor_execution_pc34_compat.c",
+    ROOT / "src/engine/main_loop_m11.c",
     ROOT / "parity-evidence" / "pass336_dm1_v1_keypad_code_binding.md",
     ROOT / "parity-evidence" / "pass337b_dm1_v1_direct_command_injection.md",
     ROOT / "parity-evidence" / "pass338b_dm1_v1_route_token_key_symbol_audit.md",
@@ -45,13 +45,13 @@ EVIDENCE_NEEDLES = [
 ]
 
 FIRESTAFF_NEEDLES = {
-    "dm1_v1_input_command_queue_pc34_compat.h": [
+    "include/dm1_v1_input_command_queue_pc34_compat.h": [
         "DM1_V1_COMMAND_TURN_LEFT = 1",
         "DM1_V1_COMMAND_MOVE_FORWARD = 3",
         "DM1_V1_COMMAND_MOVE_LEFT = 6",
         "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
     ],
-    "dm1_v1_input_command_queue_pc34_compat.c": [
+    "src/dm1/dm1_v1_input_command_queue_pc34_compat.c": [
         "static int command_for_key",
         "static int enqueue_command",
         "process_pending_click",
@@ -61,7 +61,7 @@ FIRESTAFF_NEEDLES = {
         "result.dispatchedTurn = 1;",
         "result.dispatchedMove = 1;",
     ],
-    "dm1_v1_movement_command_core_pc34_compat.c": [
+    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c": [
         "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
         "dm1_v1_is_turn_command(outResult->queue.command)",
         "dm1_v1_is_step_command(outResult->queue.command)",
@@ -70,13 +70,13 @@ FIRESTAFF_NEEDLES = {
         "outResult->stopWaitingForPlayerInput = 1;",
         "outResult->viewportRedrawRequested = 1;",
     ],
-    "dm1_v1_movement_pipeline_pc34_compat.c": [
+    "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c": [
         "DM1_V1_MovementPipeline_EnqueueInputPc34Compat",
         "DM1_V1_MovementCommandCore_ProcessOnePc34Compat",
         "outResult->viewportDirty = outResult->core.viewportRedrawRequested;",
         "DM1_V1_MovementTiming_DecrementCooldownsPc34Compat",
     ],
-    "memory_movement_pc34_compat.c": [
+    "src/memory/memory_movement_pc34_compat.c": [
         "F0700_MOVEMENT_TurnDirection_Compat",
         "F0701_MOVEMENT_GetStepDelta_Compat",
         "F0702_MOVEMENT_TryMove_Compat",
@@ -84,10 +84,10 @@ FIRESTAFF_NEEDLES = {
         "F0705_MOVEMENT_ResolveStairsTransition_Compat",
         "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
     ],
-    "memory_sensor_execution_pc34_compat.c": [
+    "src/memory/memory_sensor_execution_pc34_compat.c": [
         "F0718_SENSOR_ProcessPartyEnterLeave_Compat",
     ],
-    "main_loop_m11.c": [
+    "src/engine/main_loop_m11.c": [
         "M12_MENU_INPUT_UP",
         "M12_MENU_INPUT_STRAFE_LEFT",
         "M12_MENU_INPUT_RIGHT",
@@ -158,11 +158,11 @@ def main() -> int:
         if marker not in cite:
             raise AssertionError(f"{file_name}:{start}-{end} missing marker {marker!r}")
 
-    queue_text = read_text(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
+    queue_text = read_text(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
     if not re.search(r"queue->locked\s*=\s*1;[\s\S]*result\.dequeued\s*=\s*1;[\s\S]*process_pending_click\(queue\);", queue_text):
         raise AssertionError("queue process no longer models lock/dequeue/pending-click order")
 
-    core_text = read_text(ROOT / "dm1_v1_movement_command_core_pc34_compat.c")
+    core_text = read_text(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c")
     if "outResult->viewportRedrawRequested = 1;" not in core_text or "outResult->stopWaitingForPlayerInput = 1;" not in core_text:
         raise AssertionError("movement core no longer exposes stop-wait/redraw flags")
 

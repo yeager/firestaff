@@ -29,7 +29,7 @@ Original DM1 V1 movement/viewport/wall capture remains blocked until one bounded
 
 ## Inputs
 
-- pass563: BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED
+- pass563: BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE
 - runtime transcript: not_provided
 
 ## Non-claims

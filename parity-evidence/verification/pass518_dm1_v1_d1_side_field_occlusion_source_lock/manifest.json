@@ -1,17 +1,17 @@
 {
   "firestaffChecks": [
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DM1_VIEW_SQUARE_D1L, 0x0032",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DM1_VIEW_SQUARE_D1R, 0x0041",
       "status": "PASS"
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "floor_field_order_spec_count(), 13",
       "status": "PASS"
     }

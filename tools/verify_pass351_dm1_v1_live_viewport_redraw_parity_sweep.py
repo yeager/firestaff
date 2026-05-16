@@ -103,7 +103,7 @@ CHECKS = [
     },
     {
         "id": "firestaff_script_and_key_routes_to_m12",
-        "path": REPO / "main_loop_m11.c",
+        "path": REPO / "src/engine/main_loop_m11.c",
         "anchor": "main_loop_m11.c:788-814,1105-1133,1603-1617",
         "needles": [
             "return M12_MENU_INPUT_UP;",
@@ -116,7 +116,7 @@ CHECKS = [
     },
     {
         "id": "firestaff_live_m12_to_dm1_commands_and_pipeline",
-        "path": REPO / "m11_game_view.c",
+        "path": REPO / "src/engine/m11_game_view.c",
         "anchor": "m11_game_view.c:4864-4958",
         "needles": [
             "case M12_MENU_INPUT_UP:",
@@ -128,7 +128,7 @@ CHECKS = [
     },
     {
         "id": "firestaff_core_sets_redraw_after_accepted_effects",
-        "path": REPO / "dm1_v1_movement_command_core_pc34_compat.c",
+        "path": REPO / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
         "anchor": "dm1_v1_movement_command_core_pc34_compat.c:74-187",
         "needles": [
             "if (dm1_v1_is_turn_command(outResult->queue.command))",
@@ -141,7 +141,7 @@ CHECKS = [
     },
     {
         "id": "firestaff_pipeline_publishes_viewport_dirty",
-        "path": REPO / "dm1_v1_movement_pipeline_pc34_compat.c",
+        "path": REPO / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
         "anchor": "dm1_v1_movement_pipeline_pc34_compat.c:91-203",
         "needles": [
             "DM1_V1_MovementCommandCore_ProcessOnePc34Compat",

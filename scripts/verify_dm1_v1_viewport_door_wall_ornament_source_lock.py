@@ -154,7 +154,7 @@ def main() -> int:
                     "DUNVIEW.C:6428-6459",
                     "A D3 side square first lets wall ornaments decide alcove reveal/return; door-front squares draw rear contents, frame, door panel, then front contents.", missing)
 
-    local_text = (ROOT / "m11_game_view.c").read_text(errors="replace")
+    local_text = (ROOT / "src/engine/m11_game_view.c").read_text(errors="replace")
 
     local = local_function(local_text, "m11_draw_dm1_door_ornament_on_panel")
     missing = unordered_missing(local, [

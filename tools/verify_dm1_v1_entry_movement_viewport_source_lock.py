@@ -419,10 +419,10 @@ def source_derived_golden_metadata() -> dict[str, Any]:
 
 def verify_firestaff() -> list[dict[str, Any]]:
     files = {
-        "memory_dungeon_dat_pc34_compat.c": ROOT / "memory_dungeon_dat_pc34_compat.c",
-        "memory_champion_state_pc34_compat.c": ROOT / "memory_champion_state_pc34_compat.c",
-        "memory_movement_pc34_compat.c": ROOT / "memory_movement_pc34_compat.c",
-        "m11_game_view.c": ROOT / "m11_game_view.c",
+        "src/memory/memory_dungeon_dat_pc34_compat.c": ROOT / "src/memory/memory_dungeon_dat_pc34_compat.c",
+        "src/memory/memory_champion_state_pc34_compat.c": ROOT / "src/memory/memory_champion_state_pc34_compat.c",
+        "src/memory/memory_movement_pc34_compat.c": ROOT / "src/memory/memory_movement_pc34_compat.c",
+        "src/engine/m11_game_view.c": ROOT / "src/engine/m11_game_view.c",
         "tools/verify_dm1_v1_movement_source_lock.py": ROOT / "tools/verify_dm1_v1_movement_source_lock.py",
         "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py": ROOT / "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py",
         "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c": ROOT / "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c",
@@ -431,7 +431,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     checks.append(require(
         "memory_dungeon_dat_pc34_compat.c:header reader",
-        text["memory_dungeon_dat_pc34_compat.c"],
+        text["src/memory/memory_dungeon_dat_pc34_compat.c"],
         [
             "read_u16_le(file, &state->header.rawMapDataByteCount)",
             "read_u8(file, &state->header.mapCount)",
@@ -441,7 +441,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ))
     checks.append(require(
         "memory_champion_state_pc34_compat.c:initial party decode",
-        text["memory_champion_state_pc34_compat.c"],
+        text["src/memory/memory_champion_state_pc34_compat.c"],
         [
             "dungeon->header.initialPartyLocation",
             "&dir, &py, &px",
@@ -450,7 +450,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ))
     checks.append(require(
         "memory_movement_pc34_compat.c:relative movement and blocking",
-        text["memory_movement_pc34_compat.c"],
+        text["src/memory/memory_movement_pc34_compat.c"],
         [
             "case MOVE_FORWARD:  stepDir = direction",
             "case MOVE_RIGHT:    stepDir = (direction + 1) & 3",
@@ -463,7 +463,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ))
     checks.append(require(
         "m11_game_view.c:viewport render surface/world draw hooks",
-        text["m11_game_view.c"],
+        text["src/engine/m11_game_view.c"],
         [
             "M11_VIEWPORT_W",
             "M11_VIEWPORT_H",

@@ -22,7 +22,7 @@ PASS = "pass404_dm1_v1_side_contents_center_blocker_occlusion_gate"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-SRC = ROOT / "m11_game_view.c"
+SRC = ROOT / "src/engine/m11_game_view.c"
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp"
 

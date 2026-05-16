@@ -155,7 +155,7 @@ ORDER_CHECKS = [
 
 FIRESTAFF_LOCKS = [
     {
-        "file": "m11_game_view.c",
+        "file": "src/engine/m11_game_view.c",
         "claim": "product runtime maps live M12 movement inputs to source command ids and feeds the DM1 V1 pipeline instead of moving directly",
         "needles": [
             "static int m11_dm1_v1_pipeline_command_for_input",
@@ -169,7 +169,7 @@ FIRESTAFF_LOCKS = [
         ],
     },
     {
-        "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+        "file": "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
         "claim": "pipeline API accepts either input events or command ids and processes one F0380/F0365/F0366-compatible tick",
         "needles": [
             "DM1_V1_MovementPipeline_EnqueueInputPc34Compat",
@@ -180,7 +180,7 @@ FIRESTAFF_LOCKS = [
         ],
     },
     {
-        "file": "dm1_v1_movement_command_core_pc34_compat.c",
+        "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
         "claim": "command core consumes the queued command result into turn or step handling, including blocked-input discard and accepted-step side effects",
         "needles": [
             "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
@@ -193,7 +193,7 @@ FIRESTAFF_LOCKS = [
         ],
     },
     {
-        "file": "main_loop_m11.c",
+        "file": "src/engine/main_loop_m11.c",
         "claim": "runtime probe exports dequeued command, turn/step flags, movement/turn occurrence, and viewportDirty for live verification",
         "needles": [
             "lastDm1V1MovementPipelineResult.core.queue.dequeued",

@@ -46,10 +46,10 @@ def main() -> int:
     command = read(REDMCSB / "COMMAND.C")
     defs = read(REDMCSB / "DEFS.H")
     coord = read(REDMCSB / "COORD.C")
-    matrix = read(REPO / "touch_click_zone_matrix_pc34_compat.c")
-    pointer = read(REPO / "touch_pointer_input_pc34_compat.c")
-    matrix_test = read(REPO / "test_touch_click_zone_matrix_pc34_compat_integration.c")
-    pointer_test = read(REPO / "test_touch_pointer_input_pc34_compat_integration.c")
+    matrix = read(REPO / "src/shared/touch_click_zone_matrix_pc34_compat.c")
+    pointer = read(REPO / "src/shared/touch_pointer_input_pc34_compat.c")
+    matrix_test = read(REPO / "tests/test_touch_click_zone_matrix_pc34_compat_integration.c")
+    pointer_test = read(REPO / "tests/test_touch_pointer_input_pc34_compat_integration.c")
     manifest = read(REPO / "parity-evidence/pass560_dm1_v1_touch_ui_zone_source_lock.md")
 
     command_anchors = [
@@ -119,7 +119,7 @@ def main() -> int:
         "*outH = 136;",
     ]
     for token in matrix_tokens:
-        require_contains("touch_click_zone_matrix_pc34_compat.c", matrix, token)
+        require_contains("src/shared/touch_click_zone_matrix_pc34_compat.c", matrix, token)
 
     pointer_tokens = [
         "TOUCHPOINTER_Compat_TranslateEvent",
@@ -128,7 +128,7 @@ def main() -> int:
         "not synthesized keys",
     ]
     for token in pointer_tokens:
-        require_contains("touch_pointer_input_pc34_compat.c", pointer, token)
+        require_contains("src/shared/touch_pointer_input_pc34_compat.c", pointer, token)
 
     test_tokens = [
         "TOUCHCLICK_Compat_GetZoneCount() != 104u",

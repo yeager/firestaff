@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = RED / "DUNVIEW.C"
-LOCAL = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
+LOCAL = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 MANIFEST = ROOT / "parity-evidence/verification/pass557_dm1_v1_viewport_f0128_draw_order_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass557_dm1_v1_viewport_f0128_draw_order_source_lock.md"
 CALL_TO_SQUARE={"F0676_DrawD3L2":"DM1_VIEW_SQUARE_D3L2","F0677_DrawD3R2":"DM1_VIEW_SQUARE_D3R2","F0678_DrawD2L2":"DM1_VIEW_SQUARE_D2L2","F0679_DrawD2R2":"DM1_VIEW_SQUARE_D2R2","F0116_DUNGEONVIEW_DrawSquareD3L":"DM1_VIEW_SQUARE_D3L","F0117_DUNGEONVIEW_DrawSquareD3R":"DM1_VIEW_SQUARE_D3R","F0118_DUNGEONVIEW_DrawSquareD3C_CPSF":"DM1_VIEW_SQUARE_D3C","F0119_DUNGEONVIEW_DrawSquareD2L":"DM1_VIEW_SQUARE_D2L","F0120_DUNGEONVIEW_DrawSquareD2R_CPSF":"DM1_VIEW_SQUARE_D2R","F0121_DUNGEONVIEW_DrawSquareD2C":"DM1_VIEW_SQUARE_D2C","F0122_DUNGEONVIEW_DrawSquareD1L":"DM1_VIEW_SQUARE_D1L","F0123_DUNGEONVIEW_DrawSquareD1R":"DM1_VIEW_SQUARE_D1R","F0124_DUNGEONVIEW_DrawSquareD1C":"DM1_VIEW_SQUARE_D1C","F0125_DUNGEONVIEW_DrawSquareD0L":"DM1_VIEW_SQUARE_D0L","F0126_DUNGEONVIEW_DrawSquareD0R":"DM1_VIEW_SQUARE_D0R","F0127_DUNGEONVIEW_DrawSquareD0C":"DM1_VIEW_SQUARE_D0C"}

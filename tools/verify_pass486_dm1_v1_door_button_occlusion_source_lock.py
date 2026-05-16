@@ -129,7 +129,7 @@ def redmcsb_audit() -> dict[str, list[int]]:
 
 
 def firestaff_audit() -> dict[str, int]:
-    m11 = read(ROOT / "m11_game_view.c")
+    m11 = read(ROOT / "src/engine/m11_game_view.c")
     center = function_body(m11, "m11_draw_dm1_center_door_buttons")
     d3r = function_body(m11, "m11_draw_dm1_d3r_door_button")
     viewport = function_body(m11, "m11_draw_viewport")

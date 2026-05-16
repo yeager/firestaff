@@ -13,8 +13,8 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-GAME_VIEW = ROOT / "m11_game_view.c"
-MAP_FILE = ROOT / "sound_event_snd3_map_v1.c"
+GAME_VIEW = ROOT / "src/engine/m11_game_view.c"
+MAP_FILE = ROOT / "src/shared/sound_event_snd3_map_v1.c"
 
 EXPECTED_SOURCE_EVENTS = {
     17: "M619_SOUND_WAR_CRY",

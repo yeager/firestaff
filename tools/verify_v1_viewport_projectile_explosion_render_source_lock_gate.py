@@ -17,9 +17,9 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-HDR  = ROOT / "dm1_v1_projectile_explosion_render_pc34_compat.h"
-IMPL = ROOT / "dm1_v1_projectile_explosion_render_pc34_compat.c"
-VIEW = ROOT / "m11_game_view.c"
+HDR  = ROOT / "include/dm1_v1_projectile_explosion_render_pc34_compat.h"
+IMPL = ROOT / "src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c"
+VIEW = ROOT / "src/engine/m11_game_view.c"
 REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
 DEFS    = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H").expanduser()
 

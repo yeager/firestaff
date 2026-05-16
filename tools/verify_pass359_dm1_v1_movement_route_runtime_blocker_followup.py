@@ -44,13 +44,13 @@ PRIOR_ARTIFACTS = {
 }
 
 PRODUCT_MARKERS = [
-    ("main_loop_m11.c", "kp4"),
-    ("main_loop_m11.c", "SDLK_KP_4"),
-    ("main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
-    ("touch_click_zone_matrix_pc34_compat.c", "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary"),
-    ("touch_pointer_input_pc34_compat.c", "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat"),
+    ("src/engine/main_loop_m11.c", "kp4"),
+    ("src/engine/main_loop_m11.c", "SDLK_KP_4"),
+    ("src/engine/main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
+    ("src/shared/touch_click_zone_matrix_pc34_compat.c", "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary"),
+    ("src/shared/touch_pointer_input_pc34_compat.c", "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat"),
 ]
 
 def run(cmd: list[str]) -> dict[str, Any]:

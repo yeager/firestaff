@@ -138,10 +138,10 @@ def source_audit() -> dict:
 
 
 def firestaff_audit() -> dict:
-    queue_c = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
-    core_c = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c")
-    queue_test = read(ROOT / "test_dm1_v1_input_command_queue_pc34_compat.c")
-    core_test = read(ROOT / "test_dm1_v1_movement_command_core_pc34_compat.c")
+    queue_c = read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
+    core_c = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c")
+    queue_test = read(ROOT / "tests/test_dm1_v1_input_command_queue_pc34_compat.c")
+    core_test = read(ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c")
     cmake = read(ROOT / "CMakeLists.txt")
 
     require_order(queue_c, [

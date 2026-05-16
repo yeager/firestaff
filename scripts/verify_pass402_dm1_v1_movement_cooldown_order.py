@@ -43,7 +43,7 @@ def assert_cooldown_before_orch(text: str, start_marker: str, end_marker: str, l
         die(f"{label} must decrement movement cooldown before F0884_ORCH_AdvanceOneTick_Compat")
     return line_of(text, start + dec), line_of(text, start + orch)
 
-m11 = read("m11_game_view.c")
+m11 = read("src/engine/m11_game_view.c")
 func_start = index_or_die(m11, "static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,\n                                           M12_MenuInput input,\n                                           const char* actionLabel) {", "m11 pipeline tick definition")
 func_end = index_or_die(m11[func_start + 1:], "static int m11_apply_tick", "next m11 function") + func_start + 1
 func = m11[func_start:func_end]
@@ -66,11 +66,11 @@ spell_tick_lines = assert_cooldown_before_orch(
     "M11_GameView_CastSpell",
 )
 
-pipeline = read("dm1_v1_movement_pipeline_pc34_compat.c")
+pipeline = read("src/dm1/dm1_v1_movement_pipeline_pc34_compat.c")
 index_or_die(pipeline, "COMMAND.C:2045-2156 F0380_COMMAND_ProcessQueue_CPSC", "pipeline F0380 source lock")
 index_or_die(pipeline, "GAMELOOP.C:150-155", "pipeline GAMELOOP cooldown source lock")
 
-timing = read("dm1_v1_movement_timing_pc34_compat.c")
+timing = read("src/dm1/dm1_v1_movement_timing_pc34_compat.c")
 index_or_die(timing, "CLIKMENU.C:330-346", "timing F0366 cooldown source lock")
 index_or_die(timing, "GAMELOOP.C:150-155", "timing GAMELOOP cooldown source lock")
 

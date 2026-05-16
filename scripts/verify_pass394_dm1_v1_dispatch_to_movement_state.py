@@ -146,10 +146,10 @@ def source_audit() -> dict:
 
 
 def firestaff_audit() -> dict:
-    core_c = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
-    core_h = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.h", "utf-8")
-    test_core = read(ROOT / "test_dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
-    test_integration = read(ROOT / "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "utf-8")
+    core_c = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
+    core_h = read(ROOT / "include/dm1_v1_movement_command_core_pc34_compat.h", "utf-8")
+    test_core = read(ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
+    test_integration = read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "utf-8")
     cmake = read(ROOT / "CMakeLists.txt", "utf-8")
 
     for needle, label in [

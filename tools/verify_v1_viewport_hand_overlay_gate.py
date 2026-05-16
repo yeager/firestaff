@@ -6,8 +6,8 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-HDR = ROOT / "dm1_v1_viewport_hand_overlay_pc34_compat.h"
-TEST = ROOT / "test_dm1_v1_viewport_hand_overlay_pc34_compat.c"
+HDR = ROOT / "include/dm1_v1_viewport_hand_overlay_pc34_compat.h"
+TEST = ROOT / "tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 REDMCSB_IO = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C"
 

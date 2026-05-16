@@ -20,15 +20,15 @@ Closed blocker: Firestaff live M11 movement input now has a source-locked and re
 
 ## Firestaff runtime locks
 
-- `m11_game_view.c` — product runtime maps live M12 movement inputs to source command ids and feeds the DM1 V1 pipeline instead of moving directly
-- `dm1_v1_movement_pipeline_pc34_compat.c` — pipeline API accepts either input events or command ids and processes one F0380/F0365/F0366-compatible tick
-- `dm1_v1_movement_command_core_pc34_compat.c` — command core consumes the queued command result into turn or step handling, including blocked-input discard and accepted-step side effects
-- `main_loop_m11.c` — runtime probe exports dequeued command, turn/step flags, movement/turn occurrence, and viewportDirty for live verification
+- `src/engine/m11_game_view.c` — product runtime maps live M12 movement inputs to source command ids and feeds the DM1 V1 pipeline instead of moving directly
+- `src/dm1/dm1_v1_movement_pipeline_pc34_compat.c` — pipeline API accepts either input events or command ids and processes one F0380/F0365/F0366-compatible tick
+- `src/dm1/dm1_v1_movement_command_core_pc34_compat.c` — command core consumes the queued command result into turn or step handling, including blocked-input discard and accepted-step side effects
+- `src/engine/main_loop_m11.c` — runtime probe exports dequeued command, turn/step flags, movement/turn occurrence, and viewportDirty for live verification
 
 ## Gates
 
-- `cmake --build /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
+- `cmake --build /home/trv2/work/firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
+- `ctest --test-dir /home/trv2/work/firestaff/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
 - `git diff --check` — rc 0
 
 ## Still not claimed

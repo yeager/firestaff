@@ -110,14 +110,14 @@ def main():
     ], "F0267 accepted move state/scent/sensors")
     req(f0276, "F0272_SENSOR_TriggerEffect", "F0276 sensor dispatch")
     checks = [
-        ("dm1_v1_input_command_queue_pc34_compat.c", "COMMAND.C:2045-2156 F0380 locks"),
-        ("dm1_v1_movement_command_core_pc34_compat.c", "dm1_v1_apply_pre_step_stamina_cost(party, outResult);"),
-        ("dm1_v1_movement_command_core_pc34_compat.c", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat"),
-        ("dm1_v1_movement_command_core_pc34_compat.c", "outResult->blockedMovementVblankWaitRequested = 1;"),
-        ("dm1_v1_movement_timing_pc34_compat.c", "GAMELOOP.C:150-155"),
-        ("test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "blocked movement skips enter/leave sensors"),
-        ("test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "turn bypasses movement gate"),
-        ("test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "core blocked wall still applies pre-resolution stamina"),
+        ("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", "COMMAND.C:2045-2156 F0380 locks"),
+        ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "dm1_v1_apply_pre_step_stamina_cost(party, outResult);"),
+        ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat"),
+        ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "outResult->blockedMovementVblankWaitRequested = 1;"),
+        ("src/dm1/dm1_v1_movement_timing_pc34_compat.c", "GAMELOOP.C:150-155"),
+        ("tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "blocked movement skips enter/leave sensors"),
+        ("tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "turn bypasses movement gate"),
+        ("tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "core blocked wall still applies pre-resolution stamina"),
         ("parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json", "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN"),
     ]
     for rel, needle in checks:

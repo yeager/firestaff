@@ -238,7 +238,7 @@ def csbwin_audit(src: Path) -> list[dict[str, Any]]:
 
 def local_audit() -> list[dict[str, Any]]:
     checks = [
-        ("dm1_v1_text_message_pc34_compat.h", [
+        ("include/dm1_v1_text_message_pc34_compat.h", [
             "DM1_V1_MESSAGE_AREA_ROW_COUNT       4",
             "DM1_V1_TEXT_CHARACTER_WIDTH          6",
             "DM1_V1_TEXT_LINE_HEIGHT             7",
@@ -247,7 +247,7 @@ def local_audit() -> list[dict[str, Any]]:
             "DM1_V1_MESSAGE_CONTINUATION_INDENT  12",
             "scrollPending",
         ]),
-        ("dm1_v1_text_message_pc34_compat.c", [
+        ("src/dm1/dm1_v1_text_message_pc34_compat.c", [
             "dm1_v1_text_move_cursor",
             "state->cursorColumn = column * DM1_V1_TEXT_CHARACTER_WIDTH;",
             "state->cursorColumn = maxCol;",
@@ -260,7 +260,7 @@ def local_audit() -> list[dict[str, Any]]:
             "state->cursorColumn = DM1_V1_MESSAGE_CONTINUATION_INDENT;",
             "dm1_v1_text_print_linefeed",
         ]),
-        ("test_dm1_v1_text_message_pc34_compat.c", [
+        ("tests/test_dm1_v1_text_message_pc34_compat.c", [
             "test_cursor_movement",
             "test_clear_all_rows",
             "test_print_message_newline",

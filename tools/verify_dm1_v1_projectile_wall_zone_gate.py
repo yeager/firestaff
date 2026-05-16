@@ -19,15 +19,15 @@ CHECKS = [
 ]
 
 LOCAL_NEEDLES = [
-    ("memory_projectile_pc34_compat.c", "PROJECTILE_BLOCKER_WALL"),
-    ("memory_projectile_pc34_compat.c", "dispatch = PROJECTILE_RESULT_HIT_WALL"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "dm1_viewport_3d_projectile_visible_after_wall_case"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "return front_alcove && wall->front_alcove_reveals_contents;"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "test_projectile_wall_zone_movement_visibility_gate"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "PROJECTILE_SUBTYPE_KINETIC_ARROW"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.wall_hit_result"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.plain_wall_hides_projectile"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.front_alcove_reveals_projectile_layer"),
+    ("src/memory/memory_projectile_pc34_compat.c", "PROJECTILE_BLOCKER_WALL"),
+    ("src/memory/memory_projectile_pc34_compat.c", "dispatch = PROJECTILE_RESULT_HIT_WALL"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "dm1_viewport_3d_projectile_visible_after_wall_case"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "return front_alcove && wall->front_alcove_reveals_contents;"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "test_projectile_wall_zone_movement_visibility_gate"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "PROJECTILE_SUBTYPE_KINETIC_ARROW"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.wall_hit_result"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.plain_wall_hides_projectile"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "projectile_wall_zone.front_alcove_reveals_projectile_layer"),
 ]
 
 def read_lines(path: Path, spec: str) -> str:

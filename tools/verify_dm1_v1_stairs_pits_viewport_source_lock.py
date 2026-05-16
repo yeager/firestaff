@@ -100,9 +100,9 @@ def verify_redmcsb() -> list[dict[str, Any]]:
     return checks
 
 def verify_firestaff() -> list[dict[str, Any]]:
-    compat_c = read(ROOT / "memory_movement_pc34_compat.c")
-    compat_h = read(ROOT / "memory_movement_pc34_compat.h")
-    m11 = read(ROOT / "m11_game_view.c")
+    compat_c = read(ROOT / "src/memory/memory_movement_pc34_compat.c")
+    compat_h = read(ROOT / "include/memory_movement_pc34_compat.h")
+    m11 = read(ROOT / "src/engine/m11_game_view.c")
     cmake = read(ROOT / "CMakeLists.txt")
     checks: list[dict[str, Any]] = []
     checks.append(require("memory_movement_pc34_compat.c:movement_get_location_after_level_change", compat_c, [

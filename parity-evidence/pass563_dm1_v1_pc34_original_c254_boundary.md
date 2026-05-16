@@ -1,11 +1,11 @@
 # Pass563 - DM1 V1 PC34 original C254 boundary
 
-- Status: BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED
+- Status: BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE
 - Manifest: parity-evidence/verification/pass563_dm1_v1_pc34_original_c254_boundary/manifest.json
 
 ## Decision
 
-DM1 V1 original overlay/capture is still blocked at the canonical PC34 C254/IO_DRIVER slot runtime decode: the exact N2 PC34 DM.EXE/DATA payload is hash-locked, ReDMCSB routes I34E input through C254 slot0/slot1 before IO2/F0361, pass514/pass558 classify the empty-F0380 symptom, pass560 has not captured C254 at runtime, and pass562 correctly selects C254 slot decode as the next bounded runtime probe.
+Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.
 
 ## Canonical original payload
 - DM.EXE: PASS sha256 4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
@@ -25,7 +25,7 @@ DM1 V1 original overlay/capture is still blocked at the canonical PC34 C254/IO_D
 ## Pass chain
 
 - pass514: BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380
-- pass558: BLOCKED_PASS558_DOSBOX_EVENT_TO_GUEST_IO2_DISPATCH_BOUNDARY_CLASSIFIED
+- pass558: BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE
 - pass560: BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED
 - pass562: PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED
 

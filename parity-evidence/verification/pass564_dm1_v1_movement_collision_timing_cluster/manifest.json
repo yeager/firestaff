@@ -52,23 +52,23 @@
   ],
   "firestaffAnchors": [
     {
-      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
       "claim": "queued-command gate and pending replay"
     },
     {
-      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
       "claim": "turn/step dispatch, blockers, coordinate update, cooldown"
     },
     {
-      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_timing_pc34_compat.c",
       "claim": "movement ticks, G0362 update, cooldown decrement"
     },
     {
-      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "file": "tests/test_dm1_v1_movement_command_core_pc34_compat.c",
       "claim": "focused command core coverage"
     },
     {
-      "file": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+      "file": "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
       "claim": "pipeline cooldown decrement/release coverage"
     }
   ],

@@ -22,8 +22,8 @@ SRC = {
     "GAMELOOP.C": RED_ROOT / "GAMELOOP.C",
     "CLIKMENU.C": RED_ROOT / "CLIKMENU.C",
 }
-ORCH_C = ROOT / "memory_tick_orchestrator_pc34_compat.c"
-PROBE_C = ROOT / "firestaff_m10_tick_orchestrator_probe.c"
+ORCH_C = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
+PROBE_C = ROOT / "probes/firestaff_m10_tick_orchestrator_probe.c"
 MOVE_LOCK = ROOT / "tools/verify_dm1_v1_movement_source_lock.py"
 INPUT_LOCK = ROOT / "tools/verify_dm1_v1_input_command_queue_source_lock.py"
 

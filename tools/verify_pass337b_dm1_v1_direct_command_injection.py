@@ -9,17 +9,17 @@ RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP202102
 EVIDENCE = ROOT / "parity-evidence" / "pass337b_dm1_v1_direct_command_injection.md"
 
 REQUIRED_FILES = [
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.c",
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.h",
-    ROOT / "dm1_v1_movement_command_core_pc34_compat.c",
-    ROOT / "dm1_v1_movement_command_core_pc34_compat.h",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.c",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.h",
-    ROOT / "firestaff_memory_graphics_dat_original_input_command_queue_probe.c",
-    ROOT / "firestaff_memory_graphics_dat_original_main_loop_command_loop_probe.c",
-    ROOT / "firestaff_memory_graphics_dat_original_main_loop_command_probe.c",
-    ROOT / "firestaff_memory_graphics_dat_original_main_loop_command_queue_probe.c",
-    ROOT / "firestaff_memory_graphics_dat_original_typed_command_queue_probe.c",
+    ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
+    ROOT / "include/dm1_v1_input_command_queue_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+    ROOT / "include/dm1_v1_movement_command_core_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+    ROOT / "include/dm1_v1_movement_pipeline_pc34_compat.h",
+    ROOT / "probes/firestaff_memory_graphics_dat_original_input_command_queue_probe.c",
+    ROOT / "probes/firestaff_memory_graphics_dat_original_main_loop_command_loop_probe.c",
+    ROOT / "probes/firestaff_memory_graphics_dat_original_main_loop_command_probe.c",
+    ROOT / "probes/firestaff_memory_graphics_dat_original_main_loop_command_queue_probe.c",
+    ROOT / "probes/firestaff_memory_graphics_dat_original_typed_command_queue_probe.c",
     ROOT / "parity-evidence" / "pass333_dm1_v1_keypad_mode_command_queue_probe.md",
     ROOT / "parity-evidence" / "pass335_dm1_v1_keyboard_table_route_readiness.md",
     RED / "INPUT.C",
@@ -41,14 +41,14 @@ EVIDENCE_NEEDLES = [
 ]
 
 FIRESTAFF_NEEDLES = {
-    "dm1_v1_input_command_queue_pc34_compat.h": [
+    "include/dm1_v1_input_command_queue_pc34_compat.h": [
         "DM1_V1_COMMAND_TURN_LEFT = 1",
         "DM1_V1_COMMAND_MOVE_FORWARD = 3",
         "DM1_V1_COMMAND_MOVE_LEFT = 6",
         "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat",
         "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
     ],
-    "dm1_v1_input_command_queue_pc34_compat.c": [
+    "src/dm1/dm1_v1_input_command_queue_pc34_compat.c": [
         "static int enqueue_command",
         "return enqueue_command(queue, command, x, y);",
         "DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat",
@@ -56,18 +56,18 @@ FIRESTAFF_NEEDLES = {
         "result.dispatchedMove = 1;",
         "result.dispatchedTurn = 1;",
     ],
-    "dm1_v1_movement_command_core_pc34_compat.c": [
+    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c": [
         "DM1_V1_MovementCommandCore_ProcessOnePc34Compat",
         "DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
         "dm1_v1_is_turn_command(outResult->queue.command)",
         "dm1_v1_is_step_command(outResult->queue.command)",
         "F0702_MOVEMENT_TryMove_Compat",
     ],
-    "dm1_v1_movement_pipeline_pc34_compat.h": [
+    "include/dm1_v1_movement_pipeline_pc34_compat.h": [
         "struct Dm1V1InputCommandQueuePc34Compat commandQueue;",
         "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
     ],
-    "dm1_v1_movement_pipeline_pc34_compat.c": [
+    "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c": [
         "DM1_V1_InputCommandQueue_InitPc34Compat(&pipeline->commandQueue);",
         "DM1_V1_InputCommandQueue_EnqueueEventPc34Compat",
         "DM1_V1_MovementCommandCore_ProcessOnePc34Compat",
@@ -157,7 +157,7 @@ def main() -> int:
         if marker not in window:
             raise AssertionError(f"{path.name}:{marker} not found in cited range {expected_start}-{expected_end}")
 
-    q_c = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
+    q_c = read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
     direct_wrapper = re.search(
         r"int\s+DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat[\s\S]*return\s+enqueue_command\(queue, command, x, y\);",
         q_c,

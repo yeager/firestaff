@@ -8,6 +8,6 @@ Status: PASS542_LANEB_DM1_V1_DOOR_COMPOSITION_OCCLUSION_SOURCE_LOCKED
 - Copy/base ornament/Thieves Eye/blit lines: 4260, 4262, 4294, 4334.
 
 ## Firestaff Check
-- dm1_v1_viewport_3d_pc34_compat.c source evidence carries the F0109/F0111 temporary-door composition lock.
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c source evidence carries the F0109/F0111 temporary-door composition lock.
 
 No movement, capture, original-runtime, or pixel parity claim is made by this gate.

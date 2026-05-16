@@ -113,7 +113,7 @@ def redmcsb_audit() -> dict[str, object]:
 
 
 def firestaff_audit() -> dict[str, object]:
-    source = read(ROOT / "dm1_v1_viewport_3d_pc34_compat.c")
+    source = read(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
     evidence = function_body(source, "dm1_viewport_3d_source_evidence")
     require_order(evidence, [
         "DUNVIEW.C:4013-4117 F0109 composes door ornaments into G0074 temporary door bitmap",
@@ -125,7 +125,7 @@ def firestaff_audit() -> dict[str, object]:
         "DUNVIEW.C:7874-7937 D1C door-front occlusion",
     ]:
         require(evidence, needle, "Firestaff door-front occlusion evidence")
-    return {"file": "dm1_v1_viewport_3d_pc34_compat.c", "door_front_occlusion_anchors_checked": 3}
+    return {"file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "door_front_occlusion_anchors_checked": 3}
 
 
 def main() -> int:

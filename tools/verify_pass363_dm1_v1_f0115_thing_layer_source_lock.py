@@ -12,9 +12,9 @@ SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP
 DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
 EVIDENCE = ROOT / "parity-evidence/pass363_dm1_v1_f0115_thing_layer_source_lock.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass363_dm1_v1_f0115_thing_layer_source_lock/manifest.json"
-VIEW3D_C = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
-VIEW3D_H = ROOT / "dm1_v1_viewport_3d_pc34_compat.h"
-M11_VIEW = ROOT / "m11_game_view.c"
+VIEW3D_C = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
+VIEW3D_H = ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h"
+M11_VIEW = ROOT / "src/engine/m11_game_view.c"
 EXPECTED_STATUS = "PASS_DM1_V1_F0115_THING_LAYER_SOURCE_LOCK_BLOCKER_NARROWED"
 
 

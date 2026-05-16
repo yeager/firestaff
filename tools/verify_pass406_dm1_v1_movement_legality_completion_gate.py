@@ -18,8 +18,8 @@ RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206
 CLIKMENU = RED / "CLIKMENU.C"
 MOVESENS = RED / "MOVESENS.C"
 DUNGEON = RED / "DUNGEON.C"
-FIRE_C = ROOT / "memory_movement_pc34_compat.c"
-FIRE_TEST = ROOT / "test_dm1_v1_movement_core_pc34_compat.c"
+FIRE_C = ROOT / "src/memory/memory_movement_pc34_compat.c"
+FIRE_TEST = ROOT / "tests/test_dm1_v1_movement_core_pc34_compat.c"
 
 
 def line_no(text: str, offset: int) -> int:

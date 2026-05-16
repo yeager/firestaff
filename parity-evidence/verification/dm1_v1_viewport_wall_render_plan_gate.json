@@ -2761,7 +2761,7 @@
   ],
   "schema": "dm1_v1_viewport_wall_render_plan_gate.v1",
   "sourceInputs": {
-    "localWallMetadata": "dm1_v1_viewport_3d_pc34_compat.c",
+    "localWallMetadata": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
     "pass127": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
     "redmcsbOrder": "DUNVIEW.C:8318-8542 F0128 far-to-near draw order",
     "redmcsbWallSpecs": "DUNVIEW.C:6254-8144 PC34 wall cases and occlusion returns",

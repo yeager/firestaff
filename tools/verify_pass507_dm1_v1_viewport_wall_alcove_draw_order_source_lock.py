@@ -17,9 +17,9 @@ RED_ROOT = Path(
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ).expanduser()
 DUNVIEW = RED_ROOT / "DUNVIEW.C"
-COMPAT = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
-COMPAT_H = ROOT / "dm1_v1_viewport_3d_pc34_compat.h"
-TEST = ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c"
+COMPAT = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
+COMPAT_H = ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h"
+TEST = ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 EVIDENCE = ROOT / "parity-evidence/pass507_dm1_v1_viewport_wall_alcove_draw_order_source_lock.md"
 

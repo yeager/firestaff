@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-LOCAL = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
+LOCAL = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 DEFAULT_REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 REDMCSB = Path(os.environ.get("FIRESTAFF_REDMCSB_DUNVIEW", DEFAULT_REDMCSB))
 

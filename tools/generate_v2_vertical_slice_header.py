@@ -7,7 +7,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json"
-OUT = ROOT / "m11_v2_vertical_slice_assets.h"
+OUT = ROOT / "include/m11_v2_vertical_slice_assets.h"
 
 PALETTE = [
     (0, 0, 0),

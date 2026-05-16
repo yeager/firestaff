@@ -28,14 +28,14 @@ SOURCE_LOCKS = [
 ]
 
 PRODUCT_MARKERS = [
-    ("main_loop_m11.c", "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1"),
-    ("main_loop_m11.c", "if (strcmp(name, \"kp-6\") == 0 || strcmp(name, \"kp6\") == 0) return SDLK_KP_6"),
-    ("main_loop_m11.c", "case SDLK_KP_5:"),
-    ("main_loop_m11.c", "case SDLK_KP_1:"),
-    ("main_loop_m11.c", "case SDLK_KP_6:"),
-    ("m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
-    ("m11_game_view.c", "No OS keypad/NumLock synthesis is involved"),
+    ("src/engine/main_loop_m11.c", "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1"),
+    ("src/engine/main_loop_m11.c", "if (strcmp(name, \"kp-6\") == 0 || strcmp(name, \"kp6\") == 0) return SDLK_KP_6"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_5:"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_1:"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_6:"),
+    ("src/engine/m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
+    ("src/engine/m11_game_view.c", "No OS keypad/NumLock synthesis is involved"),
 ]
 
 REPORT_MARKERS = [

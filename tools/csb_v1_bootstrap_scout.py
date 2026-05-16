@@ -51,9 +51,9 @@ def grep_files(pattern: str, rels: list[str]) -> list[str]:
 def main() -> int:
     checks: list[Check] = []
 
-    menu = read_rel("menu_startup_m12.c")
-    asset = read_rel("asset_status_m12.c")
-    config_h = read_rel("config_m12.h")
+    menu = read_rel("src/ui/menu_startup_m12.c")
+    asset = read_rel("src/shared/asset_status_m12.c")
+    config_h = read_rel("include/config_m12.h")
 
     checks.append(Check(
         "CSB_SLOT_PRESENT",
@@ -87,10 +87,10 @@ def main() -> int:
     ))
 
     source_hits = grep_files(r"CSB|csb|Chaos Strikes Back|CSBGRAPH|CSB\.DAT", [
-        "menu_startup_m12.c",
-        "asset_status_m12.c",
+        "src/ui/menu_startup_m12.c",
+        "src/shared/asset_status_m12.c",
         "probes/m12/firestaff_m12_startup_menu_probe.c",
-        "vga_palette_pc34_compat.h",
+        "include/vga_palette_pc34_compat.h",
     ])
 
     report = {

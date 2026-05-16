@@ -12,8 +12,8 @@ GAMELOOP = RED_ROOT / "GAMELOOP.C"
 MOVESENS = RED_ROOT / "MOVESENS.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 ENTRANCE = RED_ROOT / "ENTRANCE.C"
-FIRE_H = ROOT / "dm1_v1_room_transition_pc34_compat.h"
-FIRE_C = ROOT / "dm1_v1_room_transition_pc34_compat.c"
+FIRE_H = ROOT / "include/dm1_v1_room_transition_pc34_compat.h"
+FIRE_C = ROOT / "src/dm1/dm1_v1_room_transition_pc34_compat.c"
 
 def line_no(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1

@@ -101,7 +101,7 @@ def main() -> int:
         "why": "Side contents are not a free overlay pass; visible squares hand objects/creatures/projectiles to F0115 while that square is replayed.",
     })
 
-    local = local_function((ROOT / "m11_game_view.c").read_text(errors="replace"), "m11_draw_dm1_side_contents")
+    local = local_function((ROOT / "src/engine/m11_game_view.c").read_text(errors="replace"), "m11_draw_dm1_side_contents")
     local_needles = [
         "for (depth = 2; depth >= 0; --depth)",
         "m11_dm1_center_line_clear_before_depth(cells, depth)",

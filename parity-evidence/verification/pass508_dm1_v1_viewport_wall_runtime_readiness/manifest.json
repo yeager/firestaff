@@ -7,7 +7,7 @@
   "failures": [],
   "firestaffAudit": [
     {
-      "file": "m11_game_view.c",
+      "file": "src/engine/m11_game_view.c",
       "id": "normal_renderer_batches_with_near_replay_guard",
       "missing": [],
       "positions": [
@@ -55,7 +55,7 @@
       "status": "PASS"
     },
     {
-      "file": "m11_game_view.c",
+      "file": "src/engine/m11_game_view.c",
       "id": "wall_alcove_item_source_cell_gate",
       "missing": [],
       "positions": [

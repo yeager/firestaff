@@ -56,27 +56,27 @@
   ],
   "firestaffEvidence": [
     {
-      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
       "claim": "PC-34 input rows, queue lock, gated movement retention, pending-click replay, and blocked-input discard"
     },
     {
-      "file": "dm1_v1_movement_command_core_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
       "claim": "F0380-to-F0365/F0366 seam: turns bypass movement gates, steps apply stamina/collision/group blocking/timing"
     },
     {
-      "file": "memory_movement_pc34_compat.c",
+      "file": "src/memory/memory_movement_pc34_compat.c",
       "claim": "pure movement legality and target-square result semantics behind F0366, including the empty-party group-collision bug"
     },
     {
-      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_timing_pc34_compat.c",
       "claim": "post-step cadence mirrors F0310/F0366 timing side effects"
     },
     {
-      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "file": "tests/test_dm1_v1_movement_command_core_pc34_compat.c",
       "claim": "behavior coverage for queued input through turn/step dispatch, collision, stamina, timing, and sensor order"
     },
     {
-      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "file": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
       "claim": "integration coverage for PC-34 movement queue, collision, turn, sensor, timing edges, and BUG0_85 empty-party group passage"
     }
   ],

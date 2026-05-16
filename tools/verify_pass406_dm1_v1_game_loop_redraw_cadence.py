@@ -27,9 +27,9 @@ SOURCES = {
     "COMMAND.C": RED / "COMMAND.C",
     "DUNVIEW.C": RED / "DUNVIEW.C",
     "DRAWVIEW.C": RED / "DRAWVIEW.C",
-    "main_loop_m11.c": ROOT / "main_loop_m11.c",
-    "m11_game_view.c": ROOT / "m11_game_view.c",
-    "dm1_v1_movement_pipeline_pc34_compat.c": ROOT / "dm1_v1_movement_pipeline_pc34_compat.c",
+    "src/engine/main_loop_m11.c": ROOT / "src/engine/main_loop_m11.c",
+    "src/engine/m11_game_view.c": ROOT / "src/engine/m11_game_view.c",
+    "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c": ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
 }
 
 
@@ -154,7 +154,7 @@ def main() -> int:
     ], "ReDMCSB viewport blit/vblank request")
 
     m11_start, m11_end, m11 = enclosing_range(
-        texts["m11_game_view.c"],
+        texts["src/engine/m11_game_view.c"],
         "static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,\n                                           M12_MenuInput input,\n                                           const char* actionLabel) {\n    int command;",
         "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;",
         "Firestaff m11_apply_dm1_v1_pipeline_tick",
@@ -168,7 +168,7 @@ def main() -> int:
     ], "Firestaff M11 live bridge cooldown/process/redraw publication order")
 
     loop_start, loop_end, loop = enclosing_range(
-        texts["main_loop_m11.c"],
+        texts["src/engine/main_loop_m11.c"],
         "else if (result == M11_GAME_INPUT_REDRAW) {",
         "if (gameView.world.gameTick != tickBeforeInput) {",
         "Firestaff main loop input redraw block",
@@ -183,7 +183,7 @@ def main() -> int:
     ], "Firestaff input redraw instrumentation order")
 
     pipe_start, pipe_end, pipe = function_range(
-        texts["dm1_v1_movement_pipeline_pc34_compat.c"],
+        texts["src/dm1/dm1_v1_movement_pipeline_pc34_compat.c"],
         "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
         rettype="int",
     )

@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")).expanduser()
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_entrance_input_wait_redmcsb_gate.json"
-RANGES = [("ENTRANCE.C",850,883),("ENTRANCE.C",906,943),("COMMAND.C",551,577),("entrance_frontend_pc34_compat.c",39,58),("entrance_frontend_pc34_compat.c",61,99),("entrance_frontend_pc34_compat.c",102,103),("entrance_keyboard_routes_pc34_compat.c",2,3)]
+RANGES = [("ENTRANCE.C",850,883),("ENTRANCE.C",906,943),("COMMAND.C",551,577),("src/frontend/entrance_frontend_pc34_compat.c",39,58),("src/frontend/entrance_frontend_pc34_compat.c",61,99),("src/frontend/entrance_frontend_pc34_compat.c",102,103),("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3)]
 
 def read(path: Path) -> str:
     if not path.is_file(): raise AssertionError(f"missing source file: {path}")
@@ -67,8 +67,8 @@ def verify_redmcsb() -> list[str]:
     return notes
 
 def verify_firestaff() -> list[str]:
-    fp=ROOT/"entrance_frontend_pc34_compat.c"; ft=read(fp)
-    kp=ROOT/"entrance_keyboard_routes_pc34_compat.c"; kt=read(kp)
+    fp=ROOT/"src/frontend/entrance_frontend_pc34_compat.c"; ft=read(fp)
+    kp=ROOT/"src/frontend/entrance_keyboard_routes_pc34_compat.c"; kt=read(kp)
     notes=[]
     s,w=func(ft,"entrance_event_line")
     for name,pos in require_order(w,"Firestaff entrance event evidence",[("wait event","ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT"),("wait citation","ENTRANCE.C:850-883 draw entrance, discard input, wait on VBlank loop until command"),("switch citation","ENTRANCE.C:906-934 plays switch sound after Enter/command"),("delay citation","ENTRANCE.C:935 waits F0022_MAIN_Delay(20), then hides pointer")]): notes.append(f"Firestaff entrance evidence {name}: {fp}:{line_no(ft,s+pos)}")
@@ -79,10 +79,10 @@ def verify_firestaff() -> list[str]:
     for needle in ["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"]:
         if needle not in kt: raise AssertionError(f"missing keyboard evidence marker {needle!r}")
     notes.append(f"Firestaff entrance keyboard evidence: {kp}:2")
-    excerpt("entrance_frontend_pc34_compat.c",39,58,["ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT","ENTRANCE.C:850-883","ENTRANCE.C:935"])
-    excerpt("entrance_frontend_pc34_compat.c",61,99,["sourceStepOrdinal == 4u","step.vblankLoopCount = 1u","step.delayTicks = 20u"])
-    excerpt("entrance_frontend_pc34_compat.c",102,103,["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
-    excerpt("entrance_keyboard_routes_pc34_compat.c",2,3,["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",39,58,["ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT","ENTRANCE.C:850-883","ENTRANCE.C:935"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",61,99,["sourceStepOrdinal == 4u","step.vblankLoopCount = 1u","step.delayTicks = 20u"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",102,103,["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
+    excerpt("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3,["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"])
     return notes
 
 def verify_json() -> None:

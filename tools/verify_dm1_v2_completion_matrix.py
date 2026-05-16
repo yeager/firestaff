@@ -17,13 +17,13 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "parity-evidence/verification/dm1_v2_completion_matrix.json"
 
 REQUIRED_MODULES = {
-    "dm1_v2_runtime_pc34.c": "runtime/shell",
-    "dm1_v2_movement_engine_pc34.c": "runtime/movement",
-    "dm1_v2_viewport_renderer_pc34.c": "runtime/viewport",
-    "dm1_v2_texture_upscale_pc34.c": "asset/upscale",
-    "dm1_v2_hud_overlay_pc34.c": "ui/hud",
-    "dm1_v2_lighting_dynamic_pc34.c": "visual/lighting",
-    "dm1_v2_particle_system_pc34.c": "visual/effects",
+    "src/dm1v2/dm1_v2_runtime_pc34.c": "runtime/shell",
+    "src/dm1v2/dm1_v2_movement_engine_pc34.c": "runtime/movement",
+    "src/dm1v2/dm1_v2_viewport_renderer_pc34.c": "runtime/viewport",
+    "src/dm1v2/dm1_v2_texture_upscale_pc34.c": "asset/upscale",
+    "src/dm1v2/dm1_v2_hud_overlay_pc34.c": "ui/hud",
+    "src/dm1v2/dm1_v2_lighting_dynamic_pc34.c": "visual/lighting",
+    "src/dm1v2/dm1_v2_particle_system_pc34.c": "visual/effects",
 }
 
 REQUIRED_CTEST_NAMES = {

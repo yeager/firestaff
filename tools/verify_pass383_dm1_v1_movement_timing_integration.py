@@ -58,8 +58,8 @@ def main() -> int:
     io = read(RED / "IO.C", "latin-1")
     entrance = read(RED / "ENTRANCE.C", "latin-1")
     moves = read(RED / "MOVESENS.C", "latin-1")
-    fire_pipeline = read(ROOT / "dm1_v1_movement_pipeline_pc34_compat.c")
-    fire_timing = read(ROOT / "dm1_v1_movement_timing_pc34_compat.c")
+    fire_pipeline = read(ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c")
+    fire_timing = read(ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c")
 
     proofs: list[dict] = []
     f0380_start = command.index("void F0380_COMMAND_ProcessQueue_CPSC")
@@ -128,8 +128,8 @@ def main() -> int:
         "while (G0317_i_WaitForInputVerticalBlankCount < L3367_l_);",
         "L3367_l_ = G0317_i_WaitForInputVerticalBlankCount + 2;",
     ], "ENTRANCE.C", "ENTRANCE uses the same vblank counter for door animation pacing, not for party movement command acceptance"))
-    proofs.append(require(fire_pipeline, "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat", "dm1_v1_movement_pipeline_pc34_compat.c", "Firestaff exposes explicit per-loop cooldown decrement seam"))
-    proofs.append(require(fire_timing, "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat", "dm1_v1_movement_timing_pc34_compat.c", "Firestaff has a source-locked successful-step timing seam"))
+    proofs.append(require(fire_pipeline, "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat", "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c", "Firestaff exposes explicit per-loop cooldown decrement seam"))
+    proofs.append(require(fire_timing, "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat", "src/dm1/dm1_v1_movement_timing_pc34_compat.c", "Firestaff has a source-locked successful-step timing seam"))
 
     artifact_checks = [
         grep_status(ROOT / "parity-evidence/pass349_dm1_v1_full_launcher_keypad_runtime_route.md", "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED"),

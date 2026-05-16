@@ -16,7 +16,7 @@
   ],
   "firestaffChecks": [
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 729,
@@ -56,7 +56,7 @@
       "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 467,
@@ -84,7 +84,7 @@
       "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 501,
@@ -108,7 +108,7 @@
       "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17"
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
           "line": 799,

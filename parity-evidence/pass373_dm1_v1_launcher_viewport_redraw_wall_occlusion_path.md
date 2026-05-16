@@ -1,10 +1,10 @@
 # Pass373 — DM1 V1 launcher viewport redraw wall/occlusion path
 
-Status: `PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED`
+Status: `BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH`
 
 ## Verdict
 
-The full Firestaff launcher route-token path reaches a live DM1 V1 turn, marks the viewport dirty, and source-locks the consequent redraw path into the normal V1 wall/door/occlusion renderer stack.
+The path is still blocked; inspect the manifest checks for the first failing source/runtime gate.
 
 ## Runtime proof
 
@@ -25,18 +25,18 @@ The full Firestaff launcher route-token path reaches a live DM1 V1 turn, marks t
 
 ## Firestaff path anchors
 
-- main_loop_m11.c — script token route feeds the active game view and redraw result calls M11_GameView_Draw
-- main_loop_m11.c — runtime probe records the same live movement pipeline result used by the redraw route
-- m11_game_view.c — input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport
-- m11_game_view.c — normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback
+- src/engine/main_loop_m11.c — script token route feeds the active game view and redraw result calls M11_GameView_Draw
+- src/engine/main_loop_m11.c — runtime probe records the same live movement pipeline result used by the redraw route
+- src/engine/m11_game_view.c — input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport
+- src/engine/m11_game_view.c — normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback
 
 ## Gates
 
 - firestaff_viewport_order_lock ok=True
+- prior_wall_occlusion_gate ok=False
 - prior_wall_occlusion_gate ok=True
 - prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=True
+- prior_wall_occlusion_gate ok=False
 - cmake_configure ok=True
 - cmake_build_firestaff ok=True
 - launcher_route_runtime_probe ok=True

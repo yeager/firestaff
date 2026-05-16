@@ -13,9 +13,9 @@ PASS = "pass506_dm1_v1_stairs_movement_side_effect_source_lock"
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 CLIKMENU = RED / "CLIKMENU.C"
 DUNGEON = RED / "DUNGEON.C"
-COMMAND_CORE_C = ROOT / "dm1_v1_movement_command_core_pc34_compat.c"
-COMMAND_CORE_H = ROOT / "dm1_v1_movement_command_core_pc34_compat.h"
-PIPELINE_TEST = ROOT / "test_dm1_v1_movement_pipeline_pc34_compat.c"
+COMMAND_CORE_C = ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c"
+COMMAND_CORE_H = ROOT / "include/dm1_v1_movement_command_core_pc34_compat.h"
+PIPELINE_TEST = ROOT / "tests/test_dm1_v1_movement_pipeline_pc34_compat.c"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -206,9 +206,9 @@ def main() -> int:
             },
         },
         "firestaffGuards": {
-            "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
-            "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",
-            "pipelineTest": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+            "commandCore": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+            "commandCoreResult": "include/dm1_v1_movement_command_core_pc34_compat.h",
+            "pipelineTest": "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
             "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
             "runtimeOutputLastLine": test_out.splitlines()[-1] if test_out else "",
         },

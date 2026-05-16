@@ -303,7 +303,7 @@ def csb_target_curation(original_dm: Path) -> list[str]:
 
 def repo_boundary_scan(repo: Path) -> list[str]:
     matrix = repo / "PARITY_MATRIX_DM1_V1.md"
-    config = repo / "config_m12.h"
+    config = repo / "include/config_m12.h"
     rows: list[str] = []
     if matrix.exists():
         text = matrix.read_text(errors="replace")

@@ -57,13 +57,13 @@ CHECKS = [
 ]
 
 LOCAL_NEEDLES = [
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D3R, 0x4312"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:6624-6638 teleporter field after F0115"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D2L, 0x3421"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:7033-7048 teleporter field after F0115"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D2R, 0x4312"),
-    ("dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:7226-7240 teleporter field after F0115"),
-    ("test_dm1_v1_viewport_3d_pc34_compat.c", "floor_field_order_spec_count(), 13"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D3R, 0x4312"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:6624-6638 teleporter field after F0115"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D2L, 0x3421"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:7033-7048 teleporter field after F0115"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DM1_VIEW_SQUARE_D2R, 0x4312"),
+    ("src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "DUNVIEW.C:7226-7240 teleporter field after F0115"),
+    ("tests/test_dm1_v1_viewport_3d_pc34_compat.c", "floor_field_order_spec_count(), 13"),
 ]
 
 

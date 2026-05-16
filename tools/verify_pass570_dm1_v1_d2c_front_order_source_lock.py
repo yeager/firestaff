@@ -55,7 +55,7 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-d2c-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "135-145", [
+    ("firestaff-d2c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "135-145", [
         "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349",
         "DUNVIEW.C:7314 floor ornament under rear pass",
         "DUNVIEW.C:7315 pass1 rear cells before frame",
@@ -64,7 +64,7 @@ LOCAL = [
         "DUNVIEW.C:7339 F0111 door bitmap/ornament",
         "DUNVIEW.C:7341 pass2 front cells after door",
     ]),
-    ("firestaff-d2c-floor-field-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "235-242", [
+    ("firestaff-d2c-floor-field-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "235-242", [
         "DM1_VIEW_SQUARE_D2C, 0x3421",
         "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path",
         "DUNVIEW.C:7343-7353 pit bitmap before floor ornament",
@@ -73,25 +73,25 @@ LOCAL = [
         "DUNVIEW.C:7370-7388 teleporter field after F0115",
         "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115",
     ]),
-    ("firestaff-d2c-wall-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "285-296", [
+    ("firestaff-d2c-wall-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "285-296", [
         "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C",
         "DM1_PC34_ZONE_WALL_D2C",
         "DUNVIEW.C:7299-7306",
         "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return",
     ]),
-    ("firestaff-d2c-zone-defines", ROOT / "dm1_v1_viewport_3d_pc34_compat.h", "392-415", [
+    ("firestaff-d2c-zone-defines", ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h", "392-415", [
         "#define DM1_PC34_ZONE_WALL_D2C",
         "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
         "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
         "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730",
     ]),
-    ("firestaff-d2c-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "564-631", [
+    ("firestaff-d2c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "564-631", [
         "{ DM1_VIEW_SQUARE_D2C, \"7314\", \"7315\", \"7317\", \"7332\", \"7339\", \"7341\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);",
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),
-    ("firestaff-d2c-source-evidence", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "1105-1123", [
+    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1105-1123", [
         "DUNVIEW.C:7260-7388 D2C stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115",
         "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
         "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",

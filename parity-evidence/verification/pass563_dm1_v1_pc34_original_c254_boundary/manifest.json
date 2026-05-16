@@ -1,7 +1,7 @@
 {
   "branch": "main",
-  "decision": "DM1 V1 original overlay/capture is still blocked at the canonical PC34 C254/IO_DRIVER slot runtime decode: the exact N2 PC34 DM.EXE/DATA payload is hash-locked, ReDMCSB routes I34E input through C254 slot0/slot1 before IO2/F0361, pass514/pass558 classify the empty-F0380 symptom, pass560 has not captured C254 at runtime, and pass562 correctly selects C254 slot decode as the next bounded runtime probe.",
-  "head": "188827aa53eb0c16f93cddf485de83eb4276315e",
+  "decision": "Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.",
+  "head": "2dab762c546edc723f3d665e3d4045d2bef3377f",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -65,7 +65,7 @@
     },
     "pass558": {
       "blocker": null,
-      "decision": "Classified current DM1 V1 original capture unblocker as DOSBox window/event-queue to guest keyboard interrupt/IO2 dispatch boundary: ReDMCSB requires GAMELOOP M527/M528 to call IO2 presence/read before F0361 can enqueue, pass514 reaches F0380 with no enqueue/count write, pass556 resolves the IO2 driver slots but observes no IO2 read/presence after route input, and pass557 rules out host route-key generation as the first failing boundary.",
+      "decision": "pass514/pass556/pass557 evidence chain incomplete",
       "path": "parity-evidence/verification/pass558_dm1_v1_pass514_io_blocker_classifier/manifest.json",
       "present": true,
       "proofPredicates": {
@@ -74,16 +74,16 @@
         "pass514ManifestPresent": true,
         "pass514QueueCountWriteMissing": true,
         "pass514RouteInputAfterArmingSucceeded": true,
-        "pass556F0380ReachedAfterRouteInput": true,
-        "pass556IoDriverSlotsResolved": true,
-        "pass556ManifestPresent": true,
+        "pass556F0380ReachedAfterRouteInput": false,
+        "pass556IoDriverSlotsResolved": false,
+        "pass556ManifestPresent": false,
         "pass556NoIo2ReadOrPresenceAfterRoute": true,
-        "pass557HostRouteSucceeded": true,
-        "pass557ManifestPresent": true,
-        "pass557RulesOutHostRouteGeneration": true,
+        "pass557HostRouteSucceeded": false,
+        "pass557ManifestPresent": false,
+        "pass557RulesOutHostRouteGeneration": false,
         "sourceAuditOk": true
       },
-      "status": "BLOCKED_PASS558_DOSBOX_EVENT_TO_GUEST_IO2_DISPATCH_BOUNDARY_CLASSIFIED"
+      "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE"
     },
     "pass560": {
       "blocker": "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380.",
@@ -134,7 +134,7 @@
   "proofPredicates": {
     "originalPc34PayloadOk": true,
     "pass514EmptyF0380BlockerPresent": true,
-    "pass558IoBoundaryClassified": true,
+    "pass558IoBoundaryClassified": false,
     "pass560C254RuntimeMissing": true,
     "pass562ProbeContractNamesSlots": true,
     "pass562SelectedC254SlotDecode": true,
@@ -277,6 +277,6 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS563_PC34_ORIGINAL_C254_SLOT_RUNTIME_PROBE_REQUIRED",
-  "timestampUtc": "2026-05-16T07:56:08.220512+00:00"
+  "status": "BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE",
+  "timestampUtc": "2026-05-16T08:54:08.868351+00:00"
 }

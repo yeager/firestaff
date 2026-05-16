@@ -41,9 +41,9 @@ def main() -> None:
     input_c = read(SOURCE_ROOT / "INPUT.C")
     clikmenu_c = read(SOURCE_ROOT / "CLIKMENU.C")
     defs_h = read(SOURCE_ROOT / "DEFS.H")
-    local_matrix_c = read(REPO / "touch_click_zone_matrix_pc34_compat.c")
-    local_pointer_c = read(REPO / "touch_pointer_input_pc34_compat.c")
-    local_pointer_test = read(REPO / "test_touch_pointer_input_pc34_compat_integration.c")
+    local_matrix_c = read(REPO / "src/shared/touch_click_zone_matrix_pc34_compat.c")
+    local_pointer_c = read(REPO / "src/shared/touch_pointer_input_pc34_compat.c")
+    local_pointer_test = read(REPO / "tests/test_touch_pointer_input_pc34_compat_integration.c")
 
     source_checks = {
         "primary_interface_mouse_rows": [

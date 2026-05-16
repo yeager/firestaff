@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(Firestaff VERSION 0.3.24 LANGUAGES C)
 
+include_directories(include src)
+
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -29,7 +32,7 @@ endif()
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
-file(GLOB M10_SOURCES CONFIGURE_DEPENDS "*_pc34_compat.c")
+file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 
 # Exclude test_* files from the library (they have their own main()).
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
@@ -53,39 +56,39 @@ endif()
 
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
-    main_loop_m11.c
-    m11_game_view.c
-    render_sdl_m11.c
-    audio_sdl_m11.c
-    graphics_dat_snd3_loader_v1.c
-    song_dat_loader_v1.c
-    sound_event_snd3_map_v1.c
-    title_dat_loader_v1.c
-    title_frontend_v1.c
-    asset_loader_m11.c
-    font_m11.c
-    fs_portable_compat.c
-    dm1_v1_vblank_timing.c
-    dm1_v1_save_load.c
-    dm1_v1_viewport_3d_pc34_compat.c
-    dm1_v1_dungeon_loader_pc34_compat.c
-    dm1_v1_title_screen_pc34_compat.c
-    dm1_v1_palette_font_pc34_compat.c
-    dm1_v1_object_world_pc34_compat.c
-    dm1_v1_graphics_loader_pc34_compat.c
-    dm1_v1_fade_transition_pc34_compat.c
-    dm1_v1_room_transition_pc34_compat.c
-    dm1_v1_portrait_panel_pc34_compat.c
-    dm1_v1_wall_ornament_pc34_compat.c
-    dm1_v1_dungeon_decompressor_pc34_compat.c
-    dm1_v1_field_teleporter_effect_pc34_compat.c
-    dm1_v1_game_loop_integration_pc34_compat.c
-    dm1_v1_creature_viewport_pc34_compat.c
-    dm1_v1_save_load_system_pc34_compat.c
-    dm1_v1_blit_fill_pc34_compat.c
-    dm1_v1_dialog_scroll_pc34_compat.c
-    dm1_v1_click_routing_pc34_compat.c
-    dm1_v1_engine_pc34_compat.c
+    src/engine/main_loop_m11.c
+    src/engine/m11_game_view.c
+    src/engine/render_sdl_m11.c
+    src/shared/audio_sdl_m11.c
+    src/shared/graphics_dat_snd3_loader_v1.c
+    src/shared/song_dat_loader_v1.c
+    src/shared/sound_event_snd3_map_v1.c
+    src/frontend/title_dat_loader_v1.c
+    src/frontend/title_frontend_v1.c
+    src/shared/asset_loader_m11.c
+    src/shared/font_m11.c
+    src/shared/fs_portable_compat.c
+    src/dm1/dm1_v1_vblank_timing.c
+    src/dm1/dm1_v1_save_load.c
+    src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
+    src/dm1/dm1_v1_title_screen_pc34_compat.c
+    src/dm1/dm1_v1_palette_font_pc34_compat.c
+    src/dm1/dm1_v1_object_world_pc34_compat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/dm1/dm1_v1_fade_transition_pc34_compat.c
+    src/dm1/dm1_v1_room_transition_pc34_compat.c
+    src/dm1/dm1_v1_portrait_panel_pc34_compat.c
+    src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c
+    src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
+    src/dm1/dm1_v1_game_loop_integration_pc34_compat.c
+    src/dm1/dm1_v1_creature_viewport_pc34_compat.c
+    src/dm1/dm1_v1_save_load_system_pc34_compat.c
+    src/dm1/dm1_v1_blit_fill_pc34_compat.c
+    src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
+    src/dm1/dm1_v1_click_routing_pc34_compat.c
+    src/dm1/dm1_v1_engine_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -93,41 +96,41 @@ target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
-    # m11_game_view.c is a large legacy file — relax truncation/unused warnings.
-    set_source_files_properties(m11_game_view.c PROPERTIES
+    # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
+    set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
         COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
     )
 endif()
 
 # ── M12 static library ──────────────────────────────────────────────
 set(M12_SOURCES
-    menu_startup_m12.c
-    menu_startup_render_modern_m12.c
-    menu_hit_m12.c
-    config_m12.c
-    asset_status_m12.c
-    card_art_m12.c
-    card_art_generated_m12.c
-    branding_logo_m12.c
-    branding_logo_readme_m12.c
-    bestiary_m12.c
-    creature_art_m12.c
-    data_validator_m12.c
-    changelog_m12.c
-    theme_m12.c
-    animated_bg_m12.c
-    input_remap_m12.c
-    save_browser_m12.c
-    custom_dungeon_m12.c
-    item_encyclopedia_m12.c
-    campaign_m12.c
-    spell_reference_m12.c
-    map_viewer_m12.c
-    music_jukebox_m12.c
-    gamepad_config_m12.c
-    touch_layout_m12.c
-    presentation_preview_m12.c
-    screenshot_gallery_m12.c
+    src/ui/menu_startup_m12.c
+    src/ui/menu_startup_render_modern_m12.c
+    src/ui/menu_hit_m12.c
+    src/engine/config_m12.c
+    src/shared/asset_status_m12.c
+    src/shared/card_art_m12.c
+    src/shared/card_art_generated_m12.c
+    src/ui/branding_logo_m12.c
+    src/ui/branding_logo_readme_m12.c
+    src/shared/bestiary_m12.c
+    src/shared/creature_art_m12.c
+    src/shared/data_validator_m12.c
+    src/shared/changelog_m12.c
+    src/ui/theme_m12.c
+    src/shared/animated_bg_m12.c
+    src/shared/input_remap_m12.c
+    src/shared/save_browser_m12.c
+    src/shared/custom_dungeon_m12.c
+    src/shared/item_encyclopedia_m12.c
+    src/shared/campaign_m12.c
+    src/shared/spell_reference_m12.c
+    src/shared/map_viewer_m12.c
+    src/shared/music_jukebox_m12.c
+    src/shared/gamepad_config_m12.c
+    src/ui/touch_layout_m12.c
+    src/shared/presentation_preview_m12.c
+    src/shared/screenshot_gallery_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
@@ -139,7 +142,7 @@ if(NOT MSVC)
 endif()
 
 # ── Main executable ──────────────────────────────────────────────────
-add_executable(firestaff firestaff_main_m11.c)
+add_executable(firestaff src/shared/firestaff_main_m11.c)
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
 target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
@@ -222,7 +225,7 @@ if(NOT MSVC)
 endif()
 
 # M12 Startup Menu probe
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_probe.c")
+if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
     add_executable(firestaff_m12_startup_menu_probe probes/m12/firestaff_m12_startup_menu_probe.c)
     target_link_libraries(firestaff_m12_startup_menu_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
@@ -232,7 +235,7 @@ endif()
 
 
 # DM1 V1 viewport draw-order evidence probe
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
+if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
     add_executable(firestaff_dm1_v1_viewport_draw_order_probe probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_viewport_draw_order_probe PRIVATE -Wall -Wextra -O2)
@@ -240,7 +243,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw
 endif()
 
 # DM1 V1 game-loop redraw/cadence evidence probe
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
+if(EXISTS "probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
     add_executable(firestaff_dm1_v1_game_loop_redraw_cadence_probe probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_game_loop_redraw_cadence_probe PRIVATE -Wall -Wextra -O2)
@@ -248,7 +251,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_game_loop_red
 endif()
 
 # DM1 V1 viewport palette/as-before cadence evidence probe
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c")
+if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c")
     add_executable(firestaff_dm1_v1_viewport_palette_as_before_probe probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_viewport_palette_as_before_probe PRIVATE -Wall -Wextra -O2)
@@ -311,7 +314,7 @@ if(BUILD_TESTING)
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration
-        test_touch_click_zone_matrix_pc34_compat_integration.c
+        tests/test_touch_click_zone_matrix_pc34_compat_integration.c
     )
     target_link_libraries(test_touch_click_zone_matrix_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -323,7 +326,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_action_area_routes_pc34_compat_integration
-        test_action_area_routes_pc34_compat_integration.c
+        tests/test_action_area_routes_pc34_compat_integration.c
     )
     target_link_libraries(test_action_area_routes_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -335,7 +338,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_touch_pointer_input_pc34_compat_integration
-        test_touch_pointer_input_pc34_compat_integration.c
+        tests/test_touch_pointer_input_pc34_compat_integration.c
     )
     target_link_libraries(test_touch_pointer_input_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -362,7 +365,7 @@ if(BUILD_TESTING)
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
-        test_menu_hit_launch_direct_click_m12.c
+        tests/test_menu_hit_launch_direct_click_m12.c
     )
     target_link_libraries(test_menu_hit_launch_direct_click_m12 PRIVATE firestaff_m12)
     if(NOT MSVC)
@@ -374,7 +377,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_csb_v1_launch_blocker_m12
-        test_csb_v1_launch_blocker_m12.c
+        tests/test_csb_v1_launch_blocker_m12.c
     )
     target_link_libraries(test_csb_v1_launch_blocker_m12 PRIVATE firestaff_m12)
     if(NOT MSVC)
@@ -386,7 +389,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_m12_quick_resume_gate
-        test_m12_quick_resume_gate.c
+        tests/test_m12_quick_resume_gate.c
     )
     target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
     if(NOT MSVC)
@@ -398,7 +401,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_m11_quick_resume_roundtrip
-        test_m11_quick_resume_roundtrip.c
+        tests/test_m11_quick_resume_roundtrip.c
     )
     target_link_libraries(test_m11_quick_resume_roundtrip PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
@@ -449,7 +452,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
-        test_inventory_panel_slot_routes_pc34_compat_integration.c
+        tests/test_inventory_panel_slot_routes_pc34_compat_integration.c
     )
     target_link_libraries(test_inventory_panel_slot_routes_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -461,7 +464,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_inventory_mouth_eye_routes_pc34_compat_integration
-        test_inventory_mouth_eye_routes_pc34_compat_integration.c
+        tests/test_inventory_mouth_eye_routes_pc34_compat_integration.c
     )
     target_link_libraries(test_inventory_mouth_eye_routes_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -473,7 +476,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_input_command_queue_pc34_compat
-        test_dm1_v1_input_command_queue_pc34_compat.c
+        tests/test_dm1_v1_input_command_queue_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_input_command_queue_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -485,7 +488,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_movement_core_pc34_compat
-        test_dm1_v1_movement_core_pc34_compat.c
+        tests/test_dm1_v1_movement_core_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_core_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -497,7 +500,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_movement_command_core_pc34_compat
-        test_dm1_v1_movement_command_core_pc34_compat.c
+        tests/test_dm1_v1_movement_command_core_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_command_core_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -509,7 +512,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_door_button_click_pc34_compat
-        test_dm1_v1_door_button_click_pc34_compat.c
+        tests/test_dm1_v1_door_button_click_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_door_button_click_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -521,7 +524,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_m11_v1_turning_presentation_pc34_compat
-        test_m11_v1_turning_presentation_pc34_compat.c
+        tests/test_m11_v1_turning_presentation_pc34_compat.c
     )
     target_link_libraries(test_m11_v1_turning_presentation_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -540,7 +543,7 @@ if(BUILD_TESTING)
     endif()
 
     add_executable(test_dm1_v1_movement_timing_pc34_compat
-        test_dm1_v1_movement_timing_pc34_compat.c
+        tests/test_dm1_v1_movement_timing_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_timing_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -552,7 +555,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_turn_step_timing_gate_pc34_compat
-        test_dm1_v1_turn_step_timing_gate_pc34_compat.c
+        tests/test_dm1_v1_turn_step_timing_gate_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_turn_step_timing_gate_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -564,7 +567,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_command_movement_sensor_timing_pc34_compat
-        test_dm1_v1_command_movement_sensor_timing_pc34_compat.c
+        tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_command_movement_sensor_timing_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -649,54 +652,54 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v2_movement_viewport_pc34
-        test_dm1_v2_movement_viewport_pc34.c
-        dm1_v2_movement_engine_pc34.c
-        dm1_v2_viewport_renderer_pc34.c
+        tests/test_dm1_v2_movement_viewport_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
     add_executable(test_dm1_v2_runtime_shell_pc34
-        test_dm1_v2_runtime_shell_pc34.c
-        dm1_v2_runtime_pc34.c
-        dm1_v2_movement_engine_pc34.c
-        dm1_v2_viewport_renderer_pc34.c
+        tests/test_dm1_v2_runtime_shell_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
     add_executable(test_dm1_v2_camera_controller_pc34
-        test_dm1_v2_camera_controller_pc34.c
-        dm1_v2_camera_controller_pc34.c
-        dm1_v2_movement_engine_pc34.c
+        tests/test_dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
     )
     add_executable(test_dm1_v2_movement_command_adapter_pc34
-        test_dm1_v2_movement_command_adapter_pc34.c
-        dm1_v2_movement_command_adapter_pc34.c
-        dm1_v2_runtime_pc34.c
-        dm1_v2_camera_controller_pc34.c
-        dm1_v2_movement_engine_pc34.c
-        dm1_v2_viewport_renderer_pc34.c
+        tests/test_dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
     add_executable(test_dm1_v2_hud_overlay_pc34
-        test_dm1_v2_hud_overlay_pc34.c
-        dm1_v2_hud_overlay_pc34.c
+        tests/test_dm1_v2_hud_overlay_pc34.c
+        src/dm1v2/dm1_v2_hud_overlay_pc34.c
     )
     add_executable(test_dm1_v2_lighting_dynamic_pc34
-        test_dm1_v2_lighting_dynamic_pc34.c
-        dm1_v2_lighting_dynamic_pc34.c
+        tests/test_dm1_v2_lighting_dynamic_pc34.c
+        src/dm1v2/dm1_v2_lighting_dynamic_pc34.c
     )
     add_executable(test_dm1_v2_item_render_pc34
-        test_dm1_v2_item_render_pc34.c
-        dm1_v2_item_render_pc34.c
+        tests/test_dm1_v2_item_render_pc34.c
+        src/dm1v2/dm1_v2_item_render_pc34.c
     )
     target_compile_definitions(test_dm1_v2_item_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(test_dm1_v2_settings_pc34
-        test_dm1_v2_settings_pc34.c
-        dm1_v2_settings_pc34.c
+        tests/test_dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
     )
     target_link_libraries(test_dm1_v2_settings_pc34 PRIVATE firestaff_m12)
     add_executable(test_m11_display_aspect_present_rect
-        test_m11_display_aspect_present_rect.c
+        tests/test_m11_display_aspect_present_rect.c
     )
     target_link_libraries(test_m11_display_aspect_present_rect PRIVATE firestaff_m11)
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
-        dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
     if(UNIX AND NOT APPLE)
         target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
@@ -828,27 +831,27 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
-        test_dm1_v1_movement_pipeline_pc34_compat.c
-    dm1_v1_viewport_3d_pc34_compat.c
-    dm1_v1_creature_render_pc34_compat.c
-    dm1_v2_viewport_renderer_pc34.c
-    csb_v1_dungeon_world_pc34_compat.c
-    dm1_v2_movement_engine_pc34.c
-    csb_v1_game_state_pc34_compat.c
-    csb_v1_dungeon_loader_pc34_compat.c
-    csb_v1_chaos_magic_pc34_compat.c
-    csb_v1_viewport_pc34_compat.c
-    csb_v1_monster_pc34_compat.c
-    csb_v1_character_pc34_compat.c
-    csb_v1_save_load_pc34_compat.c
-    dm1_v1_champion_stats_pc34_compat.c
-    dm1_v1_inventory_pc34_compat.c
-    dm1_v1_spell_casting_pc34_compat.c
-    dm1_v1_stairs_level_pc34_compat.c
-    dm1_v1_text_message_pc34_compat.c
-    dm1_v1_sound_pc34_compat.c
-    dm1_v1_teleporter_pit_pc34_compat.c
-    dm1_v1_light_pc34_compat.c
+        tests/test_dm1_v1_movement_pipeline_pc34_compat.c
+    src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_creature_render_pc34_compat.c
+    src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/csb/csb_v1_dungeon_world_pc34_compat.c
+    src/dm1v2/dm1_v2_movement_engine_pc34.c
+    src/csb/csb_v1_game_state_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_chaos_magic_pc34_compat.c
+    src/csb/csb_v1_viewport_pc34_compat.c
+    src/csb/csb_v1_monster_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+    src/dm1/dm1_v1_champion_stats_pc34_compat.c
+    src/dm1/dm1_v1_inventory_pc34_compat.c
+    src/dm1/dm1_v1_spell_casting_pc34_compat.c
+    src/dm1/dm1_v1_stairs_level_pc34_compat.c
+    src/dm1/dm1_v1_text_message_pc34_compat.c
+    src/dm1/dm1_v1_sound_pc34_compat.c
+    src/dm1/dm1_v1_teleporter_pit_pc34_compat.c
+    src/dm1/dm1_v1_light_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -860,26 +863,26 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
-        test_dm1_v1_creature_render_pc34_compat_integration.c
-        dm1_v1_creature_render_pc34_compat.c
-    dm1_v2_viewport_renderer_pc34.c
-    csb_v1_dungeon_world_pc34_compat.c
-    dm1_v2_movement_engine_pc34.c
-    csb_v1_game_state_pc34_compat.c
-    csb_v1_dungeon_loader_pc34_compat.c
-    csb_v1_chaos_magic_pc34_compat.c
-    csb_v1_viewport_pc34_compat.c
-    csb_v1_monster_pc34_compat.c
-    csb_v1_character_pc34_compat.c
-    csb_v1_save_load_pc34_compat.c
-    dm1_v1_champion_stats_pc34_compat.c
-    dm1_v1_inventory_pc34_compat.c
-    dm1_v1_spell_casting_pc34_compat.c
-    dm1_v1_stairs_level_pc34_compat.c
-    dm1_v1_text_message_pc34_compat.c
-    dm1_v1_sound_pc34_compat.c
-    dm1_v1_teleporter_pit_pc34_compat.c
-    dm1_v1_light_pc34_compat.c
+        tests/test_dm1_v1_creature_render_pc34_compat_integration.c
+        src/dm1/dm1_v1_creature_render_pc34_compat.c
+    src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/csb/csb_v1_dungeon_world_pc34_compat.c
+    src/dm1v2/dm1_v2_movement_engine_pc34.c
+    src/csb/csb_v1_game_state_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_chaos_magic_pc34_compat.c
+    src/csb/csb_v1_viewport_pc34_compat.c
+    src/csb/csb_v1_monster_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+    src/dm1/dm1_v1_champion_stats_pc34_compat.c
+    src/dm1/dm1_v1_inventory_pc34_compat.c
+    src/dm1/dm1_v1_spell_casting_pc34_compat.c
+    src/dm1/dm1_v1_stairs_level_pc34_compat.c
+    src/dm1/dm1_v1_text_message_pc34_compat.c
+    src/dm1/dm1_v1_sound_pc34_compat.c
+    src/dm1/dm1_v1_teleporter_pit_pc34_compat.c
+    src/dm1/dm1_v1_light_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -890,8 +893,8 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_creature_render_pc34_compat_integration
     )
     add_executable(test_dm1_v1_projectile_explosion_render_pc34_compat
-        test_dm1_v1_projectile_explosion_render_pc34_compat.c
-        dm1_v1_projectile_explosion_render_pc34_compat.c
+        tests/test_dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -906,7 +909,7 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_projectile_travel_blockers_source_lock.py
     )
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
-        test_dm1_v1_viewport_hand_overlay_pc34_compat.c
+        tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_hand_overlay_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -917,8 +920,8 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_viewport_hand_overlay_pc34_compat
     )
     add_executable(test_dm1_v1_champion_panel_hud_pc34_compat
-        test_dm1_v1_champion_panel_hud_pc34_compat.c
-        dm1_v1_champion_panel_hud_pc34_compat.c
+        tests/test_dm1_v1_champion_panel_hud_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_champion_panel_hud_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -996,7 +999,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_sensor_trigger_pc34_compat
-        test_dm1_v1_sensor_trigger_pc34_compat.c
+        tests/test_dm1_v1_sensor_trigger_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_sensor_trigger_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1008,7 +1011,7 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
-        test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c
+        tests/test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c
     )
     target_link_libraries(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1020,8 +1023,8 @@ if(BUILD_TESTING)
     )
 
     add_executable(test_dm1_v1_resurrection_pc34_compat
-        test_dm1_v1_resurrection_pc34_compat.c
-        dm1_v1_resurrection_pc34_compat.c
+        tests/test_dm1_v1_resurrection_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_resurrection_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1540,8 +1543,8 @@ if(BUILD_TESTING)
         )
 
     add_executable(test_dm1_v1_spell_casting_pc34_compat
-        test_dm1_v1_spell_casting_pc34_compat.c
-        dm1_v1_spell_casting_pc34_compat.c
+        tests/test_dm1_v1_spell_casting_pc34_compat.c
+        src/dm1/dm1_v1_spell_casting_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_spell_casting_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1555,7 +1558,7 @@ if(BUILD_TESTING)
 
     # Launcher/entrance handoff wait policy: ReDMCSB waits for fresh input.
     add_executable(test_m11_entrance_wait_policy
-        test_m11_entrance_wait_policy.c
+        tests/test_m11_entrance_wait_policy.c
     )
     target_link_libraries(test_m11_entrance_wait_policy PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
@@ -1588,8 +1591,8 @@ if(BUILD_TESTING)
 
     # DM1 V1 Sound & Music System source-lock gate
     add_executable(test_dm1_v1_sound_pc34_compat_integration
-        test_dm1_v1_sound_pc34_compat_integration.c
-        dm1_v1_sound_pc34_compat.c
+        tests/test_dm1_v1_sound_pc34_compat_integration.c
+        src/dm1/dm1_v1_sound_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_sound_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1602,42 +1605,42 @@ if(BUILD_TESTING)
 
     # DM1 V1 Save/Load Game System source-lock gate
     add_executable(test_dm1_v1_save_load
-        test_dm1_v1_save_load.c
-    dm1_v1_viewport_3d_pc34_compat.c
-    dm1_v1_dungeon_loader_pc34_compat.c
-    dm1_v1_title_screen_pc34_compat.c
-    dm1_v1_palette_font_pc34_compat.c
-    dm1_v1_object_world_pc34_compat.c
-    dm1_v1_graphics_loader_pc34_compat.c
-    dm1_v1_fade_transition_pc34_compat.c
-    dm1_v1_portrait_panel_pc34_compat.c
-    dm1_v1_wall_ornament_pc34_compat.c
-    dm1_v1_dungeon_decompressor_pc34_compat.c
-    dm1_v1_field_teleporter_effect_pc34_compat.c
-    dm1_v1_game_loop_integration_pc34_compat.c
-    dm1_v1_creature_viewport_pc34_compat.c
-    dm1_v1_save_load_system_pc34_compat.c
-    dm1_v1_blit_fill_pc34_compat.c
-    dm1_v1_dialog_scroll_pc34_compat.c
-    dm1_v1_click_routing_pc34_compat.c
-        dm1_v1_save_load.c
-    dm1_v1_viewport_3d_pc34_compat.c
-    dm1_v1_dungeon_loader_pc34_compat.c
-    dm1_v1_title_screen_pc34_compat.c
-    dm1_v1_palette_font_pc34_compat.c
-    dm1_v1_object_world_pc34_compat.c
-    dm1_v1_graphics_loader_pc34_compat.c
-    dm1_v1_fade_transition_pc34_compat.c
-    dm1_v1_portrait_panel_pc34_compat.c
-    dm1_v1_wall_ornament_pc34_compat.c
-    dm1_v1_dungeon_decompressor_pc34_compat.c
-    dm1_v1_field_teleporter_effect_pc34_compat.c
-    dm1_v1_game_loop_integration_pc34_compat.c
-    dm1_v1_creature_viewport_pc34_compat.c
-    dm1_v1_save_load_system_pc34_compat.c
-    dm1_v1_blit_fill_pc34_compat.c
-    dm1_v1_dialog_scroll_pc34_compat.c
-    dm1_v1_click_routing_pc34_compat.c
+        tests/test_dm1_v1_save_load.c
+    src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
+    src/dm1/dm1_v1_title_screen_pc34_compat.c
+    src/dm1/dm1_v1_palette_font_pc34_compat.c
+    src/dm1/dm1_v1_object_world_pc34_compat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/dm1/dm1_v1_fade_transition_pc34_compat.c
+    src/dm1/dm1_v1_portrait_panel_pc34_compat.c
+    src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c
+    src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
+    src/dm1/dm1_v1_game_loop_integration_pc34_compat.c
+    src/dm1/dm1_v1_creature_viewport_pc34_compat.c
+    src/dm1/dm1_v1_save_load_system_pc34_compat.c
+    src/dm1/dm1_v1_blit_fill_pc34_compat.c
+    src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
+    src/dm1/dm1_v1_click_routing_pc34_compat.c
+        src/dm1/dm1_v1_save_load.c
+    src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
+    src/dm1/dm1_v1_title_screen_pc34_compat.c
+    src/dm1/dm1_v1_palette_font_pc34_compat.c
+    src/dm1/dm1_v1_object_world_pc34_compat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/dm1/dm1_v1_fade_transition_pc34_compat.c
+    src/dm1/dm1_v1_portrait_panel_pc34_compat.c
+    src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c
+    src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
+    src/dm1/dm1_v1_game_loop_integration_pc34_compat.c
+    src/dm1/dm1_v1_creature_viewport_pc34_compat.c
+    src/dm1/dm1_v1_save_load_system_pc34_compat.c
+    src/dm1/dm1_v1_blit_fill_pc34_compat.c
+    src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
+    src/dm1/dm1_v1_click_routing_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_save_load PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1650,8 +1653,8 @@ if(BUILD_TESTING)
 
     # DM1 V1 Combat & Damage System source-lock gate
     add_executable(test_dm1_v1_combat_pc34_compat_integration
-        test_dm1_v1_combat_pc34_compat_integration.c
-        dm1_v1_combat_pc34_compat.c
+        tests/test_dm1_v1_combat_pc34_compat_integration.c
+        src/dm1/dm1_v1_combat_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_combat_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1670,8 +1673,8 @@ install(TARGETS firestaff RUNTIME DESTINATION bin)
 # ── DM1 V1 Champion Needs source-lock gate ───────────────────────────
 if(NOT TARGET test_dm1_v1_champion_needs_pc34_compat_integration)
     add_executable(test_dm1_v1_champion_needs_pc34_compat_integration
-        test_dm1_v1_champion_needs_pc34_compat_integration.c
-        dm1_v1_champion_needs_pc34_compat.c
+        tests/test_dm1_v1_champion_needs_pc34_compat_integration.c
+        src/dm1/dm1_v1_champion_needs_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_champion_needs_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
@@ -1685,8 +1688,8 @@ endif()
 # ── DM1 V1 Event Timer source-lock gate ──────────────────────────────
 if(NOT TARGET test_dm1_v1_event_timer_pc34_compat)
     add_executable(test_dm1_v1_event_timer_pc34_compat
-        test_dm1_v1_event_timer_pc34_compat.c
-        dm1_v1_event_timer_pc34_compat.c
+        tests/test_dm1_v1_event_timer_pc34_compat.c
+        src/dm1/dm1_v1_event_timer_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_event_timer_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1700,8 +1703,8 @@ endif()
 # ── DM1 V1 Object/Item Interaction source-lock gate ──────────────────
 if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
     add_executable(test_dm1_v1_object_interaction_pc34_compat
-        test_dm1_v1_object_interaction_pc34_compat.c
-        dm1_v1_object_interaction_pc34_compat.c
+        tests/test_dm1_v1_object_interaction_pc34_compat.c
+        src/dm1/dm1_v1_object_interaction_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_object_interaction_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1714,9 +1717,9 @@ endif()
 
     # DM1 V1 Creature AI Behavior System
     add_executable(test_dm1_v1_creature_ai_behavior_pc34_compat
-        test_dm1_v1_creature_ai_behavior_pc34_compat.c
-        dm1_v1_creature_ai_behavior_pc34_compat.c
-        memory_creature_ai_pc34_compat.c
+        tests/test_dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1730,8 +1733,8 @@ endif()
 # ── DM1 V1 Light & Torch System source-lock gate ─────────────────────
 if(NOT TARGET test_dm1_v1_light_pc34_compat)
     add_executable(test_dm1_v1_light_pc34_compat
-        test_dm1_v1_light_pc34_compat.c
-        dm1_v1_light_pc34_compat.c
+        tests/test_dm1_v1_light_pc34_compat.c
+        src/dm1/dm1_v1_light_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_light_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1745,8 +1748,8 @@ endif()
 # ── DM1 V1 Text/Message Display source-lock gate ─────────────────────
 if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
     add_executable(test_dm1_v1_text_message_pc34_compat
-        test_dm1_v1_text_message_pc34_compat.c
-        dm1_v1_text_message_pc34_compat.c
+        tests/test_dm1_v1_text_message_pc34_compat.c
+        src/dm1/dm1_v1_text_message_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_text_message_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1760,8 +1763,8 @@ endif()
 # ── DM1 V1 Skill & Experience System source-lock gate ─────────────────
 if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     add_executable(test_dm1_v1_skill_experience_pc34_compat
-        test_dm1_v1_skill_experience_pc34_compat.c
-        dm1_v1_skill_experience_pc34_compat.c
+        tests/test_dm1_v1_skill_experience_pc34_compat.c
+        src/dm1/dm1_v1_skill_experience_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_skill_experience_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1775,8 +1778,8 @@ endif()
 # ── DM1 V1 Endgame System source-lock gate ───────────────────────────
 if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
     add_executable(test_dm1_v1_endgame_system_pc34_compat
-        test_dm1_v1_endgame_system_pc34_compat.c
-        dm1_v1_endgame_system_pc34_compat.c
+        tests/test_dm1_v1_endgame_system_pc34_compat.c
+        src/dm1/dm1_v1_endgame_system_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_endgame_system_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1791,8 +1794,8 @@ endif()
 # ── DM1 V1 Room Transition source-lock gate ──────────────────────────
 if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
     add_executable(test_dm1_v1_room_transition_pc34_compat
-        test_dm1_v1_room_transition_pc34_compat.c
-        dm1_v1_room_transition_pc34_compat.c
+        tests/test_dm1_v1_room_transition_pc34_compat.c
+        src/dm1/dm1_v1_room_transition_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_room_transition_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -1812,8 +1815,8 @@ endif()
 # ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
 if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_executable(test_dm1_v1_viewport_3d_pc34_compat
-        test_dm1_v1_viewport_3d_pc34_compat.c
-        dm1_v1_viewport_3d_pc34_compat.c
+        tests/test_dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -2411,9 +2414,9 @@ endif()
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
-        test_title_frontend_runtime_cadence_pc34_compat.c
-        title_frontend_v1.c
-        title_dat_loader_v1.c
+        tests/test_title_frontend_runtime_cadence_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
     )
     if(NOT MSVC)
         target_compile_options(test_title_frontend_runtime_cadence_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -2438,11 +2441,11 @@ endif()
 # ── DM1 V1 ENDGAME source animation/capture schedule gate ─────────────
 if(BUILD_TESTING)
     add_executable(test_endgame_frontend_pc34_compat_integration
-        test_endgame_frontend_pc34_compat_integration.c
-        endgame_frontend_pc34_compat.c
-        bitmap_call_pc34_compat.c
-        image_expand_pc34_compat.c
-        image_backend_pc34_compat.c
+        tests/test_endgame_frontend_pc34_compat_integration.c
+        src/frontend/endgame_frontend_pc34_compat.c
+        src/shared/bitmap_call_pc34_compat.c
+        src/shared/image_expand_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
     )
     target_compile_definitions(test_endgame_frontend_pc34_compat_integration PRIVATE
         COMPILE_H

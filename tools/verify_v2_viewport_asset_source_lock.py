@@ -97,8 +97,8 @@ def validate_source(redmcsb_source: Path) -> dict[str, int]:
 
 
 def validate_v2_material_code(source_dims: dict[str, int]) -> None:
-    header = read(REPO_ROOT / "dm1_v2_viewport_renderer_pc34.h")
-    impl = read(REPO_ROOT / "dm1_v2_viewport_renderer_pc34.c")
+    header = read(REPO_ROOT / "include/dm1_v2_viewport_renderer_pc34.h")
+    impl = read(REPO_ROOT / "src/dm1v2/dm1_v2_viewport_renderer_pc34.c")
     require(f"#define DM1_V2_VIEWPORT_W {source_dims['width']}" in header, "V2 viewport width macro drifted")
     require(f"#define DM1_V2_VIEWPORT_H {source_dims['height']}" in header, "V2 viewport height macro drifted")
     require(f"#define DM1_V2_VIEWPORT_BYTE_W {source_dims['byteWidth']}" in header, "V2 viewport byte-width macro drifted")

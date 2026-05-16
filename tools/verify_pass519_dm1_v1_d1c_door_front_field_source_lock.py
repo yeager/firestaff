@@ -38,14 +38,14 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-d1c-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "136-156", [
+    ("firestaff-d1c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "136-156", [
         "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
         "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
         "DUNVIEW.C:7877-7902 top/side frame and button draw",
         "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
         "DUNVIEW.C:7910-7937 pass2 front cells after door",
     ]),
-    ("firestaff-d1c-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "579-615", [
+    ("firestaff-d1c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "579-615", [
         "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
         "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
         "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",

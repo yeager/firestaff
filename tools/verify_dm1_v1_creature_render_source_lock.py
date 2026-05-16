@@ -127,7 +127,7 @@ def main():
         print("FAIL: Cannot find Firestaff project root", file=sys.stderr)
         return 1
 
-    src_path = os.path.join(root, "dm1_v1_creature_render_pc34_compat.c")
+    src_path = os.path.join(root, "src/dm1/dm1_v1_creature_render_pc34_compat.c")
     if not os.path.isfile(src_path):
         print(f"FAIL: Source not found: {src_path}", file=sys.stderr)
         return 1
@@ -168,7 +168,7 @@ def main():
         errors += 1
 
     # 4. Verify M618 constant in header
-    hdr_path = os.path.join(root, "dm1_v1_creature_render_pc34_compat.h")
+    hdr_path = os.path.join(root, "include/dm1_v1_creature_render_pc34_compat.h")
     with open(hdr_path, "r") as f:
         hdr = f.read()
 

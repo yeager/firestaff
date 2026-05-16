@@ -40,7 +40,7 @@ def git(*a): return subprocess.check_output(["git",*a],cwd=ROOT,text=True).strip
 def main():
     OUT.mkdir(parents=True,exist_ok=True)
     clik=read(RED/"CLIKMENU.C","latin-1"); dung=read(RED/"DUNGEON.C","latin-1"); moves=read(RED/"MOVESENS.C","latin-1")
-    core=read(ROOT/"dm1_v1_movement_command_core_pc34_compat.c"); move=read(ROOT/"memory_movement_pc34_compat.c"); test=read(ROOT/"test_dm1_v1_movement_command_core_pc34_compat.c")
+    core=read(ROOT/"src/dm1/dm1_v1_movement_command_core_pc34_compat.c"); move=read(ROOT/"src/memory/memory_movement_pc34_compat.c"); test=read(ROOT/"tests/test_dm1_v1_movement_command_core_pc34_compat.c")
     f0366_s,f0366_e,f0366=fn(clik,"F0366_COMMAND_ProcessTypes3To6_MoveParty", next_anchor="#include \"CLIKCHAM.C\"")
     f0150_s,f0150_e,f0150=fn(dung,"F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement")
     f0267_s,f0267_e,f0267=fn(moves,"F0267_MOVE_GetMoveResult_CPSCE","BOOLEAN", next_anchor="void F0268_SENSOR_AddEvent")

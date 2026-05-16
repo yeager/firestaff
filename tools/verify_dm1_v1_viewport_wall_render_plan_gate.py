@@ -21,7 +21,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS127 = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"
-LOCAL = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
+LOCAL = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 REDMCSB_DUNVIEW = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C")
 OUT = ROOT / "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json"
 REPORT = ROOT / "parity-evidence/dm1_v1_viewport_wall_render_plan_gate.md"
@@ -301,7 +301,7 @@ def main() -> int:
         "status": status,
         "sourceInputs": {
             "pass127": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
-            "localWallMetadata": "dm1_v1_viewport_3d_pc34_compat.c",
+            "localWallMetadata": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
             "redmcsbOrder": "DUNVIEW.C:8318-8542 F0128 far-to-near draw order",
             "redmcsbWallSpecs": "DUNVIEW.C:6254-8144 PC34 wall cases and occlusion returns",
             "redmcsbZoneDefines": "DEFS.H:4042-4057 C702..C717 wall-zone IDs",

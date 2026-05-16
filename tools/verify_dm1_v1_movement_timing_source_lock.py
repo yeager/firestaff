@@ -9,8 +9,8 @@ COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 CHAMPION_C = REDMCSB_SOURCE / "CHAMPION.C"
 MOVESENS_C = REDMCSB_SOURCE / "MOVESENS.C"
-COMPAT_C = ROOT / "dm1_v1_movement_timing_pc34_compat.c"
-TEST_C = ROOT / "test_dm1_v1_movement_timing_pc34_compat.c"
+COMPAT_C = ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c"
+TEST_C = ROOT / "tests/test_dm1_v1_movement_timing_pc34_compat.c"
 
 def block(path: Path, start: int, end: int) -> str:
     lines = path.read_text(errors="replace").splitlines()

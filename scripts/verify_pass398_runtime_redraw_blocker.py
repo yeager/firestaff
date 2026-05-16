@@ -130,10 +130,10 @@ def redmcsb_audit() -> dict:
 
 def product_audit() -> list[dict]:
     checks = [
-        ("main_loop_m11.c", ["inputRedrawAfterViewportDirtyCount", "lastInputRedrawAfterViewportDirty", "M11_GameView_HandleInput(&gameView, input)", "M11_GameView_Draw(&gameView"]),
-        ("m11_game_view.c", ["DM1_V1_MovementPipeline_EnqueueCommandPc34Compat", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat", "lastDm1V1MovementPipelineResult.viewportDirty", "return M11_GAME_INPUT_REDRAW"]),
-        ("dm1_v1_movement_pipeline_pc34_compat.c", ["outResult->viewportDirty = outResult->core.viewportRedrawRequested", "provenance.viewportPresent"]),
-        ("dm1_v1_movement_command_core_pc34_compat.c", ["outResult->viewportRedrawRequested = 1", "dm1_v1_is_turn_command", "dm1_v1_is_step_command"]),
+        ("src/engine/main_loop_m11.c", ["inputRedrawAfterViewportDirtyCount", "lastInputRedrawAfterViewportDirty", "M11_GameView_HandleInput(&gameView, input)", "M11_GameView_Draw(&gameView"]),
+        ("src/engine/m11_game_view.c", ["DM1_V1_MovementPipeline_EnqueueCommandPc34Compat", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat", "lastDm1V1MovementPipelineResult.viewportDirty", "return M11_GAME_INPUT_REDRAW"]),
+        ("src/dm1/dm1_v1_movement_pipeline_pc34_compat.c", ["outResult->viewportDirty = outResult->core.viewportRedrawRequested", "provenance.viewportPresent"]),
+        ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", ["outResult->viewportRedrawRequested = 1", "dm1_v1_is_turn_command", "dm1_v1_is_step_command"]),
     ]
     rows = []
     for rel, needles in checks:

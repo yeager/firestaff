@@ -12,7 +12,7 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
-FIRESTAFF_SRC = ROOT / "m11_game_view.c"
+FIRESTAFF_SRC = ROOT / "src/engine/m11_game_view.c"
 FIRESTAFF_PROBE = ROOT / "probes/m11/firestaff_m11_game_view_probe.c"
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_inventory_mouth_eye_routing_redmcsb_gate.json"
 
@@ -23,8 +23,8 @@ SOURCE_RANGES = [
     {"file": "PANEL.C", "start": 1743, "end": 1825},
     {"file": "PANEL.C", "start": 1928, "end": 1950},
     {"file": "PANEL.C", "start": 2111, "end": 2180},
-    {"file": "m11_game_view.c", "start": 15569, "end": 15580},
-    {"file": "m11_game_view.c", "start": 15646, "end": 15658},
+    {"file": "src/engine/m11_game_view.c", "start": 15569, "end": 15580},
+    {"file": "src/engine/m11_game_view.c", "start": 15646, "end": 15658},
     {"file": "probes/m11/firestaff_m11_game_view_probe.c", "start": 738, "end": 755},
 ]
 
@@ -195,8 +195,8 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff probe mouth/eye route assertions",
     )
-    require_excerpt("m11_game_view.c", 15569, 15580, ["route->zoneId == 545 || route->zoneId == 546", "? 56 : 12", "if (outY) *outY = 13"])
-    require_excerpt("m11_game_view.c", 15646, 15658, ["{ 70, M11_DM1_MOUSE_SPACE_VIEWPORT, 545", "{ 71, M11_DM1_MOUSE_SPACE_VIEWPORT, 546"])
+    require_excerpt("src/engine/m11_game_view.c", 15569, 15580, ["route->zoneId == 545 || route->zoneId == 546", "? 56 : 12", "if (outY) *outY = 13"])
+    require_excerpt("src/engine/m11_game_view.c", 15646, 15658, ["{ 70, M11_DM1_MOUSE_SPACE_VIEWPORT, 545", "{ 71, M11_DM1_MOUSE_SPACE_VIEWPORT, 546"])
     require_excerpt("probes/m11/firestaff_m11_game_view_probe.c", 738, 755, ["INV_GV_437A", "INV_GV_437B", "zoneId == 545", "zoneId == 546"])
     return [
         f"Firestaff m11_v1_mouse_route_zone_rect starts at {FIRESTAFF_SRC}:{line_no(text, route_start)}",

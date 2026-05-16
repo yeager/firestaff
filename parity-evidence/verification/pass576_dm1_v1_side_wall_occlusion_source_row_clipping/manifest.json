@@ -102,7 +102,7 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "291-300",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -151,7 +151,7 @@
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "729-768",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -236,7 +236,7 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "222-248",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -281,7 +281,7 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "799-855",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"

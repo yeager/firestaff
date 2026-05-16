@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 PROJ = RED_ROOT / "PROJEXPL.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
-LOCAL_C = ROOT / "memory_projectile_pc34_compat.c"
-LOCAL_TEST = ROOT / "test_dm1_v1_projectile_explosion_render_pc34_compat.c"
+LOCAL_C = ROOT / "src/memory/memory_projectile_pc34_compat.c"
+LOCAL_TEST = ROOT / "tests/test_dm1_v1_projectile_explosion_render_pc34_compat.c"
 
 
 def block(path: Path, start: int, end: int) -> str:

@@ -23,7 +23,7 @@ REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 COORD_C = REDMCSB_SOURCE / "COORD.C"
 ZONES_JSON = ROOT / "data/zones_h_reconstruction.json"
-MATRIX_C = ROOT / "touch_click_zone_matrix_pc34_compat.c"
+MATRIX_C = ROOT / "src/shared/touch_click_zone_matrix_pc34_compat.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/touch_movement_viewport_source_lock.json"
 
 EXPECTED = [

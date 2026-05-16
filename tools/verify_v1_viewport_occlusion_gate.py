@@ -12,7 +12,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "m11_game_view.c"
+SRC = ROOT / "src/engine/m11_game_view.c"
 
 TARGETS = {
     "pits": "m11_draw_dm1_floor_pits",

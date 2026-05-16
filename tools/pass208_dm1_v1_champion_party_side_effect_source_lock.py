@@ -98,7 +98,7 @@ CHECKS = [
 LOCAL_CHECKS = [
     {
         "id": "movement_timing_records_square_change_scent_and_cooldown",
-        "path": "dm1_v1_movement_timing_pc34_compat.c",
+        "path": "src/dm1/dm1_v1_movement_timing_pc34_compat.c",
         "needles": [
             "MOVESENS.C:752-775 updates G0362_l_LastPartyMovementTime and scent timing",
             "result.disabledMovementTicks = DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat",
@@ -109,7 +109,7 @@ LOCAL_CHECKS = [
     },
     {
         "id": "movement_core_keeps_pure_step_direction_helpers",
-        "path": "memory_movement_pc34_compat.c",
+        "path": "src/memory/memory_movement_pc34_compat.c",
         "needles": [
             "static const int s_dx[4] = {  0,  1,  0, -1 };",
             "static const int s_dy[4] = { -1,  0,  1,  0 };",
@@ -159,7 +159,7 @@ def run() -> tuple[int, dict]:
         if missing:
             failures.append(f"{check['id']} missing {len(missing)} local snippet(s)")
 
-    champ_header = read(ROOT / "memory_champion_state_pc34_compat.h")
+    champ_header = read(ROOT / "include/memory_champion_state_pc34_compat.h")
     champion_struct = champ_header.split("struct ChampionState_Compat", 1)[1].split("};", 1)[0] if "struct ChampionState_Compat" in champ_header else ""
     has_champion_cell = any(token in champion_struct for token in [" cell;", " Cell;", "championCell", "partyCell"])
     has_champion_direction = "unsigned char  direction;" in champion_struct

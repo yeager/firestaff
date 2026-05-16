@@ -15,7 +15,7 @@ import hashlib
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-FIRE = ROOT / "m11_game_view.c"
+FIRE = ROOT / "src/engine/m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
 REGISTRY = Path.home() / ".openclaw/data/firestaff-graphics-hash-registry.md"
 RED_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"

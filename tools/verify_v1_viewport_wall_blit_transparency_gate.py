@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-SRC = REPO / "m11_game_view.c"
+SRC = REPO / "src/engine/m11_game_view.c"
 
 CITATIONS = [
     "ReDMCSB DUNVIEW.C:3111-3155 F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap blits with C10_COLOR_FLESH on MEDIA529/PC paths.",

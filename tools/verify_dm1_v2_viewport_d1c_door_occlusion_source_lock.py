@@ -39,13 +39,13 @@ ORDER_SYMBOLS = [
 FIRESTAFF_REQUIRED = [
     ("CMakeLists.txt", "dm1_v2_viewport_d1c_door_occlusion_source_lock"),
     ("tools/verify_dm1_v2_completion_matrix.py", "dm1_v2_viewport_d1c_door_occlusion_source_lock"),
-    ("dm1_v2_viewport_renderer_pc34.h", "DM1_V2_VIEW_SQUARE_D1C"),
-    ("dm1_v2_viewport_renderer_pc34.h", "DM1_V2_ELEMENT_DOOR_FRONT"),
-    ("dm1_v2_viewport_renderer_pc34.c", "DM1_V2_VIEW_SQUARE_D1C"),
-    ("dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7873-7874"),
-    ("dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7875"),
-    ("dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7877-7910"),
-    ("dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7910-7937"),
+    ("include/dm1_v2_viewport_renderer_pc34.h", "DM1_V2_VIEW_SQUARE_D1C"),
+    ("include/dm1_v2_viewport_renderer_pc34.h", "DM1_V2_ELEMENT_DOOR_FRONT"),
+    ("src/dm1v2/dm1_v2_viewport_renderer_pc34.c", "DM1_V2_VIEW_SQUARE_D1C"),
+    ("src/dm1v2/dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7873-7874"),
+    ("src/dm1v2/dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7875"),
+    ("src/dm1v2/dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7877-7910"),
+    ("src/dm1v2/dm1_v2_viewport_renderer_pc34.c", "DUNVIEW.C:7910-7937"),
 ]
 
 

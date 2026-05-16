@@ -16,7 +16,7 @@
   "pass503SourceLocks": {
     "file": "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json",
     "requiredSourceIdsPresent": true,
-    "sha256": "f4dd3a1264254c6efc021815256d08aaabbcb7ba94a7d147c4e08df6f8ac9432",
+    "sha256": "7285ee5fb2e46472b95b255bac5d8e79bcfffa33798d1264c8f26a80a38a0864",
     "sourceCheckCount": 7,
     "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
   },
@@ -44,7 +44,7 @@
   "renderPlanBoundary": {
     "file": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
     "nonClaim": "original pixel parity, screenshot comparison, or decoded GRAPHICS.DAT byte equality",
-    "sha256": "8b6c449315970e4cf9f4eb92d508b6c0f849341249a0b2b7db4248b9e5689b62",
+    "sha256": "b1c3be347a1da53025e87fb0a13ce021187323cf75c228f6653f61347921c32b",
     "snapshotSummaries": [
       {
         "d4ObjectRows": [

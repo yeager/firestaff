@@ -18,11 +18,11 @@ No DUNGEON.DAT/GRAPHICS.DAT variants are read by this verifier.
 
 ## Firestaff Anchors
 
-- dm1_v1_input_command_queue_pc34_compat.c - queued-command gate and pending replay
-- dm1_v1_movement_command_core_pc34_compat.c - turn/step dispatch, blockers, coordinate update, cooldown
-- dm1_v1_movement_timing_pc34_compat.c - movement ticks, G0362 update, cooldown decrement
-- test_dm1_v1_movement_command_core_pc34_compat.c - focused command core coverage
-- test_dm1_v1_movement_pipeline_pc34_compat.c - pipeline cooldown decrement/release coverage
+- src/dm1/dm1_v1_input_command_queue_pc34_compat.c - queued-command gate and pending replay
+- src/dm1/dm1_v1_movement_command_core_pc34_compat.c - turn/step dispatch, blockers, coordinate update, cooldown
+- src/dm1/dm1_v1_movement_timing_pc34_compat.c - movement ticks, G0362 update, cooldown decrement
+- tests/test_dm1_v1_movement_command_core_pc34_compat.c - focused command core coverage
+- tests/test_dm1_v1_movement_pipeline_pc34_compat.c - pipeline cooldown decrement/release coverage
 
 ## Registered CTests
 

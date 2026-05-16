@@ -19,11 +19,11 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 
 ## Firestaff route anchors
 
-- `main_loop_m11.c` — SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases. ok=`True`
-- `m11_game_view.c` — The live game view converts M12 movement inputs to C001..C006 and queues resolved command ids directly, so product movement is not blocked by original-DOS keyboard-buffer delivery. ok=`True`
-- `dm1_v1_input_command_queue_pc34_compat.c` — The compat queue still covers original keyboard rows when an original-shaped keycode is supplied. ok=`True`
-- `dm1_v1_movement_pipeline_pc34_compat.c` — The compat pipeline wires enqueue/dequeue/gate/turn/move/post-move processing under ReDMCSB citations. ok=`True`
-- `test_dm1_v1_input_command_queue_pc34_compat.c` — Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and the five-command C5 capacity limit (pass387 expanded the cap from four to five). ok=`True`
+- `src/engine/main_loop_m11.c` — SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases. ok=`True`
+- `src/engine/m11_game_view.c` — The live game view converts M12 movement inputs to C001..C006 and queues resolved command ids directly, so product movement is not blocked by original-DOS keyboard-buffer delivery. ok=`True`
+- `src/dm1/dm1_v1_input_command_queue_pc34_compat.c` — The compat queue still covers original keyboard rows when an original-shaped keycode is supplied. ok=`True`
+- `src/dm1/dm1_v1_movement_pipeline_pc34_compat.c` — The compat pipeline wires enqueue/dequeue/gate/turn/move/post-move processing under ReDMCSB citations. ok=`True`
+- `tests/test_dm1_v1_input_command_queue_pc34_compat.c` — Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and the five-command C5 capacity limit (pass387 expanded the cap from four to five). ok=`True`
 
 ## Prior runtime evidence reused
 

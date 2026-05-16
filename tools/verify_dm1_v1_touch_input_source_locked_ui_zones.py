@@ -36,7 +36,7 @@ MATRIX_RE = re.compile(
 
 def parse_matrix() -> dict[str, dict[str, object]]:
     rows: dict[str, dict[str, object]] = {}
-    for m in MATRIX_RE.finditer(read(REPO / "touch_click_zone_matrix_pc34_compat.c")):
+    for m in MATRIX_RE.finditer(read(REPO / "src/shared/touch_click_zone_matrix_pc34_compat.c")):
         command, zone, coord, button, x, y, w, h, name = m.groups()
         rows[name] = {
             "command": int(command),

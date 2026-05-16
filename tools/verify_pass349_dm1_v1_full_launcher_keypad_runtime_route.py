@@ -33,17 +33,17 @@ SOURCE_LOCKS = [
 ]
 
 PRODUCT_MARKERS = [
-    ("main_loop_m11.c", "m11_push_script_event_token"),
-    ("main_loop_m11.c", "kp4"),
-    ("main_loop_m11.c", "SDLK_KP_4"),
-    ("main_loop_m11.c", "SDLK_KP_5"),
-    ("main_loop_m11.c", "SDLK_KP_6"),
-    ("main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
-    ("main_loop_m11.c", "FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
-    ("m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
-    ("m11_game_view.c", "DM1_V1_COMMAND_MOVE_FORWARD"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
+    ("src/engine/main_loop_m11.c", "m11_push_script_event_token"),
+    ("src/engine/main_loop_m11.c", "kp4"),
+    ("src/engine/main_loop_m11.c", "SDLK_KP_4"),
+    ("src/engine/main_loop_m11.c", "SDLK_KP_5"),
+    ("src/engine/main_loop_m11.c", "SDLK_KP_6"),
+    ("src/engine/main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
+    ("src/engine/main_loop_m11.c", "FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
+    ("src/engine/m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
+    ("src/engine/m11_game_view.c", "DM1_V1_COMMAND_MOVE_FORWARD"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat"),
 ]
 
 

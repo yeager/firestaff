@@ -18,8 +18,8 @@ CLIKMENU = RED_ROOT / "CLIKMENU.C"
 MOVESENS = RED_ROOT / "MOVESENS.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 COMMAND = RED_ROOT / "COMMAND.C"
-FIRE_C = ROOT / "memory_movement_pc34_compat.c"
-FIRE_H = ROOT / "memory_movement_pc34_compat.h"
+FIRE_C = ROOT / "src/memory/memory_movement_pc34_compat.c"
+FIRE_H = ROOT / "include/memory_movement_pc34_compat.h"
 
 
 def line_no(text: str, offset: int) -> int:

@@ -93,9 +93,9 @@ def source_audit() -> dict:
 
 
 def firestaff_audit() -> dict:
-    movement = read(ROOT / "dm1_v1_movement_pc34_compat.c", "utf-8")
-    core = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
-    test = read(ROOT / "test_dm1_v1_movement_core_pc34_compat.c", "utf-8")
+    movement = read(ROOT / "src/dm1/dm1_v1_movement_pc34_compat.c", "utf-8")
+    core = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
+    test = read(ROOT / "tests/test_dm1_v1_movement_core_pc34_compat.c", "utf-8")
 
     require(movement, "static const int16_t step_forward_count[4] = {  1,  0, -1,  0 };", "Firestaff forward-count table")
     require(movement, "static const int16_t step_right_count[4]   = {  0,  1,  0, -1 };", "Firestaff right-count table")
@@ -125,9 +125,9 @@ def firestaff_audit() -> dict:
         require(test, needle, f"movement vector probe {needle}")
 
     return {
-        "dm1_v1_movement_pc34_compat.c": "static step_forward/right tables and cardinal dx/dy tables mirror ReDMCSB F0366/F0150 arithmetic",
-        "dm1_v1_movement_command_core_pc34_compat.c": "dequeued C003..C006 commands are converted to the same zero-based movement-arrow index before movement resolution",
-        "test_dm1_v1_movement_core_pc34_compat.c": "covers forward/back/strafe vectors for north and forward for east",
+        "src/dm1/dm1_v1_movement_pc34_compat.c": "static step_forward/right tables and cardinal dx/dy tables mirror ReDMCSB F0366/F0150 arithmetic",
+        "src/dm1/dm1_v1_movement_command_core_pc34_compat.c": "dequeued C003..C006 commands are converted to the same zero-based movement-arrow index before movement resolution",
+        "tests/test_dm1_v1_movement_core_pc34_compat.c": "covers forward/back/strafe vectors for north and forward for east",
     }
 
 

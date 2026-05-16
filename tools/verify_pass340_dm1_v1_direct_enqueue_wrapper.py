@@ -12,11 +12,11 @@ LOGDIR = ROOT / "parity-evidence" / "verification" / "pass340_dm1_v1_direct_enqu
 REQUIRED = [
     EVIDENCE,
     LOGDIR,
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.h",
-    ROOT / "dm1_v1_input_command_queue_pc34_compat.c",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.h",
-    ROOT / "dm1_v1_movement_pipeline_pc34_compat.c",
-    ROOT / "test_dm1_v1_movement_pipeline_pc34_compat.c",
+    ROOT / "include/dm1_v1_input_command_queue_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
+    ROOT / "include/dm1_v1_movement_pipeline_pc34_compat.h",
+    ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+    ROOT / "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
     RED / "COMMAND.C",
     RED / "INPUT.C",
     RED / "GAMELOOP.C",
@@ -35,24 +35,24 @@ EVIDENCE_NEEDLES = [
 ]
 
 FIRESTAFF_NEEDLES = {
-    "dm1_v1_input_command_queue_pc34_compat.h": [
+    "include/dm1_v1_input_command_queue_pc34_compat.h": [
         "DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat",
         "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat",
     ],
-    "dm1_v1_input_command_queue_pc34_compat.c": [
+    "src/dm1/dm1_v1_input_command_queue_pc34_compat.c": [
         "int DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat",
         "return enqueue_command(queue, command, x, y);",
         "return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(queue, command, x, y);",
     ],
-    "dm1_v1_movement_pipeline_pc34_compat.h": [
+    "include/dm1_v1_movement_pipeline_pc34_compat.h": [
         "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
         "It bypasses",
     ],
-    "dm1_v1_movement_pipeline_pc34_compat.c": [
+    "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c": [
         "int DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
         "DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(",
     ],
-    "test_dm1_v1_movement_pipeline_pc34_compat.c": [
+    "tests/test_dm1_v1_movement_pipeline_pc34_compat.c": [
         "test_direct_command_wrapper_forward_step",
         "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
         "DM1_V1_COMMAND_MOVE_FORWARD",
@@ -106,11 +106,11 @@ def main() -> int:
             if needle not in text:
                 raise AssertionError(f"{rel} missing {needle!r}")
 
-    q_c = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
+    q_c = read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
     if not re.search(r"int\s+DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat[\s\S]*?return\s+enqueue_command\(queue, command, x, y\);", q_c):
         raise AssertionError("queue wrapper does not directly forward explicit command")
 
-    pipe_c = read(ROOT / "dm1_v1_movement_pipeline_pc34_compat.c")
+    pipe_c = read(ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c")
     if not re.search(r"int\s+DM1_V1_MovementPipeline_EnqueueCommandPc34Compat[\s\S]*?&pipeline->commandQueue, command, x, y", pipe_c):
         raise AssertionError("pipeline wrapper does not forward to pipeline command queue")
 

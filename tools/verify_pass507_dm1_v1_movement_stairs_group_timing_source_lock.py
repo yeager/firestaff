@@ -187,30 +187,30 @@ def src_rows() -> list[dict[str, str]]:
 
 def firestaff_rows() -> list[dict[str, str]]:
     files = {
-        "queue": read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c"),
-        "move": read(ROOT / "memory_movement_pc34_compat.c"),
-        "core": read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c"),
-        "timing": read(ROOT / "dm1_v1_movement_timing_pc34_compat.c"),
-        "sensor": read(ROOT / "memory_sensor_execution_pc34_compat.c"),
-        "test_core": read(ROOT / "test_dm1_v1_movement_core_pc34_compat.c"),
-        "test_int": read(ROOT / "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"),
+        "queue": read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c"),
+        "move": read(ROOT / "src/memory/memory_movement_pc34_compat.c"),
+        "core": read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c"),
+        "timing": read(ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c"),
+        "sensor": read(ROOT / "src/memory/memory_sensor_execution_pc34_compat.c"),
+        "test_core": read(ROOT / "tests/test_dm1_v1_movement_core_pc34_compat.c"),
+        "test_int": read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"),
     }
     checks = [
-        ("dm1_v1_input_command_queue_pc34_compat.c", "DM1_V1_InputCommandQueue_ProcessOnePc34Compat", files["queue"], ["queue->locked = 1;", "is_move_command(result.command)", "disabledMovementTicks", "projectileDisabledMovementTicks", "process_pending_click(queue)", "result.dequeued = 1", "result.dispatchedMove = 1"], "F0380 move gate/replay/dispatch seam."),
-        ("memory_movement_pc34_compat.c", "F0701_MOVEMENT_GetStepDelta_Compat", files["move"], ["case MOVE_FORWARD:  stepDir = direction; break;", "case MOVE_RIGHT:    stepDir = (direction + 1) & 3; break;", "case MOVE_BACKWARD: stepDir = (direction + 2) & 3; break;", "case MOVE_LEFT:     stepDir = (direction + 3) & 3; break;"], "relative step delta seam."),
-        ("memory_movement_pc34_compat.c", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", files["move"], ["party->championCount <= 0", "DUNGEON_SQUARE_MASK_THING_LIST", "THING_GET_TYPE(thing) == THING_TYPE_GROUP", "return 1;"], "empty-party exception and group block seam."),
-        ("dm1_v1_movement_command_core_pc34_compat.c", "DM1_V1_MovementCommandCore_ProcessOnePc34Compat", files["core"], ["dm1_v1_apply_pre_step_stamina_cost", "F0705_MOVEMENT_ResolveStairsTransition_Compat", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", "inputDiscardRequested = 1", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat"], "stamina/stairs/group/input-discard/timing command seam."),
-        ("dm1_v1_movement_timing_pc34_compat.c", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat", files["timing"], ["DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat", "projectileDisabledMovementTicks = 0", "scentRecorded = 1", "lastPartyMovementTime = currentGameTick"], "successful-step timing seam."),
-        ("memory_sensor_execution_pc34_compat.c", "F0718_SENSOR_ProcessPartyEnterLeave_Compat", files["sensor"], ["F0717_SENSOR_EnumerateOnSquare_Compat", "F0710_SENSOR_Execute_Compat", "outList->effects[outList->count++]"], "source-ordered enter/leave sensor walking."),
+        ("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", "DM1_V1_InputCommandQueue_ProcessOnePc34Compat", files["queue"], ["queue->locked = 1;", "is_move_command(result.command)", "disabledMovementTicks", "projectileDisabledMovementTicks", "process_pending_click(queue)", "result.dequeued = 1", "result.dispatchedMove = 1"], "F0380 move gate/replay/dispatch seam."),
+        ("src/memory/memory_movement_pc34_compat.c", "F0701_MOVEMENT_GetStepDelta_Compat", files["move"], ["case MOVE_FORWARD:  stepDir = direction; break;", "case MOVE_RIGHT:    stepDir = (direction + 1) & 3; break;", "case MOVE_BACKWARD: stepDir = (direction + 2) & 3; break;", "case MOVE_LEFT:     stepDir = (direction + 3) & 3; break;"], "relative step delta seam."),
+        ("src/memory/memory_movement_pc34_compat.c", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", files["move"], ["party->championCount <= 0", "DUNGEON_SQUARE_MASK_THING_LIST", "THING_GET_TYPE(thing) == THING_TYPE_GROUP", "return 1;"], "empty-party exception and group block seam."),
+        ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "DM1_V1_MovementCommandCore_ProcessOnePc34Compat", files["core"], ["dm1_v1_apply_pre_step_stamina_cost", "F0705_MOVEMENT_ResolveStairsTransition_Compat", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", "inputDiscardRequested = 1", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat"], "stamina/stairs/group/input-discard/timing command seam."),
+        ("src/dm1/dm1_v1_movement_timing_pc34_compat.c", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat", files["timing"], ["DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat", "projectileDisabledMovementTicks = 0", "scentRecorded = 1", "lastPartyMovementTime = currentGameTick"], "successful-step timing seam."),
+        ("src/memory/memory_sensor_execution_pc34_compat.c", "F0718_SENSOR_ProcessPartyEnterLeave_Compat", files["sensor"], ["F0717_SENSOR_EnumerateOnSquare_Compat", "F0710_SENSOR_Execute_Compat", "outList->effects[outList->count++]"], "source-ordered enter/leave sensor walking."),
     ]
     rows = []
     for file_name, func, text, needles, claim in checks:
         require_all(body(text, func), needles, f"{file_name}:{func}")
         rows.append({"source": f"{file_name}:{line(text, after(text, func, func))}", "claim": claim})
     require_all(files["test_core"], ["movement gate leaves queued command", "wall block skips accepted-move side effects", "closed door state blocks forward", "closed real fakewall blocks forward", "pit square passable by movement dispatch", "empty party preserves source group-collision bug"], "movement core probe")
-    rows.append({"source": "test_dm1_v1_movement_core_pc34_compat.c", "claim": "covers queue gates, tile blockers, pits, and empty-party group bug."})
+    rows.append({"source": "tests/test_dm1_v1_movement_core_pc34_compat.c", "claim": "covers queue gates, tile blockers, pits, and empty-party group bug."})
     require_all(files["test_int"], ["blocked movement skips enter/leave sensors", "blocked movement skips timing update", "core group block clears queued followup", "empty-party group collision bug", "successful step cadence from slowest living champion", "successful step clears projectile cadence"], "movement integration probe")
-    rows.append({"source": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "claim": "covers blocked side-effect suppression, group collision, empty-party bug, and timing cooldowns."})
+    rows.append({"source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "claim": "covers blocked side-effect suppression, group collision, empty-party bug, and timing cooldowns."})
     return rows
 
 

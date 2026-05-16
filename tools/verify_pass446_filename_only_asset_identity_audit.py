@@ -193,7 +193,7 @@ def check_docs(errors: list[str]) -> None:
 
 
 def check_code_gates(errors: list[str]) -> None:
-    asset_status = (ROOT / "asset_status_m12.c").read_text(encoding="utf-8", errors="replace")
+    asset_status = (ROOT / "src/shared/asset_status_m12.c").read_text(encoding="utf-8", errors="replace")
     for needle in ["m12_file_md5_hex(path, md5Hex)", "strcmp(md5Hex, spec->md5) == 0"]:
         if needle not in asset_status:
             errors.append(f"asset_status_m12.c missing checksum gate: {needle}")

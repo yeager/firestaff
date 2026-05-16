@@ -142,12 +142,12 @@ def source_audit() -> dict[str, list[int]]:
 
 
 def firestaff_audit() -> dict[str, str]:
-    trigger_h = read(ROOT / "dm1_v1_sensor_trigger_pc34_compat.h", "utf-8")
-    trigger_c = read(ROOT / "dm1_v1_sensor_trigger_pc34_compat.c", "utf-8")
-    sensor_c = read(ROOT / "memory_sensor_execution_pc34_compat.c", "utf-8")
-    movement_core = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
-    trigger_test = read(ROOT / "test_dm1_v1_sensor_trigger_pc34_compat.c", "utf-8")
-    timing_test = read(ROOT / "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "utf-8")
+    trigger_h = read(ROOT / "include/dm1_v1_sensor_trigger_pc34_compat.h", "utf-8")
+    trigger_c = read(ROOT / "src/dm1/dm1_v1_sensor_trigger_pc34_compat.c", "utf-8")
+    sensor_c = read(ROOT / "src/memory/memory_sensor_execution_pc34_compat.c", "utf-8")
+    movement_core = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "utf-8")
+    trigger_test = read(ROOT / "tests/test_dm1_v1_sensor_trigger_pc34_compat.c", "utf-8")
+    timing_test = read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "utf-8")
     cmake = read(ROOT / "CMakeLists.txt", "utf-8")
 
     for needle in [

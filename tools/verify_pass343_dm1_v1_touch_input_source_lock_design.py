@@ -72,17 +72,17 @@ def main() -> int:
             errors.append("manifest redmcsb_anchors must list at least 10 anchors")
         seams = manifest.get("firestaff_seams", [])
         for seam in [
-            "touch_click_zone_matrix_pc34_compat.c",
-            "touch_pointer_input_pc34_compat.c",
-            "dm1_v1_input_command_queue_pc34_compat.c",
+            "src/shared/touch_click_zone_matrix_pc34_compat.c",
+            "src/shared/touch_pointer_input_pc34_compat.c",
+            "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
         ]:
             if seam not in seams:
                 errors.append(f"manifest missing Firestaff seam: {seam}")
 
     for path in [
-        ROOT / "touch_click_zone_matrix_pc34_compat.c",
-        ROOT / "touch_pointer_input_pc34_compat.c",
-        ROOT / "dm1_v1_input_command_queue_pc34_compat.c",
+        ROOT / "src/shared/touch_click_zone_matrix_pc34_compat.c",
+        ROOT / "src/shared/touch_pointer_input_pc34_compat.c",
+        ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
     ]:
         if not path.exists():
             errors.append(f"missing existing seam file: {path.relative_to(ROOT)}")

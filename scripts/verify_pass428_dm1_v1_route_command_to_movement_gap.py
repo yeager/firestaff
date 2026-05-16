@@ -188,14 +188,14 @@ def source_audit() -> dict:
 
 
 def firestaff_audit() -> dict:
-    queue_c = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
-    core_c = read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c")
-    timing_c = read(ROOT / "dm1_v1_movement_timing_pc34_compat.c")
-    pipeline_c = read(ROOT / "dm1_v1_movement_pipeline_pc34_compat.c")
-    m11 = read(ROOT / "m11_game_view.c")
-    test_core = read(ROOT / "test_dm1_v1_movement_command_core_pc34_compat.c")
-    test_sensor = read(ROOT / "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c")
-    test_pipeline = read(ROOT / "test_dm1_v1_movement_pipeline_pc34_compat.c")
+    queue_c = read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
+    core_c = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c")
+    timing_c = read(ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c")
+    pipeline_c = read(ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c")
+    m11 = read(ROOT / "src/engine/m11_game_view.c")
+    test_core = read(ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c")
+    test_sensor = read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c")
+    test_pipeline = read(ROOT / "tests/test_dm1_v1_movement_pipeline_pc34_compat.c")
 
     for needle in [
         "case 0xAB34: case 0x007F: case 0x9BFF: case 0x004B:",
@@ -258,9 +258,9 @@ def firestaff_audit() -> dict:
         require(test_pipeline, needle, f"pipeline test {needle}")
 
     return {
-        "dm1_v1_input_command_queue_pc34_compat.c": "maps PC-34 key/route events to C001..C006, retains movement commands while cooldown-gated, dequeues only after gate clears, and discards after blocked step",
-        "dm1_v1_movement_command_core_pc34_compat.c": "dispatches dequeued turns to F0365-equivalent direction/sensor effects and steps to F0366-equivalent stamina, collision, group, timing, redraw effects",
-        "dm1_v1_movement_pipeline_pc34_compat.c": "writes cooldown/last-movement timing only after accepted step; M11 bridge decrements old cooldowns before F0380-compatible processing",
+        "src/dm1/dm1_v1_input_command_queue_pc34_compat.c": "maps PC-34 key/route events to C001..C006, retains movement commands while cooldown-gated, dequeues only after gate clears, and discards after blocked step",
+        "src/dm1/dm1_v1_movement_command_core_pc34_compat.c": "dispatches dequeued turns to F0365-equivalent direction/sensor effects and steps to F0366-equivalent stamina, collision, group, timing, redraw effects",
+        "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c": "writes cooldown/last-movement timing only after accepted step; M11 bridge decrements old cooldowns before F0380-compatible processing",
         "tests": [
             "test_dm1_v1_movement_command_core_pc34_compat",
             "test_dm1_v1_command_movement_sensor_timing_pc34_compat",

@@ -41,10 +41,10 @@ CHECKS: list[dict[str, Any]] = [
             "M526_WaitVerticalBlank();",
         ],
         "local": [
-            ("title_frontend_v1.c", "V1_TitleFrontend_GetSourceAnimationStepCount"),
-            ("title_frontend_v1.c", "return 23u;"),
-            ("title_frontend_v1.c", "V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT"),
-            ("title_frontend_v1.c", "postZoomVblankCount = 2u"),
+            ("src/frontend/title_frontend_v1.c", "V1_TitleFrontend_GetSourceAnimationStepCount"),
+            ("src/frontend/title_frontend_v1.c", "return 23u;"),
+            ("src/frontend/title_frontend_v1.c", "V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT"),
+            ("src/frontend/title_frontend_v1.c", "postZoomVblankCount = 2u"),
         ],
     },
     {
@@ -69,9 +69,9 @@ CHECKS: list[dict[str, Any]] = [
             "F0438_STARTEND_OpenEntranceDoors();",
         ],
         "local": [
-            ("entrance_frontend_pc34_compat.c", "ENTRANCE_Compat_GetDoorAnimationStepCount"),
-            ("entrance_frontend_pc34_compat.c", "return 31u;"),
-            ("entrance_frontend_pc34_compat.c", "ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP"),
+            ("src/frontend/entrance_frontend_pc34_compat.c", "ENTRANCE_Compat_GetDoorAnimationStepCount"),
+            ("src/frontend/entrance_frontend_pc34_compat.c", "return 31u;"),
+            ("src/frontend/entrance_frontend_pc34_compat.c", "ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP"),
             ("parity-evidence/pass486_dm1_v1_door_button_occlusion_source_lock.md", "PASS486_DM1_V1_DOOR_BUTTON_OCCLUSION_SOURCE_LOCKED"),
         ],
     },
@@ -93,7 +93,7 @@ CHECKS: list[dict[str, Any]] = [
             "F0132_VIDEO_Blit(L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0348_Bitmap_Screen",
             "} while (++L1393_ui_AnimationStep != 32);",
         ],
-        "local": [("entrance_frontend_pc34_compat.c", "source animation steps 1..31")],
+        "local": [("src/frontend/entrance_frontend_pc34_compat.c", "source animation steps 1..31")],
     },
     {
         "id": "wall-click-sensor-button-semantics",
@@ -139,9 +139,9 @@ CHECKS: list[dict[str, Any]] = [
             "G0077_B_DoNotDrawFluxcagesDuringEndgame = C1_TRUE;",
         ],
         "local": [
-            ("test_dm1_v1_endgame_system_pc34_compat.c", "test_fuse_sequence_full"),
-            ("test_dm1_v1_endgame_system_pc34_compat.c", "DM1_Endgame_FuseSequence_Step"),
-            ("dm1_v1_endgame_system_pc34_compat.h", "DM1_Endgame_FuseSequence_Step"),
+            ("tests/test_dm1_v1_endgame_system_pc34_compat.c", "test_fuse_sequence_full"),
+            ("tests/test_dm1_v1_endgame_system_pc34_compat.c", "DM1_Endgame_FuseSequence_Step"),
+            ("include/dm1_v1_endgame_system_pc34_compat.h", "DM1_Endgame_FuseSequence_Step"),
         ],
     },
     {
@@ -157,9 +157,9 @@ CHECKS: list[dict[str, Any]] = [
             "BNE        L0901B9",
         ],
         "local": [
-            ("dm1_v1_vblank_timing.c", "DM1_V1_VBlank"),
-            ("title_frontend_v1.c", "GetRuntimeFrameDelayMs"),
-            ("entrance_frontend_pc34_compat.c", "vblankLoopCount"),
+            ("src/dm1/dm1_v1_vblank_timing.c", "DM1_V1_VBlank"),
+            ("src/frontend/title_frontend_v1.c", "GetRuntimeFrameDelayMs"),
+            ("src/frontend/entrance_frontend_pc34_compat.c", "vblankLoopCount"),
         ],
     },
 ]

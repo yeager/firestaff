@@ -20,12 +20,12 @@ REQUIRED_SOURCE = [
 ]
 
 REQUIRED_FIRESTAFF = [
-    (ROOT / "dm1_v2_item_render_pc34.c", "ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"),
-    (ROOT / "dm1_v2_item_render_pc34.c", "draws open-square objects before the"),
-    (ROOT / "dm1_v2_item_render_pc34.c", "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"),
-    (ROOT / "dm1_v2_item_render_pc34.c", "dm1_v2_hud_interaction_pc34 bridge"),
-    (ROOT / "test_dm1_v2_item_render_pc34.c", "test_source_locked_cell_layer_order"),
-    (ROOT / "test_dm1_v2_item_render_pc34.c", "firestaff-v2-wave1-items-starter.manifest.json"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "draws open-square objects before the"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "include/dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "dm1_v2_hud_interaction_pc34 bridge"),
+    (ROOT / "tests/test_dm1_v2_item_render_pc34.c", "test_source_locked_cell_layer_order"),
+    (ROOT / "tests/test_dm1_v2_item_render_pc34.c", "firestaff-v2-wave1-items-starter.manifest.json"),
     (ROOT / "assets-v2/items/wave1/specs/starter-icons.md", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"),
     (ROOT / "assets-v2/items/wave1/specs/starter-icons.md", "G0219"),
     (ROOT / "CMakeLists.txt", "NAME dm1_v2_item_render_pc34"),

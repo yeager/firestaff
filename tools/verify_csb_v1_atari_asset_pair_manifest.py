@@ -96,7 +96,7 @@ SOURCE_ANCHORS = (
     ),
     Anchor(
         "firestaff_csb_launch_still_gated",
-        str(ROOT / "menu_startup_m12.c"),
+        str(ROOT / "src/ui/menu_startup_m12.c"),
         "225-1412",
         (".gameId = \"csb\"", "static int m12_game_supported", "Only DM1 is launch-supported", "return gameId && strcmp(gameId, \"dm1\") == 0;"),
         "Firestaff currently catalogs CSB but m12_game_supported remains DM1-only.",

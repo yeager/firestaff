@@ -1,37 +1,37 @@
 {
   "firestaffChecks": [
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DM1_VIEW_SQUARE_D3R, 0x4312",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DUNVIEW.C:6624-6638 teleporter field after F0115",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DM1_VIEW_SQUARE_D2L, 0x3421",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DUNVIEW.C:7033-7048 teleporter field after F0115",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DM1_VIEW_SQUARE_D2R, 0x4312",
       "status": "PASS"
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "DUNVIEW.C:7226-7240 teleporter field after F0115",
       "status": "PASS"
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "floor_field_order_spec_count(), 13",
       "status": "PASS"
     }

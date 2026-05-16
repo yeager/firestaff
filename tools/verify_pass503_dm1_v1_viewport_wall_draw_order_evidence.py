@@ -139,10 +139,10 @@ SOURCE_CHECKS: list[dict[str, Any]] = [
 ]
 
 LOCAL_CHECKS = [
-    ("firestaff-draw-order-table", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportDrawStep s_draw_order[]"),
-    ("firestaff-wall-spec-table", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]"),
-    ("firestaff-thing-layer-table", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportThingLayerSpec s_thing_layers[]"),
-    ("firestaff-door-front-occlusion-table", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]"),
+    ("firestaff-draw-order-table", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportDrawStep s_draw_order[]"),
+    ("firestaff-wall-spec-table", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]"),
+    ("firestaff-thing-layer-table", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportThingLayerSpec s_thing_layers[]"),
+    ("firestaff-door-front-occlusion-table", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]"),
     ("pass496-matrix-gate-present", ROOT / "tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py", "SOURCE_CHECKS = ["),
     ("pass502-blocker-doc-present", ROOT / "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md", "Required next evidence before parity promotion:"),
 ]

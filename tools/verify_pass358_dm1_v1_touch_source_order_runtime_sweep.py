@@ -53,10 +53,10 @@ def main() -> int:
     try:
         manifest = json.loads(text(MANIFEST))
         evidence = text(EVIDENCE)
-        touch_matrix = text(ROOT / "touch_click_zone_matrix_pc34_compat.c")
-        touch_pointer = text(ROOT / "touch_pointer_input_pc34_compat.c")
-        touch_matrix_test = text(ROOT / "test_touch_click_zone_matrix_pc34_compat_integration.c")
-        touch_pointer_test = text(ROOT / "test_touch_pointer_input_pc34_compat_integration.c")
+        touch_matrix = text(ROOT / "src/shared/touch_click_zone_matrix_pc34_compat.c")
+        touch_pointer = text(ROOT / "src/shared/touch_pointer_input_pc34_compat.c")
+        touch_matrix_test = text(ROOT / "tests/test_touch_click_zone_matrix_pc34_compat_integration.c")
+        touch_pointer_test = text(ROOT / "tests/test_touch_pointer_input_pc34_compat_integration.c")
         live_probe = text(ROOT / "probes/m11/firestaff_m11_touch_live_dispatch_gate_probe.c")
         cmake = text(ROOT / "CMakeLists.txt")
 
@@ -107,21 +107,21 @@ def main() -> int:
             "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary",
             "kPrimaryInterfaceSourceOrder", "kSecondaryMovementSourceOrder",
             "TOUCHCLICK_Compat_MapViewportLocalPointToDispatch", "TOUCHCLICK_Compat_MapScaledScreenPointToDispatch",
-        ], "touch_click_zone_matrix_pc34_compat.c")
+        ], "src/shared/touch_click_zone_matrix_pc34_compat.c")
         require(touch_matrix.index("kPrimaryInterfaceSourceOrder") < touch_matrix.index("kSecondaryMovementSourceOrder"), "primary source order must appear before secondary order")
         require_all(touch_pointer, [
             "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(event->x, event->y",
             "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(screenX, screenY",
             "TOUCHCLICK_Compat_MapViewportLocalPointToDispatch",
             "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat",
-        ], "touch_pointer_input_pc34_compat.c")
+        ], "src/shared/touch_pointer_input_pc34_compat.c")
         require_all(touch_matrix_test, [
             "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(25, 11", "movement.forward", "inventory.toggle_leader",
             "TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(104, 113", "TOUCHCLICK_Compat_MapScaledScreenPointToDispatch",
-        ], "test_touch_click_zone_matrix_pc34_compat_integration.c")
+        ], "tests/test_touch_click_zone_matrix_pc34_compat_integration.c")
         require_all(touch_pointer_test, [
             "TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT", "DM1_V1_COMMAND_MOVE_FORWARD", "panel.cancel", "pendingClickPresent",
-        ], "test_touch_pointer_input_pc34_compat_integration.c")
+        ], "tests/test_touch_pointer_input_pc34_compat_integration.c")
         require_all(live_probe, [
             "primary_left_beats_status_box_child", "secondary_left_movement_fallback", "secondary_right_screen_toggle",
             "pending_replay_original_click_state", "TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue",

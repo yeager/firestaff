@@ -37,10 +37,10 @@ def main() -> None:
     startup2_c = read(SOURCE_ROOT / "STARTUP2.C")
     defs_h = read(SOURCE_ROOT / "DEFS.H")
     coord_c = read(SOURCE_ROOT / "COORD.C")
-    touch_h = read(REPO / "touch_pointer_input_pc34_compat.h")
-    touch_c = read(REPO / "touch_pointer_input_pc34_compat.c")
-    queue_c = read(REPO / "dm1_v1_input_command_queue_pc34_compat.c")
-    test_c = read(REPO / "test_touch_pointer_input_pc34_compat_integration.c")
+    touch_h = read(REPO / "include/touch_pointer_input_pc34_compat.h")
+    touch_c = read(REPO / "src/shared/touch_pointer_input_pc34_compat.c")
+    queue_c = read(REPO / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c")
+    test_c = read(REPO / "tests/test_touch_pointer_input_pc34_compat_integration.c")
     pass391 = json.loads(read(PASS391))
 
     source_checks = {
@@ -90,7 +90,7 @@ def main() -> None:
 
     local_checks = {
         "touch_header_uses_queue": [
-            (touch_h, '#include "dm1_v1_input_command_queue_pc34_compat.h"'),
+            (touch_h, '#include "include/dm1_v1_input_command_queue_pc34_compat.h"'),
             (touch_h, "TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue"),
         ],
         "touch_translation_and_enqueue": [

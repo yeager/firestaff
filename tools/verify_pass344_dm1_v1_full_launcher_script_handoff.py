@@ -39,15 +39,15 @@ COMMAND = [
 ]
 
 CHECKS = [
-    ("main_loop_m11.c", "m11_next_script_input", "script token reader exists"),
-    ("main_loop_m11.c", "m11_push_script_event_token", "script SDL event bridge exists"),
-    ("main_loop_m11.c", "if (gameView.active)", "active game-view input branch exists"),
-    ("main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)", "post-launch tokens route to game view"),
-    ("main_loop_m11.c", "Do not short-circuit Enter/Right", "launcher top-level short-circuit remains disabled"),
-    ("main_loop_m11.c", "m11_open_requested_launch(&gameView, &menuState", "M12 launch request opens runtime"),
-    ("menu_startup_m12.c", "state->launchRequested = 1", "explicit launch row requests runtime handoff"),
-    ("menu_startup_m12.c", "pmode == M12_PRESENTATION_V3_MODERN_3D", "V3 block remains explicit"),
-    ("menu_hit_m12.c", "M12_HIT_GAMEOPT_LAUNCH", "modern mouse launch hit remains explicit"),
+    ("src/engine/main_loop_m11.c", "m11_next_script_input", "script token reader exists"),
+    ("src/engine/main_loop_m11.c", "m11_push_script_event_token", "script SDL event bridge exists"),
+    ("src/engine/main_loop_m11.c", "if (gameView.active)", "active game-view input branch exists"),
+    ("src/engine/main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)", "post-launch tokens route to game view"),
+    ("src/engine/main_loop_m11.c", "Do not short-circuit Enter/Right", "launcher top-level short-circuit remains disabled"),
+    ("src/engine/main_loop_m11.c", "m11_open_requested_launch(&gameView, &menuState", "M12 launch request opens runtime"),
+    ("src/ui/menu_startup_m12.c", "state->launchRequested = 1", "explicit launch row requests runtime handoff"),
+    ("src/ui/menu_startup_m12.c", "pmode == M12_PRESENTATION_V3_MODERN_3D", "V3 block remains explicit"),
+    ("src/ui/menu_hit_m12.c", "M12_HIT_GAMEOPT_LAUNCH", "modern mouse launch hit remains explicit"),
 ]
 
 ANCHORS = [

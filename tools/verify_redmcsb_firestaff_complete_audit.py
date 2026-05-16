@@ -15,7 +15,7 @@ REQUIRED_DOC_TOKENS = [
     "KNOWN_DIFF",
     "MISSING",
     "BLOCKED",
-    "memory_creature_ai_pc34_compat.c",
+    "src/memory/memory_creature_ai_pc34_compat.c",
     "original_overlay_regression",
 ]
 
@@ -36,10 +36,10 @@ REQUIRED_REDMCSB_FILES = [
 ]
 
 REQUIRED_FIRESTAFF_FILES = [
-    "memory_creature_ai_pc34_compat.c",
-    "dm1_v1_viewport_3d_pc34_compat.c",
-    "dm1_v1_movement_pipeline_pc34_compat.c",
-    "dm1_v1_input_command_queue_pc34_compat.c",
+    "src/memory/memory_creature_ai_pc34_compat.c",
+    "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+    "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+    "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
     "docs/parity/COMPLETION_MATRIX.md",
 ]
 

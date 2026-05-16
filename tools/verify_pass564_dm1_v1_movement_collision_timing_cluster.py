@@ -88,11 +88,11 @@ SOURCE = [
 ]
 
 FIRESTAFF = [
-    ("dm1_v1_input_command_queue_pc34_compat.c", "queued-command gate and pending replay", ["result.movementDisabledGate = 1;", "process_pending_click(queue);", "result.dispatchedMove = 1"]),
-    ("dm1_v1_movement_command_core_pc34_compat.c", "turn/step dispatch, blockers, coordinate update, cooldown", ["dm1_v1_apply_pre_step_stamina_cost", "F0702_MOVEMENT_TryMove_Compat", "dm1_v1_record_blocked_wall_or_door_damage_request", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);", "party->mapX = outResult->movement.newMapX;", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat"]),
-    ("dm1_v1_movement_timing_pc34_compat.c", "movement ticks, G0362 update, cooldown decrement", ["DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat", "result.lastPartyMovementTime = currentGameTick;", "DM1_V1_MovementTiming_DecrementCooldownsPc34Compat"]),
-    ("test_dm1_v1_movement_command_core_pc34_compat.c", "focused command core coverage", ["pc34 core disabled gate keeps command queued", "pc34 core projectile nonmatching direction processes move", "forward y decremented", "blocked movement flushes queued input", "pass547 closed door reports door block", "pass547 group reaction requested", "pass549 one-fourth door sets cooldown"]),
-    ("test_dm1_v1_movement_pipeline_pc34_compat.c", "pipeline cooldown decrement/release coverage", ["test_movement_cooldown_gate", "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(&pipeline)", "gate_drained_step", "cmd_move_view.evidence.gameloop_cooldown"]),
+    ("src/dm1/dm1_v1_input_command_queue_pc34_compat.c", "queued-command gate and pending replay", ["result.movementDisabledGate = 1;", "process_pending_click(queue);", "result.dispatchedMove = 1"]),
+    ("src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "turn/step dispatch, blockers, coordinate update, cooldown", ["dm1_v1_apply_pre_step_stamina_cost", "F0702_MOVEMENT_TryMove_Compat", "dm1_v1_record_blocked_wall_or_door_damage_request", "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);", "party->mapX = outResult->movement.newMapX;", "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat"]),
+    ("src/dm1/dm1_v1_movement_timing_pc34_compat.c", "movement ticks, G0362 update, cooldown decrement", ["DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat", "result.lastPartyMovementTime = currentGameTick;", "DM1_V1_MovementTiming_DecrementCooldownsPc34Compat"]),
+    ("tests/test_dm1_v1_movement_command_core_pc34_compat.c", "focused command core coverage", ["pc34 core disabled gate keeps command queued", "pc34 core projectile nonmatching direction processes move", "forward y decremented", "blocked movement flushes queued input", "pass547 closed door reports door block", "pass547 group reaction requested", "pass549 one-fourth door sets cooldown"]),
+    ("tests/test_dm1_v1_movement_pipeline_pc34_compat.c", "pipeline cooldown decrement/release coverage", ["test_movement_cooldown_gate", "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(&pipeline)", "gate_drained_step", "cmd_move_view.evidence.gameloop_cooldown"]),
 ]
 
 def compact(s: str) -> str:

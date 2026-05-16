@@ -23,15 +23,15 @@ Scope: PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 t
 
 ## Firestaff evidence
 
-- `dm1_v1_input_command_queue_pc34_compat.c` — compat queue models PC-34 key normalization rows, mouse rows, lock/pending replay, movement gate retention, dequeue, and turn/move dispatch flags
-- `dm1_v1_movement_command_core_pc34_compat.c` — command core consumes queue results into turn/move handling, blocks before successful movement side effects, and requests input discard/redraw at the F0366 boundary
-- `test_dm1_v1_input_command_queue_pc34_compat.c` — regression covers PC-34 K/L/M/O/P/Q rows, IO2 shifted arrows, pending replay, movement-gate retention, and reserved queue slots
-- `test_dm1_v1_movement_command_core_pc34_compat.c` — focused command-core regression proves PC-34 queue output reaches turn, successful movement, cooldown clearing, and blocked-step queue discard
+- `src/dm1/dm1_v1_input_command_queue_pc34_compat.c` — compat queue models PC-34 key normalization rows, mouse rows, lock/pending replay, movement gate retention, dequeue, and turn/move dispatch flags
+- `src/dm1/dm1_v1_movement_command_core_pc34_compat.c` — command core consumes queue results into turn/move handling, blocks before successful movement side effects, and requests input discard/redraw at the F0366 boundary
+- `tests/test_dm1_v1_input_command_queue_pc34_compat.c` — regression covers PC-34 K/L/M/O/P/Q rows, IO2 shifted arrows, pending replay, movement-gate retention, and reserved queue slots
+- `tests/test_dm1_v1_movement_command_core_pc34_compat.c` — focused command-core regression proves PC-34 queue output reaches turn, successful movement, cooldown clearing, and blocked-step queue discard
 
 ## Gates
 
-- `cmake --build /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /home/trv2/work/firestaff-worktrees/pass601-dm1v1-gameplay-systems-source-lock-20260516/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
+- `cmake --build /home/trv2/work/firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
+- `ctest --test-dir /home/trv2/work/firestaff/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
 - `git diff --check` — rc 0
 
 ## Not claimed

@@ -46,17 +46,17 @@ SOURCE_LOCKS = [
 ]
 
 PRODUCT_MARKERS = [
-    ("main_loop_m11.c", "static M12_MenuInput m11_map_script_token"),
-    ("main_loop_m11.c", "strncmp(token, \"strafe-left\", len)"),
-    ("main_loop_m11.c", "if (strcmp(name, \"up\") == 0) return SDLK_UP"),
-    ("main_loop_m11.c", "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1"),
-    ("main_loop_m11.c", "case SDLK_KP_5:"),
-    ("main_loop_m11.c", "case SDLK_KP_1:"),
-    ("main_loop_m11.c", "case SDLK_KP_6:"),
-    ("main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
-    ("m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
-    ("m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
-    ("m11_game_view.c", "No OS keypad/NumLock synthesis is involved"),
+    ("src/engine/main_loop_m11.c", "static M12_MenuInput m11_map_script_token"),
+    ("src/engine/main_loop_m11.c", "strncmp(token, \"strafe-left\", len)"),
+    ("src/engine/main_loop_m11.c", "if (strcmp(name, \"up\") == 0) return SDLK_UP"),
+    ("src/engine/main_loop_m11.c", "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_5:"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_1:"),
+    ("src/engine/main_loop_m11.c", "case SDLK_KP_6:"),
+    ("src/engine/main_loop_m11.c", "M11_GameView_HandleInput(&gameView, input)"),
+    ("src/engine/m11_game_view.c", "m11_dm1_v1_pipeline_command_for_input"),
+    ("src/engine/m11_game_view.c", "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"),
+    ("src/engine/m11_game_view.c", "No OS keypad/NumLock synthesis is involved"),
 ]
 
 EVIDENCE_MARKERS = [

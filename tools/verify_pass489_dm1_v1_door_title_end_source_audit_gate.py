@@ -169,10 +169,10 @@ def source_audit() -> dict[str, object]:
 
 
 def firestaff_audit() -> dict[str, object]:
-    view = read(ROOT / "m11_game_view.c")
-    main_loop = read(ROOT / "main_loop_m11.c")
-    title = read(ROOT / "title_frontend_v1.c")
-    endgame = read(ROOT / "endgame_frontend_pc34_compat.c")
+    view = read(ROOT / "src/engine/m11_game_view.c")
+    main_loop = read(ROOT / "src/engine/main_loop_m11.c")
+    title = read(ROOT / "src/frontend/title_frontend_v1.c")
+    endgame = read(ROOT / "src/frontend/endgame_frontend_pc34_compat.c")
 
     require_order(function_body(view, "m11_draw_viewport"), [
         "m11_draw_dm1_center_doors",

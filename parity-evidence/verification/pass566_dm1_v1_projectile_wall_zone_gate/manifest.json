@@ -1,47 +1,47 @@
 {
   "local_needles": [
     {
-      "file": "memory_projectile_pc34_compat.c",
+      "file": "src/memory/memory_projectile_pc34_compat.c",
       "needle": "PROJECTILE_BLOCKER_WALL",
       "ok": true
     },
     {
-      "file": "memory_projectile_pc34_compat.c",
+      "file": "src/memory/memory_projectile_pc34_compat.c",
       "needle": "dispatch = PROJECTILE_RESULT_HIT_WALL",
       "ok": true
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "dm1_viewport_3d_projectile_visible_after_wall_case",
       "ok": true
     },
     {
-      "file": "dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "return front_alcove && wall->front_alcove_reveals_contents;",
       "ok": true
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "test_projectile_wall_zone_movement_visibility_gate",
       "ok": true
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "PROJECTILE_SUBTYPE_KINETIC_ARROW",
       "ok": true
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "projectile_wall_zone.wall_hit_result",
       "ok": true
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "projectile_wall_zone.plain_wall_hides_projectile",
       "ok": true
     },
     {
-      "file": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "projectile_wall_zone.front_alcove_reveals_projectile_layer",
       "ok": true
     }

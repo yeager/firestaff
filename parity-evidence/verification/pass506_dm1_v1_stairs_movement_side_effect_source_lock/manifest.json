@@ -1,9 +1,9 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "commandCore": "dm1_v1_movement_command_core_pc34_compat.c",
-    "commandCoreResult": "dm1_v1_movement_command_core_pc34_compat.h",
-    "pipelineTest": "test_dm1_v1_movement_pipeline_pc34_compat.c",
+    "commandCore": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+    "commandCoreResult": "include/dm1_v1_movement_command_core_pc34_compat.h",
+    "pipelineTest": "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
     "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
     "runtimeOutputLastLine": "229 passed, 0 failed"
   },

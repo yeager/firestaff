@@ -87,7 +87,7 @@ SOURCE_CHECKS = [
 FIRE_CHECKS = [
     {
         "id": "firestaff_party_tuple_flip_predicate",
-        "path": ROOT / "m11_game_view.c",
+        "path": ROOT / "src/engine/m11_game_view.c",
         "lines": "9052-9059",
         "needles": [
             "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
@@ -98,7 +98,7 @@ FIRE_CHECKS = [
     },
     {
         "id": "firestaff_wallset_variant_binding_before_draw",
-        "path": ROOT / "m11_game_view.c",
+        "path": ROOT / "src/engine/m11_game_view.c",
         "lines": "9109-9123",
         "needles": [
             "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,",
@@ -109,7 +109,7 @@ FIRE_CHECKS = [
     },
     {
         "id": "firestaff_center_wall_flip_path",
-        "path": ROOT / "m11_game_view.c",
+        "path": ROOT / "src/engine/m11_game_view.c",
         "lines": "9664-9690",
         "needles": [
             "flipWalls = m11_dm1_use_flipped_walls(state);",
@@ -122,7 +122,7 @@ FIRE_CHECKS = [
     },
     {
         "id": "firestaff_side_wall_lr_swap_path",
-        "path": ROOT / "m11_game_view.c",
+        "path": ROOT / "src/engine/m11_game_view.c",
         "lines": "10232-10280",
         "needles": [
             "flipWalls = m11_dm1_use_flipped_walls(state);",

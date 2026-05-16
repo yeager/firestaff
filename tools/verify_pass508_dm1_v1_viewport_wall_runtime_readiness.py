@@ -46,14 +46,14 @@ SOURCE_CHECKS = [
         "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);"]),
 ]
 FIRE_CHECKS = [
-    ("normal_renderer_batches_with_near_replay_guard", "m11_game_view.c", [
+    ("normal_renderer_batches_with_near_replay_guard", "src/engine/m11_game_view.c", [
         "m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state",
         "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state",
         "m11_draw_dm1_wall_ornaments(state", "m11_draw_dm1_center_doors(state",
         "m11_dm1_nearest_blocking_center_depth_index(cells)",
         "m11_draw_dm1_side_contents(state", "m11_draw_dm1_deferred_explosion_pass(state",
         "if (state->showDebugHUD)"]),
-    ("wall_alcove_item_source_cell_gate", "m11_game_view.c", [
+    ("wall_alcove_item_source_cell_gate", "src/engine/m11_game_view.c", [
         "static void m11_draw_dm1_alcove_wall_items", "C0x0000_CELL_ORDER_ALCOVE",
         "C04_VIEW_CELL_ALCOVE", "M018_OPPOSITE(direction)",
         "cell->floorItemCells[ii] != alcoveCellRelativeToParty", "m11_draw_item_sprite(state"]),

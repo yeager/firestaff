@@ -18,7 +18,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-MATRIX_C = ROOT / "touch_click_zone_matrix_pc34_compat.c"
+MATRIX_C = ROOT / "src/shared/touch_click_zone_matrix_pc34_compat.c"
 
 CHECKS: list[dict[str, Any]] = [
     {

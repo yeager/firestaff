@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW=RED/"DUNVIEW.C"; DEFS=RED/"DEFS.H"; COORD=RED/"COORD.C"
-VIEW=ROOT/"m11_game_view.c"; PROBE=ROOT/"probes/m11/firestaff_m11_game_view_probe.c"; CMAKE=ROOT/"CMakeLists.txt"
+VIEW=ROOT/"src/engine/m11_game_view.c"; PROBE=ROOT/"probes/m11/firestaff_m11_game_view_probe.c"; CMAKE=ROOT/"CMakeLists.txt"
 EVIDENCE=ROOT/"parity-evidence/pass582_dm1_v1_explosion_viewport_clip_source_lock.md"
 MANIFEST=ROOT/"parity-evidence/verification/pass582_dm1_v1_explosion_viewport_clip_source_lock/manifest.json"
 STATUS="PASS582_DM1_V1_EXPLOSION_VIEWPORT_CLIP_SOURCE_LOCKED"

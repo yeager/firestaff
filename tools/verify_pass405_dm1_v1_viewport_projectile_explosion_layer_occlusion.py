@@ -18,8 +18,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
-VIEW = ROOT / "m11_game_view.c"
-META = ROOT / "dm1_v1_viewport_3d_pc34_compat.c"
+VIEW = ROOT / "src/engine/m11_game_view.c"
+META = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 
 
 def fail(message: str) -> int:

@@ -45,7 +45,7 @@ SOURCE_CHECKS = [
     ("csb_new_adventure_flow", CSB_SRC / "Chaos.cpp", 1, 40, ["Create New Adventure", "prison savegame", "Make New Adventure"]),
     ("csb_csbgame_slots", CSB_SRC / "Chaos.cpp", 500, 625, ["CSBGAME", "CSBGAME2", "csbgame.dat", "csbgame.bak"]),
     ("csbwin_play_workflow", CSBWIN / "Game/readme.txt", 1, 30, ["Enter the dungeon", "choose prison", "Make New Adventure"]),
-    ("firestaff_csb_launch_still_gated", ROOT / "menu_startup_m12.c", 1390, 1413, ["strcmp(gameId, \"csb\") == 0", "return gameId && strcmp(gameId, \"dm1\") == 0;"]),
+    ("firestaff_csb_launch_still_gated", ROOT / "src/ui/menu_startup_m12.c", 1390, 1413, ["strcmp(gameId, \"csb\") == 0", "return gameId && strcmp(gameId, \"dm1\") == 0;"]),
 ]
 
 NON_CLAIMS = [

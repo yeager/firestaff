@@ -13,8 +13,8 @@ import re
 import sys
 
 root = Path(__file__).resolve().parents[1]
-main = (root / "main_loop_m11.c").read_text()
-frontend = (root / "title_frontend_v1.c").read_text()
+main = (root / "src/engine/main_loop_m11.c").read_text()
+frontend = (root / "src/frontend/title_frontend_v1.c").read_text()
 
 errors = []
 

@@ -12,7 +12,7 @@ RANGES = [
     ("COMMAND.C",396,405), ("COMMAND.C",412,415), ("COMMAND.C",602,609),
     ("COMMAND.C",2180,2184), ("COMMAND.C",2296,2300),
     ("PANEL.C",2244,2305), ("PANEL.C",2314,2352), ("PANEL.C",2358,2429),
-    ("m11_game_view.c",5515,5518), ("m11_game_view.c",21387,21393),
+    ("src/engine/m11_game_view.c",5515,5518), ("src/engine/m11_game_view.c",21387,21393),
 ]
 
 def read(path: Path) -> str:
@@ -82,17 +82,17 @@ def verify_redmcsb() -> list[str]:
     return notes
 
 def verify_firestaff() -> list[str]:
-    path=ROOT/"m11_game_view.c"; text=read(path); notes=[]
+    path=ROOT/"src/engine/m11_game_view.c"; text=read(path); notes=[]
     s,w = window(text, "if (input == M12_MENU_INPUT_INVENTORY_TOGGLE)", "/* While an overlay is open")
     if "showDebugHUD" in w: raise AssertionError("inventory toggle route should not branch on showDebugHUD")
     for n,p in require_order(w,"Firestaff input route",[("input","M12_MENU_INPUT_INVENTORY_TOGGLE"),("clear map","state->mapOverlayActive = 0"),("toggle","M11_GameView_ToggleInventoryPanel(state)"),("redraw","return M11_GAME_INPUT_REDRAW")]): notes.append(f"Firestaff input {n}: {path}:{line_no(text,s+p)}")
     s,w = func(text,"M11_GameView_ToggleInventoryPanel")
     if "mapOverlayActive" in w or "showDebugHUD" in w: raise AssertionError("toggle API must not collide with map/HUD state")
     for n,p in require_order(w,"Firestaff toggle state",[("null guard","if (!state) return 0"),("flip active","state->inventoryPanelActive = !state->inventoryPanelActive"),("open branch","if (state->inventoryPanelActive)"),("reset slot","state->inventorySelectedSlot = 0"),("return active","return state->inventoryPanelActive")]): notes.append(f"Firestaff toggle {n}: {path}:{line_no(text,s+p)}")
-    hdr=read(ROOT/"m11_game_view.h")
+    hdr=read(ROOT/"include/m11_game_view.h")
     if "int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state);" not in hdr: raise AssertionError("missing public toggle declaration")
-    excerpt("m11_game_view.c",5515,5518,["M12_MENU_INPUT_INVENTORY_TOGGLE","mapOverlayActive = 0","M11_GameView_ToggleInventoryPanel"])
-    excerpt("m11_game_view.c",21387,21393,["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
+    excerpt("src/engine/m11_game_view.c",5515,5518,["M12_MENU_INPUT_INVENTORY_TOGGLE","mapOverlayActive = 0","M11_GameView_ToggleInventoryPanel"])
+    excerpt("src/engine/m11_game_view.c",21387,21393,["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
     return notes
 
 def verify_json():

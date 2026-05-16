@@ -164,11 +164,11 @@ def source_audit() -> dict:
 
 def firestaff_audit() -> dict:
     files = {
-        "queue": read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c", "utf-8"),
-        "core": read(ROOT / "dm1_v1_movement_command_core_pc34_compat.c", "utf-8"),
-        "pipeline": read(ROOT / "dm1_v1_movement_pipeline_pc34_compat.c", "utf-8"),
-        "viewport": read(ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "utf-8"),
-        "m11": read(ROOT / "m11_game_view.c", "utf-8"),
+        "queue": read(ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c", "utf-8"),
+        "core": read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c", "utf-8"),
+        "pipeline": read(ROOT / "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c", "utf-8"),
+        "viewport": read(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "utf-8"),
+        "m11": read(ROOT / "src/engine/m11_game_view.c", "utf-8"),
     }
     checks = {
         "queue": [

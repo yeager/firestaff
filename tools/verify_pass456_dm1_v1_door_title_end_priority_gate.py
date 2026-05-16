@@ -6,10 +6,10 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 red_root = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-main = (root / "main_loop_m11.c").read_text()
-view = (root / "m11_game_view.c").read_text()
-title = (root / "title_frontend_v1.c").read_text()
-end = (root / "endgame_frontend_pc34_compat.c").read_text()
+main = (root / "src/engine/main_loop_m11.c").read_text()
+view = (root / "src/engine/m11_game_view.c").read_text()
+title = (root / "src/frontend/title_frontend_v1.c").read_text()
+end = (root / "src/frontend/endgame_frontend_pc34_compat.c").read_text()
 red_dunview = (red_root / "DUNVIEW.C").read_text(encoding="latin-1", errors="replace")
 red_title = (red_root / "TITLE.C").read_text(encoding="latin-1", errors="replace")
 red_end = (red_root / "ENDGAME.C").read_text(encoding="latin-1", errors="replace")

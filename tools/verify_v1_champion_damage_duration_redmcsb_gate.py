@@ -11,8 +11,8 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = ROOT / "m11_game_view.h"
-IMPL = ROOT / "m11_game_view.c"
+HEADER = ROOT / "include/m11_game_view.h"
+IMPL = ROOT / "src/engine/m11_game_view.c"
 REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C").expanduser()
 
 checks = []

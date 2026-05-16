@@ -121,7 +121,7 @@ def main() -> int:
             "M526_WaitVerticalBlank();",
         ], "DRAWVIEW.C:709-722")
 
-        body = function_body(ROOT / "m11_game_view.c", "m11_draw_viewport")
+        body = function_body(ROOT / "src/engine/m11_game_view.c", "m11_draw_viewport")
         require("if (state->showDebugHUD)" in body, "debug-only procedural corridor guard missing")
         require("nearer side layers" in body and "farther center doors/buttons/items cannot" in body,
                 "near-side occlusion replay rationale missing")

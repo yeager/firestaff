@@ -81,13 +81,13 @@
     },
     {
       "claim": "Firestaff exposes explicit per-loop cooldown decrement seam",
-      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
       "line": 427,
       "ok": true
     },
     {
       "claim": "Firestaff has a source-locked successful-step timing seam",
-      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_movement_timing_pc34_compat.c",
       "line": 65,
       "ok": true
     }

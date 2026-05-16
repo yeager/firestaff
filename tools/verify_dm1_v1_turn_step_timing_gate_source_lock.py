@@ -13,9 +13,9 @@ COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 GAMELOOP_C = REDMCSB_SOURCE / "GAMELOOP.C"
 IO_C = REDMCSB_SOURCE / "IO.C"
-TIMING_C = ROOT / "dm1_v1_movement_timing_pc34_compat.c"
-TIMING_H = ROOT / "dm1_v1_movement_timing_pc34_compat.h"
-TEST_C = ROOT / "test_dm1_v1_turn_step_timing_gate_pc34_compat.c"
+TIMING_C = ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c"
+TIMING_H = ROOT / "include/dm1_v1_movement_timing_pc34_compat.h"
+TEST_C = ROOT / "tests/test_dm1_v1_turn_step_timing_gate_pc34_compat.c"
 
 
 def lines(path: Path) -> list[str]:
@@ -136,11 +136,11 @@ def verify_firestaff() -> list[str]:
     ]:
         if marker not in c:
             raise AssertionError(f"timing source evidence missing {marker}")
-    require_regex("dm1_v1_movement_timing_pc34_compat.h", h,
+    require_regex("include/dm1_v1_movement_timing_pc34_compat.h", h,
                   r"#define\s+DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT\s+12")
-    require_regex("dm1_v1_movement_timing_pc34_compat.c", c,
+    require_regex("src/dm1/dm1_v1_movement_timing_pc34_compat.c", c,
                   r"InputWaitStopsAfterVBlanksPc34Compat.*>=\s*DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT")
-    require_regex("dm1_v1_movement_timing_pc34_compat.c", c,
+    require_regex("src/dm1/dm1_v1_movement_timing_pc34_compat.c", c,
                   r"VBlankWaitDecrementsMovementCooldownPc34Compat\(void\).*return\s+0;")
     for needle in [
         "pc34 input wait window is 12 vblanks",

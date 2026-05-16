@@ -24,12 +24,12 @@ SRC = {
     "GAMELOOP.C": REDMCSB_SOURCE / "GAMELOOP.C",
     "CHAMPION.C": REDMCSB_SOURCE / "CHAMPION.C",
 }
-COMPAT_C = ROOT / "memory_movement_pc34_compat.c"
-COMPAT_H = ROOT / "memory_movement_pc34_compat.h"
-ORCH_C = ROOT / "memory_tick_orchestrator_pc34_compat.c"
-PROBE_C = ROOT / "firestaff_m10_tick_orchestrator_probe.c"
-GROUP_PROBE_C = ROOT / "firestaff_m11_pass44_party_group_collision_probe.c"
-MOVEMENT_CORE_TEST_C = ROOT / "test_dm1_v1_movement_core_pc34_compat.c"
+COMPAT_C = ROOT / "src/memory/memory_movement_pc34_compat.c"
+COMPAT_H = ROOT / "include/memory_movement_pc34_compat.h"
+ORCH_C = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
+PROBE_C = ROOT / "probes/firestaff_m10_tick_orchestrator_probe.c"
+GROUP_PROBE_C = ROOT / "probes/firestaff_m11_pass44_party_group_collision_probe.c"
+MOVEMENT_CORE_TEST_C = ROOT / "tests/test_dm1_v1_movement_core_pc34_compat.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_movement_source_lock.json"
 
 

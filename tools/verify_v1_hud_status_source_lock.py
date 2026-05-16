@@ -14,7 +14,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ZONES = ROOT / "zones_h_reconstruction.json"
-M11 = ROOT / "m11_game_view.c"
+M11 = ROOT / "src/engine/m11_game_view.c"
 OUT = ROOT / "parity-evidence/verification/v1_hud_status_source_lock.json"
 
 SOURCE_RANGES = [

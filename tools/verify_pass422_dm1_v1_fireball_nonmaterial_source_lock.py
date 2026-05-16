@@ -14,10 +14,10 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 checks = [
-    (root / "memory_projectile_pc34_compat.c", "party square first; creature damage is in the else branch"),
-    (root / "memory_projectile_pc34_compat.c", "groupAttackApplied >>= 2"),
-    (root / "firestaff_m10_projectile_probe.c", "group preempted (PROJEXPL.C F0213)"),
-    (root / "firestaff_m10_projectile_probe.c", "group attack quartered before resistance"),
+    (root / "src/memory/memory_projectile_pc34_compat.c", "party square first; creature damage is in the else branch"),
+    (root / "src/memory/memory_projectile_pc34_compat.c", "groupAttackApplied >>= 2"),
+    (root / "probes/firestaff_m10_projectile_probe.c", "group preempted (PROJEXPL.C F0213)"),
+    (root / "probes/firestaff_m10_projectile_probe.c", "group attack quartered before resistance"),
 ]
 missing = []
 for path, needle in checks:

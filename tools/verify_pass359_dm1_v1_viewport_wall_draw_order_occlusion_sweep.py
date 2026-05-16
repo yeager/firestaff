@@ -140,7 +140,7 @@ def main() -> int:
             "C702_ZONE_WALL_D3L2", "C704_ZONE_WALL_D3C", "C709_ZONE_WALL_D2C", "C712_ZONE_WALL_D1C", "C717_ZONE_WALL_D0R",
         ], "DEFS.H:4042-4057")
 
-        view_path = ROOT / "m11_game_view.c"
+        view_path = ROOT / "src/engine/m11_game_view.c"
         require_all(function_body(view_path, "m11_dm1_max_visible_forward_from_center") +
                     function_body(view_path, "m11_dm1_nearest_blocking_center_depth_index") +
                     function_body(view_path, "m11_dm1_nearest_blocking_center_door_depth"), [

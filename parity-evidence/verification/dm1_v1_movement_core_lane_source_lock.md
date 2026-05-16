@@ -19,12 +19,12 @@ Scope: input -> command queue -> turning/collision -> timing/sensors. Viewport/w
 
 ## Firestaff evidence
 
-- dm1_v1_input_command_queue_pc34_compat.c - PC-34 input rows, queue lock, gated movement retention, pending-click replay, and blocked-input discard
-- dm1_v1_movement_command_core_pc34_compat.c - F0380-to-F0365/F0366 seam: turns bypass movement gates, steps apply stamina/collision/group blocking/timing
-- memory_movement_pc34_compat.c - pure movement legality and target-square result semantics behind F0366, including the empty-party group-collision bug
-- dm1_v1_movement_timing_pc34_compat.c - post-step cadence mirrors F0310/F0366 timing side effects
-- test_dm1_v1_movement_command_core_pc34_compat.c - behavior coverage for queued input through turn/step dispatch, collision, stamina, timing, and sensor order
-- test_dm1_v1_command_movement_sensor_timing_pc34_compat.c - integration coverage for PC-34 movement queue, collision, turn, sensor, timing edges, and BUG0_85 empty-party group passage
+- src/dm1/dm1_v1_input_command_queue_pc34_compat.c - PC-34 input rows, queue lock, gated movement retention, pending-click replay, and blocked-input discard
+- src/dm1/dm1_v1_movement_command_core_pc34_compat.c - F0380-to-F0365/F0366 seam: turns bypass movement gates, steps apply stamina/collision/group blocking/timing
+- src/memory/memory_movement_pc34_compat.c - pure movement legality and target-square result semantics behind F0366, including the empty-party group-collision bug
+- src/dm1/dm1_v1_movement_timing_pc34_compat.c - post-step cadence mirrors F0310/F0366 timing side effects
+- tests/test_dm1_v1_movement_command_core_pc34_compat.c - behavior coverage for queued input through turn/step dispatch, collision, stamina, timing, and sensor order
+- tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c - integration coverage for PC-34 movement queue, collision, turn, sensor, timing edges, and BUG0_85 empty-party group passage
 
 ## Required gates
 

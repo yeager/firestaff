@@ -6,7 +6,7 @@
   ],
   "firestaff": {
     "door_front_occlusion_anchors_checked": 3,
-    "file": "dm1_v1_viewport_3d_pc34_compat.c"
+    "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
   },
   "nonClaims": [
     "No movement core change.",
