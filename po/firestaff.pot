@@ -1,0 +1,124 @@
+# Firestaff UI string template
+# Generated automatically — do not edit manually
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. ACCESSIBILITY
+msgid "Accessibility"
+msgstr ""
+
+#. AUDIO
+msgid "Audio"
+msgstr ""
+
+#. BACK
+msgid "Back"
+msgstr ""
+
+#. BESTIARY
+msgid "Bestiary"
+msgstr ""
+
+#. CHANGELOG
+msgid "Changelog"
+msgstr ""
+
+#. COMING_SOON
+msgid "Coming soon"
+msgstr ""
+
+#. CONTINUE
+msgid "Continue Saved Game"
+msgstr ""
+
+#. CONTROLS
+msgid "Controls"
+msgstr ""
+
+#. DISPLAY
+msgid "Display"
+msgstr ""
+
+#. EXTRAS
+msgid "EXTRAS"
+msgstr ""
+
+#. ITEMS
+msgid "Item Encyclopedia"
+msgstr ""
+
+#. LANGUAGE
+msgid "Language"
+msgstr ""
+
+#. MAP_VIEWER
+msgid "Map Viewer"
+msgstr ""
+
+#. MUSEUM
+msgid "Museum of Lore"
+msgstr ""
+
+#. NEW_GAME_V1
+msgid "New Game (V1 Original)"
+msgstr ""
+
+#. NEW_GAME_V21
+msgid "New Game (V2.1 Upscaled)"
+msgstr ""
+
+#. NEW_GAME_V22
+msgid "New Game (V2.2 Enhanced)"
+msgstr ""
+
+#. NO_DATA
+msgid "No data files"
+msgstr ""
+
+#. OFF
+msgid "Off"
+msgstr ""
+
+#. ON
+msgid "On"
+msgstr ""
+
+#. PLAY
+msgid "PLAY"
+msgstr ""
+
+#. QUIT
+msgid "QUIT"
+msgstr ""
+
+#. SCREENSHOTS
+msgid "Screenshot Gallery"
+msgstr ""
+
+#. SELECT_GAME
+msgid "SELECT GAME"
+msgstr ""
+
+#. SETTINGS
+msgid "SETTINGS"
+msgstr ""
+
+#. SPELLS
+msgid "Spell Reference"
+msgstr ""
+
+#. VALIDATE
+msgid "Validate game data"
+msgstr ""
+
+#. VERSION
+msgid "Version"
+msgstr ""
+
+#. VIDEO
+msgid "Video"
+msgstr ""
+

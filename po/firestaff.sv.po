@@ -1,0 +1,93 @@
+# Firestaff UI — sv
+msgid ""
+msgstr ""
+"Language: sv\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Accessibility"
+msgstr "Tillgänglighet"
+
+msgid "Audio"
+msgstr "Ljud"
+
+msgid "Back"
+msgstr "Tillbaka"
+
+msgid "Bestiary"
+msgstr "Bestiary"
+
+msgid "Changelog"
+msgstr "Ändringslogg"
+
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "Continue Saved Game"
+msgstr "Fortsätt sparat spel"
+
+msgid "Controls"
+msgstr "Kontroller"
+
+msgid "Display"
+msgstr "Bildskärm"
+
+msgid "EXTRAS"
+msgstr "EXTRA"
+
+msgid "Item Encyclopedia"
+msgstr "Föremålsencyklopedi"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Map Viewer"
+msgstr "Kartvisare"
+
+msgid "Museum of Lore"
+msgstr "Kunskapsmuseet"
+
+msgid "New Game (V1 Original)"
+msgstr "Nytt spel (V1 Original)"
+
+msgid "New Game (V2.1 Upscaled)"
+msgstr "Nytt spel (V2.1 Uppskalat)"
+
+msgid "New Game (V2.2 Enhanced)"
+msgstr "Nytt spel (V2.2 Förbättrat)"
+
+msgid "No data files"
+msgstr "Saknar spelfiler"
+
+msgid "Off"
+msgstr "Av"
+
+msgid "On"
+msgstr "På"
+
+msgid "PLAY"
+msgstr "SPELA"
+
+msgid "QUIT"
+msgstr "AVSLUTA"
+
+msgid "Screenshot Gallery"
+msgstr "Skärmbildsgalleri"
+
+msgid "SELECT GAME"
+msgstr "VÄLJ SPEL"
+
+msgid "SETTINGS"
+msgstr "INSTÄLLNINGAR"
+
+msgid "Spell Reference"
+msgstr "Trollformler"
+
+msgid "Validate game data"
+msgstr "Validera speldata"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Video"
+msgstr "Video"
+

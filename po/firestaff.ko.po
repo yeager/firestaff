@@ -1,0 +1,93 @@
+# Firestaff UI — ko
+msgid ""
+msgstr ""
+"Language: ko\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Accessibility"
+msgstr ""
+
+msgid "Audio"
+msgstr ""
+
+msgid "Back"
+msgstr "뒤로"
+
+msgid "Bestiary"
+msgstr ""
+
+msgid "Changelog"
+msgstr ""
+
+msgid "Coming soon"
+msgstr ""
+
+msgid "Continue Saved Game"
+msgstr ""
+
+msgid "Controls"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "EXTRAS"
+msgstr ""
+
+msgid "Item Encyclopedia"
+msgstr ""
+
+msgid "Language"
+msgstr "언어"
+
+msgid "Map Viewer"
+msgstr ""
+
+msgid "Museum of Lore"
+msgstr ""
+
+msgid "New Game (V1 Original)"
+msgstr ""
+
+msgid "New Game (V2.1 Upscaled)"
+msgstr ""
+
+msgid "New Game (V2.2 Enhanced)"
+msgstr ""
+
+msgid "No data files"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "On"
+msgstr ""
+
+msgid "PLAY"
+msgstr "플레이"
+
+msgid "QUIT"
+msgstr "종료"
+
+msgid "Screenshot Gallery"
+msgstr ""
+
+msgid "SELECT GAME"
+msgstr ""
+
+msgid "SETTINGS"
+msgstr "설정"
+
+msgid "Spell Reference"
+msgstr ""
+
+msgid "Validate game data"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "Video"
+msgstr ""
+

@@ -1,5 +1,6 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "firestaff_startup.h"
 
 #define FIRESTAFF_VERSION_STRING "v0.6.0"
 #include "firestaff_bestiary.h"
@@ -3325,13 +3326,25 @@ static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
     "Dungeon Master II", "Dungeon Master Nexus"
 };
 
-static const char *g_game_select_tags[M12_GAME_SELECT_COUNT] = {
-    "V1 / V2.1", "V1", "Coming soon", "Coming soon"
+static const char *g_game_select_tags_ready[] = {"V1 / V2.1 / V2.2", "V1 / V2", "V1 / V2", "V1 / V2"};
+static const char *g_game_select_tags_missing[] = {"No data files", "No data files", "No data files", "No data files"};
+
+static int g_game_select_available[M12_GAME_SELECT_COUNT] = {
+    0, 0, 0, 0  /* set at runtime by fs_startup_check_games */
 };
 
-static const int g_game_select_available[M12_GAME_SELECT_COUNT] = {
-    1, 1, 0, 0
-};
+void m12_update_game_availability(const FS_GameAvailability *avail) {
+    if (!avail) return;
+    g_game_select_available[0] = avail->dm1_available;
+    g_game_select_available[1] = avail->csb_available;
+    g_game_select_available[2] = avail->dm2_available;
+    g_game_select_available[3] = avail->nexus_available;
+}
+
+static const char *m12_game_tag(int index) {
+    if (index < 0 || index >= M12_GAME_SELECT_COUNT) return "";
+    return g_game_select_available[index] ? g_game_select_tags_ready[index] : g_game_select_tags_missing[index];
+}
 
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
     "New Game (V1 Original)",
@@ -3438,7 +3451,7 @@ static void m12_draw_game_select(const M12_StartupMenuState *state,
     for (i = 0; i < M12_GAME_SELECT_COUNT; i++) {
         int y = startY + i * itemH;
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            g_game_select_labels[i], g_game_select_tags[i],
+            g_game_select_labels[i], m12_game_tag(i),
             (int)state->gameSelectSelected == i,
             g_game_select_available[i], i);
     }

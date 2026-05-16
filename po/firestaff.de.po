@@ -1,0 +1,93 @@
+# Firestaff UI — de
+msgid ""
+msgstr ""
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Accessibility"
+msgstr ""
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Back"
+msgstr "Zurück"
+
+msgid "Bestiary"
+msgstr ""
+
+msgid "Changelog"
+msgstr ""
+
+msgid "Coming soon"
+msgstr ""
+
+msgid "Continue Saved Game"
+msgstr ""
+
+msgid "Controls"
+msgstr "Steuerung"
+
+msgid "Display"
+msgstr "Anzeige"
+
+msgid "EXTRAS"
+msgstr "EXTRAS"
+
+msgid "Item Encyclopedia"
+msgstr ""
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Map Viewer"
+msgstr ""
+
+msgid "Museum of Lore"
+msgstr ""
+
+msgid "New Game (V1 Original)"
+msgstr ""
+
+msgid "New Game (V2.1 Upscaled)"
+msgstr ""
+
+msgid "New Game (V2.2 Enhanced)"
+msgstr ""
+
+msgid "No data files"
+msgstr ""
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "On"
+msgstr "An"
+
+msgid "PLAY"
+msgstr "SPIELEN"
+
+msgid "QUIT"
+msgstr "BEENDEN"
+
+msgid "Screenshot Gallery"
+msgstr ""
+
+msgid "SELECT GAME"
+msgstr "SPIEL WÄHLEN"
+
+msgid "SETTINGS"
+msgstr "EINSTELLUNGEN"
+
+msgid "Spell Reference"
+msgstr ""
+
+msgid "Validate game data"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "Video"
+msgstr "Video"
+
