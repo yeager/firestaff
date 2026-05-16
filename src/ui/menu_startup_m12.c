@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "firestaff_l10n.h"
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"

@@ -46,4 +46,10 @@ FS_Language fs_l10n_get_language(void);
 const char *fs_l10n_get(FS_StringId id);
 const char *fs_l10n_language_name(FS_Language lang);
 
+
+FS_Language fs_l10n_detect_system_language(void);
+int fs_l10n_to_asset_language(FS_Language ui_lang);
+void fs_l10n_init_from_system(void);
+
 #endif
+

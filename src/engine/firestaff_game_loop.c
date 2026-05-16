@@ -1,5 +1,7 @@
 
 #include "firestaff_game_loop.h"
+#include "firestaff_l10n.h"
+#include "firestaff_asset_pipeline.h"
 #include "dm1_v2_anim_timing.h"
 #include <string.h>
 #include <stdio.h>
@@ -40,6 +42,10 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         }
     }
 
+        /* Auto-detect system language and set UI + asset language */
+    fs_l10n_init_from_system();
+    printf("Firestaff: language=%s\n", fs_l10n_language_name(fs_l10n_get_language()));
+
     printf("Firestaff: init game=%d version=%d %dx%d\n",
         config->game, config->version,
         state->config.window_width, state->config.window_height);
@@ -51,6 +57,15 @@ int fs_game_load_assets(FS_GameState *state) {
     /* Load GRAPHICS.DAT and DUNGEON.DAT based on game */
     printf("Firestaff: loading assets for game %d from %s\n",
         state->config.game, state->config.data_dir ? state->config.data_dir : "(default)");
+
+    /* Load assets with language from settings */
+    {
+        FS_AssetBundle assets;
+        int asset_lang = fs_l10n_to_asset_language(fs_l10n_get_language());
+        if (state->config.data_dir) {
+            fs_assets_load_dm1_multilang(&assets, state->config.data_dir, (FS_AssetLanguage)asset_lang);
+        }
+    }
 
     /* TODO: call dm1_v1_graphics_loader / dm1_v1_dungeon_loader
      * For now, set starting position */
