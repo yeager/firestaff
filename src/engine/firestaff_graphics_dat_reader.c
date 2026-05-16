@@ -164,27 +164,16 @@ int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
  *   - Byte 0x80-0xFF: repeat next byte (N-0x80+1) times
  * ══════════════════════════════════════════════════════════════════════ */
 
-int fs_gfx_decompress_rle(const uint8_t *src, int src_size,
+/* LZW decompressor is in dm1_v1_graphics_loader_pc34_compat.c */
+#include "dm1_v1_graphics_loader_pc34_compat.h"
+
+int fs_gfx_decompress_lzw(const uint8_t *src, int src_size,
     uint8_t *dst, int dst_size)
 {
-    int si = 0, di = 0;
-    while (si < src_size && di < dst_size) {
-        uint8_t cmd = src[si++];
-        if (cmd < 0x80) {
-            /* Literal run: copy cmd+1 bytes */
-            int count = cmd + 1;
-            for (int i = 0; i < count && si < src_size && di < dst_size; i++)
-                dst[di++] = src[si++];
-        } else {
-            /* Repeat run: repeat next byte (cmd-0x80+1) times */
-            int count = (cmd & 0x7F) + 1;
-            if (si >= src_size) break;
-            uint8_t val = src[si++];
-            for (int i = 0; i < count && di < dst_size; i++)
-                dst[di++] = val;
-        }
-    }
-    return di;
+    M11_GFX_LZWState lzw;
+    memset(&lzw, 0, sizeof(lzw));
+    return m11_gfx_lzw_decompress(&lzw, src, (size_t)src_size,
+        dst, (size_t)dst_size);
 }
 
 /* Expand 4bpp packed to 8bpp indexed (2 pixels per source byte) */
@@ -215,7 +204,7 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
     w = gfx->entries[index].width;
     h = gfx->entries[index].height;
     off = gfx->entries[index].offset;
-    data_off = off + 4; /* skip width/height */
+    data_off = off; /* new format has w/h in header, old format embeds them */
 
     if (out_w) *out_w = w;
     if (out_h) *out_h = h;
@@ -232,7 +221,7 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
         return -1;
 
     /* Try RLE decompression */
-    decomp_size = fs_gfx_decompress_rle(
+    decomp_size = fs_gfx_decompress_lzw(
         gfx->raw_data + data_off, compressed_size,
         decomp_buf, sizeof(decomp_buf));
 
