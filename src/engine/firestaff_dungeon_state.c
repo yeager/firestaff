@@ -81,31 +81,53 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
 
     printf("DUNGEON.DAT: %d levels, %d bytes\n", level_count, size);
 
-    /* Read per-level map headers */
-    /* Each map header: 8 bytes (offset_x:2, offset_y:2, col_count:1, row_count:1, pad:2) */
-    for (lv = 0; lv < level_count && off + 8 <= size; lv++) {
-        int col_count = data[off + 4] + 1;
-        int row_count = data[off + 5] + 1;
-        if (col_count > DQ_MAX_W) col_count = DQ_MAX_W;
-        if (row_count > DQ_MAX_H) row_count = DQ_MAX_H;
-        g_dungeon_level_w[lv] = col_count;
-        g_dungeon_level_h[lv] = row_count;
-        off += 8;
+    /* Read MAP headers — ReDMCSB DEFS.H MAP struct:
+     * 16 bytes per map:
+     *   uint16 RawMapDataByteOffset
+     *   uint16 aUnreferenced
+     *   uint16 bUnreferenced
+     *   uint8  OffsetMapX
+     *   uint8  OffsetMapY
+     *   uint16 word_A: Level(6):Width(5):Height(5) — PC bit order
+     *   uint16 word_B: ornament counts
+     *   uint16 word_C: door/creature/difficulty
+     *   uint16 word_D: floor/wall/door sets */
+    int map_raw_offsets[DQ_MAX_LEVELS];
+    for (lv = 0; lv < level_count && off + 16 <= size; lv++) {
+        map_raw_offsets[lv] = r16(data + off);
+        uint16_t word_a = r16(data + off + 8);
+        int width = ((word_a >> 6) & 0x1F) + 1;
+        int height = ((word_a >> 11) & 0x1F) + 1;
+        if (width > DQ_MAX_W) width = DQ_MAX_W;
+        if (height > DQ_MAX_H) height = DQ_MAX_H;
+        g_dungeon_level_w[lv] = width;
+        g_dungeon_level_h[lv] = height;
+        printf("  Map %d: %dx%d (raw_offset=%d)\n", lv, width, height, map_raw_offsets[lv]);
+        off += 16;
     }
 
-    /* Read square data — each square is 2 words (4 bytes) in packed format.
-     * Square type is bits 0-2 of the first word.
-     * DM1 stores squares column-major (all rows for col 0, then col 1, etc.) */
+    /* Square data follows map headers.
+     * ReDMCSB DUNGEON.C F0150: reads column-major, 10 bytes per square.
+     * But for PC34 uncompressed: square data starts after headers,
+     * and each square is stored as a 10-byte record.
+     *
+     * Actually: RawMapDataByteCount at offset 2-3 = total bytes of raw map data.
+     * Square data offset = DUNGEON_HEADER(44) + MapCount * MAP(16) = current off.
+     * Each square: 5 uint16 = 10 bytes.
+     * Square type is bits 0-4 of first word (element type):
+     *   0=wall, 1=corridor, 2=pit, 3=stairs, 4=door, 5=teleporter, 6=fakewall */
+    int sq_data_start = off;
     for (lv = 0; lv < level_count; lv++) {
         int w = g_dungeon_level_w[lv];
         int h = g_dungeon_level_h[lv];
+        /* Squares stored column-major: for each column, read all rows */
         for (int col = 0; col < w; col++) {
             for (int row = 0; row < h; row++) {
-                if (off + 2 <= size) {
+                if (off + 10 <= size) {
                     uint16_t word = r16(data + off);
-                    int sq_type = word & 0x07; /* bits 0-2 = square type */
+                    int sq_type = (word >> 5) & 0x07; /* bits 5-7 = element type (ReDMCSB M034_SQUARE_TYPE) */
                     g_dungeon_grid[lv][row][col] = (uint8_t)sq_type;
-                    off += 2; /* skip to next square (DM1 uses variable-length entries) */
+                    off += 10;
                 }
             }
         }
@@ -115,15 +137,16 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     printf("DUNGEON.DAT: parsed %d levels, level 0 is %dx%d\n",
         level_count, g_dungeon_level_w[0], g_dungeon_level_h[0]);
 
-    /* Debug: print level 0 grid snippet around Hall of Champions */
-    printf("Level 0 grid around (11,29):\n");
-    for (int y = 27; y < 32 && y < g_dungeon_level_h[0]; y++) {
+    /* Debug: print level 0 grid */
+    printf("Level 0 (%dx%d) grid:\n", g_dungeon_level_w[0], g_dungeon_level_h[0]);
+    for (int y = 0; y < g_dungeon_level_h[0] && y < 8; y++) {
         printf("  y=%2d: ", y);
-        for (int x = 9; x < 14 && x < g_dungeon_level_w[0]; x++) {
-            printf("%d ", g_dungeon_grid[0][y][x]);
+        for (int x = 0; x < g_dungeon_level_w[0] && x < 18; x++) {
+            printf("%d", g_dungeon_grid[0][y][x]);
         }
         printf("\n");
     }
+    printf("  Start: (%d,%d) dir=%d\n", g_start_x, g_start_y, g_start_dir);
 
     return level_count;
 }
