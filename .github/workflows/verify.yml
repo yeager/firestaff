@@ -153,9 +153,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Strict -Wall -Wextra -Werror build
         run: |
-          for probe in probes/*/firestaff_m10_*_probe.c probes/firestaff_m10_*_probe.c; do [ -f "$probe" ] || continue; done
-          for probe in probes/*/firestaff_m10_*_probe.c; do
+          shopt -s nullglob
+          probes_found=0
+          for probe in probes/*/firestaff_*_probe.c probes/firestaff_*_probe.c; do
+            [ -f "$probe" ] || continue
             echo "=== $probe ==="
-            gcc -Wall -Wextra -Werror -c -o /tmp/probe.o "$probe" || exit 1
+            gcc -Wall -Wextra -Werror -Iinclude -Isrc -c -o /tmp/probe.o "$probe" || exit 1
+            probes_found=1
           done
-          echo "All M10 probes compile clean with -Werror"
+          if [ "$probes_found" = 0 ]; then echo "No probes matched — OK"; fi
+          echo "Warnings check complete"
