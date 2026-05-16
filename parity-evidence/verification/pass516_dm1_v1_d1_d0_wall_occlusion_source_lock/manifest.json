@@ -47,7 +47,7 @@
       "id": "local-d1-d0-wall-specs-present",
       "lines": "281-312",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -75,7 +75,7 @@
       "id": "local-side-occlusion-d1-d0-cell-orders-present",
       "lines": "139-171",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/home/trv2/work/firestaff/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "f83140316f835a10820872b750542eb79e482b1665f1df9a079b9f7d3b1450aa",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -84,23 +84,37 @@
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
       "hits": [
         {
+          "line": 244,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 245,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 246,
+          "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
+        },
+        {
+          "line": 247,
+          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
+        },
+        {
+          "line": 248,
+          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
           "line": 294,
           "needle": "test_wall_item_occlusion_alcove_exception"
         }
       ],
       "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
-      "lines": "281-313",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
-        "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
-        "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C",
-        "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R",
-        "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
-      ],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "lines": "234-310",
+      "missing": [],
+      "path": "/home/trv2/work/firestaff/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "localReferences": [
@@ -317,12 +331,12 @@
   ],
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -331,12 +345,12 @@
     {
       "command": [
         "/usr/bin/python3",
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
+        "/home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass516 check-only: local-runtime-test-covers-d1-d0-wall-occlusion",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass516 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

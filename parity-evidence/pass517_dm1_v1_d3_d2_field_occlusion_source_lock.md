@@ -1,6 +1,6 @@
 # Pass517 DM1 V1 D3/D2 field occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Primary ReDMCSB Evidence
 
@@ -47,7 +47,7 @@ Status: failed
 
 ## Verification
 
-- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1

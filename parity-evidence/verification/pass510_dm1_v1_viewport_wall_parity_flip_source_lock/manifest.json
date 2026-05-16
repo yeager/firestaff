@@ -28,7 +28,7 @@
       "id": "firestaff_party_tuple_flip_predicate",
       "lines": "9052-9059",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "path": "/home/trv2/work/firestaff/m11_game_view.c",
       "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
@@ -55,7 +55,7 @@
       "id": "firestaff_wallset_variant_binding_before_draw",
       "lines": "9109-9123",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "path": "/home/trv2/work/firestaff/m11_game_view.c",
       "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
@@ -90,7 +90,7 @@
       "id": "firestaff_center_wall_flip_path",
       "lines": "9664-9690",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "path": "/home/trv2/work/firestaff/m11_game_view.c",
       "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
@@ -129,7 +129,7 @@
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": "10232-10280",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "path": "/home/trv2/work/firestaff/m11_game_view.c",
       "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"

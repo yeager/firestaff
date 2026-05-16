@@ -54,7 +54,7 @@
       "wine": "/usr/bin/wine"
     }
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {

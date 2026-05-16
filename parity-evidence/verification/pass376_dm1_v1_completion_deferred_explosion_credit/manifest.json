@@ -1,5 +1,5 @@
 {
-  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "branch": "main",
   "checks": [
     {
       "kind": "pass375_deferred_explosion_prerequisite",
@@ -73,15 +73,15 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
+  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "full object/creature/projectile gameplay parity",
     "original DOS runtime explosion overlay comparison"
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-16T06:28:55.914486+00:00"
+  "timestampUtc": "2026-05-16T06:44:54.572725+00:00"
 }

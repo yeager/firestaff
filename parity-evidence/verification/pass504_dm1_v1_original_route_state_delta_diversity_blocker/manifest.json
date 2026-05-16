@@ -142,7 +142,7 @@
   },
   "ok": true,
   "remainingBlocker": "Original route-state diversity is still blocked at the post-command state-delta proof boundary. The current pass376/pass435 artifacts are useful as quarantined regression inputs, but they do not prove that distinct raw/cropped states came after source-visible F0380 -> F0365/F0366 -> G0321 -> F0128/F0097 transitions.",
-  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
+  "repo": "/home/trv2/work/firestaff",
   "requiredNextEvidence": [
     "capture route begins from a verified post-entry gameplay state, not an entrance/setup echo",
     "each command label is backed by original F0380 queue pop/load/decrement evidence",

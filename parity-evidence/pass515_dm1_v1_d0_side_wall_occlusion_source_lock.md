@@ -57,7 +57,7 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Verification
 
-- command: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat
+- command: /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -75,7 +75,7 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+- command: /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
   - returncode: 0
   - output tail:
 ~~~

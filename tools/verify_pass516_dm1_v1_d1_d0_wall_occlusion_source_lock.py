@@ -82,7 +82,7 @@ LOCAL_CHECKS = [
         "DM1_VIEW_SQUARE_D0L, 0x0002",
         "DM1_VIEW_SQUARE_D0R, 0x0001",
     ]},
-    {"id": "local-runtime-test-covers-d1-d0-wall-occlusion", "path": ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "lines": "281-313", "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.", "ordered": [
+    {"id": "local-runtime-test-covers-d1-d0-wall-occlusion", "path": ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "lines": "234-310", "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.", "ordered": [
         "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
         "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
         "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C",

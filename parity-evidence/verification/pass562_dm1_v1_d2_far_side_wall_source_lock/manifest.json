@@ -1,46 +1,91 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
+      "hits": [
+        {
+          "line": 291,
+          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
+        },
+        {
+          "line": 291,
+          "needle": "DM1_PC34_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 291,
+          "needle": "DUNVIEW.C:6849-6858"
+        },
+        {
+          "line": 291,
+          "needle": "DUNVIEW.C:6848-6862 wall case returns"
+        },
+        {
+          "line": 292,
+          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
+        },
+        {
+          "line": 292,
+          "needle": "DM1_PC34_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 292,
+          "needle": "DUNVIEW.C:6880-6889"
+        },
+        {
+          "line": 292,
+          "needle": "DUNVIEW.C:6882-6893 wall case returns"
+        }
+      ],
       "id": "firestaff-d2-far-side-wall-metadata",
-      "lines": "250-260",
-      "missing": [
-        "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
-        "DM1_PC34_ZONE_WALL_D2L2",
-        "DUNVIEW.C:6849-6858",
-        "DUNVIEW.C:6848-6862 wall case returns",
-        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
-        "DM1_PC34_ZONE_WALL_D2R2",
-        "DUNVIEW.C:6880-6889",
-        "DUNVIEW.C:6882-6893 wall case returns"
-      ],
+      "lines": "281-302",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
+      "hits": [
+        {
+          "line": 239,
+          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
+        },
+        {
+          "line": 239,
+          "needle": "DM1_PC34_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 239,
+          "needle": "\"6862\""
+        },
+        {
+          "line": 240,
+          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
+        },
+        {
+          "line": 240,
+          "needle": "DM1_PC34_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 240,
+          "needle": "\"6893\""
+        }
+      ],
       "id": "firestaff-d2-far-side-runtime-test",
-      "lines": "180-190",
-      "missing": [
-        "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
-        "DM1_PC34_ZONE_WALL_D2L2",
-        "\"6862\"",
-        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
-        "DM1_PC34_ZONE_WALL_D2R2",
-        "\"6893\""
-      ],
+      "lines": "229-249",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-source-evidence-string",
-      "lines": "972-979",
-      "missing": [
-        "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
+      "hits": [
+        {
+          "line": 1128,
+          "needle": "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
+        }
       ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "1118-1138",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -153,12 +198,12 @@
   ],
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass562_dm1_v1_d2_far_side_wall_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -167,12 +212,12 @@
     {
       "command": [
         "/usr/bin/python3",
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
+        "/home/trv2/work/firestaff/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-d2-far-side-runtime-test,firestaff-source-evidence-string",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass562 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

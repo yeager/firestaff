@@ -44,7 +44,7 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-mirrored-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "135-142", [
+    ("firestaff-mirrored-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "129-152", [
         "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
         "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
         "DUNVIEW.C:6592-6593 optional button before door panel",
@@ -53,11 +53,11 @@ LOCAL = [
         "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439",
         "DUNVIEW.C:7181 floor ornament under mirrored rear pass",
     ]),
-    ("firestaff-mirrored-door-front-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "435-491", [
+    ("firestaff-mirrored-door-front-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "572-625", [
         "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
         "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
-        "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 9);",
+        "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);",
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),

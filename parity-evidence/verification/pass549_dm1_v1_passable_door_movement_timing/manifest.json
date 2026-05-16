@@ -1,5 +1,5 @@
 {
-  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:405-490",
@@ -8,7 +8,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "1de7e21cdf0786e345689dd731c8813be9efb20c",
+  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
   "notClaimed": [
     "new original DOS runtime capture",
     "pass514/pass388 capture follow-up",
@@ -22,7 +22,7 @@
   },
   "schema": "firestaff.parity.pass549_dm1_v1_passable_door_movement_timing.v1",
   "status": "PASS549_DM1_V1_PASSABLE_DOOR_MOVEMENT_TIMING_LOCKED",
-  "timestampUtc": "2026-05-15T00:48:35.470566+00:00",
+  "timestampUtc": "2026-05-16T06:42:40.077395+00:00",
   "whyNotPass547Duplicate": "pass547 locks blocked closed-door/fake-wall/group convergence. Pass549 locks the opposite door-state branch: one-fourth and destroyed doors are accepted movement, keep queued follow-up input, process destination sensors, set movement cooldown, clear projectile cooldown, and request viewport redraw.",
-  "worktree": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch"
+  "worktree": "/home/trv2/work/firestaff"
 }

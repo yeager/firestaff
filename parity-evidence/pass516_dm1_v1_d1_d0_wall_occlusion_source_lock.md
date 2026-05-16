@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -61,12 +61,12 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 - PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:139-171)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
-- FAIL local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:281-313)
+- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:234-310)
   - The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.
 
 ## Verification
 
-- command: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat
+- command: /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -84,11 +84,11 @@ PASS source_evidence.present_wait == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /usr/bin/python3 /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 1
+- command: /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
+  - returncode: 0
   - output tail:
 ~~~
-FAIL pass516 check-only: local-runtime-test-covers-d1-d0-wall-occlusion
+PASS pass516 check-only
 ~~~
 
 ## Non-Claims

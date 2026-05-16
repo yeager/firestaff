@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build",
+        "/home/trv2/work/firestaff/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -79,11 +79,24 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "Traceback (most recent call last):",
+        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 156, in <module>",
+        "    raise SystemExit(main())",
+        "                     ^^^^^^",
+        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 124, in main",
+        "    tests = [run(cmd) for cmd in TEST_COMMANDS]",
+        "             ^^^^^^^^",
+        "  File \"/home/trv2/work/firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 111, in run",
+        "    raise AssertionError(f\"command failed {' '.join(cmd)}:\\n{proc.stdout[-4000:]}\")",
+        "AssertionError: command failed git diff --check:",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:30: leftover conflict marker",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:33: leftover conflict marker",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:36: leftover conflict marker",
+        ""
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -147,15 +160,15 @@
       "expectedStatus": null,
       "id": "pass406_game_loop_redraw_cadence",
       "outputTail": [
-        "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
-        "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:4952-5035; main_loop_m11.c:1638-1650; dm1_v1_movement_pipeline_pc34_compat.c:244-425",
-        "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
-        "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
+        "FAIL pass406_dm1_v1_game_loop_redraw_cadence: command failed git diff --check:",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:30: leftover conflict marker",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:33: leftover conflict marker",
+        "parity-evidence/pass475_dm1_v1_f0365_f0366_runtime_followup.md:36: leftover conflict marker",
+        ""
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -248,8 +261,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:10128",
-        "- Firestaff source viewport draw order: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:18614",
+        "- Firestaff field rows/zones: /home/trv2/work/firestaff/m11_game_view.c:10128",
+        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/m11_game_view.c:18614",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -276,8 +289,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:13247",
-        "- Firestaff palette apply: /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c:8835",
+        "- Firestaff palette compute: /home/trv2/work/firestaff/m11_game_view.c:13247",
+        "- Firestaff palette apply: /home/trv2/work/firestaff/m11_game_view.c:8835",
         "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -306,7 +319,7 @@
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
-  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
+  "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
   "expectedBlockerGates": [
     {
       "cmd": [
@@ -332,7 +345,7 @@
     }
   ],
   "gate": "dm1_v1_viewport_movement_completion_matrix",
-  "passed": true,
+  "passed": false,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
@@ -409,5 +422,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-16T06:28:54.470903+00:00"
+  "timestampUtc": "2026-05-16T06:47:23.105842+00:00"
 }

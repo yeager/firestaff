@@ -32,25 +32,43 @@
         }
       ],
       "id": "firestaff-mirrored-door-front-metadata",
-      "lines": "135-142",
+      "lines": "129-152",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-mirrored-door-front-runtime-test",
-      "lines": "435-491",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
-        "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
-        "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
-        "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 9);",
-        "rear.cells[0] == expected[i].rear_cells[0]",
-        "front.cells[0] == expected[i].front_cells[0]"
+      "hits": [
+        {
+          "line": 582,
+          "needle": "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },"
+        },
+        {
+          "line": 584,
+          "needle": "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },"
+        },
+        {
+          "line": 585,
+          "needle": "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },"
+        },
+        {
+          "line": 592,
+          "needle": "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);"
+        },
+        {
+          "line": 611,
+          "needle": "rear.cells[0] == expected[i].rear_cells[0]"
+        },
+        {
+          "line": 615,
+          "needle": "front.cells[0] == expected[i].front_cells[0]"
+        }
       ],
+      "id": "firestaff-mirrored-door-front-runtime-test",
+      "lines": "572-625",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -181,12 +199,12 @@
   ],
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass560_dm1_v1_mirrored_door_front_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -195,12 +213,12 @@
     {
       "command": [
         "/usr/bin/python3",
-        "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
+        "/home/trv2/work/firestaff/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass560 check-only: firestaff-mirrored-door-front-runtime-test",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass560 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

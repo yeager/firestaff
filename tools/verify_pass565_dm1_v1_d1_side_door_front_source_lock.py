@@ -32,9 +32,9 @@ SRC = [
     ]),
 ]
 LOCAL = [
-    ("firestaff-d1-side-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "135-148", ["DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039", "DUNVIEW.C:7508-7536 pass2 front-right cell after door", "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049", "DUNVIEW.C:7676-7704 pass2 front-left cell after door"]),
-    ("firestaff-d1-side-door-front-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "508-555", ["DM1_VIEW_SQUARE_D1L", "0x0028, 0x0039", "DM1_VIEW_SQUARE_D1R", "0x0018, 0x0049", "door_front_occlusion.count", "11", "door_front_occlusion.d1l_side_door_front_spec"]),
-    ("firestaff-d1-side-door-front-source-evidence", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "1080-1085", ["DUNVIEW.C:7493-7536", "DUNVIEW.C:7661-7704"]),
+    ("firestaff-d1-side-door-front-metadata", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "134-155", ["DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039", "DUNVIEW.C:7508-7536 pass2 front-right cell after door", "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049", "DUNVIEW.C:7676-7704 pass2 front-left cell after door"]),
+    ("firestaff-d1-side-door-front-runtime-test", ROOT / "test_dm1_v1_viewport_3d_pc34_compat.c", "577-640", ["DM1_VIEW_SQUARE_D1L", "0x0028, 0x0039", "DM1_VIEW_SQUARE_D1R", "0x0018, 0x0049", "door_front_occlusion.count", "11", "door_front_occlusion.d1l_side_door_front_spec"]),
+    ("firestaff-d1-side-door-front-source-evidence", ROOT / "dm1_v1_viewport_3d_pc34_compat.c", "1109-1130", ["DUNVIEW.C:7493-7536", "DUNVIEW.C:7661-7704"]),
 ]
 def read_span(path, span):
     a, b = [int(x) for x in span.split("-")]

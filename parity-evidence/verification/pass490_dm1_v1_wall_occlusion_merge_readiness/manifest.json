@@ -75,35 +75,35 @@
     },
     {
       "id": "firestaff-nearest-center-blocker",
-      "file": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "file": "/home/trv2/work/firestaff/m11_game_view.c",
       "needle": "m11_dm1_nearest_blocking_center_depth_index",
       "line": 9619,
       "ok": true
     },
     {
       "id": "firestaff-front-wall-depth-collapse",
-      "file": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "file": "/home/trv2/work/firestaff/m11_game_view.c",
       "needle": "m11_draw_dm1_front_walls",
       "line": 9650,
       "ok": true
     },
     {
       "id": "firestaff-side-lane-clear",
-      "file": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "file": "/home/trv2/work/firestaff/m11_game_view.c",
       "needle": "m11_dm1_side_lane_clear_before_depth",
       "line": 9697,
       "ok": true
     },
     {
       "id": "firestaff-side-content-center-blocker",
-      "file": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "file": "/home/trv2/work/firestaff/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
       "line": 12440,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
-      "file": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/m11_game_view.c",
+      "file": "/home/trv2/work/firestaff/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
       "line": 10630,
       "ok": true

@@ -22,7 +22,7 @@ Scope: source-lock the loop that decrements movement cooldowns before raw input 
 
 ## Gates
 
-- /home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/build/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
+- /home/trv2/work/firestaff/build/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
 
 ## Not claimed
 

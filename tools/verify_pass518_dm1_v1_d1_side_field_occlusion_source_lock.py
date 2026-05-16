@@ -7,7 +7,7 @@ checks=[("D1L","7391-7557",["L0213_i_Order = C0x0032_CELL_ORDER_BACKRIGHT_FRONTR
 red=RED.read_text(encoding="latin-1",errors="replace"); rows=[]
 for sq,span,needles in checks:
  a,b=(int(x) for x in span.split("-")); body="\n".join(red.splitlines()[a-1:b]); rows.append({"square":sq,"source":f"DUNVIEW.C:{span}","status":"PASS" if all(n in body for n in needles) else "FAIL"})
-locals=[("dm1_v1_viewport_3d_pc34_compat.c","DM1_VIEW_SQUARE_D1L, 0x0032"),("dm1_v1_viewport_3d_pc34_compat.c","DM1_VIEW_SQUARE_D1R, 0x0041"),("test_dm1_v1_viewport_3d_pc34_compat.c","floor_field_order_spec_count(), 10")]
+locals=[("dm1_v1_viewport_3d_pc34_compat.c","DM1_VIEW_SQUARE_D1L, 0x0032"),("dm1_v1_viewport_3d_pc34_compat.c","DM1_VIEW_SQUARE_D1R, 0x0041"),("test_dm1_v1_viewport_3d_pc34_compat.c","floor_field_order_spec_count(), 13")]
 lrows=[{"file":f,"needle":n,"status":"PASS" if n in (ROOT/f).read_text(errors="replace") else "FAIL"} for f,n in locals]
 p=subprocess.run([str(ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat")],cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
 ok=all(r["status"]=="PASS" for r in rows+lrows) and p.returncode==0

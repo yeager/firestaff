@@ -177,7 +177,7 @@
         },
         {
           "id": "firestaff_sample_blocker",
-          "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+          "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
           "lines": "1-20",
           "needles": [
             "BLOCKED",
@@ -353,7 +353,7 @@
     {
       "surface": "save_new_adventure",
       "id": "firestaff_sample_blocker",
-      "path": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+      "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
       "lines": "1-20",
       "needles": [
         "BLOCKED",

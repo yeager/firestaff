@@ -1,13 +1,13 @@
 {
   "blocker": "Pass559 null INT09-handler decode is not the game-facing movement blocker by itself: ReDMCSB routes raw IRQ09 through S8A_Vector, then exposes keyboard input to DM.EXE through C254 -> G8101_apc_IOInterruptVector slot0/slot1. Next capture must decode C254 and slots 0/1 before checking M528/F0361/F0380.",
-  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "branch": "main",
   "nextRequiredRuntimeProbe": [
     "read INT 09 and verify S8A_Vector after F8088_",
     "read C254 and decode G8101_apc_IOInterruptVector",
     "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_",
     "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
+  "repo": "/home/trv2/work/firestaff",
   "runtimeBinding": {
     "ok": false,
     "provided": false,

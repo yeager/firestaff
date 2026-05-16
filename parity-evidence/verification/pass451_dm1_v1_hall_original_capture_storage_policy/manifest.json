@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-16T06:28:58.314629+00:00",
+  "timestampUtc": "2026-05-16T06:44:56.035316+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch",
-  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
-  "head": "dfccf1c623c31c043be0034b00ccab0030c0839c",
+  "repo": "/home/trv2/work/firestaff",
+  "branch": "main",
+  "head": "d0634644eb5f9f76a40b9a29fe97bc686fe48713",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": false,
@@ -75,7 +75,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/home/trv2/work/firestaff-worktrees/pass593-dm1v1-landable-batch/tools/pass173_source_portrait_route_gate_probe.py"
+      "/home/trv2/work/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

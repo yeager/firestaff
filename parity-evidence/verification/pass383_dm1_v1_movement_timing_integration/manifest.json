@@ -21,9 +21,9 @@
       "ok": true
     }
   ],
-  "branch": "integrator/pass593-dm1v1-landable-batch-20260516-bosse",
+  "branch": "main",
   "buildDir": "/home/trv2/.openclaw/data/firestaff-builds/pass383-verify",
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\nTest project /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\n    Start 34: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #34: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 69: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #69: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.03 sec\n",
+  "ctestTail": "Internal ctest changing into directory: /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\nTest project /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\n    Start 36: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #36: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 71: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #71: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.02 sec\n",
   "proofs": [
     {
       "claim": "movement cooldown gate returns before dequeue, so the queued C003..C006 command is retained",
