@@ -11,7 +11,21 @@
 #include <dirent.h>
 #endif
 
-/* Try to find ISO (CUE/BIN) in data directory */
+/* Try to find ISO (CUE/BIN) in data directory — cross-platform */
+#ifdef _WIN32
+#include <windows.h>
+static int find_iso(const char *dir, char *cue_path, int max_len) {
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    char pattern[512];
+    snprintf(pattern, sizeof(pattern), "%s\\*.cue", dir);
+    h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return 0;
+    snprintf(cue_path, max_len, "%s\\%s", dir, fd.cFileName);
+    FindClose(h);
+    return 1;
+}
+#else
 static int find_iso(const char *dir, char *cue_path, int max_len) {
     DIR *d = opendir(dir);
     struct dirent *ent;
@@ -27,6 +41,7 @@ static int find_iso(const char *dir, char *cue_path, int max_len) {
     closedir(d);
     return 0;
 }
+#endif
 
 /* Check if extracted files exist */
 static int has_extracted(const char *dir) {

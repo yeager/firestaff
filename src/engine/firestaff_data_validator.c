@@ -101,6 +101,7 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
             /* Try ISO: look for .cue file in nexus/ */
             char nexus_dir[512];
             snprintf(nexus_dir, sizeof(nexus_dir), "%s/nexus", data_dir);
+#ifndef _WIN32
             DIR *d = opendir(nexus_dir);
             if (d) {
                 struct dirent *ent;
@@ -119,6 +120,7 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
                 }
                 closedir(d);
             }
+#endif
         }
         if (report->nexus_ready) total_ok++;
     }
