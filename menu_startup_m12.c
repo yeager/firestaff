@@ -69,6 +69,111 @@ enum {
     M12_MUSEUM_CATEGORY_COUNT
 };
 
+/* ── Settings tabs (V2.1/V2.2) ────────────────────────────────────── */
+enum {
+    M12_SETTINGS_TAB_DISPLAY = 0,
+    M12_SETTINGS_TAB_VIDEO,
+    M12_SETTINGS_TAB_AUDIO,
+    M12_SETTINGS_TAB_MISC,
+    M12_SETTINGS_TAB_COUNT
+};
+
+static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
+    "DISPLAY", "VIDEO", "AUDIO", "MISC"
+};
+
+/* ── Extended settings rows per tab ───────────────────────────────── */
+typedef struct {
+    const char *label;
+    const char *value;
+    int implemented; /* 1 = active, 0 = grayed out */
+    int tab;         /* M12_SETTINGS_TAB_* */
+} M12_ExtSettingsRow;
+
+static M12_ExtSettingsRow m12_ext_settings[] = {
+    /* ── DISPLAY tab ── */
+    {"Language",            "English",    1, M12_SETTINGS_TAB_DISPLAY},
+    {"Presentation Mode",   "V2.1",      1, M12_SETTINGS_TAB_DISPLAY},
+    {"Window Mode",         "Windowed",  1, M12_SETTINGS_TAB_DISPLAY},
+    {"Display Format",      "16:9",      1, M12_SETTINGS_TAB_DISPLAY},
+    {"Pixel Snap",          "On",        1, M12_SETTINGS_TAB_DISPLAY},
+    {"Theme",               "Dark",      1, M12_SETTINGS_TAB_DISPLAY},
+    {"Background",          "Dungeon",   1, M12_SETTINGS_TAB_DISPLAY},
+    {"Font Scale",          "100%",      1, M12_SETTINGS_TAB_DISPLAY},
+    {"High Contrast",       "Off",       1, M12_SETTINGS_TAB_DISPLAY},
+    {"Colorblind Mode",     "Off",       1, M12_SETTINGS_TAB_DISPLAY},
+    /* ── VIDEO tab ── */
+    {"Renderer Backend",    "SDL2",      1, M12_SETTINGS_TAB_VIDEO},
+    {"Scale",               "2x",        1, M12_SETTINGS_TAB_VIDEO},
+    {"Upscale Filter",      "EPX",       1, M12_SETTINGS_TAB_VIDEO},
+    {"Bilinear Filtering",  "Off",       1, M12_SETTINGS_TAB_VIDEO},
+    {"VSync",               "On",        1, M12_SETTINGS_TAB_VIDEO},
+    {"Viewport Style",      "Original",  1, M12_SETTINGS_TAB_VIDEO},
+    {"Palette Mode",        "Original VGA", 1, M12_SETTINGS_TAB_VIDEO},
+    {"Enhanced Palette",    "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Dynamic Lighting",    "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Smooth Movement",     "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Camera Shake",        "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Particle Effects",    "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Weather FX",          "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Damage Numbers",      "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Screen Transitions",  "Fade",      0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
+    {"Texture Upscale",     "EPX 2x",    1, M12_SETTINGS_TAB_VIDEO},
+    /* ── AUDIO tab ── */
+    {"Master Volume",       "100%",      1, M12_SETTINGS_TAB_AUDIO},
+    {"Music Volume",        "80%",       1, M12_SETTINGS_TAB_AUDIO},
+    {"SFX Volume",          "100%",      1, M12_SETTINGS_TAB_AUDIO},
+    {"Muted",               "No",        1, M12_SETTINGS_TAB_AUDIO},
+    {"Footstep Audio",      "On",        0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
+    {"Ambient Sounds",      "Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
+    {"Creature Voices",     "Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
+    {"Audio Mixer Mode",    "Stereo",    1, M12_SETTINGS_TAB_AUDIO},
+    {"PC Speaker Emulation","Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.1 */
+    /* ── MISC tab ── */
+    {"Input Mode",          "Keyboard",  1, M12_SETTINGS_TAB_MISC},
+    {"WASD Movement",       "Off",       1, M12_SETTINGS_TAB_MISC},
+    {"Touch Controls",      "Auto",      1, M12_SETTINGS_TAB_MISC},
+    {"Movement Mode",       "Classic",   1, M12_SETTINGS_TAB_MISC},
+    {"Auto-Pause",          "On",        1, M12_SETTINGS_TAB_MISC},
+    {"Auto-Save",           "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Screenshot Key",      "F12",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Input Remap",         "Default",   0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Minimap",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Journal",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Message Log",         "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Achievements",        "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
+    {"Data Status",         "OK",        1, M12_SETTINGS_TAB_MISC},
+    {"Debug Overlay",       "Off",       1, M12_SETTINGS_TAB_MISC},
+    {"Developer Gates",     "Off",       1, M12_SETTINGS_TAB_MISC},
+    {NULL, NULL, 0, 0}
+};
+
+#define M12_EXT_SETTINGS_COUNT (sizeof(m12_ext_settings) / sizeof(m12_ext_settings[0]) - 1)
+
+static int m12_ext_settings_count_for_tab(int tab) {
+    int i, count = 0;
+    for (i = 0; m12_ext_settings[i].label; i++) {
+        if (m12_ext_settings[i].tab == tab) count++;
+    }
+    return count;
+}
+
+static const M12_ExtSettingsRow *m12_ext_settings_get_in_tab(int tab, int index) {
+    int i, count = 0;
+    for (i = 0; m12_ext_settings[i].label; i++) {
+        if (m12_ext_settings[i].tab == tab) {
+            if (count == index) return &m12_ext_settings[i];
+            count++;
+        }
+    }
+    return NULL;
+}
+
+
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
 static int m12_game_slot_from_id(const char* gameId);
@@ -3174,6 +3279,127 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                                y + 3,
                                languageIndex);
     }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Tabbed settings view — Display / Video / Audio / Misc
+ * Grayed-out items have implemented=0
+ * ══════════════════════════════════════════════════════════════════════ */
+static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
+    unsigned char *framebuffer, int fw, int fh)
+{
+    int tab = state->settingsTabIndex;
+    int sel = state->settingsTabRowIndex;
+    int margin = fw / 30;
+    int tabY, contentY, tabW, tabX, rowY, rowH, visRows, firstRow, row, i;
+    int tabCount = m12_ext_settings_count_for_tab(tab);
+
+    if (margin < 12) margin = 12;
+    tabY = 52;
+    contentY = tabY + 28;
+    tabW = (fw - margin * 2) / M12_SETTINGS_TAB_COUNT;
+    rowH = 24;
+    visRows = (fh - contentY - 40) / rowH;
+    if (visRows < 4) visRows = 4;
+    if (visRows > tabCount) visRows = tabCount;
+
+    /* Draw title */
+    m12_draw_text(framebuffer, fw, fh, margin + 8, margin + 8,
+        "SETTINGS", &g_textTitleShadow);
+
+    /* Draw tab bar */
+    for (i = 0; i < M12_SETTINGS_TAB_COUNT; i++) {
+        tabX = margin + i * tabW;
+        m12_draw_frame(framebuffer, fw, fh, tabX, tabY, tabW - 2, 22,
+            (i == tab) ? M12_COLOR_LIGHT_BLUE : M12_COLOR_DARK_GRAY,
+            (i == tab) ? M12_COLOR_NAVY : M12_COLOR_BLACK);
+        m12_draw_text(framebuffer, fw, fh, tabX + 8, tabY + 4,
+            m12_settings_tab_labels[i],
+            (i == tab) ? &g_textSmallShadow : &g_textSmall);
+    }
+
+    /* Draw content panel */
+    m12_draw_frame(framebuffer, fw, fh,
+        margin, contentY, fw - margin * 2, fh - contentY - 20,
+        M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    /* Scroll calculation */
+    firstRow = sel - visRows / 2;
+    if (firstRow < 0) firstRow = 0;
+    if (firstRow > tabCount - visRows) firstRow = tabCount - visRows;
+    if (firstRow < 0) firstRow = 0;
+
+    /* Draw rows for current tab */
+    rowY = contentY + 12;
+    for (row = firstRow; row < tabCount && row < firstRow + visRows; row++) {
+        const M12_ExtSettingsRow *r = m12_ext_settings_get_in_tab(tab, row);
+        int isSelected = (row == sel);
+        int labelColor, valueColor;
+
+        if (!r) continue;
+
+        if (!r->implemented) {
+            /* Grayed out — not yet implemented */
+            labelColor = M12_COLOR_DARK_GRAY;
+            valueColor = M12_COLOR_DARK_GRAY;
+        } else if (isSelected) {
+            labelColor = M12_COLOR_WHITE;
+            valueColor = M12_COLOR_YELLOW;
+        } else {
+            labelColor = M12_COLOR_LIGHT_GRAY;
+            valueColor = M12_COLOR_LIGHT_CYAN;
+        }
+
+        /* Selection highlight */
+        if (isSelected) {
+            m12_fill_rect(framebuffer, fw, fh,
+                margin + 4, rowY - 2, fw - margin * 2 - 8, rowH,
+                M12_COLOR_NAVY);
+        }
+
+        /* Label */
+        {
+            M12_TextStyle style = g_textSmall;
+            style.color = labelColor;
+            m12_draw_text(framebuffer, fw, fh,
+                margin + 16, rowY + 2, r->label, &style);
+        }
+
+        /* Value (right-aligned) */
+        {
+            M12_TextStyle style = g_textSmall;
+            style.color = valueColor;
+            m12_draw_text(framebuffer, fw, fh,
+                fw - margin - 120, rowY + 2, r->value, &style);
+        }
+
+        /* Gray out indicator */
+        if (!r->implemented) {
+            M12_TextStyle style = g_textSmall;
+            style.color = M12_COLOR_DARK_GRAY;
+            m12_draw_text(framebuffer, fw, fh,
+                fw - margin - 40, rowY + 2, "(v2.2)", &style);
+        }
+
+        rowY += rowH;
+    }
+
+    /* Scroll indicator */
+    if (tabCount > visRows) {
+        char scrollTxt[32];
+        M12_TextStyle style = g_textSmall;
+        style.color = M12_COLOR_DARK_GRAY;
+        snprintf(scrollTxt, sizeof(scrollTxt), "%d/%d", sel + 1, tabCount);
+        m12_draw_text(framebuffer, fw, fh,
+            fw - margin - 60, fh - 32, scrollTxt, &style);
+    }
+
+    /* Tab navigation hint */
+    m12_draw_text(framebuffer, fw, fh,
+        margin + 8, fh - 32,
+        "< > Switch tab   Up/Down Navigate   Enter Change",
+        &g_textSmall);
 }
 
 static void m12_draw_settings_view(const M12_StartupMenuState* state,

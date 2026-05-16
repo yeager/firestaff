@@ -197,6 +197,8 @@ typedef struct M12_StartupMenuState {
     M12_GameCardArt cardArt[6];
     int selectedIndex;
     int settingsSelectedIndex;
+    int settingsTabIndex;      /* 0=Display 1=Video 2=Audio 3=Misc */
+    int settingsTabRowIndex;   /* selected row within current tab */
     int shouldExit;
     int launchRequested;
     int activatedIndex;
