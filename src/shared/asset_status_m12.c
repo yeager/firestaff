@@ -33,7 +33,7 @@ typedef struct {
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
-static const char* const g_nexusArchiveNames[] = {"Dungeon-Master-Nexus_SEGA-Saturn_JA.zip", NULL};
+static const char* const g_nexusArchiveNames[] = {"DM.BIN", "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip", NULL};
 
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
