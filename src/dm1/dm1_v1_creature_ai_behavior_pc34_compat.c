@@ -1002,9 +1002,12 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
             if (ctx->distanceToVisibleParty <= attackRange &&
                 (distX == 0 || distY == 0)) {
 
-                /* Random range check (source: F0209 range <= random(16)+1) */
+                /* Random attack probability — ReDMCSB F0209:
+                 * Longer range creatures are more likely to attack.
+                 * Condition: random(16) + 1 >= range means attack.
+                 * So range 1 (melee) always attacks, range 15 rarely. */
                 int roll = F0732_COMBAT_RngRandom_Compat(rng, 16) + 1;
-                if (attackRange <= roll) {
+                if (roll >= attackRange) {
                     result->actionKind = DM1_ACTION_ATTACK;
                     result->attackIsProjectile = (attackRange > 1) ? 1 : 0;
                     result->newBehavior = DM1_BEHAVIOR_ATTACK;
