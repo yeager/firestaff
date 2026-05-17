@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firestaff — Graphics Comparison</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141f;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --dim: #888899;
+    --accent: #ff6b35;
+    --accent2: #4ecdc4;
+    --accent3: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    color: var(--dim);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+    max-width: 600px;
+    margin-inline: auto;
+  }
+
+  /* Version selector */
+  .version-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .version-btn {
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .version-btn:first-child { border-radius: 8px 0 0 8px; }
+  .version-btn:last-child { border-radius: 0 8px 8px 0; }
+  .version-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .version-btn:hover:not(.active) {
+    background: #1e1e2e;
+    color: var(--text);
+  }
+
+  /* Mode descriptions */
+  .mode-info {
+    text-align: center;
+    padding: 1rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .mode-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+  }
+  .mode-info p {
+    color: var(--dim);
+    font-size: 0.9rem;
+  }
+  .mode-info .tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 0.3rem;
+  }
+  .tag-v1 { background: #333; color: #aaa; }
+  .tag-v20 { background: #1a3a2a; color: var(--accent2); }
+  .tag-v21 { background: #2a1a3a; color: var(--accent3); }
+  .tag-v22 { background: #3a1a1a; color: var(--accent); }
+
+  /* Grid */
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Asset card */
+  .asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .asset-card:hover { transform: translateY(-2px); }
+  .asset-card .card-header {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .asset-card .card-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .asset-card .card-header .dims {
+    color: var(--dim);
+    font-size: 0.8rem;
+    font-family: monospace;
+  }
+
+  /* Image container */
+  .img-container {
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    overflow: hidden;
+  }
+  .img-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .img-container img.smooth {
+    image-rendering: auto;
+  }
+
+  /* V2.0 CRT filter overlay */
+  .crt-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .crt-overlay.active {
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.15) 0px,
+      rgba(0,0,0,0.15) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+  }
+  .crt-overlay.active::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.3) 100%);
+  }
+
+  /* V2.2 placeholder */
+  .v22-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  }
+  .v22-placeholder .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .v22-placeholder .label {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .v22-placeholder .sub {
+    color: var(--dim);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+  }
+
+  /* Comparison slider */
+  .slider-container {
+    position: relative;
+    overflow: hidden;
+    cursor: col-resize;
+    user-select: none;
+  }
+  .slider-container .img-left,
+  .slider-container .img-right {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .slider-container .img-right {
+    clip-path: inset(0 0 0 50%);
+  }
+  .slider-divider {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    z-index: 10;
+    pointer-events: none;
+  }
+  .slider-divider::after {
+    content: '⟷';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--accent);
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .slider-labels {
+    position: absolute;
+    bottom: 8px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 12px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .slider-labels span {
+    background: rgba(0,0,0,0.7);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--dim);
+    font-size: 0.85rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .asset-card { animation: fadeIn 0.4s ease-out both; }
+  .asset-card:nth-child(2) { animation-delay: 0.1s; }
+  .asset-card:nth-child(3) { animation-delay: 0.2s; }
+  .asset-card:nth-child(4) { animation-delay: 0.3s; }
+
+  /* Feature table */
+  .features {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+  .features table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .features th, .features td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .features th {
+    color: var(--dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+  .features td:first-child { font-weight: 600; }
+  .check { color: #4ecdc4; }
+  .dash { color: #555; }
+
+  @media (max-width: 640px) {
+    header h1 { font-size: 1.8rem; }
+    .asset-grid { grid-template-columns: 1fr; padding: 1rem; }
+    .version-btn { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔥 <span>Firestaff</span> Graphics</h1>
+  <p>Four rendering modes for Dungeon Master — from pixel-perfect original to modern 3D-rendered 2D</p>
+</header>
+
+<div class="version-bar">
+  <button class="version-btn active" data-mode="v1" onclick="setMode('v1')">V1 Original</button>
+  <button class="version-btn" data-mode="v20" onclick="setMode('v20')">V2.0 Filtered</button>
+  <button class="version-btn" data-mode="v21" onclick="setMode('v21')">V2.1 Upscaled</button>
+  <button class="version-btn" data-mode="v22" onclick="setMode('v22')">V2.2 Modern</button>
+  <button class="version-btn" data-mode="compare" onclick="setMode('compare')">↔ Compare</button>
+</div>
+
+<div class="mode-info" id="mode-info">
+  <h2><span class="tag tag-v1">V1</span> Original</h2>
+  <p>Pixel-perfect 320×200 — exactly as FTL Games intended in 1987</p>
+</div>
+
+<div class="asset-grid" id="asset-grid"></div>
+
+<div class="features">
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>V1 Original</th>
+        <th>V2.0 Filtered</th>
+        <th>V2.1 Upscaled</th>
+        <th>V2.2 Modern</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Resolution</td><td>320×200</td><td>320×200</td><td>3200×2000</td><td>3200×2000</td></tr>
+      <tr><td>Colors</td><td>16</td><td>16 enhanced</td><td>Full RGB</td><td>Full RGB</td></tr>
+      <tr><td>CRT scanlines</td><td class="dash">—</td><td class="check">✓</td><td class="dash">—</td><td class="dash">—</td></tr>
+      <tr><td>Palette correction</td><td class="dash">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Smooth movement</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Smooth turning</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Animation interpolation</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>60fps+ rendering</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Particle effects</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td></tr>
+      <tr><td>Dynamic lighting</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td></tr>
+      <tr><td>Camera easing</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="check">✓</td></tr>
+      <tr><td>Art style</td><td>Pixel art</td><td>Pixel art</td><td>HD faithful</td><td>3D-rendered 2D</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  <p>🔥 <a href="https://github.com/yeager/firestaff">Firestaff</a> — Source-faithful Dungeon Master engine</p>
+  <p>V2.1 upscale powered by GPT-5.5 · V2.2 art generated with AI · All games: DM1, CSB, DM2, DM Nexus</p>
+</footer>
+
+<script>
+const assets = [
+  { name: 'Title Screen', v1: 'v1/title.png', v21: 'v21/title.png', dims: '320×200', desc: 'Main menu with ENTER / RESUME / QUIT' },
+  { name: 'Wall Textures', v1: 'v1/walls.png', v21: 'v21/walls.png', dims: '160×111', desc: 'Stone wall tile variations (4×2 grid)' },
+  { name: 'Wall Ornament', v1: 'v1/ornament.png', v21: 'v21/ornament.png', dims: '96×111', desc: 'Decorative dungeon frame element' },
+  { name: 'Status Banner', v1: 'v1/banner.png', v21: 'v21/banner.png', dims: '256×87', desc: 'Game UI banner / status bar' },
+];
+
+const modeInfo = {
+  v1:  { tag: 'tag-v1',  title: 'V1 — Original', desc: 'Pixel-perfect 320×200 — exactly as FTL Games intended in 1987' },
+  v20: { tag: 'tag-v20', title: 'V2.0 — Filtered', desc: 'Original graphics with CRT scanlines, palette correction, and sharpening' },
+  v21: { tag: 'tag-v21', title: 'V2.1 — 10× AI Upscaled', desc: 'Faithful 10× upscale via GPT-5.5 — preserves the DM aesthetic at modern resolution' },
+  v22: { tag: 'tag-v22', title: 'V2.2 — Modern Art', desc: '3D-rendered 2D — new art with a light Dungeon Master feel, built for 2026' },
+  compare: { tag: 'tag-v1',  title: '↔ Compare', desc: 'Drag the slider to compare V1 original with V2.1 upscaled side-by-side' },
+};
+
+let currentMode = 'v1';
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.version-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  const info = modeInfo[mode];
+  document.getElementById('mode-info').innerHTML =
+    `<h2><span class="tag ${info.tag}">${mode.toUpperCase()}</span> ${info.title}</h2><p>${info.desc}</p>`;
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('asset-grid');
+  grid.innerHTML = '';
+
+  assets.forEach((a, i) => {
+    const card = document.createElement('div');
+    card.className = 'asset-card';
+    card.style.animationDelay = `${i * 0.1}s`;
+
+    const dimsText = currentMode === 'v21' ?
+      `${parseInt(a.dims)*10}` : a.dims;
+
+    let imgHtml = '';
+    if (currentMode === 'v1') {
+      imgHtml = `<div class="img-container"><img src="${a.v1}" alt="${a.name}"></div>`;
+    } else if (currentMode === 'v20') {
+      imgHtml = `<div class="img-container"><img src="${a.v1}" alt="${a.name}"><div class="crt-overlay active"></div></div>`;
+    } else if (currentMode === 'v21') {
+      imgHtml = `<div class="img-container"><img src="${a.v21}" alt="${a.name}" class="smooth" style="filter: contrast(1.1) saturate(1.2);"></div>`;
+    } else if (currentMode === 'v22') {
+      imgHtml = `<div class="v22-placeholder"><div class="icon">✨</div><div class="label">Coming Soon</div><div class="sub">3D-rendered 2D — GPT-5.5 · Wednesday</div><div class="sub" style="margin-top:0.5rem;color:#666">${a.name}</div></div>`;
+    } else if (currentMode === 'compare') {
+      imgHtml = `
+        <div class="img-container slider-container" data-idx="${i}" onmousedown="startSlide(event)" onmousemove="doSlide(event)" ontouchstart="startSlide(event)" ontouchmove="doSlide(event)">
+          <img src="${a.v21}" alt="V2.1" class="img-left smooth" style="filter: contrast(1.1) saturate(1.2);">
+          <img src="${a.v1}" alt="V1" class="img-right" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;clip-path:inset(0 50% 0 0);">
+          <div class="slider-divider" style="left:50%"></div>
+          <div class="slider-labels"><span style="color:var(--accent3)">V2.1 Upscaled</span><span style="color:var(--dim)">V1 Original</span></div>
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-header">
+        <h3>${a.name}</h3>
+        <span class="dims">${a.dims}${currentMode === 'v21' ? ' → 10×' : ''}</span>
+      </div>
+      ${imgHtml}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+let sliding = false;
+function startSlide(e) { sliding = true; doSlide(e); }
+document.addEventListener('mouseup', () => sliding = false);
+document.addEventListener('touchend', () => sliding = false);
+
+function doSlide(e) {
+  if (!sliding) return;
+  const container = e.target.closest('.slider-container');
+  if (!container) return;
+  e.preventDefault();
+  const rect = container.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  let pct = ((clientX - rect.left) / rect.width) * 100;
+  pct = Math.max(5, Math.min(95, pct));
+  container.querySelector('.img-right').style.clipPath = `inset(0 ${100-pct}% 0 0)`;
+  container.querySelector('.slider-divider').style.left = pct + '%';
+}
+
+renderGrid();
+</script>
+</body>
+</html>
