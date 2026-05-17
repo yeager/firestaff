@@ -20,7 +20,7 @@ int  m11_add_teleporter(M11_TeleporterPitState* s, int x, int y, int destX, int 
 int  m11_add_pit(M11_TeleporterPitState* s, int x, int y, int open, int damage, int destLevel, int destX, int destY);
 int  m11_check_teleporter(const M11_TeleporterPitState* s, int x, int y, M11_TeleporterDef* out);
 int  m11_check_pit(const M11_TeleporterPitState* s, int x, int y, M11_PitDef* out);
-int  m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY, int* finalX, int* finalY, int* finalLevel, int* totalDamage);
+int  m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY, int levitating, int* finalX, int* finalY, int* finalLevel, int* totalDamage);
 #ifdef __cplusplus
 }
 #endif

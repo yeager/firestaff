@@ -47,8 +47,12 @@ int m11_check_pit(const M11_TeleporterPitState* s, int x, int y, M11_PitDef* out
 }
 
 int m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY,
-                           int* finalX, int* finalY, int* finalLevel, int* totalDamage) {
-    /* ReDMCSB F0267: pit fall chains — party falls through consecutive open pits */
+                           int levitating, int* finalX, int* finalY, int* finalLevel, int* totalDamage) {
+    /* ReDMCSB F0267: pit fall chains — party falls through consecutive open pits.
+     * F0264_MOVE_IsLevitating gate: levitating entities (flying creatures,
+     * projectiles) do not fall into pits (ReDMCSB MOVESENS.C ~line 493-500). */
+    if (levitating) return 0;
+
     if (!s || !finalX || !finalY || !finalLevel || !totalDamage) return 0;
     int cx = startX, cy = startY, lastLevel = 0, fallen = 0;
     *totalDamage = 0;
