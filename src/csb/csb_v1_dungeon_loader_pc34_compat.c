@@ -56,8 +56,8 @@ int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x
     w = d->level_widths[level];
     if (x < 0 || x >= w || y < 0 || y >= d->level_heights[level]) return -1;
 
-    /* ReDMCSB DUNGEON.C F0151: square = data[offset + y * width + x] */
-    offset = d->level_offsets[level] + (y * w + x) * 2;
+    /* ReDMCSB DUNGEON.C F0151: column-major: index = x * height + y */
+    offset = d->level_offsets[level] + (x * d->level_heights[level] + y) * 2;
     if (offset + 2 > d->raw_size) return -1;
     square = rd16(d->raw_data + offset);
     return square & 0x1F; /* low 5 bits = square type */
@@ -70,7 +70,7 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
     w = d->level_widths[level];
     if (x < 0 || x >= w || y < 0 || y >= d->level_heights[level]) return -1;
 
-    offset = d->level_offsets[level] + (y * w + x) * 2;
+    offset = d->level_offsets[level] + (x * d->level_heights[level] + y) * 2;
     if (offset + 2 > d->raw_size) return -1;
     square = rd16(d->raw_data + offset);
     return (square >> 5) & 0x3FF; /* bits 5-14 = first thing index */

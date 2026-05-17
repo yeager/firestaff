@@ -34,7 +34,7 @@ int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x
     if (!d || !d->raw_data || level < 0 || level >= d->level_count) return -1;
     w = d->level_widths[level];
     if (x < 0 || x >= w || y < 0 || y >= d->level_heights[level]) return -1;
-    offset = d->level_offsets[level] + (y * w + x) * 2;
+    offset = d->level_offsets[level] + (x * d->level_heights[level] + y) * 2;
     if (offset + 2 > d->raw_size) return -1;
     return rd16(d->raw_data + offset) & 0x1F;
 }
