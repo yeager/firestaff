@@ -108,6 +108,8 @@ typedef struct {
     int16_t  step_timer;               /* G0310_i_DisabledMovementTicks */
     int16_t  projectile_lockout_timer; /* G0311_i_ProjectileDisabledMovementTicks */
     int16_t  projectile_lockout_dir;   /* G0312_i_LastProjectileDisabledMovementDirection */
+    int16_t  step_cost;                /* configurable step duration (default 2) */
+
 } DM1_V1_MovementState;
 
 /* ── Command queue ──────────────────────────────────────────────────
@@ -146,6 +148,10 @@ typedef struct {
  *      G0318_i_WaitForInputMaximumVerticalBlankCount = 10 (Atari ST/Amiga/PC)
  *      G0310_i_DisabledMovementTicks starts at 0 (movement allowed)
  */
+/* Set movement step cost (default 2). Callers should compute per
+ * ReDMCSB CHAMPION.C F0310_CHAMPION_GetMovementTicks. */
+void dm1v1_movement_set_step_cost(DM1_V1_MovementState *state, int16_t cost);
+
 void dm1v1_movement_init(DM1_V1_MovementState *state,
                          int16_t start_x, int16_t start_y,
                          int16_t start_facing);
