@@ -148,7 +148,7 @@ int dm1_v2_collides_at(int px, int py, const int8_t* map, int mapW, int mapH) {
         return 1; // Out of bounds is a collision
     }
 
-    int index = py * mapW + px;
+    int index = px * mapH + py; /* column-major per ReDMCSB DUNGEON.C F0151 */
     int cell = map[index];
 
     // Wall if >= 1
