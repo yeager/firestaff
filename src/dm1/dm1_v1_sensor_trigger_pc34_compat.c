@@ -180,8 +180,11 @@ int F0722_SENSOR_EvaluateFloor_Compat(
     case DM1_SENSOR_FLOOR_CREATURE:
         /* Source: F0276 case C007
          * if ((L0767_i_ThingType > C04_THING_TYPE_GROUP) || (L0767_i_ThingType == CM1_THING_TYPE_PARTY) || L0773_B_SquareContainsGroup)
-         *     goto T0276079; */
-        if (ctx->thingType != DM1_TRIGGER_SOURCE_CREATURE || ctx->squareHasGroup)
+         *     goto T0276079;
+         * Only creature groups trigger this — not party, objects, or projectiles. */
+        if (ctx->thingType != DM1_TRIGGER_SOURCE_CREATURE ||
+            ctx->thingType == DM1_TRIGGER_SOURCE_PARTY ||
+            ctx->squareHasGroup)
             return 1;
         break;
 
