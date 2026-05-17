@@ -179,3 +179,4 @@ __pycache__/
 # DOSBox/debugger scratch memory dumps
 /MEMDUMP.TXT
 build-main-check/
+assets/

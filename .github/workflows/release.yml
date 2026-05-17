@@ -43,7 +43,7 @@ jobs:
         run: brew install sdl3 || true
       - name: Configure & Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel
       - name: Smoke test
         run: |
