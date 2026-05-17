@@ -130,27 +130,26 @@ int fs_gfx_get_bitmap(const FS_GraphicsDat *gfx, int index,
 int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
     if (!rgba_out) return -1;
 
-    /* DM1 PC-34: the actual game palette from ReDMCSB STARTEND.C
-     * F0436_STARTEND_FadeToPalette.
-     * These are the Atari ST RGB values (0xRGB, 3 bits per channel)
-     * converted to 8-bit RGB. Source: ReDMCSB DATA.C / dmweb.free.fr */
+
+    /* PC-34 VGA palette from ReDMCSB I34E DATA.C G0019_aui_Graphic560_Palette.
+     * VGA DAC uses 6-bit values (0-63), scaled to 8-bit: val * 255 / 63. */
     static const uint32_t dm1_palette[16] = {
-        0xFF000000,  /* 0: Black */
-        0xFF000049,  /* 1: Dark blue */
-        0xFF002400,  /* 2: Dark green */
-        0xFF6D2400,  /* 3: Brown */
-        0xFF490000,  /* 4: Dark red */
-        0xFF004900,  /* 5: Medium green */
-        0xFF246D24,  /* 6: Olive green */
-        0xFF6D6D6D,  /* 7: Gray */
-        0xFF494949,  /* 8: Dark gray */
-        0xFF0049B6,  /* 9: Blue */
-        0xFF24B624,  /* 10: Green */
-        0xFFB6B649,  /* 11: Yellow-green */
-        0xFFB64924,  /* 12: Orange-red */
-        0xFF49B6B6,  /* 13: Cyan */
-        0xFFB6B6B6,  /* 14: Light gray */
-        0xFFFFFFFF,  /* 15: White */
+        0xFF000000,  /* 0: Black          (0,0,0)     */
+        0xFF000044,  /* 1: Dark blue      (0,0,17)    */
+        0xFF002200,  /* 2: Dark green     (0,9,0)     */
+        0xFF662200,  /* 3: Brown          (25,9,0)    */
+        0xFF440000,  /* 4: Dark red       (17,0,0)    */
+        0xFF004400,  /* 5: Medium green   (0,17,0)    */
+        0xFF226622,  /* 6: Olive green    (9,25,9)    */
+        0xFF666666,  /* 7: Gray           (25,25,25)  */
+        0xFF444444,  /* 8: Dark gray      (17,17,17)  */
+        0xFF0044AA,  /* 9: Blue           (0,17,42)   */
+        0xFF22AA22,  /* 10: Green         (9,42,9)    */
+        0xFFAAAA44,  /* 11: Yellow-green  (42,42,17)  */
+        0xFFAA4422,  /* 12: Orange-red    (42,17,9)   */
+        0xFF44AAAA,  /* 13: Cyan          (17,42,42)  */
+        0xFFAAAAAA,  /* 14: Light gray    (42,42,42)  */
+        0xFFFFFFFF,  /* 15: White         (63,63,63)  */
     };
 
     memcpy(rgba_out, dm1_palette, 16 * sizeof(uint32_t));
