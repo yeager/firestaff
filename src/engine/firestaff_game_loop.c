@@ -257,8 +257,25 @@ static void fs_framebuffer_to_rgba(int scale) {
     }
 }
 
+
+/* ── Startup error helper ─────────────────────────────────────────── */
+static void fs_set_error(FS_StartupError *err, int code,
+                         const char *msg, const char *detail, const char *suggestion) {
+    if (!err) return;
+    err->code = code;
+    snprintf(err->message, FS_ERROR_MSG_MAX, "%s", msg ? msg : "Unknown error");
+    snprintf(err->detail, FS_ERROR_MSG_MAX, "%s", detail ? detail : "");
+    snprintf(err->suggestion, FS_ERROR_MSG_MAX, "%s", suggestion ? suggestion : "");
+}
+
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
-    if (!state || !config) return -1;
+    if (!state || !config) {
+        if (state) fs_set_error(&state->last_error, -1,
+            "Internal error: NULL state or config pointer",
+            "fs_game_init called with NULL argument",
+            "This is a programming error — report as a bug");
+        return -1;
+    }
     memset(state, 0, sizeof(*state));
     state->config = *config;
     state->running = 1;
@@ -279,17 +296,22 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
     fs_l10n_init_from_system();
     printf("Firestaff: language=%s\n", fs_l10n_language_name(fs_l10n_get_language()));
 
-    printf("Firestaff: init game=%d version=%d %dx%d\n",
-        config->game, config->version,
-        state->config.window_width, state->config.window_height);
+    if (!config->skip_menu) {
+        printf("Firestaff: init game=%d version=%d %dx%d\n",
+            config->game, config->version,
+            state->config.window_width, state->config.window_height);
+    }
     return 0;
 }
 
 int fs_game_load_assets(FS_GameState *state) {
     if (!state) return -1;
+    memset(&state->last_error, 0, sizeof(state->last_error));
     /* Load GRAPHICS.DAT and DUNGEON.DAT based on game */
-    printf("Firestaff: loading assets for game %d from %s\n",
-        state->config.game, state->config.data_dir ? state->config.data_dir : "(default)");
+    if (!state->config.skip_menu) {
+        printf("Firestaff: loading assets for game %d from %s\n",
+            state->config.game, state->config.data_dir ? state->config.data_dir : "(default)");
+    }
 
     /* Load assets per game */
     static FS_GraphicsDat g_gfx_dat;

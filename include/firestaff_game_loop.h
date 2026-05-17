@@ -38,7 +38,17 @@ typedef struct {
     int vsync;
     const char *data_dir;
     const char *save_dir;
+    int skip_menu;        /* 1=skip startup menu, start game directly */
 } FS_GameConfig;
+
+/* Detailed startup error for CLI direct-start diagnostics */
+#define FS_ERROR_MSG_MAX 512
+typedef struct {
+    int code;                          /* 0=ok, negative=error */
+    char message[FS_ERROR_MSG_MAX];    /* human-readable error */
+    char detail[FS_ERROR_MSG_MAX];     /* technical detail (paths, errno, etc) */
+    char suggestion[FS_ERROR_MSG_MAX]; /* how to fix it */
+} FS_StartupError;
 
 typedef struct {
     FS_GameConfig config;
@@ -54,6 +64,7 @@ typedef struct {
     int in_menu;
     FS_InputQueue input_queue;
     Nexus_V1_Engine nexus_engine;
+    FS_StartupError last_error;
 } FS_GameState;
 
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config);

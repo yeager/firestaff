@@ -20,6 +20,7 @@ typedef struct {
     const char *config_path;
     int show_help;
     int show_version;
+    int skip_menu;       /* bypass startup menu, go direct to game */
 } FS_CLIOptions;
 
 int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv);

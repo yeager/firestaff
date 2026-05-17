@@ -49,6 +49,8 @@ void fs_cli_print_help(const char *prog) {
     printf("\n");
     printf("Other:\n");
     printf("  --headless       Run without window (for testing)\n");
+    printf("  --menu           Force startup menu\n");
+    printf("  --no-menu        Skip startup menu (default when game specified)\n");
     printf("  --help, -h       Show this help\n");
     printf("  --validate       Check game data files\n");
     printf("  --version, -V    Show version\n");
@@ -106,6 +108,7 @@ int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv) {
     opts->vsync = 1;
     opts->lang = -1; /* auto-detect */
     opts->load_slot = -1;
+    opts->skip_menu = -1; /* auto: skip if game specified on CLI */
 
     for (i = 1; i < argc; i++) {
         const char *arg = argv[i];
@@ -158,10 +161,41 @@ int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv) {
         if (strcmp(arg, "--version") == 0 || strcmp(arg, "-V") == 0)
             { opts->show_version = 1; continue; }
 
+        if (strcmp(arg, "--menu") == 0) { opts->skip_menu = 0; continue; }
+        if (strcmp(arg, "--no-menu") == 0) { opts->skip_menu = 1; continue; }
+
         fprintf(stderr, "Unknown option: %s\n", arg);
         return -1;
     }
+
+    /* Auto-detect skip_menu: if a game was explicitly specified on the
+     * command line, skip the menu and start directly.  The menu is only
+     * shown when no game is given or --menu is explicit. */
+    if (opts->skip_menu < 0) {
+        /* Check if any positional arg matched a game name */
+        int game_explicit = 0;
+        for (i = 1; i < argc; i++) {
+            if (match_game(argv[i]) >= 0) { game_explicit = 1; break; }
+        }
+        opts->skip_menu = game_explicit;
+    }
+
     return 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Detailed startup error formatting
+ * ══════════════════════════════════════════════════════════════════════ */
+
+static void fs_cli_print_startup_error(const FS_StartupError *err) {
+    if (!err || err->code == 0) return;
+    fprintf(stderr, "\n╔══════════════════════════════════════════════════╗\n");
+    fprintf(stderr, "║  FIRESTAFF STARTUP ERROR                         ║\n");
+    fprintf(stderr, "╚══════════════════════════════════════════════════╝\n\n");
+    fprintf(stderr, "  Error:      %s\n", err->message);
+    if (err->detail[0])     fprintf(stderr, "  Detail:     %s\n", err->detail);
+    if (err->suggestion[0]) fprintf(stderr, "  Suggestion: %s\n", err->suggestion);
+    fprintf(stderr, "  Error code: %d\n\n", err->code);
 }
 
 int fs_cli_run(const FS_CLIOptions *opts) {
@@ -199,12 +233,14 @@ int fs_cli_run(const FS_CLIOptions *opts) {
         return 0;
     }
 
-    printf("Firestaff — %s %s\n", game_names[opts->game], ver_names[opts->version]);
-    printf("Language: %s\n", fs_l10n_language_name(fs_l10n_get_language()));
-    printf("Scale: %dx\n", opts->scale);
-    if (opts->fullscreen) printf("Fullscreen\n");
-    if (opts->load_slot >= 0) printf("Loading save slot %d\n", opts->load_slot);
-    printf("\n");
+    if (!opts->skip_menu) {
+        printf("Firestaff — %s %s\n", game_names[opts->game], ver_names[opts->version]);
+        printf("Language: %s\n", fs_l10n_language_name(fs_l10n_get_language()));
+        printf("Scale: %dx\n", opts->scale);
+        if (opts->fullscreen) printf("Fullscreen\n");
+        if (opts->load_slot >= 0) printf("Loading save slot %d\n", opts->load_slot);
+        printf("\n");
+    }
 
     /* Build game config */
     memset(&config, 0, sizeof(config));
@@ -218,17 +254,20 @@ int fs_cli_run(const FS_CLIOptions *opts) {
     config.save_dir = opts->save_dir;
 
     /* Init + run */
+    config.skip_menu = opts->skip_menu;
+
     if (fs_game_init(&state, &config) < 0) {
-        fprintf(stderr, "Failed to initialize game\n");
+        fs_cli_print_startup_error(&state.last_error);
         return 1;
     }
     if (fs_game_load_assets(&state) < 0) {
-        fprintf(stderr, "Failed to load game assets\n");
+        fs_cli_print_startup_error(&state.last_error);
         return 1;
     }
     if (opts->load_slot >= 0) {
         if (fs_load_game(&state, opts->load_slot) < 0) {
-            fprintf(stderr, "Failed to load save slot %d\n", opts->load_slot);
+            fs_cli_print_startup_error(&state.last_error);
+            fprintf(stderr, "Failed to load save slot %d — starting new game\n", opts->load_slot);
         }
     }
 
