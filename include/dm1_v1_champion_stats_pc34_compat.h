@@ -49,6 +49,7 @@ typedef struct {
     M11_ChampionStats champions[M11_MAX_CHAMPIONS];
     int count;
     int leader;
+    int staminaTick;
 } M11_ChampionStatsState;
 
 void m11_stats_init(M11_ChampionStatsState* s);
@@ -56,7 +57,7 @@ int m11_stats_add_champion(M11_ChampionStatsState* s, const char* name);
 int m11_stats_get(const M11_ChampionStatsState* s, int champ, int stat);
 void m11_stats_set(M11_ChampionStatsState* s, int champ, int stat, int val);
 void m11_stats_modify(M11_ChampionStatsState* s, int champ, int stat, int delta);
-void m11_stats_tick(M11_ChampionStatsState* s, int tickMs);
+void m11_stats_tick(M11_ChampionStatsState* s);
 int m11_stats_is_alive(const M11_ChampionStatsState* s, int champ);
 void m11_stats_kill(M11_ChampionStatsState* s, int champ);
 void m11_stats_resurrect(M11_ChampionStatsState* s, int champ, int hp);

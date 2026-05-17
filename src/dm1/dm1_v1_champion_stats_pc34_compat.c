@@ -109,19 +109,16 @@ void m11_stats_modify(M11_ChampionStatsState* s, int champ, int stat, int delta)
     }
 }
 
-void m11_stats_tick(M11_ChampionStatsState* s, int tickMs) {
+void m11_stats_tick(M11_ChampionStatsState* s) {
     if (!s) return;
 
     for (int i = 0; i < s->count; i++) {
         M11_ChampionStats* c = &s->champions[i];
         if (!c->alive) continue;
 
-        // Decrease food/water by tickMs/100
-        int consumption = tickMs / 100;
-        if (consumption < 1) consumption = 1; // Ensure at least some consumption if tickMs > 0
-
-        c->food -= consumption;
-        c->water -= consumption;
+        // Fixed per-tick food/water consumption (1 per tick, frame-rate independent)
+        c->food -= 1;
+        c->water -= 1;
 
         if (c->food < 0) c->food = 0;
         if (c->water < 0) c->water = 0;
@@ -136,11 +133,10 @@ void m11_stats_tick(M11_ChampionStatsState* s, int tickMs) {
             m11_stats_modify(s, i, DM1_STAT_HEALTH, -c->poisonAmount);
         }
 
-        // Regen stamina slowly (+1 per 500ms)
-        if (tickMs >= 500) {
-            int regen = tickMs / 500;
+        // Stamina regen: +1 every 3rd tick
+        if (s->staminaTick++ % 3 == 0) {
             if (c->stats[DM1_STAT_STAMINA] < c->maxStats[DM1_STAT_STAMINA]) {
-                c->stats[DM1_STAT_STAMINA] += regen;
+                c->stats[DM1_STAT_STAMINA] += 1;
                 if (c->stats[DM1_STAT_STAMINA] > c->maxStats[DM1_STAT_STAMINA]) {
                     c->stats[DM1_STAT_STAMINA] = c->maxStats[DM1_STAT_STAMINA];
                 }
