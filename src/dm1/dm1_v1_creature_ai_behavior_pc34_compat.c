@@ -22,6 +22,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 /* Direction deltas — PC DM convention (source: DEFS.H G0233/G0234) */
