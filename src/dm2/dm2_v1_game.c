@@ -1,8 +1,24 @@
 #include "dm2_v1_game.h"
-/* dungeon query stub */
+#include "asset_find_by_hash.h"
 #include <string.h>
 #include <stdio.h>
-#include <sys/stat.h>
+
+/* Known DM2 DUNGEON.DAT MD5 hashes.
+ * DM2 dungeon files are inside zip archives on disk — until extraction
+ * is implemented, these hashes cover extracted variants. Add hashes as
+ * verified versions are confirmed. */
+static const char *const dm2_dungeon_hashes[] = {
+    /* Add verified DM2 DUNGEON.DAT hashes here as they are confirmed */
+    NULL
+};
+
+/* Known DM2 GRAPHICS.DAT MD5 hashes (for fallback graphics search) */
+static const char *const dm2_graphics_hashes[] = {
+    "25247ede4dabb6a71e5dabdfbcd5907d",  /* PC English */
+    "b4d733576ea60c41737f79f212faf528",  /* PC French */
+    "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */
+    NULL
+};
 
 void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     if (!state) return;
@@ -12,35 +28,25 @@ void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     state->party_y = 15;
     state->party_dir = 0;
     state->gold = 100;
-    state->time_of_day = 720; /* noon (minutes) */
-}
-
-/* DM2 dungeon file varies: DUNGEON.DAT, DM2DUNGEON.DAT, or inside zip */
-static int dm2_find_dungeon(const char *data_dir, char *path, int pathlen) {
-    struct stat st;
-    static const char *fmts[] = {
-        "%s/dm2/DUNGEON.DAT", "%s/dm2/DM2DUNGEON.DAT",
-        "%s/DUNGEON.DAT", "%s/DM2DUNGEON.DAT", NULL
-    };
-    for (int i = 0; fmts[i]; i++) {
-        snprintf(path, pathlen, fmts[i], data_dir);
-        if (stat(path, &st) == 0) return 1;
-    }
-    snprintf(path, pathlen, "%s/dm2/DUNGEON.DAT", data_dir);
-    return 0;
+    state->time_of_day = 720;
 }
 
 int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
-    char path[512];
+    char path[ASSET_PATH_MAX];
     if (!state || !state->data_dir) return -1;
-    int found = dm2_find_dungeon(state->data_dir, path, sizeof(path));
-    if (!found) {
-        printf("DM2: dungeon not found (searched dm2/DUNGEON.DAT, dm2/DM2DUNGEON.DAT, DUNGEON.DAT, DM2DUNGEON.DAT)\n");
-        return -1;
+
+    /* Hash-based search for dungeon data */
+    if (dm2_dungeon_hashes[0] != NULL &&
+        asset_find_by_md5_list(state->data_dir, dm2_dungeon_hashes,
+                               path, sizeof(path), NULL, 4)) {
+        printf("DM2: found dungeon at %s (hash-verified)\n", path);
+        /* TODO: parse DM2 DUNGEON.DAT */
+        return 0;
     }
-    printf("DM2: loading dungeon from %s (39 KB)\n", path);
-    /* TODO: parse DM2 DUNGEON.DAT */
-    return 0;
+
+    printf("DM2: no verified dungeon hash available yet — "
+           "dungeon files need to be extracted from zip archives first\n");
+    return -1;
 }
 
 int dm2_v1_enter_shop(DM2_V1_GameState *state) {

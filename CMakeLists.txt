@@ -185,6 +185,7 @@ set(M12_SOURCES
     src/ui/menu_hit_m12.c
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
+    src/shared/asset_find_by_hash.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
     src/ui/branding_logo_m12.c
@@ -2583,7 +2584,6 @@ set_tests_properties(csb_v1_m11_runtime_capture_boundary PROPERTIES WILL_FAIL TR
 set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass395_touch_queue_integration_source_lock PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(firestaff_dm1_v1_side_contents_center_blocker_probe PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass361_dm1_v1_viewport_occlusion_redraw_order_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_panel_open_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_toggle_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_chest_actionhand_redmcsb_gate PROPERTIES WILL_FAIL TRUE)

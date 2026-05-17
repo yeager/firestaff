@@ -1,45 +1,37 @@
 #include "csb_v1_game.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
+
+/* Known CSB DUNGEON.DAT MD5 hashes (all verified platforms share the same hash) */
+static const char *const csb_dungeon_hashes[] = {
+    "6695d2acebce49f95db1d8f3a5c733de",  /* CSB Atari ST + Amiga (EN) */
+    NULL
+};
 
 void csb_v1_init(CSB_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
     state->data_dir = data_dir;
-    state->party_x = 5;  /* CSB start position (different from DM1) */
+    state->party_x = 5;
     state->party_y = 5;
     state->party_dir = 0;
-    state->difficulty = 1; /* 1 = normal CSB difficulty (1.5x vs DM1) */
-}
-
-/* Try multiple dungeon file candidates; CSB files vary by platform:
- * Atari ST: DUNGEON.DAT, Amiga: Dungeon.DAT, some: CSB.DAT */
-static int csb_find_dungeon(const char *data_dir, char *path, int pathlen) {
-    struct stat st;
-    static const char *fmts[] = {
-        "%s/csb/DUNGEON.DAT", "%s/csb/Dungeon.DAT", "%s/csb/CSB.DAT",
-        "%s/DUNGEON.DAT", "%s/CSB.DAT", NULL
-    };
-    for (int i = 0; fmts[i]; i++) {
-        snprintf(path, pathlen, fmts[i], data_dir);
-        if (stat(path, &st) == 0) return 1;
-    }
-    /* Fallback to standard path for error message */
-    snprintf(path, pathlen, "%s/csb/DUNGEON.DAT", data_dir);
-    return 0;
+    state->difficulty = 1;
 }
 
 int csb_v1_load_dungeon(CSB_V1_GameState *state) {
-    char path[512];
+    char path[ASSET_PATH_MAX];
     if (!state || !state->data_dir) return -1;
-    int found = csb_find_dungeon(state->data_dir, path, sizeof(path));
-    if (!found) {
-        printf("CSB: dungeon not found (searched csb/DUNGEON.DAT, csb/Dungeon.DAT, csb/CSB.DAT, DUNGEON.DAT, CSB.DAT)\n");
+
+    /* Hash-based search: find any file matching known CSB dungeon hashes,
+     * regardless of filename or directory layout */
+    if (!asset_find_by_md5_list(state->data_dir, csb_dungeon_hashes,
+                                path, sizeof(path), NULL, 4)) {
+        printf("CSB: no dungeon file found matching known hashes in %s\n",
+               state->data_dir);
         return -1;
     }
-    printf("CSB: loading dungeon from %s\n", path);
-    /* CSB DUNGEON.DAT is only 2098 bytes — likely single level or compressed */
+    printf("CSB: found dungeon at %s (hash-verified)\n", path);
     /* TODO: parse CSB DUNGEON.DAT */
     return 0;
 }
