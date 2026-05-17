@@ -12,7 +12,7 @@
  * - ReDMCSB DUNVIEW.C object section around line 4820 uses per-cell object
  *   positions from G0219 coordinate sets; V2 keeps this as metadata for the
  *   modern renderer instead of changing V1 gameplay/object semantics.
- * - Firestaff V1 parity layer dm1_v1_viewport_floor_ceiling_items_pc34_compat.h
+ * - Firestaff V1 parity layer include/dm1_v1_viewport_floor_ceiling_items_pc34_compat.h
  *   documents the same F0115 order and alcove-object special path.
  * - V2 action/inventory hand semantics are routed through the existing
  *   dm1_v2_hud_interaction_pc34 bridge, which consumes the V1 champion/action
