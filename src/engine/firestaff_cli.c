@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 void fs_cli_print_version(void) {
-    printf("Firestaff v0.5.0 — Dungeon Master Collection\n");
+    printf("Firestaff v1.3.0 — Dungeon Master Collection\n");
 }
 
 void fs_cli_print_help(const char *prog) {
