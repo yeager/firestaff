@@ -73,6 +73,7 @@ typedef struct {
     int strength;
     int kineticEnergy;
     int weaponClass;
+    int weight;         /* object weight for F0312 load calculation */
 } DM1_WeaponInfo;
 
 /* ── Creature info ────────────────────────────────────────────────── */
@@ -122,10 +123,12 @@ typedef struct {
     int hasArmor[DM1_WOUND_IDX_COUNT];
     DM1_WeaponInfo actionHandWeapon;
     int hasWeapon;
+    int weaponSlot;  /* 0=ready hand, 1=action hand */
     int skillSwing;
     int skillThrow;
     int skillShoot;
-    int skillNinja;  /* C01_SKILL_NINJA — used in SELF defense (BUG-021) */
+    int skillNinja;
+    int poisonEventCount; /* active poison chains for UI overlay */  /* C01_SKILL_NINJA — used in SELF defense (BUG-021) */
 } DM1_ChampionCombat;
 
 /* ── Creature in a group ──────────────────────────────────────────── */
@@ -147,6 +150,13 @@ typedef struct {
 /* ── Party-level combat state ─────────────────────────────────────── */
 #define DM1_MAX_CHAMPIONS 4
 
+/* Poison event — ReDMCSB F0322 timed poison chain */
+typedef struct {
+    int active;
+    int attack;
+    int ticksUntilNext;
+} DM1_PoisonEvent;
+
 typedef struct {
     DM1_ChampionCombat champions[DM1_MAX_CHAMPIONS];
     int championCount;
@@ -158,6 +168,7 @@ typedef struct {
     int partyMapY;
     int pendingDamage[DM1_MAX_CHAMPIONS];
     uint16_t pendingWounds[DM1_MAX_CHAMPIONS];
+    DM1_PoisonEvent pendingPoison[DM1_MAX_CHAMPIONS];
 } DM1_CombatState;
 
 /* ── Core helpers ─────────────────────────────────────────────────── */
@@ -184,6 +195,7 @@ int dm1_stat_adjusted_attack(const DM1_ChampionCombat* ch, int statValue, int at
 int dm1_champion_take_damage(DM1_CombatState* s, int champIdx, int attack,
                              uint16_t allowedWounds, int attackType);
 void dm1_apply_pending_damage(DM1_CombatState* s);
+void dm1_combat_tick_poison(DM1_CombatState* s);
 int dm1_creature_take_damage(DM1_CreatureGroup* group, int creatureIdx, int damage);
 int dm1_damage_all_creatures(DM1_CreatureGroup* group, int attack);
 int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* group,

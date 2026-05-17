@@ -126,7 +126,9 @@ int dm1_stat_adjusted_attack(const DM1_ChampionCombat* ch, int statValue, int at
 int dm1_champion_dexterity(const DM1_ChampionCombat* ch) {
     if (!ch) return 1;
     int dex = dm1_combat_random(8) + ch->dexterity;
-    int maxL = ch->maxLoad > 0 ? ch->maxLoad : 1;
+    /* ReDMCSB F0311: uses F0309_CHAMPION_GetMaximumLoad (computed from strength) */
+    int maxL = dm1_combat_get_maximum_load_pc34(ch->strength);
+    if (maxL <= 0) maxL = 1;
     dex -= (int)(((long)(dex >> 1) * (long)ch->load) / maxL);
     return dm1_clamp(dex >> 1, 1 + dm1_combat_random(8), 100 - dm1_combat_random(8));
 }
@@ -140,8 +142,24 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch) {
     if (!ch) return 0;
     int str = dm1_combat_random(16) + ch->strength;
 
-    /* Weapon weight vs load factor */
+    /* Weapon weight vs load factor — ReDMCSB F0312 3-tier system.
+     * Tier 1: weight <= maxLoad/16 → str += weight - 12
+     * Tier 2: weight <= threshold → str += (weight - maxLoad/16) >> 1
+     * Tier 3: weight > threshold → str -= (weight - threshold) << 1 */
     if (ch->hasWeapon) {
+        int maxLoad = dm1_combat_get_maximum_load_pc34(ch->strength);
+        int oneSixteenth = maxLoad >> 4;
+        int objWeight = ch->actionHandWeapon.weight;
+        if (objWeight <= oneSixteenth) {
+            str += objWeight - 12;
+        } else {
+            int threshold = oneSixteenth + ((oneSixteenth - 12) >> 1);
+            if (objWeight <= threshold) {
+                str += (objWeight - oneSixteenth) >> 1;
+            } else {
+                str -= (objWeight - threshold) << 1;
+            }
+        }
         str += ch->actionHandWeapon.strength;
 
         /* Skill bonus */
@@ -163,9 +181,14 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch) {
     /* Stamina adjustment */
     str = dm1_stamina_adjusted(ch, str);
 
-    /* Wound penalty: action hand wound halves strength */
-    if (ch->wounds & DM1_WOUND_ACTION_HAND) {
-        str >>= 1;
+    /* Wound penalty — ReDMCSB F0312: check wound for the slot holding the weapon.
+     * Ready hand (slot 0) → check WOUND_READY_HAND
+     * Action hand (slot 1) → check WOUND_ACTION_HAND */
+    {
+        uint16_t woundMask = (ch->weaponSlot == 0) ? DM1_WOUND_READY_HAND : DM1_WOUND_ACTION_HAND;
+        if (ch->wounds & woundMask) {
+            str >>= 1;
+        }
     }
 
     return dm1_clamp(str >> 1, 0, 100);
@@ -467,12 +490,18 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
     int damage = dm1_champion_take_damage(s, targetChampIdx, atk,
                                           allowedWounds, ci->attackType);
 
-    /* Poison */
+    /* Poison — ReDMCSB F0322_CHAMPION_Poison (CHAMPION.C:1932-1960).
+     * Creates timed poison event: damage = max(1, attack>>6) every 36 ticks,
+     * attack decrements each tick until 0. Champion PoisonEventCount tracks
+     * active poison chains for UI overlay.
+     * We record the poison request; the event timer handles the ticking. */
     if (ci->poisonAttack > 0 && damage > 0) {
-        /* Simplified poison: add small normal damage */
-        int poisonDmg = dm1_max(1, ci->poisonAttack >> 6);
-        dm1_champion_take_damage(s, targetChampIdx, poisonDmg,
-                                DM1_WOUND_NONE, DM1_ATTACK_NORMAL);
+        if (s->champions[targetChampIdx].alive) {
+            s->pendingPoison[targetChampIdx].active = 1;
+            s->pendingPoison[targetChampIdx].attack = ci->poisonAttack;
+            s->pendingPoison[targetChampIdx].ticksUntilNext = 36;
+            s->champions[targetChampIdx].poisonEventCount++;
+        }
     }
 
     return damage;
@@ -643,3 +672,34 @@ const char *dm1_combat_pass601_source_evidence(void)
  *   CHAMPION.C:1016 F0819_TEXT_MESSAGEAREA_P
  * ══════════════════════════════════════════════════════════════════════ */
 
+
+/*
+ * F0322_CHAMPION_Poison tick processing
+ * ReDMCSB CHAMPION.C:1932-1960
+ * Called once per game tick. For each active poison:
+ *   - Decrement ticksUntilNext
+ *   - When 0: apply max(1, attack >> 6) as ATTACK_NORMAL
+ *   - Decrement attack; if 0, deactivate poison
+ *   - Reset ticksUntilNext to 36
+ */
+void dm1_combat_tick_poison(DM1_CombatState* s) {
+    if (!s) return;
+    for (int i = 0; i < s->championCount; i++) {
+        DM1_PoisonEvent* p = &s->pendingPoison[i];
+        if (!p->active) continue;
+        if (!s->champions[i].alive) { p->active = 0; continue; }
+
+        if (--p->ticksUntilNext <= 0) {
+            int poisonDmg = dm1_max(1, p->attack >> 6);
+            dm1_champion_take_damage(s, i, poisonDmg,
+                                     DM1_WOUND_NONE, DM1_ATTACK_NORMAL);
+            if (--p->attack <= 0) {
+                p->active = 0;
+                if (s->champions[i].poisonEventCount > 0)
+                    s->champions[i].poisonEventCount--;
+            } else {
+                p->ticksUntilNext = 36; /* ReDMCSB: gameTime + 36 */
+            }
+        }
+    }
+}
