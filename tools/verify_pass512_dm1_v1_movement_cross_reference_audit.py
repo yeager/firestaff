@@ -327,9 +327,11 @@ def main() -> int:
         "remainingBlocker": "original PC/I34E keyboard-buffer/F0380 route transcript, representative original movement/HUD/viewport overlay captures, and local Greatstone PC34 detail-page index completion",
         "notClaimed": ["pixel parity", "viewport rendering edits", "binary-level direct F0380 body breakpoint", "promotion from Firestaff-only movement evidence"],
     }
+    # All verify_* raise on failure; reaching here means everything passed.
+    manifest["status"] = "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT"
     MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_report(manifest)
-    print(json.dumps({"status": STATUS, "manifest": str(MANIFEST.relative_to(ROOT)), "report": str(REPORT.relative_to(ROOT)), "sourceChecks": len(manifest["sourceAudit"])}, indent=2, sort_keys=True))
+    print(json.dumps({"status": manifest["status"], "manifest": str(MANIFEST.relative_to(ROOT)), "report": str(REPORT.relative_to(ROOT)), "sourceChecks": len(manifest["sourceAudit"])}, indent=2, sort_keys=True))
 
 if __name__ == "__main__":
     raise SystemExit(main())
