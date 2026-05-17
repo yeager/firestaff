@@ -161,6 +161,13 @@ int m11_group_remove_creature(M11_Group *group, int creatureIndex)
             group->cells[c] = 0xFF;
         }
     }
+    /* Reindex cells: decrement references to creatures above the removed index */
+    for (int c = 0; c < M11_GROUP_CELLS; c++) {
+        if (group->cells[c] != 0xFF &&
+            group->cells[c] > (uint8_t)creatureIndex) {
+            group->cells[c]--;
+        }
+    }
     group->hitPoints[creatureIndex] = 0;
     if (group->creatureCount > 0) {
         group->creatureCount--;
