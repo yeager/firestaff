@@ -52,8 +52,10 @@ void m11_bf_blit(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
             /* Read source pixel (chunky 8-bit indexed) */
             uint8_t pixel = src->data[fy * src->byte_width + fx];
 
-            /* Transparency check */
-            if ((flags & DM1_BF_BLIT_TRANS) && pixel == 0) continue;
+            /* Transparency check — ReDMCSB BLIT.C F0132 uses P0800_i_TransparentColor.
+             * CM1_COLOR_NO_TRANSPARENCY = -1 (disabled), C10_COLOR_FLESH = 10 for walls.
+             * When DM1_BF_BLIT_TRANS is set, skip pixels matching trans_color. */
+            if ((flags & DM1_BF_BLIT_TRANS) && pixel == src->trans_color) continue;
 
             uint8_t* dst = &fb->pixels[dy * fb->pitch + dx];
             if (flags & DM1_BF_BLIT_XOR) {

@@ -33,6 +33,7 @@ typedef struct {
     uint16_t width, height;
     uint16_t byte_width;       /* Bytes per row per bitplane */
     uint8_t  bitplanes;
+    uint8_t  trans_color;  /* transparency color (default 0, walls use 10/C10_COLOR_FLESH) */
 } M11_BF_BlitSource;
 
 /* Screen region for fill/blit target */
