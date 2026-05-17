@@ -58,6 +58,7 @@ typedef struct {
     int highContrast;       /* 0 = off, 1 = on */
     int colorblindMode;     /* 0 = off, 1 = deuteranopia, 2 = protanopia, 3 = tritanopia */
     int autoPause;          /* 0 = off, 1 = pause on focus loss */
+    int controlSchemeIndex;  /* 0 = original (A/D turn, Q/E strafe), 1 = hybrid (A/D strafe, Q/E turn) */
 
     /* Theme selector */
     int themeIndex;         /* 0 = classic, see M12_Theme enum in theme_m12.h */

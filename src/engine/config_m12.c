@@ -239,6 +239,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->highContrast = 0;
     config->colorblindMode = 0;
     config->autoPause = 0;
+    config->controlSchemeIndex = 0;  /* default: original DM-trogen */
     config->themeIndex = 0;
     config->bgAnimationPreset = 0;
     config->dm1V2ScalePercent = 100;
@@ -424,6 +425,9 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "auto_pause")) {
         config->autoPause = m12_parse_int(value, config->autoPause) ? 1 : 0;
+        } else if (strcmp(key, "control_scheme") == 0) {
+            config->controlSchemeIndex = m12_parse_int(value, config->controlSchemeIndex);
+            if (config->controlSchemeIndex < 0 || config->controlSchemeIndex > 1) config->controlSchemeIndex = 0;
         return;
     }
     if (m12_string_equals(key, "theme_index")) {
@@ -535,6 +539,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "high_contrast = %d\n", config->highContrast ? 1 : 0);
     fprintf(fp, "colorblind_mode = %d\n", config->colorblindMode);
     fprintf(fp, "auto_pause = %d\n", config->autoPause ? 1 : 0);
+    fprintf(fp, "control_scheme = %d\n", config->controlSchemeIndex);
     fprintf(fp, "theme_index = %d\n", config->themeIndex);
     fprintf(fp, "bg_animation_preset = %d\n", config->bgAnimationPreset);
     fprintf(fp, "dm1_v2_scale_percent = %d\n", config->dm1V2ScalePercent);

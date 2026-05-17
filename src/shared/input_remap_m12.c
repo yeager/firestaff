@@ -19,13 +19,14 @@ static const struct {
     M12_InputAction action;
     SDL_Keycode     primary;
     SDL_Keycode     secondary;
-} s_defaults[] = {
+} s_defaults_original[] = {
+    /* Original DM-trogen: A/D = turn, no strafe on WASD (arrow keys for movement) */
     { M12_ACTION_MOVE_FORWARD,     SDLK_UP,        SDLK_W       },
     { M12_ACTION_MOVE_BACKWARD,    SDLK_DOWN,      SDLK_S       },
-    { M12_ACTION_TURN_LEFT,        SDLK_LEFT,      SDLK_Q       },
-    { M12_ACTION_TURN_RIGHT,       SDLK_RIGHT,     SDLK_E       },
-    { M12_ACTION_STRAFE_LEFT,      SDLK_A,         0            },
-    { M12_ACTION_STRAFE_RIGHT,     SDLK_D,         0            },
+    { M12_ACTION_TURN_LEFT,        SDLK_LEFT,      SDLK_A       },
+    { M12_ACTION_TURN_RIGHT,       SDLK_RIGHT,     SDLK_D       },
+    { M12_ACTION_STRAFE_LEFT,      SDLK_Q,         0            },
+    { M12_ACTION_STRAFE_RIGHT,     SDLK_E,         0            },
     { M12_ACTION_ACCEPT,           SDLK_RETURN,    SDLK_KP_ENTER },
     { M12_ACTION_BACK,             SDLK_ESCAPE,    0            },
     { M12_ACTION_ACTION,           SDLK_SPACE,     0            },
@@ -49,7 +50,43 @@ static const struct {
     { M12_ACTION_QUICK_LOAD,       SDLK_F9,        0            },
 };
 
-#define DEFAULT_COUNT (sizeof(s_defaults) / sizeof(s_defaults[0]))
+static const struct {
+    M12_InputAction action;
+    SDL_Keycode     primary;
+    SDL_Keycode     secondary;
+} s_defaults_hybrid[] = {
+    /* Hybrid: A/D = strafe, Q/E = turn (FPS-style) */
+    { M12_ACTION_MOVE_FORWARD,     SDLK_UP,        SDLK_W       },
+    { M12_ACTION_MOVE_BACKWARD,    SDLK_DOWN,      SDLK_S       },
+    { M12_ACTION_TURN_LEFT,        SDLK_LEFT,      SDLK_Q       },
+    { M12_ACTION_TURN_RIGHT,       SDLK_RIGHT,     SDLK_E       },
+    { M12_ACTION_STRAFE_LEFT,      SDLK_A,         0            },
+    { M12_ACTION_STRAFE_RIGHT,     SDLK_D,         0            },
+    { M12_ACTION_ACCEPT,           SDLK_RETURN,    SDLK_KP_ENTER },
+    { M12_ACTION_BACK,             SDLK_ESCAPE,    0            },
+    { M12_ACTION_ACTION,           SDLK_SPACE,     0            },
+    { M12_ACTION_CYCLE_CHAMPION,   SDLK_TAB,       0            },
+    { M12_ACTION_REST_TOGGLE,      SDLK_R,         0            },
+    { M12_ACTION_USE_STAIRS,       SDLK_X,         0            },
+    { M12_ACTION_PICKUP_ITEM,      SDLK_G,         0            },
+    { M12_ACTION_DROP_ITEM,        SDLK_P,         0            },
+    { M12_ACTION_SPELL_RUNE_1,     SDLK_1,         0            },
+    { M12_ACTION_SPELL_RUNE_2,     SDLK_2,         0            },
+    { M12_ACTION_SPELL_RUNE_3,     SDLK_3,         0            },
+    { M12_ACTION_SPELL_RUNE_4,     SDLK_4,         0            },
+    { M12_ACTION_SPELL_RUNE_5,     SDLK_5,         0            },
+    { M12_ACTION_SPELL_RUNE_6,     SDLK_6,         0            },
+    { M12_ACTION_SPELL_CAST,       SDLK_F,         0            },
+    { M12_ACTION_SPELL_CLEAR,      SDLK_C,         0            },
+    { M12_ACTION_USE_ITEM,         SDLK_I,         0            },
+    { M12_ACTION_MAP_TOGGLE,       SDLK_M,         0            },
+    { M12_ACTION_INVENTORY_TOGGLE, SDLK_V,         0            },
+    { M12_ACTION_QUICK_SAVE,       SDLK_F5,        0            },
+    { M12_ACTION_QUICK_LOAD,       SDLK_F9,        0            },
+};
+
+#define DEFAULT_COUNT (sizeof(s_defaults_original) / sizeof(s_defaults_original[0]))
+#define HYBRID_COUNT  (sizeof(s_defaults_hybrid)   / sizeof(s_defaults_hybrid[0]))
 
 /* ── Action name table (config-file identifiers) ────────────────────── */
 
@@ -257,10 +294,10 @@ void M12_InputMap_SetDefaults(M12_InputMap* map) {
         map->bindings[i].action = (M12_InputAction)i;
     }
     for (i = 0; i < DEFAULT_COUNT; ++i) {
-        int idx = (int)s_defaults[i].action;
+        int idx = (int)s_defaults_original[i].action;
         if (idx >= 0 && idx < M12_ACTION_COUNT) {
-            map->bindings[idx].primary   = s_defaults[i].primary;
-            map->bindings[idx].secondary = s_defaults[i].secondary;
+            map->bindings[idx].primary   = s_defaults_original[i].primary;
+            map->bindings[idx].secondary = s_defaults_original[i].secondary;
         }
     }
 }
@@ -442,4 +479,45 @@ int M12_Remap_HandleKey(M12_RemapState* state, M12_InputMap* map, SDL_Keycode ke
 void M12_Remap_Cancel(M12_RemapState* state) {
     if (!state) return;
     state->active = 0;
+}
+
+/* ── Control scheme presets ──────────────────────────────────────────
+ * Scheme 0 "Original" (DM-trogen):
+ *   W=forward S=back A=turn left D=turn right Q=strafe left E=strafe right
+ * Scheme 1 "Hybrid" (modern FPS-style):
+ *   W=forward S=back A=strafe left D=strafe right Q=turn left E=turn right
+ *
+ * V1 graphics mode always forces scheme 0 (original).
+ */
+void M12_InputMap_ApplyScheme(M12_InputMap* map, int schemeIndex) {
+    size_t i, count;
+    if (!map) return;
+
+    /* Reset to clean state */
+    memset(map, 0, sizeof(*map));
+    for (i = 0; i < (size_t)M12_ACTION_COUNT; ++i) {
+        map->bindings[i].action = (M12_InputAction)i;
+    }
+
+    if (schemeIndex == 1) {
+        /* Hybrid: A/D strafe, Q/E turn */
+        count = HYBRID_COUNT;
+        for (i = 0; i < count; ++i) {
+            int idx = (int)s_defaults_hybrid[i].action;
+            if (idx >= 0 && idx < M12_ACTION_COUNT) {
+                map->bindings[idx].primary   = s_defaults_hybrid[i].primary;
+                map->bindings[idx].secondary = s_defaults_hybrid[i].secondary;
+            }
+        }
+    } else {
+        /* Original: A/D turn, Q/E strafe (DM-faithful) */
+        count = DEFAULT_COUNT;
+        for (i = 0; i < count; ++i) {
+            int idx = (int)s_defaults_original[i].action;
+            if (idx >= 0 && idx < M12_ACTION_COUNT) {
+                map->bindings[idx].primary   = s_defaults_original[i].primary;
+                map->bindings[idx].secondary = s_defaults_original[i].secondary;
+            }
+        }
+    }
 }

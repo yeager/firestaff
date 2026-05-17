@@ -118,4 +118,7 @@ void M12_Remap_Cancel(M12_RemapState* state);
 }
 #endif
 
+
+/* Apply a control scheme preset: 0 = original (A/D turn), 1 = hybrid (A/D strafe). */
+void M12_InputMap_ApplyScheme(M12_InputMap* map, int schemeIndex);
 #endif /* FIRESTAFF_INPUT_REMAP_M12_H */
