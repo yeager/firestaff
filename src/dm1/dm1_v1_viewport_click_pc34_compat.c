@@ -111,19 +111,23 @@ void m11_click_setup_game_zones(M11_ClickState *s)
     /* Action area */
     m11_click_add_zone(s, 233, 72, 85, 50, DM1_ZONE_ACTION_AREA);
 
-    /* Movement arrows — 6 directional buttons within 86x76 area */
-    m11_click_add_zone(s, 255, 124, 42, 20, DM1_ZONE_MOVEMENT_FORWARD);
-    m11_click_add_zone(s, 234, 144, 30, 26, DM1_ZONE_MOVEMENT_TURN_LEFT);
-    m11_click_add_zone(s, 290, 144, 30, 26, DM1_ZONE_MOVEMENT_TURN_RIGHT);
-    m11_click_add_zone(s, 234, 144, 20, 56, DM1_ZONE_MOVEMENT_LEFT);
-    m11_click_add_zone(s, 300, 144, 20, 56, DM1_ZONE_MOVEMENT_RIGHT);
-    m11_click_add_zone(s, 255, 180, 42, 20, DM1_ZONE_MOVEMENT_BACKWARD);
+    /* Movement arrows — non-overlapping zones per ReDMCSB COMMAND.C
+     * G0459_aai_Graphic561_CommandAreaCoordinates.
+     * Layout: forward top-center, turn left/right at sides,
+     * strafe left/right below turns, backward bottom-center. */
+    m11_click_add_zone(s, 255, 124, 42, 18, DM1_ZONE_MOVEMENT_FORWARD);
+    m11_click_add_zone(s, 234, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_LEFT);
+    m11_click_add_zone(s, 292, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_RIGHT);
+    m11_click_add_zone(s, 234, 170, 28, 30, DM1_ZONE_MOVEMENT_LEFT);
+    m11_click_add_zone(s, 292, 170, 28, 30, DM1_ZONE_MOVEMENT_RIGHT);
+    m11_click_add_zone(s, 262, 170, 30, 30, DM1_ZONE_MOVEMENT_BACKWARD);
 
-    /* Champion panels: 4 panels at bottom of screen */
-    m11_click_add_zone(s, 0, 136, 80, 16, DM1_ZONE_CHAMPION_0);
-    m11_click_add_zone(s, 80, 136, 80, 16, DM1_ZONE_CHAMPION_1);
-    m11_click_add_zone(s, 0, 152, 80, 16, DM1_ZONE_CHAMPION_2);
-    m11_click_add_zone(s, 80, 152, 80, 16, DM1_ZONE_CHAMPION_3);
+    /* Champion panels: 4 panels in 2x2 grid at bottom of screen.
+     * Each panel is 80x29 pixels per ReDMCSB screen layout. */
+    m11_click_add_zone(s, 0, 136, 80, 29, DM1_ZONE_CHAMPION_0);
+    m11_click_add_zone(s, 80, 136, 80, 29, DM1_ZONE_CHAMPION_1);
+    m11_click_add_zone(s, 0, 165, 80, 29, DM1_ZONE_CHAMPION_2);
+    m11_click_add_zone(s, 80, 165, 80, 29, DM1_ZONE_CHAMPION_3);
 }
 
 void m11_click_setup_inventory_zones(M11_ClickState *s)
