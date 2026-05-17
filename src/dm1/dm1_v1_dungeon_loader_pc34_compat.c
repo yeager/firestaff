@@ -45,6 +45,9 @@ bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path) {
         }
     }
 
+    /* Tile layout: column-major per ReDMCSB DUNGEON.C F0151.
+     * tiles[level][x][y] — C stores tiles[x] as contiguous column of height elements.
+     * Collision system uses dm1_tile_index(x, y, height) = x * height + y. */
     state->loaded = true;
     fclose(f);
     return true;

@@ -246,3 +246,11 @@ const char* DM1_V1_CollisionDoor_SourceEvidence(void);
 #endif
 
 #endif /* DM1_V1_COLLISION_DOOR_PC34_COMPAT_H */
+
+/* Column-major tile index — canonical per ReDMCSB DUNGEON.C F0151:
+ *   G0271_ppuc_SquareFirstThingData[mapIndex][mapX * mapHeight + mapY]
+ * C 2D arrays tiles[x][y] with tiles[DM1_MAX_MAP_W][DM1_MAX_MAP_H]
+ * naturally store column-major: &tiles[x][0] is a column of height elements. */
+static inline int dm1_tile_index(int mapX, int mapY, int mapHeight) {
+    return mapX * mapHeight + mapY;
+}

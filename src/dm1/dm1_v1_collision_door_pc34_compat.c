@@ -66,7 +66,8 @@ static int collision_read_square(
     if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height)
         return -1;
     /* Column-major: [col * height + row] */
-    return (int)(unsigned char)dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    /* Column-major: ReDMCSB DUNGEON.C F0151 */
+    return (int)(unsigned char)dungeon->tiles[mapIndex].squareData[dm1_tile_index(mapX, mapY, map->height)];
 }
 
 /*
