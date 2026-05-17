@@ -69,7 +69,7 @@ void m11_pf_draw_char(const M11_PF_FontState* state, uint8_t* fb, int x, int y, 
         int px = x;
         for (j = 0; j < DM1_FONT_CHAR_W; j++) {
             if (px < 0 || px >= scr_w) {
-                row >>= 1;
+                row <<= 1;
                 px++;
                 continue;
             }
@@ -79,7 +79,7 @@ void m11_pf_draw_char(const M11_PF_FontState* state, uint8_t* fb, int x, int y, 
             } else {
                 fb[idx] = (uint8_t)state->bg_color;
             }
-            row >>= 1;
+            row <<= 1;
             px++;
         }
     }
@@ -101,9 +101,9 @@ void m11_pf_draw_string(const M11_PF_FontState* state, uint8_t* fb, int x, int y
 }
 
 static const char* skill_names_data[DM1_SKILL_LEVEL_COUNT] = {
-    "Novice", "Apprentice", "Journeyman", "Expert", "Master",
-    "Adept", "Virtuoso", "Grandmaster", "Legend", "Mythic",
-    "Divine", "Transcendent", "Eternal", "Omnipotent", "Cosmic"
+    "NEOPHYTE", "NOVICE", "APPRENTICE", "JOURNEYMAN", "CRAFTSMAN",
+    "ARTISAN", "ADEPT", "EXPERT", "LO MASTER", "UM MASTER",
+    "ON MASTER", "EE MASTER", "HI MASTER", "SU MASTER", "ARCHMASTER"
 };
 
 const char* m11_pf_get_skill_name(int level) {
@@ -121,9 +121,14 @@ void m11_pf_convert_portrait_planar(uint8_t* buf) {
     int i, j;
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++) {
-            int idx = i * w + j;
-            out[idx] = (buf[0 * plane_size + idx] & 0x0F) |
-                       (buf[1 * plane_size + idx] & 0x0F) << 4;
+            int byte_idx = i * (w / 8) + j / 8;
+            int bit = 7 - (j & 7);
+            uint8_t pixel = 0;
+            int p;
+            for (p = 0; p < 4; p++) {
+                pixel |= ((buf[p * plane_size + byte_idx] >> bit) & 1) << p;
+            }
+            out[i * w + j] = pixel;
         }
     }
     memcpy(buf, out, w * h);
