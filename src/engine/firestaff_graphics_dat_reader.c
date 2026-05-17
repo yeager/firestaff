@@ -104,23 +104,26 @@ int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
 
     /* PC-34 VGA palette from ReDMCSB I34E DATA.C G0019_aui_Graphic560_Palette.
      * VGA DAC uses 6-bit values (0-63), scaled to 8-bit: val * 255 / 63. */
+    /* ReDMCSB DATA.C G0021_aaui_Graphic562_Palette_DungeonView[0]
+     * VGA 12-bit hex (4 bits per channel), scaled to 8-bit: nibble * 17.
+     * This is the primary dungeon palette used for most game graphics. */
     static const uint32_t dm1_palette[16] = {
-        0xFF000000,  /* 0: Black          (0,0,0)     */
-        0xFF000044,  /* 1: Dark blue      (0,0,17)    */
-        0xFF002200,  /* 2: Dark green     (0,9,0)     */
-        0xFF662200,  /* 3: Brown          (25,9,0)    */
-        0xFF440000,  /* 4: Dark red       (17,0,0)    */
-        0xFF004400,  /* 5: Medium green   (0,17,0)    */
-        0xFF226622,  /* 6: Olive green    (9,25,9)    */
-        0xFF666666,  /* 7: Gray           (25,25,25)  */
-        0xFF444444,  /* 8: Dark gray      (17,17,17)  */
-        0xFF0044AA,  /* 9: Blue           (0,17,42)   */
-        0xFF22AA22,  /* 10: Green         (9,42,9)    */
-        0xFFAAAA44,  /* 11: Yellow-green  (42,42,17)  */
-        0xFFAA4422,  /* 12: Orange-red    (42,17,9)   */
-        0xFF44AAAA,  /* 13: Cyan          (17,42,42)  */
-        0xFFAAAAAA,  /* 14: Light gray    (42,42,42)  */
-        0xFFFFFFFF,  /* 15: White         (63,63,63)  */
+        0xFF000000,  /*  0: 0x000 Black              */
+        0xFF666666,  /*  1: 0x666 Gray               */
+        0xFF888888,  /*  2: 0x888 Light gray          */
+        0xFF662200,  /*  3: 0x620 Brown               */
+        0xFF00CCCC,  /*  4: 0x0CC Cyan                */
+        0xFF884400,  /*  5: 0x840 Dark orange          */
+        0xFF008800,  /*  6: 0x080 Dark green           */
+        0xFF00CC00,  /*  7: 0x0C0 Green               */
+        0xFFFF0000,  /*  8: 0xF00 Red                 */
+        0xFFFFAA00,  /*  9: 0xFA0 Orange              */
+        0xFFCC8866,  /* 10: 0xC86 Tan/skin            */
+        0xFFFFFF00,  /* 11: 0xFF0 Yellow              */
+        0xFF444444,  /* 12: 0x444 Dark gray            */
+        0xFFAAAAAA,  /* 13: 0xAAA Light gray           */
+        0xFF0000FF,  /* 14: 0x00F Blue                */
+        0xFFFFFFFF,  /* 15: 0xFFF White               */
     };
 
     memcpy(rgba_out, dm1_palette, 16 * sizeof(uint32_t));
