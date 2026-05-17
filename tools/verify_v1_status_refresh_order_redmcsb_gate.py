@@ -26,7 +26,7 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 843, "end": 940},
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 1080, "end": 1110},
     {"file": "CHAMDRAW.C", "function": "F0293_CHAMPION_DrawAllChampionStates", "start": 1117, "end": 1139},
-    {"file": "src/engine/m11_game_view.c", "function": "m11_draw_party_panel", "start": 19127, "end": 19410},
+    {"file": "src/engine/m11_game_view.c", "function": "m11_draw_party_panel", "start": 19127, "end": 19420},
 ]
 
 
@@ -162,7 +162,7 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         ],
         "Firestaff m11_draw_party_panel V1 status refresh order",
     )
-    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 19127, 19410, [
+    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 19127, 19420, [
         "V1 source status-box background",
         "before top-row",
         "V1 champion name/title status text",
