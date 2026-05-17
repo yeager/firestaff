@@ -1,6 +1,6 @@
 # Pass512 - DM1 V1 movement cross-reference audit
 
-Status: BLOCKED_PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT_GREATSTONE_DETAIL_PAGES_MISSING
+Status: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
 
 Scope: DM1 V1 movement/förflyttning only. This is evidence, not a runtime behavior change.
 

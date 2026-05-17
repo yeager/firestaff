@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `PASS`
-Generated: `2026-05-17T14:30:13.139575+00:00`
+Generated: `2026-05-17T16:02:06.155738+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle

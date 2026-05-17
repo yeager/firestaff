@@ -20,6 +20,6 @@
   "schema": "firestaff.parity.pass559_dm1_v1_gated_movement_pending_click_queue_replay.v1",
   "scope": "DM1 V1 PC-34 movement cooldown gate plus pending-click replay queue order",
   "status": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
-  "timestampUtc": "2026-05-17T14:32:10.089822+00:00",
+  "timestampUtc": "2026-05-17T16:02:16.716676+00:00",
   "worktree": "."
 }

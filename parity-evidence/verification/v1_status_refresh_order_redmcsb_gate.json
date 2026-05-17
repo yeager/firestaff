@@ -37,7 +37,7 @@
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "start": 19127,
-      "end": 19410
+      "end": 19420
     }
   ],
   "redmcsbMarkers": [
@@ -166,56 +166,56 @@
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status-box background comment",
-      "line": 19187,
+      "line": 19205,
       "needle": "V1 source status-box background"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "alive status fill",
-      "line": 19209,
+      "line": 19227,
       "needle": "M11_GameView_GetV1StatusBoxFillColor"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "source-order shield border block",
-      "line": 19227,
+      "line": 19245,
       "needle": "before top-row\n             * text, bars, and hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "shield border blit",
-      "line": 19248,
+      "line": 19266,
       "needle": "M11_GameView_GetV1StatusShieldBorderZone"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "name clear/text block",
-      "line": 19264,
+      "line": 19282,
       "needle": "V1 champion name/title status text"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "bar graph block",
-      "line": 19305,
+      "line": 19323,
       "needle": "Pass 43: champion HP/stamina/mana bar graphs"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status hand slots block",
-      "line": 19395,
+      "line": 19413,
       "needle": "V1 status-box hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "poison/damage later overlays",
-      "line": 19414,
+      "line": 19432,
       "needle": "GRAPHICS.DAT-backed POISONED label"
     }
   ],

@@ -23,7 +23,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - PASS pass504_keyboard_buffer_state_delta_blocker: PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED
 - PASS pass509_original_overlay_keyboard_buffer_blocker: PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED
 - PASS pass511_movement_original_route_contract: PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED
-- PASS pass512_movement_cross_reference_audit: BLOCKED_PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT_GREATSTONE_DETAIL_PAGES_MISSING
+- PASS pass512_movement_cross_reference_audit: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
 
 ## Accepted I34E key rows
 

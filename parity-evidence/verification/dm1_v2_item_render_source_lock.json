@@ -43,13 +43,11 @@
       "text": "/* Draw creatures */"
     }
   ],
-  "errors": [
-    "missing Firestaff item-render source-lock text include/dm1_v1_viewport_floor_ceiling_items_pc34_compat.h in src/dm1v2/dm1_v2_item_render_pc34.c"
-  ],
+  "errors": [],
   "evidenceImpact": {
     "completionMatrixGap": "test_dm1_v2_item_render_pc34 and item starter manifest existed but were not wired into CTest/source-lock ownership; dm1_v2_item_render_pc34 was still classified as an orphan V2 module.",
     "verifiedCompletionPercent": null
   },
   "scope": "dm1_v2_item_render_pc34 Phase-5 item render source-lock and CTest wiring",
-  "status": "failed"
+  "status": "passed"
 }
