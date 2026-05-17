@@ -8,7 +8,7 @@
  * is implemented, these hashes cover extracted variants. Add hashes as
  * verified versions are confirmed. */
 static const char *const dm2_dungeon_hashes[] = {
-    /* Add verified DM2 DUNGEON.DAT hashes here as they are confirmed */
+    "6caccd7875009e82fe2e28e7f6d6adc0",  /* DM2 PC English DUNGEON.DAT */
     NULL
 };
 
