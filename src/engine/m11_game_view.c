@@ -4616,7 +4616,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     DM1_SaveMenu_Init(&state->saveMenu);
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
-    state->dm1GameID = (uint32_t)((unsigned)rand() * 65536u + (unsigned)rand());
+    state->dm1GameID = ((uint32_t)(rand() & 0xFFFF) << 16) | (uint32_t)(rand() & 0xFFFF);
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
