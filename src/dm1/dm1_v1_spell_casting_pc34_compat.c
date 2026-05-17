@@ -156,9 +156,14 @@ int dm1_spell_addSymbol(DM1_SpellCastingState* s, int champIdx,
 
     /* Compute mana cost (SYMBOL.C F0399 lines 20-25) */
     unsigned int manaCost = dm1_symbolBaseManaCost[step][symbolIdx];
+    /* BUG-007 fix: validate power symbol index before multiplier lookup.
+     * ReDMCSB SYMBOL.C F0399: symbols[0] is encoded as 96 + symbolIdx (step 0).
+     * Contract: dm1_encodeSymbol(0, idx) MUST return 96..101. */
     if (step > 0) {
         /* Multiply by power symbol's multiplier, then >>3 */
-        manaCost = (manaCost * dm1_symbolManaCostMultiplier[(unsigned char)inp->symbols[0] - 96]) >> 3;
+        unsigned int powerIdx = (unsigned char)inp->symbols[0] - 96;
+        if (powerIdx >= DM1_SYMBOLS_PER_STEP) return 0; /* invalid encoding */
+        manaCost = (manaCost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
     }
 
     if (manaCost > (unsigned int)stats->currentMana) {
