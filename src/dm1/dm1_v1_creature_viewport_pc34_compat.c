@@ -17,8 +17,12 @@ void m11_cr_init(M11_CR_State* state) {
 void m11_cr_setup_sprite_table(M11_CR_State* state) {
     if (!state) return;
 
-    /* Default sprite info — gfx_index values are GRAPHICS.DAT bitmap indices
-     * Actual values depend on the specific GRAPHICS.DAT version */
+    /* Default sprite info — gfx_index values are placeholder GRAPHICS.DAT
+     * bitmap indices from GROUP.C G0217_as_Graphic559_CreatureInfo.
+     * TODO: These MUST be verified against the actual GRAPHICS.DAT loaded
+     * at runtime. Different DM1 versions (PC34, Amiga, Atari ST) use
+     * different bitmap index offsets. Use fs_gfx_verify_creature_indices()
+     * after loading GRAPHICS.DAT to validate. */
     static const struct { uint16_t gfx; uint16_t frames; uint16_t w; uint16_t h; bool mirror; } defaults[] = {
         /* M11_CR_MUMMY */            { 225, 4, 32, 48, true },
         /* M11_CR_SCREAMER */         { 229, 2, 24, 24, false },
@@ -101,11 +105,13 @@ void m11_cr_update_visibility(M11_CR_State* state) {
     int16_t flx = lx[state->party_facing & 3];
     int16_t fly = ly[state->party_facing & 3];
 
-    /* Depth scale factors: 100%, 66%, 44%, 28% */
-    static const uint8_t scale_pct[] = { 100, 66, 44, 28 };
-    /* Screen X base positions for center at each depth */
-    static const int16_t cx[] = { 96, 104, 108, 112 };
-    static const int16_t cy[] = { 40, 52, 60, 66 };
+    /* Depth scale factors from ReDMCSB DUNVIEW.C G0163 wall frame heights.
+     * D0=136px (100%), D1=111px (82%), D2=71px (52%), D3=51px (38%).
+     * Screen positions from G0163 frame [blitX,blitY] center values. */
+    static const uint8_t scale_pct[] = { 100, 82, 52, 38 };
+    /* Screen X/Y base positions from ReDMCSB G0163 center frame coords */
+    static const int16_t cx[] = { 112, 112, 112, 112 };
+    static const int16_t cy[] = { 33, 41, 52, 57 };
 
     for (uint16_t i = 0; i < state->creature_count; i++) {
         M11_CR_Creature* c = &state->creatures[i];
