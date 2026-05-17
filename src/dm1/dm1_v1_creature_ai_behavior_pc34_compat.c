@@ -299,7 +299,10 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     if (diff == 2) {
         /* Opposite — pick a random intermediate step
          * Source: F0205 M017_NEXT((M006_RANDOM(65536) & 0x0002) + direction) */
-        newDir = next_dir(direction); /* Simplified: always turn CW */
+        /* ReDMCSB F0205: M017_NEXT((M006_RANDOM(65536) & 0x0002) + direction)
+         * Random bit selects CW or CCW. We use direction LSB as pseudo-random
+         * since this function doesn't receive RNG state. */
+        newDir = (direction & 1) ? next_dir(direction) : normalize_dir(direction - 1);
     } else {
         newDir = direction;
     }
@@ -843,9 +846,20 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                         F0732_COMBAT_RngRandom_Compat(rng, 4);
                 } else {
                     /* Walk to target */
-                    /* Compute direction to stored target */
-                    int tgtDir = ctx->currentGroupPrimaryDirToParty;
-                    int tgtSec = ctx->currentGroupSecondaryDirToParty;
+                    /* Compute direction to stored target (not current party pos).
+                     * ReDMCSB F0209 T0209082: uses F0228 on targetMapX/Y. */
+                    int dx = activeGroup->targetMapX - ctx->currentGroupMapX;
+                    int dy = activeGroup->targetMapY - ctx->currentGroupMapY;
+                    int tgtDir, tgtSec;
+                    /* Primary direction: largest delta axis */
+                    if (dx == 0 && dy == 0) { tgtDir = 0; tgtSec = 1; }
+                    else if (abs(dx) >= abs(dy)) {
+                        tgtDir = (dx > 0) ? 1 : 3; /* E or W */
+                        tgtSec = (dy < 0) ? 0 : 2; /* N or S */
+                    } else {
+                        tgtDir = (dy < 0) ? 0 : 2; /* N or S */
+                        tgtSec = (dx > 0) ? 1 : 3; /* E or W */
+                    }
                     F0813_DM1_GROUP_PickSingleSquareMove_Compat(
                         ctx, tgtDir, tgtSec, 1, rng, &dir);
                     if (dir >= 0) {
