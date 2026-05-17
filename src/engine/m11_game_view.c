@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "firestaff_po_loader.h"
 
 #include "asset_status_m12.h"
 #include "config_m12.h"
@@ -339,6 +340,29 @@ static void m11_fill_rect(unsigned char* framebuffer,
         for (xx = 0; xx < w; ++xx) {
             m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
                           x + xx, y + yy, color);
+        }
+    }
+}
+
+
+/* Dim a rectangle by setting per-pixel brightness to a darker level.
+ * Used for pause/confirm overlays instead of replacing the background. */
+static void m11_dim_rect(unsigned char* framebuffer,
+                         int framebufferWidth,
+                         int framebufferHeight,
+                         int x, int y, int w, int h,
+                         int dimLevel) {
+    for (int yy = 0; yy < h; ++yy) {
+        int py = y + yy;
+        if (py < 0 || py >= framebufferHeight) continue;
+        for (int xx = 0; xx < w; ++xx) {
+            int px = x + xx;
+            if (px < 0 || px >= framebufferWidth) continue;
+            int idx = py * framebufferWidth + px;
+            unsigned char raw = framebuffer[idx];
+            unsigned char colorIdx = raw & 0x0F;
+            /* Set upper nibble to dim level (higher = dimmer) */
+            framebuffer[idx] = (unsigned char)((dimLevel << 4) | colorIdx);
         }
     }
 }
@@ -5699,9 +5723,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->mapOverlayActive = 0;
             state->spellPanelOpen = 0;
             M11_GameView_ShowDialogOverlayChoices(state,
-                                                  "RETURN TO START MENU?",
-                                                  "YES",
-                                                  "NO",
+                                                  _("RETURN TO START MENU?"),
+                                                  _("YES"),
+                                                  _("NO"),
                                                   NULL,
                                                   NULL);
             state->returnToMenuConfirmActive = 1;
@@ -21119,11 +21143,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int dlgX = 30, dlgY = 50, dlgW = 260, dlgH = 80;
         int textY;
         int drewSourceBackdrop = 0;
-        if (m11_v1_chrome_mode_enabled()) {
+        if (state->returnToMenuConfirmActive) {
+            /* Dim the entire screen instead of showing inventory backdrop */
+            m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
+                         0, 0, framebufferWidth, framebufferHeight, 4);
+            /* Draw centered dialog box over dimmed content */
+            int cdlgW = 200, cdlgH = 50;
+            int cdlgX = (framebufferWidth - cdlgW) / 2;
+            int cdlgY = (framebufferHeight - cdlgH) / 2;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cdlgX, cdlgY, cdlgW, cdlgH, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cdlgX, cdlgY, cdlgW, cdlgH, M11_COLOR_LIGHT_GRAY);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cdlgX + 1, cdlgY + 1, cdlgW - 2, cdlgH - 2, M11_COLOR_DARK_GRAY);
+            dlgX = cdlgX; dlgY = cdlgY; dlgW = cdlgW; dlgH = cdlgH;
+            drewSourceBackdrop = 0;
+        } else if (m11_v1_chrome_mode_enabled()) {
             drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
                 state, framebuffer, framebufferWidth, framebufferHeight);
         }
-        if (!drewSourceBackdrop) {
+        if (!drewSourceBackdrop && !state->returnToMenuConfirmActive) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX, dlgY, dlgW, dlgH, M11_COLOR_BLACK);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,

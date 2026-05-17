@@ -91,3 +91,15 @@ msgstr "Version"
 msgid "Video"
 msgstr "Video"
 
+
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr "TILLBAKA TILL STARTMENYN?"
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr "JA"
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr "NEJ"

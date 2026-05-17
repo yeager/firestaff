@@ -156,6 +156,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_blit_fill_pc34_compat.c
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
+    src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
 )
 
@@ -237,7 +238,7 @@ endif()
 
 # M11 Game View probe (needs full M10 + M11 + M12)
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
-target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
@@ -261,21 +262,21 @@ endif()
 
 # Deterministic Firestaff capture-route state anchor (same route as screenshot fixture)
 add_executable(firestaff_m11_capture_route_state_probe probes/m11/firestaff_m11_capture_route_state_probe.c)
-target_link_libraries(firestaff_m11_capture_route_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_capture_route_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_capture_route_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # Source-locked turn-left/turn-right viewport orientation anchor.
 add_executable(firestaff_m11_turn_viewport_orientation_probe probes/m11/firestaff_m11_turn_viewport_orientation_probe.c)
-target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_turn_viewport_orientation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # DM1 V1 Hall of Champions walkaround runtime smoke probe.
 add_executable(firestaff_m11_hall_walkaround_runtime_probe probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c)
-target_link_libraries(firestaff_m11_hall_walkaround_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_hall_walkaround_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_hall_walkaround_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()

@@ -122,3 +122,15 @@ msgstr ""
 msgid "Video"
 msgstr ""
 
+
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""
