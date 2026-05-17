@@ -6,7 +6,7 @@
 void m11_teleporter_pit_init(M11_TeleporterPitState* s) {
     if (!s) return;
     memset(s, 0, sizeof(*s));
-    s->chainDepthLimit = 10;
+    s->chainDepthLimit = 1000; /* ReDMCSB F0267: 1000 for party/creature, 100 for projectile */
 }
 
 int m11_add_teleporter(M11_TeleporterPitState* s, int x, int y, int destX, int destY, int destLevel, int destFacing, int visible) {
@@ -48,14 +48,15 @@ int m11_check_pit(const M11_TeleporterPitState* s, int x, int y, int currentLeve
 }
 
 int m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY,
-                           int levitating, int* finalX, int* finalY, int* finalLevel, int* totalDamage) {
+                           int startLevel, int levitating,
+                           int* finalX, int* finalY, int* finalLevel, int* totalDamage) {
     /* ReDMCSB F0267: pit fall chains — party falls through consecutive open pits.
      * F0264_MOVE_IsLevitating gate: levitating entities (flying creatures,
      * projectiles) do not fall into pits (ReDMCSB MOVESENS.C ~line 493-500). */
     if (levitating) return 0;
 
     if (!s || !finalX || !finalY || !finalLevel || !totalDamage) return 0;
-    int cx = startX, cy = startY, currentLevel = 0, lastLevel = 0, fallen = 0;
+    int cx = startX, cy = startY, currentLevel = startLevel, lastLevel = startLevel, fallen = 0;
     *totalDamage = 0;
     for (int i = 0; i < s->chainDepthLimit; i++) {
         M11_PitDef pit;
