@@ -293,6 +293,11 @@ int dm1v1_event_add(
     else if (ev.type == DM1_EVENT_DOOR_ANIMATION) {
         for (i = 0; i < queue->maxEvents; i++) {
             struct DM1_Event_V1* existing = &queue->events[i];
+            /* Only consider DOOR and DOOR_ANIMATION events (ReDMCSB TIMELINE.C F0238) */
+            if (existing->type != DM1_EVENT_DOOR &&
+                existing->type != DM1_EVENT_DOOR_ANIMATION) {
+                continue;
+            }
             if (ev.map_time == existing->map_time &&
                 ev.b_mapX == existing->b_mapX &&
                 ev.b_mapY == existing->b_mapY) {
