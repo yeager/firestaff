@@ -46,6 +46,11 @@ typedef struct {
     uint16_t next_code;
     uint8_t  code_bits;
     bool     flushed;
+    uint8_t  chunk[12];
+    int      chunk_bit_idx;
+    int      chunk_bit_count;
+    size_t   byte_pos;
+    int      needs_refill;
 } M11_GFX_LZWState;
 
 /* Graphics loader state */

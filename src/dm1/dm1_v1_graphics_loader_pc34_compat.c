@@ -19,6 +19,10 @@ static void lzw_reset(M11_GFX_LZWState* lzw) {
     lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
     lzw->code_bits = 9;
     lzw->flushed   = true;
+    lzw->chunk_bit_idx = 0;
+    lzw->chunk_bit_count = 0;
+    lzw->byte_pos = 0;
+    lzw->needs_refill = 1;
 }
 
 /* Read a variable-width code from the input bitstream */
@@ -28,20 +32,8 @@ static void lzw_reset(M11_GFX_LZWState* lzw) {
  * This is NOT a continuous bitstream — it re-reads a new chunk
  * every time the chunk is exhausted or code width changes. */
 
-static uint8_t g_lzw_chunk[12];
-static int g_lzw_chunk_bit_idx = 0;
-static int g_lzw_chunk_bit_count = 0;
-static size_t g_lzw_byte_pos = 0;
-static int g_lzw_needs_refill = 1;
-
-static void lzw_input_reset(void) {
-    g_lzw_chunk_bit_idx = 0;
-    g_lzw_chunk_bit_count = 0;
-    g_lzw_byte_pos = 0;
-    g_lzw_needs_refill = 1;
-}
-
-static int lzw_read_code(const uint8_t* input, size_t in_size,
+static int lzw_read_code(M11_GFX_LZWState* lzw,
+                          const uint8_t* input, size_t in_size,
                           size_t* bit_pos_unused, uint8_t code_bits) {
     static const uint8_t lsb_masks[9] = {0x00,0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,0xFF};
     int result, bi, required;
@@ -49,21 +41,21 @@ static int lzw_read_code(const uint8_t* input, size_t in_size,
     (void)bit_pos_unused;
 
     /* Refill chunk when exhausted, after flush, or when code width changed */
-    if (g_lzw_needs_refill || g_lzw_chunk_bit_idx >= g_lzw_chunk_bit_count) {
+    if (lzw->needs_refill || lzw->chunk_bit_idx >= lzw->chunk_bit_count) {
         int chunk_bytes = code_bits;
-        if (g_lzw_byte_pos + (size_t)chunk_bytes > in_size)
-            chunk_bytes = (int)(in_size - g_lzw_byte_pos);
+        if (lzw->byte_pos + (size_t)chunk_bytes > in_size)
+            chunk_bytes = (int)(in_size - lzw->byte_pos);
         if (chunk_bytes <= 0) return -1;
-        memcpy(g_lzw_chunk, input + g_lzw_byte_pos, chunk_bytes);
-        g_lzw_byte_pos += chunk_bytes;
-        g_lzw_chunk_bit_idx = 0;
-        g_lzw_chunk_bit_count = (chunk_bytes << 3) - (code_bits - 1);
-        g_lzw_needs_refill = 0;
+        memcpy(lzw->chunk, input + lzw->byte_pos, chunk_bytes);
+        lzw->byte_pos += chunk_bytes;
+        lzw->chunk_bit_idx = 0;
+        lzw->chunk_bit_count = (chunk_bytes << 3) - (code_bits - 1);
+        lzw->needs_refill = 0;
     }
 
-    bi = g_lzw_chunk_bit_idx;
+    bi = lzw->chunk_bit_idx;
     required = code_bits;
-    p = g_lzw_chunk + (bi >> 3);
+    p = lzw->chunk + (bi >> 3);
     bi &= 7;
 
     /* Extract code across byte boundaries (matches ReDMCSB exactly) */
@@ -80,7 +72,7 @@ static int lzw_read_code(const uint8_t* input, size_t in_size,
         result |= (int)(*p & lsb_masks[required]) << bi;
     }
 
-    g_lzw_chunk_bit_idx += code_bits;
+    lzw->chunk_bit_idx += code_bits;
     return result;
 }
 
@@ -105,7 +97,6 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
     if (!lzw || !input || !output || in_size == 0 || out_size == 0) return -1;
 
     /* Reset LZW state */
-    lzw_input_reset();
     lzw_reset(lzw);
     for (i = 0; i < 256; i++) {
         lzw->dict_prefix[i] = 0xFFFF;
@@ -115,28 +106,26 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
     lzw->code_bits = 9;
 
     /* First code */
-    old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+    old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
     if (old_code < 0) return 0;
     if (old_code == DM1_GFX_LZW_CLEAR_CODE) {
         lzw_reset(lzw);
         lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
         lzw->code_bits = 9;
-        g_lzw_needs_refill = 1;
-        old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+        old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
         if (old_code < 0) return 0;
     }
     if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
 
     while (out_pos < out_size) {
-        new_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+        new_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
         if (new_code < 0) break;
 
         if (new_code == DM1_GFX_LZW_CLEAR_CODE) {
             lzw_reset(lzw);
             lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
             lzw->code_bits = 9;
-            g_lzw_needs_refill = 1;
-            old_code = lzw_read_code(input, in_size, NULL, lzw->code_bits);
+            old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
             if (old_code < 0) break;
             if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
             continue;
@@ -168,7 +157,7 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
             /* Grow code width */
             if (lzw->next_code > (uint16_t)((1 << lzw->code_bits) - 1) && lzw->code_bits < 12) {
                 lzw->code_bits++;
-                g_lzw_needs_refill = 1;  /* ReDMCSB refills on width change */
+                lzw->needs_refill = 1;  /* ReDMCSB refills on width change */
             }
         }
 
@@ -296,4 +285,3 @@ void m11_gfx_close(M11_GFX_LoaderState* state) {
  *   IMAGE3.C:170 F0682_C
  *   IMAGE3.C:932 F0690_C
  * ══════════════════════════════════════════════════════════════════════ */
-
