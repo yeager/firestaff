@@ -58,7 +58,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firestaff-${{ env.FIRESTAFF_VERSION }}-macos
-          path: release/*
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.sha256
 
   windows-installer:
     name: Windows x86_64
@@ -97,7 +100,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firestaff-${{ env.FIRESTAFF_VERSION }}-windows
-          path: release/*
+          path: |
+            release/*.zip
+            release/*.exe
+            release/*.sha256
 
   linux-x86_64:
     name: Linux x86_64
@@ -133,7 +139,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux-x86_64
-          path: release/*
+          path: |
+            release/*.deb
+            release/*.rpm
+            release/*.sha256
 
   linux-arm64:
     name: Linux ARM64 (Steam Deck)
@@ -169,7 +178,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux-arm64
-          path: release/*
+          path: |
+            release/*.deb
+            release/*.rpm
+            release/*.sha256
 
   publish-release:
     name: Publish GitHub Release
