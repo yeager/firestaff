@@ -92,8 +92,8 @@ bool m11_dd_decompress_level(M11_DD_State* state, int level,
     /* Parse tiles from level data into tile_map */
     const uint8_t* ldata = state->decomp_buffer + off;
     size_t tile_offset = 0;
-    for (uint16_t y = 0; y < lh->height && tile_offset + 4 <= sz; y++) {
-        for (uint16_t x = 0; x < lh->width && tile_offset + 4 <= sz; x++) {
+    for (uint16_t x = 0; x < lh->width && tile_offset + 4 <= sz; x++) {
+        for (uint16_t y = 0; y < lh->height && tile_offset + 4 <= sz; y++) {
             M11_DD_Tile* t = &state->tile_map[level][y][x];
             t->type = ldata[tile_offset];
             t->attributes = ldata[tile_offset + 1];
