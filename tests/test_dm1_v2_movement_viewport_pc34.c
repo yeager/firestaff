@@ -46,6 +46,7 @@ static unsigned char* read_file_bytes(const char* path, int* outSize) {
     } \
 } while (0)
 
+static void test_collision_column_major(void);
 static void test_movement_basics(void) {
     DM1_V2_PlayerPos p;
     DM1_V2_MoveParams params = {256, 1, 256, 0, 0};
@@ -315,6 +316,7 @@ static void test_viewport_region_comparator_scaffold(void) {
 
 int main(void) {
     test_movement_basics();
+    test_collision_column_major();
     test_viewport_basics();
     test_viewport_wall_occlusion_source_lock();
     test_viewport_d0_d3_draw_list_comparator_source_lock();
@@ -328,4 +330,28 @@ int main(void) {
     }
     puts("dm1_v2_movement_viewport_pc34: ok");
     return 0;
+}
+
+/* V2-BUG-001 regression test: verify column-major collision indexing.
+ * Asymmetric 3x2 map (width=3, height=2) laid out column-major:
+ *   col0: (0,0)=0 (0,1)=0
+ *   col1: (1,0)=1 (1,1)=0   <-- wall at (1,0) only
+ *   col2: (2,0)=0 (2,1)=0
+ * Column-major flat: {0,0, 1,0, 0,0}
+ * If code wrongly uses row-major (py*w+px), (1,0) would read index 1 (=0) → miss.
+ */
+static void test_collision_column_major(void) {
+    int8_t map[6] = {
+        0, 0,   /* column 0: (0,0)=0, (0,1)=0 */
+        1, 0,   /* column 1: (1,0)=1, (1,1)=0 */
+        0, 0    /* column 2: (2,0)=0, (2,1)=0 */
+    };
+    /* Wall at (1,0): column-major index = 1*2+0 = 2 → map[2] = 1 */
+    CHECK(dm1_v2_collides_at(1, 0, map, 3, 2) == 1);
+    /* No wall at (0,1): column-major index = 0*2+1 = 1 → map[1] = 0 */
+    CHECK(dm1_v2_collides_at(0, 1, map, 3, 2) == 0);
+    /* No wall at (1,1): column-major index = 1*2+1 = 3 → map[3] = 0 */
+    CHECK(dm1_v2_collides_at(1, 1, map, 3, 2) == 0);
+    /* No wall at (2,0): column-major index = 2*2+0 = 4 → map[4] = 0 */
+    CHECK(dm1_v2_collides_at(2, 0, map, 3, 2) == 0);
 }
