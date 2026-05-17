@@ -4,135 +4,85 @@
     "ReDMCSB uses swapped L/R wallset entries during that frame and restores native wallset pointers before presentation cleanup.",
     "Firestaff's normal renderer has a matching party tuple predicate and separate center/side wall flip paths."
   ],
-  "failures": [],
+  "failures": [
+    "firestaff_party_tuple_flip_predicate",
+    "firestaff_wallset_variant_binding_before_draw",
+    "firestaff_center_wall_flip_path",
+    "firestaff_side_wall_lr_swap_path"
+  ],
   "firestaffAudit": [
     {
-      "hits": [
-        {
-          "line": 9054,
-          "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
-        },
-        {
-          "line": 9056,
-          "needle": "return (state->world.party.mapX +"
-        },
-        {
-          "line": 9057,
-          "needle": "state->world.party.mapY +"
-        },
-        {
-          "line": 9058,
-          "needle": "state->world.party.direction) & 1;"
-        }
-      ],
+      "hits": [],
       "id": "firestaff_party_tuple_flip_predicate",
       "lines": "9052-9059",
-      "missing": [],
+      "missing": [
+        "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
+        "return (state->world.party.mapX +",
+        "state->world.party.mapY +",
+        "state->world.party.direction) & 1;"
+      ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sha256": "6953b2c6dede0e9c76d042c794d9d801a521d4fdbe1a56d2708477c764b64cc3",
       "sourceFile": "m11_game_view.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
-      "hits": [
-        {
-          "line": 9109,
-          "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
-        },
-        {
-          "line": 9118,
-          "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
-        },
-        {
-          "line": 9121,
-          "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
-        },
-        {
-          "line": 9122,
-          "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
-        }
-      ],
+      "hits": [],
       "id": "firestaff_wallset_variant_binding_before_draw",
       "lines": "9109-9123",
-      "missing": [],
+      "missing": [
+        "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,",
+        "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;",
+        "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +",
+        "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
+      ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sha256": "6953b2c6dede0e9c76d042c794d9d801a521d4fdbe1a56d2708477c764b64cc3",
       "sourceFile": "m11_game_view.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 9670,
-          "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
-        },
-        {
-          "line": 9675,
-          "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
-        },
-        {
-          "line": 9676,
-          "needle": "if (flipWalls) {"
-        },
-        {
-          "line": 9683,
-          "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
-        },
-        {
-          "line": 9687,
-          "needle": "} else {"
-        },
-        {
           "line": 9688,
-          "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
+          "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         }
       ],
       "id": "firestaff_center_wall_flip_path",
       "lines": "9664-9690",
-      "missing": [],
+      "missing": [
+        "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))",
+        "if (flipWalls) {",
+        "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,",
+        "} else {",
+        "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
+      ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sha256": "6953b2c6dede0e9c76d042c794d9d801a521d4fdbe1a56d2708477c764b64cc3",
       "sourceFile": "m11_game_view.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 10236,
+          "line": 10254,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
-        },
-        {
-          "line": 10264,
-          "needle": "size_t partner = i ^ 1;"
-        },
-        {
-          "line": 10265,
-          "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
-        },
-        {
-          "line": 10266,
-          "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
-        },
-        {
-          "line": 10267,
-          "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
-        },
-        {
-          "line": 10273,
-          "needle": "} else {"
-        },
-        {
-          "line": 10274,
-          "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
         }
       ],
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": "10232-10280",
-      "missing": [],
+      "missing": [
+        "size_t partner = i ^ 1;",
+        "M11_DM1WallFrontBlit swapped = kSideBlits[i];",
+        "swapped.graphicIndex = kSideBlits[partner].graphicIndex;",
+        "(void)m11_draw_dm1_wall_blit_flipped(state,",
+        "} else {",
+        "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
+      ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "43aad3b05e7884d66a3900f886b16cf8e3ef662b537e9f0fe941f4fbe38b668f",
+      "sha256": "6953b2c6dede0e9c76d042c794d9d801a521d4fdbe1a56d2708477c764b64cc3",
       "sourceFile": "m11_game_view.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "gates": [
@@ -160,7 +110,7 @@
     "no original-vs-Firestaff pixel parity",
     "no movement/pass435 ownership"
   ],
-  "ok": true,
+  "ok": false,
   "redmcsbSourceAudit": [
     {
       "hits": [
@@ -365,5 +315,5 @@
       "use": "local CSB lineage reference"
     }
   ],
-  "status": "PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED"
+  "status": "FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK"
 }

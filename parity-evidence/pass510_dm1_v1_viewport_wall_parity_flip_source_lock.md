@@ -1,6 +1,6 @@
 # Pass510 DM1 V1 viewport wall parity flip source lock
 
-Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
+Status: FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK
 
 ## ReDMCSB anchors
 - DUNVIEW.C:183-200 redmcsb_wallset_native_slots status=PASS
@@ -10,10 +10,10 @@ Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
 - DUNVIEW.C:6697-6714 redmcsb_center_walls_use_flip_flag status=PASS
 
 ## Firestaff anchors
-- m11_game_view.c:9054 firestaff_party_tuple_flip_predicate status=PASS
-- m11_game_view.c:9109 firestaff_wallset_variant_binding_before_draw status=PASS
-- m11_game_view.c:9670 firestaff_center_wall_flip_path status=PASS
-- m11_game_view.c:10236 firestaff_side_wall_lr_swap_path status=PASS
+- m11_game_view.c:missing firestaff_party_tuple_flip_predicate status=FAIL
+- m11_game_view.c:missing firestaff_wallset_variant_binding_before_draw status=FAIL
+- m11_game_view.c:9688 firestaff_center_wall_flip_path status=FAIL
+- m11_game_view.c:10254 firestaff_side_wall_lr_swap_path status=FAIL
 
 ## Local references
 - dm1_pc34_graphics /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e

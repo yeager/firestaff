@@ -1,7 +1,7 @@
 # pass466_dm1_v1_initial_hall_c080_source_stop_capture_path
 
 - status: `PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE`
-- generatedUtc: `2026-05-16T13:15:35.746087+00:00`
+- generatedUtc: `2026-05-17T14:30:15.168092+00:00`
 - redmcsb: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - parity claim: **not made**; this is a source-stop capture contract for the masked pass449 terminal HUD/status rows.
 

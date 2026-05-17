@@ -132,8 +132,11 @@
         "strcmp(gameId, \"csb\") == 0",
         "\"CSB.DAT\""
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "strcmp(gameId, \"csb\") == 0",
+        "\"CSB.DAT\""
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_current_ingame_capture_fixture_is_dm1",
@@ -179,6 +182,7 @@
     "CSB V1 completion remains 20/100 until CSB-specific runtime/capture evidence replaces the guarded DM1-shaped path."
   ],
   "failures": [
-    "firestaff_m12_launch_guard_still_blocks_csb missing ['Only DM1 is launch-supported', 'strcmp(gameId, \"dm1\") == 0'] path_exists=True"
+    "firestaff_m12_launch_guard_still_blocks_csb missing ['Only DM1 is launch-supported', 'strcmp(gameId, \"dm1\") == 0'] path_exists=True",
+    "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest missing ['strcmp(gameId, \"csb\") == 0', '\"CSB.DAT\"'] path_exists=True"
   ]
 }
