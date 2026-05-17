@@ -118,8 +118,9 @@ typedef struct {
 
 typedef enum {
     M12_PRESENTATION_V1_ORIGINAL = 0,
-    M12_PRESENTATION_V2_ENHANCED_2D,
-    M12_PRESENTATION_V3_MODERN_3D,
+    M12_PRESENTATION_V20_FILTERED,
+    M12_PRESENTATION_V21_UPSCALED,
+    M12_PRESENTATION_V22_MODERN,
     M12_PRESENTATION_MODE_COUNT
 } M12_PresentationMode;
 
@@ -214,6 +215,7 @@ typedef enum {
 /* ── Game mode sub-menu ───────────────────────────────────────────── */
 typedef enum {
     M12_GAME_MODE_NEW_V1 = 0,
+    M12_GAME_MODE_NEW_V20,
     M12_GAME_MODE_NEW_V21,
     M12_GAME_MODE_CONTINUE,
     M12_GAME_MODE_NEW_V22,

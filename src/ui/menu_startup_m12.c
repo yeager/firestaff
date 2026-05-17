@@ -79,15 +79,16 @@ enum {
 
 /* ── Settings tabs (V2.1/V2.2) ────────────────────────────────────── */
 enum {
-    M12_SETTINGS_TAB_DISPLAY = 0,
-    M12_SETTINGS_TAB_VIDEO,
+    M12_SETTINGS_TAB_GAME = 0,
+    M12_SETTINGS_TAB_GRAPHICS,
+    M12_SETTINGS_TAB_CONTROLS,
     M12_SETTINGS_TAB_AUDIO,
-    M12_SETTINGS_TAB_MISC,
+    M12_SETTINGS_TAB_ACCESSIBILITY,
     M12_SETTINGS_TAB_COUNT
 };
 
 static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
-    "DISPLAY", "VIDEO", "AUDIO", "MISC"
+    "GAME", "GRAPHICS", "CONTROLS", "AUDIO", "ACCESSIBILITY"
 };
 
 /* ── Extended settings rows per tab ───────────────────────────────── */
@@ -99,64 +100,69 @@ typedef struct {
 } M12_ExtSettingsRow;
 
 static M12_ExtSettingsRow m12_ext_settings[] = {
-    /* ── DISPLAY tab ── */
-    {"Language",            "English",    1, M12_SETTINGS_TAB_DISPLAY},
-    {"Presentation Mode",   "V2.1",      1, M12_SETTINGS_TAB_DISPLAY},
-    {"Window Mode",         "Windowed",  1, M12_SETTINGS_TAB_DISPLAY},
-    {"Display Format",      "16:9",      1, M12_SETTINGS_TAB_DISPLAY},
-    {"Pixel Snap",          "On",        1, M12_SETTINGS_TAB_DISPLAY},
-    {"Theme",               "Dark",      1, M12_SETTINGS_TAB_DISPLAY},
-    {"Background",          "Dungeon",   1, M12_SETTINGS_TAB_DISPLAY},
-    {"Font Scale",          "100%",      1, M12_SETTINGS_TAB_DISPLAY},
-    {"High Contrast",       "Off",       1, M12_SETTINGS_TAB_DISPLAY},
-    {"Colorblind Mode",     "Off",       1, M12_SETTINGS_TAB_DISPLAY},
-    /* ── VIDEO tab ── */
-    {"Renderer Backend",    "SDL2",      1, M12_SETTINGS_TAB_VIDEO},
-    {"Scale",               "2x",        1, M12_SETTINGS_TAB_VIDEO},
-    {"Upscale Filter",      "EPX",       1, M12_SETTINGS_TAB_VIDEO},
-    {"Bilinear Filtering",  "Off",       1, M12_SETTINGS_TAB_VIDEO},
-    {"VSync",               "On",        1, M12_SETTINGS_TAB_VIDEO},
-    {"Viewport Style",      "Original",  1, M12_SETTINGS_TAB_VIDEO},
-    {"Palette Mode",        "Original VGA", 1, M12_SETTINGS_TAB_VIDEO},
-    {"Enhanced Palette",    "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Dynamic Lighting",    "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Smooth Movement",     "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Camera Shake",        "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Particle Effects",    "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Weather FX",          "On",        0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Damage Numbers",      "Off",       0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Screen Transitions",  "Fade",      0, M12_SETTINGS_TAB_VIDEO},  /* V2.2 */
-    {"Texture Upscale",     "EPX 2x",    1, M12_SETTINGS_TAB_VIDEO},
+    /* ── GAME tab ── */
+    {"Graphics Mode",       "Original",  1, M12_SETTINGS_TAB_GAME},
+    {"Game Version",        "V1",           1, M12_SETTINGS_TAB_GAME},
+    {"Language",            "English",      1, M12_SETTINGS_TAB_GAME},
+    {"Game Speed",          "Normal",       1, M12_SETTINGS_TAB_GAME},
+    {"Movement Mode",       "Classic",      1, M12_SETTINGS_TAB_GAME},
+    {"Cheats",              "Off",          1, M12_SETTINGS_TAB_GAME},
+    {"Auto-Save",           "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Minimap",             "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Journal",             "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    /* ── GRAPHICS tab ── */
+    {"Window Mode",         "Maximized",    1, M12_SETTINGS_TAB_GRAPHICS},
+    {"Display Format",      "16:9",         1, M12_SETTINGS_TAB_GRAPHICS},
+    {"VSync",               "On",           1, M12_SETTINGS_TAB_GRAPHICS},
+    {"Integer Scaling",     "On",           1, M12_SETTINGS_TAB_GRAPHICS},
+    {"Viewport Style",      "Original",     1, M12_SETTINGS_TAB_GRAPHICS},
+    {"Palette Mode",        "Original VGA", 1, M12_SETTINGS_TAB_GRAPHICS},
+    {"CRT Filter",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Palette Correction",  "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Dither Cleanup",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Sharpening",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"AI Upscale (10x)",    "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
+    {"Smooth Movement",     "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
+    {"Smooth Turning",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
+    {"Animation Interpolation","Off",       0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
+    {"Dynamic Lighting",    "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.2 */
+    {"Particle Effects",    "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.2 */
+    {"Weather FX",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.2 */
+    {"Camera Easing",       "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.2 */
+    {"Screen Transitions",  "Fade",         0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.2 */
+    /* ── CONTROLS tab ── */
+    {"Control Scheme",      "Original",     1, M12_SETTINGS_TAB_CONTROLS},
+    {"Input Mode",          "Keyboard",     1, M12_SETTINGS_TAB_CONTROLS},
+    {"Touch Controls",      "Auto",         1, M12_SETTINGS_TAB_CONTROLS},
+    {"Gamepad",             "Auto-detect",  1, M12_SETTINGS_TAB_CONTROLS},
+    {"Key Bindings",        "Default",      0, M12_SETTINGS_TAB_CONTROLS},   /* V2.2 */
+    {"Auto-Pause on Focus Loss","On",       1, M12_SETTINGS_TAB_CONTROLS},
     /* ── AUDIO tab ── */
-    {"Master Volume",       "100%",      1, M12_SETTINGS_TAB_AUDIO},
-    {"Music Volume",        "80%",       1, M12_SETTINGS_TAB_AUDIO},
-    {"SFX Volume",          "100%",      1, M12_SETTINGS_TAB_AUDIO},
-    {"Muted",               "No",        1, M12_SETTINGS_TAB_AUDIO},
-    {"Footstep Audio",      "On",        0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
-    {"Ambient Sounds",      "Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
-    {"Creature Voices",     "Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.2 */
-    {"Audio Mixer Mode",    "Stereo",    1, M12_SETTINGS_TAB_AUDIO},
-    {"PC Speaker Emulation","Off",       0, M12_SETTINGS_TAB_AUDIO},  /* V2.1 */
-    /* ── MISC tab ── */
-    {"Input Mode",          "Keyboard",  1, M12_SETTINGS_TAB_MISC},
-    {"WASD Movement",       "Off",       1, M12_SETTINGS_TAB_MISC},
-    {"Touch Controls",      "Auto",      1, M12_SETTINGS_TAB_MISC},
-    {"Movement Mode",       "Classic",   1, M12_SETTINGS_TAB_MISC},
-    {"Auto-Pause",          "On",        1, M12_SETTINGS_TAB_MISC},
-    {"Auto-Save",           "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Screenshot Key",      "F12",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Input Remap",         "Default",   0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Minimap",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Journal",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Message Log",         "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Achievements",        "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_MISC},   /* V2.2 */
-    {"Data Status",         "OK",        1, M12_SETTINGS_TAB_MISC},
-    {"Debug Overlay",       "Off",       1, M12_SETTINGS_TAB_MISC},
-    {"Developer Gates",     "Off",       1, M12_SETTINGS_TAB_MISC},
+    {"Master Volume",       "100%",         1, M12_SETTINGS_TAB_AUDIO},
+    {"Music Volume",        "80%",          1, M12_SETTINGS_TAB_AUDIO},
+    {"SFX Volume",          "100%",         1, M12_SETTINGS_TAB_AUDIO},
+    {"Muted",               "No",           1, M12_SETTINGS_TAB_AUDIO},
+    {"Audio Mixer",         "Stereo",       1, M12_SETTINGS_TAB_AUDIO},
+    {"Footstep Audio",      "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
+    {"Ambient Sounds",      "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
+    {"Creature Voices",     "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
+    {"PC Speaker Emulation","Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.1 */
+    /* ── ACCESSIBILITY tab ── */
+    {"Font Scale",          "100%",         1, M12_SETTINGS_TAB_ACCESSIBILITY},
+    {"High Contrast",       "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
+    {"Colorblind Mode",     "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
+    {"Large Touch Targets", "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
+    {"Damage Numbers",      "Off",          0, M12_SETTINGS_TAB_ACCESSIBILITY},  /* V2.2 */
+    {"Screenshot Key",      "F12",          0, M12_SETTINGS_TAB_ACCESSIBILITY},  /* V2.2 */
+    {"Message Log",         "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Achievements",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"Data Status",         "OK",        1, M12_SETTINGS_TAB_GAME},
+    {"Debug Overlay",       "Off",       1, M12_SETTINGS_TAB_GAME},
+    {"Developer Gates",     "Off",       1, M12_SETTINGS_TAB_GAME},
     {NULL, NULL, 0, 0}
 };
 
@@ -1976,7 +1982,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
                     /* Launch row — V3 blocks launch with coming-soon message */
-                    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+                    if (pmode == M12_PRESENTATION_V22_MODERN) {
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
@@ -2205,7 +2211,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->activatedIndex = qrSlot;
                     m12_normalize_game_version_index(state, qrSlot);
                     m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
-                    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+                    if (pmode == M12_PRESENTATION_V22_MODERN) {
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
@@ -3369,14 +3375,15 @@ static const char *m12_game_tag(int index) {
 }
 
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
-    "New Game (V1 Original)",
-    "New Game (V2.1 Upscaled)",
+    "New Game (Original)",
+    "New Game (Original + Filters)",
+    "New Game (Original 10x Upscale)",
     "Continue Saved Game",
-    "New Game (V2.2 Enhanced)"
+    "New Game (Modern Graphics)"
 };
 
 static const int g_game_mode_available[M12_GAME_MODE_COUNT] = {
-    1, 1, 1, 0
+    1, 0, 0, 1, 0  /* V2.0/V2.1/V2.2 grayed out until built */
 };
 
 static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
@@ -5421,7 +5428,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   panelX + 10,
                   contentY + 20,
                   m12_tr(state, g_presentationModes[pmode]),
-                  pmode == M12_PRESENTATION_V3_MODERN_3D ? &g_textSmallMuted : &g_textSmallShadow);
+                  pmode == M12_PRESENTATION_V22_MODERN ? &g_textSmallMuted : &g_textSmallShadow);
     {
         char rendererLine[96];
         snprintf(rendererLine, sizeof(rendererLine), "%s: %s (%s)",
@@ -5573,7 +5580,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        launchBorder,
                        launchFill);
         {
-            const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D ||
+            const char* launchLabel = (pmode == M12_PRESENTATION_V22_MODERN ||
                                        !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
                                           ? m12_tr(state, "> DATA FILES NOT FOUND")
                                           : m12_tr(state, "> LAUNCH");
@@ -5797,7 +5804,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
     /* V3 is not launchable yet */
-    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+    if (pmode == M12_PRESENTATION_V22_MODERN) {
         return intent;
     }
     gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);

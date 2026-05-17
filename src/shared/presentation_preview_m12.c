@@ -109,7 +109,7 @@ static int wrap_mode(int mode, int delta) {
 void M12_PresentationPreview_Init(M12_PresentationPreviewState* state) {
     memset(state, 0, sizeof(*state));
     state->leftMode = M12_PRESENTATION_V1_ORIGINAL;
-    state->rightMode = M12_PRESENTATION_V2_ENHANCED_2D;
+    state->rightMode = M12_PRESENTATION_V20_FILTERED;
     state->splitPosition = 50;
     state->focusSide = M12_PREVIEW_SIDE_LEFT;
     state->selectedFeature = 0;

@@ -19,13 +19,13 @@
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
+        "[ 97%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[100%] Built target firestaff_m10",
+        "[ 97%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 89%] Built target firestaff_m10",
+        "[ 92%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-17T16:02:06.155738+00:00"
+  "timestampUtc": "2026-05-17T17:34:19.573614+00:00"
 }

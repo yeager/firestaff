@@ -487,14 +487,14 @@ static void draw_title_centered(M12_ModernCanvas* c) {
 }
 
 static M12_RGB mode_color(int mode) {
-    if (mode == M12_PRESENTATION_V2_ENHANCED_2D) return COLOR_V2();
-    if (mode == M12_PRESENTATION_V3_MODERN_3D)   return COLOR_V3();
+    if (mode == M12_PRESENTATION_V20_FILTERED) return COLOR_V2();
+    if (mode == M12_PRESENTATION_V22_MODERN)   return COLOR_V3();
     return COLOR_V1();
 }
 
 static const char* mode_short(int mode) {
-    if (mode == M12_PRESENTATION_V2_ENHANCED_2D) return "V2 ENHANCED 2D";
-    if (mode == M12_PRESENTATION_V3_MODERN_3D)   return "V3 MODERN 3D";
+    if (mode == M12_PRESENTATION_V20_FILTERED) return "V2 ENHANCED 2D";
+    if (mode == M12_PRESENTATION_V22_MODERN)   return "V3 MODERN 3D";
     return "V1 ORIGINAL";
 }
 
@@ -926,7 +926,7 @@ static void draw_card(M12_ModernCanvas* c,
         draw_text(c, x + 16, y + 144, "WINDOW",   &p);
 
         static const char* langs[] = {"EN", "SV", "FR", "DE"};
-        static const char* grf[]   = {"V1", "V2", "V3 SOON"};
+        static const char* grf[]   = {"Original", "Original + Filters", "Original 10x Upscale", "Modern Graphics"};
         static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
         int li = state->settings.languageIndex;
@@ -935,7 +935,7 @@ static void draw_card(M12_ModernCanvas* c,
         if (li < 0) li = 0;
         if (li > 3) li = 3;
         if (gi < 0) gi = 0;
-        if (gi > 2) gi = 2;
+        if (gi > 3) gi = 3;
         if (wi < 0) wi = 0;
         if (wi > 2) wi = 2;
         draw_text(c, x + 200, y + 72,  langs[li], &v);
@@ -1157,7 +1157,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
     static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
-    static const char* grf[]   = {"V1 ORIGINAL", "V2 ENHANCED 2D", "V3 MODERN/3D"};
+    static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
@@ -1165,7 +1165,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     if (li < 0) li = 0;
     if (li > 3) li = 3;
     if (gi < 0) gi = 0;
-    if (gi > 2) gi = 2;
+    if (gi > 3) gi = 3;
     if (wi < 0) wi = 0;
     if (wi > 2) wi = 2;
 
@@ -1286,10 +1286,10 @@ static void draw_presentation_row(M12_ModernCanvas* c, int x, int y, int w,
     /* Color-coded value */
     const char* val;
     M12_RGB valCol;
-    if (modeIndex == M12_PRESENTATION_V2_ENHANCED_2D) {
+    if (modeIndex == M12_PRESENTATION_V20_FILTERED) {
         val = "V2 ENHANCED 2D";
         valCol = COLOR_V2();
-    } else if (modeIndex == M12_PRESENTATION_V3_MODERN_3D) {
+    } else if (modeIndex == M12_PRESENTATION_V22_MODERN) {
         val = "V3 COMING SOON";
         valCol = rgb(100, 96, 110); /* greyed out */
     } else {
@@ -1418,7 +1418,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         draw_text(c, panelX + 36, curY + 8,
                   "V1 ORIGINAL LOCKS ASPECT AND RESOLUTION FOR AUTHENTICITY",
                   &note);
-    } else if (mode == M12_PRESENTATION_V3_MODERN_3D) {
+    } else if (mode == M12_PRESENTATION_V22_MODERN) {
         ModernTextStyle note = text_style_make(1, COLOR_V3(), 0);
         draw_text(c, panelX + 36, curY + 8,
                   "V3 MODERN 3D IS A LATER MILESTONE (COMING SOON)",
