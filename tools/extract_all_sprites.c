@@ -15,6 +15,12 @@ unsigned char* G2160_puc_Bitmap_Destination;
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define MKDIR(p) _mkdir(p)
+#else
+#define MKDIR(p) mkdir(p, 0755)
+#endif
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -23,9 +29,9 @@ static void mkdirp(const char *path) {
     char tmp[1024];
     snprintf(tmp, sizeof(tmp), "%s", path);
     for (char *p = tmp + 1; *p; p++) {
-        if (*p == '/') { *p = 0; mkdir(tmp, 0755); *p = '/'; }
+        if (*p == '/') { *p = 0; MKDIR(tmp); *p = '/'; }
     }
-    mkdir(tmp, 0755);
+    MKDIR(tmp);
 }
 
 int main(int argc, char **argv) {
