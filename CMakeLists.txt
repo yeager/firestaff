@@ -2591,7 +2591,7 @@ set_tests_properties(v1_entrance_input_wait_redmcsb_gate PROPERTIES WILL_FAIL TR
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
 add_executable(extract_all_sprites tools/extract_all_sprites.c src/engine/firestaff_graphics_dat_reader.c)
 target_include_directories(extract_all_sprites PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/tools)
-target_link_libraries(extract_all_sprites PRIVATE firestaff_m10 m)
+target_link_libraries(extract_all_sprites PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(extract_all_sprites PRIVATE -Wall -Wextra -O2)
 endif()

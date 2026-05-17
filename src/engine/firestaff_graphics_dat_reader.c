@@ -184,6 +184,8 @@ int fs_gfx_decompress_lzw(const uint8_t *src, int src_size,
 int fs_gfx_expand_4bpp(const uint8_t *packed, int packed_size,
     uint8_t *indexed, int max_pixels)
 {
+    /* 4bpp packed nibble format: high nibble = first pixel, low nibble = second.
+     * Used when LZW decompression outputs half the expected 8bpp size. */
     int pi = 0, ii = 0;
     while (pi < packed_size && ii + 1 < max_pixels) {
         indexed[ii++] = (packed[pi] >> 4) & 0x0F;

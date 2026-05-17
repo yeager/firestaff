@@ -1,8 +1,16 @@
 /*
- * extract_all_sprites.c — Extract all graphics from GRAPHICS.DAT as PNG
+ * extract_all_sprites.c — Extract all graphics from DM1 PC-34 GRAPHICS.DAT
+ * Uses IMG3 decompressor (F0689_IMG_ExpandGraphicToBitmap_Compat).
  * Usage: extract_all_sprites <GRAPHICS.DAT> [output_dir] [game_name]
  */
 #include "firestaff_graphics_dat_reader.h"
+#include "image_expand_pc34_compat.h"
+#include "image_backend_pc34_compat.h"
+
+/* Globals needed by image_backend_pc34_compat.c */
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +37,6 @@ int main(int argc, char **argv) {
     const char *out_dir = argc > 2 ? argv[2] : "./extracted_sprites";
     const char *game_name = argc > 3 ? argv[3] : "unknown";
 
-    /* Read file */
     FILE *f = fopen(gfx_path, "rb");
     if (!f) { fprintf(stderr, "Cannot open %s\n", gfx_path); return 1; }
     fseek(f, 0, SEEK_END);
@@ -41,7 +48,6 @@ int main(int argc, char **argv) {
     }
     fclose(f);
 
-    /* Parse */
     FS_GraphicsDat gfx;
     if (fs_gfx_load(&gfx, data, (int)sz) < 0) {
         fprintf(stderr, "Failed to parse GRAPHICS.DAT\n");
@@ -49,14 +55,12 @@ int main(int argc, char **argv) {
     }
     printf("Loaded %s: %d graphics\n", gfx_path, gfx.graphic_count);
 
-    /* Get palette */
     uint32_t palette[256];
     memset(palette, 0, sizeof(palette));
     fs_gfx_get_palette(&gfx, palette);
 
     mkdirp(out_dir);
 
-    /* Open manifest */
     char mpath[1024];
     snprintf(mpath, sizeof(mpath), "%s/manifest.json", out_dir);
     FILE *mf = fopen(mpath, "w");
@@ -64,62 +68,78 @@ int main(int argc, char **argv) {
     fprintf(mf, "{\n  \"game\": \"%s\",\n  \"source\": \"%s\",\n  \"graphic_count\": %d,\n  \"graphics\": [\n",
             game_name, gfx_path, gfx.graphic_count);
 
-    /* Work buffers */
-    size_t bufsize = 4 * 1024 * 1024;
-    uint8_t *indexed = (uint8_t *)malloc(bufsize);
-    uint8_t *rgba = (uint8_t *)malloc(bufsize * 4);
-    if (!indexed || !rgba) { fprintf(stderr, "OOM\n"); free(data); return 1; }
+    /* Large output buffer for expanded bitmap (320x200 max typical) */
+    size_t bmpsize = 512 * 512;
+    uint8_t *bitmap = (uint8_t *)calloc(1, bmpsize);
+    uint8_t *rgba = (uint8_t *)malloc(bmpsize * 4);
+    if (!bitmap || !rgba) { fprintf(stderr, "OOM\n"); free(data); return 1; }
 
     int extracted = 0, skipped = 0;
 
     for (int i = 0; i < gfx.graphic_count; i++) {
-        int w = 0, h = 0;
-        int rc = fs_gfx_extract_bitmap(&gfx, i, indexed, (int)bufsize, &w, &h);
-        if (rc <= 0 || w <= 0 || h <= 0) {
-            w = 0; h = 0;
-            rc = fs_gfx_get_bitmap(&gfx, i, indexed, (int)bufsize, &w, &h);
-        }
+        int w = gfx.entries[i].width;
+        int h = gfx.entries[i].height;
+        int off = gfx.entries[i].offset;
 
         char filename[256];
-        snprintf(filename, sizeof(filename), "sprite_%04d_%dx%d.png", i,
-                 w > 0 ? w : gfx.entries[i].width,
-                 h > 0 ? h : gfx.entries[i].height);
+        snprintf(filename, sizeof(filename), "sprite_%04d_%dx%d.png", i, w, h);
 
-        int ok = (rc > 0 && w > 0 && h > 0);
+        int ok = 0;
+        if (w > 0 && h > 0 && w <= 512 && h <= 512 && off >= 0 && off < (int)sz) {
+            /* The raw graphic data at offset includes 4-byte w/h header
+             * for the IMG3 decompressor. Point directly at the graphic. */
+            const uint8_t *src = data + off;
+            memset(bitmap, 0, bmpsize);
+
+            /* Use IMG3 decompressor — it reads w/h from first 4 bytes of src */
+            F0689_IMG_ExpandGraphicToBitmap_Compat(src, bitmap);
+
+            /* IMG3 outputs packed nibbles: 2 pixels per byte.
+             * Even pixel offset → high nibble, odd → low nibble.
+             * Stride is EVEN_INTEGER(width) for row alignment. */
+            int stride = (w % 2 == 0) ? w : (w + 1); /* EVEN_INTEGER */
+            int npix_bytes = (stride * h + 1) / 2; /* packed bytes */
+            if (npix_bytes > 0 && npix_bytes <= (int)bmpsize) {
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        int pixidx = y * stride + x;
+                        int byteidx = pixidx / 2;
+                        uint8_t nibble;
+                        if (pixidx % 2 == 0)
+                            nibble = (bitmap[byteidx] >> 4) & 0x0F;
+                        else
+                            nibble = bitmap[byteidx] & 0x0F;
+                        int di = (y * w + x) * 4;
+                        uint32_t c = palette[nibble];
+                        rgba[di + 0] = (uint8_t)((c >> 16) & 0xFF);
+                        rgba[di + 1] = (uint8_t)((c >> 8) & 0xFF);
+                        rgba[di + 2] = (uint8_t)(c & 0xFF);
+                        rgba[di + 3] = 0xFF;
+                    }
+                }
+
+                char out_path[1024];
+                snprintf(out_path, sizeof(out_path), "%s/%s", out_dir, filename);
+                if (stbi_write_png(out_path, w, h, 4, rgba, w * 4)) {
+                    ok = 1;
+                    extracted++;
+                }
+            }
+        }
 
         if (i > 0) fprintf(mf, ",\n");
         fprintf(mf, "    {\"index\": %d, \"filename\": \"%s\", \"width\": %d, \"height\": %d, "
                 "\"compressed_size\": %d, \"offset\": %d, \"extracted\": %s}",
-                i, filename, gfx.entries[i].width, gfx.entries[i].height,
-                gfx.entries[i].compressed_size, gfx.entries[i].offset,
+                i, filename, w, h,
+                gfx.entries[i].compressed_size, off,
                 ok ? "true" : "false");
 
-        if (!ok) { skipped++; continue; }
-
-        /* Indexed → RGBA */
-        int npix = w * h;
-        if (npix > (int)bufsize) { skipped++; continue; }
-        for (int p = 0; p < npix; p++) {
-            uint32_t c = palette[indexed[p] & 0xFF];
-            rgba[p * 4 + 0] = (uint8_t)((c >> 16) & 0xFF);
-            rgba[p * 4 + 1] = (uint8_t)((c >> 8)  & 0xFF);
-            rgba[p * 4 + 2] = (uint8_t)(c & 0xFF);
-            rgba[p * 4 + 3] = 0xFF;
-        }
-
-        char out_path[1024];
-        snprintf(out_path, sizeof(out_path), "%s/%s", out_dir, filename);
-        if (stbi_write_png(out_path, w, h, 4, rgba, w * 4)) {
-            extracted++;
-        } else {
-            fprintf(stderr, "Write failed: %s\n", out_path);
-            skipped++;
-        }
+        if (!ok) skipped++;
     }
 
     fprintf(mf, "\n  ]\n}\n");
     fclose(mf);
-    free(indexed); free(rgba); free(data);
+    free(bitmap); free(rgba); free(data);
 
     printf("Done: %d extracted, %d skipped\nManifest: %s\n", extracted, skipped, mpath);
     return (extracted > 0) ? 0 : 1;
