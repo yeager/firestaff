@@ -90,40 +90,11 @@ int fs_gfx_load(FS_GraphicsDat *gfx, const uint8_t *data, int size) {
 int fs_gfx_get_bitmap(const FS_GraphicsDat *gfx, int index,
     uint8_t *out_pixels, int max_size, int *out_w, int *out_h)
 {
-    int w, h, off, comp_size, byte_width, i;
-    if (!gfx || !gfx->loaded || index < 0 || index >= gfx->graphic_count)
-        return -1;
-
-    w = gfx->entries[index].width;
-    h = gfx->entries[index].height;
-    off = gfx->entries[index].offset;
-    comp_size = gfx->entries[index].compressed_size;
-
-    if (out_w) *out_w = w;
-    if (out_h) *out_h = h;
-    if (w <= 0 || h <= 0 || comp_size <= 0) return -1;
-    if (!out_pixels) return w * h;
-    if (w * h > max_size) return -1;
-
-    /* PC-34: data is 4bpp (2 pixels per byte), uncompressed.
-     * byte_width = (w + 1) / 2; total = byte_width * h */
-    byte_width = (w + 1) / 2;
-    if (off + byte_width * h > gfx->raw_size) {
-        /* Compressed data shorter than expected — use what we have */
-        byte_width = comp_size / h;
-        if (byte_width <= 0) return -1;
-    }
-
-    /* Expand 4bpp to 8bpp indexed */
-    memset(out_pixels, 0, w * h);
-    for (i = 0; i < byte_width * h && off + i < gfx->raw_size; i++) {
-        int pi = i * 2;
-        uint8_t byte = gfx->raw_data[off + i];
-        if (pi < w * h) out_pixels[pi] = (byte >> 4) & 0x0F;
-        if (pi + 1 < w * h) out_pixels[pi + 1] = byte & 0x0F;
-    }
-
-    return w * h;
+    /* BUG-010 fix: DM1 PC-34 GRAPHICS.DAT entries are LZW-compressed.
+     * Delegate to fs_gfx_extract_bitmap which properly decompresses
+     * via LZW then expands 4bpp to 8bpp indexed pixels.
+     * Matches ReDMCSB MEMORY.C F0474 -> LZW decompress -> F0466 expand. */
+    return fs_gfx_extract_bitmap(gfx, index, out_pixels, max_size, out_w, out_h);
 }
 
 
