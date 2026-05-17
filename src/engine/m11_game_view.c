@@ -21144,10 +21144,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int textY;
         int drewSourceBackdrop = 0;
         if (state->returnToMenuConfirmActive) {
-            /* Dim the entire screen instead of showing inventory backdrop */
+            /* Dim the current game content heavily — the actual game view
+             * (dungeon, inventory, whatever was on screen) stays visible
+             * but darkened, with the confirm dialog centered on top. */
             m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
-                         0, 0, framebufferWidth, framebufferHeight, 4);
-            /* Draw centered dialog box over dimmed content */
+                         0, 0, framebufferWidth, framebufferHeight, 5);
+            /* Draw centered confirm dialog box */
             int cdlgW = 200, cdlgH = 50;
             int cdlgX = (framebufferWidth - cdlgW) / 2;
             int cdlgY = (framebufferHeight - cdlgH) / 2;
