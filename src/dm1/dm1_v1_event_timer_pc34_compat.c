@@ -263,8 +263,10 @@ int dm1v1_event_add(
     ev = *event;
 
     /* --- Merge logic for corridor/wall/door square events (C05..C10) --- */
+    /* BUG-029 fix: scan only active timeline entries, not all slots */
     if (ev.type >= DM1_EVENT_CORRIDOR && ev.type <= DM1_EVENT_DOOR) {
-        for (i = 0; i < queue->maxEvents; i++) {
+        for (int ti = 0; ti < queue->eventCount; ti++) {
+            i = queue->timeline[ti];
             struct DM1_Event_V1* existing = &queue->events[i];
             if (existing->type >= DM1_EVENT_CORRIDOR && existing->type <= DM1_EVENT_DOOR) {
                 if (ev.map_time == existing->map_time &&
@@ -291,7 +293,8 @@ int dm1v1_event_add(
     }
     /* --- Merge logic for DOOR_ANIMATION (C01) --- */
     else if (ev.type == DM1_EVENT_DOOR_ANIMATION) {
-        for (i = 0; i < queue->maxEvents; i++) {
+        for (int ti = 0; ti < queue->eventCount; ti++) {
+            i = queue->timeline[ti];
             struct DM1_Event_V1* existing = &queue->events[i];
             /* Only consider DOOR and DOOR_ANIMATION events (ReDMCSB TIMELINE.C F0238) */
             if (existing->type != DM1_EVENT_DOOR &&
@@ -315,12 +318,15 @@ int dm1v1_event_add(
         }
     }
     /* --- Merge logic for DOOR_DESTRUCTION (C02) --- */
+    /* BUG-030 fix: also check event time, not just position */
     else if (ev.type == DM1_EVENT_DOOR_DESTRUCTION) {
-        for (i = 0; i < queue->maxEvents; i++) {
+        for (int ti = 0; ti < queue->eventCount; ti++) {
+            i = queue->timeline[ti];
             struct DM1_Event_V1* existing = &queue->events[i];
             if (ev.b_mapX == existing->b_mapX &&
                 ev.b_mapY == existing->b_mapY &&
-                DM1_MAP_TIME_MAP(ev.map_time) == DM1_MAP_TIME_MAP(existing->map_time)) {
+                DM1_MAP_TIME_MAP(ev.map_time) == DM1_MAP_TIME_MAP(existing->map_time) &&
+                DM1_MAP_TIME_TIME(ev.map_time) == DM1_MAP_TIME_TIME(existing->map_time)) {
                 if (existing->type == DM1_EVENT_DOOR_ANIMATION ||
                     existing->type == DM1_EVENT_DOOR) {
                     dm1v1_event_delete(queue, i);
