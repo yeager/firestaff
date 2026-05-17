@@ -150,7 +150,8 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch) {
         if (cls == 0 || cls == 2) { /* SWING or DAGGER_AND_AXES */
             skillLevel = ch->skillSwing;
         }
-        if (cls != 0 && cls < 16) { /* THROW weapons (class 1-15 excl swing) */
+        if (cls != 0 && cls != 2 && cls < 16) { /* THROW weapons per ReDMCSB F0312:
+             * class != SWING(0) && class != DAGGER_AND_AXES(2) && class < FIRST_BOW(16) */
             skillLevel += ch->skillThrow;
         }
         if (cls >= 16 && cls < 112) { /* SHOOT weapons */
@@ -288,6 +289,8 @@ int dm1_champion_take_damage(DM1_CombatState* s, int champIdx, int attack,
             break;
         case DM1_ATTACK_SELF:
             defense >>= 1;
+            /* ReDMCSB F0321 I34E: defense += F0303_CHAMPION_GetSkillLevel(champIdx, C01_SKILL_NINJA) */
+            defense += ch->skillNinja;
             break;
         case DM1_ATTACK_BLUNT:
         case DM1_ATTACK_SHARP:

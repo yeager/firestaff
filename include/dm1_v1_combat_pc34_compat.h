@@ -125,6 +125,7 @@ typedef struct {
     int skillSwing;
     int skillThrow;
     int skillShoot;
+    int skillNinja;  /* C01_SKILL_NINJA — used in SELF defense (BUG-021) */
 } DM1_ChampionCombat;
 
 /* ── Creature in a group ──────────────────────────────────────────── */
