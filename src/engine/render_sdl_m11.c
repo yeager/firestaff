@@ -422,7 +422,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         "Firestaff",
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 #else
     g_state.window = SDL_CreateWindow(
         "Firestaff",
@@ -491,8 +491,18 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     }
 
     memset(g_state.framebuffer, 0, M11_FB_BYTES);
-    g_state.windowW = windowWidth;
-    g_state.windowH = windowHeight;
+    /* Get actual pixel dimensions (may differ on HiDPI/Retina displays) */
+    {
+        int pw = 0, ph = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        SDL_GetWindowSizeInPixels(g_state.window, &pw, &ph);
+#else
+        SDL_GL_GetDrawableSize(g_state.window, &pw, &ph);
+        if (pw <= 0 || ph <= 0) { pw = windowWidth; ph = windowHeight; }
+#endif
+        g_state.windowW = (pw > 0) ? pw : windowWidth;
+        g_state.windowH = (ph > 0) ? ph : windowHeight;
+    }
     g_state.scaleMode = scaleMode;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
     g_state.paletteLevel = 0;
@@ -872,7 +882,14 @@ int M11_Render_PumpEvents(void) {
             }
         } else if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
                    ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-            M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            /* Use pixel size for correct HiDPI/Retina rendering */
+            int pw = 0, ph = 0;
+            SDL_GetWindowSizeInPixels(g_state.window, &pw, &ph);
+            if (pw > 0 && ph > 0) {
+                M11_Render_HandleResize(pw, ph);
+            } else {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
         }
 #else
         if (ev.type == SDL_QUIT) {
