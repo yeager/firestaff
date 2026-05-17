@@ -15,40 +15,26 @@ void m11_fw_init(M11_FoodWaterState* s, int count) {
     }
 }
 
-void m11_fw_tick(M11_FoodWaterState* s, int nowMs) {
+/* BUG-031 fix: game-tick-based decay per ReDMCSB GAMELOOP.C/CHAMPION.C.
+ * Called once per game tick, not wall-clock. Decrement food by
+ * M11_FOOD_DECAY_PER_TICK and water by M11_WATER_DECAY_PER_TICK. */
+void m11_fw_tick(M11_FoodWaterState* s, int gameTick) {
+    (void)gameTick; /* tick count for future use */
     if (!s) return;
     for (int i = 0; i < s->count; i++) {
         M11_FoodWater* fw = &s->champions[i];
-        
-        // Food decay
-        if (nowMs >= fw->lastEatMs) {
-            int elapsed = nowMs - fw->lastEatMs;
-            int decay = elapsed / M11_FOOD_DECAY_MS;
-            if (decay > 0) {
-                fw->food -= decay;
-                if (fw->food < 0) fw->food = 0;
-                fw->lastEatMs += decay * M11_FOOD_DECAY_MS;
-            }
-        }
-        
-        // Water decay
-        if (nowMs >= fw->lastDrinkMs) {
-            int elapsed = nowMs - fw->lastDrinkMs;
-            int decay = elapsed / M11_WATER_DECAY_MS;
-            if (decay > 0) {
-                fw->water -= decay;
-                if (fw->water < 0) fw->water = 0;
-                fw->lastDrinkMs += decay * M11_WATER_DECAY_MS;
-            }
-        }
-        
-        // Update status flags
-        if (fw->food == 0) {
-            fw->starved = 1;
-        }
-        if (fw->water == 0) {
-            fw->thirsty = 1;
-        }
+
+        /* Food decay per tick */
+        fw->food -= M11_FOOD_DECAY_PER_TICK;
+        if (fw->food < 0) fw->food = 0;
+
+        /* Water decay per tick */
+        fw->water -= M11_WATER_DECAY_PER_TICK;
+        if (fw->water < 0) fw->water = 0;
+
+        /* Update status flags */
+        fw->starved = (fw->food == 0) ? 1 : 0;
+        fw->thirsty = (fw->water == 0) ? 1 : 0;
     }
 }
 
@@ -92,21 +78,14 @@ int m11_fw_is_thirsty(const M11_FoodWaterState* s, int champ) {
     return s->champions[champ].thirsty;
 }
 
-void m11_fw_starve(M11_FoodWaterState* s, int champ, int nowMs) {
-    if (!s || champ < 0 || champ >= s->count) return;
-    M11_FoodWater* fw = &s->champions[champ];
-    
-    if (fw->starved || fw->thirsty) {
-        int reduction = nowMs / 1000;
-        
-        if (fw->starved) {
-            fw->food -= reduction;
-            if (fw->food < 0) fw->food = 0;
-        }
-        
-        if (fw->thirsty) {
-            fw->water -= reduction;
-            if (fw->water < 0) fw->water = 0;
-        }
-    }
+/* BUG-032 fix: starvation/thirst applies HP damage per tick via combat system,
+ * not further food reduction. Returns damage to apply (caller passes to combat). */
+int m11_fw_starvation_damage(const M11_FoodWaterState* s, int champ) {
+    if (!s || champ < 0 || champ >= s->count) return 0;
+    const M11_FoodWater* fw = &s->champions[champ];
+    int damage = 0;
+    /* ReDMCSB: starvation/thirst causes 2 HP damage per tick */
+    if (fw->starved) damage += 2;
+    if (fw->thirsty) damage += 2;
+    return damage;
 }
