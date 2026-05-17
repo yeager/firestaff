@@ -43,7 +43,7 @@ typedef struct {
 typedef struct {
     M11_Item slots[DM1_SLOT_COUNT];
     int handItem;
-    int mouseItem;
+    M11_Item mouseItem;
     int load;
     int maxLoad;
 } M11_ChampionInventory;

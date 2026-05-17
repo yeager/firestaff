@@ -63,12 +63,12 @@ int m11_inventory_pickup_mouse(M11_InventoryState* s, int champ, int slot) {
     }
     
     // Check if mouseItem is empty (itemType == 0)
-    if (inv->mouseItem != 0) {
+    if (inv->mouseItem.itemType != 0) {
         return 0;
     }
     
     // Move slot item to mouseItem
-    inv->mouseItem = inv->slots[slot].itemType;
+    inv->mouseItem = inv->slots[slot];
     memset(&inv->slots[slot], 0, sizeof(M11_Item));
     
     m11_inventory_recalc_load(s, champ);
@@ -82,7 +82,7 @@ int m11_inventory_drop_mouse(M11_InventoryState* s, int champ, int slot) {
     M11_ChampionInventory* inv = &s->champions[champ];
     
     // Check if mouseItem is not empty
-    if (inv->mouseItem == 0) {
+    if (inv->mouseItem.itemType == 0) {
         return 0;
     }
     
@@ -92,8 +92,7 @@ int m11_inventory_drop_mouse(M11_InventoryState* s, int champ, int slot) {
     }
     
     // Move mouseItem to slot
-    inv->slots[slot].itemType = inv->mouseItem;
-    inv->slots[slot].weight = 0; // Weight needs to be determined by itemType, but spec says move mouseItem->slot
+    inv->slots[slot] = inv->mouseItem;
     // Note: The spec implies mouseItem holds just the itemType ID. 
     // In a real system, we'd need to look up weight/charges from a database.
     // Based on the struct M11_Item, mouseItem is just an int.
@@ -110,7 +109,7 @@ int m11_inventory_drop_mouse(M11_InventoryState* s, int champ, int slot) {
     // If mouseItem is just an int, we lose data. 
     // Let's assume the prompt implies a simplified model where mouseItem stores the ID.
     
-    inv->mouseItem = 0;
+    memset(&inv->mouseItem, 0, sizeof(M11_Item));
     
     m11_inventory_recalc_load(s, champ);
     return 1;
