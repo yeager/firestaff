@@ -6188,6 +6188,7 @@ typedef struct M11_ViewportCell {
     int floorItemCount; /* number of valid entries in floorItem arrays */
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
+    int championPortraitOrdinal; /* ReDMCSB G0289: 0-based portrait index, or -1 */
     int doorOrnamentOrdinal;
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
@@ -7420,6 +7421,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; cell.floorItemCells[fi] = 0; } }
     cell.floorItemCount = 0;
     cell.wallOrnamentOrdinal = -1;
+    cell.championPortraitOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
     cell.firstProjectileSubtype = -1;
@@ -7598,6 +7600,18 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
+                    /* ReDMCSB DUNGEON.C:2612: C127_SENSOR_WALL_CHAMPION_PORTRAIT
+                     * stores portrait index in M040_DATA(sensor).  The portrait
+                     * ordinal is 1-based (M000_INDEX_TO_ORDINAL) in the original;
+                     * we store the 0-based index for direct sprite-sheet lookup. */
+                    if (state->world.things->sensors[sIdx].sensorType == 127) {
+                        cell.championPortraitOrdinal = (int)state->world.things->sensors[sIdx].sensorData;
+                        /* Champion mirrors also have an ornament ordinal for the
+                         * mirror frame; keep scanning or use it for the frame. */
+                        int ord = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
+                        if (ord > 0) cell.wallOrnamentOrdinal = ord;
+                        break;
+                    }
                     int ord = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
                     if (ord > 0) {
                         cell.wallOrnamentOrdinal = ord;
@@ -8378,6 +8392,36 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
         M11_ViewRect ornRect;
         ornRect.x = faceX;
         ornRect.y = faceY;
+        /* ReDMCSB DUNVIEW.C:3913-3928: champion portrait sensors override
+         * the wall ornament with the champion portrait from graphic C026
+         * (sprite sheet: 8 cols x 3 rows, each portrait 32x29 pixels).
+         * Only drawn on D1C front wall in the original; we draw at any
+         * depth for now since Firestaff uses perspective-scaled rects. */
+        if (cell->championPortraitOrdinal >= 0 && g_drawState && g_drawState->assetsAvailable) {
+            const M11_AssetSlot* portraitSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&g_drawState->assetLoader, 26U);
+            if (portraitSlot && portraitSlot->width > 0 && portraitSlot->height > 0) {
+                /* Portrait sprite sheet coordinates */
+                int portIdx = cell->championPortraitOrdinal;
+                int srcX = (portIdx & 7) * 32;
+                int srcY = (portIdx >> 3) * 29;
+                /* Scale to wall face, centered */
+                int portW = faceW * 40 / 100;
+                int portH = (portW * 29) / 32;
+                if (portH > faceH * 50 / 100) {
+                    portH = faceH * 50 / 100;
+                    portW = (portH * 32) / 29;
+                }
+                int portX = faceX + (faceW - portW) / 2;
+                int portY = faceY + (faceH - portH) / 2;
+                M11_AssetLoader_BlitSubRectScaled(
+                    portraitSlot, framebuffer, framebufferWidth, framebufferHeight,
+                    portX, portY, portW, portH,
+                    srcX, srcY, 32, 29, 0);
+                fprintf(stderr, "MIRROR: champion %d at (%d,%d) %dx%d from sheet (%d,%d)\n",
+                        portIdx, portX, portY, portW, portH, srcX, srcY);
+            }
+        }
         ornRect.w = faceW;
         ornRect.h = faceH;
         if (g_drawState) {

@@ -169,3 +169,20 @@ void M11_AssetLoader_BlitScaledMirrorReplace(const M11_AssetSlot* slot,
 #endif
 
 #endif /* FIRESTAFF_ASSET_LOADER_M11_H */
+
+/* Blit a sub-rectangle from the source slot, scaled to destination.
+ * srcX/srcY/srcW/srcH define the source region within the slot.
+ * Used for sprite-sheet extraction (e.g., champion portrait sheet). */
+void M11_AssetLoader_BlitSubRectScaled(const M11_AssetSlot* slot,
+                                       unsigned char* framebuffer,
+                                       int fbWidth,
+                                       int fbHeight,
+                                       int dstX,
+                                       int dstY,
+                                       int dstW,
+                                       int dstH,
+                                       int srcX,
+                                       int srcY,
+                                       int srcW,
+                                       int srcH,
+                                       int transparentColor);

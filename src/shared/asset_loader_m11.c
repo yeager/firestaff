@@ -616,3 +616,45 @@ void M11_AssetLoader_BlitScaledMirrorReplace(const M11_AssetSlot* slot,
         }
     }
 }
+
+
+/* Blit a sub-rectangle from the source slot, scaled to destination.
+ * ReDMCSB DUNVIEW.C:3916 uses this pattern for champion portrait
+ * extraction from the C026 sprite sheet. */
+void M11_AssetLoader_BlitSubRectScaled(const M11_AssetSlot* slot,
+                                       unsigned char* framebuffer,
+                                       int fbWidth,
+                                       int fbHeight,
+                                       int dstX,
+                                       int dstY,
+                                       int dstW,
+                                       int dstH,
+                                       int srcX,
+                                       int srcY,
+                                       int srcW,
+                                       int srcH,
+                                       int transparentColor) {
+    int dy, dx;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0 || srcW <= 0 || srcH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = srcY + dy * srcH / dstH;
+        int fbY = dstY + dy;
+        if (fbY < 0 || fbY >= fbHeight) continue;
+        if (sy < 0 || sy >= (int)slot->height) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = srcX + dx * srcW / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbWidth) continue;
+            if (sx < 0 || sx >= (int)slot->width) continue;
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            framebuffer[fbY * fbWidth + fbX] = pixel;
+        }
+    }
+}
