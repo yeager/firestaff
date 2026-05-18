@@ -2651,6 +2651,27 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "MAP %dx%d, ENTERED FROM STAIRS",
              (int)targetMap->width, (int)targetMap->height);
+
+    /* Force full viewport invalidation after level change.
+     * Without this the old map's viewport state may persist,
+     * causing a black screen until the next movement input.
+     * Also verify the destination map has tile data loaded. */
+    if (stairs.toMapIndex >= 0 &&
+        stairs.toMapIndex < (int)state->world.dungeon->header.mapCount) {
+        const struct DungeonMapTiles_Compat* destTiles =
+            &state->world.dungeon->tiles[stairs.toMapIndex];
+        if (!destTiles->squareData || destTiles->squareCount == 0) {
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: WARNING: DEST MAP %d HAS NO TILE DATA",
+                          (unsigned int)state->world.gameTick,
+                          stairs.toMapIndex);
+        }
+    }
+    /* Trigger a world hash refresh so the render loop picks up the
+     * new map immediately.  The orchestrator's hash includes mapIndex,
+     * so any hash comparison will detect the change. */
+    (void)F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
+
     return 1;
 }
 
@@ -8855,14 +8876,31 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
                                           rect, depthIndex)) {
                 break; /* Real asset drawn successfully */
             }
-            /* Fallback: primitive door lines */
+            /* Fallback: primitive door frame + gate.
+             * ReDMCSB: door frame always visible.  Gate height scales
+             * with doorState: 0 = fully open, 4 = fully closed.
+             * Frame persists at all states so the door never disappears. */
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           faceX + faceW / 2, faceY + 3, faceY + faceH - 4, M11_COLOR_YELLOW);
-            if (cell->doorState > 0 && cell->doorState < 5) {
-                int shutHeight = (faceH - 8) * cell->doorState / 5;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              faceX + 3, faceY + faceH - 4 - shutHeight,
-                              faceW - 6, shutHeight, M11_COLOR_BLACK);
+                           faceX + 2, faceY + 2, faceY + faceH - 3, M11_COLOR_YELLOW);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + faceW - 3, faceY + 2, faceY + faceH - 3, M11_COLOR_YELLOW);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + 2, faceX + faceW - 3, faceY + 2, M11_COLOR_YELLOW);
+            if (cell->doorState > 0 && cell->doorState <= 4) {
+                /* Gate descends from top: 4 = full, 1 = quarter */
+                int shutHeight = (faceH - 8) * cell->doorState / 4;
+                int gateY = faceY + 3;
+                int barSpacing = (faceW - 6) > 20 ? 4 : 3;
+                int ix;
+                for (ix = 0; ix < shutHeight; ix += barSpacing) {
+                    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                                   faceX + 3, faceX + faceW - 4,
+                                   gateY + ix, M11_COLOR_BROWN);
+                }
+                for (ix = faceX + 5; ix < faceX + faceW - 4; ix += barSpacing) {
+                    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                                   ix, gateY, gateY + shutHeight - 1, M11_COLOR_BROWN);
+                }
             }
             break;
         case DUNGEON_ELEMENT_STAIRS:
