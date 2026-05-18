@@ -13,6 +13,7 @@
 #include "menu_startup_render_modern_m12.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
+#include "firestaff_accessibility.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "title_frontend_v1.h"
@@ -1500,6 +1501,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
     m11_apply_persisted_window_size(&runtimeOptions);
+    /* Enable accessibility manifest if env var is set or always-on for now */
+    if (getenv("FS_ACCESSIBILITY") || 1) {
+        fs_ax_set_enabled(1);
+    }
     o = &runtimeOptions;
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
