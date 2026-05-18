@@ -117,6 +117,7 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
                 return 0;
         }
         if (sig == DUNGEON_COMPRESSED_SIGNATURE || sig == 0x0481u) {
+                int bigEndian = (sig == 0x0481u); /* 0x0481 LE = bytes 81 04 = big-endian file */
                 /* ReDMCSB LOADSAVE.C:1876-1923: compressed dungeon format.
                  * CSB DUNGEON.DAT uses this format. Read the compressed header,
                  * decompress to a temp buffer, then parse from memory.
@@ -171,7 +172,27 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
                         return 0;
                 }
                 free(compBuf);
-                fprintf(stderr, "FTL dungeon decompressed: %ld bytes\n", decompSize);
+                fprintf(stderr, "FTL dungeon decompressed: %ld bytes (endian=%s)\n",
+                        decompSize, bigEndian ? "BE" : "LE");
+
+                /* Big-endian decompressed data needs uint16 byte-swapping
+                 * to match our little-endian parser.
+                 * Source: dmweb.free.fr dungeon converter tools. */
+                if (bigEndian && decompSize >= 6) {
+                    long pos;
+                    unsigned char tmp;
+                    /* Swap bytes 0-3 (OrnamentRandomSeed + RawMapDataByteCount) */
+                    for (pos = 0; pos < 4 && pos + 1 < decompSize; pos += 2) {
+                        tmp = decompBuf[pos]; decompBuf[pos] = decompBuf[pos + 1]; decompBuf[pos + 1] = tmp;
+                    }
+                    /* Skip bytes 4-5 (MapCount u8 + Unreferenced u8) */
+                    /* Swap bytes 6+ (all remaining uint16 fields) */
+                    for (pos = 6; pos + 1 < decompSize; pos += 2) {
+                        tmp = decompBuf[pos]; decompBuf[pos] = decompBuf[pos + 1]; decompBuf[pos + 1] = tmp;
+                    }
+                }
+
+
 
                 /* Write decompressed data to a temp file and recursively load */
                 snprintf(tmpPath, sizeof(tmpPath), "%s.decompressed", path);
