@@ -908,8 +908,16 @@ int M11_Render_PumpEvents(void) {
                 g_state.quitRequested = 1;
             }
         } else if (ev.type == SDL_WINDOWEVENT &&
-                   ev.window.event == SDL_WINDOWEVENT_RESIZED) {
-            M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+                   (ev.window.event == SDL_WINDOWEVENT_RESIZED ||
+                    ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)) {
+            /* On macOS HiDPI/Retina, SDL_WINDOWEVENT_RESIZED gives
+             * logical coordinates (e.g. 960x540) but the renderer
+             * needs pixel coordinates (1920x1080).  Use
+             * SDL_GL_GetDrawableSize for correct Retina scaling. */
+            int pw = ev.window.data1;
+            int ph = ev.window.data2;
+            SDL_GL_GetDrawableSize(g_state.window, &pw, &ph);
+            M11_Render_HandleResize(pw, ph);
         }
 #endif
     }

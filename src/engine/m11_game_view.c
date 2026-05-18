@@ -4157,6 +4157,11 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     base = m11_map_square_base(state->world.dungeon, mapIdx);
     if (base < 0) return;
 
+    /* ReDMCSB: Hall of Champions (map 0) has no active creatures.
+     * In the original, creatures only exist on dungeon levels 1+.
+     * Map 0 contains champion mirrors and text plaques only. */
+    if (mapIdx == 0) return;
+
     /* Scan all squares on the current map for groups */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
@@ -9137,8 +9142,11 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                 depthIndex, 0 /* center cell */);
     }
 
-    /* Layer 1: Floor items (lowest physical objects — on the ground) */
-    if (cell->floorItemCount > 0) {
+    /* Layer 1: Floor items (lowest physical objects — on the ground).
+     * Skip wall squares — items on walls are in alcoves, rendered
+     * separately by m11_draw_dm1_alcove_wall_items. */
+    if (cell->floorItemCount > 0 &&
+        cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
         for (ii = 0; ii < itemsToShow; ++ii) {
