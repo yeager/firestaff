@@ -88,6 +88,7 @@ extern "C" {
 
 #define M11_DISPLAY_ASPECT_4_3       0
 #define M11_DISPLAY_ASPECT_16_9      1
+#define M11_DISPLAY_ASPECT_CONTENT   2
 
 /* Lifecycle */
 int  M11_Render_Init(int windowWidth, int windowHeight, int scaleMode);

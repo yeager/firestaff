@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 APP_NAME="Firestaff"
-VERSION="${VERSION:-0.1.5-mac-preview}"
-SHORT_VERSION="${SHORT_VERSION:-0.1.5}"
+VERSION="${VERSION:-${VERSION:-dev}}"
+SHORT_VERSION="${SHORT_VERSION:-1.7.3}"
 STAGE_DIR="$ROOT/release/macos-stage"
 APP_DIR="$STAGE_DIR/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
@@ -49,7 +49,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
   <key>CFBundleExecutable</key>
   <string>Firestaff</string>
   <key>CFBundleIdentifier</key>
-  <string>com.firestaff.preview</string>
+  <string>com.firestaff.app</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -75,7 +75,7 @@ ln -s /Applications "$STAGE_DIR/Applications"
 codesign --force --deep --sign - "$APP_DIR" >/dev/null 2>&1 || true
 rm -f "$DMG_PATH" "$ZIP_PATH"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ZIP_PATH"
-hdiutil create -volname "Firestaff Preview" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null
+hdiutil create -volname "Firestaff" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null
 
 echo "Created: $DMG_PATH"
 echo "Created: $ZIP_PATH"

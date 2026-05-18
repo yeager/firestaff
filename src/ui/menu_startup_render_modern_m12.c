@@ -27,6 +27,7 @@
 #include "branding_logo_readme_m12.h"
 #include "card_art_m12.h"
 #include "card_art_generated_m12.h"
+#include "changelog_m12.h"
 #include "creature_art_m12.h"
 
 #include <ctype.h>
@@ -484,6 +485,15 @@ static void draw_title_centered(M12_ModernCanvas* c) {
     ModernTextStyle tag = text_style_make(3, COLOR_TEXT_DIM(), 2);
     draw_text_centered(c, c->w / 2, 110,
                        "THE DEFINITIVE DUNGEON MASTER FRONT DOOR", &tag);
+    /* Version label — right of logo */
+    {
+        char vbuf[32];
+        snprintf(vbuf, sizeof(vbuf), "v%s", M12_Changelog_VersionString());
+        ModernTextStyle ver = text_style_make(3, COLOR_TEXT_DIM(), 2);
+        int vw = text_width_px(vbuf, &ver);
+        draw_text(c, c->w / 2 + 200, 110, vbuf, &ver);
+        (void)vw;
+    }
 }
 
 static M12_RGB mode_color(int mode) {

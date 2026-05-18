@@ -98,7 +98,7 @@ static int m11_validate_window_mode(int mode) {
 }
 
 static int m11_validate_display_aspect(int mode) {
-    return mode == M11_DISPLAY_ASPECT_4_3 || mode == M11_DISPLAY_ASPECT_16_9;
+    return mode == M11_DISPLAY_ASPECT_4_3 || mode == M11_DISPLAY_ASPECT_16_9 || mode == M11_DISPLAY_ASPECT_CONTENT;
 }
 
 static int m11_window_mode_from_sdl_window(void) {
@@ -211,8 +211,17 @@ int M11_Render_ComputePresentationRect(int windowW,
     int y = 0;
     int w = windowW;
     int h = windowH;
-    int ratioW = displayAspectMode == M11_DISPLAY_ASPECT_4_3 ? 4 : 16;
-    int ratioH = displayAspectMode == M11_DISPLAY_ASPECT_4_3 ? 3 : 9;
+    int ratioW, ratioH;
+    if (displayAspectMode == M11_DISPLAY_ASPECT_CONTENT) {
+        ratioW = contentW;
+        ratioH = contentH;
+    } else if (displayAspectMode == M11_DISPLAY_ASPECT_4_3) {
+        ratioW = 4;
+        ratioH = 3;
+    } else {
+        ratioW = 16;
+        ratioH = 9;
+    }
 
     if (contentW <= 0 || contentH <= 0) {
         return M11_RENDER_ERR_INVALID_ARG;
@@ -504,7 +513,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         g_state.windowH = (ph > 0) ? ph : windowHeight;
     }
     g_state.scaleMode = scaleMode;
-    g_state.displayAspectMode = M11_DISPLAY_ASPECT_4_3; /* DM1 original CRT aspect */
+    g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
