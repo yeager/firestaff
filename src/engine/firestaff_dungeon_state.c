@@ -79,6 +79,7 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
      *   4: MapCount, 5: pad, 6-7: TextDataWordCount,
      *   8-9: InitialPartyLocation, 10-11: SquareFirstThingCount,
      *   12-43: ThingCount[16] */
+    int raw_map_byte_count = r16(data + 2);
     off = 44; /* header size */
 
     printf("DUNGEON.DAT: %d levels, %d bytes\n", level_count, size);
@@ -108,35 +109,21 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
         off += 16;
     }
 
-    /* Raw map data offset calculation (ReDMCSB LOADSAVE.C F0434):
-     * After map headers come SquareFirstThings, then all Thing data arrays,
-     * and finally the raw map data (1 byte per square, column-major).
-     *
-     * File layout:
-     *   [0..43]  DungeonHeader
-     *   [44..]   MAP[MapCount] (16 bytes each)
-     *   [..]     SquareFirstThings[SquareFirstThingCount] (2 bytes each)
-     *   [..]     ThingData[16 types] (variable sizes)
-     *   [..]     RawMapData (RawMapDataByteCount bytes)
-     *
-     * Thing data sizes per type (in uint16 words, from ReDMCSB):
-     *   Door=2, Teleporter=3, Text=2, Sensor=4, Group=8,
-     *   Weapon=2, Armour=2, Scroll=2, Potion=2, Container=4,
-     *   Junk=2, (3 unused=0), Creature=8, Missile=4 */
-    {
-        static const int thing_data_words[16] = {
-            2, 3, 2, 4, 8, 2, 2, 2, 2, 4, 2, 0, 0, 0, 8, 4
-        };
-        uint16_t sq_first_thing_count = r16(data + 10);
-        /* Skip SquareFirstThings array */
-        off += (int)sq_first_thing_count * 2;
-        /* Skip all Thing data arrays */
-        for (int tt = 0; tt < 16; tt++) {
-            uint16_t tc = r16(data + 12 + tt * 2);
-            off += (int)tc * thing_data_words[tt] * 2;
-        }
-        printf("DUNGEON.DAT: raw map data at offset %d (file size %d)\n", off, size);
+    /* Raw map data offset:
+     * ReDMCSB LOADSAVE.C reads things, then raw map data, then a 2-byte
+     * checksum. The raw map data byte count is in the header. Since the
+     * thing data sizes come from Graphic 559 in GRAPHICS.DAT (which we
+     * may not have parsed yet), compute the offset from the END of file:
+     *   raw_map_offset = file_size - raw_map_byte_count - 2 (checksum)
+     * Verified against dmweb.free.fr reference maps: all 14 levels match
+     * with this calculation for DM1 PC34 DUNGEON.DAT. */
+    off = size - raw_map_byte_count - 2;
+    if (off < 44 + level_count * 16) {
+        printf("DUNGEON.DAT: raw map data offset %d looks wrong (file %d bytes)\n", off, size);
+        off = 44 + level_count * 16; /* fallback */
     }
+    printf("DUNGEON.DAT: raw map data at offset %d (file size %d, raw bytes %d)\n",
+           off, size, raw_map_byte_count);
     int sq_data_start = off;
     for (lv = 0; lv < level_count; lv++) {
         int w = g_dungeon_level_w[lv];
