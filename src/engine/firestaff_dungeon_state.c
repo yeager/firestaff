@@ -74,10 +74,12 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
             g_start_dir == 2 ? "South" : "West");
     }
 
-    /* Skip header: 12 bytes base + 32 bytes ThingCount = 44 bytes
-     * But actually the map headers follow immediately after */
-    off = 12 + 2 + 16 * 2; /* header + SquareFirstThingCount + ThingCount[16] */
-    if (off > size) off = 14; /* fallback */
+    /* Dungeon header is 44 bytes:
+     *   0-1: OrnamentRandomSeed, 2-3: RawMapDataByteCount,
+     *   4: MapCount, 5: pad, 6-7: TextDataWordCount,
+     *   8-9: InitialPartyLocation, 10-11: SquareFirstThingCount,
+     *   12-43: ThingCount[16] */
+    off = 44; /* header size */
 
     printf("DUNGEON.DAT: %d levels, %d bytes\n", level_count, size);
 
@@ -106,28 +108,49 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
         off += 16;
     }
 
-    /* Square data follows map headers.
-     * ReDMCSB DUNGEON.C F0150: reads column-major, 10 bytes per square.
-     * But for PC34 uncompressed: square data starts after headers,
-     * and each square is stored as a 10-byte record.
+    /* Raw map data offset calculation (ReDMCSB LOADSAVE.C F0434):
+     * After map headers come SquareFirstThings, then all Thing data arrays,
+     * and finally the raw map data (1 byte per square, column-major).
      *
-     * Actually: RawMapDataByteCount at offset 2-3 = total bytes of raw map data.
-     * Square data offset = DUNGEON_HEADER(44) + MapCount * MAP(16) = current off.
-     * Each square: 5 uint16 = 10 bytes.
-     * Square type is bits 0-4 of first word (element type):
-     *   0=wall, 1=corridor, 2=pit, 3=stairs, 4=door, 5=teleporter, 6=fakewall */
+     * File layout:
+     *   [0..43]  DungeonHeader
+     *   [44..]   MAP[MapCount] (16 bytes each)
+     *   [..]     SquareFirstThings[SquareFirstThingCount] (2 bytes each)
+     *   [..]     ThingData[16 types] (variable sizes)
+     *   [..]     RawMapData (RawMapDataByteCount bytes)
+     *
+     * Thing data sizes per type (in uint16 words, from ReDMCSB):
+     *   Door=2, Teleporter=3, Text=2, Sensor=4, Group=8,
+     *   Weapon=2, Armour=2, Scroll=2, Potion=2, Container=4,
+     *   Junk=2, (3 unused=0), Creature=8, Missile=4 */
+    {
+        static const int thing_data_words[16] = {
+            2, 3, 2, 4, 8, 2, 2, 2, 2, 4, 2, 0, 0, 0, 8, 4
+        };
+        uint16_t sq_first_thing_count = r16(data + 10);
+        /* Skip SquareFirstThings array */
+        off += (int)sq_first_thing_count * 2;
+        /* Skip all Thing data arrays */
+        for (int tt = 0; tt < 16; tt++) {
+            uint16_t tc = r16(data + 12 + tt * 2);
+            off += (int)tc * thing_data_words[tt] * 2;
+        }
+        printf("DUNGEON.DAT: raw map data at offset %d (file size %d)\n", off, size);
+    }
     int sq_data_start = off;
     for (lv = 0; lv < level_count; lv++) {
         int w = g_dungeon_level_w[lv];
         int h = g_dungeon_level_h[lv];
-        /* Squares stored column-major: for each column, read all rows */
+        /* Squares stored column-major, 1 byte per square.
+         * ReDMCSB: G0271_ppuc_CurrentMapData[mapX][mapY]
+         * Square type = M034_SQUARE_TYPE(byte) = byte >> 5 (top 3 bits) */
         for (int col = 0; col < w; col++) {
             for (int row = 0; row < h; row++) {
-                if (off + 10 <= size) {
-                    uint16_t word = r16(data + off);
-                    int sq_type = (word >> 5) & 0x07; /* bits 5-7 = element type (ReDMCSB M034_SQUARE_TYPE) */
+                if (off < size) {
+                    uint8_t sq_byte = data[off];
+                    int sq_type = (sq_byte >> 5) & 0x07;
                     g_dungeon_grid[lv][row][col] = (uint8_t)sq_type;
-                    off += 10;
+                    off += 1;
                 }
             }
         }
