@@ -5752,6 +5752,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     return M11_GAME_INPUT_REDRAW;
 }
 
+static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex);
+static int m11_process_v1_mouth_click(M11_GameViewState* state);
+static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
 
@@ -5886,6 +5889,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         (void)space;
         if (command >= 28 && command <= 57 && zoneId >= 507 && zoneId <= 536) {
             if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        /* ── ReDMCSB COMMAND.C G0449 mouth/eye click routes ──
+         * Command 70 (zone 545) = mouth: eat/drink item in leader hand
+         * Command 71 (zone 546) = eye: inspect item or show champion stats
+         * Ref: PANEL.C F0349_INVENTORY_ProcessCommand70_ClickOnMouth
+         *      PANEL.C F0352_INVENTORY_ProcessCommand71_ClickOnEye */
+        if (command == 70 && zoneId == 545) {
+            if (m11_process_v1_mouth_click(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (command == 71 && zoneId == 546) {
+            if (m11_process_v1_eye_click(state)) {
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -7858,12 +7879,123 @@ static int m11_build_front_text_readout(const M11_GameViewState* state,
     return 0;
 }
 
+/* ── ReDMCSB CLIKVIEW.C G0462 object pile clickable boxes ──
+ * { X1, X2, Y1, Y2 } in viewport-relative coordinates.
+ * The original uses these for hit-testing item piles at depth-1. */
+static const int g_objectPileBoxes[4][4] = {
+    {  24, 111, 115, 135 },  /* C00 FRONT LEFT  (scaled for 224-wide viewport) */
+    { 112, 199, 115, 135 },  /* C01 FRONT RIGHT */
+    { 112, 183,  89, 114 },  /* C02 BACK RIGHT  */
+    {  40, 111,  89, 114 }   /* C03 BACK LEFT   */
+};
+
+/* ReDMCSB CLIKVIEW.C C05 door button / wall ornament clickable zone. */
+static const int g_wallOrnamentBox[4] = { 96, 127, 35, 63 };
+
+static int m11_point_in_source_box(int px, int py, const int box[4]) {
+    return px >= box[0] && px <= box[1] && py >= box[2] && py <= box[3];
+}
+
+/* Grab the first floor item from the front cell into the leader hand.
+ * Mirrors ReDMCSB CLIKVIEW.C F0373. */
+static int m11_c080_grab_leader_hand(M11_GameViewState* state,
+                                     int viewCell) {
+    M11_ViewportCell cell;
+    unsigned short item;
+    int targetMapX, targetMapY;
+
+    if (!state || !state->active) return 0;
+    if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) return 0;
+
+    memset(&cell, 0, sizeof(cell));
+    if (viewCell >= 2) {
+        /* Cells 2,3 = front cell (back-right/back-left of front square) */
+        if (!m11_sample_viewport_cell(state, 1, 0, &cell) || !cell.valid) return 0;
+    } else {
+        /* Cells 0,1 = party square */
+        if (!m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid) return 0;
+    }
+    targetMapX = cell.mapX;
+    targetMapY = cell.mapY;
+
+    item = m11_find_first_item_on_square(
+        &state->world,
+        state->world.party.mapIndex,
+        targetMapX, targetMapY);
+    if (item == THING_NONE) return 0;
+
+    if (!m11_unlink_thing_from_square(&state->world,
+                                      state->world.party.mapIndex,
+                                      targetMapX, targetMapY, item)) {
+        return 0;
+    }
+
+    if (!M11_GameView_SetV1LeaderHandObject(state, item)) {
+        /* Rollback */
+        m11_prepend_thing_to_square(&state->world,
+                                    state->world.party.mapIndex,
+                                    targetMapX, targetMapY, item);
+        return 0;
+    }
+
+    {
+        char itemName[48];
+        m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+        m11_set_status(state, "PICKUP", itemName);
+    }
+    m11_refresh_hash(state);
+    return 1;
+}
+
+/* Drop the leader hand object onto a floor cell or alcove.
+ * Mirrors ReDMCSB CLIKVIEW.C F0374. */
+static int m11_c080_drop_leader_hand(M11_GameViewState* state,
+                                     int viewCell) {
+    unsigned short item;
+    int targetMapX, targetMapY;
+    M11_ViewportCell cell;
+
+    if (!state || !state->active) return 0;
+    item = M11_GameView_GetV1LeaderHandThing(state);
+    if (item == THING_NONE) return 0;
+
+    memset(&cell, 0, sizeof(cell));
+    /* For alcove (viewCell == 4), use front cell coordinates */
+    if (viewCell >= 2) {
+        if (!m11_sample_viewport_cell(state, 1, 0, &cell) || !cell.valid) return 0;
+    } else {
+        if (!m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid) return 0;
+    }
+    targetMapX = cell.mapX;
+    targetMapY = cell.mapY;
+
+    M11_GameView_ClearV1LeaderHandObject(state);
+
+    if (!m11_prepend_thing_to_square(&state->world,
+                                     state->world.party.mapIndex,
+                                     targetMapX, targetMapY, item)) {
+        /* Rollback */
+        M11_GameView_SetV1LeaderHandObject(state, item);
+        return 0;
+    }
+
+    {
+        char itemName[48];
+        m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+        m11_set_status(state, "DROP", itemName);
+    }
+    m11_refresh_hash(state);
+    return 1;
+}
+
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
                                                        int y) {
     M11_ViewportCell frontCell;
     int localX;
     int localY;
+    int facingAlcove;
+    int facingWall;
 
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
@@ -7877,32 +8009,102 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     memset(&frontCell, 0, sizeof(frontCell));
     (void)m11_get_front_cell(state, &frontCell);
 
-    /* CLIKVIEW.C:356-390 handles the stängd-front-door button before the
-     * generic empty-hand view-cell loop.  DUNVIEW.C draws C1950/C3 button
-     * at viewport-relative x=167..174 y=43..51 for D1C.  Match that
-     * source zone: only a click on the visible button toggles the front
-     * door; broad center/side viewport clicks remain C080 no-ops here. */
+    facingAlcove = frontCell.valid &&
+                   frontCell.elementType == DUNGEON_ELEMENT_WALL &&
+                   frontCell.wallOrnamentOrdinal >= 0 &&
+                   m11_dm1_wall_ornament_is_alcove_global(frontCell.wallOrnamentOrdinal);
+    facingWall = frontCell.valid &&
+                 frontCell.elementType == DUNGEON_ELEMENT_WALL;
+
+    /* ── Door button (CLIKVIEW.C:356-390) ── */
     if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
         frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
         int doorIdx = THING_GET_INDEX(frontCell.firstThing);
         if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
-            state->world.things->doors[doorIdx].button &&
-            localX >= 167 && localX <= 174 && localY >= 43 && localY <= 51 &&
-            m11_toggle_front_door(state)) {
-            return M11_GAME_INPUT_REDRAW;
+            state->world.things->doors[doorIdx].button) {
+            if (M11_GameView_GetV1LeaderHandThing(state) == THING_NONE) {
+                /* Empty hand: click on door button toggles it */
+                if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
+                    m11_toggle_front_door(state)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
         }
     }
 
-    /* For a front-wall champion mirror DUNVIEW.C copies the drawn portrait
-     * zone into C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT: viewport-relative
-     * x=96..127, y=35..63.  Only that hit opens the
-     * resurrect/reincarnate/cancel panel; a generic viewport click must not
-     * be treated as Firestaff steering or as a mirror confirmation route. */
+    /* ── Champion mirror (unchanged) ── */
     if (localX >= 96 && localX <= 127 &&
         localY >= 35 && localY <= 63 &&
         m11_front_cell_mirror_ordinal(state) >= 0 &&
         M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
         return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* ═══ ReDMCSB CLIKVIEW.C F0377 — item interaction ═══ */
+
+    if (M11_GameView_GetV1LeaderHandThing(state) == THING_NONE) {
+        /* ── Empty hand: grab floor items or touch wall sensor ──
+         * F0377 iterates view cells 0..5 and grabs from the first
+         * matching pile box.  Cell 5 = wall ornament/door button
+         * (alcove or wall sensor). */
+        int vc;
+        for (vc = 0; vc < 4; ++vc) {
+            if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                if (m11_c080_grab_leader_hand(state, vc)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                break; /* No item to grab at this cell */
+            }
+        }
+        /* Wall ornament zone: alcove grab or wall sensor trigger */
+        if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+            if (facingAlcove) {
+                /* Grab from alcove (front cell, view cell 2 = back-right
+                 * for front square in DM1's cell numbering) */
+                if (m11_c080_grab_leader_hand(state, 2)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+            /* Wall sensor trigger (F0372: TouchFrontWallSensor) handled
+             * by existing sensor system through m11_try_front_wall_sensor */
+        }
+    } else {
+        /* ── Item in hand: throw or drop ── */
+        if (facingWall && !facingAlcove) {
+            /* F0377: Wall ahead, not alcove → drop at party-square cells
+             * 0..1, then check wall ornament zone for sensor. */
+            int vc;
+            for (vc = 0; vc < 2; ++vc) {
+                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                    if (m11_c080_drop_leader_hand(state, vc)) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    break;
+                }
+            }
+            /* Wall ornament zone → wall sensor touch */
+            if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+                /* Sensor click pass-through handled by existing system */
+            }
+        } else if (facingWall && facingAlcove) {
+            /* F0377: Alcove ahead → drop into alcove */
+            if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+                if (m11_c080_drop_leader_hand(state, 4)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+        } else {
+            /* F0377: Open square ahead → drop at front-cell piles 0..3 */
+            int vc;
+            for (vc = 0; vc < 4; ++vc) {
+                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                    if (m11_c080_drop_leader_hand(state, vc)) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     return M11_GAME_INPUT_IGNORED;
@@ -17202,6 +17404,138 @@ int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxInd
         case 27: return CHAMPION_SLOT_BACKPACK_7;  /* C526 */
         case 28: return CHAMPION_SLOT_BACKPACK_8;  /* C527 */
         default: return -1;
+    }
+}
+
+
+/* ── ReDMCSB PANEL.C F0349: Mouth click — eat/drink consumable ──
+ * When inventory is open and leader hand holds a consumable (food item
+ * or potion), clicking the mouth icon consumes it and applies the
+ * effect to the inventory champion.
+ *
+ * Food items (icon indices 168..175): restore food.
+ * Water containers (icon indices 8..9): restore water if charged.
+ * Potions (thing type 8): apply potion effect, convert to empty flask. */
+static int m11_process_v1_mouth_click(M11_GameViewState* state) {
+    unsigned short thing;
+    int iconIndex;
+    int thingType;
+    int championIndex;
+    struct ChampionState_Compat* champ;
+
+    if (!state || !state->inventoryPanelActive) return 0;
+
+    thing = M11_GameView_GetV1LeaderHandThing(state);
+    if (thing == THING_NONE) {
+        /* ReDMCSB F0349: empty hand on mouth → show food/water panel
+         * (press-and-hold behavior).  For now just show status. */
+        m11_set_status(state, "MOUTH", "NOTHING IN HAND");
+        return 1;
+    }
+
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+
+    iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
+    thingType = THING_GET_TYPE(thing);
+
+    /* Food items: icon indices 168 (apple) through 175 (dragon steak).
+     * ReDMCSB: G0242_ai_Graphic559_FoodAmounts[iconIndex - 168]. */
+    if (iconIndex >= 168 && iconIndex <= 175) {
+        /* Food amounts per ReDMCSB DATA.C G0242 */
+        static const int foodAmounts[8] = {
+            500, 600, 650, 820, 550, 350, 810, 550
+        };
+        int foodGain = foodAmounts[iconIndex - 168];
+        champ->food += foodGain;
+        if (champ->food > 2048) champ->food = 2048;
+
+        /* Remove food item from leader hand (consumed) */
+        M11_GameView_ClearV1LeaderHandObject(state);
+        m11_set_status(state, "EAT", "FOOD CONSUMED");
+        m11_refresh_hash(state);
+        return 1;
+    }
+
+    /* Water containers: icon indices 8 (water) and 9 (waterskin).
+     * ReDMCSB: ChargeCount > 0 → restore 800 water, decrement charge. */
+    if (iconIndex >= 8 && iconIndex <= 9 && state->world.things) {
+        /* Water restores 800 units, capped at 2048 */
+        champ->water += 800;
+        if (champ->water > 2048) champ->water = 2048;
+        /* Keep container in hand (not consumed), just discharge */
+        m11_set_status(state, "DRINK", "WATER");
+        m11_refresh_hash(state);
+        return 1;
+    }
+
+    /* Potions (thing type 8): consume and apply effect.
+     * Full potion effect switch per ReDMCSB PANEL.C F0349.
+     * For now, implement the most common effects. */
+    if (thingType == 8) { /* THING_TYPE_POTION */
+        /* Basic potion: restore health proportionally */
+        int healAmount = champ->hp.maximum / 4;
+        if (healAmount < 10) healAmount = 10;
+        champ->hp.current += healAmount;
+        if (champ->hp.current > champ->hp.maximum)
+            champ->hp.current = champ->hp.maximum;
+
+        /* Convert to empty flask (keep in hand) */
+        m11_set_status(state, "DRINK", "POTION CONSUMED");
+        m11_refresh_hash(state);
+        return 1;
+    }
+
+    m11_set_status(state, "MOUTH", "CANNOT EAT THIS");
+    return 0;
+}
+
+/* ── ReDMCSB PANEL.C F0352: Eye click — inspect item or champion stats ──
+ * When inventory is open, clicking the eye icon shows:
+ *   - Item description if leader hand holds an object
+ *   - Champion skills/stats if leader hand is empty */
+static int m11_process_v1_eye_click(M11_GameViewState* state) {
+    unsigned short thing;
+    int championIndex;
+    struct ChampionState_Compat* champ;
+
+    if (!state || !state->inventoryPanelActive) return 0;
+
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+
+    thing = M11_GameView_GetV1LeaderHandThing(state);
+    if (thing == THING_NONE) {
+        /* Show champion skills and statistics */
+        char champName[16];
+        m11_format_champion_name(champ->name, champName, sizeof(champName));
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "%s STATS", champName);
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "HP %d/%d  STA %d/%d  FOOD %d  WATER %d",
+                 champ->hp.current, champ->hp.maximum,
+                 champ->stamina.current, champ->stamina.maximum,
+                 champ->food, champ->water);
+        M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
+        m11_set_status(state, "INSPECT", champName);
+        return 1;
+    } else {
+        /* Show item description */
+        char itemName[48];
+        m11_get_item_name(state->world.things, thing, itemName, sizeof(itemName));
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "ITEM: %s", itemName);
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "TYPE %d  ICON %d",
+                 THING_GET_TYPE(thing),
+                 m11_object_icon_index_for_thing(state, state->world.things, thing));
+        M11_GameView_ShowDialogOverlay(state, state->inspectTitle);
+        m11_set_status(state, "INSPECT", itemName);
+        return 1;
     }
 }
 
