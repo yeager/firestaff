@@ -500,17 +500,22 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     }
 
     memset(g_state.framebuffer, 0, M11_FB_BYTES);
-    /* Get actual pixel dimensions (may differ on HiDPI/Retina displays) */
+    /* Store LOGICAL window size for coordinate mapping.
+     * SDL3: renderer and mouse events use logical (window) coordinates,
+     * NOT pixel coordinates.  Using pixel size here causes the viewport
+     * to render at a fraction of the window on HiDPI/Retina displays
+     * and makes mouse clicks miss their targets.
+     * SDL2: use SDL_GL_GetDrawableSize for pixel-accurate rendering. */
     {
-        int pw = 0, ph = 0;
+        int ww = windowWidth, wh = windowHeight;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-        SDL_GetWindowSizeInPixels(g_state.window, &pw, &ph);
+        SDL_GetWindowSize(g_state.window, &ww, &wh);
 #else
-        SDL_GL_GetDrawableSize(g_state.window, &pw, &ph);
-        if (pw <= 0 || ph <= 0) { pw = windowWidth; ph = windowHeight; }
+        SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
+        if (ww <= 0 || wh <= 0) { ww = windowWidth; wh = windowHeight; }
 #endif
-        g_state.windowW = (pw > 0) ? pw : windowWidth;
-        g_state.windowH = (ph > 0) ? ph : windowHeight;
+        g_state.windowW = (ww > 0) ? ww : windowWidth;
+        g_state.windowH = (wh > 0) ? wh : windowHeight;
     }
     g_state.scaleMode = scaleMode;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
@@ -889,16 +894,11 @@ int M11_Render_PumpEvents(void) {
             if (ev.key.key == SDLK_ESCAPE) {
                 g_state.quitRequested = 1;
             }
-        } else if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
-                   ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-            /* Use pixel size for correct HiDPI/Retina rendering */
-            int pw = 0, ph = 0;
-            SDL_GetWindowSizeInPixels(g_state.window, &pw, &ph);
-            if (pw > 0 && ph > 0) {
-                M11_Render_HandleResize(pw, ph);
-            } else {
-                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
-            }
+        } else if (ev.type == SDL_EVENT_WINDOW_RESIZED) {
+            /* SDL3: use LOGICAL window size, not pixel size.
+             * The renderer and mouse events both use logical coords.
+             * ev.window.data1/data2 are the new logical width/height. */
+            M11_Render_HandleResize(ev.window.data1, ev.window.data2);
         }
 #else
         if (ev.type == SDL_QUIT) {
