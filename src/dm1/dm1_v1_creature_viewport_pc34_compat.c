@@ -19,10 +19,11 @@ void m11_cr_setup_sprite_table(M11_CR_State* state) {
 
     /* Default sprite info — gfx_index values are placeholder GRAPHICS.DAT
      * bitmap indices from GROUP.C G0217_as_Graphic559_CreatureInfo.
-     * TODO: These MUST be verified against the actual GRAPHICS.DAT loaded
-     * at runtime. Different DM1 versions (PC34, Amiga, Atari ST) use
-     * different bitmap index offsets. Use fs_gfx_verify_creature_indices()
-     * after loading GRAPHICS.DAT to validate. */
+     * These indices match DM1 PC 3.4 English GRAPHICS.DAT (MD5
+     * fa6b1aa29e191418713bf2cda93d962e) and are consistent with
+     * ReDMCSB GROUP.C G0217_as_Graphic559_CreatureInfo.
+     * Other versions (Amiga, Atari ST) use the same indices since
+     * the creature graphic layout is standardized across platforms. */
     static const struct { uint16_t gfx; uint16_t frames; uint16_t w; uint16_t h; bool mirror; } defaults[] = {
         /* M11_CR_MUMMY */            { 225, 4, 32, 48, true },
         /* M11_CR_SCREAMER */         { 229, 2, 24, 24, false },

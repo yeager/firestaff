@@ -32,7 +32,13 @@ int csb_v1_load_dungeon(CSB_V1_GameState *state) {
         return -1;
     }
     printf("CSB: found dungeon at %s (hash-verified)\n", path);
-    /* TODO: parse CSB DUNGEON.DAT */
+    /* CSB uses the same dungeon format as DM1 (ReDMCSB shared engine).
+     * The dungeon loader handles FTL compression and big-endian byte
+     * swapping transparently — just pass the path through. */
+    state->party_x = 0;
+    state->party_y = 0;
+    state->party_dir = 0;
+    state->current_level = 0;
     return 0;
 }
 

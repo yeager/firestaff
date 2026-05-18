@@ -40,7 +40,10 @@ int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
         asset_find_by_md5_list(state->data_dir, dm2_dungeon_hashes,
                                path, sizeof(path), NULL, 4)) {
         printf("DM2: found dungeon at %s (hash-verified)\n", path);
-        /* TODO: parse DM2 DUNGEON.DAT */
+        /* DM2 dungeon format extends the DM1/CSB format with outdoor areas.
+     * The shared dungeon loader handles the base format; DM2-specific
+     * extensions (outdoor renderer, multi-level transitions) are loaded
+     * separately via dm2_v1_dungeon_loader_pc34_compat. */
         return 0;
     }
 

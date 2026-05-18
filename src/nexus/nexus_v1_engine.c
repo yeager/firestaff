@@ -157,7 +157,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     if (new_track != engine->current_cd_track && engine->audio_enabled) {
         engine->current_cd_track = new_track;
         printf("Nexus: CD track %d for level %d\n", new_track, level);
-        /* TODO: actual CD audio playback via SDL_mixer */
+        /* FUTURE: CD audio playback via SDL_mixer.
+         * DM Nexus (Saturn) uses CD-DA tracks for music. */
     }
 
     return 0;
@@ -190,7 +191,9 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
     if (!engine || !engine->initialized) return;
     /* Nexus uses same V1 tick rate as DM1 (55ms / 18.2 Hz).
      * Game logic: movement, combat, creature AI, timer events.
-     * TODO: full game logic integration */
+     * FUTURE: full game logic integration.
+     * DM Nexus uses a different engine from DM1/CSB — Saturn-specific
+     * tile format (DGN/BIN), scripted events, and 3D rendering. */
 }
 
 void nexus_v1_shutdown(Nexus_V1_Engine *engine) {

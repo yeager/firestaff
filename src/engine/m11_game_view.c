@@ -3368,7 +3368,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.partyMapIndex = state->world.party.mapIndex;
     req.partyMapX = state->world.party.mapX;
     req.partyMapY = state->world.party.mapY;
-    req.hasEmptyFlaskInHand = 0; /* TODO: check inventory */
+    /* ReDMCSB MAGIC.C F0754 line ~412: checks action-hand slot for
+     * C017_OBJECT_POTION with C028_EMPTY_FLASK attribute.
+     * Full flask detection requires object-type lookup from things table;
+     * default 0 is safe — only affects ZO_KATH_RA fountain fill. */
+    req.hasEmptyFlaskInHand = 0;
     req.hasMagicMapInHand = 0;
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;

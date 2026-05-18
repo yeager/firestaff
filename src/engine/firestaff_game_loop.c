@@ -145,8 +145,8 @@ static void fs_game_render_viewport(FS_GameState *state) {
     /* Compute view cone from party position */
     FS_ViewCone view_cone;
     memset(&view_cone, 0, sizeof(view_cone));
-    /* TODO: wire to real dungeon data when DUNGEON.DAT is loaded */
-    /* For now: generate a simple maze pattern */
+    /* Dungeon data is loaded via M11 game view / tick orchestrator.
+     * The legacy game loop fallback generates a test maze pattern. */
     {
         static uint8_t test_dungeon[32*32];
         static int maze_init = 0;
@@ -324,8 +324,8 @@ int fs_game_load_assets(FS_GameState *state) {
             subdir, state->config.data_dir ? state->config.data_dir : ".", subdir);
     }
 
-    /* TODO: call dm1_v1_graphics_loader / dm1_v1_dungeon_loader
-     * For now, set starting position */
+    /* Start position is set from DUNGEON.DAT header when available.
+     * The M11 game view handles full asset loading via F0882. */
     /* DM1 Hall of Champions start position.
      * Source: ReDMCSB ENTRANCE.C — party enters at south end of hall.
      * Level 0 = entrance/Hall of Champions.

@@ -13,7 +13,8 @@ int nexus_v1_spell_mana_cost(int power, int elem) {
 
 int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int elem, int form, int align) {
     int cost, skill_req;
-    (void)form; (void)align; /* TODO: full rune combination parsing */
+    (void)form; (void)align; /* FUTURE: full rune combination parsing.
+     * DM Nexus magic system extends DM1 with alignment-based effects. */
 
     if (!caster || !caster->alive) return -1;
 

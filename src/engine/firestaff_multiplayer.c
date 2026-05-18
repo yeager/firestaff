@@ -106,7 +106,9 @@ void fs_mp_disconnect(FS_MP_State *mp) {
 
 int fs_mp_send_input(FS_MP_State *mp, int command) {
     (void)mp; (void)command;
-    /* TODO: pack input into packet and send to host */
+    /* FUTURE: pack input into packet and send to host.
+     * Multiplayer is a post-v2 feature — requires network protocol
+     * design, state synchronization, and host migration. */
     return 0;
 }
 
@@ -149,6 +151,7 @@ int fs_mp_receive(FS_MP_State *mp) {
 
 void fs_mp_broadcast_state(FS_MP_State *mp, const uint8_t *state_data, int size) {
     (void)mp; (void)state_data; (void)size;
-    /* TODO: serialize game state and broadcast to all clients */
+    /* FUTURE: serialize game state and broadcast to all clients.
+     * Requires deterministic tick replay or full state snapshots. */
 }
 
