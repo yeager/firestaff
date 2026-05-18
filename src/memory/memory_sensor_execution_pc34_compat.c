@@ -57,11 +57,10 @@ int F0710_SENSOR_Execute_Compat(
 
     if (!sensor->found) return 1; /* Empty list, valid. */
 
-    /* v1 fires effects ONLY on WALK_ON.  Other events produce an empty
-     * list for every implemented type; callers can tell "nothing to do"
-     * from "not implemented yet" by looking at SENSOR_EFFECT_UNSUPPORTED.
-     */
-    if (triggerEvent != SENSOR_EVENT_WALK_ON) {
+    /* v1 fires effects on WALK_ON and WALL_CLICK (via CHAMPION_ACTION).
+     * Other events produce an empty list. */
+    if (triggerEvent != SENSOR_EVENT_WALK_ON &&
+        triggerEvent != SENSOR_EVENT_CHAMPION_ACTION) {
         return 1;
     }
 

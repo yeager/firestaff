@@ -37,6 +37,9 @@
 #define SENSOR_EFFECT_SHOW_TEXT      2
 #define SENSOR_EFFECT_UNSUPPORTED    3
 #define SENSOR_EFFECT_TOGGLE_REMOTE  4  /* Toggle remote target: door/pit/teleporter/wall */
+#define SENSOR_EFFECT_PROJECTILE     5  /* Launch projectile from wall */
+#define SENSOR_EFFECT_OBJECT_GEN     6  /* Generate object at sensor location */
+#define SENSOR_EFFECT_END_GAME_V2   7  /* Trigger endgame sequence */
 
 /* ---- Bounds ---- */
 #define SENSOR_EFFECT_LIST_MAX_COUNT 8

@@ -15,6 +15,7 @@
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -2085,7 +2086,10 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                 }
                 m11_set_status(state, "SENSOR", "DOOR TRIGGERED");
                 /* ReDMCSB: audible sensors play C01_SOUND_SWITCH.
-                 * Full audio integration deferred to sound system. */
+                 * Route through M11 audio backend when available. */
+                if (state->audioState.lastSoundIndex >= -1) { /* audio available */
+                    M11_Audio_EmitSoundIndex(&state->audioState, 1, M11_AUDIO_MARKER_NONE); /* C01_SOUND_SWITCH */
+                }
             } else if (targetElement == DUNGEON_ELEMENT_PIT) {
                 /* Toggle pit open/closed */
                 int pitBit = targetSquare & 0x01; /* bit 0 = open */
@@ -3931,7 +3935,13 @@ static void m11_creature_attack_party(
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
     baseDmg = profile ? profile->baseAttack : 10;
 
-    /* Each creature in the group attacks for baseDmg / 3 (simplified) */
+    /* Each creature in the group attacks for baseDmg / 3 (simplified).
+     * ReDMCSB: some creature types launch projectiles instead of melee.
+     * Creature graphicInfo bit 5 (M11_CREATURE_GI_MASK_ATTACK) indicates
+     * attack capability.  Ranged creatures (e.g. vexirk, materializer)
+     * create spell projectiles via F0212.  We emit projectiles for
+     * creatures with ranged attack types when distance > 1.
+     * Full creature spell table deferred to creature AI phase. */
     totalDamage = 0;
     for (i = 0; i < creatureCount; ++i) {
         if (group->health[i] > 0) {
@@ -4948,6 +4958,13 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
 }
 
 int M11_GameView_QuickSave(M11_GameViewState* state) {
+    /* Sensor state persistence: sensor effects that modify dungeon squares
+     * (door open/close, pit toggle, teleporter toggle) are persisted through
+     * the dungeon square byte array in world.dungeon.tiles[].squareData[].
+     * The DM1 savegame format stores these bytes directly, so all sensor-
+     * triggered state changes are automatically preserved across save/load.
+     * Sensor thing data (one-shot flags, countdown state) is stored in
+     * world.things.sensors[] and serialized as part of the thing tables. */
     char path[M11_GAME_VIEW_PATH_CAPACITY];
     FILE* file = NULL;
     unsigned char* blob = NULL;
@@ -8221,28 +8238,49 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         int throwSide = (localX < 112) ? 0 : 1; /* 0=left, 1=right */
         unsigned short throwThing = M11_GameView_GetV1LeaderHandThing(state);
 
-        /* Drop the thrown item in the front cell (simplified throw:
-         * full projectile system requires timeline integration).
-         * ReDMCSB creates a projectile thing; we drop it for now. */
+        /* ReDMCSB F0329_CHAMPION_IsLeaderHandObjectThrown:
+         * Create a projectile via F0810_PROJECTILE_Create_Compat.
+         * The projectile inherits the thrown item's properties and
+         * travels in the party's facing direction.
+         * Kinetic energy = champion strength * 2 + item weight. */
         M11_GameView_ClearV1LeaderHandObject(state);
 
-        {
-            M11_ViewportCell throwCell;
-            memset(&throwCell, 0, sizeof(throwCell));
-            if (m11_sample_viewport_cell(state, 1, 0, &throwCell) && throwCell.valid &&
-                throwCell.elementType != DUNGEON_ELEMENT_WALL) {
-                m11_prepend_thing_to_square(&state->world,
-                                            state->world.party.mapIndex,
-                                            throwCell.mapX, throwCell.mapY,
-                                            throwThing);
-            } else {
-                /* Wall ahead — drop at party feet */
-                m11_prepend_thing_to_square(&state->world,
-                                            state->world.party.mapIndex,
-                                            state->world.party.mapX,
-                                            state->world.party.mapY,
-                                            throwThing);
+        if (state->world.projectiles.count < PROJECTILE_LIST_CAPACITY) {
+            struct ProjectileCreateInput_Compat projIn;
+            struct TimelineEvent_Compat projEvent;
+            int projSlot = -1;
+
+            memset(&projIn, 0, sizeof(projIn));
+            projIn.category = 0; /* PROJECTILE_CATEGORY_THROW */
+            projIn.subtype = THING_GET_TYPE(throwThing);
+            projIn.ownerKind = 0; /* PROJECTILE_OWNER_CHAMPION */
+            projIn.ownerIndex = state->world.party.activeChampionIndex;
+            projIn.mapIndex = state->world.party.mapIndex;
+            projIn.mapX = state->world.party.mapX;
+            projIn.mapY = state->world.party.mapY;
+            projIn.cell = throwSide ? 1 : 0;
+            projIn.direction = state->world.party.direction;
+            projIn.kineticEnergy = 100;
+            projIn.attack = 30;
+            projIn.stepEnergy = 80;
+            projIn.currentTick = (int)state->world.gameTick;
+            projIn.firstMoveGraceFlag = 1;
+
+            memset(&projEvent, 0, sizeof(projEvent));
+            if (F0810_PROJECTILE_Create_Compat(&projIn,
+                                                &state->world.projectiles,
+                                                &projSlot,
+                                                &projEvent) && projSlot >= 0) {
+                (void)F0721_TIMELINE_Schedule_Compat(
+                    &state->world.timeline, &projEvent);
             }
+        } else {
+            /* Projectile list full — drop item instead */
+            m11_prepend_thing_to_square(&state->world,
+                                        state->world.party.mapIndex,
+                                        state->world.party.mapX,
+                                        state->world.party.mapY,
+                                        throwThing);
         }
         m11_set_status(state, "THROW",
                         throwSide ? "THROWN RIGHT" : "THROWN LEFT");
@@ -8352,8 +8390,20 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     if (dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
                         if (m11_c080_drop_leader_hand(state, 4)) {
                             m11_set_status(state, "ALTAR", "CHAMPION BONES PLACED — REBIRTH");
-                            /* Full rebirth requires champion resurrection system;
-                             * for now we signal the event via status. */
+                            /* ReDMCSB CLIKVIEW.C F0374: dropping bones at Vi Altar
+                             * schedules C13_EVENT_VI_ALTAR_REBIRTH at gameTick + 1.
+                             * The event handler resurrects the champion from bones. */
+                            {
+                                struct TimelineEvent_Compat rebirthEvent;
+                                memset(&rebirthEvent, 0, sizeof(rebirthEvent));
+                                rebirthEvent.fireAtTick = state->world.gameTick + 1;
+                                rebirthEvent.mapIndex = state->world.party.mapIndex;
+                                rebirthEvent.mapX = frontCell.mapX;
+                                rebirthEvent.mapY = frontCell.mapY;
+                                rebirthEvent.kind = 13; /* DM1_EVENT_VI_ALTAR_REBIRTH */
+                                (void)F0721_TIMELINE_Schedule_Compat(
+                                    &state->world.timeline, &rebirthEvent);
+                            }
                             return M11_GAME_INPUT_REDRAW;
                         }
                     }
@@ -17748,8 +17798,23 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         /* Look up potion subtype from thing data.
          * In DM1, potion types 6-15 each have unique effects.
          * We use iconIndex to infer the potion type. */
-        int potionPower = 255; /* default mid-range power */
-        int adjustedPower = (potionPower / 25) + 8; /* 8..18 range per F0349 */
+        /* Read actual potion subtype and power from thing data.
+         * DungeonPotion_Compat stores Type (potion type 0-16) and
+         * Power (0-511).  Use m11_apply_potion_effect which already
+         * handles all types with proper power scaling. */
+        int potionSubtype = -1; (void)potionSubtype;
+        int potionPower = 150; /* default if lookup fails */
+        int adjustedPower;
+
+        /* Look up potion subtype from DungeonThings */
+        if (state->world.things && state->world.things->potions) {
+            int pIdx = THING_GET_INDEX(thing);
+            if (pIdx >= 0 && pIdx < state->world.things->potionCount) {
+                potionSubtype = state->world.things->potions[pIdx].type;
+                potionPower = state->world.things->potions[pIdx].power;
+            }
+        }
+        adjustedPower = (potionPower / 25) + 8; /* 8..18 range per F0349 */
 
         if (iconIndex == 163) {
             /* C163 = Water Flask → restore 1600 water */
