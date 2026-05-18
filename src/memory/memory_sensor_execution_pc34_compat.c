@@ -130,10 +130,36 @@ int F0710_SENSOR_Execute_Compat(
         outList->count = 1;
         return 1;
     }
+    case 6: {
+        /* DM1_SENSOR_FLOOR_GROUP_GENERATOR — spawn creature.
+         * Full implementation requires creature system integration.
+         * Emit UNSUPPORTED for now but with correct type marker. */
+        struct SensorEffect_Compat* e = &outList->effects[0];
+        e->kind = SENSOR_EFFECT_UNSUPPORTED;
+        e->sensorType = sensor->sensorType;
+        e->destMapX = sensor->targetMapX;
+        e->destMapY = sensor->targetMapY;
+        outList->count = 1;
+        return 1;
+    }
+    case 9: {
+        /* DM1_SENSOR_FLOOR_VERSION_CHECKER — version gate.
+         * Always triggers in our implementation (we emulate latest version). */
+        struct SensorEffect_Compat* e = &outList->effects[0];
+        e->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+        e->sensorType = sensor->sensorType;
+        e->destMapIndex = -1;
+        e->destMapX = sensor->targetMapX;
+        e->destMapY = sensor->targetMapY;
+        e->destCell = sensor->targetCell;
+        e->textIndex = 2; /* TOGGLE */
+        outList->count = 1;
+        return 1;
+    }
     default: {
         /* UNSUPPORTED — explicit marker so callers distinguish from
-         * "no effect".  Types 6, 9, 10, 127 will be
-         * implemented as timeline / combat / actuator phases land. */
+         * "no effect".  Remaining types will be implemented as
+         * timeline / combat / actuator phases land. */
         struct SensorEffect_Compat* e = &outList->effects[0];
         e->kind = SENSOR_EFFECT_UNSUPPORTED;
         e->sensorType = sensor->sensorType;
