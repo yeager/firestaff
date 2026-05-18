@@ -2029,14 +2029,43 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             }
             break;
 
-        case SENSOR_EFFECT_SHOW_TEXT:
-            /* Display text from dungeon text table */
+        case SENSOR_EFFECT_SHOW_TEXT: {
+            /* Display decoded text from dungeon text table.
+             * e->textIndex = index into things->textStrings[].
+             * F0507_DUNGEON_DecodeTextAtOffset_Compat decodes the
+             * compressed text data at the stored word offset. */
+            char decoded[96];
+            int decodeOk = 0;
+
+            if (state->world.things &&
+                state->world.things->textData &&
+                state->world.things->textDataWordCount > 0 &&
+                state->world.things->textStrings &&
+                e->textIndex >= 0 &&
+                e->textIndex < state->world.things->textStringCount) {
+                unsigned int wordOffset =
+                    state->world.things->textStrings[e->textIndex].textDataWordOffset;
+                if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
+                        state->world.things->textData,
+                        state->world.things->textDataWordCount,
+                        wordOffset, decoded, sizeof(decoded)) >= 0 &&
+                    decoded[0] != '\0') {
+                    decodeOk = 1;
+                }
+            }
+
             snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                      "MESSAGE");
-            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "TEXT #%d", e->textIndex);
+            if (decodeOk) {
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "%s", decoded);
+            } else {
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "TEXT #%d", e->textIndex);
+            }
             M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
             break;
+        }
 
         case SENSOR_EFFECT_TOGGLE_REMOTE: {
             /* Toggle remote target square: door, pit, teleporter, etc.
@@ -3449,6 +3478,9 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     return 1;
 }
 
+
+/* Forward declaration for spell XP */
+static void m11_award_combat_xp(M11_GameViewState* state, int championIndex, int damage);
 int M11_GameView_ClearSpell(M11_GameViewState* state) {
     if (!state || !state->active) return 0;
     state->spellRuneRow = 0;
@@ -3572,6 +3604,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
 
     /* Deduct mana */
     champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
+
+    /* ReDMCSB CHAMPION.C F0304: award spell casting XP.
+     * Priest spells award Priest skill XP, Wizard spells award Wizard XP.
+     * We use manaCost as XP amount (higher cost = more XP). */
+    m11_award_combat_xp(state, state->world.party.activeChampionIndex, manaCost);
 
     /* Issue CMD_CAST_SPELL through the tick system */
     {
