@@ -32,10 +32,11 @@
 #define SENSOR_EVENT_COUNT           5
 
 /* ---- Effect kinds ---- */
-#define SENSOR_EFFECT_NONE         0
-#define SENSOR_EFFECT_TELEPORT     1
-#define SENSOR_EFFECT_SHOW_TEXT    2
-#define SENSOR_EFFECT_UNSUPPORTED  3
+#define SENSOR_EFFECT_NONE           0
+#define SENSOR_EFFECT_TELEPORT       1
+#define SENSOR_EFFECT_SHOW_TEXT      2
+#define SENSOR_EFFECT_UNSUPPORTED    3
+#define SENSOR_EFFECT_TOGGLE_REMOTE  4  /* Toggle remote target: door/pit/teleporter/wall */
 
 /* ---- Bounds ---- */
 #define SENSOR_EFFECT_LIST_MAX_COUNT 8

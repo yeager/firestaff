@@ -1154,6 +1154,25 @@ static int m11_get_square_byte(const struct GameWorld_Compat* world,
     return 1;
 }
 
+static int m11_set_square_byte(struct GameWorld_Compat* world,
+                               int mapIndex,
+                               int mapX,
+                               int mapY,
+                               unsigned char newValue) {
+    struct DungeonMapDesc_Compat* map;
+    struct DungeonMapTiles_Compat* tiles;
+    int index;
+    if (!world || !world->dungeon || !world->dungeon->tilesLoaded) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) return 0;
+    tiles = &world->dungeon->tiles[mapIndex];
+    index = mapX * (int)map->height + mapY;
+    if (!tiles->squareData || index < 0 || index >= tiles->squareCount) return 0;
+    tiles->squareData[index] = newValue;
+    return 1;
+}
+
 static unsigned short m11_raw_next_thing(const struct DungeonThings_Compat* things,
                                          unsigned short thing) {
     int type;
@@ -1982,6 +2001,135 @@ static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel);
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input);
+
+/* ── Apply sensor effects from movement pipeline ──
+ * Called after movement pipeline processes a tick.
+ * Reads leaveEffects and enterEffects from the pipeline result
+ * and applies them to the game world (door toggles, pit toggles,
+ * teleporter toggles, text display).
+ *
+ * Ref: ReDMCSB MOVESENS.C F0268/F0272 effect dispatch. */
+static void m11_apply_sensor_effects(M11_GameViewState* state,
+                                     const struct SensorEffectList_Compat* effects) {
+    int i;
+    if (!state || !effects || effects->count <= 0) return;
+
+    for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
+        const struct SensorEffect_Compat* e = &effects->effects[i];
+
+        switch (e->kind) {
+        case SENSOR_EFFECT_TELEPORT:
+            /* Teleport party to destination */
+            if (e->destMapX >= 0 && e->destMapY >= 0) {
+                state->world.party.mapX = e->destMapX;
+                state->world.party.mapY = e->destMapY;
+                m11_set_status(state, "SENSOR", "TELEPORTED");
+                m11_refresh_hash(state);
+            }
+            break;
+
+        case SENSOR_EFFECT_SHOW_TEXT:
+            /* Display text from dungeon text table */
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "MESSAGE");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "TEXT #%d", e->textIndex);
+            M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
+            break;
+
+        case SENSOR_EFFECT_TOGGLE_REMOTE: {
+            /* Toggle remote target square: door, pit, teleporter, etc.
+             * e->destMapX/Y = target coordinates
+             * e->textIndex = effect code (0=SET, 1=CLEAR, 2=TOGGLE, 3=HOLD)
+             *
+             * ReDMCSB MOVESENS.C F0268: resolves target square type
+             * and creates a timed event.  We apply immediately since
+             * our timeline system handles the animation delay. */
+            unsigned char targetSquare = 0;
+            int targetElement;
+
+            if (!m11_get_square_byte(&state->world,
+                                     state->world.party.mapIndex,
+                                     e->destMapX, e->destMapY,
+                                     &targetSquare)) {
+                break;
+            }
+            targetElement = (targetSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+            if (targetElement == DUNGEON_ELEMENT_DOOR) {
+                /* Toggle door at remote location */
+                int doorEffect = 2; /* DOOR_EFFECT_TOGGLE */
+                if (e->textIndex == 0) doorEffect = 0; /* SET = open */
+                else if (e->textIndex == 1) doorEffect = 1; /* CLEAR = close */
+
+                {
+                    int resolvedEffect = -1;
+                    int currentState = -1;
+                    if (F0714_DOOR_ResolveAnimationEffect_Compat(
+                            state->world.dungeon,
+                            state->world.party.mapIndex,
+                            e->destMapX, e->destMapY,
+                            doorEffect,
+                            &resolvedEffect, &currentState)) {
+                        struct TimelineEvent_Compat animEvent;
+                        if (F0713_DOOR_BuildAnimationEvent_Compat(
+                                state->world.party.mapIndex,
+                                e->destMapX, e->destMapY,
+                                resolvedEffect,
+                                state->world.gameTick,
+                                &animEvent)) {
+                            (void)F0721_TIMELINE_Schedule_Compat(
+                                &state->world.timeline, &animEvent);
+                        }
+                    }
+                }
+                m11_set_status(state, "SENSOR", "DOOR TRIGGERED");
+            } else if (targetElement == DUNGEON_ELEMENT_PIT) {
+                /* Toggle pit open/closed */
+                int pitBit = targetSquare & 0x01; /* bit 0 = open */
+                if (e->textIndex == 2) { /* TOGGLE */
+                    pitBit = !pitBit;
+                } else if (e->textIndex == 0) { /* SET = open */
+                    pitBit = 1;
+                } else if (e->textIndex == 1) { /* CLEAR = close */
+                    pitBit = 0;
+                }
+                {
+                    unsigned char newSq = (targetSquare & ~0x01) | (pitBit ? 0x01 : 0x00);
+                    m11_set_square_byte(&state->world,
+                                        state->world.party.mapIndex,
+                                        e->destMapX, e->destMapY, newSq);
+                }
+                m11_set_status(state, "SENSOR", pitBit ? "PIT OPENED" : "PIT CLOSED");
+                m11_refresh_hash(state);
+            } else if (targetElement == DUNGEON_ELEMENT_TELEPORTER) {
+                /* Toggle teleporter active/inactive */
+                int telBit = targetSquare & 0x01;
+                if (e->textIndex == 2) telBit = !telBit;
+                else if (e->textIndex == 0) telBit = 1;
+                else if (e->textIndex == 1) telBit = 0;
+                {
+                    unsigned char newSq = (targetSquare & ~0x01) | (telBit ? 0x01 : 0x00);
+                    m11_set_square_byte(&state->world,
+                                        state->world.party.mapIndex,
+                                        e->destMapX, e->destMapY, newSq);
+                }
+                m11_set_status(state, "SENSOR",
+                               telBit ? "TELEPORTER ACTIVATED" : "TELEPORTER DEACTIVATED");
+                m11_refresh_hash(state);
+            }
+            break;
+        }
+        case SENSOR_EFFECT_UNSUPPORTED:
+            /* Log but don't crash */
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel);
@@ -5055,6 +5203,14 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     M11_GameView_TickAnimation(state);
     m11_check_party_death(state);
     m11_mark_explored(state);
+
+    /* Apply sensor effects from movement pipeline.
+     * ReDMCSB: F0276 fires sensors during move; effects are dispatched
+     * via F0268/F0272.  We read the accumulated effect lists here. */
+    m11_apply_sensor_effects(state,
+        &state->lastDm1V1MovementPipelineResult.core.leaveEffects);
+    m11_apply_sensor_effects(state,
+        &state->lastDm1V1MovementPipelineResult.core.enterEffects);
 
     if (state->lastDm1V1MovementPipelineResult.core.queue.movementDisabledGate) {
         m11_set_status(state, actionLabel, "MOVEMENT COOLDOWN");

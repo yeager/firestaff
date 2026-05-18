@@ -92,9 +92,47 @@ int F0710_SENSOR_Execute_Compat(
         outList->count = 1;
         return 1;
     }
+    case 1:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
+    case 2:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE */
+    case 3:  /* DM1_SENSOR_FLOOR_PARTY — pressure plates */
+    case 4:  /* DM1_SENSOR_FLOOR_OBJECT */
+    case 7:  /* DM1_SENSOR_FLOOR_CREATURE */
+    case 8: {/* DM1_SENSOR_FLOOR_PARTY_POSSESSION */
+        /* Floor sensors with remote target → toggle target square.
+         * ReDMCSB MOVESENS.C F0276: these sensor types fire F0268
+         * which maps the sensor's effect+target to a timed event
+         * on the target square.  The target square type determines
+         * the event type (door=10, pit=9, teleporter=8, etc.).
+         * We emit SENSOR_EFFECT_TOGGLE_REMOTE and let the caller
+         * resolve the target square and apply the effect. */
+        struct SensorEffect_Compat* e = &outList->effects[0];
+        e->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+        e->sensorType = sensor->sensorType;
+        e->destMapIndex = -1; /* same map */
+        e->destMapX = sensor->targetMapX;
+        e->destMapY = sensor->targetMapY;
+        e->destCell = sensor->targetCell;
+        e->textIndex = 2; /* TOGGLE — default effect for floor sensors; full effect resolution requires DungeonSensor_Compat lookup via sensor->sensorIndex */ /* 0=SET, 1=CLEAR, 2=TOGGLE, 3=HOLD */
+        outList->count = 1;
+        return 1;
+    }
+    case 5: {/* DM1_SENSOR_FLOOR_PARTY_ON_STAIRS */
+        /* Stairs sensor — typically triggers when party is on stairs.
+         * Usually toggles a remote target. */
+        struct SensorEffect_Compat* e = &outList->effects[0];
+        e->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+        e->sensorType = sensor->sensorType;
+        e->destMapIndex = -1;
+        e->destMapX = sensor->targetMapX;
+        e->destMapY = sensor->targetMapY;
+        e->destCell = sensor->targetCell;
+        e->textIndex = 2; /* TOGGLE — default effect for floor sensors; full effect resolution requires DungeonSensor_Compat lookup via sensor->sensorIndex */
+        outList->count = 1;
+        return 1;
+    }
     default: {
         /* UNSUPPORTED — explicit marker so callers distinguish from
-         * "no effect".  Types 1, 2, 3, 4, 5, 6, 8, 10, 127 will be
+         * "no effect".  Types 6, 9, 10, 127 will be
          * implemented as timeline / combat / actuator phases land. */
         struct SensorEffect_Compat* e = &outList->effects[0];
         e->kind = SENSOR_EFFECT_UNSUPPORTED;
