@@ -444,13 +444,35 @@ void fs_game_run(FS_GameState *state) {
     if (!state) return;
     printf("Firestaff: entering game loop\n");
 
+    /* Frame pacing: target ~60fps (16.67ms per frame).
+     * Game logic ticks at V1_TICK_MS (~55ms) matching the original
+     * DM1 VBlank-driven game speed.
+     * Use wall-clock delta time so game speed is independent of
+     * frame rate. */
+#ifdef HAVE_SDL3
+    uint64_t last_ticks = SDL_GetTicks();
+#else
+    uint32_t last_frame_ms = 0;
+#endif
+    const uint32_t TARGET_FRAME_MS = 16; /* ~60fps display rate */
+
     while (state->running) {
-        uint32_t now_ms = state->frame_count * 16; /* approximate */
+#ifdef HAVE_SDL3
+        uint64_t current_ticks = SDL_GetTicks();
+        uint32_t delta_ms = (uint32_t)(current_ticks - last_ticks);
+        last_ticks = current_ticks;
+        /* Clamp delta to avoid spiral-of-death on hitches */
+        if (delta_ms > 200) delta_ms = 200;
+        uint32_t now_ms = (uint32_t)current_ticks;
+#else
+        uint32_t delta_ms = 16; /* headless: assume 60fps */
+        uint32_t now_ms = state->frame_count * 16;
+#endif
 
-        /* Accumulate time for V1 ticks */
-        state->v1_tick_accumulator_ms += 16; /* ~60fps */
+        /* Accumulate real elapsed time for V1 game logic ticks */
+        state->v1_tick_accumulator_ms += delta_ms;
 
-        /* Process V1 ticks at original rate */
+        /* Process V1 ticks at original rate (ReDMCSB VBlank timing) */
         while (state->v1_tick_accumulator_ms >= V1_TICK_MS) {
             fs_game_tick_v1(state);
             v2_anim_clock_v1_tick(&g_clock, now_ms);
@@ -467,9 +489,13 @@ void fs_game_run(FS_GameState *state) {
         while (SDL_PollEvent(&e)) {
             fs_game_handle_sdl_event(state, &e);
         }
-        /* Present frame */
-        /* fs_sdl_present_rgba(&g_sdl, g_rgba_buffer, w, h); */
-        SDL_Delay(1); /* yield CPU */
+
+        /* Frame pacing: sleep until target frame time */
+        uint64_t frame_end = SDL_GetTicks();
+        uint32_t frame_elapsed = (uint32_t)(frame_end - current_ticks);
+        if (frame_elapsed < TARGET_FRAME_MS) {
+            SDL_Delay(TARGET_FRAME_MS - frame_elapsed);
+        }
 #else
         /* Headless: break after 100 frames */
         if (state->frame_count > 100) break;
