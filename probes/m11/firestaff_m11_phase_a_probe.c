@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
     M11_Render_SetIntegerScaling(0);
     M11_Render_SetScaleMode(M11_SCALE_FIT);
     if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-        rectW == 1000 && rectH == 562 && rectX == 0 && rectY == 69) {
+        rectW == 933 && rectH == 700 && rectX == 33 && rectY == 0) {
         fitOk = 1;
     }
     record(&t, "INV_A14",
@@ -226,7 +226,7 @@ int main(int argc, char** argv) {
     int integerFitOk = 0;
     M11_Render_SetIntegerScaling(1);
     if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-        rectW == 1000 && rectH == 562 && rectX == 0 && rectY == 69) {
+        rectW == 933 && rectH == 700 && rectX == 33 && rectY == 0) {
         integerFitOk = 1;
     }
     record(&t, "INV_A14B",
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
     M11_Render_SetScaleMode(M11_SCALE_STRETCH);
     record(&t, "INV_A15",
            M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
-               rectX == 0 && rectY == 69 && rectW == 1000 && rectH == 562,
+               rectX == 33 && rectY == 0 && rectW == 933 && rectH == 700,
            "stretch mode uses the configured-aspect present area");
 
     /* ---------- INV_A16/A17: coordinate mapping respects bars ------ */

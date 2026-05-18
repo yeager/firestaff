@@ -210,10 +210,11 @@ void fs_ax_flush(void)
         FS_AX_Element* e = &g_elements[i];
         if (i > 0) fprintf(fp, ",");
 
-        fprintf(fp, "{\"id\":\"%s\",\"type\":\"%s\",\"label\":\"%s\",",
-                fs_ax_json_escape(e->id),
-                type_to_string(e->type),
-                fs_ax_json_escape(e->label));
+        /* Write id, type, label as separate fprintfs to avoid
+         * fs_ax_json_escape static buffer aliasing */
+        fprintf(fp, "{\"id\":\"%s\",", fs_ax_json_escape(e->id));
+        fprintf(fp, "\"type\":\"%s\",", type_to_string(e->type));
+        fprintf(fp, "\"label\":\"%s\",", fs_ax_json_escape(e->label));
 
         fprintf(fp, "\"bounds\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d},",
                 e->x, e->y, e->w, e->h);
