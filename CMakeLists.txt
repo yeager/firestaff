@@ -125,6 +125,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
     src/engine/render_sdl_m11.c
     src/shared/audio_sdl_m11.c
