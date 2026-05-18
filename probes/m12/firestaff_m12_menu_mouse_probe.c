@@ -257,7 +257,7 @@ int main(void) {
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
-        s.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        s.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         s.settings.languageIndex = 0;
         memset(a, 0, rgbaBytes);
         M12_ModernMenu_Render(&s, a, W, H);
@@ -286,7 +286,7 @@ int main(void) {
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
-        s.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        s.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         s.selectedIndex = 1;
         s.frameTick = 0;
         memset(a, 0, rgbaBytes);

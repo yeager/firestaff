@@ -180,3 +180,4 @@ __pycache__/
 /MEMDUMP.TXT
 build-main-check/
 assets/
+build-arm64/

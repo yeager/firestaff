@@ -570,7 +570,7 @@ int main(void) {
     M12_StartupMenu_InitWithDataDir(&reloaded, dataDir);
     probe_record(&tally,
                  "INV_M12_11D",
-                 reloaded.settings.graphicsIndex == M12_PRESENTATION_V3_MODERN_3D &&
+                 reloaded.settings.graphicsIndex == M12_PRESENTATION_V22_MODERN &&
                      strcmp(M12_StartupMenu_GetPresentationModeLabel(&reloaded), "V3 MODERN/3D") == 0 &&
                      file_contains(configPath, "presentation_mode = \"v3-modern-3d\""),
                  "readable presentation_mode config key loads and round-trips V3 mode without relying on numeric graphics terminology");
@@ -727,15 +727,15 @@ int main(void) {
                      M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_PATCH, M12_PRESENTATION_V1_ORIGINAL) == 0 &&
-                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V2_ENHANCED_2D) == 0 &&
-                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V2_ENHANCED_2D) == 0,
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V21_UPSCALED) == 0 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V21_UPSCALED) == 0,
                      "RowLockedByMode reports correct constraints per mode");
 
         /* V2 mode: aspect and resolution cycle freely */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
-        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
-        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
+        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
@@ -768,7 +768,7 @@ int main(void) {
         /* Launch intent for V2 with explicit resolution set */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
-        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         /* Reset DM1 resolution to 0 so we can verify cycling works */
         modeState.gameOptions[0].resolution = M12_RES_320x200;
         modeState.selectedIndex = 0;
@@ -779,7 +779,7 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_20",
                      intent.valid == 1 &&
-                         intent.presentationMode == M12_PRESENTATION_V2_ENHANCED_2D &&
+                         intent.presentationMode == M12_PRESENTATION_V21_UPSCALED &&
                          strcmp(intent.gameId, "dm1") == 0 &&
                          strcmp(intent.versionId, "pc34-en") == 0 &&
                          intent.options.resolution == M12_RES_640x400,
@@ -788,8 +788,8 @@ int main(void) {
         /* V3 launch intent is invalid (coming soon) */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
-        modeState.settings.graphicsIndex = M12_PRESENTATION_V3_MODERN_3D;
-        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V3_MODERN_3D;
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V22_MODERN;
+        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V22_MODERN;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
@@ -915,10 +915,10 @@ int main(void) {
                      "startup input matrix covers arrows, accept/action/back, gameplay hotkeys, invalid keys, mouse launch, and corrupt state bounds without crashing");
 
         /* Presentation mode API */
-        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         probe_record(&tally,
                      "INV_M12_23",
-                     M12_StartupMenu_GetPresentationMode(&modeState) == M12_PRESENTATION_V2_ENHANCED_2D &&
+                     M12_StartupMenu_GetPresentationMode(&modeState) == M12_PRESENTATION_V21_UPSCALED &&
                          strcmp(M12_StartupMenu_GetPresentationModeLabel(&modeState), "V2 ENHANCED 2D") == 0,
                      "presentation mode API returns correct mode and label");
 

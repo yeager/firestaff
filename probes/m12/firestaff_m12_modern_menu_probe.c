@@ -166,7 +166,7 @@ int main(void) {
     /* ----- Fresh default state ----- */
     M12_StartupMenuState state;
     M12_StartupMenu_Init(&state);
-    state.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+    state.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
 
     /* ----- Render MAIN view ----- */
     memset(buf, 0, rgbaBytes);

@@ -133,6 +133,7 @@
         "\"CSB.DAT\""
       ],
       "missing": [
+        "m11_resolve_builtin_dungeon_path",
         "strcmp(gameId, \"csb\") == 0",
         "\"CSB.DAT\""
       ],
@@ -183,6 +184,6 @@
   ],
   "failures": [
     "firestaff_m12_launch_guard_still_blocks_csb missing ['Only DM1 is launch-supported', 'strcmp(gameId, \"dm1\") == 0'] path_exists=True",
-    "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest missing ['strcmp(gameId, \"csb\") == 0', '\"CSB.DAT\"'] path_exists=True"
+    "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest missing ['m11_resolve_builtin_dungeon_path', 'strcmp(gameId, \"csb\") == 0', '\"CSB.DAT\"'] path_exists=True"
   ]
 }
