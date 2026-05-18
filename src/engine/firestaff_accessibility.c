@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 #include <errno.h>
 #include <unistd.h>
 
@@ -112,7 +115,11 @@ static int ensure_directory(const char* path)
         return S_ISDIR(st.st_mode) ? 0 : -1;
     }
     /* Create directory (just the leaf — home dir should exist) */
+    #ifdef _WIN32
+    return _mkdir(path);
+#else
     return mkdir(path, 0755);
+#endif
 }
 
 /* ── Public API ───────────────────────────────────────────────────── */
