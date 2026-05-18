@@ -504,10 +504,10 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         g_state.windowH = (ph > 0) ? ph : windowHeight;
     }
     g_state.scaleMode = scaleMode;
-    g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
+    g_state.displayAspectMode = M11_DISPLAY_ASPECT_4_3; /* DM1 original CRT aspect */
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
-    g_state.integerScaling = 1;
+    g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
     g_state.quitRequested = 0;
@@ -551,7 +551,7 @@ void M11_Render_Shutdown(void) {
     g_state.paletteLevel = 0;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
-    g_state.integerScaling = 1;
+    g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
     g_state.contentW = 0;
