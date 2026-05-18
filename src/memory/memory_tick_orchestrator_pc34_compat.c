@@ -834,8 +834,8 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     if (!dungeon || !things) goto fail;
 
     if (!F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, dungeon)) goto fail;
-    if (!F0502_DUNGEON_LoadTileData_Compat(dungeonPath, dungeon)) goto fail;
-    if (!F0504_DUNGEON_LoadThingData_Compat(dungeonPath, dungeon, things)) goto fail;
+    { const char* lp = dungeon->decompressedPath[0] ? dungeon->decompressedPath : dungeonPath; if (!F0502_DUNGEON_LoadTileData_Compat(lp, dungeon)) goto fail;
+    if (!F0504_DUNGEON_LoadThingData_Compat(lp, dungeon, things)) goto fail; }
 
     /* Set up the world to own these. */
     memset(outWorld, 0, sizeof(*outWorld));

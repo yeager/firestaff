@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 1.7.4 LANGUAGES C)
+project(Firestaff VERSION 1.7.5 LANGUAGES C)
 
 include_directories(include src)
 
@@ -50,7 +50,7 @@ file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 
-add_library(firestaff_m10 STATIC ${M10_SOURCES})
+add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
@@ -135,6 +135,7 @@ set(M11_SOURCES
     src/frontend/title_dat_loader_v1.c
     src/frontend/title_frontend_v1.c
     src/shared/asset_loader_m11.c
+    src/shared/dungeon_decompressor_ftl.c
     src/shared/font_m11.c
     src/shared/fs_portable_compat.c
     src/dm1/dm1_v1_vblank_timing.c

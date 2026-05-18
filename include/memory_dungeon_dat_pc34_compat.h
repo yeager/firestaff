@@ -101,6 +101,7 @@ struct DungeonDatState_Compat {
     long                          fileSize;
     int                           loaded;
     int                           tilesLoaded;
+    char                          decompressedPath[512]; /* temp path if decompressed */
 };
 
 /*

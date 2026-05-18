@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "dungeon_decompressor_ftl.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 /* ---- low-level I/O helpers (same pattern as graphics_dat seams) ---- */
@@ -115,10 +116,82 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
                 fclose(file);
                 return 0;
         }
-        if (sig == DUNGEON_COMPRESSED_SIGNATURE) {
-                /* Compressed dungeon (save game format) — not supported by this seam */
+        if (sig == DUNGEON_COMPRESSED_SIGNATURE || sig == 0x0481u) {
+                /* ReDMCSB LOADSAVE.C:1876-1923: compressed dungeon format.
+                 * CSB DUNGEON.DAT uses this format. Read the compressed header,
+                 * decompress to a temp buffer, then parse from memory.
+                 * Note: signature is big-endian 0x8104 on disk. */
+                unsigned char hdr[8];
+                long decompSize;
+                unsigned char* compBuf;
+                unsigned char* decompBuf;
+                long compDataSize;
+                FILE* tmpFile;
+                char tmpPath[512];
+
+                /* Re-read from start: Signature(2) + DecompressedByteCount(4) + DungeonID(2) */
+                fseek(file, 0, SEEK_SET);
+                if (fread(hdr, 1, 8, file) != 8) { fclose(file); return 0; }
+
+                /* DecompressedByteCount is bytes 2-5, big-endian (68k format) */
+                decompSize = ((long)hdr[2] << 24) | ((long)hdr[3] << 16) |
+                             ((long)hdr[4] << 8) | (long)hdr[5];
+                if (decompSize <= 0 || decompSize > 1024 * 1024) {
+                        /* Try little-endian interpretation */
+                        decompSize = ((long)hdr[5] << 24) | ((long)hdr[4] << 16) |
+                                     ((long)hdr[3] << 8) | (long)hdr[2];
+                }
+                if (decompSize <= 0 || decompSize > 1024 * 1024) {
+                        fclose(file);
+                        return 0;
+                }
+
+                /* Read remaining compressed data */
+                fseek(file, 0, SEEK_END);
+                compDataSize = ftell(file) - 8;
+                fseek(file, 8, SEEK_SET);
+                compBuf = (unsigned char*)malloc(compDataSize);
+                decompBuf = (unsigned char*)calloc(1, decompSize);
+                if (!compBuf || !decompBuf) {
+                        free(compBuf); free(decompBuf);
+                        fclose(file);
+                        return 0;
+                }
+                if ((long)fread(compBuf, 1, compDataSize, file) != compDataSize) {
+                        free(compBuf); free(decompBuf);
+                        fclose(file);
+                        return 0;
+                }
                 fclose(file);
-                return 0;
+
+                /* Decompress */
+                if (!ftl_decompress_dungeon(compBuf, compDataSize, decompBuf, decompSize)) {
+                        fprintf(stderr, "FTL dungeon decompress failed (decompSize=%ld)\n", decompSize);
+                        free(compBuf); free(decompBuf);
+                        return 0;
+                }
+                free(compBuf);
+                fprintf(stderr, "FTL dungeon decompressed: %ld bytes\n", decompSize);
+
+                /* Write decompressed data to a temp file and recursively load */
+                snprintf(tmpPath, sizeof(tmpPath), "%s.decompressed", path);
+                tmpFile = fopen(tmpPath, "wb");
+                if (!tmpFile) { free(decompBuf); return 0; }
+                fwrite(decompBuf, 1, decompSize, tmpFile);
+                fclose(tmpFile);
+                free(decompBuf);
+
+                /* Recursively load the decompressed dungeon */
+                {
+                        int result = F0500_DUNGEON_LoadDatHeader_Compat(tmpPath, state);
+                        /* Keep the temp file for tile/thing loading */
+                        if (result) {
+                                /* Store the decompressed path so tile/thing loaders use it */
+                                strncpy(state->decompressedPath, tmpPath, sizeof(state->decompressedPath) - 1);
+                                state->decompressedPath[sizeof(state->decompressedPath) - 1] = 0;
+                        }
+                        return result;
+                }
         }
         state->header.ornamentRandomSeed = sig;
 
