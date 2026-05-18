@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "firestaff_po_loader.h"
 
 /* -------------------------------------------------------------------------- */
 /* Colour helpers                                                             */
@@ -1122,7 +1123,7 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
 
     /* Section title */
     ModernTextStyle h = text_style_make(3, COLOR_ACCENT(), 2);
-    draw_text(c, 48, 142, "SELECT A DESTINATION", &h);
+    draw_text(c, 48, 142, _("SELECT A DESTINATION"), &h);
 
     /* Faded creature silhouette in the upper-right background so the
      * screen feels like a Dungeon Master front door without stealing
@@ -1155,7 +1156,7 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 130, "SETTINGS", &h);
+    draw_text(c, 160, 130, _("SETTINGS"), &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
     draw_text(c, 160, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
 

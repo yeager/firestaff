@@ -4868,6 +4868,12 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandIconIndex = -1;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
+
+    /* Load DM1-specific translations.
+     * Try Swedish first (common locale), fall back to English. */
+    if (fs_po_load("po/dm1.sv.po") <= 0) {
+        fs_po_load("po/dm1.en.po");
+    }
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
     DM1_SaveMenu_Init(&state->saveMenu);

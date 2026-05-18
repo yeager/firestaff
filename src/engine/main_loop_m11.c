@@ -13,6 +13,7 @@
 #include "menu_startup_render_modern_m12.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
+#include "firestaff_po_loader.h"
 #include "firestaff_accessibility.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
@@ -1538,6 +1539,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* Fall back to legacy renderer on allocation failure rather
              * than aborting the launcher. */
             useModern = 0;
+        }
+    }
+    /* Load PO translations based on system language.
+     * M12_Config_GetAutoLanguageIndex: 0=en, 1=sv, 2=fr */
+    {
+        const char* langCodes[] = {"en", "sv", "fr"};
+        const char* langCode = "en";
+        int langIdx = M12_Config_GetAutoLanguageIndex();
+        if (langIdx >= 0 && langIdx < 3) langCode = langCodes[langIdx];
+        {
+            char poPath[512];
+            snprintf(poPath, sizeof(poPath), "%s/po/startup-menu.%s.po",
+                     o->dataDir ? o->dataDir : ".", langCode);
+            if (fs_po_load(poPath) <= 0) {
+                char relPath[128];
+                snprintf(relPath, sizeof(relPath), "po/startup-menu.%s.po", langCode);
+                fs_po_load(relPath);
+            }
         }
     }
     M11_GameView_Init(&gameView);
