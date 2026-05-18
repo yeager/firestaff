@@ -218,8 +218,8 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->rendererBackendIndex = 0;
     config->windowModeIndex = 1;
     config->scaleModeIndex = 4;
-    config->displayAspectMode = 1;
-    config->integerScaling = 1;
+    config->displayAspectMode = 0; /* 4:3 — DM1 original CRT aspect */
+    config->integerScaling = 0; /* smooth FIT for full-window content */
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
     config->wasdMovementEnabled = 1;

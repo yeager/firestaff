@@ -707,8 +707,16 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
          * the original TITLE animation and title-song/swoosh cue must run at the
          * launcher->DM1 handoff, before the game view opens and before the entrance
-         * transition. */
-        m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
+         * transition.
+         * Only play for DM1 — CSB/DM2/Nexus have their own intros. */
+        {
+            const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
+                menuState, menuState->activatedIndex);
+            if (launchEntry && launchEntry->gameId &&
+                strcmp(launchEntry->gameId, "dm1") == 0) {
+                m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
+            }
+        }
         (void)titleIntroPlayed;
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
