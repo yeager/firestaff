@@ -546,10 +546,10 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
+             * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
             if (ev.type == SDL_EVENT_KEY_DOWN) {
                 if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
-                if (ev.key.key == SDLK_RETURN || ev.key.key == SDLK_KP_ENTER ||
-                    ev.key.key == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 int fbX = 0;
@@ -571,10 +571,10 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             }
 #else
             if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
+             * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
             if (ev.type == SDL_KEYDOWN) {
                 if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
-                if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER ||
-                    ev.key.keysym.sym == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
                 int fbX = 0;
