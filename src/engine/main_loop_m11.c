@@ -448,6 +448,31 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
 
+    /* Pre-fill framebuffer with the entrance screen (C004 + closed doors)
+     * before the loop begins.  Source-lock: ENTRANCE.C draws the entrance
+     * screen and doors *before* entering the VBlank wait loop (lines 446-
+     * 579).  Without this pre-fill the first PresentIndexed call (inside
+     * the loop, sourceStep==1, DRAW_MICRO_DUNGEON → else branch) would
+     * present the uninitialized dungeon viewport as the first visible
+     * frame — an ugly flash between the TITLE intro and the entrance.
+     * The loop's first event (DRAW_MICRO_DUNGEON) falls through to the
+     * else branch and memcpy's the dungeon frame, but the pre-draw above
+     * ensures that if the first Present is called before any loop body
+     * executes, the screen shows the entrance screen, never the dungeon.
+     * This also mirrors the ReDMCSB source order: draw C004+doors first,
+     * then micro-dungeon, then fade/curtain, then wait-for-input loop.
+     */
+    if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+        (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
+    } else {
+        /* Palette-fill fallback: draw the entrance screen background
+         * and closed door panels so the first present is not a dungeon
+         * viewport. */
+        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
+        m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+    }
+
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
      * - ENTRANCE.C:935 delays 20 ticks before opening.
