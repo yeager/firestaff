@@ -18,6 +18,7 @@
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "title_frontend_v1.h"
+#include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
@@ -418,7 +419,8 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
 
 typedef enum {
     M11_ENTRANCE_COMMAND_QUIT = 0,
-    M11_ENTRANCE_COMMAND_ENTER = 1
+    M11_ENTRANCE_COMMAND_ENTER = 1,
+    M11_ENTRANCE_COMMAND_RESUME = 2
 } M11_EntranceCommand;
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
@@ -528,9 +530,14 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
 
         M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
-            if (m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs) == M11_ENTRANCE_COMMAND_QUIT) {
+            M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
+            if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
+            }
+            if (cmd == M11_ENTRANCE_COMMAND_RESUME) {
+                free(dungeonFrame);
+                return M11_ENTRANCE_COMMAND_RESUME;
             }
         }
         if (step.delayTicks >= 20U) {
@@ -585,8 +592,12 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
                  * ENTER 244..298,45..58; RESUME 244..298,76..93;
                  * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
                  * C434 quit for later media as a separate zone, not ENTER. */
+                /* ReDMCSB COMMAND.C:64/69/350: three entrance buttons.
+                 * ENTER  = start new game (C200)
+                 * RESUME = load saved game (M566)
+                 * QUIT   = credits/back (M567/C216) */
                 if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_RESUME;
                 if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
                 continue;
             }
@@ -607,7 +618,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
                 if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
                 if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_RESUME;
                 if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
                 continue;
             }
@@ -753,7 +764,24 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            if (!m11_play_redmcsb_entrance_transition(gameView, 1200)) {
+            int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
+            if (entranceResult == M11_ENTRANCE_COMMAND_RESUME) {
+                /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
+                 * Look for save file matching this game's source id. */
+                char savePath[512];
+                const char* sid = (gameView->sourceId[0] != '\0')
+                                  ? gameView->sourceId : "dm1";
+                struct DM1SaveHeader saveHeader;
+                int rc = snprintf(savePath, sizeof(savePath),
+                                  "firestaff-%s-dm1save.sav", sid);
+                if (rc > 0 && rc < (int)sizeof(savePath) &&
+                    DM1_LoadGame(savePath, &gameView->world, &saveHeader) == DM1_SAVE_OK) {
+                    gameView->active = 1;
+                    fprintf(stderr, "RESUME: loaded save from %s\n", savePath);
+                } else {
+                    fprintf(stderr, "RESUME: no save found at %s, starting new game\n", savePath);
+                }
+            } else if (!entranceResult) {
                 /* Non-fatal: skip entrance animation but continue to game.
                  * Previously this aborted back to menu, causing the black
                  * viewport bug when TITLE.DAT decode failed. */
