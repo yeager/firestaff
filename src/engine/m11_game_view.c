@@ -7909,9 +7909,111 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
+    /* ── Random wall ornament computation ──────────────────────────────
+     * ReDMCSB DUNGEON.C F0172_DUNGEON_SetSquareAspect + F0171 + F0170 + F0169.
+     *
+     * Wall squares have bits 0-3 indicating which cardinal faces allow
+     * random ornaments:
+     *   Bit 0 (0x01) = West,  Bit 1 (0x02) = South,
+     *   Bit 2 (0x04) = East,  Bit 3 (0x08) = North.
+     *
+     * The "front" face (what the player sees looking at this wall) depends
+     * on the viewing direction.  F0172 maps direction→face:
+     *   Facing North → front=South (bit 1), left=East (bit 2), right=West (bit 0)
+     *   Facing East  → front=West  (bit 0), left=South(bit 1), right=North(bit 3)
+     *   Facing South → front=North (bit 3), left=West (bit 0), right=East (bit 2)
+     *   Facing West  → front=East  (bit 2), left=North(bit 3), right=South(bit 1)
+     *
+     * For the viewport front ornament, the viewed direction from the
+     * party toward this square is computed from the relative position.
+     * For center cells (relSide==0): viewDir = partyDirection.
+     * For side cells: the face visible is the side face, not the front.
+     *
+     * PRNG (F0169): ((value1*31417 >> 1) + (value2*11) + seed) >> 2) % modulo
+     *   value1 = 2000 + (mapX << 5) + mapY_modified
+     *   value2 = 3000 + (mapIndex << 6) + mapWidth + mapHeight
+     *   modulo = 30
+     * If result < randomWallOrnamentCount → ordinal = result + 1.
+     *
+     * F0171 calls F0170 for each face (right/front/left) with modified
+     * mapY and incremented direction for each call.  We compute the
+     * front ornament for center walls (what the player actually sees).
+     * ────────────────────────────────────────────────────────────────── */
+    if (cell.elementType == DUNGEON_ELEMENT_WALL &&
+        cell.wallOrnamentOrdinal < 0 &&
+        state->world.dungeon &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        const struct DungeonMapDesc_Compat* ornMap =
+            &state->world.dungeon->maps[state->world.party.mapIndex];
+        int rwoc = (int)ornMap->randomWallOrnamentCount;
+        if (rwoc > 0) {
+            /* Determine which face the player is viewing.
+             * For front walls (center lane): the face is opposite to
+             * the party's approach direction.  The approach direction
+             * into this square is the party's facing direction.
+             * The "front" face of the wall from the party's perspective
+             * is the face OPPOSITE to the party's approach, i.e.:
+             *   Party faces North → sees the South face of the wall ahead
+             *   Party faces East  → sees the West face
+             *   Party faces South → sees the North face
+             *   Party faces West  → sees the East face
+             *
+             * But for side walls (relSide != 0), the visible face is
+             * the side that faces the corridor the party is in.
+             * We compute the approach direction from relative position. */
+            int viewDir = state->world.party.direction;
+            /* For side walls: if the wall is to the left (relSide < 0),
+             * approach from the right side; adjust viewDir accordingly */
+            if (relSide < 0) {
+                viewDir = (viewDir + 3) & 3; /* turn left = approach from right */
+            } else if (relSide > 0) {
+                viewDir = (viewDir + 1) & 3; /* turn right = approach from left */
+            }
+
+            /* Front face ornament bit mask per viewing direction.
+             * From F0172: facing North→front=South(0x02), etc. */
+            static const unsigned char frontFaceMask[4] = {
+                0x02, /* North: front = South */
+                0x01, /* East:  front = West  */
+                0x08, /* South: front = North */
+                0x04  /* West:  front = East  */
+            };
+            int frontAllowed = (square & frontFaceMask[viewDir & 3]) != 0;
+
+            if (frontAllowed) {
+                /* F0171 computes the front ornament as the SECOND call
+                 * (after right, before left).  The mapY and direction
+                 * are modified cumulatively:
+                 *   Right: mapY+1, dir+1
+                 *   Front: same mapY, dir+1 (so dir is original+2)
+                 *   Left:  mapY-1, dir+1 (so dir is original+3)
+                 *
+                 * For the front ornament (MEDIA720 I34E path):
+                 *   value1_mapY = (mapY+1) * (normalize(dir+2) + 1)
+                 * where dir = original direction passed to F0171. */
+                int ornDir = viewDir; /* F0171 receives the viewing direction */
+                int ornMapY = mapY + 1; /* ++P0315_i_MapY from right call */
+                int modDir = ((ornDir + 2) & 3) + 1; /* normalize(++dir twice) + 1 */
+                int ornY = ornMapY * modDir;
+
+                unsigned int v1 = (unsigned int)(2000 + (mapX << 5) + ornY);
+                unsigned int v2 = (unsigned int)(3000 +
+                    (state->world.party.mapIndex << 6) +
+                    (int)ornMap->width + (int)ornMap->height);
+                unsigned int seed = state->world.dungeon->header.ornamentRandomSeed;
+                int rndIdx = (int)((((v1 * 31417u) >> 1) + (v2 * 11u) + seed) >> 2) % 30;
+                if (rndIdx < rwoc) {
+                    cell.wallOrnamentOrdinal = rndIdx + 1; /* INDEX_TO_ORDINAL */
+                }
+            }
+        }
+    }
+
     /* Extract wall ornament ordinal from sensors on this square.
      * In DM, wall ornaments are placed via sensor things whose
-     * ornamentOrdinal field specifies the graphic to display. */
+     * ornamentOrdinal field specifies the graphic to display.
+     * Sensor-placed ornaments OVERRIDE random ornaments. */
     if (state->world.things && state->world.things->sensors) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
