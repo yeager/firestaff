@@ -199,14 +199,32 @@ jobs:
           mkdir -p release-files
           find artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.deb" -o -name "*.rpm" -o -name "*.exe" -o -name "*.sha256" -o -name "*-windows.zip" \) -exec cp {} release-files/ \;
           ls -lh release-files/
+      - name: Generate release notes
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${FIRESTAFF_VERSION}" | head -1)
+          echo "Previous tag: $PREV_TAG"
+          if [ -f "RELEASE_${FIRESTAFF_VERSION}.md" ]; then
+            cp "RELEASE_${FIRESTAFF_VERSION}.md" generated_notes.md
+          else
+            echo "## Changes since ${PREV_TAG:-initial}" > generated_notes.md
+            echo "" >> generated_notes.md
+            if [ -n "$PREV_TAG" ]; then
+              git log --pretty=format:'- %s' "${PREV_TAG}..v${FIRESTAFF_VERSION}" >> generated_notes.md
+            else
+              git log --pretty=format:'- %s' -20 >> generated_notes.md
+            fi
+            echo "" >> generated_notes.md
+            echo "" >> generated_notes.md
+            echo "Full changelog: https://github.com/${{ github.repository }}/compare/${PREV_TAG:-main}...v${FIRESTAFF_VERSION}" >> generated_notes.md
+          fi
+          cat generated_notes.md
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NOTES_FILE="RELEASE_NOTES.md"
-          if [ ! -f "$NOTES_FILE" ]; then NOTES_FILE="README.md"; fi
           gh release create "v${FIRESTAFF_VERSION}" \
             --title "Firestaff v${FIRESTAFF_VERSION}" \
-            --notes-file "$NOTES_FILE" \
+            --notes-file generated_notes.md \
             --draft=false \
             release-files/*
