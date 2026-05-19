@@ -7812,10 +7812,12 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * viewport draws them stacked/offset.  We also keep the legacy
      * single creatureType field pointing at the first group. */
     if (cell.summary.groups > 0 && state->world.things && state->world.things->groups &&
-        cell.elementType != DUNGEON_ELEMENT_WALL &&
-        state->world.party.mapIndex != 0) {
-        /* ReDMCSB: Hall of Champions (map 0) has no creatures.
-         * Skip creature group extraction on map 0. */
+        cell.elementType != DUNGEON_ELEMENT_WALL) {
+        /* Extract creature groups from the thing list for this square.
+         * Previously excluded map 0 based on a wrong assumption that
+         * Hall of Champions had no creatures.  DM1 PC 3.4 map 0 does
+         * have mummies — the entrance is C255_MAP_INDEX_ENTRANCE in
+         * ReDMCSB, not map 0. */
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
@@ -11949,12 +11951,16 @@ static int m11_c2500_object_zone_point(int scaleIndex,
      * MASK0x8000_SHIFT_OBJECTS_AND_CREATURES.  Five scale buckets
      * (G2030) × four view cells.  Entries whose source coordinates are
      * 0,0 are intentionally unusable for that distance/cell. */
+    /* ReDMCSB COORD.C G3024_s_LayoutData09 zone C2500..C2519:
+     * Five scale buckets × four view cells.  Y coordinates from
+     * ReDMCSB source (72, not 70 — the previous 70 placed items
+     * ~2px too high, contributing to the "floating" appearance). */
     static const short kC2500[5][4][2] = {
-        {{  0,  0}, {  0,  0}, {127, 70}, { 98, 70}},
-        {{  0,  0}, {  0,  0}, { 62, 70}, { 25, 70}},
-        {{  0,  0}, {  0,  0}, {200, 70}, {162, 70}},
-        {{  0,  0}, {  0,  0}, {  2, 70}, {-35, 70}},
-        {{  0,  0}, {  0,  0}, {258, 70}, {222, 70}}
+        {{  0,  0}, {  0,  0}, {125, 72}, { 95, 72}},
+        {{  0,  0}, {  0,  0}, { 62, 72}, { 25, 72}},
+        {{  0,  0}, {  0,  0}, {200, 72}, {162, 72}},
+        {{  0,  0}, {  0,  0}, {  2, 72}, {-35, 72}},
+        {{  0,  0}, {  0,  0}, {258, 72}, {222, 72}}
     };
     int zx;
     int zy;
@@ -11978,24 +11984,26 @@ static int m11_c2500_object_raw_zone_point(int rowIndex,
      * evidence helper keeps all 17 source rows probe-visible while the
      * renderer's normal object path remains on the existing five-row
      * helper pending the exact F0115 viewSquareTo mapping. */
+    /* ReDMCSB COORD.C G3024_s_LayoutData09 zone C2500..C2560:
+     * Full 17-row zone table with Y coordinates from source. */
     static const short kC2500Raw[17][4][2] = {
-        {{  0,  0}, {  0,  0}, {127, 70}, { 98, 70}},
-        {{  0,  0}, {  0,  0}, { 62, 70}, { 25, 70}},
-        {{  0,  0}, {  0,  0}, {200, 70}, {162, 70}},
-        {{  0,  0}, {  0,  0}, {  2, 70}, {-35, 70}},
-        {{  0,  0}, {  0,  0}, {258, 70}, {222, 70}},
-        {{ 94, 78}, {131, 78}, {136, 88}, { 89, 88}},
-        {{ 10, 78}, { 53, 79}, { 41, 88}, {-14, 89}},
-        {{171, 78}, {218, 78}, {236, 89}, {184, 88}},
-        {{ 83, 99}, {141, 99}, {150,115}, { 76,115}},
-        {{-40,101}, { 24, 99}, {  5,114}, {-79,117}},
-        {{200, 99}, {262,101}, {301,117}, {220,114}},
-        {{ 66,133}, {158,133}, {  0,  0}, {  0,  0}},
-        {{113, 62}, { 46, 61}, {180, 61}, {115, 74}},
-        {{  8, 73}, {220, 74}, {115, 92}, {112, 60}},
-        {{ 45, 61}, {179, 60}, {114, 73}, {  4, 73}},
-        {{219, 73}, {114, 88}, {113, 63}, { 45, 62}},
-        {{181, 62}, {114, 74}, { 11, 73}, {218, 74}}
+        {{  0,  0}, {  0,  0}, {125, 72}, { 95, 72}},
+        {{  0,  0}, {  0,  0}, { 62, 72}, { 25, 72}},
+        {{  0,  0}, {  0,  0}, {200, 72}, {162, 72}},
+        {{  0,  0}, {  0,  0}, {  2, 72}, {-35, 72}},
+        {{  0,  0}, {  0,  0}, {258, 72}, {222, 72}},
+        {{ 92, 78}, {132, 78}, {136, 86}, { 88, 86}},
+        {{ 10, 78}, { 53, 78}, { 41, 86}, {-14, 86}},
+        {{171, 78}, {218, 78}, {236, 86}, {183, 86}},
+        {{ 83, 96}, {141, 96}, {148,111}, { 76,111}},
+        {{-40, 96}, { 26, 96}, {  5,111}, {-79,111}},
+        {{197, 96}, {262, 96}, {301,111}, {220,111}},
+        {{ 66,131}, {158,131}, {  0,  0}, {  0,  0}},
+        {{112, 64}, { 24, 64}, {194, 64}, {112, 74}},
+        {{  3, 74}, {219, 74}, {112, 94}, {112, 63}},
+        {{ 24, 63}, {194, 63}, {112, 73}, {  3, 73}},
+        {{219, 73}, {112, 89}, {112, 65}, { 24, 65}},
+        {{194, 65}, {112, 76}, {  3, 76}, {219, 76}}
     };
     int zx;
     int zy;
