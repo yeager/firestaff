@@ -248,6 +248,25 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
                     snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
                 }
+                /* DM1 PC 3.4: TITLE lives beside DATA/, not inside it.
+                 * DUNGEON.DAT is in .../DungeonMasterPC34/DATA/DUNGEON.DAT
+                 * TITLE is at    .../DungeonMasterPC34/TITLE
+                 * So check the grandparent (parent of DATA/). */
+                {
+                    char grandparent[FSP_PATH_MAX];
+                    if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
+                        if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE") &&
+                            FSP_FileExists(candidate)) {
+                            snprintf(outPath, outPathBytes, "%s", candidate);
+                            return 1;
+                        }
+                        if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE.DAT") &&
+                            FSP_FileExists(candidate)) {
+                            snprintf(outPath, outPathBytes, "%s", candidate);
+                            return 1;
+                        }
+                    }
+                }
             }
         }
     }

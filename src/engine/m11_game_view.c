@@ -3991,73 +3991,130 @@ static void m11_creature_attack_party(
     const struct DungeonGroup_Compat* group) {
     const struct CreatureBehaviorProfile_Compat* profile;
     int creatureCount;
-    int totalDamage;
     int targetChamp;
     int i;
     struct ChampionState_Compat* champ;
-    int baseDmg;
+    int mapDifficulty;
 
     if (!state || !group) return;
 
     profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return;
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
-    baseDmg = profile ? profile->baseAttack : 10;
 
-    /* Each creature in the group attacks for baseDmg / 3 (simplified).
-     * ReDMCSB: some creature types launch projectiles instead of melee.
-     * Creature graphicInfo bit 5 (M11_CREATURE_GI_MASK_ATTACK) indicates
-     * attack capability.  Ranged creatures (e.g. vexirk, materializer)
-     * create spell projectiles via F0212.  We emit projectiles for
-     * creatures with ranged attack types when distance > 1.
-     * Full creature spell table deferred to creature AI phase. */
-    totalDamage = 0;
-    for (i = 0; i < creatureCount; ++i) {
-        if (group->health[i] > 0) {
-            /* Simple damage: baseAttack / 3, minimum 1 */
-            int dmg = baseDmg / 3;
-            if (dmg < 1) dmg = 1;
-            totalDamage += dmg;
-        }
+    /* Map difficulty: ReDMCSB uses G0269_ps_CurrentMap->C.Difficulty << 1 */
+    mapDifficulty = 0;
+    if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        mapDifficulty = (int)state->world.dungeon->maps[state->world.party.mapIndex].difficulty * 2;
     }
 
-    if (totalDamage <= 0) return;
+    /* ReDMCSB GROUP.C:1793 calls F0230 for each creature in the group
+     * that is on a cell adjacent to a champion.  Simplified: each alive
+     * creature in the group attacks one random alive champion. */
+    for (i = 0; i < creatureCount; ++i) {
+        int attack, damage;
+        char champName[16];
+        if (group->health[i] <= 0) continue;
 
-    /* Target the active champion, or first alive champion */
-    targetChamp = state->world.party.activeChampionIndex;
-    if (targetChamp < 0 || targetChamp >= state->world.party.championCount ||
-        !state->world.party.champions[targetChamp].present ||
-        state->world.party.champions[targetChamp].hp.current == 0) {
+        /* Pick target: random alive champion (ReDMCSB picks by cell) */
         targetChamp = -1;
-        for (i = 0; i < state->world.party.championCount; ++i) {
-            if (state->world.party.champions[i].present &&
-                state->world.party.champions[i].hp.current > 0) {
-                targetChamp = i;
-                break;
+        {
+            int aliveCount = 0;
+            int j;
+            for (j = 0; j < state->world.party.championCount; ++j) {
+                if (state->world.party.champions[j].present &&
+                    state->world.party.champions[j].hp.current > 0)
+                    aliveCount++;
+            }
+            if (aliveCount <= 0) return;
+            {
+                int pick = (int)(state->world.gameTick + (unsigned)i) % aliveCount;
+                for (j = 0; j < state->world.party.championCount; ++j) {
+                    if (state->world.party.champions[j].present &&
+                        state->world.party.champions[j].hp.current > 0) {
+                        if (pick == 0) { targetChamp = j; break; }
+                        pick--;
+                    }
+                }
             }
         }
-    }
-    if (targetChamp < 0) return;
+        if (targetChamp < 0) return;
+        champ = &state->world.party.champions[targetChamp];
 
-    champ = &state->world.party.champions[targetChamp];
-    if ((int)champ->hp.current > totalDamage) {
-        champ->hp.current -= (unsigned short)totalDamage;
-    } else {
-        champ->hp.current = 0;
-    }
+        /* ReDMCSB F0230 dodge check:
+         * Hit if: resting OR (champDex < RANDOM(32) + creatureDex + 2*mapDiff - 16
+         *         OR 25% random fail) AND NOT lucky(60) */
+        {
+            int champDex = (int)champ->attributes[CHAMPION_ATTR_DEXTERITY];
+            int creatureDex = profile->dexterity;
+            int dodgeThreshold = ((int)(state->world.gameTick * 31 + i * 7) % 32)
+                                 + creatureDex + mapDifficulty - 16;
+            int randomFail = (((int)(state->world.gameTick * 13 + i * 3) % 4) == 0);
+            if (!state->resting &&
+                champDex >= dodgeThreshold && !randomFail) {
+                /* Dodged! */
+                continue;
+            }
+        }
 
-    {
-        char champName[16];
+        /* ReDMCSB F0230 attack formula:
+         * attack = RANDOM(16) + creatureAttack + 2*mapDiff - parrySkill*2
+         * if attack <= 1: 50% dodge, else attack = RANDOM(4) + 2
+         * attack >>= 1; attack += RANDOM(attack) + RANDOM(4)
+         * attack += RANDOM(attack); attack >>= 2
+         * attack += RANDOM(4) + 1
+         * 50% chance: attack -= RANDOM(attack/2 + 1) - 1 */
+        {
+            int parrySkill = (int)champ->skillLevels[7]; /* SKILL_PARRY = 7 */
+            attack = ((int)(state->world.gameTick * 17 + i * 11) % 16)
+                     + profile->baseAttack + mapDifficulty
+                     - (parrySkill * 2);
+            if (attack <= 1) {
+                if ((state->world.gameTick + i) % 2 == 0) continue; /* 50% dodge */
+                attack = ((int)(state->world.gameTick * 7 + i) % 4) + 2;
+            }
+            attack >>= 1;
+            attack += (attack > 0 ? (int)((state->world.gameTick * 3 + i) % (unsigned)attack) : 0)
+                      + (int)((state->world.gameTick * 5 + i) % 4);
+            attack += (attack > 0 ? (int)((state->world.gameTick * 9 + i * 2) % (unsigned)attack) : 0);
+            attack >>= 2;
+            attack += (int)((state->world.gameTick * 23 + i) % 4) + 1;
+            if ((state->world.gameTick + i) % 2 == 0) {
+                int halfAtk = (attack >> 1) + 1;
+                attack -= (halfAtk > 0 ? (int)((state->world.gameTick * 19 + i) % (unsigned)halfAtk) : 0) - 1;
+            }
+        }
+        if (attack <= 0) attack = 1;
+
+        /* Simplified F0321 armor reduction.
+         * Full F0321 checks each worn item's defense value per wound slot.
+         * Here we use a simple approximation: higher-level champions
+         * take slightly less damage.  TODO: iterate inventory for
+         * real armor defense values. */
+        damage = attack;
+        {
+            int armorApprox = (int)champ->skillLevels[7] + /* parry */
+                              (int)champ->skillLevels[3];  /* fighter */
+            damage -= armorApprox / 2;
+            if (damage < 1) damage = 1;
+        }
+
+        if ((int)champ->hp.current > damage) {
+            champ->hp.current -= (unsigned short)damage;
+        } else {
+            champ->hp.current = 0;
+        }
+
         m11_format_champion_name(champ->name, champName, sizeof(champName));
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: %s HIT BY %s FOR %d",
                       (unsigned int)state->world.gameTick,
                       champName,
                       m11_creature_name(group->creatureType),
-                      totalDamage);
+                      damage);
+        M11_GameView_NotifyDamageFlash(state, group->creatureType);
     }
-
-    /* Trigger visual feedback for the attack */
-    M11_GameView_NotifyDamageFlash(state, group->creatureType);
 }
 
 /* Process one creature group: check distance, maybe move, maybe attack. */
