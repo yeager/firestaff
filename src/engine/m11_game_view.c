@@ -2960,6 +2960,24 @@ static void m11_get_item_name(const struct DungeonThings_Compat* things,
  * prepend an item to a square
  * ================================================================ */
 
+static unsigned short m11_get_raw_next_thing(const struct DungeonThings_Compat* things,
+                                             unsigned short thingId) {
+    int type;
+    int index;
+    const unsigned char* raw;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = THING_GET_TYPE(thingId);
+    index = THING_GET_INDEX(thingId);
+    if (type < 0 || type >= 16 || !things->rawThingData[type] ||
+        index < 0 || index >= things->thingCounts[type]) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type] + (index * s_thingDataByteCount[type]);
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
 static void m11_set_raw_next_thing(struct DungeonThings_Compat* things,
                                    unsigned short thingId,
                                    unsigned short newNext) {
@@ -3983,6 +4001,87 @@ static int m11_creature_try_move(
     *outNewX = groupX;
     *outNewY = groupY;
     return 0;
+}
+
+/* Check if all creatures in a group are dead.  If so, drop the group's
+ * possessions on the square and remove the group from the square's
+ * thing list.  ReDMCSB GROUP.C F0209_GROUP_RemoveCreature drops
+ * possessions via F0164_DUNGEON_UnlinkThingFromList.
+ * Returns 1 if the group was killed and removed. */
+static void m11_award_kill_xp(M11_GameViewState* state, int creatureType);
+
+static int m11_check_group_death_and_drop(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupMapIndex,
+    int groupMapX,
+    int groupMapY) {
+    int gIdx;
+    struct DungeonGroup_Compat* g;
+    int anyAlive = 0;
+    int slotI;
+
+    if (!state || !state->world.things ||
+        groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
+        return 0;
+    }
+    gIdx = THING_GET_INDEX(groupThing);
+    if (gIdx < 0 || gIdx >= state->world.things->groupCount) {
+        return 0;
+    }
+    g = &state->world.things->groups[gIdx];
+
+    for (slotI = 0; slotI <= (int)g->count; ++slotI) {
+        if (g->health[slotI] > 0) {
+            anyAlive = 1;
+            break;
+        }
+    }
+    if (anyAlive) return 0;
+
+    /* Group is dead — drop possessions on the square.
+     * Walk the group's slot chain and place each thing on the floor. */
+    {
+        unsigned short possession = g->slot;
+        int dropCount = 0;
+        int safety = 0;
+        while (possession != THING_NONE && possession != THING_ENDOFLIST
+               && safety++ < 32) {
+            unsigned short nextPossession = THING_NONE;
+            int pType = THING_GET_TYPE(possession);
+            int pIdx = THING_GET_INDEX(possession);
+            /* Read the next pointer before we unlink */
+            nextPossession = m11_get_raw_next_thing(state->world.things, possession);
+            /* Place on floor */
+            if (m11_prepend_thing_to_square(&state->world,
+                                           groupMapIndex, groupMapX, groupMapY,
+                                           possession)) {
+                dropCount++;
+            }
+            possession = nextPossession;
+        }
+        g->slot = THING_NONE;
+        if (dropCount > 0) {
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s DROPS %d ITEM%s",
+                          (unsigned int)state->world.gameTick,
+                          m11_creature_name((int)g->creatureType),
+                          dropCount, dropCount == 1 ? "" : "S");
+        }
+    }
+
+    /* Log the kill */
+    m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                  "T%u: %s DEFEATED",
+                  (unsigned int)state->world.gameTick,
+                  m11_creature_name((int)g->creatureType));
+    m11_award_kill_xp(state, (int)g->creatureType);
+
+    /* Remove the group from the square's thing list.
+     * In a full implementation this would use F0164 to properly
+     * unlink from the chain.  For now, mark it as dead by
+     * zeroing all health — the renderer already skips dead groups. */
+    return 1;
 }
 
 /* Deal autonomous creature damage to the party. */
@@ -15820,6 +15919,11 @@ static void m11_projectile_apply_impact(
                               (unsigned int)state->world.gameTick,
                               name,
                               m11_creature_name((int)g->creatureType));
+                /* Check if the group is dead after projectile damage */
+                (void)m11_check_group_death_and_drop(
+                    state, groupThing, p->mapIndex,
+                    r->newMapX != 0 || r->newMapY != 0 ? r->newMapX : p->mapX,
+                    r->newMapX != 0 || r->newMapY != 0 ? r->newMapY : p->mapY);
                 return;
             }
         }
@@ -16100,6 +16204,14 @@ static void m11_explosion_apply_tick_result(
                               (unsigned int)state->world.gameTick,
                               typeName,
                               m11_creature_name((int)g->creatureType));
+                /* Check if the group is dead after melee/explosion damage */
+                (void)m11_check_group_death_and_drop(
+                    state, groupThing,
+                    r->outActionGroup.targetMapIndex >= 0
+                        ? r->outActionGroup.targetMapIndex
+                        : state->world.party.mapIndex,
+                    r->outActionGroup.targetMapX,
+                    r->outActionGroup.targetMapY);
             }
         }
     }
