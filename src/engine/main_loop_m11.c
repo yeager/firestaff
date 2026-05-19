@@ -782,7 +782,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+        /* ReDMCSB: the entrance screen always plays for DM1 regardless
+         * of presentation mode.  F0441_STARTEND_ProcessEntrance is the
+         * mandatory gate between title and gameplay.  Previously this
+         * was gated on V1_ORIGINAL mode only, causing the entrance to
+         * be skipped when the user selected V2 Enhanced 2D or other
+         * modes — dropping them straight into the dungeon. */
+        {
             int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
             if (entranceResult == M11_ENTRANCE_COMMAND_RESUME) {
                 /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
