@@ -7812,12 +7812,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * viewport draws them stacked/offset.  We also keep the legacy
      * single creatureType field pointing at the first group. */
     if (cell.summary.groups > 0 && state->world.things && state->world.things->groups &&
-        cell.elementType != DUNGEON_ELEMENT_WALL) {
-        /* Extract creature groups from the thing list for this square.
-         * Previously excluded map 0 based on a wrong assumption that
-         * Hall of Champions had no creatures.  DM1 PC 3.4 map 0 does
-         * have mummies — the entrance is C255_MAP_INDEX_ENTRANCE in
-         * ReDMCSB, not map 0. */
+        cell.elementType != DUNGEON_ELEMENT_WALL &&
+        state->world.party.mapIndex != 0) {
+        /* ReDMCSB: Hall of Champions (map 0) has no active creatures.
+         * Daniel confirmed 2026-05-19: correct behavior, not a bug. */
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
