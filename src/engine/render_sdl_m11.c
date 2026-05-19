@@ -36,8 +36,10 @@
 
 typedef struct {
     int initialised;
-    int windowW;
+    int windowW;       /* logical window size (for mouse coordinate mapping) */
     int windowH;
+    int renderW;       /* pixel-level render output size (for destRect computation) */
+    int renderH;
     int scaleMode;
     int displayAspectMode;
     int paletteLevel;
@@ -290,8 +292,14 @@ int M11_Render_ComputePresentationRect(int windowW,
 static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
     int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
     int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
-    (void)M11_Render_ComputePresentationRect(g_state.windowW,
-                                             g_state.windowH,
+    /* Use pixel-level render output size for destRect computation.
+     * SDL3 RenderTexture operates in pixel coordinates, not logical
+     * window points.  On macOS Retina (2× scale), using logical size
+     * here causes the game content to render at half size. */
+    int rw = g_state.renderW > 0 ? g_state.renderW : g_state.windowW;
+    int rh = g_state.renderH > 0 ? g_state.renderH : g_state.windowH;
+    (void)M11_Render_ComputePresentationRect(rw,
+                                             rh,
                                              contentW,
                                              contentH,
                                              g_state.scaleMode,
@@ -500,12 +508,16 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     }
 
     memset(g_state.framebuffer, 0, M11_FB_BYTES);
-    /* Store LOGICAL window size for coordinate mapping.
-     * SDL3: renderer and mouse events use logical (window) coordinates,
-     * NOT pixel coordinates.  Using pixel size here causes the viewport
-     * to render at a fraction of the window on HiDPI/Retina displays
-     * and makes mouse clicks miss their targets.
-     * SDL2: use SDL_GL_GetDrawableSize for pixel-accurate rendering. */
+    /* Store LOGICAL window size for mouse coordinate mapping.
+     * SDL3: mouse events use logical (window) coordinates.
+     * SDL2: use SDL_GL_GetDrawableSize for pixel-accurate rendering.
+     *
+     * Separately store PIXEL render output size for destRect computation.
+     * SDL3 SDL_RenderTexture operates in pixel coordinates, not logical
+     * window points.  On macOS Retina (2× scale), the render output is
+     * 2× the logical window size.  Using logical size for destRect causes
+     * the game content to render at half size — filling only the center
+     * quarter of the window.  This was the "small content" bug on Mac. */
     {
         int ww = windowWidth, wh = windowHeight;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -517,6 +529,17 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         g_state.windowW = (ww > 0) ? ww : windowWidth;
         g_state.windowH = (wh > 0) ? wh : windowHeight;
     }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    {
+        int rw = 0, rh = 0;
+        SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
+        g_state.renderW = (rw > 0) ? rw : g_state.windowW;
+        g_state.renderH = (rh > 0) ? rh : g_state.windowH;
+    }
+#else
+    g_state.renderW = g_state.windowW;
+    g_state.renderH = g_state.windowH;
+#endif
     g_state.scaleMode = scaleMode;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.paletteLevel = 0;
@@ -562,6 +585,8 @@ void M11_Render_Shutdown(void) {
     g_state.quitRequested = 0;
     g_state.windowW = 0;
     g_state.windowH = 0;
+    g_state.renderW = 0;
+    g_state.renderH = 0;
     g_state.paletteLevel = 0;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
@@ -931,8 +956,32 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
     if (newWidth <= 0 || newHeight <= 0) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    /* SDL3 HiDPI fix: always query authoritative sizes from SDL instead
+     * of trusting the caller.  This function is called from both
+     * SDL_EVENT_WINDOW_RESIZED (logical coords) and
+     * SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED (pixel coords).  Rather than
+     * requiring callers to distinguish, we query both sizes here:
+     * - windowW/H = logical (for mouse coordinate mapping)
+     * - renderW/H = pixels (for SDL_RenderTexture destRect) */
+    {
+        int ww = 0, wh = 0;
+        SDL_GetWindowSize(g_state.window, &ww, &wh);
+        g_state.windowW = (ww > 0) ? ww : newWidth;
+        g_state.windowH = (wh > 0) ? wh : newHeight;
+    }
+    {
+        int rw = 0, rh = 0;
+        SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
+        g_state.renderW = (rw > 0) ? rw : g_state.windowW;
+        g_state.renderH = (rh > 0) ? rh : g_state.windowH;
+    }
+#else
     g_state.windowW = newWidth;
     g_state.windowH = newHeight;
+    g_state.renderW = newWidth;
+    g_state.renderH = newHeight;
+#endif
     M11_Render_SyncWindowModeFromWindow();
     return M11_RENDER_OK;
 }
@@ -1020,7 +1069,24 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
         return 0;
     }
 
-    m11_compute_present_rect(&rectX, &rectY, &rectW, &rectH);
+    /* Mouse events in SDL3 use logical (window) coordinates, not pixel
+     * coordinates.  Compute the presentation rect in logical space so
+     * the hit-test and coordinate mapping are correct. */
+    {
+        int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
+        int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
+        (void)M11_Render_ComputePresentationRect(g_state.windowW,
+                                                 g_state.windowH,
+                                                 contentW,
+                                                 contentH,
+                                                 g_state.scaleMode,
+                                                 g_state.integerScaling,
+                                                 g_state.displayAspectMode,
+                                                 &rectX,
+                                                 &rectY,
+                                                 &rectW,
+                                                 &rectH);
+    }
     if (rectW <= 0 || rectH <= 0) {
         return 0;
     }
