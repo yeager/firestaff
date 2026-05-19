@@ -16,6 +16,7 @@
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -8741,13 +8742,83 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
              * wall square, check sensorType for wall click types (1-18),
              * and fire the matching sensor.  We call the sensor pipeline
              * directly with a wall-click context. */
-            if (frontCell.valid && frontCell.summary.sensors > 0) {
-                struct SensorEffectList_Compat wallResults;
-                memset(&wallResults, 0, sizeof(wallResults));
-                /* Use the enterEffects path to process wall click results */
-                m11_apply_sensor_effects(state, &wallResults);
-                m11_set_status(state, "WALL", "SENSOR TOUCHED");
-                return M11_GAME_INPUT_REDRAW;
+            if (frontCell.valid && frontCell.summary.sensors > 0 &&
+                state->world.things && state->world.things->sensors) {
+                /* ReDMCSB F0275/F0726: enumerate sensors on the front
+                 * wall square and fire wall-click triggers. */
+                struct SensorOnSquare_Compat sensorsOnSq[SENSOR_ENUM_CAPACITY];
+                int sensCount = 0;
+                unsigned short sThing = frontCell.firstThing;
+                int sSafety = 0;
+                memset(sensorsOnSq, 0, sizeof(sensorsOnSq));
+                while (sThing != THING_ENDOFLIST && sThing != THING_NONE &&
+                       sSafety++ < 64 && sensCount < SENSOR_ENUM_CAPACITY) {
+                    if (THING_GET_TYPE(sThing) == THING_TYPE_SENSOR) {
+                        int si = THING_GET_INDEX(sThing);
+                        if (si >= 0 && si < state->world.things->sensorCount) {
+                            sensorsOnSq[sensCount].found = 1;
+                            sensorsOnSq[sensCount].sensorIndex = si;
+                            sensorsOnSq[sensCount].sensorType =
+                                (int)state->world.things->sensors[si].sensorType;
+                            sensorsOnSq[sensCount].sensorData =
+                                state->world.things->sensors[si].sensorData;
+                            sensorsOnSq[sensCount].targetMapX =
+                                (int)state->world.things->sensors[si].targetMapX;
+                            sensorsOnSq[sensCount].targetMapY =
+                                (int)state->world.things->sensors[si].targetMapY;
+                            sensorsOnSq[sensCount].cell =
+                                (int)(state->world.things->sensors[si].targetCell & 3);
+                            sensorsOnSq[sensCount].isLocal =
+                                state->world.things->sensors[si].localEffect;
+                            sensCount++;
+                        }
+                    }
+                    sThing = m11_raw_next_thing(state->world.things, sThing);
+                }
+                if (sensCount > 0) {
+                    struct WallSensorContext_Compat ctx;
+                    struct SensorTriggerResultList_Compat trigResults;
+                    memset(&ctx, 0, sizeof(ctx));
+                    ctx.mapX = frontCell.mapX;
+                    ctx.mapY = frontCell.mapY;
+                    ctx.cell = 0;
+                    ctx.leaderEmptyHanded =
+                        (M11_GameView_GetV1LeaderHandThing(state) == THING_NONE) ? 1 : 0;
+                    ctx.leaderHandObjectType = ctx.leaderEmptyHanded ? -1 :
+                        (int)THING_GET_TYPE(M11_GameView_GetV1LeaderHandThing(state));
+                    ctx.leaderIndex = state->world.party.activeChampionIndex;
+                    ctx.sensorCountInCell = sensCount;
+                    memset(&trigResults, 0, sizeof(trigResults));
+                    if (F0726_SENSOR_ProcessWallClick_Compat(
+                            sensorsOnSq, sensCount,
+                            state->world.things->sensors,
+                            state->world.things->sensorCount,
+                            &ctx, &trigResults) && trigResults.count > 0) {
+                        /* Convert trigger results to effect list */
+                        struct SensorEffectList_Compat effects;
+                        int ri;
+                        memset(&effects, 0, sizeof(effects));
+                        for (ri = 0; ri < trigResults.count &&
+                             effects.count < SENSOR_EFFECT_LIST_MAX_COUNT; ++ri) {
+                            const struct SensorTriggerResult_Compat* tr =
+                                &trigResults.results[ri];
+                            if (!tr->triggered) continue;
+                            effects.effects[effects.count].kind =
+                                SENSOR_EFFECT_TOGGLE_REMOTE;
+                            effects.effects[effects.count].destMapX = tr->targetMapX;
+                            effects.effects[effects.count].destMapY = tr->targetMapY;
+                            effects.effects[effects.count].textIndex = tr->resolvedEffect;
+                            effects.count++;
+                        }
+                        m11_apply_sensor_effects(state, &effects);
+                        if (trigResults.results[0].audible) {
+                            M11_Audio_EmitSoundIndex(&state->audioState, 1,
+                                                     M11_AUDIO_MARKER_NONE);
+                        }
+                    }
+                    m11_set_status(state, "WALL", "SENSOR ACTIVATED");
+                    return M11_GAME_INPUT_REDRAW;
+                }
             }
         }
     } else {
