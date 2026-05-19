@@ -129,8 +129,11 @@ static int movement_get_stairs_exit_direction(
 
     squareByte = dungeon->tiles[mapIndex].squareData[mapX * (int)map->height + mapY];
     northSouth = (squareByte & 0x08) ? 0 : 1;
-    checkX = mapX + (northSouth ? 0 : 1);
-    checkY = mapY + (northSouth ? -1 : 0);
+    /* ReDMCSB F0155: if NS-oriented, check EAST neighbor (+1,0);
+     * if EW-oriented, check NORTH neighbor (0,-1).
+     * Previous code had these swapped, causing wrong exit direction. */
+    checkX = mapX + (northSouth ? 1 : 0);
+    checkY = mapY + (northSouth ? 0 : -1);
     if (checkX >= 0 && checkX < (int)map->width && checkY >= 0 && checkY < (int)map->height) {
         int checkType = (dungeon->tiles[mapIndex].squareData[checkX * (int)map->height + checkY] &
                          DUNGEON_SQUARE_MASK_TYPE) >> 5;
