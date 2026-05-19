@@ -6685,6 +6685,12 @@ typedef struct M11_ViewportCell {
      * ornaments assigned via random generation or sensor things.
      * Ref: ReDMCSB DUNGEON.C F169 — SquareAspect[C4_FLOOR_ORNAMENT_ORDINAL]. */
     int floorOrnamentOrdinal;
+    /* Inscription text-string thing index (into things->textStrings[]),
+     * or -1 if no inscription text on this wall.  Set when the wall
+     * ornament matches the map's inscription ornament index and a
+     * TEXT_STRING thing exists on this square.
+     * Ref: ReDMCSB DUNGEON.C:2593 G0290_T_DungeonView_InscriptionThing. */
+    int inscriptionTextIndex;
     /* First explosion type (0-50), or -1 */
     int firstExplosionType;
     /* First explosion currentFrame (0..maxFrames-1), or -1 if none. */
@@ -7893,6 +7899,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; cell.floorItemCells[fi] = 0; } }
     cell.floorItemCount = 0;
     cell.wallOrnamentOrdinal = -1;
+    cell.inscriptionTextIndex = -1;
     cell.championPortraitOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
@@ -8198,6 +8205,57 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
+        }
+    }
+
+    /* ── Inscription text detection ──
+     * ReDMCSB DUNGEON.C:2585-2593: when a wall's ornament ordinal matches
+     * G0265_i_CurrentMapInscriptionWallOrnamentIndex, the engine sets
+     * G0290_T_DungeonView_InscriptionThing to the associated text-string
+     * thing.  The inscription ornament index is stored as the last entry
+     * in the per-map wallOrnamentIndices (at index wallOrnamentCount).
+     * DUNGEON.C:2580-2593 sets the inscription ornament ordinal when a
+     * TEXT_STRING thing is found on a wall square via a sensor linkage.
+     * For simplicity, we detect inscriptions by checking if any
+     * TEXT_STRING thing exists on this wall square. */
+    if (cell.elementType == DUNGEON_ELEMENT_WALL &&
+        cell.wallOrnamentOrdinal >= 0 &&
+        state->world.dungeon &&
+        state->world.things &&
+        state->world.things->textStrings) {
+        int mi = state->world.party.mapIndex;
+        if (mi >= 0 && mi < (int)state->world.dungeon->header.mapCount) {
+            const struct DungeonMapDesc_Compat* ornMap =
+                &state->world.dungeon->maps[mi];
+            /* The inscription ornament is at wallOrnamentCount in the
+             * per-map table (one past the last regular ornament). */
+            int inscOrnIdx = -1;
+            if (mi < 32 && state->ornamentCacheLoaded[mi]) {
+                int inscSlot = (int)ornMap->wallOrnamentCount;
+                if (inscSlot < 16) {
+                    inscOrnIdx = state->wallOrnamentIndices[mi][inscSlot];
+                }
+            }
+            /* Check if our wall ornament ordinal-1 (0-based) matches the
+             * inscription ornament index. */
+            if (inscOrnIdx >= 0 &&
+                (cell.wallOrnamentOrdinal - 1) == inscOrnIdx) {
+                /* Scan thing chain for TEXT_STRING things */
+                unsigned short tScan = firstThing;
+                int tSafety = 0;
+                while (tScan != THING_ENDOFLIST && tScan != THING_NONE &&
+                       tSafety++ < 64) {
+                    if (THING_GET_TYPE(tScan) == THING_TYPE_TEXTSTRING) {
+                        int tsIdx = THING_GET_INDEX(tScan);
+                        if (tsIdx >= 0 &&
+                            tsIdx < state->world.things->textStringCount) {
+                            cell.inscriptionTextIndex = tsIdx;
+                            break;
+                        }
+                    }
+                    tScan = m11_raw_next_thing(state->world.things, tScan);
+                }
+            }
         }
     }
 
@@ -11035,6 +11093,66 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                    m11_dm1_f0115_c2500_c2900_row(
                                                        kWallOrnaments[i].relForward,
                                                        kWallOrnaments[i].relSide));
+                }
+                /* ── Inscription text overlay ──
+                 * ReDMCSB DUNVIEW.C:3608-3650: when a D1C front wall
+                 * ornament is an inscription, the engine decodes the
+                 * text-string and draws each character using the
+                 * inscription font (graphic 120/258, 8x8 glyphs).
+                 * Text is centered at viewport X=112 (224px viewport),
+                 * lines positioned at InscriptionLineY[]. */
+                if (cell.inscriptionTextIndex >= 0 &&
+                    kWallOrnaments[i].viewWallIndex == 12 && /* D1C front */
+                    state->world.things &&
+                    state->world.things->textData &&
+                    state->world.things->textStrings &&
+                    cell.inscriptionTextIndex < state->world.things->textStringCount) {
+                    char decoded[96];
+                    unsigned int wordOff =
+                        state->world.things->textStrings[cell.inscriptionTextIndex].textDataWordOffset;
+                    if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
+                            state->world.things->textData,
+                            state->world.things->textDataWordCount,
+                            wordOff, decoded, sizeof(decoded)) >= 0 &&
+                        decoded[0] != '\0') {
+                        /* ReDMCSB InscriptionLineY: {48, 59, 75, 86}.
+                         * Text lines are delimited by '\n' in decoded.
+                         * Each glyph is 8px wide; centered at viewport
+                         * center (112px in 224px viewport). */
+                        static const int kInscLineY[4] = { 48, 59, 75, 86 };
+                        int lineCount = 0;
+                        const char* lines[4] = { NULL, NULL, NULL, NULL };
+                        int lineLens[4] = { 0, 0, 0, 0 };
+                        const char* p = decoded;
+                        int li;
+                        lines[0] = decoded;
+                        while (*p && lineCount < 4) {
+                            if (*p == '\n') {
+                                lineLens[lineCount] = (int)(p - lines[lineCount]);
+                                lineCount++;
+                                if (lineCount < 4) lines[lineCount] = p + 1;
+                            }
+                            p++;
+                        }
+                        if (lineCount < 4) {
+                            lineLens[lineCount] = (int)(p - lines[lineCount]);
+                            lineCount++;
+                        }
+                        for (li = 0; li < lineCount && li < 4; ++li) {
+                            int len = lineLens[li];
+                            int textX = M11_VIEWPORT_X + 112 - (len * 4);
+                            int textY = M11_VIEWPORT_Y + kInscLineY[li] - 4;
+                            /* Build a null-terminated line string */
+                            char lineBuf[72];
+                            if (len > 0 && len < (int)sizeof(lineBuf)) {
+                                memcpy(lineBuf, lines[li], (size_t)len);
+                                lineBuf[len] = '\0';
+                                m11_draw_text(framebuffer, fbW, fbH,
+                                              textX, textY,
+                                              lineBuf, NULL);
+                            }
+                        }
+                    }
                 }
             }
         }
