@@ -11176,15 +11176,20 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
     for (depth = 0; depth < 3; ++depth) {
         size_t i;
         const M11_ViewportCell* cell = &cells[depth][1];
-        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
-            m11_viewport_cell_is_open(cell)) {
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR) {
             continue;
         }
+        /* ReDMCSB DUNVIEW.C F0111/F0128: the door FRAME (top lintel,
+         * side pillars) is always drawn regardless of door state.
+         * Only the door PANEL (the actual gate/wooden door) is hidden
+         * when the door is fully open.  Previous code skipped the
+         * entire rendering for open doors, causing the frame to
+         * disappear when portcullis gates opened. */
         for (i = 0; i < kByDepth[depth].count; ++i) {
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &kByDepth[depth].blits[i], 10);
         }
-        {
+        if (!m11_viewport_cell_is_open(cell)) {
             int panelState = (cell->doorState >= 1 && cell->doorState <= 3) ?
                 cell->doorState : 0;
             M11_DM1ZoneBlit panel = kDoorPanels[depth][panelState];
@@ -11527,10 +11532,11 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
             continue;
         }
-        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
-            m11_viewport_cell_is_open(&cell)) {
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR) {
             continue;
         }
+        /* ReDMCSB: door frame persists at all door states.
+         * Only the panel is hidden when fully open. */
         if (kSpecs[i].frameCount >= 1) {
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &kSpecs[i].frameA, 10);
@@ -11538,6 +11544,9 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         if (kSpecs[i].frameCount >= 2) {
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &kSpecs[i].frameB, 10);
+        }
+        if (m11_viewport_cell_is_open(&cell)) {
+            continue; /* Frame drawn, skip panel for open doors */
         }
         panel = kSpecs[i].panel;
         panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
