@@ -162,6 +162,7 @@ Fontanel has already documented **93 bugs + 108 changes** across 9 game versions
 
 - [ ] Fontanel save-file obfuscation (`Noise[10]` / `Keys[16]` / `Checksums[16]`) not implemented in Phase 15. Needed only if interoperability with original `DMSAVE1.DAT` should be supported.
 - [x] `GLOBAL_DATA.GameID` / `MusicOn` carried in save header audio metadata.
+- [x] DM1 V1 music on/off runtime state source-locked: title playback gate, map-music scheduling stop while off, and save/resume round-trip verified.
 - [ ] `DungeonMutation.fieldMask` semantics still opaque, replay engine can interpret later.
 - [ ] Phase 13 DISASSEMBLY: `F0308_CHAMPION_IsLucky` plus cursed-items BUG0_38, hidden state, Luck collapsed to 0 in v1.
 - [ ] Phase 13 DISASSEMBLY: poison-cloud `F0307` vs Vitality, caller applies it, likely Phase 16 or later.
