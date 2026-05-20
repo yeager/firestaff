@@ -176,9 +176,10 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## DM1 V2 — Enhanced Mode
+## DM1 V2.1 / V2.2 — Enhanced Modes
 
-- 🔧 V2 presentation mode selectable from menu
+- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
+- 🔧 V2.1/V2.2 presentation modes selectable from menu
 - ✅ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
   - ✅ Phase 0 slice — V2 presentation command-route gate: V1/off preserves ReDMCSB movement command IDs 1..6; V2/on maps presentation runtime IDs without changing source IDs (b5a41085)
 - ✅ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
@@ -217,8 +218,9 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## CSB V2 — Enhanced Mode
+## CSB V2.1 / V2.2 — Enhanced Modes
 
+- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined CSB V2 value.
 - ❌ Phase 0 — V1 parity gate: CSB V2 may not change CSB V1 command semantics, dungeon timing, source-locked collision, save/load data, or CSB-specific mechanics unless behavior is behind an explicit V2 presentation toggle
 - ❌ Phase 1 — Presentation scaffold: split CSB V1 gameplay state from V2 render/input presentation, keep CSB V1 as the default runtime path, and add deterministic CSB V2 config/profile persistence
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for CSB walls, doors, ornaments, creatures, objects, projectiles, fonts, palette/light levels, title, and utility/import surfaces
@@ -245,8 +247,9 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## DM2 V2 — Enhanced Mode
+## DM2 V2.1 / V2.2 — Enhanced Modes
 
+- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM2 V2 value.
 - ❌ Phase 0 — V1 parity gate: DM2 V2 may not change Skullkeep command semantics, world timing, movement/collision, save/load data, object state, shop/trader behavior, or source-locked mechanics unless behavior is behind an explicit V2 presentation toggle
 - ❌ Phase 1 — Presentation scaffold: split DM2 V1 gameplay state from V2 render/input presentation, keep DM2 V1 as the default runtime path, and add deterministic DM2 V2 config/profile persistence
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for DM2 GDAT-backed walls, floors, doors, objects, creatures, clouds, projectiles, fonts, palette/light levels, title/intro, and UI surfaces
@@ -272,8 +275,9 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## DM Nexus V2 — Enhanced Mode
+## DM Nexus V2.1 / V2.2 — Enhanced Modes
 
+- 🧭 V2 split: V2.1 is the 10x source/provenance-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM Nexus V2 value.
 - ❌ Phase 0 — V1 parity gate: Nexus V2 may not change Nexus V1 command semantics, world timing, movement/collision, save/load data, champion state, object state, or source/provenance-locked mechanics unless behavior is behind an explicit V2 presentation toggle
 - ❌ Phase 1 — Presentation scaffold: split Nexus V1 gameplay state from V2 render/input presentation, keep Nexus V1 as the default runtime path, and add deterministic Nexus V2 config/profile persistence
 - ❌ Phase 2 — Graphics/model pipeline: source/provenance-preserving upscale or presentation path for Nexus textures, models, wall/floor/object/creature/projectile/UI/title assets, palettes/materials, and deterministic unsupported-asset fallbacks
