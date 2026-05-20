@@ -11,6 +11,36 @@
  * additive light map/fog overlay for the modern viewport.
  */
 
+/* ReDMCSB DATA.C:359-360, consumed by PANEL.C:418-428.  Palette index 0 is
+ * brightest, 5 is darkest; V2 mirrors the source-selected index instead of
+ * deriving gameplay lighting from presentation-only effects. */
+static const uint8_t k_source_palette_light_amount_floor[6] = { 99, 75, 50, 25, 1, 0 };
+
+M11_V2_SourcePaletteLighting v2_light_build_source_palette_lighting(
+    int source_palette_index,
+    bool enhanced_effects_enabled)
+{
+    M11_V2_SourcePaletteLighting plan;
+    int resolved_palette_index = source_palette_index;
+
+    plan.deterministic_fallback = false;
+    if (resolved_palette_index < 0 || resolved_palette_index >= 6) {
+        resolved_palette_index = 5;
+        plan.deterministic_fallback = true;
+    }
+
+    plan.source_palette_index = (uint8_t)resolved_palette_index;
+    plan.source_light_amount_floor = k_source_palette_light_amount_floor[resolved_palette_index];
+    plan.darkness_percent = (uint8_t)(100 - plan.source_light_amount_floor);
+    plan.shadow_alpha = (uint8_t)(((unsigned int)plan.darkness_percent * 192u + 50u) / 100u);
+
+    /* Invalid source input falls back to the darkest original palette and
+     * disables V2-only local effects so the presentation cannot invent a
+     * brighter gameplay state. */
+    plan.enhanced_effects_enabled = enhanced_effects_enabled && !plan.deterministic_fallback;
+    return plan;
+}
+
 static M11_V2_LightSource g_sources[M11_V2_LIGHT_MAX_SOURCES];
 static int g_source_count = 0;
 static M11_V2_LightMap g_light_map;

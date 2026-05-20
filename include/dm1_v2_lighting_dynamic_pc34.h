@@ -25,12 +25,24 @@ typedef struct {
     uint8_t b[M11_V2_LIGHT_MAP_SIZE][M11_V2_LIGHT_MAP_SIZE];
 } M11_V2_LightMap;
 
+typedef struct {
+    uint8_t source_palette_index;
+    uint8_t source_light_amount_floor;
+    uint8_t darkness_percent;
+    uint8_t shadow_alpha;
+    bool enhanced_effects_enabled;
+    bool deterministic_fallback;
+} M11_V2_SourcePaletteLighting;
+
 void v2_light_init(void);
 int v2_light_add_source(float x, float y, float radius, uint8_t intensity, uint8_t r, uint8_t g, uint8_t b);
 void v2_light_remove_source(int idx);
 void v2_light_compute_map(void);
 void v2_light_get_tile(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b);
 void v2_light_update_flicker(float dt);
+M11_V2_SourcePaletteLighting v2_light_build_source_palette_lighting(
+    int source_palette_index,
+    bool enhanced_effects_enabled);
 
 #ifdef __cplusplus
 }

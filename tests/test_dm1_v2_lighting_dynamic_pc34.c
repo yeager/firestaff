@@ -14,6 +14,29 @@ int main(void) {
     uint8_t r, g, b;
 
     v2_light_init();
+
+    M11_V2_SourcePaletteLighting plan = v2_light_build_source_palette_lighting(0, true);
+    CHECK(plan.source_palette_index == 0);
+    CHECK(plan.source_light_amount_floor == 99);
+    CHECK(plan.darkness_percent == 1);
+    CHECK(plan.shadow_alpha == 2);
+    CHECK(plan.enhanced_effects_enabled);
+    CHECK(!plan.deterministic_fallback);
+
+    plan = v2_light_build_source_palette_lighting(5, true);
+    CHECK(plan.source_palette_index == 5);
+    CHECK(plan.source_light_amount_floor == 0);
+    CHECK(plan.darkness_percent == 100);
+    CHECK(plan.shadow_alpha == 192);
+    CHECK(plan.enhanced_effects_enabled);
+    CHECK(!plan.deterministic_fallback);
+
+    plan = v2_light_build_source_palette_lighting(6, true);
+    CHECK(plan.source_palette_index == 5);
+    CHECK(plan.source_light_amount_floor == 0);
+    CHECK(!plan.enhanced_effects_enabled);
+    CHECK(plan.deterministic_fallback);
+
     v2_light_compute_map();
     get_rgb(16, 16, &r, &g, &b);
     CHECK(r == 0 && g == 0 && b == 0);
