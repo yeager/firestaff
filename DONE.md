@@ -15,6 +15,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Cardinal movement (WASD + arrow keys + click)
 - ✅ Turning (left/right)
 - ✅ Collision detection (walls, doors, creatures)
+- ✅ Collision and doors parity row — ReDMCSB-backed movement blockers, accepted movement state, viewport redraw, and canonical DM1 PC DUNGEON.DAT overlay/runtime cases now cover representative wall, closed/open door, fakewall, and door-button states
 - ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
 - ✅ Movement cooldown (G0310/G0311 timing from F0267)
   - ✅ Input wait loop timing source-lock: PC-34 input wait exits only when input wait has stopped and game time is ticking (6a842b72).
