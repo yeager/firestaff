@@ -42,7 +42,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Object zone Y coordinates (COORD.C source-lock, v2.0.0)
 - ✅ Side door rendering (D1L/R, D2L/R, D3L/R)
 - ✅ Door ornaments
-- ✅ Depth occlusion (center wall blocks far content)
+- ✅ Depth occlusion (center wall blocks far content; boundary wall blocker probe source-locked, 919598c5)
 - ✅ Side lane occlusion
 - ✅ Palette dimming based on light level
 - ✅ HiDPI/Retina scaling (v2.0.0)
@@ -169,7 +169,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Audio
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including Open Door projectile door-impact SFX; party footsteps are provenance-locked absent in DM1 V1
+- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including queued SDL source-index playback gate and Open Door projectile door-impact SFX; party footsteps are provenance-locked absent in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
 - ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
 
