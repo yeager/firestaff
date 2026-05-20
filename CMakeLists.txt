@@ -1720,6 +1720,30 @@ if(BUILD_TESTING)
         COMMAND test_m11_entrance_wait_policy
     )
 
+    add_executable(test_entrance_mouse_routes_pc34_compat_integration
+        tests/test_entrance_mouse_routes_pc34_compat_integration.c
+    )
+    target_link_libraries(test_entrance_mouse_routes_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_entrance_mouse_routes_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME entrance_mouse_routes_pc34_compat
+        COMMAND test_entrance_mouse_routes_pc34_compat_integration
+    )
+
+    add_executable(test_entrance_runtime_dispatch_source_lock
+        tests/test_entrance_runtime_dispatch_source_lock.c
+    )
+    target_link_libraries(test_entrance_runtime_dispatch_source_lock PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_entrance_runtime_dispatch_source_lock PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME entrance_runtime_dispatch_source_lock
+        COMMAND test_entrance_runtime_dispatch_source_lock
+    )
+
     # Launcher smoke (needs game data + built firestaff binary)
     add_test(
         NAME m11_launcher_smoke

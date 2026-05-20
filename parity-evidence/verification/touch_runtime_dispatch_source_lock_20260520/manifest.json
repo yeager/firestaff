@@ -1,0 +1,35 @@
+{
+  "id": "touch_runtime_dispatch_source_lock_20260520",
+  "date": "2026-05-20",
+  "scope": "DM1 V1 entrance/menu runtime mouse/touch dispatch through source-locked route helper",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "source_anchors": [
+    "ENTRANCE.C:739-747",
+    "ENTRANCE.C:850-883",
+    "COMMAND.C:340-353",
+    "COMMAND.C:1379-1449",
+    "COMMAND.C:1641-1660",
+    "COORD.C:1903-1920",
+    "COORD.C:2490-2495",
+    "DEFS.H:375-384",
+    "DEFS.H:3824-3826,3845"
+  ],
+  "changed_runtime_files": [
+    "include/main_loop_m11.h",
+    "src/engine/main_loop_m11.c",
+    "src/frontend/entrance_mouse_routes_pc34_compat.c"
+  ],
+  "changed_tests": [
+    "tests/test_entrance_runtime_dispatch_source_lock.c",
+    "CMakeLists.txt"
+  ],
+  "verification_commands": [
+    "cmake -S . -B build-touch-runtime-dispatch-source-lock-20260520 -DCMAKE_BUILD_TYPE=Debug",
+    "cmake --build build-touch-runtime-dispatch-source-lock-20260520 --target firestaff_m11 test_entrance_runtime_dispatch_source_lock test_entrance_mouse_routes_pc34_compat_integration test_m11_entrance_wait_policy test_touch_pointer_input_pc34_compat_integration test_touch_click_zone_matrix_pc34_compat_integration --parallel",
+    "ctest --test-dir build-touch-runtime-dispatch-source-lock-20260520 --output-on-failure -R 'entrance_runtime_dispatch_source_lock|entrance_mouse_routes_pc34_compat|m11_entrance_wait_policy|touch_pointer_input_pc34_compat|touch_click_zone_matrix_pc34_compat'",
+    "python3 tools/verify_dm1_v1_touch_input_source_locked_ui_zones.py",
+    "git diff --check HEAD~1..HEAD",
+    "high-signal changed-diff credential-pattern scan"
+  ],
+  "status": "verified"
+}

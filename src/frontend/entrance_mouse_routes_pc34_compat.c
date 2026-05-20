@@ -4,8 +4,12 @@
  * - COMMAND.C:340-353 defines the later-media G0445 entrance mouse table.
  * - DEFS.H:375-384 fixes C200/C201/M566/M567 command IDs for I34E/I34M.
  * - DEFS.H:3824-3826,3845 names C407/C409/C411/C434 entrance zones.
- * - COMMAND.C:1113-1139 F0673 resolves zone-backed MOUSE_INPUT rows to
- *   inclusive screen boxes for MEDIA707_I34E/I34M.
+ * - COMMAND.C:1379-1449 F0358_COMMAND_GetCommandFromMouseInput_CPSC walks
+ *   source-order MOUSE_INPUT rows, checks the row button mask, expands
+ *   zone-backed boxes, and uses inclusive coordinate tests.
+ * - COMMAND.C:1641-1660 F0359_COMMAND_ProcessClick_CPSC searches primary
+ *   mouse input before secondary input and stores command/x/y in the queue.
+ * - COORD.C:1903-1920 F0628/F0798 keeps expanded zones inclusive.
  * - COORD.C:2490-2495 F0638_GetZone fetches the layout-696 zone records.
  */
 static const EntranceMouseRouteCompat kRoutes[] = {
@@ -58,5 +62,5 @@ int ENTRANCE_Compat_HitTestMouseRoute(int screenX,
 }
 
 const char* ENTRANCE_Compat_GetMouseRouteEvidence(void) {
-    return "ReDMCSB COMMAND.C:340-353 G0445 entrance mouse table; DEFS.H:375-384 I34E/I34M command IDs; DEFS.H:3824-3826,3845 entrance zones; COMMAND.C:1113-1139 F0673 zone-to-box expansion; COORD.C:2490-2495 F0638_GetZone; ENTRANCE.C:739-747 installs entrance input and ENTRANCE.C:850-883 waits for a fresh entrance command.";
+    return "ReDMCSB COMMAND.C:340-353 G0445 entrance mouse table; DEFS.H:375-384 I34E/I34M command IDs; DEFS.H:3824-3826,3845 entrance zones; COMMAND.C:1379-1449 F0358 source-order hit-test and zone expansion; COMMAND.C:1641-1660 F0359 primary/secondary command queue routing; COORD.C:1903-1920 zone expansion/inclusive point test; COORD.C:2490-2495 F0638_GetZone; ENTRANCE.C:739-747 installs entrance input and ENTRANCE.C:850-883 waits for a fresh entrance command.";
 }

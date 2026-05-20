@@ -47,6 +47,24 @@ int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                            int autoEnterAfterMs,
                                            uint64_t elapsedMs);
 
+enum M11_EntranceRuntimeCommandId {
+    M11_ENTRANCE_RUNTIME_COMMAND_NONE = 0,
+    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON = 200,
+    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON = 201,
+    M11_ENTRANCE_RUNTIME_COMMAND_RESUME = 202,
+    M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS = 203,
+    M11_ENTRANCE_RUNTIME_COMMAND_QUIT = 216
+};
+
+/* Source-locked entrance/menu pointer dispatch. Coordinates are already in
+   the 320x200 DM1 framebuffer space; buttonMask uses ReDMCSB mouse masks. */
+int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
+                                                    int framebufferY,
+                                                    unsigned int buttonMask);
+
+/* Runtime keyboard guard for the current click-only entrance semantics. */
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode);
+
 #ifdef __cplusplus
 }
 #endif

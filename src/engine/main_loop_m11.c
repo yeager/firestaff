@@ -23,6 +23,7 @@
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -439,12 +440,54 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
 }
 
 typedef enum {
-    M11_ENTRANCE_COMMAND_QUIT = 0,
+    M11_ENTRANCE_COMMAND_QUIT = -1,
+    M11_ENTRANCE_COMMAND_NONE = 0,
     M11_ENTRANCE_COMMAND_ENTER = 1,
-    M11_ENTRANCE_COMMAND_RESUME = 2
+    M11_ENTRANCE_COMMAND_RESUME = 2,
+    M11_ENTRANCE_COMMAND_CREDITS = 3
 } M11_EntranceCommand;
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
+
+int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
+                                                    int framebufferY,
+                                                    unsigned int buttonMask) {
+    EntranceMouseRouteCompat route;
+    if (!ENTRANCE_Compat_HitTestMouseRoute(framebufferX, framebufferY, buttonMask, &route)) {
+        return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+    }
+    return (int)route.commandId;
+}
+
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
+    /* Current Firestaff entrance semantics are intentionally click-only for
+     * activation. ReDMCSB installs keyboard rows at ENTRANCE.C:745, but this
+     * runtime guard preserves the already-fixed Return/Space/KP-Enter behavior
+     * while still allowing the explicit quit keys handled before this pass. */
+    switch (keyCode) {
+    case SDLK_ESCAPE:
+    case SDLK_Q:
+        return M11_ENTRANCE_RUNTIME_COMMAND_QUIT;
+    default:
+        return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+    }
+}
+
+static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
+    switch (commandId) {
+    case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
+    case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
+        return M11_ENTRANCE_COMMAND_ENTER;
+    case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
+        return M11_ENTRANCE_COMMAND_RESUME;
+    case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
+        return M11_ENTRANCE_COMMAND_CREDITS;
+    case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
+        return M11_ENTRANCE_COMMAND_QUIT;
+    default:
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+}
 
 int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                            int autoEnterAfterMs,
@@ -560,6 +603,10 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
+            if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
+                sourceStep = 0U;
+                continue;
+            }
         }
         if (step.delayTicks >= 20U) {
             SDL_Delay(330);
@@ -572,6 +619,46 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
     M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     free(dungeonFrame);
     return 1;
+}
+
+static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
+                                                                  int fbY,
+                                                                  unsigned int buttonMask) {
+    return m11_entrance_command_path_from_source_command(
+        M11_Entrance_DispatchSourceLockedPointerCommand(fbX, fbY, buttonMask));
+}
+
+static M11_EntranceCommand m11_entrance_route_window_pointer(int windowX,
+                                                            int windowY,
+                                                            unsigned int buttonMask) {
+    int fbX = 0;
+    int fbY = 0;
+    if (!M11_Render_MapWindowToFramebuffer(windowX, windowY, &fbX, &fbY)) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+    return m11_entrance_route_framebuffer_pointer(fbX, fbY, buttonMask);
+}
+
+static M11_EntranceCommand m11_entrance_route_normalized_touch(float normalizedX,
+                                                              float normalizedY) {
+    int windowW = M11_Render_GetWindowWidth();
+    int windowH = M11_Render_GetWindowHeight();
+    int windowX;
+    int windowY;
+    if (windowW <= 0 || windowH <= 0) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+    if (normalizedX < 0.0f || normalizedX > 1.0f ||
+        normalizedY < 0.0f || normalizedY > 1.0f) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+    windowX = (int)(normalizedX * (float)windowW);
+    windowY = (int)(normalizedY * (float)windowH);
+    if (windowX >= windowW) windowX = windowW - 1;
+    if (windowY >= windowH) windowY = windowH - 1;
+    return m11_entrance_route_window_pointer(windowX,
+                                             windowY,
+                                             ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
 }
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs) {
@@ -602,24 +689,26 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
              * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
             if (ev.type == SDL_EVENT_KEY_DOWN) {
-                if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
+                M11_EntranceCommand keyCommand =
+                    m11_entrance_command_path_from_source_command(
+                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.key));
+                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                int fbX = 0;
-                int fbY = 0;
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
-                if (!M11_Render_MapWindowToFramebuffer((int)ev.button.x, (int)ev.button.y, &fbX, &fbY)) continue;
-                /* ReDMCSB COMMAND.C:63-70 PC entrance button boxes:
-                 * ENTER 244..298,45..58; RESUME 244..298,76..93;
-                 * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
-                 * C434 quit for later media as a separate zone, not ENTER. */
-                /* ReDMCSB COMMAND.C:64/69/350: three entrance buttons.
-                 * ENTER  = start new game (C200)
-                 * RESUME = load saved game (M566)
-                 * QUIT   = credits/back (M567/C216) */
-                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_RESUME;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                {
+                    M11_EntranceCommand pointerCommand =
+                        m11_entrance_route_window_pointer((int)ev.button.x,
+                                                          (int)ev.button.y,
+                                                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
+                    if (pointerCommand != M11_ENTRANCE_COMMAND_NONE) return pointerCommand;
+                }
+                continue;
+            }
+            if (ev.type == SDL_EVENT_FINGER_DOWN) {
+                M11_EntranceCommand touchCommand =
+                    m11_entrance_route_normalized_touch(ev.tfinger.x, ev.tfinger.y);
+                if (touchCommand != M11_ENTRANCE_COMMAND_NONE) return touchCommand;
                 continue;
             }
             if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
@@ -631,16 +720,26 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
              * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
             if (ev.type == SDL_KEYDOWN) {
-                if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
+                M11_EntranceCommand keyCommand =
+                    m11_entrance_command_path_from_source_command(
+                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.keysym.sym));
+                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
-                int fbX = 0;
-                int fbY = 0;
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
-                if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_RESUME;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                {
+                    M11_EntranceCommand pointerCommand =
+                        m11_entrance_route_window_pointer(ev.button.x,
+                                                          ev.button.y,
+                                                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
+                    if (pointerCommand != M11_ENTRANCE_COMMAND_NONE) return pointerCommand;
+                }
+                continue;
+            }
+            if (ev.type == SDL_FINGERDOWN) {
+                M11_EntranceCommand touchCommand =
+                    m11_entrance_route_normalized_touch(ev.tfinger.x, ev.tfinger.y);
+                if (touchCommand != M11_ENTRANCE_COMMAND_NONE) return touchCommand;
                 continue;
             }
             if (ev.type == SDL_WINDOWEVENT &&
@@ -791,6 +890,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * modes — dropping them straight into the dungeon. */
         {
             int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
+            if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
+                gameView->active = 0;
+                return 1;
+            }
             if (entranceResult == M11_ENTRANCE_COMMAND_RESUME) {
                 /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
                  * Look for save file matching this game's source id. */

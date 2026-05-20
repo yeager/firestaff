@@ -1,6 +1,6 @@
 # DM1 V1 touchscreen source-lock manifest
 
-Scope: source-lock the active DM1 V1 in-game mouse/clickable UI zones and command routing before expanding touchscreen support. This is an evidence artifact only; it does not change input behavior.
+Scope: source-lock the active DM1 V1 in-game mouse/clickable UI zones and command routing before expanding touchscreen support. Runtime entrance/menu pointer dispatch is now wired through the source-locked entrance route helper; general in-dungeon touch movement/item interaction remains out of scope.
 
 ## Primary ReDMCSB source
 
@@ -26,8 +26,8 @@ ReDMCSB later-media/PC34 entrance input is a primary mouse table, not the normal
 
 | Route set | Lines | Source behavior | Firestaff abstraction |
 | --- | ---: | --- | --- |
-| `G0445_as_Graphic561_PrimaryMouseInput_Entrance` | `COMMAND.C:340-353` | Source-ordered entrance routes: enter dungeon `C200`/zone `C407`, bonus dungeon `C201`/zone `C407` with mask `0x0010`, resume `M566`=`202`/zone `C409`, quit `C216`/zone `C434`, credits `M567`=`203`/zone `C411`. | `entrance_mouse_routes_pc34_compat.c` now exposes route metadata, button masks, 320x200 boxes, and a source-order hit-test for touch/click probes. |
-| Entrance zone expansion | `COMMAND.C:1113-1139`, `COORD.C:2490-2495` | `F0673_SetMouseInputBoxFromZone` resolves zone-backed rows with `F0638_GetZone`; I34E/I34M boxes use `x + width - 1` / `y + height - 1` inclusive bounds. | `tests/test_entrance_mouse_routes_pc34_compat_integration.c` pins inclusive endpoint hits and outside misses for C407/C409/C434/C411. |
+| `G0445_as_Graphic561_PrimaryMouseInput_Entrance` | `COMMAND.C:340-353` | Source-ordered entrance routes: enter dungeon `C200`/zone `C407`, bonus dungeon `C201`/zone `C407` with mask `0x0010`, resume `M566`=`202`/zone `C409`, quit `C216`/zone `C434`, credits `M567`=`203`/zone `C411`. | `entrance_mouse_routes_pc34_compat.c` exposes route metadata, button masks, 320x200 boxes, and a source-order hit-test; `M11_Entrance_DispatchSourceLockedPointerCommand` routes runtime mouse/touch coordinates through it. |
+| Entrance zone expansion and dispatch | `COMMAND.C:1379-1449`, `COMMAND.C:1641-1660`, `COORD.C:1903-1920`, `COORD.C:2490-2495` | `F0358_COMMAND_GetCommandFromMouseInput_CPSC` walks source-order rows, checks button masks, expands zone-backed rows, and uses inclusive point tests; `F0359_COMMAND_ProcessClick_CPSC` sends the matched command/x/y through the command queue path. | `tests/test_entrance_mouse_routes_pc34_compat_integration.c` pins inclusive endpoint hits/outside misses; `tests/test_entrance_runtime_dispatch_source_lock.c` pins enter, bonus, resume, quit, credits, zero-mask miss, outside miss, and keyboard non-activation. |
 
 ## Command matching and queue routing
 
