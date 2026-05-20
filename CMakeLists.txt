@@ -648,6 +648,12 @@ if(BUILD_TESTING)
         NAME dm1_v1_inventory_consumables_pc34_compat
         COMMAND test_dm1_v1_inventory_consumables_pc34_compat
     )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME dm1_v1_vi_wound_rng_masks_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_vi_wound_rng_masks_source_lock.py
+        )
+    endif()
 
     add_executable(test_inventory_mouth_eye_routes_pc34_compat_integration
         tests/test_inventory_mouth_eye_routes_pc34_compat_integration.c

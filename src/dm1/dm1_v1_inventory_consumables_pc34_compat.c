@@ -56,8 +56,10 @@ const char* dm1_inventory_consumables_source_evidence_pc34(void)
         "PANEL.C:1743-1785 F0349 declares mouth-consumption locals; "
         "PANEL.C:1824-1844 gates mouth-allowed objects, water/waterskin charge use, and leader-hand removal; "
         "PANEL.C:1850-1917 applies potion effects and converts all potions to C20 empty flask without clearing Power; "
+        "PANEL.C:1898-1910 makes VI heal wounds by applying M006_RANDOM(65536) masks, first max(1, Power/42) times, then one mask per retry for up to 10 tries; "
         "PANEL.C:1918-1919 applies G0242 food amounts for C168..C175 food icons capped at 2048; "
         "PANEL.C:1922-1945 clamps health/stamina, animates removed leader-hand food with C205+!(counter&1) for four 8-tick frames, and plays C08 swallow; "
+        "DEFS.H:1-5 defines M006_RANDOM as F0027_MAIN_Get16bitRandomNumber and BASE.C:1688-1695 defines the PC 3.4 16-bit RNG step; "
         "DEFS.H:62-68 defines C08_SOUND_SWALLOW as sound 8 for champion eat/drink; DUNGEON.C:428-436 defines G0242 food amounts; "
         "DUNGEON.C:1108-1127 defines waterskin charge weight and empty-flask weight; "
         "DEFS.H:1468-1481,1517-1524,1891-1947 define potion, junk, and icon constants.";

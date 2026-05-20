@@ -34,6 +34,48 @@
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
 
+enum {
+    M11_DM1_V1_POTION_VI_PC34 = 14,
+    M11_DM1_V1_VI_WOUND_MASK_MAX_PC34 = 15
+};
+
+static uint16_t m11_dm1_v1_next_16bit_random_pc34(struct RngState_Compat* rng)
+{
+    if (!rng) {
+        return 0;
+    }
+    rng->seed = (rng->seed * 0xBB40E62Du) + 11u;
+    return (uint16_t)(rng->seed >> 8);
+}
+
+static int m11_dm1_v1_fill_vi_wound_random_masks_pc34(struct RngState_Compat* rng,
+                                                       int potionPower,
+                                                       uint16_t* masks,
+                                                       int maxMasks)
+{
+    int firstTryMasks;
+    int totalMasks;
+    int i;
+
+    if (!masks || maxMasks <= 0) {
+        return 0;
+    }
+
+    firstTryMasks = potionPower / 42;
+    if (firstTryMasks < 1) {
+        firstTryMasks = 1;
+    }
+    totalMasks = firstTryMasks + 9;
+    if (totalMasks > maxMasks) {
+        totalMasks = maxMasks;
+    }
+
+    for (i = 0; i < totalMasks; ++i) {
+        masks[i] = m11_dm1_v1_next_16bit_random_pc34(rng);
+    }
+    return totalMasks;
+}
+
 /*
  * M11 in-game palette indices.
  *
@@ -19473,11 +19515,20 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     if (thingType == THING_TYPE_POTION && state->world.things && state->world.things->potions &&
         thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
         struct DungeonPotion_Compat* potion = &state->world.things->potions[thingIndex];
+        uint16_t viWoundMasks[M11_DM1_V1_VI_WOUND_MASK_MAX_PC34];
+        int viWoundMaskCount = 0;
+        if ((int)potion->type == M11_DM1_V1_POTION_VI_PC34 && champ->wounds) {
+            viWoundMaskCount = m11_dm1_v1_fill_vi_wound_random_masks_pc34(
+                &state->world.masterRng,
+                (int)potion->power,
+                viWoundMasks,
+                M11_DM1_V1_VI_WOUND_MASK_MAX_PC34);
+        }
         if (!dm1_inventory_consume_potion_pc34(&consumableChampion,
                                                (int)potion->type,
                                                (int)potion->power,
-                                               NULL,
-                                               0,
+                                               viWoundMaskCount ? viWoundMasks : NULL,
+                                               viWoundMaskCount,
                                                &consumableResult)) {
             return 0;
         }

@@ -141,6 +141,28 @@ int main(void)
     ok &= expect_int("VI wound mask applied", c.wounds, 0);
 
     c = base_champion();
+    c.wounds = 0x003Fu;
+    {
+        const uint16_t retryMasks[] = { 0xFFFFu, 0xFFFFu, 0xFFDFu };
+        ok &= expect_int("VI first try uses power/42 masks",
+                         dm1_inventory_consume_potion_pc34(&c, 14, 84, retryMasks, 3, &r), 1);
+        ok &= expect_int("VI retry resets to one random mask", c.wounds, 0x001Fu);
+    }
+
+    c = base_champion();
+    c.wounds = 0x003Fu;
+    {
+        const uint16_t noHealMasks[] = {
+            0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu,
+            0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu,
+            0xFFFFu
+        };
+        ok &= expect_int("VI stops after ten wound-mask tries",
+                         dm1_inventory_consume_potion_pc34(&c, 14, 42, noHealMasks, 11, &r), 1);
+        ok &= expect_int("VI unchanged after ten failed masks", c.wounds, 0x003F);
+    }
+
+    c = base_champion();
     ok &= expect_int("unknown potion still consumed", dm1_inventory_consume_potion_pc34(&c, 99, 80, 0, 0, &r), 1);
     ok &= expect_int("unknown potion leaves strength", c.statistic[DM1_CONSUMABLE_STAT_STRENGTH], 30);
     ok &= expect_int("unknown potion becomes empty flask", r.potionTypeAfter, 20);
