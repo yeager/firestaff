@@ -1,0 +1,12 @@
+84:FAIL INV_GV_07I0 V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts
+85:FAIL INV_GV_07I1 V1 C080 source D1C door-button interior click toggles the front door through the door animation path
+86:FAIL INV_GV_07I2 V1 C080 source D1C door-button left/top edge x160/y44 is clickable
+87:FAIL INV_GV_07I3 V1 C080 source D1C door-button right/bottom edge x175/y52 is clickable
+172:FAIL INV_GV_33 creature AI moves a skeleton toward the party within movement cadence
+436:FAIL INV_GV_172I V1 two-choice dialog uses source C471/C463/C462 zones
+465:PASS INV_GV_362 V1 inventory champion slots map to all source slot-box indices C507..C536 without alias leakage
+466:PASS INV_GV_362A normal V1 inventory slot click picks object into dedicated leader-hand runtime state
+467:PASS INV_GV_362C V1 inventory leader-hand placement honors source AllowedSlots before slot mutation
+468:PASS INV_GV_362B V1 source backpack slots C528..C536 route and mutate extended backpack storage
+469:PASS INV_GV_363 normal V1 inventory pouch/quiver/backpack icons are confined to source C513/C514/C527 boxes
+650:# summary: 601/612 invariants passed

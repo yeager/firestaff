@@ -15177,19 +15177,12 @@ static void m11_apply_dm_dialog_choice_patch(const M11_GameViewState* state,
  * G407.Champions[i].Slots[C01_SLOT_ACTION_HAND].  The status-box
  * ready hand (C00_SLOT_READY_HAND) must not bleed into the action
  * area: a champion with only a ready-hand object still shows/opens
- * the empty-hand action set.  Our compat storage has an optional
- * CHAMPION_SLOT_ACTION_HAND override for probe/runtime callers; when
- * it is absent, CHAMPION_SLOT_HAND_RIGHT is the current C01 action-
- * hand mirror. */
+ * the empty-hand action set. */
 static unsigned short m11_get_action_hand_thing(
     const struct ChampionState_Compat* champ) {
-    unsigned short t;
     if (!champ) return THING_NONE;
-    /* Prefer the CHAMPION_SLOT_ACTION_HAND mirror if populated. */
-    t = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
-    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
     /* DM1 F0386/F0389 do not fall back to the ready hand. */
-    return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
+    return champ->inventory[CHAMPION_SLOT_ACTION_HAND];
 }
 
 int M11_GameView_DecodeV1InventoryActionHandScrollText(
@@ -18601,6 +18594,15 @@ int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
         case CHAMPION_SLOT_BACKPACK_6: return 26; /* C525 */
         case CHAMPION_SLOT_BACKPACK_7: return 27; /* C526 */
         case CHAMPION_SLOT_BACKPACK_8: return 28; /* C527 */
+        case CHAMPION_SLOT_BACKPACK_9: return 29; /* C528 */
+        case CHAMPION_SLOT_BACKPACK_10: return 30; /* C529 */
+        case CHAMPION_SLOT_BACKPACK_11: return 31; /* C530 */
+        case CHAMPION_SLOT_BACKPACK_12: return 32; /* C531 */
+        case CHAMPION_SLOT_BACKPACK_13: return 33; /* C532 */
+        case CHAMPION_SLOT_BACKPACK_14: return 34; /* C533 */
+        case CHAMPION_SLOT_BACKPACK_15: return 35; /* C534 */
+        case CHAMPION_SLOT_BACKPACK_16: return 36; /* C535 */
+        case CHAMPION_SLOT_BACKPACK_17: return 37; /* C536 */
         default: return 0;
     }
 }
@@ -18608,9 +18610,8 @@ int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
 int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex) {
     /* Inverse of M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot().
      * Used by the source mouse-route bridge for COMMAND.C C028..C057.
-     * Source slot-box indices 29..37 exist in DM1, but Firestaff's
-     * bounded champion model currently exposes only eight backpack slots;
-     * return -1 for unmapped original slots rather than aliasing them. */
+     * Source slot-box indices 29..37 are the remaining DM1 backpack cells
+     * (C528..C536) and map to the reserved upper champion inventory slots. */
     switch (sourceSlotBoxIndex) {
         case 8:  return CHAMPION_SLOT_HAND_LEFT;   /* READY_HAND / C507 */
         case 9:  return CHAMPION_SLOT_HAND_RIGHT;  /* ACTION_HAND / C508 */
@@ -18633,6 +18634,15 @@ int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxInd
         case 26: return CHAMPION_SLOT_BACKPACK_6;  /* C525 */
         case 27: return CHAMPION_SLOT_BACKPACK_7;  /* C526 */
         case 28: return CHAMPION_SLOT_BACKPACK_8;  /* C527 */
+        case 29: return CHAMPION_SLOT_BACKPACK_9;  /* C528 */
+        case 30: return CHAMPION_SLOT_BACKPACK_10; /* C529 */
+        case 31: return CHAMPION_SLOT_BACKPACK_11; /* C530 */
+        case 32: return CHAMPION_SLOT_BACKPACK_12; /* C531 */
+        case 33: return CHAMPION_SLOT_BACKPACK_13; /* C532 */
+        case 34: return CHAMPION_SLOT_BACKPACK_14; /* C533 */
+        case 35: return CHAMPION_SLOT_BACKPACK_15; /* C534 */
+        case 36: return CHAMPION_SLOT_BACKPACK_16; /* C535 */
+        case 37: return CHAMPION_SLOT_BACKPACK_17; /* C536 */
         default: return -1;
     }
 }
@@ -19385,14 +19395,11 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
 
 static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compat* champ,
                                                 int handIndex) {
-    unsigned short t;
     if (!champ) return THING_NONE;
     if (handIndex == 0) {
         return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
     }
-    t = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
-    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
-    return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
+    return champ->inventory[CHAMPION_SLOT_ACTION_HAND];
 }
 
 int M11_GameView_GetV1StatusBoxZoneId(int championSlot) {
@@ -21813,11 +21820,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         /* Normal V1 dynamic overlay phase: draw every Firestaff-modeled
          * champion inventory object into the source slot-box namespace.
          * This keeps placement anchored to layout-696 C507..C536 instead
-         * of the older freehand workbench/debug layout.  Firestaff's
-         * compact champion model currently has eight backpack slots, so
-         * those populate the first eight source backpack boxes C520..C527;
-         * C528..C536 remain exposed by the source-zone helpers for the
-         * wider original namespace. */
+         * of the older freehand workbench/debug layout.  The runtime model
+         * now carries all 30 DM1 champion inventory slots, including the
+         * full C520..C536 backpack namespace. */
         int sourceSlotBox;
         int slotIdx;
         for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox) {
@@ -23322,6 +23327,15 @@ const char* M11_GameView_SlotName(int slotIndex) {
         case CHAMPION_SLOT_BACKPACK_6: return "BACK 6";
         case CHAMPION_SLOT_BACKPACK_7: return "BACK 7";
         case CHAMPION_SLOT_BACKPACK_8: return "BACK 8";
+        case CHAMPION_SLOT_BACKPACK_9: return "BACK 9";
+        case CHAMPION_SLOT_BACKPACK_10: return "BACK 10";
+        case CHAMPION_SLOT_BACKPACK_11: return "BACK 11";
+        case CHAMPION_SLOT_BACKPACK_12: return "BACK 12";
+        case CHAMPION_SLOT_BACKPACK_13: return "BACK 13";
+        case CHAMPION_SLOT_BACKPACK_14: return "BACK 14";
+        case CHAMPION_SLOT_BACKPACK_15: return "BACK 15";
+        case CHAMPION_SLOT_BACKPACK_16: return "BACK 16";
+        case CHAMPION_SLOT_BACKPACK_17: return "BACK 17";
         case CHAMPION_SLOT_HAND_LEFT:  return "L HAND";
         case CHAMPION_SLOT_HAND_RIGHT: return "R HAND";
         default: return "SLOT";

@@ -1,0 +1,16 @@
+Internal ctest changing into directory: /home/trv2/work/firestaff-worktrees/inventory-full-panel-runtime-20260520/build-inventory-full-panel-runtime
+Test project /home/trv2/work/firestaff-worktrees/inventory-full-panel-runtime-20260520/build-inventory-full-panel-runtime
+    Start  27: inventory_panel_slot_routes_pc34_compat
+1/5 Test  #27: inventory_panel_slot_routes_pc34_compat .........   Passed    0.00 sec
+    Start  28: dm1_v1_inventory_equip_slots_pc34_compat
+2/5 Test  #28: dm1_v1_inventory_equip_slots_pc34_compat ........   Passed    0.00 sec
+    Start  29: dm1_v1_inventory_backpack_chest_pc34_compat
+3/5 Test  #29: dm1_v1_inventory_backpack_chest_pc34_compat .....   Passed    0.00 sec
+    Start 243: m11_inventory_scroll_panel_render_source_lock
+4/5 Test #243: m11_inventory_scroll_panel_render_source_lock ...   Passed    0.06 sec
+    Start 244: m11_inventory_full_panel_runtime_source_lock
+5/5 Test #244: m11_inventory_full_panel_runtime_source_lock ....   Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) =   0.11 sec

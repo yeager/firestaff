@@ -1,0 +1,8 @@
+$ cmake -S . -B build-inventory-full-panel-runtime -DCMAKE_BUILD_TYPE=RelWithDebInfo
+-- Found SDL3
+-- Configuring done (0.3s)
+-- Generating done (0.4s)
+-- Build files have been written to: /home/trv2/work/firestaff-worktrees/inventory-full-panel-runtime-20260520/build-inventory-full-panel-runtime
+
+$ cmake --build ... focused inventory targets
+Built targets: test_m11_inventory_full_panel_runtime_pc34_compat, test_m11_inventory_scroll_panel_render_pc34_compat, test_dm1_v1_inventory_backpack_chest_pc34_compat, test_dm1_v1_inventory_equip_slots_pc34_compat, test_inventory_panel_slot_routes_pc34_compat_integration, firestaff_m11_game_view_probe

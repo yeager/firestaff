@@ -7672,12 +7672,14 @@ int main(int argc, char** argv) {
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_1) == 20 &&
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_1) == 21 &&
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_8) == 28 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 0 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_17) == 37 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 9 &&
                      M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(8) == CHAMPION_SLOT_HAND_LEFT &&
                      M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(9) == CHAMPION_SLOT_HAND_RIGHT &&
                      M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(28) == CHAMPION_SLOT_BACKPACK_8 &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(29) == -1,
-                 "V1 inventory champion slots map to source slot-box indices C513..C527 without alias leakage");
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(29) == CHAMPION_SLOT_BACKPACK_9 &&
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(37) == CHAMPION_SLOT_BACKPACK_17,
+                 "V1 inventory champion slots map to all source slot-box indices C507..C536 without alias leakage");
 
     /* INV_GV_362A: A normal V1 click on source inventory slot C507 routes
      * through COMMAND.C C028/F0302's pickup half: remove the slot object and
@@ -7765,15 +7767,13 @@ int main(int argc, char** argv) {
                      "V1 inventory leader-hand placement honors source AllowedSlots before slot mutation");
     }
 
-    /* INV_GV_362B: Source backpack boxes C528..C536 are real click
-     * zones/commands, but they must not alias Firestaff's compact eight-slot
-     * champion backpack model.  Until the champion model grows the remaining
-     * original DM1 backpack slots, clicks on source slot-box indices 29..37
-     * should route to COMMAND.C C049..C057 and then stop safely with no
-     * inventory mutation and no transient leader-hand pickup. */
+    /* INV_GV_362B: Source backpack boxes C528..C536 are now backed by
+     * reserved runtime inventory slots.  The mouse route still resolves
+     * through COMMAND.C C049..C057, then F0302-style pickup/place mutates
+     * the matching extended backpack slot instead of stopping at the old
+     * eight-slot Firestaff bridge. */
     {
         M11_GameViewState clickInv;
-        unsigned short readyThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         unsigned short backpackThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         int ok = 1;
         int sourceSlotBox;
@@ -7781,15 +7781,16 @@ int main(int argc, char** argv) {
         clickInv.showDebugHUD = 0;
         clickInv.inventoryPanelActive = 1;
         clickInv.world.party.activeChampionIndex = 0;
-        clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyThing;
-        clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] = backpackThing;
         M11_GameView_ClearV1LeaderHandObject(&clickInv);
         for (sourceSlotBox = 29; sourceSlotBox <= 37; ++sourceSlotBox) {
             int sx = 0, sy = 0, sw = 0, sh = 0;
             int space = M11_DM1_MOUSE_SPACE_NONE;
             int zoneId = 0;
             int command;
-            if (!M11_GameView_GetV1InventorySourceSlotBoxZone(sourceSlotBox,
+            int championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlotBox);
+            if (championSlot < CHAMPION_SLOT_BACKPACK_9 ||
+                championSlot > CHAMPION_SLOT_BACKPACK_17 ||
+                !M11_GameView_GetV1InventorySourceSlotBoxZone(sourceSlotBox,
                                                               &sx, &sy, &sw, &sh)) {
                 ok = 0;
                 break;
@@ -7801,17 +7802,17 @@ int main(int argc, char** argv) {
                 M11_DM1_MOUSE_MASK_LEFT,
                 &space,
                 &zoneId);
+            clickInv.world.party.champions[0].inventory[championSlot] = backpackThing;
+            M11_GameView_ClearV1LeaderHandObject(&clickInv);
             if (command != sourceSlotBox + 20 ||
                 space != M11_DM1_MOUSE_SPACE_VIEWPORT ||
                 zoneId != sourceSlotBox + 499 ||
-                M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlotBox) != -1 ||
                 M11_GameView_HandlePointer(&clickInv,
                                            sx + (sw / 2),
                                            33 + sy + (sh / 2),
-                                           1) != M11_GAME_INPUT_IGNORED ||
-                clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] != readyThing ||
-                clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] != backpackThing ||
-                M11_GameView_GetV1LeaderHandThing(&clickInv) != THING_NONE) {
+                                           1) != M11_GAME_INPUT_REDRAW ||
+                clickInv.world.party.champions[0].inventory[championSlot] != THING_NONE ||
+                M11_GameView_GetV1LeaderHandThing(&clickInv) != backpackThing) {
                 ok = 0;
                 break;
             }
@@ -7819,7 +7820,7 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_362B",
                      ok,
-                     "V1 source backpack slots C528..C536 route but do not alias compact Firestaff backpack slots");
+                     "V1 source backpack slots C528..C536 route and mutate extended backpack storage");
     }
 
     /* INV_GV_363: Normal V1 inventory draws pouch/quiver/backpack dynamic
