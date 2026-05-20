@@ -1,0 +1,40 @@
+{
+  "schema": "firestaff.inventory_fountain_key_usage_20260520.v1",
+  "timestampUtc": "2026-05-20T12:14:02Z",
+  "status": "implemented_verified_postrebase",
+  "scope": "DM1 V1 fountain interaction only: empty-handed drink, waterskin/water refill, empty flask to water flask; key usage intentionally not implemented",
+  "worktree": "/home/trv2/work/firestaff-worktrees/inventory-fountain-key-usage-20260520",
+  "buildDir": "/home/trv2/work/firestaff-worktrees/_cmake_inventory_fountain_key_usage_20260520/build-final-postrebase",
+  "branch": "worker/inventory-fountain-key-usage-20260520",
+  "baseHeadAtWorktreeCreation": "a9d1b7be79ae16f84b2884e344bce26a52d2c2dc",
+  "rebasedOntoOriginMain": "5b04e13d2531f29927df41a35ca29c77dc770552",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceAnchors": [
+    {"file": "DUNVIEW.C", "function": "current-map wall ornament setup", "lines": "2668-2690", "evidence": "maps wall ornament graphic 35/fountain into G0268_ai_CurrentMapFountainOrnamentIndices"},
+    {"file": "DUNGEON.C", "function": "F0601_IsWallOrnamentAFountain", "lines": "1350-1363", "evidence": "returns true when the current wall ornament index matches the map fountain ornament list"},
+    {"file": "DUNVIEW.C", "function": "wall view state", "lines": "3735-3744,7784-7788", "evidence": "sets G0288_B_FacingFountain from the viewed wall ornament and resets it when drawing a plain wall view"},
+    {"file": "CLIKVIEW.C", "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView", "lines": "419-422", "evidence": "empty-handed leader facing a fountain gets Water = 2048 and C08_SOUND_SWALLOW"},
+    {"file": "CLIKVIEW.C", "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView", "lines": "480-496", "evidence": "leader-hand water/waterskin charge count becomes 3; empty flask C195 changes to water flask C163; object icons redraw; load receives newWeight-oldWeight; front-wall sensor route F0372 follows"},
+    {"file": "DEFS.H", "function": "constants", "lines": "68,1479,1518,1891-1892,1945,1950", "evidence": "C08 sound, C15 water-flask potion type, waterskin junk type, water/waterskin/water-flask/empty-flask icons"},
+    {"file": "DUNGEON.C", "function": "object info rows", "lines": "80-103", "evidence": "water flask row 17 icon C163 and empty flask row 22 icon C195"}
+  ],
+  "implementation": [
+    "include/dm1_v1_fountain_interaction_pc34_compat.h",
+    "src/dm1/dm1_v1_fountain_interaction_pc34_compat.c",
+    "src/dm1/dm1_v1_engine_pc34_compat.c module manifest entry",
+    "tests/test_dm1_v1_fountain_interaction_pc34_compat.c",
+    "CMakeLists.txt CTest registration"
+  ],
+  "verification": [
+    {"command": "cmake -S . -B /home/trv2/work/firestaff-worktrees/_cmake_inventory_fountain_key_usage_20260520/build-final-postrebase", "result": "PASS"},
+    {"command": "cmake --build /home/trv2/work/firestaff-worktrees/_cmake_inventory_fountain_key_usage_20260520/build-final-postrebase --target test_dm1_v1_fountain_interaction_pc34_compat --clean-first -j2", "result": "PASS"},
+    {"command": "ctest --test-dir /home/trv2/work/firestaff-worktrees/_cmake_inventory_fountain_key_usage_20260520/build-final-postrebase -R dm1_v1_fountain_interaction_pc34_compat --output-on-failure", "result": "PASS 1/1"},
+    {"command": "/home/trv2/work/firestaff-worktrees/_cmake_inventory_fountain_key_usage_20260520/build-final-postrebase/test_dm1_v1_fountain_interaction_pc34_compat", "result": "PASS fountainInteractionInvariantOk=1", "output": "parity-evidence/verification/inventory_fountain_key_usage_20260520/fountain_interaction_probe.out"},
+    {"command": "git diff --check && git diff HEAD~1..HEAD --check", "result": "PASS"},
+    {"command": "rg sensitive-value scan over HEAD~1..HEAD changed files", "result": "PASS no high-signal patterns"}
+  ],
+  "blockers": [
+    "Key usage on locked doors was not implemented in this slice. The ReDMCSB search hit existing wall-sensor/key-slot semantics, but the direct locked-door key route was less isolated than the fountain path and needs its own source audit to avoid conflating keyholes, wall object sensors, and door events."
+  ],
+  "negativeScope": ["no DANNESBURK data", "no pushes", "no tags", "no releases", "no TODO.md edit", "no DM2/CSB/V2 behavior edits"]
+}

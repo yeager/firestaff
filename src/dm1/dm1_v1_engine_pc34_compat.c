@@ -35,6 +35,7 @@ static const char * const s_moduleNames[] = {
     "dm1_v1_event_timer_pc34_compat",
     "dm1_v1_fade_transition_pc34_compat",
     "dm1_v1_field_teleporter_effect_pc34_compat",
+    "dm1_v1_fountain_interaction_pc34_compat",
     "dm1_v1_food_water_pc34_compat",
     "dm1_v1_game_loop_integration_pc34_compat",
     "dm1_v1_game_loop_pc34_compat",
