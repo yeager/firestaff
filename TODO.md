@@ -123,7 +123,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, and swallow audio routing are source-locked; exact VI wound RNG masks and mouth animation remain pending
 - 🔧 Food/water item consumption (click to eat/drink) — food amounts, water/waterskin charges, caps, leader-hand removal, and swallow audio routing are source-locked and wired through M11 mouth-click; mouth animation remains pending
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
-- ❌ Key usage (use key on locked door)
+- 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
 ### Survival / Needs
 - ✅ Food and water drain (1 unit per 6 ticks per champion)
