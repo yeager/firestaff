@@ -118,7 +118,6 @@ Status per 2026-05-19 v2.4.0.
 ### Touch Support
 
 - 🔧 Touch controls config option exists
-- ❌ Touch-based item interaction
 - ❌ Gesture navigation (swipe to turn, tap to move)
 - ❌ UI scaling for touch targets
 
