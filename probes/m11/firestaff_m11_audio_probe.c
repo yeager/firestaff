@@ -1,4 +1,5 @@
 #include "audio_sdl_m11.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,59 @@ static int write_test_wav(const char* path) {
         }
     }
     return fclose(f) == 0;
+}
+
+
+static int emit_queued_play_sound_event(M11_AudioState* state,
+                                        int* outSoundIndex,
+                                        int* outMapX,
+                                        int* outMapY,
+                                        int* outMapIndex) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    int i;
+    int ok = 0;
+
+    if (!state) return 0;
+    if (!F0881_WORLD_InitDefault_Compat(&world, 0xA020u)) return 0;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_PLAY_SOUND;
+    event.fireAtTick = 0;
+    event.mapIndex = 3;
+    event.mapX = 4;
+    event.mapY = 5;
+    event.aux0 = 2; /* C02_SOUND_DOOR_RATTLE in ReDMCSB DM1 V1. */
+
+    if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &event)) {
+        F0883_WORLD_Free_Compat(&world);
+        return 0;
+    }
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    if (F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) != ORCH_OK) {
+        F0883_WORLD_Free_Compat(&world);
+        return 0;
+    }
+
+    for (i = 0; i < result.emissionCount; ++i) {
+        const struct TickEmission_Compat* emission = &result.emissions[i];
+        if (emission->kind == EMIT_SOUND_REQUEST) {
+            if (outSoundIndex) *outSoundIndex = emission->payload[0];
+            if (outMapX) *outMapX = emission->payload[1];
+            if (outMapY) *outMapY = emission->payload[2];
+            if (outMapIndex) *outMapIndex = emission->payload[3];
+            (void)M11_Audio_EmitSourceSoundIndex(state, emission->payload[0]);
+            ok = 1;
+            break;
+        }
+    }
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok;
 }
 
 int main(int argc, char** argv) {
@@ -211,6 +265,24 @@ int main(int argc, char** argv) {
                          state.queuedSampleCount > beforeQueued &&
                          state.playedMarkerCount == beforePlayed + 1,
                      "source sound index 13 queues PCM through SDL dummy backend");
+    }
+
+    {
+        int soundIndex = -1;
+        int mapX = -1;
+        int mapY = -1;
+        int mapIndex = -1;
+        int routed = emit_queued_play_sound_event(&state,
+                                                  &soundIndex,
+                                                  &mapX,
+                                                  &mapY,
+                                                  &mapIndex);
+        probe_record(&tally,
+                     "INV_M11_AUDIO_06D",
+                     routed && soundIndex == 2 && mapX == 4 && mapY == 5 &&
+                         mapIndex == 3 && state.lastSoundIndex == 2 &&
+                         state.lastMarker == M11_AUDIO_MARKER_DOOR,
+                     "queued PLAY_SOUND event preserves source sound index and location through audio seam");
     }
 
     /* INV 07: Multiple rapid emissions don't crash */
