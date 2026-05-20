@@ -131,7 +131,7 @@ int main(void) {
     world.things->sensors[0].value = 1;
     world.things->sensors[0].audible = 1;
     world.things->sensors[0].onceOnly = 0;
-    world.things->sensors[0].localMultiple = 1;
+    world.things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
     event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
     event.fireAtTick = world.gameTick;
     event.mapIndex = 0;
@@ -143,14 +143,41 @@ int main(void) {
                  "schedule C006 generator trigger event");
     rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
     ok &= expect(rc == ORCH_OK, "advance C006 generator trigger tick");
-    ok &= expect(result.emissionCount == 1,
-                 "audible C006 generator emits one playback request");
-    ok &= expect(result.emissions[0].kind == EMIT_SOUND_REQUEST,
-                 "audible C006 generator emits sound request kind");
-    ok &= expect(result.emissions[0].payload[0] == DM1_SND_BUZZ,
-                 "audible C006 generator requests M560_SOUND_BUZZ");
-    ok &= expect(result.emissions[0].payload[1] == 1 && result.emissions[0].payload[2] == 1,
-                 "audible C006 generator sound keeps source square coordinates");
+    ok &= expect(result.emissionCount == 2,
+                 "audible C006 generator emits F0185 buzz plus sensor-audible buzz");
+    ok &= expect(result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+                 result.emissions[1].kind == EMIT_SOUND_REQUEST,
+                 "audible C006 generator emits sound request kinds");
+    ok &= expect(result.emissions[0].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[1].payload[0] == DM1_SND_BUZZ,
+                 "audible C006 generator requests M560_SOUND_BUZZ twice");
+    ok &= expect(result.emissions[0].payload[1] == 1 && result.emissions[0].payload[2] == 1 &&
+                 result.emissions[1].payload[1] == 1 && result.emissions[1].payload[2] == 1,
+                 "audible C006 generator sounds keep source square coordinates");
+    ok &= expect(world.things->groupCount == 1,
+                 "C006 generator materializes one group slot");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "C006 generator links group at square head");
+    ok &= expect(world.things->groups[0].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "C006 generated group preserves prior sensor chain as next thing");
+    ok &= expect(world.things->groups[0].creatureType == 0 &&
+                 world.things->groups[0].count == 0 &&
+                 world.things->groups[0].cells == RUNTIME_GROUP_CELLS_SINGLE_CENTERED,
+                 "C006 generated single creature group has source fields");
+    ok &= expect(world.things->groups[0].health[0] > 0 &&
+                 world.things->groups[0].health[1] == 0 &&
+                 world.things->groups[0].health[2] == 0 &&
+                 world.things->groups[0].health[3] == 0,
+                 "C006 generated group writes HP only for live creature slots");
+    ok &= expect(world.creatureAICount == 1 &&
+                 world.creatureAI[0].stateKind == AI_STATE_WANDER &&
+                 world.creatureAI[0].groupMapX == 1 &&
+                 world.creatureAI[0].groupMapY == 1,
+                 "C006 generated party-map group seeds active group state");
+    ok &= expect(world.things->sensors[0].sensorType == RUNTIME_SENSOR_TYPE_DISABLED,
+                 "C006 generator disables sensor while re-enable delay is pending");
+    ok &= expect(world.timeline.count == 1,
+                 "C006 generator schedules one C65 re-enable event");
 
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;

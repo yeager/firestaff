@@ -1067,7 +1067,141 @@ static int orch_find_generator_sensor_on_square_compat(
     return 0;
 }
 
-static int orch_handle_group_generator_trigger_audio_compat(
+static unsigned short orch_make_thing_ref_compat(int type, int index) {
+    return (unsigned short)(((type & 0x0F) << 10) | (index & 0x03FF));
+}
+
+static int orch_square_has_group_or_party_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    if (world->partyMapIndex == mapIndex &&
+        world->party.mapX == mapX && world->party.mapY == mapY) {
+        return 1;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_GROUP && index >= 0 && index < world->things->groupCount) {
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return 0;
+}
+
+static int orch_add_generated_group_active_state_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct CreatureAIState_Compat* ai;
+    if (!world || !group) return 0;
+    if (mapIndex != world->partyMapIndex) return 1;
+    if (world->creatureAICount < 0 ||
+        world->creatureAICount >= GAMEWORLD_CREATURE_AI_CAPACITY) {
+        return 0;
+    }
+
+    /* ReDMCSB GROUP.C:414-447/F0183 creates ACTIVE_GROUP state for a
+     * group that arrives on the party map.  Phase 20 stores the closest
+     * persistent active-group analogue in creatureAI[]. */
+    ai = &world->creatureAI[world->creatureAICount++];
+    memset(ai, 0, sizeof(*ai));
+    ai->stateKind = AI_STATE_WANDER;
+    ai->creatureType = group->creatureType;
+    ai->groupMapIndex = mapIndex;
+    ai->groupMapX = mapX;
+    ai->groupMapY = mapY;
+    ai->groupCells = group->cells;
+    ai->groupDirection = group->direction;
+    ai->targetChampionIndex = -1;
+    ai->lastSeenPartyMapX = -1;
+    ai->lastSeenPartyMapY = -1;
+    ai->lastSeenPartyTick = -1;
+    ai->reserved0 = groupIndex;
+    return 1;
+}
+
+static int orch_materialize_generated_group_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    const struct GeneratorResult_Compat* generator,
+    int* outGroupIndex)
+{
+    struct DungeonGroup_Compat* resized;
+    struct DungeonGroup_Compat* group;
+    int sftIndex;
+    int groupIndex;
+    int i;
+
+    if (outGroupIndex) *outGroupIndex = -1;
+    if (!world || !ev || !generator || !world->dungeon || !world->things) return 0;
+    if (!generator->spawned) return 0;
+
+    /* ReDMCSB MOVESENS.C:830-844 defers group insertion if the
+     * destination already holds the party or another group.  Event60/61
+     * follow-up is not represented in Phase 20 yet, so this narrow slice
+     * only materializes the successful empty-square path. */
+    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
+        return 0;
+    }
+
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+    if (world->things->groupCount < 0 || world->things->groupCount >= 1024) return 0;
+
+    groupIndex = world->things->groupCount;
+    resized = (struct DungeonGroup_Compat*)realloc(
+        world->things->groups,
+        (size_t)(groupIndex + 1) * sizeof(*world->things->groups));
+    if (!resized) return 0;
+    world->things->groups = resized;
+    group = &world->things->groups[groupIndex];
+    memset(group, 0, sizeof(*group));
+
+    group->next = world->things->squareFirstThings[sftIndex];
+    group->slot = THING_ENDOFLIST;
+    group->creatureType = (unsigned char)(generator->spawnedCreatureType & 0xFF);
+    group->cells = (unsigned char)(generator->spawnedGroupCells & 0xFF);
+    for (i = 0; i < 4; ++i) {
+        int hp = generator->spawnedGroupHealth[i];
+        if (hp < 0) hp = 0;
+        if (hp > 0xFFFF) hp = 0xFFFF;
+        group->health[i] = (unsigned short)hp;
+    }
+    group->behavior = 0; /* C0_BEHAVIOR_WANDER */
+    group->count = (unsigned char)(generator->spawnedCreatureCount & 0x03);
+    group->direction = (unsigned char)(generator->spawnedDirection & 0x03);
+    group->doNotDiscard = 0;
+
+    world->things->groupCount = groupIndex + 1;
+    world->things->thingCounts[THING_TYPE_GROUP] = world->things->groupCount;
+    world->things->squareFirstThings[sftIndex] =
+        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
+
+    (void)orch_add_generated_group_active_state_compat(
+        world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
+    if (outGroupIndex) *outGroupIndex = groupIndex;
+    return 1;
+}
+
+static int orch_handle_group_generator_trigger_runtime_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result)
@@ -1103,14 +1237,31 @@ static int orch_handle_group_generator_trigger_audio_compat(
         ? (int)world->dungeon->maps[ev->mapIndex].difficulty
         : 1;
     ctx.isOnPartyMap = (ev->mapIndex == world->partyMapIndex) ? 1 : 0;
-    ctx.currentActiveGroupCount = world->things->groupCount;
-    ctx.maxActiveGroupCount = 32;
+    ctx.currentActiveGroupCount = world->creatureAICount;
+    ctx.maxActiveGroupCount = 60;
 
     if (!F0860_RUNTIME_HandleGroupGenerator_Compat(
             &ctx, &world->masterRng, world->gameTick, &generator)) {
         return 0;
     }
+
+    if (generator.sensorDisabled) {
+        world->things->sensors[sensorIndex].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
+    }
+    if (generator.reEnableScheduled) {
+        (void)F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &generator.reEnableEvent);
+    }
+
+    if (orch_materialize_generated_group_compat(world, ev, &generator, 0)) {
+        /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
+         * M560_SOUND_BUZZ independently of the sensor's Audible flag. */
+        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+             ev->mapX, ev->mapY, ev->mapIndex);
+    }
     if (generator.soundRequested) {
+        /* ReDMCSB TIMELINE.C:975-977/F0245: sensor Audible requests a
+         * second prioritized M560_SOUND_BUZZ after generation. */
         emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ, ev->mapX, ev->mapY, ev->mapIndex);
     }
     return 1;
@@ -1744,7 +1895,7 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             } else {
                 /* ReDMCSB TIMELINE.C:964-977: audible C006 generator
                  * requests M560_SOUND_BUZZ after F0185 generation. */
-                (void)orch_handle_group_generator_trigger_audio_compat(world, &ev, result);
+                (void)orch_handle_group_generator_trigger_runtime_compat(world, &ev, result);
             }
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
