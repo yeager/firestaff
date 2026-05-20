@@ -6,6 +6,9 @@
 
 #define V1_TITLE_DAT_ITEM_COUNT 59u
 #define V1_TITLE_DAT_FRAME_MAX  53u
+#define V1_TITLE_PC34_CANONICAL_BYTES 12002u
+#define V1_TITLE_PC34_CANONICAL_FNV1A32 0xbca252d5u
+#define V1_TITLE_PC34_CANONICAL_SHA256 "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
 
 typedef enum V1_TitleItemType {
     V1_TITLE_ITEM_AN = 0,
@@ -74,6 +77,10 @@ typedef int (*V1_TitleFrameCallback)(const V1_TitleRenderFrame* frame,
                                      size_t errMsgBytes);
 
 const char* V1_Title_TypeLabel(V1_TitleItemType type);
+
+int V1_Title_IsCanonicalPc34Title(const char* titleDatPath,
+                                  char* errMsg,
+                                  size_t errMsgBytes);
 
 int V1_Title_ParseManifest(const char* titleDatPath,
                            V1_TitleManifest* outManifest,

@@ -106,6 +106,10 @@ int main(void) {
         return 1;
     }
 
+    probe_record(&tally, "P56_TITLE_00A",
+                 V1_Title_IsCanonicalPc34Title(path, err, sizeof(err)),
+                 "TITLE identity is hash-locked as DM1 PC 3.4 canonical data, independent of filename");
+
     probe_record(&tally, "P56_TITLE_01",
                  manifest.fileBytes == 12002u && manifest.itemCount == 59u,
                  "local TITLE mapfile is 12002 bytes and parses to Greatstone's 59 items");

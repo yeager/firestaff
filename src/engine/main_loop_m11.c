@@ -222,14 +222,16 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
         ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
         ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
     };
+    char titleErr[160];
 
     if (!outPath || outPathBytes == 0U) {
         return 0;
     }
     outPath[0] = '\0';
+    titleErr[0] = '\0';
 
     envPath = getenv("FIRESTAFF_TITLE_DAT");
-    if (envPath && envPath[0] != '\0' && FSP_FileExists(envPath)) {
+    if (envPath && envPath[0] != '\0' && V1_Title_IsCanonicalPc34Title(envPath, titleErr, sizeof(titleErr))) {
         snprintf(outPath, outPathBytes, "%s", envPath);
         return 1;
     }
@@ -239,12 +241,12 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
             dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
             if (dm1v && dm1v->matched && FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
                 if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
-                    FSP_FileExists(candidate)) {
+                    V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
                     snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
                 }
                 if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE.DAT") &&
-                    FSP_FileExists(candidate)) {
+                    V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
                     snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
                 }
@@ -256,12 +258,12 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
                     char grandparent[FSP_PATH_MAX];
                     if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
                         if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE") &&
-                            FSP_FileExists(candidate)) {
+                            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
                             snprintf(outPath, outPathBytes, "%s", candidate);
                             return 1;
                         }
                         if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE.DAT") &&
-                            FSP_FileExists(candidate)) {
+                            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
                             snprintf(outPath, outPathBytes, "%s", candidate);
                             return 1;
                         }
@@ -277,7 +279,7 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     }
     for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
         if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, suffixes[i]) &&
-            FSP_FileExists(candidate)) {
+            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
             snprintf(outPath, outPathBytes, "%s", candidate);
             return 1;
         }
@@ -292,7 +294,7 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     if (dataDir && dataDir[0] != '\0') {
         for (i = 0U; i < sizeof(homeSuffixes) / sizeof(homeSuffixes[0]); ++i) {
             if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, homeSuffixes[i]) &&
-                FSP_FileExists(candidate)) {
+                V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
                 snprintf(outPath, outPathBytes, "%s", candidate);
                 return 1;
             }
@@ -701,15 +703,14 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
-    /* ReDMCSB TITLE.C source-lock:
-     *   TITLE.C:430 draws PRESENTS.
-     *   TITLE.C:456 waits M526_WaitVerticalBlank() before each reverse-order
-     *               zoom blit to C425_ZONE_TITLE_CHAOS.
-     *   TITLE.C:460 delays 20 ticks.
-     *   TITLE.C:461 draws STRIKES BACK.
-     *   TITLE.C:463 final delay/guard before the next screen.
+    /* ReDMCSB TITLE.C PC/F20 source-lock:
+     *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
+     *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
+     *               waits M526_WaitVerticalBlank() before each reverse-order zoom blit.
+     *   TITLE.C:395-402 waits two more VBlanks and draws STRIKES BACK.
+     *   TITLE.C:409 adds the final guard before the next screen.
      * Runtime uses the already decoded original 53-frame TITLE bank as the
-     * visible source and presents it before the launcher, instead of skipping
+     * visible source and presents it before the game/entrance, instead of skipping
      * straight to the menu. */
     for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
         V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);

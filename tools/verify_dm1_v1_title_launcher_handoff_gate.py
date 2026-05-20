@@ -15,6 +15,7 @@ import sys
 root = Path(__file__).resolve().parents[1]
 main = (root / "src/engine/main_loop_m11.c").read_text()
 frontend = (root / "src/frontend/title_frontend_v1.c").read_text()
+title_h = (root / "include/title_dat_loader_v1.h").read_text()
 
 errors = []
 
@@ -64,6 +65,22 @@ else:
     ]:
         if needle not in body:
             errors.append(f"TITLE intro missing required runtime step: {needle}")
+
+
+for needle in [
+    "V1_Title_IsCanonicalPc34Title(envPath",
+    "V1_Title_IsCanonicalPc34Title(candidate",
+]:
+    if needle not in main:
+        errors.append(f"TITLE path selection is not hash/provenance gated: {needle}")
+
+for needle in [
+    "V1_TITLE_PC34_CANONICAL_SHA256",
+    "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "V1_TITLE_PC34_CANONICAL_FNV1A32",
+]:
+    if needle not in title_h:
+        errors.append(f"TITLE canonical identity constant missing: {needle}")
 
 for needle in [
     "TITLE.C:340-360 builds 18 shrinked bitmaps",

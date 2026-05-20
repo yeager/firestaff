@@ -73,6 +73,17 @@ static unsigned char* read_file_bytes(const char* path, long* outBytes,
     return data;
 }
 
+static unsigned long fnv1a32_bytes(const unsigned char* data, unsigned long bytes) {
+    unsigned long h = 2166136261UL;
+    unsigned long i;
+    if (!data) return 0UL;
+    for (i = 0UL; i < bytes; ++i) {
+        h ^= (unsigned long)data[i];
+        h = (h * 16777619UL) & 0xffffffffUL;
+    }
+    return h;
+}
+
 static int is_known_tag(const unsigned char* p) {
     return (p[0] == 'A' && p[1] == 'N') ||
            (p[0] == 'B' && p[1] == 'R') ||
@@ -105,6 +116,46 @@ const char* V1_Title_TypeLabel(V1_TitleItemType type) {
         case V1_TITLE_ITEM_DO: return "DOne";
         default: return "UNKNOWN";
     }
+}
+
+int V1_Title_IsCanonicalPc34Title(const char* titleDatPath,
+                                  char* errMsg,
+                                  size_t errMsgBytes) {
+    unsigned char* data;
+    long bytes;
+    unsigned long hash;
+    V1_TitleManifest manifest;
+
+    if (!titleDatPath) {
+        set_err(errMsg, errMsgBytes, "null TITLE path");
+        return 0;
+    }
+    data = read_file_bytes(titleDatPath, &bytes, errMsg, errMsgBytes);
+    if (!data) return 0;
+
+    hash = fnv1a32_bytes(data, (unsigned long)bytes);
+    free(data);
+
+    if ((unsigned long)bytes != (unsigned long)V1_TITLE_PC34_CANONICAL_BYTES ||
+        hash != (unsigned long)V1_TITLE_PC34_CANONICAL_FNV1A32) {
+        set_err(errMsg, errMsgBytes, "TITLE is not the hash-locked DM1 PC 3.4 title file");
+        return 0;
+    }
+    if (!V1_Title_ParseManifest(titleDatPath, &manifest, errMsg, errMsgBytes)) {
+        return 0;
+    }
+    if (manifest.itemCount != V1_TITLE_DAT_ITEM_COUNT ||
+        manifest.frameCount != V1_TITLE_DAT_FRAME_MAX ||
+        manifest.animationCount != 1u ||
+        manifest.egaPaletteCount != 1u ||
+        manifest.paletteCount != 2u ||
+        manifest.encodedImageCount != 2u ||
+        manifest.deltaLayerCount != 51u ||
+        manifest.doneCount != 1u) {
+        set_err(errMsg, errMsgBytes, "TITLE manifest is not DM1 PC 3.4 canonical provenance");
+        return 0;
+    }
+    return 1;
 }
 
 static void classify_record(V1_TitleRecord* r, const unsigned char* payload) {
