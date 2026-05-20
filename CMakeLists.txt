@@ -475,6 +475,18 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_launch_blocker_m12
     )
 
+    add_executable(test_asset_find_by_hash
+        tests/test_asset_find_by_hash.c
+    )
+    target_link_libraries(test_asset_find_by_hash PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_asset_find_by_hash PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_find_by_hash
+        COMMAND test_asset_find_by_hash
+    )
+
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
     )

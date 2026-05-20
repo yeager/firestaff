@@ -147,6 +147,36 @@ static int file_md5(const char *path, char outHex[33]) {
     return 1;
 }
 
+static int is_hex_char(char c) {
+    return (c >= '0' && c <= '9') ||
+           (c >= 'a' && c <= 'f') ||
+           (c >= 'A' && c <= 'F');
+}
+
+static char lower_hex_char(char c) {
+    return (c >= 'A' && c <= 'F') ? (char)(c - 'A' + 'a') : c;
+}
+
+static int normalize_md5(const char *expectedMd5, char outExpected[33]) {
+    int i;
+    if (!expectedMd5 || strlen(expectedMd5) != 32) return 0;
+    for (i = 0; i < 32; ++i) {
+        if (!is_hex_char(expectedMd5[i])) return 0;
+        outExpected[i] = lower_hex_char(expectedMd5[i]);
+    }
+    outExpected[32] = '\0';
+    return 1;
+}
+
+static int copy_match_path(const char *path, char *outPath, int outPathLen) {
+    size_t len;
+    if (!path || !outPath || outPathLen <= 0) return 0;
+    len = strlen(path);
+    if (len >= (size_t)outPathLen) return 0;
+    memcpy(outPath, path, len + 1U);
+    return 1;
+}
+
 /* ── Recursive directory scanner ──────────────────────────────── */
 
 #ifndef _WIN32
@@ -164,7 +194,9 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 
     while ((ent = readdir(d)) != NULL) {
         if (ent->d_name[0] == '.') continue;
-        snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+        if (snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name) >= (int)sizeof(path)) {
+            continue;
+        }
         if (stat(path, &st) != 0) continue;
 
         if (S_ISREG(st.st_mode)) {
@@ -173,7 +205,10 @@ static int scan_dir(const char *dir, const char *expectedMd5,
             /* Skip files < 16 bytes (too small to be valid) */
             if (st.st_size < 16) continue;
             if (file_md5(path, hex) && strcmp(hex, expectedMd5) == 0) {
-                snprintf(outPath, outPathLen, "%s", path);
+                if (!copy_match_path(path, outPath, outPathLen)) {
+                    closedir(d);
+                    return 0;
+                }
                 closedir(d);
                 return 1;
             }
@@ -196,12 +231,12 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     char pattern[ASSET_PATH_MAX], path[ASSET_PATH_MAX];
     char hex[33];
     if (depth > maxDepth) return 0;
-    snprintf(pattern, sizeof(pattern), "%s\\*", dir);
+    if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) return 0;
     h = FindFirstFileA(pattern, &fd);
     if (h == INVALID_HANDLE_VALUE) return 0;
     do {
         if (fd.cFileName[0] == '.') continue;
-        snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName);
+        if (snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName) >= (int)sizeof(path)) continue;
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             if (scan_dir(path, expectedMd5, outPath, outPathLen, depth+1, maxDepth)) {
                 FindClose(h); return 1;
@@ -210,7 +245,10 @@ static int scan_dir(const char *dir, const char *expectedMd5,
             LARGE_INTEGER sz; sz.LowPart = fd.nFileSizeLow; sz.HighPart = fd.nFileSizeHigh;
             if (sz.QuadPart > 10*1024*1024 || sz.QuadPart < 16) continue;
             if (file_md5(path, hex) && strcmp(hex, expectedMd5) == 0) {
-                snprintf(outPath, outPathLen, "%s", path);
+                if (!copy_match_path(path, outPath, outPathLen)) {
+                    FindClose(h);
+                    return 0;
+                }
                 FindClose(h); return 1;
             }
         }
@@ -224,10 +262,11 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 
 int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
                       char *outPath, int outPathLen, int maxDepth) {
+    char normalizedMd5[33];
     if (!searchDir || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
-    if (strlen(expectedMd5) != 32) return 0;
+    if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
     if (maxDepth < 0) maxDepth = 3;
-    return scan_dir(searchDir, expectedMd5, outPath, outPathLen, 0, maxDepth);
+    return scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth);
 }
 
 int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
@@ -236,8 +275,9 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
     if (!searchDir || !md5List || !outPath || outPathLen <= 0) return 0;
     if (maxDepth < 0) maxDepth = 3;
     for (int i = 0; md5List[i] != NULL; i++) {
-        if (strlen(md5List[i]) != 32) continue;
-        if (scan_dir(searchDir, md5List[i], outPath, outPathLen, 0, maxDepth)) {
+        char normalizedMd5[33];
+        if (!normalize_md5(md5List[i], normalizedMd5)) continue;
+        if (scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth)) {
             if (outMatchIndex) *outMatchIndex = i;
             return 1;
         }
