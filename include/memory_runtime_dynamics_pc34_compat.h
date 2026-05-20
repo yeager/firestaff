@@ -77,6 +77,11 @@
 #define RUNTIME_SENSOR_TYPE_DISABLED              0  /* C000 */
 #define RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR 6  /* C006 */
 
+/* F0185_GROUP_GetGenerated uses 0xFF for a single centered creature;
+ * otherwise GROUP.Cells stores four 2-bit cell ordinals. */
+#define RUNTIME_GROUP_CELLS_SINGLE_CENTERED       0xFF
+#define RUNTIME_GROUP_CELL_VALUE(cells, index) (((cells) >> ((index) << 1)) & 0x03)
+
 /* ==========================================================
  *  Generator-event aux0 sentinels. Used by F0863 to distinguish
  *  the "re-enable" flavour of the GROUP_GENERATOR timeline event
@@ -149,7 +154,7 @@ struct GeneratorResult_Compat {
     int soundRequested;            /* 1 if audible flag was set            */
     int suppressionReason;         /* GENERATOR_SUPPRESSION_*              */
     int rngCallCount;              /* how many RNG calls consumed          */
-    int reserved0;
+    int spawnedGroupCells;         /* 0xFF single, else GROUP.Cells byte   */
     int spawnedGroupHealth[4];     /* HP for each creature (up to 4)       */
     int reserved1;                 /* padding to 68 B                      */
     struct TimelineEvent_Compat reEnableEvent; /* 44 B follow-up           */

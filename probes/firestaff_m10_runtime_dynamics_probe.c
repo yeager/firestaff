@@ -73,6 +73,10 @@ static int explist_spawn_fluxcage(
     return slot;
 }
 
+static int group_cell_value(int cells, int creatureIndex) {
+    return RUNTIME_GROUP_CELL_VALUE(cells, creatureIndex);
+}
+
 int main(int argc, char* argv[]) {
     FILE* report = 0;
     FILE* inv = 0;
@@ -110,6 +114,10 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- `runtime_get_creature_base_health` is source-locked to\n"
                     "  ReDMCSB DEFS.H:1574-1594 and DUNGEON.C:668-733\n"
                     "  for PC 3.4/I34E CREATURE_INFO base-health values.\n");
+    fprintf(report, "- `spawnedGroupCells` is source-locked to ReDMCSB "
+                    "GROUP.C:525-541 and DEFS.H:1367-1369/F0178; "
+                    "single creatures use 0xFF, multi-creature groups "
+                    "consume one random start cell and pack 2-bit cells.\n");
     fprintf(report, "- `F0861` suppression: only the global active-group-count\n"
                     "  cap on the party map is enforced (Fontanel GROUP.C:512).\n"
                     "  No party-adjacency/proximity check in WIP source; flagged\n"
@@ -181,6 +189,23 @@ int main(int argc, char* argv[]) {
               && out.spawnedGroupHealth[1] > 0
               && out.spawnedGroupHealth[2] > 0,
               "05: Generator (type=7, count=3, mult=2) spawns 3 creatures, all HP>0");
+    }
+    {
+        struct GeneratorContext_Compat ctx;
+        struct GeneratorResult_Compat out;
+        struct RngState_Compat rng;
+        int ok;
+        ctx_default(&ctx);
+        ctx.creatureType = 7; ctx.creatureCountRaw = 3; /* -> count=2 */
+        ctx.randomizeCount = 0;
+        F0730_COMBAT_RngInit_Compat(&rng, 0xDEADBEEFu);
+        ok = F0860_RUNTIME_HandleGroupGenerator_Compat(&ctx, &rng, 1000, &out);
+        CHECK(ok == 1 && out.spawned == 1
+              && out.spawnedGroupCells != RUNTIME_GROUP_CELLS_SINGLE_CENTERED
+              && group_cell_value(out.spawnedGroupCells, 0) <= 3
+              && group_cell_value(out.spawnedGroupCells, 1) <= 3
+              && group_cell_value(out.spawnedGroupCells, 2) <= 3,
+              "05c: multi-creature generator packs source-style 2-bit group cells");
     }
     {
         int hp[4];
@@ -618,9 +643,10 @@ int main(int argc, char* argv[]) {
         F0860_RUNTIME_HandleGroupGenerator_Compat(&ctx, &rng, 1000, &out);
         CHECK(out.spawned == 1
               && out.spawnedCreatureCount == 0
+              && out.spawnedGroupCells == RUNTIME_GROUP_CELLS_SINGLE_CENTERED
               && out.spawnedGroupHealth[0] > 0
               && out.spawnedGroupHealth[1] == 0,
-              "33: rawCount=1 (1 creature) -> exactly 1 health entry populated");
+              "33: rawCount=1 (1 creature) -> centered 0xFF cells and exactly 1 health entry");
     }
 
     /* ================================================================
@@ -685,7 +711,7 @@ int main(int argc, char* argv[]) {
         a.soundRequested = 1;
         a.suppressionReason = 0;
         a.rngCallCount = 5;
-        a.reserved0 = 9;
+        a.spawnedGroupCells = 0x39;
         a.spawnedGroupHealth[0] = 100;
         a.spawnedGroupHealth[1] = 110;
         a.spawnedGroupHealth[2] = 120;

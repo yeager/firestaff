@@ -75,8 +75,11 @@ static const int s_PowerOrdinalToLightAmount[RUNTIME_LIGHT_POWER_MAX + 1] = {
  *  ReDMCSB DEFS.H:1574-1594 defines CREATURE_INFO with
  *  BaseHealth as the eighth initializer field. DUNGEON.C:668-733
  *  defines the I34E-compatible G0243_as_Graphic559_CreatureInfo
- *  rows for creature types 0..26. GROUP.C:530-533 indexes that
- *  table during F0185_GROUP_GetGenerated and computes health as
+ *  rows for creature types 0..26; the third initializer field is
+ *  Attributes, whose low two bits are MASK0x0003_SIZE (DEFS.H:1597)
+ *  and C1_SIZE_HALF_SQUARE is 1 (DEFS.H:1613). GROUP.C:530-533
+ *  indexes that table during F0185_GROUP_GetGenerated and computes
+ *  health as
  *  baseHealth * multiplier + random(baseHealth >> 2 + 1).
  * ========================================================== */
 
@@ -112,6 +115,46 @@ static int runtime_get_creature_base_health(int creatureType) {
     };
     if (creatureType < 0 || creatureType > 26) return 0;
     return s_base[creatureType];
+}
+
+static int runtime_get_creature_size(int creatureType) {
+    static const int s_size[27] = {
+        /* DUNGEON.C:673 */ 0x0482 & 0x0003,
+        /* DUNGEON.C:675 */ 0x0480 & 0x0003,
+        /* DUNGEON.C:680 */ 0x4510 & 0x0003,
+        /* DUNGEON.C:682 */ 0x04B4 & 0x0003,
+        /* DUNGEON.C:683 */ 0x0701 & 0x0003,
+        /* DUNGEON.C:684 */ 0x0581 & 0x0003,
+        /* DUNGEON.C:685 */ 0x070C & 0x0003,
+        /* DUNGEON.C:686 */ 0x0300 & 0x0003,
+        /* DUNGEON.C:691 */ 0x5864 & 0x0003,
+        /* DUNGEON.C:693 */ 0x0282 & 0x0003,
+        /* DUNGEON.C:694 */ 0x1480 & 0x0003,
+        /* DUNGEON.C:699 */ 0x18C6 & 0x0003,
+        /* DUNGEON.C:701 */ 0x1280 & 0x0003,
+        /* DUNGEON.C:706 */ 0x14A2 & 0x0003,
+        /* DUNGEON.C:708 */ 0x05B8 & 0x0003,
+        /* DUNGEON.C:709 */ 0x0381 & 0x0003,
+        /* DUNGEON.C:710 */ 0x0680 & 0x0003,
+        /* DUNGEON.C:711 */ 0x04A0 & 0x0003,
+        /* DUNGEON.C:712 */ 0x0280 & 0x0003,
+        /* DUNGEON.C:718 */ 0x4060 & 0x0003,
+        /* DUNGEON.C:719 */ 0x10DE & 0x0003,
+        /* DUNGEON.C:721 */ 0x0082 & 0x0003,
+        /* DUNGEON.C:722 */ 0x1480 & 0x0003,
+        /* DUNGEON.C:730 */ 0x78AA & 0x0003,
+        /* DUNGEON.C:731 */ 0x068A & 0x0003,
+        /* DUNGEON.C:732 */ 0x78AA & 0x0003,
+        /* DUNGEON.C:733 */ 0x78AA & 0x0003
+    };
+    if (creatureType < 0 || creatureType > 26) return 0;
+    return s_size[creatureType];
+}
+
+static int runtime_set_creature_group_value(int groupValue, int creatureIndex, int creatureValue) {
+    int shift = creatureIndex << 1;
+    creatureValue = (creatureValue & 0x03) << shift;
+    return creatureValue | (groupValue & ~(3 << shift));
 }
 
 /* ==========================================================
@@ -234,6 +277,8 @@ int F0860_RUNTIME_HandleGroupGenerator_Compat(
     int healthMult;
     int direction = 0;
     int rngHealthCalls = 0;
+    int groupCells;
+    int i;
 
     if (ctx == 0 || outResult == 0) return 0;
 
@@ -282,6 +327,30 @@ int F0860_RUNTIME_HandleGroupGenerator_Compat(
         outResult->rngCallCount++;
     }
 
+    /* F0185 GROUP.C:525-541 - single groups are centered; multi-creature
+     * groups consume one random starting cell, then advance cells in the
+     * same descending creature-index order used for health assignment. */
+    if (creatureCount > 0) {
+        int cell = 0;
+        int halfSquare = runtime_get_creature_size(ctx->creatureType) == 1;
+        groupCells = 0;
+        if (rng != 0) {
+            cell = F0732_COMBAT_RngRandom_Compat(rng, 4);
+            outResult->rngCallCount++;
+        }
+        for (i = creatureCount; i >= 0; --i) {
+            groupCells = runtime_set_creature_group_value(
+                groupCells, i, cell);
+            cell++;
+            if (halfSquare) {
+                cell++;
+            }
+            cell &= 0x03;
+        }
+    } else {
+        groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    }
+
     /* Health per creature. */
     if (!F0862_RUNTIME_ComputeSpawnedGroupHealth_Compat(
             ctx->creatureType, healthMult, creatureCount,
@@ -295,6 +364,7 @@ int F0860_RUNTIME_HandleGroupGenerator_Compat(
     outResult->spawnedCreatureCount = creatureCount;
     outResult->spawnedDirection = direction & 0x03;
     outResult->spawnedHealthMultiplier = healthMult;
+    outResult->spawnedGroupCells = groupCells;
     outResult->soundRequested = ctx->audible ? 1 : 0;
     outResult->suppressionReason = GENERATOR_SUPPRESSION_NONE;
 
@@ -731,7 +801,7 @@ int F0876_RUNTIME_GeneratorResultSerialize_Compat(
     write_i32_le(outBuf + o, result->soundRequested);          o += 4;
     write_i32_le(outBuf + o, result->suppressionReason);       o += 4;
     write_i32_le(outBuf + o, result->rngCallCount);            o += 4;
-    write_i32_le(outBuf + o, result->reserved0);               o += 4;
+    write_i32_le(outBuf + o, result->spawnedGroupCells);       o += 4;
     for (i = 0; i < 4; i++) {
         write_i32_le(outBuf + o, result->spawnedGroupHealth[i]);
         o += 4;
@@ -769,7 +839,7 @@ int F0876_RUNTIME_GeneratorResultDeserialize_Compat(
     result->soundRequested          = read_i32_le(buf + o); o += 4;
     result->suppressionReason       = read_i32_le(buf + o); o += 4;
     result->rngCallCount            = read_i32_le(buf + o); o += 4;
-    result->reserved0               = read_i32_le(buf + o); o += 4;
+    result->spawnedGroupCells       = read_i32_le(buf + o); o += 4;
     for (i = 0; i < 4; i++) {
         result->spawnedGroupHealth[i] = read_i32_le(buf + o);
         o += 4;
