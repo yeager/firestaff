@@ -292,6 +292,22 @@ static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
       "DUNVIEW.C:7703-7704 F0115 object/creature/projectile/explosion handoff",
       "DUNVIEW.C:7706-7722 teleporter field after F0115",
       "DUNVIEW.C:7604-7628 wall bitmap/ornament then return" },
+    { DM1_VIEW_SQUARE_D0L, 0x0002, true, true, false, true, true, false, true,
+      "F0125_DUNGEONVIEW_DrawSquareD0L",
+      "DUNVIEW.C:7978-7988 stairs-side bitmap returns before common F0115",
+      "DUNVIEW.C:7989-7998 pit bitmap falls through before F0115",
+      "DUNVIEW.C:7999-8005 no floor-ornament call; ceiling pit precedes F0115",
+      "DUNVIEW.C:8005 F0115 object/creature/projectile/explosion handoff with C0x0002",
+      "DUNVIEW.C:8050-8059 teleporter field after F0115",
+      "DUNVIEW.C:8007-8038 wall bitmap then return before F0115/field" },
+    { DM1_VIEW_SQUARE_D0R, 0x0001, true, true, false, true, true, false, true,
+      "F0126_DUNGEONVIEW_DrawSquareD0R",
+      "DUNVIEW.C:8082-8092 stairs-side bitmap returns before common F0115",
+      "DUNVIEW.C:8093-8102 pit bitmap falls through before F0115",
+      "DUNVIEW.C:8103-8115 no floor-ornament call; ceiling pit precedes F0115",
+      "DUNVIEW.C:8115 F0115 object/creature/projectile/explosion handoff with C0x0001",
+      "DUNVIEW.C:8150-8159 teleporter field after F0115",
+      "DUNVIEW.C:8117-8144 wall bitmap then return before F0115/field" },
     { DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, true, false,
       "F0127_DUNGEONVIEW_DrawSquareD0C",
       "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115",
@@ -1177,6 +1193,8 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:6877-6896 D2R2 mirrored wall-return/teleporter-field helper has no F0115 thing pass\n"
         "  DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:7978-8062 D0L stairs/pit/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:8082-8162 D0R mirrored stairs/pit/ceiling-pit/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order\n"
         "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:6270-6286 D3L2 far door-front occlusion: rear pass, far door, front pass\n"

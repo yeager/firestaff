@@ -820,10 +820,12 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         { DM1_VIEW_SQUARE_D2R2, "F0679_DrawD2R2", 0x0000, 0, "6877-6896", "6877-6896", "no F0115 thing pass", "6894-6896", "6879-6893", 0, 0, 0 },
         { DM1_VIEW_SQUARE_D1L,  "F0122_DUNGEONVIEW_DrawSquareD1L", 0x0032, 1, "7405-7435", "7510-7520", "7535-7536", "7538-7555", "7436-7460", 0, 1, 1 },
         { DM1_VIEW_SQUARE_D1R,  "F0123_DUNGEONVIEW_DrawSquareD1R", 0x0041, 1, "7573-7603", "7678-7688", "7703-7704", "7706-7722", "7604-7628", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D0L,  "F0125_DUNGEONVIEW_DrawSquareD0L", 0x0002, 0, "7978-7988", "7989-7998", "8005", "8050-8059", "8007-8038", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D0R,  "F0126_DUNGEONVIEW_DrawSquareD0R", 0x0001, 0, "8082-8092", "8093-8102", "8115", "8150-8159", "8117-8144", 0, 1, 1 },
         { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8294", "8295-8308", "8185-8240", 1, 1, 1 },
     };
 
-    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 13);
+    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 15);
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportFloorFieldOrderSpec *spec =
             dm1_viewport_3d_get_floor_field_order_spec_for_square(expected[i].square);
@@ -862,8 +864,9 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         snprintf(id, sizeof(id), "floor_field_order.%zu.wall_source", i);
         check_int(id, strstr(spec->wall_return_source_lines, expected[i].wall_return_line) != NULL, 1);
     }
-    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(13) == NULL, 1);
-    check_int("floor_field_order.no_d0_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0L) == NULL, 1);
+    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(15) == NULL, 1);
+    check_int("floor_field_order.d0l_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0L) != NULL, 1);
+    check_int("floor_field_order.d0r_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0R) != NULL, 1);
     check_int("floor_field_order.d2l2_no_thing_pass",
               dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D2L2)->objects_creatures_projectiles_before_explosions ? 1 : 0,
               0);
@@ -954,8 +957,8 @@ static void test_d0_d1_visible_square_draw_order_gate(void)
     } side_expected[] = {
         { DM1_VIEW_SQUARE_D1L, 0x0032, "7536", "7538-7555" },
         { DM1_VIEW_SQUARE_D1R, 0x0041, "7704", "7706-7722" },
-        { DM1_VIEW_SQUARE_D0L, 0x0002, "8005", NULL },
-        { DM1_VIEW_SQUARE_D0R, 0x0001, "8115", NULL },
+        { DM1_VIEW_SQUARE_D0L, 0x0002, "8005", "8050-8059" },
+        { DM1_VIEW_SQUARE_D0R, 0x0001, "8115", "8150-8159" },
     };
     const DM1_ViewportThingLayerSpec *objects =
         dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_OBJECTS);
@@ -1041,6 +1044,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.d2r2_no_thing_pass", strstr(e, "6877-6896") != NULL && strstr(e, "no F0115 thing pass") != NULL, 1);
     check_int("source_evidence.d2l_field_order", strstr(e, "6914-7048") != NULL, 1);
     check_int("source_evidence.d2r_field_order", strstr(e, "7065-7240") != NULL, 1);
+    check_int("source_evidence.d0_side_field_order",
+        strstr(e, "DUNVIEW.C:7978-8062") != NULL && strstr(e, "DUNVIEW.C:8082-8162") != NULL, 1);
     check_int("source_evidence.d0c_foreground_before_things",
         strstr(e, "DUNVIEW.C:8185-8240") != NULL && strstr(e, "draw before common F0115") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);

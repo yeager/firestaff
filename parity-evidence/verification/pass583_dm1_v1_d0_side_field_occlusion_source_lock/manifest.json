@@ -2,40 +2,63 @@
   "firestaffChecks": [
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "needle": "DM1_VIEW_SQUARE_D1L, 0x0032",
+      "needle": "DM1_VIEW_SQUARE_D0L, 0x0002",
       "status": "PASS"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "needle": "DM1_VIEW_SQUARE_D1R, 0x0041",
+      "needle": "DUNVIEW.C:7978-8062 D0L",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DM1_VIEW_SQUARE_D0R, 0x0001",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "DUNVIEW.C:8082-8162 D0R",
       "status": "PASS"
     },
     {
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "needle": "floor_field_order_spec_count(), 15",
       "status": "PASS"
-    }
-  ],
-  "nonClaims": [
-    "no input or movement queue edits",
-    "no original DOS pixel parity claim",
-    "no DANNESBURK use"
-  ],
-  "redmcsbChecks": [
+    },
     {
-      "source": "DUNVIEW.C:7391-7557",
-      "square": "D1L",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "floor_field_order.d0l_side_spec",
       "status": "PASS"
     },
     {
-      "source": "DUNVIEW.C:7559-7725",
-      "square": "D1R",
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "needle": "floor_field_order.d0r_side_spec",
       "status": "PASS"
     }
   ],
-  "schema": "pass518_dm1_v1_d1_side_field_occlusion_source_lock.v1",
+  "nonClaims": [
+    "no renderer pixel parity claim",
+    "no input or movement queue changes",
+    "no original DOS runtime capture claim",
+    "no CSB/DM2/Nexus behavior claim"
+  ],
+  "redmcsbChecks": [
+    {
+      "id": "D0L",
+      "missing": [],
+      "source": "DUNVIEW.C:7960-8062",
+      "status": "PASS"
+    },
+    {
+      "id": "D0R",
+      "missing": [],
+      "source": "DUNVIEW.C:8064-8162",
+      "status": "PASS"
+    }
+  ],
+  "schema": "pass583_dm1_v1_d0_side_field_occlusion_source_lock.v1",
   "status": "passed",
-  "statusToken": "PASS518_DM1_V1_D1_SIDE_FIELD_OCCLUSION_SOURCE_LOCKED",
+  "statusToken": "PASS583_DM1_V1_D0_SIDE_FIELD_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
