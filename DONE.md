@@ -119,6 +119,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
 - ✅ Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, VI wound RNG masks, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, swallow audio routing, and no-mouth-animation behavior are source-locked
+- ✅ Weapon eye-panel name and attribute descriptions are source-locked for POISONED/BROKEN/CURSED formatting (94094865)
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
