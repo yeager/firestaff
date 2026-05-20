@@ -184,6 +184,7 @@ Status per 2026-05-19 v2.4.0.
   - ✅ Phase 1 slice — deterministic V2 presentation settings scaffold source-locked; V1 default path and command/gameplay state remain isolated (ac70837c)
   - ✅ Phase 1 slice — presentation profile boundary source-locked; V2 presentation mode consumes copied V1 gameplay snapshots and keeps command/gameplay routing pinned to V1 (931688c6)
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
+  - ✅ Phase 2 slice — graphics pipeline source isolation verified; V2 presentation may scale/filter/present source DM1 graphics while keeping palette, font, viewport geometry, and gameplay state boundaries source-locked (8308645d)
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
