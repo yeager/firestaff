@@ -1,0 +1,388 @@
+{
+  "blockers": [
+    "fresh original diagnostic class sequence is not the expected title/menu -> entrance -> gameplay route",
+    "fresh original diagnostic has duplicate raw 320x200 frames",
+    "fresh original diagnostic has duplicate 224x136 viewport crops",
+    "fresh original diagnostic produced no command/state/redraw transcript rows",
+    "original rows do not bind map/X/Y/direction to F0380 -> F0365/F0366 -> F0128 -> F0097 for the same sampled frame"
+  ],
+  "decision": "No promotable same-viewport original/Firestaff manifest exists yet. Firestaff has exact fixture state and viewport hashes, and original PC34 assets/tools are present, but the latest N2 original diagnostic still lacks the command-state-redraw-present transcript required to bind an original frame to any Firestaff map/X/Y/direction row.",
+  "firestaffEvidence": {
+    "captureManifest": "verification-screens/capture_manifest_sha256.tsv",
+    "stateProbe": "verification-m11/capture-route-state-pass195/pass76_capture_route_state_probe.json",
+    "states": [
+      {
+        "action": "start",
+        "activeChampionIndex": 0,
+        "capture": "01_ingame_start_latest",
+        "championCount": 1,
+        "direction": 2,
+        "inventoryPanelActive": 0,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 0,
+        "spellRuneCount": 0,
+        "tick": 0
+      },
+      {
+        "action": "right",
+        "activeChampionIndex": 0,
+        "capture": "02_ingame_turn_right_latest",
+        "championCount": 1,
+        "direction": 3,
+        "inventoryPanelActive": 0,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 0,
+        "spellRuneCount": 0,
+        "tick": 1
+      },
+      {
+        "action": "up",
+        "activeChampionIndex": 0,
+        "capture": "03_ingame_move_forward_latest",
+        "championCount": 1,
+        "direction": 3,
+        "inventoryPanelActive": 0,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 0,
+        "spellRuneCount": 0,
+        "tick": 2
+      },
+      {
+        "action": "spell_rune_1",
+        "activeChampionIndex": 0,
+        "capture": "04_ingame_spell_panel_latest",
+        "championCount": 1,
+        "direction": 3,
+        "inventoryPanelActive": 0,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 1,
+        "spellRuneCount": 1,
+        "tick": 2
+      },
+      {
+        "action": "spell_rune_4+rune_4+spell_cast",
+        "activeChampionIndex": 0,
+        "capture": "05_ingame_after_cast_latest",
+        "championCount": 1,
+        "direction": 3,
+        "inventoryPanelActive": 0,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 0,
+        "spellRuneCount": 0,
+        "tick": 3
+      },
+      {
+        "action": "spell_clear+inventory",
+        "activeChampionIndex": 0,
+        "capture": "06_ingame_inventory_panel_latest",
+        "championCount": 1,
+        "direction": 3,
+        "inventoryPanelActive": 1,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3,
+        "result": 1,
+        "rightHandThing": 5120,
+        "spellPanelOpen": 0,
+        "spellRuneCount": 0,
+        "tick": 3
+      }
+    ],
+    "viewportHashes": [
+      {
+        "bytes": 91407,
+        "filename": "01_ingame_start_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "50661c78e2ece0839df9a71a62673aec2acaecefa5c122daf406fd34d94a8bf9",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "02_ingame_turn_right_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "6dd14b51a57fd958be2b3a409f9fab5ec352b692e287683925c9d4840240dee6",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "03_ingame_move_forward_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "0cb83803cd9cfbf3ff706998bc22a5a17926ec9dfd49c8a1fedbd4b376bf92b8",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "04_ingame_spell_panel_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "0cb83803cd9cfbf3ff706998bc22a5a17926ec9dfd49c8a1fedbd4b376bf92b8",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "05_ingame_after_cast_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "0cb83803cd9cfbf3ff706998bc22a5a17926ec9dfd49c8a1fedbd4b376bf92b8",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "06_ingame_inventory_panel_latest_viewport_224x136.ppm",
+        "height": 136,
+        "sha256": "a2192a96553db14fd3da2166a75249b22428aa2c0a72a4dd3402280137f0587e",
+        "width": 224
+      }
+    ]
+  },
+  "freshOriginalDiagnostic": {
+    "attemptDir": "verification-screens/pass601-same-viewport-original-diagnostic",
+    "capturedUtc": "2026-05-20T23:49:20Z",
+    "classifications": [
+      {
+        "actual": "graphics_320x200_unclassified",
+        "cropSha256": "358136006c6d53d112d1cfea3d4bd0fa0902df0ad8b7130cf68778e298a24aa9",
+        "expected": "title_or_menu",
+        "index": 1,
+        "label": "title",
+        "rawSha256": "6176af21cb32ededfc6090ce39523f66a686a59ac4cd51d2c895da1c6286b987"
+      },
+      {
+        "actual": "entrance_menu",
+        "cropSha256": "ea845264f9229fed624079892da4c51653b7a101b2c0fa3f95aea4a4621f7edb",
+        "expected": "entrance_menu",
+        "index": 2,
+        "label": "pre_enter_menu",
+        "rawSha256": "9f95e1d8fae6b5dd5d2dcbeba09a164f96774347634ef9328937441bb87fbe19"
+      },
+      {
+        "actual": "entrance_menu",
+        "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "expected": "dungeon_gameplay",
+        "index": 3,
+        "label": "after_enter_click",
+        "rawSha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+      },
+      {
+        "actual": "entrance_menu",
+        "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "expected": "dungeon_gameplay",
+        "index": 4,
+        "label": "forward_1",
+        "rawSha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8"
+      },
+      {
+        "actual": "dungeon_gameplay",
+        "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "expected": "dungeon_gameplay",
+        "index": 5,
+        "label": "forward_2",
+        "rawSha256": "355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe"
+      },
+      {
+        "actual": "dungeon_gameplay",
+        "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "expected": "dungeon_gameplay",
+        "index": 6,
+        "label": "left_turn_probe",
+        "rawSha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      }
+    ],
+    "command": "OUT_DIR=$PWD/verification-screens/pass601-same-viewport-original-diagnostic DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=5000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:1200 shot:pre_enter_menu click:260,50 wait:1200 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "cropDuplicateRouteIndices": {
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "localDate": "2026-05-21 Europe/Stockholm",
+    "rawDuplicateRouteIndices": {
+      "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8": [
+        3,
+        4
+      ]
+    },
+    "transcriptScaffold": {
+      "rows": 0,
+      "status": "SCAFFOLD_ONLY_MISSING_ORIGINAL_RUNTIME_DEBUG_FIELDS"
+    }
+  },
+  "nonClaims": [
+    "no original-vs-Firestaff pixel parity is claimed",
+    "no ReDMCSB source-table gap is claimed",
+    "no Firestaff renderer behavior is changed",
+    "fresh original images are diagnostic-only and remain unpromoted"
+  ],
+  "ok": true,
+  "originalAssetAudit": [
+    {
+      "exists": true,
+      "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "file": "GRAPHICS.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "exists": true,
+      "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "file": "DUNGEON.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "exists": true,
+      "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "file": "TITLE",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    }
+  ],
+  "promotionRequires": [
+    "exact original map/X/Y/direction/wall-door state for every sampled frame",
+    "command id and queue delta from F0380 for the sampled command",
+    "matching F0365/F0366 handler/state delta or source-visible blocked/no-op proof",
+    "later F0128 tuple and F0097/VIDRV present boundary before screenshot acceptance",
+    "a Firestaff fixture row with the same map/X/Y/direction/wall-door state and reproducible viewport hash"
+  ],
+  "schema": "firestaff.parity.pass608_dm1_v1_same_viewport_capture_blocker.v1",
+  "sourceAudit": [
+    {
+      "claim": "PC34 mouse route tokens must hit source command zones before labels mean anything.",
+      "exists": true,
+      "file": "COMMAND.C",
+      "function": "G0448_as_Graphic561_SecondaryMouseInput_Movement",
+      "lines": "106-114",
+      "missing": [],
+      "needles": [
+        "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145",
+        "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145",
+        "C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "A capture must be after command processing lets the wait loop exit.",
+      "exists": true,
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "lines": "164-219",
+      "missing": [],
+      "needles": [
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "while (M527_IsCharacterInKeyboardBuffer())",
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "Each original shot needs F0380 pop/count delta and F0365/F0366 dispatch.",
+      "exists": true,
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "lines": "2045-2156",
+      "missing": [],
+      "needles": [
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+        "G2153_i_QueuedCommandsCount--;",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "Turn shots must prove source direction mutation.",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "lines": "142-174",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "Move shots must prove accepted movement or source-visible blocked/no-op handling.",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": "180-347",
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "The viewport bitmap must be composed from the same direction/X/Y tuple.",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "A promotable crop belongs after the PC34 viewport-present blit.",
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE"
+}
