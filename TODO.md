@@ -195,7 +195,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
   - ✅ Phase 6 slice — touch/controller affordance route gate maps V2-only swipe/controller metadata onto existing source-locked movement commands while preserving V1 touch/click parity and rejecting V2-off affordances (b3fe97e3).
 - ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
-  - ✅ Phase 7 slice — presentation-disabled V2 source route now has a deterministic state-hash gate against the normalized V1 movement model for the same command script; full enhanced V2 runtime equivalence and pixel gates remain open ($(git rev-parse --short HEAD)).
+  - ✅ Phase 7 slice — presentation-disabled V2 source route now has a deterministic state-hash gate against the normalized V1 movement model for the same command script; full enhanced V2 runtime equivalence and pixel gates remain open (95559ebc).
 
 ---
 
