@@ -17607,8 +17607,11 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s %s",
                           (unsigned int)state->world.gameTick,
                           champName, verb);
-            (void)M11_Audio_EmitMarker(&state->audioState,
-                                       M11_AUDIO_MARKER_COMBAT);
+            /* ReDMCSB PC34 MENU.C:1280-1305 routes FIREBALL / DISPELL /
+             * LIGHTNING through F0327_CHAMPION_IsProjectileSpellCast without
+             * an F0064_SOUND_RequestPlay_CPSD call at action time.
+             * CHAMPION.C:2073-2106 creates the projectile without requesting
+             * sound; projectile impact sound is a later GROUP.C concern. */
             return spawned;
         }
         case 35: /* FLUXCAGE */

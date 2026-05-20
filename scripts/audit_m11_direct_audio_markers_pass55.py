@@ -89,20 +89,18 @@ def main() -> int:
     calls = direct_marker_calls(game)
     allowed_labels = {
         "generic_non_sound_request_emission": 0,
-        "spell_projectile_action_fallback": 0,
         "invoke_action_fallback": 0,
     }
     unexpected: list[tuple[int, str]] = []
     spell_block_start = game.find("case 20:   /* FIREBALL */")
     invoke_block_start = game.find("case 27: { /* INVOKE */")
     throw_block_start = game.find("case 42: { /* THROW */")
+    spell_block = game[spell_block_start:invoke_block_start]
     for offset in calls:
         ctx = context_window(game, offset)
         line = line_for_offset(game, offset)
         if "emission->kind == EMIT_SOUND_REQUEST" in ctx and "else" in ctx:
             allowed_labels["generic_non_sound_request_emission"] += 1
-        elif spell_block_start <= offset < invoke_block_start:
-            allowed_labels["spell_projectile_action_fallback"] += 1
         elif invoke_block_start <= offset < throw_block_start:
             allowed_labels["invoke_action_fallback"] += 1
         else:
@@ -110,7 +108,6 @@ def main() -> int:
 
     expected_counts = {
         "generic_non_sound_request_emission": 1,
-        "spell_projectile_action_fallback": 1,
         "invoke_action_fallback": 1,
     }
 
@@ -128,6 +125,13 @@ def main() -> int:
         pass_line("P55_DIRECT_AUDIO_AUDIT_04A calm/brandish/confuse stay source-silent")
     else:
         failures += fail("P55_DIRECT_AUDIO_AUDIT_04A social frighten block still has marker fallback or lost source-backed horn/cry events")
+
+    if spell_block_start < 0 or invoke_block_start < 0:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04B missing spell projectile action block")
+    elif "M11_Audio_EmitMarker" not in spell_block and "MENU.C:1280-1305" in spell_block and "CHAMPION.C:2073-2106" in spell_block:
+        pass_line("P55_DIRECT_AUDIO_AUDIT_04B fireball/dispell/lightning action cast stays source-silent")
+    else:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04B spell projectile action block still has marker fallback or lost source anchors")
 
     if not unexpected and allowed_labels == expected_counts:
         pass_line(
