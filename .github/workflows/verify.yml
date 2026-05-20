@@ -198,6 +198,14 @@ jobs:
             echo "✓ All platforms produced identical hash: $FIRST"
           fi
 
+
+  web-wasm-toolchain-probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe Web/WASM toolchain availability
+        run: ./scripts/probes/run_firestaff_web_wasm_toolchain_probe.sh
+
   warnings-check:
     runs-on: ubuntu-24.04
     steps:
