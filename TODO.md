@@ -63,7 +63,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Creature type-specific behavior — Giggler steal source-locked; Ghost non-material and other type specials remain
 - ❌ Creature group spawning (C006 floor sensor group generator)
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
-- 🔧 Creature sound effects attack/movement ordinals are source-locked (runtime trigger coverage still pending)
+- ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ❌ Creature flee behavior (low HP retreat)
 
 ### Combat
@@ -167,8 +167,8 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Multiple save slots
 
 ### Audio
-- 🔧 Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- 🔧 Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures; party footsteps remain unsourced in DM1 V1
+- ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
+- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures; party footsteps are provenance-locked absent in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
 - ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
 
