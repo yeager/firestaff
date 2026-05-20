@@ -11,6 +11,10 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM1 V1 — Core Gameplay
 
+### Movement & Collision
+
+- 🔧 Collision and doors — movement blocker, door-button click, accepted-move state, and viewport redraw source/runtime evidence is locked in `196868b2`; original DOS overlay/runtime cases for representative wall, closed/open door, fakewall, and door-button states remain before `MATCHED`
+
 ### Creature System
 
 - 🔧 Creature type-specific behavior — Giggler steal and Ghost/non-material melee gating are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
