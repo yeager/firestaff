@@ -124,6 +124,14 @@ int main(void) {
                          162u, 573u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
                          "panel.cancel")) ok = 0;
 
+    event.space = TOUCH_POINTER_SPACE_DUNGEON_VIEWPORT_LOCAL_PC34_COMPAT;
+    event.x = 112;
+    event.y = 68;
+    if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
+        !expect_dispatch(&dispatch, 112, 101, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         80u, 7u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
+                         "viewport.dungeon")) ok = 0;
+
     event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
     event.space = TOUCH_POINTER_SPACE_SCALED_VIEWPORT_PC34_COMPAT;
     event.x = 68;
@@ -174,6 +182,18 @@ int main(void) {
     if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
     if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
         queued.command != 30 || queued.x != 34 || queued.y != 59) ok = 0;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_DUNGEON_VIEWPORT_LOCAL_PC34_COMPAT;
+    event.x = 112;
+    event.y = 68;
+    event.surfaceW = 0;
+    event.surfaceH = 0;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
+        queued.command != 80 || queued.x != 112 || queued.y != 101) ok = 0;
 
     event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
     event.space = TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT;

@@ -398,6 +398,40 @@ int TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(int viewportX,
     return 1;
 }
 
+int TOUCHCLICK_Compat_MapDungeonViewportLocalPointToDispatch(int viewportX,
+                                                             int viewportY,
+                                                             unsigned int buttonMask,
+                                                             TouchClickDispatchPc34Compat* outDispatch) {
+    TouchClickZonePc34Compat zone;
+    int sourceViewportX;
+    int sourceViewportY;
+    int sourceViewportW;
+    int sourceViewportH;
+    if (!outDispatch) return 0;
+    memset(outDispatch, 0, sizeof(*outDispatch));
+    if (buttonMask == 0u) return 0;
+    if (!TOUCHCLICK_Compat_GetSourceViewportRect(&sourceViewportX, &sourceViewportY,
+                                                 &sourceViewportW, &sourceViewportH)) return 0;
+    if (viewportX < 0 || viewportY < 0 ||
+        viewportX >= sourceViewportW || viewportY >= sourceViewportH) {
+        return 0;
+    }
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(sourceViewportX + viewportX,
+                                                       sourceViewportY + viewportY,
+                                                       buttonMask,
+                                                       &zone)) {
+        return 0;
+    }
+    outDispatch->screenX = sourceViewportX + viewportX;
+    outDispatch->screenY = sourceViewportY + viewportY;
+    outDispatch->buttonStatus = buttonMask;
+    outDispatch->commandId = zone.commandId;
+    outDispatch->zoneIndex = zone.zoneIndex;
+    outDispatch->coordMode = zone.coordMode;
+    outDispatch->groupName = zone.groupName;
+    return 1;
+}
+
 int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
                                                      int physicalY,
                                                      int surfaceW,
@@ -445,6 +479,25 @@ int TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(int physicalX,
     return TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(viewportX, viewportY, buttonMask, outDispatch);
 }
 
+int TOUCHCLICK_Compat_MapScaledDungeonViewportPointToDispatch(int physicalX,
+                                                              int physicalY,
+                                                              int surfaceW,
+                                                              int surfaceH,
+                                                              unsigned int buttonMask,
+                                                              TouchClickDispatchPc34Compat* outDispatch) {
+    int viewportX;
+    int viewportY;
+    if (!outDispatch) return 0;
+    memset(outDispatch, 0, sizeof(*outDispatch));
+    if (buttonMask == 0u) return 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledViewportPoint(physicalX, physicalY,
+                                                        surfaceW, surfaceH,
+                                                        &viewportX, &viewportY)) {
+        return 0;
+    }
+    return TOUCHCLICK_Compat_MapDungeonViewportLocalPointToDispatch(viewportX, viewportY, buttonMask, outDispatch);
+}
+
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables, including COMMAND.C:394 fixed absolute freeze-game box; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C plus source constants define source viewport origin/extent (x=0 y=33 w=224 h=136); scaled viewport touch points normalize through the same letterboxed integer mapping as scaled full-screen points; COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
+    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables, including COMMAND.C:394 fixed absolute freeze-game box; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C plus source constants define source viewport origin/extent (x=0 y=33 w=224 h=136); viewport-local inventory/panel points keep the viewport-relative route; explicit dungeon-viewport-local touch points promote to original screen coordinates and feed the source-ordered C080 viewport click route; scaled viewport touch points normalize through the same letterboxed integer mapping as scaled full-screen points; COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
 }

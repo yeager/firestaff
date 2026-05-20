@@ -45,8 +45,10 @@ int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX, int physicalY, i
 int TOUCHCLICK_Compat_NormalizeScaledViewportPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, int* outViewportX, int* outViewportY);
 int TOUCHCLICK_Compat_HitTestScaledScreenPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(int viewportX, int viewportY, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
+int TOUCHCLICK_Compat_MapDungeonViewportLocalPointToDispatch(int viewportX, int viewportY, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 int TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
+int TOUCHCLICK_Compat_MapScaledDungeonViewportPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void);
 
 #endif

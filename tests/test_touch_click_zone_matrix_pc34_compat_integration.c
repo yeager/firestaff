@@ -149,6 +149,15 @@ int main(void) {
         dispatch.commandId != 162u || dispatch.zoneIndex != 573u ||
         strcmp(dispatch.groupName, "panel.cancel") != 0) ok = 0;
     if (TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &dispatch)) ok = 0;
+    if (!TOUCHCLICK_Compat_MapDungeonViewportLocalPointToDispatch(112, 68, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 112 || dispatch.screenY != 101 ||
+        dispatch.commandId != 80u || dispatch.zoneIndex != 7u ||
+        dispatch.coordMode != TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT ||
+        strcmp(dispatch.groupName, "viewport.dungeon") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapScaledDungeonViewportPointToDispatch(224, 136, 448, 272, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 112 || dispatch.screenY != 101 ||
+        dispatch.commandId != 80u || dispatch.zoneIndex != 7u ||
+        strcmp(dispatch.groupName, "viewport.dungeon") != 0) ok = 0;
 
     if (!TOUCHCLICK_Compat_GetSourceViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
         viewportX != 0 || viewportY != 33 || viewportW != 224 || viewportH != 136) ok = 0;
