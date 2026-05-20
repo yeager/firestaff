@@ -128,7 +128,7 @@ Status per 2026-05-19 v2.4.0.
 ### Survival / Needs
 - ✅ Food and water drain (1 unit per 6 ticks per champion)
 - ✅ Champion bar color reflects hunger/thirst status
-- 🔧 Food/water depletion → HP damage source-lock/test added; runtime damage-queue integration remains pending
+- ✅ Food/water depletion → HP damage — source-locked champion-needs pending HP damage is applied in M11 runtime on starvation/dehydration underflow
 - ✅ Rest system — source-locked rest/wake command routing, rest recovery multiplier, and forced wake on creature attack before resting-hit damage
 - ✅ Stamina drain from actions — source-locked action-menu stamina table, per-action random jitter, and F0325-style clamp/underflow damage in M11 runtime
 - ✅ Stamina regeneration — source-locked champion-needs gate covers gain/loss, rest multiplier, idle movement delay bonus, food/water depletion, and stamina overflow damage
