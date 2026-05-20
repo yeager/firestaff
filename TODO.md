@@ -127,7 +127,7 @@ Status per 2026-05-19 v2.4.0.
 ### Survival / Needs
 - ✅ Food and water drain (1 unit per 6 ticks per champion)
 - ✅ Champion bar color reflects hunger/thirst status
-- ❌ Food/water depletion → HP damage
+- 🔧 Food/water depletion → HP damage source-lock/test added; runtime damage-queue integration remains pending
 - ❌ Rest system (sleep to recover, wake on creature approach)
 - ❌ Stamina drain from actions
 - ❌ Stamina regeneration
