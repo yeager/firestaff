@@ -1,6 +1,51 @@
 #include "dm1_v1_inventory_pc34_compat.h"
 #include <string.h>
 
+static const int kPc34SlotMasks[DM1_PC34_SLOT_COUNT] = {
+    DM1_PC34_ALLOWED_ANY_SLOT,   /* Ready Hand */
+    DM1_PC34_ALLOWED_ANY_SLOT,   /* Action Hand */
+    DM1_PC34_ALLOWED_HEAD,       /* Head */
+    DM1_PC34_ALLOWED_TORSO,      /* Torso */
+    DM1_PC34_ALLOWED_LEGS,       /* Legs */
+    DM1_PC34_ALLOWED_FEET,       /* Feet */
+    DM1_PC34_ALLOWED_POUCH,      /* Pouch 2 */
+    DM1_PC34_ALLOWED_QUIVER_LINE2,
+    DM1_PC34_ALLOWED_QUIVER_LINE2,
+    DM1_PC34_ALLOWED_QUIVER_LINE2,
+    DM1_PC34_ALLOWED_NECK,
+    DM1_PC34_ALLOWED_POUCH,
+    DM1_PC34_ALLOWED_QUIVER_LINE1,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_ANY_SLOT,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_ALLOWED_CONTAINER
+};
+
+static void m11_inventory_clear_item(M11_Item* item) {
+    memset(item, 0, sizeof(*item));
+}
+
 void m11_inventory_init(M11_InventoryState* s, int championCount) {
     if (!s) return;
     memset(s, 0, sizeof(M11_InventoryState));
@@ -8,6 +53,13 @@ void m11_inventory_init(M11_InventoryState* s, int championCount) {
 }
 
 int m11_inventory_set_item(M11_InventoryState* s, int champ, int slot, int itemType, int weight, int charges) {
+    return m11_inventory_set_item_with_allowed_slots(
+        s, champ, slot, itemType, weight, charges, DM1_PC34_ALLOWED_ANY_SLOT);
+}
+
+int m11_inventory_set_item_with_allowed_slots(M11_InventoryState* s, int champ, int slot,
+                                              int itemType, int weight, int charges,
+                                              int allowedSlots) {
     if (!s || champ < 0 || champ >= s->championCount || slot < 0 || slot >= DM1_SLOT_COUNT) {
         return 0;
     }
@@ -17,6 +69,7 @@ int m11_inventory_set_item(M11_InventoryState* s, int champ, int slot, int itemT
     inv->slots[slot].charges = charges;
     inv->slots[slot].cursed = 0;
     inv->slots[slot].identified = 0;
+    inv->slots[slot].allowedSlots = allowedSlots;
     m11_inventory_recalc_load(s, champ);
     return 1;
 }
@@ -35,7 +88,7 @@ int m11_inventory_remove_item(M11_InventoryState* s, int champ, int slot) {
         return 0;
     }
     M11_ChampionInventory* inv = &s->champions[champ];
-    memset(&inv->slots[slot], 0, sizeof(M11_Item));
+    m11_inventory_clear_item(&inv->slots[slot]);
     m11_inventory_recalc_load(s, champ);
     return 1;
 }
@@ -57,20 +110,17 @@ int m11_inventory_pickup_mouse(M11_InventoryState* s, int champ, int slot) {
     }
     M11_ChampionInventory* inv = &s->champions[champ];
     
-    // Check if slot has an item (itemType != 0)
     if (inv->slots[slot].itemType == 0) {
         return 0;
     }
-    
-    // Check if mouseItem is empty (itemType == 0)
+
     if (inv->mouseItem.itemType != 0) {
         return 0;
     }
-    
-    // Move slot item to mouseItem
+
     inv->mouseItem = inv->slots[slot];
-    memset(&inv->slots[slot], 0, sizeof(M11_Item));
-    
+    m11_inventory_clear_item(&inv->slots[slot]);
+
     m11_inventory_recalc_load(s, champ);
     return 1;
 }
@@ -81,36 +131,17 @@ int m11_inventory_drop_mouse(M11_InventoryState* s, int champ, int slot) {
     }
     M11_ChampionInventory* inv = &s->champions[champ];
     
-    // Check if mouseItem is not empty
     if (inv->mouseItem.itemType == 0) {
         return 0;
     }
-    
-    // Check if slot is empty
+
     if (inv->slots[slot].itemType != 0) {
         return 0;
     }
-    
-    // Move mouseItem to slot
+
     inv->slots[slot] = inv->mouseItem;
-    // Note: The spec implies mouseItem holds just the itemType ID. 
-    // In a real system, we'd need to look up weight/charges from a database.
-    // Based on the struct M11_Item, mouseItem is just an int.
-    // The prompt says "move mouseItem->slot". 
-    // Since mouseItem is just an int (itemType), we set itemType.
-    // We cannot restore weight/charges from mouseItem alone unless we have a lookup.
-    // However, looking at the struct: int mouseItem;
-    // And set_item takes weight/charges.
-    // This implies mouseItem might just be a placeholder or the logic is simplified.
-    // Let's assume for this compat layer that we just set the itemType and zero others, 
-    // or that the caller handles the rest. 
-    // But wait, pickup_mouse moved the whole struct? No, it moved itemType.
-    // Let's re-read: "move slot->mouseItem". 
-    // If mouseItem is just an int, we lose data. 
-    // Let's assume the prompt implies a simplified model where mouseItem stores the ID.
-    
-    memset(&inv->mouseItem, 0, sizeof(M11_Item));
-    
+    m11_inventory_clear_item(&inv->mouseItem);
+
     m11_inventory_recalc_load(s, champ);
     return 1;
 }
@@ -132,6 +163,135 @@ int m11_inventory_get_load(const M11_InventoryState* s, int champ) {
         return 0;
     }
     return s->champions[champ].load;
+}
+
+int m11_inventory_pc34_slot_mask(int pc34Slot) {
+    if (pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    return kPc34SlotMasks[pc34Slot];
+}
+
+int m11_inventory_pc34_source_slot_to_storage_slot(int pc34Slot) {
+    if (pc34Slot >= DM1_PC34_SLOT_BACKPACK_LINE1_1 &&
+        pc34Slot <= DM1_PC34_SLOT_BACKPACK_LINE2_8) {
+        return DM1_SLOT_BACKPACK1 + (pc34Slot - DM1_PC34_SLOT_BACKPACK_LINE1_1);
+    }
+
+    switch (pc34Slot) {
+    case DM1_PC34_SLOT_READY_HAND:
+        return DM1_SLOT_HAND_RIGHT;
+    case DM1_PC34_SLOT_ACTION_HAND:
+        return DM1_SLOT_HAND_LEFT;
+    case DM1_PC34_SLOT_HEAD:
+        return DM1_SLOT_HEAD;
+    case DM1_PC34_SLOT_TORSO:
+        return DM1_SLOT_TORSO;
+    case DM1_PC34_SLOT_LEGS:
+        return DM1_SLOT_LEGS;
+    case DM1_PC34_SLOT_FEET:
+        return DM1_SLOT_FEET;
+    case DM1_PC34_SLOT_POUCH_2:
+        return DM1_SLOT_POUCH2;
+    case DM1_PC34_SLOT_QUIVER_LINE2_1:
+        return DM1_SLOT_QUIVER2;
+    case DM1_PC34_SLOT_QUIVER_LINE1_2:
+        return DM1_SLOT_QUIVER3;
+    case DM1_PC34_SLOT_QUIVER_LINE2_2:
+        return DM1_SLOT_QUIVER4;
+    case DM1_PC34_SLOT_NECK:
+        return DM1_SLOT_NECK;
+    case DM1_PC34_SLOT_POUCH_1:
+        return DM1_SLOT_POUCH1;
+    case DM1_PC34_SLOT_QUIVER_LINE1_1:
+        return DM1_SLOT_QUIVER1;
+    default:
+        return -1;
+    }
+}
+
+int m11_inventory_set_mouse_item(M11_InventoryState* s, int champ, int itemType,
+                                 int weight, int charges, int allowedSlots) {
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    M11_Item* item = &s->champions[champ].mouseItem;
+    item->itemType = itemType;
+    item->weight = weight;
+    item->charges = charges;
+    item->cursed = 0;
+    item->identified = 0;
+    item->allowedSlots = allowedSlots;
+    return 1;
+}
+
+int m11_inventory_get_mouse_item(const M11_InventoryState* s, int champ, M11_Item* out) {
+    if (!s || !out || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    *out = s->champions[champ].mouseItem;
+    return 1;
+}
+
+int m11_inventory_set_item_in_pc34_source_slot(M11_InventoryState* s, int champ,
+                                               int pc34Slot, int itemType, int weight,
+                                               int charges, int allowedSlots) {
+    const int storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
+    if (storageSlot < 0) {
+        return 0;
+    }
+    return m11_inventory_set_item_with_allowed_slots(
+        s, champ, storageSlot, itemType, weight, charges, allowedSlots);
+}
+
+int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int champ,
+                                               int pc34Slot, M11_Item* out) {
+    const int storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
+    if (storageSlot < 0) {
+        return 0;
+    }
+    return m11_inventory_get_item(s, champ, storageSlot, out);
+}
+
+int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot) {
+    int slotMask;
+    int storageSlot;
+    M11_ChampionInventory* inv;
+    M11_Item leaderHandObject;
+    M11_Item slotObject;
+
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
+    if (storageSlot < 0) {
+        return 0;
+    }
+    inv = &s->champions[champ];
+    leaderHandObject = inv->mouseItem;
+    slotObject = inv->slots[storageSlot];
+    if (leaderHandObject.itemType == 0 && slotObject.itemType == 0) {
+        return 0;
+    }
+
+    slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+    if (leaderHandObject.itemType != 0 &&
+        ((leaderHandObject.allowedSlots & slotMask) == 0)) {
+        return 0;
+    }
+
+    if (slotObject.itemType != 0) {
+        inv->mouseItem = slotObject;
+    } else {
+        m11_inventory_clear_item(&inv->mouseItem);
+    }
+    if (leaderHandObject.itemType != 0) {
+        inv->slots[storageSlot] = leaderHandObject;
+    } else {
+        m11_inventory_clear_item(&inv->slots[storageSlot]);
+    }
+    m11_inventory_recalc_load(s, champ);
+    return 1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -158,8 +318,12 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "CHAMPION.C:301-487 F0299_ApplyObjectModifiersToStatistics\n"
         "CHAMPION.C:489-560 F0300_GetObjectRemovedFromSlot\n"
         "CHAMPION.C:587-660 F0301_AddObjectInSlot\n"
+        "CHAMPION.C:694-699 F0302 empty-slot no-op and AllowedSlots/SlotMasks rejection\n"
+        "CHAMPION.C:701-710 F0302 leader-hand/slot swap order\n"
+        "DATA.C:1049-1087 G0038_ai_Graphic562_SlotMasks\n"
+        "DEFS.H:778-805 C00..C25 slot index namespace\n"
+        "DEFS.H:1698-1710 object allowed-slot masks\n"
         "CHAMPION.C:662-712 F0302_ProcessCommands28To65_ClickOnSlotBox BUG0_39\n"
         "OBJECT.C:121-200 F0032_OBJECT_GetType\n"
         "OBJECT.C:25-120 F0031_OBJECT_LoadNames\n";
 }
-
