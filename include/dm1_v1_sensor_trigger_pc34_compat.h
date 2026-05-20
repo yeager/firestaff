@@ -148,6 +148,8 @@ struct WallSensorContext_Compat {
     int leaderIndex;
     int sensorCountInCell;
     int cellHasStorageObjectOfType;
+    int squareHasObject;
+    int squareObjectType;
 };
 
 /* ================================================================
@@ -175,6 +177,10 @@ struct SensorTriggerResult_Compat {
     int wallStorageObjectTaken;
     int wallStorageObjectStored;
     int wallStorageObjectType;
+    int wallObjectTaken;
+    int wallObjectTypeTaken;
+    int wallObjectStored;
+    int wallObjectTypeStored;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16

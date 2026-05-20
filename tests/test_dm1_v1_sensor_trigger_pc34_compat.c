@@ -575,6 +575,62 @@ static void test_wall_single_object_storage_rotate(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor C016 object exchanger
+ *  Source: MOVESENS.C F0275 lines 1489-1499
+ * ---------------------------------------------------------------- */
+static void test_wall_object_exchanger(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_OBJECT_EXCHANGER,
+                         8, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 5, 6, 0);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderIndex = 0;
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderHandObjectType = 8;
+    ctx.sensorCountInCell = 0;
+    ctx.squareHasObject = 1;
+    ctx.squareObjectType = 12;
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C016: matching leader object and square object trigger exchange");
+    CHECK(result.resolvedEffect == DM1_EFFECT_TOGGLE, "Wall C016: keeps sensor effect");
+    CHECK(result.leaderHandObjectRemoved == 1, "Wall C016: leader hand object is removed");
+    CHECK(result.leaderHandObjectTypeRemoved == 8, "Wall C016: removed leader object matches sensor data");
+    CHECK(result.leaderHandObjectReceived == 1, "Wall C016: square object enters leader hand");
+    CHECK(result.leaderHandObjectTypeReceived == 12, "Wall C016: received object is the old square object");
+    CHECK(result.wallObjectTaken == 1, "Wall C016: old square object is unlinked");
+    CHECK(result.wallObjectTypeTaken == 12, "Wall C016: unlinked square object type is reported");
+    CHECK(result.wallObjectStored == 1, "Wall C016: leader object is linked into clicked wall cell");
+    CHECK(result.wallObjectTypeStored == 8, "Wall C016: stored wall object type is reported");
+
+    ctx.squareHasObject = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C016: no square object skips exchange");
+
+    ctx.squareHasObject = 1;
+    ctx.leaderHandObjectType = 9;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C016: wrong leader object type skips exchange");
+
+    ctx.leaderHandObjectType = 8;
+    ctx.sensorCountInCell = 1;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C016: only the last same-cell sensor may exchange");
+
+    sensor.effect = DM1_EFFECT_HOLD;
+    ctx.sensorCountInCell = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C016 HOLD: exchange still triggers");
+    CHECK(result.resolvedEffect == DM1_EFFECT_SET, "Wall C016 HOLD: exchange resolves to SET");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — champion portrait
  *  Source: F0275 case C127 (CHAMPION_PORTRAIT)
  * ---------------------------------------------------------------- */
@@ -857,6 +913,7 @@ int main(void) {
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
     test_wall_single_object_storage_rotate();
+    test_wall_object_exchanger();
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();
     test_effect_dispatch();

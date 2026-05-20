@@ -288,6 +288,8 @@ int F0723_SENSOR_EvaluateWall_Compat(
     int sensorType;
     int storageAction = 0;
     int storageObjectType = -1;
+    int exchangerAction = 0;
+    int exchangerSquareObjectType = -1;
 
     if (!sensor || !ctx || !outResult) return 0;
     memset(outResult, 0, sizeof(*outResult));
@@ -367,10 +369,18 @@ int F0723_SENSOR_EvaluateWall_Compat(
     case DM1_SENSOR_WALL_OBJECT_EXCHANGER:
         /* Source: F0275 case C016
          * if (sensorCountInCell > 0) goto skip;
-         * if (objType(hand) != data || no object on square) goto skip; */
+         * L0762 = F0162_DUNGEON_GetSquareFirstObject(mapX,mapY);
+         * if (objType(hand) != data || L0762 == NONE) goto skip;
+         * unlink square object, remove leader-hand object, link leader-hand
+         * object into the clicked wall cell, and put the old square object in
+         * the leader hand. */
         if (ctx->sensorCountInCell > 0) return 1;
         if (ctx->leaderHandObjectType != (int)sensor->sensorData)
             return 1; /* Wrong object type */
+        if (!ctx->squareHasObject)
+            return 1;
+        exchangerAction = 1;
+        exchangerSquareObjectType = ctx->squareObjectType;
         doNotTrigger = 0;
         break;
 
@@ -424,6 +434,8 @@ int F0723_SENSOR_EvaluateWall_Compat(
     outResult->leaderHandObjectReceived = 0;
     outResult->leaderHandObjectTypeReceived = -1;
     outResult->wallStorageObjectType = -1;
+    outResult->wallObjectTypeTaken = -1;
+    outResult->wallObjectTypeStored = -1;
 
     /* Source: F0275 lines 1527-1531.  C004/C011/C017 key-slot
      * sensors consume the leader hand object only after the wall sensor
@@ -446,6 +458,17 @@ int F0723_SENSOR_EvaluateWall_Compat(
         outResult->leaderHandObjectTypeRemoved = ctx->leaderHandObjectType;
         outResult->wallStorageObjectStored = 1;
         outResult->wallStorageObjectType = storageObjectType;
+    }
+
+    if (exchangerAction) {
+        outResult->leaderHandObjectRemoved = 1;
+        outResult->leaderHandObjectTypeRemoved = ctx->leaderHandObjectType;
+        outResult->leaderHandObjectReceived = 1;
+        outResult->leaderHandObjectTypeReceived = exchangerSquareObjectType;
+        outResult->wallObjectTaken = 1;
+        outResult->wallObjectTypeTaken = exchangerSquareObjectType;
+        outResult->wallObjectStored = 1;
+        outResult->wallObjectTypeStored = ctx->leaderHandObjectType;
     }
 
     if (sensor->onceOnly) {
