@@ -115,6 +115,15 @@ int main(void) {
     M11_Audio_Shutdown(&state);
     unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG");
 
+    M11_Audio_Init(&state);
+    probe_record(&tally,
+                 "P54_SONG_RUNTIME_03",
+                 M11_Audio_TitleMusicEnabled(&state) == 1 &&
+                     M11_Audio_SetTitleMusicEnabled(&state, 0) == 1 &&
+                     M11_Audio_TitleMusicEnabled(&state) == 0,
+                 "title music runtime gate tracks G2024_B_PendingMusicOn-style on/off state");
+    M11_Audio_Shutdown(&state);
+
     songPath = find_song_dat(songPathBuf, sizeof(songPathBuf));
     if (!songPath) {
         printf("SKIP P54_SONG_RUNTIME_ASSET no SONG.DAT found for original-title-music branch\n");
@@ -125,31 +134,31 @@ int main(void) {
         setenv("FIRESTAFF_SONG_DAT", songPath, 1);
         M11_Audio_Init(&state);
         probe_record(&tally,
-                     "P54_SONG_RUNTIME_03",
+                     "P54_SONG_RUNTIME_04",
                      state.originalSongAvailable == 1 &&
                          state.originalSongPartCount == V1_SONG_DAT_MUSIC_PART_COUNT,
                      "original SONG.DAT loads all 9 SND8 music-part buffers when asset is present");
         probe_record(&tally,
-                     "P54_SONG_RUNTIME_04",
+                     "P54_SONG_RUNTIME_05",
                      state.originalSongSequenceWordCount == 20 &&
                          state.originalSongPlayablePartCount == 19 &&
                          state.originalSongLoopTargetPart == 1,
                      "SEQ2 walk stops at the bit-15 loop-back marker and records loop target part 1");
         probe_record(&tally,
-                     "P54_SONG_RUNTIME_05",
+                     "P54_SONG_RUNTIME_06",
                      expectedSamples > 0 && state.titleMusic.sampleCount == expectedSamples,
                      "11025 Hz signed SND8 parts are linearly resampled/concatenated for the fixed 22050 Hz stream");
         beforeQueued = state.queuedSampleCount;
         playResult = M11_Audio_PlayTitleMusic(&state);
         if (state.backend == M11_AUDIO_BACKEND_SDL3) {
             probe_record(&tally,
-                         "P54_SONG_RUNTIME_06",
+                         "P54_SONG_RUNTIME_07",
                          playResult == 1 && state.titleMusicQueuedCount == 1 &&
                              state.queuedSampleCount == beforeQueued + state.titleMusic.sampleCount,
                          "SDL3 runtime queues the decoded/resampled one-cycle title-music phrase");
         } else {
             probe_record(&tally,
-                         "P54_SONG_RUNTIME_06",
+                         "P54_SONG_RUNTIME_07",
                          playResult == 0 && state.titleMusicQueuedCount == 0 &&
                              state.queuedSampleCount == beforeQueued,
                          "no-audio backend keeps title music loaded but does not queue samples");

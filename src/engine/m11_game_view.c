@@ -5039,6 +5039,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
     DM1_SaveMenu_Init(&state->saveMenu);
+    state->dm1MusicOn = 1;
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
     state->dm1GameID = ((uint32_t)(rand() & 0xFFFF) << 16) | (uint32_t)(rand() & 0xFFFF);
@@ -5363,6 +5364,22 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     }
 
     return m11_game_view_load_quicksave_path(state, path);
+}
+
+int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
+    if (!state) return 0;
+    state->dm1MusicOn = enabled ? 1 : 0;
+    (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, state->dm1MusicOn);
+    return state->dm1MusicOn;
+}
+
+int M11_GameView_ToggleMusic(M11_GameViewState* state) {
+    if (!state) return 0;
+    return M11_GameView_SetMusicEnabled(state, !state->dm1MusicOn);
+}
+
+int M11_GameView_GetMusicEnabled(const M11_GameViewState* state) {
+    return (state && state->dm1MusicOn) ? 1 : 0;
 }
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
@@ -6142,7 +6159,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                               "firestaff-%s-dm1save.sav", sid);
             if (rc > 0 && rc < (int)sizeof(savePath)) {
                 int saveResult = DM1_SaveGame(&state->world, savePath,
-                                               state->dm1GameID, 1);
+                                               state->dm1GameID, 1,
+                                               state->dm1MusicOn);
                 if (saveResult == DM1_SAVE_OK) {
                     m11_set_status(state, "SAVE", "GAME SAVED");
                     M12_Config_SetLastSavePath(savePath);

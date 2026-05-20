@@ -68,6 +68,7 @@ static int test_header_roundtrip(void) {
     hdr.championCount = 4;
     hdr.saveAndPlay = 1;
     hdr.formatID = 1;
+    hdr.musicOn = 1;
 
     /* Serialize header to buffer */
     memset(buf, 0xAA, sizeof(buf));
@@ -109,6 +110,7 @@ static int test_header_roundtrip(void) {
         buf[37] = (unsigned char)((hdr.championCount >> 8) & 0xFF);
         buf[38] = hdr.saveAndPlay;
         buf[39] = hdr.formatID;
+        buf[40] = hdr.musicOn;
     }
 
     /* Verify magic is at offset 0 */
@@ -137,6 +139,7 @@ static int test_header_roundtrip(void) {
     hdr2.championCount = (uint16_t)buf[36] | ((uint16_t)buf[37] << 8);
     hdr2.saveAndPlay = buf[38];
     hdr2.formatID = buf[39];
+    hdr2.musicOn = buf[40] ? 1 : 0;
 
     if (memcmp(hdr2.magic, DM1_SAVE_MAGIC, 8) != 0 ||
         hdr2.formatVersion != hdr.formatVersion ||
@@ -150,7 +153,8 @@ static int test_header_roundtrip(void) {
         hdr2.partyMapIndex != hdr.partyMapIndex ||
         hdr2.championCount != hdr.championCount ||
         hdr2.saveAndPlay != hdr.saveAndPlay ||
-        hdr2.formatID != hdr.formatID) {
+        hdr2.formatID != hdr.formatID ||
+        hdr2.musicOn != hdr.musicOn) {
         printf("  FAIL: header round-trip mismatch\n");
         return 0;
     }
@@ -256,7 +260,7 @@ static int test_null_args(void) {
     struct DM1SaveHeader hdr;
     int rc;
 
-    rc = DM1_SaveGame(NULL, "/tmp/test.sav", 0, 0);
+    rc = DM1_SaveGame(NULL, "/tmp/test.sav", 0, 0, 1);
     if (rc != DM1_SAVE_ERROR_NULL_ARG) {
         printf("  FAIL: SaveGame(NULL world) should return NULL_ARG\n");
         return 0;

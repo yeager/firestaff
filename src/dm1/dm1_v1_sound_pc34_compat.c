@@ -106,6 +106,7 @@ void DM1_Sound_Init(DM1_SoundSystem* sys) {
     sys->music.playingTrack = DM1_MUSIC_TRACK_NONE;
     sys->music.countdownBeforeStart = -1;
     sys->music.musicOn = 1;
+    sys->music.previousMusicOn = sys->music.musicOn;
 }
 
 /*
@@ -229,11 +230,32 @@ void DM1_Sound_SetPartyPosition(DM1_SoundSystem* sys,
     sys->partyMapIndex = mapIndex;
 }
 
+int DM1_Music_SetOn(DM1_SoundSystem* sys, int musicOn) {
+    if (!sys) return 0;
+    sys->music.musicOn = musicOn ? 1 : 0;
+    return sys->music.musicOn;
+}
+
+int DM1_Music_Toggle(DM1_SoundSystem* sys) {
+    if (!sys) return 0;
+    return DM1_Music_SetOn(sys, !sys->music.musicOn);
+}
+
+int DM1_Music_IsOn(const DM1_SoundSystem* sys) {
+    return (sys && sys->music.musicOn) ? 1 : 0;
+}
+
 /*
- * ReDMCSB F0742_MUSIC_SetTrack (MEDIA488/I34E)
+ * ReDMCSB COMMAND.C:2374-2379 flips G2024_B_PendingMusicOn for C141.
+ * MUSIC.C:657-668 (I34E) only starts map music while that pending state is
+ * true; MUSIC.C:659-661 pauses and invalidates the current map when it flips
+ * false. Firestaff keeps the same runtime state boundary here.
  */
 void DM1_Music_SetTrack(DM1_SoundSystem* sys, int16_t mapIndex) {
     if (!sys) return;
+    if (!sys->music.musicOn) {
+        return;
+    }
     if (sys->music.currentMapIndex != mapIndex) {
         if (mapIndex >= 0 && mapIndex < DM1_MUSIC_MAP_COUNT) {
             sys->music.currentMapIndex = mapIndex;
@@ -249,6 +271,18 @@ void DM1_Music_SetTrack(DM1_SoundSystem* sys, int16_t mapIndex) {
  */
 void DM1_Music_Update(DM1_SoundSystem* sys) {
     if (!sys) return;
+    if (sys->music.previousMusicOn != sys->music.musicOn) {
+        sys->music.previousMusicOn = sys->music.musicOn;
+        if (!sys->music.musicOn) {
+            DM1_Music_Stop(sys);
+            sys->music.currentMapIndex = DM1_MUSIC_TRACK_NONE;
+            sys->music.pendingTrack = DM1_MUSIC_TRACK_NONE;
+            return;
+        }
+    }
+    if (!sys->music.musicOn) {
+        return;
+    }
     if (sys->music.countdownBeforeStart == 0) {
         if (sys->music.pendingTrack != sys->music.playingTrack) {
             sys->music.playingTrack = sys->music.pendingTrack;

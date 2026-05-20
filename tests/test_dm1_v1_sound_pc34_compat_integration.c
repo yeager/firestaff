@@ -160,6 +160,31 @@ static void test_music_update(void) {
     CHECK(sys.music.countdownBeforeStart == -1, "countdown reset to -1");
 }
 
+static void test_music_toggle_runtime_state(void) {
+    DM1_SoundSystem sys;
+    DM1_Sound_Init(&sys);
+
+    CHECK(DM1_Music_IsOn(&sys) == 1, "music starts enabled in Firestaff runtime");
+    DM1_Music_SetTrack(&sys, 0);
+    for (int i = 0; i <= 100; i++) DM1_Music_Update(&sys);
+    CHECK(sys.music.playingTrack == 2, "music playing before toggle off");
+
+    CHECK(DM1_Music_Toggle(&sys) == 0, "toggle returns off");
+    DM1_Music_Update(&sys);
+    CHECK(sys.music.playingTrack == DM1_MUSIC_TRACK_NONE, "toggle off stops playing track");
+    CHECK(sys.music.currentMapIndex == DM1_MUSIC_TRACK_NONE, "toggle off invalidates map index");
+
+    DM1_Music_SetTrack(&sys, 1);
+    for (int i = 0; i <= 100; i++) DM1_Music_Update(&sys);
+    CHECK(sys.music.playingTrack == DM1_MUSIC_TRACK_NONE, "track requests are ignored while off");
+
+    CHECK(DM1_Music_SetOn(&sys, 1) == 1, "music set on");
+    DM1_Music_Update(&sys);
+    DM1_Music_SetTrack(&sys, 1);
+    for (int i = 0; i <= 100; i++) DM1_Music_Update(&sys);
+    CHECK(sys.music.playingTrack == 14, "music resumes map scheduling after on");
+}
+
 static void test_music_stop(void) {
     DM1_SoundSystem sys;
     DM1_Sound_Init(&sys);
@@ -202,6 +227,7 @@ int main(void) {
     test_out_of_range_not_played();
     test_music_set_track();
     test_music_update();
+    test_music_toggle_runtime_state();
     test_music_stop();
     test_sound_names();
     test_music_map_parity();

@@ -649,6 +649,7 @@ int M11_Audio_Init(M11_AudioState* state) {
     state->sfxVolume    = M11_AUDIO_VOLUME_MAX;
     state->musicVolume  = M11_AUDIO_VOLUME_MAX;
     state->uiVolume     = M11_AUDIO_VOLUME_MAX;
+    state->titleMusicEnabled = 1;
     state->lastMarker   = M11_AUDIO_MARKER_NONE;
     state->lastSoundIndex = -1;
     state->sdlStream    = NULL;
@@ -761,6 +762,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->originalSongPlayablePartCount = 0;
     state->originalSongLoopTargetPart = 0;
     state->titleMusicQueuedCount = 0;
+    state->titleMusicEnabled = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -920,8 +922,19 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
 }
 
+int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled) {
+    if (!state || !state->initialized) return 0;
+    state->titleMusicEnabled = enabled ? 1 : 0;
+    return 1;
+}
+
+int M11_Audio_TitleMusicEnabled(const M11_AudioState* state) {
+    return (state && state->titleMusicEnabled) ? 1 : 0;
+}
+
 int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
     if (!state || !state->initialized) return 0;
+    if (!state->titleMusicEnabled) return 0;
     if (!state->originalSongAvailable || state->titleMusic.sampleCount <= 0) return 0;
 
     if (state->backend != M11_AUDIO_BACKEND_SDL3) {

@@ -266,6 +266,7 @@ typedef struct {
      * C140_COMMAND (LOADSAVE.C F0433). */
     struct DM1SaveMenuContext saveMenu;
     uint32_t dm1GameID;  /* Persistent game ID for save file matching */
+    int dm1MusicOn;      /* ReDMCSB G2024_B_PendingMusicOn runtime state */
 } M11_GameViewState;
 
 /* Spell casting API */
@@ -286,6 +287,9 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   size_t outSize);
 int M11_GameView_QuickSave(M11_GameViewState* state);
 int M11_GameView_QuickLoad(M11_GameViewState* state);
+int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled);
+int M11_GameView_ToggleMusic(M11_GameViewState* state);
+int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);

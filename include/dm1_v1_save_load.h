@@ -77,7 +77,8 @@ enum DM1SaveLoadError {
  *   [36..37]  championCount  0-4 champions in party
  *   [38..38]  saveAndPlay    0=save-and-quit, 1=save-and-play
  *   [39..39]  formatID       C1_FORMAT_DM_ATARI_ST = 1
- *   [40..63]  reserved       zero-filled
+ *   [40..40]  musicOn        GLOBAL_DATA.MusicOn / G2024_B_PendingMusicOn
+ *   [41..63]  reserved       zero-filled
  */
 struct DM1SaveHeader {
     unsigned char magic[8];
@@ -93,7 +94,8 @@ struct DM1SaveHeader {
     uint16_t championCount;
     uint8_t  saveAndPlay;
     uint8_t  formatID;
-    unsigned char reserved[24];
+    uint8_t  musicOn;
+    unsigned char reserved[23];
 };
 
 /* ── Save menu state ──────────────────────────────────────────── */
@@ -138,7 +140,8 @@ struct GameWorld_Compat;
 int DM1_SaveGame(const struct GameWorld_Compat* world,
                  const char* path,
                  uint32_t gameID,
-                 int saveAndPlay);
+                 int saveAndPlay,
+                 int musicOn);
 
 /*
  * Load game world from file.

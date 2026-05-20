@@ -802,6 +802,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 if (rc > 0 && rc < (int)sizeof(savePath) &&
                     DM1_LoadGame(savePath, &gameView->world, &saveHeader) == DM1_SAVE_OK) {
                     gameView->active = 1;
+                    (void)M11_GameView_SetMusicEnabled(gameView, saveHeader.musicOn);
                     fprintf(stderr, "RESUME: loaded save from %s\n", savePath);
                 } else {
                     fprintf(stderr, "RESUME: no save found at %s, starting new game\n", savePath);

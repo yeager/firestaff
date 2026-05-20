@@ -110,7 +110,8 @@ static int dm1_serialize_header(const struct DM1SaveHeader* hdr,
     dm1_write_u16_le(buf + 36, hdr->championCount);
     buf[38] = hdr->saveAndPlay;
     buf[39] = hdr->formatID;
-    /* bytes 40..63 remain zero (reserved) */
+    buf[40] = (uint8_t)(hdr->musicOn ? 1 : 0);
+    /* bytes 41..63 remain zero (reserved) */
     return 1;
 }
 
@@ -129,7 +130,8 @@ static int dm1_deserialize_header(const unsigned char buf[DM1_SAVE_HEADER_SIZE],
     hdr->championCount  = dm1_read_u16_le(buf + 36);
     hdr->saveAndPlay    = buf[38];
     hdr->formatID       = buf[39];
-    memcpy(hdr->reserved, buf + 40, 24);
+    hdr->musicOn        = buf[40] ? 1 : 0;
+    memcpy(hdr->reserved, buf + 41, 23);
     return 1;
 }
 
@@ -163,7 +165,8 @@ static int dm1_deserialize_header(const unsigned char buf[DM1_SAVE_HEADER_SIZE],
 int DM1_SaveGame(const struct GameWorld_Compat* world,
                  const char* path,
                  uint32_t gameID,
-                 int saveAndPlay) {
+                 int saveAndPlay,
+                 int musicOn) {
     struct DM1SaveHeader hdr;
     unsigned char headerBuf[DM1_SAVE_HEADER_SIZE];
     unsigned char* blob = NULL;
@@ -210,6 +213,7 @@ int DM1_SaveGame(const struct GameWorld_Compat* world,
     hdr.championCount  = (uint16_t)world->party.championCount;
     hdr.saveAndPlay    = (uint8_t)(saveAndPlay ? 1 : 0);
     hdr.formatID       = 1; /* C1_FORMAT_DM_ATARI_ST */
+    hdr.musicOn        = (uint8_t)(musicOn ? 1 : 0);
 
     dm1_serialize_header(&hdr, headerBuf);
 

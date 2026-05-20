@@ -90,6 +90,7 @@ typedef struct {
     int16_t playingTrack;
     int     countdownBeforeStart;
     int     musicOn;
+    int     previousMusicOn;
 } DM1_MusicState;
 
 typedef struct {
@@ -122,6 +123,9 @@ void DM1_Sound_PlayPending(DM1_SoundSystem* sys);
 void DM1_Sound_SetPartyPosition(DM1_SoundSystem* sys,
                                 int16_t mapX, int16_t mapY,
                                 int16_t direction, int16_t mapIndex);
+int  DM1_Music_SetOn(DM1_SoundSystem* sys, int musicOn);
+int  DM1_Music_Toggle(DM1_SoundSystem* sys);
+int  DM1_Music_IsOn(const DM1_SoundSystem* sys);
 void DM1_Music_SetTrack(DM1_SoundSystem* sys, int16_t mapIndex);
 void DM1_Music_Update(DM1_SoundSystem* sys);
 void DM1_Music_Stop(DM1_SoundSystem* sys);
