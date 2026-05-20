@@ -15808,6 +15808,56 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     }
 }
 
+/* ReDMCSB MENU.C G0494_auc_Graphic560_ActionStamina.  F0407 adds
+ * M005_RANDOM(2) before the common tail calls F0325.  M11 does not
+ * carry the original global PRNG, so the bounded runtime uses a
+ * deterministic 0/1 jitter from the current tick/champion/action while
+ * preserving the source table and the F0325 clamp/underflow semantics. */
+static const unsigned char M11_ACTION_STAMINA_BASE[44] = {
+    0, 4, 10, 0, 1, 0, 1, 3, 1, 3, 40, 3, 3, 2, 4, 17,
+    3, 1, 6, 40, 5, 2, 2, 4, 5, 25, 1, 2, 2, 10, 9, 2,
+    3, 1, 2, 6, 1, 1, 3, 2, 3, 2, 0, 2
+};
+
+static int m11_apply_action_stamina_cost(M11_GameViewState* state,
+                                         int championIndex,
+                                         unsigned char actionIndex) {
+    struct ChampionState_Compat* champ;
+    int cost;
+    int staminaAfter;
+    int hpDamage;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (actionIndex >= 44) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+
+    cost = (int)M11_ACTION_STAMINA_BASE[actionIndex] +
+           (int)((state->world.gameTick + (uint32_t)championIndex +
+                  (uint32_t)actionIndex) & 1u);
+    if (cost <= 0) return 0;
+
+    staminaAfter = (int)champ->stamina.current - cost;
+    if (staminaAfter <= 0) {
+        champ->stamina.current = 0;
+        hpDamage = (-staminaAfter) >> 1;
+        if (hpDamage > 0) {
+            if ((int)champ->hp.current > hpDamage) {
+                champ->hp.current = (unsigned short)((int)champ->hp.current - hpDamage);
+            } else {
+                champ->hp.current = 0;
+            }
+            M11_GameView_NotifyDamageFlash(state, -1);
+        }
+    } else if (staminaAfter > (int)champ->stamina.maximum) {
+        champ->stamina.current = champ->stamina.maximum;
+    } else {
+        champ->stamina.current = (unsigned short)staminaAfter;
+    }
+    return cost;
+}
+
 /* Bounded non-melee action effects for the V1 slice.
  *
  * F0391 -> F0407 dispatches every menu action through a large
@@ -15822,9 +15872,9 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
  * have not yet grounded (projectile spells, F0401 frighten,
  * thrown objects, flux/fuse, thieves-eye event) falls through to
  * the generic "time passes" tick advance below so the action row
- * still visibly behaves — stamina drains, disabled-ticks accrue
- * via the orchestrator, creatures move — instead of being a
- * silent log-only stub.
+ * still visibly behaves — the shared action tail drains stamina,
+ * disabled-ticks accrue via the orchestrator, creatures move —
+ * instead of being a silent log-only stub.
  *
  * Ref: ReDMCSB MENU.C F0407_MENUS_IsActionPerformed,
  *      ACTIDRAW.C F0391_MENUS_DidClickTriggerAction.
@@ -17303,9 +17353,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             /* F0407 routes these through the action-disabled /
              * stamina path only (G0491 ActionDisabledTicks +
              * G0494 ActionStamina).  In V1 the defensive posture
-             * is visible as "time passes" — stamina drains via
-             * the orchestrator's survival pass, and the menu
-             * closes.  Emit a bounded defensive log so the
+             * is visible as "time passes" — the shared action tail
+             * drains stamina and the menu closes.  Emit a bounded
+             * defensive log so the
              * player sees the champion is guarding. */
             m11_log_event(state, M11_COLOR_LIGHT_GRAY,
                           "T%u: %s TAKES A DEFENSIVE STANCE",
@@ -17735,6 +17785,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * the closing frame — DM1 updates the leader portrait to the
      * acting champion while the action animation plays. */
     state->world.party.activeChampionIndex = championIndex;
+    (void)m11_apply_action_stamina_cost(state, championIndex, chosen);
     if (m11_action_is_melee_contact(chosen)) {
         /* Advance one tick with CMD_ATTACK via HandleInput so the
          * full M10 strike resolution runs (damage emission,
@@ -17745,7 +17796,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     } else {
         /* Non-melee: apply bounded effect (if any), then advance
          * a CMD_NONE tick so "time passes" semantics hold —
-         * stamina drains, action-disabled ticks roll forward,
+         * action stamina has drained, action-disabled ticks roll forward,
          * creature AI resolves, freeze-life decrements are
          * observed.  This keeps the action-menu loop visibly
          * identical to DM1: the player picks an action, the
@@ -17798,6 +17849,8 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     }
     state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
     state->world.party.activeChampionIndex = championIndex;
+    (void)m11_apply_action_stamina_cost(state, championIndex,
+                                        (unsigned char)actionIndex);
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
                                              champName);
