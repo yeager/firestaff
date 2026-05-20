@@ -12,6 +12,8 @@
  *     the active inventory champion action hand and panel content route
  *   PANEL.C F0352 lines 1250-1254: weapon descriptions expose Cursed,
  *     Poisoned, Broken and ChargeCount-derived state from WEAPON data
+ *   PANEL.C F0351 lines 2026-2108: eye click with empty leader hand draws
+ *     champion base skills plus all six current/max statistic families
  */
 
 #include "m11_game_view.h"
@@ -150,6 +152,51 @@ static void test_eye_panel_weapon_attribute_flags(void) {
                 "weapon eye panel reports source charge count");
 }
 
+static void test_eye_panel_champion_stats_and_skills(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct ChampionState_Compat* champ;
+
+    seed_inventory_view(&state, &things, &weapon);
+    champ = &state.world.party.champions[0];
+    champ->hp.current = 77;
+    champ->hp.maximum = 100;
+    champ->stamina.current = 66;
+    champ->stamina.maximum = 90;
+    champ->mana.current = 12;
+    champ->mana.maximum = 33;
+    champ->attributes[CHAMPION_ATTR_STRENGTH] = 41;
+    champ->attributes[CHAMPION_ATTR_DEXTERITY] = 42;
+    champ->attributes[CHAMPION_ATTR_WISDOM] = 43;
+    champ->attributes[CHAMPION_ATTR_VITALITY] = 44;
+    champ->attributes[CHAMPION_ATTR_ANTIMAGIC] = 45;
+    champ->attributes[CHAMPION_ATTR_ANTIFIRE] = 46;
+    champ->skillLevels[CHAMPION_SKILL_FIGHTER] = 2;
+    champ->skillLevels[CHAMPION_SKILL_NINJA] = 3;
+    champ->skillLevels[CHAMPION_SKILL_PRIEST] = 4;
+    champ->skillLevels[CHAMPION_SKILL_WIZARD] = 5;
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click with empty leader hand opens champion stats");
+    ASSERT_TRUE(strstr(state.inspectDetail, "MANA 12/33") != NULL,
+                "champion stats panel reports mana");
+    ASSERT_TRUE(strstr(state.inspectDetail, "STR 41") != NULL &&
+                strstr(state.inspectDetail, "DEX 42") != NULL &&
+                strstr(state.inspectDetail, "WIS 43") != NULL &&
+                strstr(state.inspectDetail, "VIT 44") != NULL,
+                "champion stats panel reports core statistics");
+    ASSERT_TRUE(strstr(state.inspectDetail, "AM 45") != NULL &&
+                strstr(state.inspectDetail, "AF 46") != NULL,
+                "champion stats panel reports anti-magic and anti-fire");
+    ASSERT_TRUE(strstr(state.inspectDetail, "FTR 2") != NULL &&
+                strstr(state.inspectDetail, "NIN 3") != NULL &&
+                strstr(state.inspectDetail, "PRI 4") != NULL &&
+                strstr(state.inspectDetail, "WIZ 5") != NULL,
+                "champion stats panel reports base skill levels");
+}
+
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: DEFS.H 778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, PANEL.C F0347 1651-1691\n\n");
@@ -157,6 +204,7 @@ int main(void) {
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_eye_panel_weapon_attribute_flags();
+    test_eye_panel_champion_stats_and_skills();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

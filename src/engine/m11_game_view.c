@@ -18923,10 +18923,20 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  "%s STATS", champName);
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "HP %d/%d  STA %d/%d  FOOD %d  WATER %d",
+                 "HP %d/%d  STA %d/%d  MANA %d/%d  STR %u  DEX %u  WIS %u  VIT %u  AM %u  AF %u  FTR %u  NIN %u  PRI %u  WIZ %u",
                  champ->hp.current, champ->hp.maximum,
                  champ->stamina.current, champ->stamina.maximum,
-                 champ->food, champ->water);
+                 champ->mana.current, champ->mana.maximum,
+                 champ->attributes[CHAMPION_ATTR_STRENGTH],
+                 champ->attributes[CHAMPION_ATTR_DEXTERITY],
+                 champ->attributes[CHAMPION_ATTR_WISDOM],
+                 champ->attributes[CHAMPION_ATTR_VITALITY],
+                 champ->attributes[CHAMPION_ATTR_ANTIMAGIC],
+                 champ->attributes[CHAMPION_ATTR_ANTIFIRE],
+                 champ->skillLevels[CHAMPION_SKILL_FIGHTER],
+                 champ->skillLevels[CHAMPION_SKILL_NINJA],
+                 champ->skillLevels[CHAMPION_SKILL_PRIEST],
+                 champ->skillLevels[CHAMPION_SKILL_WIZARD]);
         M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
         m11_set_status(state, "INSPECT", champName);
         return 1;
