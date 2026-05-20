@@ -7256,39 +7256,6 @@ static void m11_draw_pit_effect(unsigned char* framebuffer,
                    x + 4, x + w - 5, pitY + pitH - 4, M11_COLOR_NAVY);
 }
 
-/* Draw a teleporter visual effect: colored shimmer/rift.
- * In DM1, teleporters have a distinctive visual presence in the
- * viewport — a shimmering effect.  We render a colored frame with
- * an inner glow pattern. */
-static void m11_draw_teleporter_effect(unsigned char* framebuffer,
-                                       int framebufferWidth,
-                                       int framebufferHeight,
-                                       int x, int y, int w, int h,
-                                       int depthIndex) {
-    int cx = x + w / 2;
-    int cy = y + h / 2;
-    int rw = w * 2 / 3;
-    int rh = h * 2 / 3;
-    unsigned char color = depthIndex == 0 ? M11_COLOR_LIGHT_CYAN :
-                          (depthIndex == 1 ? M11_COLOR_CYAN : M11_COLOR_NAVY);
-    /* Outer shimmer frame */
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  cx - rw / 2, cy - rh / 2, rw, rh, color);
-    /* Inner cross pattern */
-    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                   cx - rw / 4, cx + rw / 4, cy, color);
-    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                   cx, cy - rh / 4, cy + rh / 4, color);
-    /* Corner dots for shimmer */
-    if (rw > 8 && rh > 8) {
-        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                      cx - rw / 3, cy - rh / 3, M11_COLOR_WHITE);
-        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                      cx + rw / 3, cy + rh / 3, M11_COLOR_WHITE);
-    }
-}
-
-
 static void m11_draw_explosion_cue(unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight,
@@ -7464,11 +7431,9 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                            cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
         }
     }
-    /* Teleporter shimmer effect */
-    if (cell->summary.teleporters > 0) {
-        m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
-                                   x, y, w, h, depthIndex);
-    }
+    /* Teleporter fields are source bitmap overlays, not procedural cue art.
+     * Normal V1 draws them in m11_draw_dm1_teleporter_fields(), using
+     * DUNVIEW.C F0113 + G0188/G2035 field-aspect rows. */
     /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
     if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
@@ -10431,6 +10396,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     const M11_AssetSlot* mask = NULL;
     int maskFlip = 0;
     int y;
+    int fieldStartUnit;
+    int fieldYPhase;
     if (!state || !state->assetsAvailable || !framebuffer ||
         dstW <= 0 || dstH <= 0) {
         return 0;
@@ -10449,6 +10416,12 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             mask = NULL;
         }
     }
+    /* ReDMCSB DUNVIEW.C F0113 calls F0133 with
+     * M005_RANDOM(2)+BaseStartUnit and M003_RANDOM(32).  Use animTick as a
+     * deterministic frame source so the field shimmers without inventing
+     * non-source geometry or particles. */
+    fieldStartUnit = baseStartUnit + (int)((state->animTick >> 1) & 1u);
+    fieldYPhase = (int)((state->animTick * 7u) & 31u);
     for (y = 0; y < dstH; ++y) {
         int fbY = M11_VIEWPORT_Y + dstY + y;
         int x;
@@ -10475,8 +10448,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                     continue;
                 }
             }
-            sx = (x + (baseStartUnit * 16)) % (int)field->width;
-            sy = y % (int)field->height;
+            sx = (x + (fieldStartUnit * 16)) % (int)field->width;
+            sy = (y + fieldYPhase) % (int)field->height;
             pixel = field->pixels[sy * (int)field->width + sx];
             if ((transparentColor & 0x7f) != 0x7f && pixel == (unsigned char)(transparentColor & 0x7f)) {
                 continue;

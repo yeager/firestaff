@@ -175,11 +175,14 @@ def main() -> int:
 
     _, field_zone_body = find_function(fire, "m11_draw_dm1_field_zone")
     require_in_order(field_zone_body, [
+        "fieldStartUnit = baseStartUnit + (int)((state->animTick >> 1) & 1u);",
+        "fieldYPhase = (int)((state->animTick * 7u) & 31u);",
         "fbY = M11_VIEWPORT_Y + dstY + y;",
         "if (fbY < 0 || fbY >= fbH)",
         "fbX = M11_VIEWPORT_X + dstX + x;",
         "if (fbX < 0 || fbX >= fbW)",
-        "sx = (x + (baseStartUnit * 16)) % (int)field->width;",
+        "sx = (x + (fieldStartUnit * 16)) % (int)field->width;",
+        "sy = (y + fieldYPhase) % (int)field->height;",
         "framebuffer[fbY * fbW + fbX] = pixel;",
     ], "Firestaff field viewport clip")
 
