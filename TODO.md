@@ -60,7 +60,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Dead groups cleaned up (don't block movement)
 - ✅ Kill XP award via lifecycle system
 - ✅ Creature rendering — sprites load and source-locked aspect frames cycle
-- ❌ Creature type-specific behavior (Giggler steal, Ghost non-material, etc.)
+- 🔧 Creature type-specific behavior — Giggler steal source-locked; Ghost non-material and other type specials remain
 - ❌ Creature group spawning (C006 floor sensor group generator)
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
 - 🔧 Creature sound effects attack/movement ordinals are source-locked (runtime trigger coverage still pending)
