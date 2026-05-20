@@ -2839,6 +2839,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 D0C current-square occlusion/source-lock gate --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass608_dm1_v1_d0c_current_square_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass608_dm1_v1_d0c_current_square_occlusion_source_lock.py
+    )
+    set_tests_properties(pass608_dm1_v1_d0c_current_square_occlusion_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
 # -- DM1 V1 D1C door-front field source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
