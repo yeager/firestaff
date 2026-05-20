@@ -115,7 +115,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Torch burns out → extinguish
 - 🔧 Floor item pickup — partially: ReDMCSB source-lock now gates floor pickup by rendered grabbable object cells; runtime still needs viewport grabbable mask / pile-top wiring before marking done
 - ❌ Full inventory panel (8 body slots + 2 hand slots + backpack)
-- ❌ Equip/unequip items to body slots
+- 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
 - ❌ Backpack/chest container management
 - ❌ Item identification (scroll reading, potion identification)
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
