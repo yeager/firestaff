@@ -1,0 +1,306 @@
+{
+  "anchors": [
+    {
+      "file": "DEFS.H",
+      "line": 238,
+      "needle": "C001_COMMAND_TURN_LEFT",
+      "text": "#define C001_COMMAND_TURN_LEFT                                                1"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 243,
+      "needle": "C006_COMMAND_MOVE_LEFT",
+      "text": "#define C006_COMMAND_MOVE_LEFT                                                6"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2045,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "void F0380_COMMAND_ProcessQueue_CPSC("
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2096,
+      "needle": "G0310_i_DisabledMovementTicks",
+      "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2151,
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2155,
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 142,
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "void F0365_COMMAND_ProcessTypes1To2_TurnParty("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 172,
+      "needle": "F0284_CHAMPION_SetPartyDirection",
+      "text": "F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(G0308_i_PartyDirection + ((P0734_i_Command == C002_COMMAND_TURN_RIGHT) ? 1 : 3)));"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 180,
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "void F0366_COMMAND_ProcessTypes3To6_MoveParty("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 269,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(G0308_i_PartyDirection, G0465_ai_Graphic561_MovementArrowToStepForwardCount[AL1118_ui_MovementArrowIndex], G0466_ai_Graphic561_MovementArrowToStepRightCount[AL1118_ui_MovementArrowIndex], &L1121_i_MapX, &L1122_i_MapY);"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 278,
+      "needle": "L1117_B_MovementBlocked = C0_FALSE",
+      "text": "L1117_B_MovementBlocked = C0_FALSE;"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 283,
+      "needle": "M036_DOOR_STATE",
+      "text": "L1117_B_MovementBlocked = M036_DOOR_STATE(AL1115_ui_Square);"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 287,
+      "needle": "MASK0x0004_FAKEWALL_OPEN",
+      "text": "L1117_B_MovementBlocked = (!M007_GET(AL1115_ui_Square, MASK0x0004_FAKEWALL_OPEN) && !M007_GET(AL1115_ui_Square, MASK0x0001_FAKEWALL_IMAGINARY));"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 312,
+      "needle": "F0175_GROUP_GetThing",
+      "text": "if (L1117_B_MovementBlocked = (F0175_GROUP_GetThing(L1121_i_MapX, L1122_i_MapY) != C0xFFFE_THING_ENDOFLIST)) {"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 318,
+      "needle": "F0357_COMMAND_DiscardAllInput",
+      "text": "F0357_COMMAND_DiscardAllInput();"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 345,
+      "needle": "G0310_i_DisabledMovementTicks",
+      "text": "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 90,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 150,
+      "needle": "G0310_i_DisabledMovementTicks",
+      "text": "if (G0310_i_DisabledMovementTicks) {"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 153,
+      "needle": "G0311_i_ProjectileDisabledMovementTicks",
+      "text": "if (G0311_i_ProjectileDisabledMovementTicks) {"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 219,
+      "needle": "G0301_B_GameTimeTicking",
+      "text": "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+    },
+    {
+      "file": "MOVESENS.C",
+      "line": 316,
+      "needle": "F0267_MOVE_GetMoveResult_CPSCE",
+      "text": "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE("
+    },
+    {
+      "file": "LOADSAVE.C",
+      "line": 1520,
+      "needle": "L1348_s_GlobalData.PartyMapX",
+      "text": "L1348_s_GlobalData.PartyMapX = G0306_i_PartyMapX;"
+    },
+    {
+      "file": "LOADSAVE.C",
+      "line": 1532,
+      "needle": "DisabledMovementTicks",
+      "text": "L1348_s_GlobalData.DisabledMovementTicks = G0310_i_DisabledMovementTicks;"
+    },
+    {
+      "file": "LOADSAVE.C",
+      "line": 2731,
+      "needle": "G0308_i_PartyDirection",
+      "text": "G0308_i_PartyDirection = L1371_s_GlobalData.PartyDirection;"
+    },
+    {
+      "file": "LOADSAVE.C",
+      "line": 2741,
+      "needle": "G0310_i_DisabledMovementTicks",
+      "text": "G0310_i_DisabledMovementTicks = L1371_s_GlobalData.DisabledMovementTicks;"
+    },
+    {
+      "file": "COORD.C",
+      "line": 1721,
+      "needle": "G2073_C224_ViewportPixelWidth = 224",
+      "text": "int16_t G2073_C224_ViewportPixelWidth = 224;"
+    },
+    {
+      "file": "COORD.C",
+      "line": 1722,
+      "needle": "G2074_C136_ViewportHeight = 136",
+      "text": "int16_t G2074_C136_ViewportHeight = 136;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 2999,
+      "needle": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport)",
+      "text": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport) = G2073_C224_ViewportPixelWidth;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 3000,
+      "needle": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport)",
+      "text": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport) = G2074_C136_ViewportHeight;"
+    }
+  ],
+  "errors": [],
+  "firestaffNeedles": [
+    {
+      "needle": "DM1_V2_PHASE_DOMAIN_COMMAND_SEMANTICS",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "DM1_V2_PHASE_DOMAIN_DUNGEON_TIMING",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "DM1_V2_PHASE_DOMAIN_COLLISION_RULES",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "DM1_V2_PHASE_DOMAIN_SAVE_LOAD_DATA",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "v2PresentationEnabled",
+      "path": "include/dm1_v2_phase_gate_pc34.h"
+    },
+    {
+      "needle": "DEFS.H:238-243 owns command ids",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "COMMAND.C:2045-2155",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "CLIKMENU.C:142-346",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "GAMELOOP.C:150-155",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "MOVESENS.C:316-345",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "LOADSAVE.C:1520-1534",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "COORD.C:1721-1722",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "dm1_v2_phase_gate_defaults",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "return decision(1, 0",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "presentationEnabled && configPersistenceEnabled",
+      "path": "src/dm1v2/dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "check_default_v1_locks",
+      "path": "tests/test_dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "check_presentation_toggle_scope",
+      "path": "tests/test_dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "check_existing_scaffolds_obey_gate",
+      "path": "tests/test_dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "v1Route.runtimeCommand == 3",
+      "path": "tests/test_dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "v2Route.runtimeCommand == 1",
+      "path": "tests/test_dm1_v2_phase_gate_pc34.c"
+    },
+    {
+      "needle": "DM1_V2_MOVEMENT_ROUTE_V1_SOURCE",
+      "path": "src/dm1v2/dm1_v2_movement_command_adapter_pc34.c"
+    },
+    {
+      "needle": "V1 behavior is not read from these fields",
+      "path": "src/dm1v2/dm1_v2_settings_pc34.c"
+    },
+    {
+      "needle": "config->graphicsIndex = 0",
+      "path": "src/engine/config_m12.c"
+    },
+    {
+      "needle": "NAME dm1_v2_phase_gate_pc34",
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "NAME dm1_v2_phase0_phase1_source_lock",
+      "path": "CMakeLists.txt"
+    }
+  ],
+  "phase0": {
+    "collisions": "locked to CLIKMENU wall/door/fakewall/group checks and MOVESENS F0267",
+    "commandSemantics": "locked to DEFS.H C001..C006 and COMMAND.C F0380 dispatch",
+    "dungeonTiming": "locked to GAMELOOP disabled-tick decrement and CLIKMENU cooldown writes",
+    "saveLoad": "locked to LOADSAVE global data fields"
+  },
+  "phase1": {
+    "configPersistence": "V2 config persistence is deterministic and presentation-only",
+    "defaultBootRuntime": "M12 config defaults graphicsIndex to 0 (V1/original)",
+    "presentationToggle": "render/input/config presentation allowed only through explicit V2 gate fields"
+  },
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.dm1_v2_phase0_phase1_source_lock.v1",
+  "scope": "DM1 V2 Phase 0 V1 gameplay lock plus Phase 1 explicit presentation scaffold",
+  "status": "passed"
+}

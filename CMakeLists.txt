@@ -971,6 +971,17 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_presentation_profile_pc34 PRIVATE firestaff_m12)
+    add_executable(test_dm1_v2_phase_gate_pc34
+        tests/test_dm1_v2_phase_gate_pc34.c
+        src/dm1v2/dm1_v2_phase_gate_pc34.c
+        src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -997,6 +1008,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
@@ -1105,6 +1117,10 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v2_presentation_profile_pc34
     )
     add_test(
+        NAME dm1_v2_phase_gate_pc34
+        COMMAND test_dm1_v2_phase_gate_pc34
+    )
+    add_test(
         NAME m11_display_aspect_present_rect
         COMMAND test_m11_display_aspect_present_rect
     )
@@ -1119,6 +1135,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_graphics_pipeline_source_isolation
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_graphics_pipeline_source_isolation.py
+    )
+    add_test(
+        NAME dm1_v2_phase0_phase1_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_phase0_phase1_source_lock.py
     )
     add_test(
         NAME dm1_v2_viewport_wall_occlusion_source_lock
