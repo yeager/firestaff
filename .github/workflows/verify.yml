@@ -7,24 +7,75 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SDL3_TAG: release-3.2.14
+
 jobs:
   cmake-build:
-    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+        include:
+          - os: ubuntu-24.04
+            shell: bash
+            generator: Ninja
+            exe: ''
+          - os: macos-14
+            shell: bash
+            generator: Unix Makefiles
+            exe: ''
+          - os: windows-2022
+            shell: msys2 {0}
+            generator: Ninja
+            exe: '.exe'
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install SDL3
+      - name: Install SDL3 (macOS)
+        if: runner.os == 'macOS'
         run: brew install sdl3 || true
 
+      - name: Install SDL3 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
+            libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
+          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake --build /tmp/SDL3-build --parallel
+          sudo cmake --install /tmp/SDL3-build
+          sudo ldconfig
+
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-sdl3
+
       - name: CMake configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release
 
       - name: CMake build
         run: cmake --build build --parallel
 
       - name: Run Phase A probe (headless, no game data needed)
         run: |
-          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe 2>&1 | tee phase_a.log
+          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe${{ matrix.exe }} 2>&1 | tee phase_a.log
           grep '^# summary: ' phase_a.log
           PASSED=$(grep '^# summary: ' phase_a.log | awk '{print $3}' | cut -d/ -f1)
           TOTAL=$(grep '^# summary: ' phase_a.log | awk '{print $3}' | cut -d/ -f2)
@@ -36,7 +87,7 @@ jobs:
 
       - name: Run Audio probe (no SDL3_mixer needed)
         run: |
-          ./build/firestaff_m11_audio_probe 2>&1 | tee audio.log
+          ./build/firestaff_m11_audio_probe${{ matrix.exe }} 2>&1 | tee audio.log
           grep '^# summary: ' audio.log
           PASSED=$(grep '^# summary: ' audio.log | awk '{print $3}' | cut -d/ -f1)
           TOTAL=$(grep '^# summary: ' audio.log | awk '{print $3}' | cut -d/ -f2)
