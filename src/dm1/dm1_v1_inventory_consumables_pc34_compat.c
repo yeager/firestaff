@@ -58,7 +58,7 @@ const char* dm1_inventory_consumables_source_evidence_pc34(void)
         "PANEL.C:1850-1917 applies potion effects and converts all potions to C20 empty flask without clearing Power; "
         "PANEL.C:1918-1919 applies G0242 food amounts for C168..C175 food icons capped at 2048; "
         "PANEL.C:1922-1945 clamps health/stamina and plays C08 swallow; "
-        "DUNGEON.C:428-436 defines G0242 food amounts; "
+        "DEFS.H:62-68 defines C08_SOUND_SWALLOW as sound 8 for champion eat/drink; DUNGEON.C:428-436 defines G0242 food amounts; "
         "DUNGEON.C:1108-1127 defines waterskin charge weight and empty-flask weight; "
         "DEFS.H:1468-1481,1517-1524,1891-1947 define potion, junk, and icon constants.";
 }
@@ -233,5 +233,19 @@ int dm1_inventory_consume_potion_pc34(DM1ConsumableChampionPc34* champion,
         outResult->potionTypeAfter = DM1_CONSUMABLE_POTION_EMPTY_FLASK_PC34;
         outResult->potionPowerAfter = potionPower;
     }
+    return 1;
+}
+
+int dm1_inventory_consumables_route_swallow_sound_pc34(const DM1ConsumableResultPc34* result,
+                                                       DM1_SoundSystem* soundSystem,
+                                                       int16_t partyMapX,
+                                                       int16_t partyMapY)
+{
+    if (!result || !soundSystem || !result->consumed || !result->playSwallowSound) {
+        return 0;
+    }
+
+    DM1_Sound_RequestPlay(soundSystem, DM1_SND_SWALLOW, partyMapX, partyMapY,
+                          DM1_MODE_PLAY_IMMEDIATELY);
     return 1;
 }

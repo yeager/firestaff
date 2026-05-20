@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "dm1_v1_sound_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -71,6 +73,10 @@ int dm1_inventory_consume_potion_pc34(DM1ConsumableChampionPc34* champion,
                                       const uint16_t* woundRandomMasks,
                                       int woundRandomMaskCount,
                                       DM1ConsumableResultPc34* outResult);
+int dm1_inventory_consumables_route_swallow_sound_pc34(const DM1ConsumableResultPc34* result,
+                                                       DM1_SoundSystem* soundSystem,
+                                                       int16_t partyMapX,
+                                                       int16_t partyMapY);
 
 #ifdef __cplusplus
 }

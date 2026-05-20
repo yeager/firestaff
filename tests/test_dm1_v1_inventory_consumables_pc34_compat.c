@@ -40,6 +40,7 @@ int main(void)
     DM1ConsumableChampionPc34 c;
     DM1ConsumableResultPc34 r;
     const uint16_t viMasks[] = { 0xFF0Fu };
+    DM1_SoundSystem soundSystem;
 
     printf("probe=dm1_v1_inventory_consumables_pc34_compat\n");
     printf("sourceEvidence=%s\n", dm1_inventory_consumables_source_evidence_pc34());
@@ -56,6 +57,17 @@ int main(void)
 
     c = base_champion();
     c.food = 1800;
+    DM1_Sound_Init(&soundSystem);
+    DM1_Sound_SetPartyPosition(&soundSystem, 4, 6, 0, 0);
+    ok &= expect_int("eat dragon steak for sound route",
+                     dm1_inventory_consume_food_junk_pc34(&c, 175, &r), 1);
+    ok &= expect_int("food swallow sound flag", r.playSwallowSound, 1);
+    ok &= expect_int("food swallow sound routed",
+                     dm1_inventory_consumables_route_swallow_sound_pc34(&r, &soundSystem, 4, 6), 1);
+    ok &= expect_int("food swallow sound index", soundSystem.lastPlayedSoundIndex, DM1_SND_SWALLOW);
+    ok &= expect_int("food swallow sound request count", soundSystem.totalSoundRequests, 1);
+    ok &= expect_int("food swallow sound played count", soundSystem.totalSoundsPlayed, 1);
+
     ok &= expect_int("eat dragon steak", dm1_inventory_consume_food_junk_pc34(&c, 175, &r), 1);
     ok &= expect_int("dragon steak caps at 2048", c.food, 2048);
 
@@ -63,11 +75,15 @@ int main(void)
     ok &= expect_int("drink waterskin", dm1_inventory_consume_water_junk_pc34(&c, 9, 3, &r), 1);
     ok &= expect_int("waterskin water amount", c.water, 1800);
     ok &= expect_int("waterskin charge decremented", r.chargeCountAfter, 2);
+    ok &= expect_int("waterskin swallow sound flag", r.playSwallowSound, 1);
     ok &= expect_int("waterskin stays in hand", r.removeLeaderHandObject, 0);
 
     c = base_champion();
     ok &= expect_int("empty waterskin no consume", dm1_inventory_consume_water_junk_pc34(&c, 9, 0, &r), 0);
     ok &= expect_int("empty waterskin water unchanged", c.water, 1000);
+    DM1_Sound_Init(&soundSystem);
+    ok &= expect_int("empty waterskin no swallow route",
+                     dm1_inventory_consumables_route_swallow_sound_pc34(&r, &soundSystem, 0, 0), 0);
 
     c = base_champion();
     ok &= expect_int("ROS potion", dm1_inventory_consume_potion_pc34(&c, 6, 80, 0, 0, &r), 1);
@@ -119,6 +135,13 @@ int main(void)
     c = base_champion();
     ok &= expect_int("water flask potion", dm1_inventory_consume_potion_pc34(&c, 15, 80, 0, 0, &r), 1);
     ok &= expect_int("water flask amount capped", c.water, 2048);
+    DM1_Sound_Init(&soundSystem);
+    DM1_Sound_SetPartyPosition(&soundSystem, 7, 8, 0, 0);
+    ok &= expect_int("potion swallow sound routed",
+                     dm1_inventory_consumables_route_swallow_sound_pc34(&r, &soundSystem, 7, 8), 1);
+    ok &= expect_int("potion swallow sound flag", r.playSwallowSound, 1);
+    ok &= expect_int("potion swallow sound index", soundSystem.lastPlayedSoundIndex, DM1_SND_SWALLOW);
+    ok &= expect_int("potion swallow sound played count", soundSystem.totalSoundsPlayed, 1);
 
     printf("inventoryConsumablesInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;
