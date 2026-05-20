@@ -92,7 +92,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Darkness spell (DES IR SAR -> source-backed darkness/recovery bridge)
 - 🔧 Open Door spell (ZO BREU) — projectile door-impact SFX source-locked; full door behavior remains pending
 - ❌ Poison cloud damage over time
-- ❌ Spell failure feedback (fizzle animation)
+- ✅ Spell failure feedback — needs-practice/meaningless feedback metadata and cast-click symbol cleanup are source-locked
 
 ### Champion System
 - ✅ Champion recruitment from mirrors (HoC)
