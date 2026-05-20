@@ -258,7 +258,7 @@ Status per 2026-05-19 v2.4.0.
 ### Platform
 - ✅ macOS build (CMake + make)
 - ✅ GitHub Actions CI/CD release pipeline
-- ❌ Linux build verification
+- ✅ Linux build verification (Ubuntu 24.04 x86_64 CMake/Ninja build, CI-equivalent smoke probes, and local DEB/RPM preview - docs/platform/linux-build-verification-20260520.md)
 - ❌ Windows build
 
 ---
