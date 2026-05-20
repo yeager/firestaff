@@ -431,6 +431,38 @@ static void test_wound_defense(void) {
     PASS();
 }
 
+/* ── Test: shield defense includes F0312 hand strength ───────────── */
+static void test_shield_defense_uses_hand_strength(void) {
+    TEST(shield_defense_uses_hand_strength);
+
+    DM1_CombatState base;
+    DM1_CombatState shielded;
+    dm1_combat_init(&base);
+    dm1_combat_init(&shielded);
+    base.championCount = 1;
+    shielded.championCount = 1;
+    dm1_combat_init_champion(&base.champions[0]);
+    dm1_combat_init_champion(&shielded.champions[0]);
+
+    base.champions[0].strength = 80;
+    base.champions[0].vitality = 0;
+    shielded.champions[0] = base.champions[0];
+    shielded.champions[0].hasArmor[DM1_WOUND_IDX_READY_HAND] = 1;
+    shielded.champions[0].armor[DM1_WOUND_IDX_READY_HAND].isShield = 1;
+    shielded.champions[0].armor[DM1_WOUND_IDX_READY_HAND].defense = 0;
+    shielded.champions[0].armor[DM1_WOUND_IDX_READY_HAND].weight = 0;
+
+    dm1_combat_seed_rng(9001);
+    int withoutShield = dm1_wound_defense(&base, 0, DM1_WOUND_IDX_TORSO, 0);
+    dm1_combat_seed_rng(9001);
+    int withShield = dm1_wound_defense(&shielded, 0, DM1_WOUND_IDX_TORSO, 0);
+
+    CHECK(withShield > withoutShield,
+          "shield contribution should include hand strength even when armor defense is zero");
+
+    PASS();
+}
+
 /* ── Test: dead champion can't take damage ───────────────────────── */
 static void test_dead_champion_no_damage(void) {
     TEST(dead_champion_no_damage);
@@ -570,6 +602,7 @@ int main(void) {
     test_creature_melee_attack();
     test_champion_melee_action();
     test_wound_defense();
+    test_shield_defense_uses_hand_strength();
     test_dead_champion_no_damage();
     test_lethal_pending();
     test_ranged_shoot_bow_crossbow();

@@ -133,38 +133,37 @@ int dm1_champion_dexterity(const DM1_ChampionCombat* ch) {
     return dm1_clamp(dex >> 1, 1 + dm1_combat_random(8), 100 - dm1_combat_random(8));
 }
 
-/*
- * F0312_CHAMPION_GetStrength
- * ReDMCSB CHAMPION.C: Strength from stats + weapon + skill + stamina adj,
- * wound penalty. Bounded [0, 100].
- */
-int dm1_champion_strength(const DM1_ChampionCombat* ch) {
-    if (!ch) return 0;
+static int dm1_champion_slot_strength_pc34(const DM1_ChampionCombat* ch,
+                                           int slotIndex,
+                                           int objectWeight,
+                                           const DM1_WeaponInfo* weapon) {
     int str = dm1_combat_random(16) + ch->strength;
 
-    /* Weapon weight vs load factor — ReDMCSB F0312 3-tier system.
+    /* Object weight vs load factor — ReDMCSB F0312 3-tier system.
      * Tier 1: weight <= maxLoad/16 → str += weight - 12
      * Tier 2: weight <= threshold → str += (weight - maxLoad/16) >> 1
      * Tier 3: weight > threshold → str -= (weight - threshold) << 1 */
-    if (ch->hasWeapon) {
+    {
         int maxLoad = dm1_combat_get_maximum_load_pc34(ch->strength);
         int oneSixteenth = maxLoad >> 4;
-        int objWeight = ch->actionHandWeapon.weight;
-        if (objWeight <= oneSixteenth) {
-            str += objWeight - 12;
+        if (objectWeight <= oneSixteenth) {
+            str += objectWeight - 12;
         } else {
             int threshold = oneSixteenth + ((oneSixteenth - 12) >> 1);
-            if (objWeight <= threshold) {
-                str += (objWeight - oneSixteenth) >> 1;
+            if (objectWeight <= threshold) {
+                str += (objectWeight - oneSixteenth) >> 1;
             } else {
-                str -= (objWeight - threshold) << 1;
+                str -= (objectWeight - threshold) << 1;
             }
         }
-        str += ch->actionHandWeapon.strength;
+    }
+
+    if (weapon) {
+        str += weapon->strength;
 
         /* Skill bonus */
         int skillLevel = 0;
-        int cls = ch->actionHandWeapon.weaponClass;
+        int cls = weapon->weaponClass;
         if (cls == 0 || cls == 2) { /* SWING or DAGGER_AND_AXES */
             skillLevel = ch->skillSwing;
         }
@@ -185,13 +184,26 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch) {
      * Ready hand (slot 0) → check WOUND_READY_HAND
      * Action hand (slot 1) → check WOUND_ACTION_HAND */
     {
-        uint16_t woundMask = (ch->weaponSlot == 0) ? DM1_WOUND_READY_HAND : DM1_WOUND_ACTION_HAND;
+        uint16_t woundMask = (slotIndex == 0) ? DM1_WOUND_READY_HAND : DM1_WOUND_ACTION_HAND;
         if (ch->wounds & woundMask) {
             str >>= 1;
         }
     }
 
     return dm1_clamp(str >> 1, 0, 100);
+}
+
+/*
+ * F0312_CHAMPION_GetStrength
+ * ReDMCSB CHAMPION.C: Strength from stats + object weight + optional
+ * weapon/skill + stamina adjustment + hand wound penalty. Bounded [0, 100].
+ */
+int dm1_champion_strength(const DM1_ChampionCombat* ch) {
+    if (!ch) return 0;
+    return dm1_champion_slot_strength_pc34(ch,
+                                           ch->weaponSlot,
+                                           ch->hasWeapon ? ch->actionHandWeapon.weight : 0,
+                                           ch->hasWeapon ? &ch->actionHandWeapon : NULL);
 }
 
 /*
@@ -299,8 +311,9 @@ int dm1_wound_defense(const DM1_CombatState* s, int champIdx,
     for (int slot = 0; slot <= 1; slot++) {
         if (ch->hasArmor[slot] && ch->armor[slot].isShield) {
             int armorDef = dm1_armor_defense(&ch->armor[slot], useSharpDefense);
-            /* Shield defense weighted by wound location factor */
-            int weighted = (armorDef * g_woundDefenseFactor[woundIdx]) >> ((slot == woundIdx) ? 4 : 5);
+            int slotStrength = dm1_champion_slot_strength_pc34(ch, slot, ch->armor[slot].weight, NULL);
+            /* ReDMCSB F0313 adds F0312 slot strength to shield armor defense. */
+            int weighted = ((slotStrength + armorDef) * g_woundDefenseFactor[woundIdx]) >> ((slot == woundIdx) ? 4 : 5);
             shieldDef += weighted;
         }
     }

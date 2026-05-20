@@ -82,6 +82,7 @@ typedef struct {
     int sharpDefense;
     int isShield;
     int slot;
+    int weight;
 } DM1_ArmorPiece;
 
 /* ── Weapon info ──────────────────────────────────────────────────── */
