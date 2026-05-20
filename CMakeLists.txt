@@ -1919,6 +1919,24 @@ if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
     )
 endif()
 
+# -- DM1 V1 Viewport floor pickup click source-lock gate -----------------
+if(NOT TARGET test_dm1_v1_viewport_click_pc34_compat)
+    add_executable(test_dm1_v1_viewport_click_pc34_compat
+        tests/test_dm1_v1_viewport_click_pc34_compat.c
+        src/dm1/dm1_v1_viewport_click_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_viewport_click_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_click_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_click_source_lock
+        COMMAND test_dm1_v1_viewport_click_pc34_compat
+    )
+endif()
+
     # DM1 V1 Creature AI Behavior System
     add_executable(test_dm1_v1_creature_ai_behavior_pc34_compat
         tests/test_dm1_v1_creature_ai_behavior_pc34_compat.c

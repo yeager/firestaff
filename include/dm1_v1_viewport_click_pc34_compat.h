@@ -152,10 +152,17 @@ M11_ViewportClickResult m11_viewport_resolve_click(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty);
 
+M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask);
+
 /*
  * Source evidence string.
  */
 const char *m11_viewport_click_source_evidence(void);
+
+#define DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell) ((uint8_t)(1u << (cell)))
+#define DM1_VIEWPORT_GRABBABLE_ALL_CELLS ((uint8_t)0x0fu)
 
 #ifdef __cplusplus
 }

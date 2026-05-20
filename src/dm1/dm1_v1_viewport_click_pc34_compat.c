@@ -147,6 +147,15 @@ M11_ViewportClickResult m11_viewport_resolve_click(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty)
 {
+    return m11_viewport_resolve_click_with_grabbable_mask(
+        mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
+        DM1_VIEWPORT_GRABBABLE_ALL_CELLS);
+}
+
+M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask)
+{
     M11_ViewportClickResult result;
     memset(&result, 0, sizeof(result));
 
@@ -185,9 +194,14 @@ M11_ViewportClickResult m11_viewport_resolve_click(
             result.stopWaitingForInput = 1;
         }
     } else if (leaderHandEmpty) {
-        /* Empty hand — grab object from floor (F0373) */
-        result.objectGrabbed = 1;
-        result.stopWaitingForInput = 1;
+        /* Empty hand - grab only when F0115 produced a grabbable object zone.
+         * ReDMCSB stores the rendered pile top in G0292_aT_PileTopObject[cell]
+         * and F0377 calls F0373 only for matching dungeon-view clickable boxes.
+         */
+        if (grabbableCellMask & DM1_VIEWPORT_GRABBABLE_CELL_MASK(result.viewCell)) {
+            result.objectGrabbed = 1;
+            result.stopWaitingForInput = 1;
+        }
     } else {
         /* Hand has object — throw/place it (F0374) */
         result.objectThrown = 1;
@@ -208,6 +222,12 @@ const char *m11_viewport_click_source_evidence(void)
         "CLIKVIEW.C F0373: grab object from floor.\n"
         "  View cells 0/1 = party square, cells 2/3 = front square.\n"
         "  G0411_i_LeaderIndex must be != -1.\n"
+        "  CLIKVIEW.C:117-126 uses G0292_aT_PileTopObject[cell], icon check,\n"
+        "  F0267_MOVE_GetMoveResult_CPSCE, then leader-hand placement.\n"
+        "CLIKVIEW.C:406-438: empty-hand floor pickup is reached only after\n"
+        "  G2210/G0291 dungeon-view clickable box hit for cells 0..3.\n"
+        "DUNVIEW.C:5113-5165: F0115 creates/extends grabbable object zones\n"
+        "  while rendering visible object piles.\n"
         "CLIKVIEW.C F0374: throw/put object.\n"
         "CLIKVIEW.C F0375: attack creature.\n"
         "CLIKMENU.C F0365/F0366: turn/step dispatch from movement arrows.\n"
