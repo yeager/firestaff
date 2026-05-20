@@ -471,6 +471,74 @@ static void test_wall_click_specific_object_removed(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor C013 single-object storage + rotate
+ *  Source: MOVESENS.C F0275 lines 1464-1477, 1478-1487, 1549
+ * ---------------------------------------------------------------- */
+static void test_wall_single_object_storage_rotate(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE,
+                         8, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 5, 6, 0);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderIndex = 0;
+    ctx.leaderEmptyHanded = 1;
+    ctx.leaderHandObjectType = -1;
+    ctx.cellHasStorageObjectOfType = 0;
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C013: empty hand skips when no stored object exists");
+
+    ctx.cellHasStorageObjectOfType = 1;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C013: empty hand takes matching stored object");
+    CHECK(result.leaderHandObjectReceived == 1, "Wall C013: taken object is put in leader hand");
+    CHECK(result.leaderHandObjectTypeReceived == 8, "Wall C013: received object type matches sensor data");
+    CHECK(result.wallStorageObjectTaken == 1, "Wall C013: stored wall object is removed from cell");
+    CHECK(result.wallStorageObjectType == 8, "Wall C013: stored wall object type reported");
+
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderHandObjectType = 8;
+    ctx.cellHasStorageObjectOfType = 1;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C013: occupied matching hand skips if cell already stores that type");
+
+    ctx.cellHasStorageObjectOfType = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C013: matching leader object stores into empty cell");
+    CHECK(result.leaderHandObjectRemoved == 1, "Wall C013: stored object leaves leader hand");
+    CHECK(result.leaderHandObjectTypeRemoved == 8, "Wall C013: stored object type matches sensor data");
+    CHECK(result.wallStorageObjectStored == 1, "Wall C013: leader object is linked into wall cell");
+    CHECK(result.wallStorageObjectType == 8, "Wall C013: stored wall object type reported");
+
+    ctx.leaderHandObjectType = 9;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C013: wrong leader object type skips");
+
+    sensor.effect = DM1_EFFECT_HOLD;
+    ctx.leaderEmptyHanded = 1;
+    ctx.leaderHandObjectType = -1;
+    ctx.cellHasStorageObjectOfType = 1;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C013 HOLD: pickup still triggers");
+    CHECK(result.resolvedEffect == DM1_EFFECT_SET, "Wall C013 HOLD: pickup resolves to SET");
+
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderHandObjectType = 8;
+    ctx.cellHasStorageObjectOfType = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C013 HOLD: store still triggers");
+    CHECK(result.resolvedEffect == DM1_EFFECT_CLEAR, "Wall C013 HOLD: store resolves to CLEAR");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — champion portrait
  *  Source: F0275 case C127 (CHAMPION_PORTRAIT)
  * ---------------------------------------------------------------- */
@@ -751,6 +819,7 @@ int main(void) {
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
+    test_wall_single_object_storage_rotate();
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();
     test_effect_dispatch();

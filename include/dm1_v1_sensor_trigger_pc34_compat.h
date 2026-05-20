@@ -146,6 +146,7 @@ struct WallSensorContext_Compat {
     int leaderEmptyHanded;
     int leaderIndex;
     int sensorCountInCell;
+    int cellHasStorageObjectOfType;
 };
 
 /* ================================================================
@@ -168,6 +169,11 @@ struct SensorTriggerResult_Compat {
     int delayTicks;
     int leaderHandObjectRemoved;
     int leaderHandObjectTypeRemoved;
+    int leaderHandObjectReceived;
+    int leaderHandObjectTypeReceived;
+    int wallStorageObjectTaken;
+    int wallStorageObjectStored;
+    int wallStorageObjectType;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16

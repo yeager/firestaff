@@ -287,6 +287,8 @@ int F0723_SENSOR_EvaluateWall_Compat(
     int doNotTrigger = 0;
     int effect;
     int sensorType;
+    int storageAction = 0;
+    int storageObjectType = -1;
 
     if (!sensor || !ctx || !outResult) return 0;
     memset(outResult, 0, sizeof(*outResult));
@@ -343,10 +345,24 @@ int F0723_SENSOR_EvaluateWall_Compat(
         /* Source: F0275 case C013 — complex object storage logic.
          * We model the trigger/no-trigger decision; actual object
          * manipulation is for the caller.
-         * If empty-handed and no matching object on square -> skip.
-         * If holding object and (wrong type or already one on square) -> skip.
-         * We simplify: this always triggers if sensor is reached. */
-        doNotTrigger = 0;
+         * Source lines 1464-1477:
+         *   empty hand: find matching object in the clicked wall cell, unlink it,
+         *               and put it in the leader hand; no object means skip.
+         *   occupied hand: require matching type and no matching stored object,
+         *                  remove from hand, link to the clicked wall cell.
+         *   both paths schedule deferred sensor rotation.
+         * Source lines 1478-1487:
+         *   HOLD resolves from the original hand state: pickup -> SET, store -> CLEAR. */
+        if (ctx->leaderEmptyHanded) {
+            if (!ctx->cellHasStorageObjectOfType) return 1;
+            storageAction = 1; /* take matching object from wall cell into leader hand */
+        } else {
+            if (ctx->leaderHandObjectType != (int)sensor->sensorData || ctx->cellHasStorageObjectOfType)
+                return 1;
+            storageAction = 2; /* store leader hand object in wall cell */
+        }
+        storageObjectType = (int)sensor->sensorData;
+        doNotTrigger = (effect == DM1_EFFECT_HOLD) && !ctx->leaderEmptyHanded;
         break;
 
     case DM1_SENSOR_WALL_OBJECT_EXCHANGER:
@@ -406,6 +422,9 @@ int F0723_SENSOR_EvaluateWall_Compat(
     outResult->sensorIndex = -1;
     outResult->leaderHandObjectRemoved = 0;
     outResult->leaderHandObjectTypeRemoved = -1;
+    outResult->leaderHandObjectReceived = 0;
+    outResult->leaderHandObjectTypeReceived = -1;
+    outResult->wallStorageObjectType = -1;
 
     /* Source: F0275 lines 1527-1531.  C004/C011/C017 key-slot
      * sensors consume the leader hand object only after the wall sensor
@@ -416,6 +435,18 @@ int F0723_SENSOR_EvaluateWall_Compat(
          sensorType == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR)) {
         outResult->leaderHandObjectRemoved = 1;
         outResult->leaderHandObjectTypeRemoved = ctx->leaderHandObjectType;
+    }
+
+    if (storageAction == 1) {
+        outResult->leaderHandObjectReceived = 1;
+        outResult->leaderHandObjectTypeReceived = storageObjectType;
+        outResult->wallStorageObjectTaken = 1;
+        outResult->wallStorageObjectType = storageObjectType;
+    } else if (storageAction == 2) {
+        outResult->leaderHandObjectRemoved = 1;
+        outResult->leaderHandObjectTypeRemoved = ctx->leaderHandObjectType;
+        outResult->wallStorageObjectStored = 1;
+        outResult->wallStorageObjectType = storageObjectType;
     }
 
     if (sensor->onceOnly) {
