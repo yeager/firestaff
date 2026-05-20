@@ -457,6 +457,18 @@ if(BUILD_TESTING)
         COMMAND test_touch_pointer_input_pc34_compat_integration
     )
 
+    add_executable(test_touch_item_mouse_queue_pc34_compat
+        tests/test_touch_item_mouse_queue_pc34_compat.c
+    )
+    target_link_libraries(test_touch_item_mouse_queue_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_touch_item_mouse_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME touch_item_mouse_queue_pc34_compat
+        COMMAND test_touch_item_mouse_queue_pc34_compat
+    )
+
     add_executable(test_touch_movement_turn_routes_pc34_compat
         tests/test_touch_movement_turn_routes_pc34_compat.c
     )

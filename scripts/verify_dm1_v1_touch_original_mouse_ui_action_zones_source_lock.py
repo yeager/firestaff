@@ -44,6 +44,7 @@ def main() -> None:
     local_matrix_c = read(REPO / "src/shared/touch_click_zone_matrix_pc34_compat.c")
     local_pointer_c = read(REPO / "src/shared/touch_pointer_input_pc34_compat.c")
     local_pointer_test = read(REPO / "tests/test_touch_pointer_input_pc34_compat_integration.c")
+    local_item_test = read(REPO / "tests/test_touch_item_mouse_queue_pc34_compat.c")
 
     source_checks = {
         "primary_interface_mouse_rows": [
@@ -107,6 +108,13 @@ def main() -> None:
             (local_pointer_test, "TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue"),
             (local_pointer_test, "processResult.dispatchedMove"),
             (local_pointer_test, "queue.pendingClickCommand != 71"),
+        ],
+        "runtime_probe_covers_touch_item_mouse_queue": [
+            (local_item_test, "status hand touch queues parent C012"),
+            (local_item_test, "inventory action hand touch queues C029"),
+            (local_item_test, "backpack touch queues C041"),
+            (local_item_test, "chest panel touch queues C058"),
+            (local_item_test, "dungeon viewport mode does not reinterpret inventory coordinates"),
         ],
     }
     for label, checks in local_checks.items():
