@@ -132,6 +132,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Weapon eye-panel name and attribute descriptions are source-locked for POISONED/BROKEN/CURSED formatting (94094865)
 - ✅ Item eye-panel weight line display is source-locked from ReDMCSB item description formatting (35461e0b)
 - ✅ Armour/junk/scroll/container eye-panel description families are source-locked from ReDMCSB F0342/F0336 routing and formatting: armour BROKEN/CURSED, junk CONSUMABLE plus compass and waterskin state lines, and scroll/container delegation to scroll/chest panels
+- ✅ PC34 open-chest slot setter preserves panel slot writes and close-time compact ordering in the backpack/chest runtime gate (461139c9)
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
