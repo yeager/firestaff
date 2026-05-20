@@ -87,6 +87,42 @@ static void test_v2_affordances_map_to_source_locked_routes(void) {
     }
 }
 
+static void test_v2_affordance_runtime_bridge_uses_existing_command_routes(void) {
+    size_t i;
+
+    /* Runtime bridge gate: V2 touch/controller labels resolve to the same
+     * source route first, then enter the existing V2 runtime adapter.  The
+     * bridge must not invent a parallel command id or bypass the adapter. */
+    for (i = 0; i < sizeof(kCases) / sizeof(kCases[0]); ++i) {
+        DM1_V2_RuntimeState runtime;
+        DM1_V2_CameraController camera;
+        DM1_V2_TouchControllerAffordanceRoute route;
+        DM1_V2_MovementCommandResult result;
+
+        dm1_v2_runtime_init(&runtime);
+        dm1_v2_runtime_start(&runtime, 1000U);
+        dm1_v2_camera_init(&camera, &runtime.player);
+
+        route = dm1_v2_touch_controller_affordance_route(1, kCases[i].affordance);
+        result = dm1_v2_movement_command_apply(
+            &runtime,
+            &camera,
+            route.movementCommand,
+            1000U,
+            64);
+
+        CHECK(route.accepted == 1);
+        CHECK(route.v2Only == 1);
+        CHECK(route.route.sourceCommand == kCases[i].sourceCommand);
+        CHECK(route.route.runtimeCommand == kCases[i].runtimeCommand);
+        CHECK(result.accepted == 1);
+        CHECK(result.sourceCommand == route.route.sourceCommand);
+        CHECK(result.runtimeCommand == route.route.runtimeCommand);
+        CHECK(runtime.lastCommand == route.route.runtimeCommand);
+        CHECK(dm1_v2_camera_is_active(&camera));
+    }
+}
+
 static void test_v1_off_rejects_v2_only_affordances(void) {
     size_t i;
 
@@ -143,6 +179,7 @@ static void test_source_evidence_string_names_referenced_routes(void) {
 
 int main(void) {
     test_v2_affordances_map_to_source_locked_routes();
+    test_v2_affordance_runtime_bridge_uses_existing_command_routes();
     test_v1_off_rejects_v2_only_affordances();
     test_invalid_affordance_is_not_a_command();
     test_route_probe_does_not_mutate_runtime_state();
