@@ -14,7 +14,7 @@ Living list. Update when things are completed or when new ideas appear.
 - [x] M10 Phase 16, monster AI / CREATURE_TICK (complete, 40 invariants, 3 creature types fully implemented)
 - [ ] M10 Phase 17, projectile and explosion flight (implementation in progress)
 - [ ] M10 Phase 18, champion lifecycle (hunger, status, rest, XP), plan complete, 48 invariants
-- [ ] M10 Phase 19, runtime dynamics (generators, light decay, fluxcage), plan complete, 48 invariants; C006 generator base-health table is source-locked
+- [ ] M10 Phase 19, runtime dynamics (generators, light decay, fluxcage), plan complete, 49 invariants; C006 generator base-health table and group-cell placement are source-locked
 - [ ] M10 Phase 20, tick orchestrator plus deterministic harness (plan in progress), the M10 finale
 
 ### Phase 17-20 execution order
