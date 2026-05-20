@@ -111,6 +111,12 @@ int main(void)
     ok &= expect_int("VI wound mask applied", c.wounds, 0);
 
     c = base_champion();
+    ok &= expect_int("unknown potion still consumed", dm1_inventory_consume_potion_pc34(&c, 99, 80, 0, 0, &r), 1);
+    ok &= expect_int("unknown potion leaves strength", c.statistic[DM1_CONSUMABLE_STAT_STRENGTH], 30);
+    ok &= expect_int("unknown potion becomes empty flask", r.potionTypeAfter, 20);
+    ok &= expect_int("unknown potion power preserved", r.potionPowerAfter, 80);
+
+    c = base_champion();
     ok &= expect_int("water flask potion", dm1_inventory_consume_potion_pc34(&c, 15, 80, 0, 0, &r), 1);
     ok &= expect_int("water flask amount capped", c.water, 2048);
 
