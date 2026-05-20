@@ -38,6 +38,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature sprites from GRAPHICS.DAT
 - ✅ Projectile sprites (spell projectiles, thrown items)
 - ✅ Explosion/burst rendering (smoke, fireball aftermath)
+- ✅ DM1 V1 explosion viewport-zone mapping source-locked for D0-D4 view squares and rebirth overlays (`d0720a66`)
 - ✅ Floor item sprites (scatter rendering, multi-item)
 - ✅ Alcove content rendering (items inside wall alcoves)
 - ✅ Object zone Y coordinates (PC34 C696/C2500 layout-696 source-lock, pass606)
