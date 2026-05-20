@@ -103,8 +103,8 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Skill XP and level-up via lifecycle system
 - ✅ Champion death detection
 - ✅ Resurrection system (dm1_v1_resurrection_pc34_compat)
-- 🔧 Champion stats panel — exists but not fully interactive
-- ❌ Champion stat screen (full F0340 display with all attributes)
+- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, and four base skill levels; broader panel polish remains
+- ✅ Champion stat screen current-value coverage — inventory eye panel is source-locked to F0351-style skills/statistics display data
 - 🔧 Champion weight/load system (encumbrance) — F0306/F0309/F0310 max-load and movement-cost core source-locked
 - ✅ Champion stamina regeneration — source-locked to F0331 food/water, resting, idle-delay, max-stamina amount, and mana-regeneration stamina cost; no direct load factor in regeneration path
 
