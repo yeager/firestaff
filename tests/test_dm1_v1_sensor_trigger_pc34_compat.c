@@ -433,6 +433,43 @@ static void test_wall_click_specific_object(void) {
     CHECK(result.triggered == 0, "Wall specific obj: wrong object does NOT trigger");
 }
 
+
+/* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor C003/C004 leader-hand side effects
+ *  Source: MOVESENS.C F0275 lines 1412-1414, 1527-1531
+ * ---------------------------------------------------------------- */
+static void test_wall_click_specific_object_removed(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderHandObjectType = 8;
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderIndex = 0;
+    ctx.sensorCountInCell = 0;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT,
+                         8, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 5, 6, 0);
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C003: matching object triggers");
+    CHECK(result.leaderHandObjectRemoved == 0, "Wall C003: matching object is not consumed");
+
+    sensor = make_sensor(DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED,
+                         8, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 5, 6, 0);
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C004: matching object triggers");
+    CHECK(result.leaderHandObjectRemoved == 1, "Wall C004: matching object is consumed");
+    CHECK(result.leaderHandObjectTypeRemoved == 8, "Wall C004: consumed object type is reported");
+
+    ctx.leaderHandObjectType = 9;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Wall C004: wrong object does not trigger");
+    CHECK(result.leaderHandObjectRemoved == 0, "Wall C004: wrong object is not consumed");
+}
+
 /* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — champion portrait
  *  Source: F0275 case C127 (CHAMPION_PORTRAIT)
@@ -713,6 +750,7 @@ int main(void) {
     test_floor_local_effect();
     test_wall_ornament_click();
     test_wall_click_specific_object();
+    test_wall_click_specific_object_removed();
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();
     test_effect_dispatch();

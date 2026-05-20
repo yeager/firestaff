@@ -166,6 +166,8 @@ struct SensorTriggerResult_Compat {
     int audible;
     int sensorIndex;
     int delayTicks;
+    int leaderHandObjectRemoved;
+    int leaderHandObjectTypeRemoved;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16

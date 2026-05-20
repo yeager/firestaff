@@ -404,6 +404,19 @@ int F0723_SENSOR_EvaluateWall_Compat(
     outResult->audible = sensor->audible;
     outResult->delayTicks = sensor->value;
     outResult->sensorIndex = -1;
+    outResult->leaderHandObjectRemoved = 0;
+    outResult->leaderHandObjectTypeRemoved = -1;
+
+    /* Source: F0275 lines 1527-1531.  C004/C011/C017 key-slot
+     * sensors consume the leader hand object only after the wall sensor
+     * actually triggers; C003 is a non-consuming specific-object click. */
+    if (!ctx->leaderEmptyHanded &&
+        (sensorType == DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED ||
+         sensorType == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE ||
+         sensorType == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR)) {
+        outResult->leaderHandObjectRemoved = 1;
+        outResult->leaderHandObjectTypeRemoved = ctx->leaderHandObjectType;
+    }
 
     if (sensor->onceOnly) {
         outResult->sensorDisabled = 1;
