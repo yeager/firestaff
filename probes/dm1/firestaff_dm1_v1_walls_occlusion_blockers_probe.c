@@ -61,6 +61,44 @@ static unsigned char read_square_for_view(int map_x, int map_y, void* user_data)
     return fixture->squares[map_x * MAP_H + map_y];
 }
 
+static unsigned char redmcsb_f0151_boundary_square(const struct MapFixture* fixture, int map_x, int map_y)
+{
+    int x_in_bounds = map_x >= 0 && map_x < MAP_W;
+    int y_in_bounds = map_y >= 0 && map_y < MAP_H;
+
+    if (x_in_bounds && y_in_bounds) {
+        return fixture->squares[map_x * MAP_H + map_y];
+    }
+
+    if (y_in_bounds) {
+        if (map_x == -1) {
+            int edge_type = DM1_SQUARE_TYPE(fixture->squares[0 * MAP_H + map_y]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR || edge_type == DM1_ELEMENT_PIT) {
+                return sqb(DM1_ELEMENT_WALL, DM1_WALL_EAST_RANDOM_ORN);
+            }
+        } else if (map_x == MAP_W) {
+            int edge_type = DM1_SQUARE_TYPE(fixture->squares[(MAP_W - 1) * MAP_H + map_y]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR || edge_type == DM1_ELEMENT_PIT) {
+                return sqb(DM1_ELEMENT_WALL, DM1_WALL_WEST_RANDOM_ORN);
+            }
+        }
+    } else if (x_in_bounds) {
+        if (map_y == -1) {
+            int edge_type = DM1_SQUARE_TYPE(fixture->squares[map_x * MAP_H]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR || edge_type == DM1_ELEMENT_PIT) {
+                return sqb(DM1_ELEMENT_WALL, DM1_WALL_SOUTH_RANDOM_ORN);
+            }
+        } else if (map_y == MAP_H) {
+            int edge_type = DM1_SQUARE_TYPE(fixture->squares[map_x * MAP_H + (MAP_H - 1)]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR || edge_type == DM1_ELEMENT_PIT) {
+                return sqb(DM1_ELEMENT_WALL, DM1_WALL_NORTH_RANDOM_ORN);
+            }
+        }
+    }
+
+    return sqb(DM1_ELEMENT_WALL, 0);
+}
+
 static void reset_fixture(struct MapFixture* fixture,
     struct DungeonDatState_Compat* dungeon,
     struct DungeonMapDesc_Compat* map,
@@ -132,6 +170,56 @@ static int verify_parity_flip(void)
         dm1_viewport_uses_flipped_wall_and_footprints(2, 3, DIR_NORTH) ? 1 : 0, 1);
     ok &= expect_int("parity masks direction to DM1 cardinal range",
         dm1_viewport_uses_flipped_wall_and_footprints(2, 2, DIR_NORTH + 4) ? 1 : 0, 0);
+
+    return ok;
+}
+
+static int verify_boundary_wall_semantics(struct MapFixture* fixture,
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonMapDesc_Compat* map,
+    struct DungeonMapTiles_Compat* tiles,
+    struct PartyState_Compat* party)
+{
+    dm1_viewport_state_t vp;
+    int visible[DM1_VIEWPORT_SQUARE_COUNT];
+    int count;
+    int ok = 1;
+
+    reset_fixture(fixture, dungeon, map, tiles, party);
+    printf("boundarySquares source=DUNGEON.C:1423-1475 west=0x%02x east=0x%02x north=0x%02x south=0x%02x diagonal=0x%02x\n",
+        redmcsb_f0151_boundary_square(fixture, -1, 2),
+        redmcsb_f0151_boundary_square(fixture, MAP_W, 2),
+        redmcsb_f0151_boundary_square(fixture, 2, -1),
+        redmcsb_f0151_boundary_square(fixture, 2, MAP_H),
+        redmcsb_f0151_boundary_square(fixture, -1, -1));
+    ok &= expect_int("F0151 west boundary returns east-ornament wall",
+        redmcsb_f0151_boundary_square(fixture, -1, 2), sqb(DM1_ELEMENT_WALL, DM1_WALL_EAST_RANDOM_ORN));
+    ok &= expect_int("F0151 east boundary returns west-ornament wall",
+        redmcsb_f0151_boundary_square(fixture, MAP_W, 2), sqb(DM1_ELEMENT_WALL, DM1_WALL_WEST_RANDOM_ORN));
+    ok &= expect_int("F0151 north boundary returns south-ornament wall",
+        redmcsb_f0151_boundary_square(fixture, 2, -1), sqb(DM1_ELEMENT_WALL, DM1_WALL_SOUTH_RANDOM_ORN));
+    ok &= expect_int("F0151 south boundary returns north-ornament wall",
+        redmcsb_f0151_boundary_square(fixture, 2, MAP_H), sqb(DM1_ELEMENT_WALL, DM1_WALL_NORTH_RANDOM_ORN));
+    ok &= expect_int("F0151 diagonal out of bounds returns plain wall",
+        redmcsb_f0151_boundary_square(fixture, -1, -1), sqb(DM1_ELEMENT_WALL, 0));
+
+    set_square(fixture->squares, 0, 2, sqb(DM1_ELEMENT_WALL, 0));
+    ok &= expect_int("F0151 west boundary beside wall has no random-ornament flag",
+        redmcsb_f0151_boundary_square(fixture, -1, 2), sqb(DM1_ELEMENT_WALL, 0));
+    set_square(fixture->squares, 0, 2, sqb(DM1_ELEMENT_PIT, 0));
+    ok &= expect_int("F0151 west boundary beside pit keeps random-ornament flag",
+        redmcsb_f0151_boundary_square(fixture, -1, 2), sqb(DM1_ELEMENT_WALL, DM1_WALL_EAST_RANDOM_ORN));
+
+    reset_fixture(fixture, dungeon, map, tiles, party);
+    ok &= expect_int("movement passability blocks north map boundary",
+        F0706_MOVEMENT_IsSquarePassable_Compat(dungeon, 0, 2, -1), 0);
+    dm1_build_viewport(2, 1, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+    count = dm1_get_visible_squares(&vp, visible);
+    printf("boundaryViewport party=(2,1,N) d2cElement=%d d2FrontWall=%d visibleCount=%d source=DUNGEON.C:1423-1475 DUNVIEW.C:8518-8521\n",
+        vp.squares[3].aspect[DM1_SQA_ELEMENT], dm1_is_front_wall_at_depth(&vp, 2) ? 1 : 0, count);
+    ok &= expect_int("north boundary D2C is wall", vp.squares[3].aspect[DM1_SQA_ELEMENT], DM1_ELEMENT_WALL);
+    ok &= expect_int("north boundary D2C sets front-wall blocker", dm1_is_front_wall_at_depth(&vp, 2) ? 1 : 0, 1);
+    ok &= expect_int("north boundary D2C occludes D3 row", count, 9);
 
     return ok;
 }
@@ -272,6 +360,7 @@ int main(void)
     ok &= expect_front_aspect(&fixture, sqb(DM1_ELEMENT_FAKEWALL, 0), DM1_ELEMENT_WALL, 1, "closed-real-fakewall");
     ok &= expect_front_aspect(&fixture, sqb(DM1_ELEMENT_FAKEWALL, DM1_FAKEWALL_IMAGINARY), DM1_ELEMENT_WALL, 0, "closed-imaginary-fakewall-renders-wall-but-walks");
     ok &= expect_front_aspect(&fixture, sqb(DM1_ELEMENT_FAKEWALL, DM1_FAKEWALL_OPEN), DM1_ELEMENT_CORRIDOR, 0, "open-fakewall");
+    ok &= verify_boundary_wall_semantics(&fixture, &dungeon, &map, &tiles, &party);
 
     reset_fixture(&fixture, &dungeon, &map, &tiles, &party);
     ok &= verify_draw_order(&fixture);
