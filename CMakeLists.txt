@@ -154,6 +154,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
     src/dm1/dm1_v1_game_loop_integration_pc34_compat.c
     src/dm1/dm1_v1_creature_viewport_pc34_compat.c
+    src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
     src/dm1/dm1_v1_save_load_system_pc34_compat.c
     src/dm1/dm1_v1_blit_fill_pc34_compat.c
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
@@ -2330,6 +2331,20 @@ if(NOT TARGET test_m11_rest_runtime_pc34_compat)
     add_test(
         NAME m11_rest_runtime_source_lock
         COMMAND test_m11_rest_runtime_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_m11_creature_projectile_runtime_pc34_compat)
+    add_executable(test_m11_creature_projectile_runtime_pc34_compat
+        tests/test_m11_creature_projectile_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_m11_creature_projectile_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_creature_projectile_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_creature_projectile_runtime_source_lock
+        COMMAND test_m11_creature_projectile_runtime_pc34_compat
     )
 endif()
 

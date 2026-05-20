@@ -558,6 +558,16 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
  * log cue as the bounded V1 slice).  Safe on empty lists. */
 void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state);
 
+/* Probe-visible creature projectile insertion hook.  Drives the same
+ * M11 runtime creature-AI launch branch used by AdvanceIdleTick after
+ * a group has been located on the current map; returns 1 when a live
+ * projectile slot was inserted and first-move scheduled. */
+int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
+                                                      unsigned short groupThing,
+                                                      int groupIndex,
+                                                      int groupMapX,
+                                                      int groupMapY);
+
 /* V1 explosion cycle probe hook: drive one tick of the V1 explosion
  * advance over all live explosion slots.  Normally invoked from
  * M11_GameView_ProcessTickEmissions each orchestrator tick right after

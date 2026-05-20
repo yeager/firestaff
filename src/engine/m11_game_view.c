@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "firestaff_accessibility.h"
 #include "firestaff_po_loader.h"
 
@@ -960,21 +961,29 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
     (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
 }
 
-static void m11_audio_emit_creature_attack_sound(M11_GameViewState* state,
-                                                 int creatureType,
-                                                 int mapX,
-                                                 int mapY) {
+static void m11_audio_emit_creature_attack_sound_ex(M11_GameViewState* state,
+                                                    int creatureType,
+                                                    int mapX,
+                                                    int mapY,
+                                                    int useSpellFallback) {
     int soundIndex;
     if (!state) {
         return;
     }
     (void)mapX;
     (void)mapY;
-    soundIndex = DM1_CreatureSound_AttackIndexForType(creatureType, 0);
+    soundIndex = DM1_CreatureSound_AttackIndexForType(creatureType, useSpellFallback);
     if (soundIndex != DM1_SND_NONE) {
         m11_audio_emit_source_sound(state, soundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
     }
+}
+
+static void m11_audio_emit_creature_attack_sound(M11_GameViewState* state,
+                                                 int creatureType,
+                                                 int mapX,
+                                                 int mapY) {
+    m11_audio_emit_creature_attack_sound_ex(state, creatureType, mapX, mapY, 0);
 }
 
 static void m11_audio_emit_creature_movement_sound(M11_GameViewState* state,
@@ -4376,6 +4385,195 @@ static void m11_creature_attack_party(
     }
 }
 
+static int m11_creature_source_info_i34(int creatureType,
+                                        struct DM1CreatureInfo_Compat* out) {
+    /* Source: ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo
+     * lines 668-733 and DEFS.H CREATURE_INFO lines 1574-1594.
+     * PC/I34 rows use MEDIA720 values; the byte after Dexterity is
+     * explicit PC padding, so Ranges is the following 16-bit word. */
+    static const struct DM1CreatureInfo_Compat info[27] = {
+        {0, 4, 0x0482, 0x623D,   8,  20,  55, 150, 150, 240,  55, 0x1153, 0, 0, 0, 0, 4},
+        {1,14, 0x0480, 0xA625,  15,  32,  20, 110,  80,  15,  20, 0x3132, 0, 0, 0, 0, 3},
+        {2, 6, 0x4510, 0x6198,   3,   5,  50,  10,  10,   0, 110, 0x1376, 0, 0, 0, 0, 0},
+        {3, 0, 0x04B4, 0xB225,  10,  21,  30,  40,  58,   0,  80, 0x320A, 0, 0, 0, 0, 5},
+        {4,18, 0x0701, 0xA3B8,   9,   8,  45, 101,  90,   0,  65, 0x1554, 0, 0, 0, 0, 4},
+        {5,17, 0x0581, 0x539D,  20,  18, 100,  60,  30,   0,  30, 0x1232, 0, 0, 0, 0, 3},
+        {6, 3, 0x070C, 0x0020, 120,  10,   5, 165,   5,   0,   5, 0x1111, 0, 0, 0, 0, 6},
+        {7, 7, 0x0300, 0x0220, 185,  15, 170,  50,  40,   5,  10, 0x1463, 0, 0, 0, 0, 4},
+        {8, 2, 0x5864, 0x5225,  11,  16,  15,  30,  55,   0,  80, 0x1423, 0, 0, 0, 0, 6},
+        {9,10, 0x0282, 0x71B8,  21,  14, 240, 120, 219,   0,  35, 0x1023, 0, 0, 0, 0, 3},
+        {10,13,0x1480, 0x11B8,  17,  12,  25,  33,  20,   0,  40, 0x1224, 0, 0, 0, 0, 3},
+        {11,0, 0x18C6, 0x0225, 255,   8,  45,  80, 105,   0,  60, 0x1312, 0, 0, 0, 0, 1},
+        {12,11,0x1280, 0x6038,   7,   7,  22,  20,  22,   0,  80, 0x1013, 0, 0, 0, 0, 4},
+        {13,9, 0x14A2, 0xB23D,   5,  10,  42,  39,  90, 100,  88, 0x1343, 0, 0, 0, 0, 4},
+        {14,16,0x05B8, 0x1638,  10,  20,  47,  44,  75,   0,  90, 0x4335, 0, 0, 0, 0, 5},
+        {15,5, 0x0381, 0x523D,  18,  19,  72,  70,  45,  35,  35, 0x1AA1, 0, 0, 0, 0, 4},
+        {16,10,0x0680, 0xA038,  13,   8,  28,  20,  25,   0,  41, 0x1343, 0, 0, 0, 0, 3},
+        {17,15,0x04A0, 0xF23D,   1,  16, 180,   8,  28,  20, 150, 0x1432, 0, 0, 0, 0, 4},
+        {18,12,0x0280, 0xA3BD,  14,   6, 140,  60, 105,   0,  70, 0x1005, 0, 0, 0, 0, 4},
+        {19,0, 0x4060, 0xE23D,   5,  18,  15,  33,  61,   0,  65, 0x3258, 0, 0, 0, 0, 5},
+        {20,8, 0x10DE, 0x0225,  25,  25,  75, 144,  66,   0,  50, 0x1381, 0, 0, 0, 0, 3},
+        {21,3, 0x0082, 0xA3BD,   7,  15,  33,  77, 130,   0,  60, 0x1592, 0, 0, 0, 0, 4},
+        {22,16,0x1480, 0x53BD,  10,  14,  68, 100, 100,   0,  75, 0x4344, 0, 0, 0, 0, 3},
+        {23,0, 0x78AA, 0x0038,  12,  22, 255, 180, 210,   0, 130, 0x6369, 0, 0, 0, 0, 5},
+        {24,1, 0x068A, 0x97BD,  13,  28, 110, 255, 255,   0,  70, 0x3645, 0, 0, 0, 0, 4},
+        {25,0, 0x78AA, 0x0000,  12,  22, 255, 180, 210,   0, 130, 0x6369, 0, 0, 0, 0, 5},
+        {26,0, 0x78AA, 0x0000, 255, 255, 255, 180, 210,   0, 130, 0x6369, 0, 0, 0, 0, 5}
+    };
+    if (!out || creatureType < 0 || creatureType >= 27) return 0;
+    *out = info[creatureType];
+    return 1;
+}
+
+static int m11_creature_projectile_subtype_from_thing(int projectileThing) {
+    switch (projectileThing) {
+        case DM1_PROJECTILE_THING_FIREBALL:          return PROJECTILE_SUBTYPE_FIREBALL;
+        case DM1_PROJECTILE_THING_SLIME:             return PROJECTILE_SUBTYPE_SLIME;
+        case DM1_PROJECTILE_THING_LIGHTNING_BOLT:    return PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+        case DM1_PROJECTILE_THING_HARM_NON_MATERIAL: return PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+        case DM1_PROJECTILE_THING_OPEN_DOOR:         return PROJECTILE_SUBTYPE_OPEN_DOOR;
+        case DM1_PROJECTILE_THING_POISON_CLOUD:      return PROJECTILE_SUBTYPE_POISON_CLOUD;
+        default:                                     return -1;
+    }
+}
+
+static int m11_creature_projectile_attack_type(int subtype) {
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL:
+            return COMBAT_ATTACK_FIRE;
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+            return COMBAT_ATTACK_LIGHTNING;
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+        case PROJECTILE_SUBTYPE_OPEN_DOOR:
+            return COMBAT_ATTACK_MAGIC;
+        case PROJECTILE_SUBTYPE_SLIME:
+        case PROJECTILE_SUBTYPE_POISON_CLOUD:
+        default:
+            return COMBAT_ATTACK_NORMAL;
+    }
+}
+
+static int m11_creature_maybe_launch_projectile(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    const struct CreatureBehaviorProfile_Compat* profile,
+    int groupX,
+    int groupY,
+    int dist) {
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct DM1CreatureProjectileAttack_Compat launch;
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat firstMove;
+    int primaryDir = 0;
+    int secondaryDir = 1;
+    struct DM1CreatureInfo_Compat sourceInfo;
+    int attackRange;
+    int subtype;
+    int slot = -1;
+
+    if (!state || !group || !profile) return 0;
+    if (!m11_creature_source_info_i34((int)group->creatureType, &sourceInfo)) return 0;
+    attackRange = DM1_ATTACK_RANGE(sourceInfo.ranges);
+    if (attackRange <= 1 || dist <= 0 || dist > attackRange) return 0;
+
+    /* ReDMCSB GROUP.C F0209 gates ranged attacks to the same row/column
+     * before F0207 resolves projectile payload. */
+    if (groupX != state->world.party.mapX && groupY != state->world.party.mapY) {
+        return 0;
+    }
+    if (sourceInfo.attackTicks > 0 &&
+        (state->world.gameTick % (uint32_t)sourceInfo.attackTicks) != 0u) {
+        return 0;
+    }
+    if (attackRange > F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) + 1) {
+        return 0;
+    }
+    if (!m11_creature_compute_primary_secondary_dirs(
+            state, groupX, groupY,
+            state->world.party.mapX, state->world.party.mapY,
+            &primaryDir, &secondaryDir)) {
+        return 0;
+    }
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentGroupMapX = groupX;
+    ctx.currentGroupMapY = groupY;
+    ctx.currentGroupDistanceToParty = dist;
+    ctx.currentGroupPrimaryDirToParty = primaryDir;
+    ctx.currentGroupSecondaryDirToParty = secondaryDir;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.currentMapIndex = state->world.party.mapIndex;
+    ctx.partyChampionCount = state->world.party.championCount;
+    ctx.creatureType = (int)group->creatureType;
+    ctx.groupBehavior = (int)group->behavior;
+    ctx.creatureCount = (int)group->count;
+    ctx.creatureSize = sourceInfo.attributes & DM1_ATTR_SIZE_MASK;
+    ctx.isArchenemy = (sourceInfo.attributes & CREATURE_ATTR_MASK_ARCHENEMY) ? 1 : 0;
+    ctx.distanceToVisibleParty = dist;
+    ctx.movementTicks = sourceInfo.movementTicks;
+    ctx.currentTickLow = (int)(state->world.gameTick & 0xFFu);
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ctx.eventTicks = (int)state->world.gameTick;
+    ctx.creatureInfo = sourceInfo;
+
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    activeGroup.groupThingIndex = THING_GET_INDEX(groupThing);
+    activeGroup.directions = (int)group->direction;
+    activeGroup.cells = (int)group->cells;
+    activeGroup.targetMapX = state->world.party.mapX;
+    activeGroup.targetMapY = state->world.party.mapY;
+    activeGroup.homeMapX = groupX;
+    activeGroup.homeMapY = groupY;
+
+    memset(&launch, 0, sizeof(launch));
+    if (!F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+            &ctx, &activeGroup, 0, &state->world.masterRng, &launch) ||
+        !launch.shouldLaunch) {
+        return 0;
+    }
+
+    subtype = m11_creature_projectile_subtype_from_thing(launch.projectileThing);
+    if (subtype < 0) return 0;
+
+    memset(&input, 0, sizeof(input));
+    input.category = PROJECTILE_CATEGORY_MAGICAL;
+    input.subtype = subtype;
+    input.ownerKind = PROJECTILE_OWNER_CREATURE;
+    input.ownerIndex = groupIndex;
+    input.mapIndex = state->world.party.mapIndex;
+    input.mapX = groupX;
+    input.mapY = groupY;
+    input.cell = launch.targetCell & 3;
+    input.direction = launch.direction & 3;
+    input.kineticEnergy = launch.kineticEnergy;
+    input.attack = launch.attack;
+    input.stepEnergy = launch.stepEnergy;
+    input.currentTick = (int)state->world.gameTick;
+    input.poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) ? launch.attack : 0;
+    input.attackTypeCode = m11_creature_projectile_attack_type(subtype);
+    input.firstMoveGraceFlag = 1;
+
+    memset(&firstMove, 0, sizeof(firstMove));
+    if (!F0810_PROJECTILE_Create_Compat(&input, &state->world.projectiles,
+                                        &slot, &firstMove)) {
+        return 0;
+    }
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
+    m11_audio_emit_creature_attack_sound_ex(state, group->creatureType,
+                                            groupX, groupY,
+                                            launch.useSpellSoundFallback);
+    m11_log_event(state, M11_COLOR_LIGHT_RED,
+                  "T%u: %s LAUNCHES PROJECTILE",
+                  (unsigned int)state->world.gameTick,
+                  m11_creature_name((int)group->creatureType));
+    return 1;
+}
+
 /* Process one creature group: check distance, maybe move, maybe attack. */
 static void m11_process_one_creature_group(
     M11_GameViewState* state,
@@ -4432,6 +4630,12 @@ static void m11_process_one_creature_group(
         return; /* too far to detect party */
     }
 
+    if (m11_creature_maybe_launch_projectile(state, groupThing, groupIndex,
+                                             group, profile, groupX, groupY,
+                                             dist)) {
+        return;
+    }
+
     /* Movement cadence: only move every movementTicks ticks */
     if (profile->movementTicks > 0 &&
         (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u) {
@@ -4453,6 +4657,28 @@ static void m11_process_one_creature_group(
             }
         }
     }
+}
+
+int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
+                                                      unsigned short groupThing,
+                                                      int groupIndex,
+                                                      int groupMapX,
+                                                      int groupMapY) {
+    struct DungeonGroup_Compat* group;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int dist;
+    if (!state || !state->world.things || groupIndex < 0 ||
+        groupIndex >= state->world.things->groupCount) {
+        return 0;
+    }
+    group = &state->world.things->groups[groupIndex];
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return 0;
+    dist = abs(state->world.party.mapX - groupMapX) +
+           abs(state->world.party.mapY - groupMapY);
+    return m11_creature_maybe_launch_projectile(state, groupThing, groupIndex,
+                                                group, profile, groupMapX,
+                                                groupMapY, dist);
 }
 
 /* Scan all groups on the current map and process their AI. */
