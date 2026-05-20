@@ -516,6 +516,46 @@ static void test_projectile_travel_blockers(void) {
 }
 
 
+static void test_poison_cloud_party_damage_over_time(void) {
+    struct ExplosionInstance_Compat explosion;
+    struct ExplosionInstance_Compat next;
+    struct CellContentDigest_Compat digest;
+    struct ExplosionTickResult_Compat result;
+
+    printf("  poison cloud party damage over time...\n");
+
+    memset(&explosion, 0, sizeof(explosion));
+    explosion.slotIndex = 3;
+    explosion.explosionType = C007_EXPLOSION_POISON_CLOUD;
+    explosion.mapIndex = 0;
+    explosion.mapX = 4;
+    explosion.mapY = 5;
+    explosion.cell = EXPLOSION_CELL_CENTERED;
+    explosion.centered = 1;
+    explosion.attack = 64;
+    explosion.currentFrame = 2;
+    explosion.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    explosion.ownerIndex = 1;
+
+    memset(&digest, 0, sizeof(digest));
+    digest.destMapIndex = 0;
+    digest.destMapX = 4;
+    digest.destMapY = 5;
+    digest.destHasChampion = 1;
+
+    ASSERT_EQ(F0822_EXPLOSION_Advance_Compat(&explosion, &digest, 250, NULL, &next, &result),
+              1, "poison cloud advance ok");
+    ASSERT_EQ(result.emittedCombatActionPartyCount, 1, "poison cloud damages party");
+    ASSERT_EQ(result.outActionParty.allowedWounds, 0, "poison cloud party damage has no wound mask");
+    ASSERT_EQ(result.outActionParty.rawAttackValue, 2, "poison cloud attack>>5 without rng");
+    ASSERT_EQ(result.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME, "poison cloud continues");
+    ASSERT_EQ(result.despawn, 0, "poison cloud does not despawn while attack >= 6");
+    ASSERT_EQ(next.attack, 61, "poison cloud attack decays by 3");
+    ASSERT_EQ(result.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "poison cloud schedules next tick");
+    ASSERT_EQ((int)result.outNextTick.fireAtTick, 251, "poison cloud next tick +1");
+}
+
+
 
 /* ── Main ────────────────────────────────────────────────────────── */
 
@@ -538,6 +578,7 @@ int main(void) {
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
     test_projectile_travel_blockers();
+    test_poison_cloud_party_damage_over_time();
 
     if (g_failures == 0) {
         printf("All tests passed.\n");

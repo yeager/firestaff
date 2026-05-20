@@ -1281,6 +1281,7 @@ int F0822_EXPLOSION_Advance_Compat(
             build_explosion_champion_action(in, digest, attackApplied,
                                             COMBAT_ATTACK_NORMAL,
                                             &outResult->outActionParty);
+            outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
             build_explosion_group_action(in, digest, attackApplied,
@@ -1548,4 +1549,3 @@ int F0829_EXPLOSION_ListDeserialize_Compat(
     }
     return o;
 }
-
