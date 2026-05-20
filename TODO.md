@@ -18,6 +18,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Collision detection (walls, doors, creatures)
 - ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
 - ✅ Movement cooldown (G0310/G0311 timing from F0267)
+  - ✅ Input wait loop timing source-lock: PC-34 input wait exits only when input wait has stopped and game time is ticking (6a842b72).
 - ✅ Pit fall + level change + fall damage (20 HP/pit)
 - ✅ Teleporter chains (up to 1000 iterations)
 - ✅ Stair transitions (up/down, correct direction per F0155)
