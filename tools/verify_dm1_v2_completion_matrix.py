@@ -49,6 +49,7 @@ REQUIRED_CTEST_NAMES = {
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_settings_pc34",
     "dm1_v2_settings_source_lock",
+    "dm1_v2_graphics_pipeline_source_isolation",
     "dm1_v2_item_render_pc34",
     "dm1_v2_item_render_source_lock",
 }

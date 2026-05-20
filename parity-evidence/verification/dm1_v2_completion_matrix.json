@@ -9,6 +9,7 @@
     "dm1_v2_entry_viewport_png_comparator_gate",
     "dm1_v2_entry_viewport_png_export",
     "dm1_v2_entry_viewport_png_export_gate",
+    "dm1_v2_graphics_pipeline_source_isolation",
     "dm1_v2_hud_overlay_pc34",
     "dm1_v2_hud_overlay_source_lock",
     "dm1_v2_item_render_pc34",
@@ -47,6 +48,7 @@
     "dm1_v2_entry_viewport_png_comparator_gate",
     "dm1_v2_entry_viewport_png_export",
     "dm1_v2_entry_viewport_png_export_gate",
+    "dm1_v2_graphics_pipeline_source_isolation",
     "dm1_v2_hud_overlay_pc34",
     "dm1_v2_hud_overlay_source_lock",
     "dm1_v2_item_render_pc34",
@@ -66,5 +68,5 @@
   ],
   "status": "failed",
   "testCount": 0,
-  "toolCount": 33
+  "toolCount": 35
 }

@@ -1014,6 +1014,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_presentation_profile_source_lock.py
     )
     add_test(
+        NAME dm1_v2_graphics_pipeline_source_isolation
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_graphics_pipeline_source_isolation.py
+    )
+    add_test(
         NAME dm1_v2_viewport_wall_occlusion_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_wall_occlusion_source_lock.py
     )
