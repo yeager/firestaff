@@ -147,7 +147,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Countdown sensor (C006 — timer-based trigger)
 - ✅ Projectile launcher sensors (C007-C010, C014-C015)
 - ✅ End game sensor (C018 — source-locked win/endgame trigger)
-- ❌ Floor party-on-stairs sensor (C005)
+- ✅ Floor party-on-stairs sensor (C005 — source-locked stairs-only trigger)
 - ✅ Floor possession sensor (C008 — party has specific item)
 - ✅ Floor creature sensor (C007)
 
