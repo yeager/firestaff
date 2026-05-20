@@ -76,6 +76,12 @@ enum {
     DM1_PROJECTILE_DISABLED_MOVEMENT_TICKS_PC34 = 4
 };
 
+/* -- Melee non-material gates (MENU.C / PROJEXPL.C) ------------------ */
+enum {
+    DM1_ICON_WEAPON_VORPAL_BLADE = 40,
+    DM1_MELEE_FLAG_HIT_NON_MATERIAL = 0x0001
+};
+
 /* ── Armor piece ──────────────────────────────────────────────────── */
 typedef struct {
     int defense;
@@ -142,6 +148,8 @@ typedef struct {
     DM1_WeaponInfo actionHandWeapon;
     int hasWeapon;
     int weaponSlot;  /* 0=ready hand, 1=action hand */
+    int actionHandIcon; /* DEFS.H Cxxx_ICON_*; 40 is Vorpal Blade */
+    int actionFlags;    /* DM1_MELEE_FLAG_* source gates */
     int skillSwing;
     int skillThrow;
     int skillShoot;

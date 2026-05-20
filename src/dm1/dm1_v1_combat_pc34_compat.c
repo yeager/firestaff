@@ -619,6 +619,20 @@ int dm1_get_melee_target(const DM1_CreatureGroup* group, int championCell,
     return -1;
 }
 
+static int dm1_melee_action_hits_non_material(const DM1_ChampionCombat* ch) {
+    if (!ch) return 0;
+
+    /* ReDMCSB MENU.C:1045-1050 sets MASK0x8000_HIT_NON_MATERIAL_CREATURES
+     * only when the action is DISRUPT or the action-hand icon is
+     * C040_ICON_WEAPON_VORPAL_BLADE. PROJEXPL.C:1474-1478 consumes that
+     * flag before the hit-probability/dexterity gate; an ordinary weapon in
+     * hand is not enough to hit Ghost/non-material creatures. */
+    if (ch->actionFlags & DM1_MELEE_FLAG_HIT_NON_MATERIAL) {
+        return 1;
+    }
+    return ch->actionHandIcon == DM1_ICON_WEAPON_VORPAL_BLADE;
+}
+
 /*
  * dm1_melee_action_damage — Champion melee attack against creature
  *
@@ -634,6 +648,11 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
 
     DM1_ChampionCombat* ch = &s->champions[champIdx];
     if (!ch->alive) return 0;
+
+    /* Source: PROJEXPL.C:1477 gates non-material targets before hit RNG. */
+    if (group->info.nonMaterial && !dm1_melee_action_hits_non_material(ch)) {
+        return 0;
+    }
 
     /* Champion attack strength */
     int str = dm1_champion_strength(ch);
@@ -652,11 +671,6 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
 
     /* Apply creature defense */
     attack = dm1_max(0, attack - dm1_combat_random(creatureDef + 1));
-
-    /* Non-material creatures can only be hit by specific means */
-    if (group->info.nonMaterial && !ch->hasWeapon) {
-        return 0;
-    }
 
     /* Apply damage */
     return dm1_creature_take_damage(group, creatureIdx, attack);

@@ -403,6 +403,75 @@ static void test_champion_melee_action(void) {
     PASS();
 }
 
+static void setup_non_material_melee_fixture(DM1_CombatState* s,
+                                            DM1_CreatureGroup* g) {
+    dm1_combat_init(s);
+    s->championCount = 1;
+    dm1_combat_init_champion(&s->champions[0]);
+    s->champions[0].strength = 100;
+    s->champions[0].dexterity = 100;
+    s->champions[0].hasWeapon = 1;
+    s->champions[0].actionHandWeapon.strength = 50;
+    s->champions[0].actionHandWeapon.weaponClass = 0;
+    s->champions[0].skillSwing = 10;
+
+    dm1_combat_init_group(g);
+    g->info.defense = 0;
+    g->info.dexterity = 0;
+    g->info.nonMaterial = 1;
+    g->count = 0;
+    g->creatures[0].health = 1;
+}
+
+/* -- Test: Ghost/non-material melee source gate ---------------------- */
+static void test_non_material_melee_requires_vorpal_or_disrupt(void) {
+    TEST(non_material_melee_requires_vorpal_or_disrupt);
+
+    DM1_CombatState s;
+    DM1_CreatureGroup g;
+
+    setup_non_material_melee_fixture(&s, &g);
+    dm1_combat_seed_rng(789);
+    s.champions[0].actionHandIcon = 1; /* ordinary weapon icon */
+    CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_NONE,
+          "ordinary weapon should not hit non-material creature");
+    CHECK(g.creatures[0].health == 1,
+          "ordinary weapon should leave non-material creature health unchanged");
+
+    setup_non_material_melee_fixture(&s, &g);
+    dm1_combat_seed_rng(789);
+    s.champions[0].actionHandIcon = DM1_ICON_WEAPON_VORPAL_BLADE;
+    CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_ALL,
+          "Vorpal Blade should set the non-material melee hit gate");
+
+    setup_non_material_melee_fixture(&s, &g);
+    dm1_combat_seed_rng(789);
+    s.champions[0].hasWeapon = 0;
+    s.champions[0].actionHandIcon = 0;
+    s.champions[0].actionFlags = DM1_MELEE_FLAG_HIT_NON_MATERIAL;
+    CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_ALL,
+          "DISRUPT-style action flag should hit non-material creature");
+
+    PASS();
+}
+
+/* -- Test: material melee still accepts ordinary weapons -------------- */
+static void test_material_melee_does_not_require_non_material_gate(void) {
+    TEST(material_melee_does_not_require_non_material_gate);
+
+    DM1_CombatState s;
+    DM1_CreatureGroup g;
+
+    setup_non_material_melee_fixture(&s, &g);
+    dm1_combat_seed_rng(789);
+    g.info.nonMaterial = 0;
+    s.champions[0].actionHandIcon = 1;
+    CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_ALL,
+          "ordinary weapon should still hit material creature");
+
+    PASS();
+}
+
 /* ── Test: wound defense calculation (F0313) ─────────────────────── */
 static void test_wound_defense(void) {
     TEST(wound_defense);
@@ -601,6 +670,8 @@ int main(void) {
     test_damage_all_champions();
     test_creature_melee_attack();
     test_champion_melee_action();
+    test_non_material_melee_requires_vorpal_or_disrupt();
+    test_material_melee_does_not_require_non_material_gate();
     test_wound_defense();
     test_shield_defense_uses_hand_strength();
     test_dead_champion_no_damage();
