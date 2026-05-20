@@ -40,7 +40,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Explosion/burst rendering (smoke, fireball aftermath)
 - ✅ Floor item sprites (scatter rendering, multi-item)
 - ✅ Alcove content rendering (items inside wall alcoves)
-- ✅ Object zone Y coordinates (COORD.C source-lock, v2.0.0)
+- ✅ Object zone Y coordinates (PC34 C696/C2500 layout-696 source-lock, pass606)
 - ✅ Side door rendering (D1L/R, D2L/R, D3L/R)
 - ✅ Door ornaments
 - ✅ Depth occlusion (center wall blocks far content; boundary wall blocker probe source-locked, 919598c5)
@@ -322,7 +322,7 @@ Status per 2026-05-19 v2.4.0.
 
 ## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
 
-- Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500)
+- Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500, pass606)
 - DM1 V1 wall/collision runtime capture gate with exact coordinates, movement-pipeline state, and screenshots
 - HiDPI/Retina scaling
 - Stair direction (F0155)
