@@ -234,6 +234,74 @@ static void test_poison_adjusted(void) {
     PASS();
 }
 
+/* -- Test: F0322 poison applies immediate damage then schedules DOT ---- */
+static void test_poison_start_immediate_and_followup(void) {
+    TEST(poison_start_immediate_and_followup);
+
+    DM1_CombatState s;
+    dm1_combat_init(&s);
+    s.championCount = 1;
+    dm1_combat_init_champion(&s.champions[0]);
+
+    CHECK(dm1_combat_start_poison_pc34(&s, 0, 130) == 2,
+          "attack 130 should immediately add max(1, 130>>6) damage");
+    CHECK(s.pendingDamage[0] == 2, "poison immediate damage should be pending");
+    CHECK(s.pendingPoison[0].active == 1, "attack 130 should schedule a follow-up event");
+    CHECK(s.pendingPoison[0].attack == 129, "scheduled poison attack should be decremented");
+    CHECK(s.pendingPoison[0].ticksUntilNext == 36, "follow-up should be 36 ticks out");
+    CHECK(s.champions[0].poisonEventCount == 1, "scheduled poison event count should be one");
+
+    for (int i = 0; i < 35; i++) {
+        dm1_combat_tick_poison(&s);
+    }
+    CHECK(s.pendingDamage[0] == 2, "poison should not tick before 36 ticks");
+    CHECK(s.pendingPoison[0].ticksUntilNext == 1, "one tick should remain before follow-up");
+
+    dm1_combat_tick_poison(&s);
+    CHECK(s.pendingDamage[0] == 4, "36th tick should apply the next poison damage");
+    CHECK(s.pendingPoison[0].active == 1, "continuing poison should reschedule itself");
+    CHECK(s.pendingPoison[0].attack == 128, "rescheduled poison attack should decrement again");
+    CHECK(s.champions[0].poisonEventCount == 1, "event count should remain one while chain continues");
+
+    s.pendingPoison[0].active = 0;
+    s.pendingPoison[0].attack = 0;
+    s.pendingPoison[0].ticksUntilNext = 0;
+    s.champions[0].poisonEventCount = 0;
+    s.pendingDamage[0] = 0;
+    CHECK(dm1_combat_start_poison_pc34(&s, 0, 1) == 1,
+          "attack 1 should still deal one immediate poison damage");
+    CHECK(s.pendingPoison[0].active == 0, "attack 1 should not schedule a follow-up");
+    CHECK(s.champions[0].poisonEventCount == 0, "no follow-up means no scheduled event count");
+
+    PASS();
+}
+
+/* -- Test: F0230 creature poison uses 50% gate + F0307 Vitality adjust -- */
+static void test_creature_poison_gate_and_vitality_adjust(void) {
+    TEST(creature_poison_gate_and_vitality_adjust);
+
+    DM1_CombatState s;
+    dm1_combat_init(&s);
+    s.championCount = 1;
+    dm1_combat_init_champion(&s.champions[0]);
+    s.champions[0].vitality = 42;
+
+    dm1_combat_seed_rng(1); /* first random(2) == 0: poison gate fails */
+    CHECK(dm1_creature_poison_attack_pc34(&s, 0, 96) == 0,
+          "failed 50% gate should not start poison");
+    CHECK(s.pendingDamage[0] == 0, "failed gate should leave pending damage unchanged");
+    CHECK(s.pendingPoison[0].active == 0, "failed gate should not schedule poison");
+
+    dm1_combat_seed_rng(3); /* first random(2) == 1: poison gate passes */
+    CHECK(dm1_creature_poison_attack_pc34(&s, 0, 96) == 1,
+          "passed gate should start F0322 with Vitality-adjusted attack");
+    CHECK(s.pendingDamage[0] == 1, "adjusted attack 96 should add one immediate poison damage");
+    CHECK(s.pendingPoison[0].active == 1, "passed gate should schedule poison follow-up");
+    CHECK(s.pendingPoison[0].attack == 95, "F0322 should schedule adjusted attack minus one");
+
+    PASS();
+}
+
 /* ── Test: damage all creatures (F0191) ──────────────────────────── */
 static void test_damage_all_creatures(void) {
     TEST(damage_all_creatures);
@@ -495,6 +563,8 @@ int main(void) {
     test_sharp_attack_wounds();
     test_fire_attack_shield();
     test_poison_adjusted();
+    test_poison_start_immediate_and_followup();
+    test_creature_poison_gate_and_vitality_adjust();
     test_damage_all_creatures();
     test_damage_all_champions();
     test_creature_melee_attack();

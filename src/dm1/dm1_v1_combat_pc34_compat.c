@@ -564,18 +564,11 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
     int damage = dm1_champion_take_damage(s, targetChampIdx, atk,
                                           allowedWounds, ci->attackType);
 
-    /* Poison — ReDMCSB F0322_CHAMPION_Poison (CHAMPION.C:1932-1960).
-     * Creates timed poison event: damage = max(1, attack>>6) every 36 ticks,
-     * attack decrements each tick until 0. Champion PoisonEventCount tracks
-     * active poison chains for UI overlay.
-     * We record the poison request; the event timer handles the ticking. */
+    /* Poison — ReDMCSB PROJEXPL.C F0230 lines 1404-1408:
+     * only after damage, with a 50% gate, then F0307 Vitality adjustment
+     * before F0322 applies the first poison tick immediately. */
     if (ci->poisonAttack > 0 && damage > 0) {
-        if (s->champions[targetChampIdx].alive) {
-            s->pendingPoison[targetChampIdx].active = 1;
-            s->pendingPoison[targetChampIdx].attack = ci->poisonAttack;
-            s->pendingPoison[targetChampIdx].ticksUntilNext = 36;
-            s->champions[targetChampIdx].poisonEventCount++;
-        }
+        (void)dm1_creature_poison_attack_pc34(s, targetChampIdx, ci->poisonAttack);
     }
 
     return damage;
@@ -747,15 +740,57 @@ const char *dm1_combat_pass601_source_evidence(void)
  * ══════════════════════════════════════════════════════════════════════ */
 
 
-/*
- * F0322_CHAMPION_Poison tick processing
- * ReDMCSB CHAMPION.C:1932-1960
- * Called once per game tick. For each active poison:
- *   - Decrement ticksUntilNext
- *   - When 0: apply max(1, attack >> 6) as ATTACK_NORMAL
- *   - Decrement attack; if 0, deactivate poison
- *   - Reset ticksUntilNext to 36
- */
+/* F0322_CHAMPION_Poison (CHAMPION.C:1926-1960). Applies immediate normal
+ * poison damage, decrements attack, and schedules the next event 36 ticks out. */
+int dm1_combat_start_poison_pc34(DM1_CombatState* s, int champIdx, int attack) {
+    DM1_PoisonEvent* p;
+    int damage;
+
+    if (!s || champIdx < 0 || champIdx >= s->championCount) return 0;
+    if (attack <= 0) return 0;
+    if (!s->champions[champIdx].alive || !s->champions[champIdx].currentHealth) return 0;
+
+    p = &s->pendingPoison[champIdx];
+    if (p->active && s->champions[champIdx].poisonEventCount > 0) {
+        s->champions[champIdx].poisonEventCount--;
+    }
+
+    damage = dm1_champion_take_damage(s, champIdx, dm1_max(1, attack >> 6),
+                                      DM1_WOUND_NONE, DM1_ATTACK_NORMAL);
+
+    attack--;
+    if (attack > 0) {
+        p->active = 1;
+        p->attack = attack;
+        p->ticksUntilNext = 36;
+        s->champions[champIdx].poisonEventCount++;
+    } else {
+        p->active = 0;
+        p->attack = 0;
+        p->ticksUntilNext = 0;
+    }
+
+    return damage;
+}
+
+/* F0230 creature poison side-effect (PROJEXPL.C:1404-1408). */
+int dm1_creature_poison_attack_pc34(DM1_CombatState* s, int champIdx, int poisonAttack) {
+    DM1_ChampionCombat* ch;
+    int adjustedAttack;
+
+    if (!s || champIdx < 0 || champIdx >= s->championCount) return 0;
+    if (poisonAttack <= 0) return 0;
+    ch = &s->champions[champIdx];
+    if (!ch->alive || !ch->currentHealth) return 0;
+    if (!dm1_combat_random(2)) return 0;
+
+    adjustedAttack = dm1_stat_adjusted_attack(ch, ch->vitality, poisonAttack);
+    if (adjustedAttack <= 0) return 0;
+    return dm1_combat_start_poison_pc34(s, champIdx, adjustedAttack);
+}
+
+/* C75_EVENT_POISON_CHAMPION dispatch: TIMELINE.C:1991-1993 decrements the
+ * scheduled-event count, then calls F0322 with the remaining attack value. */
 void dm1_combat_tick_poison(DM1_CombatState* s) {
     if (!s) return;
     for (int i = 0; i < s->championCount; i++) {
@@ -764,16 +799,14 @@ void dm1_combat_tick_poison(DM1_CombatState* s) {
         if (!s->champions[i].alive) { p->active = 0; continue; }
 
         if (--p->ticksUntilNext <= 0) {
-            int poisonDmg = dm1_max(1, p->attack >> 6);
-            dm1_champion_take_damage(s, i, poisonDmg,
-                                     DM1_WOUND_NONE, DM1_ATTACK_NORMAL);
-            if (--p->attack <= 0) {
-                p->active = 0;
-                if (s->champions[i].poisonEventCount > 0)
-                    s->champions[i].poisonEventCount--;
-            } else {
-                p->ticksUntilNext = 36; /* ReDMCSB: gameTime + 36 */
+            int attack = p->attack;
+            p->active = 0;
+            p->attack = 0;
+            p->ticksUntilNext = 0;
+            if (s->champions[i].poisonEventCount > 0) {
+                s->champions[i].poisonEventCount--;
             }
+            (void)dm1_combat_start_poison_pc34(s, i, attack);
         }
     }
 }

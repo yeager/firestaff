@@ -237,6 +237,8 @@ int dm1_champion_take_damage(DM1_CombatState* s, int champIdx, int attack,
                              uint16_t allowedWounds, int attackType);
 void dm1_apply_pending_damage(DM1_CombatState* s);
 void dm1_combat_tick_poison(DM1_CombatState* s);
+int dm1_combat_start_poison_pc34(DM1_CombatState* s, int champIdx, int attack);
+int dm1_creature_poison_attack_pc34(DM1_CombatState* s, int champIdx, int poisonAttack);
 int dm1_creature_take_damage(DM1_CreatureGroup* group, int creatureIdx, int damage);
 int dm1_damage_all_creatures(DM1_CreatureGroup* group, int attack);
 int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* group,

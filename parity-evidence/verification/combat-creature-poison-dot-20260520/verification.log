@@ -1,0 +1,60 @@
+# Verification log: combat creature poison DOT
+
+Final commit before amend: c21df008
+Branch base: 69cb4de8
+
+## cmake configure
+-- Found SDL3
+-- Configuring done (0.3s)
+-- Generating done (0.4s)
+-- Build files have been written to: /home/trv2/work/firestaff-worktrees/combat-defense-breakage-poison-20260520/build-combat-poison-dot
+
+## build relevant targets
+[ 96%] Built target firestaff_m10
+[100%] Built target test_dm1_v1_combat_pc34_compat_integration
+[ 86%] Built target firestaff_m10
+[100%] Built target firestaff_m11
+PASS: built test_dm1_v1_combat_pc34_compat_integration and firestaff_m11
+
+## targeted ctest
+Internal ctest changing into directory: /home/trv2/work/firestaff-worktrees/combat-defense-breakage-poison-20260520/build-combat-poison-dot
+Test project /home/trv2/work/firestaff-worktrees/combat-defense-breakage-poison-20260520/build-combat-poison-dot
+    Start 232: dm1_v1_combat_damage_source_lock
+1/1 Test #232: dm1_v1_combat_damage_source_lock ...   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+
+## direct deterministic probe
+=== DM1 V1 Combat System — Source-locked CTest Gate ===
+  TEST: scaled_product ... PASS
+  TEST: armor_defense ... PASS
+  TEST: stamina_adjusted ... PASS
+  TEST: stat_adjusted_attack ... PASS
+  TEST: creature_damage ... PASS
+  TEST: creature_damage_multi ... PASS
+  TEST: archenemy_immune ... PASS
+  TEST: champion_damage_pipeline ... PASS
+  TEST: sharp_attack_wounds ... PASS
+  TEST: fire_attack_shield ... PASS
+  TEST: poison_adjusted ... PASS
+  TEST: poison_start_immediate_and_followup ... PASS
+  TEST: creature_poison_gate_and_vitality_adjust ... PASS
+  TEST: damage_all_creatures ... PASS
+  TEST: damage_all_champions ... PASS
+  TEST: creature_melee_attack ... PASS
+  TEST: champion_melee_action ... PASS
+  TEST: wound_defense ... PASS
+  TEST: dead_champion_no_damage ... PASS
+  TEST: lethal_pending ... PASS
+  TEST: ranged_shoot_bow_crossbow ... PASS
+  TEST: ranged_shoot_no_bow_ammunition ... PASS
+
+=== Results: 22 passed, 0 failed ===
+
+## git diff --check
+PASS: git diff --check
+
+## high-signal secret scan
+PASS: high-signal secret scan clean
