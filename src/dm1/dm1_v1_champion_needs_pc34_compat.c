@@ -33,6 +33,7 @@
  *   } while (--cycleCount && (CurrentStamina - staminaLoss) < MaxStamina)
  *
  *   F0325_DecrementStamina(champIdx, staminaLoss)
+ *   If stamina underflows, F0325 adds pending HP damage = (-stamina) >> 1.
  *   Clamp Food to [-1024, ...]  Clamp Water to [-1024, ...]
  *
  * HP HEALING:
@@ -54,7 +55,7 @@
  *
  * F0325_CHAMPION_DecrementStamina (CHAMPION.C):
  *   CurrentStamina -= decrement
- *   if (stamina <= 0): stamina = 0; damage = (-stamina) >> 1
+ *   if (stamina <= 0): stamina = 0; pending HP damage = (-stamina) >> 1
  *   if (stamina > MaxStamina): stamina = MaxStamina
  */
 
@@ -117,6 +118,7 @@ void dm1_needs_apply_time_effects(
     out->stamina_delta = 0;
     out->health_delta = 0;
     out->mana_delta = 0;
+    out->pending_health_damage = 0;
     out->food_after = champ->food;
     out->water_after = champ->water;
     out->starvation_damage = 0;
@@ -152,7 +154,10 @@ void dm1_needs_apply_time_effects(
         int mana_damage = dm1_needs_decrement_stamina(&cur_stamina, max_stamina,
                                                        (int16_t)stamina_cost);
         out->stamina_delta -= (int16_t)stamina_cost;
-        if (mana_damage > 0) out->starvation_damage = 1;
+        if (mana_damage > 0) {
+            out->pending_health_damage += (int16_t)mana_damage;
+            out->starvation_damage = 1;
+        }
         /* Mana gain clamped */
         int actual_mana = min_value(mana_gain, champ->max_mana - champ->current_mana);
         out->mana_delta = (int16_t)actual_mana;
@@ -227,7 +232,10 @@ void dm1_needs_apply_time_effects(
        stamina_loss, so the actual delta is -stamina_loss (but clamped). */
     /* Recalculate precisely: */
     out->stamina_delta = cur_stamina - champ->current_stamina;
-    if (stam_damage > 0) out->starvation_damage = 1;
+    if (stam_damage > 0) {
+        out->pending_health_damage += (int16_t)stam_damage;
+        out->starvation_damage = 1;
+    }
 
     /* Clamp food/water to minimum */
     if (food < DM1_NEEDS_FOOD_MIN) food = (int16_t)DM1_NEEDS_FOOD_MIN;

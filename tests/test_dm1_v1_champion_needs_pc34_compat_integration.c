@@ -137,6 +137,24 @@ static void test_starvation_stamina_loss(void) {
     ASSERT(out.stamina_delta < 0, "stamina lost when starving");
 }
 
+static void test_starvation_stamina_underflow_adds_pending_hp_damage(void) {
+    DM1_ChampionNeeds c = make_champion();
+    c.current_stamina = 4;
+    c.food = -600;
+    c.water = -600;
+    DM1_NeedsTickContext ctx = make_ctx(1000, 0);
+    DM1_NeedsTickResult out;
+
+    dm1_needs_apply_time_effects(&c, &ctx, &out);
+
+    /* ReDMCSB F0325: underflow damage is (-stamina_after_decrement) >> 1. */
+    ASSERT_EQ(out.stamina_delta, -4, "stamina clamped to zero");
+    ASSERT_EQ(out.pending_health_damage, 18, "starvation/dehydration pending HP damage");
+    ASSERT_EQ(out.starvation_damage, 1, "starvation damage flag set");
+    ASSERT_EQ(out.food_after, -608, "starvation food drain applies on above-half cycles");
+    ASSERT_EQ(out.water_after, -604, "dehydration water drain applies on above-half cycles");
+}
+
 /* ── Test: resting doubles stamina gain ───────────────────────────── */
 static void test_resting_doubles_gain(void) {
     DM1_ChampionNeeds c = make_champion();
@@ -308,6 +326,7 @@ int main(void) {
     test_decrement_stamina();
     test_food_depletes();
     test_starvation_stamina_loss();
+    test_starvation_stamina_underflow_adds_pending_hp_damage();
     test_resting_doubles_gain();
     test_hp_healing();
     test_no_heal_low_stamina();

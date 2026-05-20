@@ -64,6 +64,7 @@ typedef struct {
     int16_t stamina_delta;
     int16_t health_delta;
     int16_t mana_delta;
+    int16_t pending_health_damage;
     int16_t food_after;
     int16_t water_after;
     int     starvation_damage;
