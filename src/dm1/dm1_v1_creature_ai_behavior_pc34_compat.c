@@ -19,6 +19,7 @@
  *   F0819 -> GROUP.C F0201_GROUP_GetSmelledPartyPrimaryDirectionOrdinal
  *   F0820 -> GROUP.C F0209 T0209094_FleeFromTarget
  *   F0821 -> GROUP.C F0190 fear test in GetDamageCreatureOutcome
+ *   F0822 -> GROUP.C F0193 Giggler steal/flee behavior
  */
 
 #include <string.h>
@@ -47,6 +48,75 @@ static int manhattan(int x1, int y1, int x2, int y2) {
 
 /* Max helper */
 static int max_val(int a, int b) { return (a > b) ? a : b; }
+
+static const int g_gigglerStealSlotsPc34[8] = {
+    DM1_SLOT_ACTION_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND,
+    DM1_SLOT_READY_HAND
+};
+
+/* =========================================================================
+ *  F0822: Giggler steal/flee attack resolution
+ *
+ *  Source: GROUP.C F0193_GROUP_StealFromChampion lines 1013-1080.
+ *  PC/I34 slot order: DATA.C G0025 lines 900-908.
+ * ========================================================================= */
+
+int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+    int championDexterity,
+    uint32_t occupiedSlotMask,
+    int luckyAttemptMask,
+    struct RngState_Compat* rng,
+    struct DM1GigglerStealResult_Compat* out)
+{
+    int percentage;
+    int counter;
+    int attempt = 0;
+
+    if (!rng || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->stealSlotIndex = -1;
+    out->newBehavior = DM1_BEHAVIOR_ATTACK;
+
+    if (championDexterity < 0) championDexterity = 0;
+    if (championDexterity > 100) championDexterity = 100;
+
+    percentage = 100 - championDexterity;
+    counter = F0732_COMBAT_RngRandom_Compat(rng, 8);
+    out->initialCounter = counter;
+
+    while (percentage > 0) {
+        int slot;
+        if (luckyAttemptMask & (1 << attempt)) break;
+        slot = g_gigglerStealSlotsPc34[counter & 7];
+        out->attemptedSlotCount++;
+        if ((occupiedSlotMask & (1u << slot)) != 0u) {
+            occupiedSlotMask &= ~(1u << slot);
+            out->objectStolen = 1;
+            out->stolenSlotMask |= (1u << slot);
+            out->stolenCount++;
+            if (out->stealSlotIndex < 0) out->stealSlotIndex = slot;
+        }
+        counter = (counter + 1) & 7;
+        percentage -= 20;
+        attempt++;
+    }
+
+    if (F0732_COMBAT_RngRandom_Compat(rng, 8) == 0 ||
+        (out->objectStolen && F0732_COMBAT_RngRandom_Compat(rng, 2) != 0)) {
+        out->shouldFlee = 1;
+        out->fleeDelayTicks = F0732_COMBAT_RngRandom_Compat(rng, 64) + 20;
+        out->newBehavior = DM1_BEHAVIOR_FLEE;
+    }
+
+    return 1;
+}
+
 
 /* =========================================================================
  *  F0811: Movement possibility check
@@ -1009,6 +1079,40 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                  * So range 1 (melee) always attacks, range 15 rarely. */
                 int roll = F0732_COMBAT_RngRandom_Compat(rng, 16) + 1;
                 if (roll >= attackRange) {
+                    if (ctx->creatureType == DM1_CREATURE_TYPE_GIGGLER) {
+                        struct DM1GigglerStealResult_Compat steal;
+                        F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+                            ctx->targetChampionDexterity,
+                            ctx->targetChampionOccupiedSlotMask,
+                            ctx->targetChampionLuckyAttemptMask,
+                            rng, &steal);
+                        result->actionKind = DM1_ACTION_STEAL;
+                        result->attackIsProjectile = 0;
+                        result->newBehavior = steal.newBehavior;
+                        result->stealSlotIndex = steal.stealSlotIndex;
+                        result->stolenSlotMask = steal.stolenSlotMask;
+                        result->stolenCount = steal.stolenCount;
+                        result->gigglerInitialStealCounter =
+                            steal.initialCounter;
+                        result->gigglerFleeDelayTicks = steal.fleeDelayTicks;
+                        if (steal.shouldFlee) {
+                            activeGroup->delayFleeingFromTarget =
+                                steal.fleeDelayTicks;
+                            result->nextEventType =
+                                DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+                            result->nextEventDelayTicks =
+                                steal.fleeDelayTicks;
+                        } else {
+                            result->nextEventType = eventType;
+                            result->nextEventDelayTicks =
+                                DM1_NEXT_BEHAVIOR_TICKS(
+                                    ctx->creatureInfo.animationTicks) +
+                                F0732_COMBAT_RngRandom_Compat(rng, 2);
+                            if (result->nextEventDelayTicks < 1)
+                                result->nextEventDelayTicks = 1;
+                        }
+                        return 1;
+                    }
                     result->actionKind = DM1_ACTION_ATTACK;
                     result->attackIsProjectile = (attackRange > 1) ? 1 : 0;
                     result->newBehavior = DM1_BEHAVIOR_ATTACK;

@@ -392,6 +392,69 @@ static void test_flee_direction(void) {
     EXPECT_EQ(fleeS, 2, "flee_dir: secondary is South (opposite of North)");
 }
 
+
+/* =========================================================
+ *  Test 17: Giggler steal uses PC34 hand-slot table and may flee
+ * ========================================================= */
+static void test_giggler_steal_resolver(void) {
+    struct RngState_Compat rng = make_rng(1);
+    struct DM1GigglerStealResult_Compat steal;
+    uint32_t occupied = (1u << DM1_SLOT_READY_HAND) |
+                        (1u << DM1_SLOT_ACTION_HAND);
+
+    int ok = F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+        0, occupied, 0, &rng, &steal);
+
+    EXPECT_EQ(ok, 1, "giggler_resolve: returns 1");
+    EXPECT_EQ(steal.initialCounter, 6,
+              "giggler_resolve: seed chooses PC34 counter 6");
+    EXPECT_EQ(steal.stealSlotIndex, DM1_SLOT_READY_HAND,
+              "giggler_resolve: first stolen slot is ready hand");
+    EXPECT_EQ((int)steal.stolenSlotMask,
+              (int)((1u << DM1_SLOT_READY_HAND) |
+                    (1u << DM1_SLOT_ACTION_HAND)),
+              "giggler_resolve: continuing loop can steal both hands");
+    EXPECT_EQ(steal.stolenCount, 2,
+              "giggler_resolve: two occupied slots stolen");
+    EXPECT_EQ(steal.shouldFlee, 1,
+              "giggler_resolve: stolen object can trigger flee");
+    EXPECT_EQ(steal.fleeDelayTicks, 63,
+              "giggler_resolve: flee delay is random(64)+20");
+    EXPECT_EQ(steal.newBehavior, DM1_BEHAVIOR_FLEE,
+              "giggler_resolve: behavior switches to FLEE");
+}
+
+/* =========================================================
+ *  Test 18: Per-creature Giggler attack emits STEAL, not damage attack
+ * ========================================================= */
+static void test_giggler_attack_dispatch_steals(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(1);
+    struct DM1BehaviorResult_Compat result;
+
+    ctx.creatureType = DM1_CREATURE_TYPE_GIGGLER;
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ctx.distanceToVisibleParty = 1;
+    ctx.targetChampionDexterity = 0;
+    ctx.targetChampionOccupiedSlotMask =
+        (1u << DM1_SLOT_READY_HAND) | (1u << DM1_SLOT_ACTION_HAND);
+
+    int ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "giggler_dispatch: returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_STEAL,
+              "giggler_dispatch: action is STEAL");
+    EXPECT_EQ(result.newBehavior, DM1_BEHAVIOR_FLEE,
+              "giggler_dispatch: steal can switch to FLEE");
+    EXPECT_EQ(result.stealSlotIndex, DM1_SLOT_READY_HAND,
+              "giggler_dispatch: reports first stolen slot");
+    EXPECT_EQ(result.stolenCount, 2,
+              "giggler_dispatch: reports stolen slot count");
+    EXPECT_EQ(ag.delayFleeingFromTarget, 31,
+              "giggler_dispatch: writes active-group flee delay");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -412,6 +475,8 @@ int main(void) {
     test_per_creature_attack_event();
     test_reaction_during_freeze();
     test_flee_direction();
+    test_giggler_steal_resolver();
+    test_giggler_attack_dispatch_steals();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

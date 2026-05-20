@@ -131,6 +131,12 @@ struct DM1CreatureInfo_Compat {
 #define DM1_IMMOBILE 255
 #define DM1_IMMUNE_TO_FEAR 15
 
+/* Creature/slot constants used by type-specific attack behavior.
+ * Sources: DEFS.H C02_CREATURE_GIGGLER and C00/C01 slot constants. */
+#define DM1_CREATURE_TYPE_GIGGLER 2
+#define DM1_SLOT_READY_HAND       0
+#define DM1_SLOT_ACTION_HAND      1
+
 /* ==========================================================
  *  DM1 V1 Active Group State (matches DEFS.H ACTIVE_GROUP)
  *
@@ -175,6 +181,8 @@ struct DM1GroupBehaviorContext_Compat {
     /* Creature info for the group's type */
     struct DM1CreatureInfo_Compat creatureInfo;
 
+    int creatureType;        /* DEFS.H Cxx_CREATURE_* */
+
     int groupBehavior;       /* DM1_BEHAVIOR_* */
     int creatureCount;       /* Group.Count (0-based: 0 means 1 creature) */
     int creatureSize;        /* DM1_SIZE_* from attributes */
@@ -197,6 +205,11 @@ struct DM1GroupBehaviorContext_Compat {
     /* Event context */
     int eventType;           /* C29..C41 or negative for reactions */
     int eventTicks;          /* P0430_ui_Ticks from the event */
+
+    /* Giggler steal snapshot for F0193-compatible pure resolution. */
+    int targetChampionDexterity;
+    uint32_t targetChampionOccupiedSlotMask;
+    int targetChampionLuckyAttemptMask;
 };
 
 /* ==========================================================
@@ -213,6 +226,19 @@ struct DM1GroupBehaviorContext_Compat {
 #define DM1_ACTION_SET_DIRECTION  4
 #define DM1_ACTION_SKIP_FROZEN    5
 #define DM1_ACTION_CAST_SPELL     6
+#define DM1_ACTION_STEAL          7
+
+struct DM1GigglerStealResult_Compat {
+    int objectStolen;
+    int stealSlotIndex;
+    uint32_t stolenSlotMask;
+    int stolenCount;
+    int attemptedSlotCount;
+    int initialCounter;
+    int shouldFlee;
+    int fleeDelayTicks;
+    int newBehavior;
+};
 
 struct DM1BehaviorResult_Compat {
     int actionKind;          /* DM1_ACTION_* */
@@ -230,6 +256,11 @@ struct DM1BehaviorResult_Compat {
     int startWandering;      /* 1 if group should transition to wander */
     int deleteEvents;        /* 1 if existing events should be purged */
     int fearDecrement;       /* amount to decrement fear counter */
+    int stealSlotIndex;      /* first stolen slot, or -1 */
+    uint32_t stolenSlotMask; /* all slots stolen during this attack */
+    int stolenCount;
+    int gigglerFleeDelayTicks;
+    int gigglerInitialStealCounter;
 };
 
 /* ==========================================================
@@ -391,5 +422,18 @@ int F0821_DM1_GROUP_ShouldFrighten_Compat(
     struct RngState_Compat* rng,
     int* outShouldFlee,
     int* outFleeDelay);
+
+/*
+ * F0822: Resolve Giggler steal/flee attack semantics.
+ *
+ * Source: GROUP.C F0193_GROUP_StealFromChampion; PC/I34 slot table is
+ * DATA.C G0025_auc_Graphic562_StealFromSlotIndices.
+ */
+int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+    int championDexterity,
+    uint32_t occupiedSlotMask,
+    int luckyAttemptMask,
+    struct RngState_Compat* rng,
+    struct DM1GigglerStealResult_Compat* out);
 
 #endif /* DM1_V1_CREATURE_AI_BEHAVIOR_PC34_COMPAT_H */
