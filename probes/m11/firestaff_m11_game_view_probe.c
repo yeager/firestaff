@@ -11014,6 +11014,25 @@ int main(int argc, char** argv) {
                 int projCountAfter;
                 int spawned;
                 int slotSubtype;
+                struct DungeonThings_Compat shootThings;
+                struct DungeonWeapon_Compat shootWeapons[4];
+                struct DungeonThings_Compat* savedThings;
+
+                memset(&shootThings, 0, sizeof(shootThings));
+                memset(shootWeapons, 0, sizeof(shootWeapons));
+                shootWeapons[0].type = 25; /* BOW: class 20, KE 50, attack 50 */
+                shootWeapons[1].type = 27; /* ARROW: class 10, KE 10 */
+                shootWeapons[2].type = 29; /* SLING: class 39, KE 20, attack 50 */
+                shootWeapons[3].type = 30; /* ROCK: class 11, KE 18 */
+                shootThings.weapons = shootWeapons;
+                shootThings.weaponCount = 4;
+                savedThings = menuView.world.things;
+                menuView.world.things = &shootThings;
+                menuView.world.party.direction = DIR_EAST;
+                menuView.world.lifecycle.champions[0]
+                    .skills20[LIFECYCLE_SKILL_NINJA].experience = 1000;
+                menuView.world.lifecycle.champions[0]
+                    .skills20[LIFECYCLE_SKILL_SHOOT].experience = 1000;
 
                 probe_record(&tally, "INV_GV_332",
                              M11_GameView_GetActionName(20) != NULL &&
@@ -11124,9 +11143,14 @@ int main(int argc, char** argv) {
                     "projectile action: INVOKE spawns one of the 4 F0407 "
                     "C027 subtypes");
 
-                /* SHOOT with an empty ready hand: should NOT
-                 * spawn a projectile and should log the
-                 * "NO AMMUNITION" cue (handler returns 0). */
+                /* SHOOT with a bow in the action hand but empty ready hand
+                 * follows T0407032: no projectile and NO AMMUNITION. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_ACTION_HAND] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_RIGHT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
@@ -11139,30 +11163,51 @@ int main(int argc, char** argv) {
                              "projectile action: SHOOT with empty ready hand "
                              "emits NO AMMUNITION and spawns nothing");
 
-                /* SHOOT with any ready-hand item spawns a
-                 * kinetic projectile (category KINETIC, subtype
-                 * KINETIC_ARROW = 0). */
+                /* Bow + rock is a class mismatch (bow requires class-10
+                 * ammo), so it follows the same no-ammunition branch. */
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
-                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                probe_record(&tally, "INV_GV_339A",
+                             spawned == 0 &&
+                                 projCountAfter == projCountBefore,
+                             "projectile action: SHOOT rejects mismatched "
+                             "bow/rock ammunition class");
+
+                /* Bow + arrow spawns one kinetic projectile with source
+                 * kinetic, attack, cell, direction, and step-energy fields. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
                 projCountAfter = M11_GameView_GetProjectileCount(&menuView);
                 {
-                    int slotCat =
+                    const struct ProjectileInstance_Compat* p =
                         (projCountAfter > projCountBefore)
-                            ? menuView.world.projectiles
-                                  .entries[projCountBefore]
-                                  .projectileCategory
-                            : -1;
+                            ? &menuView.world.projectiles.entries[projCountBefore]
+                            : NULL;
                     probe_record(
                         &tally, "INV_GV_339",
                         spawned == 1 &&
-                            projCountAfter == projCountBefore + 1 &&
-                            slotCat == PROJECTILE_CATEGORY_KINETIC,
-                        "projectile action: SHOOT with ready-hand ammo "
-                        "spawns kinetic projectile");
+                            projCountAfter == projCountBefore + 1 && p &&
+                            p->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+                            p->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW &&
+                            p->kineticEnergy == 60 &&
+                            p->attack == 106 &&
+                            p->stepEnergy == 4 &&
+                            p->direction == DIR_EAST &&
+                            p->cell == 1 &&
+                            menuView.world.party.champions[0]
+                                .inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
+                            menuView.world.projectileDisabledMovementTicks == 0,
+                        "projectile action: SHOOT bow/arrow uses source "
+                        "kinetic attack cell direction step-energy and consumes ammo");
                 }
 
                 /* THROW with the action-hand holding an item
@@ -11189,6 +11234,7 @@ int main(int argc, char** argv) {
                         "projectile action: THROW with item in action hand "
                         "spawns kinetic projectile");
                 }
+                menuView.world.things = savedThings;
             }
         }
 

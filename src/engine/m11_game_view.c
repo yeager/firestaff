@@ -2836,6 +2836,64 @@ static const char* const s_weaponTypeNames[] = {
     "SPEED BOW", "THE FIRESTAFF"
 };
 
+typedef struct {
+    unsigned char weaponClass;
+    unsigned char kineticEnergy;
+    unsigned char shootAttack;
+} M11_DM1WeaponInfo;
+
+/* ReDMCSB DUNGEON.C:261-308 G0238_as_Graphic559_WeaponInfo.
+ * For the SHOOT action we need exactly Class, KineticEnergy and
+ * M065_SHOOT_ATTACK(Attributes). */
+static const M11_DM1WeaponInfo s_dm1WeaponInfo[] = {
+    {130,   0,   0}, /* EYE OF TIME */
+    {131,   0,   0}, /* STORMRING */
+    {  0,   2,   0}, /* TORCH */
+    {112,  80,  40}, /* FLAMITT */
+    {129,   7,   0}, /* STAFF OF CLAWS */
+    {113, 110,  66}, /* BOLT BLADE */
+    {  0,  20,   0}, /* FURY */
+    {255,  10, 255}, /* THE FIRESTAFF */
+    {  2,  19,   0}, /* DAGGER */
+    {  0,   8,   0}, /* FALCHION */
+    {  0,  10,   0}, /* SWORD */
+    {  0,  10,   0}, /* RAPIER */
+    {  0,  11,   0}, /* SABRE */
+    {  0,  12,   0}, /* SAMURAI SWORD */
+    {  0,  14,   0}, /* DELTA */
+    {  0,  14,   0}, /* DIAMOND EDGE */
+    {  0,  13,   0}, /* VORPAL BLADE */
+    {  0,  15,   0}, /* THE INQUISITOR */
+    {  2,  33,   0}, /* AXE */
+    {  2,  44,   0}, /* HARDCLEAVE */
+    {  0,  10,   0}, /* MACE */
+    {  0,  13,   0}, /* MACE OF ORDER */
+    {  0,  15,   0}, /* MORNINGSTAR */
+    {  0,  10,   0}, /* CLUB */
+    {  0,  22,   0}, /* STONE CLUB */
+    { 20,  50,  50}, /* BOW */
+    { 30, 180, 120}, /* CROSSBOW */
+    { 10,  10,   0}, /* ARROW */
+    { 10,  28,   0}, /* SLAYER */
+    { 39,  20,  50}, /* SLING */
+    { 11,  18,   0}, /* ROCK */
+    { 12,  23,   0}, /* POISON DART */
+    {  1,  19,   0}, /* THROWING STAR */
+    {  0,   4,   0}, /* STICK */
+    {129,   4,   0}, /* STAFF */
+    {130,   0,   0}, /* WAND */
+    {140,  20,   0}, /* TEOWAND */
+    {128,   6,   0}, /* YEW STAFF */
+    {159,   4,   0}, /* STAFF OF MANAR */
+    {131,   3,   0}, /* SNAKE STAFF */
+    {136,   7,   0}, /* THE CONDUIT */
+    {132,   1,   0}, /* DRAGON SPIT */
+    {131,   4,   0}, /* SCEPTRE OF LYF */
+    {192,   1,   0}, /* HORN OF FEAR */
+    { 26, 220, 125}, /* SPEEDBOW */
+    {255,  50, 255}  /* THE FIRESTAFF */
+};
+
 static const char* const s_armourTypeNames[] = {
     "CAPE", "CLOAK OF NIGHT", "BARBARIAN HIDE", "SANDALS",
     "LEATHER BOOTS", "ELVEN BOOTS", "LEATHER JERKIN", "LEATHER PANTS",
@@ -15799,13 +15857,16 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
  *
  * Ref: ReDMCSB MENU.C F0407 C020/C021/C023/C027/C032/C042 cases,
  *      PROJEXPL.C F0212_PROJECTILE_Create. */
-static int m11_spawn_action_projectile(M11_GameViewState* state,
-                                       int championIndex,
-                                       int subtype,
-                                       int category,
-                                       int kineticEnergy,
-                                       int impactAttack,
-                                       int attackTypeCode) {
+static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
+                                          int championIndex,
+                                          int subtype,
+                                          int category,
+                                          int kineticEnergy,
+                                          int impactAttack,
+                                          int attackTypeCode,
+                                          int launchCell,
+                                          int launchDirection,
+                                          int stepEnergy) {
     struct ProjectileCreateInput_Compat input;
     struct TimelineEvent_Compat firstMove;
     int slot = -1;
@@ -15819,11 +15880,11 @@ static int m11_spawn_action_projectile(M11_GameViewState* state,
     input.mapIndex           = state->world.party.mapIndex;
     input.mapX               = state->world.party.mapX;
     input.mapY               = state->world.party.mapY;
-    input.cell               = championIndex & 3;
-    input.direction          = state->world.party.direction & 3;
+    input.cell               = launchCell >= 0 ? (launchCell & 3) : (championIndex & 3);
+    input.direction          = launchDirection >= 0 ? (launchDirection & 3) : (state->world.party.direction & 3);
     input.kineticEnergy      = kineticEnergy;
     input.attack             = impactAttack;
-    input.stepEnergy         = 1;
+    input.stepEnergy         = stepEnergy > 0 ? stepEnergy : 1;
     input.currentTick        = (int)state->world.gameTick;
     input.poisonAttack       = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
                                 subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
@@ -15842,6 +15903,64 @@ static int m11_spawn_action_projectile(M11_GameViewState* state,
      * handler without requiring any M10 changes. */
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
     return 1;
+}
+
+static int m11_spawn_action_projectile(M11_GameViewState* state,
+                                       int championIndex,
+                                       int subtype,
+                                       int category,
+                                       int kineticEnergy,
+                                       int impactAttack,
+                                       int attackTypeCode) {
+    return m11_spawn_action_projectile_ex(state, championIndex, subtype,
+                                          category, kineticEnergy,
+                                          impactAttack, attackTypeCode,
+                                          -1, -1, 1);
+}
+
+static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(
+    const M11_GameViewState* state,
+    unsigned short thing) {
+    int thingIndex;
+    int weaponType;
+    if (!state || !state->world.things || !state->world.things->weapons) return NULL;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return NULL;
+    if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return NULL;
+    thingIndex = THING_GET_INDEX(thing);
+    if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) return NULL;
+    weaponType = state->world.things->weapons[thingIndex].type;
+    if (weaponType < 0 || weaponType >= (int)(sizeof(s_dm1WeaponInfo) / sizeof(s_dm1WeaponInfo[0]))) {
+        return NULL;
+    }
+    return &s_dm1WeaponInfo[weaponType];
+}
+
+static int m11_dm1_shoot_step_energy(int actionClass, int* outStepEnergy) {
+    if (!outStepEnergy) return 0;
+    if (actionClass >= 16 && actionClass <= 31) {
+        *outStepEnergy = actionClass - 16;
+        return 1;
+    }
+    if (actionClass >= 32 && actionClass <= 47) {
+        *outStepEnergy = actionClass - 32;
+        return 1;
+    }
+    return 0;
+}
+
+static int m11_dm1_projectile_launch_cell(int championCell,
+                                           int direction) {
+    championCell &= 3;
+    direction &= 3;
+    return (((((championCell - direction + 1) & 2) >> 1) + direction) & 3);
+}
+
+static int m11_dm1_shoot_skill_level(const M11_GameViewState* state,
+                                     int championIndex) {
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+        &state->world.lifecycle.champions[championIndex],
+        LIFECYCLE_SKILL_SHOOT, 0);
 }
 
 /* Compute projectile-spell kinetic/attack parameters for the
@@ -17230,44 +17349,59 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             }
             return 0;
         }
-        case 32: /* SHOOT */ {
-            /* F0407 case C032_ACTION_SHOOT validates the action-
-             * hand is a bow/sling class and the ready-hand is
-             * matching ammunition; on failure it sets
-             * G0513_i_ActionDamage = CM2_DAMAGE_NO_AMMUNITION and
-             * returns AL1245_B_ActionPerformed=FALSE.  The
-             * WeaponInfo class-check is outside the V1 slice, but
-             * when the ready-hand holds something we can honour
-             * the bounded DM1 effect by spawning a kinetic
-             * projectile carrying that thing, mirroring
-             * F0326_CHAMPION_ShootProjectile's essential step:
-             * the player sees a projectile sprite leave the party
-             * cell in the facing direction.  When the ready-hand
-             * is empty we emit the authentic "NO AMMUNITION" cue. */
+        case 32: { /* SHOOT */
+            /* ReDMCSB MENU.C:1363-1396 validates C01 action-hand
+             * bow/sling class against C00 ready-hand ammunition, removes
+             * the ready-hand object, plays the combat sound, then calls
+             * F0326_CHAMPION_ShootProjectile.  F0326 (CHAMPION.C:2051-2071)
+             * launches from the champion-cell/direction formula and, for
+             * PC34/I34E, intentionally does not set the projectile movement
+             * lock described in BUG0_46. */
+            unsigned short actionThing = m11_get_action_hand_thing(champ);
             unsigned short readyThing = champ->inventory[CHAMPION_SLOT_HAND_LEFT];
-            int skillShoot = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        CHAMPION_SKILL_FIGHTER);
+            const M11_DM1WeaponInfo* actionInfo =
+                m11_dm1_weapon_info_for_thing(state, actionThing);
+            const M11_DM1WeaponInfo* readyInfo =
+                m11_dm1_weapon_info_for_thing(state, readyThing);
+            int actionClass;
+            int readyClass;
+            int stepEnergy;
+            int skillShoot;
             int shootAttack;
+            int kineticEnergy;
+            int direction;
+            int launchCell;
             int spawned;
-            if (readyThing == THING_NONE || readyThing == THING_ENDOFLIST) {
-                m11_log_event(state, M11_COLOR_LIGHT_RED,
-                              "T%u: %s HAS NO AMMUNITION",
-                              (unsigned int)state->world.gameTick,
-                              champName);
-                return 0;
+
+            if (!actionInfo || !readyInfo) goto shoot_no_ammunition;
+            actionClass = actionInfo->weaponClass;
+            readyClass = readyInfo->weaponClass;
+            if (actionClass >= 16 && actionClass <= 31) {
+                if (readyClass != 10) goto shoot_no_ammunition;
+            } else if (actionClass >= 32 && actionClass <= 47) {
+                if (readyClass != 11) goto shoot_no_ammunition;
+            } else {
+                goto shoot_no_ammunition;
             }
-            if (skillShoot < 0) skillShoot = 0;
-            /* F0407 SHOOT damage: (ShootAttack + SkillLevel) << 1;
-             * without the WeaponInfo table we approximate
-             * ShootAttack=20 which is the mid-class bow attack in
-             * G0238.  Skill scaling matches the original shift. */
-            shootAttack = (20 + skillShoot) << 1;
+            if (!m11_dm1_shoot_step_energy(actionClass, &stepEnergy)) {
+                goto shoot_no_ammunition;
+            }
+
+            direction = state->world.party.direction & 3;
+            skillShoot = m11_dm1_shoot_skill_level(state, championIndex);
+            shootAttack = ((int)actionInfo->shootAttack + skillShoot) << 1;
             if (shootAttack > 255) shootAttack = 255;
-            spawned = m11_spawn_action_projectile(state, championIndex,
-                                                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                                                  PROJECTILE_CATEGORY_KINETIC,
-                                                  120, shootAttack,
-                                                  COMBAT_ATTACK_NORMAL);
+            kineticEnergy = (int)actionInfo->kineticEnergy +
+                            (int)readyInfo->kineticEnergy;
+            launchCell = m11_dm1_projectile_launch_cell(championIndex & 3,
+                                                        direction);
+            spawned = m11_spawn_action_projectile_ex(
+                state, championIndex, PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                PROJECTILE_CATEGORY_KINETIC, kineticEnergy, shootAttack,
+                COMBAT_ATTACK_NORMAL, launchCell, direction, stepEnergy);
+            if (spawned) {
+                champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+            }
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s SHOOTS",
                           (unsigned int)state->world.gameTick,
@@ -17276,6 +17410,13 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * sound event 13 (M563_SOUND_COMBAT_ATTACK...). */
             m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
             return spawned;
+
+        shoot_no_ammunition:
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: %s HAS NO AMMUNITION",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            return 0;
         }
         case 20:   /* FIREBALL */
         case 21:   /* DISPELL */

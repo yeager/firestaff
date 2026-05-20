@@ -1757,6 +1757,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_movement_interlock_source_lock.py
         )
         add_test(
+            NAME dm1_v1_ranged_shoot_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_ranged_shoot_source_lock.py
+        )
+        add_test(
             NAME csb_v1_inventory_render_grid_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_inventory_render_grid_source_lock.py
         )
