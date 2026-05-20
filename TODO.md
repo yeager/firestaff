@@ -157,7 +157,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Resume loads saved game (M566 path)
 - ✅ Click-only buttons (no keyboard shortcuts for Enter/Resume/Quit)
 - ✅ No dungeon flash before entrance
-- 🐛 Swoosh animation not playing — TITLE.DAT path/decode issue
+- ✅ TITLE.DAT swoosh/zoom animation path + decode source-locked (see `parity-evidence/runtime/title_dat_swoosh_path_decode_closure_20260520.md`)
 - ✅ Title song / music playback (SONG.DAT runtime + opt-in SDL dummy-driver live path source-locked)
 
 ### Save/Load
@@ -241,8 +241,7 @@ Status per 2026-05-19 v2.4.0.
 
 1. 🐛 Väggar saknas ibland i viewport — behöver exakt position och screenshot
 2. 🐛 Kollision blockerar ibland där det borde vara fritt — behöver exakt position
-3. 🐛 Swoosh-animation visas inte — TITLE.DAT path/decode
-4. 🐛 Flytande objekt kan fortfarande se lite off ut trots zone Y fix
+3. 🐛 Flytande objekt kan fortfarande se lite off ut trots zone Y fix
 
 ---
 
