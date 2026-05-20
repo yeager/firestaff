@@ -2499,6 +2499,31 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
 endif()
 
 
+# -- DM1 V1 SWSH source animation/capture schedule gate
+if(BUILD_TESTING)
+    add_executable(test_swsh_frontend_pc34_compat_integration
+        tests/test_swsh_frontend_pc34_compat_integration.c
+        src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/bitmap_call_pc34_compat.c
+        src/shared/image_expand_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
+    )
+    target_compile_definitions(test_swsh_frontend_pc34_compat_integration PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_swsh_frontend_pc34_compat_integration PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME swsh_frontend_source_animation_schedule
+        COMMAND test_swsh_frontend_pc34_compat_integration
+    )
+endif()
+
+
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
