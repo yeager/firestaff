@@ -66,6 +66,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature projectile attacks - ReDMCSB F0207/F0212 payload now feeds M11 live runtime insertion with source-backed C48 first-move ignore-impact proof; broader exact creature AI event scheduling remains separate
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
+- ✅ C006 Lord Chaos blocked-destination adjacent random retry is source-locked from ReDMCSB event60/61 handling (0a12e07d)
 
 ### Combat
 
