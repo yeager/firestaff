@@ -158,7 +158,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Click-only buttons (no keyboard shortcuts for Enter/Resume/Quit)
 - ✅ No dungeon flash before entrance
 - 🐛 Swoosh animation not playing — TITLE.DAT path/decode issue
-- ❌ Title song / music playback
+- ✅ Title song / music playback (SONG.DAT runtime + opt-in SDL dummy-driver live path source-locked)
 
 ### Save/Load
 - ✅ Save game on quit (DM1_SaveGame)
@@ -170,7 +170,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Sound index emission system exists (M11_Audio_EmitSoundIndex)
 - 🔧 Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures; party footsteps remain unsourced in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
-- 🔧 Music/title song (SONG.DAT runtime source-locked; live SDL playback still opt-in)
+- ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
 
 ---
 
