@@ -804,6 +804,52 @@ static void test_effect_dispatch(void) {
     CHECK(result.sensorDisabled == 1, "Dispatch: once-only -> disabled");
 }
 
+
+/* ----------------------------------------------------------------
+ *  Test F0729: Wall AND/OR gate sensor C005 event handling
+ *  Source: TIMELINE.C F0248 lines 1268-1309; DEFS.H M042/M043
+ *  lines 1298-1299.
+ * ---------------------------------------------------------------- */
+static void test_wall_and_or_gate_event(void) {
+    struct DungeonSensor_Compat sensor;
+    struct SensorTriggerResult_Compat result;
+
+    /* current=0001, reference=0011. SET on cell 1 makes current match. */
+    sensor = make_sensor(DM1_SENSOR_WALL_AND_OR_GATE,
+                         0x31, DM1_EFFECT_TOGGLE, 0, 0, 1, 0, 0, 6, 7, 2);
+    F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+        &sensor, 1, DM1_EFFECT_SET, DM1_SQUARE_WALL, 4, 5, &result);
+    CHECK(result.triggered == 1, "Wall C005: SET matching bit triggers non-HOLD gate");
+    CHECK(result.sensorDataAfter == 0x33, "Wall C005: low-nibble current mask updated");
+    CHECK(result.gateCurrentMask == 0x3, "Wall C005: current mask is low nibble");
+    CHECK(result.gateReferenceMask == 0x3, "Wall C005: reference mask is high nibble");
+    CHECK(result.gateTriggerSetEffect == 1, "Wall C005: current==reference triggers set effect");
+    CHECK(result.resolvedEffect == DM1_EFFECT_TOGGLE, "Wall C005: non-HOLD dispatches sensor effect");
+    CHECK(result.targetMapX == 6, "Wall C005: target X comes from sensor remote target");
+    CHECK(result.targetCell == 2, "Wall C005: wall targets preserve sensor target cell");
+
+    /* TOGGLE clears an already-set bit, so current no longer matches. */
+    sensor.sensorData = 0x33;
+    memset(&result, 0, sizeof(result));
+    F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+        &sensor, 1, DM1_EFFECT_TOGGLE, DM1_SQUARE_WALL, 4, 5, &result);
+    CHECK(result.triggered == 0, "Wall C005: non-HOLD does not dispatch when mask differs");
+    CHECK(result.sensorDataAfter == 0x31, "Wall C005: TOGGLE clears active event-cell bit");
+    CHECK(result.gateTriggerSetEffect == 0, "Wall C005: mismatch clears trigger-set flag");
+
+    /* HOLD always dispatches SET/CLEAR from the comparison, after revert. */
+    sensor.sensorData = 0x33;
+    sensor.effect = DM1_EFFECT_HOLD;
+    sensor.revertEffect = 1;
+    memset(&result, 0, sizeof(result));
+    F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+        &sensor, 0, DM1_EFFECT_SET, DM1_SQUARE_DOOR, 4, 5, &result);
+    CHECK(result.triggered == 1, "Wall C005 HOLD: dispatches even when reverted comparison is false");
+    CHECK(result.resolvedEffect == DM1_EFFECT_CLEAR, "Wall C005 HOLD: false comparison resolves to CLEAR");
+    CHECK(result.targetEventType == DM1_EVENT_DOOR, "Wall C005 HOLD: dispatch resolves target square event type");
+    CHECK(result.targetCell == 0, "Wall C005 HOLD: non-wall targets force northwest cell");
+}
+
 /* ----------------------------------------------------------------
  *  Test F0725: Process floor square with multiple sensors
  *  Source: F0276 outer loop
@@ -1004,6 +1050,7 @@ int main(void) {
     test_wall_event_triggered_skip();
     test_wall_countdown_event();
     test_effect_dispatch();
+    test_wall_and_or_gate_event();
     test_process_floor_square();
     test_process_wall_click();
     test_process_wall_click_rotation_per_cell_deferred();

@@ -666,6 +666,83 @@ int F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
 }
 
 /* ================================================================
+ *  F0730 - Event-triggered wall AND/OR gate sensor C005
+ *  Source: TIMELINE.C F0248 lines 1268-1309.
+ *  The low nibble is the current input mask; the high nibble is the
+ *  reference mask. The incoming wall event cell chooses the bit to
+ *  SET/CLEAR/TOGGLE, then the gate fires when current == reference,
+ *  inverted by Remote.RevertEffect. HOLD always dispatches SET/CLEAR;
+ *  non-HOLD dispatches only when the comparison is true.
+ * ================================================================ */
+int F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int eventCell,
+    int eventEffect,
+    int targetSquareType,
+    int sensorMapX,
+    int sensorMapY,
+    struct SensorTriggerResult_Compat* outResult)
+{
+    int data;
+    int bitMask;
+    int currentMask;
+    int referenceMask;
+    int triggerSetEffect;
+    int resolvedEffect;
+
+    if (!sensor || !outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+    outResult->sensorIndex = -1;
+    outResult->sensorDataBefore = (int)sensor->sensorData;
+    outResult->sensorDataAfter = (int)sensor->sensorData;
+
+    if (sensor->sensorType != DM1_SENSOR_WALL_AND_OR_GATE) return 1;
+    if (eventCell < 0 || eventCell > 3) return 0;
+
+    data = (int)sensor->sensorData & 0x01FF;
+    bitMask = 1 << eventCell;
+    if (eventEffect == DM1_EFFECT_TOGGLE) {
+        if ((data & bitMask) != 0) data &= ~bitMask;
+        else data |= bitMask;
+    } else if (eventEffect != DM1_EFFECT_SET) {
+        data &= ~bitMask;
+    } else {
+        data |= bitMask;
+    }
+    data &= 0x01FF;
+
+    currentMask = data & 0x000F;
+    referenceMask = (data & 0x00F0) >> 4;
+    triggerSetEffect = (currentMask == referenceMask) != sensor->revertEffect;
+
+    outResult->sensorDataAfter = data;
+    outResult->gateBitMask = bitMask;
+    outResult->gateCurrentMask = currentMask;
+    outResult->gateReferenceMask = referenceMask;
+    outResult->gateTriggerSetEffect = triggerSetEffect;
+
+    if (sensor->effect == DM1_EFFECT_HOLD) {
+        resolvedEffect = triggerSetEffect ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+    } else {
+        if (!triggerSetEffect) return 1;
+        resolvedEffect = sensor->effect;
+    }
+
+    if (!F0724_SENSOR_ResolveEffectDispatch_Compat(
+            sensor, resolvedEffect, targetSquareType,
+            sensorMapX, sensorMapY, outResult)) {
+        return 0;
+    }
+    outResult->triggered = 1;
+    outResult->sensorDataAfter = data;
+    outResult->gateBitMask = bitMask;
+    outResult->gateCurrentMask = currentMask;
+    outResult->gateReferenceMask = referenceMask;
+    outResult->gateTriggerSetEffect = triggerSetEffect;
+    return 1;
+}
+
+/* ================================================================
  *  F0725 — Process all floor sensors on a square
  *  Source: F0276_SENSOR_ProcessThingAdditionOrRemoval outer loop
  * ================================================================ */
@@ -814,4 +891,3 @@ int F0726_SENSOR_ProcessWallClick_Compat(
  *
  *   MOVESENS.C:668 F0413_CPSC_G
  * ══════════════════════════════════════════════════════════════════════ */
-

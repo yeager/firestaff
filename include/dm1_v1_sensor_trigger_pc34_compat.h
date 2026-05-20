@@ -184,6 +184,10 @@ struct SensorTriggerResult_Compat {
     int sensorDataBefore;
     int sensorDataAfter;
     int sensorDataChanged;
+    int gateBitMask;
+    int gateCurrentMask;
+    int gateReferenceMask;
+    int gateTriggerSetEffect;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16
@@ -250,6 +254,15 @@ int F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
     int sensorMapX,
     int sensorMapY,
     int sensorCell,
+    struct SensorTriggerResult_Compat* outResult);
+
+int F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int eventCell,
+    int eventEffect,
+    int targetSquareType,
+    int sensorMapX,
+    int sensorMapY,
     struct SensorTriggerResult_Compat* outResult);
 
 #endif
