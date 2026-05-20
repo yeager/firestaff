@@ -887,21 +887,9 @@ int F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
     thing = things->squareFirstThings[sftIndex];
     while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
         if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
-            /* ReDMCSB F0267/F0708: only LIVING creature groups block.
-             * Dead groups (all health == 0) should not obstruct movement.
-             * Previously, dead groups blocked passage indefinitely. */
-            int gIdx = THING_GET_INDEX(thing);
-            if (gIdx >= 0 && gIdx < things->groupCount) {
-                int anyAlive = 0;
-                int ci;
-                for (ci = 0; ci <= (int)things->groups[gIdx].count; ++ci) {
-                    if (things->groups[gIdx].health[ci] > 0) {
-                        anyAlive = 1;
-                        break;
-                    }
-                }
-                if (anyAlive) return 1;
-            }
+            /* ReDMCSB GROUP.C:52-67 F0175_GROUP_GetThing returns the first
+             * group thing on the destination square; F0366 does no HP check. */
+            return 1;
         }
         thing = movement_next_thing(things, thing);
     }

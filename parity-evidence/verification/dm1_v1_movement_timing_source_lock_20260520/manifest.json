@@ -1,0 +1,42 @@
+{
+  "schema": "firestaff.dm1_v1_movement_timing_source_lock.v1",
+  "status": "pass-after-local-fix",
+  "created": "2026-05-20",
+  "host": "firestaff-worker",
+  "worktree": "/home/trv2/work/firestaff-worktrees/dm1-v1-movement-timing-source-lock-20260520",
+  "branch": "worker/dm1-v1-movement-timing-source-lock-20260520",
+  "base_origin_main": "77878680fdeecb9403d16473430ed62236c738c8",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "original_data_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "canonical_dm1_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "canonical_anchors": [
+    { "path": "_canonical/dm1/DUNGEON.DAT", "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85" },
+    { "path": "_canonical/dm1/GRAPHICS.DAT", "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e" },
+    { "path": "_canonical/dm1/TITLE", "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745" }
+  ],
+  "source_rules": [
+    { "topic": "command acceptance", "refs": ["COMMAND.C:2075-2100", "COMMAND.C:2118-2127", "COMMAND.C:2150-2156"] },
+    { "topic": "turn and step timing", "refs": ["CLIKMENU.C:156-173", "CLIKMENU.C:237-269", "CLIKMENU.C:330-346", "CHAMPION.C:1180-1215"] },
+    { "topic": "blocked-step behavior", "refs": ["CLIKMENU.C:278-323", "GROUP.C:52-67", "MOVESENS.C:738-783", "MOVESENS.C:799-818"] },
+    { "topic": "redraw cadence", "refs": ["GAMELOOP.C:80-90", "DUNVIEW.C:8608-8611", "DRAWVIEW.C:709-723", "DRAWVIEW.C:821-858", "GAMELOOP.C:150-155", "GAMELOOP.C:164-219"] }
+  ],
+  "changed_files": [
+    "src/memory/memory_movement_pc34_compat.c",
+    "parity-evidence/verification/dm1_v1_movement_timing_source_lock_20260520/analysis.md",
+    "parity-evidence/verification/dm1_v1_movement_timing_source_lock_20260520/manifest.json"
+  ],
+  "local_fix": {
+    "file": "src/memory/memory_movement_pc34_compat.c",
+    "function": "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
+    "summary": "Removed a living-creature HP filter from party/group movement blocking. ReDMCSB F0175_GROUP_GetThing returns the destination group thing by type, and F0366 blocks on that result without checking group HP."
+  },
+  "tests_existing_coverage_sufficient": true,
+  "new_ctest_added": false,
+  "verification": [
+    { "command": "cmake -S . -B build-dm1-v1-movement-timing-source-lock-20260520 -DCMAKE_BUILD_TYPE=Release", "result": "pass" },
+    { "command": "cmake --build build-dm1-v1-movement-timing-source-lock-20260520 --target test_dm1_v1_movement_timing_pc34_compat test_dm1_v1_turn_step_timing_gate_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat test_dm1_v1_movement_command_core_pc34_compat firestaff_dm1_v1_game_loop_redraw_cadence_probe -j2", "result": "pass" },
+    { "command": "ctest --test-dir build-dm1-v1-movement-timing-source-lock-20260520 --output-on-failure -R ^(dm1_v1_movement_timing_pc34_compat|dm1_v1_turn_step_timing_gate_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_game_loop_redraw_cadence_probe|dm1_v1_movement_timing_source_lock|dm1_v1_turn_step_timing_gate_source_lock|dm1_v1_movement_command_gate_source_lock|pass351_dm1_v1_live_viewport_redraw_parity_sweep|pass551_dm1_v1_blocked_movement_lifecycle)$", "result": "pass" },
+    { "command": "git diff --check", "result": "pass" },
+    { "command": "staged/commit diff secret scan for token-like material", "result": "pass" }
+  ]
+}
