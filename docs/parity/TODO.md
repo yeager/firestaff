@@ -145,7 +145,7 @@ Fontanel has already documented **93 bugs + 108 changes** across 9 game versions
 
 ### Community / modding
 - [ ] **Portrait / avatar packs**, champion portraits are hard-coded, let people swap them out
-- [ ] **Sound-pack support**, community HD / remastered SFX packs
+- [x] **Sound-pack support**, source-keyed WAV overrides for community HD / remastered SFX packs
 - [ ] **Wall / texture packs**, AI-upscaled plus handcrafted, beyond the built-in graphics levels
 - [ ] **Custom dungeons**, support DM2 Custom Dungeon Editor format, with MD5-based detection of original vs custom
 - [ ] **Scripting API (Lua / WASM)**, expose the data layer after V1 so people can add spell mods, custom AI, and new monsters without forking the C code
