@@ -134,6 +134,37 @@ static int expect_junk_description(unsigned int iconIndex,
     return 1;
 }
 
+static int expect_object_description_layout(void) {
+    InventoryObjectDescriptionLayoutPc34Compat layout;
+    char lines[4][24];
+    size_t count;
+    memset(lines, 0, sizeof(lines));
+    if (!INVENTORY_Compat_GetObjectDescriptionLayout(&layout)) return 0;
+    if (layout.headerTextZoneIndex != 506u) return 0;
+    if (layout.bodyTextZoneIndex != 556u) return 0;
+    if (layout.iconZoneIndex != 505u) return 0;
+    if (layout.circleZoneIndex != 504u) return 0;
+    if (layout.bodyStartY != 87u) return 0;
+    if (layout.lineHeight != 7u) return 0;
+    if (layout.wrapLimitChars != 18u) return 0;
+    if (layout.textColor != 13u) return 0;
+    if (!layout.sourceEvidence || strstr(layout.sourceEvidence, "PANEL.C:172-228") == NULL) return 0;
+    if (strstr(layout.sourceEvidence, "PANEL.C:1198-1208") == NULL) return 0;
+    if (strstr(layout.sourceEvidence, "DEFS.H:3873-3875") == NULL) return 0;
+    if (strstr(layout.sourceEvidence, "COORD.C:1758") == NULL) return 0;
+
+    count = INVENTORY_Compat_WrapObjectDescriptionText("POISONED BROKEN AND CURSED",
+                                                       &lines[0][0], 4u, sizeof(lines[0]), &layout);
+    if (count != 2u) return 0;
+    if (strcmp(lines[0], "POISONED BROKEN") != 0) return 0;
+    if (strcmp(lines[1], "AND CURSED") != 0) return 0;
+    count = INVENTORY_Compat_WrapObjectDescriptionText("EIGHTEEN CHARS OK",
+                                                       &lines[0][0], 4u, sizeof(lines[0]), NULL);
+    if (count != 1u) return 0;
+    if (strcmp(lines[0], "EIGHTEEN CHARS OK") != 0) return 0;
+    return 1;
+}
+
 static int expect_weight_line(unsigned int weightTenths,
                               const char* expectedText,
                               unsigned int expectedWhole,
@@ -230,6 +261,8 @@ int main(void) {
                                                   DM1_ALLOWED_SLOT_MOUTH, "APPLE", name, sizeof(name),
                                                   attributes, sizeof(attributes), attributes,
                                                   sizeof(attributes), NULL) != 0) ok = 0;
+
+    ok &= expect_object_description_layout();
 
     ok &= expect_weight_line(0u, "WEIGHS 0.0 KG.", 0u, 0u);
     ok &= expect_weight_line(1u, "WEIGHS 0.1 KG.", 0u, 1u);

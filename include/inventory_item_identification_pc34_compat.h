@@ -24,6 +24,18 @@ typedef struct InventoryObjectWeightLinePc34Compat {
     const char* sourceEvidence;
 } InventoryObjectWeightLinePc34Compat;
 
+typedef struct InventoryObjectDescriptionLayoutPc34Compat {
+    unsigned int headerTextZoneIndex;
+    unsigned int bodyTextZoneIndex;
+    unsigned int iconZoneIndex;
+    unsigned int circleZoneIndex;
+    unsigned int bodyStartY;
+    unsigned int lineHeight;
+    unsigned int wrapLimitChars;
+    unsigned int textColor;
+    const char* sourceEvidence;
+} InventoryObjectDescriptionLayoutPc34Compat;
+
 typedef enum InventoryObjectEyePanelRoutePc34Compat {
     INVENTORY_OBJECT_EYE_PANEL_ROUTE_OBJECT_DESCRIPTION_PC34_COMPAT = 0,
     INVENTORY_OBJECT_EYE_PANEL_ROUTE_SCROLL_TEXT_PC34_COMPAT = 1,
@@ -115,6 +127,12 @@ int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
                                             char* outText,
                                             size_t outTextSize,
                                             InventoryObjectWeightLinePc34Compat* outDescription);
+int INVENTORY_Compat_GetObjectDescriptionLayout(InventoryObjectDescriptionLayoutPc34Compat* outLayout);
+size_t INVENTORY_Compat_WrapObjectDescriptionText(const char* text,
+                                                  char* outLines,
+                                                  size_t outLineCount,
+                                                  size_t outLineStride,
+                                                  InventoryObjectDescriptionLayoutPc34Compat* outLayout);
 const char* INVENTORY_Compat_GetItemIdentificationEvidence(void);
 
 #endif

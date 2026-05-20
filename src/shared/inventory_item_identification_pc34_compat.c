@@ -1,6 +1,7 @@
 #include "inventory_item_identification_pc34_compat.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #define DM1_THING_TYPE_POTION_PC34_COMPAT 8u
 #define DM1_THING_TYPE_CONTAINER_PC34_COMPAT 9u
@@ -38,6 +39,8 @@ static const char* kArmourIdentificationEvidence =
     "ReDMCSB source lock: PANEL.C:1126-1200 F0342 fetches object data/name and draws the object-description header; PANEL.C:1215-1242 defines English attribute text order; PANEL.C:1272-1274 gives armour potential CURSED|BROKEN and actual Cursed<<3 | Broken<<2; PANEL.C:1420-1427 emits the built attribute line; PANEL.C:235-317 F0336 formats matching bits with comma/AND joins; DEFS.H:1415-1433 defines ARMOUR Cursed/Broken fields and DEFS.H:2922-2926 defines description masks.";
 static const char* kJunkIdentificationEvidence =
     "ReDMCSB source lock: PANEL.C:1295-1320 handles compass icons C000..C003 as PARTY FACING + direction with no attributes; PANEL.C:1322-1390 handles water/waterskin icons C008..C009 charge states EMPTY/ALMOST EMPTY/ALMOST FULL/FULL with no attributes; PANEL.C:1412-1413 gives other junk potential CONSUMABLE and actual ObjectInfo AllowedSlots; PANEL.C:1420-1427 emits the built attribute line; DUNGEON.C:1147-1158 maps junk/container/scroll object info; DEFS.H:1499-1515 defines JUNK ChargeCount/Cursed and DEFS.H:2922-2926 defines description masks.";
+static const char* kObjectDescriptionLayoutEvidence =
+    "ReDMCSB source lock: PANEL.C:172-228 F0335 resets object-description text with form-feed, uses C556_ZONE_OBJECT_DESCRIPTION as the PC34 body text origin, wraps body text by splitting strings longer than 18 characters at the previous space, prints in C13 lightest gray, and advances by G2088_C7_TextLineHeight; PANEL.C:1198-1208 prints the object name in C506_ZONE_OBJECT_DESCRIPTION, draws the icon in C505_ZONE_OBJECT_DESCRIPTION_ICON, then starts body lines at Y=87 when an extra name-line payload exists; PANEL.C:1244-1248 starts normal attribute/state/weight body lines at Y=87 for PC34; PANEL.C:1420-1469 emits attribute and weight body lines; DEFS.H:3873-3875 defines C504/C505/C506 zones, DEFS.H:3925 defines C556, and COORD.C:1758 fixes G2088_C7_TextLineHeight at 7.";
 
 static const char* const kDirectionNames[] = { "NORTH", "EAST", "SOUTH", "WEST" };
 static const char* const kWaterskinStateNames[] = { "(EMPTY)", "(ALMOST EMPTY)", "(ALMOST FULL)", "(FULL)" };
@@ -304,6 +307,19 @@ int INVENTORY_Compat_FormatJunkEyeDescription(unsigned int thingType,
     return 1;
 }
 
+static void fill_object_description_layout(InventoryObjectDescriptionLayoutPc34Compat* outLayout) {
+    if (!outLayout) return;
+    outLayout->headerTextZoneIndex = 506u;
+    outLayout->bodyTextZoneIndex = 556u;
+    outLayout->iconZoneIndex = 505u;
+    outLayout->circleZoneIndex = 504u;
+    outLayout->bodyStartY = 87u;
+    outLayout->lineHeight = 7u;
+    outLayout->wrapLimitChars = 18u;
+    outLayout->textColor = 13u;
+    outLayout->sourceEvidence = kObjectDescriptionLayoutEvidence;
+}
+
 int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
                                             char* outText,
                                             size_t outTextSize,
@@ -327,6 +343,40 @@ int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
         outDescription->sourceEvidence = kObjectWeightLineEvidence;
     }
     return 1;
+}
+
+int INVENTORY_Compat_GetObjectDescriptionLayout(InventoryObjectDescriptionLayoutPc34Compat* outLayout) {
+    if (!outLayout) return 0;
+    fill_object_description_layout(outLayout);
+    return 1;
+}
+
+size_t INVENTORY_Compat_WrapObjectDescriptionText(const char* text,
+                                                  char* outLines,
+                                                  size_t outLineCount,
+                                                  size_t outLineStride,
+                                                  InventoryObjectDescriptionLayoutPc34Compat* outLayout) {
+    const char* cursor = text ? text : "";
+    size_t count = 0u;
+    fill_object_description_layout(outLayout);
+    if (!outLines || outLineCount == 0u || outLineStride == 0u) return 0u;
+    while (*cursor) {
+        const size_t remaining = strlen(cursor);
+        size_t split = remaining;
+        if (remaining > 18u) {
+            split = 17u;
+            while (split > 0u && cursor[split] != ' ') split--;
+            if (split == 0u) return 0u;
+        }
+        if (count >= outLineCount || split >= outLineStride) return 0u;
+        memcpy(outLines + (count * outLineStride), cursor, split);
+        outLines[(count * outLineStride) + split] = '\0';
+        count++;
+        if (remaining <= 18u) break;
+        cursor += split;
+        if (*cursor == ' ') cursor++;
+    }
+    return count;
 }
 
 const char* INVENTORY_Compat_GetItemIdentificationEvidence(void) {
