@@ -19,6 +19,16 @@ ReDMCSB `COMMAND.C:375-405` defines the active interface and movement mouse tabl
 | `G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory` | `COMMAND.C:412-452` | Inventory close/save/rest/music, slot boxes, mouth/eye, panel. Uses both screen-relative and viewport-relative coordinates. | `touch_click_zone_matrix_pc34_compat.c` inventory-mode viewport-relative entries and dispatch mappers. |
 | `G0452/G0453/G0454/G0455` | `COMMAND.C:461-497` | Action names/icons, spell area subroutes, champion names/hands subroutes. | `action_area_routes_pc34_compat.c`, `spell_area_routes_pc34_compat.c`, `spell_area_symbol_routes_pc34_compat.c`, `champion_name_hand_routes_pc34_compat.c`, and their inclusion in the touch matrix invariant test. |
 
+
+## Entrance/menu click zones
+
+ReDMCSB later-media/PC34 entrance input is a primary mouse table, not the normal in-dungeon primary+secondary pair. `ENTRANCE.C:739-747` installs `G0445_as_Graphic561_PrimaryMouseInput_Entrance` and clears secondary mouse input while the entrance loop waits for a fresh command at `ENTRANCE.C:850-883`.
+
+| Route set | Lines | Source behavior | Firestaff abstraction |
+| --- | ---: | --- | --- |
+| `G0445_as_Graphic561_PrimaryMouseInput_Entrance` | `COMMAND.C:340-353` | Source-ordered entrance routes: enter dungeon `C200`/zone `C407`, bonus dungeon `C201`/zone `C407` with mask `0x0010`, resume `M566`=`202`/zone `C409`, quit `C216`/zone `C434`, credits `M567`=`203`/zone `C411`. | `entrance_mouse_routes_pc34_compat.c` now exposes route metadata, button masks, 320x200 boxes, and a source-order hit-test for touch/click probes. |
+| Entrance zone expansion | `COMMAND.C:1113-1139`, `COORD.C:2490-2495` | `F0673_SetMouseInputBoxFromZone` resolves zone-backed rows with `F0638_GetZone`; I34E/I34M boxes use `x + width - 1` / `y + height - 1` inclusive bounds. | `tests/test_entrance_mouse_routes_pc34_compat_integration.c` pins inclusive endpoint hits and outside misses for C407/C409/C434/C411. |
+
 ## Command matching and queue routing
 
 | Function | Lines | Source behavior | Firestaff abstraction |
