@@ -13,7 +13,6 @@ Status per 2026-05-19 v2.4.0.
 
 ### Movement & Collision
 
-- 🔧 Collision and doors — movement blocker, door-button click, accepted-move state, and viewport redraw source/runtime evidence is locked in `196868b2`; original DOS overlay/runtime cases for representative wall, closed/open door, fakewall, and door-button states remain before `MATCHED`
 
 ### Creature System
 
