@@ -63,7 +63,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Creature type-specific behavior (Giggler steal, Ghost non-material, etc.)
 - ❌ Creature group spawning (C006 floor sensor group generator)
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
-- ❌ Creature sound effects (attack sounds, movement sounds)
+- 🔧 Creature sound effects source-index fallback lanes are source-locked (runtime trigger coverage still pending)
 - ❌ Creature flee behavior (low HP retreat)
 
 ### Combat
@@ -168,7 +168,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Audio
 - 🔧 Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- ❌ Sound effect playback (footsteps, doors, combat, creatures)
+- 🔧 Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures; party footsteps remain unsourced in DM1 V1
 - ❌ Ambient dungeon sound
 - ❌ Music/title song
 
