@@ -1498,6 +1498,15 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_wall_collision_runtime_capture PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME dm1_v1_wall_collision_capture_manifest_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_wall_collision_capture_manifest_source_lock.py
+        )
+        set_tests_properties(dm1_v1_wall_collision_capture_manifest_source_lock PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+        )
+    endif()
 
     add_test(
         NAME m11_turn_viewport_orientation
