@@ -1,7 +1,9 @@
 #include "audio_sdl_m11.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct {
     int total;
@@ -21,12 +23,77 @@ static void probe_record(ProbeTally* tally,
     }
 }
 
+
+static int write_u16_le(FILE* f, unsigned int v) {
+    unsigned char b[2];
+    b[0] = (unsigned char)(v & 0xFFu);
+    b[1] = (unsigned char)((v >> 8) & 0xFFu);
+    return fwrite(b, 1, sizeof(b), f) == sizeof(b);
+}
+
+static int write_u32_le(FILE* f, unsigned int v) {
+    unsigned char b[4];
+    b[0] = (unsigned char)(v & 0xFFu);
+    b[1] = (unsigned char)((v >> 8) & 0xFFu);
+    b[2] = (unsigned char)((v >> 16) & 0xFFu);
+    b[3] = (unsigned char)((v >> 24) & 0xFFu);
+    return fwrite(b, 1, sizeof(b), f) == sizeof(b);
+}
+
+static int write_test_wav(const char* path) {
+    FILE* f;
+    unsigned int sampleRate = 11025u;
+    unsigned int sampleCount = 110u;
+    unsigned int i;
+    if (!path) return 0;
+    f = fopen(path, "wb");
+    if (!f) return 0;
+    if (fwrite("RIFF", 1, 4, f) != 4 ||
+        !write_u32_le(f, 36u + sampleCount) ||
+        fwrite("WAVEfmt ", 1, 8, f) != 8 ||
+        !write_u32_le(f, 16u) ||
+        !write_u16_le(f, 1u) ||
+        !write_u16_le(f, 1u) ||
+        !write_u32_le(f, sampleRate) ||
+        !write_u32_le(f, sampleRate) ||
+        !write_u16_le(f, 1u) ||
+        !write_u16_le(f, 8u) ||
+        fwrite("data", 1, 4, f) != 4 ||
+        !write_u32_le(f, sampleCount)) {
+        fclose(f);
+        return 0;
+    }
+    for (i = 0; i < sampleCount; ++i) {
+        unsigned char sample = (unsigned char)(96u + (i % 64u));
+        if (fwrite(&sample, 1, 1, f) != 1) {
+            fclose(f);
+            return 0;
+        }
+    }
+    return fclose(f) == 0;
+}
+
 int main(void) {
     M11_AudioState state;
     ProbeTally tally = {0, 0};
     int master = -1, sfx = -1, music = -1, ui = -1;
     int emitResult = -1;
     int i;
+    char packDirTemplate[] = "/tmp/firestaff-sound-pack-XXXXXX";
+    char* packDir = mkdtemp(packDirTemplate);
+    char packPath[256];
+    int packFixtureReady = 0;
+
+    if (packDir) {
+        int n = snprintf(packPath, sizeof(packPath), "%s/13.wav", packDir);
+        if (n > 0 && (size_t)n < sizeof(packPath)) {
+            packFixtureReady = write_test_wav(packPath);
+        }
+    }
+    if (packFixtureReady) {
+        setenv("FIRESTAFF_SOUND_PACK_DIR", packDir, 1);
+        setenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3", "1", 1);
+    }
 
     /* INV 01: Init succeeds (may get SDL3 backend or fallback) */
     probe_record(&tally,
@@ -36,6 +103,15 @@ int main(void) {
 
     printf("  backend: %s\n",
            state.backend == M11_AUDIO_BACKEND_SDL3 ? "SDL3" : "NONE (fallback)");
+
+    probe_record(&tally,
+                 "INV_M11_AUDIO_00",
+                 !packFixtureReady ||
+                     (M11_Audio_SoundPackAvailable(&state) == 1 &&
+                      state.soundPackLoadedCount == 1 &&
+                      state.originalSounds[13].sampleCount > 0 &&
+                      state.originalSounds[2].sampleCount == 0),
+                 "optional sound-pack WAV overrides are source-index keyed");
 
     /* INV 02: Sound buffers are pre-generated */
     {
@@ -122,6 +198,13 @@ int main(void) {
     }
 
     M11_Audio_Shutdown(&state);
+
+    if (packFixtureReady) {
+        unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
+        unsetenv("FIRESTAFF_SOUND_PACK_DIR");
+        unlink(packPath);
+    }
+    if (packDir) rmdir(packDir);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;

@@ -4,6 +4,7 @@
 #include "sound_event_snd3_map_v1.h"
 
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,9 @@
 
 #define M11_AUDIO_VOLUME_MIN 0
 #define M11_AUDIO_VOLUME_MAX 128
+#define M11_AUDIO_SOUND_PACK_PATH_CAPACITY 1024
+#define M11_AUDIO_SOUND_PACK_MAX_SECONDS 10u
+#define M11_AUDIO_SOUND_PACK_MAX_BYTES (64u * 1024u * 1024u)
 
 /*
  * Guard: SDL3 headers are only included when we actually attempt real audio.
@@ -175,6 +179,214 @@ static int m11_file_exists(const char* path) {
     f = fopen(path, "rb");
     if (!f) return 0;
     fclose(f);
+    return 1;
+}
+
+static unsigned int m11_read_le16(const unsigned char* p) {
+    return ((unsigned int)p[0]) | ((unsigned int)p[1] << 8);
+}
+
+static unsigned int m11_read_le32(const unsigned char* p) {
+    return ((unsigned int)p[0]) |
+           ((unsigned int)p[1] << 8) |
+           ((unsigned int)p[2] << 16) |
+           ((unsigned int)p[3] << 24);
+}
+
+static int m11_path_join(char* out, size_t outBytes, const char* dir, const char* name) {
+    int n;
+    size_t dirLen;
+    if (!out || outBytes == 0 || !dir || !*dir || !name || !*name) return 0;
+    dirLen = strlen(dir);
+    n = snprintf(out, outBytes, "%s%s%s", dir, (dirLen > 0 && dir[dirLen - 1] == '/') ? "" : "/", name);
+    return (n > 0 && (size_t)n < outBytes) ? 1 : 0;
+}
+
+static int m11_try_sound_pack_name(char* out,
+                                   size_t outBytes,
+                                   const char* dir,
+                                   const char* name) {
+    if (!m11_path_join(out, outBytes, dir, name)) return 0;
+    return m11_file_exists(out);
+}
+
+static int m11_find_sound_pack_file(char* out,
+                                    size_t outBytes,
+                                    const char* dir,
+                                    const V1_SoundEventSnd3MapEntry* entry) {
+    char name[256];
+    int n;
+    if (!out || outBytes == 0 || !dir || !entry) return 0;
+
+    n = snprintf(name, sizeof(name), "%02d.wav", entry->soundIndex);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    n = snprintf(name, sizeof(name), "sound-%02d.wav", entry->soundIndex);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    n = snprintf(name, sizeof(name), "sound_%02d.wav", entry->soundIndex);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    n = snprintf(name, sizeof(name), "snd3-%03u.wav", entry->snd3ItemIndex);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    n = snprintf(name, sizeof(name), "SND3_%03u.wav", entry->snd3ItemIndex);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    n = snprintf(name, sizeof(name), "%s.wav", entry->macroName);
+    if (n > 0 && (size_t)n < sizeof(name) && m11_try_sound_pack_name(out, outBytes, dir, name)) return 1;
+    return 0;
+}
+
+static double m11_decode_wav_sample(const unsigned char* p,
+                                    unsigned int audioFormat,
+                                    unsigned int bitsPerSample) {
+    if (audioFormat == 3 && bitsPerSample == 32) {
+        float v;
+        memcpy(&v, p, sizeof(v));
+        if (v < -1.0f) v = -1.0f;
+        if (v > 1.0f) v = 1.0f;
+        return (double)v;
+    }
+
+    if (audioFormat != 1) return 0.0;
+    switch (bitsPerSample) {
+        case 8:
+            return ((double)p[0] - 128.0) / 128.0;
+        case 16: {
+            int16_t v = (int16_t)m11_read_le16(p);
+            return (double)v / 32768.0;
+        }
+        case 24: {
+            int32_t v = (int32_t)((unsigned int)p[0] |
+                                  ((unsigned int)p[1] << 8) |
+                                  ((unsigned int)p[2] << 16));
+            if (v & 0x00800000) v |= (int32_t)0xFF000000u;
+            return (double)v / 8388608.0;
+        }
+        case 32: {
+            int32_t v = (int32_t)m11_read_le32(p);
+            return (double)v / 2147483648.0;
+        }
+        default:
+            return 0.0;
+    }
+}
+
+static double m11_decode_wav_frame(const unsigned char* data,
+                                   unsigned int frameIndex,
+                                   unsigned int channels,
+                                   unsigned int bytesPerSample,
+                                   unsigned int audioFormat,
+                                   unsigned int bitsPerSample) {
+    unsigned int ch;
+    double mixed = 0.0;
+    const unsigned char* frame = data + ((size_t)frameIndex * channels * bytesPerSample);
+    for (ch = 0; ch < channels; ++ch) {
+        mixed += m11_decode_wav_sample(frame + ((size_t)ch * bytesPerSample), audioFormat, bitsPerSample);
+    }
+    return mixed / (double)channels;
+}
+
+static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path) {
+    FILE* f;
+    long fileSize;
+    unsigned char* bytes;
+    unsigned int pos = 12;
+    unsigned int fmtSeen = 0;
+    unsigned int dataSeen = 0;
+    unsigned int audioFormat = 0;
+    unsigned int channels = 0;
+    unsigned int sampleRate = 0;
+    unsigned int bitsPerSample = 0;
+    unsigned int blockAlign = 0;
+    const unsigned char* data = NULL;
+    unsigned int dataBytes = 0;
+    unsigned int bytesPerSample;
+    unsigned int frameCount;
+    int outCount;
+    int i;
+
+    if (!dst || !path || !*path) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
+    fileSize = ftell(f);
+    if (fileSize < 44 || fileSize > (long)M11_AUDIO_SOUND_PACK_MAX_BYTES) { fclose(f); return 0; }
+    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return 0; }
+
+    bytes = (unsigned char*)malloc((size_t)fileSize);
+    if (!bytes) { fclose(f); return 0; }
+    if (fread(bytes, 1, (size_t)fileSize, f) != (size_t)fileSize) {
+        free(bytes);
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+
+    if (memcmp(bytes, "RIFF", 4) != 0 || memcmp(bytes + 8, "WAVE", 4) != 0) {
+        free(bytes);
+        return 0;
+    }
+
+    while (pos + 8u <= (unsigned int)fileSize) {
+        const unsigned char* chunk = bytes + pos;
+        unsigned int chunkSize = m11_read_le32(chunk + 4);
+        unsigned int payload = pos + 8u;
+        if (chunkSize > (unsigned int)fileSize || payload > (unsigned int)fileSize - chunkSize) break;
+        if (memcmp(chunk, "fmt ", 4) == 0 && chunkSize >= 16u) {
+            audioFormat = m11_read_le16(bytes + payload);
+            channels = m11_read_le16(bytes + payload + 2u);
+            sampleRate = m11_read_le32(bytes + payload + 4u);
+            blockAlign = m11_read_le16(bytes + payload + 12u);
+            bitsPerSample = m11_read_le16(bytes + payload + 14u);
+            fmtSeen = 1;
+        } else if (memcmp(chunk, "data", 4) == 0) {
+            data = bytes + payload;
+            dataBytes = chunkSize;
+            dataSeen = 1;
+        }
+        pos = payload + chunkSize + (chunkSize & 1u);
+    }
+
+    if (!fmtSeen || !dataSeen || !data ||
+        (audioFormat != 1 && audioFormat != 3) ||
+        (channels != 1u && channels != 2u) ||
+        sampleRate < 8000u || sampleRate > 192000u ||
+        (bitsPerSample != 8u && bitsPerSample != 16u && bitsPerSample != 24u && bitsPerSample != 32u)) {
+        free(bytes);
+        return 0;
+    }
+    if (audioFormat == 3 && bitsPerSample != 32u) {
+        free(bytes);
+        return 0;
+    }
+    bytesPerSample = bitsPerSample / 8u;
+    if (blockAlign != channels * bytesPerSample || blockAlign == 0u) {
+        free(bytes);
+        return 0;
+    }
+    frameCount = dataBytes / blockAlign;
+    if (frameCount == 0u || frameCount > sampleRate * M11_AUDIO_SOUND_PACK_MAX_SECONDS) {
+        free(bytes);
+        return 0;
+    }
+
+    outCount = (int)(((unsigned long long)frameCount * M11_AUDIO_SAMPLE_RATE + sampleRate - 1u) / sampleRate);
+    if (outCount <= 0 || !m11_sound_reserve(dst, outCount)) {
+        free(bytes);
+        return 0;
+    }
+    for (i = 0; i < outCount; ++i) {
+        double sourcePos = ((double)i * (double)sampleRate) / (double)M11_AUDIO_SAMPLE_RATE;
+        unsigned int base = (unsigned int)sourcePos;
+        double frac = sourcePos - (double)base;
+        unsigned int next = base + 1u;
+        double a;
+        double b;
+        if (base >= frameCount) base = frameCount - 1u;
+        if (next >= frameCount) next = frameCount - 1u;
+        a = m11_decode_wav_frame(data, base, channels, bytesPerSample, audioFormat, bitsPerSample);
+        b = m11_decode_wav_frame(data, next, channels, bytesPerSample, audioFormat, bitsPerSample);
+        dst->samples[i] = (float)(a + (b - a) * frac);
+    }
+    dst->sampleCount = outCount;
+    free(bytes);
     return 1;
 }
 
@@ -395,6 +607,38 @@ static void m11_try_load_original_snd3(M11_AudioState* state) {
     state->originalSnd3Available = (state->originalSnd3LoadedCount == M11_AUDIO_ORIGINAL_SOUND_COUNT) ? 1 : 0;
 }
 
+static void m11_try_load_sound_pack(M11_AudioState* state) {
+    const char* dir;
+    unsigned int i;
+    if (!state) return;
+    if (getenv("FIRESTAFF_AUDIO_DISABLE_SOUND_PACK")) return;
+    dir = getenv("FIRESTAFF_SOUND_PACK_DIR");
+    if (!dir || !*dir) return;
+
+    if (!state->originalSnd3Available) {
+        for (i = 0; i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
+            m11_sound_free(&state->originalSounds[i]);
+        }
+        state->originalSnd3LoadedCount = 0;
+    }
+
+    for (i = 0; i < V1_DM_SOUND_EVENT_COUNT && i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
+        const V1_SoundEventSnd3MapEntry* entry = V1_SoundEventSnd3_Find((int)i);
+        char path[M11_AUDIO_SOUND_PACK_PATH_CAPACITY];
+        M11_SoundBuffer replacement;
+        if (!entry || !m11_find_sound_pack_file(path, sizeof(path), dir, entry)) continue;
+        memset(&replacement, 0, sizeof(replacement));
+        if (m11_load_wav_to_stream(&replacement, path)) {
+            m11_sound_free(&state->originalSounds[i]);
+            state->originalSounds[i] = replacement;
+            state->soundPackLoadedCount += 1;
+        } else {
+            m11_sound_free(&replacement);
+        }
+    }
+    state->soundPackAvailable = state->soundPackLoadedCount > 0 ? 1 : 0;
+}
+
 /* ── public API ──────────────────────────────────────────────────── */
 
 int M11_Audio_Init(M11_AudioState* state) {
@@ -426,6 +670,12 @@ int M11_Audio_Init(M11_AudioState* state) {
      * asset is missing or any mapping/decode fails, procedural marker
      * playback remains the runtime fallback. */
     m11_try_load_original_snd3(state);
+
+    /* Sound-pack support is source-index locked to the same ReDMCSB DM PC 3.4
+     * sound-event namespace as the GRAPHICS.DAT SND3 path. Packs are opt-in
+     * via FIRESTAFF_SOUND_PACK_DIR and may override any subset with .wav files
+     * named by event index, SND3 item, or ReDMCSB macro. */
+    m11_try_load_sound_pack(state);
 
 #if M11_HAVE_SDL_AUDIO
     {
@@ -503,6 +753,8 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->backend = M11_AUDIO_BACKEND_NONE;
     state->originalSnd3Available = 0;
     state->originalSnd3LoadedCount = 0;
+    state->soundPackAvailable = 0;
+    state->soundPackLoadedCount = 0;
     state->originalSongAvailable = 0;
     state->originalSongPartCount = 0;
     state->originalSongSequenceWordCount = 0;
@@ -629,7 +881,7 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
     }
 
     if (state->backend == M11_AUDIO_BACKEND_SDL3 &&
-        state->originalSnd3Available &&
+        (state->originalSnd3Available || state->soundPackAvailable) &&
         state->originalSounds[soundIndex].sampleCount > 0) {
 #if M11_HAVE_SDL_AUDIO
         const M11_SoundBuffer* snd = &state->originalSounds[soundIndex];
@@ -699,4 +951,8 @@ int M11_Audio_OriginalSnd3Available(const M11_AudioState* state) {
 
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state) {
     return (state && state->originalSongAvailable) ? 1 : 0;
+}
+
+int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {
+    return (state && state->soundPackAvailable) ? 1 : 0;
 }

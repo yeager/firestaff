@@ -54,6 +54,10 @@ typedef struct {
     int originalSnd3Available;
     int originalSnd3LoadedCount;
 
+    /* Optional community/remastered SFX pack overrides, source-index keyed. */
+    int soundPackAvailable;
+    int soundPackLoadedCount;
+
     /* Original V1 title music: loaded from SONG.DAT when available. */
     int originalSongAvailable;
     int originalSongPartCount;
@@ -95,6 +99,7 @@ int  M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
 int  M11_Audio_PlayTitleMusic(M11_AudioState* state);
 int  M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int  M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
+int  M11_Audio_SoundPackAvailable(const M11_AudioState* state);
 
 #ifdef __cplusplus
 }
