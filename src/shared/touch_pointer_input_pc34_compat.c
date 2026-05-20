@@ -20,6 +20,8 @@
  * - CLIKMENU.C:519-585 resolves action-menu child clicks after C111 dispatch,
  *   so touch/click only feeds the original command IDs and does not touch
  *   dungeon movement/collision timing.
+ * - COMMAND.C:2045-2156 F0380 processes queued commands and dispatches the
+ *   original turn/move command IDs to CLIKMENU.C F0365/F0366.
  */
 
 static void clear_dispatch(TouchPointerDispatchPc34Compat* outDispatch) {
@@ -145,5 +147,5 @@ int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
 }
 
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; INPUT.C:641-664 forwards raw left/right button masks to the click processor; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local inventory/panel events and explicit dungeon-viewport touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
+    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2045-2156 queue dispatch to original turn/move handlers, 2296-2324 C083/C111/C080 dispatch; CLIKMENU.C:142-179 F0365 turn handling and 180-347 F0366 movement handling; INPUT.C:641-664 forwards raw left/right button masks to the click processor; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local inventory/panel events and explicit dungeon-viewport touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
 }
