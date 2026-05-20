@@ -1886,6 +1886,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_save_load
     )
 
+    add_executable(test_dm1_v1_save_load_slots
+        tests/test_dm1_v1_save_load_slots.c
+        src/dm1/dm1_v1_save_load_system_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_save_load_slots PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_save_load_slots PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_save_load_slot_core
+        COMMAND test_dm1_v1_save_load_slots
+    )
+
     # DM1 V1 Combat & Damage System source-lock gate
     add_executable(test_dm1_v1_combat_pc34_compat_integration
         tests/test_dm1_v1_combat_pc34_compat_integration.c

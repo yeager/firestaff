@@ -10,11 +10,14 @@
 void m11_sl_init(M11_SL_State* state, const char* save_dir) {
     if (!state) return;
     memset(state, 0, sizeof(M11_SL_State));
-    if (save_dir) {
+    if (save_dir && save_dir[0] != 0) {
         size_t len = strlen(save_dir);
         if (len >= sizeof(state->save_dir)) len = sizeof(state->save_dir) - 1;
         memcpy(state->save_dir, save_dir, len);
-        state->save_dir[len] = '\0';
+        state->save_dir[len] = 0;
+    } else {
+        state->save_dir[0] = '.';
+        state->save_dir[1] = 0;
     }
     state->initialized = true;
 }
@@ -34,6 +37,9 @@ bool m11_sl_scan_slots(M11_SL_State* state) {
         FILE* f = fopen(path, "rb");
         if (!f) {
             state->slots[i].occupied = false;
+            memset(&state->slots[i].header, 0, sizeof(state->slots[i].header));
+            state->slots[i].label[0] = 0;
+            state->slots[i].timestamp = 0;
             continue;
         }
 
@@ -46,6 +52,9 @@ bool m11_sl_scan_slots(M11_SL_State* state) {
             state->slot_count++;
         } else {
             state->slots[i].occupied = false;
+            memset(&state->slots[i].header, 0, sizeof(state->slots[i].header));
+            state->slots[i].label[0] = 0;
+            state->slots[i].timestamp = 0;
         }
         fclose(f);
     }
@@ -55,7 +64,8 @@ bool m11_sl_scan_slots(M11_SL_State* state) {
 bool m11_sl_save(M11_SL_State* state, uint8_t slot,
                   const M11_SL_SaveHeader* header,
                   const uint8_t* data, size_t data_size) {
-    if (!state || !state->initialized || !header || !data) return false;
+    if (!state || !state->initialized || !header) return false;
+    if (data_size > 0 && !data) return false;
     if (slot >= DM1_SL_MAX_SLOTS) return false;
 
     char path[512];
@@ -69,14 +79,19 @@ bool m11_sl_save(M11_SL_State* state, uint8_t slot,
     hdr.data_size = (uint32_t)data_size;
 
     bool ok = (fwrite(&hdr, sizeof(hdr), 1, f) == 1) &&
-              (fwrite(data, 1, data_size, f) == data_size);
+              (data_size == 0 || fwrite(data, 1, data_size, f) == data_size);
     fclose(f);
 
     if (ok) {
+        bool was_occupied = state->slots[slot].occupied;
         state->slots[slot].occupied = true;
         state->slots[slot].header = hdr;
+        state->slots[slot].timestamp = hdr.game_time;
         snprintf(state->slots[slot].label, sizeof(state->slots[slot].label),
                  "Level %u (%d,%d)", hdr.current_level, hdr.party_x, hdr.party_y);
+        if (!was_occupied && state->slot_count < DM1_SL_MAX_SLOTS) {
+            state->slot_count++;
+        }
     }
     return ok;
 }
@@ -115,7 +130,13 @@ bool m11_sl_load_data(M11_SL_State* state, uint8_t slot,
         return false;
     }
 
-    size_t to_read = (hdr.data_size < max_size) ? hdr.data_size : max_size;
+    if (hdr.data_size > max_size) {
+        if (actual_size) *actual_size = hdr.data_size;
+        fclose(f);
+        return false;
+    }
+
+    size_t to_read = hdr.data_size;
     size_t got = fread(data, 1, to_read, f);
     fclose(f);
 
@@ -131,9 +152,14 @@ bool m11_sl_delete(M11_SL_State* state, uint8_t slot) {
     slot_path(state, slot, path, sizeof(path));
 
     if (remove(path) == 0) {
+        bool was_occupied = state->slots[slot].occupied;
         state->slots[slot].occupied = false;
         memset(&state->slots[slot].header, 0, sizeof(M11_SL_SaveHeader));
-        state->slot_count--;
+        state->slots[slot].label[0] = 0;
+        state->slots[slot].timestamp = 0;
+        if (was_occupied && state->slot_count > 0) {
+            state->slot_count--;
+        }
         return true;
     }
     return false;
