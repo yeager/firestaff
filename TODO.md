@@ -310,7 +310,8 @@ Status per 2026-05-19 v2.4.0.
 - ✅ macOS build (CMake + make)
 - ✅ GitHub Actions CI/CD release pipeline
 - ✅ Linux build verification (Ubuntu 24.04 x86_64 CMake/Ninja build, CI-equivalent smoke probes, and local DEB/RPM preview - docs/platform/linux-build-verification-20260520.md)
-- ✅ Windows build verification (GitHub Actions windows-2022/MSYS2 release job, ZIP, NSIS installer, and SHA256 published for v2.4.1 - docs/platform/windows-build-verification-20260520.md)
+- ❌ Web/WASM build verification (toolchain probe added; N2 lacks Emscripten, so no WASM configure/build pass yet - docs/platform/web-wasm-toolchain-probe-20260520.md)
+- ❌ iOS/Android build verification (no mobile SDK evidence packet yet)
 
 ---
 
