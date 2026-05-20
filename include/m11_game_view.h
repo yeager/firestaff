@@ -1057,6 +1057,13 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
+int M11_GameView_GetV1ChestSlotBoxZoneCount(void);
+int M11_GameView_GetV1ChestSlotBoxZoneId(int chestOrdinal);
+int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH);
 enum {
     M11_DM1_MOUSE_MASK_RIGHT = 0x0001,
     M11_DM1_MOUSE_MASK_LEFT  = 0x0002

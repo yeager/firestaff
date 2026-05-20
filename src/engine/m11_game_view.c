@@ -5414,6 +5414,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
+    state->v1OpenChestThing = THING_NONE;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 
@@ -6793,7 +6794,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             &space,
             &zoneId);
         (void)space;
-        if (command >= 28 && command <= 57 && zoneId >= 507 && zoneId <= 536) {
+        if (command >= 28 && command <= 65 && zoneId >= 507 && zoneId <= 544) {
             if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -15798,6 +15799,124 @@ static int m11_object_info_index_for_thing(const struct DungeonThings_Compat* th
     }
 }
 
+
+static unsigned short m11_v1_get_thing_next(const struct DungeonThings_Compat* things,
+                                            unsigned short thing) {
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return THING_ENDOFLIST;
+    index = (int)THING_GET_INDEX(thing);
+    switch (THING_GET_TYPE(thing)) {
+        case THING_TYPE_WEAPON:
+            return (things->weapons && index >= 0 && index < things->weaponCount) ? things->weapons[index].next : THING_ENDOFLIST;
+        case THING_TYPE_ARMOUR:
+            return (things->armours && index >= 0 && index < things->armourCount) ? things->armours[index].next : THING_ENDOFLIST;
+        case THING_TYPE_SCROLL:
+            return (things->scrolls && index >= 0 && index < things->scrollCount) ? things->scrolls[index].next : THING_ENDOFLIST;
+        case THING_TYPE_POTION:
+            return (things->potions && index >= 0 && index < things->potionCount) ? things->potions[index].next : THING_ENDOFLIST;
+        case THING_TYPE_CONTAINER:
+            return (things->containers && index >= 0 && index < things->containerCount) ? things->containers[index].next : THING_ENDOFLIST;
+        case THING_TYPE_JUNK:
+            return (things->junks && index >= 0 && index < things->junkCount) ? things->junks[index].next : THING_ENDOFLIST;
+        case THING_TYPE_PROJECTILE:
+            return (things->projectiles && index >= 0 && index < things->projectileCount) ? things->projectiles[index].next : THING_ENDOFLIST;
+        case THING_TYPE_EXPLOSION:
+            return (things->explosions && index >= 0 && index < things->explosionCount) ? things->explosions[index].next : THING_ENDOFLIST;
+        default:
+            return THING_ENDOFLIST;
+    }
+}
+
+static void m11_v1_set_thing_next(struct DungeonThings_Compat* things,
+                                  unsigned short thing,
+                                  unsigned short next) {
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return;
+    index = (int)THING_GET_INDEX(thing);
+    switch (THING_GET_TYPE(thing)) {
+        case THING_TYPE_WEAPON:
+            if (things->weapons && index >= 0 && index < things->weaponCount) things->weapons[index].next = next;
+            break;
+        case THING_TYPE_ARMOUR:
+            if (things->armours && index >= 0 && index < things->armourCount) things->armours[index].next = next;
+            break;
+        case THING_TYPE_SCROLL:
+            if (things->scrolls && index >= 0 && index < things->scrollCount) things->scrolls[index].next = next;
+            break;
+        case THING_TYPE_POTION:
+            if (things->potions && index >= 0 && index < things->potionCount) things->potions[index].next = next;
+            break;
+        case THING_TYPE_CONTAINER:
+            if (things->containers && index >= 0 && index < things->containerCount) things->containers[index].next = next;
+            break;
+        case THING_TYPE_JUNK:
+            if (things->junks && index >= 0 && index < things->junkCount) things->junks[index].next = next;
+            break;
+        case THING_TYPE_PROJECTILE:
+            if (things->projectiles && index >= 0 && index < things->projectileCount) things->projectiles[index].next = next;
+            break;
+        case THING_TYPE_EXPLOSION:
+            if (things->explosions && index >= 0 && index < things->explosionCount) things->explosions[index].next = next;
+            break;
+        default:
+            break;
+    }
+}
+
+static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
+    unsigned short thing;
+    int index;
+    if (!state || !state->world.things || !state->world.things->containers) return -1;
+    thing = state->v1OpenChestThing;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return -1;
+    index = (int)THING_GET_INDEX(thing);
+    return (index >= 0 && index < state->world.things->containerCount) ? index : -1;
+}
+
+static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
+                                        unsigned short outSlots[8]) {
+    int containerIndex;
+    unsigned short thing;
+    int count = 0;
+    int i;
+    if (!outSlots) return 0;
+    for (i = 0; i < 8; ++i) outSlots[i] = THING_NONE;
+    containerIndex = m11_v1_open_chest_container_index(state);
+    if (containerIndex < 0) return 0;
+    thing = state->world.things->containers[containerIndex].slot;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && count < 8) {
+        outSlots[count++] = thing;
+        thing = m11_v1_get_thing_next(state->world.things, thing);
+    }
+    return count;
+}
+
+static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
+                                         const unsigned short slots[8]) {
+    int containerIndex;
+    unsigned short first = THING_ENDOFLIST;
+    unsigned short previous = THING_ENDOFLIST;
+    int i;
+    if (!state || !state->world.things || !slots) return 0;
+    containerIndex = m11_v1_open_chest_container_index(state);
+    if (containerIndex < 0) return 0;
+    for (i = 0; i < 8; ++i) {
+        unsigned short thing = slots[i];
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        if (first == THING_ENDOFLIST) {
+            first = thing;
+        } else {
+            m11_v1_set_thing_next(state->world.things, previous, thing);
+        }
+        previous = thing;
+    }
+    if (previous != THING_ENDOFLIST) {
+        m11_v1_set_thing_next(state->world.things, previous, THING_ENDOFLIST);
+    }
+    state->world.things->containers[containerIndex].slot = first;
+    return 1;
+}
+
 static unsigned int m11_allowed_slots_for_thing(const struct DungeonThings_Compat* things,
                                                 unsigned short thingId) {
     static const unsigned short kObjectInfoAllowedSlots[180] = {
@@ -15839,6 +15958,9 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
         case 20: return 0x0040u;
         default:
             if (sourceSlotBoxIndex >= 21 && sourceSlotBoxIndex <= 37) {
+                return 0x0400u;
+            }
+            if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
                 return 0x0400u;
             }
             return 0;
@@ -18484,6 +18606,28 @@ int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
     return out[0] != '\0';
 }
 
+int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
+    int championIndex;
+    unsigned short thing;
+    if (!state || !state->inventoryPanelActive) return 0;
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
+    state->v1OpenChestThing = thing;
+    return m11_v1_open_chest_container_index(state) >= 0;
+}
+
+void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
+    if (!state) return;
+    state->v1OpenChestThing = THING_NONE;
+}
+
+unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state) {
+    if (!state || state->v1OpenChestThing == THING_ENDOFLIST) return THING_NONE;
+    return state->v1OpenChestThing;
+}
+
 int M11_GameView_GetV1ActionAreaZoneId(void) {
     return 11;
 }
@@ -18805,6 +18949,15 @@ static const M11_V1InventorySlotZone kV1InventoryBackpackSlotZones[] = {
     { 536, 202, 33 }
 };
 
+static const M11_V1InventorySlotZone kV1ChestSlotBoxZones[] = {
+    /* ReDMCSB COMMAND.C:498-507 G0456_as_Graphic561_MouseInput_PanelChest
+     * maps C058..C065 to viewport-relative C537..C544.  The coordinates
+     * are layout-696 chest panel C106 child zones. */
+    { 537, 117,  59 }, { 538, 106,  76 }, { 539, 111,  93 },
+    { 540, 128,  98 }, { 541, 145, 101 }, { 542, 162, 103 },
+    { 543, 179, 104 }, { 544, 196, 105 }
+};
+
 int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void) {
     return (int)(sizeof(kV1InventorySourceSlotBoxZones) /
                  sizeof(kV1InventorySourceSlotBoxZones[0]));
@@ -18903,6 +19056,34 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
     return 1;
 }
 
+int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
+    return (int)(sizeof(kV1ChestSlotBoxZones) /
+                 sizeof(kV1ChestSlotBoxZones[0]));
+}
+
+int M11_GameView_GetV1ChestSlotBoxZoneId(int chestOrdinal) {
+    if (chestOrdinal < 0 ||
+        chestOrdinal >= M11_GameView_GetV1ChestSlotBoxZoneCount()) {
+        return 0;
+    }
+    return kV1ChestSlotBoxZones[chestOrdinal].zoneId;
+}
+
+int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (!M11_GameView_GetV1ChestSlotBoxZoneId(chestOrdinal)) {
+        return 0;
+    }
+    if (outX) *outX = kV1ChestSlotBoxZones[chestOrdinal].x;
+    if (outY) *outY = kV1ChestSlotBoxZones[chestOrdinal].y;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
+
 typedef struct M11_V1MouseRoute_ {
     int command;
     int coordinateSpace;
@@ -18970,6 +19151,10 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
     if (route->zoneId >= 507 && route->zoneId <= 536) {
         return M11_GameView_GetV1InventorySourceSlotBoxZone(route->zoneId - 499,
                                                             outX, outY, outW, outH);
+    }
+    if (route->zoneId >= 537 && route->zoneId <= 544) {
+        return M11_GameView_GetV1ChestSlotBoxZone(route->zoneId - 537,
+                                                  outX, outY, outW, outH);
     }
     if (route->zoneId == 545 || route->zoneId == 546) {
         /* ReDMCSB COMMAND.C G0449 routes inventory mouth/eye clicks through
@@ -19078,7 +19263,18 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 54, M11_DM1_MOUSE_SPACE_VIEWPORT, 533, M11_DM1_MOUSE_MASK_LEFT },
         { 55, M11_DM1_MOUSE_SPACE_VIEWPORT, 534, M11_DM1_MOUSE_MASK_LEFT },
         { 56, M11_DM1_MOUSE_SPACE_VIEWPORT, 535, M11_DM1_MOUSE_MASK_LEFT },
-        { 57, M11_DM1_MOUSE_SPACE_VIEWPORT, 536, M11_DM1_MOUSE_MASK_LEFT }
+        { 57, M11_DM1_MOUSE_SPACE_VIEWPORT, 536, M11_DM1_MOUSE_MASK_LEFT },
+        /* ReDMCSB COMMAND.C G0456 panel-chest route is active while the
+         * inventory panel shows an open chest.  Keeping the routes in the
+         * inventory list lets the runtime gate execution on v1OpenChestThing. */
+        { 58, M11_DM1_MOUSE_SPACE_VIEWPORT, 537, M11_DM1_MOUSE_MASK_LEFT },
+        { 59, M11_DM1_MOUSE_SPACE_VIEWPORT, 538, M11_DM1_MOUSE_MASK_LEFT },
+        { 60, M11_DM1_MOUSE_SPACE_VIEWPORT, 539, M11_DM1_MOUSE_MASK_LEFT },
+        { 61, M11_DM1_MOUSE_SPACE_VIEWPORT, 540, M11_DM1_MOUSE_MASK_LEFT },
+        { 62, M11_DM1_MOUSE_SPACE_VIEWPORT, 541, M11_DM1_MOUSE_MASK_LEFT },
+        { 63, M11_DM1_MOUSE_SPACE_VIEWPORT, 542, M11_DM1_MOUSE_MASK_LEFT },
+        { 64, M11_DM1_MOUSE_SPACE_VIEWPORT, 543, M11_DM1_MOUSE_MASK_LEFT },
+        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT }
     };
     const M11_V1MouseRoute* routes = NULL;
     int count = 0;
@@ -19410,6 +19606,44 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
     }
 }
 
+static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
+                                               int sourceSlotBoxIndex) {
+    unsigned short slots[8];
+    unsigned short leaderThing;
+    unsigned short slotThing;
+    int chestOrdinal = sourceSlotBoxIndex - 38;
+
+    if (!state || !state->inventoryPanelActive || chestOrdinal < 0 || chestOrdinal >= 8) return 0;
+    if (m11_v1_open_chest_container_index(state) < 0) return 0;
+    (void)m11_v1_read_open_chest_slots(state, slots);
+    leaderThing = M11_GameView_GetV1LeaderHandThing(state);
+    slotThing = slots[chestOrdinal];
+    if ((leaderThing == THING_NONE || leaderThing == THING_ENDOFLIST) &&
+        (slotThing == THING_NONE || slotThing == THING_ENDOFLIST)) {
+        return 0;
+    }
+    if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST &&
+        (m11_allowed_slots_for_thing(state->world.things, leaderThing) & 0x0400u) == 0) {
+        return 0;
+    }
+
+    if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST) {
+        slots[chestOrdinal] = leaderThing;
+        M11_GameView_ClearV1LeaderHandObject(state);
+        if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST) {
+            m11_v1_set_thing_next(state->world.things, slotThing, THING_ENDOFLIST);
+            if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) return 0;
+        }
+    } else {
+        slots[chestOrdinal] = THING_NONE;
+        m11_v1_set_thing_next(state->world.things, slotThing, THING_ENDOFLIST);
+        if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) return 0;
+    }
+    if (!m11_v1_write_open_chest_slots(state, slots)) return 0;
+    m11_refresh_hash(state);
+    return 1;
+}
+
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex) {
     int championIndex;
@@ -19418,6 +19652,9 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     unsigned short slotThing;
 
     if (!state || !state->inventoryPanelActive) return 0;
+    if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
+        return m11_process_v1_chest_slot_box_click(state, sourceSlotBoxIndex);
+    }
     championIndex = state->world.party.activeChampionIndex;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
@@ -22457,6 +22694,42 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 if (M11_GameView_GetV1InventorySourceSlotBoxZone(
                         sourceSlotBox, &zx, &zy, &zw, &zh)) {
                     (void)zw; (void)zh;
+                    (void)m11_draw_dm_object_icon_index(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
+                }
+            }
+        }
+        if (M11_GameView_GetV1OpenChestThing(state) != THING_NONE) {
+            unsigned short chestSlots[8];
+            int chestOrdinal;
+            (void)m11_v1_read_open_chest_slots(state, chestSlots);
+            for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
+                int zx = 0, zy = 0, zw = 0, zh = 0;
+                if (!M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal, &zx, &zy, &zw, &zh)) continue;
+                if (state->assetsAvailable) {
+                    const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader,
+                        (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
+                    if (boxSlot && boxSlot->width == 18 && boxSlot->height == 18) {
+                        M11_AssetLoader_Blit(boxSlot, framebuffer, framebufferWidth,
+                                             framebufferHeight,
+                                             M11_VIEWPORT_X + zx - 1,
+                                             M11_VIEWPORT_Y + zy - 1, 0);
+                    }
+                } else {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                                  zw, zh, M11_COLOR_BLACK);
+                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                                  zw, zh, M11_COLOR_DARK_GRAY);
+                }
+                if (chestSlots[chestOrdinal] != THING_NONE &&
+                    chestSlots[chestOrdinal] != THING_ENDOFLIST &&
+                    state->assetsAvailable && state->world.things) {
+                    int iconIndex = m11_object_icon_index_for_thing(
+                        state, state->world.things, chestSlots[chestOrdinal]);
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
                         iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);

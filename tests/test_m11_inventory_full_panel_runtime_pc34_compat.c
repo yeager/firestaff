@@ -124,6 +124,90 @@ static void test_extended_backpack_runtime_clicks(void) {
               "C536 placement clears leader hand");
 }
 
+static void test_open_chest_runtime_routes_and_clicks(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[3];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short axeThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    unsigned short arrowThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int space = 0, zone = 0;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 3;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapons[0].type = 2; /* ReDMCSB object-info index 25: container-compatible. */
+    weapons[0].next = axeThing;
+    weapons[1].type = 2;
+    weapons[1].next = THING_ENDOFLIST;
+    weapons[2].type = 4; /* ReDMCSB object-info index 27: quiver-only, not container. */
+    weapons[2].next = THING_ENDOFLIST;
+    containers[0].type = 0;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand container opens source chest panel state");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "open chest thing mirrors the action-hand container");
+    ASSERT_EQ(M11_GameView_GetV1ChestSlotBoxZoneCount(), 8,
+              "source chest panel exposes eight C537..C544 slots");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+                "C537 chest slot zone exists");
+    ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+                                                     sx + sw / 2,
+                                                     33 + sy + sh / 2,
+                                                     M11_DM1_MOUSE_MASK_LEFT,
+                                                     &space,
+                                                     &zone),
+              58,
+              "C537 resolves to source command C058");
+    ASSERT_EQ(zone, 537, "C537 route returns the source zone id");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C537 picks the first visible chest item");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "chest pickup moves the slot object to the leader hand");
+    ASSERT_EQ(containers[0].slot, axeThing,
+              "open chest writeback compacts remaining visible slot objects");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "picked chest object is detached from the container list");
+
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &sx, &sy, &sw, &sh),
+                "C538 chest slot zone exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C538 places the leader-hand item into the chest");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "placing into chest clears the leader hand");
+    ASSERT_EQ(containers[0].slot, axeThing,
+              "chest list keeps the first existing object first");
+    ASSERT_EQ(weapons[1].next, daggerThing,
+              "placed object is linked after the existing visible item");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "placed object terminates the compacted chest list");
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, arrowThing), 1,
+              "leader hand accepts a source weapon thing for rejection test");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_IGNORED,
+              "quiver-only object is rejected from the container slot");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), arrowThing,
+              "rejected object stays in the leader hand");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "closing the panel clears open chest state");
+}
+
 static void test_eye_panel_weapon_attribute_flags(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -203,6 +287,7 @@ int main(void) {
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
+    test_open_chest_runtime_routes_and_clicks();
     test_eye_panel_weapon_attribute_flags();
     test_eye_panel_champion_stats_and_skills();
 
