@@ -10,6 +10,8 @@
  *   CHAMPION.C F0302 lines 700-712: leader hand/slot swap and redraw
  *   PANEL.C F0347 lines 1651-1691: inventory panel redraw is driven by
  *     the active inventory champion action hand and panel content route
+ *   PANEL.C F0352 lines 1250-1254: weapon descriptions expose Cursed,
+ *     Poisoned, Broken and ChargeCount-derived state from WEAPON data
  */
 
 #include "m11_game_view.h"
@@ -120,12 +122,41 @@ static void test_extended_backpack_runtime_clicks(void) {
               "C536 placement clears leader hand");
 }
 
+static void test_eye_panel_weapon_attribute_flags(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+    seed_inventory_view(&state, &things, &weapon);
+    weapon.type = 8;
+    weapon.cursed = 1;
+    weapon.poisoned = 1;
+    weapon.broken = 1;
+    weapon.chargeCount = 7;
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, daggerThing), 1,
+              "leader hand accepts source weapon thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click opens source weapon description");
+    ASSERT_TRUE(strstr(state.inspectDetail, "CURSED") != NULL,
+                "weapon eye panel reports source cursed flag");
+    ASSERT_TRUE(strstr(state.inspectDetail, "POISONED") != NULL,
+                "weapon eye panel reports source poisoned flag");
+    ASSERT_TRUE(strstr(state.inspectDetail, "BROKEN") != NULL,
+                "weapon eye panel reports source broken flag");
+    ASSERT_TRUE(strstr(state.inspectDetail, "CHARGE 7") != NULL,
+                "weapon eye panel reports source charge count");
+}
+
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: DEFS.H 778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, PANEL.C F0347 1651-1691\n\n");
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
+    test_eye_panel_weapon_attribute_flags();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

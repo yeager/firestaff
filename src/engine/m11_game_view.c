@@ -18956,10 +18956,21 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
                  "%s: %s", typeName, itemName);
 
         if (itemType == 5) { /* Weapon */
+            int thingIndex = THING_GET_INDEX(thing);
+            const struct DungeonWeapon_Compat* weapon = NULL;
+            if (state->world.things &&
+                thingIndex >= 0 &&
+                thingIndex < state->world.things->weaponCount) {
+                weapon = &state->world.things->weapons[thingIndex];
+            }
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "WEAPON  ICON %d  CLASS %s",
+                     "WEAPON  ICON %d  CLASS %s  FLAGS%s%s%s  CHARGE %d",
                      itemIcon,
-                     (itemIcon < 20) ? "MELEE" : "RANGED");
+                     (itemIcon < 20) ? "MELEE" : "RANGED",
+                     (weapon && weapon->cursed) ? " CURSED" : "",
+                     (weapon && weapon->poisoned) ? " POISONED" : "",
+                     (weapon && weapon->broken) ? " BROKEN" : "",
+                     weapon ? (int)weapon->chargeCount : 0);
         } else if (itemType == 6) { /* Armour */
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                      "ARMOUR  ICON %d  PROTECTION CLASS %d",
