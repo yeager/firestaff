@@ -114,7 +114,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Torch fuel tracking + light power calculation
 - ✅ Torch burns out → extinguish
 - ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
-- ❌ Full inventory panel (8 body slots + 2 hand slots + backpack)
+- 🔧 Full inventory panel (8 body slots + 2 hand slots + backpack) — C507..C536 source slot-box bridge and full backpack runtime storage/pickup/place path are source-locked; remaining panel polish/chest runtime details stay open
 - 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
 - 🔧 Backpack/chest container management — PC34 backpack/chest slot namespace, chest open/close visible-slot compaction, and leader-hand/chest slot swap helpers source-locked; runtime panel wiring remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display is source-locked for priest skill > 1, including the original empty-flask quirk; broader item identification and runtime panel wiring remain pending
