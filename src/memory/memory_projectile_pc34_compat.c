@@ -1129,6 +1129,41 @@ int F0823_EXPLOSION_ComputeAoE_Compat(
     return 1;
 }
 
+int F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+    int baseAttack,
+    int creatureType,
+    int explosionOnPartyMap,
+    int activeGroupAspect,
+    struct RngState_Compat* rng,
+    int* outAttackApplied)
+{
+    int attack;
+    int additionalAttack;
+
+    if (outAttackApplied == NULL) return 0;
+    *outAttackApplied = 0;
+    attack = baseAttack;
+    if (attack < 0) attack = 0;
+
+    /* ReDMCSB PROJEXPL.C:F0220 lines 832-846: Harm Non Material
+     * damages every non-material creature normally, except party-map
+     * Materializer/Zytaz (C19), where each slot is damaged only while
+     * that slot's active-group Aspect has MASK0x0080_IS_ATTACKING set. */
+    if (creatureType == 19 && explosionOnPartyMap) {
+        if ((activeGroupAspect & 0x80) == 0) {
+            return 1;
+        }
+        additionalAttack = attack >> 3;
+        attack -= additionalAttack;
+        additionalAttack = (additionalAttack << 1) + 1;
+        attack += F0732_COMBAT_RngRandom_Compat(rng, additionalAttack);
+        attack += F0732_COMBAT_RngRandom_Compat(rng, 4);
+    }
+
+    *outAttackApplied = attack;
+    return 1;
+}
+
 static void build_explosion_champion_action(
     const struct ExplosionInstance_Compat* in,
     const struct CellContentDigest_Compat* digest,

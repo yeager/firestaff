@@ -556,6 +556,50 @@ static void test_poison_cloud_party_damage_over_time(void) {
 }
 
 
+static void test_harm_non_material_materializer_attack_only(void) {
+    int attack = -1;
+    struct RngState_Compat rng;
+    struct RngState_Compat expectedRng;
+    int expectedAttack;
+
+    printf("  harm non-material Materializer/Zytaz attack-only damage...\n");
+
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 19, 1, 0x00, NULL, &attack),
+              1, "materializer idle helper ok");
+    ASSERT_EQ(attack, 0, "party-map idle Materializer takes no harm-non-material damage");
+
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 19, 1, 0x80, NULL, &attack),
+              1, "materializer attacking helper ok");
+    ASSERT_EQ(attack, 63, "attacking Materializer uses base minus one-eighth without rng");
+
+    F0730_COMBAT_RngInit_Compat(&rng, 5);
+    F0730_COMBAT_RngInit_Compat(&expectedRng, 5);
+    expectedAttack = 63 + F0732_COMBAT_RngRandom_Compat(&expectedRng, 19)
+                         + F0732_COMBAT_RngRandom_Compat(&expectedRng, 4);
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 19, 1, 0x80, &rng, &attack),
+              1, "materializer attacking rng helper ok");
+    ASSERT_EQ(attack, expectedAttack, "attacking Materializer damage applies +random(2*(attack>>3)+1)+random(4)");
+    ASSERT_EQ((int)rng.seed, (int)expectedRng.seed, "attacking Materializer consumes exactly two rng rolls");
+
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 8, 1, 0x00, NULL, &attack),
+              1, "non-material non-Materializer helper ok");
+    ASSERT_EQ(attack, 72, "other non-material creatures use normal harm-non-material damage");
+
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 19, 0, 0x00, NULL, &attack),
+              1, "off-party-map Materializer helper ok");
+    ASSERT_EQ(attack, 72, "off-party-map Materializer uses normal damage path");
+
+    ASSERT_EQ(F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+                  72, 19, 1, 0x80, NULL, NULL),
+              0, "null out attack rejected");
+}
+
+
 
 /* ── Main ────────────────────────────────────────────────────────── */
 
@@ -579,6 +623,7 @@ int main(void) {
     test_spell_graphic_indices();
     test_projectile_travel_blockers();
     test_poison_cloud_party_damage_over_time();
+    test_harm_non_material_materializer_attack_only();
 
     if (g_failures == 0) {
         printf("All tests passed.\n");

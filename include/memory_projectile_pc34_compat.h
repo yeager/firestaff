@@ -475,6 +475,14 @@ int F0823_EXPLOSION_ComputeAoE_Compat(
     struct RngState_Compat* rng,
     int* outAttackApplied);
 
+int F0830_EXPLOSION_HarmNonMaterialCreatureAttack_Compat(
+    int baseAttack,
+    int creatureType,
+    int explosionOnPartyMap,
+    int activeGroupAspect,
+    struct RngState_Compat* rng,
+    int* outAttackApplied);
+
 int F0824_EXPLOSION_Despawn_Compat(
     struct ExplosionList_Compat* list,
     int slotIndex);
