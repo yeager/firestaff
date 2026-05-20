@@ -271,6 +271,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_capture_route_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 wall/collision runtime repro capture with exact map coordinates.
+add_executable(firestaff_m11_wall_collision_capture_probe probes/m11/firestaff_m11_wall_collision_capture_probe.c)
+target_link_libraries(firestaff_m11_wall_collision_capture_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_wall_collision_capture_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Source-locked turn-left/turn-right viewport orientation anchor.
 add_executable(firestaff_m11_turn_viewport_orientation_probe probes/m11/firestaff_m11_turn_viewport_orientation_probe.c)
 target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
@@ -1312,6 +1319,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_m11_capture_route_state_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/capture-route-state
     )
     set_tests_properties(m11_capture_route_state PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_wall_collision_runtime_capture
+        COMMAND firestaff_m11_wall_collision_capture_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/wall-collision-capture
+    )
+    set_tests_properties(dm1_v1_wall_collision_runtime_capture PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
