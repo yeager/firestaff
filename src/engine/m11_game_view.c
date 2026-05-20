@@ -4197,6 +4197,12 @@ static void m11_creature_attack_party(
     if (!profile) return;
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
 
+    if (state->resting) {
+        state->resting = 0;
+        m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                      (unsigned int)state->world.gameTick);
+    }
+
     /* Map difficulty: ReDMCSB uses G0269_ps_CurrentMap->C.Difficulty << 1 */
     mapDifficulty = 0;
     if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
