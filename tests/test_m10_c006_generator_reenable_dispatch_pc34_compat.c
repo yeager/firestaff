@@ -94,6 +94,7 @@ int main(void) {
     struct TimelineEvent_Compat event;
     int ok = 1;
     int rc;
+    unsigned int generatorTriggerTick;
 
     if (!build_world(&world)) {
         fprintf(stderr, "FAIL: build_world\n");
@@ -141,6 +142,7 @@ int main(void) {
 
     ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
                  "schedule C006 generator trigger event");
+    generatorTriggerTick = world.gameTick;
     rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
     ok &= expect(rc == ORCH_OK, "advance C006 generator trigger tick");
     ok &= expect(result.emissionCount == 2,
@@ -176,8 +178,20 @@ int main(void) {
                  "C006 generated party-map group seeds active group state");
     ok &= expect(world.things->sensors[0].sensorType == RUNTIME_SENSOR_TYPE_DISABLED,
                  "C006 generator disables sensor while re-enable delay is pending");
-    ok &= expect(world.timeline.count == 1,
-                 "C006 generator schedules one C65 re-enable event");
+    ok &= expect(world.timeline.count == 2,
+                 "C006 generator schedules C37 wander and C65 re-enable events");
+    ok &= expect(world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].fireAtTick == generatorTriggerTick + 1u &&
+                 world.timeline.events[0].mapIndex == 0 &&
+                 world.timeline.events[0].mapX == 1 &&
+                 world.timeline.events[0].mapY == 1 &&
+                 world.timeline.events[0].aux0 == 0 &&
+                 world.timeline.events[0].aux1 == 0 &&
+                 world.timeline.events[0].aux2 == AI_STATE_WANDER,
+                 "C006 generated group schedules source C37 wander at game time +1");
+    ok &= expect(world.timeline.events[1].kind == TIMELINE_EVENT_GROUP_GENERATOR &&
+                 world.timeline.events[1].aux0 == GENERATOR_EVENT_AUX0_REENABLE,
+                 "C006 generator keeps delayed C65 re-enable event after wander event");
 
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;

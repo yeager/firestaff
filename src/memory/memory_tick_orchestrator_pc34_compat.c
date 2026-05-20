@@ -1137,6 +1137,31 @@ static int orch_add_generated_group_active_state_compat(
     return 1;
 }
 
+static void orch_schedule_generated_group_wandering_event_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct TimelineEvent_Compat wander;
+    if (!world || !group) return;
+
+    /* ReDMCSB GROUP.C:311-338/F0180: newly placed groups start
+     * wandering by scheduling C37 for game time +1 on their square. */
+    memset(&wander, 0, sizeof(wander));
+    wander.kind = TIMELINE_EVENT_CREATURE_TICK;
+    wander.fireAtTick = world->gameTick + 1u;
+    wander.mapIndex = mapIndex;
+    wander.mapX = mapX;
+    wander.mapY = mapY;
+    wander.aux0 = groupIndex;
+    wander.aux1 = group->creatureType;
+    wander.aux2 = AI_STATE_WANDER;
+    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
+}
+
 static int orch_materialize_generated_group_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -1196,6 +1221,8 @@ static int orch_materialize_generated_group_compat(
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
 
     (void)orch_add_generated_group_active_state_compat(
+        world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
+    orch_schedule_generated_group_wandering_event_compat(
         world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
     if (outGroupIndex) *outGroupIndex = groupIndex;
     return 1;

@@ -18,6 +18,7 @@ Scope: land the narrow successful empty-square runtime path for C006 floor group
 - The Phase 20 `TIMELINE_EVENT_GROUP_GENERATOR` trigger now applies `F0860_RUNTIME_HandleGroupGenerator_Compat` results to `GameWorld_Compat` for successful empty-square placement.
 - A generated group is appended to `DungeonThings_Compat.groups`, linked at the target square head, and initialized with source-derived type/count/direction/cells/health. Firestaff's decoded Phase 9 thing list has no unused-slot free list yet, so append represents the available group slot for this compat runtime slice.
 - Party-map generation seeds one `CreatureAIState_Compat` entry as the active-group analogue of `F0183_GROUP_AddActiveGroup`.
+- Successful generated placement now schedules the `F0180_GROUP_StartWandering` analogue as `TIMELINE_EVENT_CREATURE_TICK` at `gameTick + 1` on the generated group square. The event carries the generated group slot, creature type, and wander state in the existing Phase 16 event fields.
 - Delayed/once-only sensor state is applied and delayed generators schedule the existing C65 re-enable event.
 - Sound dispatch now distinguishes the unconditional `F0185` successful-placement buzz from the optional sensor-audible `F0245` buzz.
 
@@ -25,5 +26,4 @@ Scope: land the narrow successful empty-square runtime path for C006 floor group
 
 - Full `F0267` collision/defer path for destination party/group squares, including materialized event 60/61 handling and later insertion.
 - Exact original unused-slot freelist semantics; the current decoded runtime appends one group slot.
-- `F0180_GROUP_StartWandering` event-37 runtime scheduling beyond the active-state seed.
 - Projectile impact, teleporter, pit, cross-map, and full movement-sound side effects outside the empty-square generator materialization path.
