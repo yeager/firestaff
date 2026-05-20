@@ -2776,6 +2776,17 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# DM1 V1 blocked wall/door/fakewall self-damage source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass590_dm1_v1_blocked_wall_door_self_damage_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass590_dm1_v1_blocked_wall_door_self_damage_source_lock.py
+    )
+    set_tests_properties(pass590_dm1_v1_blocked_wall_door_self_damage_source_lock PROPERTIES
+        ENVIRONMENT "BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    )
+endif()
+
 # DM1 V1 gated movement pending-click replay source-lock gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

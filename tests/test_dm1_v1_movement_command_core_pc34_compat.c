@@ -573,6 +573,11 @@ int main(void)
         ok &= expect_int("pass547 closed door reports door block", result.movement.resultCode, MOVE_BLOCKED_DOOR);
         ok &= expect_int("pass547 closed door movement blocked", result.movementBlocked, 1);
         ok &= expect_int("pass547 closed door damage request", result.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("pass590 closed door damage attack is one", result.blockedByWallOrDoorDamageAttack, 1);
+        ok &= expect_int("pass590 closed door damage attack type self", result.blockedByWallOrDoorDamageAttackTypeSelf, 2);
+        ok &= expect_int("pass590 closed door damage wounds torso legs", result.blockedByWallOrDoorDamageAllowedWounds, 0x0018);
+        ok &= expect_int("pass590 closed door damage first cell", result.blockedByWallOrDoorDamageFirstCell, DIR_SOUTH);
+        ok &= expect_int("pass590 closed door damage second cell", result.blockedByWallOrDoorDamageSecondCell, DIR_WEST);
         ok &= expect_int("pass547 closed door discards trailing input", (int)queue.count, 0);
         ok &= expect_int("pass547 closed door leaves input wait armed", result.stopWaitingForPlayerInput, 0);
         ok &= expect_int("pass547 closed door no cooldown", result.timing.disabledMovementTicks, 0);
@@ -600,6 +605,11 @@ int main(void)
                 &queue, &dungeon, &things, &party, 0, 0, 0, 450, 440, footwear, &result), 1);
         ok &= expect_int("pass547 closed fakewall reports wall block", result.movement.resultCode, MOVE_BLOCKED_WALL);
         ok &= expect_int("pass547 closed fakewall damage request", result.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("pass590 closed fakewall damage attack is one", result.blockedByWallOrDoorDamageAttack, 1);
+        ok &= expect_int("pass590 closed fakewall damage attack type self", result.blockedByWallOrDoorDamageAttackTypeSelf, 2);
+        ok &= expect_int("pass590 closed fakewall damage wounds torso legs", result.blockedByWallOrDoorDamageAllowedWounds, 0x0018);
+        ok &= expect_int("pass590 closed fakewall damage first cell", result.blockedByWallOrDoorDamageFirstCell, DIR_SOUTH);
+        ok &= expect_int("pass590 closed fakewall damage second cell", result.blockedByWallOrDoorDamageSecondCell, DIR_WEST);
         ok &= expect_int("pass547 closed fakewall discards trailing input", (int)queue.count, 0);
         ok &= expect_int("pass547 closed fakewall leaves input wait armed", result.stopWaitingForPlayerInput, 0);
         ok &= expect_int("pass547 closed fakewall no cooldown", result.timing.disabledMovementTicks, 0);
