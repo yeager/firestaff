@@ -177,10 +177,14 @@ Status per 2026-05-19 v2.4.0.
 ## DM1 V2 — Enhanced Mode
 
 - 🔧 V2 presentation mode selectable from menu
-- ❌ Upscaled graphics pipeline
-- ❌ Modern UI overlay
-- ❌ Enhanced lighting/shadows
-- ❌ Smooth movement interpolation
+- ❌ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
+- ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
+- ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
+- ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
+- ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
+- ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
+- ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
 ---
 
