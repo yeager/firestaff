@@ -20,6 +20,7 @@
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
+#include "dm1_v1_inventory_consumables_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -18721,27 +18722,25 @@ int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxInd
 }
 
 
-/* ── ReDMCSB PANEL.C F0349: Mouth click — eat/drink consumable ──
- * When inventory is open and leader hand holds a consumable (food item
- * or potion), clicking the mouth icon consumes it and applies the
- * effect to the inventory champion.
- *
- * Food items (icon indices 168..175): restore food.
- * Water containers (icon indices 8..9): restore water if charged.
- * Potions (thing type 8): apply potion effect, convert to empty flask. */
+/* -- ReDMCSB PANEL.C F0349: Mouth click --
+ * Source anchors: PANEL.C:1824-1844 gates mouth-allowed consumables;
+ * PANEL.C:1850-1917 applies potion effects and converts the potion to
+ * C20 empty flask; PANEL.C:1918-1919 applies food amounts; PANEL.C:1944
+ * plays swallow after successful consumption. */
 static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     unsigned short thing;
     int iconIndex;
     int thingType;
+    int thingIndex;
     int championIndex;
     struct ChampionState_Compat* champ;
+    DM1ConsumableChampionPc34 consumableChampion;
+    DM1ConsumableResultPc34 consumableResult;
 
     if (!state || !state->inventoryPanelActive) return 0;
 
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE) {
-        /* ReDMCSB F0349: empty hand on mouth → show food/water panel
-         * (press-and-hold behavior).  For now just show status. */
         m11_set_status(state, "MOUTH", "NOTHING IN HAND");
         return 1;
     }
@@ -18753,151 +18752,78 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
 
     iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
     thingType = THING_GET_TYPE(thing);
+    thingIndex = THING_GET_INDEX(thing);
 
-    /* Food items: icon indices 168 (apple) through 175 (dragon steak).
-     * ReDMCSB: G0242_ai_Graphic559_FoodAmounts[iconIndex - 168]. */
-    if (iconIndex >= 168 && iconIndex <= 175) {
-        /* Food amounts per ReDMCSB DATA.C G0242 */
-        static const int foodAmounts[8] = {
-            500, 600, 650, 820, 550, 350, 810, 550
-        };
-        int foodGain = foodAmounts[iconIndex - 168];
-        champ->food += foodGain;
-        if (champ->food > 2048) champ->food = 2048;
+    memset(&consumableChampion, 0, sizeof(consumableChampion));
+    consumableChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH] = (int16_t)champ->attributes[CHAMPION_ATTR_STRENGTH];
+    consumableChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = (int16_t)champ->attributes[CHAMPION_ATTR_DEXTERITY];
+    consumableChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM] = (int16_t)champ->attributes[CHAMPION_ATTR_WISDOM];
+    consumableChampion.statistic[DM1_CONSUMABLE_STAT_VITALITY] = (int16_t)champ->attributes[CHAMPION_ATTR_VITALITY];
+    consumableChampion.currentHealth = (int16_t)champ->hp.current;
+    consumableChampion.maximumHealth = (int16_t)champ->hp.maximum;
+    consumableChampion.currentStamina = (int16_t)champ->stamina.current;
+    consumableChampion.maximumStamina = (int16_t)champ->stamina.maximum;
+    consumableChampion.currentMana = (int16_t)champ->mana.current;
+    consumableChampion.maximumMana = (int16_t)champ->mana.maximum;
+    consumableChampion.food = champ->food;
+    consumableChampion.water = champ->water;
+    consumableChampion.wounds = champ->wounds;
+    consumableChampion.poisonDose = champ->poisonDose;
+    consumableChampion.shieldDefense = (int16_t)state->world.magic.partyShieldDefense;
 
-        /* Remove food item from leader hand (consumed) */
-        M11_GameView_ClearV1LeaderHandObject(state);
-        m11_set_status(state, "EAT", "FOOD CONSUMED");
-        m11_refresh_hash(state);
-        return 1;
-    }
-
-    /* Water containers: icon indices 8 (water) and 9 (waterskin).
-     * ReDMCSB: ChargeCount > 0 → restore 800 water, decrement charge. */
-    if (iconIndex >= 8 && iconIndex <= 9 && state->world.things) {
-        /* Water restores 800 units, capped at 2048 */
-        champ->water += 800;
-        if (champ->water > 2048) champ->water = 2048;
-        /* Keep container in hand (not consumed), just discharge */
-        m11_set_status(state, "DRINK", "WATER");
-        m11_refresh_hash(state);
-        return 1;
-    }
-
-    /* Potions (thing type 8): full potion effect switch.
-     * ReDMCSB PANEL.C F0349: potionType determines effect.
-     * Potion power is in sensorData/chargeCount field.
-     * After consumption, potion becomes Empty Flask (type 20). */
-    if (thingType == 8) { /* THING_TYPE_POTION */
-        /* Look up potion subtype from thing data.
-         * In DM1, potion types 6-15 each have unique effects.
-         * We use iconIndex to infer the potion type. */
-        /* Read actual potion subtype and power from thing data.
-         * DungeonPotion_Compat stores Type (potion type 0-16) and
-         * Power (0-511).  Use m11_apply_potion_effect which already
-         * handles all types with proper power scaling. */
-        int potionSubtype = -1; (void)potionSubtype;
-        int potionPower = 150; /* default if lookup fails */
-        int adjustedPower;
-
-        /* Look up potion subtype from DungeonThings */
-        if (state->world.things && state->world.things->potions) {
-            int pIdx = THING_GET_INDEX(thing);
-            if (pIdx >= 0 && pIdx < state->world.things->potionCount) {
-                potionSubtype = state->world.things->potions[pIdx].type;
-                potionPower = state->world.things->potions[pIdx].power;
+    if (thingType == THING_TYPE_JUNK && state->world.things && state->world.things->junks &&
+        thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
+        struct DungeonJunk_Compat* junk = &state->world.things->junks[thingIndex];
+        int foodIcon = dm1_inventory_junk_food_icon_from_type_pc34((int)junk->type);
+        if (iconIndex == 8 || iconIndex == 9) {
+            if (!dm1_inventory_consume_water_junk_pc34(&consumableChampion, iconIndex,
+                                                       (int)junk->chargeCount,
+                                                       &consumableResult)) {
+                m11_set_status(state, "DRINK", "EMPTY");
+                return 0;
             }
+            junk->chargeCount = (unsigned char)consumableResult.chargeCountAfter;
+            champ->water = consumableChampion.water;
+            m11_set_status(state, "DRINK", "WATER");
+            m11_refresh_hash(state);
+            return 1;
         }
-        adjustedPower = (potionPower / 25) + 8; /* 8..18 range per F0349 */
+        if (foodIcon >= 0 && dm1_inventory_consume_food_junk_pc34(&consumableChampion,
+                                                                   foodIcon,
+                                                                   &consumableResult)) {
+            champ->food = consumableChampion.food;
+            M11_GameView_ClearV1LeaderHandObject(state);
+            m11_set_status(state, "EAT", "FOOD CONSUMED");
+            m11_refresh_hash(state);
+            return 1;
+        }
+    }
 
-        if (iconIndex == 163) {
-            /* C163 = Water Flask → restore 1600 water */
-            champ->water += 1600;
-            if (champ->water > 2048) champ->water = 2048;
-            m11_set_status(state, "DRINK", "WATER FLASK");
-        } else if (iconIndex == 195) {
-            /* C195 = Empty Flask → nothing to drink */
-            m11_set_status(state, "DRINK", "EMPTY FLASK");
+    if (thingType == THING_TYPE_POTION && state->world.things && state->world.things->potions &&
+        thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
+        struct DungeonPotion_Compat* potion = &state->world.things->potions[thingIndex];
+        if (!dm1_inventory_consume_potion_pc34(&consumableChampion,
+                                               (int)potion->type,
+                                               (int)potion->power,
+                                               NULL,
+                                               0,
+                                               &consumableResult)) {
             return 0;
-        } else if (iconIndex >= 144 && iconIndex <= 162) {
-            /* Colored potions: effect based on icon offset.
-             * ReDMCSB potion types: 6=ROS(dex), 7=KU(str), 8=DANE(wis),
-             * 9=NETA(vit), 10=ANTIVENIN, 11=MON(stamina), 12=YA(shield),
-             * 13=EE(mana), 14=VI(heal), 15=WATER */
-            int potionType = (iconIndex - 144) % 10 + 6;
-            switch (potionType) {
-            case 6: /* ROS — dexterity */
-                if (champ->attributes[2] < 200)
-                    champ->attributes[2] += adjustedPower;
-                m11_set_status(state, "DRINK", "ROS POTION — DEX UP");
-                break;
-            case 7: /* KU — strength */
-                if (champ->attributes[1] < 200)
-                    champ->attributes[1] += (potionPower / 35) + 5;
-                m11_set_status(state, "DRINK", "KU POTION — STR UP");
-                break;
-            case 8: /* DANE — wisdom */
-                if (champ->attributes[3] < 200)
-                    champ->attributes[3] += adjustedPower;
-                m11_set_status(state, "DRINK", "DANE POTION — WIS UP");
-                break;
-            case 9: /* NETA — vitality */
-                if (champ->attributes[4] < 200)
-                    champ->attributes[4] += adjustedPower;
-                m11_set_status(state, "DRINK", "NETA POTION — VIT UP");
-                break;
-            case 10: /* ANTIVENIN — cure poison */
-                champ->poisonDose = 0;
-                m11_set_status(state, "DRINK", "ANTIVENIN — CURED");
-                break;
-            case 11: { /* MON — stamina */
-                int gain = champ->stamina.maximum / 4;
-                champ->stamina.current += gain;
-                if (champ->stamina.current > champ->stamina.maximum)
-                    champ->stamina.current = champ->stamina.maximum;
-                m11_set_status(state, "DRINK", "MON POTION — STAMINA");
-                break;
-            }
-            case 12: /* YA — shield defense (timed, but we just boost) */
-                m11_set_status(state, "DRINK", "YA POTION — SHIELD UP");
-                break;
-            case 13: { /* EE — mana */
-                int manaGain = adjustedPower + (adjustedPower - 8);
-                champ->mana.current += manaGain;
-                if (champ->mana.current > 900)
-                    champ->mana.current = 900;
-                if (champ->mana.current > champ->mana.maximum)
-                    champ->mana.current = champ->mana.maximum;
-                m11_set_status(state, "DRINK", "EE POTION — MANA UP");
-                break;
-            }
-            case 14: { /* VI — heal wounds */
-                int healAmt = champ->hp.maximum / 4;
-                champ->hp.current += healAmt;
-                if (champ->hp.current > champ->hp.maximum)
-                    champ->hp.current = champ->hp.maximum;
-                /* Heal random wounds */
-                if (champ->wounds) {
-                    champ->wounds &= (unsigned short)(champ->wounds - 1);
-                }
-                m11_set_status(state, "DRINK", "VI POTION — HEALED");
-                break;
-            }
-            default:
-                champ->hp.current += champ->hp.maximum / 6;
-                if (champ->hp.current > champ->hp.maximum)
-                    champ->hp.current = champ->hp.maximum;
-                m11_set_status(state, "DRINK", "POTION CONSUMED");
-                break;
-            }
-        } else {
-            /* Unknown potion icon — generic heal */
-            champ->hp.current += champ->hp.maximum / 4;
-            if (champ->hp.current > champ->hp.maximum)
-                champ->hp.current = champ->hp.maximum;
-            m11_set_status(state, "DRINK", "POTION CONSUMED");
         }
-
+        champ->attributes[CHAMPION_ATTR_STRENGTH] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH];
+        champ->attributes[CHAMPION_ATTR_DEXTERITY] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY];
+        champ->attributes[CHAMPION_ATTR_WISDOM] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM];
+        champ->attributes[CHAMPION_ATTR_VITALITY] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_VITALITY];
+        champ->hp.current = (uint16_t)consumableChampion.currentHealth;
+        champ->stamina.current = (uint16_t)consumableChampion.currentStamina;
+        champ->mana.current = (uint16_t)consumableChampion.currentMana;
+        champ->food = consumableChampion.food;
+        champ->water = consumableChampion.water;
+        champ->wounds = consumableChampion.wounds;
+        champ->poisonDose = consumableChampion.poisonDose;
+        state->world.magic.partyShieldDefense = consumableChampion.shieldDefense;
+        potion->type = (unsigned char)consumableResult.potionTypeAfter;
+        m11_set_status(state, "DRINK", "POTION CONSUMED");
         m11_refresh_hash(state);
         return 1;
     }

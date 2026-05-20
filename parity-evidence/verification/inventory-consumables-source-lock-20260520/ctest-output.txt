@@ -1,0 +1,10 @@
+Internal ctest changing into directory: /tmp/firestaff-build-inventory-consumables-rebased-20260520
+Test project /tmp/firestaff-build-inventory-consumables-rebased-20260520
+    Start 30: dm1_v1_inventory_consumables_pc34_compat
+1/2 Test #30: dm1_v1_inventory_consumables_pc34_compat ...   Passed    0.00 sec
+    Start 31: inventory_mouth_eye_routes_pc34_compat
+2/2 Test #31: inventory_mouth_eye_routes_pc34_compat .....   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.02 sec
