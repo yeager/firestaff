@@ -83,7 +83,7 @@ def main() -> int:
         )
 
     # 3. Remaining direct marker calls are allowed only in explicitly documented buckets:
-    #    generic non-EMIT tick emissions plus spell/invoke action cues whose exact
+    #    generic non-EMIT tick emissions plus INVOKE action cues whose exact
     #    original request timing/index is not source-backed here. CALM / BRANDISH /
     #    CONFUSE are source-silent in PC34 MENU.C and must not use marker fallback.
     calls = direct_marker_calls(game)
