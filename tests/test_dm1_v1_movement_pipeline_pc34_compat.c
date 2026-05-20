@@ -924,6 +924,61 @@ static void test_post_move_environment_side_effects(void)
             EXPECT_INT("post_teleporter_sensor_order_not_intermediate", result.core.enterEffects.effects[0].textIndex == 11, 0);
         }
     }
+
+    /* MOVESENS.C:810-818 deletes a group already on the party
+     * destination before destination enter sensors.  CLIKMENU.C:291-313
+     * intentionally lets an empty party overrun a group before F0267, so the
+     * same deletion has to run on the non-teleporter/non-pit path too. */
+    {
+        struct DungeonDatState_Compat gdungeon;
+        struct DungeonMapDesc_Compat gmap;
+        struct DungeonMapTiles_Compat gtiles;
+        unsigned char gsquares[5 * 5];
+        struct DungeonThings_Compat gthings;
+        unsigned short gfirstThings[1];
+        struct DungeonGroup_Compat groups[1];
+        struct DungeonSensor_Compat sensors[1];
+
+        setup_dungeon(&gdungeon, &gmap, &gtiles, gsquares, 5, 5);
+        memset(&gthings, 0, sizeof(gthings));
+        memset(groups, 0, sizeof(groups));
+        memset(sensors, 0, sizeof(sensors));
+        set_sq(gsquares, 5, 2, 1,
+            sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+        gfirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+        groups[0].next = thing_ref(THING_TYPE_SENSOR, 0);
+        sensors[0].next = THING_ENDOFLIST;
+        sensors[0].sensorType = 13;
+        sensors[0].sensorData = 77;
+        gthings.loaded = 1;
+        gthings.squareFirstThings = gfirstThings;
+        gthings.squareFirstThingCount = 1;
+        gthings.groups = groups;
+        gthings.groupCount = 1;
+        gthings.sensors = sensors;
+        gthings.sensorCount = 1;
+
+        setup_party(&party, 2, 2, DIR_NORTH, 0);
+        DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+        DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &gdungeon, &gthings, &party, NULL, &result);
+
+        EXPECT_INT("post_normal_empty_party_group_step_applied", result.core.stepApplied, 1);
+        EXPECT_INT("post_normal_empty_party_group_no_chain", result.postMove.transitioned, 0);
+        EXPECT_INT("post_normal_empty_party_group_deleted",
+            result.postMoveDestinationGroupDeleted, 1);
+        EXPECT_INT("post_normal_empty_party_group_deleted_thing",
+            result.postMoveDeletedGroupThing, thing_ref(THING_TYPE_GROUP, 0));
+        EXPECT_INT("post_normal_empty_party_group_unlinked",
+            gfirstThings[0], thing_ref(THING_TYPE_SENSOR, 0));
+        EXPECT_INT("post_normal_empty_party_group_enter_sensor_count",
+            result.core.enterEffects.count, 1);
+        EXPECT_INT("post_normal_empty_party_group_enter_sensor_text",
+            result.core.enterEffects.effects[0].textIndex, 77);
+        EXPECT_INT("post_normal_empty_party_group_x", party.mapX, 2);
+        EXPECT_INT("post_normal_empty_party_group_y", party.mapY, 1);
+    }
 }
 
 

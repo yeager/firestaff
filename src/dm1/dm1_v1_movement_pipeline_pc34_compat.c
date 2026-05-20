@@ -336,6 +336,24 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
             (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
                 dungeon, things, party->mapIndex, party->mapX, party->mapY,
                 SENSOR_EVENT_WALK_ON, &outResult->core.enterEffects);
+        } else {
+            /* Source lock: MOVESENS.C:810-818 deletes a group already on
+             * the final party destination before firing destination enter
+             * sensors.  CLIKMENU.C:291-313 skips the pre-F0267 group-block
+             * check when the party has no champions, so the non-transition
+             * empty-party collision path must still perform the F0267 group
+             * deletion/replay here, not only after pit/teleporter chains.
+             */
+            outResult->postMoveDestinationGroupDeleted =
+                pipeline_delete_group_on_square_before_enter_sensors(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    &outResult->postMoveDeletedGroupThing);
+            if (outResult->postMoveDestinationGroupDeleted) {
+                memset(&outResult->core.enterEffects, 0, sizeof(outResult->core.enterEffects));
+                (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    SENSOR_EVENT_WALK_ON, &outResult->core.enterEffects);
+            }
         }
 
         /* Source lock: CLIKMENU.C:330-346 computes movement cooldown only
