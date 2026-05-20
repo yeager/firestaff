@@ -11015,7 +11015,7 @@ int main(int argc, char** argv) {
                 int spawned;
                 int slotSubtype;
                 struct DungeonThings_Compat shootThings;
-                struct DungeonWeapon_Compat shootWeapons[4];
+                struct DungeonWeapon_Compat shootWeapons[5];
                 struct DungeonThings_Compat* savedThings;
 
                 memset(&shootThings, 0, sizeof(shootThings));
@@ -11024,8 +11024,9 @@ int main(int argc, char** argv) {
                 shootWeapons[1].type = 27; /* ARROW: class 10, KE 10 */
                 shootWeapons[2].type = 29; /* SLING: class 39, KE 20, attack 50 */
                 shootWeapons[3].type = 30; /* ROCK: class 11, KE 18 */
+                shootWeapons[4].type = 27; /* ARROW: second compatible quiver round */
                 shootThings.weapons = shootWeapons;
-                shootThings.weaponCount = 4;
+                shootThings.weaponCount = 5;
                 savedThings = menuView.world.things;
                 menuView.world.things = &shootThings;
                 menuView.world.party.direction = DIR_EAST;
@@ -11179,10 +11180,15 @@ int main(int argc, char** argv) {
                              "bow/rock ammunition class");
 
                 /* Bow + arrow spawns one kinetic projectile with source
-                 * kinetic, attack, cell, direction, and step-energy fields. */
+                 * kinetic, attack, cell, direction, and step-energy fields.
+                 * TIMELINE.C:1597-1607 then refills the empty ready hand from
+                 * compatible quiver ammunition when the SHOOT action closes. */
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_QUIVER_1] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 4);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
@@ -11204,11 +11210,38 @@ int main(int argc, char** argv) {
                             p->direction == DIR_EAST &&
                             p->cell == 1 &&
                             menuView.world.party.champions[0]
-                                .inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
+                                .inventory[CHAMPION_SLOT_HAND_LEFT] ==
+                                (unsigned short)((THING_TYPE_WEAPON << 10) | 4) &&
+                            menuView.world.party.champions[0]
+                                .inventory[CHAMPION_SLOT_QUIVER_1] == THING_NONE &&
                             menuView.world.projectileDisabledMovementTicks == 0,
                         "projectile action: SHOOT bow/arrow uses source "
-                        "kinetic attack cell direction step-energy and consumes ammo");
+                        "kinetic attack cell direction step-energy and reloads from quiver");
                 }
+
+                /* Empty ready hand still fails the immediate SHOOT branch, but
+                 * F0253's action-closure refill moves compatible quiver ammo
+                 * into the ready hand in source order: C12 first, then C07-C09. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_QUIVER_1] = THING_NONE;
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_QUIVER_3] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 4);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                probe_record(&tally, "INV_GV_339D",
+                             spawned == 0 &&
+                                 projCountAfter == projCountBefore &&
+                                 menuView.world.party.champions[0]
+                                     .inventory[CHAMPION_SLOT_HAND_LEFT] ==
+                                     (unsigned short)((THING_TYPE_WEAPON << 10) | 4) &&
+                                 menuView.world.party.champions[0]
+                                     .inventory[CHAMPION_SLOT_QUIVER_3] == THING_NONE,
+                             "projectile action: SHOOT action closure reloads compatible quiver ammo");
 
                 /* Sling + rock takes the sling ammunition branch from
                  * MENU.C:1381-1390: class 39 launcher requires class-11

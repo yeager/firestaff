@@ -16586,6 +16586,60 @@ static int m11_dm1_shoot_step_energy(int actionClass, int* outStepEnergy) {
     return 0;
 }
 
+static int m11_dm1_shoot_ammunition_matches(
+    const M11_DM1WeaponInfo* actionInfo,
+    const M11_DM1WeaponInfo* readyInfo) {
+    int actionClass;
+    int readyClass;
+    if (!actionInfo || !readyInfo) return 0;
+    actionClass = actionInfo->weaponClass;
+    readyClass = readyInfo->weaponClass;
+    if (actionClass >= 16 && actionClass <= 31) {
+        return readyClass == 10;
+    }
+    if (actionClass >= 32 && actionClass <= 47) {
+        return readyClass == 11;
+    }
+    return 0;
+}
+
+static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
+                                                 int championIndex) {
+    static const int sourceQuiverOrder[] = {
+        CHAMPION_SLOT_QUIVER_1, /* C12_SLOT_QUIVER_LINE1_1 */
+        CHAMPION_SLOT_QUIVER_3, /* C07_SLOT_QUIVER_LINE2_1 */
+        CHAMPION_SLOT_QUIVER_2, /* C08_SLOT_QUIVER_LINE1_2 */
+        CHAMPION_SLOT_QUIVER_4  /* C09_SLOT_QUIVER_LINE2_2 */
+    };
+    struct ChampionState_Compat* champ;
+    unsigned short actionThing;
+    const M11_DM1WeaponInfo* actionInfo;
+    size_t i;
+
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+    if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] != THING_NONE) return 0;
+
+    actionThing = m11_get_action_hand_thing(champ);
+    actionInfo = m11_dm1_weapon_info_for_thing(state, actionThing);
+    if (!actionInfo) return 0;
+
+    for (i = 0; i < sizeof(sourceQuiverOrder) / sizeof(sourceQuiverOrder[0]); ++i) {
+        int slot = sourceQuiverOrder[i];
+        unsigned short ammoThing = champ->inventory[slot];
+        const M11_DM1WeaponInfo* ammoInfo =
+            m11_dm1_weapon_info_for_thing(state, ammoThing);
+        if (!m11_dm1_shoot_ammunition_matches(actionInfo, ammoInfo)) continue;
+        champ->inventory[CHAMPION_SLOT_HAND_LEFT] = ammoThing;
+        champ->inventory[slot] = THING_NONE;
+        return 1;
+    }
+    return 0;
+}
+
 static int m11_dm1_projectile_launch_cell(int championCell,
                                            int direction) {
     championCell &= 3;
@@ -18033,7 +18087,6 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             const M11_DM1WeaponInfo* readyInfo =
                 m11_dm1_weapon_info_for_thing(state, readyThing);
             int actionClass;
-            int readyClass;
             int stepEnergy;
             int skillShoot;
             int shootAttack;
@@ -18044,12 +18097,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
 
             if (!actionInfo || !readyInfo) goto shoot_no_ammunition;
             actionClass = actionInfo->weaponClass;
-            readyClass = readyInfo->weaponClass;
-            if (actionClass >= 16 && actionClass <= 31) {
-                if (readyClass != 10) goto shoot_no_ammunition;
-            } else if (actionClass >= 32 && actionClass <= 47) {
-                if (readyClass != 11) goto shoot_no_ammunition;
-            } else {
+            if (!m11_dm1_shoot_ammunition_matches(actionInfo, readyInfo)) {
                 goto shoot_no_ammunition;
             }
             if (!m11_dm1_shoot_step_energy(actionClass, &stepEnergy)) {
@@ -18071,6 +18119,11 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             if (spawned) {
                 champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
             }
+            /* ReDMCSB TIMELINE.C:1597-1607 refills an empty ready hand from
+             * compatible quiver ammunition when the SHOOT action enable event
+             * closes.  M11 does not yet expose that delayed action event, so
+             * the bounded runtime mirrors the slot transaction at action end. */
+            (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s SHOOTS",
                           (unsigned int)state->world.gameTick,
@@ -18081,6 +18134,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return spawned;
 
         shoot_no_ammunition:
+            (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HAS NO AMMUNITION",
                           (unsigned int)state->world.gameTick,

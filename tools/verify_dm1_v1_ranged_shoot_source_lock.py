@@ -16,6 +16,7 @@ RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206
 MENU = RED / "MENU.C"
 CHAMPION = RED / "CHAMPION.C"
 DUNGEON = RED / "DUNGEON.C"
+TIMELINE = RED / "TIMELINE.C"
 GAME_VIEW = ROOT / "src/engine/m11_game_view.c"
 PROBE = ROOT / "probes/m11/firestaff_m11_game_view_probe.c"
 
@@ -93,6 +94,15 @@ def main() -> int:
     ])
     citations.append("MENU.C:157-465 SHOOT disabled ticks/stamina/skill/experience table entries")
 
+    require("TIMELINE.C:1597-1607", lines(TIMELINE, 1597, 1607), [
+        "ActionIndex == C032_ACTION_SHOOT",
+        "Slots[C00_SLOT_READY_HAND] == C0xFFFF_THING_NONE",
+        "F0294_CHAMPION_IsAmmunitionCompatibleWithWeapon(P0530_ui_ChampionIndex, C01_SLOT_ACTION_HAND, L0660_i_SlotIndex = C12_SLOT_QUIVER_LINE1_1)",
+        "F0301_CHAMPION_AddObjectInSlot(P0530_ui_ChampionIndex, F0300_CHAMPION_GetObjectRemovedFromSlot(P0530_ui_ChampionIndex, L0660_i_SlotIndex), C00_SLOT_READY_HAND)",
+        "L0660_i_SlotIndex = L0661_i_QuiverSlotIndex + C07_SLOT_QUIVER_LINE2_1",
+    ])
+    citations.append("TIMELINE.C:1597-1607 F0253 refills empty ready hand from compatible quiver ammo")
+
     game = GAME_VIEW.read_text(encoding="utf-8")
     probe = PROBE.read_text(encoding="utf-8")
 
@@ -110,8 +120,7 @@ def main() -> int:
         "ReDMCSB MENU.C:1363-1396 validates C01 action-hand",
         "m11_dm1_weapon_info_for_thing(state, actionThing)",
         "m11_dm1_weapon_info_for_thing(state, readyThing)",
-        "readyClass != 10",
-        "readyClass != 11",
+        "m11_dm1_shoot_ammunition_matches(actionInfo, readyInfo)",
         "m11_dm1_shoot_step_energy(actionClass, &stepEnergy)",
         "m11_dm1_shoot_skill_level(state, championIndex)",
         "shootAttack = ((int)actionInfo->shootAttack + skillShoot) << 1",
@@ -119,6 +128,7 @@ def main() -> int:
         "m11_dm1_projectile_launch_cell(championIndex & 3,",
         "m11_spawn_action_projectile_ex(",
         "champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE",
+        "m11_refill_ready_hand_after_dm1_shoot(state, championIndex)",
         "HAS NO AMMUNITION",
     ])
     require_re("m11_game_view.c PC34 no projectile movement lock", game,
@@ -132,13 +142,15 @@ def main() -> int:
         "SHOOT rejects mismatched",
         "bow/rock ammunition class",
         "SHOOT bow/arrow uses source",
-        "kinetic attack cell direction step-energy and consumes ammo",
+        "kinetic attack cell direction step-energy and reloads from quiver",
         "p->kineticEnergy == 60",
         "p->attack == 106",
         "p->stepEnergy == 4",
         "p->direction == DIR_EAST",
         "p->cell == 1",
         "projectileDisabledMovementTicks == 0",
+        "INV_GV_339D",
+        "SHOOT action closure reloads compatible quiver ammo",
         "INV_GV_339B",
         "SHOOT sling/rock uses source",
         "p->kineticEnergy == 38",
@@ -147,7 +159,7 @@ def main() -> int:
         "SHOOT rejects mismatched",
         "sling/arrow ammunition class",
     ])
-    citations.append("probes/m11/firestaff_m11_game_view_probe.c INV_GV_338/339A/339/339B/339C SHOOT invariants")
+    citations.append("probes/m11/firestaff_m11_game_view_probe.c INV_GV_338/339A/339/339D/339B/339C SHOOT invariants")
 
     print("DM1_V1_RANGED_SHOOT_SOURCE_LOCK_VERIFIED")
     for c in citations:
