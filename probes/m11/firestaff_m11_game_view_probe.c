@@ -11210,6 +11210,60 @@ int main(int argc, char** argv) {
                         "kinetic attack cell direction step-energy and consumes ammo");
                 }
 
+                /* Sling + rock takes the sling ammunition branch from
+                 * MENU.C:1381-1390: class 39 launcher requires class-11
+                 * ammo, step energy is 39 - C032_CLASS_FIRST_SLING, and
+                 * F0326 uses the same champion-cell launch formula. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_ACTION_HAND] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_RIGHT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                {
+                    const struct ProjectileInstance_Compat* p =
+                        (projCountAfter > projCountBefore)
+                            ? &menuView.world.projectiles.entries[projCountBefore]
+                            : NULL;
+                    probe_record(
+                        &tally, "INV_GV_339B",
+                        spawned == 1 &&
+                            projCountAfter == projCountBefore + 1 && p &&
+                            p->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+                            p->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW &&
+                            p->kineticEnergy == 38 &&
+                            p->attack == 106 &&
+                            p->stepEnergy == 7 &&
+                            p->direction == DIR_EAST &&
+                            p->cell == 1 &&
+                            menuView.world.party.champions[0]
+                                .inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
+                            menuView.world.projectileDisabledMovementTicks == 0,
+                        "projectile action: SHOOT sling/rock uses source "
+                        "kinetic attack cell direction step-energy and consumes ammo");
+                }
+
+                /* Sling rejects bow ammunition just as bow rejected rock. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                probe_record(&tally, "INV_GV_339C",
+                             spawned == 0 &&
+                                 projCountAfter == projCountBefore,
+                             "projectile action: SHOOT rejects mismatched "
+                             "sling/arrow ammunition class");
+
                 /* THROW with the action-hand holding an item
                  * spawns a kinetic projectile. */
                 menuView.world.party.champions[0]

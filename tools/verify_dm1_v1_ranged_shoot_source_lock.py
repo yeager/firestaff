@@ -139,8 +139,15 @@ def main() -> int:
         "p->direction == DIR_EAST",
         "p->cell == 1",
         "projectileDisabledMovementTicks == 0",
+        "INV_GV_339B",
+        "SHOOT sling/rock uses source",
+        "p->kineticEnergy == 38",
+        "p->stepEnergy == 7",
+        "INV_GV_339C",
+        "SHOOT rejects mismatched",
+        "sling/arrow ammunition class",
     ])
-    citations.append("probes/m11/firestaff_m11_game_view_probe.c INV_GV_338/339A/339 SHOOT invariants")
+    citations.append("probes/m11/firestaff_m11_game_view_probe.c INV_GV_338/339A/339/339B/339C SHOOT invariants")
 
     print("DM1_V1_RANGED_SHOOT_SOURCE_LOCK_VERIFIED")
     for c in citations:

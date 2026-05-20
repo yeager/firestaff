@@ -649,6 +649,44 @@ static void test_ranged_shoot_no_bow_ammunition(void) {
     PASS();
 }
 
+/* -- Test: sling SHOOT projectile parameters and ammo class gate ----- */
+static void test_ranged_shoot_sling_ammunition(void) {
+    TEST(ranged_shoot_sling_ammunition);
+
+    DM1_WeaponInfo sling = {0};
+    DM1_WeaponInfo rock = {0};
+    DM1_WeaponInfo arrow = {0};
+    DM1_RangedShootResult out;
+
+    sling.weaponClass = 39;
+    sling.kineticEnergy = 20;
+    sling.attributes = 0x2032;
+    rock.weaponClass = DM1_WEAPON_CLASS_SLING_AMMUNITION;
+    rock.kineticEnergy = 18;
+
+    CHECK(dm1_ranged_shoot_resolve_pc34(&sling, &rock, 0x3333, 3, 2, 6, &out) == 1,
+          "sling+rock should perform SHOOT");
+    CHECK(out.actionPerformed == 1, "sling action should be performed");
+    CHECK(out.noAmmunition == 0, "sling action should not report no ammo");
+    CHECK(out.projectileThing == 0x3333, "ready-hand rock should become projectile thing");
+    CHECK(out.projectileCell == 3, "champion cell 3/south launch cell should match F0326 formula");
+    CHECK(out.projectileDirection == 2, "sling projectile direction should be south");
+    CHECK(out.kineticEnergy == 38, "sling kinetic energy should add launcher and rock");
+    CHECK(out.attack == 112, "sling attack should be (shoot-attack low byte + skill) << 1");
+    CHECK(out.stepEnergy == 7, "sling class 39 should produce step energy 7");
+
+    arrow.weaponClass = DM1_WEAPON_CLASS_BOW_AMMUNITION;
+    arrow.kineticEnergy = 10;
+
+    CHECK(dm1_ranged_shoot_resolve_pc34(&sling, &arrow, 0x4444, 3, 2, 6, &out) == 0,
+          "sling+arrow should fail compatibility gate");
+    CHECK(out.actionPerformed == 0, "failed sling SHOOT should not perform action");
+    CHECK(out.noAmmunition == 1, "failed sling SHOOT should report no ammunition");
+    CHECK(out.projectileThing == -1, "failed sling SHOOT should not produce projectile thing");
+
+    PASS();
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 int main(void) {
     printf("=== DM1 V1 Combat System — Source-locked CTest Gate ===\n");
@@ -678,6 +716,7 @@ int main(void) {
     test_lethal_pending();
     test_ranged_shoot_bow_crossbow();
     test_ranged_shoot_no_bow_ammunition();
+    test_ranged_shoot_sling_ammunition();
 
     printf("\n=== Results: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
