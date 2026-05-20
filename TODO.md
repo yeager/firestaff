@@ -144,7 +144,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Object storage sensor (C013 — place item, get effect)
 - ✅ Object exchanger sensor (C016 — swap item for effect)
 - ❌ AND/OR gate sensor (C005 — multi-condition trigger)
-- ❌ Countdown sensor (C006 — timer-based trigger)
+- ✅ Countdown sensor (C006 — timer-based trigger)
 - ❌ Projectile launcher sensors (C007-C010, C014-C015)
 - ❌ End game sensor (C018)
 - ❌ Floor party-on-stairs sensor (C005)
