@@ -164,7 +164,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Save game on quit (DM1_SaveGame)
 - ✅ Load game on Resume (DM1_LoadGame)
 - ❌ Auto-save on level change
-- ❌ Multiple save slots
+- 🔧 Multiple save slots — M11 slot-core bookkeeping is source-locked and hardened; full UI/runtime multiple-slot flow remains pending
 
 ### Audio
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
