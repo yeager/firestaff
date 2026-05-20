@@ -269,6 +269,55 @@ static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
               "action hand stores the placed chest");
 }
 
+static void test_object_description_layout_source_zones(void) {
+    int x = -1, y = -1, w = -1, h = -1;
+    const char* evidence = M11_GameView_GetV1ObjectDescriptionLayoutEvidence();
+
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionPanelGraphicId(), 20,
+              "object description uses C020 panel-empty graphic");
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleGraphicId(), 29,
+              "object description uses C029 circle graphic");
+
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleZoneId(), 504,
+              "object description circle source zone is C504");
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleZone(&x, &y, &w, &h), 1,
+              "C504 circle zone resolves");
+    ASSERT_EQ(x, 103, "C504 circle x follows layout-696 F0635");
+    ASSERT_EQ(y, 53, "C504 circle y follows layout-696 F0635");
+    ASSERT_EQ(w, 32, "C029 circle width resolves to 32 pixels");
+    ASSERT_EQ(h, 27, "C029 circle height resolves to 27 pixels");
+
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionIconZoneId(), 505,
+              "object description icon source zone is C505");
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionIconZone(&x, &y, &w, &h), 1,
+              "C505 icon zone resolves");
+    ASSERT_EQ(x, 111, "C505 icon x follows layout-696 F0635");
+    ASSERT_EQ(y, 59, "C505 icon y follows layout-696 F0635");
+    ASSERT_EQ(w, 16, "C505 icon width is one object-icon cell");
+    ASSERT_EQ(h, 16, "C505 icon height is one object-icon cell");
+
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionNameZoneId(), 506,
+              "object description name source zone is C506");
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionNameZoneForText(80, 7, &x, &y, &w, &h), 1,
+              "C506 text zone resolves for an 80x7 measured name");
+    ASSERT_EQ(x, 134, "C506 name x follows TEXT.C/F0635");
+    ASSERT_EQ(y, 64, "C506 name top follows type-8 vertical centering");
+    ASSERT_EQ(w, 80, "C506 keeps caller-measured text width");
+    ASSERT_EQ(h, 7, "C506 keeps caller-measured text height");
+
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionContinuationOrigin(&x, &y), 1,
+              "C556 continuation text origin resolves");
+    ASSERT_EQ(x, 108, "C556 form-feed x includes one-pixel margin");
+    ASSERT_EQ(y, 59, "C556 form-feed y includes one-pixel margin");
+
+    ASSERT_TRUE(evidence && strstr(evidence, "PANEL.C:1136-1145") != NULL,
+                "layout evidence cites object-description panel blits");
+    ASSERT_TRUE(strstr(evidence, "TEXT.C:1937-1950") != NULL,
+                "layout evidence cites C506 text zone resolver");
+    ASSERT_TRUE(strstr(evidence, "COORD.C:2052-2412") != NULL,
+                "layout evidence cites F0635 layout resolver");
+}
+
 static void test_eye_panel_weapon_attribute_flags(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -404,6 +453,7 @@ int main(void) {
     test_open_chest_runtime_routes_and_clicks();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_eye_panel_potion_power_prefix_runtime();
+    test_object_description_layout_source_zones();
     test_eye_panel_weapon_attribute_flags();
     test_eye_panel_champion_stats_and_skills();
 

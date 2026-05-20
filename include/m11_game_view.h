@@ -1035,6 +1035,28 @@ int M11_GameView_GetV1InventoryPanelZone(int* outX,
                                           int* outY,
                                           int* outW,
                                           int* outH);
+int M11_GameView_GetV1ObjectDescriptionPanelGraphicId(void);
+int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void);
+int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void);
+int M11_GameView_GetV1ObjectDescriptionCircleZone(int* outX,
+                                                   int* outY,
+                                                   int* outW,
+                                                   int* outH);
+int M11_GameView_GetV1ObjectDescriptionIconZoneId(void);
+int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
+                                                 int* outY,
+                                                 int* outW,
+                                                 int* outH);
+int M11_GameView_GetV1ObjectDescriptionNameZoneId(void);
+int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
+                                                        int textPixelHeight,
+                                                        int* outX,
+                                                        int* outY,
+                                                        int* outW,
+                                                        int* outH);
+int M11_GameView_GetV1ObjectDescriptionContinuationOrigin(int* outX,
+                                                           int* outY);
+const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void);
 int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void);
 int M11_GameView_GetV1InventorySourceSlotBoxZoneId(int sourceSlotBoxIndex);
 int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,

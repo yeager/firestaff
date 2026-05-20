@@ -10420,6 +10420,10 @@ enum {
      * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
     M11_GFX_PANEL_EMPTY = 20,
 
+    /* Object description circle (graphic 29 in original DM1).
+     * PANEL.C F0342 blits it into C504_ZONE_OBJECT_DESCRIPTION_CIRCLE. */
+    M11_GFX_OBJECT_DESCRIPTION_CIRCLE = 29,
+
     /* Open scroll panel (graphic 23 in original CSB/DM).
      * Blitted into C101_ZONE_PANEL by PANEL.C F0341 before the decoded
      * TextString lines are rendered in the scroll font. */
@@ -19110,6 +19114,81 @@ int M11_GameView_GetV1InventoryPanelZone(int* outX,
     if (outW) *outW = 144;
     if (outH) *outH = 73;
     return 1;
+}
+
+int M11_GameView_GetV1ObjectDescriptionPanelGraphicId(void) {
+    /* PANEL.C F0342 uses C020_GRAPHIC_PANEL_EMPTY before object details. */
+    return M11_GFX_PANEL_EMPTY;
+}
+
+int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void) {
+    return M11_GFX_OBJECT_DESCRIPTION_CIRCLE;
+}
+
+int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void) {
+    return 504;
+}
+
+int M11_GameView_GetV1ObjectDescriptionCircleZone(int* outX,
+                                                   int* outY,
+                                                   int* outW,
+                                                   int* outH) {
+    /* ReDMCSB PANEL.C:1143-1145 blits C029 to C504.
+     * layout-696 C504 resolves a 32x27 circle bitmap to x=103,y=53. */
+    if (outX) *outX = 103;
+    if (outY) *outY = 53;
+    if (outW) *outW = 32;
+    if (outH) *outH = 27;
+    return 1;
+}
+
+int M11_GameView_GetV1ObjectDescriptionIconZoneId(void) {
+    return 505;
+}
+
+int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
+                                                 int* outY,
+                                                 int* outW,
+                                                 int* outH) {
+    /* PANEL.C:1198-1200 draws the object icon into C505. */
+    if (outX) *outX = 111;
+    if (outY) *outY = 59;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
+
+int M11_GameView_GetV1ObjectDescriptionNameZoneId(void) {
+    return 506;
+}
+
+int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
+                                                        int textPixelHeight,
+                                                        int* outX,
+                                                        int* outY,
+                                                        int* outW,
+                                                        int* outH) {
+    if (textPixelWidth <= 0 || textPixelHeight <= 0) return 0;
+    /* COORD.C F0635 type-8 zone math for layout-696 C506 under C101:
+     * x=134, y=68-((textPixelHeight+1)/2), width/height clipped to the
+     * caller-measured text. TEXT.C F0648 then prints at the zone bottom. */
+    if (outX) *outX = 134;
+    if (outY) *outY = 68 - ((textPixelHeight + 1) / 2);
+    if (outW) *outW = textPixelWidth;
+    if (outH) *outH = textPixelHeight;
+    return 1;
+}
+
+int M11_GameView_GetV1ObjectDescriptionContinuationOrigin(int* outX,
+                                                           int* outY) {
+    /* F0335 form-feed path calls F0636 on C556 with a 1-pixel margin. */
+    if (outX) *outX = 108;
+    if (outY) *outY = 59;
+    return 1;
+}
+
+const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void) {
+    return "ReDMCSB source lock: PANEL.C:172-223 F0335 form-feed resets text origin through C556_ZONE_OBJECT_DESCRIPTION; PANEL.C:1136-1145 F0342 enters C03_PANEL_OBJECT_DESCRIPTION, blits C020 panel to C101 and C029 circle to C504; PANEL.C:1198-1200 prints object name in C506 and object icon in C505; TEXT.C:1937-1950 F0648 measures text and resolves C506 through COORD.C F0635; COORD.C:2052-2412 F0635 resolves layout records; COORD.C:2434-2448 F0636 adds the 1-pixel text margin; DEFS.H:3873-3875,3925 names C504/C505/C506/C556; DATA.C:316 and data/zones_h_reconstruction.json layout-696 records provide the panel/circle/icon/text geometry.";
 }
 
 typedef struct M11_V1InventorySlotZone_ {
