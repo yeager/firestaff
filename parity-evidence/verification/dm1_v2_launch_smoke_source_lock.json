@@ -1,0 +1,59 @@
+{
+  "anchors": [
+    {
+      "file": "GAMELOOP.C",
+      "line": 164,
+      "needle": "G0321_B_StopWaitingForPlayerInput = C0_FALSE",
+      "text": "G0321_B_StopWaitingForPlayerInput = C0_FALSE;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 219,
+      "needle": "G0301_B_GameTimeTicking",
+      "text": "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2045,
+      "needle": "void F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "void F0380_COMMAND_ProcessQueue_CPSC("
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2151,
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2155,
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 238,
+      "needle": "C001_COMMAND_TURN_LEFT",
+      "text": "#define C001_COMMAND_TURN_LEFT                                                1"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 243,
+      "needle": "C006_COMMAND_MOVE_LEFT",
+      "text": "#define C006_COMMAND_MOVE_LEFT                                                6"
+    }
+  ],
+  "errors": [],
+  "evidenceImpact": {
+    "completionMatrixGap": "Phase 1 required a deterministic smoke path for launch V2, render first frame, process one input tick, and exit without making V1 the V2 presentation route.",
+    "verifiedCompletionPercent": null
+  },
+  "scope": "DM1 V2 Phase-1 headless launch-smoke: M12 V2.1 launch intent plus one runtime input tick",
+  "status": "passed"
+}

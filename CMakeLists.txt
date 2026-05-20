@@ -900,6 +900,16 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_dm1_v2_launch_smoke_pc34
+        tests/test_dm1_v2_launch_smoke_pc34.c
+        src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_dm1_v2_launch_smoke_pc34 PRIVATE firestaff_m12)
     add_executable(test_dm1_v2_hud_overlay_pc34
         tests/test_dm1_v2_hud_overlay_pc34.c
         src/dm1v2/dm1_v2_hud_overlay_pc34.c
@@ -945,6 +955,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_runtime_shell_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_camera_controller_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_launch_smoke_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_lighting_dynamic_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
@@ -984,6 +995,14 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_movement_command_adapter_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_movement_command_adapter_source_lock.py
+    )
+    add_test(
+        NAME dm1_v2_launch_smoke_pc34
+        COMMAND test_dm1_v2_launch_smoke_pc34
+    )
+    add_test(
+        NAME dm1_v2_launch_smoke_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_launch_smoke_source_lock.py
     )
     add_test(
         NAME dm1_v2_hud_overlay_pc34
