@@ -79,12 +79,18 @@ typedef struct {
     M11_ViewCell viewCell;          /* which cell was clicked */
     int wallSensorTriggered;        /* F0372: front wall sensor activated */
     int objectGrabbed;              /* F0373: picked up an object */
+    int pileTopObjectId;            /* G0292_aT_PileTopObject[viewCell] */
     int objectThrown;               /* F0374: threw/placed an object */
     int creatureAttacked;           /* F0375: attack in viewport */
     int targetMapX;                 /* world coords of click target */
     int targetMapY;
     int stopWaitingForInput;        /* G0321 flag set */
 } M11_ViewportClickResult;
+
+typedef struct {
+    uint8_t grabbableCellMask;
+    int pileTopObjectId[DM1_VIEW_CELL_COUNT];
+} M11_ViewportGrabbableState;
 
 /*
  * Initialize click routing state.
@@ -156,13 +162,28 @@ M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask);
 
+M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_state(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty,
+    const M11_ViewportGrabbableState *grabbableState);
+
+void m11_viewport_grabbable_init(M11_ViewportGrabbableState *state);
+void m11_viewport_grabbable_clear(M11_ViewportGrabbableState *state);
+int m11_viewport_grabbable_set_pile_top(M11_ViewportGrabbableState *state,
+                                        M11_ViewCell cell,
+                                        int pileTopObjectId);
+int m11_viewport_grabbable_pile_top(
+    const M11_ViewportGrabbableState *state, M11_ViewCell cell);
+
 /*
  * Source evidence string.
  */
 const char *m11_viewport_click_source_evidence(void);
 
 #define DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell) ((uint8_t)(1u << (cell)))
+#define DM1_VIEWPORT_GRABBABLE_NO_CELLS ((uint8_t)0x00u)
 #define DM1_VIEWPORT_GRABBABLE_ALL_CELLS ((uint8_t)0x0fu)
+#define DM1_VIEWPORT_NO_PILE_TOP_OBJECT (-1)
 
 #ifdef __cplusplus
 }

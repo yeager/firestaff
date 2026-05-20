@@ -33,6 +33,52 @@
 static const int s_dirStepEast[4]  = { 0, 1, 0, -1 }; /* N, E, S, W */
 static const int s_dirStepNorth[4] = { -1, 0, 1, 0 };
 
+static int is_valid_view_cell(M11_ViewCell cell)
+{
+    return cell >= DM1_VIEW_CELL_FRONT_LEFT && cell < DM1_VIEW_CELL_COUNT;
+}
+
+void m11_viewport_grabbable_clear(M11_ViewportGrabbableState *state)
+{
+    if (!state) return;
+    state->grabbableCellMask = DM1_VIEWPORT_GRABBABLE_NO_CELLS;
+    for (int i = 0; i < DM1_VIEW_CELL_COUNT; ++i) {
+        state->pileTopObjectId[i] = DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
+    }
+}
+
+void m11_viewport_grabbable_init(M11_ViewportGrabbableState *state)
+{
+    m11_viewport_grabbable_clear(state);
+}
+
+int m11_viewport_grabbable_set_pile_top(M11_ViewportGrabbableState *state,
+                                        M11_ViewCell cell,
+                                        int pileTopObjectId)
+{
+    if (!state || !is_valid_view_cell(cell)) return 0;
+    state->pileTopObjectId[cell] = pileTopObjectId;
+    if (pileTopObjectId == DM1_VIEWPORT_NO_PILE_TOP_OBJECT) {
+        state->grabbableCellMask &=
+            (uint8_t)~DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell);
+    } else {
+        state->grabbableCellMask |= DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell);
+    }
+    return 1;
+}
+
+int m11_viewport_grabbable_pile_top(
+    const M11_ViewportGrabbableState *state, M11_ViewCell cell)
+{
+    if (!state || !is_valid_view_cell(cell)) {
+        return DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
+    }
+    if (!(state->grabbableCellMask & DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell))) {
+        return DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
+    }
+    return state->pileTopObjectId[cell];
+}
+
 void m11_click_init(M11_ClickState *s)
 {
     memset(s, 0, sizeof(*s));
@@ -149,7 +195,7 @@ M11_ViewportClickResult m11_viewport_resolve_click(
 {
     return m11_viewport_resolve_click_with_grabbable_mask(
         mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
-        DM1_VIEWPORT_GRABBABLE_ALL_CELLS);
+        DM1_VIEWPORT_GRABBABLE_NO_CELLS);
 }
 
 M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
@@ -158,6 +204,7 @@ M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
 {
     M11_ViewportClickResult result;
     memset(&result, 0, sizeof(result));
+    result.pileTopObjectId = DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
 
     /* Determine view cell from click position within 224x136 viewport.
      * F0372/F0373: cells 0/1 are near (party square), 2/3 are far (front).
@@ -211,6 +258,22 @@ M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
     return result;
 }
 
+M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_state(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty,
+    const M11_ViewportGrabbableState *grabbableState)
+{
+    M11_ViewportClickResult result = m11_viewport_resolve_click_with_grabbable_mask(
+        mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
+        grabbableState ? grabbableState->grabbableCellMask
+                       : DM1_VIEWPORT_GRABBABLE_NO_CELLS);
+    if (result.objectGrabbed) {
+        result.pileTopObjectId =
+            m11_viewport_grabbable_pile_top(grabbableState, result.viewCell);
+    }
+    return result;
+}
+
 const char *m11_viewport_click_source_evidence(void)
 {
     return
@@ -226,8 +289,8 @@ const char *m11_viewport_click_source_evidence(void)
         "  F0267_MOVE_GetMoveResult_CPSCE, then leader-hand placement.\n"
         "CLIKVIEW.C:406-438: empty-hand floor pickup is reached only after\n"
         "  G2210/G0291 dungeon-view clickable box hit for cells 0..3.\n"
-        "DUNVIEW.C:5113-5165: F0115 creates/extends grabbable object zones\n"
-        "  while rendering visible object piles.\n"
+        "DUNVIEW.C:5113-5178: F0115 creates/extends grabbable object zones\n"
+        "  while rendering visible object piles, then records pile-top object.\n"
         "CLIKVIEW.C F0374: throw/put object.\n"
         "CLIKVIEW.C F0375: attack creature.\n"
         "CLIKMENU.C F0365/F0366: turn/step dispatch from movement arrows.\n"
