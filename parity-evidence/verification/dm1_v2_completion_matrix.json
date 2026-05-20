@@ -14,6 +14,8 @@
     "dm1_v2_hud_overlay_source_lock",
     "dm1_v2_item_render_pc34",
     "dm1_v2_item_render_source_lock",
+    "dm1_v2_launch_smoke_pc34",
+    "dm1_v2_launch_smoke_source_lock",
     "dm1_v2_lighting_dynamic_pc34",
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
@@ -53,6 +55,8 @@
     "dm1_v2_hud_overlay_source_lock",
     "dm1_v2_item_render_pc34",
     "dm1_v2_item_render_source_lock",
+    "dm1_v2_launch_smoke_pc34",
+    "dm1_v2_launch_smoke_source_lock",
     "dm1_v2_lighting_dynamic_pc34",
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
@@ -68,5 +72,5 @@
   ],
   "status": "failed",
   "testCount": 0,
-  "toolCount": 35
+  "toolCount": 36
 }
