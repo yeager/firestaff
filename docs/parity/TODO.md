@@ -113,7 +113,7 @@ Fontanel has already documented **93 bugs + 108 changes** across 9 game versions
 - [ ] Scrape dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm for initial data
 - [ ] Code side: `bug_flags_compat` module, bit-mask (128+ flags, not just 64)
 - [ ] Per-flag activation check: `if (BUG_ACTIVE(BUG0_02)) { original_behavior } else { fixed_behavior }`
-- [ ] Save files store their profile, loading warns on profile mismatch
+- [ ] Save files store their profile, loading warns on profile mismatch — DM1 save profile hash storage and RESUME mismatch warning source-locked; full bug-toggle profile persistence still pending
 - [ ] Replay determinism requires identical flags, bake them into the TickStreamRecord world hash
 - [ ] Changes must also be toggleable, not just bugs
 
