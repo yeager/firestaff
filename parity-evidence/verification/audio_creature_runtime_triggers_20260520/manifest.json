@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-05-20T11:24:00+02:00",
+  "worker_branch": "worker/audio-creature-runtime-triggers-20260520",
+  "worktree": "/home/trv2/work/firestaff-worktrees/audio-creature-runtime-triggers-20260520",
+  "base_mirror": "/home/trv2/work/firestaff",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_line_ranges": [
+    {
+      "path": "GROUP.C",
+      "ranges": [
+        "260-281",
+        "1668-1745",
+        "1788-1818"
+      ]
+    },
+    {
+      "path": "MOVESENS.C",
+      "ranges": [
+        "830-854",
+        "984-995"
+      ]
+    },
+    {
+      "path": "DUNGEON.C",
+      "ranges": [
+        "667-753"
+      ]
+    },
+    {
+      "path": "DEFS.H",
+      "ranges": [
+        "100-133"
+      ]
+    },
+    {
+      "path": "SOUND.C",
+      "ranges": [
+        "1475-1640"
+      ]
+    }
+  ],
+  "changed_files": [
+    "CMakeLists.txt",
+    "src/engine/m11_game_view.c",
+    "probes/m11/firestaff_m11_creature_runtime_audio_probe.c",
+    "parity-evidence/verification/audio_creature_runtime_triggers_20260520/analysis.md",
+    "parity-evidence/verification/audio_creature_runtime_triggers_20260520/manifest.json"
+  ],
+  "verification": [
+    {
+      "command": "cmake -S \"$wt\" -B \"$build\" -DCMAKE_BUILD_TYPE=Release && cmake --build \"$build\" --target firestaff_m11_creature_runtime_audio_probe test_dm1_v1_creature_sound_pc34_compat firestaff_m11_audio_probe -j2",
+      "status": "passed"
+    },
+    {
+      "command": "\"$build\"/firestaff_m11_creature_runtime_audio_probe",
+      "status": "passed",
+      "summary": "11/11 invariants passed"
+    },
+    {
+      "command": "\"$build\"/test_dm1_v1_creature_sound_pc34_compat",
+      "status": "passed",
+      "summary": "33 passed, 0 failed"
+    },
+    {
+      "command": "\"$build\"/firestaff_m11_audio_probe",
+      "status": "passed",
+      "summary": "9/9 invariants passed"
+    },
+    {
+      "command": "ctest --test-dir \"$build\" -R \"firestaff_m11_creature_runtime_audio_probe|dm1_v1_creature_sound_source_lock|m11_audio\" --output-on-failure",
+      "status": "passed",
+      "summary": "3/3 tests passed"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed"
+    },
+    {
+      "command": "high-signal rg secret scan over git diff excluding build-audio-creature-runtime-triggers",
+      "status": "passed",
+      "summary": "no matches"
+    }
+  ],
+  "notes": [
+    "No push performed",
+    "TODO not marked complete",
+    "No DANNESBURK paths used",
+    "No unsupported ambient or party-footstep behavior added"
+  ]
+}

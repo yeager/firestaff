@@ -17,6 +17,7 @@
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_creature_sound_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -953,6 +954,41 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
     }
     (void)fallbackMarker;
     (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
+}
+
+static void m11_audio_emit_creature_attack_sound(M11_GameViewState* state,
+                                                 int creatureType,
+                                                 int mapX,
+                                                 int mapY) {
+    int soundIndex;
+    if (!state) {
+        return;
+    }
+    (void)mapX;
+    (void)mapY;
+    soundIndex = DM1_CreatureSound_AttackIndexForType(creatureType, 0);
+    if (soundIndex != DM1_SND_NONE) {
+        m11_audio_emit_source_sound(state, soundIndex,
+                                    M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
+    }
+}
+
+static void m11_audio_emit_creature_movement_sound(M11_GameViewState* state,
+                                                   int creatureType,
+                                                   int mapX,
+                                                   int mapY) {
+    int soundIndex;
+    if (!state) {
+        return;
+    }
+    (void)mapX;
+    (void)mapY;
+    soundIndex = DM1_CreatureSound_MovementIndexForType(creatureType,
+                                                        state->resting);
+    if (soundIndex != DM1_SND_NONE) {
+        m11_audio_emit_source_sound(state, soundIndex,
+                                    M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
+    }
 }
 
 static void m11_audio_emit_for_emission(M11_GameViewState* state,
@@ -4085,7 +4121,9 @@ static int m11_check_group_death_and_drop(
 /* Deal autonomous creature damage to the party. */
 static void m11_creature_attack_party(
     M11_GameViewState* state,
-    const struct DungeonGroup_Compat* group) {
+    const struct DungeonGroup_Compat* group,
+    int mapX,
+    int mapY) {
     const struct CreatureBehaviorProfile_Compat* profile;
     int creatureCount;
     int targetChamp;
@@ -4211,6 +4249,7 @@ static void m11_creature_attack_party(
                       m11_creature_name(group->creatureType),
                       damage);
         M11_GameView_NotifyDamageFlash(state, group->creatureType);
+        m11_audio_emit_creature_attack_sound(state, group->creatureType, mapX, mapY);
     }
 }
 
@@ -4260,7 +4299,7 @@ static void m11_process_one_creature_group(
         /* Attack cadence: only attack every attackTicks ticks */
         if (profile->attackTicks > 0 &&
             (state->world.gameTick % (uint32_t)profile->attackTicks) == 0u) {
-            m11_creature_attack_party(state, group);
+            m11_creature_attack_party(state, group, groupX, groupY);
         }
         return;
     }
@@ -4280,6 +4319,7 @@ static void m11_process_one_creature_group(
     {
         int newX, newY;
         if (m11_creature_try_move(state, groupThing, groupX, groupY, &newX, &newY)) {
+            m11_audio_emit_creature_movement_sound(state, group->creatureType, newX, newY);
             /* Check if creature arrived at party square */
             if (newX == state->world.party.mapX &&
                 newY == state->world.party.mapY) {

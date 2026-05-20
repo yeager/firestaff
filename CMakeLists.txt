@@ -297,6 +297,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_audio_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M11 creature attack/movement runtime source-index audio probe
+add_executable(firestaff_m11_creature_runtime_audio_probe probes/m11/firestaff_m11_creature_runtime_audio_probe.c)
+target_link_libraries(firestaff_m11_creature_runtime_audio_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_creature_runtime_audio_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 title-song runtime source-lock probe (SONG.DAT only; no generic SFX lane)
 add_executable(firestaff_m11_pass54_song_runtime_probe probes/m11/firestaff_m11_pass54_song_runtime_probe.c)
 target_link_libraries(firestaff_m11_pass54_song_runtime_probe PRIVATE firestaff_m11 firestaff_m10)
@@ -1169,6 +1176,11 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
+    )
+
+    add_test(
+        NAME firestaff_m11_creature_runtime_audio_probe
+        COMMAND firestaff_m11_creature_runtime_audio_probe
     )
 
     add_test(
