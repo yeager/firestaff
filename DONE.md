@@ -111,6 +111,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Champion death detection
 - ✅ Resurrection system (dm1_v1_resurrection_pc34_compat)
 - ✅ Champion stat screen current-value coverage — inventory eye panel is source-locked to F0351-style skills/statistics display data
+- ✅ Champion panel HP/stamina/mana numeric status-value formatting and zone routing are source-locked from CHAMDRAW.C F0289/F0290 (d504de4c)
 - ✅ Champion stamina regeneration — source-locked to F0331 food/water, resting, idle-delay, max-stamina amount, and mana-regeneration stamina cost; no direct load factor in regeneration path
 
 ### Inventory & Items
