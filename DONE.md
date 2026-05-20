@@ -79,6 +79,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Shield defense bonus in combat — hand-slot shield defense now includes source-locked F0312 hand strength plus armor defense in F0313 wound defense
 - ✅ Weapon broken flag display is source-locked in the inventory eye panel; ReDMCSB exposes WEAPON.Broken as an item-description attribute and no DM1 V1 runtime weapon-breakage write path was found
 - ✅ Poison damage over time — creature PoisonAttack → F0322 immediate damage, 36-tick follow-up scheduling, event-count decrement, and Vitality-adjusted gate are source-locked
+- ✅ Ranged weapon actions (SHOOT with bow/crossbow/sling) — ammunition class validation, runtime projectile launch, and F0253 ready-hand reload from compatible quiver ammunition are source-locked; M11 mirrors the refill at bounded action end until the exact delayed action-enable event is exposed (d000fd99)
 
 ### Spell System
 
