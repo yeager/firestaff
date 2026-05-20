@@ -1,0 +1,81 @@
+{
+  "schema": "firestaff.inventory_key_usage_door_source_lock_20260520.v1",
+  "timestampUtc": "2026-05-20T16:28:00Z",
+  "status": "source_locked_blocked_no_direct_key_on_door_route",
+  "scope": "DM1 V1 Inventory & Items TODO: Key usage (use key on locked door)",
+  "worktree": "/home/trv2/work/firestaff-worktrees/inventory-key-usage-source-lock-20260520-160633",
+  "branch": "worker/inventory-key-usage-source-lock-20260520-160633",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "conclusion": "No direct DM1 V1 key-on-locked-door behavior is source-backed in the audited ReDMCSB PC click/command/sensor/door route. Do not invent a key-door action; keys remain wall-sensor/object-mechanism behavior unless another primary source proves otherwise.",
+  "sourceAnchors": [
+    {
+      "file": "COMMAND.C",
+      "lines": "2322-2324",
+      "evidence": "C080 dungeon viewport clicks dispatch to CLIKVIEW.C:F0377_COMMAND_ProcessType80_ClickInDungeonView."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "365-390",
+      "evidence": "Front-door click toggles only when the leader hand is empty, DOOR->Button is set, and the door-button/wall-ornament zone is hit; it schedules C10_EVENT_DOOR/C02_EFFECT_TOGGLE."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "391-401",
+      "evidence": "When the square ahead is a door and the leader hand is not empty, the path attempts thrown-object handling only; no key-type check or door unlock path appears."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "449-499",
+      "evidence": "Non-empty leader-hand object interaction with wall ornaments/fountains routes only on wall squares, then continues to F0372 front-wall sensor touch."
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "1309-1538",
+      "evidence": "F0275 click-on-wall sensors compare/use the leader-hand object for C003/C004/C011/C017 and object mechanisms C013/C016; this is wall sensor behavior, not door-square behavior."
+    },
+    {
+      "file": "DEFS.H",
+      "lines": "1266-1284",
+      "evidence": "Specific-object sensor types are explicitly wall ornament/player-click sensors; event-driven wall sensors are separate."
+    }
+  ],
+  "negativeSearches": [
+    {
+      "files": [
+        "COMMAND.C",
+        "CLIKVIEW.C",
+        "MOVESENS.C",
+        "DUNGEON.C",
+        "PANEL.C",
+        "DEFS.H",
+        "TIMELINE.C",
+        "DUNVIEW.C"
+      ],
+      "patterns": [
+        "key.*door",
+        "door.*key",
+        "locked door",
+        "unlock.*door",
+        "lock.*door",
+        "keyhole",
+        "key hole"
+      ],
+      "result": "No direct key-door route found; only unrelated door movement blocker names matched lock/door terms."
+    }
+  ],
+  "implementation": [],
+  "verification": [
+    {
+      "command": "rg -n -i 'key.*door|door.*key|locked door|unlock.*door|lock.*door|keyhole|key hole' COMMAND.C CLIKVIEW.C MOVESENS.C DUNGEON.C PANEL.C DEFS.H TIMELINE.C DUNVIEW.C",
+      "result": "PASS only unrelated G0389_B_GroupMovementBlockedByDoor extern matched; no direct key-door route found"
+    }
+  ],
+  "negativeScope": [
+    "no behavior invented",
+    "no TODO.md edit",
+    "no DANNESBURK data",
+    "no push",
+    "no tag",
+    "no release"
+  ]
+}
