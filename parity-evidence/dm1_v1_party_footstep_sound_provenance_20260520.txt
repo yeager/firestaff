@@ -1,0 +1,35 @@
+PASS COMMAND.C:2150-2156 party command dispatch
+PASS COMMAND.C:2150-2156 dispatch: no sound request/play call
+PASS CLIKMENU.C:256-329 legal party movement path
+PASS CLIKMENU.C:291-309 blocked-party-damage sound exception
+PASS CLIKMENU.C:325-347 successful movement cooldown tail: no sound request/play call
+PASS CLIKMENU.C:330-347 movement cooldown only
+PASS MOVESENS.C:441-451 party coordinate update
+PASS MOVESENS.C:441-451 party coordinate update: no sound request/play call
+PASS MOVESENS.C:493-498 audible teleporter buzz
+PASS MOVESENS.C:575-603 pit-fall scream
+PASS MOVESENS.C:764-783 scent/footprint state
+PASS MOVESENS.C:764-783 scent/footprint state: no sound request/play call
+PASS MOVESENS.C:811-819 party arrival sensors
+PASS MOVESENS.C:811-819 party arrival sensors: no sound request/play call
+PASS MOVESENS.C:847-853 creature movement sound request
+PASS MOVESENS.C:984-995 I34E creature sound lookup
+PASS GROUP.C:267-280 creature animation movement sound
+PASS DEFS.H:855-865 party footprint/scent fields
+PASS DUNGEON.C:2631-2719 footprint graphics path
+PASS DUNGEON.C:2631-2719 footprint graphics path: no sound request/play call
+PASS TIMELINE.C:1998-1999 footprint event expiry
+PASS TIMELINE.C:1998-1999 footprint event expiry: no sound request/play call
+PASS DEFS.H:58-59 I34E-family sound count
+PASS DEFS.H:100-128 I34E game sound constants
+PASS DATA.C:1264-1310 I34E-family sound table
+PASS DEFS.H:6834-6844 sound request prototype
+PASS SOUND.C:1476-1544 sound request/schedule
+PASS SOUND.C:1608-1642 immediate/pending sound path
+PASS SOUND.C:1756-1850 pending sound flush
+PASS TIMELINE.C:1903-1905 delayed sound event
+PASS audited source has no SOUND_*FOOT/FOOTPRINT/STEP/WALK constant
+PASS no sound request/play call is coupled to foot/footprint/walk terms
+INFO searched 9 source files for foot/footprint/step/walk/move/sound patterns
+INFO term-hit lines=1696 sound-call lines=53
+PASS dm1_v1_party_footstep_sound_provenance: no source-backed party footstep sound trigger found
