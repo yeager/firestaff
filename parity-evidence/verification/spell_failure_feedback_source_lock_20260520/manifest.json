@@ -1,0 +1,29 @@
+{
+  "schema": "firestaff.spell_failure_feedback_source_lock.v1",
+  "timestampUtc": "2026-05-20T11:15:09Z",
+  "status": "implemented_verified_precommit",
+  "scope": "DM1 V1 spell failure feedback deterministic bridge/probe only",
+  "originMain": "69ea4312f53fe59db36bd107dda7b5bc88a8b83f",
+  "originMainMovedDuringWork": "49f896dfc913bc7301d028473d5c42967ddfa411 -> 69ea4312f53fe59db36bd107dda7b5bc88a8b83f",
+  "worktree": "/home/trv2/work/firestaff-worktrees/spell-failure-feedback-source-lock-20260520",
+  "branch": "worker/spell-failure-feedback-source-lock-20260520",
+  "sourceAnchors": [
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C", "function": "F0365_COMMAND_ProcessTypes12To27_ClickInArea", "lines": "484-497", "evidence": "cast button routes to F0408_MENUS_GetClickOnSpellCastResult"},
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/MENU.C", "function": "F0408_MENUS_GetClickOnSpellCastResult", "lines": "1633-1663", "evidence": "cast-click path calls F0412, clears Symbols[0], resets SymbolStep, redraws F0397/F0398 for every result except C3 needs-flask"},
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/MENU.C", "function": "F0412_MENUS_GetChampionSpellCastResult", "lines": "1817-1849", "evidence": "meaningless, needs-practice, and needs-flask failures call F0410 with C01/C00/C10; C10 returns C3"},
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/SPELFAIL.C", "function": "F0410_MENUS_PrintSpellFailureMessage", "lines": "2-40,41-64,139-168,188-209", "evidence": "line feed/champion-name prefix and English failure message branches"},
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/MENUDRAW.C", "function": "F0397_MENUS_DrawAvailableSymbols/F0398_MENUS_DrawChampionSymbols", "lines": "47-120", "evidence": "spell rows redrawn after F0408 clears non-flask cast results"},
+    {"file": "ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H", "function": "failure/result constants", "lines": "2932-2941", "evidence": "C00/C01/C10/C11 failure constants and C0/C1/C3 cast result constants"}
+  ],
+  "implementation": [
+    "include/dm1_v1_spell_casting_pc34_compat.h: DM1_SpellFailureFeedback metadata API and F0408 cleanup predicate",
+    "src/dm1/dm1_v1_spell_casting_pc34_compat.c: source-locked failure feedback table, cleanup helper, source evidence string, and C10 outFailure propagation",
+    "tests/test_dm1_v1_spell_casting_pc34_compat.c: focused deterministic probes for meaningless, needs-practice, and needs-flask feedback behavior"
+  ],
+  "verification": [
+    {"command": "cmake -S . -B build-spell-failure-feedback-source-lock-20260520", "result": "PASS"},
+    {"command": "cmake --build build-spell-failure-feedback-source-lock-20260520 --target test_dm1_v1_spell_casting_pc34_compat --clean-first -j2", "result": "PASS"},
+    {"command": "ctest --test-dir build-spell-failure-feedback-source-lock-20260520 -R dm1_v1_spell_casting_source_lock --output-on-failure", "result": "PASS 1/1"}
+  ],
+  "negativeScope": ["no CSB edits", "no DM2 edits", "no V2 edits", "no packaging/release/tag/publish"]
+}

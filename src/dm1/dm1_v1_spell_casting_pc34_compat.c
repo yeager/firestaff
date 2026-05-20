@@ -112,8 +112,26 @@ static const char* const symbolNames[DM1_SYMBOL_STEP_COUNT * DM1_SYMBOLS_PER_STE
  * Internal helpers
  * ═══════════════════════════════════════════════════════════════════ */
 
+static const DM1_SpellFailureFeedback failureFeedback[] = {
+    {
+        DM1_FAILURE_NEEDS_MORE_PRACTICE, 4, 1, 1, 1, 1, 1, 1,
+        " NEEDS MORE PRACTICE WITH THIS ", " SPELL."
+    },
+    {
+        DM1_FAILURE_MEANINGLESS_SPELL, 4, 1, 1, 0, 1, 1, 1,
+        " MUMBLES A MEANINGLESS SPELL.", ""
+    },
+    {
+        DM1_FAILURE_NEEDS_FLASK_IN_HAND, 4, 1, 1, 0, 0, 0, 0,
+        " NEEDS AN EMPTY FLASK IN HAND FOR POTION.", ""
+    },
+    {
+        DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND, 4, 1, 1, 0, 0, 0, 0,
+        " NEEDS A MAGIC MAP IN ACTION HAND FOR THIS SPELL.", ""
+    },
+};
+
 static inline int minVal(int a, int b) { return a < b ? a : b; }
-static inline int maxVal(int a, int b) { return a > b ? a : b; }
 
 /** Clamp value to [lo, hi] — mirrors F0026_MAIN_GetBoundedValue */
 static inline int boundedValue(int lo, int val, int hi) {
@@ -265,6 +283,27 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
     return (int)cost;
 }
 
+const DM1_SpellFailureFeedback* dm1_spell_failureFeedback(int failureType) {
+    for (unsigned int i = 0; i < sizeof(failureFeedback) / sizeof(failureFeedback[0]); i++) {
+        if (failureFeedback[i].failureType == failureType) return &failureFeedback[i];
+    }
+    return NULL;
+}
+
+int dm1_spell_castClearsSymbolsForResult(int castResult) {
+    return castResult != DM1_SPELL_CAST_FAILURE_NEEDS_FLASK;
+}
+
+void dm1_spell_applyCastClickSymbolFeedback(DM1_SpellCastingState* s,
+                                           int champIdx,
+                                           int castResult) {
+    if (!s || champIdx < 0 || champIdx >= 4) return;
+    if (!dm1_spell_castClearsSymbolsForResult(castResult)) return;
+
+    s->input[champIdx].symbols[0] = 0;
+    s->input[champIdx].symbolStep = 0;
+}
+
 /*
  * dm1_spell_cast — Source: MENU.C F0412_MENUS_GetChampionSpellCastResult
  *
@@ -275,7 +314,8 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
  *   4. experience = rng8 + (requiredSkill << 4) + ((powerOrd-1)*baseRequired << 3) + (required^2)
  *   5. Skill check: if skillLevel < required, random failure check per missing level
  *   6. Switch on spell kind (potion → needs flask, projectile → create, other → effect)
- *   7. On success, clear symbols + reset SymbolStep to 0
+ *   7. F0408 cast-click feedback clears symbols and redraws spell rows for every
+ *      result except C3_SPELL_CAST_FAILURE_NEEDS_FLASK.
  */
 int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
                    DM1_ChampionSpellStats* stats, uint16_t rng16,
@@ -283,17 +323,21 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
                    int* outFailure) {
     if (!s || !stats || champIdx < 0 || champIdx >= 4) return DM1_SPELL_CAST_FAILURE;
 
+    DM1_ChampionSpellInput* inp = &s->input[champIdx];
+
     /* Champion must be alive */
-    if (stats->currentHealth <= 0) return DM1_SPELL_CAST_FAILURE;
+    if (stats->currentHealth <= 0) {
+        dm1_spell_applyCastClickSymbolFeedback(s, champIdx, DM1_SPELL_CAST_FAILURE);
+        return DM1_SPELL_CAST_FAILURE;
+    }
 
     /* Look up spell (F0412 line: F0409_MENUS_GetSpellFromSymbols) */
     const DM1_Spell* spell = dm1_spell_lookup(s, champIdx);
     if (!spell) {
         if (outFailure) *outFailure = DM1_FAILURE_MEANINGLESS_SPELL;
+        dm1_spell_applyCastClickSymbolFeedback(s, champIdx, DM1_SPELL_CAST_FAILURE);
         return DM1_SPELL_CAST_FAILURE;
     }
-
-    DM1_ChampionSpellInput* inp = &s->input[champIdx];
 
     /* Power symbol ordinal = Symbols[0] - '_' (MENU.C F0412 line: L1268) */
     /* '_' is ASCII 95. Symbols[0] is a power symbol char 96..101 → ordinal 1..6 */
@@ -335,6 +379,7 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
          * to let the caller check.
          */
         if (outSpell) *outSpell = spell;
+        if (outFailure) *outFailure = DM1_FAILURE_NEEDS_FLASK_IN_HAND;
         return DM1_SPELL_CAST_FAILURE_NEEDS_FLASK;
     }
 
@@ -434,3 +479,16 @@ const char *dm1_spell_pass601_spell_source_evidence(void)
         "CHAMPION.C:1123-1155 F0308_CHAMPION_IsLucky\n";
 }
 
+
+const char *dm1_spell_failure_feedback_source_evidence(void)
+{
+    return
+        "CLIKMENU.C:484-497 cast button routes to F0408_MENUS_GetClickOnSpellCastResult\n"
+        "MENU.C:1633-1663 F0408 clears symbols, resets SymbolStep, redraws F0397/F0398 except C3 needs-flask\n"
+        "MENU.C:1817-1849 F0412 maps meaningless, needs-practice, needs-flask failures to F0410/C0/C1/C10/C3\n"
+        "SPELFAIL.C:2-40 F0410 prints line feed and champion name before failure text\n"
+        "SPELFAIL.C:41-64 C00 needs-practice message with base skill name and SPELL suffix\n"
+        "SPELFAIL.C:139-168 C01 meaningless and C10 needs-flask English message branches\n"
+        "MENUDRAW.C:47-120 F0397/F0398 redraw available and champion spell symbols\n"
+        "DEFS.H:2932-2941 failure and cast result constants\n";
+}

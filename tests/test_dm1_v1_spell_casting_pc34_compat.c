@@ -320,6 +320,8 @@ static void test_spell_cast_dead(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR);
 
     assert(dm1_spell_cast(&s, 0, &stats, 0, NULL, NULL, NULL) == DM1_SPELL_CAST_FAILURE);
+    assert(s.input[0].symbols[0] == 0);
+    assert(s.input[0].symbolStep == 0);
 
     printf("    PASS\n");
 }
@@ -340,6 +342,8 @@ static void test_spell_cast_meaningless(void) {
     int failure __attribute__((unused)) = -1;
     assert(dm1_spell_cast(&s, 0, &stats, 0, NULL, NULL, &failure) == DM1_SPELL_CAST_FAILURE);
     assert(failure == DM1_FAILURE_MEANINGLESS_SPELL);
+    assert(s.input[0].symbols[0] == 0);
+    assert(s.input[0].symbolStep == 0);
 
     printf("    PASS\n");
 }
@@ -359,10 +363,14 @@ static void test_spell_cast_potion(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_VI);
 
     const DM1_Spell* outSpell = NULL;
-    int result __attribute__((unused)) = dm1_spell_cast(&s, 0, &stats, 0, &outSpell, NULL, NULL);
+    int failure = -1;
+    int result __attribute__((unused)) = dm1_spell_cast(&s, 0, &stats, 0, &outSpell, NULL, &failure);
     assert(result == DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
+    assert(failure == DM1_FAILURE_NEEDS_FLASK_IN_HAND);
     assert(outSpell != NULL);
     assert(DM1_SPELL_KIND(outSpell) == DM1_SPELL_KIND_POTION);
+    assert(s.input[0].symbols[0] != 0);
+    assert(s.input[0].symbolStep == 2);
 
     printf("    PASS\n");
 }
@@ -529,6 +537,76 @@ static void test_power_only_no_match(void) {
     printf("    PASS\n");
 }
 
+
+/* ── Test 23: Spell cast failure feedback clears needs-practice ─────── */
+static void test_spell_cast_needs_practice_feedback(void) {
+    printf("  [23] Spell cast failure feedback — needs practice...\n");
+
+    DM1_SpellCastingState s;
+    dm1_spell_init(&s);
+    DM1_ChampionSpellStats stats = makeStats(200, 200, 50, 0);
+    stats.skillLevels[DM1_SKILL_FIRE] = 0;
+
+    dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
+    dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL);
+    dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR);
+
+    const DM1_Spell* outSpell = NULL;
+    int failure = -1;
+    int result = dm1_spell_cast(&s, 0, &stats, 0x7FFF, &outSpell, NULL, &failure);
+    (void)result;
+    assert(result == DM1_SPELL_CAST_FAILURE);
+    assert(outSpell != NULL);
+    assert(failure == DM1_FAILURE_NEEDS_MORE_PRACTICE);
+    assert(s.input[0].symbols[0] == 0);
+    assert(s.input[0].symbolStep == 0);
+
+    printf("    PASS\n");
+}
+
+/* ── Test 24: Spell failure feedback metadata ───────────────────────── */
+static void test_spell_failure_feedback_metadata(void) {
+    printf("  [24] Spell failure feedback metadata...\n");
+
+    const DM1_SpellFailureFeedback* practice = dm1_spell_failureFeedback(DM1_FAILURE_NEEDS_MORE_PRACTICE);
+    (void)practice;
+    assert(practice != NULL);
+    assert(practice->messageColor == 4);
+    assert(practice->printsLineFeed == 1);
+    assert(practice->printsChampionName == 1);
+    assert(practice->appendsBaseSkillName == 1);
+    assert(practice->clearsSymbolsOnCastClick == 1);
+    assert(strcmp(practice->messageBeforeSkill, " NEEDS MORE PRACTICE WITH THIS ") == 0);
+    assert(strcmp(practice->messageAfterSkill, " SPELL.") == 0);
+
+    const DM1_SpellFailureFeedback* meaningless = dm1_spell_failureFeedback(DM1_FAILURE_MEANINGLESS_SPELL);
+    (void)meaningless;
+    assert(meaningless != NULL);
+    assert(meaningless->clearsSymbolsOnCastClick == 1);
+    assert(strcmp(meaningless->messageBeforeSkill, " MUMBLES A MEANINGLESS SPELL.") == 0);
+
+    const DM1_SpellFailureFeedback* flask = dm1_spell_failureFeedback(DM1_FAILURE_NEEDS_FLASK_IN_HAND);
+    (void)flask;
+    assert(flask != NULL);
+    assert(flask->clearsSymbolsOnCastClick == 0);
+    assert(strcmp(flask->messageBeforeSkill, " NEEDS AN EMPTY FLASK IN HAND FOR POTION.") == 0);
+
+    assert(dm1_spell_failureFeedback(99) == NULL);
+
+    printf("    PASS\n");
+}
+
+/* ── Test 25: F0408 cast-click symbol cleanup predicate ─────────────── */
+static void test_spell_cast_click_cleanup_predicate(void) {
+    printf("  [25] Spell cast-click cleanup predicate...\n");
+
+    assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE) == 1);
+    assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_SUCCESS) == 1);
+    assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE_NEEDS_FLASK) == 0);
+
+    printf("    PASS\n");
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 int main(void) {
     printf("DM1 V1 Spell Casting — CTest gate\n");
@@ -556,7 +634,10 @@ int main(void) {
     test_zokathra();
     test_lightning_bolt();
     test_power_only_no_match();
+    test_spell_cast_needs_practice_feedback();
+    test_spell_failure_feedback_metadata();
+    test_spell_cast_click_cleanup_predicate();
 
-    printf("\nAll 22 tests PASSED.\n");
+    printf("\nAll 25 tests PASSED.\n");
     return 0;
 }

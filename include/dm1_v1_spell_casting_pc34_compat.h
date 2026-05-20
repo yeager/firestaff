@@ -97,6 +97,20 @@ extern "C" {
 #define DM1_FAILURE_NEEDS_MORE_PRACTICE    0
 #define DM1_FAILURE_MEANINGLESS_SPELL      1
 #define DM1_FAILURE_NEEDS_FLASK_IN_HAND   10
+#define DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND 11
+
+typedef struct {
+    int failureType;
+    int messageColor;
+    int printsLineFeed;
+    int printsChampionName;
+    int appendsBaseSkillName;
+    int clearsSymbolsOnCastClick;
+    int redrawsAvailableSymbols;
+    int redrawsChampionSymbols;
+    const char* messageBeforeSkill;
+    const char* messageAfterSkill;
+} DM1_SpellFailureFeedback;
 
 /* ── Skill indices (DEFS.H:757-776) ────────────────────────────── */
 #define DM1_SKILL_FIGHTER    0
@@ -227,6 +241,20 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
                    int* outFailure);
 
 /**
+ * Return source-locked failure message/redraw metadata (SPELFAIL.C F0410
+ * plus MENU.C F0408 cast-click cleanup policy), or NULL for unknown failures.
+ */
+const DM1_SpellFailureFeedback* dm1_spell_failureFeedback(int failureType);
+
+/** MENU.C F0408 cleanup predicate: all cast results except needs-flask clear. */
+int dm1_spell_castClearsSymbolsForResult(int castResult);
+
+/** Apply F0408 symbol clear/redraw state effect for the cast-click result. */
+void dm1_spell_applyCastClickSymbolFeedback(DM1_SpellCastingState* s,
+                                           int champIdx,
+                                           int castResult);
+
+/**
  * Compute projectile kinetic energy (source: MENU.C F0412 case C2).
  */
 int dm1_spell_projectileKineticEnergy(int powerOrdinal, int skillLevel, int spellType);
@@ -246,6 +274,9 @@ const char* dm1_spell_symbolName(char sym);
 
 /** Get a human-readable name for a spell (from its index in dm1_spells). */
 const char* dm1_spell_name(int spellIndex);
+
+/** Source anchors for the spell failure feedback contract. */
+const char *dm1_spell_failure_feedback_source_evidence(void);
 
 #ifdef __cplusplus
 }
