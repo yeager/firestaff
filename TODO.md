@@ -1,9 +1,8 @@
-# Firestaff TODO — DM1 V1 Parity & Beyond
+# Firestaff TODO — Open Work
 
 Status per 2026-05-19 v2.4.0.
 
 ## Legend
-- ✅ Done
 - 🔧 Partially implemented
 - ❌ Not started
 - 🐛 Known bug
@@ -12,202 +11,42 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM1 V1 — Core Gameplay
 
-### Movement & Navigation
-- ✅ Cardinal movement (WASD + arrow keys + click)
-- ✅ Turning (left/right)
-- ✅ Collision detection (walls, doors, creatures)
-- ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
-- ✅ Movement cooldown (G0310/G0311 timing from F0267)
-  - ✅ Input wait loop timing source-lock: PC-34 input wait exits only when input wait has stopped and game time is ticking (6a842b72).
-- ✅ Pit fall + level change + fall damage (20 HP/pit)
-- ✅ Teleporter chains (up to 1000 iterations)
-- ✅ Stair transitions (up/down, correct direction per F0155)
-- ✅ Dead creature groups don't block (v2.3.0)
-
-### Viewport Rendering
-- ✅ Wall rendering from GRAPHICS.DAT (DM1 zone blits)
-- ✅ Door rendering (frame + panel, open/close states)
-- ✅ Door frame persists when portcullis is open (v2.0.0)
-- ✅ Wall ornaments from GRAPHICS.DAT (per-map ornament cache)
-- ✅ Floor ornaments
-- ✅ Champion mirror portraits (C127 sensor)
-- ✅ Random wall ornament generation (F0169-F0172)
-- ✅ Inscription text overlay on D1C front walls (v2.4.0)
-- ✅ Floor pit graphics (open/closed, invisible pits)
-- ✅ Stair graphics
-- ✅ Creature sprites from GRAPHICS.DAT
-- ✅ Projectile sprites (spell projectiles, thrown items)
-- ✅ Explosion/burst rendering (smoke, fireball aftermath)
-- ✅ Floor item sprites (scatter rendering, multi-item)
-- ✅ Alcove content rendering (items inside wall alcoves)
-- ✅ Object zone Y coordinates (PC34 C696/C2500 layout-696 source-lock, pass606)
-- ✅ Side door rendering (D1L/R, D2L/R, D3L/R)
-- ✅ Door ornaments
-- ✅ Depth occlusion (center wall blocks far content; boundary wall blocker probe source-locked, 919598c5)
-- ✅ Side lane occlusion
-- ✅ Palette dimming based on light level
-- ✅ HiDPI/Retina scaling (v2.0.0)
-- ✅ Fakewall viewport/collision parity — open fakewalls render as corridor, closed imaginary fakewalls stay passable but wall-like
-- ✅ Wall/collision runtime capture gate — exact map/x/y/direction, movement-pipeline state, and PPM screenshots for blocked and accepted movement
-- ✅ Inscription rendering on side walls (D2L/R, D3L/R) — unreadable plaque heights source-locked (pass582)
-- ✅ Readable inscription rendering (source message zone centering)
-- ✅ Teleporter visual effect — source-backed GRAPHICS.DAT field bitmap overlay, not procedural sparkle
-
 ### Creature System
-- ✅ Creature groups loaded from dungeon.dat
-- ✅ Creature behavior profiles (27 types, movement/attack/sight/smell)
-- ✅ Creature AI — movement toward party (cardinal-only, F0228/F0209)
-- ✅ Creature attack on party (F0230 damage formula with dodge/parry/armor)
-- ✅ Creature death detection + item drops (v2.2.0)
-- ✅ Dead groups cleaned up (don't block movement)
-- ✅ Kill XP award via lifecycle system
-- ✅ Creature rendering — sprites load and source-locked aspect frames cycle
+
 - 🔧 Creature type-specific behavior — Giggler steal and Ghost/non-material melee gating are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
 - 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with group slot creation, square insertion, party-map active-state seed, F0180 event37 wandering hookup, delayed C65 re-enable, and F0185/F0245 buzz dispatch; event60/61 blocked-destination defer is source-locked (5ace9238); exact unused-slot freelist, Lord Chaos adjacent random retry branch, and full F0267 teleporter/pit/projectile/cross-map side effects remain
-- ✅ Creature projectile attacks - ReDMCSB F0207/F0212 payload now feeds M11 live runtime insertion with source-backed C48 first-move ignore-impact proof; broader exact creature AI event scheduling remains separate
-- ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
-- ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
 
 ### Combat
-- ✅ Champion melee actions (SWING, CHOP, STAB, THRUST, HACK, etc.)
-- ✅ Action menu (3 actions per weapon type + empty hand)
-- ✅ Melee damage applied to creature groups (F0738)
-- ✅ Creature damage to champions (F0230)
-- ✅ Parry skill XP
-- ✅ Combat result logging
-- 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow/sling ammunition class validation and runtime projectile launch are source-locked; broader ranged polish remains pending
-- ✅ Shield defense bonus in combat — hand-slot shield defense now includes source-locked F0312 hand strength plus armor defense in F0313 wound defense
-- ✅ Weapon broken flag display is source-locked in the inventory eye panel; ReDMCSB exposes WEAPON.Broken as an item-description attribute and no DM1 V1 runtime weapon-breakage write path was found
-- ✅ Poison damage over time — creature PoisonAttack → F0322 immediate damage, 36-tick follow-up scheduling, event-count decrement, and Vitality-adjusted gate are source-locked
 
-### Spell System
-- ✅ Rune panel UI (open/close, 6 power runes + 6 element runes)
-- ✅ Rune buffer (up to 4 runes per cast)
-- ✅ Spell encoding (F0750)
-- ✅ Spell table lookup (F0752)
-- ✅ Mana cost check + skill level requirement
-- ✅ Spell projectile creation (fireball, lightning, poison cloud, etc.)
-- ✅ Spell shield / fire shield effects
-- ✅ HEAL action (mana → HP transfer)
-- ✅ FREEZE LIFE action
-- ✅ Light spell (OH IR RA -> source-backed magical light bridge)
-- ✅ Darkness spell (DES IR SAR -> source-backed darkness/recovery bridge)
-- ✅ Open Door spell (ZO BREU) — M11 projectile door-impact SFX, non-destroyed button-door GameTime+1 toggle animation, and source-backed UI cast projectile launch are locked; direct key-door behavior remains separate/out of scope
-- ✅ Poison cloud damage over time — source-locked cloud ticks now preserve repeated damage, attack decay, +1 tick rescheduling, and no-wound party damage
-- ✅ Spell failure feedback — needs-practice/meaningless feedback metadata and cast-click symbol cleanup are source-locked
+- 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow/sling ammunition class validation and runtime projectile launch are source-locked; broader ranged polish remains pending
 
 ### Champion System
-- ✅ Champion recruitment from mirrors (HoC)
-- ✅ Active champion selection
-- ✅ Champion bar display (HP/stamina/mana bars)
-- ✅ Skill levels (Fighter/Ninja/Priest/Wizard)
-- ✅ Skill XP and level-up via lifecycle system
-- ✅ Champion death detection
-- ✅ Resurrection system (dm1_v1_resurrection_pc34_compat)
+
 - 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, and four base skill levels; broader panel polish remains
-- ✅ Champion stat screen current-value coverage — inventory eye panel is source-locked to F0351-style skills/statistics display data
 - 🔧 Champion weight/load system (encumbrance) — F0306/F0309/F0310 max-load and movement-cost core plus CHAMDRAW F0292 load color/format panel rules are source-locked
-- ✅ Champion stamina regeneration — source-locked to F0331 food/water, resting, idle-delay, max-stamina amount, and mana-regeneration stamina cost; no direct load factor in regeneration path
 
 ### Inventory & Items
-- ✅ Leader hand object (pick up, put down, swap)
-- ✅ Alcove item interaction (click to pick up)
-- ✅ Item throwing (throw into dungeon, creates projectile)
-- ✅ Torch fuel tracking + light power calculation
-- ✅ Torch burns out → extinguish
-- ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
+
 - 🔧 Full inventory panel (8 body slots + 2 hand slots + backpack) — C507..C536 source slot-box bridge and full backpack runtime storage/pickup/place path are source-locked; remaining panel polish/chest runtime details stay open
 - 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
 - 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, leader-hand/chest slot swaps, and action-hand chest panel close/reopen persistence are source-locked; broader full panel polish remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display and M11 leader-hand runtime wiring are source-locked for Priest > 1, including the original empty-flask quirk; broader item-family descriptions remain pending
-- ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
-- ✅ Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, VI wound RNG masks, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, swallow audio routing, and no-mouth-animation behavior are source-locked
 - 🔧 Food/water item consumption (click to eat/drink) — food amounts, water/waterskin charges, caps, leader-hand removal, swallow audio routing, and source mouth-animation frame/delay gate and food mouth visual C545 blit are source-locked and wired through M11 mouth-click; water/potion remain no-visual per source gate
-- ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
-- 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
-
-### Survival / Needs
-- ✅ Food and water drain (1 unit per 6 ticks per champion)
-- ✅ Champion bar color reflects hunger/thirst status
-- ✅ Food/water depletion → HP damage — source-locked champion-needs pending HP damage is applied in M11 runtime on starvation/dehydration underflow
-- ✅ Rest system — source-locked rest/wake command routing, rest recovery multiplier, and forced wake on creature attack before resting-hit damage
-- ✅ Stamina drain from actions — source-locked action-menu stamina table, per-action random jitter, and F0325-style clamp/underflow damage in M11 runtime
-- ✅ Stamina regeneration — source-locked champion-needs gate covers gain/loss, rest multiplier, idle movement delay bonus, food/water depletion, and stamina overflow damage
-
-### Sensors & Mechanisms
-- ✅ Floor sensors (party walk-on/walk-off triggers)
-- ✅ Wall click sensors — buttons/switches now fire correctly (v2.4.0)
-- ✅ Remote door toggle (SET/CLEAR/TOGGLE)
-- ✅ Remote pit toggle
-- ✅ Remote teleporter toggle
-- ✅ Sensor text display (inscription/message popup)
-- ✅ Sensor audible feedback (click sound)
-- ✅ Wall sensor with specific object (key slot — C003/C004)
-- ✅ Object storage sensor (C013 — place item, get effect)
-- ✅ Object exchanger sensor (C016 — swap item for effect)
-- ✅ AND/OR gate sensor (C005 — multi-condition trigger)
-- ✅ Countdown sensor (C006 — timer-based trigger)
-- ✅ Projectile launcher sensors (C007-C010, C014-C015)
-- ✅ End game sensor (C018 — source-locked win/endgame trigger)
-- ✅ Floor party-on-stairs sensor (C005 — source-locked stairs-only trigger)
-- ✅ Floor possession sensor (C008 — party has specific item)
-- ✅ Floor creature sensor (C007)
-
-### Entrance & Title
-- ✅ Entrance screen (Enter/Resume/Quit) — always shows for DM1 (v2.3.1)
-- ✅ Entrance door opening animation (31-step, 4px/step)
-- ✅ Resume loads saved game (M566 path)
-- ✅ Click-only buttons (no keyboard shortcuts for Enter/Resume/Quit)
-- ✅ No dungeon flash before entrance
-- ✅ TITLE.DAT swoosh/zoom animation path + decode + launcher handoff before DM1 Entrance source-locked (all DM1 presentation modes; see `parity-evidence/runtime/title_dat_swoosh_path_decode_closure_20260520.md`)
-- ✅ Title song / music playback (SONG.DAT runtime + opt-in SDL dummy-driver live path source-locked)
-
-### Save/Load
-- ✅ Save game on quit (DM1_SaveGame)
-- ✅ Load game on Resume (DM1_LoadGame)
-- ✅ Direct auto-save on level change absent/source-locked — ReDMCSB routes ordinary stairs/pits/teleporters through movement/map/sensor paths only; save writes are C140-only
-- ✅ Multiple save slots — DM1 V1 runtime compatibility is source-locked to one primary save plus automatic .bak fallback (ef9fadd9); ReDMCSB does not support numbered in-game save slots, so any future multi-slot browser must be Firestaff-native UX
-
-### Audio
-- ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including queued SDL source-index playback gate, Open Door projectile door-impact SFX, and source-silent CALM/BRANDISH/CONFUSE and FIREBALL/DISPELL/LIGHTNING action cues; party footsteps are provenance-locked absent in DM1 V1
-- 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
-- ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
-
----
 
 ## DM1 V2.1 / V2.2 — Enhanced Modes
 
 - 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
 - 🔧 V2.1/V2.2 presentation modes selectable from menu
-- ✅ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
-  - ✅ Phase 0 slice — V2 presentation command-route gate: V1/off preserves ReDMCSB movement command IDs 1..6; V2/on maps presentation runtime IDs without changing source IDs (b5a41085)
-- ✅ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
-  - ✅ Phase 1 slice — deterministic V2 presentation settings scaffold source-locked; V1 default path and command/gameplay state remain isolated (ac70837c)
-  - ✅ Phase 1 slice — presentation profile boundary source-locked; V2 presentation mode consumes copied V1 gameplay snapshots and keeps command/gameplay routing pinned to V1 (931688c6)
-  - ✅ Phase 1 slice — launch smoke gate source-locked; V2 menu/config boot path can reach the presentation runtime without changing V1 default route (6a4b7b86)
-  - ✅ Phase 1 slice — Phase 0/1 boundary gate source-locks V2 presentation routing away from V1 gameplay domains and verifies the scoped V2-only presentation scaffold (54a74d30).
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
-  - ✅ Phase 2 slice — graphics pipeline source isolation verified; V2 presentation may scale/filter/present source DM1 graphics while keeping palette, font, viewport geometry, and gameplay state boundaries source-locked (8308645d)
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
-  - ✅ Phase 3 slice — HUD champion/action interaction gate source-locked; existing V2 HUD command mirror is now wired into CTest and guarded against bypassing V1 inventory/slot transaction owners (f8b0b54d)
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
-  - ✅ Phase 4 slice — V2 lighting palette presentation gate mirrors ReDMCSB-selected DM1 V1 palette indices/thresholds and disables V2-only local effects on invalid source input; full Phase 4 remains open (7a2d4c6b).
-  - ✅ Phase 4 slice — field/projectile effect metadata gate source-locks presentation-only V2 metadata to ReDMCSB projectile, explosion, fluxcage, and field draw ownership without claiming pixel parity (db290990).
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
-  - ✅ Phase 5 slice — smooth movement presentation source-lock gate proves camera interpolation is presentation-only after accepted source-style movement and does not mutate V1 timing/cooldown, collision, sensor/event, creature timing, or redraw-cadence owners (2f3442bf).
-  - ✅ Phase 5 runtime bridge slice — source-accepted V1 movement/turn ticks can start V2 camera interpolation while preserving source-owned cooldowns, collision, sensors, creature timing, and redraw cadence (89b7332b).
 - ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
-  - ✅ Phase 6 slice — touch/controller affordance route gate maps V2-only swipe/controller metadata onto existing source-locked movement commands while preserving V1 touch/click parity and rejecting V2-off affordances (b3fe97e3).
 - ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
-  - ✅ Phase 7 slice — presentation-disabled V2 source route now has a deterministic state-hash gate against the normalized V1 movement model for the same command script; full enhanced V2 runtime equivalence and pixel gates remain open (95559ebc).
-
----
 
 ## CSB V1 (Chaos Strikes Back)
 
 - 🔧 CSB launch entry in menu
-- ✅ Phase 0 — Provenance gate: hash-lock exact CSB dungeon/graphics/title/music assets and keep CSBWin/CSB lineage sources as secondary evidence; do not reuse DM1 assumptions without variant proof (185019bf; reinforced by 80293bb0)
 - ❌ Phase 1 — Boot/profile split: separate CSB runtime profile from DM1, including asset discovery, menu launch, save namespace, deterministic config, and variant-specific diagnostics
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics
 - ❌ Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
@@ -215,8 +54,6 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 5 — Creature/combat parity: CSB creature roster, AI differences, attacks/projectiles, drops, sounds, and combat constants
 - ❌ Phase 6 — Utility/import flow: CSB utility disk behavior, champion import path, reincarnation/resurrection differences, and saved-party interoperability
 - ❌ Phase 7 — Verification suite: canonical CSB asset manifests, parser probes, deterministic input scripts, viewport/pixel gates, save/load round trips, and source-evidence manifests
-
----
 
 ## CSB V2.1 / V2.2 — Enhanced Modes
 
@@ -230,12 +67,9 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Touch/controller ergonomics: CSB V2-only gesture/controller affordances mapped onto existing CSB command routes, with CSB V1 touch/click parity preserved
 - ❌ Phase 7 — V2 verification suite: side-by-side CSB V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
----
-
 ## DM2 V1 (Skullkeep)
 
 - 🔧 DM2 launch entry in menu
-- ✅ Phase 0 — Source and provenance gate: mirror/hash-lock `gbsphenx/skproject` (`master` HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6`), Sphenx SKWin reference page/package provenance, and exact Skullkeep game assets before parser or runtime work (`dm2_v1_phase0_provenance_gate`)
 - ❌ Phase 1 — Runtime profile split: separate DM2/Skullkeep boot profile from DM1/CSB, including menu launch, asset roots, save namespace, platform/version diagnostics, and deterministic config
 - ❌ Phase 2 — Data formats: source-lock DM2 dungeon and graphics formats from SKWin/SKWINSPX/DMDC2 references, including GDAT categories, dungeon records, text, item records, actuators, doors, pits, teleports, ornate data, and variant/platform differences
 - ❌ Phase 3 — Core world model: implement DM2 map loading, party placement, map transitions, outdoor/interior state, timers, object database, and deterministic world-state hashing
@@ -244,8 +78,6 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Creature, combat, spells, and environmental systems: source-lock DM2 creature AI, attacks/projectiles, champion actions, spells/clouds, weather/ambient timers, sounds, drops, and progression constants
 - ❌ Phase 7 — Save/import compatibility: support DM2 save/load, PC savegame interoperability where source-backed, champion state persistence, object/container state, and cross-version diagnostics
 - ❌ Phase 8 — Verification suite: canonical DM2 asset manifests, parser probes, GDAT/dungeon record fixtures, deterministic input scripts, pixel/viewport gates, save/load round trips, and source-evidence manifests tied to SKWin/skproject references
-
----
 
 ## DM2 V2.1 / V2.2 — Enhanced Modes
 
@@ -259,8 +91,6 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Touch/controller ergonomics: DM2 V2-only gesture/controller affordances mapped onto existing DM2 command routes, with DM2 V1 touch/click parity preserved
 - ❌ Phase 7 — V2 verification suite: side-by-side DM2 V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
----
-
 ## DM Nexus V1
 
 - 🔧 Nexus launch entry in menu
@@ -272,8 +102,6 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 5 — Mechanics parity: implement Nexus movement, click/input routes, item interactions, doors, pits, teleporters, triggers, champion state, inventory, spells, combat, creature AI, drops, and sounds only after source/provenance evidence is locked
 - ❌ Phase 6 — Save/import compatibility: support Nexus save/load and champion/world persistence where format evidence is available, with explicit diagnostics for unknown or unsupported save variants
 - ❌ Phase 7 — Verification suite: canonical Nexus asset manifests, parser fixtures, deterministic input scripts, viewport/pixel or model-frame gates, save/load round trips, and source-evidence manifests tied to exact disc/version hashes
-
----
 
 ## DM Nexus V2.1 / V2.2 — Enhanced Modes
 
@@ -287,53 +115,22 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Touch/controller ergonomics: Nexus V2-only gesture/controller affordances mapped onto existing Nexus command routes, with Nexus V1 touch/click parity preserved where source/provenance evidence exists
 - ❌ Phase 7 — V2 verification suite: side-by-side Nexus V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus viewport/pixel or model-frame gates for V2 presentation
 
----
-
 ## Cross-Cutting Features
 
 ### Touch Support
+
 - 🔧 Touch controls config option exists
-- ✅ Entrance/menu click zones and runtime touch dispatch are source-locked from ReDMCSB
-- ✅ DM1 V1 dungeon viewport/main UI touch-route evidence and CTest gate source-locked (7a16e741)
-- ✅ Touch input zones for movement/turning are source-locked to existing DM1 V1 mouse command routes and queue dispatch (c4e64fcc)
 - ❌ Touch-based item interaction
 - ❌ Gesture navigation (swipe to turn, tap to move)
 - ❌ UI scaling for touch targets
 
 ### Accessibility
+
 - 🔧 Accessibility module exists (firestaff_accessibility)
 - ❌ Screen reader integration
 - ❌ High-contrast mode
 - ❌ Configurable font size
 
-### Platform
-- ✅ macOS build (CMake + make)
-- ✅ GitHub Actions CI/CD release pipeline
-- ✅ Linux build verification (Ubuntu 24.04 x86_64 CMake/Ninja build, CI-equivalent smoke probes, and local DEB/RPM preview - docs/platform/linux-build-verification-20260520.md)
-- ✅ Windows build verification (GitHub Actions windows-2022/MSYS2 release job, ZIP, NSIS installer, and SHA256 published for v2.4.1 - docs/platform/windows-build-verification-20260520.md)
-
----
-
 ## Known Bugs (need repro)
 
 1. No open wall/collision report without a capture manifest. Use the DM1 V1 wall/collision runtime capture gate for exact map/x/y/direction and screenshots before accepting new reports.
-
----
-
-## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
-
-- Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500, pass606)
-- DM1 V1 wall/collision runtime capture gate with exact coordinates, movement-pipeline state, and screenshots
-- HiDPI/Retina scaling
-- Stair direction (F0155)
-- Door frame preservation for open portcullis doors (F0111)
-- Resume button loads saved data (M566)
-- Entrance click-only + dungeon flash fix
-- Champion mirrors/wall ornaments (F0169-F0172)
-- Object zone Y coordinates (COORD.C)
-- Creature damage formula (F0230)
-- Creature death item drops
-- Dead creatures do not block passage
-- Entrance screen always appears for DM1
-- Inscription text overlay
-- Wall click sensors work for door buttons and switches
