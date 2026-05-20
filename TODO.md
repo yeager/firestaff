@@ -23,7 +23,6 @@ Status per 2026-05-19 v2.4.0.
 ### Champion System
 
 - 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, and CHAMDRAW status-value formatting/zone routing (d504de4c); broader panel polish remains
-- 🔧 Champion weight/load system (encumbrance) — F0306/F0309/F0310 max-load and movement-cost core plus CHAMDRAW F0292 load color/format panel rules are source-locked
 
 ### Inventory & Items
 
