@@ -63,7 +63,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Kill XP award via lifecycle system
 - ✅ Creature rendering — sprites load and source-locked aspect frames cycle
 - 🔧 Creature type-specific behavior — Giggler steal and Ghost/non-material melee gating are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt flag path is accepted; other type specials remain
-- 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with group slot creation, square insertion, party-map active-state seed, delayed C65 re-enable, and F0185/F0245 buzz dispatch; event60/61 defer, exact unused-slot freelist, F0180 event37 wandering hookup, and full F0267 teleporter/pit/projectile/cross-map side effects remain
+- 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with group slot creation, square insertion, party-map active-state seed, F0180 event37 wandering hookup, delayed C65 re-enable, and F0185/F0245 buzz dispatch; event60/61 defer, exact unused-slot freelist, and full F0267 teleporter/pit/projectile/cross-map side effects remain
 - ✅ Creature projectile attacks - ReDMCSB F0207/F0212 payload now feeds M11 live runtime insertion with source-backed C48 first-move ignore-impact proof; broader exact creature AI event scheduling remains separate
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
