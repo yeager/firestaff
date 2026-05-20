@@ -163,6 +163,127 @@ static int test_lord_chaos_adjacent_random_retry(void) {
     return ok ? 0 : 1;
 }
 
+static int prime_generator_sensor(struct GameWorld_Compat* world);
+static int schedule_generator_trigger(struct GameWorld_Compat* world);
+
+static int rebuild_as_two_map_teleporter_world(struct GameWorld_Compat* world) {
+    struct DungeonMapDesc_Compat* maps;
+    struct DungeonMapTiles_Compat* tiles;
+    unsigned char* map0;
+    unsigned char* map1;
+    unsigned short* squareFirstThings;
+    struct DungeonTeleporter_Compat* teleporters;
+    int i;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    free(world->dungeon->tiles[0].squareData);
+    free(world->dungeon->maps);
+    free(world->dungeon->tiles);
+    free(world->things->squareFirstThings);
+
+    maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(*maps));
+    tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(*tiles));
+    map0 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    map1 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    squareFirstThings = (unsigned short*)calloc(2, sizeof(unsigned short));
+    teleporters = (struct DungeonTeleporter_Compat*)calloc(1, sizeof(*teleporters));
+    if (!maps || !tiles || !map0 || !map1 || !squareFirstThings || !teleporters) {
+        free(maps);
+        free(tiles);
+        free(map0);
+        free(map1);
+        free(squareFirstThings);
+        free(teleporters);
+        return 0;
+    }
+
+    for (i = 0; i < 9; ++i) {
+        map0[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        map1[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    }
+    map0[(1 * 3) + 1] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) |
+                                        DUNGEON_SQUARE_MASK_THING_LIST | 0x08);
+    map1[(2 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+
+    maps[0].width = 3;
+    maps[0].height = 3;
+    maps[1].width = 3;
+    maps[1].height = 3;
+    tiles[0].squareCount = 9;
+    tiles[0].squareData = map0;
+    tiles[1].squareCount = 9;
+    tiles[1].squareData = map1;
+
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+    squareFirstThings[1] = THING_ENDOFLIST;
+    teleporters[0].next = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    teleporters[0].targetMapX = 2;
+    teleporters[0].targetMapY = 1;
+    teleporters[0].targetMapIndex = 1;
+    teleporters[0].scope = 1;
+    teleporters[0].audible = 1;
+
+    world->dungeon->header.mapCount = 2;
+    world->dungeon->maps = maps;
+    world->dungeon->tiles = tiles;
+    world->things->squareFirstThingCount = 2;
+    world->things->squareFirstThings = squareFirstThings;
+    world->things->teleporterCount = 1;
+    world->things->thingCounts[THING_TYPE_TELEPORTER] = 1;
+    world->things->teleporters = teleporters;
+    world->things->sensors[0].next = THING_ENDOFLIST;
+    world->partyMapIndex = 0;
+    world->party.mapIndex = 0;
+    world->party.mapX = 0;
+    world->party.mapY = 0;
+    return 1;
+}
+
+static int test_c006_generated_group_teleports_cross_map_before_link(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world teleporter cross-map\n");
+        return 1;
+    }
+
+    ok &= expect(rebuild_as_two_map_teleporter_world(&world),
+                 "build two-map creature teleporter fixture");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime generator sensor on teleporter square");
+    ok &= expect(schedule_generator_trigger(&world), "schedule generator on teleporter square");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator teleporter side-effect tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0),
+                 "C006 F0267 teleporter leaves source teleporter chain untouched");
+    ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "C006 F0267 teleporter links generated group at target map square");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST,
+                 "C006 F0267 teleporter target group links onto empty target chain");
+    ok &= expect(world.creatureAICount == 0,
+                 "C006 F0267 cross-map group does not seed party-map active state");
+    ok &= expect(world.timeline.count == 2 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].mapIndex == 1 &&
+                 world.timeline.events[0].mapX == 2 &&
+                 world.timeline.events[0].mapY == 1 &&
+                 world.timeline.events[1].kind == TIMELINE_EVENT_GROUP_GENERATOR,
+                 "C006 F0267 teleporter schedules C37 at target map square");
+    ok &= expect(result.emissionCount == 3 &&
+                 result.emissions[0].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[0].payload[1] == 2 &&
+                 result.emissions[0].payload[2] == 1 &&
+                 result.emissions[0].payload[3] == 1,
+                 "C006 F0267 audible teleporter buzzes at target map square before F0185 buzzes");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int prime_generator_sensor(struct GameWorld_Compat* world) {
     if (!world || !world->things || !world->things->sensors) return 0;
     world->things->sensors[0].sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
@@ -465,6 +586,7 @@ int main(void) {
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
+    if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");

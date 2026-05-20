@@ -1118,6 +1118,105 @@ static int orch_square_has_group_or_party_compat(
     return 0;
 }
 
+static int orch_find_teleporter_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DungeonTeleporter_Compat* outTeleporter)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !outTeleporter) return 0;
+    if (!world->things->teleporters || world->things->teleporterCount <= 0) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_TELEPORTER &&
+            index >= 0 && index < world->things->teleporterCount) {
+            *outTeleporter = world->things->teleporters[index];
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return 0;
+}
+
+static int orch_resolve_group_f0267_teleporter_destination_compat(
+    const struct GameWorld_Compat* world,
+    int* inOutMapIndex,
+    int* inOutMapX,
+    int* inOutMapY,
+    int* outTeleporterBuzzMapIndex,
+    int* outTeleporterBuzzMapX,
+    int* outTeleporterBuzzMapY)
+{
+    int remaining;
+
+    if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = -1;
+    if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = -1;
+    if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = -1;
+    if (!world || !world->dungeon || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
+
+    /* ReDMCSB MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE source lock:
+     * - lines 453-454 choose MASK0x0001_SCOPE_CREATURES for group moves.
+     * - lines 469-472 bound chained teleporter/pit moves (PC34 branch: 100).
+     * - lines 474-492 require an open teleporter, creature scope, and then
+     *   switch to TargetMapIndex/TargetMapX/TargetMapY.
+     * - lines 520-524 request M560 at the target for audible group teleporters.
+     * This helper intentionally owns only the C006/F0185 and event60/61
+     * group-teleporter destination subcase; pit fall damage, projectile impact,
+     * group rotation, and creature-allowed-on-map deletion remain outside it. */
+    for (remaining = 100; remaining > 0; --remaining) {
+        const struct DungeonMapDesc_Compat* map;
+        unsigned char squareByte;
+        int squareIndex;
+        int squareType;
+        struct DungeonTeleporter_Compat tp;
+        int targetMapIndex;
+        int destinationIsTeleporterTarget;
+
+        if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
+        map = &world->dungeon->maps[*inOutMapIndex];
+        if (*inOutMapX < 0 || *inOutMapX >= map->width ||
+            *inOutMapY < 0 || *inOutMapY >= map->height) break;
+        if (!world->dungeon->tiles || !world->dungeon->tiles[*inOutMapIndex].squareData) break;
+
+        squareIndex = (*inOutMapX * map->height) + *inOutMapY;
+        squareByte = world->dungeon->tiles[*inOutMapIndex].squareData[squareIndex];
+        squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        if (squareType != DUNGEON_ELEMENT_TELEPORTER || !(squareByte & 0x08)) break;
+        if (!orch_find_teleporter_on_square_compat(
+                world, *inOutMapIndex, *inOutMapX, *inOutMapY, &tp)) break;
+        if (!(tp.scope & 0x01)) break;
+
+        destinationIsTeleporterTarget =
+            (*inOutMapX == (int)tp.targetMapX &&
+             *inOutMapY == (int)tp.targetMapY &&
+             *inOutMapIndex == (int)tp.targetMapIndex);
+
+        targetMapIndex = (int)tp.targetMapIndex;
+        if (targetMapIndex < 0 || targetMapIndex >= (int)world->dungeon->header.mapCount) break;
+        *inOutMapIndex = targetMapIndex;
+        *inOutMapX = (int)tp.targetMapX;
+        *inOutMapY = (int)tp.targetMapY;
+        if (tp.audible) {
+            if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = *inOutMapIndex;
+            if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = *inOutMapX;
+            if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = *inOutMapY;
+        }
+        if (destinationIsTeleporterTarget) break;
+    }
+    return 1;
+}
+
 static int orch_is_lord_chaos_allowed_square_compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex,
@@ -1296,7 +1395,10 @@ static int orch_materialize_generated_group_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     const struct GeneratorResult_Compat* generator,
-    int* outGroupIndex)
+    int* outGroupIndex,
+    int* outTeleporterBuzzMapIndex,
+    int* outTeleporterBuzzMapX,
+    int* outTeleporterBuzzMapY)
 {
     struct DungeonGroup_Compat* group;
     int sftIndex;
@@ -1304,6 +1406,9 @@ static int orch_materialize_generated_group_compat(
     int i;
 
     if (outGroupIndex) *outGroupIndex = -1;
+    if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = -1;
+    if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = -1;
+    if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = -1;
     if (!world || !ev || !generator || !world->dungeon || !world->things) return 0;
     if (!generator->spawned) return 0;
 
@@ -1334,20 +1439,36 @@ static int orch_materialize_generated_group_compat(
     /* ReDMCSB GROUP.C:F0185:543-545 keeps the initialized group slot
      * referenced by the deferred move event instead of linking it when
      * F0267 reports a blocked destination. */
-    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
-        if (!orch_schedule_deferred_group_move_compat(world, ev, groupIndex, 0)) {
+    {
+        int destMapIndex = ev->mapIndex;
+        int destMapX = ev->mapX;
+        int destMapY = ev->mapY;
+        struct TimelineEvent_Compat resolvedEvent = *ev;
+
+        (void)orch_resolve_group_f0267_teleporter_destination_compat(
+            world, &destMapIndex, &destMapX, &destMapY,
+            outTeleporterBuzzMapIndex,
+            outTeleporterBuzzMapX,
+            outTeleporterBuzzMapY);
+        resolvedEvent.mapIndex = destMapIndex;
+        resolvedEvent.mapX = destMapX;
+        resolvedEvent.mapY = destMapY;
+
+        if (orch_square_has_group_or_party_compat(world, destMapIndex, destMapX, destMapY)) {
+            if (!orch_schedule_deferred_group_move_compat(world, &resolvedEvent, groupIndex, 0)) {
+                return 0;
+            }
+            if (outGroupIndex) *outGroupIndex = groupIndex;
+            return 0;
+        }
+
+        if (!orch_link_existing_group_to_square_compat(
+                world, groupIndex, destMapIndex, destMapX, destMapY)) {
             return 0;
         }
         if (outGroupIndex) *outGroupIndex = groupIndex;
-        return 0;
+        return 1;
     }
-
-    if (!orch_link_existing_group_to_square_compat(
-            world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY)) {
-        return 0;
-    }
-    if (outGroupIndex) *outGroupIndex = groupIndex;
-    return 1;
 }
 
 static int orch_handle_deferred_group_move_event_compat(
@@ -1360,19 +1481,30 @@ static int orch_handle_deferred_group_move_event_compat(
     int targetMapY;
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat retry;
+    int teleporterBuzzMapIndex = -1;
+    int teleporterBuzzMapX = -1;
+    int teleporterBuzzMapY = -1;
 
     if (!world || !ev || !result || !world->things) return 0;
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
+    retry = *ev;
     targetMapX = ev->mapX;
     targetMapY = ev->mapY;
 
     /* ReDMCSB TIMELINE.C:F0252:1527-1567 inserts the deferred group
      * only when the destination is clear.  If C23 Lord Chaos is blocked,
      * lines 1536-1555 give one 1/4-chance random adjacent insertion
-     * attempt before the lines 1565-1567 retry at +5 ticks. */
-    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, targetMapX, targetMapY)) {
+     * attempt before the lines 1565-1567 retry at +5 ticks.  When clear,
+     * line 1534 re-enters MOVESENS.C:F0267 with a non-square source; the
+     * teleporter destination helper above covers the narrow C006 group
+     * teleporter/cross-map subcase before the final insertion. */
+    (void)orch_resolve_group_f0267_teleporter_destination_compat(
+        world, &retry.mapIndex, &targetMapX, &targetMapY,
+        &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
+
+    if (orch_square_has_group_or_party_compat(world, retry.mapIndex, targetMapX, targetMapY)) {
         if (orch_try_lord_chaos_random_adjacent_retry_compat(
                 world, group, ev, &targetMapX, &targetMapY) &&
             !orch_square_has_group_or_party_compat(
@@ -1385,17 +1517,22 @@ static int orch_handle_deferred_group_move_event_compat(
                 world, groupIndex, ev->mapIndex, targetMapX, targetMapY);
         }
 
-        retry = *ev;
         retry.fireAtTick = ev->fireAtTick + 5u;
+        retry.mapX = targetMapX;
+        retry.mapY = targetMapY;
         return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
     }
 
     if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
         emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-             targetMapX, targetMapY, ev->mapIndex);
+             targetMapX, targetMapY, retry.mapIndex);
+    }
+    if (teleporterBuzzMapIndex >= 0) {
+        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+             teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
     }
     return orch_link_existing_group_to_square_compat(
-        world, groupIndex, ev->mapIndex, targetMapX, targetMapY);
+        world, groupIndex, retry.mapIndex, targetMapX, targetMapY);
 }
 
 static int orch_handle_group_generator_trigger_runtime_compat(
@@ -1407,6 +1544,9 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     const struct DungeonSensor_Compat* sensor;
     struct GeneratorContext_Compat ctx;
     struct GeneratorResult_Compat generator;
+    int teleporterBuzzMapIndex = -1;
+    int teleporterBuzzMapX = -1;
+    int teleporterBuzzMapY = -1;
 
     if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
     if (!orch_find_generator_sensor_on_square_compat(
@@ -1450,7 +1590,13 @@ static int orch_handle_group_generator_trigger_runtime_compat(
             &world->timeline, &generator.reEnableEvent);
     }
 
-    if (orch_materialize_generated_group_compat(world, ev, &generator, 0)) {
+    if (orch_materialize_generated_group_compat(
+            world, ev, &generator, 0,
+            &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY)) {
+        if (teleporterBuzzMapIndex >= 0) {
+            emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                 teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
+        }
         /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
          * M560_SOUND_BUZZ independently of the sensor's Audible flag. */
         emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
