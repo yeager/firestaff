@@ -75,7 +75,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Parry skill XP
 - ✅ Combat result logging
 - 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow/sling ammunition class validation and runtime projectile launch are source-locked; broader ranged polish remains pending
-- ❌ Shield defense bonus in combat
+- ✅ Shield defense bonus in combat — hand-slot shield defense now includes source-locked F0312 hand strength plus armor defense in F0313 wound defense
 - ❌ Weapon breakage
 - ✅ Poison damage over time — creature PoisonAttack → F0322 immediate damage, 36-tick follow-up scheduling, event-count decrement, and Vitality-adjusted gate are source-locked
 
