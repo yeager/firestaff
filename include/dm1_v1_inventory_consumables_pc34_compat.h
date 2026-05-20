@@ -11,6 +11,10 @@ extern "C" {
 
 #define DM1_CONSUMABLE_FOOD_WATER_MAX_PC34 2048
 #define DM1_CONSUMABLE_POTION_EMPTY_FLASK_PC34 20
+#define DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34 4
+#define DM1_CONSUMABLE_MOUTH_ANIMATION_DELAY_TICKS_PC34 8
+#define DM1_CONSUMABLE_MOUTH_ICON_OPEN_PC34 205
+
 
 enum {
     DM1_CONSUMABLE_STAT_STRENGTH = 0,
@@ -56,6 +60,11 @@ typedef struct {
     const char* evidence;
 } DM1ConsumableResultPc34;
 
+typedef struct {
+    int iconIndex;
+    int delayTicks;
+} DM1ConsumableMouthAnimationFramePc34;
+
 const char* dm1_inventory_consumables_source_evidence_pc34(void);
 int dm1_inventory_food_amount_from_icon_pc34(int iconIndex);
 int dm1_inventory_junk_food_icon_from_type_pc34(int junkType);
@@ -77,6 +86,9 @@ int dm1_inventory_consumables_route_swallow_sound_pc34(const DM1ConsumableResult
                                                        DM1_SoundSystem* soundSystem,
                                                        int16_t partyMapX,
                                                        int16_t partyMapY);
+int dm1_inventory_consumables_mouth_animation_pc34(const DM1ConsumableResultPc34* result,
+                                                   DM1ConsumableMouthAnimationFramePc34* frames,
+                                                   int maxFrames);
 
 #ifdef __cplusplus
 }

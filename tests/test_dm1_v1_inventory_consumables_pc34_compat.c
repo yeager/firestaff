@@ -41,6 +41,7 @@ int main(void)
     DM1ConsumableResultPc34 r;
     const uint16_t viMasks[] = { 0xFF0Fu };
     DM1_SoundSystem soundSystem;
+    DM1ConsumableMouthAnimationFramePc34 mouthFrames[DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34];
 
     printf("probe=dm1_v1_inventory_consumables_pc34_compat\n");
     printf("sourceEvidence=%s\n", dm1_inventory_consumables_source_evidence_pc34());
@@ -54,6 +55,15 @@ int main(void)
     ok &= expect_int("eat cheese", dm1_inventory_consume_food_junk_pc34(&c, 171, &r), 1);
     ok &= expect_int("cheese food cap", c.food, 1820);
     ok &= expect_int("food removes leader hand", r.removeLeaderHandObject, 1);
+    ok &= expect_int("food mouth animation count",
+                     dm1_inventory_consumables_mouth_animation_pc34(&r, mouthFrames,
+                                                                    DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34),
+                     4);
+    ok &= expect_int("food mouth frame 0 icon", mouthFrames[0].iconIndex, 206);
+    ok &= expect_int("food mouth frame 1 icon", mouthFrames[1].iconIndex, 205);
+    ok &= expect_int("food mouth frame 2 icon", mouthFrames[2].iconIndex, 206);
+    ok &= expect_int("food mouth frame 3 icon", mouthFrames[3].iconIndex, 205);
+    ok &= expect_int("food mouth frame delay", mouthFrames[0].delayTicks, 8);
 
     c = base_champion();
     c.food = 1800;
@@ -77,6 +87,10 @@ int main(void)
     ok &= expect_int("waterskin charge decremented", r.chargeCountAfter, 2);
     ok &= expect_int("waterskin swallow sound flag", r.playSwallowSound, 1);
     ok &= expect_int("waterskin stays in hand", r.removeLeaderHandObject, 0);
+    ok &= expect_int("waterskin no mouth animation",
+                     dm1_inventory_consumables_mouth_animation_pc34(&r, mouthFrames,
+                                                                    DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34),
+                     0);
 
     c = base_champion();
     ok &= expect_int("empty waterskin no consume", dm1_inventory_consume_water_junk_pc34(&c, 9, 0, &r), 0);
@@ -142,6 +156,10 @@ int main(void)
     ok &= expect_int("potion swallow sound flag", r.playSwallowSound, 1);
     ok &= expect_int("potion swallow sound index", soundSystem.lastPlayedSoundIndex, DM1_SND_SWALLOW);
     ok &= expect_int("potion swallow sound played count", soundSystem.totalSoundsPlayed, 1);
+    ok &= expect_int("potion no mouth animation",
+                     dm1_inventory_consumables_mouth_animation_pc34(&r, mouthFrames,
+                                                                    DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34),
+                     0);
 
     printf("inventoryConsumablesInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;

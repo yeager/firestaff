@@ -57,7 +57,7 @@ const char* dm1_inventory_consumables_source_evidence_pc34(void)
         "PANEL.C:1824-1844 gates mouth-allowed objects, water/waterskin charge use, and leader-hand removal; "
         "PANEL.C:1850-1917 applies potion effects and converts all potions to C20 empty flask without clearing Power; "
         "PANEL.C:1918-1919 applies G0242 food amounts for C168..C175 food icons capped at 2048; "
-        "PANEL.C:1922-1945 clamps health/stamina and plays C08 swallow; "
+        "PANEL.C:1922-1945 clamps health/stamina, animates removed leader-hand food with C205+!(counter&1) for four 8-tick frames, and plays C08 swallow; "
         "DEFS.H:62-68 defines C08_SOUND_SWALLOW as sound 8 for champion eat/drink; DUNGEON.C:428-436 defines G0242 food amounts; "
         "DUNGEON.C:1108-1127 defines waterskin charge weight and empty-flask weight; "
         "DEFS.H:1468-1481,1517-1524,1891-1947 define potion, junk, and icon constants.";
@@ -248,4 +248,31 @@ int dm1_inventory_consumables_route_swallow_sound_pc34(const DM1ConsumableResult
     DM1_Sound_RequestPlay(soundSystem, DM1_SND_SWALLOW, partyMapX, partyMapY,
                           DM1_MODE_PLAY_IMMEDIATELY);
     return 1;
+}
+
+int dm1_inventory_consumables_mouth_animation_pc34(const DM1ConsumableResultPc34* result,
+                                                   DM1ConsumableMouthAnimationFramePc34* frames,
+                                                   int maxFrames)
+{
+    int counter;
+    int frameIndex = 0;
+
+    if (!result || !result->consumed || !result->removeLeaderHandObject) {
+        return 0;
+    }
+    if (!frames) {
+        return DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34;
+    }
+    if (maxFrames < DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0349 lines 1928-1938: for counter=5; --counter;
+     * draw C205_ICON_MOUTH_OPEN + !(counter & 1), then delay 8. */
+    for (counter = 5; --counter; ) {
+        frames[frameIndex].iconIndex = DM1_CONSUMABLE_MOUTH_ICON_OPEN_PC34 + !(counter & 1);
+        frames[frameIndex].delayTicks = DM1_CONSUMABLE_MOUTH_ANIMATION_DELAY_TICKS_PC34;
+        ++frameIndex;
+    }
+    return frameIndex;
 }
