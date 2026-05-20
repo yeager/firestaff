@@ -18761,12 +18761,30 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
     state->v1OpenChestThing = thing;
-    return m11_v1_open_chest_container_index(state) >= 0;
+    if (m11_v1_open_chest_container_index(state) < 0) {
+        state->v1OpenChestThing = THING_NONE;
+        return 0;
+    }
+    return 1;
 }
 
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
     if (!state) return;
     state->v1OpenChestThing = THING_NONE;
+}
+
+static void m11_refresh_v1_action_hand_chest_panel(M11_GameViewState* state,
+                                                   unsigned short removedThing,
+                                                   unsigned short currentThing) {
+    if (!state) return;
+    if (removedThing != THING_NONE && removedThing != THING_ENDOFLIST &&
+        removedThing == state->v1OpenChestThing) {
+        M11_GameView_CloseV1OpenChest(state);
+    }
+    if (currentThing != THING_NONE && currentThing != THING_ENDOFLIST &&
+        THING_GET_TYPE(currentThing) == THING_TYPE_CONTAINER) {
+        (void)M11_GameView_OpenV1ActionHandChest(state);
+    }
 }
 
 unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state) {
@@ -19856,6 +19874,9 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
             champ->inventory[championSlot] = slotThing;
             return 0;
         }
+        if (championSlot == CHAMPION_SLOT_ACTION_HAND) {
+            m11_refresh_v1_action_hand_chest_panel(state, slotThing, leaderThing);
+        }
         return 1;
     }
     if (slotThing == THING_NONE || slotThing == THING_ENDOFLIST) return 0;
@@ -19863,6 +19884,9 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
         champ->inventory[championSlot] = slotThing;
         return 0;
+    }
+    if (championSlot == CHAMPION_SLOT_ACTION_HAND) {
+        m11_refresh_v1_action_hand_chest_panel(state, slotThing, THING_NONE);
     }
     return 1;
 }

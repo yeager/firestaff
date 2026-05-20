@@ -208,6 +208,67 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
               "closing the panel clears open chest state");
 }
 
+static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short axeThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 2;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapons[0].type = 2;
+    weapons[0].next = axeThing;
+    weapons[1].type = 2;
+    weapons[1].next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "open action-hand chest before action-hand removal");
+    ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(9, &sx, &sy, &sw, &sh),
+                "C508 action-hand source slot zone exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C508 picks up the open action-hand chest");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "removing the open action-hand chest clears panel state");
+    ASSERT_EQ(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND], THING_NONE,
+              "action hand is empty after picking up the chest");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestThing,
+              "removed chest moves to the leader hand");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "closing action-hand panel state preserves container list head");
+    ASSERT_EQ(weapons[0].next, axeThing,
+              "closing action-hand panel state preserves linked contents");
+
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+                "C537 chest source slot zone exists after close");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_IGNORED,
+              "closed chest panel ignores stale C537 clicks");
+
+    ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(9, &sx, &sy, &sw, &sh),
+                "C508 action-hand source slot zone still exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "placing the leader-hand chest into C508 reopens panel state");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "placing a container in the action hand opens its chest panel");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "placing the chest clears the leader hand");
+    ASSERT_EQ(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND], chestThing,
+              "action hand stores the placed chest");
+}
+
 static void test_eye_panel_weapon_attribute_flags(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -341,6 +402,7 @@ int main(void) {
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_open_chest_runtime_routes_and_clicks();
+    test_action_hand_chest_panel_state_follows_slot_clicks();
     test_eye_panel_potion_power_prefix_runtime();
     test_eye_panel_weapon_attribute_flags();
     test_eye_panel_champion_stats_and_skills();
