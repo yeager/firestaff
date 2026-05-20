@@ -121,7 +121,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
 - 🔧 Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects and empty-flask conversion are source-locked and wired through M11 mouth-click; exact VI wound RNG masks, swallow audio routing, and mouth animation remain pending
 - 🔧 Food/water item consumption (click to eat/drink) — food amounts, water/waterskin charges, caps, and leader-hand removal are source-locked and wired through M11 mouth-click; swallow audio routing and mouth animation remain pending
-- ❌ Fountain interaction (fill flask with water)
+- ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - ❌ Key usage (use key on locked door)
 
 ### Survival / Needs
