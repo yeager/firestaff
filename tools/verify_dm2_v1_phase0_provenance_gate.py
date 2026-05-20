@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -256,6 +257,18 @@ def main() -> int:
     parser.add_argument("--sphenx-cache", type=Path, default=DEFAULT_SPHENX_CACHE)
     parser.add_argument("--evidence", type=Path, default=DEFAULT_EVIDENCE)
     args = parser.parse_args()
+
+    using_default_roots = not any(
+        arg.startswith(("--dm2-canonical", "--skproject-mirror", "--sphenx-cache"))
+        for arg in sys.argv[1:]
+    )
+    if using_default_roots and not (
+        args.dm2_canonical.is_dir()
+        and args.skproject_mirror.is_dir()
+        and args.sphenx_cache.is_dir()
+    ):
+        print("SKIP default DM2 provenance roots are not available on this host")
+        return 0
 
     errors: list[str] = []
     result = {
