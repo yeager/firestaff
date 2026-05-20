@@ -181,6 +181,9 @@ struct SensorTriggerResult_Compat {
     int wallObjectTypeTaken;
     int wallObjectStored;
     int wallObjectTypeStored;
+    int sensorDataBefore;
+    int sensorDataAfter;
+    int sensorDataChanged;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16
@@ -240,5 +243,13 @@ int F0726_SENSOR_ProcessWallClick_Compat(
 int F0727_SENSOR_SquareTypeToEventType_Compat(int squareType);
 
 int F0728_SENSOR_ResolveHoldEffect_Compat(int effect, int triggerActive);
+
+int F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int eventEffect,
+    int sensorMapX,
+    int sensorMapY,
+    int sensorCell,
+    struct SensorTriggerResult_Compat* outResult);
 
 #endif

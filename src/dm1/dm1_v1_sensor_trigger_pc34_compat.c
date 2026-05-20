@@ -8,6 +8,7 @@
  *   MOVESENS.C F0272 (line ~1154): TriggerEffect — dispatch local vs remote
  *   MOVESENS.C F0275 (line ~1309): IsTriggeredByClickOnWall — wall click switch
  *   MOVESENS.C F0276 (line ~1553): ProcessThingAdditionOrRemoval — floor sensors
+ *   TIMELINE.C F0248 (lines 1136-1350): wall event sensors incl. C006 countdown
  *   DEFS.H (lines 1256-1305): sensor type/effect constants, macros
  *   DATA.C (line ~470): G0059_auc_Graphic562_SquareTypeToEventType[7]
  */
@@ -561,6 +562,98 @@ int F0724_SENSOR_ResolveEffectDispatch_Compat(
         outResult->targetSquareType = targetSquareType;
         outResult->targetEventType = F0727_SENSOR_SquareTypeToEventType_Compat(targetSquareType);
 
+        switch (resolvedEffect) {
+        case DM1_EFFECT_SET:    outResult->effectKind = SENSOR_EFFECT_SET_TARGET; break;
+        case DM1_EFFECT_CLEAR:  outResult->effectKind = SENSOR_EFFECT_CLEAR_TARGET; break;
+        case DM1_EFFECT_TOGGLE: outResult->effectKind = SENSOR_EFFECT_TOGGLE_TARGET; break;
+        default: outResult->effectKind = SENSOR_EFFECT_TOGGLE_TARGET; break;
+        }
+    }
+
+    return 1;
+}
+
+
+/* ================================================================
+ *  F0729 -- Wall countdown sensor event evaluation
+ *  Source: TIMELINE.C F0248 lines 1198-1266, C006_SENSOR_WALL_COUNTDOWN.
+ *
+ *  ReDMCSB mutates M040_DATA in place. This pure helper reports the
+ *  before/after counter values; the caller applies the sensor-data write
+ *  and any F0272-triggered effect to the world/event queue.
+ * ================================================================ */
+int F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int eventEffect,
+    int sensorMapX,
+    int sensorMapY,
+    int sensorCell,
+    struct SensorTriggerResult_Compat* outResult)
+{
+    int data;
+    int before;
+    int resolvedEffect;
+
+    if (!sensor || !outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+    outResult->sensorIndex = -1;
+    outResult->sensorDataBefore = (int)sensor->sensorData;
+    outResult->sensorDataAfter = (int)sensor->sensorData;
+
+    if (sensor->sensorType != DM1_SENSOR_WALL_COUNTDOWN) return 1;
+
+    before = (int)sensor->sensorData;
+    data = before;
+    if (data <= 0) return 1;
+
+    /* Source: TIMELINE.C:1203-1211. SET increments up to 511; every
+     * other event effect decrements. */
+    if (eventEffect == DM1_EFFECT_SET) {
+        if (data < 511) {
+            data++;
+        }
+    } else {
+        data--;
+    }
+
+    outResult->sensorDataAfter = data;
+    outResult->sensorDataChanged = (data != before);
+
+    /* Source: TIMELINE.C:1212-1263. HOLD dispatches SET/CLEAR on every
+     * nonzero starting count event; non-HOLD dispatches only when the
+     * updated counter reaches zero. */
+    if (sensor->effect == DM1_EFFECT_HOLD) {
+        int triggerSetEffect = ((data == 0) != (sensor->revertEffect != 0));
+        resolvedEffect = triggerSetEffect ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+    } else {
+        if (data != 0) return 1;
+        resolvedEffect = sensor->effect;
+    }
+
+    outResult->triggered = 1;
+    outResult->resolvedEffect = resolvedEffect;
+    outResult->audible = sensor->audible;
+    outResult->delayTicks = sensor->value;
+    if (sensor->onceOnly) {
+        outResult->sensorDisabled = 1;
+    }
+
+    if (sensor->localEffect) {
+        outResult->isLocal = 1;
+        outResult->localEffectValue = sensor->localMultiple;
+        outResult->targetMapX = sensorMapX;
+        outResult->targetMapY = sensorMapY;
+        outResult->targetCell = sensorCell;
+        if (sensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+            outResult->effectKind = SENSOR_EFFECT_ADD_XP;
+        } else {
+            outResult->effectKind = SENSOR_EFFECT_ROTATION;
+        }
+    } else {
+        outResult->isLocal = 0;
+        outResult->targetMapX = sensor->targetMapX;
+        outResult->targetMapY = sensor->targetMapY;
+        outResult->targetCell = sensor->targetCell;
         switch (resolvedEffect) {
         case DM1_EFFECT_SET:    outResult->effectKind = SENSOR_EFFECT_SET_TARGET; break;
         case DM1_EFFECT_CLEAR:  outResult->effectKind = SENSOR_EFFECT_CLEAR_TARGET; break;

@@ -666,6 +666,12 @@ static void test_wall_event_triggered_skip(void) {
     F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "AND/OR gate: not triggered by click");
 
+    /* Countdown (type 6) */
+    sensor = make_sensor(6, 2, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 0, 0, 0);
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Countdown: not triggered by click");
+
     /* Launcher (type 7) */
     sensor = make_sensor(7, 0, DM1_EFFECT_TOGGLE, 0, 0, 0, 0, 0, 0, 0, 0);
     memset(&result, 0, sizeof(result));
@@ -677,6 +683,86 @@ static void test_wall_event_triggered_skip(void) {
     memset(&result, 0, sizeof(result));
     F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "End game: not triggered by click");
+}
+
+
+/* ----------------------------------------------------------------
+ *  Test F0729: Wall sensor C006 countdown/timer event
+ *  Source: TIMELINE.C F0248 lines 1198-1266
+ * ---------------------------------------------------------------- */
+static void test_wall_countdown_event(void) {
+    struct DungeonSensor_Compat sensor;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_COUNTDOWN, 2,
+                         DM1_EFFECT_TOGGLE, 0, 0, 1, 4,
+                         0, 7, 8, 2);
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.sensorDataBefore == 2, "Countdown: records starting data");
+    CHECK(result.sensorDataAfter == 1, "Countdown: CLEAR decrements data");
+    CHECK(result.sensorDataChanged == 1, "Countdown: data changed on decrement");
+    CHECK(result.triggered == 0, "Countdown: non-HOLD does not trigger until zero");
+
+    sensor.sensorData = 1;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.sensorDataAfter == 0, "Countdown: last decrement reaches zero");
+    CHECK(result.triggered == 1, "Countdown: non-HOLD triggers when data reaches zero");
+    CHECK(result.resolvedEffect == DM1_EFFECT_TOGGLE, "Countdown: non-HOLD dispatches sensor effect");
+    CHECK(result.audible == 1, "Countdown: audible flag is preserved");
+    CHECK(result.delayTicks == 4, "Countdown: delay ticks come from sensor value");
+    CHECK(result.targetMapX == 7, "Countdown: remote target X comes from sensor");
+    CHECK(result.targetMapY == 8, "Countdown: remote target Y comes from sensor");
+    CHECK(result.targetCell == 2, "Countdown: remote target cell comes from sensor");
+
+    sensor.effect = DM1_EFFECT_HOLD;
+    sensor.revertEffect = 0;
+    sensor.sensorData = 1;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.triggered == 1, "Countdown HOLD: dispatches when decremented to zero");
+    CHECK(result.resolvedEffect == DM1_EFFECT_SET, "Countdown HOLD: zero resolves to SET without revert");
+
+    sensor.revertEffect = 1;
+    sensor.sensorData = 1;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.resolvedEffect == DM1_EFFECT_CLEAR, "Countdown HOLD: zero resolves to CLEAR with revert");
+
+    sensor.revertEffect = 0;
+    sensor.sensorData = 511;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_SET, 3, 4, 1, &result);
+    CHECK(result.sensorDataAfter == 511, "Countdown: SET caps increment at 511");
+    CHECK(result.sensorDataChanged == 0, "Countdown: capped SET reports no data change");
+    CHECK(result.triggered == 1, "Countdown HOLD: still dispatches after capped SET event");
+    CHECK(result.resolvedEffect == DM1_EFFECT_CLEAR, "Countdown HOLD: nonzero resolves to CLEAR without revert");
+
+    sensor.sensorData = 0;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.sensorDataAfter == 0, "Countdown: zero counter stays zero");
+    CHECK(result.triggered == 0, "Countdown: zero starting counter is skipped");
+
+    sensor.sensorData = 1;
+    sensor.localEffect = 1;
+    sensor.localMultiple = DM1_EFFECT_TOGGLE;
+    sensor.onceOnly = 1;
+    memset(&result, 0, sizeof(result));
+    F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+        &sensor, DM1_EFFECT_CLEAR, 3, 4, 1, &result);
+    CHECK(result.isLocal == 1, "Countdown: local effect dispatch is reported");
+    CHECK(result.effectKind == SENSOR_EFFECT_ROTATION, "Countdown: local effect maps to rotation kind");
+    CHECK(result.targetMapX == 3, "Countdown: local effect uses source X");
+    CHECK(result.targetMapY == 4, "Countdown: local effect uses source Y");
+    CHECK(result.targetCell == 1, "Countdown: local effect uses event cell");
+    CHECK(result.sensorDisabled == 1, "Countdown: once-only disables only on dispatch");
 }
 
 /* ----------------------------------------------------------------
@@ -916,6 +1002,7 @@ int main(void) {
     test_wall_object_exchanger();
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();
+    test_wall_countdown_event();
     test_effect_dispatch();
     test_process_floor_square();
     test_process_wall_click();
