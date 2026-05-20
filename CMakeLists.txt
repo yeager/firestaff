@@ -395,6 +395,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )
         add_test(
+            NAME csb_v1_phase0_provenance_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_phase0_provenance_gate.py
+        )
+        add_test(
             NAME csb_v1_completion_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_completion_matrix.py
         )
