@@ -14,6 +14,7 @@
 #include <ctype.h>
 
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
+#include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
 
 /* ================================================================
  *  Local LE helpers
@@ -1033,6 +1034,88 @@ static int orch_reenable_generator_sensor_on_square_compat(
     return 0;
 }
 
+static int orch_find_generator_sensor_on_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outSensorIndex)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (outSensorIndex) *outSensorIndex = -1;
+    if (!dungeon || !things || !things->loaded || !things->squareFirstThings) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) return 0;
+
+    thing = things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_SENSOR && index >= 0 && index < things->sensorCount) {
+            const struct DungeonSensor_Compat* sensor = &things->sensors[index];
+            if (sensor->sensorType == RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR) {
+                if (outSensorIndex) *outSensorIndex = index;
+                return 1;
+            }
+        }
+        thing = orch_next_thing_compat(things, thing);
+    }
+    return 0;
+}
+
+static int orch_handle_group_generator_trigger_audio_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int sensorIndex = -1;
+    const struct DungeonSensor_Compat* sensor;
+    struct GeneratorContext_Compat ctx;
+    struct GeneratorResult_Compat generator;
+
+    if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
+    if (!orch_find_generator_sensor_on_square_compat(
+            world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY,
+            &sensorIndex)) {
+        return 0;
+    }
+    if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount) return 0;
+
+    sensor = &world->things->sensors[sensorIndex];
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.sensorIndex = sensorIndex;
+    ctx.mapIndex = ev->mapIndex;
+    ctx.mapX = ev->mapX;
+    ctx.mapY = ev->mapY;
+    ctx.creatureType = (int)sensor->sensorData;
+    ctx.creatureCountRaw = (int)sensor->value;
+    ctx.randomizeCount = (sensor->value & 0x08u) ? 1 : 0;
+    ctx.healthMultiplier = (int)(sensor->localMultiple & 0x000Fu);
+    ctx.ticksRaw = (int)((sensor->localMultiple >> 4) & 0x00FFu);
+    ctx.onceOnly = sensor->onceOnly ? 1 : 0;
+    ctx.audible = sensor->audible ? 1 : 0;
+    ctx.mapDifficulty = (world->dungeon->maps && ev->mapIndex >= 0 &&
+                         ev->mapIndex < (int)world->dungeon->header.mapCount)
+        ? (int)world->dungeon->maps[ev->mapIndex].difficulty
+        : 1;
+    ctx.isOnPartyMap = (ev->mapIndex == world->partyMapIndex) ? 1 : 0;
+    ctx.currentActiveGroupCount = world->things->groupCount;
+    ctx.maxActiveGroupCount = 32;
+
+    if (!F0860_RUNTIME_HandleGroupGenerator_Compat(
+            &ctx, &world->masterRng, world->gameTick, &generator)) {
+        return 0;
+    }
+    if (generator.soundRequested) {
+        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ, ev->mapX, ev->mapY, ev->mapIndex);
+    }
+    return 1;
+}
+
 static int orch_find_material_group_on_square_compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -1658,6 +1741,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             if (ev.aux0 == GENERATOR_EVENT_AUX0_REENABLE) {
                 (void)orch_reenable_generator_sensor_on_square_compat(
                     world->dungeon, world->things, ev.mapIndex, ev.mapX, ev.mapY);
+            } else {
+                /* ReDMCSB TIMELINE.C:964-977: audible C006 generator
+                 * requests M560_SOUND_BUZZ after F0185 generation. */
+                (void)orch_handle_group_generator_trigger_audio_compat(world, &ev, result);
             }
             break;
         case TIMELINE_EVENT_SQUARE_STATE:

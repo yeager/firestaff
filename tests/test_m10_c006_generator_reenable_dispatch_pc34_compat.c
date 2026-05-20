@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 
 static int build_world(struct GameWorld_Compat* world) {
     struct DungeonDatState_Compat* dungeon;
@@ -123,8 +124,36 @@ int main(void) {
                  "second disabled sensor remains disabled");
     ok &= expect(world.timeline.count == 0, "re-enable event is consumed");
 
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    world.things->sensors[0].sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
+    world.things->sensors[0].sensorData = 0;
+    world.things->sensors[0].value = 1;
+    world.things->sensors[0].audible = 1;
+    world.things->sensors[0].onceOnly = 0;
+    world.things->sensors[0].localMultiple = 1;
+    event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule C006 generator trigger event");
+    rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+    ok &= expect(rc == ORCH_OK, "advance C006 generator trigger tick");
+    ok &= expect(result.emissionCount == 1,
+                 "audible C006 generator emits one playback request");
+    ok &= expect(result.emissions[0].kind == EMIT_SOUND_REQUEST,
+                 "audible C006 generator emits sound request kind");
+    ok &= expect(result.emissions[0].payload[0] == DM1_SND_BUZZ,
+                 "audible C006 generator requests M560_SOUND_BUZZ");
+    ok &= expect(result.emissions[0].payload[1] == 1 && result.emissions[0].payload[2] == 1,
+                 "audible C006 generator sound keeps source square coordinates");
+
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
-    puts("M10_C006_GENERATOR_REENABLE_DISPATCH_OK");
+    puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;
 }
