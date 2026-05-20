@@ -90,7 +90,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ FREEZE LIFE action
 - ✅ Light spell (OH IR RA -> source-backed magical light bridge)
 - ✅ Darkness spell (DES IR SAR -> source-backed darkness/recovery bridge)
-- 🔧 Open Door spell (ZO BREU) — projectile door-impact SFX source-locked; full door behavior remains pending
+- 🔧 Open Door spell (ZO BREU) — projectile door-impact SFX and non-destroyed door hit/toggle runtime behavior are source-locked; remaining polish stays separate
 - ❌ Poison cloud damage over time
 - ✅ Spell failure feedback — needs-practice/meaningless feedback metadata and cast-click symbol cleanup are source-locked
 
