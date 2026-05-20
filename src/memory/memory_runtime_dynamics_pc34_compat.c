@@ -70,51 +70,45 @@ static const int s_PowerOrdinalToLightAmount[RUNTIME_LIGHT_POWER_MAX + 1] = {
 };
 
 /* ==========================================================
- *  Creature base-health lookup (minimal v1).
+ *  Creature base-health lookup (DM1 PC 3.4 / I34E).
  *
- *  Fontanel stores per-creature baseHealth in the CREATURE_INFO
- *  table, indexed by creatureType. Phase 9/16 expose sensor
- *  decode only — no CreatureInfo_Compat table yet. Phase 19 v1
- *  ships a minimal lookup that covers DM1's 27 creature types
- *  (0..26); values are placeholder plausible-range integers
- *  mirroring Fontanel's order-of-magnitude for each kind.
- *  Real values come from CREATURE.C:creatureInfo[] initialiser.
- *
- *  NEEDS DISASSEMBLY REVIEW — specific per-type health values.
+ *  ReDMCSB DEFS.H:1574-1594 defines CREATURE_INFO with
+ *  BaseHealth as the eighth initializer field. DUNGEON.C:668-733
+ *  defines the I34E-compatible G0243_as_Graphic559_CreatureInfo
+ *  rows for creature types 0..26. GROUP.C:530-533 indexes that
+ *  table during F0185_GROUP_GetGenerated and computes health as
+ *  baseHealth * multiplier + random(baseHealth >> 2 + 1).
  * ========================================================== */
 
 static int runtime_get_creature_base_health(int creatureType) {
-    /* Plausible baseline values drawn from Fontanel ranges
-     * (Mummy ~75, Dragon ~500, Screamer ~10, etc.). Exact
-     * calibration is deferred to CreatureInfo_Compat delivery. */
     static const int s_base[27] = {
-        /*  0 Mummy          */  75,
-        /*  1 Ghost          */  35,
-        /*  2 RockPile       */  55,
-        /*  3 Giggler        */  25,
-        /*  4 Wasp           */  15,
-        /*  5 GiantScorpion  */  85,
-        /*  6 AntMan         */  65,
-        /*  7 PainRat        */  30,
-        /*  8 Ruster         */  40,
-        /*  9 Screamer       */  10,
-        /* 10 Skeleton       */  45,
-        /* 11 Trolin         */  60,
-        /* 12 Worm           */  50,
-        /* 13 Couatl         */ 110,
-        /* 14 StoneGolem     */ 125,
-        /* 15 Mummy2         */  95,
-        /* 16 BlackFlame     */  80,
-        /* 17 Wizard         */ 150,
-        /* 18 AnimatedArmour */ 135,
-        /* 19 Zytaz          */  90,
-        /* 20 Demon          */ 200,
-        /* 21 Lord Chaos     */ 250,
-        /* 22 RedDragon      */ 500,
-        /* 23 Knight         */ 160,
-        /* 24 Swamp Slime    */  70,
-        /* 25 Giant          */ 180,
-        /* 26 Minion         */  40
+        /* DUNGEON.C:673 */ 150,
+        /* DUNGEON.C:675 */ 110,
+        /* DUNGEON.C:680 */  10,
+        /* DUNGEON.C:682 */  40,
+        /* DUNGEON.C:683 */ 101,
+        /* DUNGEON.C:684 */  60,
+        /* DUNGEON.C:685 */ 165,
+        /* DUNGEON.C:686 */  50,
+        /* DUNGEON.C:691 */  30,
+        /* DUNGEON.C:693 */ 120,
+        /* DUNGEON.C:694 */  33,
+        /* DUNGEON.C:699 */  80,
+        /* DUNGEON.C:701 */  20,
+        /* DUNGEON.C:706 */  39,
+        /* DUNGEON.C:708 */  44,
+        /* DUNGEON.C:709 */  70,
+        /* DUNGEON.C:710 */  20,
+        /* DUNGEON.C:711 */   8,
+        /* DUNGEON.C:712 */  60,
+        /* DUNGEON.C:718 */  33,
+        /* DUNGEON.C:719 */ 144,
+        /* DUNGEON.C:721 */  77,
+        /* DUNGEON.C:722 */ 100,
+        /* DUNGEON.C:730 */ 180,
+        /* DUNGEON.C:731 */ 255,
+        /* DUNGEON.C:732 */ 180,
+        /* DUNGEON.C:733 */ 180
     };
     if (creatureType < 0 || creatureType > 26) return 0;
     return s_base[creatureType];

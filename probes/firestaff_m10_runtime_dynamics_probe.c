@@ -2,7 +2,7 @@
  * M10 Phase 19 probe — Runtime dynamics verification.
  *
  * Validates the pure runtime-dynamics data layer against
- * PHASE19_PLAN.md §5 invariants. Ships 46 invariants across 21
+ * PHASE19_PLAN.md §5 invariants. Ships 48 invariants across 21
  * blocks (A..U).
  *
  * Reporting: runtime_dynamics_probe.md (scope/notes) +
@@ -107,9 +107,9 @@ int main(int argc, char* argv[]) {
                     "  placeholder `{3,6,10,16,24,40}`; real values are from\n"
                     "  GRAPHICS.DAT entry 562 (G0039). Full 16-entry table is\n"
                     "  post-M10.\n");
-    fprintf(report, "- `runtime_get_creature_base_health` per-type values are\n"
-                    "  plausible-range placeholders; exact numbers come from\n"
-                    "  CREATURE.C:creatureInfo[] when the loader lands.\n");
+    fprintf(report, "- `runtime_get_creature_base_health` is source-locked to\n"
+                    "  ReDMCSB DEFS.H:1574-1594 and DUNGEON.C:668-733\n"
+                    "  for PC 3.4/I34E CREATURE_INFO base-health values.\n");
     fprintf(report, "- `F0861` suppression: only the global active-group-count\n"
                     "  cap on the party map is enforced (Fontanel GROUP.C:512).\n"
                     "  No party-adjacency/proximity check in WIP source; flagged\n"
@@ -181,6 +181,23 @@ int main(int argc, char* argv[]) {
               && out.spawnedGroupHealth[1] > 0
               && out.spawnedGroupHealth[2] > 0,
               "05: Generator (type=7, count=3, mult=2) spawns 3 creatures, all HP>0");
+    }
+    {
+        int hp[4];
+        int rngCalls = -1;
+        memset(hp, 0, sizeof(hp));
+        F0862_RUNTIME_ComputeSpawnedGroupHealth_Compat(7, 2, 2, 0, hp, &rngCalls);
+        CHECK(hp[0] == 100 && hp[1] == 100 && hp[2] == 100
+              && hp[3] == 0 && rngCalls == 0,
+              "05a: type=7 source baseHealth=50, mult=2, count=3 -> HP=100 without RNG jitter");
+    }
+    {
+        int hp[4];
+        int rngCalls = -1;
+        memset(hp, 0, sizeof(hp));
+        F0862_RUNTIME_ComputeSpawnedGroupHealth_Compat(24, 1, 0, 0, hp, &rngCalls);
+        CHECK(hp[0] == 255 && hp[1] == 0 && rngCalls == 0,
+              "05b: type=24 source baseHealth=255, count=1 -> HP=255 without RNG jitter");
     }
     {
         struct GeneratorContext_Compat ctx;
