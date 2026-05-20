@@ -203,9 +203,9 @@ Fontanel has already documented **93 bugs + 108 changes** across 9 game versions
 
 ### CI / CD
 - [ ] GitHub Actions, build on all three platforms for every PR
-- [ ] Automated tests, run verify scripts on all three platforms
+- [x] Automated tests, run verify scripts on all three platforms (verified on GitHub Actions run 26150087692, 2026-05-20)
 - [ ] Automated release, tag versions, build packages, upload to GitHub Releases
-- [ ] Cross-platform determinism test, run-twice hash must be identical on macOS / Linux / Windows
+- [x] Cross-platform determinism test, run-twice hash must be identical on macOS / Linux / Windows (verified on GitHub Actions run 26150087692, 2026-05-20)
 
 ### Minimum supported versions (proposal)
 - macOS: 11 Big Sur+
