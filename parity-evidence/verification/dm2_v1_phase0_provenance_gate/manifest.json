@@ -1,0 +1,381 @@
+{
+  "contract": "DM2 V1 parser/runtime work is blocked until these exact original assets and DM2 source references are present and hash-locked. This gate claims provenance only, not runtime parity.",
+  "dm2CanonicalAssets": {
+    "archives": [
+      {
+        "actual": {
+          "bytes": 13203537,
+          "memberCount": 34,
+          "sha256": "d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929"
+        },
+        "exists": true,
+        "expected": {
+          "bytes": 13203537,
+          "memberCount": 34,
+          "sha256": "d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929"
+        },
+        "filename": "Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+        "label": "DM2 DOS EN release",
+        "members": [
+          {
+            "actual": {
+              "bytes": 39437,
+              "crc32": "2530a08a",
+              "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef"
+            },
+            "expected": {
+              "bytes": 39437,
+              "crc32": "2530a08a",
+              "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef"
+            },
+            "ok": true,
+            "path": "data/dungeon.dat",
+            "role": "dungeon"
+          },
+          {
+            "actual": {
+              "bytes": 8639757,
+              "crc32": "c6d130f6",
+              "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346"
+            },
+            "expected": {
+              "bytes": 8639757,
+              "crc32": "c6d130f6",
+              "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346"
+            },
+            "ok": true,
+            "path": "data/graphics.dat",
+            "role": "graphics"
+          },
+          {
+            "actual": {
+              "bytes": 63,
+              "crc32": "fa6cdaca",
+              "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72"
+            },
+            "expected": {
+              "bytes": 63,
+              "crc32": "fa6cdaca",
+              "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72"
+            },
+            "ok": true,
+            "path": "data/songlist.dat",
+            "role": "songlist"
+          },
+          {
+            "actual": {
+              "bytes": 522637,
+              "crc32": "c1526f95",
+              "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"
+            },
+            "expected": {
+              "bytes": 522637,
+              "crc32": "c1526f95",
+              "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"
+            },
+            "ok": true,
+            "path": "skull.exe",
+            "role": "runtime"
+          }
+        ]
+      },
+      {
+        "actual": {
+          "bytes": 46596215,
+          "memberCount": 36,
+          "sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228"
+        },
+        "exists": true,
+        "expected": {
+          "bytes": 46596215,
+          "memberCount": 36,
+          "sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228"
+        },
+        "filename": "Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip",
+        "label": "DM2 DOS CD/layout candidate",
+        "members": [
+          {
+            "actual": {
+              "bytes": 39437,
+              "crc32": "2530a08a",
+              "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef"
+            },
+            "expected": {
+              "bytes": 39437,
+              "crc32": "2530a08a",
+              "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef"
+            },
+            "ok": true,
+            "path": "dumast2/DATA/DUNGEON.DAT",
+            "role": "dungeon"
+          },
+          {
+            "actual": {
+              "bytes": 8639757,
+              "crc32": "c6d130f6",
+              "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346"
+            },
+            "expected": {
+              "bytes": 8639757,
+              "crc32": "c6d130f6",
+              "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346"
+            },
+            "ok": true,
+            "path": "dumast2/DATA/GRAPHICS.DAT",
+            "role": "graphics"
+          },
+          {
+            "actual": {
+              "bytes": 63,
+              "crc32": "fa6cdaca",
+              "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72"
+            },
+            "expected": {
+              "bytes": 63,
+              "crc32": "fa6cdaca",
+              "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72"
+            },
+            "ok": true,
+            "path": "dumast2/DATA/SONGLIST.DAT",
+            "role": "songlist"
+          },
+          {
+            "actual": {
+              "bytes": 522637,
+              "crc32": "c1526f95",
+              "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"
+            },
+            "expected": {
+              "bytes": 522637,
+              "crc32": "c1526f95",
+              "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"
+            },
+            "ok": true,
+            "path": "dumast2/SKULL.EXE",
+            "role": "runtime"
+          }
+        ]
+      }
+    ],
+    "root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2",
+    "sourceDisassembly": {
+      "actual": {
+        "bytes": 7841116,
+        "sha256": "a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099"
+      },
+      "exists": true,
+      "expected": {
+        "bytes": 7841116,
+        "sha256": "a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099"
+      },
+      "filename": "SKULL.ASM",
+      "label": "DM2 DOS source disassembly"
+    }
+  },
+  "errors": [],
+  "nextAllowedWork": [
+    "DM2-specific parity matrix and acceptance labels",
+    "SKWin/skproject-backed data-format source map",
+    "runtime probes only after a source-evidence manifest cites this gate"
+  ],
+  "parityClaimed": false,
+  "redmcsbBoundaryDiscipline": {
+    "files": [
+      {
+        "exists": true,
+        "file": "FILENAME.C",
+        "needles": [
+          {
+            "line": 6,
+            "needle": "DATA\\\\DUNGEON.DAT"
+          },
+          {
+            "line": 9,
+            "needle": "DATA\\\\GRAPHICS.DAT"
+          }
+        ],
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C"
+      },
+      {
+        "exists": true,
+        "file": "LOADSAVE.C",
+        "needles": [
+          {
+            "line": 2355,
+            "needle": "F0770_FILE_Open(G1059_pc_DungeonFileName)"
+          },
+          {
+            "line": 2340,
+            "needle": "F0770_FILE_Open(\"\\\\DUNGEON.DAT\")"
+          }
+        ],
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C"
+      },
+      {
+        "exists": true,
+        "file": "MEMORY.C",
+        "needles": [
+          {
+            "line": 1212,
+            "needle": "F0477_MEMORY_OpenGraphicsDat_CPSDF"
+          },
+          {
+            "line": 1266,
+            "needle": "F0770_FILE_Open(G2130_GraphicsDatFileName)"
+          }
+        ],
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C"
+      }
+    ],
+    "policy": "DM1/CSB source discipline comparison only; ReDMCSB is not a DM2 source."
+  },
+  "runtimeOrParserImplemented": false,
+  "schema": "firestaff.dm2_v1_phase0_provenance_gate.v1",
+  "skproject": {
+    "actual": {
+      "commitType": "commit",
+      "masterHead": "a962896e42aaf54c76157a7b062fb5b0526929e6",
+      "tree": "a095e458cfaaa0490b9c4d4d2adf88108a8ad92f",
+      "treeFileCount": 1868,
+      "treeNameSha256": "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
+    },
+    "exists": true,
+    "expected": {
+      "masterHead": "a962896e42aaf54c76157a7b062fb5b0526929e6",
+      "tree": "a095e458cfaaa0490b9c4d4d2adf88108a8ad92f",
+      "treeFileCount": 1868,
+      "treeNameSha256": "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
+    },
+    "mirror": "/home/trv2/.openclaw/data/firestaff-dm2-sources/skproject.git",
+    "remote": "https://github.com/gbsphenx/skproject"
+  },
+  "sphenxSkwin": {
+    "package": {
+      "actual": {
+        "bytes": 71221297,
+        "memberCount": 212,
+        "sha256": "ed6f1f8a38c43fbff36421090c4bab4e5f939707db12f55cfcfac04688df4645"
+      },
+      "exists": true,
+      "expected": {
+        "bytes": 71221297,
+        "memberCount": 212,
+        "sha256": "ed6f1f8a38c43fbff36421090c4bab4e5f939707db12f55cfcfac04688df4645"
+      },
+      "filename": "SkWinCurrent.zip",
+      "label": "Sphenx SKWin SPX package",
+      "members": [
+        {
+          "actual": {
+            "bytes": 761856,
+            "crc32": "dd80d0de",
+            "sha256": "95ab275d465c8dee600f24a78df056618b25c06f44105c1d05f200780640787c"
+          },
+          "expected": {
+            "bytes": 761856,
+            "crc32": "dd80d0de",
+            "sha256": "95ab275d465c8dee600f24a78df056618b25c06f44105c1d05f200780640787c"
+          },
+          "ok": true,
+          "path": "skwinspx/skwin9821.exe",
+          "role": "skwin_pc9821_runtime"
+        },
+        {
+          "actual": {
+            "bytes": 33585316,
+            "crc32": "26ecb296",
+            "sha256": "54d3d5a7a58413dcd1d329312fce1280908b738d5b5fbd98073d7c95d0576a36"
+          },
+          "expected": {
+            "bytes": 33585316,
+            "crc32": "26ecb296",
+            "sha256": "54d3d5a7a58413dcd1d329312fce1280908b738d5b5fbd98073d7c95d0576a36"
+          },
+          "ok": true,
+          "path": "skwinspx/SKULLV4.EXE",
+          "role": "skwin_dos_runtime"
+        },
+        {
+          "actual": {
+            "bytes": 37957,
+            "crc32": "a6cbf283",
+            "sha256": "530b8e28c70f231ae3dc6eee12f75181954635db33b3f2a9872a8d396fcf3982"
+          },
+          "expected": {
+            "bytes": 37957,
+            "crc32": "a6cbf283",
+            "sha256": "530b8e28c70f231ae3dc6eee12f75181954635db33b3f2a9872a8d396fcf3982"
+          },
+          "ok": true,
+          "path": "skwinspx/data/DUNGEON.DAT",
+          "role": "skwin_dm2_dungeon"
+        },
+        {
+          "actual": {
+            "bytes": 8717101,
+            "crc32": "501e75a3",
+            "sha256": "7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b"
+          },
+          "expected": {
+            "bytes": 8717101,
+            "crc32": "501e75a3",
+            "sha256": "7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b"
+          },
+          "ok": true,
+          "path": "skwinspx/data/GRAPHICS.DAT",
+          "role": "skwin_dm2_graphics"
+        },
+        {
+          "actual": {
+            "bytes": 63,
+            "crc32": "eb361d01",
+            "sha256": "0561ef73aa0f0abe2086b238fcb72d2c231ae1e2c1035a6582a35a72c03233aa"
+          },
+          "expected": {
+            "bytes": 63,
+            "crc32": "eb361d01",
+            "sha256": "0561ef73aa0f0abe2086b238fcb72d2c231ae1e2c1035a6582a35a72c03233aa"
+          },
+          "ok": true,
+          "path": "skwinspx/data/SONGLIST.DAT",
+          "role": "skwin_dm2_songlist"
+        },
+        {
+          "actual": {
+            "bytes": 57344,
+            "crc32": "af2c2c69",
+            "sha256": "2c33f09a515ce9a36c323aeb71f22b4f6fd87791020051aeacbeaad287c89edc"
+          },
+          "expected": {
+            "bytes": 57344,
+            "crc32": "af2c2c69",
+            "sha256": "2c33f09a515ce9a36c323aeb71f22b4f6fd87791020051aeacbeaad287c89edc"
+          },
+          "ok": true,
+          "path": "skwinspx/LOGDM2.TXT",
+          "role": "skwin_log_reference"
+        }
+      ]
+    },
+    "packageUrl": "https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip",
+    "page": {
+      "actual": {
+        "bytes": 4351,
+        "sha256": "ef5ed8402262d5eb95b4fe0f6e3ef6e1074a69cdaa9c2f864d3309f545d63091"
+      },
+      "anchors": [
+        "SKWin is a project initiated by Kentaro",
+        "skwin/SkWinCurrent.zip",
+        "https://github.com/gbsphenx/skproject"
+      ],
+      "exists": true,
+      "expected": {
+        "bytes": 4351,
+        "sha256": "ef5ed8402262d5eb95b4fe0f6e3ef6e1074a69cdaa9c2f864d3309f545d63091"
+      },
+      "filename": "skwin.php",
+      "url": "https://dmbuilder.sphenxmusics.fr/skwin.php"
+    }
+  },
+  "status": "PASS"
+}

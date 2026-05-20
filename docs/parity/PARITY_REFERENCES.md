@@ -1,6 +1,6 @@
 # Parity Reference Sources
 
-Last updated: 2026-04-22
+Last updated: 2026-05-20
 
 This file inventories all known local reference sources and artifacts available for 1:1 parity verification work.
 
@@ -48,9 +48,16 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 - **Status:** `BLOCKED_ON_REFERENCE`
 - **Needed:** Original CSB data files (DUNGEON.DAT, GRAPHICS.DAT equivalent) for CSB-specific parity work.
 
-### A4. DM2 data — NOT YET ACQUIRED
-- **Status:** `BLOCKED_ON_REFERENCE`
-- **Needed:** Original DM2 data files for DM2-specific parity work.
+### A4. DM2 data — acquired and Phase 0 locked
+- **Status:** `SOURCE_LOCKED_PROVENANCE_ONLY`
+- **Canonical worker-local path:** `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/`
+- **Gate:** `tools/verify_dm2_v1_phase0_provenance_gate.py`
+- **Evidence:** `parity-evidence/verification/dm2_v1_phase0_provenance_gate/manifest.json`
+- **Contents:**
+  - `Dungeon-Master-II-Skullkeep_DOS_EN.zip` - sha256 `d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929`
+  - `Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip` - sha256 `a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228`
+  - `SKULL.ASM` - sha256 `a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099`
+- **Good for:** DM2-specific provenance and future parser/runtime source maps. This does not claim DM2 runtime parity.
 
 ---
 
@@ -155,6 +162,16 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 - **Local paths:** `phase11-fixtures/` (sensor catalog), `phase11-ref/` (MOVESENS.C), `shims/` (DOS compatibility headers)
 - **Good for:** Sensor execution parity, DOS-layer compatibility verification.
 
+### D4. DM2/Skullkeep source references
+- **skproject remote:** `https://github.com/gbsphenx/skproject`
+- **Locked master HEAD:** `a962896e42aaf54c76157a7b062fb5b0526929e6`
+- **Locked tree:** `a095e458cfaaa0490b9c4d4d2adf88108a8ad92f`
+- **Canonical N2 mirror:** `~/.openclaw/data/firestaff-dm2-sources/skproject.git`
+- **Sphenx SKWin page:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
+- **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
+- **Good for:** DM2-specific source/provenance research after the Phase 0 gate passes.
+- **Boundary:** ReDMCSB remains the DM1/CSB source-discipline model only; DM2 work must cite DM2-specific anchors.
+
 ---
 
 ## E. Probe and analysis scripts
@@ -188,9 +205,9 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 | Gap | Impact | Status |
 |-----|--------|--------|
 | CSB original data files | Cannot begin CSB parity work | `BLOCKED_ON_REFERENCE` |
-| DM2 original data files | Cannot begin DM2 parity work | `BLOCKED_ON_REFERENCE` |
+| DM2 original data files | Parser/runtime work needs DM2-specific source maps before implementation | `SOURCE_LOCKED_PROVENANCE_ONLY` |
 | CSBwin source/build | Cross-check reference for CSB behavior | `BLOCKED_ON_REFERENCE` |
 | Original DM1 runtime screenshots | No pixel-level original captures for direct overlay comparison yet | `UNPROVEN` — can be generated via emulator |
 | Original audio samples | Only procedural placeholders exist in Firestaff | `BLOCKED_ON_REFERENCE` |
-| DM2 ReDMCSB source equivalent | No reconstructed source for DM2 engine | `BLOCKED_ON_REFERENCE` |
+| DM2 ReDMCSB source equivalent | No ReDMCSB-equivalent C source exists; use locked skproject/SKWin/SKULL.ASM references instead | `SOURCE_LOCKED_PROVENANCE_ONLY` |
 | Original timing measurements | No frame/tick timing from original runtime | `UNPROVEN` — requires emulator instrumentation |
