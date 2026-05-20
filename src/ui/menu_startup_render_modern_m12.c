@@ -486,15 +486,6 @@ static void draw_title_centered(M12_ModernCanvas* c) {
     ModernTextStyle tag = text_style_make(3, COLOR_TEXT_DIM(), 2);
     draw_text_centered(c, c->w / 2, 110,
                        "THE DEFINITIVE DUNGEON MASTER FRONT DOOR", &tag);
-    /* Version label — right of logo */
-    {
-        char vbuf[32];
-        snprintf(vbuf, sizeof(vbuf), "v%s", M12_Changelog_VersionString());
-        ModernTextStyle ver = text_style_make(3, COLOR_TEXT_DIM(), 2);
-        int vw = text_width_px(vbuf, &ver);
-        draw_text(c, c->w / 2 + 200, 110, vbuf, &ver);
-        (void)vw;
-    }
 }
 
 static M12_RGB mode_color(int mode) {
@@ -1049,10 +1040,13 @@ static void draw_back_button(M12_ModernCanvas* c, int highlight) {
 static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right) {
     int h = 48;
     int y = c->h - h - 12;
+    char version[32];
     fill_rounded_rect(c, 24, y, c->w - 48, h, 10, rgb(14, 14, 28));
     stroke_rounded_rect(c, 24, y, c->w - 48, h, 10, COLOR_PANEL_EDGE());
     ModernTextStyle t = text_style_make(2, COLOR_TEXT_DIM(), 1);
     if (left)  draw_text(c, 48,            y + 14, left, &t);
+    snprintf(version, sizeof(version), "v%s", M12_Changelog_VersionString());
+    draw_text_centered(c, c->w / 2, y + 14, version, &t);
     if (right) {
         int rw = text_width_px(right, &t);
         draw_text(c, c->w - 48 - rw, y + 14, right, &t);
