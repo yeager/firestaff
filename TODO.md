@@ -118,7 +118,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Equip/unequip items to body slots
 - ❌ Backpack/chest container management
 - ❌ Item identification (scroll reading, potion identification)
-- 🔧 Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path source-locked; inventory panel rendering remains pending
+- ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
 - ❌ Potion consumption effects
 - ❌ Food/water item consumption (click to eat/drink)
 - ❌ Fountain interaction (fill flask with water)
