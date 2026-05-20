@@ -11,7 +11,11 @@ Treat party footsteps as a non-V1/procedural audio decision unless a stronger or
 ## Audited source
 
 Primary source tree:
-`/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+
+The verifier defaults to the N1-local tree above. If this audit is rerun on N2,
+pass the N2-local tree explicitly with `--redmcsb-source`; do not substitute any
+non-local or filename-only provenance.
 
 Required files inspected: `COMMAND.C`, `MOVESENS.C`, `GROUP.C`, `SOUND.C`, `TIMELINE.C`, `DUNGEON.C`, `DATA.C`, `DEFS.H`. `CLIKMENU.C` is included because `COMMAND.C` dispatches party movement to `F0366_COMMAND_ProcessTypes3To6_MoveParty` there.
 
