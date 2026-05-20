@@ -206,7 +206,7 @@ Status per 2026-05-19 v2.4.0.
 ## DM2 (Skullkeep)
 
 - 🔧 DM2 launch entry in menu
-- ❌ Phase 0 — Source and provenance gate: mirror/hash-lock `gbsphenx/skproject` (`master` HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6` at planning time), Sphenx SKWin reference page/package provenance, and exact Skullkeep game assets before parser or runtime work
+- ✅ Phase 0 — Source and provenance gate: mirror/hash-lock `gbsphenx/skproject` (`master` HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6`), Sphenx SKWin reference page/package provenance, and exact Skullkeep game assets before parser or runtime work (`dm2_v1_phase0_provenance_gate`)
 - ❌ Phase 1 — Runtime profile split: separate DM2/Skullkeep boot profile from DM1/CSB, including menu launch, asset roots, save namespace, platform/version diagnostics, and deterministic config
 - ❌ Phase 2 — Data formats: source-lock DM2 dungeon and graphics formats from SKWin/SKWINSPX/DMDC2 references, including GDAT categories, dungeon records, text, item records, actuators, doors, pits, teleports, ornate data, and variant/platform differences
 - ❌ Phase 3 — Core world model: implement DM2 map loading, party placement, map transitions, outdoor/interior state, timers, object database, and deterministic world-state hashing
