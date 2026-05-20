@@ -118,7 +118,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
 - 🔧 Full inventory panel (8 body slots + 2 hand slots + backpack) — C507..C536 source slot-box bridge and full backpack runtime storage/pickup/place path are source-locked; remaining panel polish/chest runtime details stay open
 - 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
-- 🔧 Backpack/chest container management — PC34 backpack/chest slot namespace, chest open/close visible-slot compaction, and leader-hand/chest slot swap helpers source-locked; runtime panel wiring remains pending
+- 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, and leader-hand/chest slot swaps are source-locked; broader persistence/full panel polish remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display is source-locked for priest skill > 1, including the original empty-flask quirk; broader item identification and runtime panel wiring remain pending
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
 - 🔧 Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, swallow audio routing, and no-mouth-animation behavior are source-locked; exact VI wound RNG masks remain pending
