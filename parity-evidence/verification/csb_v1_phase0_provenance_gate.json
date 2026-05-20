@@ -152,6 +152,26 @@
       "ok": true
     },
     {
+      "id": "canonical_atari_archive",
+      "role": "original_archive",
+      "path": "<original-games>/DM/_canonical/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+      "expected_size": 1669479,
+      "actual_size": 1669479,
+      "expected_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "actual_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "ok": true
+    },
+    {
+      "id": "canonical_amiga_archive",
+      "role": "original_archive",
+      "path": "<original-games>/DM/_canonical/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z",
+      "expected_size": 3327297,
+      "actual_size": 3327297,
+      "expected_sha256": "77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58",
+      "actual_sha256": "77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58",
+      "ok": true
+    },
+    {
       "id": "canonical_atari_graphics",
       "role": "original_asset",
       "path": "<original-games>/DM/_canonical/csb/atari-GRAPHICS.DAT",
@@ -219,6 +239,156 @@
       "actual_size": 42815,
       "expected_sha256": "61d981061bbb7a81b9b7f4795e99c24a592ee329169eb0c195459ba4eb62e3a9",
       "actual_sha256": "61d981061bbb7a81b9b7f4795e99c24a592ee329169eb0c195459ba4eb62e3a9",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_animate_dat",
+      "role": "original_title_animation_payload",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/ANIMATE.DAT",
+      "expected_size": 58683,
+      "actual_size": 58683,
+      "expected_sha256": "c9127d63f7c7e9138bf6649e98f389f073a37e9950d618be3e2b062c5e97e9d7",
+      "actual_sha256": "c9127d63f7c7e9138bf6649e98f389f073a37e9950d618be3e2b062c5e97e9d7",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_chaos_ftl",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/CHAOS.FTL",
+      "expected_size": 42090,
+      "actual_size": 42090,
+      "expected_sha256": "41bbcfd0683f33e90079a28f7c4af01a586b9b07769b70ce26e889a0ee2a36f7",
+      "actual_sha256": "41bbcfd0683f33e90079a28f7c4af01a586b9b07769b70ce26e889a0ee2a36f7",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_cmain",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/CMAIN",
+      "expected_size": 145446,
+      "actual_size": 145446,
+      "expected_sha256": "f1acad863b46394f4c5d1c0b1505393dfc4b2d82f9d04eba9862faf5c60e05d8",
+      "actual_sha256": "f1acad863b46394f4c5d1c0b1505393dfc4b2d82f9d04eba9862faf5c60e05d8",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_game_prg",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GAME.PRG",
+      "expected_size": 20817,
+      "actual_size": 20817,
+      "expected_sha256": "623ec19f1ade68c6d9ed45d9a83343ca8fb64cab264cfd40f72394c8bf4c54e1",
+      "actual_sha256": "623ec19f1ade68c6d9ed45d9a83343ca8fb64cab264cfd40f72394c8bf4c54e1",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_hint_ftl",
+      "role": "original_runtime_support",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/HINT.FTL",
+      "expected_size": 49436,
+      "actual_size": 49436,
+      "expected_sha256": "3c5134a2f9967b1428a8fa231e20f6fafa89d871e9160c4601118f07b9909f4d",
+      "actual_sha256": "3c5134a2f9967b1428a8fa231e20f6fafa89d871e9160c4601118f07b9909f4d",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_switch_dat",
+      "role": "original_runtime_support",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/SWITCH.DAT",
+      "expected_size": 7405,
+      "actual_size": 7405,
+      "expected_sha256": "65def841dd42d258d692d9c89cc57301ed9603cd4bae957a9437bc04ca17580e",
+      "actual_sha256": "65def841dd42d258d692d9c89cc57301ed9603cd4bae957a9437bc04ca17580e",
+      "ok": true
+    },
+    {
+      "id": "selected_atari_utility_prg",
+      "role": "original_utility_payload",
+      "path": "<original-games>/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/UTILITY.PRG",
+      "expected_size": 32550,
+      "actual_size": 32550,
+      "expected_sha256": "db439c0109cd1aac1d172394b2fa8973fc23df9e55caa75875813b69bf8a82b5",
+      "actual_sha256": "db439c0109cd1aac1d172394b2fa8973fc23df9e55caa75875813b69bf8a82b5",
+      "ok": true
+    },
+    {
+      "id": "amiga_dungeon_f",
+      "role": "original_asset_split_reference",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/DungeonF.DAT",
+      "expected_size": 2091,
+      "actual_size": 2091,
+      "expected_sha256": "818e6530aab0ba7d16aa42376db2cebc2c7db47e7811e3335fb3e8486f5407c5",
+      "actual_sha256": "818e6530aab0ba7d16aa42376db2cebc2c7db47e7811e3335fb3e8486f5407c5",
+      "ok": true
+    },
+    {
+      "id": "amiga_dungeon_g",
+      "role": "original_asset_split_reference",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/DungeonG.DAT",
+      "expected_size": 2076,
+      "actual_size": 2076,
+      "expected_sha256": "5343ef1ba6dca0ba584439356483565257fd7593b62180207914494eb493282e",
+      "actual_sha256": "5343ef1ba6dca0ba584439356483565257fd7593b62180207914494eb493282e",
+      "ok": true
+    },
+    {
+      "id": "amiga_anim_ftl",
+      "role": "original_title_animation_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/ANIM.FTL",
+      "expected_size": 11890,
+      "actual_size": 11890,
+      "expected_sha256": "a3ac98e87f90fff19052a17ae3d10c1f5dc288dd93be3895e1dd90db63f8e422",
+      "actual_sha256": "a3ac98e87f90fff19052a17ae3d10c1f5dc288dd93be3895e1dd90db63f8e422",
+      "ok": true
+    },
+    {
+      "id": "amiga_enda_dat",
+      "role": "original_endgame_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/ENDA.DAT",
+      "expected_size": 91420,
+      "actual_size": 91420,
+      "expected_sha256": "b1a4c7abb493feeb3c3c6915c3281d753e62ec48e83bcfb5227806798cbb799c",
+      "actual_sha256": "b1a4c7abb493feeb3c3c6915c3281d753e62ec48e83bcfb5227806798cbb799c",
+      "ok": true
+    },
+    {
+      "id": "amiga_grf1_ftl",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/GRF1.FTL",
+      "expected_size": 8594,
+      "actual_size": 8594,
+      "expected_sha256": "dd0362462116ce249cf81a4b80fa2445cfc9d6378d5defef9775ef6778f2d35f",
+      "actual_sha256": "dd0362462116ce249cf81a4b80fa2445cfc9d6378d5defef9775ef6778f2d35f",
+      "ok": true
+    },
+    {
+      "id": "amiga_kaos_ftl",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/KAOS.FTL",
+      "expected_size": 121942,
+      "actual_size": 121942,
+      "expected_sha256": "da21534cd9c00bdf0ca9875a18630a8babfff9f43f4a23bda3e1a2608f891693",
+      "actual_sha256": "da21534cd9c00bdf0ca9875a18630a8babfff9f43f4a23bda3e1a2608f891693",
+      "ok": true
+    },
+    {
+      "id": "amiga_swsh_ftl",
+      "role": "original_runtime_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/SWSH.FTL",
+      "expected_size": 18882,
+      "actual_size": 18882,
+      "expected_sha256": "d1795c422969a6cefda13a0ef4ea6a8f71d59678af49a391b6a40f5370e7eaaf",
+      "actual_sha256": "d1795c422969a6cefda13a0ef4ea6a8f71d59678af49a391b6a40f5370e7eaaf",
+      "ok": true
+    },
+    {
+      "id": "amiga_titl_dat",
+      "role": "original_title_payload",
+      "path": "<original-games>/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/TITL.DAT",
+      "expected_size": 15638,
+      "actual_size": 15638,
+      "expected_sha256": "719428985617eca596ee0e5255c3f739c3d4c35c5bcb2736a7c3a71d4f2ff695",
+      "actual_sha256": "719428985617eca596ee0e5255c3f739c3d4c35c5bcb2736a7c3a71d4f2ff695",
       "ok": true
     }
   ],
@@ -333,6 +503,20 @@
       "ok": true
     },
     {
+      "id": "csb_secondary_linux_required_payloads",
+      "path": "<csb-secondary>/CSB/src/CSBlinux.cpp",
+      "lines": "301-308",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "hcsb.hct",
+        "mini.dat",
+        "graphics.dat"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
       "id": "csb_secondary_graphics_boundary",
       "path": "<csb-secondary>/CSB/src/Graphics.cpp",
       "lines": "1814-1915",
@@ -341,6 +525,19 @@
         "graphics.dat",
         "OpenCSBgraphicsFile",
         "CSBgraphics.dat"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_secondary_sound_records_are_graphics_backed",
+      "path": "<csb-secondary>/CSB/src/Sound.cpp",
+      "lines": "960-973",
+      "needles": [
+        "SOUNDDATA::ReadSound",
+        "ReadCSBgraphic",
+        "CGT_Sound",
+        "soundNum"
       ],
       "missing": [],
       "ok": true
@@ -393,6 +590,15 @@
       "blocker": "No curated CSB saved-game backup fixture exists in the selected original-data anchor."
     }
   ],
+  "standalone_music_file_scan": {
+    "patterns": [
+      "song",
+      "music",
+      "*.mus"
+    ],
+    "matches": [],
+    "interpretation": "No standalone music file is a CSB V1 audio identity in the selected Atari or Amiga hard-disk anchors; later audio parity must source-lock graphics/CSBgraphics sound records."
+  },
   "non_claims": [
     "No CSB launch/runtime/render/gameplay/save-compatibility/pixel-parity support is enabled or claimed.",
     "ReDMCSB is the primary source wherever it has CSB-specific coverage; CSB and CSBWin are secondary references only.",
