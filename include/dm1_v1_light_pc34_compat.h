@@ -60,6 +60,14 @@ extern "C" {
  *  ReDMCSB TIMELINE.C F0257: GameTime + 4 */
 #define DM1_LIGHT_EVENT_FADE_TICKS   4
 
+/** ReDMCSB DEFS.H other-spell types used by MENU.C F0412 light branch. */
+#define DM1_LIGHT_SPELL_TYPE_OTHER_LIGHT      0
+#define DM1_LIGHT_SPELL_TYPE_OTHER_DARKNESS   1
+
+/** DM1 power symbol ordinals are stored as Champion.Symbols[0] - '_' (1..6). */
+#define DM1_LIGHT_POWER_SYMBOL_ORDINAL_MIN    1
+#define DM1_LIGHT_POWER_SYMBOL_ORDINAL_MAX    6
+
 /* ── Lookup tables from ReDMCSB DATA.C ──────────────────────────────── */
 
 /** LightPowerToLightAmount[16]: maps torch ChargeCount (0-15) to light amount
@@ -147,6 +155,12 @@ void dm1_light_add_magical(DM1_LightState *s, int16_t light_power,
 /** Apply darkness spell effect.
  *  ReDMCSB MENU.C C1_SPELL_TYPE_OTHER_DARKNESS */
 void dm1_light_add_darkness(DM1_LightState *s, int16_t light_power);
+
+/** Apply DM1 V1 other-spell light/darkness effects after a successful spell cast.
+ *  Mirrors MENU.C F0412 cases C0_SPELL_TYPE_OTHER_LIGHT and
+ *  C1_SPELL_TYPE_OTHER_DARKNESS. Returns 1 when an effect was applied. */
+int dm1_light_apply_other_spell_effect(DM1_LightState *s, int other_spell_type,
+                                       int power_symbol_ordinal);
 
 /** Advance game time by one tick. Handles torch depletion and light events. */
 void dm1_light_tick(DM1_LightState *s);

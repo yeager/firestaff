@@ -147,6 +147,44 @@ void dm1_light_add_darkness(DM1_LightState *s, int16_t light_power) {
     dm1_light_recalculate_palette(s);
 }
 
+/* ── MENU.C F0412 light/darkness spell effects ─────────────────────── */
+
+/**
+ * ReDMCSB MENU.C F0412 lines 1922-1942:
+ *   SpellPower = (PowerSymbolOrdinal + 1) << 2
+ *   Light:    ticks = 10000 + ((SpellPower - 8) << 9)
+ *             lightPower = (SpellPower >> 1) - 1
+ *             MagicalLightAmount += LightPowerToLightAmount[lightPower]
+ *             CreateEvent70_Light(-lightPower, ticks)
+ *   Darkness: lightPower = SpellPower >> 2
+ *             MagicalLightAmount -= LightPowerToLightAmount[lightPower]
+ *             CreateEvent70_Light(+lightPower, 98)
+ */
+int dm1_light_apply_other_spell_effect(DM1_LightState *s, int other_spell_type,
+                                       int power_symbol_ordinal) {
+    if (!s) return 0;
+    if (power_symbol_ordinal < DM1_LIGHT_POWER_SYMBOL_ORDINAL_MIN ||
+        power_symbol_ordinal > DM1_LIGHT_POWER_SYMBOL_ORDINAL_MAX) {
+        return 0;
+    }
+
+    int spell_power = (power_symbol_ordinal + 1) << 2;
+
+    switch (other_spell_type) {
+    case DM1_LIGHT_SPELL_TYPE_OTHER_LIGHT: {
+        int16_t light_power = (int16_t)((spell_power >> 1) - 1);
+        int32_t ticks = 10000 + ((spell_power - 8) << 9);
+        dm1_light_add_magical(s, light_power, ticks);
+        return 1;
+    }
+    case DM1_LIGHT_SPELL_TYPE_OTHER_DARKNESS:
+        dm1_light_add_darkness(s, (int16_t)(spell_power >> 2));
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /* ── F0337_INVENTORY_SetDungeonViewPalette ──────────────────────────── */
 
 /**
