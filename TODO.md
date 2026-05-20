@@ -59,7 +59,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature death detection + item drops (v2.2.0)
 - ✅ Dead groups cleaned up (don't block movement)
 - ✅ Kill XP award via lifecycle system
-- 🔧 Creature rendering — sprites load but animation frames not cycled
+- ✅ Creature rendering — sprites load and source-locked aspect frames cycle
 - ❌ Creature type-specific behavior (Giggler steal, Ghost non-material, etc.)
 - ❌ Creature group spawning (C006 floor sensor group generator)
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
