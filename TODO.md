@@ -203,7 +203,7 @@ Status per 2026-05-19 v2.4.0.
 ## CSB V1 (Chaos Strikes Back)
 
 - 🔧 CSB launch entry in menu
-- ✅ Phase 0 — Provenance gate: hash-lock exact CSB dungeon/graphics/title/music assets and keep CSBWin/CSB lineage sources as secondary evidence; do not reuse DM1 assumptions without variant proof (185019bf)
+- ✅ Phase 0 — Provenance gate: hash-lock exact CSB dungeon/graphics/title/music assets and keep CSBWin/CSB lineage sources as secondary evidence; do not reuse DM1 assumptions without variant proof (185019bf; reinforced by 80293bb0)
 - ❌ Phase 1 — Boot/profile split: separate CSB runtime profile from DM1, including asset discovery, menu launch, save namespace, deterministic config, and variant-specific diagnostics
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics
 - ❌ Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
