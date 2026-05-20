@@ -260,12 +260,12 @@ Status per 2026-05-19 v2.4.0.
 ## Known Bugs (need repro)
 
 1. 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
-2. 🐛 Some floor objects may still look slightly mispositioned despite the zone Y fix
 
 ---
 
 ## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
 
+- Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500)
 - HiDPI/Retina scaling
 - Stair direction (F0155)
 - Door frame preservation for open portcullis doors (F0111)
