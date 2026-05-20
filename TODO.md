@@ -48,7 +48,7 @@ Status per 2026-05-19 v2.4.0.
 - 🐛 Väggar saknas ibland — behöver exakt plats/screenshot för repro
 - 🐛 Kollision blockerar ibland fel — behöver exakt plats för repro
 - ❌ Inscription rendering on side walls (D2L/R, D3L/R) — only D1C front done
-- ❌ Unreadable inscription rendering (InscriptionBoxY2 perspective scaling)
+- ✅ Readable inscription rendering (source message zone centering)
 - ❌ Teleporter visual effect (shimmer/sparkle)
 
 ### Creature System
