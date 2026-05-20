@@ -191,6 +191,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
   - ✅ Phase 4 slice — V2 lighting palette presentation gate mirrors ReDMCSB-selected DM1 V1 palette indices/thresholds and disables V2-only local effects on invalid source input; full Phase 4 remains open (7a2d4c6b).
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
+  - ✅ Phase 5 slice — smooth movement presentation source-lock gate proves camera interpolation is presentation-only after accepted source-style movement and does not mutate V1 timing/cooldown, collision, sensor/event, creature timing, or redraw-cadence owners (2f3442bf).
 - ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
 - ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
