@@ -17011,6 +17011,37 @@ static int m11_projectile_impact_source_sound_index(
     return 4;
 }
 
+static void m11_schedule_open_door_spell_toggle(
+    M11_GameViewState* state,
+    const struct ProjectileTickResult_Compat* r) {
+    int resolvedEffect = -1;
+    struct TimelineEvent_Compat animEvent;
+
+    if (!state || !state->world.dungeon || !r || !r->emittedDoorToggleEvent) {
+        return;
+    }
+    if (!F0714_DOOR_ResolveAnimationEffect_Compat(
+            state->world.dungeon,
+            r->outNextTick.mapIndex,
+            r->outNextTick.mapX,
+            r->outNextTick.mapY,
+            DOOR_EFFECT_TOGGLE,
+            &resolvedEffect,
+            NULL)) {
+        return;
+    }
+    if (!F0713_DOOR_BuildAnimationEvent_Compat(
+            r->outNextTick.mapIndex,
+            r->outNextTick.mapX,
+            r->outNextTick.mapY,
+            resolvedEffect,
+            r->outNextTick.fireAtTick,
+            &animEvent)) {
+        return;
+    }
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &animEvent);
+}
+
 /* Apply bounded V1 impact side-effects: explosion spawn, creature
  * damage, champion damage, and DM1-style log cue.  Designed to
  * touch only data the M10 layer already owns (world.explosions via
@@ -17026,6 +17057,7 @@ static void m11_projectile_apply_impact(
         m11_audio_emit_source_sound(state, sourceSoundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(sourceSoundIndex));
     }
+    m11_schedule_open_door_spell_toggle(state, r);
 
     /* Explosion spawn — magical hits on fireball / lightning /
      * harm-non-material / poison-* subtypes.  F0820 populated
