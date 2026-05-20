@@ -305,6 +305,119 @@ static void test_projectile_decision(void) {
     EXPECT_EQ(useProj, 1, "projectile: caster at distance uses projectile");
 }
 
+
+/* =========================================================
+ *  Test 11b: Creature projectile launch parameters source-lock
+ * ========================================================= */
+static void test_creature_projectile_launch_params(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(42);
+    struct DM1CreatureProjectileAttack_Compat out;
+    int ok;
+
+    ctx.creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    ctx.creatureInfo.ranges = 0x3005; /* attack range 3, sight 5 */
+    ctx.creatureInfo.attack = 70;
+    ctx.creatureInfo.dexterity = 45;
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.currentGroupPrimaryDirToParty = 1; /* East */
+    ag.cells = 0xFF;
+
+    ok = F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+        &ctx, &ag, 0, &rng, &out);
+    EXPECT_EQ(ok, 1, "projectile_launch: resolver returns 1");
+    EXPECT_EQ(out.shouldLaunch, 1,
+              "projectile_launch: red dragon launches at distance > 1");
+    EXPECT_EQ(out.projectileThing, DM1_PROJECTILE_THING_FIREBALL,
+              "projectile_launch: red dragon uses fireball thing");
+    EXPECT_EQ(out.direction, 1,
+              "projectile_launch: direction is primary direction to party");
+    EXPECT_EQ(out.stepEnergy, 8,
+              "projectile_launch: step energy is source constant 8");
+    EXPECT_EQ(out.attack, 45,
+              "projectile_launch: attack uses creature dexterity");
+    EXPECT_EQ(out.targetCell >= 0 && out.targetCell <= 3, 1,
+              "projectile_launch: target cell is normalized");
+    EXPECT_EQ(out.kineticEnergy >= 20 && out.kineticEnergy <= 255, 1,
+              "projectile_launch: kinetic energy is source bounded");
+}
+
+/* =========================================================
+ *  Test 11c: Vexirk projectile type table is source-backed
+ * ========================================================= */
+static void test_vexirk_projectile_type_table(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    int sawFireball = 0;
+    int sawAlternate = 0;
+    int seed;
+
+    ctx.creatureType = DM1_CREATURE_TYPE_VEXIRK;
+    ctx.creatureInfo.ranges = 0x4004;
+    ctx.creatureInfo.attack = 30;
+    ctx.creatureInfo.dexterity = 50;
+    ctx.currentGroupDistanceToParty = 3;
+    ag.cells = 0xFF;
+
+    for (seed = 1; seed <= 64; seed++) {
+        struct RngState_Compat rng = make_rng((uint32_t)seed);
+        struct DM1CreatureProjectileAttack_Compat out;
+        F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+            &ctx, &ag, 0, &rng, &out);
+        if (out.projectileThing == DM1_PROJECTILE_THING_FIREBALL) {
+            sawFireball = 1;
+        }
+        if (out.projectileThing == DM1_PROJECTILE_THING_HARM_NON_MATERIAL ||
+            out.projectileThing == DM1_PROJECTILE_THING_LIGHTNING_BOLT ||
+            out.projectileThing == DM1_PROJECTILE_THING_POISON_CLOUD ||
+            out.projectileThing == DM1_PROJECTILE_THING_OPEN_DOOR) {
+            sawAlternate = 1;
+        }
+    }
+
+    EXPECT_EQ(sawFireball, 1,
+              "vexirk_projectile: RNG table can choose fireball");
+    EXPECT_EQ(sawAlternate, 1,
+              "vexirk_projectile: RNG table can choose alternate spells");
+}
+
+/* =========================================================
+ *  Test 11d: Dispatch exposes projectile launch payload
+ * ========================================================= */
+static void test_dispatch_projectile_payload(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(7);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ctx.distanceToVisibleParty = 2;
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.partyMapX = 7;
+    ctx.partyMapY = 5;
+    ctx.creatureInfo.ranges = 0x3005;
+    ctx.creatureInfo.attack = 70;
+    ctx.creatureInfo.dexterity = 45;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "dispatch_projectile: returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_ATTACK,
+              "dispatch_projectile: action is attack");
+    EXPECT_EQ(result.attackIsProjectile, 1,
+              "dispatch_projectile: attack is projectile");
+    EXPECT_EQ(result.projectileThing, DM1_PROJECTILE_THING_FIREBALL,
+              "dispatch_projectile: red dragon payload is fireball");
+    EXPECT_EQ(result.projectileDirection, ctx.currentGroupPrimaryDirToParty,
+              "dispatch_projectile: payload direction matches source primary direction");
+    EXPECT_EQ(result.projectileStepEnergy, 8,
+              "dispatch_projectile: payload step energy is source constant 8");
+}
+
+
 /* =========================================================
  *  Test 12: Group direction setting
  * ========================================================= */
@@ -470,6 +583,9 @@ int main(void) {
     test_should_attack_range();
     test_fear_check();
     test_projectile_decision();
+    test_creature_projectile_launch_params();
+    test_vexirk_projectile_type_table();
+    test_dispatch_projectile_payload();
     test_set_group_direction();
     test_smell_direction();
     test_per_creature_attack_event();

@@ -134,8 +134,24 @@ struct DM1CreatureInfo_Compat {
 /* Creature/slot constants used by type-specific attack behavior.
  * Sources: DEFS.H C02_CREATURE_GIGGLER and C00/C01 slot constants. */
 #define DM1_CREATURE_TYPE_GIGGLER 2
+#define DM1_CREATURE_TYPE_SWAMP_SLIME 1
+#define DM1_CREATURE_TYPE_WIZARD_EYE 3
+#define DM1_CREATURE_TYPE_VEXIRK 14
+#define DM1_CREATURE_TYPE_MATERIALIZER 19
+#define DM1_CREATURE_TYPE_DEMON 22
+#define DM1_CREATURE_TYPE_LORD_CHAOS 23
+#define DM1_CREATURE_TYPE_RED_DRAGON 24
 #define DM1_SLOT_READY_HAND       0
 #define DM1_SLOT_ACTION_HAND      1
+
+/* Special projectile-associated EXPLOSION thing values.
+ * Source: ReDMCSB DEFS.H:421-428. */
+#define DM1_PROJECTILE_THING_FIREBALL          0xFF80
+#define DM1_PROJECTILE_THING_SLIME             0xFF81
+#define DM1_PROJECTILE_THING_LIGHTNING_BOLT    0xFF82
+#define DM1_PROJECTILE_THING_HARM_NON_MATERIAL 0xFF83
+#define DM1_PROJECTILE_THING_OPEN_DOOR         0xFF84
+#define DM1_PROJECTILE_THING_POISON_CLOUD      0xFF87
 
 /* ==========================================================
  *  DM1 V1 Active Group State (matches DEFS.H ACTIVE_GROUP)
@@ -240,6 +256,18 @@ struct DM1GigglerStealResult_Compat {
     int newBehavior;
 };
 
+struct DM1CreatureProjectileAttack_Compat {
+    int shouldLaunch;
+    int projectileThing;
+    int targetCell;
+    int direction;
+    int kineticEnergy;
+    int attack;
+    int stepEnergy;
+    int useSpellSoundFallback;
+    int rngCallCount;
+};
+
 struct DM1BehaviorResult_Compat {
     int actionKind;          /* DM1_ACTION_* */
     int newBehavior;         /* updated DM1_BEHAVIOR_* */
@@ -261,6 +289,12 @@ struct DM1BehaviorResult_Compat {
     int stolenCount;
     int gigglerFleeDelayTicks;
     int gigglerInitialStealCounter;
+    int projectileThing;
+    int projectileKineticEnergy;
+    int projectileAttack;
+    int projectileStepEnergy;
+    int projectileDirection;
+    int projectileUseSpellSoundFallback;
 };
 
 /* ==========================================================
@@ -435,5 +469,20 @@ int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
     int luckyAttemptMask,
     struct RngState_Compat* rng,
     struct DM1GigglerStealResult_Compat* out);
+
+/*
+ * F0823: Resolve creature projectile attack launch parameters.
+ *
+ * Source: ReDMCSB GROUP.C F0207 lines 1695-1770 and PROJEXPL.C
+ * F0212 lines 43-92. This pure helper returns the exact special thing,
+ * source target cell, direction, bounded kinetic energy, dexterity attack,
+ * and step energy that the caller must pass to F0212_PROJECTILE_Create.
+ */
+int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int creatureIndex,
+    struct RngState_Compat* rng,
+    struct DM1CreatureProjectileAttack_Compat* out);
 
 #endif /* DM1_V1_CREATURE_AI_BEHAVIOR_PC34_COMPAT_H */

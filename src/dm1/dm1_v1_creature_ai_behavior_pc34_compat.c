@@ -49,6 +49,16 @@ static int manhattan(int x1, int y1, int x2, int y2) {
 /* Max helper */
 static int max_val(int a, int b) { return (a > b) ? a : b; }
 
+static int bounded_val(int min, int value, int max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+static int packed_group_cell(int cells, int creatureIndex) {
+    return (cells >> (creatureIndex * 2)) & 0x03;
+}
+
 static const int g_gigglerStealSlotsPc34[8] = {
     DM1_SLOT_ACTION_HAND,
     DM1_SLOT_READY_HAND,
@@ -114,6 +124,111 @@ int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
         out->newBehavior = DM1_BEHAVIOR_FLEE;
     }
 
+    return 1;
+}
+
+
+/* =========================================================================
+ *  F0823: Creature projectile attack launch parameters
+ *
+ *  Source: GROUP.C F0207_GROUP_IsCreatureAttacking lines 1695-1770.
+ *  Source: PROJEXPL.C F0212_PROJECTILE_Create lines 43-92.
+ * ========================================================================= */
+
+int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int creatureIndex,
+    struct RngState_Compat* rng,
+    struct DM1CreatureProjectileAttack_Compat* out)
+{
+    uint32_t rngBefore;
+    int attackRange;
+    int targetCell;
+    int energy;
+
+    if (!ctx || !activeGroup || !rng || !out) return 0;
+    if (creatureIndex < 0 || creatureIndex > ctx->creatureCount) return 0;
+    memset(out, 0, sizeof(*out));
+    out->projectileThing = -1;
+    out->targetCell = -1;
+    out->direction = ctx->currentGroupPrimaryDirToParty & 3;
+    out->stepEnergy = 8;
+    rngBefore = rng->seed;
+
+    attackRange = DM1_ATTACK_RANGE(ctx->creatureInfo.ranges);
+    if (attackRange <= 1) {
+        out->rngCallCount = 0;
+        return 1;
+    }
+    if (ctx->currentGroupDistanceToParty <= 1 &&
+        F0732_COMBAT_RngRandom_Compat(rng, 2) == 0) {
+        out->rngCallCount = (int)(rng->seed - rngBefore);
+        return 1;
+    }
+
+    if (activeGroup->cells == 0xFF) {
+        targetCell = F0732_COMBAT_RngRandom_Compat(rng, 2);
+    } else {
+        targetCell = ((packed_group_cell(activeGroup->cells, creatureIndex) +
+                       5 - out->direction) & 0x0002) >> 1;
+    }
+    targetCell = (targetCell + out->direction) & 0x0003;
+
+    out->shouldLaunch = 1;
+    out->targetCell = targetCell;
+    out->useSpellSoundFallback = 1;
+
+    switch (ctx->creatureType) {
+    case DM1_CREATURE_TYPE_VEXIRK:
+    case DM1_CREATURE_TYPE_LORD_CHAOS:
+        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            out->projectileThing = DM1_PROJECTILE_THING_FIREBALL;
+        } else {
+            switch (F0732_COMBAT_RngRandom_Compat(rng, 4)) {
+            case 0:
+                out->projectileThing = DM1_PROJECTILE_THING_HARM_NON_MATERIAL;
+                break;
+            case 1:
+                out->projectileThing = DM1_PROJECTILE_THING_LIGHTNING_BOLT;
+                break;
+            case 2:
+                out->projectileThing = DM1_PROJECTILE_THING_POISON_CLOUD;
+                break;
+            default:
+                out->projectileThing = DM1_PROJECTILE_THING_OPEN_DOOR;
+                break;
+            }
+        }
+        break;
+    case DM1_CREATURE_TYPE_SWAMP_SLIME:
+        out->projectileThing = DM1_PROJECTILE_THING_SLIME;
+        out->useSpellSoundFallback = 0;
+        break;
+    case DM1_CREATURE_TYPE_WIZARD_EYE:
+        out->projectileThing = (F0732_COMBAT_RngRandom_Compat(rng, 8) != 0)
+            ? DM1_PROJECTILE_THING_LIGHTNING_BOLT
+            : DM1_PROJECTILE_THING_OPEN_DOOR;
+        break;
+    case DM1_CREATURE_TYPE_MATERIALIZER:
+        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            out->projectileThing = DM1_PROJECTILE_THING_POISON_CLOUD;
+            break;
+        }
+        /* FALLTHROUGH */
+    case DM1_CREATURE_TYPE_DEMON:
+    case DM1_CREATURE_TYPE_RED_DRAGON:
+    default:
+        out->projectileThing = DM1_PROJECTILE_THING_FIREBALL;
+        break;
+    }
+
+    energy = (ctx->creatureInfo.attack >> 2) + 1;
+    energy += F0732_COMBAT_RngRandom_Compat(rng, energy);
+    energy += F0732_COMBAT_RngRandom_Compat(rng, energy);
+    out->kineticEnergy = bounded_val(20, energy, 255);
+    out->attack = ctx->creatureInfo.dexterity;
+    out->rngCallCount = (int)(rng->seed - rngBefore);
     return 1;
 }
 
@@ -1079,6 +1194,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                  * So range 1 (melee) always attacks, range 15 rarely. */
                 int roll = F0732_COMBAT_RngRandom_Compat(rng, 16) + 1;
                 if (roll >= attackRange) {
+                    struct DM1CreatureProjectileAttack_Compat projectile;
                     if (ctx->creatureType == DM1_CREATURE_TYPE_GIGGLER) {
                         struct DM1GigglerStealResult_Compat steal;
                         F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
@@ -1113,8 +1229,20 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                         }
                         return 1;
                     }
+                    F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+                        ctx, activeGroup, creatureIndex, rng, &projectile);
                     result->actionKind = DM1_ACTION_ATTACK;
-                    result->attackIsProjectile = (attackRange > 1) ? 1 : 0;
+                    result->attackIsProjectile = projectile.shouldLaunch;
+                    if (projectile.shouldLaunch) {
+                        result->attackTargetCell = projectile.targetCell;
+                        result->projectileThing = projectile.projectileThing;
+                        result->projectileKineticEnergy = projectile.kineticEnergy;
+                        result->projectileAttack = projectile.attack;
+                        result->projectileStepEnergy = projectile.stepEnergy;
+                        result->projectileDirection = projectile.direction;
+                        result->projectileUseSpellSoundFallback =
+                            projectile.useSpellSoundFallback;
+                    }
                     result->newBehavior = DM1_BEHAVIOR_ATTACK;
                     result->nextEventType = eventType;
                     result->nextEventDelayTicks =
