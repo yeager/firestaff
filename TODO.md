@@ -73,7 +73,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature damage to champions (F0230)
 - ✅ Parry skill XP
 - ✅ Combat result logging
-- 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow parameter path source-locked; full runtime projectile wiring remains pending
+- 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow/sling ammunition class validation and runtime projectile launch are source-locked; broader ranged polish remains pending
 - ❌ Shield defense bonus in combat
 - ❌ Weapon breakage
 - ✅ Poison damage over time — creature PoisonAttack → F0322 immediate damage, 36-tick follow-up scheduling, event-count decrement, and Vitality-adjusted gate are source-locked
