@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "firestaff_accessibility.h"
 #include "firestaff_po_loader.h"
 
@@ -2030,7 +2031,6 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
-static int m11_viewport_cell_is_wall_free(int elementType);
 static int m11_toggle_front_door(M11_GameViewState* state);
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
@@ -8238,7 +8238,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * invisible champion records paired with the C127 portrait/mirror wall
      * ornament route, whose map-local frame ordinal is the last wall
      * ornament in DM1 map 0.  Sensor ornaments keep precedence. */
-    if (cell.elementType == DUNGEON_ELEMENT_WALL && cell.wallOrnamentOrdinal <= 0 &&
+    if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) && cell.wallOrnamentOrdinal <= 0 &&
         state->world.dungeon && state->world.things && state->world.things->textStrings &&
         state->world.party.mapIndex >= 0 &&
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
@@ -8274,7 +8274,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * ReDMCSB DUNGEON.C:2585-2593 sets
      * G0290_T_DungeonView_InscriptionThing when the current wall ornament
      * matches the synthetic current-map inscription ornament. */
-    if (cell.elementType == DUNGEON_ELEMENT_WALL &&
+    if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) &&
         cell.wallOrnamentOrdinal >= 0 &&
         state->world.dungeon &&
         state->world.things &&
@@ -8453,7 +8453,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * floor sensors.  Stairs route through T0172046_Stairs without
      * assigning M558_FLOOR_ORNAMENT_ORDINAL; their 0x08 bit is
      * orientation, not random-ornament permission. */
-    if (cell.valid && m11_viewport_cell_is_wall_free(cell.elementType)) {
+    if (cell.valid && M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(cell.square)) {
         cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
             state, state->world.party.mapIndex, mapX, mapY, square);
     }
@@ -8464,37 +8464,18 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     return 1;
 }
 
-/* Helper: return 1 for element types that can have floor ornaments. */
-static int m11_viewport_cell_is_wall_free(int elementType) {
-    return elementType == DUNGEON_ELEMENT_CORRIDOR ||
-           elementType == DUNGEON_ELEMENT_PIT ||
-           elementType == DUNGEON_ELEMENT_TELEPORTER;
-}
-
-static int m11_viewport_element_state_is_open(int elementType, int doorState) {
-    if (elementType == DUNGEON_ELEMENT_WALL ||
-        elementType == DUNGEON_ELEMENT_FAKEWALL) {
-        return 0;
-    }
-    if (elementType == DUNGEON_ELEMENT_DOOR) {
-        return doorState == 0 || doorState == 5;
-    }
-    return 1;
-}
-
 static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    return m11_viewport_element_state_is_open(cell->elementType, cell->doorState);
+    return M11_DM1_ViewportSquareIsOpenPc34(cell->square);
 }
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    return cell->elementType == DUNGEON_ELEMENT_WALL ||
-           cell->elementType == DUNGEON_ELEMENT_FAKEWALL;
+    return M11_DM1_ViewportSquareIsWallLikePc34(cell->square);
 }
 
 static int m11_build_front_text_readout(const M11_GameViewState* state,
@@ -11409,7 +11390,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!cell.valid) {
             continue;
         }
-        if (cell.elementType != DUNGEON_ELEMENT_WALL && frontMirrorOrdinal < 0) {
+        if (!m11_viewport_cell_is_wall_like(&cell) && frontMirrorOrdinal < 0) {
             continue;
         }
         mapIdx = state->world.party.mapIndex;
