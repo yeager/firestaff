@@ -205,10 +205,15 @@ Status per 2026-05-19 v2.4.0.
 ## DM2 (Skullkeep)
 
 - 🔧 DM2 launch entry in menu
-- ❌ DM2 dungeon.dat format
-- ❌ DM2 graphics.dat format
-- ❌ DM2 creature types and AI
-- ❌ DM2-specific mechanics (shops, minecart, etc.)
+- ❌ Phase 0 — Source and provenance gate: mirror/hash-lock `gbsphenx/skproject` (`master` HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6` at planning time), Sphenx SKWin reference page/package provenance, and exact Skullkeep game assets before parser or runtime work
+- ❌ Phase 1 — Runtime profile split: separate DM2/Skullkeep boot profile from DM1/CSB, including menu launch, asset roots, save namespace, platform/version diagnostics, and deterministic config
+- ❌ Phase 2 — Data formats: source-lock DM2 dungeon and graphics formats from SKWin/SKWINSPX/DMDC2 references, including GDAT categories, dungeon records, text, item records, actuators, doors, pits, teleports, ornate data, and variant/platform differences
+- ❌ Phase 3 — Core world model: implement DM2 map loading, party placement, map transitions, outdoor/interior state, timers, object database, and deterministic world-state hashing
+- ❌ Phase 4 — Rendering pipeline: source-lock Skullkeep wall/floor/door/ornament/item/creature/projectile/cloud rendering, palette/light handling, UI surfaces, title/intro assets, and GDAT-backed animation frames
+- ❌ Phase 5 — Movement and interaction: port DM2 movement, click routing, item pickup/placement, containers, shop/trader interactions, doors, ladders, pits, teleports, buttons, generators, and mine/cart-specific routes
+- ❌ Phase 6 — Creature, combat, spells, and environmental systems: source-lock DM2 creature AI, attacks/projectiles, champion actions, spells/clouds, weather/ambient timers, sounds, drops, and progression constants
+- ❌ Phase 7 — Save/import compatibility: support DM2 save/load, PC savegame interoperability where source-backed, champion state persistence, object/container state, and cross-version diagnostics
+- ❌ Phase 8 — Verification suite: canonical DM2 asset manifests, parser probes, GDAT/dungeon record fixtures, deterministic input scripts, pixel/viewport gates, save/load round trips, and source-evidence manifests tied to SKWin/skproject references
 
 ---
 
@@ -248,22 +253,22 @@ Status per 2026-05-19 v2.4.0.
 ## Known Bugs (need repro)
 
 1. 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
-2. 🐛 Flytande objekt kan fortfarande se lite off ut trots zone Y fix
+2. 🐛 Some floor objects may still look slightly mispositioned despite the zone Y fix
 
 ---
 
 ## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
 
-- HiDPI/Retina skalning
-- Trapp-riktning (F0155)
-- Dörrfodret vid öppna gallerdörrar (F0111)
-- Resume-knapp laddar sparad data (M566)
+- HiDPI/Retina scaling
+- Stair direction (F0155)
+- Door frame preservation for open portcullis doors (F0111)
+- Resume button loads saved data (M566)
 - Entrance click-only + dungeon flash fix
 - Champion mirrors/wall ornaments (F0169-F0172)
-- Object zone Y-koordinater (COORD.C)
+- Object zone Y coordinates (COORD.C)
 - Creature damage formula (F0230)
 - Creature death item drops
-- Dead creatures blockerar inte passage
-- Entrance-skärmen visas alltid för DM1
+- Dead creatures do not block passage
+- Entrance screen always appears for DM1
 - Inscription text overlay
-- Wall click sensors fungerar (dörrknappar/switchar)
+- Wall click sensors work for door buttons and switches
