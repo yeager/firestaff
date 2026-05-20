@@ -2601,6 +2601,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_gfx_extract_proof PRIVATE -Wall -Wextra -O2)
 endif()
 
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME dm1_v1_ambient_dungeon_sound_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_ambient_dungeon_sound_source_lock.py
+    )
+endif()
+
 
 
 # ── Known failing tests (WILL_FAIL = expected failure) ──

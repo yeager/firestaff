@@ -1,0 +1,25 @@
+PASS SOURCE_ANCHOR GAMELOOP.C:115 per-tick pending SFX flush
+PASS SOURCE_ANCHOR SOUND.C:1476 event-indexed sound request function
+PASS SOURCE_ANCHOR SOUND.C:1538 deferred sound request event
+PASS SOURCE_ANCHOR SOUND.C:1608 immediate sound branch
+PASS SOURCE_ANCHOR SOUND.C:1633 priority pending branch
+PASS SOURCE_ANCHOR SOUND.C:1756 pending sound playback function
+PASS SOURCE_ANCHOR SOUND.C:1871 directional distance-volume function
+PASS SOURCE_ANCHOR DEFS.H:133 movement sound namespace
+PASS SOURCE_ANCHOR DEFS.H:137 one-sound-per-tick play mode
+PASS SOURCE_ANCHOR DATA.C:1304 I34E SND3 creature movement table
+PASS SOURCE_ANCHOR MOVESENS.C:853 movement-triggered sound request
+PASS SOURCE_ANCHOR GROUP.C:280 creature animation movement sound request
+PASS SOURCE_ANCHOR TIMELINE.C:1903 deferred play-sound event dispatch
+PASS NO_GAMELOOP_SOUND_REQUEST_LOOP game loop only flushes pending sound, it does not originate ambient SFX
+PASS NO_REDMCSB_AMBIENT_SYMBOL no ambient/ambience symbol in core sound source
+PASS NO_AMBIENT_LOOP_API SOUND.C loop/repeat hits are decoder internals at lines [915, 1150, 1169, 1170, 1171, 1172, 1183, 1197]
+PASS FIRESTAFF_TODO_ROW_PRESENT Ambient dungeon sound remains tracked in TODO.md
+PASS FIRESTAFF_NO_AMBIENT_AUDIO_API no ambient-specific M11 audio API exists
+# Request call files:
+#   DEFS.H: [6834]
+#   GROUP.C: [242, 271, 276, 280, 546, 645, 734, 1768, 1803, 1808, 1812, 2283]
+#   MOVESENS.C: [497, 522, 602, 849, 853, 1525, 1783]
+#   SOUND.C: [1476]
+#   TIMELINE.C: [769, 793, 808, 976, 1532, 1904]
+PASS DM1_V1_AMBIENT_DUNGEON_SOUND_SOURCE_LOCK no source-backed ambient dungeon loop found
