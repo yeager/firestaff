@@ -202,7 +202,7 @@ Fontanel has already documented **93 bugs + 108 changes** across 9 game versions
 - [ ] Asset search: MD5 validation works identically on all platforms
 
 ### CI / CD
-- [ ] GitHub Actions, build on all three platforms for every PR
+- [x] GitHub Actions, build on all three platforms for every PR (verified on GitHub Actions run 26150718512, 2026-05-20)
 - [x] Automated tests, run verify scripts on all three platforms (verified on GitHub Actions run 26150087692, 2026-05-20)
 - [ ] Automated release, tag versions, build packages, upload to GitHub Releases
 - [x] Cross-platform determinism test, run-twice hash must be identical on macOS / Linux / Windows (verified on GitHub Actions run 26150087692, 2026-05-20)
