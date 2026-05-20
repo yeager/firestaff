@@ -1,0 +1,108 @@
+{
+  "anchors": [
+    {
+      "file": "DEFS.H",
+      "line": 197,
+      "needle": "typedef struct {",
+      "text": "typedef struct {"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 200,
+      "needle": "KEYBOARD_INPUT",
+      "text": "} KEYBOARD_INPUT;"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 211,
+      "needle": "MOUSE_INPUT",
+      "text": "} MOUSE_INPUT;"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 238,
+      "needle": "C001_COMMAND_TURN_LEFT",
+      "text": "#define C001_COMMAND_TURN_LEFT                                                1"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 243,
+      "needle": "C006_COMMAND_MOVE_LEFT",
+      "text": "#define C006_COMMAND_MOVE_LEFT                                                6"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2045,
+      "needle": "void F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "void F0380_COMMAND_ProcessQueue_CPSC("
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2151,
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2155,
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 142,
+      "needle": "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "void F0365_COMMAND_ProcessTypes1To2_TurnParty("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 172,
+      "needle": "F0284_CHAMPION_SetPartyDirection",
+      "text": "F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(G0308_i_PartyDirection + ((P0734_i_Command == C002_COMMAND_TURN_RIGHT) ? 1 : 3)));"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 180,
+      "needle": "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "void F0366_COMMAND_ProcessTypes3To6_MoveParty("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 224,
+      "needle": "G0465_ai_Graphic561_MovementArrowToStepForwardCount",
+      "text": "static int16_t G0465_ai_Graphic561_MovementArrowToStepForwardCount[4] = {"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 229,
+      "needle": "G0466_ai_Graphic561_MovementArrowToStepRightCount",
+      "text": "static int16_t G0466_ai_Graphic561_MovementArrowToStepRightCount[4] = {"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line": 269,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(G0308_i_PartyDirection, G0465_ai_Graphic561_MovementArrowToStepForwardCount[AL1118_ui_MovementArrowIndex], G0466_ai_Graphic561_MovementArrowToStepRightCount[AL1118_ui_MovementArrowIndex], &L1121_i_MapX, &L1122_i_MapY);"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 164,
+      "needle": "G0321_B_StopWaitingForPlayerInput",
+      "text": "G0321_B_StopWaitingForPlayerInput = C0_FALSE;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 219,
+      "needle": "G0301_B_GameTimeTicking",
+      "text": "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+    }
+  ],
+  "errors": [],
+  "status": "passed"
+}
