@@ -31,7 +31,6 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
 - 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, leader-hand/chest slot swaps, and action-hand chest panel close/reopen persistence are source-locked; broader full panel polish remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display and M11 leader-hand runtime wiring are source-locked for Priest > 1, including the original empty-flask quirk; weapon eye-panel name/attribute description formatting is source-locked for POISONED/BROKEN/CURSED (94094865); item weight line display is source-locked (35461e0b); armor BROKEN/CURSED, junk consumable/compass/waterskin state lines, and scroll/container panel routes are source-locked; broader object-description pixel/layout polish remains pending
-- 🔧 Food/water item consumption (click to eat/drink) — food amounts, water/waterskin charges, caps, leader-hand removal, swallow audio routing, and source mouth-animation frame/delay gate and food mouth visual C545 blit are source-locked and wired through M11 mouth-click; water/potion remain no-visual per source gate
 
 ## DM1 V2.1 / V2.2 — Enhanced Modes
 
