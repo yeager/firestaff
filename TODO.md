@@ -49,7 +49,7 @@ Status per 2026-05-19 v2.4.0.
 - 🐛 Kollision blockerar ibland fel — behöver exakt plats för repro
 - ✅ Inscription rendering on side walls (D2L/R, D3L/R) — unreadable plaque heights source-locked (pass582)
 - ✅ Readable inscription rendering (source message zone centering)
-- ❌ Teleporter visual effect (shimmer/sparkle)
+- ✅ Teleporter visual effect — source-backed GRAPHICS.DAT field bitmap overlay, not procedural sparkle
 
 ### Creature System
 - ✅ Creature groups loaded from dungeon.dat
