@@ -29,6 +29,15 @@ enum {
     DM1_SLOT_BACKPACK6,
     DM1_SLOT_BACKPACK7,
     DM1_SLOT_BACKPACK8,
+    DM1_SLOT_BACKPACK9,
+    DM1_SLOT_BACKPACK10,
+    DM1_SLOT_BACKPACK11,
+    DM1_SLOT_BACKPACK12,
+    DM1_SLOT_BACKPACK13,
+    DM1_SLOT_BACKPACK14,
+    DM1_SLOT_BACKPACK15,
+    DM1_SLOT_BACKPACK16,
+    DM1_SLOT_BACKPACK17,
     DM1_SLOT_COUNT
 };
 
@@ -64,7 +73,17 @@ enum {
     DM1_PC34_SLOT_BACKPACK_LINE1_8 = 28,
     DM1_PC34_SLOT_BACKPACK_LINE1_9 = 29,
     DM1_PC34_SLOT_CHEST_1 = 30,
-    DM1_PC34_SLOT_COUNT = 38
+    DM1_PC34_SLOT_CHEST_2 = 31,
+    DM1_PC34_SLOT_CHEST_3 = 32,
+    DM1_PC34_SLOT_CHEST_4 = 33,
+    DM1_PC34_SLOT_CHEST_5 = 34,
+    DM1_PC34_SLOT_CHEST_6 = 35,
+    DM1_PC34_SLOT_CHEST_7 = 36,
+    DM1_PC34_SLOT_CHEST_8 = 37,
+    DM1_PC34_SLOT_COUNT = 38,
+    DM1_PC34_INVENTORY_SLOT_COUNT = 30,
+    DM1_PC34_BACKPACK_SLOT_COUNT = 17,
+    DM1_PC34_CHEST_SLOT_COUNT = 8
 };
 
 enum {
@@ -97,6 +116,8 @@ typedef struct {
     M11_Item mouseItem;
     int load;
     int maxLoad;
+    M11_Item chestSlots[DM1_PC34_CHEST_SLOT_COUNT];
+    int openChestThing;
 } M11_ChampionInventory;
 
 #define M11_MAX_CHAMPIONS 4
@@ -130,6 +151,17 @@ int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int 
                                                int pc34Slot, M11_Item* out);
 int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot);
 const char *dm1_inventory_pass601_inventory_source_evidence(void);
+int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot);
+int m11_inventory_pc34_is_chest_source_slot(int pc34Slot);
+int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
+                             const M11_Item* linkedItems, int linkedItemCount);
+int m11_inventory_close_chest(M11_InventoryState* s, int champ,
+                              M11_Item* linkedItemsOut, int maxItemsOut);
+int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);
+int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int chestSlotIndex,
+                                         int itemType, int weight, int charges, int allowedSlots);
+int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
+                                         int chestSlotIndex, M11_Item* out);
 
 #ifdef __cplusplus
 }

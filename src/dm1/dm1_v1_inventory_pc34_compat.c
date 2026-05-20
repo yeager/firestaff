@@ -155,7 +155,59 @@ void m11_inventory_recalc_load(M11_InventoryState* s, int champ) {
     for (int i = 0; i < DM1_SLOT_COUNT; i++) {
         totalLoad += inv->slots[i].weight;
     }
+    if (inv->openChestThing != 0) {
+        for (int i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; i++) {
+            totalLoad += inv->chestSlots[i].weight;
+        }
+    }
     inv->load = totalLoad;
+}
+
+int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot) {
+    return pc34Slot >= DM1_PC34_SLOT_BACKPACK_LINE1_1 &&
+           pc34Slot <= DM1_PC34_SLOT_BACKPACK_LINE1_9;
+}
+
+int m11_inventory_pc34_is_chest_source_slot(int pc34Slot) {
+    return pc34Slot >= DM1_PC34_SLOT_CHEST_1 && pc34Slot <= DM1_PC34_SLOT_CHEST_8;
+}
+
+static M11_Item* m11_inventory_pc34_mutable_slot(M11_InventoryState* s, int champ, int pc34Slot) {
+    int storageSlot;
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return NULL;
+    }
+    if (m11_inventory_pc34_is_chest_source_slot(pc34Slot)) {
+        M11_ChampionInventory* inv = &s->champions[champ];
+        if (inv->openChestThing == 0) {
+            return NULL;
+        }
+        return &inv->chestSlots[pc34Slot - DM1_PC34_SLOT_CHEST_1];
+    }
+    storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
+    if (storageSlot < 0) {
+        return NULL;
+    }
+    return &s->champions[champ].slots[storageSlot];
+}
+
+static const M11_Item* m11_inventory_pc34_const_slot(const M11_InventoryState* s, int champ, int pc34Slot) {
+    int storageSlot;
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return NULL;
+    }
+    if (m11_inventory_pc34_is_chest_source_slot(pc34Slot)) {
+        const M11_ChampionInventory* inv = &s->champions[champ];
+        if (inv->openChestThing == 0) {
+            return NULL;
+        }
+        return &inv->chestSlots[pc34Slot - DM1_PC34_SLOT_CHEST_1];
+    }
+    storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
+    if (storageSlot < 0) {
+        return NULL;
+    }
+    return &s->champions[champ].slots[storageSlot];
 }
 
 int m11_inventory_get_load(const M11_InventoryState* s, int champ) {
@@ -173,8 +225,7 @@ int m11_inventory_pc34_slot_mask(int pc34Slot) {
 }
 
 int m11_inventory_pc34_source_slot_to_storage_slot(int pc34Slot) {
-    if (pc34Slot >= DM1_PC34_SLOT_BACKPACK_LINE1_1 &&
-        pc34Slot <= DM1_PC34_SLOT_BACKPACK_LINE2_8) {
+    if (m11_inventory_pc34_is_backpack_source_slot(pc34Slot)) {
         return DM1_SLOT_BACKPACK1 + (pc34Slot - DM1_PC34_SLOT_BACKPACK_LINE1_1);
     }
 
@@ -237,44 +288,39 @@ int m11_inventory_set_item_in_pc34_source_slot(M11_InventoryState* s, int champ,
                                                int pc34Slot, int itemType, int weight,
                                                int charges, int allowedSlots) {
     const int storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    if (storageSlot < 0) {
+    if (!s || champ < 0 || champ >= s->championCount || storageSlot < 0) {
         return 0;
     }
-    return m11_inventory_set_item_with_allowed_slots(
-        s, champ, storageSlot, itemType, weight, charges, allowedSlots);
+    return m11_inventory_set_item_with_allowed_slots(s, champ, storageSlot,
+                                                     itemType, weight, charges, allowedSlots);
 }
 
 int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int champ,
                                                int pc34Slot, M11_Item* out) {
-    const int storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    if (storageSlot < 0) {
+    const M11_Item* slot = m11_inventory_pc34_const_slot(s, champ, pc34Slot);
+    if (!slot || !out) {
         return 0;
     }
-    return m11_inventory_get_item(s, champ, storageSlot, out);
+    *out = *slot;
+    return 1;
 }
 
 int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot) {
-    int slotMask;
-    int storageSlot;
-    M11_ChampionInventory* inv;
-    M11_Item leaderHandObject;
-    M11_Item slotObject;
-
     if (!s || champ < 0 || champ >= s->championCount) {
         return 0;
     }
-    storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    if (storageSlot < 0) {
+    const int slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+    M11_Item* slot = m11_inventory_pc34_mutable_slot(s, champ, pc34Slot);
+    if (!slot || slotMask == 0) {
         return 0;
     }
-    inv = &s->champions[champ];
-    leaderHandObject = inv->mouseItem;
-    slotObject = inv->slots[storageSlot];
+    M11_ChampionInventory* inv = &s->champions[champ];
+    M11_Item leaderHandObject = inv->mouseItem;
+    M11_Item slotObject = *slot;
     if (leaderHandObject.itemType == 0 && slotObject.itemType == 0) {
         return 0;
     }
 
-    slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
     if (leaderHandObject.itemType != 0 &&
         ((leaderHandObject.allowedSlots & slotMask) == 0)) {
         return 0;
@@ -286,11 +332,93 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
         m11_inventory_clear_item(&inv->mouseItem);
     }
     if (leaderHandObject.itemType != 0) {
-        inv->slots[storageSlot] = leaderHandObject;
+        *slot = leaderHandObject;
     } else {
-        m11_inventory_clear_item(&inv->slots[storageSlot]);
+        m11_inventory_clear_item(slot);
     }
     m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
+                             const M11_Item* linkedItems, int linkedItemCount) {
+    if (!s || champ < 0 || champ >= s->championCount || openChestThing == 0 ||
+        linkedItemCount < 0 || (linkedItemCount > 0 && !linkedItems)) {
+        return 0;
+    }
+    M11_ChampionInventory* inv = &s->champions[champ];
+    if (inv->openChestThing == openChestThing) {
+        return 1;
+    }
+    inv->openChestThing = openChestThing;
+    for (int i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; i++) {
+        m11_inventory_clear_item(&inv->chestSlots[i]);
+    }
+    const int limit = linkedItemCount < DM1_PC34_CHEST_SLOT_COUNT ?
+        linkedItemCount : DM1_PC34_CHEST_SLOT_COUNT;
+    for (int i = 0; i < limit; i++) {
+        inv->chestSlots[i] = linkedItems[i];
+    }
+    m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+int m11_inventory_close_chest(M11_InventoryState* s, int champ,
+                              M11_Item* linkedItemsOut, int maxItemsOut) {
+    if (!s || champ < 0 || champ >= s->championCount || maxItemsOut < 0 ||
+        (maxItemsOut > 0 && !linkedItemsOut)) {
+        return -1;
+    }
+    M11_ChampionInventory* inv = &s->champions[champ];
+    if (inv->openChestThing == 0) {
+        return 0;
+    }
+    int count = 0;
+    for (int i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; i++) {
+        if (inv->chestSlots[i].itemType != 0) {
+            if (count < maxItemsOut) {
+                linkedItemsOut[count] = inv->chestSlots[i];
+            }
+            count++;
+        }
+        m11_inventory_clear_item(&inv->chestSlots[i]);
+    }
+    inv->openChestThing = 0;
+    m11_inventory_recalc_load(s, champ);
+    return count;
+}
+
+int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ) {
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    return s->champions[champ].openChestThing;
+}
+
+int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int chestSlotIndex,
+                                         int itemType, int weight, int charges, int allowedSlots) {
+    if (!s || champ < 0 || champ >= s->championCount || chestSlotIndex < 0 ||
+        chestSlotIndex >= DM1_PC34_CHEST_SLOT_COUNT || s->champions[champ].openChestThing == 0) {
+        return 0;
+    }
+    M11_Item* item = &s->champions[champ].chestSlots[chestSlotIndex];
+    item->itemType = itemType;
+    item->weight = weight;
+    item->charges = charges;
+    item->cursed = 0;
+    item->identified = 0;
+    item->allowedSlots = allowedSlots;
+    m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
+                                         int chestSlotIndex, M11_Item* out) {
+    if (!s || !out || champ < 0 || champ >= s->championCount || chestSlotIndex < 0 ||
+        chestSlotIndex >= DM1_PC34_CHEST_SLOT_COUNT || s->champions[champ].openChestThing == 0) {
+        return 0;
+    }
+    *out = s->champions[champ].chestSlots[chestSlotIndex];
     return 1;
 }
 
@@ -308,6 +436,11 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
  *
  * OBJECT.C:121-200    F0032_OBJECT_GetType (thing type extraction)
  * OBJECT.C:25-120     F0031_OBJECT_LoadNames (object name table)
+ * CHEST.C:30-46       F0333 open chest id guard, close-other, open icon
+ * CHEST.C:53-76       F0333 copies first 8 linked container things into G0425
+ * CHEST.C:112-133     F0334 closes by compacting non-empty G0425 slots back to links
+ * DEFS.H:778-817      C00..C37 inventory/backpack/chest slot namespace
+ * DATA.C:1049-1087    30 inventory slot masks + 8 chest container masks
  * ══════════════════════════════════════════════════════════════════════ */
 
 const char *dm1_inventory_pass601_inventory_source_evidence(void)
@@ -321,8 +454,11 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "CHAMPION.C:694-699 F0302 empty-slot no-op and AllowedSlots/SlotMasks rejection\n"
         "CHAMPION.C:701-710 F0302 leader-hand/slot swap order\n"
         "DATA.C:1049-1087 G0038_ai_Graphic562_SlotMasks\n"
-        "DEFS.H:778-805 C00..C25 slot index namespace\n"
+        "DEFS.H:778-817 C00..C37 inventory/backpack/chest slot index namespace\n"
         "DEFS.H:1698-1710 object allowed-slot masks\n"
+        "CHEST.C:30-46 F0333 open chest guard/open icon\n"
+        "CHEST.C:53-76 F0333 first-8 chest slot copy\n"
+        "CHEST.C:112-133 F0334 non-empty slot compact close\n"
         "CHAMPION.C:662-712 F0302_ProcessCommands28To65_ClickOnSlotBox BUG0_39\n"
         "OBJECT.C:121-200 F0032_OBJECT_GetType\n"
         "OBJECT.C:25-120 F0031_OBJECT_LoadNames\n";
