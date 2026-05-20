@@ -92,16 +92,23 @@ static int write_test_wav(const char* path) {
     return fclose(f) == 0;
 }
 
-int main(void) {
+int main(int argc, char** argv) {
     M11_AudioState state;
     ProbeTally tally = {0, 0};
     int master = -1, sfx = -1, music = -1, ui = -1;
     int emitResult = -1;
     int i;
+    int expectSdlSourceIndexQueue = 0;
     char packDirTemplate[] = "/tmp/firestaff-sound-pack-XXXXXX";
     char* packDir = mkdtemp(packDirTemplate);
     char packPath[256];
     int packFixtureReady = 0;
+
+    for (i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--expect-sdl-source-index-queue") == 0) {
+            expectSdlSourceIndexQueue = 1;
+        }
+    }
 
     if (packDir) {
         int n = snprintf(packPath, sizeof(packPath), "%s/13.wav", packDir);
@@ -182,6 +189,29 @@ int main(void) {
                  M11_Audio_IsAvailable(&state) ==
                      (state.backend == M11_AUDIO_BACKEND_SDL3 ? 1 : 0),
                  "IsAvailable reflects backend state");
+
+    if (expectSdlSourceIndexQueue) {
+        int beforeQueued = state.queuedSampleCount;
+        int beforePlayed = state.playedMarkerCount;
+        int sourceResult;
+
+        probe_record(&tally,
+                     "INV_M11_AUDIO_06B",
+                     state.backend == M11_AUDIO_BACKEND_SDL3 &&
+                         packFixtureReady &&
+                         M11_Audio_SoundPackAvailable(&state) == 1,
+                     "SDL dummy backend has source-index sound-pack data ready");
+
+        sourceResult = M11_Audio_EmitSourceSoundIndex(&state, 13);
+        probe_record(&tally,
+                     "INV_M11_AUDIO_06C",
+                     sourceResult == 1 &&
+                         state.lastSoundIndex == 13 &&
+                         state.lastMarker == M11_AUDIO_MARKER_COMBAT &&
+                         state.queuedSampleCount > beforeQueued &&
+                         state.playedMarkerCount == beforePlayed + 1,
+                     "source sound index 13 queues PCM through SDL dummy backend");
+    }
 
     /* INV 07: Multiple rapid emissions don't crash */
     {

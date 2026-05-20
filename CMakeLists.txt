@@ -1216,6 +1216,14 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME m11_audio_source_index_live_sdl_dummy
+        COMMAND firestaff_m11_audio_probe --expect-sdl-source-index-queue
+    )
+    set_tests_properties(m11_audio_source_index_live_sdl_dummy PROPERTIES
+        ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
+    )
+
+    add_test(
         NAME firestaff_m11_creature_runtime_audio_probe
         COMMAND firestaff_m11_creature_runtime_audio_probe
     )
