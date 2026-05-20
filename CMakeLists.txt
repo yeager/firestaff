@@ -856,6 +856,18 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_original_fakewall_view_collision_probe
     )
 
+    add_executable(firestaff_dm1_v1_original_collision_overlay_runtime_probe
+        probes/dm1/firestaff_dm1_v1_original_collision_overlay_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_original_collision_overlay_runtime_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_original_collision_overlay_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_original_collision_overlay_runtime_probe
+        COMMAND firestaff_dm1_v1_original_collision_overlay_runtime_probe
+    )
+
     add_executable(firestaff_dm1_v1_side_contents_center_blocker_probe
         probes/dm1/firestaff_dm1_v1_side_contents_center_blocker_probe.c
     )

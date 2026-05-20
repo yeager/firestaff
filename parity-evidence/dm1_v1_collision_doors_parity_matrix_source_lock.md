@@ -2,7 +2,7 @@
 
 Status: DM1_V1_COLLISION_DOORS_PARITY_MATRIX_SOURCE_LOCKED
 
-This gate narrows the stale collision/doors parity row from a bare UNPROVEN stub to source/runtime-backed evidence. It keeps the original DOS pixel/content parity blocker explicit.
+This gate locks the collision/doors parity row to ReDMCSB source evidence plus canonical DM1 PC original-data overlay/runtime cases. It does not claim bit-identical original DOS pixels.
 
 ## ReDMCSB locks
 
@@ -15,10 +15,13 @@ This gate narrows the stale collision/doors parity row from a bare UNPROVEN stub
 
 - PASS CMakeLists.txt contains `dm1_v1_movement_command_core_pc34_compat`
 - PASS CMakeLists.txt contains `dm1_v1_door_button_click_pc34_compat`
+- PASS CMakeLists.txt contains `firestaff_dm1_v1_original_collision_overlay_runtime_probe`
 - PASS CMakeLists.txt contains `dm1_v1_wall_collision_runtime_capture`
 - PASS CMakeLists.txt contains `dm1_v1_wall_collision_capture_manifest_source_lock`
 - PASS tests/test_dm1_v1_movement_command_core_pc34_compat.c contains `pass547 closed door movement blocked`
 - PASS tests/test_dm1_v1_door_button_click_pc34_compat.c contains `door with button accepted`
+- PASS probes/dm1/firestaff_dm1_v1_original_collision_overlay_runtime_probe.c contains `closed_door`
+- PASS parity-evidence/dm1_v1_original_collision_overlay_runtime_cases.md contains `DM1_V1_ORIGINAL_COLLISION_OVERLAY_RUNTIME_CASES_LOCKED`
 - PASS parity-evidence/dm1_v1_wall_collision_capture_manifest_source_lock.md contains `not an original DOS pixel-parity claim`
 
 ## Parity matrix
@@ -28,6 +31,5 @@ This gate narrows the stale collision/doors parity row from a bare UNPROVEN stub
 
 ## Non-claims
 
-- does not promote original DOS pixel/content parity
-- does not remove the need for original-backed overlay cases
+- does not claim bit-identical original DOS pixels
 - does not change Firestaff movement or viewport runtime behavior

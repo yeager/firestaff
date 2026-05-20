@@ -76,10 +76,13 @@ SOURCE_LOCKS: list[dict[str, Any]] = [
 REQUIRED_REPO_LOCKS = [
     (ROOT / "CMakeLists.txt", "dm1_v1_movement_command_core_pc34_compat"),
     (ROOT / "CMakeLists.txt", "dm1_v1_door_button_click_pc34_compat"),
+    (ROOT / "CMakeLists.txt", "firestaff_dm1_v1_original_collision_overlay_runtime_probe"),
     (ROOT / "CMakeLists.txt", "dm1_v1_wall_collision_runtime_capture"),
     (ROOT / "CMakeLists.txt", "dm1_v1_wall_collision_capture_manifest_source_lock"),
     (ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c", "pass547 closed door movement blocked"),
     (ROOT / "tests/test_dm1_v1_door_button_click_pc34_compat.c", "door with button accepted"),
+    (ROOT / "probes/dm1/firestaff_dm1_v1_original_collision_overlay_runtime_probe.c", "closed_door"),
+    (ROOT / "parity-evidence/dm1_v1_original_collision_overlay_runtime_cases.md", "DM1_V1_ORIGINAL_COLLISION_OVERLAY_RUNTIME_CASES_LOCKED"),
     (ROOT / "parity-evidence/dm1_v1_wall_collision_capture_manifest_source_lock.md", "not an original DOS pixel-parity claim"),
 ]
 
@@ -135,17 +138,17 @@ def audit_parity_matrix() -> dict[str, Any]:
     matrix = read(ROOT / "docs/parity/PARITY_MATRIX_DM1_V1.md")
     row = next((line for line in matrix.splitlines() if line.startswith("| Collision and doors |")), "")
     required = [
-        "KNOWN_DIFF",
+        "MATCHED",
         "dm1_v1_movement_command_core_pc34_compat",
         "dm1_v1_door_button_click_pc34_compat",
         "dm1_v1_wall_collision_capture_manifest_source_lock",
-        "not an original DOS pixel-parity claim",
+        "firestaff_dm1_v1_original_collision_overlay_runtime_probe",
     ]
     return {
         "row": row,
-        "ok": bool(row) and "| `UNPROVEN` | Add original-backed cases |" not in row and all(token in row for token in required),
+        "ok": bool(row) and "Add original-backed overlay/runtime cases" not in row and all(token in row for token in required),
         "missing": [token for token in required if token not in row],
-        "stillUnprovenStub": "| `UNPROVEN` | Add original-backed cases |" in row,
+        "stillUnprovenStub": "Add original-backed overlay/runtime cases" in row,
     }
 
 
@@ -167,8 +170,7 @@ def build() -> dict[str, Any]:
         "repoLocks": repo,
         "parityMatrix": matrix,
         "nonClaims": [
-            "does not promote original DOS pixel/content parity",
-            "does not remove the need for original-backed overlay cases",
+            "does not claim bit-identical original DOS pixels",
             "does not change Firestaff movement or viewport runtime behavior",
         ],
         "problems": problems,
@@ -181,7 +183,7 @@ def write_report(data: dict[str, Any]) -> None:
         "",
         f"Status: {data['status']}",
         "",
-        "This gate narrows the stale collision/doors parity row from a bare UNPROVEN stub to source/runtime-backed evidence. It keeps the original DOS pixel/content parity blocker explicit.",
+        "This gate locks the collision/doors parity row to ReDMCSB source evidence plus canonical DM1 PC original-data overlay/runtime cases. It does not claim bit-identical original DOS pixels.",
         "",
         "## ReDMCSB locks",
         "",
