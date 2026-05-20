@@ -165,7 +165,7 @@ Status per 2026-05-19 v2.4.0.
 ### Save/Load
 - ✅ Save game on quit (DM1_SaveGame)
 - ✅ Load game on Resume (DM1_LoadGame)
-- ❌ Auto-save on level change
+- ✅ Direct auto-save on level change absent/source-locked — ReDMCSB routes ordinary stairs/pits/teleporters through movement/map/sensor paths only; save writes are C140-only
 - 🔧 Multiple save slots — M11 slot-core bookkeeping is source-locked and hardened; full UI/runtime multiple-slot flow remains pending
 
 ### Audio
