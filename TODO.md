@@ -76,7 +76,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow parameter path source-locked; full runtime projectile wiring remains pending
 - ❌ Shield defense bonus in combat
 - ❌ Weapon breakage
-- ❌ Poison damage over time (creature PoisonAttack → F0322)
+- ✅ Poison damage over time — creature PoisonAttack → F0322 immediate damage, 36-tick follow-up scheduling, event-count decrement, and Vitality-adjusted gate are source-locked
 
 ### Spell System
 - ✅ Rune panel UI (open/close, 6 power runes + 6 element runes)
