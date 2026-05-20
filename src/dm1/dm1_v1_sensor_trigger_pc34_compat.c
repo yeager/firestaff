@@ -665,6 +665,197 @@ int F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
     return 1;
 }
 
+
+static int F0730_IsProjectileLauncherType_Compat(int sensorType) {
+    return ((sensorType >= DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ &&
+             sensorType <= DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) ||
+            sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ ||
+            sensorType == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ);
+}
+
+static int F0730_IsSingleProjectileLauncherType_Compat(int sensorType) {
+    return (sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ ||
+            sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION ||
+            sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ);
+}
+
+static int F0730_IsExplosionProjectileLauncherType_Compat(int sensorType) {
+    return (sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION ||
+            sensorType == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION);
+}
+
+static int F0730_IsSquareObjectProjectileLauncherType_Compat(int sensorType) {
+    return (sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ ||
+            sensorType == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ);
+}
+
+static int F0730_NormalizeCell_Compat(int cell) {
+    return cell & 3;
+}
+
+static int F0730_NextCell_Compat(int cell) {
+    return (cell + 1) & 3;
+}
+
+static int F0730_OppositeCell_Compat(int cell) {
+    return (cell + 2) & 3;
+}
+
+static unsigned short F0730_SelectSquareProjectileThing_Compat(
+    const struct ProjectileLauncherContext_Compat* ctx,
+    int eventCell,
+    unsigned short skipThing)
+{
+    int i;
+    int nextCell;
+
+    if (!ctx || !ctx->squareThings || ctx->squareThingCount <= 0) return THING_NONE;
+
+    nextCell = F0730_NextCell_Compat(eventCell);
+    for (i = 0; i < ctx->squareThingCount; ++i) {
+        const struct ProjectileLauncherSquareThing_Compat* t = &ctx->squareThings[i];
+        int thingType;
+        int thingCell;
+
+        if (t->thing == THING_NONE || t->thing == THING_ENDOFLIST || t->thing == skipThing) continue;
+        thingType = (t->thingType >= 0) ? t->thingType : (int)THING_GET_TYPE(t->thing);
+        thingCell = (t->cell >= 0) ? t->cell : (int)THING_GET_CELL(t->thing);
+        if (thingType > THING_TYPE_SENSOR &&
+            (F0730_NormalizeCell_Compat(thingCell) == eventCell ||
+             F0730_NormalizeCell_Compat(thingCell) == nextCell)) {
+            return t->thing;
+        }
+    }
+
+    return THING_NONE;
+}
+
+static void F0730_RecordProjectileLaunch_Compat(
+    struct ProjectileLauncherResult_Compat* outResult,
+    int index,
+    unsigned short associatedThing,
+    int mapX,
+    int mapY,
+    int cell,
+    int direction,
+    int kineticEnergy,
+    int stepEnergy)
+{
+    struct ProjectileLauncherLaunch_Compat* launch;
+
+    if (!outResult || index < 0 || index >= DM1_PROJECTILE_LAUNCHER_MAX_LAUNCHES) return;
+    launch = &outResult->launches[index];
+    memset(launch, 0, sizeof(*launch));
+    launch->valid = 1;
+    launch->associatedThing = associatedThing;
+    launch->mapX = mapX;
+    launch->mapY = mapY;
+    launch->cell = cell;
+    launch->direction = direction;
+    launch->kineticEnergy = kineticEnergy;
+    launch->attack = DM1_PROJECTILE_LAUNCHER_ATTACK;
+    launch->stepEnergy = stepEnergy;
+}
+
+/* ================================================================
+ *  F0730 -- Wall projectile launcher event evaluation
+ *  Source: TIMELINE.C F0247 lines 1033-1133 and F0248 lines 1312-1316.
+ *
+ *  ReDMCSB creates the projectile(s) immediately from a wall event on the
+ *  same cell. This pure helper reports the F0212_PROJECTILE_Create calls
+ *  and any source-square object unlinking the caller must apply.
+ * ================================================================ */
+int F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int sensorCell,
+    int eventMapX,
+    int eventMapY,
+    int eventCell,
+    const struct ProjectileLauncherContext_Compat* ctx,
+    struct ProjectileLauncherResult_Compat* outResult)
+{
+    static const int stepEast[4] = { 0, 1, 0, -1 };
+    static const int stepNorth[4] = { -1, 0, 1, 0 };
+    int sensorType;
+    int launchSingle;
+    int projectileCell;
+    int projectileMapX;
+    int projectileMapY;
+    int kineticEnergy;
+    int stepEnergy;
+    unsigned short firstThing = THING_NONE;
+    unsigned short secondThing = THING_NONE;
+
+    if (!sensor || !outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+
+    sensorType = sensor->sensorType;
+    eventCell = F0730_NormalizeCell_Compat(eventCell);
+    sensorCell = F0730_NormalizeCell_Compat(sensorCell);
+    if (!F0730_IsProjectileLauncherType_Compat(sensorType) || sensorCell != eventCell) {
+        return 1;
+    }
+
+    outResult->triggered = 1;
+    outResult->sensorDisabled = sensor->onceOnly ? 1 : 0;
+    outResult->launcherType = sensorType;
+
+    launchSingle = F0730_IsSingleProjectileLauncherType_Compat(sensorType);
+    projectileCell = F0730_OppositeCell_Compat(eventCell);
+    outResult->projectileCellBase = projectileCell;
+
+    kineticEnergy = (int)(sensor->localMultiple & 0x00FFu);
+    stepEnergy = (int)((sensor->localMultiple >> 8) & 0x00FFu);
+
+    if (F0730_IsExplosionProjectileLauncherType_Compat(sensorType)) {
+        firstThing = secondThing = (unsigned short)(DM1_THING_FIRST_EXPLOSION + sensor->sensorData);
+    } else if (F0730_IsSquareObjectProjectileLauncherType_Compat(sensorType)) {
+        firstThing = F0730_SelectSquareProjectileThing_Compat(ctx, eventCell, THING_NONE);
+        if (firstThing == THING_NONE) return 1;
+        outResult->unlinkThings[outResult->unlinkCount++] = firstThing;
+        if (!launchSingle) {
+            secondThing = F0730_SelectSquareProjectileThing_Compat(ctx, eventCell, firstThing);
+            if (secondThing == THING_NONE) {
+                launchSingle = 1;
+            } else {
+                outResult->unlinkThings[outResult->unlinkCount++] = secondThing;
+            }
+        }
+    } else {
+        if (!ctx || ctx->newObjectThings[0] == THING_NONE) return 1;
+        firstThing = ctx->newObjectThings[0];
+        if (!launchSingle) {
+            secondThing = ctx->newObjectThings[1];
+            if (secondThing == THING_NONE) {
+                launchSingle = 1;
+            }
+        }
+    }
+
+    if (launchSingle) {
+        int randomBit = ctx ? (ctx->randomBit & 1) : 0;
+        projectileCell = F0730_NormalizeCell_Compat(projectileCell + randomBit);
+    }
+    outResult->launchSingleProjectile = launchSingle ? 1 : 0;
+
+    projectileMapX = eventMapX + stepEast[eventCell];
+    projectileMapY = eventMapY + stepNorth[eventCell];
+
+    F0730_RecordProjectileLaunch_Compat(outResult, 0, firstThing,
+        projectileMapX, projectileMapY, projectileCell, eventCell,
+        kineticEnergy, stepEnergy);
+    outResult->launchCount = 1;
+
+    if (!launchSingle) {
+        F0730_RecordProjectileLaunch_Compat(outResult, 1, secondThing,
+            projectileMapX, projectileMapY, F0730_NextCell_Compat(projectileCell), eventCell,
+            kineticEnergy, stepEnergy);
+        outResult->launchCount = 2;
+    }
+
+    return 1;
+}
+
 /* ================================================================
  *  F0730 - Event-triggered wall AND/OR gate sensor C005
  *  Source: TIMELINE.C F0248 lines 1268-1309.

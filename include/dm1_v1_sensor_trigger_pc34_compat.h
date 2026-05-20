@@ -204,6 +204,51 @@ struct SensorTriggerResultList_Compat {
 };
 
 /* ================================================================
+ *  Projectile launcher event model (TIMELINE.C F0247/F0248)
+ * ================================================================ */
+
+#define DM1_PROJECTILE_LAUNCHER_MAX_LAUNCHES 2
+#define DM1_PROJECTILE_LAUNCHER_ATTACK       100
+#define DM1_THING_FIRST_EXPLOSION            0xFF80u
+
+struct ProjectileLauncherSquareThing_Compat {
+    unsigned short thing;
+    int cell;       /* 0..3; pass -1 to derive from THING bits */
+    int thingType;  /* 0..15; pass -1 to derive from THING bits */
+};
+
+struct ProjectileLauncherContext_Compat {
+    int randomBit;  /* M005_RANDOM(2), used only after single-launch collapse */
+    unsigned short newObjectThings[DM1_PROJECTILE_LAUNCHER_MAX_LAUNCHES];
+    const struct ProjectileLauncherSquareThing_Compat* squareThings;
+    int squareThingCount;
+};
+
+struct ProjectileLauncherLaunch_Compat {
+    int valid;
+    unsigned short associatedThing;
+    int mapX;
+    int mapY;
+    int cell;
+    int direction;
+    int kineticEnergy;
+    int attack;
+    int stepEnergy;
+};
+
+struct ProjectileLauncherResult_Compat {
+    int triggered;
+    int sensorDisabled;
+    int launcherType;
+    int launchSingleProjectile;
+    int projectileCellBase;
+    int launchCount;
+    struct ProjectileLauncherLaunch_Compat launches[DM1_PROJECTILE_LAUNCHER_MAX_LAUNCHES];
+    int unlinkCount;
+    unsigned short unlinkThings[DM1_PROJECTILE_LAUNCHER_MAX_LAUNCHES];
+};
+
+/* ================================================================
  *  API Functions
  * ================================================================ */
 
@@ -264,5 +309,14 @@ int F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
     int sensorMapX,
     int sensorMapY,
     struct SensorTriggerResult_Compat* outResult);
+
+int F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int sensorCell,
+    int eventMapX,
+    int eventMapY,
+    int eventCell,
+    const struct ProjectileLauncherContext_Compat* ctx,
+    struct ProjectileLauncherResult_Compat* outResult);
 
 #endif

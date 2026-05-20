@@ -92,6 +92,11 @@ static void test_sensor_classification(void) {
 /* ----------------------------------------------------------------
  *  Helper: build a test sensor
  * ---------------------------------------------------------------- */
+
+static unsigned short make_thing(int type, int index, int cell) {
+    return (unsigned short)(((cell & 3) << 14) | ((type & 15) << 10) | (index & 0x03FF));
+}
+
 static struct DungeonSensor_Compat make_sensor(
     int type, int data, int effect, int revertEffect,
     int onceOnly, int audible, int value,
@@ -765,6 +770,173 @@ static void test_wall_countdown_event(void) {
     CHECK(result.sensorDisabled == 1, "Countdown: once-only disables only on dispatch");
 }
 
+
+/* ----------------------------------------------------------------
+ *  Test F0730: wall projectile launcher C008 single explosion
+ *  Source: TIMELINE.C F0247 lines 1068-1077, 1114-1123 and
+ *  F0248 lines 1312-1316.
+ * ---------------------------------------------------------------- */
+static void test_wall_projectile_launcher_single_explosion(void) {
+    struct DungeonSensor_Compat sensor;
+    struct ProjectileLauncherContext_Compat ctx;
+    struct ProjectileLauncherResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION,
+                         3, DM1_EFFECT_TOGGLE, 0, 1, 0, 0,
+                         0, 0, 0, 0);
+    sensor.localMultiple = (unsigned short)((4 << 8) | 55);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.randomBit = 1;
+    ctx.newObjectThings[0] = THING_NONE;
+    ctx.newObjectThings[1] = THING_NONE;
+
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 1, 10, 20, 1, &ctx, &result);
+
+    CHECK(result.triggered == 1, "Launcher C008: matching wall event triggers");
+    CHECK(result.sensorDisabled == 1, "Launcher C008: once-only disables after event");
+    CHECK(result.launchSingleProjectile == 1, "Launcher C008: single launcher uses one projectile");
+    CHECK(result.launchCount == 1, "Launcher C008: creates one projectile");
+    CHECK(result.launches[0].associatedThing == (unsigned short)(DM1_THING_FIRST_EXPLOSION + 3),
+          "Launcher C008: explosion thing comes from data + first explosion");
+    CHECK(result.launches[0].mapX == 11 && result.launches[0].mapY == 20,
+          "Launcher C008: launch square is one step in event cell direction");
+    CHECK(result.launches[0].cell == 0, "Launcher C008: single projectile cell applies random bit");
+    CHECK(result.launches[0].direction == 1, "Launcher C008: direction is event cell");
+    CHECK(result.launches[0].kineticEnergy == 55, "Launcher C008: kinetic energy is localMultiple low byte");
+    CHECK(result.launches[0].stepEnergy == 4, "Launcher C008: PC34 step energy is localMultiple high byte");
+    CHECK(result.launches[0].attack == DM1_PROJECTILE_LAUNCHER_ATTACK,
+          "Launcher C008: attack is fixed at 100");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0730: wall projectile launcher C010 double explosion
+ *  Source: TIMELINE.C F0247 lines 1073-1077, 1125-1130.
+ * ---------------------------------------------------------------- */
+static void test_wall_projectile_launcher_double_explosion(void) {
+    struct DungeonSensor_Compat sensor;
+    struct ProjectileLauncherContext_Compat ctx;
+    struct ProjectileLauncherResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION,
+                         7, DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                         0, 0, 0, 0);
+    sensor.localMultiple = (unsigned short)((9 << 8) | 80);
+    memset(&ctx, 0, sizeof(ctx));
+
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 0, 4, 4, 0, &ctx, &result);
+
+    CHECK(result.launchCount == 2, "Launcher C010: double explosion creates two projectiles");
+    CHECK(result.launchSingleProjectile == 0, "Launcher C010: double launcher does not randomize cell");
+    CHECK(result.launches[0].associatedThing == (unsigned short)(DM1_THING_FIRST_EXPLOSION + 7),
+          "Launcher C010: first projectile uses explosion thing");
+    CHECK(result.launches[1].associatedThing == (unsigned short)(DM1_THING_FIRST_EXPLOSION + 7),
+          "Launcher C010: second projectile uses same explosion thing");
+    CHECK(result.launches[0].mapX == 4 && result.launches[0].mapY == 3,
+          "Launcher C010: north-facing launcher moves to y-1");
+    CHECK(result.launches[0].cell == 2 && result.launches[1].cell == 3,
+          "Launcher C010: double cells are opposite and next cell");
+    CHECK(result.launches[1].stepEnergy == 9, "Launcher C010: second projectile keeps step energy");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0730: wall projectile launcher C007/C009 new objects
+ *  Source: TIMELINE.C F0247 lines 1105-1115.
+ * ---------------------------------------------------------------- */
+static void test_wall_projectile_launcher_new_objects(void) {
+    struct DungeonSensor_Compat sensor;
+    struct ProjectileLauncherContext_Compat ctx;
+    struct ProjectileLauncherResult_Compat result;
+    unsigned short arrow = make_thing(THING_TYPE_WEAPON, 3, 0);
+
+    sensor = make_sensor(DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ,
+                         12, DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                         0, 0, 0, 0);
+    sensor.localMultiple = (unsigned short)((2 << 8) | 33);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.randomBit = 1;
+    ctx.newObjectThings[0] = arrow;
+    ctx.newObjectThings[1] = THING_NONE;
+
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 2, 8, 9, 2, &ctx, &result);
+
+    CHECK(result.triggered == 1, "Launcher C009: matching event triggers");
+    CHECK(result.launchCount == 1, "Launcher C009: missing second object collapses to one projectile");
+    CHECK(result.launchSingleProjectile == 1, "Launcher C009: collapsed double uses single-launch cell randomization");
+    CHECK(result.launches[0].associatedThing == arrow, "Launcher C009: uses first F0167 object");
+    CHECK(result.launches[0].mapX == 8 && result.launches[0].mapY == 10,
+          "Launcher C009: south-facing launcher moves to y+1");
+    CHECK(result.launches[0].cell == 1, "Launcher C009: collapsed single cell includes random bit");
+    CHECK(result.unlinkCount == 0, "Launcher C009: generated objects are not square unlinks");
+
+    sensor.sensorType = DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ;
+    sensor.onceOnly = 1;
+    ctx.newObjectThings[0] = THING_NONE;
+    memset(&result, 0, sizeof(result));
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 2, 8, 9, 2, &ctx, &result);
+    CHECK(result.triggered == 1, "Launcher C007: event still matches with no generated object");
+    CHECK(result.sensorDisabled == 1, "Launcher C007: once-only disables even when F0247 returns early");
+    CHECK(result.launchCount == 0, "Launcher C007: no generated object means no projectile create");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0730: wall projectile launcher C014/C015 square objects
+ *  Source: TIMELINE.C F0247 lines 1079-1103.
+ * ---------------------------------------------------------------- */
+static void test_wall_projectile_launcher_square_objects(void) {
+    struct DungeonSensor_Compat sensor;
+    struct ProjectileLauncherContext_Compat ctx;
+    struct ProjectileLauncherSquareThing_Compat things[4];
+    struct ProjectileLauncherResult_Compat result;
+    unsigned short ignoredSensor = make_thing(THING_TYPE_SENSOR, 1, 3);
+    unsigned short firstObj = make_thing(THING_TYPE_WEAPON, 4, 0);
+    unsigned short ignoredObj = make_thing(THING_TYPE_ARMOUR, 5, 2);
+    unsigned short secondObj = make_thing(THING_TYPE_JUNK, 6, 3);
+
+    things[0].thing = ignoredSensor; things[0].cell = 3; things[0].thingType = THING_TYPE_SENSOR;
+    things[1].thing = firstObj; things[1].cell = 0; things[1].thingType = THING_TYPE_WEAPON;
+    things[2].thing = ignoredObj; things[2].cell = 2; things[2].thingType = THING_TYPE_ARMOUR;
+    things[3].thing = secondObj; things[3].cell = 3; things[3].thingType = THING_TYPE_JUNK;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ,
+                         0, DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                         0, 0, 0, 0);
+    sensor.localMultiple = (unsigned short)((6 << 8) | 44);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.squareThings = things;
+    ctx.squareThingCount = 4;
+
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 3, 12, 6, 3, &ctx, &result);
+
+    CHECK(result.launchCount == 2, "Launcher C015: two matching square objects create two projectiles");
+    CHECK(result.unlinkCount == 2, "Launcher C015: selected square objects are unlinked");
+    CHECK(result.unlinkThings[0] == firstObj && result.unlinkThings[1] == secondObj,
+          "Launcher C015: square object selection follows thing-list order and cell filter");
+    CHECK(result.launches[0].mapX == 11 && result.launches[0].mapY == 6,
+          "Launcher C015: west-facing launcher moves to x-1");
+    CHECK(result.launches[0].cell == 1 && result.launches[1].cell == 2,
+          "Launcher C015: double square-object cells are opposite and next");
+
+    sensor.sensorType = DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ;
+    ctx.randomBit = 1;
+    memset(&result, 0, sizeof(result));
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 3, 12, 6, 3, &ctx, &result);
+    CHECK(result.launchCount == 1, "Launcher C014: single square-object launcher creates one projectile");
+    CHECK(result.unlinkCount == 1 && result.unlinkThings[0] == firstObj,
+          "Launcher C014: single square-object launcher unlinks one object");
+    CHECK(result.launches[0].cell == 2, "Launcher C014: single square-object cell includes random bit");
+
+    memset(&result, 0, sizeof(result));
+    F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+        &sensor, 0, 12, 6, 3, &ctx, &result);
+    CHECK(result.triggered == 0, "Launcher C014: sensor cell must match wall event cell");
+}
+
 /* ----------------------------------------------------------------
  *  Test F0724: Effect dispatch resolution
  *  Source: F0272_SENSOR_TriggerEffect (MOVESENS.C line ~1154)
@@ -1049,6 +1221,10 @@ int main(void) {
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();
     test_wall_countdown_event();
+    test_wall_projectile_launcher_single_explosion();
+    test_wall_projectile_launcher_double_explosion();
+    test_wall_projectile_launcher_new_objects();
+    test_wall_projectile_launcher_square_objects();
     test_effect_dispatch();
     test_wall_and_or_gate_event();
     test_process_floor_square();
