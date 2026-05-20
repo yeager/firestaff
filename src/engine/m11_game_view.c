@@ -23,6 +23,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "inventory_item_identification_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -19634,6 +19635,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         char itemName[48];
         int itemType = THING_GET_TYPE(thing);
         int itemIcon = m11_object_icon_index_for_thing(state, state->world.things, thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        const struct DungeonPotion_Compat* potion = NULL;
         const char* typeName = "OBJECT";
 
         m11_get_item_name(state->world.things, thing, itemName, sizeof(itemName));
@@ -19647,6 +19650,31 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         case 10: typeName = "JUNK"; break;
         case 15: typeName = "MISC"; break;
         default: typeName = "OBJECT"; break;
+        }
+
+        if (itemType == THING_TYPE_POTION &&
+            state->world.things && state->world.things->potions &&
+            thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
+            char eyePanelName[64];
+            potion = &state->world.things->potions[thingIndex];
+
+            /* ReDMCSB DUNGEON.C:83-103 maps potion type 20 through object
+             * info index 22 to icon C195 Empty Flask; PANEL.C:1182-1191
+             * then treats it like every non-water potion for the priest-skill
+             * power-prefix quirk. */
+            if (itemIcon == 195) {
+                snprintf(itemName, sizeof(itemName), "EMPTY FLASK");
+            } else if (itemIcon == 163) {
+                snprintf(itemName, sizeof(itemName), "WATER FLASK");
+            }
+
+            if (INVENTORY_Compat_FormatPotionEyeDescription(
+                    (unsigned int)itemType, (unsigned int)itemIcon,
+                    (unsigned int)potion->power,
+                    (unsigned int)champ->skillLevels[CHAMPION_SKILL_PRIEST],
+                    itemName, eyePanelName, sizeof(eyePanelName), NULL)) {
+                snprintf(itemName, sizeof(itemName), "%s", eyePanelName);
+            }
         }
 
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
@@ -19674,10 +19702,9 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
                      itemIcon, (itemIcon % 10) + 1);
         } else if (itemType == 8) { /* Potion */
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "POTION  ICON %d  %s",
+                     "POTION  ICON %d  PANEL %s",
                      itemIcon,
-                     (itemIcon == 195) ? "EMPTY FLASK" :
-                     (itemIcon == 163) ? "WATER" : "MAGICAL");
+                     itemName);
         } else {
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                      "%s  ICON %d", typeName, itemIcon);

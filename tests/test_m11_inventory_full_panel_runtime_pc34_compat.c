@@ -236,6 +236,59 @@ static void test_eye_panel_weapon_attribute_flags(void) {
                 "weapon eye panel reports source charge count");
 }
 
+static void test_eye_panel_potion_power_prefix_runtime(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonPotion_Compat potions[3];
+    unsigned short rosPotionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
+    unsigned short waterFlaskThing = (unsigned short)((THING_TYPE_POTION << 10) | 1);
+    unsigned short emptyFlaskThing = (unsigned short)((THING_TYPE_POTION << 10) | 2);
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(potions, 0, sizeof(potions));
+    things.potions = potions;
+    things.potionCount = 3;
+    potions[0].type = 6;   /* ROS POTION: DUNGEON.C object-info index 8, icon C154. */
+    potions[0].power = 80; /* PANEL.C:1184 => '_' + 2 == 'a'. */
+    potions[1].type = 15;  /* WATER FLASK: DUNGEON.C object-info index 17, icon C163. */
+    potions[1].power = 120;
+    potions[2].type = 20;  /* EMPTY FLASK: DUNGEON.C object-info index 22, icon C195. */
+    potions[2].power = 0;
+
+    state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 2;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, rosPotionThing), 1,
+              "leader hand accepts source ROS potion thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click opens source ROS potion description");
+    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: a ROS POTION") != NULL,
+                "priest skill > 1 prefixes non-water potion name in eye panel");
+    ASSERT_TRUE(strstr(state.inspectDetail, "PANEL a ROS POTION") != NULL,
+                "runtime potion detail carries source PANEL.C description text");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss ROS potion eye-panel overlay");
+
+    state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 4;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, waterFlaskThing), 1,
+              "leader hand accepts source water flask thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click opens source water flask description");
+    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: WATER FLASK") != NULL,
+                "water flask is excluded from the priest-skill power prefix");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss water flask eye-panel overlay");
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, emptyFlaskThing), 1,
+              "leader hand accepts source empty flask thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click opens source empty flask description");
+    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: _ EMPTY FLASK") != NULL,
+                "empty flask keeps the original non-water potion prefix quirk");
+}
+
 static void test_eye_panel_champion_stats_and_skills(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -288,6 +341,7 @@ int main(void) {
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_open_chest_runtime_routes_and_clicks();
+    test_eye_panel_potion_power_prefix_runtime();
     test_eye_panel_weapon_attribute_flags();
     test_eye_panel_champion_stats_and_skills();
 
