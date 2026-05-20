@@ -157,6 +157,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_save_load_system_pc34_compat.c
     src/dm1/dm1_v1_blit_fill_pc34_compat.c
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
+    src/dm1/dm1_v1_text_message_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
     src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
@@ -1995,6 +1996,20 @@ if(NOT TARGET test_memory_dungeon_text_scroll_pc34_compat)
     add_test(
         NAME memory_dungeon_text_scroll_source_lock
         COMMAND test_memory_dungeon_text_scroll_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_m11_inventory_scroll_panel_render_pc34_compat)
+    add_executable(test_m11_inventory_scroll_panel_render_pc34_compat
+        tests/test_m11_inventory_scroll_panel_render_pc34_compat.c
+    )
+    target_link_libraries(test_m11_inventory_scroll_panel_render_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_inventory_scroll_panel_render_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_inventory_scroll_panel_render_source_lock
+        COMMAND test_m11_inventory_scroll_panel_render_pc34_compat
     )
 endif()
 

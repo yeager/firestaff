@@ -19,6 +19,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
+#include "dm1_v1_text_message_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -9917,6 +9918,11 @@ enum {
      * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
     M11_GFX_PANEL_EMPTY = 20,
 
+    /* Open scroll panel (graphic 23 in original CSB/DM).
+     * Blitted into C101_ZONE_PANEL by PANEL.C F0341 before the decoded
+     * TextString lines are rendered in the scroll font. */
+    M11_GFX_PANEL_OPEN_SCROLL = 23,
+
     /* Resurrect/Reincarnate/Cancel panel (graphic 40 in original DM1).
      * Drawn into C101_ZONE_PANEL when G0299 candidate is open. */
     M11_GFX_PANEL_RESURRECT_REINCARNATE = 40,
@@ -15269,6 +15275,45 @@ static unsigned short m11_get_action_hand_thing(
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_DecodeV1InventoryActionHandScrollText(
+    const M11_GameViewState* state,
+    char* out,
+    int outSize) {
+    const struct ChampionState_Compat* champ;
+    unsigned short thing;
+    int scrollIndex;
+
+    if (out && outSize > 0) out[0] = '\0';
+    if (!state || !out || outSize < 2 || !state->world.things ||
+        !state->world.things->scrolls) {
+        return 0;
+    }
+    if (state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        state->world.party.activeChampionIndex >= state->world.party.championCount) {
+        return 0;
+    }
+
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (!champ->present) return 0;
+
+    thing = m11_get_action_hand_thing(champ);
+    if (thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_SCROLL) {
+        return 0;
+    }
+
+    scrollIndex = (int)THING_GET_INDEX(thing);
+    if (F0509_DUNGEON_DecodeScrollText_Compat(state->world.things,
+                                              scrollIndex,
+                                              out,
+                                              outSize) < 0) {
+        out[0] = '\0';
+        return 0;
+    }
+    return out[0] != '\0';
+}
+
 /* Source-backed ActionSetIndex lookups extracted from
  * G0237_as_Graphic559_ObjectInfo (ReDMCSB DUNGLOB.C, 180 entries).
  *
@@ -18208,6 +18253,10 @@ int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
 
 int M11_GameView_GetV1InventoryPanelGraphicId(void) {
     return M11_GFX_PANEL_EMPTY;
+}
+
+int M11_GameView_GetV1OpenScrollPanelGraphicId(void) {
+    return M11_GFX_PANEL_OPEN_SCROLL;
 }
 
 int M11_GameView_GetV1InventoryBackdropGraphicId(void) {
@@ -21701,6 +21750,109 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int centerX,
+                                         int y,
+                                         const char* line) {
+    unsigned char encoded[DM1_V1_MESSAGE_MAX_LENGTH];
+    M11_TextStyle fallbackStyle = g_text_small;
+
+    if (!line) return;
+    fallbackStyle.color = M11_COLOR_BLACK;
+    fallbackStyle.shadowColor = M11_COLOR_WHITE;
+    fallbackStyle.shadowDx = 0;
+    fallbackStyle.shadowDy = 0;
+
+    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
+        int width;
+        dm1_v1_text_scroll_encode_line(line, encoded, sizeof(encoded));
+        width = M11_Font_MeasureString((const char*)encoded);
+        M11_Font_DrawString(g_activeOriginalFont,
+                            framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            centerX - (width / 2),
+                            y,
+                            (const char*)encoded,
+                            M11_COLOR_BLACK,
+                            -1,
+                            1);
+    } else {
+        m11_draw_text_centered_in_rect(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       centerX - 72,
+                                       y,
+                                       144,
+                                       line,
+                                       &fallbackStyle);
+    }
+}
+
+static int m11_draw_v1_inventory_action_hand_scroll_panel(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
+    char decoded[DM1_V1_SCROLL_TEXT_MAX_LENGTH];
+    DM1_V1_ScrollLayout layout;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int centerX;
+    int drewPanel = 0;
+    int i;
+
+    if (!M11_GameView_DecodeV1InventoryActionHandScrollText(
+            state, decoded, sizeof(decoded))) {
+        return 0;
+    }
+    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0347 chooses the action-hand scroll as panel
+     * content, F0342 dispatches it to F0341, and F0341 blits graphic C023
+     * into C101_ZONE_PANEL before printing decoded TextString lines. */
+    if (state && state->assetsAvailable) {
+        const M11_AssetSlot* scrollPanel = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1OpenScrollPanelGraphicId());
+        if (scrollPanel && (int)scrollPanel->width == panelW &&
+            (int)scrollPanel->height == panelH) {
+            M11_AssetLoader_Blit(scrollPanel,
+                                 framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 M11_VIEWPORT_X + panelX,
+                                 M11_VIEWPORT_Y + panelY,
+                                 8);
+            drewPanel = 1;
+        }
+    }
+    if (!drewPanel) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_LIGHT_GRAY);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_BROWN);
+    }
+
+    dm1_v1_text_scroll_measure_layout(decoded, &layout);
+    centerX = M11_VIEWPORT_X + panelX + (panelW / 2);
+    for (i = 0; i < layout.storedLineCount; ++i) {
+        m11_draw_v1_scroll_text_line(framebuffer,
+                                     framebufferWidth,
+                                     framebufferHeight,
+                                     centerX,
+                                     M11_VIEWPORT_Y + layout.firstLineY +
+                                         i * DM1_V1_TEXT_LINE_HEIGHT,
+                                     layout.lines[i]);
+    }
+    return 1;
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -21873,6 +22025,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
             }
         }
+        (void)m11_draw_v1_inventory_action_hand_scroll_panel(
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
 

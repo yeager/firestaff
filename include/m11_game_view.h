@@ -942,6 +942,10 @@ int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state);
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
                                            char* out,
                                            int outSize);
+int M11_GameView_DecodeV1InventoryActionHandScrollText(
+    const M11_GameViewState* state,
+    char* out,
+    int outSize);
 int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state);
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state);
 unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state);
@@ -1000,6 +1004,7 @@ int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
                                               int championSlot);
 int M11_GameView_GetV1ChampionIconInvisibilityRemap(int paletteIndex);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
+int M11_GameView_GetV1OpenScrollPanelGraphicId(void);
 int M11_GameView_GetV1InventoryPanelZoneId(void);
 int M11_GameView_GetV1InventoryBackdropGraphicId(void);
 int M11_GameView_GetV1InventoryBackdropZone(int* outX,
