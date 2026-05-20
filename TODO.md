@@ -149,7 +149,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ End game sensor (C018)
 - ❌ Floor party-on-stairs sensor (C005)
 - ✅ Floor possession sensor (C008 — party has specific item)
-- ❌ Floor creature sensor (C007)
+- ✅ Floor creature sensor (C007)
 
 ### Entrance & Title
 - ✅ Entrance screen (Enter/Resume/Quit) — always shows for DM1 (v2.3.1)
