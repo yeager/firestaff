@@ -41,6 +41,7 @@
  *   Champion icon: 19x14. Slot box: 18x18.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -120,10 +121,21 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_VIEWPORT_W 224
 #define DM1_VIEWPORT_H 136
 
+/* Inventory champion HP/stamina/mana value zones */
+#define DM1_ZONE_HEALTH_VALUE  550
+#define DM1_ZONE_MANA_VALUE    551
+#define DM1_ZONE_STAMINA_VALUE 552
+
 /* ── Slot box index ranges — DEFS.H ── */
 #define DM1_SLOTBOX_FIRST_STATUS    0
 #define DM1_SLOTBOX_FIRST_INVENTORY 8
 #define DM1_SLOTBOX_FIRST_CHEST    38
+
+enum {
+    DM1_STATUS_VALUE_HEALTH = 0,
+    DM1_STATUS_VALUE_STAMINA,
+    DM1_STATUS_VALUE_MANA
+};
 
 /* ── Source-locked bar height — CHAMDRAW.C F0287 ── */
 int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
@@ -141,6 +153,14 @@ int DM1_ChampionPanel_NameZoneX(int champIdx);
 /* ── Bar graph screen XY — layout-696 C195..C206 ── */
 void DM1_ChampionPanel_BarGraphScreenXY(int champIdx, int statIndex,
                                          int *outX, int *outY);
+
+/* Inventory HP/stamina/mana numeric value format - CHAMDRAW.C F0289/F0290 */
+int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
+                                        int currentHealth, int maximumHealth,
+                                        int currentStamina, int maximumStamina,
+                                        int currentMana, int maximumMana,
+                                        char *out, size_t outSize);
+int DM1_ChampionPanel_StatusValueZone(int valueIndex);
 
 /* ── Inventory slot XY (viewport-relative) ── */
 int DM1_ChampionPanel_InventorySlotXY(int slotBoxIndex,

@@ -10,6 +10,7 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void)
 {
@@ -97,6 +98,44 @@ int main(void)
         if (!DM1_ChampionPanel_InventorySlotXY(9, &sx, &sy) ||
             sx != 24 || sy != 10) {
             fprintf(stderr, "FAIL: inv slot 9 (ActionHand) XY\n");
+            failures++;
+        }
+    }
+
+    /* CHAMDRAW.C F0289/F0290 inventory champion numeric values */
+    if (DM1_ZONE_HEALTH_VALUE != 550 ||
+        DM1_ZONE_MANA_VALUE != 551 ||
+        DM1_ZONE_STAMINA_VALUE != 552) {
+        fprintf(stderr, "FAIL: HP/stamina/mana value zone IDs\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_StatusValueZone(DM1_STATUS_VALUE_HEALTH) !=
+        DM1_ZONE_HEALTH_VALUE ||
+        DM1_ChampionPanel_StatusValueZone(DM1_STATUS_VALUE_STAMINA) !=
+        DM1_ZONE_MANA_VALUE ||
+        DM1_ChampionPanel_StatusValueZone(DM1_STATUS_VALUE_MANA) !=
+        DM1_ZONE_STAMINA_VALUE) {
+        fprintf(stderr, "FAIL: F0290 value-zone routing\n");
+        failures++;
+    }
+    {
+        char value[8];
+        if (!DM1_ChampionPanel_FormatStatusValue(
+                DM1_STATUS_VALUE_HEALTH, 77, 100, 666, 999, 12, 33,
+                value, sizeof(value)) || strcmp(value, " 77/100") != 0) {
+            fprintf(stderr, "FAIL: F0289 health value format got %s\n", value);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatStatusValue(
+                DM1_STATUS_VALUE_STAMINA, 77, 100, 666, 999, 12, 33,
+                value, sizeof(value)) || strcmp(value, " 66/ 99") != 0) {
+            fprintf(stderr, "FAIL: F0290 stamina /10 format got %s\n", value);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatStatusValue(
+                DM1_STATUS_VALUE_MANA, 77, 100, 666, 999, 12, 33,
+                value, sizeof(value)) || strcmp(value, " 12/ 33") != 0) {
+            fprintf(stderr, "FAIL: F0290 mana value format got %s\n", value);
             failures++;
         }
     }

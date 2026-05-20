@@ -124,6 +124,60 @@ void DM1_ChampionPanel_BarGraphScreenXY(int champIdx, int statIndex,
     if (outY) *outY = 2; /* All bars start at y=2 */
 }
 
+/* =====================================================================
+ * Inventory champion HP/stamina/mana values - CHAMDRAW.C F0289/F0290.
+ * PC34 draws seven-character "nnn/nnn" strings. Stamina is divided by
+ * 10 before formatting, and the original PC34 source routes that stamina
+ * text to C551_ZONE_MANA_VALUE, then mana text to C552_ZONE_STAMINA_VALUE.
+ * ===================================================================== */
+int DM1_ChampionPanel_StatusValueZone(int valueIndex)
+{
+    switch (valueIndex) {
+    case DM1_STATUS_VALUE_HEALTH:
+        return DM1_ZONE_HEALTH_VALUE;
+    case DM1_STATUS_VALUE_STAMINA:
+        return DM1_ZONE_MANA_VALUE;
+    case DM1_STATUS_VALUE_MANA:
+        return DM1_ZONE_STAMINA_VALUE;
+    default:
+        return -1;
+    }
+}
+
+int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
+                                        int currentHealth, int maximumHealth,
+                                        int currentStamina, int maximumStamina,
+                                        int currentMana, int maximumMana,
+                                        char *out, size_t outSize)
+{
+    int current;
+    int maximum;
+    int written;
+
+    if (!out || outSize == 0) return 0;
+
+    switch (valueIndex) {
+    case DM1_STATUS_VALUE_HEALTH:
+        current = currentHealth;
+        maximum = maximumHealth;
+        break;
+    case DM1_STATUS_VALUE_STAMINA:
+        current = currentStamina / 10;
+        maximum = maximumStamina / 10;
+        break;
+    case DM1_STATUS_VALUE_MANA:
+        current = currentMana;
+        maximum = maximumMana;
+        break;
+    default:
+        out[0] = 0;
+        return 0;
+    }
+
+    written = snprintf(out, outSize, "%3d/%3d", current, maximum);
+    return written >= 0 && (size_t)written < outSize;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Inventory slot XY (viewport-relative) — layout-696 C507..C536
  *
