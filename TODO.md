@@ -73,7 +73,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature damage to champions (F0230)
 - ✅ Parry skill XP
 - ✅ Combat result logging
-- ❌ Ranged weapon actions (SHOOT with bow/crossbow)
+- 🔧 Ranged weapon actions (SHOOT with bow/crossbow) — bow/crossbow parameter path source-locked; full runtime projectile wiring remains pending
 - ❌ Shield defense bonus in combat
 - ❌ Weapon breakage
 - ❌ Poison damage over time (creature PoisonAttack → F0322)
@@ -118,7 +118,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Equip/unequip items to body slots
 - ❌ Backpack/chest container management
 - ❌ Item identification (scroll reading, potion identification)
-- ❌ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL)
+- 🔧 Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path source-locked; inventory panel rendering remains pending
 - ❌ Potion consumption effects
 - ❌ Food/water item consumption (click to eat/drink)
 - ❌ Fountain interaction (fill flask with water)
@@ -216,7 +216,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Touch Support
 - 🔧 Touch controls config option exists
-- 🔧 Entrance/menu click zones are source-locked from ReDMCSB for touch routing; runtime touch dispatch remains pending
+- ✅ Entrance/menu click zones and runtime touch dispatch are source-locked from ReDMCSB
 - ❌ Touch input zones for movement/turning
 - ❌ Touch-based item interaction
 - ❌ Gesture navigation (swipe to turn, tap to move)
