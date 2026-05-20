@@ -30,7 +30,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_champion_stats_pc34_compat\n");
-    printf("sourceEvidence=CHAMPION.C:1078-1104,1157-1215,2025-2048; MOVESENS.C:590-598; DUNGEON.C:1082-1134\n");
+    printf("sourceEvidence=CHAMPION.C:1078-1104,1157-1215,2025-2048; CHAMDRAW.C:958-1006; MOVESENS.C:590-598; DUNGEON.C:1082-1134\n");
 
     ok &= expect_int("F0306 above half keeps value",
         dm1_stats_stamina_adjusted_value_pc34(60, 100, 500), 500);
@@ -87,6 +87,35 @@ int main(void)
     champion.load = 200;
     ok &= expect_int("MOVESENS rope stamina cost uses load/max load ratio",
         m11_stats_movement_stamina_cost_pc34(&champion), 11);
+
+    champion = make_champion();
+    champion.load = 312;
+    ok &= expect_int("CHAMDRAW F0292 load at five-eighths threshold stays gray",
+        m11_stats_load_color_pc34(&champion), DM1_LOAD_COLOR_LIGHTEST_GRAY);
+
+    champion.load = 313;
+    ok &= expect_int("CHAMDRAW F0292 load above five-eighths max is yellow",
+        m11_stats_load_color_pc34(&champion), DM1_LOAD_COLOR_YELLOW);
+
+    champion.load = 500;
+    ok &= expect_int("CHAMDRAW F0292 load exactly at max remains yellow",
+        m11_stats_load_color_pc34(&champion), DM1_LOAD_COLOR_YELLOW);
+
+    champion.load = 501;
+    ok &= expect_int("CHAMDRAW F0292 load above max is red",
+        m11_stats_load_color_pc34(&champion), DM1_LOAD_COLOR_RED);
+
+    champion = make_champion();
+    champion.load = 200;
+    {
+        char loadString[16];
+        if (!m11_stats_format_load_pc34(&champion, loadString, sizeof(loadString)) ||
+            strcmp(loadString, " 20.0/ 50 KG") != 0) {
+            fprintf(stderr, "FAIL CHAMDRAW F0292 load string got='%s' want=' 20.0/ 50 KG'\n",
+                    loadString);
+            ok = 0;
+        }
+    }
 
     return ok ? 0 : 1;
 }

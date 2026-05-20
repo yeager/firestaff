@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM1_V1_CHAMPION_STATS_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_CHAMPION_STATS_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -37,6 +38,12 @@ enum {
 enum {
     DM1_ICON_ARMOUR_ELVEN_BOOTS = 119,
     DM1_ICON_ARMOUR_BOOT_OF_SPEED = 194
+};
+
+enum {
+    DM1_LOAD_COLOR_RED = 8,
+    DM1_LOAD_COLOR_YELLOW = 11,
+    DM1_LOAD_COLOR_LIGHTEST_GRAY = 13
 };
 
 typedef struct {
@@ -82,6 +89,10 @@ int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
 int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion);
 int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion);
 int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion);
+int m11_stats_load_color_pc34(const M11_ChampionStats* champion);
+int m11_stats_format_load_pc34(const M11_ChampionStats* champion,
+                               char* out,
+                               size_t outSize);
 
 #ifdef __cplusplus
 }

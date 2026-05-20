@@ -1,4 +1,5 @@
 #include "dm1_v1_champion_stats_pc34_compat.h"
+#include <stdio.h>
 #include <string.h>
 
 static const char* stat_names[] = {
@@ -272,6 +273,42 @@ int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion) {
     maximumLoad = m11_stats_maximum_load_pc34(champion);
     if (maximumLoad <= 0) return 0;
     return ((champion->load * 25) / maximumLoad) + 1;
+}
+
+int m11_stats_load_color_pc34(const M11_ChampionStats* champion) {
+    int maximumLoad;
+
+    if (!champion) return DM1_LOAD_COLOR_LIGHTEST_GRAY;
+
+    /* ReDMCSB CHAMDRAW.C:958-966 / F0292. The displayed load turns
+       red only above maximum load; exactly-at-maximum remains yellow. */
+    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    if (champion->load > maximumLoad) {
+        return DM1_LOAD_COLOR_RED;
+    }
+    if (((long)champion->load << 3) > ((long)maximumLoad * 5)) {
+        return DM1_LOAD_COLOR_YELLOW;
+    }
+    return DM1_LOAD_COLOR_LIGHTEST_GRAY;
+}
+
+int m11_stats_format_load_pc34(const M11_ChampionStats* champion,
+                               char* out,
+                               size_t outSize) {
+    int currentWhole;
+    int currentTenths;
+    int maximumWhole;
+
+    if (!champion || !out || outSize == 0) return 0;
+
+    /* ReDMCSB CHAMDRAW.C:986-1006 / F0292 formats tenths-of-kilogram
+       load as current integer, decimal digit, '/', rounded max, and KG. */
+    currentWhole = champion->load / 10;
+    currentTenths = champion->load - (currentWhole * 10);
+    maximumWhole = (m11_stats_maximum_load_pc34(champion) + 5) / 10;
+    snprintf(out, outSize, "%3d.%d/%3d KG",
+             currentWhole, currentTenths, maximumWhole);
+    return 1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
