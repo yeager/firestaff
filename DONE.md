@@ -22,7 +22,8 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Pit fall + level change + fall damage (20 HP/pit)
 - ✅ Teleporter chains (up to 1000 iterations)
 - ✅ Stair transitions (up/down, correct direction per F0155)
-- ✅ Dead creature groups don't block (v2.3.0)
+- ✅ Dead creature groups don.t block (v2.3.0)
+- ✅ Empty-party group collision F0267 destination cleanup is source-locked: empty-party movement can enter a group square, then the post-move destination group is deleted and enter sensors are replayed in source order (ab5e892e)
 
 ### Viewport Rendering
 
