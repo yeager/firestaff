@@ -60,6 +60,22 @@ enum {
     DM1_OUTCOME_KILLED_ALL  = 2
 };
 
+/* -- Weapon classes / SHOOT action constants (DEFS.H / MENU.C) ------- */
+enum {
+    DM1_WEAPON_CLASS_BOW_AMMUNITION = 10,
+    DM1_WEAPON_CLASS_SLING_AMMUNITION = 11,
+    DM1_WEAPON_CLASS_FIRST_BOW = 16,
+    DM1_WEAPON_CLASS_LAST_BOW = 31,
+    DM1_WEAPON_CLASS_FIRST_SLING = 32,
+    DM1_WEAPON_CLASS_LAST_SLING = 47,
+    DM1_WEAPON_CLASS_FIRST_MAGIC_WEAPON = 112,
+    DM1_ACTION_SHOOT_DISABLED_TICKS_PC34 = 14,
+    DM1_ACTION_SHOOT_STAMINA_BASE_PC34 = 3,
+    DM1_ACTION_SHOOT_SKILL_INDEX_PC34 = 11,
+    DM1_ACTION_SHOOT_EXPERIENCE_GAIN_PC34 = 20,
+    DM1_PROJECTILE_DISABLED_MOVEMENT_TICKS_PC34 = 4
+};
+
 /* ── Armor piece ──────────────────────────────────────────────────── */
 typedef struct {
     int defense;
@@ -74,6 +90,7 @@ typedef struct {
     int kineticEnergy;
     int weaponClass;
     int weight;         /* object weight for F0312 load calculation */
+    int attributes;     /* low byte is M065_SHOOT_ATTACK */
 } DM1_WeaponInfo;
 
 /* ── Creature info ────────────────────────────────────────────────── */
@@ -190,6 +207,30 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch);
 int dm1_champion_dexterity(const DM1_ChampionCombat* ch);
 int dm1_stamina_adjusted(const DM1_ChampionCombat* ch, int value);
 int dm1_stat_adjusted_attack(const DM1_ChampionCombat* ch, int statValue, int attack);
+
+/* ── Ranged SHOOT action source-lock helper ───────────────────────── */
+typedef struct {
+    int actionPerformed;
+    int noAmmunition;
+    int projectileThing;
+    int projectileCell;
+    int projectileDirection;
+    int kineticEnergy;
+    int attack;
+    int stepEnergy;
+    int actionDisabledTicks;
+    int actionStaminaBase;
+    int skillIndex;
+    int experienceGain;
+    int projectileMovementDisabledTicks;
+} DM1_RangedShootResult;
+
+int dm1_ranged_shoot_resolve_pc34(const DM1_WeaponInfo* actionHandWeapon,
+                                  const DM1_WeaponInfo* readyHandObject,
+                                  int readyHandThing, int championCell,
+                                  int championDirection, int shootSkillLevel,
+                                  DM1_RangedShootResult* out);
+const char *dm1_ranged_shoot_source_evidence_pc34(void);
 
 /* ── Damage pipelines ─────────────────────────────────────────────── */
 int dm1_champion_take_damage(DM1_CombatState* s, int champIdx, int attack,

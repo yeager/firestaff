@@ -397,6 +397,89 @@ static void test_lethal_pending(void) {
     PASS();
 }
 
+/* -- Test: bow/crossbow SHOOT projectile parameters ----------------- */
+static void test_ranged_shoot_bow_crossbow(void) {
+    TEST(ranged_shoot_bow_crossbow);
+
+    DM1_WeaponInfo bow = {0};
+    DM1_WeaponInfo crossbow = {0};
+    DM1_WeaponInfo arrow = {0};
+    DM1_WeaponInfo slayer = {0};
+    DM1_RangedShootResult out;
+
+    bow.weaponClass = 20;
+    bow.kineticEnergy = 50;
+    bow.attributes = 0x2032;
+    arrow.weaponClass = DM1_WEAPON_CLASS_BOW_AMMUNITION;
+    arrow.kineticEnergy = 10;
+
+    CHECK(dm1_ranged_shoot_resolve_pc34(&bow, &arrow, 0x1234, 0, 0, 5, &out) == 1,
+          "bow+arrow should perform SHOOT");
+    CHECK(out.actionPerformed == 1, "bow action should be performed");
+    CHECK(out.noAmmunition == 0, "bow action should not report no ammo");
+    CHECK(out.projectileThing == 0x1234, "ready-hand arrow should become projectile thing");
+    CHECK(out.projectileCell == 0, "front-left/north launch cell should match F0326 formula");
+    CHECK(out.projectileDirection == 0, "projectile direction should be champion direction");
+    CHECK(out.kineticEnergy == 60, "bow kinetic energy should add launcher and arrow");
+    CHECK(out.attack == 110, "bow attack should be (shoot-attack low byte + skill) << 1");
+    CHECK(out.stepEnergy == 4, "bow class 20 should produce step energy 4");
+    CHECK(out.actionDisabledTicks == DM1_ACTION_SHOOT_DISABLED_TICKS_PC34,
+          "SHOOT should disable action for 14 ticks");
+    CHECK(out.actionStaminaBase == DM1_ACTION_SHOOT_STAMINA_BASE_PC34,
+          "SHOOT base stamina should be 3 before random(2)");
+    CHECK(out.skillIndex == DM1_ACTION_SHOOT_SKILL_INDEX_PC34,
+          "SHOOT should award C11 skill");
+    CHECK(out.experienceGain == DM1_ACTION_SHOOT_EXPERIENCE_GAIN_PC34,
+          "SHOOT should award 20 XP on success");
+    CHECK(out.projectileMovementDisabledTicks == DM1_PROJECTILE_DISABLED_MOVEMENT_TICKS_PC34,
+          "F0326 should set projectile movement lockout to 4 ticks");
+
+    crossbow.weaponClass = 30;
+    crossbow.kineticEnergy = 180;
+    crossbow.attributes = 0x2078;
+    slayer.weaponClass = DM1_WEAPON_CLASS_BOW_AMMUNITION;
+    slayer.kineticEnergy = 28;
+
+    CHECK(dm1_ranged_shoot_resolve_pc34(&crossbow, &slayer, 0x5678, 2, 1, 7, &out) == 1,
+          "crossbow+slayer should perform SHOOT");
+    CHECK(out.projectileThing == 0x5678, "ready-hand slayer should become projectile thing");
+    CHECK(out.projectileCell == 2, "champion cell 2/east launch cell should match F0326 formula");
+    CHECK(out.projectileDirection == 1, "crossbow projectile direction should be east");
+    CHECK(out.kineticEnergy == 208, "crossbow kinetic energy should add launcher and slayer");
+    CHECK(out.attack == 254, "crossbow attack should be (120 + shoot skill 7) << 1");
+    CHECK(out.stepEnergy == 14, "crossbow class 30 should produce step energy 14");
+
+    PASS();
+}
+
+/* -- Test: SHOOT without compatible bow ammunition ------------------ */
+static void test_ranged_shoot_no_bow_ammunition(void) {
+    TEST(ranged_shoot_no_bow_ammunition);
+
+    DM1_WeaponInfo bow = {0};
+    DM1_WeaponInfo rock = {0};
+    DM1_RangedShootResult out;
+
+    bow.weaponClass = 20;
+    bow.kineticEnergy = 50;
+    bow.attributes = 0x2032;
+    rock.weaponClass = DM1_WEAPON_CLASS_SLING_AMMUNITION;
+    rock.kineticEnergy = 18;
+
+    CHECK(dm1_ranged_shoot_resolve_pc34(&bow, &rock, 0x2222, 0, 0, 5, &out) == 0,
+          "bow+rock should fail compatibility gate");
+    CHECK(out.actionPerformed == 0, "failed SHOOT should not perform action");
+    CHECK(out.noAmmunition == 1, "failed SHOOT should report no ammunition");
+    CHECK(out.projectileThing == -1, "failed SHOOT should not produce projectile thing");
+    CHECK(out.experienceGain == 0, "failed SHOOT should zero XP gain");
+    CHECK(out.actionDisabledTicks == DM1_ACTION_SHOOT_DISABLED_TICKS_PC34,
+          "failed SHOOT still uses action disabled ticks from source table");
+    CHECK(out.actionStaminaBase == DM1_ACTION_SHOOT_STAMINA_BASE_PC34,
+          "failed SHOOT still uses source base stamina before random(2)");
+
+    PASS();
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 int main(void) {
     printf("=== DM1 V1 Combat System — Source-locked CTest Gate ===\n");
@@ -419,6 +502,8 @@ int main(void) {
     test_wound_defense();
     test_dead_champion_no_damage();
     test_lethal_pending();
+    test_ranged_shoot_bow_crossbow();
+    test_ranged_shoot_no_bow_ammunition();
 
     printf("\n=== Results: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

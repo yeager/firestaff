@@ -195,6 +195,80 @@ int dm1_champion_strength(const DM1_ChampionCombat* ch) {
 }
 
 /*
+ * C032_ACTION_SHOOT bow/sling projectile launch parameter resolver.
+ * Source-locked to ReDMCSB MENU.C F0407, AMMO.C F0294,
+ * CHAMPION.C F0326, and DEFS.H weapon class/attribute macros.
+ */
+int dm1_ranged_shoot_resolve_pc34(const DM1_WeaponInfo* actionHandWeapon,
+                                  const DM1_WeaponInfo* readyHandObject,
+                                  int readyHandThing, int championCell,
+                                  int championDirection, int shootSkillLevel,
+                                  DM1_RangedShootResult* out)
+{
+    int launcherClass;
+    int ammunitionClass;
+    int stepEnergy;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->projectileThing = -1;
+    out->projectileCell = -1;
+    out->projectileDirection = ((championDirection % 4) + 4) % 4;
+    out->actionDisabledTicks = DM1_ACTION_SHOOT_DISABLED_TICKS_PC34;
+    out->actionStaminaBase = DM1_ACTION_SHOOT_STAMINA_BASE_PC34;
+    out->skillIndex = DM1_ACTION_SHOOT_SKILL_INDEX_PC34;
+
+    if (!actionHandWeapon || !readyHandObject) {
+        out->noAmmunition = 1;
+        return 0;
+    }
+
+    launcherClass = actionHandWeapon->weaponClass;
+    ammunitionClass = readyHandObject->weaponClass;
+
+    if (launcherClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
+        launcherClass <= DM1_WEAPON_CLASS_LAST_BOW) {
+        if (ammunitionClass != DM1_WEAPON_CLASS_BOW_AMMUNITION) {
+            out->noAmmunition = 1;
+            return 0;
+        }
+        stepEnergy = launcherClass - DM1_WEAPON_CLASS_FIRST_BOW;
+    } else if (launcherClass >= DM1_WEAPON_CLASS_FIRST_SLING &&
+               launcherClass <= DM1_WEAPON_CLASS_LAST_SLING) {
+        if (ammunitionClass != DM1_WEAPON_CLASS_SLING_AMMUNITION) {
+            out->noAmmunition = 1;
+            return 0;
+        }
+        stepEnergy = launcherClass - DM1_WEAPON_CLASS_FIRST_SLING;
+    } else {
+        out->noAmmunition = 1;
+        return 0;
+    }
+
+    out->actionPerformed = 1;
+    out->projectileThing = readyHandThing;
+    out->projectileDirection = ((championDirection % 4) + 4) % 4;
+    out->projectileCell = ((((championCell - out->projectileDirection + 1) & 0x0002) >> 1) +
+                           out->projectileDirection) & 0x0003;
+    out->kineticEnergy = actionHandWeapon->kineticEnergy + readyHandObject->kineticEnergy;
+    out->attack = ((actionHandWeapon->attributes & 0x00FF) + shootSkillLevel) << 1;
+    out->stepEnergy = stepEnergy;
+    out->experienceGain = DM1_ACTION_SHOOT_EXPERIENCE_GAIN_PC34;
+    out->projectileMovementDisabledTicks = DM1_PROJECTILE_DISABLED_MOVEMENT_TICKS_PC34;
+    return 1;
+}
+
+const char *dm1_ranged_shoot_source_evidence_pc34(void)
+{
+    return
+        "AMMO.C:34-80 F0294_CHAMPION_IsAmmunitionCompatibleWithWeapon bow/sling ammunition class gate\n"
+        "MENU.C:1363-1395 F0407 C032_ACTION_SHOOT compatibility, ammo removal, kinetic/attack/step formulas\n"
+        "MENU.C:1620-1628 F0407 action disable, stamina, skill XP tail\n"
+        "CHAMPION.C:2051-2070 F0326_CHAMPION_ShootProjectile launch cell/direction and projectile movement lockout\n"
+        "DEFS.H:1720-1734 weapon class constants and M065_SHOOT_ATTACK low-byte attribute macro\n";
+}
+
+/*
  * G0050_auc_Graphic562_WoundDefenseFactor — per-wound defense weight.
  * ReDMCSB uses these factors in F0313.
  */
