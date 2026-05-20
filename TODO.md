@@ -119,8 +119,8 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Backpack/chest container management — PC34 backpack/chest slot namespace, chest open/close visible-slot compaction, and leader-hand/chest slot swap helpers source-locked; runtime panel wiring remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display is source-locked for priest skill > 1, including the original empty-flask quirk; broader item identification and runtime panel wiring remain pending
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
-- ❌ Potion consumption effects
-- ❌ Food/water item consumption (click to eat/drink)
+- 🔧 Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects and empty-flask conversion are source-locked and wired through M11 mouth-click; exact VI wound RNG masks, swallow audio routing, and mouth animation remain pending
+- 🔧 Food/water item consumption (click to eat/drink) — food amounts, water/waterskin charges, caps, and leader-hand removal are source-locked and wired through M11 mouth-click; swallow audio routing and mouth animation remain pending
 - ❌ Fountain interaction (fill flask with water)
 - ❌ Key usage (use key on locked door)
 
