@@ -1101,6 +1101,64 @@ static int orch_square_has_group_or_party_compat(
     return 0;
 }
 
+static int orch_is_lord_chaos_allowed_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int squareType;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->maps || !dungeon->tiles) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return 0;
+    if (!dungeon->tiles[mapIndex].squareData) return 0;
+
+    /* ReDMCSB GROUP.C:F0223:162-170 allows Lord Chaos on raw square
+     * types corridor, teleporter, pit, and door during event60/61 retry. */
+    squareByte = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    return squareType == DUNGEON_ELEMENT_CORRIDOR ||
+           squareType == DUNGEON_ELEMENT_TELEPORTER ||
+           squareType == DUNGEON_ELEMENT_PIT ||
+           squareType == DUNGEON_ELEMENT_DOOR;
+}
+
+static int orch_try_lord_chaos_random_adjacent_retry_compat(
+    struct GameWorld_Compat* world,
+    const struct DungeonGroup_Compat* group,
+    const struct TimelineEvent_Compat* ev,
+    int* outMapX,
+    int* outMapY)
+{
+    int candidateX;
+    int candidateY;
+
+    if (!world || !group || !ev || !outMapX || !outMapY) return 0;
+    if (group->creatureType != 23) return 0; /* C23_CREATURE_LORD_CHAOS */
+    if (F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4) != 0) return 0;
+
+    candidateX = ev->mapX;
+    candidateY = ev->mapY;
+    switch (F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4)) {
+        case 0: candidateX--; break;
+        case 1: candidateX++; break;
+        case 2: candidateY--; break;
+        case 3: candidateY++; break;
+    }
+    if (!orch_is_lord_chaos_allowed_square_compat(
+            world->dungeon, ev->mapIndex, candidateX, candidateY)) {
+        return 0;
+    }
+
+    *outMapX = candidateX;
+    *outMapY = candidateY;
+    return 1;
+}
+
 static int orch_add_generated_group_active_state_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
@@ -1290,16 +1348,35 @@ static int orch_handle_deferred_group_move_event_compat(
     struct TickResult_Compat* result)
 {
     int groupIndex;
+    int targetMapX;
+    int targetMapY;
+    struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat retry;
 
     if (!world || !ev || !result || !world->things) return 0;
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    group = &world->things->groups[groupIndex];
+    targetMapX = ev->mapX;
+    targetMapY = ev->mapY;
 
-    /* ReDMCSB TIMELINE.C:F0252:1527-1535 inserts the deferred group
-     * only when the destination is clear; lines 1565-1567 retry the same
-     * event five ticks later while the party or another group blocks it. */
-    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
+    /* ReDMCSB TIMELINE.C:F0252:1527-1567 inserts the deferred group
+     * only when the destination is clear.  If C23 Lord Chaos is blocked,
+     * lines 1536-1555 give one 1/4-chance random adjacent insertion
+     * attempt before the lines 1565-1567 retry at +5 ticks. */
+    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, targetMapX, targetMapY)) {
+        if (orch_try_lord_chaos_random_adjacent_retry_compat(
+                world, group, ev, &targetMapX, &targetMapY) &&
+            !orch_square_has_group_or_party_compat(
+                world, ev->mapIndex, targetMapX, targetMapY)) {
+            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     targetMapX, targetMapY, ev->mapIndex);
+            }
+            return orch_link_existing_group_to_square_compat(
+                world, groupIndex, ev->mapIndex, targetMapX, targetMapY);
+        }
+
         retry = *ev;
         retry.fireAtTick = ev->fireAtTick + 5u;
         return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
@@ -1307,10 +1384,10 @@ static int orch_handle_deferred_group_move_event_compat(
 
     if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
         emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-             ev->mapX, ev->mapY, ev->mapIndex);
+             targetMapX, targetMapY, ev->mapIndex);
     }
     return orch_link_existing_group_to_square_compat(
-        world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY);
+        world, groupIndex, ev->mapIndex, targetMapX, targetMapY);
 }
 
 static int orch_handle_group_generator_trigger_runtime_compat(

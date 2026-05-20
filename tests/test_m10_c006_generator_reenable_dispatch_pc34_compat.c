@@ -38,16 +38,18 @@ static int build_world(struct GameWorld_Compat* world) {
         dungeon->tiles[0].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     }
     dungeon->tiles[0].squareData[(1 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    dungeon->tiles[0].squareData[(2 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
 
     things->loaded = 1;
-    things->squareFirstThingCount = 1;
-    things->squareFirstThings = (unsigned short*)calloc(1, sizeof(unsigned short));
+    things->squareFirstThingCount = 2;
+    things->squareFirstThings = (unsigned short*)calloc(2, sizeof(unsigned short));
     things->sensorCount = 3;
     things->thingCounts[THING_TYPE_SENSOR] = 3;
     things->sensors = (struct DungeonSensor_Compat*)calloc(3, sizeof(*things->sensors));
     if (!things->squareFirstThings || !things->sensors) goto fail;
 
     things->squareFirstThings[0] = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    things->squareFirstThings[1] = THING_ENDOFLIST;
     things->sensors[0].sensorType = 3;
     things->sensors[0].next = (unsigned short)((THING_TYPE_SENSOR << 10) | 1);
     things->sensors[1].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
@@ -85,6 +87,73 @@ static int expect(int cond, const char* label) {
         return 0;
     }
     return 1;
+}
+
+static int test_lord_chaos_adjacent_random_retry(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    struct DungeonGroup_Compat* group;
+    int ok = 1;
+    int rc;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world Lord Chaos retry\n");
+        return 1;
+    }
+
+    world.things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*world.things->groups));
+    if (!world.things->groups) {
+        F0883_WORLD_Free_Compat(&world);
+        fprintf(stderr, "FAIL: allocate Lord Chaos group\n");
+        return 1;
+    }
+    world.things->groupCount = 1;
+    world.things->thingCounts[THING_TYPE_GROUP] = 1;
+    group = &world.things->groups[0];
+    group->next = THING_ENDOFLIST;
+    group->slot = THING_ENDOFLIST;
+    group->creatureType = 23;
+    group->cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    group->health[0] = 10000;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, 2u);
+
+    event.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule Lord Chaos blocked event60 retry");
+    rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+    ok &= expect(rc == ORCH_OK, "advance Lord Chaos blocked event60 retry");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "Lord Chaos retry leaves original blocked square chain untouched");
+    ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "Lord Chaos random adjacent retry links group to allowed east square");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST,
+                 "Lord Chaos random adjacent retry links onto empty adjacent chain");
+    ok &= expect(world.creatureAICount == 1 &&
+                 world.creatureAI[0].groupMapX == 2 &&
+                 world.creatureAI[0].groupMapY == 1,
+                 "Lord Chaos random adjacent retry seeds active state at adjacent square");
+    ok &= expect(world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].mapX == 2 &&
+                 world.timeline.events[0].mapY == 1,
+                 "Lord Chaos random adjacent retry schedules C37 at adjacent square");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
 }
 
 int main(void) {
@@ -268,6 +337,7 @@ int main(void) {
 
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
+    if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;
 }
