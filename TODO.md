@@ -46,7 +46,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Palette dimming based on light level
 - ✅ HiDPI/Retina scaling (v2.0.0)
 - ✅ Fakewall viewport/collision parity — open fakewalls render as corridor, closed imaginary fakewalls stay passable but wall-like
-- 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
+- ✅ Wall/collision runtime capture gate — exact map/x/y/direction, movement-pipeline state, and PPM screenshots for blocked and accepted movement
 - ✅ Inscription rendering on side walls (D2L/R, D3L/R) — unreadable plaque heights source-locked (pass582)
 - ✅ Readable inscription rendering (source message zone centering)
 - ✅ Teleporter visual effect — source-backed GRAPHICS.DAT field bitmap overlay, not procedural sparkle
@@ -262,13 +262,14 @@ Status per 2026-05-19 v2.4.0.
 
 ## Known Bugs (need repro)
 
-1. 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
+1. No open wall/collision report without a capture manifest. Use the DM1 V1 wall/collision runtime capture gate for exact map/x/y/direction and screenshots before accepting new reports.
 
 ---
 
 ## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
 
 - Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500)
+- DM1 V1 wall/collision runtime capture gate with exact coordinates, movement-pipeline state, and screenshots
 - HiDPI/Retina scaling
 - Stair direction (F0155)
 - Door frame preservation for open portcullis doors (F0111)
