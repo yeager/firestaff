@@ -216,6 +216,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Touch Support
 - 🔧 Touch controls config option exists
+- 🔧 Entrance/menu click zones are source-locked from ReDMCSB for touch routing; runtime touch dispatch remains pending
 - ❌ Touch input zones for movement/turning
 - ❌ Touch-based item interaction
 - ❌ Gesture navigation (swipe to turn, tap to move)
