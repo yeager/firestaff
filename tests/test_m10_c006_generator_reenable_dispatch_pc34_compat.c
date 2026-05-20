@@ -194,6 +194,79 @@ int main(void) {
                  "C006 generator keeps delayed C65 re-enable event after wander event");
 
     F0883_WORLD_Free_Compat(&world);
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: rebuild_world_blocked_defer\n");
+        return 1;
+    }
+
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    world.things->sensors[0].sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
+    world.things->sensors[0].sensorData = 0;
+    world.things->sensors[0].value = 1;
+    world.things->sensors[0].audible = 1;
+    world.things->sensors[0].onceOnly = 0;
+    world.things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule blocked C006 generator trigger event");
+    generatorTriggerTick = world.gameTick;
+    rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+    ok &= expect(rc == ORCH_OK, "advance blocked C006 generator trigger tick");
+    ok &= expect(result.emissionCount == 1,
+                 "blocked C006 generator emits only sensor-audible buzz before deferred insertion");
+    ok &= expect(result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+                 result.emissions[0].payload[0] == DM1_SND_BUZZ,
+                 "blocked C006 generator keeps audible sensor buzz");
+    ok &= expect(world.things->groupCount == 1,
+                 "blocked C006 generator keeps initialized group slot for event60");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "blocked C006 generator does not link group onto occupied square");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST,
+                 "blocked C006 generator leaves deferred group unlinked");
+    ok &= expect(world.creatureAICount == 0,
+                 "blocked C006 generator does not seed active group state before insertion");
+    ok &= expect(world.timeline.count == 2,
+                 "blocked C006 generator schedules C65 re-enable and event60 retry");
+    ok &= expect(world.timeline.events[0].kind == TIMELINE_EVENT_GROUP_GENERATOR &&
+                 world.timeline.events[0].aux0 == GENERATOR_EVENT_AUX0_REENABLE &&
+                 world.timeline.events[0].fireAtTick == generatorTriggerTick + 2u,
+                 "blocked C006 generator keeps delayed C65 re-enable first");
+    ok &= expect(world.timeline.events[1].kind == TIMELINE_EVENT_MOVE_GROUP_SILENT &&
+                 world.timeline.events[1].fireAtTick == generatorTriggerTick + 5u &&
+                 world.timeline.events[1].aux0 == 0,
+                 "blocked C006 generator schedules silent event60 insertion retry");
+
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    while (world.gameTick <= generatorTriggerTick + 5u) {
+        memset(&result, 0, sizeof(result));
+        rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+        ok &= expect(rc == ORCH_OK, "advance to deferred event60 insertion tick");
+    }
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "event60 retry links deferred group when destination clears");
+    ok &= expect(world.things->groups[0].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "event60 retry preserves target square sensor chain");
+    ok &= expect(world.creatureAICount == 1 &&
+                 world.creatureAI[0].groupMapX == 1 &&
+                 world.creatureAI[0].groupMapY == 1,
+                 "event60 retry seeds party-map active group state after insertion");
+    ok &= expect(world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].fireAtTick == generatorTriggerTick + 6u,
+                 "event60 retry schedules source C37 wander after insertion");
+
+    F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;

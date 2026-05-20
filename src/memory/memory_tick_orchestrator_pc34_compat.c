@@ -1162,6 +1162,61 @@ static void orch_schedule_generated_group_wandering_event_compat(
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
 }
 
+static int orch_link_existing_group_to_square_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct DungeonGroup_Compat* group;
+    int sftIndex;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    group = &world->things->groups[groupIndex];
+    group->next = world->things->squareFirstThings[sftIndex];
+    world->things->squareFirstThings[sftIndex] =
+        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
+
+    (void)orch_add_generated_group_active_state_compat(
+        world, groupIndex, group, mapIndex, mapX, mapY);
+    orch_schedule_generated_group_wandering_event_compat(
+        world, groupIndex, group, mapIndex, mapX, mapY);
+    return 1;
+}
+
+static int orch_schedule_deferred_group_move_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    int groupIndex,
+    int audible)
+{
+    struct TimelineEvent_Compat deferred;
+
+    if (!world || !ev) return 0;
+
+    /* ReDMCSB MOVESENS.C:F0265:169-192 creates C60/C61 at
+     * G0313_ul_GameTime + 5 with destination map/x/y and the group thing
+     * slot; MOVESENS.C:F0267:830-844 calls it when insertion is blocked
+     * by the party or another group. */
+    memset(&deferred, 0, sizeof(deferred));
+    deferred.kind = audible
+        ? TIMELINE_EVENT_MOVE_GROUP_AUDIBLE
+        : TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    deferred.fireAtTick = world->gameTick + 5u;
+    deferred.mapIndex = ev->mapIndex;
+    deferred.mapX = ev->mapX;
+    deferred.mapY = ev->mapY;
+    deferred.aux0 = groupIndex;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &deferred);
+}
+
 static int orch_materialize_generated_group_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -1178,14 +1233,6 @@ static int orch_materialize_generated_group_compat(
     if (!world || !ev || !generator || !world->dungeon || !world->things) return 0;
     if (!generator->spawned) return 0;
 
-    /* ReDMCSB MOVESENS.C:830-844 defers group insertion if the
-     * destination already holds the party or another group.  Event60/61
-     * follow-up is not represented in Phase 20 yet, so this narrow slice
-     * only materializes the successful empty-square path. */
-    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
-        return 0;
-    }
-
     sftIndex = orch_square_first_thing_list_index_compat(
         world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
@@ -1200,7 +1247,7 @@ static int orch_materialize_generated_group_compat(
     group = &world->things->groups[groupIndex];
     memset(group, 0, sizeof(*group));
 
-    group->next = world->things->squareFirstThings[sftIndex];
+    group->next = THING_ENDOFLIST;
     group->slot = THING_ENDOFLIST;
     group->creatureType = (unsigned char)(generator->spawnedCreatureType & 0xFF);
     group->cells = (unsigned char)(generator->spawnedGroupCells & 0xFF);
@@ -1217,15 +1264,53 @@ static int orch_materialize_generated_group_compat(
 
     world->things->groupCount = groupIndex + 1;
     world->things->thingCounts[THING_TYPE_GROUP] = world->things->groupCount;
-    world->things->squareFirstThings[sftIndex] =
-        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
 
-    (void)orch_add_generated_group_active_state_compat(
-        world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
-    orch_schedule_generated_group_wandering_event_compat(
-        world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
+    /* ReDMCSB GROUP.C:F0185:543-545 keeps the initialized group slot
+     * referenced by the deferred move event instead of linking it when
+     * F0267 reports a blocked destination. */
+    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
+        if (!orch_schedule_deferred_group_move_compat(world, ev, groupIndex, 0)) {
+            return 0;
+        }
+        if (outGroupIndex) *outGroupIndex = groupIndex;
+        return 0;
+    }
+
+    if (!orch_link_existing_group_to_square_compat(
+            world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY)) {
+        return 0;
+    }
     if (outGroupIndex) *outGroupIndex = groupIndex;
     return 1;
+}
+
+static int orch_handle_deferred_group_move_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int groupIndex;
+    struct TimelineEvent_Compat retry;
+
+    if (!world || !ev || !result || !world->things) return 0;
+    groupIndex = ev->aux0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+
+    /* ReDMCSB TIMELINE.C:F0252:1527-1535 inserts the deferred group
+     * only when the destination is clear; lines 1565-1567 retry the same
+     * event five ticks later while the party or another group blocks it. */
+    if (orch_square_has_group_or_party_compat(world, ev->mapIndex, ev->mapX, ev->mapY)) {
+        retry = *ev;
+        retry.fireAtTick = ev->fireAtTick + 5u;
+        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+    }
+
+    if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
+        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+             ev->mapX, ev->mapY, ev->mapIndex);
+    }
+    return orch_link_existing_group_to_square_compat(
+        world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY);
 }
 
 static int orch_handle_group_generator_trigger_runtime_compat(
@@ -1924,6 +2009,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                  * requests M560_SOUND_BUZZ after F0185 generation. */
                 (void)orch_handle_group_generator_trigger_runtime_compat(world, &ev, result);
             }
+            break;
+        case TIMELINE_EVENT_MOVE_GROUP_SILENT:
+        case TIMELINE_EVENT_MOVE_GROUP_AUDIBLE:
+            (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
         case TIMELINE_EVENT_SENSOR_DELAYED:
