@@ -62,7 +62,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Kill XP award via lifecycle system
 - ✅ Creature rendering — sprites load and source-locked aspect frames cycle
 - 🔧 Creature type-specific behavior — Giggler steal source-locked; Ghost non-material and other type specials remain
-- 🔧 Creature group spawning (C006 floor sensor group generator) — base-health, source-style group-cell placement, and C65 re-enable dispatch are source-locked; full C05 trigger, world insertion, placement/defer, active-group state, and sound dispatch remain
+- 🔧 Creature group spawning (C006 floor sensor group generator) — base-health, source-style group-cell placement, C65 re-enable dispatch, and audible M560 buzz playback gate are source-locked; full C05 trigger, world insertion, placement/defer, and active-group state remain
 - 🔧 Creature projectile attacks - ReDMCSB F0207/F0212 projectile type, target cell, direction, kinetic-energy bound, dexterity attack, and step-energy launch payload are source-locked; live runtime projectile insertion remains pending
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
