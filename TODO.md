@@ -90,7 +90,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ FREEZE LIFE action
 - ❌ Light spell (ZO → increase magical light)
 - ❌ Darkness spell
-- ❌ Open Door spell (ZO BREU)
+- 🔧 Open Door spell (ZO BREU) — projectile door-impact SFX source-locked; full door behavior remains pending
 - ❌ Poison cloud damage over time
 - ❌ Spell failure feedback (fizzle animation)
 
@@ -168,7 +168,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Audio
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures; party footsteps are provenance-locked absent in DM1 V1
+- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including Open Door projectile door-impact SFX; party footsteps are provenance-locked absent in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
 - ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
 
