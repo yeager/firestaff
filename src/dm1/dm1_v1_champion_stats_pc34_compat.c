@@ -62,6 +62,9 @@ int m11_stats_add_champion(M11_ChampionStatsState* s, const char* name) {
         c->skillXP[i] = 0;
     }
 
+    c->load = 0;
+    c->wounds = 0;
+    c->feetIconIndex = 0;
     c->level = 1;
     c->food = 1000;
     c->water = 1000;
@@ -181,6 +184,96 @@ const char* m11_skill_name(int skill) {
     return skill_names[skill];
 }
 
+int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
+                                          int maximumStamina,
+                                          int value) {
+    int halfMaximumStamina = maximumStamina >> 1;
+
+    /* ReDMCSB CHAMPION.C:1078-1104 / F0306. The assignment shift is
+       intentional: the original uses the halved value for both terms. */
+    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
+        value >>= 1;
+        return value + (int)(((long)value * (long)currentStamina) /
+                             halfMaximumStamina);
+    }
+    return value;
+}
+
+int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion) {
+    int maximumLoad;
+
+    if (!champion) return 0;
+
+    /* ReDMCSB CHAMPION.C:1157-1177 / F0309. Units are the original
+       tenths-of-kilogram load units used by the champion panel. */
+    maximumLoad = (champion->stats[DM1_STAT_STRENGTH] << 3) + 100;
+    maximumLoad = dm1_stats_stamina_adjusted_value_pc34(
+        champion->stats[DM1_STAT_STAMINA],
+        champion->maxStats[DM1_STAT_STAMINA],
+        maximumLoad);
+
+    if (champion->wounds) {
+        maximumLoad -= maximumLoad >> ((champion->wounds & DM1_WOUND_LEGS) ? 2 : 3);
+    }
+
+    if (champion->feetIconIndex == DM1_ICON_ARMOUR_ELVEN_BOOTS) {
+        maximumLoad += maximumLoad >> 4;
+    }
+
+    maximumLoad += 9;
+    maximumLoad -= maximumLoad % 10;
+    return maximumLoad;
+}
+
+int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion) {
+    int load;
+    int maximumLoad;
+    int ticks;
+    int woundTicks;
+
+    if (!champion) return 0;
+
+    /* ReDMCSB CHAMPION.C:1180-1215 / F0310, preserving BUG0_72:
+       load == maximumLoad follows the overloaded branch. */
+    load = champion->load;
+    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    if (maximumLoad > load) {
+        ticks = 2;
+        if (((long)load << 3) > ((long)maximumLoad * 5)) {
+            ticks++;
+        }
+        woundTicks = 1;
+    } else if (maximumLoad > 0) {
+        ticks = 4 + (((load - maximumLoad) << 2) / maximumLoad);
+        woundTicks = 2;
+    } else {
+        ticks = 4;
+        woundTicks = 2;
+    }
+
+    if (champion->wounds & DM1_WOUND_FEET) {
+        ticks += woundTicks;
+    }
+
+    if (champion->feetIconIndex == DM1_ICON_ARMOUR_BOOT_OF_SPEED) {
+        ticks--;
+    }
+
+    return ticks < 1 ? 1 : ticks;
+}
+
+int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion) {
+    int maximumLoad;
+
+    if (!champion) return 0;
+
+    /* ReDMCSB MOVESENS.C:590-598 applies this through F0325 when a
+       champion uses a rope to climb down a pit. */
+    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    if (maximumLoad <= 0) return 0;
+    return ((champion->load * 25) / maximumLoad) + 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Pass602b — STATS.C remaining function citations
  *
@@ -206,4 +299,3 @@ const char* m11_skill_name(int skill) {
  *   STATS.C:522 F8043_G
  *   STATS.C:538 F8044_G
  * ══════════════════════════════════════════════════════════════════════ */
-

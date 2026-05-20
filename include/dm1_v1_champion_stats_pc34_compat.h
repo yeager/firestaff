@@ -29,12 +29,25 @@ enum {
     DM1_SKILL_COUNT
 };
 
+enum {
+    DM1_WOUND_LEGS = 0x0010,
+    DM1_WOUND_FEET = 0x0020
+};
+
+enum {
+    DM1_ICON_ARMOUR_ELVEN_BOOTS = 119,
+    DM1_ICON_ARMOUR_BOOT_OF_SPEED = 194
+};
+
 typedef struct {
     char name[16];
     int stats[DM1_STAT_COUNT];
     int maxStats[DM1_STAT_COUNT];
     int skills[DM1_SKILL_COUNT];
     int skillXP[DM1_SKILL_COUNT];
+    int load;
+    int wounds;
+    int feetIconIndex;
     int level;
     int food;
     int water;
@@ -63,6 +76,12 @@ void m11_stats_kill(M11_ChampionStatsState* s, int champ);
 void m11_stats_resurrect(M11_ChampionStatsState* s, int champ, int hp);
 const char* m11_stat_name(int stat);
 const char* m11_skill_name(int skill);
+int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
+                                          int maximumStamina,
+                                          int value);
+int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion);
+int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion);
+int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion);
 
 #ifdef __cplusplus
 }
