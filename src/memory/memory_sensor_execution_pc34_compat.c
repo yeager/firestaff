@@ -396,6 +396,7 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
 {
     struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
     int sensorCount, i;
+    int squareType = -1;
 
     if (!outList) return 0;
     memset(outList, 0, sizeof(*outList));
@@ -408,9 +409,25 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         dungeon, things, mapIndex, mapX, mapY, sensors);
 
+    if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount) {
+        const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
+        if (dungeon->tiles && mapX >= 0 && mapX < map->width && mapY >= 0 && mapY < map->height) {
+            unsigned char squareByte = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+            squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        }
+    }
+
     for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
         struct SensorEffectList_Compat tmp;
         memset(&tmp, 0, sizeof(tmp));
+        /* ReDMCSB MOVESENS.C F0276 lines 1695-1702: floor C005 only
+         * survives the switch when the party is the triggering thing and
+         * M034_SQUARE_TYPE(current square) == C03_ELEMENT_STAIRS.  This
+         * party-enter/leave wrapper already models party triggers, so it
+         * must preserve the stairs-square predicate before execution. */
+        if (sensors[i].sensorType == 5 && squareType != DUNGEON_ELEMENT_STAIRS) {
+            continue;
+        }
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
                                          triggerEvent, &tmp)) {
             continue;

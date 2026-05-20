@@ -411,6 +411,104 @@ static void test_floor_party_possession(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0722: Floor sensor -- party on stairs
+ *  Source: MOVESENS.C F0276 case C005 at lines 1695-1702.
+ * ---------------------------------------------------------------- */
+static void test_floor_party_on_stairs(void) {
+    struct DungeonSensor_Compat sensor;
+    struct FloorSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_FLOOR_PARTY_ON_STAIRS, 0,
+                         DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                         0, 9, 10, 1);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.thingType = DM1_TRIGGER_SOURCE_PARTY;
+    ctx.isAddition = 1;
+    ctx.squareType = DM1_SQUARE_STAIRS;
+
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Party-on-stairs: party triggers on stairs square");
+    CHECK(result.resolvedEffect == DM1_EFFECT_TOGGLE, "Party-on-stairs: keeps TOGGLE effect");
+    CHECK(result.targetMapX == 9, "Party-on-stairs: target X preserved");
+    CHECK(result.targetMapY == 10, "Party-on-stairs: target Y preserved");
+
+    ctx.squareType = DM1_SQUARE_CORRIDOR;
+    memset(&result, 0, sizeof(result));
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Party-on-stairs: party on corridor does not trigger");
+
+    ctx.squareType = DM1_SQUARE_STAIRS;
+    ctx.thingType = DM1_TRIGGER_SOURCE_CREATURE;
+    memset(&result, 0, sizeof(result));
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Party-on-stairs: creature on stairs does not trigger");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0718: Runtime floor C005 gate -- party on stairs only
+ *  Source: MOVESENS.C F0276 case C005 at lines 1695-1702.
+ * ---------------------------------------------------------------- */
+static void test_floor_party_on_stairs_runtime_gate(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_PARTY_ON_STAIRS;
+    sensors[0].targetMapX = 1;
+    sensors[0].targetMapY = 1;
+    sensors[0].targetCell = 2;
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.loaded = 1;
+
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 0, "Runtime C005: corridor square is skipped");
+
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 1, "Runtime C005: stairs square triggers");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "Runtime C005: stairs effect is remote toggle");
+    CHECK(effects.effects[0].sensorType == DM1_SENSOR_FLOOR_PARTY_ON_STAIRS,
+          "Runtime C005: effect carries sensor type");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — simple click
  *  Source: F0275 case C001 (WALL_ORNAMENT_CLICK)
  * ---------------------------------------------------------------- */
@@ -1248,6 +1346,8 @@ int main(void) {
     test_floor_revert_effect();
     test_floor_local_effect();
     test_floor_party_possession();
+    test_floor_party_on_stairs();
+    test_floor_party_on_stairs_runtime_gate();
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
