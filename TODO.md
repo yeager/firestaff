@@ -178,9 +178,9 @@ Status per 2026-05-19 v2.4.0.
 ## DM1 V2 — Enhanced Mode
 
 - 🔧 V2 presentation mode selectable from menu
-- ❌ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
+- ✅ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
   - ✅ Phase 0 slice — V2 presentation command-route gate: V1/off preserves ReDMCSB movement command IDs 1..6; V2/on maps presentation runtime IDs without changing source IDs (b5a41085)
-- ❌ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
+- ✅ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
   - ✅ Phase 1 slice — deterministic V2 presentation settings scaffold source-locked; V1 default path and command/gameplay state remain isolated (ac70837c)
   - ✅ Phase 1 slice — presentation profile boundary source-locked; V2 presentation mode consumes copied V1 gameplay snapshots and keeps command/gameplay routing pinned to V1 (931688c6)
   - ✅ Phase 1 slice — launch smoke gate source-locked; V2 menu/config boot path can reach the presentation runtime without changing V1 default route (6a4b7b86)
