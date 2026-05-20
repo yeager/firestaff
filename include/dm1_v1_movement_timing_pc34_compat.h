@@ -45,6 +45,9 @@ void DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
 int DM1_V1_MovementTiming_InputWaitMaxVBlanksPc34Compat(void);
 int DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(
     int accumulatedVBlanks);
+int DM1_V1_MovementTiming_InputLoopContinuesPc34Compat(
+    int stopWaitingForPlayerInput,
+    int gameTimeTicking);
 int DM1_V1_MovementTiming_VBlankWaitDecrementsMovementCooldownPc34Compat(void);
 
 const char* DM1_V1_MovementTiming_SourceEvidencePc34Compat(void);

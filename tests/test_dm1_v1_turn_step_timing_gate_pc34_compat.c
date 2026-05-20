@@ -31,6 +31,12 @@ int main(void)
         DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(11), 0);
     ok &= expect_int("input wait stops at twelfth vblank",
         DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(12), 1);
+    ok &= expect_int("input loop continues before input wait stops",
+        DM1_V1_MovementTiming_InputLoopContinuesPc34Compat(0, 1), 1);
+    ok &= expect_int("input loop continues while game time is paused",
+        DM1_V1_MovementTiming_InputLoopContinuesPc34Compat(1, 0), 1);
+    ok &= expect_int("input loop exits only when input stopped and time ticking",
+        DM1_V1_MovementTiming_InputLoopContinuesPc34Compat(1, 1), 0);
     ok &= expect_int("vblank wait does not decrement movement cooldown",
         DM1_V1_MovementTiming_VBlankWaitDecrementsMovementCooldownPc34Compat(), 0);
 

@@ -19,7 +19,8 @@
  * - GAMELOOP.C:47-50 sets the per-input wait window; PC-34/I34E uses 12
  *   vertical blanks.
  * - GAMELOOP.C:164-219 drains queued keyboard input, processes one queue slot,
- *   and repeats until input stops waiting and game time is ticking.
+ *   and repeats while either input has not stopped waiting or game time is not
+ *   ticking.
  * - IO.C:772-778 and 1015-1019 advance the input wait VBlank counter and set
  *   G0321_B_StopWaitingForPlayerInput; they do not decrement movement cooldowns.
  */
@@ -108,6 +109,13 @@ int DM1_V1_MovementTiming_InputWaitMaxVBlanksPc34Compat(void)
 int DM1_V1_MovementTiming_InputWaitStopsAfterVBlanksPc34Compat(int accumulatedVBlanks)
 {
     return accumulatedVBlanks >= DM1_V1_INPUT_WAIT_MAX_VBLANKS_PC34_COMPAT;
+}
+
+int DM1_V1_MovementTiming_InputLoopContinuesPc34Compat(
+    int stopWaitingForPlayerInput,
+    int gameTimeTicking)
+{
+    return !stopWaitingForPlayerInput || !gameTimeTicking;
 }
 
 int DM1_V1_MovementTiming_VBlankWaitDecrementsMovementCooldownPc34Compat(void)
