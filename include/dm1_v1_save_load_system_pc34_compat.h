@@ -17,6 +17,13 @@ extern "C" {
 #define DM1_SL_HEADER_SIZE       256
 #define DM1_SL_ADDITIONAL_DATA   134  /* G0534 size */
 #define DM1_SL_MAX_SLOTS         20
+/* ReDMCSB runtime exposes one selected save target, plus an automatic .BAK
+ * fallback file.  It does not expose numbered in-game save slots.
+ * Source refs: FILENAME.C:10-13 names DMSAVE.DAT/DMSAVE.BAK;
+ * LOADSAVE.C:1477-1483 writes the primary after rotating backup;
+ * LOADSAVE.C:2560-2583 loads primary then backup on open failure. */
+#define DM1_SL_SOURCE_RUNTIME_SLOT 0
+#define DM1_SL_SOURCE_RUNTIME_SLOT_COUNT 1
 
 typedef struct {
     uint32_t magic;               /* DM1_SL_SAVE_MAGIC */
@@ -57,6 +64,8 @@ bool m11_sl_load_data(M11_SL_State* state, uint8_t slot,
                        uint8_t* data, size_t max_size, size_t* actual_size);
 bool m11_sl_delete(M11_SL_State* state, uint8_t slot);
 bool m11_sl_slot_occupied(const M11_SL_State* state, uint8_t slot);
+bool m11_sl_source_runtime_slot_supported(uint8_t slot);
+uint8_t m11_sl_source_runtime_slot_count(void);
 
 #ifdef __cplusplus
 }

@@ -902,10 +902,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 const char* sid = (gameView->sourceId[0] != '\0')
                                   ? gameView->sourceId : "dm1";
                 struct DM1SaveHeader saveHeader;
+                int usedBackup = 0;
                 int rc = snprintf(savePath, sizeof(savePath),
                                   "firestaff-%s-dm1save.sav", sid);
                 if (rc > 0 && rc < (int)sizeof(savePath) &&
-                    DM1_LoadGame(savePath, &gameView->world, &saveHeader) == DM1_SAVE_OK) {
+                    DM1_LoadGameWithBackup(savePath, &gameView->world,
+                                           &saveHeader, &usedBackup) == DM1_SAVE_OK) {
                     if (!DM1_SaveProfileMatches(&saveHeader,
                                                 DM1_DefaultSaveProfileHash())) {
                         fprintf(stderr,
@@ -916,7 +918,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                     }
                     gameView->active = 1;
                     (void)M11_GameView_SetMusicEnabled(gameView, saveHeader.musicOn);
-                    fprintf(stderr, "RESUME: loaded save from %s\n", savePath);
+                    fprintf(stderr, "RESUME: loaded save from %s%s\n", savePath,
+                            usedBackup ? " backup" : "");
                 } else {
                     fprintf(stderr, "RESUME: no save found at %s, starting new game\n", savePath);
                 }

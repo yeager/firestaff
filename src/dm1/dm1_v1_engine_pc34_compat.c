@@ -268,6 +268,7 @@ bool m11_engine_new_game(M11_Engine *engine)
 bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
+    if (!m11_sl_source_runtime_slot_supported(slot)) return false;
     if (!m11_sl_slot_occupied(&engine->saveLoad, slot)) return false;
 
     M11_SL_SaveHeader header;
@@ -281,6 +282,7 @@ bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
 bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
+    if (!m11_sl_source_runtime_slot_supported(slot)) return false;
 
     M11_SL_SaveHeader header;
     memset(&header, 0, sizeof(header));

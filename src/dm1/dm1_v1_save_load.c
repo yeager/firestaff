@@ -378,6 +378,34 @@ int DM1_LoadGame(const char* path,
     return DM1_SAVE_OK;
 }
 
+int DM1_LoadGameWithBackup(const char* path,
+                           struct GameWorld_Compat* outWorld,
+                           struct DM1SaveHeader* outHeader,
+                           int* outUsedBackup) {
+    char backupPath[512];
+    int rc;
+
+    if (outUsedBackup) *outUsedBackup = 0;
+    if (!path || !outWorld) return DM1_SAVE_ERROR_NULL_ARG;
+
+    rc = DM1_LoadGame(path, outWorld, outHeader);
+    if (rc != DM1_SAVE_ERROR_FILE_OPEN) {
+        return rc;
+    }
+
+    if (!DM1_GetBackupSavePath(path, backupPath, (int)sizeof(backupPath))) {
+        return rc;
+    }
+
+    rc = DM1_LoadGame(backupPath, outWorld, outHeader);
+    if (rc == DM1_SAVE_OK) {
+        if (outUsedBackup) *outUsedBackup = 1;
+        remove(path);
+        rename(backupPath, path);
+    }
+    return rc;
+}
+
 /* ── Validate save file ───────────────────────────────────────── */
 
 int DM1_ValidateSaveFile(const char* path,
@@ -469,6 +497,16 @@ int DM1_GetSavePath(const char* sourceId,
     rc = snprintf(outPath, (size_t)outSize,
                   "%s/firestaff-%s-dm1save.sav",
                   dataDir, sourceId);
+    return (rc > 0 && rc < outSize) ? 1 : 0;
+}
+
+int DM1_GetBackupSavePath(const char* savePath,
+                          char* outPath, int outSize) {
+    int rc;
+
+    if (!savePath || !outPath || outSize <= 0) return 0;
+
+    rc = snprintf(outPath, (size_t)outSize, "%s.bak", savePath);
     return (rc > 0 && rc < outSize) ? 1 : 0;
 }
 

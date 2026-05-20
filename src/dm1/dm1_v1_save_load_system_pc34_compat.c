@@ -7,6 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
+uint8_t m11_sl_source_runtime_slot_count(void) {
+    return DM1_SL_SOURCE_RUNTIME_SLOT_COUNT;
+}
+
+bool m11_sl_source_runtime_slot_supported(uint8_t slot) {
+    return slot == DM1_SL_SOURCE_RUNTIME_SLOT;
+}
+
 void m11_sl_init(M11_SL_State* state, const char* save_dir) {
     if (!state) return;
     memset(state, 0, sizeof(M11_SL_State));

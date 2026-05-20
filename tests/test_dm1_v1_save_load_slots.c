@@ -90,6 +90,14 @@ int main(void) {
     uint8_t out[4] = { 0, 0, 0, 0 };
     size_t actual = 0;
 
+    if (m11_sl_source_runtime_slot_count() != 1 ||
+        !m11_sl_source_runtime_slot_supported(0) ||
+        m11_sl_source_runtime_slot_supported(1) ||
+        m11_sl_source_runtime_slot_supported(DM1_SL_MAX_SLOTS - 1)) {
+        printf("FAIL: ReDMCSB runtime should expose only the primary save target\n");
+        return 1;
+    }
+
     if (!make_temp_dir(dir, sizeof(dir))) {
         printf("FAIL: could not create temp save-slot directory\n");
         return 1;

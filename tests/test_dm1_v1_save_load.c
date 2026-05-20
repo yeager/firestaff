@@ -309,6 +309,49 @@ static int test_load_nonexistent(void) {
     return 1;
 }
 
+static int test_backup_fallback_path(void) {
+    const char* primary = "/tmp/dm1_backup_fallback_test.sav";
+    char backup[512];
+    struct GameWorld_Compat world;
+    struct DM1SaveHeader hdr;
+    unsigned char garbage[128];
+    int usedBackup = 7;
+    FILE* f;
+    int rc;
+
+    remove(primary);
+    if (!DM1_GetBackupSavePath(primary, backup, (int)sizeof(backup))) {
+        printf("  FAIL: backup path helper rejected valid path\n");
+        return 0;
+    }
+    remove(backup);
+
+    memset(garbage, 0x42, sizeof(garbage));
+    f = fopen(backup, "wb");
+    if (!f) {
+        printf("  SKIP: cannot create backup temp file\n");
+        return 1;
+    }
+    fwrite(garbage, 1, sizeof(garbage), f);
+    fclose(f);
+
+    memset(&world, 0, sizeof(world));
+    rc = DM1_LoadGameWithBackup(primary, &world, &hdr, &usedBackup);
+    remove(backup);
+
+    if (rc != DM1_SAVE_ERROR_BAD_MAGIC) {
+        printf("  FAIL: backup fallback should open backup and reject its magic, got %d\n", rc);
+        return 0;
+    }
+    if (usedBackup != 0) {
+        printf("  FAIL: usedBackup should only be set after a successful backup load\n");
+        return 0;
+    }
+
+    printf("  PASS: backup fallback path\n");
+    return 1;
+}
+
 /* ── Test 8: Validate corrupt file ────────────────────────────── */
 
 static int test_validate_corrupt(void) {
@@ -396,6 +439,7 @@ int main(void) {
     if (test_save_path())       pass++; else fail++;
     if (test_null_args())       pass++; else fail++;
     if (test_load_nonexistent()) pass++; else fail++;
+    if (test_backup_fallback_path()) pass++; else fail++;
     if (test_validate_corrupt()) pass++; else fail++;
     if (test_profile_hash_mismatch()) pass++; else fail++;
 

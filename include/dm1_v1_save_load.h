@@ -170,6 +170,21 @@ int DM1_LoadGame(const char* path,
                  struct DM1SaveHeader* outHeader);
 
 /*
+ * Load the single source-backed runtime save, falling back to the automatic
+ * backup only when the primary save file cannot be opened.
+ *
+ * ReDMCSB source ref: LOADSAVE.C F0435_STARTEND_LoadGame
+ *   - opens G0569_pc_SavedGameFileName first, then G0570_pc_SavedGameBackupFileName
+ *     only on open failure (lines 2560-2583)
+ *   - renames the backup back to the primary save filename after a successful
+ *     backup load (lines 2901-2906)
+ */
+int DM1_LoadGameWithBackup(const char* path,
+                           struct GameWorld_Compat* outWorld,
+                           struct DM1SaveHeader* outHeader,
+                           int* outUsedBackup);
+
+/*
  * Validate a save file without loading it.
  * Reads header, checks magic/version/CRC. Does not deserialize world.
  */
@@ -189,6 +204,8 @@ uint32_t DM1_CRC32(const unsigned char* data, size_t len);
 
 int DM1_GetSavePath(const char* sourceId,
                     char* outPath, int outSize);
+int DM1_GetBackupSavePath(const char* savePath,
+                          char* outPath, int outSize);
 
 /* ── Error string ─────────────────────────────────────────────── */
 
