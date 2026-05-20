@@ -22,6 +22,8 @@
  *
  * Source reference: ReDMCSB GROUP.C
  *   F0176_GROUP_GetCreatureOrdinalInCell (line 69)
+ *   F0179_GROUP_GetCreatureAspectUpdateTime (lines 187-308)
+ *   F0209 update-aspect dispatch (lines 2051-2075)
  *
  * Source reference: ReDMCSB CHAMPION.H
  *   C000_CREATURE_TYPE_xxx .. C026 (creature type constants)
@@ -88,9 +90,14 @@ enum {
 #define DM1_GI_MASK_SPECIAL_D2_FRONT    0x0080u
 #define DM1_GI_MASK_D2_FRONT_IS_FLIPPED 0x0100u
 #define DM1_GI_MASK_FLIP_ATTACK         0x0200u
+#define DM1_GI_MASK_FLIP_DURING_ATTACK  0x0400u
 
 /* M618_GRAPHIC_FIRST_CREATURE for PC 3.4 — ReDMCSB DEFS.H line 2392 */
 #define DM1_GRAPHIC_FIRST_CREATURE 584
+
+/* Active-group Aspect frame bits — ReDMCSB DEFS.H lines 603-606 */
+#define DM1_CREATURE_ASPECT_FLIP_BITMAP  0x40u
+#define DM1_CREATURE_ASPECT_IS_ATTACKING 0x80u
 
 /* ── Creature aspect — matches ReDMCSB CREATURE_ASPECT typedef ── */
 typedef struct {
@@ -146,6 +153,10 @@ int dm1_creature_pose_from_delta(int directionDelta, int attacking,
 int dm1_creature_should_flip(int directionDelta, int pose,
                              int attacking, uint16_t graphicInfo,
                              uint8_t aspectBits);
+uint8_t dm1_creature_cycle_aspect_frame(int creatureType,
+                                        uint8_t previousAspect,
+                                        int attacking, int randomBit);
+int dm1_creature_next_aspect_update_delay(int animationTicks, int attacking, int randomBit);
 int dm1_creature_coordinate_set(int creatureType);
 int dm1_creature_transparent_color(int creatureType);
 const unsigned char* dm1_creature_palette_d3(void);

@@ -357,6 +357,47 @@ static void test_m11_cross_check(void) {
               657, "Demon front = 657");
 }
 
+/* Test 11: Source-locked creature Aspect frame cycling.
+ * ReDMCSB GROUP.C F0179 lines 222-305 stores frame state in the
+ * active-group Aspect bits, and DUNVIEW.C F0115 lines 5331-5418 consumes
+ * those bits to select attack/front flip state. */
+static void test_aspect_frame_cycling(void) {
+    ASSERT_EQ(dm1_creature_next_aspect_update_delay(0x0A50, 0, 0),
+              5, "non-attack aspect delay low random");
+    ASSERT_EQ(dm1_creature_next_aspect_update_delay(0x0A50, 0, 1),
+              6, "non-attack aspect delay high random");
+    ASSERT_EQ(dm1_creature_next_aspect_update_delay(0x0A50, 1, 0),
+              10, "attack aspect delay");
+
+    /* Ghost has FLIP_NON_ATTACK (0x5864), so non-attack update chooses
+     * the FLIP_BITMAP frame bit from M005_RANDOM(2). */
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GHOST, 0x00, 0, 1),
+              DM1_CREATURE_ASPECT_FLIP_BITMAP,
+              "ghost non-attack random=1 sets flip frame");
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GHOST, 0xC0, 0, 0),
+              0, "ghost non-attack random=0 clears attack and flip");
+
+    /* Giant Scorpion lacks FLIP_NON_ATTACK, so idle cycling clears the
+     * flip frame regardless of previous state. */
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GIANT_SCORPION,
+              DM1_CREATURE_ASPECT_FLIP_BITMAP, 0, 1),
+              0, "non-flipping creature clears idle flip frame");
+
+    /* Pain Rat has FLIP_ATTACK and FLIP_DURING_ATTACK (0x0701). The first
+     * attack update chooses a flip bit; a later attack update preserves it. */
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_PAIN_RAT, 0x00, 1, 1),
+              DM1_CREATURE_ASPECT_IS_ATTACKING | DM1_CREATURE_ASPECT_FLIP_BITMAP,
+              "pain rat first attack update sets attack and flip");
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_PAIN_RAT, 0xC0, 1, 0),
+              0xC0, "pain rat flip persists during attack");
+
+    /* Animated Armour/Deth Knight toggles the attack flip bit when already
+     * attacking, matching GROUP.C lines 239-242. */
+    ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_ANIMATED_ARMOUR, 0xC0, 1, 1),
+              DM1_CREATURE_ASPECT_IS_ATTACKING,
+              "animated armour attack update toggles flip off");
+}
+
 int main(void) {
     printf("=== DM1 V1 Creature Render Source Lock Test ===\n");
 
@@ -370,6 +411,7 @@ int main(void) {
     test_type_names();
     test_legacy_api();
     test_m11_cross_check();
+    test_aspect_frame_cycling();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

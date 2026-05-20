@@ -17,6 +17,10 @@
  */
 
 #include "dm1_v1_creature_render_pc34_compat.h"
+
+#define DM1_NEXT_NON_ATTACK_ASPECT_UPDATE_TICKS(a) (((a) >> 4) & 0x000F)
+#define DM1_NEXT_ATTACK_ASPECT_UPDATE_TICKS(a)     (((a) >> 8) & 0x000F)
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -102,6 +106,75 @@ int dm1_creature_coordinate_set(int creatureType) {
 int dm1_creature_transparent_color(int creatureType) {
     if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
     return s_aspects[creatureType].coordinateSet_transparentColor & 0x0F;
+}
+
+/*
+ * Aspect frame cycling — ReDMCSB GROUP.C F0179 lines 222-305.
+ *
+ * The original does not increment a linear sprite-frame number. Instead it
+ * rewrites the active-group Aspect bits. Bits 0-5 hold per-update offsets;
+ * this bounded helper implements only the frame-selection bits used by
+ * DUNVIEW.C F0115: MASK0x0040_FLIP_BITMAP and MASK0x0080_IS_ATTACKING.
+ * The caller supplies randomBit as the source-locked M005_RANDOM(2) result.
+ */
+uint8_t dm1_creature_cycle_aspect_frame(int creatureType,
+                                        uint8_t previousAspect,
+                                        int attacking, int randomBit) {
+    uint16_t gi;
+    uint8_t aspect;
+    int randomSet;
+
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+
+    gi = s_aspects[creatureType].graphicInfo;
+    aspect = (uint8_t)(previousAspect &
+                       (DM1_CREATURE_ASPECT_IS_ATTACKING |
+                        DM1_CREATURE_ASPECT_FLIP_BITMAP));
+    randomSet = randomBit & 1;
+
+    if (attacking) {
+        if (gi & DM1_GI_MASK_FLIP_ATTACK) {
+            if ((aspect & DM1_CREATURE_ASPECT_IS_ATTACKING) &&
+                creatureType == DM1_CREATURE_ANIMATED_ARMOUR) {
+                if (randomSet) {
+                    aspect ^= DM1_CREATURE_ASPECT_FLIP_BITMAP;
+                }
+            } else if (!(aspect & DM1_CREATURE_ASPECT_IS_ATTACKING) ||
+                       !(gi & DM1_GI_MASK_FLIP_DURING_ATTACK)) {
+                if (randomSet) {
+                    aspect |= DM1_CREATURE_ASPECT_FLIP_BITMAP;
+                } else {
+                    aspect &= (uint8_t)~DM1_CREATURE_ASPECT_FLIP_BITMAP;
+                }
+            }
+        } else {
+            aspect &= (uint8_t)~DM1_CREATURE_ASPECT_FLIP_BITMAP;
+        }
+        aspect |= DM1_CREATURE_ASPECT_IS_ATTACKING;
+    } else {
+        if (gi & DM1_GI_MASK_FLIP_NON_ATTACK) {
+            if (creatureType == DM1_CREATURE_COUATL) {
+                if (randomSet) {
+                    aspect ^= DM1_CREATURE_ASPECT_FLIP_BITMAP;
+                }
+            } else if (randomSet) {
+                aspect |= DM1_CREATURE_ASPECT_FLIP_BITMAP;
+            } else {
+                aspect &= (uint8_t)~DM1_CREATURE_ASPECT_FLIP_BITMAP;
+            }
+        } else {
+            aspect &= (uint8_t)~DM1_CREATURE_ASPECT_FLIP_BITMAP;
+        }
+        aspect &= (uint8_t)~DM1_CREATURE_ASPECT_IS_ATTACKING;
+    }
+
+    return aspect;
+}
+
+int dm1_creature_next_aspect_update_delay(int animationTicks, int attacking, int randomBit) {
+    int base = attacking ? DM1_NEXT_ATTACK_ASPECT_UPDATE_TICKS(animationTicks)
+                         : DM1_NEXT_NON_ATTACK_ASPECT_UPDATE_TICKS(animationTicks);
+    return base + (randomBit & 1);
 }
 
 /*
