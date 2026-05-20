@@ -1077,6 +1077,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_hud_interaction_source_lock.py
     )
     add_test(
+        NAME dm1_v2_ui_overlay_affordance_routes_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_ui_overlay_affordance_routes_source_lock.py
+    )
+    add_test(
         NAME dm1_v2_lighting_dynamic_pc34
         COMMAND test_dm1_v2_lighting_dynamic_pc34
     )
