@@ -192,6 +192,7 @@ Status per 2026-05-19 v2.4.0.
   - ✅ Phase 3 slice — HUD champion/action interaction gate source-locked; existing V2 HUD command mirror is now wired into CTest and guarded against bypassing V1 inventory/slot transaction owners (f8b0b54d)
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
   - ✅ Phase 4 slice — V2 lighting palette presentation gate mirrors ReDMCSB-selected DM1 V1 palette indices/thresholds and disables V2-only local effects on invalid source input; full Phase 4 remains open (7a2d4c6b).
+  - ✅ Phase 4 slice — field/projectile effect metadata gate source-locks presentation-only V2 metadata to ReDMCSB projectile, explosion, fluxcage, and field draw ownership without claiming pixel parity (db290990).
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
   - ✅ Phase 5 slice — smooth movement presentation source-lock gate proves camera interpolation is presentation-only after accepted source-style movement and does not mutate V1 timing/cooldown, collision, sensor/event, creature timing, or redraw-cadence owners (2f3442bf).
   - ✅ Phase 5 runtime bridge slice — source-accepted V1 movement/turn ticks can start V2 camera interpolation while preserving source-owned cooldowns, collision, sensors, creature timing, and redraw cadence (e56d271a).
