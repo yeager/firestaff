@@ -166,7 +166,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Save game on quit (DM1_SaveGame)
 - ✅ Load game on Resume (DM1_LoadGame)
 - ✅ Direct auto-save on level change absent/source-locked — ReDMCSB routes ordinary stairs/pits/teleporters through movement/map/sensor paths only; save writes are C140-only
-- 🔧 Multiple save slots — M11 slot-core bookkeeping is source-locked and hardened; full UI/runtime multiple-slot flow remains pending
+- ✅ Multiple save slots — DM1 V1 runtime compatibility is source-locked to one primary save plus automatic .bak fallback (ef9fadd9); ReDMCSB does not support numbered in-game save slots, so any future multi-slot browser must be Firestaff-native UX
 
 ### Audio
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
