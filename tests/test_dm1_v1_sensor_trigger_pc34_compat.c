@@ -1023,6 +1023,41 @@ static void test_wall_and_or_gate_event(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0731: Wall end-game sensor C018 event handling
+ *  Source: TIMELINE.C F0248 lines 1317-1339; DEFS.H line 1283.
+ * ---------------------------------------------------------------- */
+static void test_wall_endgame_event(void) {
+    struct DungeonSensor_Compat sensor;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_END_GAME,
+                         12, DM1_EFFECT_TOGGLE, 0, 1, 1, 3,
+                         0, 6, 7, 2);
+
+    F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+        &sensor, 0, DM1_EFFECT_CLEAR, 3, &result);
+    CHECK(result.triggered == 1, "Wall C018: event triggers end-game sensor");
+    CHECK(result.effectKind == SENSOR_EFFECT_END_GAME, "Wall C018: reports END_GAME effect kind");
+    CHECK(result.resolvedEffect == DM1_EFFECT_NONE, "Wall C018: ignores sensor remote effect");
+    CHECK(result.sensorDisabled == 0, "Wall C018: once-only does not disable in F0248 branch");
+    CHECK(result.endGameGameWon == 1, "Wall C018: marks game won");
+    CHECK(result.endGameRestartGameAllowedCleared == 1, "Wall C018: clears restart permission on DM1 media branch");
+    CHECK(result.endGamePresentationRequested == 1, "Wall C018: requests end-game presentation");
+    CHECK(result.endGameDelayTicks == 180, "Wall C018: optional delay is 60 * sensor value");
+
+    memset(&result, 0, sizeof(result));
+    F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+        &sensor, 2, DM1_EFFECT_SET, 1, &result);
+    CHECK(result.triggered == 1, "Wall C018: unlike projectiles, mismatched event cell still triggers");
+
+    sensor.sensorType = DM1_SENSOR_WALL_COUNTDOWN;
+    memset(&result, 0, sizeof(result));
+    F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+        &sensor, 0, DM1_EFFECT_CLEAR, 0, &result);
+    CHECK(result.triggered == 0, "Wall C018: other wall sensor types are skipped");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0725: Process floor square with multiple sensors
  *  Source: F0276 outer loop
  * ---------------------------------------------------------------- */
@@ -1227,6 +1262,7 @@ int main(void) {
     test_wall_projectile_launcher_square_objects();
     test_effect_dispatch();
     test_wall_and_or_gate_event();
+    test_wall_endgame_event();
     test_process_floor_square();
     test_process_wall_click();
     test_process_wall_click_rotation_per_cell_deferred();

@@ -19,6 +19,8 @@
  *     M039_TYPE, M040_DATA macros (lines 1295-1296)
  *   DATA.C:
  *     G0059_auc_Graphic562_SquareTypeToEventType[7] (line ~470): maps square type -> event type
+ *   TIMELINE.C:
+ *     F0248 lines 1317-1339: C018 end-game wall event sensor branch
  *
  * Design: Pure functions. NO UI, NO rendering, NO world mutation.
  * The caller applies effects to the game state.
@@ -188,6 +190,10 @@ struct SensorTriggerResult_Compat {
     int gateCurrentMask;
     int gateReferenceMask;
     int gateTriggerSetEffect;
+    int endGameGameWon;
+    int endGameRestartGameAllowedCleared;
+    int endGamePresentationRequested;
+    int endGameDelayTicks;
 };
 
 #define SENSOR_TRIGGER_RESULT_MAX 16
@@ -318,5 +324,12 @@ int F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
     int eventCell,
     const struct ProjectileLauncherContext_Compat* ctx,
     struct ProjectileLauncherResult_Compat* outResult);
+
+int F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int sensorCell,
+    int eventEffect,
+    int eventCell,
+    struct SensorTriggerResult_Compat* outResult);
 
 #endif

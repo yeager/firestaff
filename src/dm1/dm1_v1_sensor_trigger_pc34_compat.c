@@ -934,6 +934,45 @@ int F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
 }
 
 /* ================================================================
+ *  F0731 - Event-triggered wall end-game sensor C018
+ *  Source: TIMELINE.C F0248 lines 1317-1339.
+ *
+ *  Unlike projectile launcher sensors, the C018 branch does not test the
+ *  sensor thing cell against the incoming wall event cell. It ignores the
+ *  incoming event effect and the sensor's remote effect/target fields,
+ *  marks the game as won, and enters the end-game presentation path. Some
+ *  media branches clear restart permission and/or apply 60 * Value delay
+ *  before drawing the end-game screen.
+ * ================================================================ */
+int F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    int sensorCell,
+    int eventEffect,
+    int eventCell,
+    struct SensorTriggerResult_Compat* outResult)
+{
+    (void)sensorCell;
+    (void)eventEffect;
+    (void)eventCell;
+
+    if (!sensor || !outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+    outResult->sensorIndex = -1;
+
+    if (sensor->sensorType != DM1_SENSOR_WALL_END_GAME) return 1;
+
+    outResult->triggered = 1;
+    outResult->effectKind = SENSOR_EFFECT_END_GAME;
+    outResult->resolvedEffect = DM1_EFFECT_NONE;
+    outResult->endGameGameWon = 1;
+    outResult->endGameRestartGameAllowedCleared = 1;
+    outResult->endGamePresentationRequested = 1;
+    outResult->endGameDelayTicks = 60 * (int)sensor->value;
+    outResult->delayTicks = outResult->endGameDelayTicks;
+    return 1;
+}
+
+/* ================================================================
  *  F0725 — Process all floor sensors on a square
  *  Source: F0276_SENSOR_ProcessThingAdditionOrRemoval outer loop
  * ================================================================ */
