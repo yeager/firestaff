@@ -92,7 +92,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Light spell (OH IR RA -> source-backed magical light bridge)
 - ✅ Darkness spell (DES IR SAR -> source-backed darkness/recovery bridge)
 - 🔧 Open Door spell (ZO BREU) — projectile door-impact SFX and non-destroyed door hit/toggle runtime behavior are source-locked; remaining polish stays separate
-- ❌ Poison cloud damage over time
+- ✅ Poison cloud damage over time — source-locked cloud ticks now preserve repeated damage, attack decay, +1 tick rescheduling, and no-wound party damage
 - ✅ Spell failure feedback — needs-practice/meaningless feedback metadata and cast-click symbol cleanup are source-locked
 
 ### Champion System
