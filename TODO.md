@@ -129,7 +129,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Food and water drain (1 unit per 6 ticks per champion)
 - ✅ Champion bar color reflects hunger/thirst status
 - 🔧 Food/water depletion → HP damage source-lock/test added; runtime damage-queue integration remains pending
-- ❌ Rest system (sleep to recover, wake on creature approach)
+- ✅ Rest system — source-locked rest/wake command routing, rest recovery multiplier, and forced wake on creature attack before resting-hit damage
 - ❌ Stamina drain from actions
 - ✅ Stamina regeneration — source-locked champion-needs gate covers gain/loss, rest multiplier, idle movement delay bonus, food/water depletion, and stamina overflow damage
 
