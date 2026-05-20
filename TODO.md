@@ -116,7 +116,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
 - ❌ Full inventory panel (8 body slots + 2 hand slots + backpack)
 - 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
-- ❌ Backpack/chest container management
+- 🔧 Backpack/chest container management — PC34 backpack/chest slot namespace, chest open/close visible-slot compaction, and leader-hand/chest slot swap helpers source-locked; runtime panel wiring remains pending
 - ❌ Item identification (scroll reading, potion identification)
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
 - ❌ Potion consumption effects
