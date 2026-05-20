@@ -238,6 +238,7 @@ Status per 2026-05-19 v2.4.0.
 ### Touch Support
 - 🔧 Touch controls config option exists
 - ✅ Entrance/menu click zones and runtime touch dispatch are source-locked from ReDMCSB
+- ✅ DM1 V1 dungeon viewport/main UI touch-route evidence and CTest gate source-locked (7a16e741)
 - ❌ Touch input zones for movement/turning
 - ❌ Touch-based item interaction
 - ❌ Gesture navigation (swipe to turn, tap to move)
