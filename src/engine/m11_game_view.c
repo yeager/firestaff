@@ -9464,36 +9464,11 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
         M11_ViewRect ornRect;
         ornRect.x = faceX;
         ornRect.y = faceY;
-        /* ReDMCSB DUNVIEW.C:3913-3928: champion portrait sensors override
-         * the wall ornament with the champion portrait from graphic C026
-         * (sprite sheet: 8 cols x 3 rows, each portrait 32x29 pixels).
-         * Only drawn on D1C front wall in the original; we draw at any
-         * depth for now since Firestaff uses perspective-scaled rects. */
-        if (cell->championPortraitOrdinal >= 0 && g_drawState && g_drawState->assetsAvailable) {
-            const M11_AssetSlot* portraitSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&g_drawState->assetLoader, 26U);
-            if (portraitSlot && portraitSlot->width > 0 && portraitSlot->height > 0) {
-                /* Portrait sprite sheet coordinates */
-                int portIdx = cell->championPortraitOrdinal;
-                int srcX = (portIdx & 7) * 32;
-                int srcY = (portIdx >> 3) * 29;
-                /* Scale to wall face, centered */
-                int portW = faceW * 40 / 100;
-                int portH = (portW * 29) / 32;
-                if (portH > faceH * 50 / 100) {
-                    portH = faceH * 50 / 100;
-                    portW = (portH * 32) / 29;
-                }
-                int portX = faceX + (faceW - portW) / 2;
-                int portY = faceY + (faceH - portH) / 2;
-                M11_AssetLoader_BlitSubRectScaled(
-                    portraitSlot, framebuffer, framebufferWidth, framebufferHeight,
-                    portX, portY, portW, portH,
-                    srcX, srcY, 32, 29, 0);
-                fprintf(stderr, "MIRROR: champion %d at (%d,%d) %dx%d from sheet (%d,%d)\n",
-                        portIdx, portX, portY, portW, portH, srcX, srcY);
-            }
-        }
+        /* Champion mirror portraits are not perspective-scaled wall-face
+         * ornaments in DM1.  ReDMCSB DUNVIEW.C:3916 blits C026 only into
+         * the fixed D1C portrait-on-wall box {96..127,35..63}; the normal
+         * source wall-ornament pass handles that route.  Keep this debug
+         * procedural wall-face path from drawing a second floating portrait. */
         ornRect.w = faceW;
         ornRect.h = faceH;
         if (g_drawState) {
@@ -9575,6 +9550,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
+        int sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
+                                                          cell->relSide);
         for (ii = 0; ii < itemsToShow; ++ii) {
             if (cell->floorItemTypes[ii] < 0) continue;
             if (!g_drawState ||
@@ -9585,7 +9562,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                       cell->floorItemSubtypes[ii],
                                       cell->floorItemCells[ii], ii,
                                       depthIndex,
-                                      -1)) {
+                                      sourceZoneRow)) {
                 /* Fallback cue only for the first item to avoid clutter */
                 if (ii == 0) {
                     m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
@@ -11194,13 +11171,13 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
                                                      unsigned char* framebuffer,
                                                      int fbW,
                                                      int fbH) {
-    static const int kLineTopY[4] = {41, 52, 68, 79};
+    static const int kLineBottomY[4] = {48, 59, 75, 86};
     char decoded[128];
     char* cursor;
     int line = 0;
     M11_TextStyle inscriptionStyle = g_text_shadow;
-    inscriptionStyle.color = M11_COLOR_MAGENTA;
-    inscriptionStyle.shadowColor = M11_COLOR_DARK_GRAY;
+    inscriptionStyle.color = M11_COLOR_LIGHT_GRAY;
+    inscriptionStyle.shadowColor = M11_COLOR_WHITE;
     if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
         return;
     }
@@ -11213,14 +11190,13 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             *next = '\0';
         }
         if (*cursor) {
-            m11_draw_text_centered_in_rect(framebuffer,
-                                           fbW,
-                                           fbH,
-                                           M11_VIEWPORT_X + 79,
-                                           M11_VIEWPORT_Y + kLineTopY[line],
-                                           65,
-                                           cursor,
-                                           &inscriptionStyle);
+            int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
+            int textX = M11_VIEWPORT_X + 112 - (textW / 2);
+            int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
+            m11_draw_text(framebuffer, fbW, fbH,
+                          textX, textY,
+                          cursor,
+                          &inscriptionStyle);
         }
         if (!next) break;
         *next = saved;
@@ -11469,66 +11445,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                    m11_dm1_f0115_c2500_c2900_row(
                                                        kWallOrnaments[i].relForward,
                                                        kWallOrnaments[i].relSide));
-                }
-                /* ── Inscription text overlay ──
-                 * ReDMCSB DUNVIEW.C:3608-3650: when a D1C front wall
-                 * ornament is an inscription, the engine decodes the
-                 * text-string and draws each character using the
-                 * inscription font (graphic 120/258, 8x8 glyphs).
-                 * Text is centered at viewport X=112 (224px viewport),
-                 * lines positioned at InscriptionLineY[]. */
-                if (cell.inscriptionTextIndex >= 0 &&
-                    kWallOrnaments[i].viewWallIndex == 12 && /* D1C front */
-                    state->world.things &&
-                    state->world.things->textData &&
-                    state->world.things->textStrings &&
-                    cell.inscriptionTextIndex < state->world.things->textStringCount) {
-                    char decoded[96];
-                    unsigned int wordOff =
-                        state->world.things->textStrings[cell.inscriptionTextIndex].textDataWordOffset;
-                    if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
-                            state->world.things->textData,
-                            state->world.things->textDataWordCount,
-                            wordOff, decoded, sizeof(decoded)) >= 0 &&
-                        decoded[0] != '\0') {
-                        /* ReDMCSB InscriptionLineY: {48, 59, 75, 86}.
-                         * Text lines are delimited by '\n' in decoded.
-                         * Each glyph is 8px wide; centered at viewport
-                         * center (112px in 224px viewport). */
-                        static const int kInscLineY[4] = { 48, 59, 75, 86 };
-                        int lineCount = 0;
-                        const char* lines[4] = { NULL, NULL, NULL, NULL };
-                        int lineLens[4] = { 0, 0, 0, 0 };
-                        const char* p = decoded;
-                        int li;
-                        lines[0] = decoded;
-                        while (*p && lineCount < 4) {
-                            if (*p == '\n') {
-                                lineLens[lineCount] = (int)(p - lines[lineCount]);
-                                lineCount++;
-                                if (lineCount < 4) lines[lineCount] = p + 1;
-                            }
-                            p++;
-                        }
-                        if (lineCount < 4) {
-                            lineLens[lineCount] = (int)(p - lines[lineCount]);
-                            lineCount++;
-                        }
-                        for (li = 0; li < lineCount && li < 4; ++li) {
-                            int len = lineLens[li];
-                            int textX = M11_VIEWPORT_X + 112 - (len * 4);
-                            int textY = M11_VIEWPORT_Y + kInscLineY[li] - 4;
-                            /* Build a null-terminated line string */
-                            char lineBuf[72];
-                            if (len > 0 && len < (int)sizeof(lineBuf)) {
-                                memcpy(lineBuf, lines[li], (size_t)len);
-                                lineBuf[len] = '\0';
-                                m11_draw_text(framebuffer, fbW, fbH,
-                                              textX, textY,
-                                              lineBuf, NULL);
-                            }
-                        }
-                    }
                 }
             }
         }
