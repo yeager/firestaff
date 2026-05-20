@@ -445,7 +445,23 @@ if(BUILD_TESTING)
         COMMAND test_touch_pointer_input_pc34_compat_integration
     )
 
+    add_executable(test_dm1_v1_dungeon_view_touch_route_pc34_compat
+        tests/test_dm1_v1_dungeon_view_touch_route_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dungeon_view_touch_route_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dungeon_view_touch_route_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dungeon_view_touch_route_pc34_compat
+        COMMAND test_dm1_v1_dungeon_view_touch_route_pc34_compat
+    )
+
     if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME dm1_v1_dungeon_view_touch_route_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_dungeon_view_touch_route_source_lock.py
+        )
         add_test(
             NAME pass395_touch_queue_integration_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass395_touch_queue_integration.py
