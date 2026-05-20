@@ -3736,8 +3736,15 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.championIndex = state->world.party.activeChampionIndex;
     req.currentMana = (int)champ->mana.current;
     req.maximumMana = (int)champ->mana.maximum;
-    req.skillLevelForSpell = (spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT)
-                                  ? champ->skillLevels[spell.skillIndex] : 0;
+    if (spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT) {
+        req.skillLevelForSpell = champ->skillLevels[spell.skillIndex];
+    } else if (spell.skillIndex >= 0 && spell.skillIndex < LIFECYCLE_SKILL_COUNT) {
+        req.skillLevelForSpell = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            &state->world.lifecycle.champions[state->world.party.activeChampionIndex],
+            spell.skillIndex, 0);
+    } else {
+        req.skillLevelForSpell = 0;
+    }
     req.statisticWisdom = champ->attributes[CHAMPION_ATTR_WISDOM];
     req.luckCurrent = state->world.magic.luckCurrent;
     req.partyDirection = state->world.party.direction;
@@ -5275,6 +5282,18 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state);
  * post-detonation aftermath progresses through its frame sequence
  * rather than freezing at the first burst frame. */
 static void m11_advance_explosions_v1(M11_GameViewState* state);
+static int m11_dm1_projectile_launch_cell(int championCell, int direction);
+
+static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
+                                          int championIndex,
+                                          int subtype,
+                                          int category,
+                                          int kineticEnergy,
+                                          int impactAttack,
+                                          int attackTypeCode,
+                                          int launchCell,
+                                          int launchDirection,
+                                          int stepEnergy);
 
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
@@ -5379,13 +5398,65 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 int sType = (int)e->payload[2];
                 int sPow  = (int)e->payload[3];
                 const char* kindStr = "SPELL";
+                int launchedProjectile = 0;
                 if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
                 else if (sKind == C3_SPELL_KIND_OTHER_COMPAT) kindStr = "ENCHANTMENT";
                 else if (sKind == C1_SPELL_KIND_POTION_COMPAT) kindStr = "POTION";
+                if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT &&
+                    sType == C4_SPELL_TYPE_PROJECTILE_OPEN_DOOR_COMPAT &&
+                    sChamp >= 0 && sChamp < CHAMPION_MAX_PARTY) {
+                    struct ChampionState_Compat* caster = &state->world.party.champions[sChamp];
+                    struct SpellDefinition_Compat spell;
+                    struct SpellEffect_Compat effect;
+                    int stepEnergy;
+                    int launchCell;
+                    int launchDirection;
+                    int skillLevel;
+                    enum { DM1_V1_OPEN_DOOR_TABLE_INDEX = 14 };
+
+                    memset(&spell, 0, sizeof(spell));
+                    memset(&effect, 0, sizeof(effect));
+                    skillLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+                        &state->world.lifecycle.champions[sChamp],
+                        LIFECYCLE_SKILL_AIR, 0);
+                    if (F0752b_MAGIC_LookupSpellByTableIndex_Compat(DM1_V1_OPEN_DOOR_TABLE_INDEX, &spell) &&
+                        F0756_MAGIC_ProduceProjectileEffect_Compat(&spell, sPow,
+                                                                   skillLevel,
+                                                                   &state->world.masterRng,
+                                                                   &effect)) {
+                        /* ReDMCSB MENU.C:1867-1870 produces C0xFF84 from
+                         * ZO/Open Door; CHAMPION.C:2097-2102 then derives
+                         * step energy from MaximumMana and launches through
+                         * F0326/F0212 with attack=90. */
+                        stepEnergy = 10 - (((int)caster->mana.maximum >> 3) < 8
+                                                ? ((int)caster->mana.maximum >> 3)
+                                                : 8);
+                        if (effect.impactAttack < (stepEnergy << 2)) {
+                            effect.impactAttack += 3;
+                            stepEnergy--;
+                        }
+                        if (stepEnergy < 1) stepEnergy = 1;
+                        launchDirection = state->world.party.direction & 3;
+                        launchCell = m11_dm1_projectile_launch_cell(sChamp & 3,
+                                                                    launchDirection);
+                        launchedProjectile = m11_spawn_action_projectile_ex(
+                            state,
+                            sChamp,
+                            PROJECTILE_SUBTYPE_OPEN_DOOR,
+                            PROJECTILE_CATEGORY_MAGICAL,
+                            effect.impactAttack,
+                            90,
+                            COMBAT_ATTACK_MAGIC,
+                            launchCell,
+                            launchDirection,
+                            stepEnergy);
+                    }
+                }
                 m11_log_event(state, M11_COLOR_CYAN,
-                              "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)",
+                              "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d%s)",
                               (unsigned int)state->world.gameTick,
-                              kindStr, sType, sPow);
+                              kindStr, sType, sPow,
+                              launchedProjectile ? ", LAUNCHED" : "");
                 /* Award magic XP to the casting champion */
                 m11_award_magic_xp(state, sChamp, sKind, sPow);
                 break;

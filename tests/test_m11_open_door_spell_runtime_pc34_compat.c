@@ -9,6 +9,10 @@
  *     C10_EVENT_DOOR / C02_EFFECT_TOGGLE for GameTime+1.
  *   PROJEXPL.C lines 491-508 and 1554-1599: the normal door-destruction
  *     branch is separate and is not used by OPEN_DOOR.
+ *   COMMAND.C lines 473-483 and 2302-2307 plus CLIKMENU.C lines 484-497:
+ *     the spell-area cast zone routes through F0408 before the F0412 cast.
+ *   CHAMPION.C lines 2097-2102: F0327 derives projectile step energy
+ *     from MaximumMana and calls F0326/F0212 with attack 90.
  */
 
 #include "m11_game_view.h"
@@ -151,11 +155,65 @@ static void test_open_door_projectile_schedules_delayed_toggle_and_animates(void
     ASSERT_EQ(mapTiles[1] & 0x07, 3, "first delayed animation step opens door one state");
 }
 
+static void test_open_door_ui_cast_launches_source_projectile(void) {
+    M11_GameViewState state;
+    struct ProjectileInstance_Compat* projectile;
+
+    memset(&state, 0, sizeof(state));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.gameTick = 40;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].mana.current = 80;
+    state.world.party.champions[0].mana.maximum = 80;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "spell panel opens");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "LO power rune entered");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1, "ZO element rune entered");
+
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "ZO/Open Door cast consumed");
+    ASSERT_EQ(state.spellPanelOpen, 0, "cast closes source spell panel");
+    ASSERT_EQ(state.spellBuffer.runeCount, 0, "cast clears source rune buffer");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "Open Door UI cast launches one live projectile");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "Open Door UI cast schedules first projectile move");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_PROJECTILE_MOVE,
+              "first projectile move is scheduled");
+
+    projectile = &state.world.projectiles.entries[0];
+    ASSERT_EQ(projectile->projectileSubtype, PROJECTILE_SUBTYPE_OPEN_DOOR,
+              "projectile subtype is Open Door");
+    ASSERT_EQ(projectile->projectileCategory, PROJECTILE_CATEGORY_MAGICAL,
+              "projectile category is magical");
+    ASSERT_EQ(projectile->attack, 90, "F0327 launches spell projectile with attack 90");
+    ASSERT_EQ(projectile->kineticEnergy, 84,
+              "Open Door kinetic energy uses doubled Air skill formula");
+    ASSERT_EQ(projectile->stepEnergy, 2,
+              "step energy derived from champion maximum mana");
+    ASSERT_EQ(projectile->direction, 1, "launch direction follows party direction");
+    ASSERT_EQ(state.world.timeline.events[0].aux3, PROJECTILE_SUBTYPE_OPEN_DOOR,
+              "timeline carries Open Door subtype");
+}
+
 int main(void) {
     printf("=== M11 Open Door Spell Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C Open Door projectile; PROJEXPL.C door impact C10/C02 toggle branch\n\n");
 
     test_open_door_projectile_schedules_delayed_toggle_and_animates();
+    test_open_door_ui_cast_launches_source_projectile();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
