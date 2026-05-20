@@ -63,7 +63,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Creature type-specific behavior (Giggler steal, Ghost non-material, etc.)
 - ❌ Creature group spawning (C006 floor sensor group generator)
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
-- 🔧 Creature sound effects source-index fallback lanes are source-locked (runtime trigger coverage still pending)
+- 🔧 Creature sound effects attack/movement ordinals are source-locked (runtime trigger coverage still pending)
 - ❌ Creature flee behavior (low HP retreat)
 
 ### Combat
