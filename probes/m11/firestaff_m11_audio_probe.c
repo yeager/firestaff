@@ -4,11 +4,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 typedef struct {
     int total;
     int passed;
 } ProbeTally;
+
+static int probe_setenv(const char* name, const char* value) {
+#ifdef _WIN32
+    return SetEnvironmentVariableA(name, value) ? 0 : -1;
+#else
+    return setenv(name, value, 1);
+#endif
+}
+
+static int probe_unsetenv(const char* name) {
+#ifdef _WIN32
+    return SetEnvironmentVariableA(name, NULL) ? 0 : -1;
+#else
+    return unsetenv(name);
+#endif
+}
 
 static void probe_record(ProbeTally* tally,
                          const char* id,
@@ -91,8 +110,8 @@ int main(void) {
         }
     }
     if (packFixtureReady) {
-        setenv("FIRESTAFF_SOUND_PACK_DIR", packDir, 1);
-        setenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3", "1", 1);
+        probe_setenv("FIRESTAFF_SOUND_PACK_DIR", packDir);
+        probe_setenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3", "1");
     }
 
     /* INV 01: Init succeeds (may get SDL3 backend or fallback) */
@@ -200,8 +219,8 @@ int main(void) {
     M11_Audio_Shutdown(&state);
 
     if (packFixtureReady) {
-        unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
-        unsetenv("FIRESTAFF_SOUND_PACK_DIR");
+        probe_unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
+        probe_unsetenv("FIRESTAFF_SOUND_PACK_DIR");
         unlink(packPath);
     }
     if (packDir) rmdir(packDir);
