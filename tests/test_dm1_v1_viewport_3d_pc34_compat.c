@@ -490,6 +490,80 @@ static void test_projectile_occlusion_zone_mapping(void)
 }
 
 
+static void test_explosion_occlusion_zone_mapping(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int source_id;
+        int depth;
+        int row;
+        int field_aspect;
+        int rebirth_row;
+        int d0c_zone;
+        int centered_zone;
+        int cell0_zone;
+        int cell1_zone;
+        int rebirth1_zone;
+        int rebirth2_zone;
+        const char *line_needle;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D0C,   0, 0, 14, 13, 11, 4, -1,   -1,   -1, 3011,   -1, "6031" },
+        { DM1_VIEW_SQUARE_D0L,   1, 0, 15, 14, -1, -1, 3029, 3061, 3062, -1,   -1, "6106" },
+        { DM1_VIEW_SQUARE_D0R,   2, 0, 16, 15, -1, -1, 3030, 3063, 3064, -1,   -1, "6106" },
+        { DM1_VIEW_SQUARE_D1C,   3, 1, 11, 10,  8, -1, 3025, 3053, 3054, 3008, 3015, "5983" },
+        { DM1_VIEW_SQUARE_D1L,   4, 1, 12, 11,  9, -1, 3026, 3055, 3056, 3009, 3016, "5983" },
+        { DM1_VIEW_SQUARE_D1R,   5, 1, 13, 12, 10, -1, 3027, 3057, 3058, 3010, 3017, "5983" },
+        { DM1_VIEW_SQUARE_D2C,   6, 2,  8,  7,  5, -1, 3022, 3047, 3048, 3005, 3012, "5983" },
+        { DM1_VIEW_SQUARE_D2L,   7, 2,  9,  8,  6, -1, 3023, 3049, 3050, 3006, 3013, "5983" },
+        { DM1_VIEW_SQUARE_D2R,   8, 2, 10,  9,  7, -1, 3024, 3051, 3052, 3007, 3014, "5983" },
+        { DM1_VIEW_SQUARE_D3C,  11, 3,  3,  2,  0, -1, 3017, 3037, 3038, 3000, 3007, "5983" },
+        { DM1_VIEW_SQUARE_D3L,  12, 3,  4,  3,  1, -1, 3018, 3039, 3040, 3001, 3008, "5983" },
+        { DM1_VIEW_SQUARE_D3R,  13, 3,  5,  4,  2, -1, 3019, 3041, 3042, 3002, 3009, "5983" },
+        { DM1_VIEW_SQUARE_D3L2, 14, 3,  6,  0,  3, -1, 3020, 3043, 3044, 3003, 3010, "5983" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 3,  7,  1,  4, -1, 3021, 3045, 3046, 3004, 3011, "5983" },
+        { DM1_VIEW_SQUARE_D4C,  16, 4,  0, -1, -1, -1, 3014, 3031, 3032, -1,   -1, "6106" },
+        { DM1_VIEW_SQUARE_D4L,  17, 4,  1, -1, -1, -1, 3015, 3033, 3034, -1,   -1, "6106" },
+        { DM1_VIEW_SQUARE_D4R,  18, 4,  2, -1, -1, -1, 3016, 3035, 3036, -1,   -1, "6106" },
+    };
+
+    check_int("explosion_occlusion.count", (int)dm1_viewport_3d_explosion_occlusion_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportExplosionOcclusionSpec *spec = dm1_viewport_3d_get_explosion_occlusion_spec_for_square(expected[i].square);
+        char id[112];
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.source_id", i);
+        check_int(id, spec->redmcsb_view_square_id, expected[i].source_id);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.depth", i);
+        check_int(id, spec->view_depth, expected[i].depth);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.g2034_row", i);
+        check_int(id, spec->g2034_row, expected[i].row);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.g2035_field_aspect", i);
+        check_int(id, spec->g2035_field_aspect, expected[i].field_aspect);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.rebirth_row", i);
+        check_int(id, spec->rebirth_row, expected[i].rebirth_row);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.d0c_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_d0c_pattern_zone(spec), expected[i].d0c_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.centered_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_centered_zone(spec), expected[i].centered_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.cell0_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_two_cell_zone(spec, 0), expected[i].cell0_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.cell1_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_two_cell_zone(spec, 1), expected[i].cell1_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.rebirth1_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_rebirth_step1_zone(spec), expected[i].rebirth1_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.rebirth2_zone", i);
+        check_int(id, dm1_viewport_3d_explosion_rebirth_step2_zone(spec), expected[i].rebirth2_zone);
+        snprintf(id, sizeof(id), "explosion_occlusion.%zu.source", i);
+        check_int(id, strstr(spec->source_lines, expected[i].line_needle) != NULL, 1);
+    }
+    check_int("explosion_occlusion.d2l2_regular_unsupported", dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D2L2) == NULL, 1);
+    check_int("explosion_occlusion.out_of_range", dm1_viewport_3d_get_explosion_occlusion_spec(17) == NULL, 1);
+    check_int("explosion_occlusion.null_zone", dm1_viewport_3d_explosion_centered_zone(NULL), -1);
+    check_int("explosion_occlusion.bad_cell", dm1_viewport_3d_explosion_two_cell_zone(dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D3C), 2), -1);
+}
+
 static void test_projectile_wall_zone_movement_visibility_gate(void)
 {
     struct ProjectileInstance_Compat projectile;
@@ -960,6 +1034,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
     check_int("source_evidence.floor_field_order", strstr(e, "stairs/pit/floor-ornament/F0115/teleporter-field order") != NULL, 1);
     check_int("source_evidence.d0c_field_order", strstr(e, "8241-8308") != NULL, 1);
+    check_int("source_evidence.explosion_zone_mapping", strstr(e, "PC34 explosion viewport zones") != NULL, 1);
     check_int("source_evidence.d3r_field_order", strstr(e, "6514-6638") != NULL, 1);
     check_int("source_evidence.d3r2_field_order", strstr(e, "6304-6356") != NULL, 1);
     check_int("source_evidence.d2l2_no_thing_pass", strstr(e, "6846-6865") != NULL && strstr(e, "no F0115 thing pass") != NULL, 1);
@@ -1001,6 +1076,7 @@ int main(void)
     test_wall_draw_uses_clip_gate_source_offsets();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
+    test_explosion_occlusion_zone_mapping();
     test_projectile_wall_zone_movement_visibility_gate();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();

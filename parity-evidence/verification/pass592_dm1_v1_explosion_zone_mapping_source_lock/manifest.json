@@ -1,0 +1,25 @@
+{
+  "schema": "pass592_dm1_v1_explosion_zone_mapping_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS592_DM1_V1_EXPLOSION_ZONE_MAPPING_SOURCE_LOCKED",
+  "claim": "DM1 V1 PC34 viewport explosion zone routing is source-locked for D0C pattern, centered, two-cell, and rebirth overlay paths.",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceAnchors": [
+    { "file": "DUNVIEW.C", "lines": "370-377", "functions": "MEDIA720 viewport mapping tables G2026/G2027/G2028/G2034/G2035" },
+    { "file": "DUNVIEW.C", "lines": "5915-6137", "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF" },
+    { "file": "DEFS.H", "lines": "3749,4232-4235", "constants": "C004_ZONE_EXPLOSION_PATTERN_D0C, C3000_ZONE_, C3007_ZONE_, C3014_ZONE_, C3031_ZONE_" }
+  ],
+  "firestaffChecks": [
+    "DM1_ViewportExplosionOcclusionSpec encodes G2034 regular explosion rows, G2035 field aspects, and G2028 rebirth rows for every PC34 view square with a regular explosion zone.",
+    "test_dm1_v1_viewport_3d_pc34_compat validates C004 D0C pattern zone, C3014 centered zones, C3031 two-cell zones, and C3000/C3007 rebirth step zones."
+  ],
+  "nonClaims": [
+    "Does not claim pixel parity against DOS captures.",
+    "Does not change movement, collision, creature-specials, or projectile lifecycle behavior.",
+    "Does not edit TODO.md."
+  ],
+  "verificationRuns": [
+    { "command": "cmake --build build-dm1v1-finish-viewport-walls-20260520-2254 --target test_dm1_v1_viewport_3d_pc34_compat", "passed": true },
+    { "command": "ctest --test-dir build-dm1v1-finish-viewport-walls-20260520-2254 -R dm1_v1_viewport_3d_source_lock --output-on-failure", "passed": true }
+  ]
+}

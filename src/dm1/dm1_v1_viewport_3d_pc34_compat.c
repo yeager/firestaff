@@ -132,6 +132,26 @@ static const DM1_ViewportProjectileOcclusionSpec s_projectile_occlusion_specs[] 
     { DM1_VIEW_SQUARE_D3R2, 15, 3,  4, "DEFS.H:2611; DUNVIEW.C:373,5672-5673,5683,5710-5715,5881-5883" },
 };
 
+static const DM1_ViewportExplosionOcclusionSpec s_explosion_occlusion_specs[] = {
+    { DM1_VIEW_SQUARE_D0C,   0, 0, 14, 13, 11, true,  "DEFS.H:2596,3749,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6031-6071,6094-6129" },
+    { DM1_VIEW_SQUARE_D0L,   1, 0, 15, 14, -1, false, "DEFS.H:2597,4234-4235; DUNVIEW.C:376-377,5920-5923,6106-6129" },
+    { DM1_VIEW_SQUARE_D0R,   2, 0, 16, 15, -1, false, "DEFS.H:2598,4234-4235; DUNVIEW.C:376-377,5920-5923,6106-6129" },
+    { DM1_VIEW_SQUARE_D1C,   3, 1, 11, 10,  8, false, "DEFS.H:2599,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D1L,   4, 1, 12, 11,  9, false, "DEFS.H:2600,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D1R,   5, 1, 13, 12, 10, false, "DEFS.H:2601,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D2C,   6, 2,  8,  7,  5, false, "DEFS.H:2602,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D2L,   7, 2,  9,  8,  6, false, "DEFS.H:2603,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D2R,   8, 2, 10,  9,  7, false, "DEFS.H:2604,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D3C,  11, 3,  3,  2,  0, false, "DEFS.H:2607,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D3L,  12, 3,  4,  3,  1, false, "DEFS.H:2608,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D3R,  13, 3,  5,  4,  2, false, "DEFS.H:2609,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D3L2, 14, 3,  6,  0,  3, false, "DEFS.H:2610,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D3R2, 15, 3,  7,  1,  4, false, "DEFS.H:2611,4232-4235; DUNVIEW.C:373,376-377,5920-5923,5983-6000,6094-6129" },
+    { DM1_VIEW_SQUARE_D4C,  16, 4,  0, -1, -1, false, "DEFS.H:2612,4234-4235; DUNVIEW.C:376-377,5920-5923,6106-6129" },
+    { DM1_VIEW_SQUARE_D4L,  17, 4,  1, -1, -1, false, "DEFS.H:2613,4234-4235; DUNVIEW.C:376-377,5920-5923,6106-6129" },
+    { DM1_VIEW_SQUARE_D4R,  18, 4,  2, -1, -1, false, "DEFS.H:2614,4234-4235; DUNVIEW.C:376-377,5920-5923,6106-6129" },
+};
+
 static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349, "DUNVIEW.C:6270 floor ornament under far rear pass", "DUNVIEW.C:6271 pass1 rear cells before far door", "DUNVIEW.C:6272 no separate far frame; F0111 draws C3700_ZONE_DOOR_D3L2", NULL, "DUNVIEW.C:6272 F0111 door bitmap/ornament", "DUNVIEW.C:6273-6286 pass2 front cells after door" },
     { DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439, "DUNVIEW.C:6337 floor ornament under mirrored far rear pass", "DUNVIEW.C:6338 pass1 rear cells before far door", "DUNVIEW.C:6339 no separate far frame; F0111 draws C3710_ZONE_DOOR_D3R2", NULL, "DUNVIEW.C:6339 F0111 door bitmap/ornament", "DUNVIEW.C:6340-6353 pass2 front cells after door" },
@@ -982,6 +1002,55 @@ bool dm1_viewport_3d_projectile_visible_after_wall_case(const DM1_ViewportWallDr
     return front_alcove && wall->front_alcove_reveals_contents;
 }
 
+size_t dm1_viewport_3d_explosion_occlusion_spec_count(void)
+{
+    return sizeof(s_explosion_occlusion_specs) / sizeof(s_explosion_occlusion_specs[0]);
+}
+
+const DM1_ViewportExplosionOcclusionSpec *dm1_viewport_3d_get_explosion_occlusion_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_explosion_occlusion_spec_count()) return NULL;
+    return &s_explosion_occlusion_specs[index];
+}
+
+const DM1_ViewportExplosionOcclusionSpec *dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_explosion_occlusion_spec_count(); ++i) {
+        if (s_explosion_occlusion_specs[i].square == square) return &s_explosion_occlusion_specs[i];
+    }
+    return NULL;
+}
+
+int dm1_viewport_3d_explosion_d0c_pattern_zone(const DM1_ViewportExplosionOcclusionSpec *spec)
+{
+    if (!spec || !spec->d0c_pattern_zone) return -1;
+    return 4;
+}
+
+int dm1_viewport_3d_explosion_centered_zone(const DM1_ViewportExplosionOcclusionSpec *spec)
+{
+    if (!spec || spec->d0c_pattern_zone || spec->g2034_row < 0) return -1;
+    return 3014 + spec->g2034_row;
+}
+
+int dm1_viewport_3d_explosion_two_cell_zone(const DM1_ViewportExplosionOcclusionSpec *spec, unsigned char front_cell)
+{
+    if (!spec || spec->d0c_pattern_zone || spec->g2034_row < 0 || front_cell > 1) return -1;
+    return 3031 + ((int)spec->g2034_row * 2) + front_cell;
+}
+
+int dm1_viewport_3d_explosion_rebirth_step1_zone(const DM1_ViewportExplosionOcclusionSpec *spec)
+{
+    if (!spec || spec->rebirth_row < 0) return -1;
+    return 3000 + spec->rebirth_row;
+}
+
+int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOcclusionSpec *spec)
+{
+    if (!spec || spec->d0c_pattern_zone || spec->rebirth_row < 0) return -1;
+    return 3007 + spec->rebirth_row;
+}
+
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
 {
     return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);
@@ -1095,6 +1164,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
         "  DUNVIEW.C:373,5667-5683 projectile occlusion via G2028 row and C2900 zone mapping; D3 front cells/D0 back cells clipped\n"
         "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"
+        "  DUNVIEW.C:373-377,5920-6129; DEFS.H:3749,4232-4235 PC34 explosion viewport zones: C004 D0C pattern, C3000/C3007 rebirth rows, C3014 centered rows, C3031 two-cell rows\n"
         "  DUNVIEW.C:6237-6289 D3L2 stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:6375-6495 D3L stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
         "  DUNVIEW.C:6514-6638 D3R stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"

@@ -270,6 +270,22 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportProjectileOcclusionSpec;
 
+/* PC34/I34E explosion viewport-zone contract for F0115.  ReDMCSB maps
+ * MEDIA720 view-square ids through G2034/G2035, uses C004 for the D0C full
+ * viewport explosion pattern, C3014/C3031 rows for centered/two-cell normal
+ * explosions, and C3000/C3007 rows for rebirth step overlays.
+ * Source: DUNVIEW.C:373-377, 5915-6137; DEFS.H:3749,4232-4235. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int8_t redmcsb_view_square_id;
+    int8_t view_depth;
+    int8_t g2034_row;
+    int8_t g2035_field_aspect;
+    int8_t rebirth_row;
+    bool d0c_pattern_zone;
+    const char *source_lines;
+} DM1_ViewportExplosionOcclusionSpec;
+
 /* Door-front occlusion contract for ReDMCSB F0116/F0118/F0121/F0124
  * front-door branches: rear cells are drawn with F0115 before the frame and
  * door bitmap, then front cells are drawn with a second F0115 pass after the
@@ -671,6 +687,14 @@ int dm1_viewport_3d_projectile_zone_for_cell(const DM1_ViewportProjectileOcclusi
 int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectileOcclusionSpec *spec, unsigned char view_cell);
 bool dm1_viewport_3d_projectile_visible_after_wall_case(const DM1_ViewportWallDrawSpec *wall,
                                                         bool front_alcove);
+size_t dm1_viewport_3d_explosion_occlusion_spec_count(void);
+const DM1_ViewportExplosionOcclusionSpec *dm1_viewport_3d_get_explosion_occlusion_spec(size_t index);
+const DM1_ViewportExplosionOcclusionSpec *dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+int dm1_viewport_3d_explosion_d0c_pattern_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
+int dm1_viewport_3d_explosion_centered_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
+int dm1_viewport_3d_explosion_two_cell_zone(const DM1_ViewportExplosionOcclusionSpec *spec, unsigned char front_cell);
+int dm1_viewport_3d_explosion_rebirth_step1_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
+int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
