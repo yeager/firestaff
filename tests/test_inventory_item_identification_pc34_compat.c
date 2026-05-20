@@ -57,6 +57,25 @@ static int expect_weapon_description(unsigned int cursed,
     return 1;
 }
 
+static int expect_weight_line(unsigned int weightTenths,
+                              const char* expectedText,
+                              unsigned int expectedWhole,
+                              unsigned int expectedTenths) {
+    char text[32];
+    InventoryObjectWeightLinePc34Compat description;
+    if (!INVENTORY_Compat_FormatObjectWeightLine(weightTenths, text, sizeof(text), &description)) {
+        return 0;
+    }
+    if (strcmp(text, expectedText) != 0) return 0;
+    if (description.weightTenths != weightTenths) return 0;
+    if (description.wholeKilograms != expectedWhole) return 0;
+    if (description.tenthsKilograms != expectedTenths) return 0;
+    if (!description.sourceEvidence || strstr(description.sourceEvidence, "PANEL.C:1444-1469") == NULL) return 0;
+    if (strstr(description.sourceEvidence, "DUNGEON.C:1082-1133") == NULL) return 0;
+    if (strstr(description.sourceEvidence, "CHAMDRAW.C:349-392") == NULL) return 0;
+    return 1;
+}
+
 int main(void) {
     int ok = 1;
     char tiny[4];
@@ -93,6 +112,12 @@ int main(void) {
     if (INVENTORY_Compat_FormatWeaponEyeDescription(DM1_THING_TYPE_JUNK, 1u, 1u, 1u,
                                                     "APPLE", name, sizeof(name), attributes,
                                                     sizeof(attributes), NULL) != 0) ok = 0;
+
+    ok &= expect_weight_line(0u, "WEIGHS 0.0 KG.", 0u, 0u);
+    ok &= expect_weight_line(1u, "WEIGHS 0.1 KG.", 0u, 1u);
+    ok &= expect_weight_line(50u, "WEIGHS 5.0 KG.", 5u, 0u);
+    ok &= expect_weight_line(123u, "WEIGHS 12.3 KG.", 12u, 3u);
+    if (INVENTORY_Compat_FormatObjectWeightLine(123u, tiny, sizeof(tiny), NULL) != 0) ok = 0;
 
     printf("inventoryItemIdentificationInvariantOk=%d\n", ok);
     return ok ? 0 : 1;

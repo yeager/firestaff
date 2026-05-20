@@ -17,6 +17,13 @@ typedef struct InventoryWeaponEyeDescriptionPc34Compat {
     const char* sourceEvidence;
 } InventoryWeaponEyeDescriptionPc34Compat;
 
+typedef struct InventoryObjectWeightLinePc34Compat {
+    unsigned int weightTenths;
+    unsigned int wholeKilograms;
+    unsigned int tenthsKilograms;
+    const char* sourceEvidence;
+} InventoryObjectWeightLinePc34Compat;
+
 unsigned int INVENTORY_Compat_PotionEyeShowsPowerPrefix(unsigned int thingType,
                                                        unsigned int iconIndex,
                                                        unsigned int priestSkillLevel);
@@ -43,6 +50,10 @@ int INVENTORY_Compat_FormatWeaponEyeDescription(unsigned int thingType,
                                                 char* outAttributeText,
                                                 size_t outAttributeTextSize,
                                                 InventoryWeaponEyeDescriptionPc34Compat* outDescription);
+int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
+                                            char* outText,
+                                            size_t outTextSize,
+                                            InventoryObjectWeightLinePc34Compat* outDescription);
 const char* INVENTORY_Compat_GetItemIdentificationEvidence(void);
 
 #endif

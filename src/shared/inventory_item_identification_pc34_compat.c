@@ -20,6 +20,8 @@ static const char* kItemIdentificationEvidence =
     "ReDMCSB source lock: PANEL.C:1055-1138 F0342 routes scrolls to F0341, containers to F0333, and other leader-hand objects to object descriptions; PANEL.C:1182-1191 prefixes non-water-flask potion names with '_' + Power/40 when the inventory champion Priest skill is > 1, then falls back to G0352 object names otherwise; PANEL.C:1198-1200 prints the description and icon; PANEL.C:1276-1294 marks potions consumable through G0237 object info; DUNGEON.C:83-98 and 103 define potion object-info icon rows including water flask C163 and empty flask C195; DUNGEON.C:1157-1158 maps potion things to C002 + Potion.Type; OBJECT.C:25-119 loads G0352 object names.";
 static const char* kWeaponIdentificationEvidence =
     "ReDMCSB source lock: PANEL.C:1126-1138 F0342 fetches object data, clears the panel, rejects scroll/container branches, and enters object-description mode; PANEL.C:1189-1200 uses G0352 object names for non-potion objects and prints the description/icon; PANEL.C:235-317 F0336 counts matching potential/actual description bits and builds a parenthesized attribute string in bit order with comma/AND joins; PANEL.C:1250-1254 gives weapons potential CURSED|POISONED|BROKEN and actual Cursed<<3 | Poisoned<<1 | Broken<<2; PANEL.C:1420-1427 draws the built attribute line when any potential bit is set; DUNGEON.C:1153-1154 maps weapon things to C023 + Weapon.Type; OBJECT.C:25-119 loads G0352 object names.";
+static const char* kObjectWeightLineEvidence =
+    "ReDMCSB source lock: PANEL.C:1444-1469 appends the eye-panel weight line after type-specific attribute/state lines as WEIGHS + F0140_DUNGEON_GetObjectWeight/10 + decimal separator + remainder + ' KG.'; DUNGEON.C:1082-1133 F0140 returns object weights in tenths of kilograms for weapons, armour, junk, containers including contents, potions, and scrolls; CHAMDRAW.C:349-392 F0288 emits unpadded decimal digits when padding is false.";
 
 static int append_text(char* outText, size_t outTextSize, size_t* used, const char* text) {
     int written;
@@ -152,6 +154,31 @@ int INVENTORY_Compat_FormatWeaponEyeDescription(unsigned int thingType,
         outDescription->potentialAttributesMask = potentialMask;
         outDescription->actualAttributesMask = actualMask;
         outDescription->sourceEvidence = kWeaponIdentificationEvidence;
+    }
+    return 1;
+}
+
+int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
+                                            char* outText,
+                                            size_t outTextSize,
+                                            InventoryObjectWeightLinePc34Compat* outDescription) {
+    int written;
+    const unsigned int whole = weightTenths / 10u;
+    const unsigned int tenths = weightTenths - (whole * 10u);
+    if (!outText || outTextSize == 0u) {
+        return 0;
+    }
+
+    written = snprintf(outText, outTextSize, "WEIGHS %u.%u KG.", whole, tenths);
+    if (written < 0 || (size_t)written >= outTextSize) {
+        return 0;
+    }
+
+    if (outDescription) {
+        outDescription->weightTenths = weightTenths;
+        outDescription->wholeKilograms = whole;
+        outDescription->tenthsKilograms = tenths;
+        outDescription->sourceEvidence = kObjectWeightLineEvidence;
     }
     return 1;
 }
