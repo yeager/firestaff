@@ -75,5 +75,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "1.7.6";
+    return "2.4.1";
 }
