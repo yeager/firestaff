@@ -1168,6 +1168,14 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME m11_title_song_live_sdl_dummy_source_lock
+        COMMAND firestaff_m11_pass54_song_runtime_probe --expect-sdl-title-queue
+    )
+    set_tests_properties(m11_title_song_live_sdl_dummy_source_lock PROPERTIES
+        ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
+    )
+
+    add_test(
         NAME m11_viewport_state
         COMMAND firestaff_m11_viewport_state_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/viewport-state
     )
