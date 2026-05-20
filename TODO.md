@@ -113,7 +113,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Item throwing (throw into dungeon, creates projectile)
 - ✅ Torch fuel tracking + light power calculation
 - ✅ Torch burns out → extinguish
-- 🔧 Floor item pickup — partially (alcoves yes, floor scatter limited)
+- 🔧 Floor item pickup — partially: ReDMCSB source-lock now gates floor pickup by rendered grabbable object cells; runtime still needs viewport grabbable mask / pile-top wiring before marking done
 - ❌ Full inventory panel (8 body slots + 2 hand slots + backpack)
 - ❌ Equip/unequip items to body slots
 - ❌ Backpack/chest container management
