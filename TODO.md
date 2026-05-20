@@ -104,7 +104,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Resurrection system (dm1_v1_resurrection_pc34_compat)
 - 🔧 Champion stats panel — exists but not fully interactive
 - ❌ Champion stat screen (full F0340 display with all attributes)
-- ❌ Champion weight/load system (encumbrance)
+- 🔧 Champion weight/load system (encumbrance) — F0306/F0309/F0310 max-load and movement-cost core source-locked
 - ❌ Champion stamina regeneration rate tied to load
 
 ### Inventory & Items
