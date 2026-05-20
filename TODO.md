@@ -169,7 +169,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Audio
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
-- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including queued SDL source-index playback gate and Open Door projectile door-impact SFX; party footsteps are provenance-locked absent in DM1 V1
+- ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including queued SDL source-index playback gate, Open Door projectile door-impact SFX, and source-silent CALM/BRANDISH/CONFUSE action cues; party footsteps are provenance-locked absent in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
 - ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
 
