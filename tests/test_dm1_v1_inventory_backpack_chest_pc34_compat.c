@@ -69,6 +69,12 @@ int main(void) {
     ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item);
     ok &= expect_item_type("same chest open preserves edited slot", &item, 999);
 
+    ok &= expect_int("pc34 source setter writes open chest slot",
+                     m11_inventory_set_item_in_pc34_source_slot(&state, 0, DM1_PC34_SLOT_CHEST_8,
+                                                                555, 1, 2, DM1_PC34_ALLOWED_CONTAINER), 1);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 7, &item);
+    ok &= expect_item_type("pc34 source getter reads written chest slot", &item, 555);
+
     ok &= m11_inventory_set_mouse_item(&state, 0, 300, 4, 0, DM1_PC34_ALLOWED_CONTAINER);
     ok &= expect_int("container-compatible leader hand swaps into chest", m11_inventory_click_pc34_source_slot(&state, 0, DM1_PC34_SLOT_CHEST_3), 1);
     ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 2, &item);
@@ -93,7 +99,8 @@ int main(void) {
     ok &= expect_int("open chest cleared", m11_inventory_get_open_chest_thing(&state, 0), 0);
     ok &= expect_item_type("closed slot 0 preserves edited first slot", &closed[0], 999);
     ok &= expect_item_type("closed list skips empty chest slot", &closed[1], 201);
-    ok &= expect_item_type("closed list preserves later order", &closed[6], 207);
+    ok &= expect_item_type("closed list preserves later order", &closed[5], 206);
+    ok &= expect_item_type("closed list includes pc34-set chest item", &closed[6], 555);
     ok &= expect_int("closed chest no longer exposes panel slots", m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item), 0);
 
     printf("inventoryBackpackChestInvariantOk=%d\n", ok ? 1 : 0);

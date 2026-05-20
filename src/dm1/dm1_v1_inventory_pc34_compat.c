@@ -287,12 +287,18 @@ int m11_inventory_get_mouse_item(const M11_InventoryState* s, int champ, M11_Ite
 int m11_inventory_set_item_in_pc34_source_slot(M11_InventoryState* s, int champ,
                                                int pc34Slot, int itemType, int weight,
                                                int charges, int allowedSlots) {
-    const int storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    if (!s || champ < 0 || champ >= s->championCount || storageSlot < 0) {
+    M11_Item* slot = m11_inventory_pc34_mutable_slot(s, champ, pc34Slot);
+    if (!slot) {
         return 0;
     }
-    return m11_inventory_set_item_with_allowed_slots(s, champ, storageSlot,
-                                                     itemType, weight, charges, allowedSlots);
+    slot->itemType = itemType;
+    slot->weight = weight;
+    slot->charges = charges;
+    slot->cursed = 0;
+    slot->identified = 0;
+    slot->allowedSlots = allowedSlots;
+    m11_inventory_recalc_load(s, champ);
+    return 1;
 }
 
 int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int champ,
