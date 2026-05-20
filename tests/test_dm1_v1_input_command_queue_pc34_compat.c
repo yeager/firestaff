@@ -136,6 +136,25 @@ int main(void)
     ok &= expect_int("locked primary action replay command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
     ok &= expect_int("locked primary action queued", peek.command, DM1_V1_COMMAND_CLICK_IN_ACTION_AREA);
 
+    /* Pass608: a pending click outside both active mouse tables is replayed
+     * exactly once and remains a no-op. Source lock: COMMAND.C:1692-1707
+     * F0360 clears G0436 before forwarding the saved click to F0359;
+     * COMMAND.C:1641-1651 only enqueues when primary/secondary table lookup
+     * returns a non-C000 command. Existing pass388 runtime capture proves the
+     * original pending replay hook is the source-owned route boundary. */
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("locked no-op pending stored",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 226, 180, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("locked no-op pending command", queue.pendingClickCommand, DM1_V1_COMMAND_NONE);
+    queue.locked = 0;
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("locked no-op pending replayed once", result.pendingReplayCount, 1);
+    ok &= expect_int("locked no-op pending cleared", queue.pendingClickPresent, 0);
+    ok &= expect_int("locked no-op pending leaves queue empty", (int)queue.count, 0);
+    ok &= expect_int("locked no-op pending has no peek", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 0);
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("left button bar graph source-order toggle",
         DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
