@@ -15,7 +15,6 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Cardinal movement (WASD + arrow keys + click)
 - ✅ Turning (left/right)
 - ✅ Collision detection (walls, doors, creatures)
-- ✅ Collision and doors parity row — ReDMCSB-backed movement blockers, accepted movement state, viewport redraw, and canonical DM1 PC DUNGEON.DAT overlay/runtime cases now cover representative wall, closed/open door, fakewall, and door-button states
 - ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
 - ✅ Movement cooldown (G0310/G0311 timing from F0267)
   - ✅ Input wait loop timing source-lock: PC-34 input wait exits only when input wait has stopped and game time is ticking (6a842b72).
@@ -124,6 +123,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, VI wound RNG masks, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, swallow audio routing, and no-mouth-animation behavior are source-locked
 - ✅ Weapon eye-panel name and attribute descriptions are source-locked for POISONED/BROKEN/CURSED formatting (94094865)
 - ✅ Item eye-panel weight line display is source-locked from ReDMCSB item description formatting (35461e0b)
+- ✅ Armour/junk/scroll/container eye-panel description families are source-locked from ReDMCSB F0342/F0336 routing and formatting: armour BROKEN/CURSED, junk CONSUMABLE plus compass and waterskin state lines, and scroll/container delegation to scroll/chest panels
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
