@@ -10,7 +10,7 @@
  *   - Diagnostics (F0787/F0788/F0789)
  *   - Cross-phase integration: F0736 bit-identical pre-/post-load
  *
- * 40 invariants, >= 30 required for PASS.
+ * 48 invariants, >= 30 required for PASS.
  *
  * Authoritative plan: PHASE15_PLAN.md §5.
  */
@@ -376,10 +376,11 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Top-level save/load + round-trip (F0773/F0774)\n");
     fprintf(report, "- File-IO round-trip (F0785/F0786)\n");
     fprintf(report, "- Cross-phase integration: Phase 13 F0736 post-load parity\n\n");
-    fprintf(report, "## Known NEEDS DISASSEMBLY REVIEW (still open)\n\n");
+    fprintf(report, "- Header-reserved GameID + MusicOn metadata (ReDMCSB DM_SAVE_HEADER/GLOBAL_DATA source-lock)\n\n");
+    fprintf(report, "## Save-format notes\n\n");
     fprintf(report, "- Fontanel DM_SAVE_HEADER Noise[10]/Keys[16]/Checksums[16] obfuscation: v1 intentionally drops interop with DMSAVE1.DAT — our format (RDMCSB15) uses a single CRC32. Re-implementing the XOR key derivation is only required if we ever want DMSAVE1.DAT interop (plan §4.8 item 1).\n");
     fprintf(report, "- DungeonMutation_Compat.fieldMask semantics: Phase 15 carries the bytes opaquely; the replay engine in a future phase will decide which DungeonGroup_Compat.health[] / square byte / sensor bit a given mutation refers to (plan §4.8 item 1).\n");
-    fprintf(report, "- GLOBAL_DATA.MusicOn / GameID fields from Fontanel's save header: not mirrored in v1; the 36-byte header.reserved block is the placeholder for a future migration (plan §4.7, §4.8 item 3).\n\n");
+    fprintf(report, "- GLOBAL_DATA.MusicOn / DM_SAVE_HEADER.GameID are now carried in header.reserved[36] bytes 0..4. This is Firestaff-native metadata, not original DMSAVE1.DAT byte interop.\n\n");
 
     snprintf(path_buf, sizeof(path_buf), "%s/savegame_invariants.md", outputDir);
     invariants = fopen(path_buf, "w");
@@ -503,6 +504,27 @@ int main(int argc, char* argv[]) {
               SAVEGAME_ERROR_BAD_SECTION_COUNT,
               "F0772 rejects sectionCount != 7 with BAD_SECTION_COUNT");
     }
+    {
+        struct SaveGameHeader_Compat hdr;
+        int ok;
+        F0771_SAVEGAME_WriteHeader_Compat(&hdr, 176u, 0u);
+        F0790_SAVEGAME_SetAudioMetadata_Compat(&hdr, 0x12345678u, 1);
+        ok = (hdr.reserved[0] == 0x78u && hdr.reserved[1] == 0x56u &&
+              hdr.reserved[2] == 0x34u && hdr.reserved[3] == 0x12u &&
+              hdr.reserved[4] == 1u &&
+              F0791_SAVEGAME_GetGameID_Compat(&hdr) == 0x12345678u &&
+              F0792_SAVEGAME_GetMusicOn_Compat(&hdr) == 1);
+        CHECK(ok,
+              "F0790/F0791/F0792 pack GameID LE and MusicOn into header.reserved[0..4]");
+    }
+    {
+        struct SaveGameHeader_Compat hdr;
+        F0771_SAVEGAME_WriteHeader_Compat(&hdr, 176u, 0u);
+        F0790_SAVEGAME_SetAudioMetadata_Compat(&hdr, 0xA5A5A5A5u, 7);
+        CHECK(F0791_SAVEGAME_GetGameID_Compat(&hdr) == 0xA5A5A5A5u &&
+              F0792_SAVEGAME_GetMusicOn_Compat(&hdr) == 1,
+              "F0792 normalises any non-zero MusicOn value to 1");
+    }
 
     /* ==============================================================
      *  Block C — section-table compute/validate (invariants 19-22)
@@ -590,6 +612,29 @@ int main(int argc, char* argv[]) {
               F0787_SAVEGAME_Compare_Compat(bufA, wA, bufB, wB, &firstDiff) == 1);
         CHECK(rc,
               "Round-trip populated state: bit-identical save->load->save");
+        free(bufA); free(bufB);
+    }
+    {
+        struct SaveGameFixture a, b;
+        unsigned char* bufA = malloc(62080);
+        unsigned char* bufB = malloc(62080);
+        int wA = 0, wB = 0;
+        int errA, errB, errL;
+        int firstDiff = -1;
+        int rc;
+        build_populated_fixture(&a);
+        build_zero_fixture(&b);
+        F0790_SAVEGAME_SetAudioMetadata_Compat(&a.save.header, 0xCAFEBABEu, 1);
+        errA = F0773_SAVEGAME_SaveToBuffer_Compat(&a.save, bufA, 62080, &wA);
+        errL = F0774_SAVEGAME_LoadFromBuffer_Compat(bufA, wA, &b.save);
+        errB = F0773_SAVEGAME_SaveToBuffer_Compat(&b.save, bufB, 62080, &wB);
+        rc = (errA == SAVEGAME_OK && errL == SAVEGAME_OK && errB == SAVEGAME_OK &&
+              F0791_SAVEGAME_GetGameID_Compat(&b.save.header) == 0xCAFEBABEu &&
+              F0792_SAVEGAME_GetMusicOn_Compat(&b.save.header) == 1 &&
+              wA == wB &&
+              F0787_SAVEGAME_Compare_Compat(bufA, wA, bufB, wB, &firstDiff) == 1);
+        CHECK(rc,
+              "Round-trip preserves header.reserved GameID/MusicOn and reserialises bit-identically");
         free(bufA); free(bufB);
     }
 

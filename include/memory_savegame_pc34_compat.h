@@ -58,6 +58,14 @@
 #define SAVEGAME_SECTION_MAGIC          0x00010007u
 #define SAVEGAME_SECTION_DUNGEON_DELTA  0x00010008u
 
+/* Header reserved[36] source-locked audio metadata.
+ * ReDMCSB stores GameID in DM_SAVE_HEADER.GameID and MusicOn in
+ * GLOBAL_DATA.MusicOn; Firestaff keeps them in this native header's
+ * reserved area without changing the 64-byte save framing.
+ * Layout: reserved[0..3] = GameID LE, reserved[4] = MusicOn (0/1). */
+#define SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET 0
+#define SAVEGAME_HEADER_RESERVED_MUSIC_ON_OFFSET 4
+
 /* -------- Per-section payload sizes (plan §2 budget table) -------- */
 
 #define MOVEMENT_RESULT_SERIALIZED_SIZE  20   /* 5 int32 LE */
@@ -113,9 +121,16 @@ enum SaveGameError_Compat {
  * Noise[] would need to be re-implemented only if DMSAVE1.DAT
  * byte-level interop is ever required.
  *
- * NEEDS DISASSEMBLY REVIEW: GameID / MusicOn fields from Fontanel's
- * GLOBAL_DATA block live in reserved[36] conceptually — deferred to
- * the audio / migration phase (plan §4.7, §4.8 item 3).
+ * SOURCE-LOCKED AUDIO METADATA:
+ *   ReDMCSB DEFS.H:468-480 has DM_SAVE_HEADER.GameID.
+ *   ReDMCSB DEFS.H:538-572 has GLOBAL_DATA.MusicOn for MEDIA505.
+ *   ReDMCSB LOADSAVE.C:1546-1548 saves G2024_B_PendingMusicOn into
+ *     GLOBAL_DATA.MusicOn.
+ *   ReDMCSB LOADSAVE.C:1590-1594 stamps SaveAndPlayChoice + GameID.
+ *   ReDMCSB LOADSAVE.C:2665-2677 validates/restores GameID on load.
+ *   ReDMCSB LOADSAVE.C:2721-2748 reads GLOBAL_DATA and restores MusicOn.
+ * Firestaff stores the pair in reserved[36]: GameID at bytes 0..3 LE,
+ * MusicOn at byte 4, leaving the rest reserved and zero-filled.
  */
 struct SaveGameHeader_Compat {
     unsigned char magic[8];      /* "RDMCSB15" literal, no NUL */
@@ -328,5 +343,16 @@ int F0788_SAVEGAME_InspectHeader_Compat(
     struct SaveGameHeader_Compat* outHdr);
 
 const char* F0789_SAVEGAME_ErrorToString_Compat(int code);
+
+void F0790_SAVEGAME_SetAudioMetadata_Compat(
+    struct SaveGameHeader_Compat* hdr,
+    uint32_t gameID,
+    int musicOn);
+
+uint32_t F0791_SAVEGAME_GetGameID_Compat(
+    const struct SaveGameHeader_Compat* hdr);
+
+int F0792_SAVEGAME_GetMusicOn_Compat(
+    const struct SaveGameHeader_Compat* hdr);
 
 #endif /* REDMCSB_MEMORY_SAVEGAME_PC34_COMPAT_H */

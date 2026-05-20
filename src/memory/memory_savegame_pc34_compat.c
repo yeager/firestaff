@@ -60,6 +60,32 @@ static int read_i32_le(const unsigned char* p) {
     return (int)read_u32_le(p);
 }
 
+void F0790_SAVEGAME_SetAudioMetadata_Compat(
+    struct SaveGameHeader_Compat* hdr,
+    uint32_t gameID,
+    int musicOn)
+{
+    if (hdr == 0) return;
+    write_u32_le(hdr->reserved + SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET,
+                 gameID);
+    hdr->reserved[SAVEGAME_HEADER_RESERVED_MUSIC_ON_OFFSET] =
+        (unsigned char)(musicOn ? 1 : 0);
+}
+
+uint32_t F0791_SAVEGAME_GetGameID_Compat(
+    const struct SaveGameHeader_Compat* hdr)
+{
+    if (hdr == 0) return 0u;
+    return read_u32_le(hdr->reserved + SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET);
+}
+
+int F0792_SAVEGAME_GetMusicOn_Compat(
+    const struct SaveGameHeader_Compat* hdr)
+{
+    if (hdr == 0) return 0;
+    return hdr->reserved[SAVEGAME_HEADER_RESERVED_MUSIC_ON_OFFSET] ? 1 : 0;
+}
+
 /* ==========================================================
  *  Group A — Checksum / header helpers (F0770–F0772)
  * ========================================================== */
@@ -101,7 +127,8 @@ int F0771_SAVEGAME_WriteHeader_Compat(
     hdr->totalFileSize  = totalSize;
     hdr->sectionCount   = SAVEGAME_SECTION_COUNT;
     hdr->bodyCRC32      = bodyCRC;
-    /* reserved stays zero-filled by memset above. */
+    /* reserved stays zero-filled by memset above; callers that need
+     * ReDMCSB GameID/MusicOn metadata stamp it with F0790. */
     return SAVEGAME_OK;
 }
 
@@ -669,6 +696,7 @@ int F0773_SAVEGAME_SaveToBuffer_Compat(
         (size_t)(totalSize - SAVEGAME_HEADER_SERIALIZED_SIZE));
     err = F0771_SAVEGAME_WriteHeader_Compat(&hdr, totalSize, bodyCRC);
     if (err != SAVEGAME_OK) return err;
+    memcpy(hdr.reserved, state->header.reserved, sizeof(hdr.reserved));
     savegame_header_write(outBuf, &hdr);
 
     *outBytesWritten = (int)totalSize;
