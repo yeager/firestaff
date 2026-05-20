@@ -27,6 +27,22 @@ typedef struct {
     int16_t targetFacingDir;
 } DM1_V2_MovementCommandResult;
 
+typedef enum {
+    DM1_V2_MOVEMENT_ROUTE_V1_SOURCE = 0,
+    DM1_V2_MOVEMENT_ROUTE_V2_PRESENTATION = 1
+} DM1_V2_MovementRouteKind;
+
+typedef struct {
+    DM1_V2_MovementRouteKind routeKind;
+    int v2PresentationEnabled;
+    int sourceCommand;
+    int runtimeCommand;
+} DM1_V2_MovementCommandRoute;
+
+DM1_V2_MovementCommandRoute dm1_v2_movement_command_route_for_presentation(
+    int v2PresentationEnabled,
+    DM1_V2_MovementCommand command);
+
 DM1_V2_MovementCommandResult dm1_v2_movement_command_apply(
     DM1_V2_RuntimeState* runtime,
     DM1_V2_CameraController* camera,

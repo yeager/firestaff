@@ -21,7 +21,9 @@
  *   F0380_COMMAND_ProcessQueue_CPSC, redraws/highlight-disables while waiting,
  *   and only advances after a command stops waiting and game time is ticking.
  *
- * V2 keeps gameplay movement discrete/source-like.  This adapter only translates
+ * V2 keeps gameplay movement discrete/source-like.  With the V2 presentation
+ * route disabled, source command ids remain untouched for the V1 command queue.
+ * With the explicit V2 presentation route enabled, this adapter translates
  * source-faithful semantic command ids onto the current V2 runtime shell command
  * ids, then starts the camera controller for presentation-only interpolation. */
 
@@ -62,13 +64,34 @@ static int dm1_v2_translate_runtime_command(DM1_V2_MovementCommand command) {
     }
 }
 
+DM1_V2_MovementCommandRoute dm1_v2_movement_command_route_for_presentation(
+    int v2PresentationEnabled,
+    DM1_V2_MovementCommand command) {
+    DM1_V2_MovementCommandRoute route;
+    route.routeKind = v2PresentationEnabled
+        ? DM1_V2_MOVEMENT_ROUTE_V2_PRESENTATION
+        : DM1_V2_MOVEMENT_ROUTE_V1_SOURCE;
+    route.v2PresentationEnabled = v2PresentationEnabled ? 1 : 0;
+    route.sourceCommand = (int)command;
+    route.runtimeCommand = v2PresentationEnabled
+        ? dm1_v2_translate_runtime_command(command)
+        : (int)command;
+
+    if (command == DM1_V2_MOVEMENT_COMMAND_NONE) {
+        route.runtimeCommand = 0;
+    }
+    return route;
+}
+
 DM1_V2_MovementCommandResult dm1_v2_movement_command_apply(
     DM1_V2_RuntimeState* runtime,
     DM1_V2_CameraController* camera,
     DM1_V2_MovementCommand command,
     uint32_t nowMs,
     int32_t cameraDurationMs) {
-    int runtimeCommand = dm1_v2_translate_runtime_command(command);
+    int runtimeCommand = dm1_v2_movement_command_route_for_presentation(
+        1,
+        command).runtimeCommand;
     DM1_V2_MovementCommandResult result = dm1_v2_result((int)command, runtimeCommand);
     int16_t beforeFacing;
 

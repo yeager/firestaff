@@ -118,6 +118,45 @@ static int test_source_strafes_translate_to_runtime_ids(void) {
     return 0;
 }
 
+static int test_v1_presentation_route_keeps_source_command_ids(void) {
+    const struct {
+        DM1_V2_MovementCommand command;
+        int sourceCommand;
+        int v2RuntimeCommand;
+    } cases[] = {
+        {DM1_V2_MOVEMENT_COMMAND_TURN_LEFT, 1, 3},
+        {DM1_V2_MOVEMENT_COMMAND_TURN_RIGHT, 2, 4},
+        {DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD, 3, 1},
+        {DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 4, 5},
+        {DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD, 5, 2},
+        {DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 6, 6},
+    };
+    size_t i;
+
+    /* Phase 0 gate: DEFS.H:238-243 owns the V1 command ids and
+     * COMMAND.C:2045-2155 consumes those ids from the source queue.  V2
+     * presentation routing is explicit; when the toggle is off, the route
+     * leaves the source id untouched for the V1 command path. */
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        DM1_V2_MovementCommandRoute v1Route =
+            dm1_v2_movement_command_route_for_presentation(0, cases[i].command);
+        DM1_V2_MovementCommandRoute v2Route =
+            dm1_v2_movement_command_route_for_presentation(1, cases[i].command);
+
+        CHECK(v1Route.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE);
+        CHECK(v1Route.v2PresentationEnabled == 0);
+        CHECK(v1Route.sourceCommand == cases[i].sourceCommand);
+        CHECK(v1Route.runtimeCommand == cases[i].sourceCommand);
+
+        CHECK(v2Route.routeKind == DM1_V2_MOVEMENT_ROUTE_V2_PRESENTATION);
+        CHECK(v2Route.v2PresentationEnabled == 1);
+        CHECK(v2Route.sourceCommand == cases[i].sourceCommand);
+        CHECK(v2Route.runtimeCommand == cases[i].v2RuntimeCommand);
+    }
+
+    return 0;
+}
+
 static int test_rejects_stopped_commands(void) {
     DM1_V2_RuntimeState rt;
     DM1_V2_CameraController camera;
@@ -139,6 +178,7 @@ int main(void) {
     if (test_source_ids_translate_to_runtime_ids()) return 1;
     if (test_turns_start_presentation_only_camera_turns()) return 1;
     if (test_source_strafes_translate_to_runtime_ids()) return 1;
+    if (test_v1_presentation_route_keeps_source_command_ids()) return 1;
     if (test_rejects_stopped_commands()) return 1;
     puts("dm1_v2_movement_command_adapter_pc34: ok");
     return 0;
