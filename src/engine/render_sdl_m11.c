@@ -957,24 +957,35 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-    /* SDL3 HiDPI fix: always query authoritative sizes from SDL instead
-     * of trusting the caller.  This function is called from both
-     * SDL_EVENT_WINDOW_RESIZED (logical coords) and
-     * SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED (pixel coords).  Rather than
-     * requiring callers to distinguish, we query both sizes here:
+    /* SDL3 HiDPI fix: query authoritative sizes from SDL when the SDL
+     * window has actually changed.  Headless probes and direct callers can
+     * exercise this resize path without an SDL window event, so keep the
+     * caller-provided logical size when SDL still reports the old size:
      * - windowW/H = logical (for mouse coordinate mapping)
      * - renderW/H = pixels (for SDL_RenderTexture destRect) */
     {
         int ww = 0, wh = 0;
+        int sdlWindowMatchedResize = 0;
         SDL_GetWindowSize(g_state.window, &ww, &wh);
-        g_state.windowW = (ww > 0) ? ww : newWidth;
-        g_state.windowH = (wh > 0) ? wh : newHeight;
-    }
-    {
-        int rw = 0, rh = 0;
-        SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
-        g_state.renderW = (rw > 0) ? rw : g_state.windowW;
-        g_state.renderH = (rh > 0) ? rh : g_state.windowH;
+        if (ww == newWidth && wh == newHeight) {
+            g_state.windowW = ww;
+            g_state.windowH = wh;
+            sdlWindowMatchedResize = 1;
+        } else {
+            g_state.windowW = newWidth;
+            g_state.windowH = newHeight;
+        }
+        {
+            int rw = 0, rh = 0;
+            SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
+            if (sdlWindowMatchedResize && rw > 0 && rh > 0) {
+                g_state.renderW = rw;
+                g_state.renderH = rh;
+            } else {
+                g_state.renderW = g_state.windowW;
+                g_state.renderH = g_state.windowH;
+            }
+        }
     }
 #else
     g_state.windowW = newWidth;
