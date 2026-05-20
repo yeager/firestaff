@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate: V1 original DM1 launch must not bypass ReDMCSB TITLE/swoosh.
+"""Gate: DM1 launch must not bypass ReDMCSB TITLE/swoosh.
 
 This is intentionally a source-shape regression gate. The user-visible bug was
 that selecting DM1 from Firestaff's launcher reached the game/entrance without
@@ -38,8 +38,10 @@ else:
     if "m11_play_redmcsb_entrance_transition(gameView, 1200)" not in body:
         errors.append("modern launcher must auto-confirm entrance wait shortly after explicit Launch")
     guard_start = body.rfind("M12_StartupMenu_GetPresentationMode", 0, title_idx if title_idx >= 0 else 0)
-    if title_idx >= 0 and guard_start < 0:
-        errors.append("TITLE intro call is not guarded by V1 presentation mode")
+    if title_idx >= 0 and guard_start >= 0:
+        errors.append("TITLE intro call is still guarded by presentation mode; DM1 TITLE must run before Entrance in every DM1 presentation mode")
+    if title_idx >= 0 and 'strcmp(launchEntry->gameId, "dm1") == 0' not in body:
+        errors.append("TITLE intro call must remain guarded to DM1 launches only")
 
 phase = re.search(r"int M11_PhaseA_Run\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
 if phase:

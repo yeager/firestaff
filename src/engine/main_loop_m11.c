@@ -858,21 +858,22 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
-    if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+    {
         int titleIntroPlayed = 0;
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
          * the original TITLE animation and title-song/swoosh cue must run at the
          * launcher->DM1 handoff, before the game view opens and before the entrance
          * transition.
-         * Only play for DM1 — CSB/DM2/Nexus have their own intros. */
-        {
-            const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
-                menuState, menuState->activatedIndex);
-            if (launchEntry && launchEntry->gameId &&
-                strcmp(launchEntry->gameId, "dm1") == 0) {
-                m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
-            }
+         * This is a DM1 source-order rule, not a V1-only renderer feature:
+         * Entrance is mandatory for every DM1 presentation mode, and TITLE must
+         * be the visible handoff immediately before it.  CSB/DM2/Nexus keep
+         * their own intro paths. */
+        const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
+            menuState, menuState->activatedIndex);
+        if (launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0) {
+            m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
         (void)titleIntroPlayed;
     }
