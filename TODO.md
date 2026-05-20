@@ -13,6 +13,8 @@ Status per 2026-05-19 v2.4.0.
 
 ### Movement & Collision
 
+- 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, and D0 evidence manifests and focused viewport regression coverage through 17811281; remaining wall/viewport parity gaps still need capture-backed closure
+
 ### Creature System
 
 - 🔧 Creature type-specific behavior — Giggler steal, Ghost/non-material melee gating, quarter-square melee cell shuffle, and adjacent creature projectile chance are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
