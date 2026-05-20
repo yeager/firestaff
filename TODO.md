@@ -157,7 +157,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Resume loads saved game (M566 path)
 - ✅ Click-only buttons (no keyboard shortcuts for Enter/Resume/Quit)
 - ✅ No dungeon flash before entrance
-- ✅ TITLE.DAT swoosh/zoom animation path + decode source-locked (see `parity-evidence/runtime/title_dat_swoosh_path_decode_closure_20260520.md`)
+- ✅ TITLE.DAT swoosh/zoom animation path + decode + launcher handoff before DM1 Entrance source-locked (all DM1 presentation modes; see `parity-evidence/runtime/title_dat_swoosh_path_decode_closure_20260520.md`)
 - ✅ Title song / music playback (SONG.DAT runtime + opt-in SDL dummy-driver live path source-locked)
 
 ### Save/Load
