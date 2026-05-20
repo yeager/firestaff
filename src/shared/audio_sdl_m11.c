@@ -549,6 +549,37 @@ int M11_Audio_GetVolumes(const M11_AudioState* state,
     return 1;
 }
 
+M11_AudioMarker M11_Audio_FallbackMarkerForSoundIndex(int soundIndex) {
+    const V1_SoundEventSnd3MapEntry* entry = V1_SoundEventSnd3_Find(soundIndex);
+    if (!entry) return M11_AUDIO_MARKER_NONE;
+
+    /* Source-lock:
+     * - ReDMCSB DEFS.H 100-127 defines the I34E 35-sound namespace.
+     * - ReDMCSB TIMELINE.C 769/793/808 routes closing-door damage,
+     *   creature-under-door thud, and door rattle through F0064.
+     * - ReDMCSB GROUP.C 1807-1808 routes creature attack ordinals to
+     *   G2003_aauc_CreatureSounds[][C0_ATTACK_SOUND]; GROUP.C 279-280
+     *   routes creature movement via F0514_MOVE_GetSound.
+     * - ReDMCSB PROJEXPL.C 587-600 routes projectile impact SFX.
+     * The marker only selects the fallback procedural cue when original SND3
+     * playback is unavailable; mapped source indices still prefer SND3 data. */
+    if (soundIndex == 1 || soundIndex == 2 || soundIndex == 3) {
+        return M11_AUDIO_MARKER_DOOR;
+    }
+    if ((soundIndex >= 19 && soundIndex <= 34) ||
+        soundIndex == 17 || soundIndex == 18) {
+        return M11_AUDIO_MARKER_CREATURE;
+    }
+    if (soundIndex == 5 || soundIndex == 6 || soundIndex == 14 ||
+        soundIndex == 16) {
+        return M11_AUDIO_MARKER_SPELL;
+    }
+    if (soundIndex == 8) {
+        return M11_AUDIO_MARKER_CREATURE;
+    }
+    return M11_AUDIO_MARKER_COMBAT;
+}
+
 int M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker) {
     if (!state || !state->initialized) return 0;
     if (marker <= M11_AUDIO_MARKER_NONE || marker >= M11_AUDIO_MARKER_COUNT) return 0;
@@ -623,6 +654,12 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
         }
         return result;
     }
+}
+
+int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
+    return M11_Audio_EmitSoundIndex(state,
+                                    soundIndex,
+                                    M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
 }
 
 int M11_Audio_PlayTitleMusic(M11_AudioState* state) {

@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "audio_sdl_m11.h"
 
 #include <stdio.h>
@@ -43,7 +44,7 @@ int main(void) {
                  "headless fallback backend initializes without opening SDL audio");
 
     beforeQueued = state.queuedSampleCount;
-    result = M11_Audio_EmitSoundIndex(&state, 13, M11_AUDIO_MARKER_COMBAT);
+    result = M11_Audio_EmitSourceSoundIndex(&state, 13);
     probe_record(&tally,
                  "P125_AUDIO_EVENT_ORDER_02",
                  result == 0 && state.lastSoundIndex == 13 &&
@@ -58,12 +59,28 @@ int main(void) {
                      state.lastMarker == M11_AUDIO_MARKER_SPELL,
                  "direct marker emission remains distinguishable from source sound-event emission");
 
-    result = M11_Audio_EmitSoundIndex(&state, 999, M11_AUDIO_MARKER_DOOR);
+    result = M11_Audio_EmitSourceSoundIndex(&state, 999);
     probe_record(&tally,
                  "P125_AUDIO_EVENT_ORDER_04",
                  result == 0 && state.lastSoundIndex == -1 &&
-                     state.lastMarker == M11_AUDIO_MARKER_DOOR,
-                 "out-of-range sound index uses marker fallback without recording a false source event");
+                     state.lastMarker == M11_AUDIO_MARKER_SPELL,
+                 "out-of-range source sound index is rejected without recording a false source event");
+
+    result = M11_Audio_EmitSourceSoundIndex(&state, 2);
+    probe_record(&tally,
+                 "P125_AUDIO_EVENT_ORDER_05",
+                 result == 0 && state.lastSoundIndex == 2 &&
+                     state.lastMarker == M11_AUDIO_MARKER_DOOR &&
+                     M11_Audio_FallbackMarkerForSoundIndex(2) == M11_AUDIO_MARKER_DOOR,
+                 "door rattle source event maps to the door SFX fallback lane");
+
+    result = M11_Audio_EmitSourceSoundIndex(&state, 28);
+    probe_record(&tally,
+                 "P125_AUDIO_EVENT_ORDER_06",
+                 result == 0 && state.lastSoundIndex == 28 &&
+                     state.lastMarker == M11_AUDIO_MARKER_CREATURE &&
+                     M11_Audio_FallbackMarkerForSoundIndex(28) == M11_AUDIO_MARKER_CREATURE,
+                 "creature movement source event maps to the creature SFX fallback lane");
 
     M11_Audio_Shutdown(&state);
     unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");

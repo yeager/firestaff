@@ -89,7 +89,9 @@ int  M11_Audio_GetVolumes(const M11_AudioState* state,
                           int* outMusic,
                           int* outUi);
 int  M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker);
+M11_AudioMarker M11_Audio_FallbackMarkerForSoundIndex(int soundIndex);
 int  M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMarker fallbackMarker);
+int  M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
 int  M11_Audio_PlayTitleMusic(M11_AudioState* state);
 int  M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int  M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
