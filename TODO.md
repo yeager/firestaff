@@ -140,15 +140,15 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Remote teleporter toggle
 - ✅ Sensor text display (inscription/message popup)
 - ✅ Sensor audible feedback (click sound)
-- ❌ Wall sensor with specific object (key slot — C003/C004)
-- ❌ Object storage sensor (C013 — place item, get effect)
+- ✅ Wall sensor with specific object (key slot — C003/C004)
+- ✅ Object storage sensor (C013 — place item, get effect)
 - ❌ Object exchanger sensor (C016 — swap item for effect)
 - ❌ AND/OR gate sensor (C005 — multi-condition trigger)
 - ❌ Countdown sensor (C006 — timer-based trigger)
 - ❌ Projectile launcher sensors (C007-C010, C014-C015)
 - ❌ End game sensor (C018)
 - ❌ Floor party-on-stairs sensor (C005)
-- ❌ Floor possession sensor (C008 — party has specific item)
+- ✅ Floor possession sensor (C008 — party has specific item)
 - ❌ Floor creature sensor (C007)
 
 ### Entrance & Title
