@@ -8209,16 +8209,48 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* ── Inscription text detection ──
-     * ReDMCSB DUNGEON.C:2585-2593: when a wall's ornament ordinal matches
-     * G0265_i_CurrentMapInscriptionWallOrnamentIndex, the engine sets
-     * G0290_T_DungeonView_InscriptionThing to the associated text-string
-     * thing.  The inscription ornament index is stored as the last entry
-     * in the per-map wallOrnamentIndices (at index wallOrnamentCount).
-     * DUNGEON.C:2580-2593 sets the inscription ornament ordinal when a
-     * TEXT_STRING thing is found on a wall square via a sensor linkage.
-     * For simplicity, we detect inscriptions by checking if any
-     * TEXT_STRING thing exists on this wall square. */
+    /* ReDMCSB DUNGEON.C:F0172/F0174 maps visible TextString things on
+     * WALL squares to the synthetic current-map inscription ornament slot
+     * (wallOrnamentCount + 1).  Hall of Champions mirror TextStrings are
+     * invisible champion records paired with the C127 portrait/mirror wall
+     * ornament route, whose map-local frame ordinal is the last wall
+     * ornament in DM1 map 0.  Sensor ornaments keep precedence. */
+    if (cell.elementType == DUNGEON_ELEMENT_WALL && cell.wallOrnamentOrdinal <= 0 &&
+        state->world.dungeon && state->world.things && state->world.things->textStrings &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        const struct DungeonMapDesc_Compat* mapDesc =
+            &state->world.dungeon->maps[state->world.party.mapIndex];
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        int hasVisibleText = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_TEXTSTRING) {
+                int textIdx = THING_GET_INDEX(scanThing);
+                if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
+                    if (state->mirrorCatalogAvailable && mapDesc->wallOrnamentCount > 0 &&
+                        F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                            &state->mirrorCatalog, textIdx) >= 0) {
+                        cell.wallOrnamentOrdinal = (int)mapDesc->wallOrnamentCount;
+                        break;
+                    }
+                    if (state->world.things->textStrings[textIdx].visible) {
+                        hasVisibleText = 1;
+                    }
+                }
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+        if (cell.wallOrnamentOrdinal <= 0 && hasVisibleText) {
+            cell.wallOrnamentOrdinal = (int)mapDesc->wallOrnamentCount + 1;
+        }
+    }
+
+    /* Inscription text detection.
+     * ReDMCSB DUNGEON.C:2585-2593 sets
+     * G0290_T_DungeonView_InscriptionThing when the current wall ornament
+     * matches the synthetic current-map inscription ornament. */
     if (cell.elementType == DUNGEON_ELEMENT_WALL &&
         cell.wallOrnamentOrdinal >= 0 &&
         state->world.dungeon &&
@@ -8228,8 +8260,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         if (mi >= 0 && mi < (int)state->world.dungeon->header.mapCount) {
             const struct DungeonMapDesc_Compat* ornMap =
                 &state->world.dungeon->maps[mi];
-            /* The inscription ornament is at wallOrnamentCount in the
-             * per-map table (one past the last regular ornament). */
             int inscOrnIdx = -1;
             if (mi < 32 && state->ornamentCacheLoaded[mi]) {
                 int inscSlot = (int)ornMap->wallOrnamentCount;
@@ -8237,11 +8267,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                     inscOrnIdx = state->wallOrnamentIndices[mi][inscSlot];
                 }
             }
-            /* Check if our wall ornament ordinal-1 (0-based) matches the
-             * inscription ornament index. */
             if (inscOrnIdx >= 0 &&
                 (cell.wallOrnamentOrdinal - 1) == inscOrnIdx) {
-                /* Scan thing chain for TEXT_STRING things */
                 unsigned short tScan = firstThing;
                 int tSafety = 0;
                 while (tScan != THING_ENDOFLIST && tScan != THING_NONE &&
@@ -11045,6 +11072,169 @@ static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                                      relSide < 0 ? 0 : 2);
 }
 
+static int m11_decode_visible_wall_text(const M11_GameViewState* state,
+                                           const M11_ViewportCell* cell,
+                                           char* outText,
+                                           size_t outTextSize) {
+    unsigned short thing;
+    int safety = 0;
+    if (!state || !cell || !outText || outTextSize == 0 ||
+        !state->world.things || !state->world.things->textStrings ||
+        !state->world.things->textData || state->world.things->textDataWordCount <= 0) {
+        if (outText && outTextSize > 0) outText[0] = '\0';
+        return 0;
+    }
+    outText[0] = '\0';
+    thing = cell->firstThing;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
+            int textIdx = THING_GET_INDEX(thing);
+            if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
+                const struct DungeonTextString_Compat* textThing =
+                    &state->world.things->textStrings[textIdx];
+                if (textThing->visible &&
+                    F0507_DUNGEON_DecodeTextAtOffset_Compat(state->world.things->textData,
+                                                            state->world.things->textDataWordCount,
+                                                            textThing->textDataWordOffset,
+                                                            outText,
+                                                            (int)outTextSize) >= 0 &&
+                    outText[0] != '\0') {
+                    return 1;
+                }
+            }
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+        ++safety;
+    }
+    return 0;
+}
+
+static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
+                                                     const M11_ViewportCell* cell,
+                                                     unsigned char* framebuffer,
+                                                     int fbW,
+                                                     int fbH) {
+    static const int kLineTopY[4] = {41, 52, 68, 79};
+    char decoded[128];
+    char* cursor;
+    int line = 0;
+    M11_TextStyle inscriptionStyle = g_text_shadow;
+    inscriptionStyle.color = M11_COLOR_MAGENTA;
+    inscriptionStyle.shadowColor = M11_COLOR_DARK_GRAY;
+    if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
+        return;
+    }
+    cursor = decoded;
+    while (cursor && *cursor && line < 4) {
+        char* next = strchr(cursor, '\n');
+        char saved = '\0';
+        if (next) {
+            saved = *next;
+            *next = '\0';
+        }
+        if (*cursor) {
+            m11_draw_text_centered_in_rect(framebuffer,
+                                           fbW,
+                                           fbH,
+                                           M11_VIEWPORT_X + 79,
+                                           M11_VIEWPORT_Y + kLineTopY[line],
+                                           65,
+                                           cursor,
+                                           &inscriptionStyle);
+        }
+        if (!next) break;
+        *next = saved;
+        cursor = next + 1;
+        ++line;
+    }
+}
+
+static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
+                                                 const M11_ViewportCell* cell,
+                                                 unsigned char* framebuffer,
+                                                 int fbW,
+                                                 int fbH) {
+    const M11_AssetSlot* portraits;
+    int portraitIdx;
+    if (!state || !cell) {
+        return;
+    }
+    portraitIdx = cell->championPortraitOrdinal;
+    if (portraitIdx < 0) {
+        /* The Hall of Champions mirror text and C127 portrait sensor are
+         * adjacent wall-face routes in DM1.  If the sampled wall cell only
+         * exposes the TextString, use the source mirror catalog ordinal as
+         * the C026 portrait-sheet index for the same front mirror. */
+        portraitIdx = m11_front_cell_mirror_ordinal(state);
+    }
+    if (portraitIdx < 0) {
+        return;
+    }
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     (unsigned int)M11_GFX_CHAMPION_PORTRAITS);
+    if (!portraits || !portraits->loaded || !portraits->pixels) {
+        return;
+    }
+    M11_AssetLoader_BlitRegion(portraits,
+                               (portraitIdx & 7) * M11_PORTRAIT_W,
+                               (portraitIdx >> 3) * M11_PORTRAIT_H,
+                               M11_PORTRAIT_W,
+                               M11_PORTRAIT_H,
+                               framebuffer,
+                               fbW,
+                               fbH,
+                               M11_VIEWPORT_X + 96,
+                               M11_VIEWPORT_Y + 35,
+                               1);
+}
+
+static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
+                                            const M11_ViewportCell* frontCell,
+                                            unsigned char* framebuffer,
+                                            int fbW,
+                                            int fbH) {
+    static const unsigned char kOrnD2Palette[16] = {
+        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+    };
+    M11_DM1ZoneBlit blit;
+    const M11_AssetSlot* slot;
+    int mapIdx;
+    int localIdx;
+    int ornGlobalIdx = 43;
+    if (!state || !frontCell || m11_front_cell_mirror_ordinal(state) < 0) {
+        return;
+    }
+    mapIdx = state->world.party.mapIndex;
+    if (state->world.dungeon && mapIdx >= 0 &&
+        mapIdx < (int)state->world.dungeon->header.mapCount &&
+        state->world.dungeon->maps[mapIdx].wallOrnamentCount > 0) {
+        localIdx = (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount - 1;
+        m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+        if (mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] &&
+            localIdx >= 0 && localIdx < 16) {
+            ornGlobalIdx = state->wallOrnamentIndices[mapIdx][localIdx];
+        }
+    }
+    if (!m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx),
+                                    12,
+                                    &blit)) {
+        return;
+    }
+    blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + 1;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)blit.graphicIndex);
+    if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
+        m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
+                                               M11_VIEWPORT_X + blit.dstX,
+                                               M11_VIEWPORT_Y + blit.dstY,
+                                               blit.width, blit.height,
+                                               10,
+                                               kOrnD2Palette,
+                                               0);
+    }
+    m11_draw_dm1_front_champion_portrait(state, frontCell, framebuffer, fbW, fbH);
+}
+
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -11108,6 +11298,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         M11_DM1ZoneBlit blit;
         int localIdx;
         int mapIdx;
+        int frontMirrorOrdinal = -1;
         int ornGlobalIdx = -1;
         if (kWallOrnaments[i].relForward > maxVisibleForward) {
             continue;
@@ -11120,10 +11311,25 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
             continue;
         }
-        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_WALL || cell.wallOrnamentOrdinal <= 0) {
+        if (kWallOrnaments[i].viewWallIndex == 12) {
+            frontMirrorOrdinal = m11_front_cell_mirror_ordinal(state);
+        }
+        if (!cell.valid) {
+            continue;
+        }
+        if (cell.elementType != DUNGEON_ELEMENT_WALL && frontMirrorOrdinal < 0) {
             continue;
         }
         mapIdx = state->world.party.mapIndex;
+        if (cell.wallOrnamentOrdinal <= 0 && frontMirrorOrdinal >= 0 &&
+            state->world.dungeon && mapIdx >= 0 &&
+            mapIdx < (int)state->world.dungeon->header.mapCount &&
+            state->world.dungeon->maps[mapIdx].wallOrnamentCount > 0) {
+            cell.wallOrnamentOrdinal = (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount;
+        }
+        if (cell.wallOrnamentOrdinal <= 0) {
+            continue;
+        }
         localIdx = cell.wallOrnamentOrdinal - 1;
         m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
         if (mapIdx >= 0 && mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] &&
@@ -11158,6 +11364,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        10,
                                                        kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
                                                        kWallOrnaments[i].flipHorizontal);
+                if (kWallOrnaments[i].viewWallIndex == 12) {
+                    if (ornGlobalIdx == 0) {
+                        m11_draw_dm1_front_wall_inscription_text(state, &cell,
+                                                                 framebuffer, fbW, fbH);
+                    }
+                    m11_draw_dm1_front_champion_portrait(state, &cell,
+                                                         framebuffer, fbW, fbH);
+                }
                 if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)) {
                     m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
                                                    &cell, &blit,
@@ -20207,6 +20421,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
+
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
@@ -22644,24 +22861,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             int lineCount = m11_dialog_source_split_two_lines(
                 state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
                 m11_dialog_source_message_width_for_choices(state->dialogChoiceCount));
+            int msgX = 0, msgY = 0, msgW = M11_VIEWPORT_W, msgH = 0;
             textY = (state->dialogChoiceCount > 1)
                         ? M11_GameView_GetV1DialogMultiChoiceMessageTextY(lineCount)
                         : M11_GameView_GetV1DialogSingleChoiceMessageTextY(lineCount);
+            (void)M11_GameView_GetV1DialogMessageZone(state->dialogChoiceCount,
+                                                      &msgX, &msgY, &msgW, &msgH);
             m11_draw_text_centered_in_rect(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
-                                           M11_VIEWPORT_X,
+                                           M11_VIEWPORT_X + msgX,
                                            textY,
-                                           M11_VIEWPORT_W,
+                                           msgW,
                                            line1,
                                            &g_text_shadow);
             if (lineCount > 1 && line2[0] != '\0') {
                 m11_draw_text_centered_in_rect(framebuffer,
                                                framebufferWidth,
                                                framebufferHeight,
-                                               M11_VIEWPORT_X,
+                                               M11_VIEWPORT_X + msgX,
                                                textY + 8,
-                                               M11_VIEWPORT_W,
+                                               msgW,
                                                line2,
                                                &g_text_shadow);
             }
