@@ -2136,6 +2136,11 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_save_load
     )
 
+    add_test(
+        NAME pass607_dm1_v1_level_change_autosave_absence_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass607_dm1_v1_level_change_autosave_absence_source_lock.py
+    )
+
     add_executable(test_dm1_v1_save_load_slots
         tests/test_dm1_v1_save_load_slots.c
         src/dm1/dm1_v1_save_load_system_pc34_compat.c

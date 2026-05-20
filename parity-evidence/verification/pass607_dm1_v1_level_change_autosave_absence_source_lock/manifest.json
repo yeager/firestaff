@@ -1,0 +1,108 @@
+{
+  "branchAtVerification": "main",
+  "canonicalAssetsSha256": {
+    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+  },
+  "conclusion": "No ordinary DM1 V1 stairs, pit, or teleporter level-change path directly saves the game; the audited save write path is reached through command C140 only.",
+  "directSaveCallLocations": [
+    {
+      "file": "COMMAND.C",
+      "line": 2368
+    }
+  ],
+  "gitHeadAtVerification": "206a75558f408b953959ace0ba7fefd06ad46aa0",
+  "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
+  "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
+  "sourceAudit": {
+    "CLIKMENU.C:F0364_COMMAND_TakeStairs": {
+      "claim": "stairs level change removes party from source, resolves destination level/map, sets facing, and restores current map; no save/write path",
+      "focusedLines": "135-139",
+      "lines": [
+        124,
+        140
+      ]
+    },
+    "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": {
+      "claim": "turning while on stairs delegates to F0364 and returns before any command-save route",
+      "focusedLines": "167-169",
+      "lines": [
+        142,
+        174
+      ]
+    },
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": {
+      "claim": "movement stairs paths delegate through F0364/F0267; ordinary movement calls F0267; no direct save/write path",
+      "focusedLines": "264-328",
+      "lines": [
+        180,
+        349
+      ]
+    },
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": {
+      "claim": "C140 command is the only direct caller of F0433",
+      "focusedLines": "2228-2370",
+      "lines": [
+        2045,
+        2480
+      ]
+    },
+    "DUNGEON.C:F0154_DUNGEON_GetLocationAfterLevelChange": {
+      "claim": "level delta resolves a target map and adjusted coordinates only",
+      "focusedLines": "1540-1551",
+      "lines": [
+        1508,
+        1558
+      ]
+    },
+    "DUNGEON.C:F0155_DUNGEON_GetStairsExitDirection": {
+      "claim": "stairs exit direction probes adjacent square type only",
+      "focusedLines": "1560-1582",
+      "lines": [
+        1560,
+        1582
+      ]
+    },
+    "DUNGEON.C:F0173/F0174 current-map setters": {
+      "claim": "map setters update current/party map metadata only",
+      "focusedLines": "2755-2757",
+      "lines": [
+        2724,
+        2764
+      ]
+    },
+    "LOADSAVE.C:F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF": {
+      "claim": "F0433 owns save-file creation/write and last-save-time mutation",
+      "focusedLines": "1477-1714",
+      "lines": [
+        550,
+        1783
+      ]
+    },
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": {
+      "claim": "teleporter and pit chains update map/position/direction/result/sensors; save function name appears only in checksum/copy-protection expressions, not as a call",
+      "focusedLines": {
+        "copyProtectionOnly": "666-730",
+        "pit": "538-606",
+        "resultAndSensors": "738-821",
+        "teleporter": "475-506"
+      },
+      "lines": [
+        316,
+        998
+      ]
+    },
+    "MOVESENS.C:F0276_SENSOR_ProcessThingAdditionOrRemoval": {
+      "claim": "party-on-stairs sensor filtering has no save/write path",
+      "focusedLines": "1695-1704",
+      "lines": [
+        1553,
+        1796
+      ]
+    }
+  },
+  "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
+  "timestampUtc": "2026-05-20T19:42:19.572167+00:00",
+  "worktree": "/home/trv2/work/firestaff"
+}
