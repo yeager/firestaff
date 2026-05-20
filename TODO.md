@@ -178,6 +178,7 @@ Status per 2026-05-19 v2.4.0.
 
 - 🔧 V2 presentation mode selectable from menu
 - ❌ Phase 0 — V1 parity gate: DM1 V2 may not change command semantics, dungeon timing, source-locked collisions, save/load data, or ReDMCSB-backed rules unless the behavior is behind an explicit V2 presentation toggle
+  - ✅ Phase 0 slice — V2 presentation command-route gate: V1/off preserves ReDMCSB movement command IDs 1..6; V2/on maps presentation runtime IDs without changing source IDs (b5a41085)
 - ❌ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, add deterministic V2 config persistence, and keep V1 as the default boot/runtime path
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
