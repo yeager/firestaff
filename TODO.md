@@ -45,8 +45,8 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Side lane occlusion
 - ✅ Palette dimming based on light level
 - ✅ HiDPI/Retina scaling (v2.0.0)
-- 🐛 Väggar saknas ibland — behöver exakt plats/screenshot för repro
-- 🐛 Kollision blockerar ibland fel — behöver exakt plats för repro
+- ✅ Fakewall viewport/collision parity — open fakewalls render as corridor, closed imaginary fakewalls stay passable but wall-like
+- 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
 - ✅ Inscription rendering on side walls (D2L/R, D3L/R) — unreadable plaque heights source-locked (pass582)
 - ✅ Readable inscription rendering (source message zone centering)
 - ✅ Teleporter visual effect — source-backed GRAPHICS.DAT field bitmap overlay, not procedural sparkle
@@ -239,9 +239,8 @@ Status per 2026-05-19 v2.4.0.
 
 ## Known Bugs (need repro)
 
-1. 🐛 Väggar saknas ibland i viewport — behöver exakt position och screenshot
-2. 🐛 Kollision blockerar ibland där det borde vara fritt — behöver exakt position
-3. 🐛 Flytande objekt kan fortfarande se lite off ut trots zone Y fix
+1. 🐛 Remaining intermittent wall/collision reports need exact coordinate/screenshot/runtime capture
+2. 🐛 Flytande objekt kan fortfarande se lite off ut trots zone Y fix
 
 ---
 
