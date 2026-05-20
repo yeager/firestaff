@@ -187,6 +187,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
   - ✅ Phase 2 slice — graphics pipeline source isolation verified; V2 presentation may scale/filter/present source DM1 graphics while keeping palette, font, viewport geometry, and gameplay state boundaries source-locked (8308645d)
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
+  - ✅ Phase 3 slice — HUD champion/action interaction gate source-locked; existing V2 HUD command mirror is now wired into CTest and guarded against bypassing V1 inventory/slot transaction owners (f8b0b54d)
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
 - ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
