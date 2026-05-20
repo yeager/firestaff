@@ -200,7 +200,7 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## CSB (Chaos Strikes Back)
+## CSB V1 (Chaos Strikes Back)
 
 - 🔧 CSB launch entry in menu
 - ✅ Phase 0 — Provenance gate: hash-lock exact CSB dungeon/graphics/title/music assets and keep CSBWin/CSB lineage sources as secondary evidence; do not reuse DM1 assumptions without variant proof (185019bf)
@@ -214,7 +214,20 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## DM2 (Skullkeep)
+## CSB V2 — Enhanced Mode
+
+- ❌ Phase 0 — V1 parity gate: CSB V2 may not change CSB V1 command semantics, dungeon timing, source-locked collision, save/load data, or CSB-specific mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 1 — Presentation scaffold: split CSB V1 gameplay state from V2 render/input presentation, keep CSB V1 as the default runtime path, and add deterministic CSB V2 config/profile persistence
+- ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for CSB walls, doors, ornaments, creatures, objects, projectiles, fonts, palette/light levels, title, and utility/import surfaces
+- ❌ Phase 3 — Modern UI overlay: optional CSB HUD, inventory, champion, rune, action, utility, and import panels that mirror CSB V1 commands without bypassing source-locked click routes or transactions
+- ❌ Phase 4 — Lighting and visual effects: enhanced CSB lighting/shadows, palette interpolation, teleport/projectile/field effects, and HiDPI-safe composition with deterministic fallback
+- ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked CSB movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
+- ❌ Phase 6 — Touch/controller ergonomics: CSB V2-only gesture/controller affordances mapped onto existing CSB command routes, with CSB V1 touch/click parity preserved
+- ❌ Phase 7 — V2 verification suite: side-by-side CSB V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
+
+---
+
+## DM2 V1 (Skullkeep)
 
 - 🔧 DM2 launch entry in menu
 - ✅ Phase 0 — Source and provenance gate: mirror/hash-lock `gbsphenx/skproject` (`master` HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6`), Sphenx SKWin reference page/package provenance, and exact Skullkeep game assets before parser or runtime work (`dm2_v1_phase0_provenance_gate`)
@@ -229,7 +242,20 @@ Status per 2026-05-19 v2.4.0.
 
 ---
 
-## DM Nexus
+## DM2 V2 — Enhanced Mode
+
+- ❌ Phase 0 — V1 parity gate: DM2 V2 may not change Skullkeep command semantics, world timing, movement/collision, save/load data, object state, shop/trader behavior, or source-locked mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 1 — Presentation scaffold: split DM2 V1 gameplay state from V2 render/input presentation, keep DM2 V1 as the default runtime path, and add deterministic DM2 V2 config/profile persistence
+- ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for DM2 GDAT-backed walls, floors, doors, objects, creatures, clouds, projectiles, fonts, palette/light levels, title/intro, and UI surfaces
+- ❌ Phase 3 — Modern UI overlay: optional DM2 HUD, inventory, champion, rune/action, shop/trader, map/transition, and container panels that mirror DM2 V1 commands without bypassing source-locked transactions
+- ❌ Phase 4 — Lighting and visual effects: enhanced Skullkeep lighting, weather/ambient presentation, cloud/projectile/field effects, palette interpolation, and HiDPI-safe composition with deterministic fallback
+- ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked DM2 movement/world ticks without changing cooldowns, collisions, actuators, timers, creature timing, or redraw cadence
+- ❌ Phase 6 — Touch/controller ergonomics: DM2 V2-only gesture/controller affordances mapped onto existing DM2 command routes, with DM2 V1 touch/click parity preserved
+- ❌ Phase 7 — V2 verification suite: side-by-side DM2 V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
+
+---
+
+## DM Nexus V1
 
 - 🔧 Nexus launch entry in menu
 - ❌ Phase 0 — Provenance gate: hash-lock exact Dungeon Master Nexus disc/images, file manifests, compression/container formats, region/version metadata, and any available primary technical references before parser or runtime work
@@ -240,6 +266,19 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 5 — Mechanics parity: implement Nexus movement, click/input routes, item interactions, doors, pits, teleporters, triggers, champion state, inventory, spells, combat, creature AI, drops, and sounds only after source/provenance evidence is locked
 - ❌ Phase 6 — Save/import compatibility: support Nexus save/load and champion/world persistence where format evidence is available, with explicit diagnostics for unknown or unsupported save variants
 - ❌ Phase 7 — Verification suite: canonical Nexus asset manifests, parser fixtures, deterministic input scripts, viewport/pixel or model-frame gates, save/load round trips, and source-evidence manifests tied to exact disc/version hashes
+
+---
+
+## DM Nexus V2 — Enhanced Mode
+
+- ❌ Phase 0 — V1 parity gate: Nexus V2 may not change Nexus V1 command semantics, world timing, movement/collision, save/load data, champion state, object state, or source/provenance-locked mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 1 — Presentation scaffold: split Nexus V1 gameplay state from V2 render/input presentation, keep Nexus V1 as the default runtime path, and add deterministic Nexus V2 config/profile persistence
+- ❌ Phase 2 — Graphics/model pipeline: source/provenance-preserving upscale or presentation path for Nexus textures, models, wall/floor/object/creature/projectile/UI/title assets, palettes/materials, and deterministic unsupported-asset fallbacks
+- ❌ Phase 3 — Modern UI overlay: optional Nexus HUD, inventory, champion, spell/action, map, and diagnostics panels that mirror Nexus V1 commands without bypassing source/provenance-locked routes or transactions
+- ❌ Phase 4 — Lighting and visual effects: enhanced Nexus lighting, model-frame presentation, projectile/field effects, palette/material interpolation, and HiDPI-safe composition with deterministic fallback
+- ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source/provenance-locked Nexus movement/world ticks without changing cooldowns, collisions, triggers, timers, creature timing, or redraw cadence
+- ❌ Phase 6 — Touch/controller ergonomics: Nexus V2-only gesture/controller affordances mapped onto existing Nexus command routes, with Nexus V1 touch/click parity preserved where source/provenance evidence exists
+- ❌ Phase 7 — V2 verification suite: side-by-side Nexus V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus viewport/pixel or model-frame gates for V2 presentation
 
 ---
 
