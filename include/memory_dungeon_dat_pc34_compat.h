@@ -468,6 +468,10 @@ const char* F0505_DUNGEON_GetThingTypeName_Compat(int thingType);
 
 #define DUNGEON_TEXT_MAX_STRING_LEN 128  /* Max decoded string length per entry */
 #define DUNGEON_TEXT_CODE_END       31   /* End-of-text code */
+#define DUNGEON_TEXT_TYPE_INSCRIPTION 0
+#define DUNGEON_TEXT_TYPE_MESSAGE     1
+#define DUNGEON_TEXT_TYPE_SCROLL      2
+#define DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE 0x8000
 
 struct DungeonTextTable_Compat {
     int    count;    /* Number of decoded strings */
@@ -496,6 +500,29 @@ int F0507_DUNGEON_DecodeTextAtOffset_Compat(
     int                   wordOffset,
     char*                 outBuf,
     int                   outBufSize);
+
+/*
+ * Source-locked F0168 wrapper for a TextString thing index.
+ * Respects TextString visibility unless DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE
+ * is set in textType, and uses the ReDMCSB separator for message,
+ * inscription, or scroll text.
+ */
+int F0508_DUNGEON_DecodeTextStringThing_Compat(
+    const struct DungeonThings_Compat* things,
+    int                                textStringThingIndex,
+    int                                textType,
+    char*                              outBuf,
+    int                                outBufSize);
+
+/*
+ * Decode the text associated with a scroll thing, matching
+ * PANEL.C F0341's C2_TEXT_TYPE_SCROLL | MASK0x8000 call into F0168.
+ */
+int F0509_DUNGEON_DecodeScrollText_Compat(
+    const struct DungeonThings_Compat* things,
+    int                                scrollIndex,
+    char*                              outBuf,
+    int                                outBufSize);
 
 /*
  * Free text table.

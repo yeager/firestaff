@@ -969,21 +969,82 @@ int F0507_DUNGEON_DecodeTextAtOffset_Compat(
         char*                 outBuf,
         int                   outBufSize)
 {
-        int wi = wordOffset;
-        int codeIdx = 0;
-        int pos = 0;
-        int escape = 0;
-        unsigned short w = 0;
-
-        if (!textData || wordOffset < 0 || wordOffset >= textDataWordCount || !outBuf || outBufSize < 2) {
+        if (!textData || wordOffset < 0 || wordOffset >= textDataWordCount ||
+            !outBuf || outBufSize < 2) {
                 if (outBuf && outBufSize > 0) outBuf[0] = '\0';
                 return -1;
         }
 
-        while (pos < outBufSize - 1 && wi < textDataWordCount) {
+        return F0508_DUNGEON_DecodeTextStringThing_Compat(
+                &(struct DungeonThings_Compat){
+                        .textData = (unsigned short*)textData,
+                        .textDataWordCount = textDataWordCount,
+                        .textStrings = &(struct DungeonTextString_Compat){
+                                .visible = 1,
+                                .textDataWordOffset = (unsigned short)wordOffset
+                        },
+                        .textStringCount = 1
+                },
+                0,
+                DUNGEON_TEXT_TYPE_SCROLL | DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE,
+                outBuf,
+                outBufSize);
+}
+
+int F0508_DUNGEON_DecodeTextStringThing_Compat(
+        const struct DungeonThings_Compat* things,
+        int                                textStringThingIndex,
+        int                                textType,
+        char*                              outBuf,
+        int                                outBufSize)
+{
+        int wi = 0;
+        int codeIdx = 0;
+        int pos = 0;
+        int escape = 0;
+        unsigned short w = 0;
+        int baseTextType;
+        char separator;
+        const struct DungeonTextString_Compat* textString;
+
+        if (!things || !things->textData || textStringThingIndex < 0 ||
+            textStringThingIndex >= things->textStringCount || !outBuf || outBufSize < 2) {
+                if (outBuf && outBufSize > 0) outBuf[0] = '\0';
+                return -1;
+        }
+
+        textString = &things->textStrings[textStringThingIndex];
+        if (textString->textDataWordOffset >= (unsigned short)things->textDataWordCount) {
+                outBuf[0] = '\0';
+                return -1;
+        }
+
+        /* ReDMCSB: DUNGEON.C F0168 lines 2255-2275 gates decoding on
+         * TextString.Visible or MASK0x8000, then chooses the text-type
+         * separator.  Lines 2329-2350 emit that separator and terminate the
+         * decoded buffer.  Scroll panels call this path from PANEL.C F0341
+         * lines 890-895 with C2_TEXT_TYPE_SCROLL | MASK0x8000. */
+        if (!textString->visible &&
+            !(textType & DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE)) {
+                outBuf[0] = '\0';
+                return 0;
+        }
+
+        baseTextType = textType & ~DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE;
+        if (baseTextType == DUNGEON_TEXT_TYPE_MESSAGE) {
+                outBuf[pos++] = '\n';
+                separator = ' ';
+        } else if (baseTextType == DUNGEON_TEXT_TYPE_INSCRIPTION) {
+                separator = (char)0x80;
+        } else {
+                separator = '\n';
+        }
+
+        wi = (int)textString->textDataWordOffset;
+        while (pos < outBufSize - 1 && wi < things->textDataWordCount) {
                 int code;
                 if (codeIdx == 0) {
-                        w = textData[wi];
+                        w = things->textData[wi];
                         code = (w >> 10) & 0x1F;
                 } else if (codeIdx == 1) {
                         code = (w >> 5) & 0x1F;
@@ -1023,15 +1084,39 @@ int F0507_DUNGEON_DecodeTextAtOffset_Compat(
                 } else if (code == 27) {
                         outBuf[pos++] = '.';
                 } else if (code == 28) {
-                        outBuf[pos++] = '\n'; /* separator */
+                        outBuf[pos++] = separator;
                 } else if (code == 29 || code == 30) {
                         escape = code;
                 } else { /* code == 31: end of text */
                         break;
                 }
         }
+
+        if (baseTextType == DUNGEON_TEXT_TYPE_INSCRIPTION && pos < outBufSize - 1) {
+                outBuf[pos++] = (char)0x81;
+        }
         outBuf[pos] = '\0';
         return pos;
+}
+
+int F0509_DUNGEON_DecodeScrollText_Compat(
+        const struct DungeonThings_Compat* things,
+        int                                scrollIndex,
+        char*                              outBuf,
+        int                                outBufSize)
+{
+        if (!things || !things->scrolls || scrollIndex < 0 ||
+            scrollIndex >= things->scrollCount || !outBuf || outBufSize < 2) {
+                if (outBuf && outBufSize > 0) outBuf[0] = '\0';
+                return -1;
+        }
+
+        return F0508_DUNGEON_DecodeTextStringThing_Compat(
+                things,
+                (int)things->scrolls[scrollIndex].textStringThingIndex,
+                DUNGEON_TEXT_TYPE_SCROLL | DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE,
+                outBuf,
+                outBufSize);
 }
 
 int F0506_DUNGEON_DecodeTextTable_Compat(
