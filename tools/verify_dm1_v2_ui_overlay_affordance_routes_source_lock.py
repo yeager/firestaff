@@ -117,7 +117,7 @@ SOURCE_CHECKS = [
         "claim": "source queue dispatch owns movement, champion, slot/inventory, and inventory-toggle transactions",
     },
     {
-        "file": "COMMAND.C",
+        "file": "CLIKMENU.C",
         "start": 352,
         "end": 518,
         "function": "F0369/F0370 spell-area processing and route tables",
@@ -164,7 +164,7 @@ FIRESTAFF_CHECKS = {
         "inventory.close_right",
         "inventory.mouth",
         "inventory.eye",
-        "inventory.panel",
+        "inventory.chest_1",
         "champion0.toggle_box",
         "champion3.action_hand",
         "spell.symbol1",
@@ -262,3 +262,24 @@ for rel in [
     for forbidden in FORBIDDEN_DIRECT_TRANSACTIONS:
         if forbidden in text:
             errors.append(f"{rel}: overlay affordance bypasses source-owned transaction {forbidden}")
+
+result = {
+    "status": "failed" if errors else "passed",
+    "scope": "DM1 V2 Phase 3 modern UI overlay affordance route source-lock",
+    "redmcsbSourceRoot": str(SOURCE),
+    "anchors": anchors,
+    "firestaffFiles": sorted(FIRESTAFF_CHECKS),
+    "forbiddenDirectTransactions": FORBIDDEN_DIRECT_TRANSACTIONS,
+    "errors": errors,
+}
+
+EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
+EVIDENCE.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+if errors:
+    print("dm1_v2_ui_overlay_affordance_routes_source_lock=FAIL")
+    for error in errors:
+        print("error:", error)
+    raise SystemExit(1)
+
+print(f"dm1_v2_ui_overlay_affordance_routes_source_lock=OK evidence={EVIDENCE.relative_to(ROOT)}")
