@@ -920,7 +920,6 @@ static M11_AudioMarker m11_audio_marker_from_emission(const struct TickEmission_
             return M11_AUDIO_MARKER_FOOTSTEP;
         case EMIT_DOOR_STATE:
             return M11_AUDIO_MARKER_DOOR;
-        case EMIT_DAMAGE_DEALT:
         case EMIT_KILL_NOTIFY:
         case EMIT_CHAMPION_DOWN:
             return M11_AUDIO_MARKER_COMBAT;
@@ -952,9 +951,8 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
     if (!state) {
         return;
     }
-    (void)M11_Audio_EmitSoundIndex(&state->audioState,
-                                   soundIndex,
-                                   fallbackMarker);
+    (void)fallbackMarker;
+    (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
 }
 
 static void m11_audio_emit_for_emission(M11_GameViewState* state,
@@ -968,9 +966,8 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
         return;
     }
     if (emission->kind == EMIT_SOUND_REQUEST) {
-        (void)M11_Audio_EmitSoundIndex(&state->audioState,
-                                       emission->payload[0],
-                                       marker);
+        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
+                                               emission->payload[0]);
     } else {
         (void)M11_Audio_EmitMarker(&state->audioState, marker);
     }
@@ -2118,7 +2115,7 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                 /* ReDMCSB: audible sensors play C01_SOUND_SWITCH.
                  * Route through M11 audio backend when available. */
                 if (state->audioState.lastSoundIndex >= -1) { /* audio available */
-                    M11_Audio_EmitSoundIndex(&state->audioState, 1, M11_AUDIO_MARKER_NONE); /* C01_SOUND_SWITCH */
+                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR); /* C01_SOUND_SWITCH */
                 }
             } else if (targetElement == DUNGEON_ELEMENT_PIT) {
                 /* Toggle pit open/closed */
@@ -5580,6 +5577,9 @@ static int m11_apply_tick(M11_GameViewState* state,
     /* Process emissions into the message log (also sets gameWon/partyDead
      * via EMIT_GAME_WON / EMIT_PARTY_DEAD handling). */
     M11_GameView_ProcessTickEmissions(state);
+    if (command == CMD_ATTACK) {
+        m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
+    }
 
     /* Apply survival mechanics */
     m11_apply_survival_drain(state);
@@ -8680,8 +8680,11 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             state->world.things->doors[doorIdx].button) {
             if (M11_GameView_GetV1LeaderHandThing(state) == THING_NONE) {
                 /* Empty hand: click on door button toggles it */
-                if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
-                    m11_toggle_front_door(state)) {
+                if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+                    if (!m11_toggle_front_door(state)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
                     return M11_GAME_INPUT_REDRAW;
                 }
             }
@@ -8857,8 +8860,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         }
                         m11_apply_sensor_effects(state, &effects);
                         if (trigResults.results[0].audible) {
-                            M11_Audio_EmitSoundIndex(&state->audioState, 1,
-                                                     M11_AUDIO_MARKER_NONE);
+                            m11_audio_emit_source_sound(state, 1,
+                                                      M11_AUDIO_MARKER_DOOR);
                         }
                     }
                     m11_set_status(state, "WALL", "SENSOR ACTIVATED");
@@ -16267,6 +16270,44 @@ static const char* m11_projectile_subtype_name(int subtype) {
     }
 }
 
+static int m11_projectile_impact_source_sound_index(
+    const struct ProjectileInstance_Compat* p,
+    const struct ProjectileTickResult_Compat* r) {
+    if (!p || !r) return -1;
+    switch (r->resultKind) {
+        case PROJECTILE_RESULT_HIT_WALL:
+        case PROJECTILE_RESULT_HIT_DOOR:
+        case PROJECTILE_RESULT_HIT_CHAMPION:
+        case PROJECTILE_RESULT_HIT_CREATURE:
+        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
+            break;
+        default:
+            return -1;
+    }
+
+    if (r->emittedExplosion) {
+        switch (r->outExplosion.explosionType) {
+            case C000_EXPLOSION_FIREBALL:
+            case C001_EXPLOSION_SLIME:
+            case C002_EXPLOSION_LIGHTNING_BOLT:
+                return (r->outExplosion.attack > 80) ? 5 : 6;
+            case C040_EXPLOSION_SMOKE:
+                return -1;
+            default:
+                return 16;
+        }
+    }
+
+    if (p->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT) {
+        return 16;
+    }
+    if (p->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+        p->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
+        return 0;
+    }
+    return 4;
+}
+
 /* Apply bounded V1 impact side-effects: explosion spawn, creature
  * damage, champion damage, and DM1-style log cue.  Designed to
  * touch only data the M10 layer already owns (world.explosions via
@@ -16277,6 +16318,11 @@ static void m11_projectile_apply_impact(
     const struct ProjectileInstance_Compat* p,
     const struct ProjectileTickResult_Compat* r) {
     const char* name = m11_projectile_subtype_name(p->projectileSubtype);
+    int sourceSoundIndex = m11_projectile_impact_source_sound_index(p, r);
+    if (sourceSoundIndex >= 0) {
+        m11_audio_emit_source_sound(state, sourceSoundIndex,
+                                    M11_Audio_FallbackMarkerForSoundIndex(sourceSoundIndex));
+    }
 
     /* Explosion spawn — magical hits on fireball / lightning /
      * harm-non-material / poison-* subtypes.  F0820 populated

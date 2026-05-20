@@ -1433,8 +1433,9 @@ int main(int argc, char** argv) {
     probe_record(&tally,
                  "INV_GV_07M",
                  syntheticView.audioEventCount > 0 &&
-                     syntheticView.audioState.lastMarker == M11_AUDIO_MARKER_DOOR,
-                 "door interaction maps tick emissions to the M11 audio marker pipeline");
+                     syntheticView.audioState.lastMarker == M11_AUDIO_MARKER_DOOR &&
+                     syntheticView.audioState.lastSoundIndex == 2,
+                 "door interaction preserves ReDMCSB C02 door-rattle source sound index");
 
     initialTick = syntheticView.world.gameTick;
     initialHash = syntheticView.lastWorldHash;
@@ -10953,8 +10954,9 @@ int main(int argc, char** argv) {
             leaderAfterCry = menuView.world.party.activeChampionIndex;
 
             probe_record(&tally, "INV_GV_326",
-                         markerAfter == M11_AUDIO_MARKER_CREATURE,
-                         "non-melee action: WAR CRY emits an audio marker");
+                         markerAfter == M11_AUDIO_MARKER_CREATURE &&
+                             menuView.audioState.lastSoundIndex == 17,
+                         "non-melee action: WAR CRY preserves ReDMCSB M619 source sound index");
             probe_record(&tally, "INV_GV_327",
                          tickAfterCry > tickBeforeCry,
                          "non-melee action: WAR CRY advances a time-passes tick");
@@ -11391,6 +11393,10 @@ int main(int argc, char** argv) {
                      flightView.world.explosions.count >= 1,
                      "projectile detonation: magical impact spawns an "
                      "explosion into world.explosions");
+
+        probe_record(&tally, "INV_GV_350",
+                     flightView.audioState.lastSoundIndex == 6,
+                     "projectile detonation: weak fireball impact preserves ReDMCSB M541 source sound index");
 
         /* Explosion is at a corridor square and visible via the
          * summary so the viewport's explosion burst visual renders. */
