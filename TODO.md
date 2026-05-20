@@ -65,7 +65,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Creature group spawning (C006 floor sensor group generator) — base-health parity source-locked; full world insertion/runtime dispatch remains
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
-- ❌ Creature flee behavior (low HP retreat)
+- ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
 
 ### Combat
 - ✅ Champion melee actions (SWING, CHOP, STAB, THRUST, HACK, etc.)
