@@ -193,7 +193,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 5 — Smooth movement presentation: interpolation/camera easing between source-locked V1 movement ticks without changing cooldowns, collision, sensors, creature timing, or redraw cadence
   - ✅ Phase 5 slice — smooth movement presentation source-lock gate proves camera interpolation is presentation-only after accepted source-style movement and does not mutate V1 timing/cooldown, collision, sensor/event, creature timing, or redraw-cadence owners (2f3442bf).
 - ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes, with V1 touch/click parity preserved
-  - ✅ Phase 6 slice — touch/controller affordance route gate maps V2-only swipe/controller metadata onto existing source-locked movement commands while preserving V1 touch/click parity and rejecting V2-off affordances (2f3442bf/phase6).
+  - ✅ Phase 6 slice — touch/controller affordance route gate maps V2-only swipe/controller metadata onto existing source-locked movement commands while preserving V1 touch/click parity and rejecting V2-off affordances (b3fe97e3).
 - ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
 ---
