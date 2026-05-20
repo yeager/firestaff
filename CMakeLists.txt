@@ -1529,6 +1529,10 @@ if(BUILD_TESTING)
         set_tests_properties(dm1_v1_wall_collision_capture_manifest_source_lock PROPERTIES
             ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
         )
+        add_test(
+            NAME dm1_v1_collision_doors_parity_matrix_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_collision_doors_parity_matrix_source_lock.py
+        )
     endif()
 
     add_test(
