@@ -106,7 +106,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Champion stats panel — exists but not fully interactive
 - ❌ Champion stat screen (full F0340 display with all attributes)
 - 🔧 Champion weight/load system (encumbrance) — F0306/F0309/F0310 max-load and movement-cost core source-locked
-- ❌ Champion stamina regeneration rate tied to load
+- ✅ Champion stamina regeneration — source-locked to F0331 food/water, resting, idle-delay, max-stamina amount, and mana-regeneration stamina cost; no direct load factor in regeneration path
 
 ### Inventory & Items
 - ✅ Leader hand object (pick up, put down, swap)
@@ -131,7 +131,7 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Food/water depletion → HP damage source-lock/test added; runtime damage-queue integration remains pending
 - ❌ Rest system (sleep to recover, wake on creature approach)
 - ❌ Stamina drain from actions
-- ❌ Stamina regeneration
+- ✅ Stamina regeneration — source-locked champion-needs gate covers gain/loss, rest multiplier, idle movement delay bonus, food/water depletion, and stamina overflow damage
 
 ### Sensors & Mechanisms
 - ✅ Floor sensors (party walk-on/walk-off triggers)
