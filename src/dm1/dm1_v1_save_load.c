@@ -111,7 +111,8 @@ static int dm1_serialize_header(const struct DM1SaveHeader* hdr,
     buf[38] = hdr->saveAndPlay;
     buf[39] = hdr->formatID;
     buf[40] = (uint8_t)(hdr->musicOn ? 1 : 0);
-    /* bytes 41..63 remain zero (reserved) */
+    dm1_write_u32_le(buf + 41, hdr->bugProfileHash);
+    /* bytes 45..63 remain zero (reserved) */
     return 1;
 }
 
@@ -131,7 +132,8 @@ static int dm1_deserialize_header(const unsigned char buf[DM1_SAVE_HEADER_SIZE],
     hdr->saveAndPlay    = buf[38];
     hdr->formatID       = buf[39];
     hdr->musicOn        = buf[40] ? 1 : 0;
-    memcpy(hdr->reserved, buf + 41, 23);
+    hdr->bugProfileHash = dm1_read_u32_le(buf + 41);
+    memcpy(hdr->reserved, buf + 45, 19);
     return 1;
 }
 
@@ -167,6 +169,16 @@ int DM1_SaveGame(const struct GameWorld_Compat* world,
                  uint32_t gameID,
                  int saveAndPlay,
                  int musicOn) {
+    return DM1_SaveGameWithProfile(world, path, gameID, saveAndPlay, musicOn,
+                                   DM1_DefaultSaveProfileHash());
+}
+
+int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
+                            const char* path,
+                            uint32_t gameID,
+                            int saveAndPlay,
+                            int musicOn,
+                            uint32_t bugProfileHash) {
     struct DM1SaveHeader hdr;
     unsigned char headerBuf[DM1_SAVE_HEADER_SIZE];
     unsigned char* blob = NULL;
@@ -214,6 +226,7 @@ int DM1_SaveGame(const struct GameWorld_Compat* world,
     hdr.saveAndPlay    = (uint8_t)(saveAndPlay ? 1 : 0);
     hdr.formatID       = 1; /* C1_FORMAT_DM_ATARI_ST */
     hdr.musicOn        = (uint8_t)(musicOn ? 1 : 0);
+    hdr.bugProfileHash = bugProfileHash;
 
     dm1_serialize_header(&hdr, headerBuf);
 
@@ -418,6 +431,27 @@ int DM1_ValidateSaveFile(const char* path,
 
     *outHeader = hdr;
     return DM1_SAVE_OK;
+}
+
+uint32_t DM1_SaveProfileHashFromName(const char* profileName) {
+    if (!profileName || profileName[0] == '\0') {
+        return DM1_SAVE_PROFILE_UNSPECIFIED;
+    }
+    return DM1_CRC32((const unsigned char*)profileName, strlen(profileName));
+}
+
+uint32_t DM1_DefaultSaveProfileHash(void) {
+    return DM1_SaveProfileHashFromName(DM1_SAVE_PROFILE_ID_PC34_BASELINE);
+}
+
+int DM1_SaveProfileMatches(const struct DM1SaveHeader* header,
+                           uint32_t currentBugProfileHash) {
+    if (!header) return 0;
+    if (header->bugProfileHash == DM1_SAVE_PROFILE_UNSPECIFIED ||
+        currentBugProfileHash == DM1_SAVE_PROFILE_UNSPECIFIED) {
+        return 1;
+    }
+    return header->bugProfileHash == currentBugProfileHash;
 }
 
 /* ── Save path helper ─────────────────────────────────────────── */

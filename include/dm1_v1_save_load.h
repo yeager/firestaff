@@ -78,7 +78,8 @@ enum DM1SaveLoadError {
  *   [38..38]  saveAndPlay    0=save-and-quit, 1=save-and-play
  *   [39..39]  formatID       C1_FORMAT_DM_ATARI_ST = 1
  *   [40..40]  musicOn        GLOBAL_DATA.MusicOn / G2024_B_PendingMusicOn
- *   [41..63]  reserved       zero-filled
+ *   [41..44]  bugProfileHash Firestaff bug-toggle profile hash
+ *   [45..63]  reserved       zero-filled
  */
 struct DM1SaveHeader {
     unsigned char magic[8];
@@ -95,8 +96,12 @@ struct DM1SaveHeader {
     uint8_t  saveAndPlay;
     uint8_t  formatID;
     uint8_t  musicOn;
-    unsigned char reserved[23];
+    uint32_t bugProfileHash;
+    unsigned char reserved[19];
 };
+
+#define DM1_SAVE_PROFILE_UNSPECIFIED 0u
+#define DM1_SAVE_PROFILE_ID_PC34_BASELINE "PC_3.4_baseline"
 
 /* ── Save menu state ──────────────────────────────────────────── */
 
@@ -143,6 +148,13 @@ int DM1_SaveGame(const struct GameWorld_Compat* world,
                  int saveAndPlay,
                  int musicOn);
 
+int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
+                            const char* path,
+                            uint32_t gameID,
+                            int saveAndPlay,
+                            int musicOn,
+                            uint32_t bugProfileHash);
+
 /*
  * Load game world from file.
  *
@@ -163,6 +175,11 @@ int DM1_LoadGame(const char* path,
  */
 int DM1_ValidateSaveFile(const char* path,
                          struct DM1SaveHeader* outHeader);
+
+uint32_t DM1_SaveProfileHashFromName(const char* profileName);
+uint32_t DM1_DefaultSaveProfileHash(void);
+int DM1_SaveProfileMatches(const struct DM1SaveHeader* header,
+                           uint32_t currentBugProfileHash);
 
 /* ── CRC32 helper ─────────────────────────────────────────────── */
 

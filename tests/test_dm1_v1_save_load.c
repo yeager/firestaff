@@ -8,6 +8,7 @@
  *   4. Save menu state machine
  *   5. Save path generation
  *   6. Full save/load round-trip (requires GameWorld_Compat stubs)
+ *   7. Save-file bug profile hash mismatch helper
  *
  * ReDMCSB source refs — validates against original save format semantics:
  *   DEFS.H     DM_SAVE_HEADER layout, GLOBAL_DATA fields
@@ -69,6 +70,7 @@ static int test_header_roundtrip(void) {
     hdr.saveAndPlay = 1;
     hdr.formatID = 1;
     hdr.musicOn = 1;
+    hdr.bugProfileHash = 0xA1B2C3D4u;
 
     /* Serialize header to buffer */
     memset(buf, 0xAA, sizeof(buf));
@@ -111,6 +113,10 @@ static int test_header_roundtrip(void) {
         buf[38] = hdr.saveAndPlay;
         buf[39] = hdr.formatID;
         buf[40] = hdr.musicOn;
+        buf[41] = (unsigned char)(hdr.bugProfileHash & 0xFF);
+        buf[42] = (unsigned char)((hdr.bugProfileHash >> 8) & 0xFF);
+        buf[43] = (unsigned char)((hdr.bugProfileHash >> 16) & 0xFF);
+        buf[44] = (unsigned char)((hdr.bugProfileHash >> 24) & 0xFF);
     }
 
     /* Verify magic is at offset 0 */
@@ -140,6 +146,8 @@ static int test_header_roundtrip(void) {
     hdr2.saveAndPlay = buf[38];
     hdr2.formatID = buf[39];
     hdr2.musicOn = buf[40] ? 1 : 0;
+    hdr2.bugProfileHash = (uint32_t)buf[41] | ((uint32_t)buf[42] << 8) |
+                          ((uint32_t)buf[43] << 16) | ((uint32_t)buf[44] << 24);
 
     if (memcmp(hdr2.magic, DM1_SAVE_MAGIC, 8) != 0 ||
         hdr2.formatVersion != hdr.formatVersion ||
@@ -154,7 +162,8 @@ static int test_header_roundtrip(void) {
         hdr2.championCount != hdr.championCount ||
         hdr2.saveAndPlay != hdr.saveAndPlay ||
         hdr2.formatID != hdr.formatID ||
-        hdr2.musicOn != hdr.musicOn) {
+        hdr2.musicOn != hdr.musicOn ||
+        hdr2.bugProfileHash != hdr.bugProfileHash) {
         printf("  FAIL: header round-trip mismatch\n");
         return 0;
     }
@@ -332,6 +341,47 @@ static int test_validate_corrupt(void) {
     return 1;
 }
 
+/* ── Test 9: Profile hash mismatch helper ──────────────────────── */
+
+static int test_profile_hash_mismatch(void) {
+    struct DM1SaveHeader hdr;
+    uint32_t defaultHash = DM1_DefaultSaveProfileHash();
+    uint32_t namedHash = DM1_SaveProfileHashFromName(DM1_SAVE_PROFILE_ID_PC34_BASELINE);
+    uint32_t customHash = DM1_SaveProfileHashFromName("Custom_DM1_bug_profile");
+
+    if (defaultHash == DM1_SAVE_PROFILE_UNSPECIFIED) {
+        printf("  FAIL: default profile hash should be nonzero\n");
+        return 0;
+    }
+    if (defaultHash != namedHash) {
+        printf("  FAIL: default profile hash does not match baseline profile name\n");
+        return 0;
+    }
+    if (customHash == defaultHash || customHash == DM1_SAVE_PROFILE_UNSPECIFIED) {
+        printf("  FAIL: custom profile hash should be distinct and nonzero\n");
+        return 0;
+    }
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.bugProfileHash = defaultHash;
+    if (!DM1_SaveProfileMatches(&hdr, defaultHash)) {
+        printf("  FAIL: matching save/current profile should pass\n");
+        return 0;
+    }
+    if (DM1_SaveProfileMatches(&hdr, customHash)) {
+        printf("  FAIL: mismatched save/current profile should warn\n");
+        return 0;
+    }
+    hdr.bugProfileHash = DM1_SAVE_PROFILE_UNSPECIFIED;
+    if (!DM1_SaveProfileMatches(&hdr, customHash)) {
+        printf("  FAIL: legacy unspecified save profile should not hard-fail\n");
+        return 0;
+    }
+
+    printf("  PASS: profile hash mismatch helper\n");
+    return 1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -347,6 +397,7 @@ int main(void) {
     if (test_null_args())       pass++; else fail++;
     if (test_load_nonexistent()) pass++; else fail++;
     if (test_validate_corrupt()) pass++; else fail++;
+    if (test_profile_hash_mismatch()) pass++; else fail++;
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return (fail > 0) ? 1 : 0;

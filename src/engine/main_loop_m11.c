@@ -802,6 +802,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                                   "firestaff-%s-dm1save.sav", sid);
                 if (rc > 0 && rc < (int)sizeof(savePath) &&
                     DM1_LoadGame(savePath, &gameView->world, &saveHeader) == DM1_SAVE_OK) {
+                    if (!DM1_SaveProfileMatches(&saveHeader,
+                                                DM1_DefaultSaveProfileHash())) {
+                        fprintf(stderr,
+                                "RESUME WARNING: save profile mismatch "
+                                "(save=0x%08X current=0x%08X)\n",
+                                (unsigned)saveHeader.bugProfileHash,
+                                (unsigned)DM1_DefaultSaveProfileHash());
+                    }
                     gameView->active = 1;
                     (void)M11_GameView_SetMusicEnabled(gameView, saveHeader.musicOn);
                     fprintf(stderr, "RESUME: loaded save from %s\n", savePath);
