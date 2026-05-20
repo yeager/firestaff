@@ -256,8 +256,6 @@ Status per 2026-05-19 v2.4.0.
 - ✅ GitHub Actions CI/CD release pipeline
 - ❌ Linux build verification
 - ❌ Windows build
-- ❌ iOS/Android build
-- ❌ Web/WASM build
 
 ---
 
