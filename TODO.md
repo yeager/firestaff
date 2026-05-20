@@ -62,7 +62,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Kill XP award via lifecycle system
 - ✅ Creature rendering — sprites load and source-locked aspect frames cycle
 - 🔧 Creature type-specific behavior — Giggler steal source-locked; Ghost non-material and other type specials remain
-- ❌ Creature group spawning (C006 floor sensor group generator)
+- 🔧 Creature group spawning (C006 floor sensor group generator) — base-health parity source-locked; full world insertion/runtime dispatch remains
 - ❌ Creature projectile attacks (Vexirk spells, Dragon fire)
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ❌ Creature flee behavior (low HP retreat)
