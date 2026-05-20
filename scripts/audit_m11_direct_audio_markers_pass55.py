@@ -71,21 +71,24 @@ def main() -> int:
         else:
             failures += fail(f"P55_DIRECT_AUDIO_AUDIT_02 missing {label}")
 
-    combat_event_13_count = game.count("m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT)")
-    if combat_event_13_count == 2:
+    shoot_block_start = game.find("case 32: { /* SHOOT */")
+    action_block_end = game.find("int M11_GameView_TriggerActionRow")
+    action_block = game[shoot_block_start:action_block_end]
+    combat_event_13_count = action_block.count("m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT)")
+    if shoot_block_start >= 0 and action_block_end >= 0 and combat_event_13_count == 2:
         pass_line("P55_DIRECT_AUDIO_AUDIT_03 shoot and throw emit source-backed event 13")
     else:
         failures += fail(
-            f"P55_DIRECT_AUDIO_AUDIT_03 expected 2 event-13 action emissions, found {combat_event_13_count}"
+            f"P55_DIRECT_AUDIO_AUDIT_03 expected 2 shoot/throw event-13 action emissions, found {combat_event_13_count}"
         )
 
     # 3. Remaining direct marker calls are allowed only in explicitly documented buckets:
-    #    generic non-EMIT tick emissions; CALM/BRANDISH/CONFUSE fallback; spell/invoke
-    #    action cues whose exact original request timing/index is not source-backed here.
+    #    generic non-EMIT tick emissions plus spell/invoke action cues whose exact
+    #    original request timing/index is not source-backed here. CALM / BRANDISH /
+    #    CONFUSE are source-silent in PC34 MENU.C and must not use marker fallback.
     calls = direct_marker_calls(game)
     allowed_labels = {
         "generic_non_sound_request_emission": 0,
-        "calm_brandish_confuse_fallback": 0,
         "spell_projectile_action_fallback": 0,
         "invoke_action_fallback": 0,
     }
@@ -98,8 +101,6 @@ def main() -> int:
         line = line_for_offset(game, offset)
         if "emission->kind == EMIT_SOUND_REQUEST" in ctx and "else" in ctx:
             allowed_labels["generic_non_sound_request_emission"] += 1
-        elif "CALM / BRANDISH / CONFUSE are still V1-slice cues only" in ctx:
-            allowed_labels["calm_brandish_confuse_fallback"] += 1
         elif spell_block_start <= offset < invoke_block_start:
             allowed_labels["spell_projectile_action_fallback"] += 1
         elif invoke_block_start <= offset < throw_block_start:
@@ -109,10 +110,25 @@ def main() -> int:
 
     expected_counts = {
         "generic_non_sound_request_emission": 1,
-        "calm_brandish_confuse_fallback": 1,
         "spell_projectile_action_fallback": 1,
         "invoke_action_fallback": 1,
     }
+
+    social_block_start = game.find("case 37: /* CALM */")
+    social_block_end = game.find("case 32: { /* SHOOT */")
+    social_block = game[social_block_start:social_block_end]
+    if social_block_start < 0 or social_block_end < 0:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04A missing social frighten action block")
+    elif (
+        "M11_Audio_EmitMarker" not in social_block
+        and "m11_audio_emit_source_sound(state, 17, M11_AUDIO_MARKER_CREATURE)" in social_block
+        and "m11_audio_emit_source_sound(state, 18, M11_AUDIO_MARKER_CREATURE)" in social_block
+        and "ReDMCSB PC34 MENU.C:1347-1362" in social_block
+    ):
+        pass_line("P55_DIRECT_AUDIO_AUDIT_04A calm/brandish/confuse stay source-silent")
+    else:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04A social frighten block still has marker fallback or lost source-backed horn/cry events")
+
     if not unexpected and allowed_labels == expected_counts:
         pass_line(
             "P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets "

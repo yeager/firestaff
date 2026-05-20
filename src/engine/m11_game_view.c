@@ -17450,11 +17450,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                  * (M620_SOUND_BLOW_HORN / GRAPHICS.DAT SND3 item 704). */
                 m11_audio_emit_source_sound(state, 18, M11_AUDIO_MARKER_CREATURE);
             } else {
-                /* CALM / BRANDISH / CONFUSE are still V1-slice cues only;
-                 * keep the honest marker fallback until their original
-                 * runtime sound requests are captured or source-backed. */
-                (void)M11_Audio_EmitMarker(&state->audioState,
-                                           M11_AUDIO_MARKER_CREATURE);
+                /* ReDMCSB PC34 MENU.C:1347-1362 routes CALM / BRANDISH /
+                 * CONFUSE through F0401_MENUS_IsGroupFrightenedByAction
+                 * without an F0064_SOUND_RequestPlay_CPSD call. */
+                (void)0;
             }
             return 0;
         }

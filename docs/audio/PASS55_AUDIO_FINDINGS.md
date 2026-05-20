@@ -24,6 +24,10 @@ Converted action cues:
 - `SHOOT` → sound event `13` (`M563_SOUND_COMBAT_ATTACK...`, SND3 item 684)
 - `THROW` → sound event `13` (`M563_SOUND_COMBAT_ATTACK...`, SND3 item 684)
 
+Source-silent action cues:
+
+- `CALM`, `BRANDISH`, and `CONFUSE` stay silent for PC34: ReDMCSB `MENU.C:1347-1362` only calls `F0064_SOUND_RequestPlay_CPSD(...)` for `WAR CRY` and `BLOW HORN` before routing all five actions through `F0401_MENUS_IsGroupFrightenedByAction(...)`.
+
 These are anchored to the Pass 52 `sound_event_snd3_map_v1.[ch]` table and its
 ReDMCSB `DEFS.H` / `DATA.C` source anchors.  The conversion uses the Pass 53
 `M11_Audio_EmitSoundIndex(...)` path, so original SND3 assets are queued when
@@ -39,13 +43,13 @@ a source-backed sound-index assertion or original runtime capture:
 | Bucket | Count | Why still direct |
 |--------|------:|------------------|
 | Generic non-`EMIT_SOUND_REQUEST` tick emissions | 1 | Existing catch-all procedural cue for movement/door/damage/spell emissions that are not yet original sound-request payloads |
-| `CALM` / `BRANDISH` / `CONFUSE` action fallback | 1 | V1-slice cues only; exact original sound request/index not asserted in this pass |
 | `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue | 1 | Projectile creation is source-backed, but exact cast-vs-impact sound request timing/index is not captured here |
 | `INVOKE` action cue | 1 | Random subtype path exists, but exact original sound request timing/index is not captured here |
 
 This pass does **not** claim those TODO buckets are original-faithful.  It only
 prevents accidental overclaiming by making the remaining procedural paths
-explicit.
+explicit.  It also prevents the now source-silent `CALM` / `BRANDISH` /
+`CONFUSE` block from regressing to a procedural marker fallback.
 
 ---
 
@@ -58,7 +62,8 @@ PASS P55_DIRECT_AUDIO_AUDIT_01 map contains sound event 13 M563_SOUND_COMBAT_ATT
 PASS P55_DIRECT_AUDIO_AUDIT_02 war cry action emits event 17
 PASS P55_DIRECT_AUDIO_AUDIT_02 blow horn action emits event 18
 PASS P55_DIRECT_AUDIO_AUDIT_03 shoot and throw emit source-backed event 13
-PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1, 'calm_brandish_confuse_fallback': 1, 'spell_projectile_action_fallback': 1, 'invoke_action_fallback': 1}
+PASS P55_DIRECT_AUDIO_AUDIT_04A calm/brandish/confuse stay source-silent
+PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1, 'spell_projectile_action_fallback': 1, 'invoke_action_fallback': 1}
 PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s SHOOTS
 PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s THROWS
 PASS P55_DIRECT_AUDIO_AUDIT_SUMMARY 0 failures
@@ -77,8 +82,10 @@ Rerun regressions:
 - No original runtime audio capture.
 - No SFX/title-music cadence, looping, prioritization, or overlap parity claim.
 - No claim that the remaining direct marker TODO buckets are original-faithful.
+- No audio for `CALM` / `BRANDISH` / `CONFUSE`; this pass source-locks their absence.
 - No distribution of original audio assets.
 
 Pass 55 narrows the trigger-point gap from "remaining direct marker calls
-unknown" to "four source-backed action cue emissions converted; four remaining
-direct-marker buckets explicitly documented and guarded by audit."
+unknown" to "four source-backed action cue emissions converted; three remaining
+direct-marker buckets explicitly documented; and CALM/BRANDISH/CONFUSE kept
+source-silent under audit."
