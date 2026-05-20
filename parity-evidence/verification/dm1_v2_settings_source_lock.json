@@ -27,9 +27,9 @@
   ],
   "errors": [],
   "evidenceImpact": {
-    "completionMatrixGap": "test_dm1_v2_settings_pc34 existed but was not wired into CTest; no settings source-lock gate tied V2 presentation settings back to ReDMCSB viewport geometry and V1-safe M12 persistence.",
+    "completionMatrixGap": "Phase 1 needs deterministic V2 presentation config carried beside V1 gameplay state; this gate ties the V2-only settings path back to ReDMCSB viewport/command invariants and V1-safe persistence.",
     "verifiedCompletionPercent": null
   },
-  "scope": "dm1_v2_settings_pc34 Phase-6 settings persistence source-lock",
+  "scope": "dm1_v2_settings_pc34 Phase-1 presentation scaffold settings persistence source-lock",
   "status": "passed"
 }

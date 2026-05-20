@@ -44,6 +44,9 @@ int main(void) {
     DM1_V2_Settings settings;
     DM1_V2_Settings roundtrip;
     const char* path;
+    const char* home;
+    char standalonePath[512];
+    char missingPath[512];
 
     set_test_home();
 
@@ -57,6 +60,14 @@ int main(void) {
     CHECK(settings.dynamicLightingEnabled == 1);
     CHECK(settings.accessibilityTouchEnabled == 0);
     CHECK(settings.aspectMode == DM1_V2_ASPECT_ORIGINAL_4_3);
+    CHECK(settings.viewport_scale == 2);
+    CHECK(settings.use_epx == 1);
+    CHECK(settings.use_bilinear == 0);
+    CHECK(settings.palette_enhanced == 0);
+    CHECK(settings.sound_enabled == 1);
+    CHECK(settings.music_enabled == 0);
+    CHECK(settings.fullscreen == 0);
+    CHECK(settings.vsync == 1);
     CHECK(strcmp(dm1_v2_settings_aspect_id(settings.aspectMode), "4:3-original") == 0);
 
     settings.scalePercent = 250;
@@ -103,6 +114,48 @@ int main(void) {
     CHECK(settings.dynamicLightingEnabled == 1);
     CHECK(settings.accessibilityTouchEnabled == 1);
     CHECK(settings.aspectMode == DM1_V2_ASPECT_ORIGINAL_4_3);
+
+    home = getenv("HOME");
+    snprintf(standalonePath, sizeof(standalonePath), "%s/dm1-v2-settings.ini", home ? home : ".");
+    snprintf(missingPath, sizeof(missingPath), "%s/dm1-v2-settings-missing.ini", home ? home : ".");
+    remove(missingPath);
+    settings.scalePercent = 999;
+    settings.smoothingEnabled = -3;
+    settings.dynamicLightingEnabled = 2;
+    settings.accessibilityTouchEnabled = 0;
+    settings.aspectMode = DM1_V2_ASPECT_WIDESCREEN_16_9;
+    settings.viewport_scale = 64;
+    settings.use_epx = 5;
+    settings.use_bilinear = 0;
+    settings.palette_enhanced = -1;
+    settings.sound_enabled = 1;
+    settings.music_enabled = 7;
+    settings.fullscreen = 0;
+    settings.vsync = 9;
+    CHECK(v2_settings_save_to_file(&settings, standalonePath) == 0);
+    CHECK(file_contains(standalonePath, "scale_percent=400"));
+    CHECK(file_contains(standalonePath, "viewport_scale=16"));
+    CHECK(file_contains(standalonePath, "epx=1"));
+    CHECK(file_contains(standalonePath, "palette_enhanced=1"));
+    CHECK(file_contains(standalonePath, "music=1"));
+
+    memset(&roundtrip, 0xA5, sizeof(roundtrip));
+    CHECK(v2_settings_load_from_file(&roundtrip, standalonePath) == 0);
+    CHECK(roundtrip.scalePercent == 400);
+    CHECK(roundtrip.smoothingEnabled == 1);
+    CHECK(roundtrip.dynamicLightingEnabled == 1);
+    CHECK(roundtrip.accessibilityTouchEnabled == 0);
+    CHECK(roundtrip.aspectMode == DM1_V2_ASPECT_WIDESCREEN_16_9);
+    CHECK(roundtrip.viewport_scale == 16);
+    CHECK(roundtrip.use_epx == 1);
+    CHECK(roundtrip.use_bilinear == 0);
+    CHECK(roundtrip.palette_enhanced == 1);
+    CHECK(roundtrip.sound_enabled == 1);
+    CHECK(roundtrip.music_enabled == 1);
+    CHECK(roundtrip.fullscreen == 0);
+    CHECK(roundtrip.vsync == 1);
+
+    CHECK(v2_settings_load_from_file(&roundtrip, missingPath) == -1);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
