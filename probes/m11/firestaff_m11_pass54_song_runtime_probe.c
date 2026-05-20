@@ -48,6 +48,12 @@ static const char* find_song_dat(char* buf, size_t cap) {
     if (home && buf && cap > 0) {
         int n = snprintf(buf, cap, "%s/.firestaff/data/SONG.DAT", home);
         if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        n = snprintf(buf, cap, "%s/.firestaff/data/dm1-multilingual/SONG.DAT", home);
+        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        n = snprintf(buf, cap, "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/SONG.DAT", home);
+        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        n = snprintf(buf, cap, "%s/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/SONG.DAT", home);
+        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
     }
     if (file_exists("/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT")) {
         return "/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT";

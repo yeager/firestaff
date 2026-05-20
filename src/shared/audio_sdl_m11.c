@@ -200,6 +200,12 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     if (home && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/SONG.DAT", home);
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1-multilingual/SONG.DAT", home);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/SONG.DAT", home);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/SONG.DAT", home);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
     }
     if (m11_file_exists("/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT")) {
         return "/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT";

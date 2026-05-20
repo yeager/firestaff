@@ -297,6 +297,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_audio_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M11 title-song runtime source-lock probe (SONG.DAT only; no generic SFX lane)
+add_executable(firestaff_m11_pass54_song_runtime_probe probes/m11/firestaff_m11_pass54_song_runtime_probe.c)
+target_link_libraries(firestaff_m11_pass54_song_runtime_probe PRIVATE firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass54_song_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 FS Portable probe (cross-platform filesystem helpers)
 add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
 target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_m10)
@@ -1150,6 +1157,14 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
+    )
+
+    add_test(
+        NAME m11_title_song_runtime_source_lock
+        COMMAND firestaff_m11_pass54_song_runtime_probe
+    )
+    set_tests_properties(m11_title_song_runtime_source_lock PROPERTIES
+        ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0"
     )
 
     add_test(
