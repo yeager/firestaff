@@ -50,6 +50,21 @@ static int projectile_digest_door_is_destroyed(const struct CellContentDigest_Co
     return digest && digest->destDoorState == PROJECTILE_DOOR_STATE_DESTROYED;
 }
 
+static int projectile_open_door_spell_impacts_door(
+    const struct ProjectileInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest)
+{
+    /* ReDMCSB PROJEXPL.C:F0217 door branch lines 471-489 checks
+     * C0xFF84_THING_EXPLOSION_OPEN_DOOR before the normal destroyed/open/
+     * pass-through door tests.  Therefore Open Door impacts every
+     * non-destroyed door state, including open and one-quarter doors. */
+    return in && digest
+        && in->projectileSubtype == PROJECTILE_SUBTYPE_OPEN_DOOR
+        && digest->destSquareType == PROJECTILE_ELEMENT_DOOR
+        && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
+        && !projectile_digest_door_is_destroyed(digest);
+}
+
 enum {
     PHASE17_SOUND_WOODEN_THUD = 4 /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM */
 };
@@ -586,13 +601,15 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         outResult->despawn = 1;
         return 1;
     case PROJECTILE_RESULT_HIT_DOOR: {
-        int passes = 0;
-        F0816_PROJECTILE_DoesPassThroughDoor_Compat(in, digest, rng, &passes);
-        if (passes) {
-            outResult->resultKind = PROJECTILE_RESULT_FLEW;
-            outResult->despawn    = 0;
-            /* Caller re-enqueues next PROJECTILE_MOVE normally. */
-            return 1;
+        if (in->projectileSubtype != PROJECTILE_SUBTYPE_OPEN_DOOR) {
+            int passes = 0;
+            F0816_PROJECTILE_DoesPassThroughDoor_Compat(in, digest, rng, &passes);
+            if (passes) {
+                outResult->resultKind = PROJECTILE_RESULT_FLEW;
+                outResult->despawn    = 0;
+                /* Caller re-enqueues next PROJECTILE_MOVE normally. */
+                return 1;
+            }
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_DOOR;
         if (in->projectileSubtype == PROJECTILE_SUBTYPE_OPEN_DOOR) {
@@ -831,6 +848,11 @@ MOTION_STEP:
         /* (7) Inspect destination cell. */
         F0814_PROJECTILE_InspectDestination_Compat(digest, &blocker);
 
+        if (projectile_open_door_spell_impacts_door(in, digest)) {
+            dispatch = PROJECTILE_RESULT_HIT_DOOR;
+            goto RESOLVE;
+        }
+
         switch (blocker) {
         case PROJECTILE_BLOCKER_WALL:
         case PROJECTILE_BLOCKER_STAIRS:
@@ -898,6 +920,10 @@ MOTION_STEP:
         outResult->crossedCell = 1;
     } else {
         /* Intra-cell flip, did we land on a door inside the square? */
+        if (projectile_open_door_spell_impacts_door(in, digest)) {
+            dispatch = PROJECTILE_RESULT_HIT_DOOR;
+            goto RESOLVE;
+        }
         if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR
             && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
             && !projectile_digest_door_is_destroyed(digest)

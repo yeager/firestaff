@@ -1,0 +1,7 @@
+## changed files since HEAD
+parity-evidence/verification/spell-open-door-poison-fizzle-20260520/hygiene-output.txt
+parity-evidence/verification/spell-open-door-poison-fizzle-20260520/verification-output.txt
+
+## diff check
+
+## high-signal secret scan tracked+evidence files

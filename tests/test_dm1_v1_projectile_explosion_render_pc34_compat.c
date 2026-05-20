@@ -472,9 +472,47 @@ static void test_projectile_travel_blockers(void) {
     ASSERT_EQ(result.despawn, 0, "allowed magical projectile not consumed");
 
     p = make_travel_projectile(PROJECTILE_CATEGORY_MAGICAL, PROJECTILE_SUBTYPE_OPEN_DOOR);
+    d.destDoorHasButton = 0;
     ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 107, NULL, &next, &result), 1, "open-door projectile advance ok");
     ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "open-door projectile still hits pass-through door");
     ASSERT_EQ(result.despawn, 1, "open-door projectile consumed");
+    ASSERT_EQ(result.emittedDoorToggleEvent, 0, "open-door no-button emits no toggle");
+    ASSERT_EQ(result.emittedDoorDestructionEvent, 0, "open-door never emits destruction");
+    ASSERT_EQ(result.emittedSoundCode, 4, "open-door impact thud");
+
+    d.destDoorHasButton = 1;
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 108, NULL, &next, &result), 1, "open-door button advance ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "open-door button hits door");
+    ASSERT_EQ(result.emittedDoorToggleEvent, 1, "open-door button emits toggle");
+    ASSERT_EQ(result.emittedDoorDestructionEvent, 0, "open-door button no destruction");
+    ASSERT_EQ(result.outNextTick.kind, TIMELINE_EVENT_SENSOR_DELAYED, "open-door toggle event kind");
+    ASSERT_EQ((int)result.outNextTick.fireAtTick, 109, "open-door toggle tick+1");
+    ASSERT_EQ(result.outNextTick.mapX, d.destMapX, "open-door toggle x");
+    ASSERT_EQ(result.outNextTick.mapY, d.destMapY, "open-door toggle y");
+    ASSERT_EQ(result.outNextTick.aux0, 10, "open-door toggle C10_EVENT_DOOR");
+    ASSERT_EQ(result.outNextTick.aux1, 2, "open-door toggle C02_EFFECT_TOGGLE");
+
+    d.destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+    d.destDoorAllowsProjectilePassThrough = 0;
+    ASSERT_EQ(F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker), 1, "open door inspect ok");
+    ASSERT_EQ(blocker, PROJECTILE_BLOCKER_OPEN, "open door normal blocker open");
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 109, NULL, &next, &result), 1, "open-door spell versus open door ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "open-door spell impacts open door");
+    ASSERT_EQ(result.emittedDoorToggleEvent, 1, "open-door spell toggles open button door");
+    ASSERT_EQ(result.despawn, 1, "open-door spell open door consumed");
+
+    d.destDoorState = PROJECTILE_DOOR_STATE_CLOSED_ONE_FOURTH;
+    d.destDoorHasButton = 0;
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 110, NULL, &next, &result), 1, "open-door spell versus one-fourth door ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_HIT_DOOR, "open-door spell impacts one-fourth door");
+    ASSERT_EQ(result.emittedDoorToggleEvent, 0, "one-fourth no-button emits no toggle");
+    ASSERT_EQ(result.despawn, 1, "open-door spell one-fourth consumed");
+
+    d.destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+    d.destDoorHasButton = 1;
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 111, NULL, &next, &result), 1, "open-door spell versus destroyed door ok");
+    ASSERT_EQ(result.resultKind, PROJECTILE_RESULT_FLEW, "open-door spell passes destroyed door");
+    ASSERT_EQ(result.despawn, 0, "destroyed door keeps open-door projectile flying");
 }
 
 
