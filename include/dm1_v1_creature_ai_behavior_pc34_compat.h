@@ -243,6 +243,7 @@ struct DM1GroupBehaviorContext_Compat {
 #define DM1_ACTION_SKIP_FROZEN    5
 #define DM1_ACTION_CAST_SPELL     6
 #define DM1_ACTION_STEAL          7
+#define DM1_ACTION_ADJUST_CELL    8
 
 struct DM1GigglerStealResult_Compat {
     int objectStolen;
@@ -295,6 +296,9 @@ struct DM1BehaviorResult_Compat {
     int projectileStepEnergy;
     int projectileDirection;
     int projectileUseSpellSoundFallback;
+    int meleeCellAdjustment;   /* 1 when F0209 deferred melee to shift cells */
+    int updatedGroupCells;     /* activeGroup->cells after source cell update */
+    int adjustedCreatureCell;  /* new cell, or -1 when centered */
 };
 
 /* ==========================================================

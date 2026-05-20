@@ -59,6 +59,96 @@ static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }
 
+static int packed_group_cell_is_occupied(int cells, int creatureCount,
+                                         int skipCreatureIndex, int cell)
+{
+    int i;
+
+    for (i = creatureCount; i >= 0; --i) {
+        if (i == skipCreatureIndex) continue;
+        if (packed_group_cell(cells, i) == (cell & 3)) return 1;
+    }
+    return 0;
+}
+
+static int packed_group_cell_update(int cells, int creatureIndex, int cell)
+{
+    int shift = creatureIndex * 2;
+
+    return (cells & ~(3 << shift)) | ((cell & 3) << shift);
+}
+
+static int resolve_quarter_square_melee_cell_adjustment(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int creatureIndex,
+    struct RngState_Compat* rng,
+    struct DM1BehaviorResult_Compat* result)
+{
+    int attrs;
+    int primaryDir;
+    int currentCell;
+    int candidateCell;
+    int centered;
+
+    if (!ctx || !activeGroup || !rng || !result) return 0;
+    if (DM1_ATTACK_RANGE(ctx->creatureInfo.ranges) != 1) return 0;
+    if (ctx->creatureSize != DM1_SIZE_QUARTER_SQUARE) return 0;
+    if (activeGroup->cells == 0xFF) return 0;
+
+    attrs = ctx->creatureInfo.attributes;
+    primaryDir = ctx->currentGroupPrimaryDirToParty & 3;
+    currentCell = packed_group_cell(activeGroup->cells, creatureIndex);
+    if (currentCell == primaryDir || currentCell == ((primaryDir + 1) & 3)) {
+        return 0;
+    }
+
+    /* GROUP.C:2388-2393: attack-any back-row creatures get a 3/4 chance
+     * to keep attacking from the back row instead of shifting cells. */
+    if ((attrs & DM1_ATTR_PREFER_BACK_ROW) != 0) {
+        if (F0732_COMBAT_RngRandom_Compat(rng, 4) != 0 &&
+            (attrs & DM1_ATTR_ATTACK_ANY_CHAMPION) != 0) {
+            return 0;
+        }
+    }
+
+    centered = 0;
+    if (ctx->creatureCount == 0 &&
+        F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+        activeGroup->cells = 0xFF;
+        centered = 1;
+    } else {
+        if ((primaryDir & 1) == (currentCell & 1)) {
+            candidateCell = (currentCell - 1) & 3;
+        } else {
+            candidateCell = (currentCell + 1) & 3;
+        }
+        if (!packed_group_cell_is_occupied(activeGroup->cells,
+                                           ctx->creatureCount,
+                                           creatureIndex,
+                                           candidateCell) ||
+            (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0 &&
+             !packed_group_cell_is_occupied(activeGroup->cells,
+                                            ctx->creatureCount,
+                                            creatureIndex,
+                                            (candidateCell + 2) & 3))) {
+            activeGroup->cells = packed_group_cell_update(
+                activeGroup->cells, creatureIndex, candidateCell);
+        }
+    }
+
+    result->actionKind = DM1_ACTION_ADJUST_CELL;
+    result->newBehavior = DM1_BEHAVIOR_ATTACK;
+    result->meleeCellAdjustment = 1;
+    result->updatedGroupCells = activeGroup->cells;
+    result->adjustedCreatureCell = centered ? -1 :
+        packed_group_cell(activeGroup->cells, creatureIndex);
+    result->nextEventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + creatureIndex;
+    result->nextEventDelayTicks = max_val(1, (ctx->creatureInfo.movementTicks >> 1) +
+                                          F0732_COMBAT_RngRandom_Compat(rng, 2));
+    return 1;
+}
+
 static const int g_gigglerStealSlotsPc34[8] = {
     DM1_SLOT_ACTION_HAND,
     DM1_SLOT_READY_HAND,
@@ -448,7 +538,7 @@ int F0816_DM1_GROUP_ShouldUseProjectile_Compat(
         *outUseProjectile = 1;
     } else {
         roll = F0732_COMBAT_RngRandom_Compat(rng, 2);
-        *outUseProjectile = (roll == 0) ? 1 : 0;
+        *outUseProjectile = (roll != 0) ? 1 : 0;
     }
 
     return 1;
@@ -1194,6 +1284,11 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                  * So range 1 (melee) always attacks, range 15 rarely. */
                 int roll = F0732_COMBAT_RngRandom_Compat(rng, 16) + 1;
                 if (roll >= attackRange) {
+                    if (resolve_quarter_square_melee_cell_adjustment(
+                            ctx, activeGroup, creatureIndex, rng, result)) {
+                        return 1;
+                    }
+
                     struct DM1CreatureProjectileAttack_Compat projectile;
                     if (ctx->creatureType == DM1_CREATURE_TYPE_GIGGLER) {
                         struct DM1GigglerStealResult_Compat steal;

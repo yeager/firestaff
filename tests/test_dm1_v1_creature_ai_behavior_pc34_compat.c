@@ -298,11 +298,25 @@ static void test_projectile_decision(void) {
     F0816_DM1_GROUP_ShouldUseProjectile_Compat(&ctx, &rng, &useProj);
     EXPECT_EQ(useProj, 0, "projectile: melee-only never uses projectile");
 
-    /* Spell caster at distance > 1 → always uses projectile */
+    /* Spell caster at distance > 1 -> always uses projectile */
     ctx.creatureInfo.ranges = 0x3003; /* attack range = 3 */
     ctx.currentGroupDistanceToParty = 2;
     F0816_DM1_GROUP_ShouldUseProjectile_Compat(&ctx, &rng, &useProj);
     EXPECT_EQ(useProj, 1, "projectile: caster at distance uses projectile");
+
+    /* Adjacent spell caster follows GROUP.C F0207: random(2) nonzero casts. */
+    ctx.currentGroupDistanceToParty = 1;
+    rng = make_rng(1);
+    useProj = 99;
+    F0816_DM1_GROUP_ShouldUseProjectile_Compat(&ctx, &rng, &useProj);
+    EXPECT_EQ(useProj, 0,
+              "projectile: adjacent caster with random(2)==0 uses melee");
+
+    rng = make_rng(3);
+    useProj = 99;
+    F0816_DM1_GROUP_ShouldUseProjectile_Compat(&ctx, &rng, &useProj);
+    EXPECT_EQ(useProj, 1,
+              "projectile: adjacent caster with random(2)!=0 uses projectile");
 }
 
 
@@ -553,6 +567,7 @@ static void test_giggler_attack_dispatch_steals(void) {
     ctx.targetChampionDexterity = 0;
     ctx.targetChampionOccupiedSlotMask =
         (1u << DM1_SLOT_READY_HAND) | (1u << DM1_SLOT_ACTION_HAND);
+    ag.cells = 1; /* front cell for east-facing melee; this test isolates steal */
 
     int ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
     EXPECT_EQ(ok, 1, "giggler_dispatch: returns 1");
@@ -566,6 +581,81 @@ static void test_giggler_attack_dispatch_steals(void) {
               "giggler_dispatch: reports stolen slot count");
     EXPECT_EQ(ag.delayFleeingFromTarget, 31,
               "giggler_dispatch: writes active-group flee delay");
+}
+
+/* =========================================================
+ *  Test 19: Quarter-square melee creature shuffles before attack
+ * ========================================================= */
+static void test_quarter_square_melee_cell_adjusts_before_attack(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(2);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ctx.creatureType = DM1_CREATURE_TYPE_SWAMP_SLIME;
+    ctx.creatureSize = DM1_SIZE_QUARTER_SQUARE;
+    ctx.creatureCount = 0;
+    ctx.creatureInfo.ranges = 0x1003; /* attack range 1 */
+    ctx.creatureInfo.movementTicks = 20;
+    ctx.currentGroupPrimaryDirToParty = 1; /* front cells 1 and 2 */
+    ctx.distanceToVisibleParty = 1;
+    ctx.currentGroupDistanceToParty = 1;
+    ag.cells = 0; /* creature starts in non-attacking back cell 0 */
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "quarter_melee_adjust: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_ADJUST_CELL,
+              "quarter_melee_adjust: action adjusts cell instead of attacking");
+    EXPECT_EQ(result.attackIsProjectile, 0,
+              "quarter_melee_adjust: no attack payload emitted during shuffle");
+    EXPECT_EQ(result.meleeCellAdjustment, 1,
+              "quarter_melee_adjust: result marks source cell adjustment");
+    EXPECT_EQ(ag.cells, 0xFF,
+              "quarter_melee_adjust: single creature can move to centered cell");
+    EXPECT_EQ(result.updatedGroupCells, 0xFF,
+              "quarter_melee_adjust: reports updated centered group cells");
+    EXPECT_EQ(result.adjustedCreatureCell, -1,
+              "quarter_melee_adjust: centered creature reports no single cell");
+    EXPECT_EQ(result.nextEventType, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+              "quarter_melee_adjust: reschedules same creature behavior event");
+    EXPECT_EQ(result.nextEventDelayTicks, 11,
+              "quarter_melee_adjust: delay is movementTicks/2 + random(2)");
+}
+
+/* =========================================================
+ *  Test 20: Attack-any back-row creature may bypass melee shuffle
+ * ========================================================= */
+static void test_attack_any_back_row_bypasses_cell_adjust(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(2);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ctx.creatureType = DM1_CREATURE_TYPE_SWAMP_SLIME;
+    ctx.creatureSize = DM1_SIZE_QUARTER_SQUARE;
+    ctx.creatureCount = 0;
+    ctx.creatureInfo.ranges = 0x1003;
+    ctx.creatureInfo.attributes = DM1_ATTR_PREFER_BACK_ROW |
+                                  DM1_ATTR_ATTACK_ANY_CHAMPION;
+    ctx.currentGroupPrimaryDirToParty = 1;
+    ctx.distanceToVisibleParty = 1;
+    ctx.currentGroupDistanceToParty = 1;
+    ag.cells = 0;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "attack_any_back_row: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_ATTACK,
+              "attack_any_back_row: source RNG can keep back-row attack");
+    EXPECT_EQ(result.meleeCellAdjustment, 0,
+              "attack_any_back_row: no cell adjustment on bypass");
+    EXPECT_EQ(ag.cells, 0,
+              "attack_any_back_row: group cells remain unchanged");
 }
 
 int main(void) {
@@ -593,6 +683,8 @@ int main(void) {
     test_flee_direction();
     test_giggler_steal_resolver();
     test_giggler_attack_dispatch_steals();
+    test_quarter_square_melee_cell_adjusts_before_attack();
+    test_attack_any_back_row_bypasses_cell_adjust();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
