@@ -19840,14 +19840,62 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
                      (weapon && weapon->broken) ? " BROKEN" : "",
                      weapon ? (int)weapon->chargeCount : 0);
         } else if (itemType == 6) { /* Armour */
-            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "ARMOUR  ICON %d  PROTECTION CLASS %d",
-                     itemIcon, (itemIcon % 10) + 1);
+            const struct DungeonArmour_Compat* armour = NULL;
+            char armourName[64];
+            char armourAttributes[64];
+            if (state->world.things &&
+                thingIndex >= 0 &&
+                thingIndex < state->world.things->armourCount) {
+                armour = &state->world.things->armours[thingIndex];
+            }
+            if (armour && INVENTORY_Compat_FormatArmourEyeDescription(
+                    (unsigned int)itemType, (unsigned int)armour->cursed,
+                    (unsigned int)armour->broken, itemName, armourName, sizeof(armourName),
+                    armourAttributes, sizeof(armourAttributes), NULL)) {
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "ARMOUR  ICON %d  %s", itemIcon, armourAttributes);
+            } else {
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "ARMOUR  ICON %d", itemIcon);
+            }
         } else if (itemType == 8) { /* Potion */
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                      "POTION  ICON %d  PANEL %s",
                      itemIcon,
                      itemName);
+        } else if (itemType == 10) { /* Junk */
+            const struct DungeonJunk_Compat* junk = NULL;
+            char junkName[64];
+            char junkState[64];
+            char junkAttributes[64];
+            unsigned int allowedSlots = m11_allowed_slots_for_thing(state->world.things, thing);
+            if (state->world.things &&
+                thingIndex >= 0 &&
+                thingIndex < state->world.things->junkCount) {
+                junk = &state->world.things->junks[thingIndex];
+            }
+            if (junk && INVENTORY_Compat_FormatJunkEyeDescription(
+                    (unsigned int)itemType, (unsigned int)itemIcon,
+                    (unsigned int)junk->chargeCount, allowedSlots, itemName, junkName, sizeof(junkName),
+                    junkState, sizeof(junkState), junkAttributes, sizeof(junkAttributes), NULL)) {
+                const char* line = junkState[0] ? junkState : junkAttributes;
+                if (line[0]) {
+                    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                             "JUNK  ICON %d  %s", itemIcon, line);
+                } else {
+                    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                             "JUNK  ICON %d", itemIcon);
+                }
+            } else {
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "JUNK  ICON %d", itemIcon);
+            }
+        } else if (itemType == 7) { /* Scroll */
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "SCROLL TEXT PANEL  ICON %d", itemIcon);
+        } else if (itemType == 9) { /* Container */
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "CONTAINER CHEST PANEL  ICON %d", itemIcon);
         } else {
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                      "%s  ICON %d", typeName, itemIcon);

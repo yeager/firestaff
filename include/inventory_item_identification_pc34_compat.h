@@ -24,6 +24,38 @@ typedef struct InventoryObjectWeightLinePc34Compat {
     const char* sourceEvidence;
 } InventoryObjectWeightLinePc34Compat;
 
+typedef enum InventoryObjectEyePanelRoutePc34Compat {
+    INVENTORY_OBJECT_EYE_PANEL_ROUTE_OBJECT_DESCRIPTION_PC34_COMPAT = 0,
+    INVENTORY_OBJECT_EYE_PANEL_ROUTE_SCROLL_TEXT_PC34_COMPAT = 1,
+    INVENTORY_OBJECT_EYE_PANEL_ROUTE_CONTAINER_CHEST_PC34_COMPAT = 2
+} InventoryObjectEyePanelRoutePc34Compat;
+
+typedef enum InventoryJunkEyeSpecialStatePc34Compat {
+    INVENTORY_JUNK_EYE_SPECIAL_NONE_PC34_COMPAT = 0,
+    INVENTORY_JUNK_EYE_SPECIAL_COMPASS_PC34_COMPAT = 1,
+    INVENTORY_JUNK_EYE_SPECIAL_WATERSKIN_PC34_COMPAT = 2
+} InventoryJunkEyeSpecialStatePc34Compat;
+
+typedef struct InventoryObjectEyePanelRouteDescriptionPc34Compat {
+    InventoryObjectEyePanelRoutePc34Compat route;
+    const char* sourceEvidence;
+} InventoryObjectEyePanelRouteDescriptionPc34Compat;
+
+typedef struct InventoryArmourEyeDescriptionPc34Compat {
+    unsigned int isArmour;
+    unsigned int potentialAttributesMask;
+    unsigned int actualAttributesMask;
+    const char* sourceEvidence;
+} InventoryArmourEyeDescriptionPc34Compat;
+
+typedef struct InventoryJunkEyeDescriptionPc34Compat {
+    unsigned int isJunk;
+    InventoryJunkEyeSpecialStatePc34Compat specialState;
+    unsigned int potentialAttributesMask;
+    unsigned int actualAttributesMask;
+    const char* sourceEvidence;
+} InventoryJunkEyeDescriptionPc34Compat;
+
 unsigned int INVENTORY_Compat_PotionEyeShowsPowerPrefix(unsigned int thingType,
                                                        unsigned int iconIndex,
                                                        unsigned int priestSkillLevel);
@@ -50,6 +82,35 @@ int INVENTORY_Compat_FormatWeaponEyeDescription(unsigned int thingType,
                                                 char* outAttributeText,
                                                 size_t outAttributeTextSize,
                                                 InventoryWeaponEyeDescriptionPc34Compat* outDescription);
+InventoryObjectEyePanelRoutePc34Compat INVENTORY_Compat_ObjectEyePanelRoute(unsigned int thingType,
+                                                                               InventoryObjectEyePanelRouteDescriptionPc34Compat* outDescription);
+unsigned int INVENTORY_Compat_ArmourEyePotentialAttributesMask(void);
+unsigned int INVENTORY_Compat_ArmourEyeActualAttributesMask(unsigned int cursed,
+                                                           unsigned int broken);
+int INVENTORY_Compat_FormatArmourEyeDescription(unsigned int thingType,
+                                                unsigned int cursed,
+                                                unsigned int broken,
+                                                const char* objectName,
+                                                char* outNameText,
+                                                size_t outNameTextSize,
+                                                char* outAttributeText,
+                                                size_t outAttributeTextSize,
+                                                InventoryArmourEyeDescriptionPc34Compat* outDescription);
+unsigned int INVENTORY_Compat_JunkEyePotentialAttributesMask(unsigned int iconIndex);
+unsigned int INVENTORY_Compat_JunkEyeActualAttributesMask(unsigned int iconIndex,
+                                                         unsigned int allowedSlots);
+int INVENTORY_Compat_FormatJunkEyeDescription(unsigned int thingType,
+                                              unsigned int iconIndex,
+                                              unsigned int chargeCount,
+                                              unsigned int allowedSlots,
+                                              const char* objectName,
+                                              char* outNameText,
+                                              size_t outNameTextSize,
+                                              char* outStateText,
+                                              size_t outStateTextSize,
+                                              char* outAttributeText,
+                                              size_t outAttributeTextSize,
+                                              InventoryJunkEyeDescriptionPc34Compat* outDescription);
 int INVENTORY_Compat_FormatObjectWeightLine(unsigned int weightTenths,
                                             char* outText,
                                             size_t outTextSize,
