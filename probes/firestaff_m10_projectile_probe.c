@@ -626,6 +626,7 @@ int main(int argc, char* argv[]) {
                       && r.outNextTick.kind == TIMELINE_EVENT_SENSOR_DELAYED
                       && r.outNextTick.aux0 == 10
                       && r.outNextTick.aux1 == 2
+                      && r.emittedSoundCode == 4
                       && r.despawn == 1);
 
         d.destDoorHasButton = 0;
@@ -635,9 +636,10 @@ int main(int argc, char* argv[]) {
                               && r.emittedDoorDestructionEvent == 0
                               && r.emittedDoorToggleEvent == 0
                               && r.outNextTick.kind == 0
+                              && r.emittedSoundCode == 4
                               && r.despawn == 1);
         CHECK(okHarm && okLightning && okOpenDoor && okOpenDoorNoButton,
-              "Portcullis projectile gate: HARM_NON_MATERIAL passes; LIGHTNING_BOLT hits; OPEN_DOOR button-only toggle (PROJEXPL.C:485-505)");
+              "Portcullis projectile gate: HARM_NON_MATERIAL passes; LIGHTNING_BOLT hits; OPEN_DOOR button-only toggle plus C04 impact sound (PROJEXPL.C:485-505,587-600)");
     }
     /* 20c: Solid doors do not honor magical pass-through projectile subtypes. */
     {

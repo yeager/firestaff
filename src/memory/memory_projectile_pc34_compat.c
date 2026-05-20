@@ -50,6 +50,10 @@ static int projectile_digest_door_is_destroyed(const struct CellContentDigest_Co
     return digest && digest->destDoorState == PROJECTILE_DOOR_STATE_DESTROYED;
 }
 
+enum {
+    PHASE17_SOUND_WOODEN_THUD = 4 /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM */
+};
+
 /* ==========================================================
  *  Static tables.
  * ========================================================== */
@@ -538,6 +542,7 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
     outResult->emittedExplosion            = 0;
     outResult->emittedDoorDestructionEvent = 0;
     outResult->emittedDoorToggleEvent       = 0;
+    outResult->emittedSoundCode            = 0;
 
     F0815_PROJECTILE_ComputeImpactAttack_Compat(in, &impactAttack);
 
@@ -591,13 +596,17 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_DOOR;
         if (in->projectileSubtype == PROJECTILE_SUBTYPE_OPEN_DOOR) {
+            outResult->emittedSoundCode = PHASE17_SOUND_WOODEN_THUD;
             /* ReDMCSB PROJEXPL.C:F0217 lines 485-489: an OPEN_DOOR
              * projectile does not use the door-destruction attack path;
              * if DOOR->Button is set it enqueues
              * F0268_SENSOR_AddEvent(C10_EVENT_DOOR, x, y, 0,
              * C02_EFFECT_TOGGLE, GameTime+1). Without the button bit
              * ReDMCSB just breaks from F0217: no destruction event, no
-             * sensor event, projectile consumed. */
+             * sensor event, projectile consumed. F0217 then falls through
+             * to the non-explosion impact sound path at PROJEXPL.C:587-600,
+             * which requests C04_SOUND_WOODEN_THUD for this non-weapon
+             * associated thing. */
             if (!digest->destDoorHasButton) {
                 outResult->despawn = 1;
                 return 1;
