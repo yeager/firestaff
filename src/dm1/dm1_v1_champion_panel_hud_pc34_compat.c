@@ -178,6 +178,53 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
     return written >= 0 && (size_t)written < outSize;
 }
 
+/* =====================================================================
+ * Inventory champion load color/value - CHAMDRAW.C F0292.
+ *
+ * Source evidence:
+ *   CHAMDRAW.C:958-967 chooses red if Load > F0309 maximum load, yellow
+ *   if (Load << 3) > maxLoad * 5, otherwise lightest gray.
+ *   CHAMDRAW.C:986-1017 builds current deci-kg, /, rounded max kg,
+ *    KG, prints it to C555, then schedules the viewport refresh.
+ *   CHAMDRAW.C:349-388 F0288 pads three-character integer fields with
+ *   spaces when padding is requested.
+ * ===================================================================== */
+int DM1_ChampionPanel_LoadColor(int load, int maximumLoad)
+{
+    if (maximumLoad <= 0) {
+        return load > 0 ? DM1_COLOR_RED : DM1_COLOR_LIGHTEST_GRAY;
+    }
+    if (load > maximumLoad) {
+        return DM1_COLOR_RED;
+    }
+    if (((long)load << 3) > ((long)maximumLoad * 5L)) {
+        return DM1_COLOR_YELLOW;
+    }
+    return DM1_COLOR_LIGHTEST_GRAY;
+}
+
+int DM1_ChampionPanel_FormatLoadValue(int load, int maximumLoad,
+                                      char *out, size_t outSize)
+{
+    int loadKg;
+    int loadTenths;
+    int maximumKg;
+    int written;
+
+    if (!out || outSize == 0) return 0;
+
+    loadKg = load / 10;
+    loadTenths = load - (loadKg * 10);
+    maximumKg = (maximumLoad + 5) / 10;
+    written = snprintf(out, outSize, "%3d.%d/%3d KG", loadKg, loadTenths, maximumKg);
+    return written >= 0 && (size_t)written < outSize;
+}
+
+int DM1_ChampionPanel_LoadValueZone(void)
+{
+    return DM1_ZONE_CHAMPION_LOAD_VALUE;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Inventory slot XY (viewport-relative) — layout-696 C507..C536
  *

@@ -131,6 +131,10 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_SLOTBOX_FIRST_INVENTORY 8
 #define DM1_SLOTBOX_FIRST_CHEST    38
 
+/* Inventory champion load label/value zones - CHAMDRAW.C F0292 */
+#define DM1_ZONE_CHAMPION_LOAD_LABEL 554
+#define DM1_ZONE_CHAMPION_LOAD_VALUE 555
+
 enum {
     DM1_STATUS_VALUE_HEALTH = 0,
     DM1_STATUS_VALUE_STAMINA,
@@ -161,6 +165,12 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
                                         int currentMana, int maximumMana,
                                         char *out, size_t outSize);
 int DM1_ChampionPanel_StatusValueZone(int valueIndex);
+
+/* Inventory load label/value color and value format - CHAMDRAW.C F0292 */
+int DM1_ChampionPanel_LoadColor(int load, int maximumLoad);
+int DM1_ChampionPanel_FormatLoadValue(int load, int maximumLoad,
+                                      char *out, size_t outSize);
+int DM1_ChampionPanel_LoadValueZone(void);
 
 /* ── Inventory slot XY (viewport-relative) ── */
 int DM1_ChampionPanel_InventorySlotXY(int slotBoxIndex,

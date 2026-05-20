@@ -140,6 +140,55 @@ int main(void)
         }
     }
 
+    /*
+     * CHAMDRAW.C:F0292 source lock:
+     * - 958-967: load label/value color is red only above max load; yellow
+     *   starts at strict (load << 3) > maxLoad * 5.
+     * - 986-1017: value format is current deci-kg as %3d.%d, /, rounded
+     *   max kg ((maxLoad + 5) / 10), then " KG", printed in zone C555.
+     * - 349-388: F0288 pads requested integer fields with spaces.
+     */
+    if (DM1_ZONE_CHAMPION_LOAD_LABEL != 554 ||
+        DM1_ZONE_CHAMPION_LOAD_VALUE != 555 ||
+        DM1_ChampionPanel_LoadValueZone() != DM1_ZONE_CHAMPION_LOAD_VALUE) {
+        fprintf(stderr, "FAIL: load label/value zone IDs\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_LoadColor(187, 300) != DM1_COLOR_LIGHTEST_GRAY) {
+        fprintf(stderr, "FAIL: load color below strict 5/8 threshold\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_LoadColor(188, 300) != DM1_COLOR_YELLOW) {
+        fprintf(stderr, "FAIL: load color above strict 5/8 threshold\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_LoadColor(300, 300) != DM1_COLOR_YELLOW) {
+        fprintf(stderr, "FAIL: load color at exact maximum should be yellow\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_LoadColor(301, 300) != DM1_COLOR_RED) {
+        fprintf(stderr, "FAIL: load color above maximum should be red\n");
+        failures++;
+    }
+    {
+        char loadValue[16];
+        if (!DM1_ChampionPanel_FormatLoadValue(0, 300, loadValue, sizeof(loadValue)) ||
+            strcmp(loadValue, "  0.0/ 30 KG") != 0) {
+            fprintf(stderr, "FAIL: load zero value format got %s\n", loadValue);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatLoadValue(251, 300, loadValue, sizeof(loadValue)) ||
+            strcmp(loadValue, " 25.1/ 30 KG") != 0) {
+            fprintf(stderr, "FAIL: load value format got %s\n", loadValue);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatLoadValue(999, 254, loadValue, sizeof(loadValue)) ||
+            strcmp(loadValue, " 99.9/ 25 KG") != 0) {
+            fprintf(stderr, "FAIL: load rounded max format got %s\n", loadValue);
+            failures++;
+        }
+    }
+
     if (failures == 0) {
         printf("PASS: all champion panel HUD source-lock assertions passed.\n");
     } else {
