@@ -1266,6 +1266,18 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py
     )
 
+    add_executable(test_m10_c006_generator_reenable_dispatch_pc34_compat
+        tests/test_m10_c006_generator_reenable_dispatch_pc34_compat.c
+    )
+    target_link_libraries(test_m10_c006_generator_reenable_dispatch_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_m10_c006_generator_reenable_dispatch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m10_c006_generator_reenable_dispatch_pc34_compat
+        COMMAND test_m10_c006_generator_reenable_dispatch_pc34_compat
+    )
+
     add_executable(test_dm1_v1_sensor_trigger_pc34_compat
         tests/test_dm1_v1_sensor_trigger_pc34_compat.c
     )

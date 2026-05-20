@@ -997,6 +997,42 @@ static int orch_square_first_thing_list_index_compat(
     return sftIndex;
 }
 
+static int orch_reenable_generator_sensor_on_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!dungeon || !things || !things->loaded || !things->squareFirstThings) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) return 0;
+
+    /* ReDMCSB TIMELINE.C:1009-1027, F0246: event C65 scans the
+     * target square's thing list and changes the first disabled sensor
+     * back to C006_SENSOR_FLOOR_GROUP_GENERATOR.  The full C05 trigger
+     * and F0185 insertion path remain separate; this helper only owns
+     * the source-locked C65 re-enable mutation. */
+    thing = things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_SENSOR && index >= 0 && index < things->sensorCount) {
+            struct DungeonSensor_Compat* sensor = &things->sensors[index];
+            if (sensor->sensorType == RUNTIME_SENSOR_TYPE_DISABLED) {
+                sensor->sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
+                return 1;
+            }
+        }
+        thing = orch_next_thing_compat(things, thing);
+    }
+    return 0;
+}
+
 static int orch_find_material_group_on_square_compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -1618,11 +1654,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             F0868_RUNTIME_HandleRemoveFluxcage_Compat(&in, &world->explosions, &out);
             break;
         }
+        case TIMELINE_EVENT_GROUP_GENERATOR:
+            if (ev.aux0 == GENERATOR_EVENT_AUX0_REENABLE) {
+                (void)orch_reenable_generator_sensor_on_square_compat(
+                    world->dungeon, world->things, ev.mapIndex, ev.mapX, ev.mapY);
+            }
+            break;
         case TIMELINE_EVENT_SQUARE_STATE:
         case TIMELINE_EVENT_SENSOR_DELAYED:
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
-        case TIMELINE_EVENT_GROUP_GENERATOR:
         case TIMELINE_EVENT_CREATURE_TICK:
         case TIMELINE_EVENT_PROJECTILE_MOVE:
         case TIMELINE_EVENT_EXPLOSION_ADVANCE:
