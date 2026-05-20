@@ -11130,6 +11130,64 @@ static int m11_decode_visible_wall_text(const M11_GameViewState* state,
     return 0;
 }
 
+static int m11_dm1_decoded_inscription_line_count(const char* decoded) {
+    int lines = 1;
+    const char* p;
+    if (!decoded || !decoded[0]) {
+        return 0;
+    }
+    for (p = decoded; *p && lines < 4; ++p) {
+        if (*p == '\n') {
+            ++lines;
+        }
+    }
+    return lines;
+}
+
+static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
+                                                const M11_ViewportCell* cell) {
+    char decoded[128];
+    if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
+        return 0;
+    }
+    return m11_dm1_decoded_inscription_line_count(decoded);
+}
+
+static int m11_dm1_unreadable_inscription_box_height(int relForward,
+                                                     int relSide,
+                                                     int sideProjection,
+                                                     int lineCount) {
+    /* ReDMCSB DUNVIEW.C:3864-3902 counts decoded inscription lines and,
+     * for unreadable non-D1C projections, passes a smaller bitmap height
+     * through G2155 before F0791/F0635 clips the blit.  The PC34/I34E
+     * height table is DUNVIEW.C:1327-1332 G0204:
+     *   D3 side 5/8/13, D3 front 7/13/20,
+     *   D2 side 5/12/19, D2 front 10/17/27,
+     *   D1 side 11/22/33. */
+    static const unsigned char kUnreadableBoxHeight[5][3] = {
+        {5, 8, 13},
+        {7, 13, 20},
+        {5, 12, 19},
+        {10, 17, 27},
+        {11, 22, 33}
+    };
+    int row = -1;
+    if (lineCount <= 0 || lineCount >= 4) {
+        return 0;
+    }
+    if (relForward == 3) {
+        row = (relSide != 0 && sideProjection) ? 0 : 1;
+    } else if (relForward == 2) {
+        row = (relSide != 0 && sideProjection) ? 2 : 3;
+    } else if (relForward == 1 && relSide != 0) {
+        row = 4;
+    }
+    if (row < 0) {
+        return 0;
+    }
+    return (int)kUnreadableBoxHeight[row][lineCount - 1];
+}
+
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
                                                      const M11_ViewportCell* cell,
                                                      unsigned char* framebuffer,
@@ -11367,6 +11425,17 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                        kWallOrnaments[i].viewWallIndex,
                                        &blit)) {
             const M11_AssetSlot* slot;
+            if (ornGlobalIdx == 0 && kWallOrnaments[i].viewWallIndex != 12) {
+                int unreadableHeight =
+                    m11_dm1_unreadable_inscription_box_height(
+                        kWallOrnaments[i].relForward,
+                        kWallOrnaments[i].relSide,
+                        kWallOrnaments[i].blit.width <= 16,
+                        m11_dm1_visible_wall_text_line_count(state, &cell));
+                if (unreadableHeight > 0 && unreadableHeight < blit.height) {
+                    blit.height = unreadableHeight;
+                }
+            }
             /* ReDMCSB DUNVIEW.C F0107 increments the native wall-ornament
              * bitmap for front-facing projections (and D1 side views), but not
              * for D2L_RIGHT/D2R_LEFT side projections: D2R_LEFT reuses the base
