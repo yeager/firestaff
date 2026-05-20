@@ -2039,6 +2039,10 @@ static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel);
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input);
+static void m11_clear_v1_mouth_visual(M11_GameViewState* state);
+static int m11_start_v1_mouth_animation(M11_GameViewState* state,
+                                        const DM1ConsumableResultPc34* result);
+static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
 
 /* ── Apply sensor effects from movement pipeline ──
  * Called after movement pipeline processes a tick.
@@ -5539,16 +5543,18 @@ int M11_GameView_GetMusicEnabled(const M11_GameViewState* state) {
 }
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
+    int mouthRedraw;
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    mouthRedraw = m11_tick_v1_mouth_animation(state);
     /* No idle ticks during overlays, endgame, or dialog. */
     if (state->gameWon || state->dialogOverlayActive ||
         state->mapOverlayActive || state->inventoryPanelActive) {
-        return M11_GAME_INPUT_IGNORED;
+        return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
-        return M11_GAME_INPUT_IGNORED;
+        return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_REDRAW;
 }
@@ -6371,6 +6377,66 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
+
+static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
+    if (!state) return;
+    state->v1MouthVisualIconIndex = 0;
+    state->v1MouthAnimationFrameCount = 0;
+    state->v1MouthAnimationFrameIndex = 0;
+    state->v1MouthAnimationDelayRemaining = 0;
+    memset(state->v1MouthAnimationIcons, 0, sizeof(state->v1MouthAnimationIcons));
+    memset(state->v1MouthAnimationDelays, 0, sizeof(state->v1MouthAnimationDelays));
+}
+
+static int m11_start_v1_mouth_animation(M11_GameViewState* state,
+                                        const DM1ConsumableResultPc34* result) {
+    DM1ConsumableMouthAnimationFramePc34 frames[DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34];
+    int frameCount;
+    int i;
+    if (!state) return 0;
+
+    frameCount = dm1_inventory_consumables_mouth_animation_pc34(
+        result, frames, DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34);
+    if (frameCount <= 0) {
+        return 0;
+    }
+
+    state->v1MouthAnimationFrameCount = frameCount;
+    state->v1MouthAnimationFrameIndex = 0;
+    for (i = 0; i < frameCount && i < DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34; ++i) {
+        state->v1MouthAnimationIcons[i] = frames[i].iconIndex;
+        state->v1MouthAnimationDelays[i] = frames[i].delayTicks;
+    }
+    state->v1MouthVisualIconIndex = state->v1MouthAnimationIcons[0];
+    state->v1MouthAnimationDelayRemaining = state->v1MouthAnimationDelays[0];
+    return 1;
+}
+
+static int m11_tick_v1_mouth_animation(M11_GameViewState* state) {
+    if (!state || state->v1MouthAnimationFrameCount <= 0) {
+        return 0;
+    }
+    if (state->v1MouthAnimationDelayRemaining > 0) {
+        --state->v1MouthAnimationDelayRemaining;
+        if (state->v1MouthAnimationDelayRemaining > 0) {
+            return 0;
+        }
+    }
+
+    if (state->v1MouthAnimationFrameIndex + 1 >= state->v1MouthAnimationFrameCount) {
+        state->v1MouthAnimationFrameCount = 0;
+        state->v1MouthAnimationFrameIndex = 0;
+        state->v1MouthAnimationDelayRemaining = 0;
+        return 0;
+    }
+
+    ++state->v1MouthAnimationFrameIndex;
+    state->v1MouthVisualIconIndex =
+        state->v1MouthAnimationIcons[state->v1MouthAnimationFrameIndex];
+    state->v1MouthAnimationDelayRemaining =
+        state->v1MouthAnimationDelays[state->v1MouthAnimationFrameIndex];
+    return 1;
+}
 
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
@@ -18974,6 +19040,7 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
                                                                    &consumableResult)) {
             champ->food = consumableChampion.food;
             M11_GameView_ClearV1LeaderHandObject(state);
+            (void)m11_start_v1_mouth_animation(state, &consumableResult);
             m11_set_status(state, "EAT", "FOOD CONSUMED");
             m11_refresh_hash(state);
             return 1;
@@ -21978,6 +22045,27 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     return 1;
 }
 
+static int m11_draw_v1_mouth_visual_frame(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    if (!state || !framebuffer || state->showDebugHUD ||
+        state->v1MouthVisualIconIndex <= 0) {
+        return 0;
+    }
+    /* ReDMCSB PANEL.C F0349 draws C205/C206 into C545_ZONE_MOUTH.
+     * COMMAND.C maps C545 to viewport-relative x=56,y=13 in the
+     * same 16x16 object-icon footprint used by F0332. */
+    return m11_draw_dm_object_icon_index(state,
+                                         framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         state->v1MouthVisualIconIndex,
+                                         M11_VIEWPORT_X + 56,
+                                         M11_VIEWPORT_Y + 13,
+                                         0);
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -22149,6 +22237,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             }
         }
         (void)m11_draw_v1_inventory_action_hand_scroll_panel(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        (void)m11_draw_v1_mouth_visual_frame(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
@@ -23568,6 +23658,7 @@ int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
 int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
     state->inventoryPanelActive = !state->inventoryPanelActive;
+    m11_clear_v1_mouth_visual(state);
     if (state->inventoryPanelActive) {
         state->inventorySelectedSlot = 0;
     }

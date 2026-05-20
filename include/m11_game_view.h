@@ -192,6 +192,16 @@ typedef struct {
     int mapOverlayActive;        /* 1 when full-screen map is displayed */
     int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
     int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
+    /* ReDMCSB PANEL.C F0349 food mouth animation.  The source draws four
+     * icon frames into C545_ZONE_MOUTH with an 8-delay gate after a
+     * leader-hand food object is removed.  These fields preserve that
+     * transient visual across M11 full-frame redraws. */
+    int v1MouthVisualIconIndex;  /* current C205/C206 icon to blit; 0 = none */
+    int v1MouthAnimationFrameCount;
+    int v1MouthAnimationFrameIndex;
+    int v1MouthAnimationDelayRemaining;
+    int v1MouthAnimationIcons[4];
+    int v1MouthAnimationDelays[4];
 
     /* ── Endgame / dialog flow state ── */
     /* Set to 1 when ORCH_GAME_WON / EMIT_GAME_WON fires.  Blocks all
