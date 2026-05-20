@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+import hashlib
 import json
 import re
 import sys
@@ -18,6 +19,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
 ZONES = ROOT / "data/zones_h_reconstruction.json"
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CANON_GRAPHICS = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
+EXPECTED_DM1_PC34_GRAPHICS_SHA256 = "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
 
 
 def line_no(text: str, offset: int) -> int:
@@ -62,6 +66,27 @@ def require_equal(label: str, got: list[tuple[int, int]], expected: list[tuple[i
         raise AssertionError(f"{label}: length mismatch code={len(got)} source={len(expected)}")
 
 
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def require_ordered_needles(label: str, path: Path, needles: list[str]) -> list[tuple[int, str]]:
+    text = path.read_text(encoding="latin-1", errors="replace")
+    cursor = 0
+    hits: list[tuple[int, str]] = []
+    for needle in needles:
+        pos = text.find(needle, cursor)
+        if pos < 0:
+            raise AssertionError(f"{label}: missing ordered source marker {needle!r}")
+        hits.append((line_no(text, pos), needle))
+        cursor = pos + len(needle)
+    return hits
+
+
 def require_multiset_subset(label: str, got: list[tuple[int, int]], source: list[tuple[int, int]]) -> None:
     missing = Counter(got) - Counter(source)
     if missing:
@@ -75,8 +100,50 @@ def main() -> int:
     records = data.get("records", {})
     prov = data.get("$provenance", {})
     sha = prov.get("source_sha256", "unknown")
-    if sha != "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e":
+    if sha != EXPECTED_DM1_PC34_GRAPHICS_SHA256:
         raise AssertionError(f"unexpected GRAPHICS.DAT source sha256 {sha}")
+    if not CANON_GRAPHICS.exists():
+        raise AssertionError(f"missing canonical DM1 PC34 GRAPHICS.DAT at {CANON_GRAPHICS}")
+    actual_sha = sha256(CANON_GRAPHICS)
+    if actual_sha != EXPECTED_DM1_PC34_GRAPHICS_SHA256:
+        raise AssertionError(f"canonical GRAPHICS.DAT sha256 {actual_sha} != {EXPECTED_DM1_PC34_GRAPHICS_SHA256}")
+
+    redmcsb_hits: list[str] = []
+    coord_hits = require_ordered_needles(
+        "ReDMCSB PC34 layout load path",
+        RED / "COORD.C",
+        [
+            "LAYOUT_RANGE* G2174_ps_LayoutData = NULL;",
+            "if ((L2300_i_ = M007_GET(P2131_i_ZoneIndex, MASK0x8000_SHIFT_OBJECTS_AND_CREATURES)) != 0)",
+            "F0639_LoadLayoutRanges(",
+            "void F0640_LoadLayoutData(",
+            "F0639_LoadLayoutRanges(M776_CAST_PUI(L2322_puc_Buffer), L2323_ul_ByteCount, &G2174_ps_LayoutData, F0789_AllocateLayoutRange);",
+            "F0640_LoadLayoutData(C696_GRAPHIC_LAYOUT);",
+        ],
+    )
+    redmcsb_hits.append(f"COORD.C:{coord_hits[0][0]}-{coord_hits[-1][0]} loads PC34 layout-696 and applies object/creature shifts")
+    dunview_hits = require_ordered_needles(
+        "ReDMCSB F0115 C2500 routing",
+        RED / "DUNVIEW.C",
+        [
+            "char G2028_ac_ViewSquareIndexTo[23]",
+            "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(",
+            "L2476_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex];",
+            "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (L2476_i_ * 4) + AL0126_i_ViewCell;",
+        ],
+    )
+    redmcsb_hits.append(f"DUNVIEW.C:{dunview_hits[0][0]}-{dunview_hits[-1][0]} maps visible squares to C2500 object rows")
+    defs_hits = require_ordered_needles(
+        "ReDMCSB C2500 zone constants",
+        RED / "DEFS.H",
+        [
+            "#define MASK0x8000_SHIFT_OBJECTS_AND_CREATURES",
+            "#define C2500_ZONE_",
+            "#define C2900_ZONE_",
+            "#define C3200_ZONE_",
+        ],
+    )
+    redmcsb_hits.append(f"DEFS.H:{defs_hits[0][0]}-{defs_hits[-1][0]} defines shifted object/creature and content zone families")
 
     ok: list[str] = []
 
@@ -105,7 +172,10 @@ def main() -> int:
     ok.append(f"C3200 side creature anchors: {len(c3200_side)} code points are source C3200-family records at m11_game_view.c:{c3200_side_line}")
 
     print("V1 viewport content zone table verification passed")
+    print(f"- canonical GRAPHICS.DAT: {CANON_GRAPHICS} sha256={actual_sha}")
     print(f"- source: zones_h_reconstruction.json GRAPHICS.DAT sha256={sha}")
+    for line in redmcsb_hits:
+        print(f"- ReDMCSB anchor: {line}")
     for line in ok:
         print(f"- {line}")
     return 0
