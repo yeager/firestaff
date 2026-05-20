@@ -68,6 +68,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
 - ✅ C006 Lord Chaos blocked-destination adjacent random retry is source-locked from ReDMCSB event60/61 handling (0a12e07d)
+- ✅ C006 generated groups now reuse ReDMCSB-style fixed unused group slots instead of appending beyond source capacity (1d3a9bd4)
 
 ### Combat
 
