@@ -136,13 +136,45 @@ struct DM1CreatureInfo_Compat {
 #define DM1_CREATURE_TYPE_GIGGLER 2
 #define DM1_CREATURE_TYPE_SWAMP_SLIME 1
 #define DM1_CREATURE_TYPE_WIZARD_EYE 3
+#define DM1_CREATURE_TYPE_PAIN_RAT 4
+#define DM1_CREATURE_TYPE_SCREAMER 6
+#define DM1_CREATURE_TYPE_ROCKPILE 7
+#define DM1_CREATURE_TYPE_STONE_GOLEM 9
+#define DM1_CREATURE_TYPE_SKELETON 12
 #define DM1_CREATURE_TYPE_VEXIRK 14
+#define DM1_CREATURE_TYPE_MAGENTA_WORM 15
+#define DM1_CREATURE_TYPE_TROLIN 16
+#define DM1_CREATURE_TYPE_ANIMATED_ARMOUR 18
 #define DM1_CREATURE_TYPE_MATERIALIZER 19
 #define DM1_CREATURE_TYPE_DEMON 22
 #define DM1_CREATURE_TYPE_LORD_CHAOS 23
 #define DM1_CREATURE_TYPE_RED_DRAGON 24
 #define DM1_SLOT_READY_HAND       0
 #define DM1_SLOT_ACTION_HAND      1
+
+#define DM1_SINGLE_CENTERED_CREATURE_CELL 0xFF
+
+/* Thing types and object-info bases used by fixed creature possessions.
+ * Sources: ReDMCSB DEFS.H thing type constants and DUNGEON.C object-info
+ * index tables consumed by GROUP.C F0186. */
+#define DM1_DROP_THING_TYPE_WEAPON 5
+#define DM1_DROP_THING_TYPE_ARMOUR 6
+#define DM1_DROP_THING_TYPE_JUNK   10
+
+#define DM1_DROP_OBJECT_FIRST_WEAPON 23
+#define DM1_DROP_OBJECT_FIRST_ARMOUR 69
+#define DM1_DROP_OBJECT_FIRST_JUNK   127
+#define DM1_DROP_RANDOM_FLAG         0x8000
+#define DM1_MAX_FIXED_POSSESSION_DROPS 10
+
+struct DM1FixedPossessionDrop_Compat {
+    int thingType;
+    int itemType;
+    int cell;
+    int cursed;
+    int sourceOrdinal;
+    int sourceHadRandomFlag;
+};
 
 /* Special projectile-associated EXPLOSION thing values.
  * Source: ReDMCSB DEFS.H:421-428. */
@@ -488,5 +520,22 @@ int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
     int creatureIndex,
     struct RngState_Compat* rng,
     struct DM1CreatureProjectileAttack_Compat* out);
+
+/*
+ * F0824: Resolve source creature fixed-possession drops.
+ *
+ * Source: ReDMCSB GROUP.C F0186 lines 580-645 plus DUNGEON.C
+ * G0245-G0253 fixed possession tables lines 518-557. This pure helper
+ * does not allocate dungeon things; it returns the type/item/cell/cursed
+ * payloads the caller must materialize through F0166/F0267.
+ */
+int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+    int creatureType,
+    int sourceCell,
+    struct RngState_Compat* rng,
+    struct DM1FixedPossessionDrop_Compat* outDrops,
+    int maxDrops,
+    int* outDropCount,
+    int* outWeaponDropped);
 
 #endif /* DM1_V1_CREATURE_AI_BEHAVIOR_PC34_COMPAT_H */

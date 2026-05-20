@@ -658,6 +658,120 @@ static void test_attack_any_back_row_bypasses_cell_adjust(void) {
               "attack_any_back_row: group cells remain unchanged");
 }
 
+
+/* =========================================================
+ *  Test 21: Source fixed possession table: Animated Armour
+ * ========================================================= */
+static void test_fixed_possessions_animated_armour_are_cursed(void) {
+    struct RngState_Compat rng = make_rng(1);
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int count = -1;
+    int weaponDropped = 0;
+    int ok;
+
+    memset(drops, 0, sizeof(drops));
+    ok = F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+        DM1_CREATURE_TYPE_ANIMATED_ARMOUR,
+        2,
+        &rng,
+        drops,
+        DM1_MAX_FIXED_POSSESSION_DROPS,
+        &count,
+        &weaponDropped);
+
+    EXPECT_EQ(ok, 1, "fixed_drop_armour: resolver returns 1");
+    EXPECT_EQ(count, 6, "fixed_drop_armour: six source items drop");
+    EXPECT_EQ(weaponDropped, 1, "fixed_drop_armour: weapon thud selected");
+    EXPECT_EQ(drops[0].thingType, DM1_DROP_THING_TYPE_ARMOUR,
+              "fixed_drop_armour: foot plate is armour");
+    EXPECT_EQ(drops[0].itemType, 41,
+              "fixed_drop_armour: first item is Foot Plate type 41");
+    EXPECT_EQ(drops[0].cursed, 1,
+              "fixed_drop_armour: fixed armour drops are cursed");
+    EXPECT_EQ(drops[3].thingType, DM1_DROP_THING_TYPE_WEAPON,
+              "fixed_drop_armour: fourth item is sword weapon");
+    EXPECT_EQ(drops[3].itemType, 10,
+              "fixed_drop_armour: sword type is 10");
+    EXPECT_EQ(drops[5].thingType, DM1_DROP_THING_TYPE_WEAPON,
+              "fixed_drop_armour: sixth item is second sword");
+    EXPECT_EQ(drops[5].sourceOrdinal, 6,
+              "fixed_drop_armour: source ordinal preserves table order");
+}
+
+/* =========================================================
+ *  Test 22: Source fixed possession random drops: Rockpile
+ * ========================================================= */
+static void test_fixed_possessions_rockpile_random_flags(void) {
+    struct RngState_Compat rng = make_rng(8);
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int count = -1;
+    int weaponDropped = 0;
+    int ok;
+
+    memset(drops, 0, sizeof(drops));
+    ok = F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+        DM1_CREATURE_TYPE_ROCKPILE,
+        2,
+        &rng,
+        drops,
+        DM1_MAX_FIXED_POSSESSION_DROPS,
+        &count,
+        &weaponDropped);
+
+    EXPECT_EQ(ok, 1, "fixed_drop_rock: resolver returns 1");
+    EXPECT_EQ(count, 3, "fixed_drop_rock: seed keeps three of four entries");
+    EXPECT_EQ(drops[0].thingType, DM1_DROP_THING_TYPE_JUNK,
+              "fixed_drop_rock: guaranteed first boulder is junk");
+    EXPECT_EQ(drops[0].itemType, 25,
+              "fixed_drop_rock: boulder junk type is 25");
+    EXPECT_EQ(drops[1].sourceHadRandomFlag, 1,
+              "fixed_drop_rock: second kept drop came from random table entry");
+    EXPECT_EQ(drops[1].sourceOrdinal, 2,
+              "fixed_drop_rock: random boulder source ordinal is 2");
+    EXPECT_EQ(drops[2].thingType, DM1_DROP_THING_TYPE_WEAPON,
+              "fixed_drop_rock: random rock can drop as weapon");
+    EXPECT_EQ(drops[2].itemType, 30,
+              "fixed_drop_rock: rock weapon type is 30");
+    EXPECT_EQ(weaponDropped, 1, "fixed_drop_rock: weapon drop toggles thud flag");
+}
+
+/* =========================================================
+ *  Test 23: Source fixed possession table: Red Dragon steaks
+ * ========================================================= */
+static void test_fixed_possessions_dragon_steak_table(void) {
+    struct RngState_Compat rng = make_rng(8);
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int count = -1;
+    int weaponDropped = 0;
+    int ok;
+    int i;
+
+    memset(drops, 0, sizeof(drops));
+    ok = F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+        DM1_CREATURE_TYPE_RED_DRAGON,
+        2,
+        &rng,
+        drops,
+        DM1_MAX_FIXED_POSSESSION_DROPS,
+        &count,
+        &weaponDropped);
+
+    EXPECT_EQ(ok, 1, "fixed_drop_dragon: resolver returns 1");
+    EXPECT_EQ(count, 10,
+              "fixed_drop_dragon: seed keeps all eight guaranteed plus two random steaks");
+    EXPECT_EQ(weaponDropped, 0, "fixed_drop_dragon: no weapon thud");
+    for (i = 0; i < count; ++i) {
+        EXPECT_EQ(drops[i].thingType, DM1_DROP_THING_TYPE_JUNK,
+                  "fixed_drop_dragon: every drop is junk");
+        EXPECT_EQ(drops[i].itemType, 36,
+                  "fixed_drop_dragon: every drop is Dragon Steak type 36");
+    }
+    EXPECT_EQ(drops[8].sourceHadRandomFlag, 1,
+              "fixed_drop_dragon: ninth source entry is random");
+    EXPECT_EQ(drops[9].sourceOrdinal, 10,
+              "fixed_drop_dragon: tenth source entry can survive RNG");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -685,6 +799,9 @@ int main(void) {
     test_giggler_attack_dispatch_steals();
     test_quarter_square_melee_cell_adjusts_before_attack();
     test_attack_any_back_row_bypasses_cell_adjust();
+    test_fixed_possessions_animated_armour_are_cursed();
+    test_fixed_possessions_rockpile_random_flags();
+    test_fixed_possessions_dragon_steak_table();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

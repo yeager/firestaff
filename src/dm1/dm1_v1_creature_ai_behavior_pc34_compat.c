@@ -323,6 +323,171 @@ int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
 }
 
 
+static const uint16_t g_fixedPossessionsSkeleton[] = {
+    DM1_DROP_OBJECT_FIRST_WEAPON + 9,
+    DM1_DROP_OBJECT_FIRST_ARMOUR + 30,
+    0
+};
+
+static const uint16_t g_fixedPossessionsStoneGolem[] = {
+    DM1_DROP_OBJECT_FIRST_WEAPON + 24,
+    0
+};
+
+static const uint16_t g_fixedPossessionsTrolin[] = {
+    DM1_DROP_OBJECT_FIRST_WEAPON + 23,
+    0
+};
+
+static const uint16_t g_fixedPossessionsAnimatedArmour[] = {
+    DM1_DROP_OBJECT_FIRST_ARMOUR + 41,
+    DM1_DROP_OBJECT_FIRST_ARMOUR + 40,
+    DM1_DROP_OBJECT_FIRST_ARMOUR + 39,
+    DM1_DROP_OBJECT_FIRST_WEAPON + 10,
+    DM1_DROP_OBJECT_FIRST_ARMOUR + 38,
+    DM1_DROP_OBJECT_FIRST_WEAPON + 10,
+    0
+};
+
+static const uint16_t g_fixedPossessionsRockpile[] = {
+    DM1_DROP_OBJECT_FIRST_JUNK + 25,
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 25 + DM1_DROP_RANDOM_FLAG),
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_WEAPON + 30 + DM1_DROP_RANDOM_FLAG),
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_WEAPON + 30 + DM1_DROP_RANDOM_FLAG),
+    0
+};
+
+static const uint16_t g_fixedPossessionsPainRat[] = {
+    DM1_DROP_OBJECT_FIRST_JUNK + 35,
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 35 + DM1_DROP_RANDOM_FLAG),
+    0
+};
+
+static const uint16_t g_fixedPossessionsScreamer[] = {
+    DM1_DROP_OBJECT_FIRST_JUNK + 33,
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 33 + DM1_DROP_RANDOM_FLAG),
+    0
+};
+
+static const uint16_t g_fixedPossessionsWorm[] = {
+    DM1_DROP_OBJECT_FIRST_JUNK + 34,
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 34 + DM1_DROP_RANDOM_FLAG),
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 34 + DM1_DROP_RANDOM_FLAG),
+    0
+};
+
+static const uint16_t g_fixedPossessionsDragon[] = {
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    DM1_DROP_OBJECT_FIRST_JUNK + 36,
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 36 + DM1_DROP_RANDOM_FLAG),
+    (uint16_t)(DM1_DROP_OBJECT_FIRST_JUNK + 36 + DM1_DROP_RANDOM_FLAG),
+    0
+};
+
+static const uint16_t* fixed_possession_table_for_creature(int creatureType,
+                                                           int* outCursed)
+{
+    if (outCursed) *outCursed = 0;
+    switch (creatureType) {
+    case DM1_CREATURE_TYPE_SKELETON:
+        return g_fixedPossessionsSkeleton;
+    case DM1_CREATURE_TYPE_STONE_GOLEM:
+        return g_fixedPossessionsStoneGolem;
+    case DM1_CREATURE_TYPE_TROLIN:
+        return g_fixedPossessionsTrolin;
+    case DM1_CREATURE_TYPE_ANIMATED_ARMOUR:
+        if (outCursed) *outCursed = 1;
+        return g_fixedPossessionsAnimatedArmour;
+    case DM1_CREATURE_TYPE_ROCKPILE:
+        return g_fixedPossessionsRockpile;
+    case DM1_CREATURE_TYPE_PAIN_RAT:
+        return g_fixedPossessionsPainRat;
+    case DM1_CREATURE_TYPE_SCREAMER:
+        return g_fixedPossessionsScreamer;
+    case DM1_CREATURE_TYPE_MAGENTA_WORM:
+        return g_fixedPossessionsWorm;
+    case DM1_CREATURE_TYPE_RED_DRAGON:
+        return g_fixedPossessionsDragon;
+    default:
+        return 0;
+    }
+}
+
+static int fixed_possession_cell(int sourceCell, struct RngState_Compat* rng)
+{
+    if (sourceCell == DM1_SINGLE_CENTERED_CREATURE_CELL ||
+        F0732_COMBAT_RngRandom_Compat(rng, 4) == 0) {
+        return F0732_COMBAT_RngRandom_Compat(rng, 4);
+    }
+    return sourceCell & 3;
+}
+
+int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+    int creatureType,
+    int sourceCell,
+    struct RngState_Compat* rng,
+    struct DM1FixedPossessionDrop_Compat* outDrops,
+    int maxDrops,
+    int* outDropCount,
+    int* outWeaponDropped)
+{
+    const uint16_t* table;
+    int cursed;
+    int count = 0;
+    int ordinal = 0;
+
+    if (!rng || !outDropCount || !outWeaponDropped) return 0;
+    if (maxDrops < 0) return 0;
+    if (maxDrops > 0 && !outDrops) return 0;
+    *outDropCount = 0;
+    *outWeaponDropped = 0;
+
+    table = fixed_possession_table_for_creature(creatureType, &cursed);
+    if (!table) return 1;
+
+    while (*table) {
+        uint16_t raw = *table++;
+        int randomFlag = (raw & DM1_DROP_RANDOM_FLAG) != 0;
+        int objectIndex = raw & ~DM1_DROP_RANDOM_FLAG;
+        struct DM1FixedPossessionDrop_Compat drop;
+
+        ordinal++;
+        if (randomFlag && F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            continue;
+        }
+        if (count >= maxDrops) return 0;
+
+        memset(&drop, 0, sizeof(drop));
+        drop.cell = fixed_possession_cell(sourceCell, rng);
+        drop.cursed = cursed;
+        drop.sourceOrdinal = ordinal;
+        drop.sourceHadRandomFlag = randomFlag;
+
+        if (objectIndex >= DM1_DROP_OBJECT_FIRST_JUNK) {
+            drop.thingType = DM1_DROP_THING_TYPE_JUNK;
+            drop.itemType = objectIndex - DM1_DROP_OBJECT_FIRST_JUNK;
+        } else if (objectIndex >= DM1_DROP_OBJECT_FIRST_ARMOUR) {
+            drop.thingType = DM1_DROP_THING_TYPE_ARMOUR;
+            drop.itemType = objectIndex - DM1_DROP_OBJECT_FIRST_ARMOUR;
+        } else {
+            drop.thingType = DM1_DROP_THING_TYPE_WEAPON;
+            drop.itemType = objectIndex - DM1_DROP_OBJECT_FIRST_WEAPON;
+            *outWeaponDropped = 1;
+        }
+        outDrops[count++] = drop;
+    }
+
+    *outDropCount = count;
+    return 1;
+}
+
+
 /* =========================================================================
  *  F0811: Movement possibility check
  *
