@@ -1414,6 +1414,10 @@ if(BUILD_TESTING)
         NAME c006_event60_61_defer_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_c006_event60_61_defer_source_lock.py
     )
+    add_test(
+        NAME c006_unused_group_slot_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_c006_unused_group_slot_source_lock.py
+    )
 
     add_executable(test_dm1_v1_sensor_trigger_pc34_compat
         tests/test_dm1_v1_sensor_trigger_pc34_compat.c

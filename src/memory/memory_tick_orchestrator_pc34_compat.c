@@ -1071,6 +1071,23 @@ static unsigned short orch_make_thing_ref_compat(int type, int index) {
     return (unsigned short)(((type & 0x0F) << 10) | (index & 0x03FF));
 }
 
+static int orch_find_unused_group_slot_compat(
+    const struct DungeonThings_Compat* things)
+{
+    int i;
+    if (!things || !things->groups || things->groupCount <= 0) return -1;
+
+    /* ReDMCSB DUNGEON.C:F0166:2077-2137 scans the fixed thing-data
+     * array from index 0 and takes the first entry whose Next word is
+     * C0xFFFF_THING_NONE.  GROUP.C:F0185:512-521 calls that allocator
+     * before initializing a generated group, so C006 generation must
+     * reuse an unused source slot instead of growing the group array. */
+    for (i = 0; i < things->groupCount; ++i) {
+        if (things->groups[i].next == THING_NONE) return i;
+    }
+    return -1;
+}
+
 static int orch_square_has_group_or_party_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -1281,7 +1298,6 @@ static int orch_materialize_generated_group_compat(
     const struct GeneratorResult_Compat* generator,
     int* outGroupIndex)
 {
-    struct DungeonGroup_Compat* resized;
     struct DungeonGroup_Compat* group;
     int sftIndex;
     int groupIndex;
@@ -1294,14 +1310,9 @@ static int orch_materialize_generated_group_compat(
     sftIndex = orch_square_first_thing_list_index_compat(
         world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
-    if (world->things->groupCount < 0 || world->things->groupCount >= 1024) return 0;
 
-    groupIndex = world->things->groupCount;
-    resized = (struct DungeonGroup_Compat*)realloc(
-        world->things->groups,
-        (size_t)(groupIndex + 1) * sizeof(*world->things->groups));
-    if (!resized) return 0;
-    world->things->groups = resized;
+    groupIndex = orch_find_unused_group_slot_compat(world->things);
+    if (groupIndex < 0) return 0;
     group = &world->things->groups[groupIndex];
     memset(group, 0, sizeof(*group));
 
@@ -1319,9 +1330,6 @@ static int orch_materialize_generated_group_compat(
     group->count = (unsigned char)(generator->spawnedCreatureCount & 0x03);
     group->direction = (unsigned char)(generator->spawnedDirection & 0x03);
     group->doNotDiscard = 0;
-
-    world->things->groupCount = groupIndex + 1;
-    world->things->thingCounts[THING_TYPE_GROUP] = world->things->groupCount;
 
     /* ReDMCSB GROUP.C:F0185:543-545 keeps the initialized group slot
      * referenced by the deferred move event instead of linking it when

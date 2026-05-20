@@ -46,7 +46,10 @@ static int build_world(struct GameWorld_Compat* world) {
     things->sensorCount = 3;
     things->thingCounts[THING_TYPE_SENSOR] = 3;
     things->sensors = (struct DungeonSensor_Compat*)calloc(3, sizeof(*things->sensors));
-    if (!things->squareFirstThings || !things->sensors) goto fail;
+    things->groupCount = 1;
+    things->thingCounts[THING_TYPE_GROUP] = 1;
+    things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
+    if (!things->squareFirstThings || !things->sensors || !things->groups) goto fail;
 
     things->squareFirstThings[0] = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
     things->squareFirstThings[1] = THING_ENDOFLIST;
@@ -58,6 +61,7 @@ static int build_world(struct GameWorld_Compat* world) {
     things->sensors[2].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
     things->sensors[2].sensorData = 9;
     things->sensors[2].next = THING_ENDOFLIST;
+    things->groups[0].next = THING_NONE;
 
     world->dungeon = dungeon;
     world->things = things;
@@ -75,6 +79,7 @@ fail:
     if (things) {
         free(things->squareFirstThings);
         free(things->sensors);
+        free(things->groups);
     }
     free(dungeon);
     free(things);
@@ -103,14 +108,16 @@ static int test_lord_chaos_adjacent_random_retry(void) {
         return 1;
     }
 
-    world.things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*world.things->groups));
+    if (!world.things->groups || world.things->groupCount < 1) {
+        world.things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*world.things->groups));
+        world.things->groupCount = 1;
+        world.things->thingCounts[THING_TYPE_GROUP] = 1;
+    }
     if (!world.things->groups) {
         F0883_WORLD_Free_Compat(&world);
         fprintf(stderr, "FAIL: allocate Lord Chaos group\n");
         return 1;
     }
-    world.things->groupCount = 1;
-    world.things->thingCounts[THING_TYPE_GROUP] = 1;
     group = &world.things->groups[0];
     group->next = THING_ENDOFLIST;
     group->slot = THING_ENDOFLIST;
@@ -151,6 +158,126 @@ static int test_lord_chaos_adjacent_random_retry(void) {
                  world.timeline.events[0].mapX == 2 &&
                  world.timeline.events[0].mapY == 1,
                  "Lord Chaos random adjacent retry schedules C37 at adjacent square");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int prime_generator_sensor(struct GameWorld_Compat* world) {
+    if (!world || !world->things || !world->things->sensors) return 0;
+    world->things->sensors[0].sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
+    world->things->sensors[0].sensorData = 0;
+    world->things->sensors[0].value = 1;
+    world->things->sensors[0].audible = 1;
+    world->things->sensors[0].onceOnly = 0;
+    world->things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    return 1;
+}
+
+static int schedule_generator_trigger(struct GameWorld_Compat* world) {
+    struct TimelineEvent_Compat event;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+    event.fireAtTick = world->gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event) == 1;
+}
+
+static int test_c006_reuses_first_unused_group_slot(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct DungeonGroup_Compat* pool;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world unused-slot reuse\n");
+        return 1;
+    }
+
+    free(world.things->groups);
+    world.things->groups = NULL;
+    pool = (struct DungeonGroup_Compat*)calloc(2, sizeof(*pool));
+    if (!pool) {
+        F0883_WORLD_Free_Compat(&world);
+        fprintf(stderr, "FAIL: allocate two-slot group pool\n");
+        return 1;
+    }
+    world.things->groups = pool;
+    world.things->groupCount = 2;
+    world.things->thingCounts[THING_TYPE_GROUP] = 2;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = 9;
+    world.things->groups[1].next = THING_NONE;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime generator sensor for unused-slot reuse");
+    ok &= expect(schedule_generator_trigger(&world), "schedule generator for unused-slot reuse");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator unused-slot reuse");
+    ok &= expect(world.things->groupCount == 2,
+                 "C006 generator keeps fixed source group-slot capacity");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_GROUP << 10) | 1),
+                 "C006 generator reuses first Next=THING_NONE group slot");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST &&
+                 world.things->groups[0].creatureType == 9,
+                 "C006 generator leaves earlier used group slot untouched");
+    ok &= expect(world.things->groups[1].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "C006 reused group slot links previous square chain");
+    ok &= expect(world.creatureAICount == 1 && world.creatureAI[0].reserved0 == 1,
+                 "C006 reused group slot seeds active state with reused index");
+    ok &= expect(world.timeline.count == 2 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].aux0 == 1,
+                 "C006 reused group schedules C37 for reused index");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_c006_no_unused_group_slot_does_not_append(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world no-unused-slot\n");
+        return 1;
+    }
+
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = 12;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime generator sensor without unused group slot");
+    ok &= expect(schedule_generator_trigger(&world), "schedule generator without unused group slot");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator without unused group slot");
+    ok &= expect(world.things->groupCount == 1,
+                 "C006 generator does not append beyond source group-slot capacity");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "C006 generator leaves square chain unchanged when no group slot exists");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST &&
+                 world.things->groups[0].creatureType == 12,
+                 "C006 generator leaves occupied group slot untouched when no free slot exists");
+    ok &= expect(result.emissionCount == 1 &&
+                 result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+                 result.emissions[0].payload[0] == DM1_SND_BUZZ,
+                 "C006 no-slot path still keeps sensor-audible buzz");
+    ok &= expect(world.creatureAICount == 0,
+                 "C006 no-slot path does not seed active group state");
+    ok &= expect(world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_GROUP_GENERATOR &&
+                 world.timeline.events[0].aux0 == GENERATOR_EVENT_AUX0_REENABLE,
+                 "C006 no-slot path keeps only delayed C65 re-enable");
 
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
@@ -338,6 +465,8 @@ int main(void) {
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
+    if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
+    if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;
 }
