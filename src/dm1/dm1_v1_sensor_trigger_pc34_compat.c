@@ -192,11 +192,10 @@ int F0722_SENSOR_EvaluateFloor_Compat(
         /* Source: F0276 case C008
          * if (L0767_i_ThingType != CM1_THING_TYPE_PARTY) goto skip;
          * L0768_B_TriggerSensor = F0274_SENSOR_IsObjectInPartyPossession(data);
-         * We can't check party possession here (pure function), so we signal
-         * that the sensor WOULD trigger and let the caller check possession. */
+         * F0274 scans living champion slots, chest contents, then leader hand. */
         if (ctx->thingType != DM1_TRIGGER_SOURCE_PARTY)
             return 1;
-        /* triggerSensor remains ctx->isAddition — caller must verify possession */
+        triggerSensor = ctx->partyHasObjectType;
         break;
 
     case DM1_SENSOR_FLOOR_VERSION_CHECKER:

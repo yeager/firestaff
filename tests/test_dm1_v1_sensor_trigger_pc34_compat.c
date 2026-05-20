@@ -370,6 +370,42 @@ static void test_floor_local_effect(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0722: Floor sensor -- party possession
+ *  Source: MOVESENS.C F0276 C008 at 1710-1714 calls
+ *  F0274_SENSOR_IsObjectInPartyPossession; F0274 at 1272-1306 scans
+ *  living champion slots, chest contents, then leader hand.
+ * ---------------------------------------------------------------- */
+static void test_floor_party_possession(void) {
+    struct DungeonSensor_Compat sensor;
+    struct FloorSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_FLOOR_PARTY_POSSESSION, 8,
+                         DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                         0, 4, 6, 0);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.thingType = DM1_TRIGGER_SOURCE_PARTY;
+    ctx.isAddition = 1;
+    ctx.partyHasObjectType = 1;
+
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Party possession: present object triggers");
+    CHECK(result.resolvedEffect == DM1_EFFECT_TOGGLE, "Party possession: keeps TOGGLE effect");
+
+    ctx.partyHasObjectType = 0;
+    memset(&result, 0, sizeof(result));
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Party possession: absent object does not trigger TOGGLE");
+
+    sensor.effect = DM1_EFFECT_HOLD;
+    memset(&result, 0, sizeof(result));
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Party possession: HOLD fires with absent object");
+    CHECK(result.resolvedEffect == DM1_EFFECT_CLEAR, "Party possession: absent object resolves HOLD to CLEAR");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — simple click
  *  Source: F0275 case C001 (WALL_ORNAMENT_CLICK)
  * ---------------------------------------------------------------- */
@@ -816,6 +852,7 @@ int main(void) {
     test_floor_once_only();
     test_floor_revert_effect();
     test_floor_local_effect();
+    test_floor_party_possession();
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();

@@ -132,6 +132,7 @@ struct FloorSensorContext_Compat {
     int squareType;
     int partyDirection;
     int partyChampionCount;
+    int partyHasObjectType;
     int isAddition;
 };
 
