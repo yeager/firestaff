@@ -37,19 +37,16 @@ present and procedural marker fallback remains when assets are absent/disabled.
 
 ## 2. Remaining direct marker calls
 
-Pass 55 deliberately leaves direct marker calls where the current V1 slice lacks
-a source-backed sound-index assertion or original runtime capture:
+This audio source-lock follow-up removes the `FIREBALL` / `DISPELL` / `LIGHTNING` action-time marker fallback after ReDMCSB source audit. Pass 55 now leaves direct marker calls only where the current V1 slice lacks a source-backed sound-index assertion or original runtime capture:
 
 | Bucket | Count | Why still direct |
 |--------|------:|------------------|
 | Generic non-`EMIT_SOUND_REQUEST` tick emissions | 1 | Existing catch-all procedural cue for movement/door/damage/spell emissions that are not yet original sound-request payloads |
-| `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue | 1 | Projectile creation is source-backed, but exact cast-vs-impact sound request timing/index is not captured here |
-| `INVOKE` action cue | 1 | Random subtype path exists, but exact original sound request timing/index is not captured here |
+| `INVOKE` action cue | 1 | Random subtype path exists, but exact original action-time sound request timing/index is not captured here |
 
-This pass does **not** claim those TODO buckets are original-faithful.  It only
-prevents accidental overclaiming by making the remaining procedural paths
-explicit.  It also prevents the now source-silent `CALM` / `BRANDISH` /
-`CONFUSE` block from regressing to a procedural marker fallback.
+`FIREBALL` / `DISPELL` / `LIGHTNING` now stay action-time silent because ReDMCSB PC34 `MENU.C:1280-1305` routes them through `F0327_CHAMPION_IsProjectileSpellCast` without `F0064_SOUND_RequestPlay_CPSD`, and `CHAMPION.C:2073-2106` creates the projectile without requesting sound. Later projectile impact sound remains a separate `GROUP.C` concern.
+
+This pass does **not** claim the remaining TODO buckets are original-faithful.  It only prevents accidental overclaiming by making the remaining procedural paths explicit.  It also prevents the now source-silent `CALM` / `BRANDISH` / `CONFUSE` and `FIREBALL` / `DISPELL` / `LIGHTNING` action blocks from regressing to procedural marker fallbacks.
 
 ---
 
@@ -63,7 +60,8 @@ PASS P55_DIRECT_AUDIO_AUDIT_02 war cry action emits event 17
 PASS P55_DIRECT_AUDIO_AUDIT_02 blow horn action emits event 18
 PASS P55_DIRECT_AUDIO_AUDIT_03 shoot and throw emit source-backed event 13
 PASS P55_DIRECT_AUDIO_AUDIT_04A calm/brandish/confuse stay source-silent
-PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1, 'spell_projectile_action_fallback': 1, 'invoke_action_fallback': 1}
+PASS P55_DIRECT_AUDIO_AUDIT_04B fireball/dispell/lightning action cast stays source-silent
+PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1, 'invoke_action_fallback': 1}
 PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s SHOOTS
 PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s THROWS
 PASS P55_DIRECT_AUDIO_AUDIT_SUMMARY 0 failures
@@ -86,6 +84,6 @@ Rerun regressions:
 - No distribution of original audio assets.
 
 Pass 55 narrows the trigger-point gap from "remaining direct marker calls
-unknown" to "four source-backed action cue emissions converted; three remaining
+unknown" to "four source-backed action cue emissions converted; FIREBALL/DISPELL/LIGHTNING action-time marker fallback removed as source-silent; two remaining
 direct-marker buckets explicitly documented; and CALM/BRANDISH/CONFUSE kept
 source-silent under audit."
