@@ -13,7 +13,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Movement & Collision
 
-- 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, and D0 evidence manifests and focused viewport regression coverage through 17811281; remaining wall/viewport parity gaps still need capture-backed closure
+- 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, and D0 evidence manifests and focused viewport regression coverage through 17811281; pass608 records the same-viewport capture blocker, so remaining wall/viewport parity gaps still need promotable original/Firestaff capture-backed closure (6d51905a)
 
 ### Creature System
 
