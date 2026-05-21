@@ -75,6 +75,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ C006 Lord Chaos blocked-destination adjacent random retry is source-locked from ReDMCSB event60/61 handling (0a12e07d)
 - ✅ C006 generated groups now reuse ReDMCSB-style fixed unused group slots instead of appending beyond source capacity (1d3a9bd4)
 - ✅ C006 generated/deferred groups now route through the narrow F0267 teleporter destination/cross-map placement path, including the covered audible buzz and target-square wandering scheduling case (191c9d3c)
+- ✅ C006/F0267 open-pit group movement is source-locked for generated lower-map insertion, fall damage/death, and carried group-slot fall-kill drops at the lower destination (9db12dbf)
 - ✅ F0267 teleporter rotation parity is source-locked for party, projectile, object, and projectile-associated object rotation/cell behavior (9fd978af)
 
 ### Combat
