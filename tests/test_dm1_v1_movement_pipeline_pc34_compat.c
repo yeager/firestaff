@@ -149,6 +149,25 @@ static unsigned short thing_ref(int type, int index)
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
+static void setup_destination_sensor_chain(struct DungeonThings_Compat* things,
+    unsigned short squareFirstThings[1],
+    struct DungeonSensor_Compat sensors[1],
+    unsigned short firstThing)
+{
+    memset(things, 0, sizeof(*things));
+    memset(sensors, 0, sizeof(struct DungeonSensor_Compat));
+    sensors[0].sensorType = 13; /* text/message floor sensor */
+    sensors[0].sensorData = 77;
+    sensors[0].localEffect = 1;
+    sensors[0].next = THING_ENDOFLIST;
+    squareFirstThings[0] = firstThing;
+    things->squareFirstThings = squareFirstThings;
+    things->squareFirstThingCount = 1;
+    things->sensors = sensors;
+    things->sensorCount = 1;
+    things->loaded = 1;
+}
+
 /* ---- Test: keyboard forward step on open corridor ---- */
 static void test_keyboard_forward_step(void)
 {
@@ -290,6 +309,92 @@ static void test_door_passability(void)
     EXPECT("door_open_passed", result.core.stepApplied == 1);
     EXPECT_INT("door_open_no_blocked_vblank_wait", result.blockedMovementVblankWaitRequested, 0);
     EXPECT_INT("door_open_y", party.mapY, 4);
+}
+
+/* ---- Test: collision blocks before destination sensors ---- */
+static void test_collision_blocks_before_destination_sensors(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[10 * 10];
+    struct DungeonThings_Compat things;
+    unsigned short squareFirstThings[1];
+    struct DungeonSensor_Compat sensors[1];
+    struct DungeonGroup_Compat groups[1];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+    int rc;
+
+    /*
+     * Source lock:
+     * - CLIKMENU.C:278-323 resolves wall/door/group collision and returns
+     *   before the successful F0267 call at CLIKMENU.C:325-328.
+     * - MOVESENS.C:799-818 owns party leave/enter sensor processing, so a
+     *   blocked step must not run the destination sensor chain.
+     */
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    set_sq(squares, 10, 5, 4,
+        sq(DUNGEON_ELEMENT_WALL, DUNGEON_SQUARE_MASK_THING_LIST));
+    setup_destination_sensor_chain(&things, squareFirstThings, sensors,
+        thing_ref(THING_TYPE_SENSOR, 0));
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    rc = DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+    EXPECT_INT("sensor_gate_wall_rc", rc, 1);
+    EXPECT_INT("sensor_gate_wall_blocked", result.core.movementBlocked, 1);
+    EXPECT_INT("sensor_gate_wall_no_step", result.core.stepApplied, 0);
+    EXPECT_INT("sensor_gate_wall_leave_effects", result.core.leaveEffects.count, 0);
+    EXPECT_INT("sensor_gate_wall_enter_effects", result.core.enterEffects.count, 0);
+    EXPECT_INT("sensor_gate_wall_no_postmove_delete", result.postMoveDestinationGroupDeleted, 0);
+    EXPECT_INT("sensor_gate_wall_x", party.mapX, 5);
+    EXPECT_INT("sensor_gate_wall_y", party.mapY, 5);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    set_sq(squares, 10, 5, 4,
+        sq(DUNGEON_ELEMENT_DOOR, DUNGEON_SQUARE_MASK_THING_LIST | 3));
+    setup_destination_sensor_chain(&things, squareFirstThings, sensors,
+        thing_ref(THING_TYPE_SENSOR, 0));
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    rc = DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+    EXPECT_INT("sensor_gate_door_rc", rc, 1);
+    EXPECT_INT("sensor_gate_door_blocked", result.core.movementBlocked, 1);
+    EXPECT_INT("sensor_gate_door_no_step", result.core.stepApplied, 0);
+    EXPECT_INT("sensor_gate_door_leave_effects", result.core.leaveEffects.count, 0);
+    EXPECT_INT("sensor_gate_door_enter_effects", result.core.enterEffects.count, 0);
+    EXPECT_INT("sensor_gate_door_no_postmove_delete", result.postMoveDestinationGroupDeleted, 0);
+    EXPECT_INT("sensor_gate_door_x", party.mapX, 5);
+    EXPECT_INT("sensor_gate_door_y", party.mapY, 5);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    set_sq(squares, 10, 5, 4,
+        sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+    memset(groups, 0, sizeof(groups));
+    groups[0].next = thing_ref(THING_TYPE_SENSOR, 0);
+    setup_destination_sensor_chain(&things, squareFirstThings, sensors,
+        thing_ref(THING_TYPE_GROUP, 0));
+    things.groups = groups;
+    things.groupCount = 1;
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    rc = DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, &things, &party, NULL, &result);
+    EXPECT_INT("sensor_gate_group_rc", rc, 1);
+    EXPECT_INT("sensor_gate_group_blocked", result.core.movementBlocked, 1);
+    EXPECT_INT("sensor_gate_group_specific_block", result.core.blockedByGroup, 1);
+    EXPECT_INT("sensor_gate_group_no_step", result.core.stepApplied, 0);
+    EXPECT_INT("sensor_gate_group_leave_effects", result.core.leaveEffects.count, 0);
+    EXPECT_INT("sensor_gate_group_enter_effects", result.core.enterEffects.count, 0);
+    EXPECT_INT("sensor_gate_group_not_deleted", squareFirstThings[0], thing_ref(THING_TYPE_GROUP, 0));
+    EXPECT_INT("sensor_gate_group_x", party.mapX, 5);
+    EXPECT_INT("sensor_gate_group_y", party.mapY, 5);
 }
 
 /* ---- Test: movement cooldown gate (F0380 movement-disabled check) ---- */
@@ -1223,6 +1328,7 @@ int main(void)
     test_keyboard_turn_left();
     test_wall_blocks_movement();
     test_door_passability();
+    test_collision_blocks_before_destination_sensors();
     test_movement_cooldown_gate();
     test_queue_sequencing();
     test_empty_queue();
