@@ -84,6 +84,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ C006 generated/deferred group placement is source-locked to reject creature types not allowed on the destination map, drop carried-slot possessions, skip insertion/AI/wander scheduling, and avoid success buzz on failed generator placement (1741688d)
 - ✅ C006/F0267 moving fixed-possession partial/death drops are source-locked for falling moving groups: partial death consumes killed moving-creature cells, surviving fixed possessions and carried slots drop at the destination, and deleted source groups are cleaned up in ReDMCSB order (365b4b8f)
 - ✅ F0267 teleporter rotation parity is source-locked for party, projectile, object, and projectile-associated object rotation/cell behavior (9fd978af)
+- ✅ C006/F0267 multi-hop teleporter audible buzz parity is source-locked for chained group teleporter traversal, preserving all per-hop buzzes before generator and sensor buzz dispatch (d3ef5834)
 
 ### Combat
 
