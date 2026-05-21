@@ -22,7 +22,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Champion System
 
-- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper (4a13163e), and runtime current/maximum statistic row wiring (4c671c34) are source-locked; remaining polish is pixel/layout parity for the drawn colored per-stat panel
+- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper (4a13163e), runtime current/maximum statistic row wiring (4c671c34), and the F0351 text-run layout/color model plus M11 stats text routing coverage (ac3efa45) are source-locked; remaining polish is framebuffer/pixel parity for the drawn colored per-stat panel
 
 ### Inventory & Items
 

@@ -124,6 +124,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Champion stat screen current-vs-maximum statistic color rows are source-locked: below max red, above max light green, equal lightest gray, with max suffix lightest gray (ea743e8c)
 - ✅ Champion panel HUD statistic color/format helper mirrors the F0351 current/maximum row colors and split value formatting (4a13163e)
 - ✅ Champion max-stat runtime rows are wired through champion state serialization, fallback loading, panel row helpers, and M11 empty-hand eye stats output (4c671c34)
+- ✅ Champion stats panel text-run layout/color model and M11 stats text routing are source-locked for the F0351 statistic rows, with tests covering panel helper coordinates/colors and runtime stats detail output (ac3efa45)
 - ✅ Champion panel HP/stamina/mana numeric status-value formatting and zone routing are source-locked from CHAMDRAW.C F0289/F0290 (d504de4c)
 - ✅ Champion weight/load panel formatting, color thresholds, label/value routing, rounded maximum load, stamina-adjusted load, and movement-cost load gates are source-locked from ReDMCSB CHAMDRAW/CHAMPION paths (0a075966)
 - ✅ Champion stamina regeneration — source-locked to F0331 food/water, resting, idle-delay, max-stamina amount, and mana-regeneration stamina cost; no direct load factor in regeneration path
