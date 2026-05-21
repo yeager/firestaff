@@ -88,6 +88,11 @@ typedef struct {
     char lastOutcome[64];
     char inspectTitle[64];
     char inspectDetail[512];
+    int v1ObjectDescriptionPanelActive;
+    unsigned short v1ObjectDescriptionThing;
+    int v1ObjectDescriptionIconIndex;
+    char v1ObjectDescriptionName[64];
+    char v1ObjectDescriptionBody[256];
     /* Pass 42: V1-chrome-mode reroute bookkeeping.  Last payload
      * pushed into the message log from m11_set_status /
      * m11_set_inspect_readout, used to suppress back-to-back
