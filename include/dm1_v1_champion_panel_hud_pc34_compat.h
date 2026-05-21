@@ -152,6 +152,28 @@ enum {
     DM1_STATUS_VALUE_MANA
 };
 
+enum {
+    DM1_STATUS_BOX_DRAW_NONE = 0,
+    DM1_STATUS_BOX_DRAW_ALIVE,
+    DM1_STATUS_BOX_DRAW_DEAD
+};
+
+typedef struct DM1_ChampionPanel_StatusBoxModel {
+    int drawKind;
+    int fillColor;
+    int graphicId;
+    int nameColor;
+    int nameBackgroundColor;
+    int propagatedAttributes;
+    int drawPortrait;
+    int drawActionIcon;
+    int stopAfterDead;
+} DM1_ChampionPanel_StatusBoxModel;
+
+int DM1_ChampionPanel_BuildStatusBoxModel(
+    int championIndex, int leaderIndex, int isInventoryChampion,
+    int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel);
+
 /* ── Source-locked bar height — CHAMDRAW.C F0287 ── */
 int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
 

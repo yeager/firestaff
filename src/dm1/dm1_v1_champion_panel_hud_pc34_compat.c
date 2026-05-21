@@ -46,6 +46,53 @@ int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana)
         return (int)(scaled >> 10);
 }
 
+int DM1_ChampionPanel_BuildStatusBoxModel(
+    int championIndex, int leaderIndex, int isInventoryChampion,
+    int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel)
+{
+    (void)leaderIndex;
+
+    if (!outModel || championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT) {
+        return 0;
+    }
+
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->fillColor = -1;
+    outModel->graphicId = -1;
+    outModel->nameColor = -1;
+    outModel->nameBackgroundColor = -1;
+
+    /* CHAMDRAW.C F0292 lines 771-789: status-box redraw fills the live
+     * champion status box with C12 before shield borders/portrait/hands. */
+    if (currentHealth > 0) {
+        outModel->drawKind = DM1_STATUS_BOX_DRAW_ALIVE;
+        outModel->fillColor = DM1_COLOR_DARKEST_GRAY;
+        if (isInventoryChampion) {
+            /* Lines 810-812: inventory champion draws the portrait and then
+             * schedules only the statistics redraw in the local mask. */
+            outModel->drawPortrait = 1;
+            outModel->propagatedAttributes = DM1_ATTR_STATISTICS;
+        } else {
+            /* Lines 813-815: status-box redraw for other live champions
+             * schedules name/title, bars/statistics, wounds and action hand. */
+            outModel->propagatedAttributes =
+                DM1_ATTR_NAME_TITLE | DM1_ATTR_STATISTICS |
+                DM1_ATTR_WOUNDS | DM1_ATTR_ACTION_HAND;
+        }
+        return 1;
+    }
+
+    /* Lines 816-838: dead champions blit C008, print the name with C13 on
+     * C01, draw the action icon, then jump to the end of F0292. */
+    outModel->drawKind = DM1_STATUS_BOX_DRAW_DEAD;
+    outModel->graphicId = DM1_GFX_DEAD_CHAMPION;
+    outModel->nameColor = DM1_COLOR_LIGHTEST_GRAY;
+    outModel->nameBackgroundColor = DM1_COLOR_DARK_GRAY;
+    outModel->drawActionIcon = 1;
+    outModel->stopAfterDead = 1;
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Slot box graphic — CHAMDRAW.C F0291_CHAMPION_DrawSlot
  *
@@ -556,6 +603,40 @@ int DM1_ChampionPanel_SelfTest(void)
                 failures++;
                 fprintf(stderr, "FAIL: statistic text run out-of-range index\n");
             }
+        }
+    }
+
+    /* CHAMDRAW.C F0292 status-box redraw propagation */
+    {
+        DM1_ChampionPanel_StatusBoxModel model;
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(0, 0, 1, 77, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_ALIVE ||
+            model.fillColor != DM1_COLOR_DARKEST_GRAY ||
+            model.drawPortrait != 1 ||
+            model.propagatedAttributes != DM1_ATTR_STATISTICS ||
+            model.drawActionIcon != 0 ||
+            model.stopAfterDead != 0) {
+            failures++;
+            fprintf(stderr, "FAIL: live inventory status-box model\n");
+        }
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(1, 0, 0, 77, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_ALIVE ||
+            model.fillColor != DM1_COLOR_DARKEST_GRAY ||
+            model.drawPortrait != 0 ||
+            model.propagatedAttributes !=
+                (DM1_ATTR_NAME_TITLE | DM1_ATTR_STATISTICS |
+                 DM1_ATTR_WOUNDS | DM1_ATTR_ACTION_HAND)) {
+            failures++;
+            fprintf(stderr, "FAIL: live status-box propagated attributes\n");
+        }
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(2, 0, 0, 0, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_DEAD ||
+            model.graphicId != DM1_GFX_DEAD_CHAMPION ||
+            model.nameColor != DM1_COLOR_LIGHTEST_GRAY ||
+            model.nameBackgroundColor != DM1_COLOR_DARK_GRAY ||
+            model.drawActionIcon != 1 || model.stopAfterDead != 1) {
+            failures++;
+            fprintf(stderr, "FAIL: dead status-box model\n");
         }
     }
 

@@ -79,6 +79,11 @@ int main(void)
         failures++;
     }
 
+    if (DM1_STATUS_BOX_DRAW_ALIVE != 1 || DM1_STATUS_BOX_DRAW_DEAD != 2) {
+        fprintf(stderr, "FAIL: status-box draw kind constants\n");
+        failures++;
+    }
+
     /* All four champions' bar graph positions should be at y=2 */
     {
         int ci;
@@ -246,6 +251,51 @@ int main(void)
         if (!DM1_ChampionPanel_FormatLoadValue(999, 254, loadValue, sizeof(loadValue)) ||
             strcmp(loadValue, " 99.9/ 25 KG") != 0) {
             fprintf(stderr, "FAIL: load rounded max format got %s\n", loadValue);
+            failures++;
+        }
+    }
+
+    /*
+     * CHAMDRAW.C:F0292 source lock:
+     * - 771-789: STATUS_BOX fills live champion status box with C12.
+     * - 810-815: inventory champion draws portrait and schedules only
+     *   STATISTICS; other live champions schedule NAME_TITLE, STATISTICS,
+     *   WOUNDS, and ACTION_HAND in the local redraw mask.
+     * - 816-838: dead champion draws C008, prints name in C13/C01,
+     *   draws action icon, then jumps to the end of F0292.
+     */
+    {
+        DM1_ChampionPanel_StatusBoxModel model;
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(0, 0, 1, 100, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_ALIVE ||
+            model.fillColor != DM1_COLOR_DARKEST_GRAY ||
+            model.drawPortrait != 1 ||
+            model.propagatedAttributes != DM1_ATTR_STATISTICS) {
+            fprintf(stderr, "FAIL: F0292 inventory champion status-box propagation\n");
+            failures++;
+        }
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(3, 0, 0, 100, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_ALIVE ||
+            model.drawPortrait != 0 ||
+            model.propagatedAttributes !=
+                (DM1_ATTR_NAME_TITLE | DM1_ATTR_STATISTICS |
+                 DM1_ATTR_WOUNDS | DM1_ATTR_ACTION_HAND)) {
+            fprintf(stderr, "FAIL: F0292 non-inventory champion status-box propagation\n");
+            failures++;
+        }
+        if (!DM1_ChampionPanel_BuildStatusBoxModel(1, 0, 0, 0, &model) ||
+            model.drawKind != DM1_STATUS_BOX_DRAW_DEAD ||
+            model.graphicId != DM1_GFX_DEAD_CHAMPION ||
+            model.nameColor != DM1_COLOR_LIGHTEST_GRAY ||
+            model.nameBackgroundColor != DM1_COLOR_DARK_GRAY ||
+            model.propagatedAttributes != 0 ||
+            model.drawActionIcon != 1 ||
+            model.stopAfterDead != 1) {
+            fprintf(stderr, "FAIL: F0292 dead champion status-box route\n");
+            failures++;
+        }
+        if (DM1_ChampionPanel_BuildStatusBoxModel(4, 0, 0, 100, &model)) {
+            fprintf(stderr, "FAIL: F0292 status-box model accepts invalid champion\n");
             failures++;
         }
     }
