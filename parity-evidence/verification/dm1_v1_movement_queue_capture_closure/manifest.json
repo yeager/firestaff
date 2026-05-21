@@ -1,0 +1,114 @@
+{
+  "artifactChecks": [
+    {
+      "expected": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+      "observed": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+      "ok": true,
+      "path": "parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json"
+    },
+    {
+      "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "ok": true,
+      "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json"
+    },
+    {
+      "expected": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED",
+      "observed": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md"
+    },
+    {
+      "expected": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
+      "observed": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass545_dm1_v1_movement_queue_sensor_consequences/manifest.json"
+    },
+    {
+      "expected": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
+      "observed": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass559_dm1_v1_gated_movement_pending_click_queue_replay/manifest.json"
+    }
+  ],
+  "closedSourceGap": "No uncovered source-table or Firestaff queue-dispatch gap remains for command input -> queue -> movement dispatch.",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceAudit": [
+    {
+      "claim": "PC34 movement mouse zones feed the command queue labels used by capture routes.",
+      "file": "COMMAND.C",
+      "lines": "106-121",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0359 stores accepted mouse commands or pending clicks into G0432.",
+      "file": "COMMAND.C",
+      "lines": "1452-1661",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0361 scans keyboard tables and writes matched commands to G0432/G2153.",
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0380 gates movement, replays pending clicks, pops a command, and dispatches F0365/F0366.",
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0365/F0366 own the turn and step state changes before redraw promotion is legal.",
+      "file": "CLIKMENU.C",
+      "lines": "142-347",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0128 composes the viewport from the post-command party tuple.",
+      "file": "DUNVIEW.C",
+      "lines": "8318-8611",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "F0097 is the PC34 viewport-present boundary required for promoted captures.",
+      "file": "DRAWVIEW.C",
+      "lines": "709-858",
+      "missingMarkers": [],
+      "ok": true
+    }
+  ],
+  "remainingCaptureGap": {
+    "id": "original_pc34_route_transcript_plus_paired_viewport_crops",
+    "notClaimed": [
+      "original pixel parity",
+      "new DOSBox runtime transcript",
+      "renderer behavior change"
+    ],
+    "requires": [
+      "original keyboard/mouse command token",
+      "G0432/G2153 queue write and F0380 pop/count delta",
+      "F0365/F0366 dispatch and party tuple mutation or blocked-step proof",
+      "F0128 redraw tuple and F0097 viewport-present boundary",
+      "paired original and Firestaff viewport crop hashes for the same tuple"
+    ]
+  },
+  "schema": "firestaff.dm1_v1_movement_queue_capture_closure.v1",
+  "status": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
+  "todoCheck": {
+    "file": "TODO.md",
+    "needles": [
+      "Input command routing",
+      "release-mouse button identity",
+      "movement collision-before-sensor dispatch ordering",
+      "capture-only"
+    ],
+    "ok": true
+  }
+}

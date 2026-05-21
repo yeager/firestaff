@@ -2010,6 +2010,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_input_command_queue_source_lock.py
         )
         add_test(
+            NAME dm1_v1_movement_queue_capture_closure
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_movement_queue_capture_closure.py
+        )
+        add_test(
             NAME dm1_v1_turn_step_timing_gate_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_turn_step_timing_gate_source_lock.py
         )
