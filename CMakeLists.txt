@@ -3084,6 +3084,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original transcript row preflight gate -----------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass625_dm1_v1_original_transcript_row_preflight
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass625_dm1_v1_original_transcript_row_preflight.py
+    )
+endif()
+
 # -- DM1 V1 original capture route preflight gate -------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

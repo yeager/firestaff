@@ -1,0 +1,373 @@
+{
+  "canonicalOriginalRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "decision": "The next original capture attempt has a machine-checked, source-backed target row: one original PC/I34E transcript for 02_turn_right_west_1_3 must prove queue write/pop, F0380->F0365 dispatch, party tuple 0/1/3/3, F0128 redraw, and F0097/VIDRV viewport present before its crop can be paired with the locked Firestaff viewport hash.",
+  "gateStatusChecks": [
+    {
+      "duplicateCropGroups": {
+        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "id": "pass608_same_viewport_blocker",
+      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "ok": true,
+      "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
+      "runtimeTranscriptOk": false,
+      "runtimeTranscriptProvided": false
+    },
+    {
+      "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
+      "expected": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
+      "id": "pass622_viewport_wall_capture_gap",
+      "manifestOk": true,
+      "observed": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json"
+    },
+    {
+      "expected": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
+      "id": "pass623_input_capture_bridge",
+      "observed": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json"
+    }
+  ],
+  "nonClaims": [
+    "no original DOS runtime capture was run",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no renderer, movement, or input behavior is changed",
+    "no non-N2 original asset path is used",
+    "no push, tag, package, or release action"
+  ],
+  "ok": true,
+  "originalAssetLocks": [
+    {
+      "bytes": 12002,
+      "exists": true,
+      "expectedBytes": 12002,
+      "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "relative": "TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    {
+      "bytes": 363417,
+      "exists": true,
+      "expectedBytes": 363417,
+      "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "relative": "GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "exists": true,
+      "expectedBytes": 33357,
+      "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "relative": "DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "bytes": 11471,
+      "exists": true,
+      "expectedBytes": 11471,
+      "expectedSha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "relative": "DungeonMasterPC34/DM.EXE",
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"
+    },
+    {
+      "bytes": 4503,
+      "exists": true,
+      "expectedBytes": 4503,
+      "expectedSha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/VGA",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA",
+      "relative": "DungeonMasterPC34/VGA",
+      "sha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b"
+    },
+    {
+      "bytes": 15474,
+      "exists": true,
+      "expectedBytes": 15474,
+      "expectedSha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/SELECTOR",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SELECTOR",
+      "relative": "DungeonMasterPC34/SELECTOR",
+      "sha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4"
+    },
+    {
+      "bytes": 896553,
+      "exists": true,
+      "expectedBytes": 896553,
+      "expectedSha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/Dungeon-Master_DOS_EN.zip",
+      "realpath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/Dungeon-Master_DOS_EN.zip",
+      "relative": "Dungeon-Master_DOS_EN.zip",
+      "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
+    }
+  ],
+  "problems": [],
+  "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
+  "sourceAudit": [
+    {
+      "claim": "the original PC/I34E entrance click must resolve to C200 before gameplay capture labels are accepted",
+      "file": "COMMAND.C",
+      "id": "i34e_entrance_enter_mouse_command",
+      "lines": "341-352",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the original PC/I34E keyboard entrance route has a source command id distinct from later movement commands",
+      "file": "COMMAND.C",
+      "id": "i34e_entrance_enter_keyboard_command",
+      "lines": "551-571",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "post-entry movement labels must use the source movement command ids consumed by F0380",
+      "file": "COMMAND.C",
+      "id": "i34e_movement_mouse_commands",
+      "lines": "396-405",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "a mouse-driven transcript row must record the G0432 command/x/y write and queued-count delta",
+      "file": "COMMAND.C",
+      "id": "mouse_queue_write_with_coordinates",
+      "lines": "1452-1661",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "a keyboard-driven transcript row must record the same queue boundary before F0380 dispatch",
+      "file": "COMMAND.C",
+      "id": "keyboard_queue_write",
+      "lines": "1709-1813",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the transcript row must bind the queue pop to the exact turn/step handler",
+      "file": "COMMAND.C",
+      "id": "queue_pop_dispatch_turn_or_step",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "a promotable crop must be sampled after the bounded command wait loop reaches the next F0128 draw",
+      "file": "GAMELOOP.C",
+      "id": "game_loop_redraw_after_dispatch",
+      "lines": "90-219",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the transcript row must include the direction/x/y tuple consumed by F0128",
+      "file": "DUNVIEW.C",
+      "id": "viewport_tuple_consumed_by_f0128",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the original screenshot/crop must be taken at or after the viewport-present boundary",
+      "file": "DRAWVIEW.C",
+      "id": "pc_viewport_present_boundary",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+  "targetRowAudit": {
+    "ok": true,
+    "pass623Row": {
+      "claim": "right input resolves to C002 turn-right and changes facing only",
+      "commandIds": [
+        2
+      ],
+      "inputTokens": [
+        "M12_MENU_INPUT_RIGHT"
+      ],
+      "label": "02_turn_right_west_1_3",
+      "observed": {
+        "crop": "02_turn_right_west_1_3_viewport_224x136.ppm",
+        "direction": 3,
+        "label": "02_turn_right_west_1_3",
+        "map": 0,
+        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "x": 1,
+        "y": 3
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "problems": []
+    },
+    "problems": [],
+    "target": {
+      "f0128Tuple": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "firestaffViewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+      "inputToken": "M12_MENU_INPUT_RIGHT",
+      "partyAfter": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "partyBefore": {
+        "direction": 2,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "routeLabel": "02_turn_right_west_1_3",
+      "sourceCommandId": 2,
+      "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
+    }
+  },
+  "timestampUtc": "2026-05-21T07:44:40.565256+00:00",
+  "transcriptTemplateAudit": {
+    "missing": [],
+    "ok": true,
+    "requiredFields": [
+      "runId",
+      "routeLabel",
+      "originalAssetSet.sha256.GRAPHICS.DAT",
+      "originalAssetSet.sha256.DUNGEON.DAT",
+      "originalFrame.path",
+      "originalFrame.rawSha256",
+      "originalFrame.cropSha256",
+      "originalFrame.width",
+      "originalFrame.height",
+      "input.source",
+      "input.token",
+      "input.sourceCommandId",
+      "commandQueue.sourceFunction",
+      "commandQueue.command",
+      "commandQueue.countBefore",
+      "commandQueue.countAfter",
+      "commandQueue.firstIndexBefore",
+      "commandQueue.firstIndexAfter",
+      "dispatch.sourceFunction",
+      "dispatch.handler",
+      "partyBefore.mapIndex",
+      "partyBefore.mapX",
+      "partyBefore.mapY",
+      "partyBefore.direction",
+      "partyAfter.mapIndex",
+      "partyAfter.mapX",
+      "partyAfter.mapY",
+      "partyAfter.direction",
+      "redraw.sourceFunction",
+      "redraw.mapX",
+      "redraw.mapY",
+      "redraw.direction",
+      "present.sourceFunction",
+      "present.viewportPresented",
+      "present.boundary",
+      "firestaffFrame.mapIndex",
+      "firestaffFrame.mapX",
+      "firestaffFrame.mapY",
+      "firestaffFrame.direction",
+      "firestaffFrame.viewportSha256"
+    ],
+    "template": {
+      "commandQueue": {
+        "command": 2,
+        "countAfter": "<int>",
+        "countBefore": "<int>",
+        "firstIndexAfter": "<int>",
+        "firstIndexBefore": "<int>",
+        "sourceFunction": "F0359_COMMAND_ProcessClick_CPSC or F0361_COMMAND_ProcessKeyPress"
+      },
+      "dispatch": {
+        "handler": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "sourceFunction": "F0380_COMMAND_ProcessQueue_CPSC"
+      },
+      "firestaffFrame": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "viewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81"
+      },
+      "input": {
+        "source": "original PC/I34E",
+        "sourceCommandId": 2,
+        "sourceCommandName": "C002_COMMAND_TURN_RIGHT",
+        "token": "M12_MENU_INPUT_RIGHT"
+      },
+      "originalAssetSet": {
+        "sha256": {
+          "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+          "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+          "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+        }
+      },
+      "originalFrame": {
+        "cropSha256": "<sha256>",
+        "height": 200,
+        "path": "<raw-320x200-frame.png>",
+        "rawSha256": "<sha256>",
+        "width": 320
+      },
+      "partyAfter": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "partyBefore": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "present": {
+        "boundary": "VIDRV_09_BlitViewPort",
+        "sourceFunction": "F0097_DUNGEONVIEW_DrawViewport",
+        "viewportPresented": true
+      },
+      "redraw": {
+        "direction": 3,
+        "mapX": 1,
+        "mapY": 3,
+        "sourceFunction": "F0128_DUNGEONVIEW_Draw_CPSF"
+      },
+      "routeLabel": "02_turn_right_west_1_3",
+      "runId": "<original-runtime-run-id>"
+    }
+  }
+}
