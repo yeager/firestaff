@@ -350,6 +350,7 @@ static void test_eye_panel_weapon_attribute_flags(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapon;
+    unsigned char framebuffer[320 * 200];
     unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
 
     seed_inventory_view(&state, &things, &weapon);
@@ -364,6 +365,23 @@ static void test_eye_panel_weapon_attribute_flags(void) {
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click opens source weapon description");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 1,
+              "leader-hand eye click marks object-description panel active");
+    ASSERT_EQ(state.v1ObjectDescriptionThing, daggerThing,
+              "object-description panel is locked to the leader-hand thing");
+    ASSERT_EQ(state.v1ObjectDescriptionIconIndex, 32,
+              "object-description panel uses the source object icon index");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_EQ(framebuffer[(33 + 52) * 320 + 80], 3,
+              "drawn object-description panel border starts at source C101");
+    ASSERT_EQ(framebuffer[(33 + 53) * 320 + 103], 12,
+              "drawn object-description circle starts at source C504");
+    ASSERT_EQ(framebuffer[(33 + 59) * 320 + 111], 13,
+              "drawn object-description icon fallback is anchored at source C505");
+    ASSERT_EQ(framebuffer[(33 + 64) * 320 + 134], 13,
+              "drawn object-description name text starts in source C506");
     ASSERT_TRUE(strstr(state.inspectDetail, "CURSED") != NULL,
                 "weapon eye panel reports source cursed flag");
     ASSERT_TRUE(strstr(state.inspectDetail, "POISONED") != NULL,
