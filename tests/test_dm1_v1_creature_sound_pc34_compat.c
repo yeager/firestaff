@@ -101,6 +101,32 @@ static void test_request_movement_seam(void) {
           "resting movement gate queues nothing");
 }
 
+static void test_couatl_aspect_update_movement_special(void) {
+    DM1_SoundSystem sys;
+    DM1_Sound_Init(&sys);
+    DM1_Sound_SetPartyPosition(&sys, 10, 10, 0, 0);
+
+    CHECK(DM1_CreatureSound_AspectUpdateMovementIndexForType(
+              DM1_CREATURE_COUATL, 0, 1, 0) == DM1_SND_MOVE_COUATL_WASP,
+          "couatl idle aspect update random=1 emits movement sound");
+    CHECK(DM1_CreatureSound_AspectUpdateMovementIndexForType(
+              DM1_CREATURE_COUATL, 0, 0, 0) == DM1_SND_NONE,
+          "couatl idle aspect update random=0 is silent");
+    CHECK(DM1_CreatureSound_AspectUpdateMovementIndexForType(
+              DM1_CREATURE_COUATL, 1, 1, 0) == DM1_SND_NONE,
+          "couatl attack aspect update does not use idle movement special");
+    CHECK(DM1_CreatureSound_AspectUpdateMovementIndexForType(
+              DM1_CREATURE_GIANT_WASP, 0, 1, 0) == DM1_SND_NONE,
+          "giant wasp shares movement sound ordinal but not couatl aspect special");
+    CHECK(DM1_CreatureSound_AspectUpdateMovementIndexForType(
+              DM1_CREATURE_COUATL, 0, 1, 1) == DM1_SND_NONE,
+          "couatl aspect movement sound respects F0514 resting gate");
+
+    DM1_CreatureSound_RequestAspectUpdateMovement(&sys, DM1_CREATURE_COUATL, 10, 10, 0, 1, 0);
+    CHECK(sys.pending.pendingSoundIndex == DM1_SND_MOVE_COUATL_WASP,
+          "couatl aspect update request queues movement sound");
+}
+
 static void test_source_evidence(void) {
     const char* evidence = DM1_CreatureSound_SourceEvidence();
     CHECK(evidence != NULL, "source evidence exists");
@@ -108,6 +134,7 @@ static void test_source_evidence(void) {
     CHECK(strstr(evidence, "MOVESENS.C:847-854") != NULL, "movement trigger evidence cited");
     CHECK(strstr(evidence, "DUNGEON.C:735-753") != NULL, "sound table evidence cited");
     CHECK(strstr(evidence, "SOUND.C:1475-1640") != NULL, "audio gate evidence cited");
+    CHECK(strstr(evidence, "GROUP.C:267-281") != NULL, "couatl aspect special evidence cited");
 }
 
 int main(void) {
@@ -116,6 +143,7 @@ int main(void) {
     test_type_sound_selection();
     test_request_attack_seam();
     test_request_movement_seam();
+    test_couatl_aspect_update_movement_special();
     test_source_evidence();
 
     printf("dm1_v1_creature_sound_pc34_compat: %d passed, %d failed\n", g_pass, g_fail);

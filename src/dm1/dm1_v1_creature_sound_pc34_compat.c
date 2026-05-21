@@ -55,6 +55,17 @@ int DM1_CreatureSound_MovementIndexForType(int creatureType, int partyIsResting)
     return DM1_CreatureSound_MovementIndexForOrdinal(DM1_CreatureSound_AttackOrdinalForType(creatureType));
 }
 
+int DM1_CreatureSound_AspectUpdateMovementIndexForType(int creatureType,
+                                                       int attacking,
+                                                       int randomBit,
+                                                       int partyIsResting) {
+    /* ReDMCSB GROUP.C:267-281: only Couatl idle aspect updates call
+     * F0514_MOVE_GetSound, and only when M005_RANDOM(2) is true. */
+    if (creatureType != DM1_CREATURE_COUATL) return DM1_SND_NONE;
+    if (attacking || ((randomBit & 1) == 0)) return DM1_SND_NONE;
+    return DM1_CreatureSound_MovementIndexForType(creatureType, partyIsResting);
+}
+
 void DM1_CreatureSound_RequestAttack(DM1_SoundSystem* sys,
                                      int creatureType,
                                      int16_t mapX,
@@ -77,12 +88,27 @@ void DM1_CreatureSound_RequestMovement(DM1_SoundSystem* sys,
     }
 }
 
+void DM1_CreatureSound_RequestAspectUpdateMovement(DM1_SoundSystem* sys,
+                                                   int creatureType,
+                                                   int16_t mapX,
+                                                   int16_t mapY,
+                                                   int attacking,
+                                                   int randomBit,
+                                                   int partyIsResting) {
+    int soundIndex = DM1_CreatureSound_AspectUpdateMovementIndexForType(
+        creatureType, attacking, randomBit, partyIsResting);
+    if (soundIndex != DM1_SND_NONE) {
+        DM1_Sound_RequestPlay(sys, (int16_t)soundIndex, mapX, mapY, DM1_MODE_PLAY_IF_PRIORITIZED);
+    }
+}
+
 const char* DM1_CreatureSound_SourceEvidence(void) {
     return "GROUP.C:1806-1815 attack ordinal emission; "
            "MOVESENS.C:847-854 movement emission; "
            "MOVESENS.C:984-995 F0514_MOVE_GetSound I34E resting/ordinal gate; "
            "DUNGEON.C:667-733 I34E AttackSoundOrdinal table; "
            "DUNGEON.C:735-753 G2003_aauc_CreatureSounds; "
+           "GROUP.C:267-281 Couatl idle aspect update movement sound gate; "
            "DEFS.H:100-133 I34E sound constants; "
            "SOUND.C:1475-1640 F0064 request/pending gate";
 }

@@ -9,6 +9,8 @@
  *   MOVESENS.C:847-854  group movement emits F0514_MOVE_GetSound result
  *   MOVESENS.C:984-995  F0514_MOVE_GetSound I34E: resting gate, ordinal table
  *   DUNGEON.C:667-733   I34E CreatureInfo AttackSoundOrdinal per creature type
+ *   GROUP.C:267-281     Couatl idle aspect update toggles frame and emits
+ *                       movement sound only when M005_RANDOM(2) is true
  *   DUNGEON.C:735-753   G2003_aauc_CreatureSounds[18][2]
  *   DEFS.H:100-133      I34E sound indexes and attack/movement ranges
  *   SOUND.C:1475-1640   F0064 request gate/pending state
@@ -34,6 +36,10 @@ int DM1_CreatureSound_AttackIndexForOrdinal(int attackSoundOrdinal);
 int DM1_CreatureSound_MovementIndexForOrdinal(int attackSoundOrdinal);
 int DM1_CreatureSound_AttackIndexForType(int creatureType, int useSpellFallback);
 int DM1_CreatureSound_MovementIndexForType(int creatureType, int partyIsResting);
+int DM1_CreatureSound_AspectUpdateMovementIndexForType(int creatureType,
+                                                       int attacking,
+                                                       int randomBit,
+                                                       int partyIsResting);
 
 void DM1_CreatureSound_RequestAttack(DM1_SoundSystem* sys,
                                      int creatureType,
@@ -45,6 +51,13 @@ void DM1_CreatureSound_RequestMovement(DM1_SoundSystem* sys,
                                        int16_t mapX,
                                        int16_t mapY,
                                        int partyIsResting);
+void DM1_CreatureSound_RequestAspectUpdateMovement(DM1_SoundSystem* sys,
+                                                   int creatureType,
+                                                   int16_t mapX,
+                                                   int16_t mapY,
+                                                   int attacking,
+                                                   int randomBit,
+                                                   int partyIsResting);
 
 const char* DM1_CreatureSound_SourceEvidence(void);
 
