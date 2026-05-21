@@ -351,6 +351,147 @@ static int test_c006_generated_group_teleports_cross_map_before_link(void) {
     return ok ? 0 : 1;
 }
 
+
+static int rebuild_as_three_map_multi_hop_teleporter_world(struct GameWorld_Compat* world) {
+    struct DungeonMapDesc_Compat* maps;
+    struct DungeonMapTiles_Compat* tiles;
+    unsigned char* map0;
+    unsigned char* map1;
+    unsigned char* map2;
+    unsigned short* squareFirstThings;
+    struct DungeonTeleporter_Compat* teleporters;
+    int i;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    free(world->dungeon->tiles[0].squareData);
+    free(world->dungeon->maps);
+    free(world->dungeon->tiles);
+    free(world->things->squareFirstThings);
+
+    maps = (struct DungeonMapDesc_Compat*)calloc(3, sizeof(*maps));
+    tiles = (struct DungeonMapTiles_Compat*)calloc(3, sizeof(*tiles));
+    map0 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    map1 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    map2 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    squareFirstThings = (unsigned short*)calloc(3, sizeof(unsigned short));
+    teleporters = (struct DungeonTeleporter_Compat*)calloc(2, sizeof(*teleporters));
+    if (!maps || !tiles || !map0 || !map1 || !map2 || !squareFirstThings || !teleporters) {
+        free(maps);
+        free(tiles);
+        free(map0);
+        free(map1);
+        free(map2);
+        free(squareFirstThings);
+        free(teleporters);
+        return 0;
+    }
+
+    for (i = 0; i < 9; ++i) {
+        map0[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        map1[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        map2[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    }
+    map0[(1 * 3) + 1] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) |
+                                        DUNGEON_SQUARE_MASK_THING_LIST | 0x08);
+    map1[(1 * 3) + 1] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) |
+                                        DUNGEON_SQUARE_MASK_THING_LIST | 0x08);
+    map2[(2 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 3;
+        maps[i].height = 3;
+        maps[i].creatureTypeCount = 2;
+        maps[i].allowedCreatureTypes[0] = 0;
+        maps[i].allowedCreatureTypes[1] = 23;
+        tiles[i].squareCount = 9;
+    }
+    tiles[0].squareData = map0;
+    tiles[1].squareData = map1;
+    tiles[2].squareData = map2;
+
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+    squareFirstThings[1] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 1);
+    squareFirstThings[2] = THING_ENDOFLIST;
+    teleporters[0].next = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    teleporters[0].targetMapX = 1;
+    teleporters[0].targetMapY = 1;
+    teleporters[0].targetMapIndex = 1;
+    teleporters[0].scope = 1;
+    teleporters[0].audible = 1;
+    teleporters[1].next = THING_ENDOFLIST;
+    teleporters[1].targetMapX = 2;
+    teleporters[1].targetMapY = 1;
+    teleporters[1].targetMapIndex = 2;
+    teleporters[1].scope = 1;
+    teleporters[1].audible = 1;
+
+    world->dungeon->header.mapCount = 3;
+    world->dungeon->maps = maps;
+    world->dungeon->tiles = tiles;
+    world->things->squareFirstThingCount = 3;
+    world->things->squareFirstThings = squareFirstThings;
+    world->things->teleporterCount = 2;
+    world->things->thingCounts[THING_TYPE_TELEPORTER] = 2;
+    world->things->teleporters = teleporters;
+    world->things->sensors[0].next = THING_ENDOFLIST;
+    world->partyMapIndex = 0;
+    world->party.mapIndex = 0;
+    world->party.mapX = 0;
+    world->party.mapY = 0;
+    return 1;
+}
+
+static int test_c006_generated_group_multi_hop_teleporter_buzzes_each_audible_hop(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world multi-hop teleporter\n");
+        return 1;
+    }
+
+    ok &= expect(rebuild_as_three_map_multi_hop_teleporter_world(&world),
+                 "build three-map multi-hop creature teleporter fixture");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime generator sensor on first teleporter square");
+    ok &= expect(schedule_generator_trigger(&world), "schedule generator on first teleporter square");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator multi-hop teleporter side-effect tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0),
+                 "C006 F0267 multi-hop leaves source teleporter chain untouched");
+    ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 1),
+                 "C006 F0267 multi-hop leaves intermediate teleporter chain untouched");
+    ok &= expect(world.things->squareFirstThings[2] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "C006 F0267 multi-hop links generated group at final target square");
+    ok &= expect(result.emissionCount == 4,
+                 "C006 F0267 multi-hop emits both teleporter buzzes plus F0185 and sensor buzzes");
+    ok &= expect(result.emissions[0].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[0].payload[1] == 1 &&
+                 result.emissions[0].payload[2] == 1 &&
+                 result.emissions[0].payload[3] == 1,
+                 "C006 F0267 first audible teleporter buzzes at intermediate target");
+    ok &= expect(result.emissions[1].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[1].payload[1] == 2 &&
+                 result.emissions[1].payload[2] == 1 &&
+                 result.emissions[1].payload[3] == 2,
+                 "C006 F0267 second audible teleporter buzzes at final target");
+    ok &= expect(result.emissions[2].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[2].payload[1] == 1 &&
+                 result.emissions[2].payload[2] == 1 &&
+                 result.emissions[2].payload[3] == 0 &&
+                 result.emissions[3].payload[0] == DM1_SND_BUZZ &&
+                 result.emissions[3].payload[1] == 1 &&
+                 result.emissions[3].payload[2] == 1 &&
+                 result.emissions[3].payload[3] == 0,
+                 "C006 F0267 multi-hop keeps F0185 and sensor-audible source buzzes after teleporter buzzes");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int prime_generator_sensor(struct GameWorld_Compat* world) {
     if (!world || !world->things || !world->things->sensors) return 0;
     world->things->sensors[0].sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
@@ -1311,6 +1452,7 @@ int main(void) {
     if (!ok) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
     if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
+    if (test_c006_generated_group_multi_hop_teleporter_buzzes_each_audible_hop() != 0) return 1;
     if (test_c006_generated_group_falls_through_pit_before_link() != 0) return 1;
     if (test_event60_group_pit_fall_death_drops_carried_slot() != 0) return 1;
     if (test_event60_group_pit_fall_partial_death_drops_fixed_possessions() != 0) return 1;

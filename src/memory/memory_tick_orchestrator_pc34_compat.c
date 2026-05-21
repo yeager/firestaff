@@ -117,6 +117,50 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[3] = d;
 }
 
+struct OrchTeleporterBuzz_Compat {
+    int mapIndex;
+    int mapX;
+    int mapY;
+};
+
+struct OrchTeleporterBuzzList_Compat {
+    int count;
+    struct OrchTeleporterBuzz_Compat items[TICK_EMISSION_CAPACITY];
+};
+
+static void orch_teleporter_buzz_list_init_compat(
+    struct OrchTeleporterBuzzList_Compat* list)
+{
+    if (list) memset(list, 0, sizeof(*list));
+}
+
+static void orch_record_teleporter_buzz_compat(
+    struct OrchTeleporterBuzzList_Compat* list,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct OrchTeleporterBuzz_Compat* item;
+    if (!list || list->count >= TICK_EMISSION_CAPACITY) return;
+    item = &list->items[list->count++];
+    item->mapIndex = mapIndex;
+    item->mapX = mapX;
+    item->mapY = mapY;
+}
+
+static void orch_emit_teleporter_buzzes_compat(
+    struct TickResult_Compat* result,
+    const struct OrchTeleporterBuzzList_Compat* list)
+{
+    int i;
+    if (!result || !list) return;
+    for (i = 0; i < list->count; ++i) {
+        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+             list->items[i].mapX, list->items[i].mapY,
+             list->items[i].mapIndex);
+    }
+}
+
 /* ================================================================
  *  Small-struct serialisers
  * ================================================================ */
@@ -1160,15 +1204,11 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
     int* inOutMapIndex,
     int* inOutMapX,
     int* inOutMapY,
-    int* outTeleporterBuzzMapIndex,
-    int* outTeleporterBuzzMapX,
-    int* outTeleporterBuzzMapY)
+    struct OrchTeleporterBuzzList_Compat* outTeleporterBuzzes)
 {
     int remaining;
 
-    if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = -1;
-    if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = -1;
-    if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = -1;
+    orch_teleporter_buzz_list_init_compat(outTeleporterBuzzes);
     if (!world || !world->dungeon || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
 
     /* ReDMCSB MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE source lock:
@@ -1176,7 +1216,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      * - lines 469-472 bound chained teleporter/pit moves (PC34 branch: 100).
      * - lines 474-492 require an open teleporter, creature scope, and then
      *   switch to TargetMapIndex/TargetMapX/TargetMapY.
-     * - lines 520-524 request M560 at the target for audible group teleporters.
+     * - lines 520-524 request M560 at the target on each audible group teleporter hop.
      * This helper intentionally owns only the C006/F0185 and event60/61
      * group-teleporter destination subcase. GROUP.C:F0185:543 and
      * TIMELINE.C:F0252:1534 pass CM1_MAPX_NOT_ON_A_SQUARE, so the
@@ -1216,9 +1256,8 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
         *inOutMapX = (int)tp.targetMapX;
         *inOutMapY = (int)tp.targetMapY;
         if (tp.audible) {
-            if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = *inOutMapIndex;
-            if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = *inOutMapX;
-            if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = *inOutMapY;
+            orch_record_teleporter_buzz_compat(
+                outTeleporterBuzzes, *inOutMapIndex, *inOutMapX, *inOutMapY);
         }
         if (destinationIsTeleporterTarget) break;
     }
@@ -2204,9 +2243,7 @@ static int orch_materialize_generated_group_compat(
     const struct TimelineEvent_Compat* ev,
     const struct GeneratorResult_Compat* generator,
     int* outGroupIndex,
-    int* outTeleporterBuzzMapIndex,
-    int* outTeleporterBuzzMapX,
-    int* outTeleporterBuzzMapY)
+    struct OrchTeleporterBuzzList_Compat* outTeleporterBuzzes)
 {
     struct DungeonGroup_Compat* group;
     int sftIndex;
@@ -2214,9 +2251,7 @@ static int orch_materialize_generated_group_compat(
     int i;
 
     if (outGroupIndex) *outGroupIndex = -1;
-    if (outTeleporterBuzzMapIndex) *outTeleporterBuzzMapIndex = -1;
-    if (outTeleporterBuzzMapX) *outTeleporterBuzzMapX = -1;
-    if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = -1;
+    orch_teleporter_buzz_list_init_compat(outTeleporterBuzzes);
     if (!world || !ev || !generator || !world->dungeon || !world->things) return 0;
     if (!generator->spawned) return 0;
 
@@ -2258,9 +2293,7 @@ static int orch_materialize_generated_group_compat(
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
             world, &destMapIndex, &destMapX, &destMapY,
-            outTeleporterBuzzMapIndex,
-            outTeleporterBuzzMapX,
-            outTeleporterBuzzMapY);
+            outTeleporterBuzzes);
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
                 &fallKilledGroup, movingFixedDropCells,
@@ -2318,9 +2351,7 @@ static int orch_handle_deferred_group_move_event_compat(
     int targetMapY;
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat retry;
-    int teleporterBuzzMapIndex = -1;
-    int teleporterBuzzMapX = -1;
-    int teleporterBuzzMapY = -1;
+    struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
 
     if (!world || !ev || !result || !world->things) return 0;
     groupIndex = ev->aux0;
@@ -2341,7 +2372,7 @@ static int orch_handle_deferred_group_move_event_compat(
      * before the final insertion. */
     (void)orch_resolve_group_f0267_teleporter_destination_compat(
         world, &retry.mapIndex, &targetMapX, &targetMapY,
-        &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
+        &teleporterBuzzes);
     {
         int fallKilledGroup = 0;
         unsigned char movingFixedDropCells[4];
@@ -2357,10 +2388,7 @@ static int orch_handle_deferred_group_move_event_compat(
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      targetMapX, targetMapY, retry.mapIndex);
             }
-            if (teleporterBuzzMapIndex >= 0) {
-                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                     teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
-            }
+            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
             return orch_drop_group_f0267_rejection_possessions_compat(
                 world, group, movingFixedDropCells, movingFixedDropCellCount,
                 retry.mapIndex, targetMapX, targetMapY);
@@ -2373,10 +2401,7 @@ static int orch_handle_deferred_group_move_event_compat(
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      targetMapX, targetMapY, retry.mapIndex);
             }
-            if (teleporterBuzzMapIndex >= 0) {
-                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                     teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
-            }
+            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
             return orch_drop_group_f0267_rejection_possessions_compat(
                 world, group, NULL, 0, retry.mapIndex, targetMapX, targetMapY);
         }
@@ -2405,10 +2430,7 @@ static int orch_handle_deferred_group_move_event_compat(
         emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
              targetMapX, targetMapY, retry.mapIndex);
     }
-    if (teleporterBuzzMapIndex >= 0) {
-        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-             teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
-    }
+    orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
     return orch_link_existing_group_to_square_compat(
         world, groupIndex, retry.mapIndex, targetMapX, targetMapY);
 }
@@ -2523,9 +2545,7 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     const struct DungeonSensor_Compat* sensor;
     struct GeneratorContext_Compat ctx;
     struct GeneratorResult_Compat generator;
-    int teleporterBuzzMapIndex = -1;
-    int teleporterBuzzMapX = -1;
-    int teleporterBuzzMapY = -1;
+    struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
 
     if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
     if (!orch_find_generator_sensor_on_square_compat(
@@ -2571,12 +2591,8 @@ static int orch_handle_group_generator_trigger_runtime_compat(
 
     {
         int placed = orch_materialize_generated_group_compat(
-            world, ev, &generator, 0,
-            &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
-        if (teleporterBuzzMapIndex >= 0) {
-            emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                 teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
-        }
+            world, ev, &generator, 0, &teleporterBuzzes);
+        orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
         if (placed) {
             /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
              * M560_SOUND_BUZZ independently of the sensor's Audible flag. */
