@@ -48,7 +48,8 @@ def run(cmd):
     return p.stdout.strip()
 
 def find_test():
-    cands = [ROOT/'build-pass578'/'test_dm1_v1_movement_pipeline_pc34_compat', ROOT/'build'/'test_dm1_v1_movement_pipeline_pc34_compat']
+    cwd = Path.cwd()
+    cands = [cwd/'test_dm1_v1_movement_pipeline_pc34_compat', cwd/'build-pass578'/'test_dm1_v1_movement_pipeline_pc34_compat', cwd/'build'/'test_dm1_v1_movement_pipeline_pc34_compat', ROOT/'build-pass578'/'test_dm1_v1_movement_pipeline_pc34_compat', ROOT/'build'/'test_dm1_v1_movement_pipeline_pc34_compat']
     cands += sorted(ROOT.glob('build*/test_dm1_v1_movement_pipeline_pc34_compat'))
     for c in cands:
         if c.exists(): return c
@@ -59,9 +60,9 @@ def main():
     command = read(RED/'COMMAND.C', 'latin-1')
     clik = read(RED/'CLIKMENU.C', 'latin-1')
     dungeon = read(RED/'DUNGEON.C', 'latin-1')
-    queue = read(ROOT/'dm1_v1_input_command_queue_pc34_compat.c')
-    core = read(ROOT/'dm1_v1_movement_command_core_pc34_compat.c')
-    test = read(ROOT/'test_dm1_v1_movement_pipeline_pc34_compat.c')
+    queue = read(ROOT/'src/dm1/dm1_v1_input_command_queue_pc34_compat.c')
+    core = read(ROOT/'src/dm1/dm1_v1_movement_command_core_pc34_compat.c')
+    test = read(ROOT/'tests/test_dm1_v1_movement_pipeline_pc34_compat.c')
     f0380_s, f0380_e, f0380 = fn(command, 'F0380_COMMAND_ProcessQueue_CPSC')
     f0366_s = line(clik, clik.find('void F0366_COMMAND_ProcessTypes3To6_MoveParty'))
     f0366_end_pos = clik.find('#include \"CLIKCHAM.C\"', clik.find('void F0366_COMMAND_ProcessTypes3To6_MoveParty'))

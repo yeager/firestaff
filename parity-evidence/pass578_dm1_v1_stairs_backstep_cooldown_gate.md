@@ -11,7 +11,7 @@
 
 ## Firestaff Gate
 
-- dm1_v1_input_command_queue_pc34_compat.c:286-328, focused 303-318: queue returns before popping a gated move.
+- dm1_v1_input_command_queue_pc34_compat.c:300-342, focused 317-332: queue returns before popping a gated move.
 - dm1_v1_movement_command_core_pc34_compat.c:182-376, focused 206-364: command core returns before stamina/stairs/timing when queue did not dequeue.
 - test_dm1_v1_movement_pipeline_pc34_compat asserts a cooldown-gated backward command on stairs remains queued, leaves party/stamina unchanged, and does not apply a stairs transition.
 
