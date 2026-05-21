@@ -18,7 +18,11 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 enum {
     CAPTURE_W = 320,
-    CAPTURE_H = 200
+    CAPTURE_H = 200,
+    VIEWPORT_X = 0,
+    VIEWPORT_Y = 33,
+    VIEWPORT_W = 224,
+    VIEWPORT_H = 136
 };
 
 typedef struct WallCollisionCapture {
@@ -66,6 +70,29 @@ static void dump_vga_ppm(const char* path, const unsigned char* fb) {
     fclose(f);
 }
 
+static void dump_vga_viewport_ppm(const char* path, const unsigned char* fb) {
+    FILE* f;
+    int x;
+    int y;
+    if (!path || !fb) return;
+    f = fopen(path, "wb");
+    if (!f) return;
+    fprintf(f, "P6\n%d %d\n255\n", VIEWPORT_W, VIEWPORT_H);
+    for (y = 0; y < VIEWPORT_H; ++y) {
+        for (x = 0; x < VIEWPORT_W; ++x) {
+            unsigned char raw = fb[(VIEWPORT_Y + y) * CAPTURE_W + (VIEWPORT_X + x)];
+            unsigned char idx = M11_FB_DECODE_INDEX(raw);
+            int level = M11_FB_DECODE_LEVEL(raw);
+            const unsigned char* rgb;
+            if (level < 0) level = 0;
+            if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
+            rgb = G9010_auc_VgaPaletteAll_Compat[level][idx];
+            fwrite(rgb, 1, 3, f);
+        }
+    }
+    fclose(f);
+}
+
 static void snapshot(M11_GameViewState* game,
                      const char* outDir,
                      const char* label,
@@ -78,6 +105,8 @@ static void snapshot(M11_GameViewState* game,
     M11_GameView_Draw(game, framebuffer, CAPTURE_W, CAPTURE_H);
     snprintf(ppmPath, sizeof(ppmPath), "%s/%s.ppm", outDir, label);
     dump_vga_ppm(ppmPath, framebuffer);
+    snprintf(ppmPath, sizeof(ppmPath), "%s/%s_viewport_224x136.ppm", outDir, label);
+    dump_vga_viewport_ppm(ppmPath, framebuffer);
 
     memset(out, 0, sizeof(*out));
     out->label = label;
@@ -119,28 +148,30 @@ static int write_manifest(const char* outDir,
     fprintf(js, "    \"DUNGEON.C:1371-1391 F0150 relative coordinate update\",\n");
     fprintf(js, "    \"CLIKMENU.C:180-347 F0366 step dispatch and wall/door blocker path\",\n");
     fprintf(js, "    \"MOVESENS.C:438-444 F0267 accepted movement coordinate mutation\",\n");
-    fprintf(js, "    \"DUNVIEW.C:8318-8618 F0128 viewport redraw from party map/x/y/direction\"\n");
+    fprintf(js, "    \"DUNVIEW.C:8318-8618 F0128 viewport redraw from party map/x/y/direction\",\n");
+    fprintf(js, "    \"COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions\",\n");
+    fprintf(js, "    \"DRAWVIEW.C:842-857 F0097 presents G0296 through C007_ZONE_VIEWPORT\"\n");
     fprintf(js, "  ],\n");
-    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates and PPM screenshots; not an original DOS pixel-parity claim.\",\n");
+    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs; not an original DOS pixel-parity claim.\",\n");
     fprintf(js, "  \"captures\": [\n");
 
     fprintf(md, "# DM1 V1 wall/collision runtime capture\n\n");
-    fprintf(md, "Deterministic Firestaff runtime repro for wall/collision reports. Each row records exact map/x/y/direction, movement pipeline state, and a PPM screenshot. This closes the TODO blocker that lacked exact coordinate/screenshot/runtime capture; it does not claim original DOS pixel parity.\n\n");
-    fprintf(md, "| label | action | result | map | x | y | dir | command | turn | step | blocked | dirty | screenshot |\n");
-    fprintf(md, "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
+    fprintf(md, "Deterministic Firestaff runtime repro for wall/collision reports. Each row records exact map/x/y/direction, movement pipeline state, a full-frame PPM, and a source-geometry viewport crop PPM. This is capture readiness only; it does not claim original DOS pixel parity.\n\n");
+    fprintf(md, "| label | action | result | map | x | y | dir | command | turn | step | blocked | dirty | screenshot | viewport crop |\n");
+    fprintf(md, "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
 
     for (i = 0; i < count; ++i) {
         const WallCollisionCapture* r = &rows[i];
         fprintf(js,
-                "    {\"label\":\"%s\",\"action\":\"%s\",\"result\":%d,\"party\":{\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d},\"pipeline\":{\"command\":%d,\"turnApplied\":%d,\"stepApplied\":%d,\"movementBlocked\":%d,\"viewportDirty\":%d},\"screenshot\":\"%s.ppm\"}%s\n",
+                "    {\"label\":\"%s\",\"action\":\"%s\",\"result\":%d,\"party\":{\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d},\"pipeline\":{\"command\":%d,\"turnApplied\":%d,\"stepApplied\":%d,\"movementBlocked\":%d,\"viewportDirty\":%d},\"screenshot\":\"%s.ppm\",\"viewportCrop\":\"%s_viewport_224x136.ppm\"}%s\n",
                 r->label, r->action, r->result, r->mapIndex, r->mapX, r->mapY,
                 r->direction, r->command, r->turnApplied, r->stepApplied,
-                r->movementBlocked, r->viewportDirty, r->screenshot,
+                r->movementBlocked, r->viewportDirty, r->screenshot, r->screenshot,
                 i == count - 1 ? "" : ",");
-        fprintf(md, "| %s | %s | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | `%s.ppm` |\n",
+        fprintf(md, "| %s | %s | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | `%s.ppm` | `%s_viewport_224x136.ppm` |\n",
                 r->label, r->action, r->result, r->mapIndex, r->mapX, r->mapY,
                 r->direction, r->command, r->turnApplied, r->stepApplied,
-                r->movementBlocked, r->viewportDirty, r->screenshot);
+                r->movementBlocked, r->viewportDirty, r->screenshot, r->screenshot);
     }
     fprintf(js, "  ]\n}\n");
     fclose(js);
