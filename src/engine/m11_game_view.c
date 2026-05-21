@@ -20063,6 +20063,82 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     return 0;
 }
 
+static void m11_appendf_pc34(char* out, size_t outSize, const char* fmt, ...) {
+    size_t used;
+    va_list ap;
+
+    if (!out || outSize == 0 || !fmt) return;
+    used = strlen(out);
+    if (used >= outSize) return;
+
+    va_start(ap, fmt);
+    vsnprintf(out + used, outSize - used, fmt, ap);
+    va_end(ap);
+}
+
+static const char* m11_dm1_v1_skill_level_name_pc34(unsigned int level) {
+    static const char* const names[15] = {
+        "NEOPHYTE", "NOVICE", "APPRENTICE", "JOURNEYMAN", "CRAFTSMAN",
+        "ARTISAN", "ADEPT", "EXPERT", "` MASTER", "a MASTER",
+        "b MASTER", "c MASTER", "d MASTER", "e MASTER", "ARCHMASTER"
+    };
+
+    if (level > 16U) level = 16U;
+    if (level <= 1U) return NULL;
+    return names[level - 2U];
+}
+
+static void m11_format_v1_champion_stats_panel_pc34(
+    const struct ChampionState_Compat* champ,
+    char* out,
+    size_t outSize) {
+    static const char* const skillNames[CHAMPION_SKILL_COUNT] = {
+        "FIGHTER", "NINJA", "PRIEST", "WIZARD"
+    };
+    static const char* const skillAbbrev[CHAMPION_SKILL_COUNT] = {
+        "FTR", "NIN", "PRI", "WIZ"
+    };
+    static const char* const statNames[CHAMPION_ATTR_COUNT] = {
+        "STRENGTH", "DEXTERITY", "WISDOM", "VITALITY", "ANTI-MAGIC", "ANTI-FIRE"
+    };
+    static const char* const statAbbrev[CHAMPION_ATTR_COUNT] = {
+        "STR", "DEX", "WIS", "VIT", "AM", "AF"
+    };
+    unsigned int i;
+
+    if (!out || outSize == 0) return;
+    out[0] = 0;
+    if (!champ) return;
+
+    /* ReDMCSB PANEL.C F0351/F0352: an empty leader hand on the eye icon
+     * draws the skills/statistics panel. Keep the existing compact runtime
+     * tokens, then add the source F0351 level/statistic names. */
+    m11_appendf_pc34(out, outSize,
+                     "HP %u/%u  STA %u/%u  MANA %u/%u",
+                     (unsigned int)champ->hp.current,
+                     (unsigned int)champ->hp.maximum,
+                     (unsigned int)champ->stamina.current,
+                     (unsigned int)champ->stamina.maximum,
+                     (unsigned int)champ->mana.current,
+                     (unsigned int)champ->mana.maximum);
+
+    for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
+        const unsigned int level = (unsigned int)champ->skillLevels[i];
+        const char* levelName = m11_dm1_v1_skill_level_name_pc34(level);
+        m11_appendf_pc34(out, outSize, "  %s %u", skillAbbrev[i], level);
+        if (levelName) {
+            m11_appendf_pc34(out, outSize, " %s %s", levelName, skillNames[i]);
+        }
+    }
+
+    for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+        m11_appendf_pc34(out, outSize, "  %s %u %s",
+                         statAbbrev[i],
+                         (unsigned int)champ->attributes[i],
+                         statNames[i]);
+    }
+}
+
 /* ── ReDMCSB PANEL.C F0352: Eye click — inspect item or champion stats ──
  * When inventory is open, clicking the eye icon shows:
  *   - Item description if leader hand holds an object
@@ -20086,21 +20162,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         m11_format_champion_name(champ->name, champName, sizeof(champName));
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  "%s STATS", champName);
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "HP %d/%d  STA %d/%d  MANA %d/%d  STR %u  DEX %u  WIS %u  VIT %u  AM %u  AF %u  FTR %u  NIN %u  PRI %u  WIZ %u",
-                 champ->hp.current, champ->hp.maximum,
-                 champ->stamina.current, champ->stamina.maximum,
-                 champ->mana.current, champ->mana.maximum,
-                 champ->attributes[CHAMPION_ATTR_STRENGTH],
-                 champ->attributes[CHAMPION_ATTR_DEXTERITY],
-                 champ->attributes[CHAMPION_ATTR_WISDOM],
-                 champ->attributes[CHAMPION_ATTR_VITALITY],
-                 champ->attributes[CHAMPION_ATTR_ANTIMAGIC],
-                 champ->attributes[CHAMPION_ATTR_ANTIFIRE],
-                 champ->skillLevels[CHAMPION_SKILL_FIGHTER],
-                 champ->skillLevels[CHAMPION_SKILL_NINJA],
-                 champ->skillLevels[CHAMPION_SKILL_PRIEST],
-                 champ->skillLevels[CHAMPION_SKILL_WIZARD]);
+        m11_format_v1_champion_stats_panel_pc34(champ, state->inspectDetail, sizeof(state->inspectDetail));
         M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
         m11_set_status(state, "INSPECT", champName);
         return 1;

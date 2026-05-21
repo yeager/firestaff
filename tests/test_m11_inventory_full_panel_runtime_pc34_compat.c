@@ -434,19 +434,32 @@ static void test_eye_panel_champion_stats_and_skills(void) {
                 strstr(state.inspectDetail, "WIS 43") != NULL &&
                 strstr(state.inspectDetail, "VIT 44") != NULL,
                 "champion stats panel reports core statistics");
+    ASSERT_TRUE(strstr(state.inspectDetail, "STRENGTH") != NULL &&
+                strstr(state.inspectDetail, "DEXTERITY") != NULL &&
+                strstr(state.inspectDetail, "WISDOM") != NULL &&
+                strstr(state.inspectDetail, "VITALITY") != NULL,
+                "champion stats panel reports source statistic names");
     ASSERT_TRUE(strstr(state.inspectDetail, "AM 45") != NULL &&
                 strstr(state.inspectDetail, "AF 46") != NULL,
                 "champion stats panel reports anti-magic and anti-fire");
+    ASSERT_TRUE(strstr(state.inspectDetail, "ANTI-MAGIC") != NULL &&
+                strstr(state.inspectDetail, "ANTI-FIRE") != NULL,
+                "champion stats panel reports source anti-statistic names");
     ASSERT_TRUE(strstr(state.inspectDetail, "FTR 2") != NULL &&
                 strstr(state.inspectDetail, "NIN 3") != NULL &&
                 strstr(state.inspectDetail, "PRI 4") != NULL &&
                 strstr(state.inspectDetail, "WIZ 5") != NULL,
                 "champion stats panel reports base skill levels");
+    ASSERT_TRUE(strstr(state.inspectDetail, "NEOPHYTE FIGHTER") != NULL &&
+                strstr(state.inspectDetail, "NOVICE NINJA") != NULL &&
+                strstr(state.inspectDetail, "APPRENTICE PRIEST") != NULL &&
+                strstr(state.inspectDetail, "JOURNEYMAN WIZARD") != NULL,
+                "champion stats panel reports source skill level names");
 }
 
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
-    printf("ReDMCSB: DEFS.H 778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, PANEL.C F0347 1651-1691\n\n");
+    printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
