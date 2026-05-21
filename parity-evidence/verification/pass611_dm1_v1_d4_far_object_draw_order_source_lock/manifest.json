@@ -1,0 +1,321 @@
+{
+  "buildDir": "/home/trv2/work/firestaff-builds/main-land-wall-d4-draw-order-20260521-0945",
+  "firestaffChecks": [
+    {
+      "file": "include/dm1_v1_viewport_3d_pc34_compat.h",
+      "id": "far-object-struct",
+      "needle": "DM1_ViewportFarObjectPassSpec",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-table",
+      "needle": "s_far_object_pass_specs",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-d4l",
+      "needle": "DM1_VIEW_SQUARE_D4L, 4, -1, 0x0001, 17",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-d4r",
+      "needle": "DM1_VIEW_SQUARE_D4R, 4,  1, 0x0001, 18",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-d4c",
+      "needle": "DM1_VIEW_SQUARE_D4C, 4,  0, 0x0001, 16",
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-test",
+      "needle": "test_f0128_d4_far_object_pass_order",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "far-object-evidence",
+      "needle": "DUNVIEW.C:8466-8477 F0128 D4 far-object passes",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No renderer pixel parity claim.",
+    "No original PC34 same-run transcript/frame binding claim.",
+    "No movement queue, viewport capture, audible C006, or item panel behavior changed.",
+    "No CSB, DM2, or Nexus behavior claim."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 8468,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, -1"
+        },
+        {
+          "line": 8469,
+          "needle": "M598_VIEW_SQUARE_D4L, C0x0001_CELL_ORDER_BACKLEFT);"
+        },
+        {
+          "line": 8472,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, 1"
+        },
+        {
+          "line": 8473,
+          "needle": "M599_VIEW_SQUARE_D4R, C0x0001_CELL_ORDER_BACKLEFT);"
+        },
+        {
+          "line": 8476,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, 0"
+        },
+        {
+          "line": 8477,
+          "needle": "M597_VIEW_SQUARE_D4C, C0x0001_CELL_ORDER_BACKLEFT);"
+        },
+        {
+          "line": 8482,
+          "needle": "F0676_DrawD3L2(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        }
+      ],
+      "id": "dunview-f0128-d4-before-d3",
+      "lines": "8466-8482",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 4547,
+          "needle": "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF("
+        },
+        {
+          "line": 4562,
+          "needle": "If the first nibble is 0, then the function call is to draw objects in an alcove on a wall square."
+        },
+        {
+          "line": 4564,
+          "needle": "The remaining nibbles contain ordinals of square view cells to draw"
+        },
+        {
+          "line": 4580,
+          "needle": "Draw only explosions at specified cell, except for Fluxcages"
+        }
+      ],
+      "id": "dunview-f0115-cell-layer-contract",
+      "lines": "4547-4582",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 709,
+          "needle": "void F0097_DUNGEONVIEW_DrawViewport("
+        },
+        {
+          "line": 721,
+          "needle": "G0324_B_DrawViewportRequested = C1_TRUE"
+        },
+        {
+          "line": 722,
+          "needle": "M526_WaitVerticalBlank();"
+        },
+        {
+          "line": 847,
+          "needle": "F0638_GetZone(C007_ZONE_VIEWPORT, L2413_ai_Box);"
+        },
+        {
+          "line": 857,
+          "needle": "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);"
+        }
+      ],
+      "id": "drawview-present-boundary",
+      "lines": "709-858",
+      "missing": [],
+      "sourceFile": "DRAWVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 396,
+          "needle": "G0448_as_Graphic561_SecondaryMouseInput_Movement"
+        },
+        {
+          "line": 403,
+          "needle": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW"
+        },
+        {
+          "line": 403,
+          "needle": "C007_ZONE_VIEWPORT"
+        }
+      ],
+      "id": "command-viewport-zone-and-queue",
+      "lines": "396-405",
+      "missing": [],
+      "sourceFile": "COMMAND.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 2045,
+          "needle": "void F0380_COMMAND_ProcessQueue_CPSC("
+        },
+        {
+          "line": 2075,
+          "needle": "G0435_B_CommandQueueLocked = C1_TRUE;"
+        },
+        {
+          "line": 2087,
+          "needle": "G0435_B_CommandQueueLocked = C0_FALSE;"
+        },
+        {
+          "line": 2151,
+          "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+        },
+        {
+          "line": 2155,
+          "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+        }
+      ],
+      "id": "command-queue-mutation-before-redraw",
+      "lines": "2045-2156",
+      "missing": [],
+      "sourceFile": "COMMAND.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 316,
+          "needle": "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE("
+        },
+        {
+          "line": 318,
+          "needle": "P0558_i_SourceMapX"
+        },
+        {
+          "line": 318,
+          "needle": "P0560_i_DestinationMapX"
+        }
+      ],
+      "id": "movesens-fall-redraw-caveat",
+      "lines": "316-356",
+      "missing": [],
+      "sourceFile": "MOVESENS.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 550,
+          "needle": "F0096_DUNGEONVIEW_LoadCurrentMapGraphics_CPSDF();"
+        },
+        {
+          "line": 556,
+          "needle": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, P0560_i_DestinationMapX, P0561_i_DestinationMapY);"
+        },
+        {
+          "line": 556,
+          "needle": "BUG0_28"
+        }
+      ],
+      "id": "movesens-f0128-while-falling-blocker",
+      "lines": "548-558",
+      "missing": [],
+      "sourceFile": "MOVESENS.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 2612,
+          "needle": "#define M597_VIEW_SQUARE_D4C 16"
+        },
+        {
+          "line": 2613,
+          "needle": "#define M598_VIEW_SQUARE_D4L 17"
+        },
+        {
+          "line": 2614,
+          "needle": "#define M599_VIEW_SQUARE_D4R 18"
+        }
+      ],
+      "id": "defs-pc34-d4-square-ids",
+      "lines": "2595-2615",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 3752,
+          "needle": "#define C007_ZONE_VIEWPORT"
+        }
+      ],
+      "id": "defs-viewport-zone-id",
+      "lines": "3748-3756",
+      "missing": [],
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 2389,
+          "needle": "#ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J"
+        },
+        {
+          "line": 2394,
+          "needle": "M708_ZONE_WIDTH(P2130_pi_XYZ)"
+        },
+        {
+          "line": 2402,
+          "needle": "M709_ZONE_HEIGHT(P2130_pi_XYZ)"
+        },
+        {
+          "line": 2409,
+          "needle": "return NULL;"
+        }
+      ],
+      "id": "coord-zone-clip-contract",
+      "lines": "2389-2410",
+      "missing": [],
+      "sourceFile": "COORD.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass611_dm1_v1_d4_far_object_draw_order_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS611_DM1_V1_D4_FAR_OBJECT_DRAW_ORDER_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/home/trv2/work/firestaff-builds/main-land-wall-d4-draw-order-20260521-0945/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/home/trv2/work/firestaff-worktrees/main-land-wall-d4-draw-order-20260521-0945/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass611 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

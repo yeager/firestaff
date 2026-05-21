@@ -2983,6 +2983,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass570_dm1_v1_d2c_front_order_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
+# -- DM1 V1 D4 far-object draw-order source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass611_dm1_v1_d4_far_object_draw_order_source_lock
+        COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py
+    )
+    set_tests_properties(pass611_dm1_v1_d4_far_object_draw_order_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
 # -- DM1 V1 D0/D1 visible-square draw-order source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

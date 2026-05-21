@@ -101,6 +101,17 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
     { DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "DUNVIEW.C:8542" },
 };
 
+/* ReDMCSB DUNVIEW.C F0128 lines 8466-8477 draw D4L, D4R, then D4C by
+ * resolving relative map coordinates and calling F0115 with
+ * F0162_DUNGEON_GetSquareFirstObject(...), M598/M599/M597 and
+ * C0x0001_CELL_ORDER_BACKLEFT.  This happens before the D3 side-wall helpers
+ * at lines 8478-8499, so nearer wall panels occlude any far object pixels. */
+static const DM1_ViewportFarObjectPassSpec s_far_object_pass_specs[] = {
+    { DM1_VIEW_SQUARE_D4L, 4, -1, 0x0001, 17, true, "DUNVIEW.C:8466-8469; DEFS.H:2613 M598_VIEW_SQUARE_D4L" },
+    { DM1_VIEW_SQUARE_D4R, 4,  1, 0x0001, 18, true, "DUNVIEW.C:8470-8473; DEFS.H:2614 M599_VIEW_SQUARE_D4R" },
+    { DM1_VIEW_SQUARE_D4C, 4,  0, 0x0001, 16, true, "DUNVIEW.C:8474-8477; DEFS.H:2612 M597_VIEW_SQUARE_D4C" },
+};
+
 
 /* PC34/I34E wall bitmap selection table, source-locked to the MEDIA709/720
  * draw calls in ReDMCSB DUNVIEW.C.  These entries encode the native draw
@@ -829,6 +840,25 @@ const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index)
     return &s_draw_order[index];
 }
 
+size_t dm1_viewport_3d_far_object_pass_spec_count(void)
+{
+    return sizeof(s_far_object_pass_specs) / sizeof(s_far_object_pass_specs[0]);
+}
+
+const DM1_ViewportFarObjectPassSpec *dm1_viewport_3d_get_far_object_pass_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_far_object_pass_spec_count()) return NULL;
+    return &s_far_object_pass_specs[index];
+}
+
+const DM1_ViewportFarObjectPassSpec *dm1_viewport_3d_get_far_object_pass_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_far_object_pass_spec_count(); ++i) {
+        if (s_far_object_pass_specs[i].square == square) return &s_far_object_pass_specs[i];
+    }
+    return NULL;
+}
+
 int dm1_viewport_3d_resolve_relative_map_xy(int direction,
                                             int rel_depth,
                                             int rel_lateral,
@@ -1196,6 +1226,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:4218-4335 F0111 copies door panel to G0074, applies ornaments/masks, then blits G0074 into viewport\n"
         "  DUNVIEW.C:4547 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n"
         "  DUNVIEW.C:4561-4581 F0115 packed cell-order and object/creature/projectile/explosion z-order\n"
+        "  DUNVIEW.C:8466-8477 F0128 D4 far-object passes: D4L, D4R, D4C use F0162 first-object seed and C0x0001 before D3 walls\n"
         "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
         "  DUNVIEW.C:373,5667-5683 projectile occlusion via G2028 row and C2900 zone mapping; D3 front cells/D0 back cells clipped\n"
         "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"

@@ -380,6 +380,20 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportDrawStep;
 
+/* F0128 D4 far-object pass.  ReDMCSB does not call a square helper at D4;
+ * it resolves three far map cells directly, seeds F0115 from the first object
+ * on that square, and uses the same back-left cell order for each pass before
+ * any D3/D2/D1/D0 wall helper can overdraw it. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int8_t rel_depth;
+    int8_t rel_lateral;
+    uint16_t cell_order;
+    int8_t redmcsb_view_square_id;
+    bool uses_square_first_object;
+    const char *source_lines;
+} DM1_ViewportFarObjectPassSpec;
+
 typedef struct {
     DM1_ViewSquareIndex square;
     int16_t map_x;
@@ -671,6 +685,9 @@ DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_W
 /* Source-locked F0128 visible-square draw order metadata. */
 size_t dm1_viewport_3d_draw_order_count(void);
 const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index);
+size_t dm1_viewport_3d_far_object_pass_spec_count(void);
+const DM1_ViewportFarObjectPassSpec *dm1_viewport_3d_get_far_object_pass_spec(size_t index);
+const DM1_ViewportFarObjectPassSpec *dm1_viewport_3d_get_far_object_pass_spec_for_square(DM1_ViewSquareIndex square);
 int dm1_viewport_3d_resolve_relative_map_xy(int direction,
                                             int rel_depth,
                                             int rel_lateral,

@@ -165,6 +165,55 @@ static void test_redmcsb_f0128_draw_order(void)
     check_int("F0128.draw_order.out_of_range", dm1_viewport_3d_get_draw_order_step(19) == NULL, 1);
 }
 
+static void test_f0128_d4_far_object_pass_order(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int rel_lateral;
+        int redmcsb_id;
+        const char *source_line;
+        const char *defs_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D4L, -1, 17, "8466-8469", "2613" },
+        { DM1_VIEW_SQUARE_D4R,  1, 18, "8470-8473", "2614" },
+        { DM1_VIEW_SQUARE_D4C,  0, 16, "8474-8477", "2612" },
+    };
+
+    check_int("F0128.d4_far_object.count", (int)dm1_viewport_3d_far_object_pass_spec_count(), 3);
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportFarObjectPassSpec *spec =
+            dm1_viewport_3d_get_far_object_pass_spec_for_square(expected[i].square);
+        DM1_ViewportCellOrder order;
+        char id[96];
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.depth", i);
+        check_int(id, spec->rel_depth, 4);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.lateral", i);
+        check_int(id, spec->rel_lateral, expected[i].rel_lateral);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.redmcsb_id", i);
+        check_int(id, spec->redmcsb_view_square_id, expected[i].redmcsb_id);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.first_object", i);
+        check_int(id, spec->uses_square_first_object ? 1 : 0, 1);
+        order = dm1_viewport_3d_decode_cell_order(spec->cell_order);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.cell_order", i);
+        check_int(id, spec->cell_order, 0x0001);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.cell_count", i);
+        check_int(id, order.cell_count, 1);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.cell0", i);
+        check_int(id, order.cells[0], 1);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.source_line", i);
+        check_int(id, strstr(spec->source_lines, expected[i].source_line) != NULL, 1);
+        snprintf(id, sizeof(id), "F0128.d4_far_object.%zu.defs_line", i);
+        check_int(id, strstr(spec->source_lines, expected[i].defs_line) != NULL, 1);
+    }
+    check_int("F0128.d4_far_object.before_d3_wall",
+              dm1_viewport_3d_get_draw_order_step(3)->square == DM1_VIEW_SQUARE_D3L2, 1);
+    check_int("F0128.d4_far_object.out_of_range",
+              dm1_viewport_3d_get_far_object_pass_spec(3) == NULL, 1);
+}
+
 static void test_f0128_draw_order_resolves_relative_map_coordinates(void)
 {
     static const struct {
@@ -1052,6 +1101,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.pc34_d2_side", strstr(e, "F0678/F0679 PC34 D2L2/D2R2") != NULL, 1);
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
     check_int("source_evidence.f0115_cell_order", strstr(e, "packed cell-order") != NULL, 1);
+    check_int("source_evidence.d4_far_object_pass",
+              strstr(e, "DUNVIEW.C:8466-8477") != NULL && strstr(e, "C0x0001 before D3 walls") != NULL, 1);
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
     check_int("source_evidence.projectile_occlusion", strstr(e, "G2028 row and C2900 zone mapping") != NULL, 1);
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
@@ -1100,6 +1151,7 @@ int main(void)
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
+    test_f0128_d4_far_object_pass_order();
     test_f0128_draw_order_resolves_relative_map_coordinates();
     test_pc34_wall_bitmap_selection();
     test_wall_item_occlusion_alcove_exception();
