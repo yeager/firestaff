@@ -5782,6 +5782,8 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
+    state->v1ScrollPanelActive = 0;
+    state->v1ScrollPanelThing = THING_NONE;
     state->v1OpenChestThing = THING_NONE;
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
@@ -15992,7 +15994,13 @@ int M11_GameView_DecodeV1InventoryActionHandScrollText(
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];
     if (!champ->present) return 0;
 
-    thing = m11_get_action_hand_thing(champ);
+    if (state->v1ScrollPanelActive &&
+        state->v1ScrollPanelThing != THING_NONE &&
+        M11_GameView_GetV1LeaderHandThing(state) == state->v1ScrollPanelThing) {
+        thing = state->v1ScrollPanelThing;
+    } else {
+        thing = m11_get_action_hand_thing(champ);
+    }
     if (thing == THING_NONE || thing == THING_ENDOFLIST ||
         THING_GET_TYPE(thing) != THING_TYPE_SCROLL) {
         return 0;
@@ -19039,6 +19047,8 @@ void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
+    state->v1ScrollPanelActive = 0;
+    state->v1ScrollPanelThing = THING_NONE;
 }
 
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state) {
@@ -20196,6 +20206,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE) {
         state->v1ObjectDescriptionPanelActive = 0;
+        state->v1ScrollPanelActive = 0;
+        state->v1ScrollPanelThing = THING_NONE;
         /* Show champion skills and statistics */
         char champName[16];
         m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -20227,6 +20239,26 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         case 10: typeName = "JUNK"; break;
         case 15: typeName = "MISC"; break;
         default: typeName = "OBJECT"; break;
+        }
+
+        if (INVENTORY_Compat_ObjectEyePanelRoute((unsigned int)itemType, NULL) ==
+            INVENTORY_OBJECT_EYE_PANEL_ROUTE_SCROLL_TEXT_PC34_COMPAT) {
+            /* ReDMCSB PANEL.C F0352 -> F0342 keeps scrolls on the inventory
+             * panel route: F0342 clears object-description state and dispatches
+             * C07 things directly to F0341 open-scroll rendering. */
+            state->v1ObjectDescriptionPanelActive = 0;
+            state->v1ObjectDescriptionThing = THING_NONE;
+            state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ScrollPanelActive = 1;
+            state->v1ScrollPanelThing = thing;
+            state->v1ObjectDescriptionName[0] = '\0';
+            state->v1ObjectDescriptionBody[0] = '\0';
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "%s: %s", typeName, itemName);
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "SCROLL TEXT PANEL  ICON %d", itemIcon);
+            m11_set_status(state, "INSPECT", itemName);
+            return 1;
         }
 
         if (itemType == THING_TYPE_POTION &&
@@ -20340,6 +20372,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             state->v1ObjectDescriptionPanelActive = 1;
             state->v1ObjectDescriptionThing = thing;
             state->v1ObjectDescriptionIconIndex = itemIcon;
+            state->v1ScrollPanelActive = 0;
+            state->v1ScrollPanelThing = THING_NONE;
             snprintf(state->v1ObjectDescriptionName,
                      sizeof(state->v1ObjectDescriptionName), "%s", itemName);
             snprintf(state->v1ObjectDescriptionBody,
@@ -20348,6 +20382,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ScrollPanelActive = 0;
+            state->v1ScrollPanelThing = THING_NONE;
         }
 
         M11_GameView_ShowDialogOverlay(state, state->inspectTitle);
@@ -25110,7 +25146,9 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->v1ObjectDescriptionPanelActive = 0;
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
-    state->v1ObjectDescriptionName[0] = 0;
+    state->v1ObjectDescriptionName[0] = '\0';
+    state->v1ScrollPanelActive = 0;
+    state->v1ScrollPanelThing = THING_NONE;
     return 1;
 }
 

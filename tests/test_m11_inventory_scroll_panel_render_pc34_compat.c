@@ -133,12 +133,50 @@ static void test_inventory_draw_overlays_scroll_panel_region(void) {
                 "scroll panel render path reaches C101 lower interior");
 }
 
+static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonTextString_Compat textStrings[1];
+    struct DungeonScroll_Compat scrolls[1];
+    unsigned short textData[3];
+    unsigned char framebuffer[320 * 200];
+    int vx = 0, vy = 0, vw = 0, vh = 0;
+    int zx = 0, zy = 0, zw = 0, zh = 0;
+
+    M11_GameView_Init(&state);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state,
+              (unsigned short)(THING_TYPE_SCROLL << 10)), 1,
+              "leader hand accepts source scroll thing");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye click with leader-hand scroll redraws the inventory panel");
+    ASSERT_EQ(M11_GameView_IsDialogOverlayActive(&state), 0,
+              "scroll eye route does not open Firestaff dialog overlay");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "scroll eye route does not mark object-description panel active");
+    ASSERT_TRUE(strstr(state.inspectDetail, "SCROLL TEXT PANEL") != NULL,
+                "scroll eye route records source scroll-panel detail");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh),
+                "viewport rect helper remains available after scroll eye click");
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
+                "C101 panel zone remains available after scroll eye click");
+    ASSERT_TRUE(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)] != 0,
+                "scroll eye click leaves C023 scroll panel renderable");
+}
+
 int main(void) {
     printf("=== M11 Inventory Scroll Panel Render Source-Lock Gate ===\n");
     printf("ReDMCSB: PANEL.C F0347 -> F0342 -> F0341, DUNGEON.C F0168\n\n");
 
     test_action_hand_scroll_decode_reaches_m11_panel_state();
     test_inventory_draw_overlays_scroll_panel_region();
+    test_eye_click_scroll_routes_without_dialog_overlay();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
