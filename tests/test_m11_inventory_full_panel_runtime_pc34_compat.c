@@ -193,6 +193,66 @@ static void test_extended_backpack_runtime_clicks(void) {
               "C536 placement clears leader hand");
 }
 
+
+static void test_all_backpack_source_slots_round_trip_runtime(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[17];
+    int ordinal;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    things.weapons = weapons;
+    things.weaponCount = 17;
+
+    for (ordinal = 0; ordinal < 17; ++ordinal) {
+        const int sourceSlotBox = 21 + ordinal;
+        const int sourceZone = 520 + ordinal;
+        const int sourceCommand = 41 + ordinal;
+        const int championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
+            sourceSlotBox);
+        const unsigned short thing = (unsigned short)((THING_TYPE_WEAPON << 10) | ordinal);
+        int sx = 0, sy = 0, sw = 0, sh = 0;
+        int space = 0, zone = 0;
+
+        weapons[ordinal].type = 8; /* Dagger-like weapon: source mask allows backpack slots. */
+        weapons[ordinal].next = THING_ENDOFLIST;
+
+        ASSERT_TRUE(championSlot >= CHAMPION_SLOT_BACKPACK_1 &&
+                    championSlot < CHAMPION_SLOT_COUNT,
+                    "C520..C536 source slot maps into champion backpack storage");
+        ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(sourceSlotBox,
+                                                                &sx, &sy, &sw, &sh),
+                    "C520..C536 inventory source zone exists");
+        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+                                                         sx + sw / 2,
+                                                         33 + sy + sh / 2,
+                                                         M11_DM1_MOUSE_MASK_LEFT,
+                                                         &space,
+                                                         &zone),
+                  sourceCommand,
+                  "C520..C536 resolves to source inventory command C041..C057");
+        ASSERT_EQ(zone, sourceZone,
+                  "C520..C536 route returns the matching source zone id");
+
+        state.world.party.champions[0].inventory[championSlot] = thing;
+        ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+                  M11_GAME_INPUT_REDRAW,
+                  "C520..C536 runtime click picks up the stored backpack object");
+        ASSERT_EQ(state.world.party.champions[0].inventory[championSlot], THING_NONE,
+                  "C520..C536 pickup clears the exact backpack storage slot");
+        ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), thing,
+                  "C520..C536 pickup moves the object to the source leader hand");
+        ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+                  M11_GAME_INPUT_REDRAW,
+                  "C520..C536 runtime click places leader-hand object back into backpack");
+        ASSERT_EQ(state.world.party.champions[0].inventory[championSlot], thing,
+                  "C520..C536 placement restores the exact backpack storage slot");
+        ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+                  "C520..C536 placement clears the source leader hand");
+    }
+}
+
 static void test_open_chest_runtime_routes_and_clicks(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -772,6 +832,7 @@ int main(void) {
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
+    test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_middle_pickup_compacts_visible_list();
