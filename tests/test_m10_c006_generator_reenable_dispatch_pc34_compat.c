@@ -572,6 +572,148 @@ static int test_c006_no_unused_group_slot_does_not_append(void) {
     return ok ? 0 : 1;
 }
 
+
+static unsigned short test_make_thing_ref(int type, int index, int cell) {
+    return (unsigned short)(((cell & 3) << 14) | ((type & 15) << 10) | (index & 0x03FF));
+}
+
+static int test_add_projectile_on_square(
+    struct GameWorld_Compat* world,
+    int squareFirstThingIndex,
+    unsigned short nextThing)
+{
+    if (!world || !world->things || squareFirstThingIndex < 0 ||
+        squareFirstThingIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    world->things->projectiles = (struct DungeonProjectile_Compat*)calloc(1, sizeof(*world->things->projectiles));
+    if (!world->things->projectiles) return 0;
+    world->things->projectileCount = 1;
+    world->things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+    world->things->projectiles[0].next = nextThing;
+    world->things->projectiles[0].slot = THING_ENDOFLIST;
+    world->things->projectiles[0].eventIndex = 77;
+    world->things->squareFirstThings[squareFirstThingIndex] =
+        test_make_thing_ref(THING_TYPE_PROJECTILE, 0, 0);
+    return 1;
+}
+
+static int test_schedule_future_projectile_move(struct GameWorld_Compat* world) {
+    struct TimelineEvent_Compat event;
+    if (!world) return 0;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event.fireAtTick = world->gameTick + 100u;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.cell = 0;
+    event.aux0 = 0;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event) == 1;
+}
+
+static int test_timeline_keeps_future_projectile_move(const struct GameWorld_Compat* world) {
+    int i;
+    if (!world) return 0;
+    for (i = 0; i < world->timeline.count; ++i) {
+        if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+            world->timeline.events[i].aux0 == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int test_c006_generated_group_preserves_projectile_without_impact(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world generated projectile preserve\n");
+        return 1;
+    }
+
+    ok &= expect(test_add_projectile_on_square(
+                     &world, 0, (unsigned short)((THING_TYPE_SENSOR << 10) | 0)),
+                 "place projectile before C006 generator sensor chain");
+    ok &= expect(test_schedule_future_projectile_move(&world),
+                 "schedule future projectile move before C006 generation");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world),
+                 "prime generator sensor behind projectile");
+    ok &= expect(schedule_generator_trigger(&world),
+                 "schedule generator on projectile square");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator projectile-preserve tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "C006 generated group links ahead of projectile square chain");
+    ok &= expect(world.things->groups[0].next == test_make_thing_ref(THING_TYPE_PROJECTILE, 0, 0),
+                 "C006 generated group preserves projectile as next thing");
+    ok &= expect(world.things->projectiles[0].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0) &&
+                 world.things->projectiles[0].eventIndex == 77,
+                 "C006 generated insertion does not remove projectile thing/event index");
+    ok &= expect(test_timeline_keeps_future_projectile_move(&world),
+                 "C006 generated insertion leaves projectile move event queued");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_event60_deferred_group_preserves_projectile_without_impact(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world event60 projectile preserve\n");
+        return 1;
+    }
+
+    ok &= expect(test_add_projectile_on_square(&world, 1, THING_ENDOFLIST),
+                 "place projectile on event60 target square");
+    ok &= expect(test_schedule_future_projectile_move(&world),
+                 "schedule future projectile move before event60 insertion");
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.things->groups[0].health[0] = 180;
+    world.things->groups[0].count = 0;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 2;
+    event.mapY = 1;
+    event.aux0 = 0;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule event60 insertion onto projectile square");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance event60 projectile-preserve tick");
+    ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "event60 group links ahead of projectile target chain");
+    ok &= expect(world.things->groups[0].next == test_make_thing_ref(THING_TYPE_PROJECTILE, 0, 0),
+                 "event60 group preserves projectile as next thing");
+    ok &= expect(world.things->projectiles[0].next == THING_ENDOFLIST &&
+                 world.things->projectiles[0].eventIndex == 77,
+                 "event60 insertion does not remove projectile thing/event index");
+    ok &= expect(test_timeline_keeps_future_projectile_move(&world),
+                 "event60 insertion leaves projectile move event queued");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+
 int main(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -759,6 +901,8 @@ int main(void) {
     if (test_event60_group_pit_fall_death_drops_carried_slot() != 0) return 1;
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
+    if (test_c006_generated_group_preserves_projectile_without_impact() != 0) return 1;
+    if (test_event60_deferred_group_preserves_projectile_without_impact() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;
 }

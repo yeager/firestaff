@@ -1172,8 +1172,11 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      *   switch to TargetMapIndex/TargetMapX/TargetMapY.
      * - lines 520-524 request M560 at the target for audible group teleporters.
      * This helper intentionally owns only the C006/F0185 and event60/61
-     * group-teleporter destination subcase; projectile impact,
-     * group rotation, and creature-allowed-on-map deletion remain outside it. */
+     * group-teleporter destination subcase. GROUP.C:F0185:543 and
+     * TIMELINE.C:F0252:1534 pass CM1_MAPX_NOT_ON_A_SQUARE, so the
+     * MOVESENS.C:F0267:432-435 projectile-impact precheck is not entered
+     * for generated/deferred insertion; group rotation and
+     * creature-allowed-on-map deletion remain outside it. */
     for (remaining = 100; remaining > 0; --remaining) {
         const struct DungeonMapDesc_Compat* map;
         unsigned char squareByte;
@@ -1768,9 +1771,11 @@ static int orch_handle_deferred_group_move_event_compat(
      * only when the destination is clear.  If C23 Lord Chaos is blocked,
      * lines 1536-1555 give one 1/4-chance random adjacent insertion
      * attempt before the lines 1565-1567 retry at +5 ticks.  When clear,
-     * line 1534 re-enters MOVESENS.C:F0267 with a non-square source; the
-     * teleporter destination helper above covers the narrow C006 group
-     * teleporter/cross-map subcase before the final insertion. */
+     * line 1534 re-enters MOVESENS.C:F0267 with a non-square source, which
+     * also skips MOVESENS.C:F0266 projectile impact/removal via the
+     * SourceMapX >= 0 guard at F0267:432-435.  The teleporter destination
+     * helper above covers the narrow C006 group teleporter/cross-map subcase
+     * before the final insertion. */
     (void)orch_resolve_group_f0267_teleporter_destination_compat(
         world, &retry.mapIndex, &targetMapX, &targetMapY,
         &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
