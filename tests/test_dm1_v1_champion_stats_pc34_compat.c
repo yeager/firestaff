@@ -30,7 +30,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_champion_stats_pc34_compat\n");
-    printf("sourceEvidence=CHAMPION.C:1078-1104,1157-1215,2025-2048; CHAMDRAW.C:958-1006; MOVESENS.C:590-598; DUNGEON.C:1082-1134\n");
+    printf("sourceEvidence=PANEL.C:2081-2105; CHAMPION.C:1078-1104,1157-1215,2025-2048; CHAMDRAW.C:958-1006; MOVESENS.C:590-598; DUNGEON.C:1082-1134\n");
 
     ok &= expect_int("F0306 above half keeps value",
         dm1_stats_stamina_adjusted_value_pc34(60, 100, 500), 500);
@@ -59,6 +59,27 @@ int main(void)
     champion.feetIconIndex = DM1_ICON_ARMOUR_ELVEN_BOOTS;
     ok &= expect_int("F0309 elven boots add one sixteenth before rounding",
         m11_stats_maximum_load_pc34(&champion), 540);
+
+    ok &= expect_int("PANEL F0351 statistic below maximum is red",
+        m11_stats_statistic_color_pc34(49, 50), DM1_STAT_COLOR_RED);
+    ok &= expect_int("PANEL F0351 statistic equal to maximum is lightest gray",
+        m11_stats_statistic_color_pc34(50, 50), DM1_STAT_COLOR_LIGHTEST_GRAY);
+    ok &= expect_int("PANEL F0351 statistic above maximum is light green",
+        m11_stats_statistic_color_pc34(51, 50), DM1_STAT_COLOR_LIGHT_GREEN);
+
+    champion = make_champion();
+    champion.stats[DM1_STAT_STRENGTH] = 42;
+    champion.maxStats[DM1_STAT_STRENGTH] = 50;
+    ok &= expect_int("PANEL F0351 champion statistic reads current/max rows",
+        m11_stats_champion_statistic_color_pc34(&champion, DM1_STAT_STRENGTH),
+        DM1_STAT_COLOR_RED);
+    champion.stats[DM1_STAT_STRENGTH] = 60;
+    ok &= expect_int("PANEL F0351 champion statistic buff above max is light green",
+        m11_stats_champion_statistic_color_pc34(&champion, DM1_STAT_STRENGTH),
+        DM1_STAT_COLOR_LIGHT_GREEN);
+    ok &= expect_int("PANEL F0351 invalid statistic defaults to lightest gray",
+        m11_stats_champion_statistic_color_pc34(&champion, DM1_STAT_COUNT),
+        DM1_STAT_COLOR_LIGHTEST_GRAY);
 
     champion = make_champion();
     champion.load = 200;

@@ -200,6 +200,27 @@ int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
     return value;
 }
 
+int m11_stats_statistic_color_pc34(int currentValue, int maximumValue) {
+    /* ReDMCSB PANEL.C:2081-2096 / F0351 compares the drawn current
+       statistic against its maximum row: below max red, above max light
+       green, equal lightest gray. */
+    if (currentValue < maximumValue) {
+        return DM1_STAT_COLOR_RED;
+    }
+    if (currentValue > maximumValue) {
+        return DM1_STAT_COLOR_LIGHT_GREEN;
+    }
+    return DM1_STAT_COLOR_LIGHTEST_GRAY;
+}
+
+int m11_stats_champion_statistic_color_pc34(const M11_ChampionStats* champion, int stat) {
+    if (!champion) return DM1_STAT_COLOR_LIGHTEST_GRAY;
+    if (stat < 0 || stat >= DM1_STAT_COUNT) return DM1_STAT_COLOR_LIGHTEST_GRAY;
+
+    return m11_stats_statistic_color_pc34(champion->stats[stat],
+                                          champion->maxStats[stat]);
+}
+
 int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion) {
     int maximumLoad;
 

@@ -46,6 +46,12 @@ enum {
     DM1_LOAD_COLOR_LIGHTEST_GRAY = 13
 };
 
+enum {
+    DM1_STAT_COLOR_LIGHT_GREEN = 7,
+    DM1_STAT_COLOR_RED = 8,
+    DM1_STAT_COLOR_LIGHTEST_GRAY = 13
+};
+
 typedef struct {
     char name[16];
     int stats[DM1_STAT_COUNT];
@@ -86,6 +92,8 @@ const char* m11_skill_name(int skill);
 int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
                                           int maximumStamina,
                                           int value);
+int m11_stats_statistic_color_pc34(int currentValue, int maximumValue);
+int m11_stats_champion_statistic_color_pc34(const M11_ChampionStats* champion, int stat);
 int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion);
 int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion);
 int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion);
