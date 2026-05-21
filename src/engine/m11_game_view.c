@@ -23524,7 +23524,9 @@ static int m11_draw_v1_inventory_object_description_panel(
         const M11_AssetSlot* circle = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)M11_GameView_GetV1ObjectDescriptionCircleGraphicId());
-        if (circle && (int)circle->width == circleW && (int)circle->height == circleH) {
+        if (circle && circle->pixels && circle->width > 0 && circle->height > 0 &&
+            (int)circle->width <= circleW &&
+            (int)circle->height <= circleH) {
             M11_AssetLoader_Blit(circle, framebuffer, framebufferWidth, framebufferHeight,
                                  M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
                                  M11_COLOR_DARK_GRAY);

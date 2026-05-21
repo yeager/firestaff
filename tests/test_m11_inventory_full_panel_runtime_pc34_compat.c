@@ -20,6 +20,8 @@
  *     champion base skills plus all six current/max statistic families
  *   PANEL.C F0342 lines 1132-1133 and 1472: container eye dispatches to
  *     F0333 then redraws arrow/eye chrome
+ *   PANEL.C F0342 lines 1140-1145: object-description panel blits C020
+ *     into C101 and C029 into C504 before icon/text overdraw
  *   CHEST.C F0333 lines 43-48 and 64-65: opened container state blits
  *     C025 open-chest panel, then C537..C544 slot boxes and object icons
  */
@@ -66,6 +68,115 @@ static const char* graphics_dat_path(void) {
     const char* env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
     if (env && env[0] != '\0') return env;
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+}
+
+static int point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
+    return x >= rx && x < rx + rw && y >= ry && y < ry + rh;
+}
+
+static int point_is_in_object_description_panel_overdraw(int panelX,
+                                                        int panelY,
+                                                        int x,
+                                                        int y) {
+    int circleX = 0, circleY = 0, circleW = 0, circleH = 0;
+    int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
+
+    if (M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
+                                                       &circleW, &circleH) &&
+        point_in_rect(x, y, circleX - panelX, circleY - panelY, circleW, circleH)) {
+        return 1;
+    }
+    if (M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH) &&
+        point_in_rect(x, y, iconX - panelX, iconY - panelY, iconW, iconH)) {
+        return 1;
+    }
+    /* F0339 draws C019/C018 into C503 after the panel contents. */
+    if (point_in_rect(x, y, 11, 10, 16, 16)) return 1;
+    /* Text is rendered after the source panel and circle blits. */
+    if (point_in_rect(x, y, 48, 4, 92, 24)) return 1;
+    if (point_in_rect(x, y, 24, 30, 116, 43)) return 1;
+    return 0;
+}
+
+static int framebuffer_matches_object_description_source_pixels(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer) {
+    const M11_AssetSlot* panel;
+    const M11_AssetSlot* circle;
+    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int circleX = 0, circleY = 0, circleW = 0, circleH = 0;
+    int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
+    int panelMatched = 0;
+    int circleMatched = 0;
+    int circleAssetW = 0;
+    int circleAssetH = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH) ||
+        !M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
+                                                       &circleW, &circleH) ||
+        !M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH)) {
+        return 0;
+    }
+    (void)viewportW;
+    (void)viewportH;
+
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
+    circle = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                  (unsigned int)M11_GameView_GetV1ObjectDescriptionCircleGraphicId());
+    if (!panel || !panel->pixels || !circle || !circle->pixels ||
+        panel->width != (unsigned short)panelW || panel->height != (unsigned short)panelH) {
+        return 0;
+    }
+    circleAssetW = (int)circle->width;
+    circleAssetH = (int)circle->height;
+    if (circleAssetW <= 0 || circleAssetH <= 0 ||
+        circleAssetW > circleW || circleAssetH > circleH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            unsigned char want = panel->pixels[y * (int)panel->width + x];
+            unsigned char got;
+            if (want == 8 || point_is_in_object_description_panel_overdraw(panelX, panelY, x, y)) {
+                continue;
+            }
+            got = framebuffer[(viewportY + panelY + y) * 320 + (viewportX + panelX + x)];
+            if (got != want) {
+                fprintf(stderr, "panel mismatch local=%d,%d screen=%d,%d want=%u got=%u matched=%d\n",
+                        x, y, viewportX + panelX + x, viewportY + panelY + y,
+                        (unsigned)want, (unsigned)got, panelMatched);
+                return 0;
+            }
+            panelMatched++;
+        }
+    }
+
+    for (y = 0; y < circleAssetH; ++y) {
+        for (x = 0; x < circleAssetW; ++x) {
+            unsigned char want = circle->pixels[y * (int)circle->width + x];
+            unsigned char got;
+            if (want == 12 || point_in_rect(circleX + x, circleY + y,
+                                            iconX, iconY, iconW, iconH)) {
+                continue;
+            }
+            got = framebuffer[(viewportY + circleY + y) * 320 + (viewportX + circleX + x)];
+            if (got != want) {
+                fprintf(stderr, "circle mismatch local=%d,%d screen=%d,%d want=%u got=%u matched=%d\n",
+                        x, y, viewportX + circleX + x, viewportY + circleY + y,
+                        (unsigned)want, (unsigned)got, circleMatched);
+                return 0;
+            }
+            circleMatched++;
+        }
+    }
+
+    return panelMatched > 1000 && circleMatched > 50;
 }
 
 static int point_is_in_chest_slot_frame(int panelX, int panelY, int x, int y) {
@@ -637,6 +748,40 @@ static void test_eye_panel_weapon_attribute_flags(void) {
                 "weapon eye panel reports source charge count");
 }
 
+static void test_leader_hand_weapon_eye_blits_source_object_description_pixels(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned char framebuffer[320 * 200];
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+    seed_inventory_view(&state, &things, &weapon);
+    weapon.type = 8;
+    weapon.next = THING_ENDOFLIST;
+
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for source object-description blits");
+    state.assetsAvailable = 1;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, daggerThing), 1,
+              "leader hand accepts source weapon thing for object-description pixel gate");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "inventory eye click routes weapon to object-description panel");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 1,
+              "weapon eye route marks object-description panel active");
+    ASSERT_EQ(state.v1ScrollPanelActive, 0,
+              "weapon eye route does not use the scroll panel route");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "weapon eye route does not use the chest panel route");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(framebuffer_matches_object_description_source_pixels(&state, framebuffer),
+                "leader-hand weapon eye render blits source C020 panel and C029 circle into C101/C504");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
 static void test_eye_panel_potion_power_prefix_runtime(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -884,6 +1029,7 @@ int main(void) {
     test_eye_panel_potion_power_prefix_runtime();
     test_object_description_layout_source_zones();
     test_eye_panel_weapon_attribute_flags();
+    test_leader_hand_weapon_eye_blits_source_object_description_pixels();
     test_champion_statistic_maximum_row_runtime_state();
     test_eye_panel_champion_stats_and_skills();
 
