@@ -73,6 +73,12 @@ int main(void)
         failures++;
     }
 
+    if (DM1_COLOR_LIGHT_GREEN != 7 || DM1_COLOR_RED != 8 ||
+        DM1_COLOR_LIGHTEST_GRAY != 13) {
+        fprintf(stderr, "FAIL: statistic color constants\n");
+        failures++;
+    }
+
     /* All four champions' bar graph positions should be at y=2 */
     {
         int ci;
@@ -136,6 +142,43 @@ int main(void)
                 DM1_STATUS_VALUE_MANA, 77, 100, 666, 999, 12, 33,
                 value, sizeof(value)) || strcmp(value, " 12/ 33") != 0) {
             fprintf(stderr, "FAIL: F0290 mana value format got %s\n", value);
+            failures++;
+        }
+    }
+
+    /*
+     * PANEL.C:F0351 source lock:
+     * - 2081-2091: compare current statistic row against maximum row;
+     *   below max red, above max light green, equal lightest gray.
+     * - 2093-2105: current value and /maximum suffix are printed
+     *   separately; only the current value uses the computed color.
+     */
+    if (DM1_ChampionPanel_StatisticCurrentColor(49, 50) != DM1_COLOR_RED) {
+        fprintf(stderr, "FAIL: F0351 stat below max current color\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_StatisticCurrentColor(50, 50) != DM1_COLOR_LIGHTEST_GRAY) {
+        fprintf(stderr, "FAIL: F0351 stat equal max current color\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_StatisticCurrentColor(51, 50) != DM1_COLOR_LIGHT_GREEN) {
+        fprintf(stderr, "FAIL: F0351 stat above max current color\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_StatisticMaximumColor() != DM1_COLOR_LIGHTEST_GRAY) {
+        fprintf(stderr, "FAIL: F0351 max suffix color\n");
+        failures++;
+    }
+    {
+        char currentValue[4];
+        char maximumValue[5];
+        if (!DM1_ChampionPanel_FormatStatisticValue(49, 50,
+                currentValue, sizeof(currentValue),
+                maximumValue, sizeof(maximumValue)) ||
+            strcmp(currentValue, " 49") != 0 ||
+            strcmp(maximumValue, "/ 50") != 0) {
+            fprintf(stderr, "FAIL: F0351 stat value format got %s %s\n",
+                    currentValue, maximumValue);
             failures++;
         }
     }

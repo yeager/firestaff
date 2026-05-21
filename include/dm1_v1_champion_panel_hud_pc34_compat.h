@@ -60,6 +60,7 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 /* ── VGA palette indices — DEFS.H ── */
 #define DM1_COLOR_BLACK         0
 #define DM1_COLOR_DARK_GRAY     1
+#define DM1_COLOR_LIGHT_GREEN   7
 #define DM1_COLOR_RED           8
 #define DM1_COLOR_GOLD          9
 #define DM1_COLOR_YELLOW        11
@@ -165,6 +166,13 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
                                         int currentMana, int maximumMana,
                                         char *out, size_t outSize);
 int DM1_ChampionPanel_StatusValueZone(int valueIndex);
+
+/* Inventory statistic current/max row color and value format - PANEL.C F0351 */
+int DM1_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue);
+int DM1_ChampionPanel_StatisticMaximumColor(void);
+int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
+                                           char *currentOut, size_t currentOutSize,
+                                           char *maximumOut, size_t maximumOutSize);
 
 /* Inventory load label/value color and value format - CHAMDRAW.C F0292 */
 int DM1_ChampionPanel_LoadColor(int load, int maximumLoad);

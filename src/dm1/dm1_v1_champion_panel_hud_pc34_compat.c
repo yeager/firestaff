@@ -8,6 +8,7 @@
 
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include <stdio.h>
+#include <string.h>
 
 /* ══════════════════════════════════════════════════════════════════════
  * Champion color table — G0046_auc_Graphic562_ChampionColor[4]
@@ -176,6 +177,50 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
 
     written = snprintf(out, outSize, "%3d/%3d", current, maximum);
     return written >= 0 && (size_t)written < outSize;
+}
+
+/* =====================================================================
+ * Inventory statistic current/max row - PANEL.C F0351.
+ *
+ * Source evidence:
+ *   PANEL.C:2081-2091 reads Statistics[stat][C1_CURRENT] and
+ *   Statistics[stat][C0_MAXIMUM], then colors only the current value:
+ *   below maximum C08 red, above maximum C07 light green, equal C13
+ *   lightest gray. PANEL.C:2098-2105 prints the "/nnn" maximum suffix
+ *   separately in C13 lightest gray.
+ * ===================================================================== */
+int DM1_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue)
+{
+    if (currentValue < maximumValue) {
+        return DM1_COLOR_RED;
+    }
+    if (currentValue > maximumValue) {
+        return DM1_COLOR_LIGHT_GREEN;
+    }
+    return DM1_COLOR_LIGHTEST_GRAY;
+}
+
+int DM1_ChampionPanel_StatisticMaximumColor(void)
+{
+    return DM1_COLOR_LIGHTEST_GRAY;
+}
+
+int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
+                                           char *currentOut, size_t currentOutSize,
+                                           char *maximumOut, size_t maximumOutSize)
+{
+    int currentWritten;
+    int maximumWritten;
+
+    if (!currentOut || !maximumOut || currentOutSize == 0 || maximumOutSize == 0) {
+        return 0;
+    }
+
+    currentWritten = snprintf(currentOut, currentOutSize, "%3d", currentValue);
+    maximumWritten = snprintf(maximumOut, maximumOutSize, "/%3d", maximumValue);
+    return currentWritten >= 0 && maximumWritten >= 0 &&
+           (size_t)currentWritten < currentOutSize &&
+           (size_t)maximumWritten < maximumOutSize;
 }
 
 /* =====================================================================
@@ -425,6 +470,21 @@ int DM1_ChampionPanel_SelfTest(void)
         else if (sx != 62 || sy != 10) { failures++; fprintf(stderr, "FAIL: inv slot 10 (Head) XY (%d,%d)\n", sx, sy); }
         if (DM1_ChampionPanel_InventorySlotXY(7, &sx, &sy)) { failures++; fprintf(stderr, "FAIL: inv slot 7 should fail\n"); }
         if (DM1_ChampionPanel_InventorySlotXY(38, &sx, &sy)) { failures++; fprintf(stderr, "FAIL: inv slot 38 out of range\n"); }
+    }
+
+    /* PANEL.C F0351 statistic current/max row color and formatting */
+    if (DM1_ChampionPanel_StatisticCurrentColor(49, 50) != DM1_COLOR_RED) { failures++; fprintf(stderr, "FAIL: statistic 49/50 color\n"); }
+    if (DM1_ChampionPanel_StatisticCurrentColor(50, 50) != DM1_COLOR_LIGHTEST_GRAY) { failures++; fprintf(stderr, "FAIL: statistic 50/50 color\n"); }
+    if (DM1_ChampionPanel_StatisticCurrentColor(51, 50) != DM1_COLOR_LIGHT_GREEN) { failures++; fprintf(stderr, "FAIL: statistic 51/50 color\n"); }
+    if (DM1_ChampionPanel_StatisticMaximumColor() != DM1_COLOR_LIGHTEST_GRAY) { failures++; fprintf(stderr, "FAIL: statistic max suffix color\n"); }
+    {
+        char currentValue[4];
+        char maximumValue[5];
+        if (!DM1_ChampionPanel_FormatStatisticValue(49, 50, currentValue, sizeof(currentValue), maximumValue, sizeof(maximumValue)) ||
+            strcmp(currentValue, " 49") != 0 || strcmp(maximumValue, "/ 50") != 0) {
+            failures++;
+            fprintf(stderr, "FAIL: statistic row format got %s %s\n", currentValue, maximumValue);
+        }
     }
 
     /* Name color */
