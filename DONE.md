@@ -239,6 +239,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Entrance/menu click zones and runtime touch dispatch are source-locked from ReDMCSB
 - ✅ DM1 V1 dungeon viewport/main UI touch-route evidence and CTest gate source-locked (7a16e741)
 - ✅ Touch input zones for movement/turning are source-locked to existing DM1 V1 mouse command routes and queue dispatch (c4e64fcc)
+- ✅ DM1 V1 champion status ready/action hand touch zones are source-locked to the original status-box hand-slot route matrix and CTest coverage (e1546462)
 - ✅ Touch item interaction routes are source-locked as mouse-command queue producers for status hand, inventory action hand, backpack, chest panel, scaled viewport, dungeon-viewport guard, and locked-queue pending clicks (a29fe25e)
 
 ### Platform
