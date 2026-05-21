@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "champion_status_slotbox_pc34_compat.h"
 
 int main(void) {
@@ -22,6 +23,8 @@ int main(void) {
     printf("statusRedrawPlanEvidence=%s\n", CHAMPION_Compat_GetStatusRedrawPlanEvidence());
 
     if (CHAMPION_Compat_GetStatusSlotBoxCount() != 8u) ok = 0;
+    if (strstr(CHAMPION_Compat_GetStatusSlotBoxEvidence(), "COMMAND.C:489-496") == NULL) ok = 0;
+    if (strstr(CHAMPION_Compat_GetStatusSlotBoxEvidence(), "COMMAND.C:1437-1440") == NULL) ok = 0;
     for (i = 0; i < 8; i++) {
         if (!CHAMPION_Compat_GetStatusSlotBox(i, &b)) { ok = 0; continue; }
         printf("statusSlotBox[%u]=champion:%u handSlot:%u command:%u zone:%u box:%u..%u,%u..%u evidence:%s\n",
@@ -31,7 +34,10 @@ int main(void) {
             b.commandId != 20u + i || b.zoneIndex != 211u + i ||
             b.left != (i / 2u) * 69u + ((i % 2u) ? 24u : 4u) ||
             b.right != b.left + 15u || b.top != 10u || b.bottom != 25u) ok = 0;
+        if (strstr(b.evidence, "COMMAND.C:489-496") == NULL) ok = 0;
+        if (strstr(b.evidence, "CLIKCHAM.C:27-32") == NULL) ok = 0;
     }
+    if (CHAMPION_Compat_GetStatusSlotBox(8u, &b)) ok = 0;
 
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;
     for (i = 0; i < 4; i++) {
