@@ -99,38 +99,38 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 ## Firestaff Evidence
 
-- PASS firestaff_side_wall_metadata_has_returning_side_lanes_only (dm1_v1_viewport_3d_pc34_compat.c:327-336)
+- PASS firestaff_side_wall_metadata_has_returning_side_lanes_only (dm1_v1_viewport_3d_pc34_compat.c:335-350)
   - Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.
-  - line 327: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 327: DM1_PC34_ZONE_WALL_D2L2
-  - line 327: DUNVIEW.C:6848-6862 wall case returns
-  - line 328: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 328: DM1_PC34_ZONE_WALL_D2R2
-  - line 328: DUNVIEW.C:6882-6893 wall case returns
-  - line 332: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 332: DM1_PC34_ZONE_WALL_D1L
-  - line 332: DUNVIEW.C:7459-7460 side ornament then return
-  - line 333: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 333: DM1_PC34_ZONE_WALL_D1R
-  - line 333: DUNVIEW.C:7627-7628 side ornament then return
-  - line 335: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - line 335: DM1_PC34_ZONE_WALL_D0L
-  - line 335: DUNVIEW.C:8036-8038 wall case returns
-  - line 336: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - line 336: DM1_PC34_ZONE_WALL_D0R
-  - line 336: DUNVIEW.C:8142-8144 wall case returns
+  - line 341: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 341: DM1_PC34_ZONE_WALL_D2L2
+  - line 341: DUNVIEW.C:6848-6862 wall case returns
+  - line 342: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 342: DM1_PC34_ZONE_WALL_D2R2
+  - line 342: DUNVIEW.C:6882-6893 wall case returns
+  - line 346: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 346: DM1_PC34_ZONE_WALL_D1L
+  - line 346: DUNVIEW.C:7459-7460 side ornament then return
+  - line 347: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 347: DM1_PC34_ZONE_WALL_D1R
+  - line 347: DUNVIEW.C:7627-7628 side ornament then return
+  - line 349: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - line 349: DM1_PC34_ZONE_WALL_D0L
+  - line 349: DUNVIEW.C:8036-8038 wall case returns
+  - line 350: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - line 350: DM1_PC34_ZONE_WALL_D0R
+  - line 350: DUNVIEW.C:8142-8144 wall case returns
 
-- PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:765-804)
+- PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:779-818)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 765: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 777: int src_x = frame->blit_x;
-  - line 778: int src_y = frame->blit_y;
-  - line 785: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 792: if (src_x + width > source_width) width = source_width - src_x;
-  - line 795: if (width <= 0 || height <= 0) return gate;
-  - line 797: gate.visible = true;
-  - line 798: gate.src_x = (int16_t)src_x;
-  - line 799: gate.src_y = (int16_t)src_y;
+  - line 779: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - line 791: int src_x = frame->blit_x;
+  - line 792: int src_y = frame->blit_y;
+  - line 799: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - line 806: if (src_x + width > source_width) width = source_width - src_x;
+  - line 809: if (width <= 0 || height <= 0) return gate;
+  - line 811: gate.visible = true;
+  - line 812: gate.src_x = (int16_t)src_x;
+  - line 813: gate.src_y = (int16_t)src_y;
 
 - PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:222-248)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.
@@ -153,20 +153,20 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
   - line 248: DM1_PC34_ZONE_WALL_D0R
   - line 248: "8144"
 
-- PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:876-931)
+- PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:896-952)
   - Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.
-  - line 876: static void test_wall_source_row_clip_occlusion_gate(void)
-  - line 881: wall_clip_gate.151713.src_x
-  - line 882: wall_clip_gate.151713.src_y
-  - line 905: wall_clip_gate.occluded_source_row
-  - line 909: wall_clip_gate.occluded_viewport
-  - line 912: static void test_wall_draw_uses_clip_gate_source_offsets(void)
-  - line 924: wall_clip_draw.source_offset_next
-  - line 931: wall_clip_draw.opaque_copies_transparent_color
+  - line 896: static void test_wall_source_row_clip_occlusion_gate(void)
+  - line 901: wall_clip_gate.151713.src_x
+  - line 902: wall_clip_gate.151713.src_y
+  - line 925: wall_clip_gate.occluded_source_row
+  - line 929: wall_clip_gate.occluded_viewport
+  - line 932: static void test_wall_draw_uses_clip_gate_source_offsets(void)
+  - line 944: wall_clip_draw.source_offset_next
+  - line 951: wall_clip_draw.opaque_copies_transparent_color
 
 ## DM1 Hash Locks
-- PASS DM1 canonical PC34/V1 GRAPHICS.DAT: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417
-- PASS DM1 canonical PC34/V1 DUNGEON.DAT: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 bytes=33357
+- PASS DM1 canonical PC34/V1 GRAPHICS.DAT: /Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417
+- PASS DM1 canonical PC34/V1 DUNGEON.DAT: /Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 bytes=33357
 
 ## Non-Claims
 - No front-wall/front-cell behavior is promoted by this pass.

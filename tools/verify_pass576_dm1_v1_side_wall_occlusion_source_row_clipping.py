@@ -8,12 +8,33 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-DM1 = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+DATA = Path.home() / ".openclaw/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+
+def first_existing(env_name: str, candidates: list[Path]) -> Path:
+    env = os.environ.get(env_name)
+    if env:
+        return Path(env)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+RED = first_existing("FIRESTAFF_REDMCSB_SOURCE", [
+    DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+])
+DM1 = first_existing("FIRESTAFF_DM1_CANONICAL", [
+    DATA / "firestaff-original-games/DM/_canonical/dm1",
+    EXTERNAL_DATA / "firestaff-original-games/DM/_canonical/dm1",
+    Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"),
+])
 REPORT = ROOT / "parity-evidence/pass576_dm1_v1_side_wall_occlusion_source_row_clipping.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass576_dm1_v1_side_wall_occlusion_source_row_clipping/manifest.json"
 STATUS = "PASS576_DM1_V1_SIDE_WALL_OCCLUSION_SOURCE_ROW_CLIPPING_LOCKED"
@@ -25,6 +46,11 @@ DM1_HASH_EXPECTED = {
 
 ALLOWED_ROOTS = [
     ROOT.resolve(),
+    RED.resolve(),
+    DM1.resolve(),
+    DM1.parents[1].resolve(),
+    DATA.resolve(),
+    EXTERNAL_DATA.resolve(),
     Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source").resolve(),
     Path("/home/trv2/.openclaw/data/firestaff-original-games/DM").resolve(),
 ]
@@ -161,7 +187,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "327-336",
+        "lines": "335-350",
         "claim": "Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.",
         "ordered": [
             "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
@@ -188,7 +214,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "765-804",
+        "lines": "779-818",
         "claim": "The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.",
         "ordered": [
             "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate",
@@ -233,7 +259,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_clip_row_runtime_assertions_are_registered",
         "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "876-931",
+        "lines": "896-952",
         "claim": "Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.",
         "ordered": [
             "static void test_wall_source_row_clip_occlusion_gate(void)",

@@ -5,7 +5,7 @@
       "bytes": 363417,
       "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "name": "GRAPHICS.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "status": "PASS",
       "variant": "DM1 canonical PC34/V1"
@@ -14,7 +14,7 @@
       "bytes": 33357,
       "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "name": "DUNGEON.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "status": "PASS",
       "variant": "DM1 canonical PC34/V1"
@@ -27,83 +27,83 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 327,
+          "line": 341,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 327,
+          "line": 341,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 327,
+          "line": 341,
           "needle": "DUNVIEW.C:6848-6862 wall case returns"
         },
         {
-          "line": 328,
+          "line": 342,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 328,
+          "line": 342,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 328,
+          "line": 342,
           "needle": "DUNVIEW.C:6882-6893 wall case returns"
         },
         {
-          "line": 332,
+          "line": 346,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 332,
+          "line": 346,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 332,
+          "line": 346,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 333,
+          "line": 347,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 333,
+          "line": 347,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 333,
+          "line": 347,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 335,
+          "line": 349,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 335,
+          "line": 349,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 335,
+          "line": 349,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 336,
+          "line": 350,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 336,
+          "line": 350,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 336,
+          "line": 350,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
-      "lines": "327-336",
+      "lines": "335-350",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "0cda56395e6ab95de7b68ee9fc8b6fbcf864e4138efcd0f03ce3b18eef8916c5",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/integrate-n2-viewport-wall-contract-aadc7ed3-20260521-0730/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "5c92d3e1f0a899d20912de3c2ea7035e47f1f6c43721181a97de32d09ba139a8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -112,47 +112,47 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 765,
+          "line": 779,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 777,
+          "line": 791,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 778,
+          "line": 792,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 785,
+          "line": 799,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 792,
+          "line": 806,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 795,
+          "line": 809,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 797,
+          "line": 811,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 798,
+          "line": 812,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 799,
+          "line": 813,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
-      "lines": "765-804",
+      "lines": "779-818",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "0cda56395e6ab95de7b68ee9fc8b6fbcf864e4138efcd0f03ce3b18eef8916c5",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/integrate-n2-viewport-wall-contract-aadc7ed3-20260521-0730/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "5c92d3e1f0a899d20912de3c2ea7035e47f1f6c43721181a97de32d09ba139a8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -236,8 +236,8 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "222-248",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6982c1015219ed81be4382fe64f7d2c0cf8aec2c965f4d1e26c875ec0b6a985a",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/integrate-n2-viewport-wall-contract-aadc7ed3-20260521-0730/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f70f214469090eb068753ad6cc9877269de12f483860d7f7c3ad3ee23d518ec4",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -246,43 +246,43 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 876,
+          "line": 896,
           "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
         },
         {
-          "line": 881,
+          "line": 901,
           "needle": "wall_clip_gate.151713.src_x"
         },
         {
-          "line": 882,
+          "line": 902,
           "needle": "wall_clip_gate.151713.src_y"
         },
         {
-          "line": 905,
+          "line": 925,
           "needle": "wall_clip_gate.occluded_source_row"
         },
         {
-          "line": 909,
+          "line": 929,
           "needle": "wall_clip_gate.occluded_viewport"
         },
         {
-          "line": 912,
+          "line": 932,
           "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
         },
         {
-          "line": 924,
+          "line": 944,
           "needle": "wall_clip_draw.source_offset_next"
         },
         {
-          "line": 931,
+          "line": 951,
           "needle": "wall_clip_draw.opaque_copies_transparent_color"
         }
       ],
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
-      "lines": "876-931",
+      "lines": "896-952",
       "missing": [],
-      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6982c1015219ed81be4382fe64f7d2c0cf8aec2c965f4d1e26c875ec0b6a985a",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/worktrees/integrate-n2-viewport-wall-contract-aadc7ed3-20260521-0730/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f70f214469090eb068753ad6cc9877269de12f483860d7f7c3ad3ee23d518ec4",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
@@ -350,7 +350,7 @@
       "id": "redmcsb_pc34_side_wall_zone_ids_are_not_front_cells",
       "lines": "4042-4057",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "sha256": "33b3160a5dd7d9c62b9ad0f3d26ac09ddacd6328c9717656fe2bbe8786625728",
       "sourceFile": "DEFS.H",
       "status": "PASS"
@@ -427,7 +427,7 @@
       "id": "redmcsb_f0128_draws_side_rows_before_centers",
       "lines": "8478-8542",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -500,7 +500,7 @@
       "id": "redmcsb_far_side_wall_cases_return_before_field_paths",
       "lines": "6846-6896",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -553,7 +553,7 @@
       "id": "redmcsb_d1_side_wall_cases_return_before_open_lane_paths",
       "lines": "7436-7628",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -606,7 +606,7 @@
       "id": "redmcsb_d0_side_wall_cases_return_before_source_row_field_paths",
       "lines": "7999-8159",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -651,13 +651,13 @@
       "id": "redmcsb_shared_bitmap_source_row_clipping_seam",
       "lines": "3394-3472",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass576_dm1_v1_side_wall_occlusion_source_row_clipping.v1",
   "status": "passed",
   "statusToken": "PASS576_DM1_V1_SIDE_WALL_OCCLUSION_SOURCE_ROW_CLIPPING_LOCKED"

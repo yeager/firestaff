@@ -9,6 +9,7 @@ bound to the same source-stop chain.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -16,7 +17,23 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+DATA = Path.home() / ".openclaw/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+
+def first_existing(env_name: str, candidates: list[Path]) -> Path:
+    env = os.environ.get(env_name)
+    if env:
+        return Path(env)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+RED = first_existing("FIRESTAFF_REDMCSB_SOURCE", [
+    DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+])
 PASS = "pass609_dm1_v1_same_viewport_capture_contract"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
