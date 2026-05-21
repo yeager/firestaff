@@ -1,0 +1,258 @@
+{
+  "canonicalInputCaptureRows": [
+    {
+      "claim": "baseline viewport crop before scripted movement input",
+      "commandIds": [],
+      "inputTokens": [],
+      "label": "01_start_south_1_3",
+      "observed": {
+        "crop": "01_start_south_1_3_viewport_224x136.ppm",
+        "direction": 2,
+        "label": "01_start_south_1_3",
+        "map": 0,
+        "sha": "66be58673b791da682bfcad7930cf325b6289ee19d6314cb8ca8113f363d2271",
+        "x": 1,
+        "y": 3
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 2,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "problems": []
+    },
+    {
+      "claim": "right input resolves to C002 turn-right and changes facing only",
+      "commandIds": [
+        2
+      ],
+      "inputTokens": [
+        "M12_MENU_INPUT_RIGHT"
+      ],
+      "label": "02_turn_right_west_1_3",
+      "observed": {
+        "crop": "02_turn_right_west_1_3_viewport_224x136.ppm",
+        "direction": 3,
+        "label": "02_turn_right_west_1_3",
+        "map": 0,
+        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "x": 1,
+        "y": 3
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "problems": []
+    },
+    {
+      "claim": "forward command into the west wall is consumed but leaves the same tuple/crop",
+      "commandIds": [
+        3
+      ],
+      "inputTokens": [
+        "M12_MENU_INPUT_UP"
+      ],
+      "label": "03_blocked_west_wall_1_3",
+      "observed": {
+        "crop": "03_blocked_west_wall_1_3_viewport_224x136.ppm",
+        "direction": 3,
+        "label": "03_blocked_west_wall_1_3",
+        "map": 0,
+        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "x": 1,
+        "y": 3
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "problems": [],
+      "sameViewportHashAs": "02_turn_right_west_1_3"
+    },
+    {
+      "claim": "turn-left then forward gives a distinct moved viewport crop",
+      "commandIds": [
+        1,
+        3
+      ],
+      "inputTokens": [
+        "M12_MENU_INPUT_LEFT",
+        "M12_MENU_INPUT_UP"
+      ],
+      "label": "04_forward_south_1_4",
+      "observed": {
+        "crop": "04_forward_south_1_4_viewport_224x136.ppm",
+        "direction": 2,
+        "label": "04_forward_south_1_4",
+        "map": 0,
+        "sha": "5e9fb1e3b97cdc6a6b9b2d9c01580c16364f3f6041c7d028427586c125c50349",
+        "x": 1,
+        "y": 4
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 2,
+        "map": 0,
+        "x": 1,
+        "y": 4
+      },
+      "problems": []
+    }
+  ],
+  "decision": "Firestaff now has an audited bridge from M12 input tokens to DM1 V1 command ids, movement/blocked state, and 224x136 viewport crop labels. The remaining blocker is specifically original-side: capture one transcript row with the required queue/dispatch/F0128/F0097 fields for one of these route labels before promoting original-vs-Firestaff parity.",
+  "firestaffRouteAudit": [
+    {
+      "claim": "Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick",
+      "file": "src/engine/m11_game_view.c",
+      "id": "m11_input_maps_to_dm1_v1_commands",
+      "lines": "6162-6225",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
+      "file": "src/engine/m11_game_view.c",
+      "id": "m11_records_movement_pipeline_capture_state",
+      "lines": "6229-6297",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
+      "file": "probes/m11/firestaff_m11_wall_collision_capture_probe.c",
+      "id": "wall_collision_probe_emits_input_script_and_viewport_crops",
+      "lines": "20-174,210-236",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "gateStatusChecks": [
+    {
+      "expected": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
+      "id": "movement_queue_capture_closure",
+      "observed": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/dm1_v1_movement_queue_capture_closure/manifest.json"
+    },
+    {
+      "expected": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+      "id": "pass564_original_transcript_gate",
+      "observed": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+      "ok": true,
+      "path": "parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json"
+    },
+    {
+      "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "firestaffStateCount": 6,
+      "firestaffViewportHashCount": 6,
+      "id": "pass608_same_viewport_blocker",
+      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "ok": true,
+      "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
+      "runtimeTranscriptOk": false,
+      "runtimeTranscriptProvided": false
+    },
+    {
+      "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
+      "expected": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
+      "id": "pass622_viewport_wall_capture_closure_gap",
+      "manifestOk": true,
+      "observed": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json"
+    }
+  ],
+  "nonClaims": [
+    "no original runtime capture was produced",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no movement, renderer, or input behavior is changed",
+    "no non-N2 source path is used",
+    "no push or release action"
+  ],
+  "ok": true,
+  "problems": [],
+  "redmcsbSourceAudit": [
+    {
+      "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
+      "file": "COMMAND.C",
+      "id": "pc34_movement_mouse_boxes_map_to_c001_c006",
+      "lines": "106-121",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "accepted mouse input enters G0432 with command and coordinates before dispatch",
+      "file": "COMMAND.C",
+      "id": "f0359_queues_mouse_command_with_coordinates",
+      "lines": "1452-1661",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "keyboard input has the same queue/count boundary that a promotable original transcript must show",
+      "file": "COMMAND.C",
+      "id": "f0361_queues_keyboard_command",
+      "lines": "1709-1813",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the queue pop must be paired to F0365/F0366 before any post-command viewport row is promotable",
+      "file": "COMMAND.C",
+      "id": "f0380_pops_and_dispatches_turn_or_step",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "an original transcript must tie the command pop to the later F0128 tuple draw in the same bounded route",
+      "file": "GAMELOOP.C",
+      "id": "game_loop_draws_tuple_then_waits_for_command_dispatch",
+      "lines": "90-219",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the viewport crop row must bind to the exact direction/X/Y consumed by F0128",
+      "file": "DUNVIEW.C",
+      "id": "f0128_consumes_tuple_and_calls_present",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "promotable original crops must be sampled at or after the viewport-present boundary",
+      "file": "DRAWVIEW.C",
+      "id": "f0097_presents_the_composed_viewport",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "requiredOriginalTranscriptColumns": [
+    "routeLabel",
+    "inputToken",
+    "sourceCommandId",
+    "G0432WriteIndex",
+    "G2153BeforeAfter",
+    "F0380DequeuedCommand",
+    "F0365OrF0366Dispatch",
+    "postCommandMapXMapYDirection",
+    "F0128DrawTuple",
+    "F0097PresentFrameId",
+    "viewportCropSha256"
+  ],
+  "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
+  "timestampUtc": "2026-05-21T07:12:03.460089+00:00"
+}

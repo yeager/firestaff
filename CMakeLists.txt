@@ -3076,6 +3076,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 input/capture readiness bridge gate --------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass623_dm1_v1_input_capture_readiness_bridge
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass623_dm1_v1_input_capture_readiness_bridge.py
+    )
+endif()
+
 # -- DM1 V1 original capture route preflight gate -------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
