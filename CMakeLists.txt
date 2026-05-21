@@ -2266,6 +2266,14 @@ if(NOT TARGET test_dm1_v1_champion_stats_pc34_compat)
     )
 endif()
 
+# DM1 V1 champion statistic drawn-panel source-lock / pixel-parity blocker gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass621_dm1_v1_champion_stat_drawn_panel_pixel_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass621_dm1_v1_champion_stat_drawn_panel_pixel_gate.py
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_champion_needs_pc34_compat_integration)
     add_executable(test_dm1_v1_champion_needs_pc34_compat_integration
         tests/test_dm1_v1_champion_needs_pc34_compat_integration.c
