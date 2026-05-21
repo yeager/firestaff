@@ -16,6 +16,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Turning (left/right)
 - ✅ Collision detection (walls, doors, creatures)
 - ✅ Collision and doors parity row — ReDMCSB-backed movement blockers, accepted movement state, viewport redraw, and canonical DM1 PC DUNGEON.DAT overlay/runtime cases now cover representative wall, closed/open door, fakewall, and door-button states
+- ✅ Firestaff-side viewport crop capture readiness is source-locked by pass610: wall/collision capture rows now emit 224x136 viewport crops beside 320x200 captures, with source geometry and no original-vs-Firestaff pixel parity claim (cbfad52e).
 - ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
 - ✅ Movement cooldown (G0310/G0311 timing from F0267)
 - ✅ Stairs backstep movement-cooldown gate is source-locked by pass578: queued backward-on-stairs movement remains queued and does not apply stairs transition, stamina, map, or cooldown side effects while movement is gated (06cedcf6).
