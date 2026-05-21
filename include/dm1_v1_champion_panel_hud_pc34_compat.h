@@ -127,6 +127,16 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_ZONE_MANA_VALUE    551
 #define DM1_ZONE_STAMINA_VALUE 552
 
+/* Inventory empty-hand eye statistics panel zones - PANEL.C F0351 */
+#define DM1_ZONE_SKILL_VALUE      557
+#define DM1_ZONE_STATISTIC_VALUE  559
+#define DM1_STATISTIC_ROW_COUNT     6
+#define DM1_PANEL_TEXT_CHAR_WIDTH   6
+#define DM1_PANEL_TEXT_LINE_HEIGHT  7
+#define DM1_STATISTIC_NAME_REL_X    28
+#define DM1_STATISTIC_CURRENT_REL_X 94
+#define DM1_STATISTIC_FIRST_REL_Y   34
+
 /* ── Slot box index ranges — DEFS.H ── */
 #define DM1_SLOTBOX_FIRST_STATUS    0
 #define DM1_SLOTBOX_FIRST_INVENTORY 8
@@ -177,6 +187,21 @@ typedef struct DM1_ChampionPanel_StatisticRowModel {
     char maximumText[5];
 } DM1_ChampionPanel_StatisticRowModel;
 
+typedef struct DM1_ChampionPanel_StatisticTextRunModel {
+    int statisticIndex;
+    int nameZone;
+    int valueZone;
+    int nameX;
+    int currentX;
+    int maximumX;
+    int y;
+    int nameColor;
+    int currentColor;
+    int maximumColor;
+    char currentText[4];
+    char maximumText[5];
+} DM1_ChampionPanel_StatisticTextRunModel;
+
 int DM1_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue);
 int DM1_ChampionPanel_StatisticMaximumColor(void);
 int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
@@ -185,6 +210,9 @@ int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
 int DM1_ChampionPanel_BuildStatisticRowModel(
     int currentValue, int maximumValue,
     DM1_ChampionPanel_StatisticRowModel *outRow);
+int DM1_ChampionPanel_BuildStatisticTextRunModel(
+    int statisticIndex, int currentValue, int maximumValue,
+    DM1_ChampionPanel_StatisticTextRunModel *outRun);
 
 /* Inventory load label/value color and value format - CHAMDRAW.C F0292 */
 int DM1_ChampionPanel_LoadColor(int load, int maximumLoad);

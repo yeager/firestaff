@@ -238,6 +238,31 @@ int DM1_ChampionPanel_BuildStatisticRowModel(
                                                   outRow->maximumText, sizeof(outRow->maximumText));
 }
 
+int DM1_ChampionPanel_BuildStatisticTextRunModel(
+    int statisticIndex, int currentValue, int maximumValue,
+    DM1_ChampionPanel_StatisticTextRunModel *outRun)
+{
+    if (!outRun) return 0;
+    if (statisticIndex < 0 || statisticIndex >= DM1_STATISTIC_ROW_COUNT) return 0;
+
+    outRun->statisticIndex = statisticIndex;
+    outRun->nameZone = DM1_ZONE_SKILL_VALUE;
+    outRun->valueZone = DM1_ZONE_STATISTIC_VALUE;
+    outRun->nameX = DM1_STATISTIC_NAME_REL_X;
+    outRun->currentX = DM1_STATISTIC_CURRENT_REL_X;
+    outRun->maximumX = DM1_STATISTIC_CURRENT_REL_X +
+                       DM1_PANEL_TEXT_CHAR_WIDTH * 3;
+    outRun->y = DM1_STATISTIC_FIRST_REL_Y +
+                DM1_PANEL_TEXT_LINE_HEIGHT * statisticIndex;
+    outRun->nameColor = DM1_COLOR_LIGHTEST_GRAY;
+    outRun->currentColor =
+        DM1_ChampionPanel_StatisticCurrentColor(currentValue, maximumValue);
+    outRun->maximumColor = DM1_ChampionPanel_StatisticMaximumColor();
+    return DM1_ChampionPanel_FormatStatisticValue(currentValue, maximumValue,
+                                                  outRun->currentText, sizeof(outRun->currentText),
+                                                  outRun->maximumText, sizeof(outRun->maximumText));
+}
+
 /* =====================================================================
  * Inventory champion load color/value - CHAMDRAW.C F0292.
  *
@@ -509,6 +534,28 @@ int DM1_ChampionPanel_SelfTest(void)
             strcmp(row.maximumText, "/ 50") != 0) {
             failures++;
             fprintf(stderr, "FAIL: statistic row model\n");
+        }
+        {
+            DM1_ChampionPanel_StatisticTextRunModel run;
+            if (!DM1_ChampionPanel_BuildStatisticTextRunModel(2, 51, 50, &run) ||
+                run.nameZone != DM1_ZONE_SKILL_VALUE ||
+                run.valueZone != DM1_ZONE_STATISTIC_VALUE ||
+                run.nameX != DM1_STATISTIC_NAME_REL_X ||
+                run.currentX != DM1_STATISTIC_CURRENT_REL_X ||
+                run.maximumX != DM1_STATISTIC_CURRENT_REL_X + DM1_PANEL_TEXT_CHAR_WIDTH * 3 ||
+                run.y != DM1_STATISTIC_FIRST_REL_Y + DM1_PANEL_TEXT_LINE_HEIGHT * 2 ||
+                run.nameColor != DM1_COLOR_LIGHTEST_GRAY ||
+                run.currentColor != DM1_COLOR_LIGHT_GREEN ||
+                run.maximumColor != DM1_COLOR_LIGHTEST_GRAY ||
+                strcmp(run.currentText, " 51") != 0 ||
+                strcmp(run.maximumText, "/ 50") != 0) {
+                failures++;
+                fprintf(stderr, "FAIL: statistic text run model\n");
+            }
+            if (DM1_ChampionPanel_BuildStatisticTextRunModel(6, 51, 50, &run)) {
+                failures++;
+                fprintf(stderr, "FAIL: statistic text run out-of-range index\n");
+            }
         }
     }
 
