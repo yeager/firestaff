@@ -182,6 +182,24 @@ int main(void)
             failures++;
         }
     }
+    {
+        DM1_ChampionPanel_StatisticTextRunModel run;
+        if (!DM1_ChampionPanel_BuildStatisticTextRunModel(1, 51, 50, &run) ||
+            run.nameZone != DM1_ZONE_SKILL_VALUE ||
+            run.valueZone != DM1_ZONE_STATISTIC_VALUE ||
+            run.nameX != DM1_STATISTIC_NAME_REL_X ||
+            run.currentX != DM1_STATISTIC_CURRENT_REL_X ||
+            run.maximumX != DM1_STATISTIC_CURRENT_REL_X + DM1_PANEL_TEXT_CHAR_WIDTH * 3 ||
+            run.y != DM1_STATISTIC_FIRST_REL_Y + DM1_PANEL_TEXT_LINE_HEIGHT ||
+            run.nameColor != DM1_COLOR_LIGHTEST_GRAY ||
+            run.currentColor != DM1_COLOR_LIGHT_GREEN ||
+            run.maximumColor != DM1_COLOR_LIGHTEST_GRAY ||
+            strcmp(run.currentText, " 51") != 0 ||
+            strcmp(run.maximumText, "/ 50") != 0) {
+            fprintf(stderr, "FAIL: F0351 stat text run layout/color\n");
+            failures++;
+        }
+    }
 
     /*
      * CHAMDRAW.C:F0292 source lock:

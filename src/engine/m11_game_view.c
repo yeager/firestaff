@@ -20183,13 +20183,13 @@ static void m11_format_v1_champion_stats_panel_pc34(
     for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
         unsigned short current = 0;
         unsigned short maximum = 0;
-        DM1_ChampionPanel_StatisticRowModel row;
+        DM1_ChampionPanel_StatisticTextRunModel row;
         if (!F0677_CHAMPION_GetAttributeStatisticRow_Compat(
                 champ, (int)i, &current, &maximum)) {
             continue;
         }
-        if (!DM1_ChampionPanel_BuildStatisticRowModel(
-                (int)current, (int)maximum, &row)) {
+        if (!DM1_ChampionPanel_BuildStatisticTextRunModel(
+                (int)i, (int)current, (int)maximum, &row)) {
             continue;
         }
         m11_appendf_pc34(out, outSize, "  %s %s%s %s",
