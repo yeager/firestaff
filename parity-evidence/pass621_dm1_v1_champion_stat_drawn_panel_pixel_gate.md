@@ -17,18 +17,17 @@ This gate locks the ReDMCSB draw contract for the inventory eye-panel champion s
 
 - PASS `local header exposes source statistic panel constants` - include/dm1_v1_champion_panel_hud_pc34_compat.h:131-138,235
 - PASS `local implementation preserves split current/max text runs` - src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c:288-313
-- PASS `local tests cover the drawn statistic text-run contract` - tests/test_dm1_v1_champion_panel_hud_pc34_compat.c; tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
+- PASS `local tests cover the drawn statistic text-run and framebuffer contract` - tests/test_dm1_v1_champion_panel_hud_pc34_compat.c; tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
 - PASS `CMake registers pass621 gate` - CMakeLists.txt
 
 ## Remaining Blockers
 
 - A verified original PC 3.4 320x200 runtime frame with inventory open, empty leader hand, eye-panel champion statistics visible, and a documented input transcript/state snapshot.
-- A matching Firestaff indexed framebuffer generated from the same champion, inventory, panel-content, and palette state.
+- A matching Firestaff indexed framebuffer generated from an original-equivalent champion, inventory, panel-content, and palette state.
 - A crop/overlay comparator for the panel statistic text rows that separates palette-index deltas, glyph/text-run deltas, and panel background deltas.
 
 ## Non-Claims
 
 - No original-vs-Firestaff pixel parity claim.
-- No renderer behavior change.
 - No original DOS runtime capture was launched by this gate.
 - No push, package, tag, release, or external action.

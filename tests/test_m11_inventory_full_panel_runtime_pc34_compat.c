@@ -735,6 +735,8 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapon;
     struct ChampionState_Compat* champ;
+    unsigned char framebuffer[320 * 200];
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
 
     seed_inventory_view(&state, &things, &weapon);
     champ = &state.world.party.champions[0];
@@ -764,6 +766,8 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click with empty leader hand opens champion stats");
+    ASSERT_EQ(state.v1ChampionStatsPanelActive, 1,
+              "empty-hand eye click marks the drawn champion stats panel active");
     ASSERT_TRUE(strstr(state.inspectDetail, "MANA 12/33") != NULL,
                 "champion stats panel reports mana");
     ASSERT_TRUE(strstr(state.inspectDetail, "STR  41/ 50") != NULL &&
@@ -838,6 +842,31 @@ static void test_eye_panel_champion_stats_and_skills(void) {
         ASSERT_EQ(wisdomRun.currentColor, DM1_COLOR_LIGHTEST_GRAY,
                   "champion stats render helper colors equal current value gray");
     }
+
+    memset(framebuffer, 0xEE, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH),
+                "champion stats pixel test resolves C101 panel zone");
+    ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y) * 320 +
+                          (panelX + DM1_STATISTIC_CURRENT_REL_X + 9)],
+              DM1_COLOR_RED,
+              "drawn strength current digit pixel is red below maximum");
+    ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y + DM1_PANEL_TEXT_LINE_HEIGHT) * 320 +
+                          (panelX + DM1_STATISTIC_CURRENT_REL_X + 6)],
+              DM1_COLOR_LIGHT_GREEN,
+              "drawn dexterity current digit pixel is green above maximum");
+    ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y + 2 * DM1_PANEL_TEXT_LINE_HEIGHT) * 320 +
+                          (panelX + DM1_STATISTIC_CURRENT_REL_X + 9)],
+              DM1_COLOR_LIGHTEST_GRAY,
+              "drawn wisdom current digit pixel is gray at maximum");
+    ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y) * 320 +
+                          (panelX + DM1_STATISTIC_CURRENT_REL_X + DM1_PANEL_TEXT_CHAR_WIDTH * 3 + 4)],
+              DM1_COLOR_LIGHTEST_GRAY,
+              "drawn statistic maximum slash pixel is gray");
+    ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y) * 320 +
+                          (panelX + DM1_STATISTIC_NAME_REL_X + 1)],
+              DM1_COLOR_LIGHTEST_GRAY,
+              "drawn statistic name pixel is source gray");
 }
 
 int main(void) {

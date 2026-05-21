@@ -19045,6 +19045,7 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
     state->leaderHandThing = thing;
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
         state, state->world.things, thing);
+    state->v1ChampionStatsPanelActive = 0;
     return 1;
 }
 
@@ -20220,6 +20221,108 @@ static void m11_format_v1_champion_stats_panel_pc34(
     }
 }
 
+/* ReDMCSB PANEL.C F0351 blits C020 to C101, prints skill rows from
+ * C557, then prints statistic names plus split current/max value runs
+ * through C557/C559 with red/green/gray current-value coloring. */
+static int m11_draw_v1_inventory_champion_stats_panel(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
+    static const char* const skillNames[CHAMPION_SKILL_COUNT] = {
+        "FIGHTER", "NINJA", "PRIEST", "WIZARD"
+    };
+    static const char* const statNames[CHAMPION_ATTR_COUNT] = {
+        "STRENGTH", "DEXTERITY", "WISDOM", "VITALITY", "ANTI-MAGIC", "ANTI-FIRE"
+    };
+    const struct ChampionState_Compat* champ;
+    M11_TextStyle textStyle;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int drewPanel = 0;
+    int skillY;
+    int i;
+
+    if (!state || !framebuffer || !state->v1ChampionStatsPanelActive ||
+        M11_GameView_GetV1LeaderHandThing(state) != THING_NONE ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (!champ->present) return 0;
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* panel = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
+        if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
+            M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
+                                 M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                                 M11_COLOR_RED);
+            drewPanel = 1;
+        }
+    }
+    if (!drewPanel) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_BROWN);
+    }
+
+    textStyle = g_text_small;
+    textStyle.color = M11_COLOR_SILVER;
+    textStyle.shadowDx = 0;
+    textStyle.shadowDy = 0;
+    textStyle.shadowColor = M11_COLOR_BLACK;
+
+    skillY = panelY + 6;
+    for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
+        unsigned int level = (unsigned int)champ->skillLevels[i];
+        const char* levelName = m11_dm1_v1_skill_level_name_pc34(level);
+        char line[32];
+        if (!levelName) continue;
+        snprintf(line, sizeof(line), "%s %s", levelName, skillNames[i]);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX + 28,
+                      M11_VIEWPORT_Y + skillY,
+                      line, &textStyle);
+        skillY += DM1_PANEL_TEXT_LINE_HEIGHT;
+    }
+
+    for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+        unsigned short current = 0;
+        unsigned short maximum = 0;
+        DM1_ChampionPanel_StatisticTextRunModel row;
+        if (!F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+                champ, i, &current, &maximum) ||
+            !DM1_ChampionPanel_BuildStatisticTextRunModel(
+                i, (int)current, (int)maximum, &row)) {
+            continue;
+        }
+
+        textStyle.color = (unsigned char)row.nameColor;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX + row.nameX,
+                      M11_VIEWPORT_Y + panelY + row.y,
+                      statNames[i], &textStyle);
+        textStyle.color = (unsigned char)row.currentColor;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX + row.currentX,
+                      M11_VIEWPORT_Y + panelY + row.y,
+                      row.currentText, &textStyle);
+        textStyle.color = (unsigned char)row.maximumColor;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX + row.maximumX,
+                      M11_VIEWPORT_Y + panelY + row.y,
+                      row.maximumText, &textStyle);
+    }
+    return 1;
+}
+
 /* ── ReDMCSB PANEL.C F0352: Eye click — inspect item or champion stats ──
  * When inventory is open, clicking the eye icon shows:
  *   - Item description if leader hand holds an object
@@ -20241,6 +20344,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         state->v1ObjectDescriptionPanelActive = 0;
         state->v1ScrollPanelActive = 0;
         state->v1ScrollPanelThing = THING_NONE;
+        state->v1ChampionStatsPanelActive = 1;
         /* Show champion skills and statistics */
         char champName[16];
         m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -20251,6 +20355,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         m11_set_status(state, "INSPECT", champName);
         return 1;
     } else {
+        state->v1ChampionStatsPanelActive = 0;
         /* Show detailed item description.
          * ReDMCSB F0352: eye click with item in hand shows object panel
          * with name, weight, type-specific stats (damage, armor, charges). */
@@ -23725,6 +23830,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
             return;
         }
+        if (m11_draw_v1_inventory_champion_stats_panel(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
+            return;
+        }
         (void)m11_draw_v1_inventory_action_hand_scroll_panel(
             state, framebuffer, framebufferWidth, framebufferHeight);
         (void)m11_draw_v1_mouth_visual_frame(
@@ -25229,6 +25338,7 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->v1ObjectDescriptionName[0] = '\0';
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
+    state->v1ChampionStatsPanelActive = 0;
     return 1;
 }
 
