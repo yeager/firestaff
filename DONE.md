@@ -73,6 +73,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
 - ✅ Creature special positioning — quarter-square melee cell shuffle and adjacent creature projectile chance are source-locked in the DM1 V1 creature AI gate (5121884b)
 - ✅ Creature fixed possession drop payloads and runtime materialization are source-locked for fixed source object pools, unused-slot allocation, raw object payload writes, cell tagging, square-list linking, death-path integration, and dead group unused-pool cleanup (de044e27)
+- ✅ Black Flame fireball-impact healing is source-locked: fireball impacts add attack value to Black Flame health up to the source cap instead of applying normal creature damage (63a905c8)
 - ✅ C006 Lord Chaos blocked-destination adjacent random retry is source-locked from ReDMCSB event60/61 handling (0a12e07d)
 - ✅ C006 generated groups now reuse ReDMCSB-style fixed unused group slots instead of appending beyond source capacity (1d3a9bd4)
 - ✅ C006 generated/deferred groups now route through the narrow F0267 teleporter destination/cross-map placement path, including the covered audible buzz and target-square wandering scheduling case (191c9d3c)
