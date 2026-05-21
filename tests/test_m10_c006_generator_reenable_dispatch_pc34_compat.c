@@ -807,6 +807,178 @@ static int test_c006_generated_group_preserves_projectile_without_impact(void) {
     return ok ? 0 : 1;
 }
 
+
+static int test_schedule_creature_tick_now(struct GameWorld_Compat* world, int groupIndex) {
+    struct TimelineEvent_Compat event;
+    if (!world) return 0;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_TICK;
+    event.fireAtTick = world->gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = groupIndex;
+    event.aux1 = 0;
+    event.aux2 = AI_STATE_WANDER;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event) == 1;
+}
+
+static int test_timeline_lacks_projectile_move(const struct GameWorld_Compat* world) {
+    int i;
+    if (!world) return 0;
+    for (i = 0; i < world->timeline.count; ++i) {
+        if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+            world->timeline.events[i].aux0 == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct DungeonGroup_Compat* group;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world ordinary group projectile impact\n");
+        return 1;
+    }
+
+    world.things->projectiles = (struct DungeonProjectile_Compat*)calloc(1, sizeof(*world.things->projectiles));
+    if (!world.things->projectiles) {
+        F0883_WORLD_Free_Compat(&world);
+        return 1;
+    }
+    world.things->projectileCount = 1;
+    world.things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+
+    group = &world.things->groups[0];
+    group->next = test_make_thing_ref(THING_TYPE_PROJECTILE, 0, 0);
+    group->slot = THING_ENDOFLIST;
+    group->creatureType = 0;
+    group->cells = 0;
+    group->health[0] = 50;
+    group->count = 0;
+    group->direction = 1;
+    world.things->squareFirstThings[0] = test_make_thing_ref(THING_TYPE_GROUP, 0, 0);
+    world.things->projectiles[0].next = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    world.things->projectiles[0].slot = THING_ENDOFLIST;
+    world.things->projectiles[0].attack = 5;
+    world.things->projectiles[0].kineticEnergy = 5;
+    world.things->projectiles[0].eventIndex = 77;
+
+    memset(&world.creatureAI[0], 0, sizeof(world.creatureAI[0]));
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = 0;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 1;
+    world.creatureAI[0].groupMapY = 1;
+    world.creatureAI[0].groupCells = group->cells;
+    world.creatureAI[0].groupDirection = 1;
+    world.creatureAI[0].reserved0 = 0;
+
+    ok &= expect(test_schedule_future_projectile_move(&world),
+                 "MOVESENS.C:297/F0214 queues projectile event before ordinary group impact");
+    ok &= expect(test_schedule_creature_tick_now(&world, 0),
+                 "GROUP.C:1928/2175 ordinary group tick enters F0267 from real source square");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance ordinary C37/F0267 projectile impact tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "MOVESENS.C:289-301 source projectile removed before group leaves source square");
+    ok &= expect(world.things->squareFirstThings[1] == test_make_thing_ref(THING_TYPE_GROUP, 0, 0),
+                 "MOVESENS.C:432-435 nonlethal ordinary group impact still permits F0267 movement");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST &&
+                 world.things->groups[0].health[0] == 40,
+                 "PROJEXPL.C:515-608 applies projectile hit and unlinks projectile thing");
+    ok &= expect(world.things->projectiles[0].next == THING_NONE &&
+                 world.things->projectiles[0].eventIndex == 0xFFFFu,
+                 "MOVESENS.C:297 plus PROJEXPL.C:607-608 deletes projectile event and thing");
+    ok &= expect(test_timeline_lacks_projectile_move(&world),
+                 "MOVESENS.C:297/F0214 removes queued projectile move on ordinary group impact");
+    ok &= expect(world.creatureAICount == 1 &&
+                 world.creatureAI[0].groupMapX == 2 &&
+                 world.creatureAI[0].groupMapY == 1,
+                 "ordinary moving group active state follows successful F0267 move");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+
+static int test_c006_f0267_ordinary_moving_group_lethal_projectile_blocks_move(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct DungeonGroup_Compat* group;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world ordinary group lethal projectile impact\n");
+        return 1;
+    }
+
+    world.things->projectiles = (struct DungeonProjectile_Compat*)calloc(1, sizeof(*world.things->projectiles));
+    if (!world.things->projectiles) {
+        F0883_WORLD_Free_Compat(&world);
+        return 1;
+    }
+    world.things->projectileCount = 1;
+    world.things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+
+    group = &world.things->groups[0];
+    group->next = test_make_thing_ref(THING_TYPE_PROJECTILE, 0, 0);
+    group->slot = THING_ENDOFLIST;
+    group->creatureType = 0;
+    group->cells = 0;
+    group->health[0] = 10;
+    group->count = 0;
+    group->direction = 1;
+    world.things->squareFirstThings[0] = test_make_thing_ref(THING_TYPE_GROUP, 0, 0);
+    world.things->projectiles[0].next = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    world.things->projectiles[0].slot = THING_ENDOFLIST;
+    world.things->projectiles[0].attack = 10;
+    world.things->projectiles[0].kineticEnergy = 10;
+    world.things->projectiles[0].eventIndex = 77;
+
+    memset(&world.creatureAI[0], 0, sizeof(world.creatureAI[0]));
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = 0;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 1;
+    world.creatureAI[0].groupMapY = 1;
+    world.creatureAI[0].groupCells = group->cells;
+    world.creatureAI[0].groupDirection = 1;
+    world.creatureAI[0].reserved0 = 0;
+
+    ok &= expect(test_schedule_future_projectile_move(&world),
+                 "schedule projectile event before lethal ordinary group impact");
+    ok &= expect(test_schedule_creature_tick_now(&world, 0),
+                 "schedule ordinary group movement tick for lethal projectile impact");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance lethal ordinary C37/F0267 projectile impact tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "lethal ordinary group impact removes group and projectile from source chain");
+    ok &= expect(world.things->squareFirstThings[1] == THING_ENDOFLIST,
+                 "lethal ordinary group impact blocks successful F0267 movement");
+    ok &= expect(world.things->groups[0].next == THING_NONE &&
+                 world.things->groups[0].health[0] == 0,
+                 "lethal ordinary group impact marks group slot unused/dead");
+    ok &= expect(test_timeline_lacks_projectile_move(&world),
+                 "lethal ordinary group impact deletes queued projectile move");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int test_c006_generated_group_not_allowed_drops_without_insertion(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -891,7 +1063,7 @@ static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void)
     ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0) &&
                  test_count_chain_type(world.things, world.things->squareFirstThings[0],
                                        THING_TYPE_WEAPON) == 1,
-                 "event60 disallowed group appends carried slot to destination square");
+                 "event60 disallowed group drops carried slot on destination square");
     ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
                  "event60 disallowed carried slot terminates destination chain");
     ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
@@ -1145,6 +1317,8 @@ int main(void) {
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     if (test_c006_generated_group_preserves_projectile_without_impact() != 0) return 1;
+    if (test_c006_f0267_ordinary_moving_group_source_projectile_is_removed() != 0) return 1;
+    if (test_c006_f0267_ordinary_moving_group_lethal_projectile_blocks_move() != 0) return 1;
     if (test_c006_generated_group_not_allowed_drops_without_insertion() != 0) return 1;
     if (test_event60_group_not_allowed_drops_carried_slot_without_retry() != 0) return 1;
     if (test_event60_deferred_group_preserves_projectile_without_impact() != 0) return 1;

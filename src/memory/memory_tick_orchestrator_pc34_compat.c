@@ -1331,6 +1331,105 @@ static int orch_set_next_thing_compat(
     }
 }
 
+
+static int orch_unlink_thing_from_square_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thingToUnlink)
+{
+    int sftIndex;
+    unsigned short thing;
+    unsigned short previous = THING_NONE;
+    unsigned short target = (unsigned short)(thingToUnlink & 0x3FFFu);
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    if (thingToUnlink == THING_NONE || thingToUnlink == THING_ENDOFLIST) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+        if ((unsigned short)(thing & 0x3FFFu) == target) {
+            if (previous == THING_NONE) {
+                world->things->squareFirstThings[sftIndex] = nextThing;
+            } else if (!orch_set_next_thing_compat(world->things, previous, nextThing)) {
+                return 0;
+            }
+            (void)orch_set_next_thing_compat(world->things, thingToUnlink, THING_ENDOFLIST);
+            return 1;
+        }
+        previous = thing;
+        thing = nextThing;
+    }
+    return 0;
+}
+
+static int orch_delete_projectile_move_events_compat(
+    struct GameWorld_Compat* world,
+    int projectileIndex)
+{
+    int i;
+    int writeIndex = 0;
+    int deleted = 0;
+    int oldCount;
+
+    if (!world || projectileIndex < 0) return 0;
+    oldCount = world->timeline.count;
+    for (i = 0; i < oldCount; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+            event->aux0 == projectileIndex) {
+            deleted = 1;
+            continue;
+        }
+        if (writeIndex != i) {
+            world->timeline.events[writeIndex] = world->timeline.events[i];
+        }
+        ++writeIndex;
+    }
+    while (writeIndex < oldCount) {
+        memset(&world->timeline.events[writeIndex], 0, sizeof(world->timeline.events[writeIndex]));
+        ++writeIndex;
+    }
+    if (deleted) world->timeline.count = writeIndex;
+    return deleted;
+}
+
+static int orch_find_active_group_state_index_compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex)
+{
+    int i;
+    if (!world || groupIndex < 0) return -1;
+    for (i = 0; i < world->creatureAICount; ++i) {
+        if (world->creatureAI[i].reserved0 == groupIndex) return i;
+    }
+    return -1;
+}
+
+static void orch_remove_active_group_state_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex)
+{
+    int i;
+    int writeIndex = 0;
+    if (!world || groupIndex < 0) return;
+    for (i = 0; i < world->creatureAICount; ++i) {
+        if (world->creatureAI[i].reserved0 == groupIndex) continue;
+        if (writeIndex != i) world->creatureAI[writeIndex] = world->creatureAI[i];
+        ++writeIndex;
+    }
+    while (writeIndex < world->creatureAICount) {
+        memset(&world->creatureAI[writeIndex], 0, sizeof(world->creatureAI[writeIndex]));
+        ++writeIndex;
+    }
+    world->creatureAICount = writeIndex;
+}
+
 static int orch_group_creature_cell_compat(
     const struct DungeonGroup_Compat* group,
     int creatureIndex)
@@ -1348,6 +1447,173 @@ static int orch_group_set_creature_cell_compat(
     int shift = creatureIndex << 1;
     return (cells & ~(0x03 << shift)) | ((cell & 0x03) << shift);
 }
+
+static void orch_build_group_projectile_impact_cells_compat(
+    const struct DungeonGroup_Compat* group,
+    unsigned char ordinalInCell[4])
+{
+    int i;
+    if (!ordinalInCell) return;
+    memset(ordinalInCell, 0, 4);
+    if (!group) return;
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        int cell;
+        if (group->health[i] == 0) continue;
+        if (group->cells == 0xFFu) {
+            ordinalInCell[0] = ordinalInCell[1] =
+                ordinalInCell[2] = ordinalInCell[3] = (unsigned char)(i + 1);
+            return;
+        }
+        cell = orch_group_creature_cell_compat(group, i);
+        if (cell >= 0 && cell < 4) ordinalInCell[cell] = (unsigned char)(i + 1);
+    }
+}
+
+static int orch_damage_group_by_projectile_compat(
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    const struct DungeonProjectile_Compat* projectile)
+{
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int impactAttack;
+    int defense;
+    int damage;
+    int i;
+
+    if (!group || !projectile || creatureIndex < 0 || creatureIndex > 3) return 0;
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (profile && (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) return 0;
+
+    /* PROJEXPL.C:F0217 scales projectile impact attack by creature defense
+     * before calling GROUP.C:F0190.  The compat projectile record already
+     * stores the resolved impact attack/energy, so this keeps the same
+     * source-shaped branch without recreating every associated-object case. */
+    impactAttack = projectile->attack ? projectile->attack : projectile->kineticEnergy;
+    defense = (profile && profile->baseDefense > 0) ? profile->baseDefense : 64;
+    damage = (impactAttack << 6) / defense;
+    if (damage <= 0) return 0;
+
+    if (group->health[creatureIndex] > (unsigned int)damage) {
+        group->health[creatureIndex] = (unsigned short)(group->health[creatureIndex] - damage);
+        return 0;
+    }
+
+    group->health[creatureIndex] = 0;
+    if (group->count == 0) return 2;
+
+    for (i = creatureIndex; i < (int)group->count && i < 3; ++i) {
+        group->health[i] = group->health[i + 1];
+        if (group->cells != 0xFFu) {
+            group->cells = (unsigned char)orch_group_set_creature_cell_compat(
+                group->cells, i, orch_group_creature_cell_compat(group, i + 1));
+        }
+    }
+    group->health[group->count] = 0;
+    if (group->cells != 0xFFu) group->cells = (unsigned char)(group->cells & 0x3Fu);
+    group->count--;
+    return 1;
+}
+
+static int orch_process_group_projectile_impacts_on_square_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    const unsigned char ordinalInCell[4],
+    int* outKilledGroup)
+{
+    int sftIndex;
+    int restart;
+
+    if (outKilledGroup) *outKilledGroup = 0;
+    if (!world || !group || !ordinalInCell || !world->dungeon || !world->things) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 1;
+
+    do {
+        unsigned short thing = world->things->squareFirstThings[sftIndex];
+        int safety = 0;
+        restart = 0;
+        while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+            int type = THING_GET_TYPE(thing);
+            int index = THING_GET_INDEX(thing);
+            int cell = THING_GET_CELL(thing);
+            if (type == THING_TYPE_PROJECTILE && index >= 0 &&
+                index < world->things->projectileCount && world->things->projectiles &&
+                ordinalInCell[cell]) {
+                struct DungeonProjectile_Compat* projectile = &world->things->projectiles[index];
+                int creatureIndex = (int)ordinalInCell[cell] - 1;
+                int outcome;
+
+                /* MOVESENS.C:F0266:292-301 calls F0217 on matching projectile
+                 * cells, then F0214 deletes the projectile event and F0217/
+                 * PROJEXPL.C:607-608 unlinks/deletes the projectile thing.
+                 * The compat timeline stores projectile slot in aux0. */
+                (void)orch_delete_projectile_move_events_compat(world, index);
+                (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
+                projectile->next = THING_NONE;
+                projectile->eventIndex = 0xFFFFu;
+                outcome = orch_damage_group_by_projectile_compat(group, creatureIndex, projectile);
+                if (outcome == 2) {
+                    if (outKilledGroup) *outKilledGroup = 1;
+                    return 1;
+                }
+                restart = 1;
+                break;
+            }
+            thing = orch_next_thing_compat(world->things, thing);
+        }
+    } while (restart);
+    return 1;
+}
+
+static int orch_apply_f0266_group_projectile_precheck_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int sourceMapIndex,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    int* outKilledGroup)
+{
+    struct DungeonGroup_Compat* group;
+    unsigned char sourceOrdinalInCell[4];
+    unsigned char destinationOrdinalInCell[4];
+    unsigned char intermediaryOrdinalInCell[4];
+    int checkDestination;
+
+    if (outKilledGroup) *outKilledGroup = 0;
+    if (!world || !world->things || groupIndex < 0 ||
+        groupIndex >= world->things->groupCount || !world->things->groups) return 0;
+    if (sourceMapX < 0) return 1;
+    if (sourceMapIndex != world->partyMapIndex) return 1;
+
+    /* MOVESENS.C:F0267:432-435 enters F0266 only for party moves or
+     * groups moving on the party map from a real source square.  Non-square
+     * C006/F0185/event60 insertion remains the no-impact preservation path. */
+    group = &world->things->groups[groupIndex];
+    orch_build_group_projectile_impact_cells_compat(group, sourceOrdinalInCell);
+    checkDestination = F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+        sourceMapX, sourceMapY, destinationMapX, destinationMapY,
+        sourceOrdinalInCell, destinationOrdinalInCell, intermediaryOrdinalInCell);
+    if (!orch_process_group_projectile_impacts_on_square_compat(
+            world, group, sourceMapIndex, sourceMapX, sourceMapY,
+            sourceOrdinalInCell, outKilledGroup)) {
+        return 0;
+    }
+    if (outKilledGroup && *outKilledGroup) return 1;
+    if (checkDestination) {
+        if (!orch_process_group_projectile_impacts_on_square_compat(
+                world, group, sourceMapIndex, destinationMapX, destinationMapY,
+                intermediaryOrdinalInCell, outKilledGroup)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 
 static unsigned short orch_allocate_fixed_possession_thing_compat(
     struct DungeonThings_Compat* things,
@@ -2113,6 +2379,107 @@ static int orch_handle_deferred_group_move_event_compat(
         world, groupIndex, retry.mapIndex, targetMapX, targetMapY);
 }
 
+
+static int orch_link_existing_group_to_square_head_only_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct DungeonGroup_Compat* group;
+    int sftIndex;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    group = &world->things->groups[groupIndex];
+    group->next = world->things->squareFirstThings[sftIndex];
+    world->things->squareFirstThings[sftIndex] =
+        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
+    return 1;
+}
+
+static int orch_handle_creature_tick_group_move_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int groupIndex;
+    int activeIndex;
+    int direction;
+    int destMapX;
+    int destMapY;
+    int killedByProjectile = 0;
+    struct DungeonGroup_Compat* group;
+    struct TimelineEvent_Compat nextEvent;
+
+    (void)result;
+    if (!world || !ev || !world->things || !world->dungeon) return 0;
+    groupIndex = ev->aux0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount || !world->things->groups) return 0;
+    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (activeIndex < 0) return 1;
+    group = &world->things->groups[groupIndex];
+    direction = world->creatureAI[activeIndex].groupDirection & 3;
+    destMapX = ev->mapX;
+    destMapY = ev->mapY;
+    switch (direction) {
+        case DIR_NORTH: destMapY--; break;
+        case DIR_EAST:  destMapX++; break;
+        case DIR_SOUTH: destMapY++; break;
+        case DIR_WEST:  destMapX--; break;
+    }
+
+    if (!F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+            world->dungeon, ev->mapIndex, destMapX, destMapY,
+            MOVEMENT_PASS_CTX_CREATURE) ||
+        orch_square_has_group_or_party_compat(world, ev->mapIndex, destMapX, destMapY)) {
+        nextEvent = *ev;
+        nextEvent.fireAtTick = world->gameTick + 1u;
+        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
+    }
+
+    if (!orch_apply_f0266_group_projectile_precheck_compat(
+            world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
+            destMapX, destMapY, &killedByProjectile)) {
+        return 0;
+    }
+    if (killedByProjectile) {
+        (void)orch_unlink_thing_from_square_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
+        group->next = THING_NONE;
+        orch_remove_active_group_state_compat(world, groupIndex);
+        return 1;
+    }
+
+    if (!orch_unlink_thing_from_square_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+        return 0;
+    }
+    group->direction = (unsigned char)direction;
+    if (!orch_link_existing_group_to_square_head_only_compat(
+            world, groupIndex, ev->mapIndex, destMapX, destMapY)) {
+        return 0;
+    }
+
+    world->creatureAI[activeIndex].groupMapIndex = ev->mapIndex;
+    world->creatureAI[activeIndex].groupMapX = destMapX;
+    world->creatureAI[activeIndex].groupMapY = destMapY;
+    world->creatureAI[activeIndex].groupCells = group->cells;
+
+    nextEvent = *ev;
+    nextEvent.fireAtTick = world->gameTick + 1u;
+    nextEvent.mapX = destMapX;
+    nextEvent.mapY = destMapY;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
+}
+
 static int orch_handle_group_generator_trigger_runtime_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -2830,7 +3197,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_SENSOR_DELAYED:
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
+            break;
         case TIMELINE_EVENT_CREATURE_TICK:
+            (void)orch_handle_creature_tick_group_move_compat(world, &ev, result);
+            break;
         case TIMELINE_EVENT_PROJECTILE_MOVE:
         case TIMELINE_EVENT_EXPLOSION_ADVANCE:
         default:
