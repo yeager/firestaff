@@ -151,6 +151,13 @@ int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int 
                                                int pc34Slot, M11_Item* out);
 int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot);
 const char *dm1_inventory_pass601_inventory_source_evidence(void);
+int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
+                                               int partyChampionCount,
+                                               int inventoryChampionOrdinal,
+                                               int candidateChampionOrdinal,
+                                               const int* championCurrentHealth,
+                                               int* outChampionIndex,
+                                               int* outPc34SourceSlot);
 int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot);
 int m11_inventory_pc34_is_chest_source_slot(int pc34Slot);
 int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,

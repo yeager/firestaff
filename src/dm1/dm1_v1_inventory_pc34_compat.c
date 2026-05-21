@@ -346,6 +346,54 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
     return 1;
 }
 
+int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
+                                               int partyChampionCount,
+                                               int inventoryChampionOrdinal,
+                                               int candidateChampionOrdinal,
+                                               const int* championCurrentHealth,
+                                               int* outChampionIndex,
+                                               int* outPc34SourceSlot) {
+    if (outChampionIndex) {
+        *outChampionIndex = -1;
+    }
+    if (outPc34SourceSlot) {
+        *outPc34SourceSlot = -1;
+    }
+
+    if (slotBoxIndex < 0 || slotBoxIndex >= 8 || partyChampionCount < 0 ||
+        partyChampionCount > M11_MAX_CHAMPIONS || !championCurrentHealth) {
+        return 0;
+    }
+
+    if (candidateChampionOrdinal != 0) {
+        return 0;
+    }
+
+    const int championIndex = slotBoxIndex >> 1;
+    if (championIndex >= partyChampionCount) {
+        return 0;
+    }
+
+    if (inventoryChampionOrdinal == championIndex + 1) {
+        return 0;
+    }
+
+    if (championCurrentHealth[championIndex] <= 0) {
+        return 0;
+    }
+
+    const int pc34SourceSlot = (slotBoxIndex & 1) ?
+        DM1_PC34_SLOT_ACTION_HAND : DM1_PC34_SLOT_READY_HAND;
+
+    if (outChampionIndex) {
+        *outChampionIndex = championIndex;
+    }
+    if (outPc34SourceSlot) {
+        *outPc34SourceSlot = pc34SourceSlot;
+    }
+    return 1;
+}
+
 int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
                              const M11_Item* linkedItems, int linkedItemCount) {
     if (!s || champ < 0 || champ >= s->championCount || openChestThing == 0 ||
@@ -437,12 +485,15 @@ int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
  * CHAMPION.C:489-560  F0300_CHAMPION_GetObjectRemovedFromSlot
  * CHAMPION.C:587-660  F0301_CHAMPION_AddObjectInSlot
  * CHAMPION.C:662-712  F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox
+ *   677-687: status hand slot boxes resolve to championIndex=(slot>>1)
+ *            and hand slot=(slot&1); inventory panel slots subtract C08.
  *   BUG0_39: Food/Water panel flash when swapping scroll/chest in leader hand
  *   (F0300 sets MASK0x0800, F0297 triggers F0292 which draws panel prematurely)
  *
  * OBJECT.C:121-200    F0032_OBJECT_GetType (thing type extraction)
  * OBJECT.C:25-120     F0031_OBJECT_LoadNames (object name table)
  * CHEST.C:30-46       F0333 open chest id guard, close-other, open icon
+ * CLIKCHAM.C:31-32    status-hand commands dispatch F0302 with command offset
  * CHEST.C:53-76       F0333 copies first 8 linked container things into G0425
  * CHEST.C:112-133     F0334 closes by compacting non-empty G0425 slots back to links
  * DEFS.H:778-817      C00..C37 inventory/backpack/chest slot namespace
@@ -459,12 +510,15 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "CHAMPION.C:587-660 F0301_AddObjectInSlot\n"
         "CHAMPION.C:694-699 F0302 empty-slot no-op and AllowedSlots/SlotMasks rejection\n"
         "CHAMPION.C:701-710 F0302 leader-hand/slot swap order\n"
+        "CHAMPION.C:677-687 F0302 status hand slot routing gates\n"
         "DATA.C:1049-1087 G0038_ai_Graphic562_SlotMasks\n"
         "DEFS.H:778-817 C00..C37 inventory/backpack/chest slot index namespace\n"
+        "DEFS.H:1874-1878 C08 slot-box split and M070_HAND_SLOT_INDEX\n"
         "DEFS.H:1698-1710 object allowed-slot masks\n"
         "CHEST.C:30-46 F0333 open chest guard/open icon\n"
         "CHEST.C:53-76 F0333 first-8 chest slot copy\n"
         "CHEST.C:112-133 F0334 non-empty slot compact close\n"
+        "CLIKCHAM.C:31-32 status box hand click dispatch\n"
         "CHAMPION.C:662-712 F0302_ProcessCommands28To65_ClickOnSlotBox BUG0_39\n"
         "OBJECT.C:121-200 F0032_OBJECT_GetType\n"
         "OBJECT.C:25-120 F0031_OBJECT_LoadNames\n";

@@ -24,9 +24,37 @@ int main(void) {
     M11_InventoryState state;
     M11_Item item;
     int ok = 1;
+    int health[4] = { 100, 100, 100, 100 };
+    int championIndex = -1;
+    int pc34SourceSlot = -1;
 
     printf("probe=dm1_v1_inventory_equip_slots_pc34_compat\n");
     printf("sourceEvidence=%s\n", dm1_inventory_pass601_inventory_source_evidence());
+
+    ok &= expect_int("status slotbox 0 routes champion 0 ready hand",
+                     m11_inventory_resolve_status_hand_slot_box(0, 4, 0, 0, health,
+                                                                &championIndex, &pc34SourceSlot), 1);
+    ok &= expect_int("slotbox 0 champion", championIndex, 0);
+    ok &= expect_int("slotbox 0 source slot", pc34SourceSlot, DM1_PC34_SLOT_READY_HAND);
+    ok &= expect_int("status slotbox 3 routes champion 1 action hand",
+                     m11_inventory_resolve_status_hand_slot_box(3, 4, 0, 0, health,
+                                                                &championIndex, &pc34SourceSlot), 1);
+    ok &= expect_int("slotbox 3 champion", championIndex, 1);
+    ok &= expect_int("slotbox 3 source slot", pc34SourceSlot, DM1_PC34_SLOT_ACTION_HAND);
+    ok &= expect_int("slotbox rejects champion outside party count",
+                     m11_inventory_resolve_status_hand_slot_box(6, 3, 0, 0, health,
+                                                                &championIndex, &pc34SourceSlot), 0);
+    ok &= expect_int("slotbox rejects currently open inventory champion",
+                     m11_inventory_resolve_status_hand_slot_box(2, 4, 2, 0, health,
+                                                                &championIndex, &pc34SourceSlot), 0);
+    ok &= expect_int("slotbox rejects candidate champion flow",
+                     m11_inventory_resolve_status_hand_slot_box(2, 4, 0, 1, health,
+                                                                &championIndex, &pc34SourceSlot), 0);
+    health[2] = 0;
+    ok &= expect_int("slotbox rejects dead champion",
+                     m11_inventory_resolve_status_hand_slot_box(4, 4, 0, 0, health,
+                                                                &championIndex, &pc34SourceSlot), 0);
+    health[2] = 100;
 
     ok &= expect_int("ready hand mask", m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_READY_HAND),
                      DM1_PC34_ALLOWED_ANY_SLOT);
