@@ -14,6 +14,7 @@ Status per 2026-05-19 v2.4.0.
 ### Movement & Collision
 
 - 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, D0, and D0C current-square evidence manifests and focused viewport regression coverage through 49f15769; the side-content center-blocker probe is enabled and validates the ReDMCSB side-wall occlusion source route (9b9cda30); pass608 records the same-viewport capture blocker, so remaining wall/viewport parity gaps still need promotable original/Firestaff capture-backed closure (49f15769)
+- 🔧 Input command routing — release-mouse button identity and routed click acceptance are source-locked for the V1 command queue path (6a168a9e); remaining input parity work should stay tied to original capture-backed movement/viewport scripts
 
 ### Creature System
 
@@ -22,7 +23,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Champion System
 
-- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper (4a13163e), runtime current/maximum statistic row wiring (4c671c34), and the F0351 text-run layout/color model plus M11 stats text routing coverage (ac3efa45) are source-locked; remaining polish is framebuffer/pixel parity for the drawn colored per-stat panel
+- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper and status box model (dc4cbb37), runtime current/maximum statistic row wiring (4c671c34), and the F0351 text-run layout/color model plus M11 stats text routing coverage (ac3efa45) are source-locked; remaining polish is framebuffer/pixel parity for the drawn colored per-stat panel
 
 ### Inventory & Items
 
