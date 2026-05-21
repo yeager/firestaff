@@ -285,6 +285,11 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
 
+int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    const struct ProjectileInstance_Compat* projectile);
+
 /* ================================================================
  *  Group D — Determinism + Hash (F0891-F0893)
  * ================================================================ */

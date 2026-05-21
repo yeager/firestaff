@@ -17,6 +17,11 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
 
+enum {
+    ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
+    ORCH_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
+};
+
 /* ================================================================
  *  Local LE helpers
  * ================================================================ */
@@ -1469,10 +1474,10 @@ static void orch_build_group_projectile_impact_cells_compat(
     }
 }
 
-static int orch_damage_group_by_projectile_compat(
+int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
-    const struct DungeonProjectile_Compat* projectile)
+    const struct ProjectileInstance_Compat* projectile)
 {
     const struct CreatureBehaviorProfile_Compat* profile;
     int impactAttack;
@@ -1484,11 +1489,24 @@ static int orch_damage_group_by_projectile_compat(
     profile = CREATURE_GetProfile_Compat(group->creatureType);
     if (profile && (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) return 0;
 
+    impactAttack = projectile->attack ? projectile->attack : projectile->kineticEnergy;
+
+    /* ReDMCSB PROJEXPL.C:F0217 heals Black Flame on fireball impact
+     * and then skips the normal damage branch. */
+    if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+        group->creatureType == ORCH_CREATURE_BLACK_FLAME_PC34) {
+        int healed = (int)group->health[creatureIndex] + impactAttack;
+        if (healed > ORCH_BLACK_FLAME_MAX_HEALTH_PC34) {
+            healed = ORCH_BLACK_FLAME_MAX_HEALTH_PC34;
+        }
+        group->health[creatureIndex] = (unsigned short)healed;
+        return 0;
+    }
+
     /* PROJEXPL.C:F0217 scales projectile impact attack by creature defense
      * before calling GROUP.C:F0190.  The compat projectile record already
      * stores the resolved impact attack/energy, so this keeps the same
      * source-shaped branch without recreating every associated-object case. */
-    impactAttack = projectile->attack ? projectile->attack : projectile->kineticEnergy;
     defense = (profile && profile->baseDefense > 0) ? profile->baseDefense : 64;
     damage = (impactAttack << 6) / defense;
     if (damage <= 0) return 0;
@@ -1512,6 +1530,22 @@ static int orch_damage_group_by_projectile_compat(
     if (group->cells != 0xFFu) group->cells = (unsigned char)(group->cells & 0x3Fu);
     group->count--;
     return 1;
+}
+
+static int orch_damage_group_by_projectile_compat(
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    const struct DungeonProjectile_Compat* projectile)
+{
+    struct ProjectileInstance_Compat compatProjectile;
+
+    if (!projectile) return 0;
+    memset(&compatProjectile, 0, sizeof(compatProjectile));
+    compatProjectile.projectileSubtype = projectile->slot & 0x00FFu;
+    compatProjectile.kineticEnergy = projectile->kineticEnergy;
+    compatProjectile.attack = projectile->attack;
+    return F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
+        group, creatureIndex, &compatProjectile);
 }
 
 static int orch_process_group_projectile_impacts_on_square_compat(

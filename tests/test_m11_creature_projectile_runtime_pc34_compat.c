@@ -17,6 +17,7 @@
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
@@ -163,6 +164,35 @@ static void test_live_idle_tick_inserts_creature_projectile(void) {
               "live creature tick projectile has first-move grace");
 }
 
+
+static void test_black_flame_fireball_impact_heals_and_caps(void) {
+    struct DungeonGroup_Compat group;
+    struct ProjectileInstance_Compat projectile;
+
+    memset(&group, 0, sizeof(group));
+    memset(&projectile, 0, sizeof(projectile));
+
+    group.creatureType = 11; /* ReDMCSB C11_CREATURE_BLACK_FLAME */
+    group.count = 0;
+    group.cells = 0xFF;
+    group.health[0] = 990;
+
+    projectile.projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    projectile.attack = 15;
+
+    ASSERT_EQ(F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(&group, 0, &projectile),
+              0, "black flame fireball impact does not kill");
+    ASSERT_EQ(group.health[0], 1000,
+              "black flame fireball impact heals and caps at 1000");
+
+    group.health[0] = 120;
+    projectile.attack = 30;
+    ASSERT_EQ(F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(&group, 0, &projectile),
+              0, "black flame fireball impact uses heal branch");
+    ASSERT_EQ(group.health[0], 150,
+              "black flame fireball impact adds projectile attack to health");
+}
+
 static void test_first_move_grace_skips_source_square_impact(void) {
     struct ProjectileCreateInput_Compat input;
     struct ProjectileList_Compat list;
@@ -218,6 +248,7 @@ int main(void) {
 
     test_probe_inserts_creature_projectile_slot();
     test_live_idle_tick_inserts_creature_projectile();
+    test_black_flame_fireball_impact_heals_and_caps();
     test_first_move_grace_skips_source_square_impact();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
