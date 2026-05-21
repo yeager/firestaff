@@ -6,8 +6,8 @@
  *   PANEL.C F0342 lines 1126-1131: scroll object dispatches to F0341
  *   PANEL.C F0341 lines 890-895: decodes Scroll.TextStringThingIndex
  *     with C2_TEXT_TYPE_SCROLL | MASK0x8000_DECODE_EVEN_IF_INVISIBLE
- *   PANEL.C F0341 lines 969-1043: blits C023 open-scroll panel and
- *     renders each decoded newline-separated line
+ *   PANEL.C F0341 lines 969-1043: blits C023 open-scroll panel into C101 with red transparency
+ *     and renders each decoded newline-separated line
  */
 
 #include "m11_game_view.h"
@@ -15,6 +15,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 unsigned short G2157_;
@@ -38,6 +39,56 @@ static int g_fail = 0;
     if (strcmp((a), (b)) == 0) { g_pass++; } \
     else { g_fail++; fprintf(stderr, "FAIL: %s: expected '%s', got '%s'\n", (msg), (b), (a)); } \
 } while (0)
+
+static const char* graphics_dat_path(void) {
+    const char* env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    if (env && env[0] != '\0') return env;
+    return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+}
+
+static int point_is_in_scroll_text_band(int y) {
+    /* The source C023 panel blit happens before F0340 text rendering.  The
+     * fallback text renderer may overdraw a wider band than the original font,
+     * so compare the source bitmap outside the centered scroll text rows. */
+    return y >= 28 && y < 56;
+}
+
+static int framebuffer_matches_open_scroll_panel_pixels(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer) {
+    const M11_AssetSlot* panel;
+    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int matched = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+    (void)viewportW;
+    (void)viewportH;
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)M11_GameView_GetV1OpenScrollPanelGraphicId());
+    if (!panel || !panel->pixels ||
+        panel->width != (unsigned short)panelW ||
+        panel->height != (unsigned short)panelH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            unsigned char want = panel->pixels[y * (int)panel->width + x];
+            unsigned char got;
+            if (want == 8 || point_is_in_scroll_text_band(y)) continue;
+            got = framebuffer[(viewportY + panelY + y) * 320 + (viewportX + panelX + x)];
+            if (got != want) return 0;
+            matched++;
+        }
+    }
+    return matched > 1000;
+}
 
 static unsigned short pack3(int a, int b, int c) {
     return (unsigned short)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
@@ -133,6 +184,29 @@ static void test_inventory_draw_overlays_scroll_panel_region(void) {
                 "scroll panel render path reaches C101 lower interior");
 }
 
+static void test_inventory_draw_blits_source_open_scroll_panel_pixels(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonTextString_Compat textStrings[1];
+    struct DungeonScroll_Compat scrolls[1];
+    unsigned short textData[3];
+    unsigned char framebuffer[320 * 200];
+
+    M11_GameView_Init(&state);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for source C023 scroll panel blit");
+    state.assetsAvailable = 1;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+
+    ASSERT_TRUE(framebuffer_matches_open_scroll_panel_pixels(&state, framebuffer),
+                "action-hand scroll render blits source C023 open-scroll panel into C101");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
 static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -176,6 +250,7 @@ int main(void) {
 
     test_action_hand_scroll_decode_reaches_m11_panel_state();
     test_inventory_draw_overlays_scroll_panel_region();
+    test_inventory_draw_blits_source_open_scroll_panel_pixels();
     test_eye_click_scroll_routes_without_dialog_overlay();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
