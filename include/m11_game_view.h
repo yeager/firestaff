@@ -977,6 +977,8 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
 void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state);
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state);
 int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state);
+int M11_GameView_GetV1InventorySlotIconIndex(const M11_GameViewState* state,
+                                             int championSlot);
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
                                            char* out,
                                            int outSize);

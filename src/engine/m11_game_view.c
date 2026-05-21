@@ -19052,6 +19052,42 @@ int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) 
     return m11_object_icon_index_for_thing(state, state->world.things, thing);
 }
 
+static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* state,
+                                                      int championSlot,
+                                                      unsigned short thing) {
+    int iconIndex;
+    if (!state || !state->world.things ||
+        thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return -1;
+    }
+    iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
+    /* ReDMCSB CHEST.C:43-46 draws C145 into C09 when a chest is open;
+     * CHAMDRAW.C:621-630 performs the same closed-to-open remap when
+     * redrawing the inventory champion's action-hand slot. */
+    if (championSlot == CHAMPION_SLOT_ACTION_HAND &&
+        thing == M11_GameView_GetV1OpenChestThing(state) &&
+        iconIndex == 144) {
+        return 145;
+    }
+    return iconIndex;
+}
+
+int M11_GameView_GetV1InventorySlotIconIndex(const M11_GameViewState* state,
+                                             int championSlot) {
+    int championIndex;
+    unsigned short thing;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) {
+        return -1;
+    }
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex >= state->world.party.championCount) {
+        return -1;
+    }
+    thing = state->world.party.champions[championIndex].inventory[championSlot];
+    return m11_v1_inventory_slot_icon_index_for_thing(state, championSlot, thing);
+}
+
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
                                            char* out,
                                            int outSize) {
@@ -23391,8 +23427,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
                 state->assetsAvailable && state->world.things) {
                 int zx = 0, zy = 0, zw = 0, zh = 0;
-                int iconIndex = m11_object_icon_index_for_thing(
-                    state, state->world.things, thingId);
+                int iconIndex = m11_v1_inventory_slot_icon_index_for_thing(
+                    state, slotIdx, thingId);
                 if (M11_GameView_GetV1InventorySourceSlotBoxZone(
                         sourceSlotBox, &zx, &zy, &zw, &zh)) {
                     (void)zw; (void)zh;

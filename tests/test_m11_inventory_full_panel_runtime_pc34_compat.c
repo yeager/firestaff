@@ -10,6 +10,8 @@
  *   CHAMPION.C F0302 lines 700-712: leader hand/slot swap and redraw
  *   PANEL.C F0347 lines 1651-1691: inventory panel redraw is driven by
  *     the active inventory champion action hand and panel content route
+ *   CHEST.C F0333 lines 43-46 and CHAMDRAW.C F0291 lines 621-630:
+ *     an open action-hand chest uses C145 instead of closed chest C144
  *   PANEL.C F0352 lines 1250-1254: weapon descriptions expose Cursed,
  *     Poisoned, Broken and ChargeCount-derived state from WEAPON data
  *   PANEL.C F0351 lines 2026-2108: eye click with empty leader hand draws
@@ -269,6 +271,32 @@ static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
               "action hand stores the placed chest");
 }
 
+static void test_action_hand_open_chest_icon_runtime(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat container;
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&container, 0, sizeof(container));
+    things.containers = &container;
+    things.containerCount = 1;
+    container.type = 0;
+    container.slot = THING_ENDOFLIST;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "closed action-hand container uses source C144 before panel open");
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "opening action-hand chest succeeds for icon remap");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND), 145,
+              "open action-hand chest remaps source icon C144 to C145");
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "closed panel restores action-hand chest icon C144");
+}
+
 static void test_object_description_layout_source_zones(void) {
     int x = -1, y = -1, w = -1, h = -1;
     const char* evidence = M11_GameView_GetV1ObjectDescriptionLayoutEvidence();
@@ -465,6 +493,7 @@ int main(void) {
     test_extended_backpack_runtime_clicks();
     test_open_chest_runtime_routes_and_clicks();
     test_action_hand_chest_panel_state_follows_slot_clicks();
+    test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();
     test_object_description_layout_source_zones();
     test_eye_panel_weapon_attribute_flags();
