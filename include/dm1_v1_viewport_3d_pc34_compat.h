@@ -340,6 +340,20 @@ typedef struct {
 } DM1_ViewportPostCommandRedrawSpec;
 
 typedef struct {
+    bool requires_original_command_transcript;
+    bool requires_same_firestaff_view_tuple;
+    bool duplicate_original_viewport_hashes_block_promotion;
+    bool requires_pc34_asset_hashes;
+    const char *mouse_zone_source_lines;
+    const char *queue_source_lines;
+    const char *turn_source_lines;
+    const char *move_source_lines;
+    const char *draw_source_lines;
+    const char *present_source_lines;
+    const char *asset_source_lines;
+} DM1_ViewportSameViewportCaptureContract;
+
+typedef struct {
     DM1_ViewSquareIndex square;
     uint16_t cell_order;
     bool stairs_draw_before_floor_ornament;
@@ -712,6 +726,10 @@ const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spe
  * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,
  * and F0097 waits until the viewport buffer has been presented. */
 const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void);
+
+/* Source-locked pass608 promotion contract for original/Firestaff same-viewport
+ * capture evidence. This is metadata only; it does not claim pixel parity. */
+const DM1_ViewportSameViewportCaptureContract *dm1_viewport_3d_same_viewport_capture_contract(void);
 
 /*
  * Source evidence string for verification.

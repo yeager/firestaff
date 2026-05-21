@@ -195,6 +195,20 @@ static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     "DRAWVIEW.C:709-722 F0097_DUNGEONVIEW_DrawViewport requests the G0296 viewport blit and waits for vertical blank",
 };
 
+static const DM1_ViewportSameViewportCaptureContract s_same_viewport_capture_contract = {
+    true,
+    true,
+    true,
+    true,
+    "COMMAND.C:106-114 PC34 movement/dungeon-view mouse zones feed the original command queue labels",
+    "COMMAND.C:2045-2156 F0380_COMMAND_ProcessQueue_CPSC pops one queued command and dispatches turn/move handlers",
+    "CLIKMENU.C:142-174 F0365_COMMAND_ProcessTypes1To2_TurnParty mutates direction and stops waiting",
+    "CLIKMENU.C:180-347 F0366_COMMAND_ProcessTypes3To6_MoveParty resolves relative movement/result ticks",
+    "DUNVIEW.C:8318-8611 F0128_DUNGEONVIEW_Draw_CPSF composes G0296 from direction/mapX/mapY and calls F0097",
+    "DRAWVIEW.C:709-858 F0097_DUNGEONVIEW_DrawViewport blits G0296 through the PC34 viewport-present boundary",
+    "_canonical/dm1 README hashes: GRAPHICS.DAT 2c3aa836..., DUNGEON.DAT d90b6b1c..., TITLE adc7f191...",
+};
+
 static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, 0x3421, true, true, true, true, true, false, true,
       "F0676_DrawD3L2",
@@ -1148,6 +1162,11 @@ const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spe
     return &s_post_command_redraw;
 }
 
+const DM1_ViewportSameViewportCaptureContract *dm1_viewport_3d_same_viewport_capture_contract(void)
+{
+    return &s_same_viewport_capture_contract;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Source Evidence
  * ──────────────────────────────────────────────────────────────────────── */
@@ -1230,6 +1249,13 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNGEON.C:1371-1421 F0150 resolves F0128 relative depth/lateral offsets to map X/Y\n"
         "  COMMAND.C:2045-2156 F0380 command dispatch before next main-loop redraw\n"
         "  GAMELOOP.C:55-90 next loop iteration redraws F0128 from post-command G0308/G0306/G0307 party tuple\n"
+        "  COMMAND.C:106-114 PC34 movement/dungeon-view mouse zones used by same-viewport capture labels\n"
+        "  COMMAND.C:2045-2156 F0380 queue pop/count delta required for same-viewport promotion\n"
+        "  CLIKMENU.C:142-174 F0365 turn state mutation required for turn-frame promotion\n"
+        "  CLIKMENU.C:180-347 F0366 movement result required for movement-frame promotion\n"
+        "  DUNVIEW.C:8318-8611 F0128 direction/mapX/mapY tuple composition required for original frame binding\n"
+        "  DRAWVIEW.C:709-858 F0097 PC34 viewport-present boundary required before screenshot acceptance\n"
+        "  canonical DM1 PC34 assets GRAPHICS.DAT/DUNGEON.DAT/TITLE hashes are required by pass608\n"
         "  DRAWVIEW.C:709-722 F0097 requests viewport blit and waits for vertical blank\n"
         "  DUNVIEW.C:8446-8542 F0128 back-to-front viewport wall/object draw order\n"
         "  DUNVIEW.C:8478-8541 F0128 wall distance buckets replay D3 side/front, D2 side/front, D1 side/front, then D0 side walls\n"

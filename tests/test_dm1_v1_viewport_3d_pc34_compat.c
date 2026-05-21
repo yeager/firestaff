@@ -792,6 +792,26 @@ static void test_post_command_redraw_contract(void)
     check_int("post_command_redraw.present_source", strstr(spec->present_source_lines, "DRAWVIEW.C:709-722") != NULL, 1);
 }
 
+static void test_same_viewport_capture_contract(void)
+{
+    const DM1_ViewportSameViewportCaptureContract *spec =
+        dm1_viewport_3d_same_viewport_capture_contract();
+
+    check_nonnull("same_viewport_capture.nonnull", spec);
+    if (!spec) return;
+    check_int("same_viewport_capture.requires_original_transcript", spec->requires_original_command_transcript ? 1 : 0, 1);
+    check_int("same_viewport_capture.requires_firestaff_tuple", spec->requires_same_firestaff_view_tuple ? 1 : 0, 1);
+    check_int("same_viewport_capture.duplicate_hashes_block", spec->duplicate_original_viewport_hashes_block_promotion ? 1 : 0, 1);
+    check_int("same_viewport_capture.requires_assets", spec->requires_pc34_asset_hashes ? 1 : 0, 1);
+    check_int("same_viewport_capture.mouse_source", strstr(spec->mouse_zone_source_lines, "COMMAND.C:106-114") != NULL, 1);
+    check_int("same_viewport_capture.queue_source", strstr(spec->queue_source_lines, "COMMAND.C:2045-2156") != NULL, 1);
+    check_int("same_viewport_capture.turn_source", strstr(spec->turn_source_lines, "CLIKMENU.C:142-174") != NULL, 1);
+    check_int("same_viewport_capture.move_source", strstr(spec->move_source_lines, "CLIKMENU.C:180-347") != NULL, 1);
+    check_int("same_viewport_capture.draw_source", strstr(spec->draw_source_lines, "DUNVIEW.C:8318-8611") != NULL, 1);
+    check_int("same_viewport_capture.present_source", strstr(spec->present_source_lines, "DRAWVIEW.C:709-858") != NULL, 1);
+    check_int("same_viewport_capture.asset_source", strstr(spec->asset_source_lines, "GRAPHICS.DAT") != NULL && strstr(spec->asset_source_lines, "DUNGEON.DAT") != NULL, 1);
+}
+
 static void test_floor_field_stairs_pit_teleporter_order(void)
 {
     static const struct {
@@ -1067,6 +1087,12 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.command_dispatch", strstr(e, "COMMAND.C:2045-2156") != NULL, 1);
     check_int("source_evidence.next_redraw", strstr(e, "GAMELOOP.C:55-90") != NULL, 1);
     check_int("source_evidence.present_wait", strstr(e, "DRAWVIEW.C:709-722") != NULL, 1);
+    check_int("source_evidence.same_viewport_mouse", strstr(e, "COMMAND.C:106-114") != NULL, 1);
+    check_int("source_evidence.same_viewport_turn", strstr(e, "CLIKMENU.C:142-174") != NULL, 1);
+    check_int("source_evidence.same_viewport_move", strstr(e, "CLIKMENU.C:180-347") != NULL, 1);
+    check_int("source_evidence.same_viewport_draw", strstr(e, "DUNVIEW.C:8318-8611") != NULL, 1);
+    check_int("source_evidence.same_viewport_present", strstr(e, "DRAWVIEW.C:709-858") != NULL, 1);
+    check_int("source_evidence.same_viewport_assets", strstr(e, "canonical DM1 PC34 assets") != NULL, 1);
 }
 
 int main(void)
@@ -1091,6 +1117,7 @@ int main(void)
     test_floor_ceiling_bands_and_zones();
     test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();
+    test_same_viewport_capture_contract();
     test_source_evidence_mentions_visual_lane();
 
     if (g_failures) {
