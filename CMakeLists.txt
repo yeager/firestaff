@@ -3101,6 +3101,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original transcript turn/redraw route gate ---------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass626_dm1_v1_original_transcript_turn_redraw_route
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass626_dm1_v1_original_transcript_turn_redraw_route.py
+    )
+endif()
+
 # -- DM1 V1 original capture route preflight gate -------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
