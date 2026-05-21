@@ -568,6 +568,24 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
                                                       int groupMapX,
                                                       int groupMapY);
 
+/* Probe the DM1 V1 creature fixed-possession materialization bridge.
+ * Mirrors GROUP.C F0186 allocation through F0166-style unused object slots
+ * and F0267-style placement from CM1_MAPX_NOT_ON_A_SQUARE onto the target
+ * square. Returns the number of object things materialized, or -1 on error. */
+int M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+    M11_GameViewState* state,
+    int creatureType,
+    int sourceCell,
+    int mapIndex,
+    int mapX,
+    int mapY);
+int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* V1 explosion cycle probe hook: drive one tick of the V1 explosion
  * advance over all live explosion slots.  Normally invoked from
  * M11_GameView_ProcessTickEmissions each orchestrator tick right after

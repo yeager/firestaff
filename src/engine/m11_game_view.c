@@ -3238,6 +3238,240 @@ static int m11_prepend_thing_to_square(struct GameWorld_Compat* world,
     return 1;
 }
 
+static unsigned short m11_thing_with_cell(int thingType, int thingIndex, int cell) {
+    return (unsigned short)(((cell & 0x03) << 14) |
+                            ((thingType & 0x0F) << 10) |
+                            (thingIndex & 0x03FF));
+}
+
+static void m11_store_raw_object4(struct DungeonThings_Compat* things,
+                                  int thingType,
+                                  int thingIndex,
+                                  unsigned short next,
+                                  int itemType,
+                                  int cursed) {
+    unsigned char* raw;
+    unsigned short bf;
+    if (!things || thingType < 0 || thingType >= 16 ||
+        thingIndex < 0 || thingIndex >= things->thingCounts[thingType] ||
+        !things->rawThingData[thingType]) {
+        return;
+    }
+
+    raw = things->rawThingData[thingType] +
+          thingIndex * s_thingDataByteCount[thingType];
+    raw[0] = (unsigned char)(next & 0xFFu);
+    raw[1] = (unsigned char)((next >> 8) & 0xFFu);
+    bf = (unsigned short)(itemType & 0x7F);
+    if (cursed) bf |= 0x0100u;
+    raw[2] = (unsigned char)(bf & 0xFFu);
+    raw[3] = (unsigned char)((bf >> 8) & 0xFFu);
+}
+
+static void m11_set_object_drop_next(struct DungeonThings_Compat* things,
+                                     unsigned short thing,
+                                     unsigned short next) {
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    switch (type) {
+    case THING_TYPE_WEAPON:
+        if (things->weapons && index >= 0 && index < things->weaponCount) {
+            things->weapons[index].next = next;
+            m11_store_raw_object4(things, type, index, next,
+                                  things->weapons[index].type,
+                                  things->weapons[index].cursed);
+        }
+        break;
+    case THING_TYPE_ARMOUR:
+        if (things->armours && index >= 0 && index < things->armourCount) {
+            things->armours[index].next = next;
+            m11_store_raw_object4(things, type, index, next,
+                                  things->armours[index].type,
+                                  things->armours[index].cursed);
+        }
+        break;
+    case THING_TYPE_JUNK:
+        if (things->junks && index >= 0 && index < things->junkCount) {
+            things->junks[index].next = next;
+            m11_store_raw_object4(things, type, index, next,
+                                  things->junks[index].type,
+                                  things->junks[index].cursed);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+static int m11_find_unused_object_slot(const struct DungeonThings_Compat* things,
+                                       int thingType) {
+    int i;
+    if (!things) return -1;
+    switch (thingType) {
+    case THING_TYPE_WEAPON:
+        if (!things->weapons) return -1;
+        for (i = 0; i < things->weaponCount; ++i) {
+            if (things->weapons[i].next == THING_NONE) return i;
+        }
+        break;
+    case THING_TYPE_ARMOUR:
+        if (!things->armours) return -1;
+        for (i = 0; i < things->armourCount; ++i) {
+            if (things->armours[i].next == THING_NONE) return i;
+        }
+        break;
+    case THING_TYPE_JUNK:
+        if (!things->junks) return -1;
+        for (i = 0; i < things->junkCount; ++i) {
+            if (things->junks[i].next == THING_NONE) return i;
+        }
+        break;
+    default:
+        break;
+    }
+    return -1;
+}
+
+static unsigned short m11_allocate_fixed_possession_thing(
+    struct DungeonThings_Compat* things,
+    const struct DM1FixedPossessionDrop_Compat* drop) {
+    int index;
+    unsigned short thing;
+    if (!things || !drop) return THING_NONE;
+    index = m11_find_unused_object_slot(things, drop->thingType);
+    if (index < 0) return THING_NONE;
+
+    thing = m11_thing_with_cell(drop->thingType, index, drop->cell);
+    switch (drop->thingType) {
+    case THING_TYPE_WEAPON:
+        memset(&things->weapons[index], 0, sizeof(things->weapons[index]));
+        things->weapons[index].next = THING_ENDOFLIST;
+        things->weapons[index].type = (unsigned char)(drop->itemType & 0x7F);
+        things->weapons[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+        break;
+    case THING_TYPE_ARMOUR:
+        memset(&things->armours[index], 0, sizeof(things->armours[index]));
+        things->armours[index].next = THING_ENDOFLIST;
+        things->armours[index].type = (unsigned char)(drop->itemType & 0x7F);
+        things->armours[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+        break;
+    case THING_TYPE_JUNK:
+        memset(&things->junks[index], 0, sizeof(things->junks[index]));
+        things->junks[index].next = THING_ENDOFLIST;
+        things->junks[index].type = (unsigned char)(drop->itemType & 0x7F);
+        things->junks[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+        break;
+    default:
+        return THING_NONE;
+    }
+    m11_store_raw_object4(things, drop->thingType, index, THING_ENDOFLIST,
+                          drop->itemType, drop->cursed);
+    return thing;
+}
+
+static int m11_link_fixed_possession_thing_to_square(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thing) {
+    int base;
+    const struct DungeonMapDesc_Compat* map;
+    int squareIndex;
+    unsigned short oldFirst;
+
+    if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) return 0;
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) return 0;
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) return 0;
+
+    oldFirst = world->things->squareFirstThings[squareIndex];
+    m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
+    if (oldFirst == THING_ENDOFLIST || oldFirst == THING_NONE) {
+        world->things->squareFirstThings[squareIndex] = thing;
+    } else {
+        unsigned short current = oldFirst;
+        int safety = 0;
+        while (current != THING_ENDOFLIST && current != THING_NONE &&
+               safety++ < 64) {
+            unsigned short next = m11_get_raw_next_thing(world->things, current);
+            if (next == THING_ENDOFLIST || next == THING_NONE) {
+                int currentType = THING_GET_TYPE(current);
+                if (currentType == THING_TYPE_WEAPON ||
+                    currentType == THING_TYPE_ARMOUR ||
+                    currentType == THING_TYPE_JUNK) {
+                    m11_set_object_drop_next(world->things, current, thing);
+                } else {
+                    m11_set_raw_next_thing(world->things, current, thing);
+                }
+                break;
+            }
+            current = next;
+        }
+    }
+    return 1;
+}
+
+static int m11_materialize_creature_fixed_possession_drops(
+    M11_GameViewState* state,
+    int creatureType,
+    int sourceCell,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int dropCount = 0;
+    int weaponDropped = 0;
+    int materialized = 0;
+    int i;
+
+    if (!state || !state->world.things) return -1;
+    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+            creatureType, sourceCell, &state->world.masterRng, drops,
+            DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
+        return -1;
+    }
+
+    for (i = 0; i < dropCount; ++i) {
+        unsigned short thing =
+            m11_allocate_fixed_possession_thing(state->world.things, &drops[i]);
+        if (thing == THING_NONE) {
+            continue;
+        }
+        if (m11_link_fixed_possession_thing_to_square(
+                &state->world, mapIndex, mapX, mapY, thing)) {
+            ++materialized;
+        } else {
+            m11_set_object_drop_next(state->world.things, thing, THING_NONE);
+        }
+    }
+
+    if (materialized > 0) {
+        m11_audio_emit_source_sound(
+            state, weaponDropped ? DM1_SND_METALLIC_THUD : DM1_SND_WOODEN_THUD,
+            M11_AUDIO_MARKER_COMBAT);
+    }
+    return materialized;
+}
+
+int M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+    M11_GameViewState* state,
+    int creatureType,
+    int sourceCell,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    return m11_materialize_creature_fixed_possession_drops(
+        state, creatureType, sourceCell, mapIndex, mapX, mapY);
+}
+
 /* Find the first item-type thing on a square. */
 static unsigned short m11_find_first_item_on_square(
     const struct GameWorld_Compat* world,
@@ -4249,6 +4483,17 @@ static int m11_check_group_death_and_drop(
     }
     if (anyAlive) return 0;
 
+    /* ReDMCSB GROUP.C:F0188:716-721 calls F0186 once for each
+     * creature slot before dropping the group possession chain. */
+    for (slotI = (int)g->count; slotI >= 0; --slotI) {
+        int sourceCell = (g->cells == DM1_SINGLE_CENTERED_CREATURE_CELL)
+            ? DM1_SINGLE_CENTERED_CREATURE_CELL
+            : ((int)g->cells >> (slotI * 2)) & 0x03;
+        (void)m11_materialize_creature_fixed_possession_drops(
+            state, (int)g->creatureType, sourceCell,
+            groupMapIndex, groupMapX, groupMapY);
+    }
+
     /* Group is dead — drop possessions on the square.
      * Walk the group's slot chain and place each thing on the floor. */
     {
@@ -4258,8 +4503,6 @@ static int m11_check_group_death_and_drop(
         while (possession != THING_NONE && possession != THING_ENDOFLIST
                && safety++ < 32) {
             unsigned short nextPossession = THING_NONE;
-            int pType = THING_GET_TYPE(possession);
-            int pIdx = THING_GET_INDEX(possession);
             /* Read the next pointer before we unlink */
             nextPossession = m11_get_raw_next_thing(state->world.things, possession);
             /* Place on floor */
@@ -4287,14 +4530,25 @@ static int m11_check_group_death_and_drop(
                   m11_creature_name((int)g->creatureType));
     m11_award_kill_xp(state, (int)g->creatureType);
 
-    /* Remove the group from the square's thing list.
-     * In a full implementation this would use F0164 to properly
-     * unlink from the chain.  For now, mark it as dead by
-     * zeroing all health — the renderer already skips dead groups. */
+    /* Remove the group from the square's thing list and return its slot
+     * to the fixed source pool, matching GROUP.C F0189:759-761. */
+    (void)m11_unlink_thing_from_square(&state->world, groupMapIndex, groupMapX,
+                                       groupMapY, groupThing);
+    m11_set_raw_next_thing(state->world.things, groupThing, THING_NONE);
+    g->next = THING_NONE;
     return 1;
 }
 
 /* Deal autonomous creature damage to the party. */
+int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    return m11_check_group_death_and_drop(state, groupThing, mapIndex, mapX, mapY);
+}
+
 static void m11_creature_attack_party(
     M11_GameViewState* state,
     const struct DungeonGroup_Compat* group,
