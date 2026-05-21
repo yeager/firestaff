@@ -136,6 +136,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Item eye-panel weight line display is source-locked from ReDMCSB item description formatting (35461e0b)
 - ✅ Armour/junk/scroll/container eye-panel description families are source-locked from ReDMCSB F0342/F0336 routing and formatting: armour BROKEN/CURSED, junk CONSUMABLE plus compass and waterskin state lines, and scroll/container delegation to scroll/chest panels
 - ✅ PC34 open-chest slot setter preserves panel slot writes and close-time compact ordering in the backpack/chest runtime gate (461139c9)
+- ✅ Open action-hand chest icon remap is source-locked in M11 inventory rendering: closed container icon C144 becomes open chest C145 only for the active open action-hand chest (ba92e3a7)
 - ✅ Status-box hand-slot route resolution is source-locked into the equip-slot transaction path, including candidate/open/dead/current-inventory gates (6acbf589)
 - ✅ Object-description panel layout is source-locked for form-feed reset, PC34 body origin, 18-character wrap, text color, and 7-pixel line advance (440eaca1)
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
