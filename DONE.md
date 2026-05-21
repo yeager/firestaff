@@ -48,6 +48,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Door ornaments
 - ✅ Depth occlusion (center wall blocks far content; boundary wall blocker probe source-locked, 919598c5)
 - ✅ Side lane occlusion
+- ✅ DM1 V1 side-content center-blocker probe now runs as a normal CTest gate and validates the source-locked side-wall occlusion route (9b9cda30)
 - ✅ Palette dimming based on light level
 - ✅ HiDPI/Retina scaling (v2.0.0)
 - ✅ Fakewall viewport/collision parity — open fakewalls render as corridor, closed imaginary fakewalls stay passable but wall-like
