@@ -354,10 +354,10 @@ int main(int argc, char **argv)
 
     if (!home) home = "/home/trv2";
     snprintf(redmcsb_path, sizeof(redmcsb_path), "%s/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C", home);
-    snprintf(m11_path, sizeof(m11_path), "%s/m11_game_view.c", root);
-    snprintf(view3d_c_path, sizeof(view3d_c_path), "%s/dm1_v1_viewport_3d_pc34_compat.c", root);
-    snprintf(view3d_h_path, sizeof(view3d_h_path), "%s/dm1_v1_viewport_3d_pc34_compat.h", root);
-    snprintf(view3d_test_path, sizeof(view3d_test_path), "%s/test_dm1_v1_viewport_3d_pc34_compat.c", root);
+    snprintf(m11_path, sizeof(m11_path), "%s/src/engine/m11_game_view.c", root);
+    snprintf(view3d_c_path, sizeof(view3d_c_path), "%s/src/dm1/dm1_v1_viewport_3d_pc34_compat.c", root);
+    snprintf(view3d_h_path, sizeof(view3d_h_path), "%s/include/dm1_v1_viewport_3d_pc34_compat.h", root);
+    snprintf(view3d_test_path, sizeof(view3d_test_path), "%s/tests/test_dm1_v1_viewport_3d_pc34_compat.c", root);
 
     printf("probe=firestaff_dm1_v1_side_contents_center_blocker_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
