@@ -100,10 +100,22 @@ def verify_redmcsb() -> list[str]:
         "F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput",
         "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command",
     ]); citations.append("COMMAND.C:1452-1661 mouse enqueue/pending")
+    require("COMMAND.C:1490-1493", block(COMMAND_C, 1490, 1493), [
+        "G0436_B_PendingClickPresent = C1_TRUE",
+        "G0437_i_PendingClickX = P0725_i_X",
+        "G0438_i_PendingClickY = P0726_i_Y",
+        "G0439_i_PendingClickButtonsStatus = P0727_i_ButtonsStatus",
+    ]); citations.append("COMMAND.C:1490-1493 locked click overwrites one pending-click tuple")
     require("COMMAND.C:1692-1707", block(COMMAND_C, 1692, 1707), [
         "F0360_COMMAND_ProcessPendingClick", "if (G0436_B_PendingClickPresent)",
         "G0436_B_PendingClickPresent = C0_FALSE", "F0359_COMMAND_ProcessClick_CPSC(G0437_i_PendingClickX",
     ]); citations.append("COMMAND.C:1692-1707 pending click replay")
+    require("COMMAND.C:2854-2857", block(COMMAND_C, 2854, 2857), [
+        "G0436_B_PendingClickPresent = C1_TRUE",
+        "G0437_i_PendingClickX = P0725_i_X",
+        "G0438_i_PendingClickY = P0726_i_Y",
+        "G0439_i_PendingClickButtonsStatus = P0727_i_ButtonsStatus",
+    ]); citations.append("COMMAND.C:2854-2857 alternate locked-click path overwrites one pending-click tuple")
     require("COMMAND.C:1709-1813", block(COMMAND_C, 1709, 1813), [
         "F0361_COMMAND_ProcessKeyPress", "G0443_ps_PrimaryKeyboardInput", "G0444_ps_SecondaryKeyboardInput",
         "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command",
@@ -154,6 +166,8 @@ def verify_firestaff() -> list[str]:
     for needle in [
         "locked mouse becomes pending", "movement gate set", "movement not dequeued",
         "pending replayed", "forward dequeued after gate clears", "turn dispatched",
+        "second locked pending overwrites with turn right", "pending overwrite replays once",
+        "pending overwrite replay is latest",
         "turn bypasses movement disabled gate", "turn dequeued despite movement disabled",
         "locked direct touch inventory pending", "direct touch command",
         "pc34 table left arrow turns left", "pc34 table up arrow moves forward",

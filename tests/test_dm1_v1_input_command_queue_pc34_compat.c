@@ -86,6 +86,29 @@ int main(void)
     ok &= expect_int("turn dispatched", result.dispatchedTurn, 1);
     ok &= expect_int("queue empty", (int)queue.count, 0);
 
+    /* Source lock: ReDMCSB COMMAND.C:6-16 declares one pending-click
+     * storage tuple. COMMAND.C:1490-1493 and 2854-2857 overwrite the
+     * same tuple when the queue is locked, and COMMAND.C:1703-1705 /
+     * 2925-2927 clears and replays one saved click after unlock. */
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("first locked pending stores forward",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 270, 130, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("first locked pending command", queue.pendingClickCommand, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("second locked pending overwrites with turn right",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 300, 130, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("pending slot remains single", queue.pendingClickPresent, 1);
+    ok &= expect_int("pending overwrite keeps latest command", queue.pendingClickCommand, DM1_V1_COMMAND_TURN_RIGHT);
+    ok &= expect_int("pending overwrite keeps latest x", queue.pendingClickX, 300);
+    queue.locked = 0;
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pending overwrite replays once", result.pendingReplayCount, 1);
+    ok &= expect_int("pending overwrite queues one command", (int)queue.count, 1);
+    ok &= expect_int("pending overwrite replay command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("pending overwrite replay is latest", peek.command, DM1_V1_COMMAND_TURN_RIGHT);
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("enqueue turn while movement disabled", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
