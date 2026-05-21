@@ -273,6 +273,92 @@ static void test_wall_blocks_movement(void)
     EXPECT_INT("wall_y", party.mapY, 5);
 }
 
+/* ---- Test: accepted movement is the deterministic viewport present gate ---- */
+static void test_accepted_movement_viewport_present_gate(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[10 * 10];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+    const char* evidence;
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    EXPECT_INT("accepted_viewport_process",
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &dungeon, NULL, &party, NULL, &result),
+        1);
+
+    EXPECT_INT("accepted_viewport_dequeued", result.core.queue.dequeued, 1);
+    EXPECT_INT("accepted_viewport_command", result.core.queue.command, DM1_V1_COMMAND_MOVE_FORWARD);
+    EXPECT_INT("accepted_viewport_source_x", result.core.sourceMapX, 5);
+    EXPECT_INT("accepted_viewport_source_y", result.core.sourceMapY, 5);
+    EXPECT_INT("accepted_viewport_source_dir", result.core.sourceDirection, DIR_NORTH);
+    EXPECT_INT("accepted_viewport_final_x", party.mapX, 5);
+    EXPECT_INT("accepted_viewport_final_y", party.mapY, 4);
+    EXPECT_INT("accepted_viewport_step", result.core.stepApplied, 1);
+    EXPECT_INT("accepted_viewport_movement_flag", result.anyMovementOccurred, 1);
+    EXPECT_INT("accepted_viewport_dirty", result.viewportDirty, 1);
+    EXPECT_INT("accepted_viewport_present", result.provenance.viewportPresent, 1);
+    EXPECT_INT("accepted_viewport_no_blocked_vblank", result.blockedMovementVblankWaitRequested, 0);
+    EXPECT_INT("accepted_viewport_no_original_claim", result.provenance.originalRuntimeObserved, 0);
+    EXPECT_INT("accepted_viewport_no_pixel_claim", result.provenance.noPixelParityClaim, 1);
+
+    evidence = DM1_V1_MovementPipeline_SourceEvidencePc34Compat();
+    EXPECT("accepted_viewport_evidence_dispatch", strstr(evidence, "COMMAND.C:2150-2156") != NULL);
+    EXPECT("accepted_viewport_evidence_mutation", strstr(evidence, "CLIKMENU.C:325-346") != NULL);
+    EXPECT("accepted_viewport_evidence_mainloop", strstr(evidence, "GAMELOOP.C:90") != NULL);
+    EXPECT("accepted_viewport_evidence_dunview_present", strstr(evidence, "DUNVIEW.C:8609-8610") != NULL);
+    EXPECT("accepted_viewport_evidence_drawview_present", strstr(evidence, "DRAWVIEW.C:721-722") != NULL);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    set_sq(squares, 10, 5, 4, sq(DUNGEON_ELEMENT_WALL, 0));
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    EXPECT_INT("blocked_viewport_process",
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &dungeon, NULL, &party, NULL, &result),
+        1);
+
+    EXPECT_INT("blocked_viewport_dequeued", result.core.queue.dequeued, 1);
+    EXPECT_INT("blocked_viewport_movement_blocked", result.core.movementBlocked, 1);
+    EXPECT_INT("blocked_viewport_step", result.core.stepApplied, 0);
+    EXPECT_INT("blocked_viewport_dirty", result.viewportDirty, 0);
+    EXPECT_INT("blocked_viewport_present", result.provenance.viewportPresent, 0);
+    EXPECT_INT("blocked_viewport_vblank_wait", result.blockedMovementVblankWaitRequested, 1);
+    EXPECT_INT("blocked_viewport_keeps_input_wait", result.blockedMovementKeepsInputWaitArmed, 1);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    pipeline.disabledMovementTicks = 2;
+
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    EXPECT_INT("cooldown_viewport_process",
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &dungeon, NULL, &party, NULL, &result),
+        1);
+
+    EXPECT_INT("cooldown_viewport_not_dequeued", result.core.queue.dequeued, 0);
+    EXPECT_INT("cooldown_viewport_gate", result.core.queue.movementDisabledGate, 1);
+    EXPECT_INT("cooldown_viewport_queue_kept", (int)pipeline.commandQueue.count, 1);
+    EXPECT_INT("cooldown_viewport_dirty", result.viewportDirty, 0);
+    EXPECT_INT("cooldown_viewport_present", result.provenance.viewportPresent, 0);
+    EXPECT_INT("cooldown_viewport_x", party.mapX, 5);
+    EXPECT_INT("cooldown_viewport_y", party.mapY, 5);
+}
+
 /* ---- Test: closed door blocks, open door passes ---- */
 static void test_door_passability(void)
 {
@@ -1383,6 +1469,7 @@ int main(void)
     test_keyboard_forward_step();
     test_keyboard_turn_left();
     test_wall_blocks_movement();
+    test_accepted_movement_viewport_present_gate();
     test_door_passability();
     test_collision_blocks_before_destination_sensors();
     test_movement_cooldown_gate();
