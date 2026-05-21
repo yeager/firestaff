@@ -12,6 +12,8 @@
  *     the active inventory champion action hand and panel content route
  *   CHEST.C F0333 lines 43-46 and CHAMDRAW.C F0291 lines 621-630:
  *     an open action-hand chest uses C145 instead of closed chest C144
+ *   CHEST.C F0334 lines 112-133 and DUNGEON.C F0163 lines 1796-1837:
+ *     closing or rewriting an open chest compacts non-empty visible slots
  *   PANEL.C F0352 lines 1250-1254: weapon descriptions expose Cursed,
  *     Poisoned, Broken and ChargeCount-derived state from WEAPON data
  *   PANEL.C F0351 lines 2026-2108: eye click with empty leader hand draws
@@ -254,6 +256,57 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
     (void)sh;
     ASSERT_TRUE(framebuffer[(33 + sy) * 320 + sx] != 0,
                 "leader-hand container eye render reaches C537 chest slot frame");
+}
+
+static void test_open_chest_middle_pickup_compacts_visible_list(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[4];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short axeThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    unsigned short swordThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    unsigned short maceThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 4;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapons[0].type = 2;
+    weapons[0].next = axeThing;
+    weapons[1].type = 2;
+    weapons[1].next = swordThing;
+    weapons[2].type = 2;
+    weapons[2].next = maceThing;
+    weapons[3].type = 2;
+    weapons[3].next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before middle-slot pickup");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(2, &sx, &sy, &sw, &sh),
+                "C539 middle chest slot zone exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C539 picks the middle visible chest object");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), swordThing,
+              "middle chest pickup moves the selected object to leader hand");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "middle chest pickup keeps first visible object as list head");
+    ASSERT_EQ(weapons[0].next, axeThing,
+              "middle chest pickup preserves object before the picked slot");
+    ASSERT_EQ(weapons[1].next, maceThing,
+              "middle chest pickup links around the emptied visible slot");
+    ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
+              "middle chest pickup detaches the picked object from chest list");
+    ASSERT_EQ(weapons[3].next, THING_ENDOFLIST,
+              "middle chest pickup terminates the compacted visible list");
 }
 
 static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
@@ -643,12 +696,13 @@ static void test_eye_panel_champion_stats_and_skills(void) {
 
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
-    printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
+    printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, CHEST.C F0334 112-133, DUNGEON.C F0163 1796-1837, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_open_chest_runtime_routes_and_clicks();
     test_leader_hand_container_eye_routes_to_chest_panel();
+    test_open_chest_middle_pickup_compacts_visible_list();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();
