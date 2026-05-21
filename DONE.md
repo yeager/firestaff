@@ -151,6 +151,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Object-description panel layout is source-locked for form-feed reset, PC34 body origin, 18-character wrap, text color, and 7-pixel line advance (440eaca1)
 - ✅ M11 item eye object-description runtime rendering is source-locked to the source panel, circle, icon, name, and wrapped body layout (48a05966)
 - ✅ M11 leader-hand scroll eye-click routes to the source scroll panel renderer instead of the generic dialog/object-description overlay (4fa32322)
+- ✅ M11 leader-hand container eye-click routes to the source chest panel renderer instead of the generic dialog/object-description overlay (d206cb6c)
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
