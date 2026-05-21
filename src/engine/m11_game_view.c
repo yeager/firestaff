@@ -10679,6 +10679,11 @@ enum {
      * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
     M11_GFX_PANEL_EMPTY = 20,
 
+    /* Open chest panel (graphic 25 in original DM1).
+     * PANEL.C F0342 dispatches containers to CHEST.C F0333, which blits
+     * C025 into C101 before drawing the visible C537..C544 slot boxes. */
+    M11_GFX_PANEL_OPEN_CHEST = 25,
+
     /* Object description circle (graphic 29 in original DM1).
      * PANEL.C F0342 blits it into C504_ZONE_OBJECT_DESCRIPTION_CIRCLE. */
     M11_GFX_OBJECT_DESCRIPTION_CIRCLE = 29,
@@ -23660,7 +23665,28 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         if (M11_GameView_GetV1OpenChestThing(state) != THING_NONE) {
             unsigned short chestSlots[8];
             int chestOrdinal;
+            int chestPanelX = 0, chestPanelY = 0, chestPanelW = 0, chestPanelH = 0;
             (void)m11_v1_read_open_chest_slots(state, chestSlots);
+            /* ReDMCSB PANEL.C:1132-1133 routes containers to CHEST.C F0333;
+             * CHEST.C:43-48 opens G0426_T_OpenChest and blits C025 into
+             * G0032/C101 before F0038 draws C537..C544 slot boxes. */
+            if (state->assetsAvailable &&
+                M11_GameView_GetV1InventoryPanelZone(&chestPanelX,
+                                                     &chestPanelY,
+                                                     &chestPanelW,
+                                                     &chestPanelH)) {
+                const M11_AssetSlot* chestPanel = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)M11_GFX_PANEL_OPEN_CHEST);
+                if (chestPanel &&
+                    chestPanel->width == (unsigned short)chestPanelW &&
+                    chestPanel->height == (unsigned short)chestPanelH) {
+                    M11_AssetLoader_Blit(chestPanel, framebuffer, framebufferWidth,
+                                         framebufferHeight,
+                                         M11_VIEWPORT_X + chestPanelX,
+                                         M11_VIEWPORT_Y + chestPanelY, 8);
+                }
+            }
             for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
                 int zx = 0, zy = 0, zw = 0, zh = 0;
                 if (!M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal, &zx, &zy, &zw, &zh)) continue;

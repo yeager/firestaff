@@ -18,6 +18,10 @@
  *     Poisoned, Broken and ChargeCount-derived state from WEAPON data
  *   PANEL.C F0351 lines 2026-2108: eye click with empty leader hand draws
  *     champion base skills plus all six current/max statistic families
+ *   PANEL.C F0342 lines 1132-1133 and 1472: container eye dispatches to
+ *     F0333 then redraws arrow/eye chrome
+ *   CHEST.C F0333 lines 43-48 and 64-65: opened container state blits
+ *     C025 open-chest panel, then C537..C544 slot boxes and object icons
  */
 
 #include "m11_game_view.h"
@@ -26,6 +30,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 unsigned short G2157_;
@@ -46,6 +51,65 @@ static int g_fail = 0;
     if (a_ == e_) { ++g_pass; } \
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
+
+static const char* graphics_dat_path(void) {
+    const char* env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    if (env && env[0] != '\0') return env;
+    return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+}
+
+static int point_is_in_chest_slot_frame(int panelX, int panelY, int x, int y) {
+    int chestOrdinal;
+    for (chestOrdinal = 0; chestOrdinal < M11_GameView_GetV1ChestSlotBoxZoneCount(); ++chestOrdinal) {
+        int sx = 0, sy = 0, sw = 0, sh = 0;
+        if (!M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal, &sx, &sy, &sw, &sh)) {
+            continue;
+        }
+        /* F0038 draws the 18x18 slot-box around the 16x16 C537..C544
+         * child icon zone, so skip those pixels when validating C025. */
+        sx -= panelX + 1;
+        sy -= panelY + 1;
+        sw += 2;
+        sh += 2;
+        if (x >= sx && x < sx + sw && y >= sy && y < sy + sh) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* state,
+                                                       const unsigned char* framebuffer) {
+    const M11_AssetSlot* panel;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 25u);
+    if (!panel || !panel->pixels ||
+        panel->width != (unsigned short)panelW ||
+        panel->height != (unsigned short)panelH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            unsigned char want = panel->pixels[y * (int)panel->width + x];
+            unsigned char got;
+            if (want == 8 || point_is_in_chest_slot_frame(panelX, panelY, x, y)) {
+                continue;
+            }
+            got = framebuffer[(33 + panelY + y) * 320 + (panelX + x)];
+            if (got != want) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
 
 static void seed_inventory_view(M11_GameViewState* state,
                                 struct DungeonThings_Compat* things,
@@ -234,6 +298,10 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
 
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
               "leader hand accepts source container thing");
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for source chest panel blit");
+    state.assetsAvailable = 1;
+
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "eye click with leader-hand container redraws source chest panel");
@@ -254,8 +322,12 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
                 "C537 chest slot zone exists after leader-hand container eye click");
     (void)sw;
     (void)sh;
+    ASSERT_TRUE(framebuffer_matches_open_chest_panel_pixels(&state, framebuffer),
+                "leader-hand container eye render blits source C025 open-chest panel into C101");
     ASSERT_TRUE(framebuffer[(33 + sy) * 320 + sx] != 0,
                 "leader-hand container eye render reaches C537 chest slot frame");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
 static void test_open_chest_middle_pickup_compacts_visible_list(void) {
