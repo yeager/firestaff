@@ -18,6 +18,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Collision and doors parity row — ReDMCSB-backed movement blockers, accepted movement state, viewport redraw, and canonical DM1 PC DUNGEON.DAT overlay/runtime cases now cover representative wall, closed/open door, fakewall, and door-button states
 - ✅ Blocked wall/door/closed-real-fakewall self-damage request source-lock
 - ✅ Movement cooldown (G0310/G0311 timing from F0267)
+- ✅ Stairs backstep movement-cooldown gate is source-locked by pass578: queued backward-on-stairs movement remains queued and does not apply stairs transition, stamina, map, or cooldown side effects while movement is gated (06cedcf6).
   - ✅ Input wait loop timing source-lock: PC-34 input wait exits only when input wait has stopped and game time is ticking (6a842b72).
 - ✅ Pit fall + level change + fall damage (20 HP/pit)
 - ✅ Teleporter chains (up to 1000 iterations)
