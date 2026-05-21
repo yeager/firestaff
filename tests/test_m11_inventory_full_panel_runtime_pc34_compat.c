@@ -19,6 +19,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -547,6 +548,52 @@ static void test_eye_panel_champion_stats_and_skills(void) {
                 strstr(state.inspectDetail, "APPRENTICE PRIEST") != NULL &&
                 strstr(state.inspectDetail, "JOURNEYMAN WIZARD") != NULL,
                 "champion stats panel reports source skill level names");
+    {
+        DM1_ChampionPanel_StatisticTextRunModel strengthRun;
+        DM1_ChampionPanel_StatisticTextRunModel dexterityRun;
+        DM1_ChampionPanel_StatisticTextRunModel wisdomRun;
+
+        ASSERT_EQ(DM1_ChampionPanel_BuildStatisticTextRunModel(
+                      CHAMPION_ATTR_STRENGTH,
+                      champ->attributes[CHAMPION_ATTR_STRENGTH],
+                      champ->attributeMaximums[CHAMPION_ATTR_STRENGTH],
+                      &strengthRun),
+                  1,
+                  "champion stats render helper accepts strength row");
+        ASSERT_EQ(strengthRun.currentColor, DM1_COLOR_RED,
+                  "champion stats render helper colors below-max current value red");
+        ASSERT_EQ(strengthRun.maximumColor, DM1_COLOR_LIGHTEST_GRAY,
+                  "champion stats render helper keeps maximum suffix gray");
+        ASSERT_EQ(strengthRun.currentX, DM1_STATISTIC_CURRENT_REL_X,
+                  "champion stats render helper source-locks current value x");
+        ASSERT_EQ(strengthRun.maximumX,
+                  DM1_STATISTIC_CURRENT_REL_X + DM1_PANEL_TEXT_CHAR_WIDTH * 3,
+                  "champion stats render helper source-locks maximum suffix x");
+        ASSERT_EQ(strengthRun.y, DM1_STATISTIC_FIRST_REL_Y,
+                  "champion stats render helper source-locks first statistic y");
+
+        ASSERT_EQ(DM1_ChampionPanel_BuildStatisticTextRunModel(
+                      CHAMPION_ATTR_DEXTERITY,
+                      champ->attributes[CHAMPION_ATTR_DEXTERITY],
+                      champ->attributeMaximums[CHAMPION_ATTR_DEXTERITY],
+                      &dexterityRun),
+                  1,
+                  "champion stats render helper accepts dexterity row");
+        ASSERT_EQ(dexterityRun.currentColor, DM1_COLOR_LIGHT_GREEN,
+                  "champion stats render helper colors above-max current value light green");
+        ASSERT_EQ(dexterityRun.y, DM1_STATISTIC_FIRST_REL_Y + DM1_PANEL_TEXT_LINE_HEIGHT,
+                  "champion stats render helper advances row y by source text height");
+
+        ASSERT_EQ(DM1_ChampionPanel_BuildStatisticTextRunModel(
+                      CHAMPION_ATTR_WISDOM,
+                      champ->attributes[CHAMPION_ATTR_WISDOM],
+                      champ->attributeMaximums[CHAMPION_ATTR_WISDOM],
+                      &wisdomRun),
+                  1,
+                  "champion stats render helper accepts wisdom row");
+        ASSERT_EQ(wisdomRun.currentColor, DM1_COLOR_LIGHTEST_GRAY,
+                  "champion stats render helper colors equal current value gray");
+    }
 }
 
 int main(void) {
