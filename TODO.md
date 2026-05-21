@@ -27,7 +27,7 @@ Status per 2026-05-19 v2.4.0.
 ### Inventory & Items
 
 - 🔧 Full inventory panel (8 body slots + 2 hand slots + backpack) — C507..C536 source slot-box bridge and full backpack runtime storage/pickup/place path and PC34 open-chest slot setter are source-locked (461139c9); remaining panel polish/chest runtime details stay open
-- 🔧 Equip/unequip items to body slots — partially: PC34 slot masks and leader-hand/body-slot swap transaction are source-locked; full inventory/backpack/chest storage expansion remains pending
+- 🔧 Equip/unequip items to body slots — partially: PC34 slot masks, status hand-slot route resolution, and leader-hand/body-slot swap transaction are source-locked (6acbf589); full inventory/backpack/chest storage expansion remains pending
 - 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, leader-hand/chest slot swaps, action-hand chest panel close/reopen persistence, and PC34 open-chest slot setter are source-locked (461139c9); broader full panel polish remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display and M11 leader-hand runtime wiring are source-locked for Priest > 1, including the original empty-flask quirk; weapon eye-panel name/attribute description formatting is source-locked for POISONED/BROKEN/CURSED (94094865); item weight line display is source-locked (35461e0b); armor BROKEN/CURSED, junk consumable/compass/waterskin state lines, scroll/container panel routes, and object-description panel layout are source-locked (440eaca1); remaining item-identification polish is runtime/render integration only
 
