@@ -140,6 +140,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Torch burns out → extinguish
 - ✅ Floor item pickup — rendered grabbable object-cell gate and runtime pile-top object wiring source-locked
 - ✅ Scroll text display (F0168 C2_TEXT_TYPE_SCROLL) — TextString decode/visibility/separator path and inventory scroll panel rendering source-locked
+- ✅ M11 action-hand scroll panel C023 framebuffer pixels are source-locked against GRAPHICS.DAT for the scroll route, skipping transparent red pixels and the later text band (64de7dcf)
 - ✅ Potion consumption effects — potion stat/heal/mana/stamina/water/shield effects, VI wound RNG masks, inert/unknown potion empty-flask conversion, M11 mouth-click wiring, swallow audio routing, and no-mouth-animation behavior are source-locked
 - ✅ Food/water item consumption — food amounts, water/waterskin charges, caps, leader-hand removal, swallow audio routing, C545 food mouth visual blit, and water/potion no-visual runtime behavior are source-locked through M11 mouth-click (4209e8e4)
 - ✅ Weapon eye-panel name and attribute descriptions are source-locked for POISONED/BROKEN/CURSED formatting (94094865)
