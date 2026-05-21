@@ -27,83 +27,83 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 291,
+          "line": 327,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 291,
+          "line": 327,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 291,
+          "line": 327,
           "needle": "DUNVIEW.C:6848-6862 wall case returns"
         },
         {
-          "line": 292,
+          "line": 328,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 292,
+          "line": 328,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 292,
+          "line": 328,
           "needle": "DUNVIEW.C:6882-6893 wall case returns"
         },
         {
-          "line": 296,
+          "line": 332,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 296,
+          "line": 332,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 296,
+          "line": 332,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 297,
+          "line": 333,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 297,
+          "line": 333,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 297,
+          "line": 333,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 299,
+          "line": 335,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 299,
+          "line": 335,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 299,
+          "line": 335,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 300,
+          "line": 336,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 300,
+          "line": 336,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 300,
+          "line": 336,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
-      "lines": "291-300",
+      "lines": "327-336",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
+      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "0cda56395e6ab95de7b68ee9fc8b6fbcf864e4138efcd0f03ce3b18eef8916c5",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -112,47 +112,47 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 729,
+          "line": 765,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 741,
+          "line": 777,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 742,
+          "line": 778,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 749,
+          "line": 785,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 756,
+          "line": 792,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 759,
+          "line": 795,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 761,
+          "line": 797,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 762,
+          "line": 798,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 763,
+          "line": 799,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
-      "lines": "729-768",
+      "lines": "765-804",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "3f0405522c807fb85a50631d2261ad563f76d644743349270f75cca181d1ec17",
+      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "0cda56395e6ab95de7b68ee9fc8b6fbcf864e4138efcd0f03ce3b18eef8916c5",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -236,8 +236,8 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "222-248",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
+      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "6982c1015219ed81be4382fe64f7d2c0cf8aec2c965f4d1e26c875ec0b6a985a",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -246,43 +246,43 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 799,
+          "line": 876,
           "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
         },
         {
-          "line": 804,
+          "line": 881,
           "needle": "wall_clip_gate.151713.src_x"
         },
         {
-          "line": 805,
+          "line": 882,
           "needle": "wall_clip_gate.151713.src_y"
         },
         {
-          "line": 828,
+          "line": 905,
           "needle": "wall_clip_gate.occluded_source_row"
         },
         {
-          "line": 832,
+          "line": 909,
           "needle": "wall_clip_gate.occluded_viewport"
         },
         {
-          "line": 835,
+          "line": 912,
           "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
         },
         {
-          "line": 847,
+          "line": 924,
           "needle": "wall_clip_draw.source_offset_next"
         },
         {
-          "line": 854,
+          "line": 931,
           "needle": "wall_clip_draw.opaque_copies_transparent_color"
         }
       ],
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
-      "lines": "799-855",
+      "lines": "876-931",
       "missing": [],
-      "path": "/home/trv2/work/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "79b196c73e5652bf858cb3fb3178f376d3dd1d3e2f17e1b1b517b4ed271ee454",
+      "path": "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "6982c1015219ed81be4382fe64f7d2c0cf8aec2c965f4d1e26c875ec0b6a985a",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

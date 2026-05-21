@@ -328,7 +328,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff-worktrees/dm1v1-wall-occlusion-next-openai-20260521-0059/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff-worktrees/n2-viewport-wall-contract-20260521-0629/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
