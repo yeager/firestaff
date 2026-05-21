@@ -64,6 +64,7 @@ struct DungeonMapDesc_Compat {
     unsigned char  doorOrnamentCount;
     unsigned char  creatureTypeCount;
     unsigned char  difficulty;
+    unsigned char  allowedCreatureTypes[16];
     /* Decoded from bitfield D (graphic sets) */
     unsigned char  floorSet;
     unsigned char  wallSet;

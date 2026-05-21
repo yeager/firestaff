@@ -30,6 +30,9 @@ static int build_world(struct GameWorld_Compat* world) {
 
     dungeon->maps[0].width = 3;
     dungeon->maps[0].height = 3;
+    dungeon->maps[0].creatureTypeCount = 2;
+    dungeon->maps[0].allowedCreatureTypes[0] = 0;
+    dungeon->maps[0].allowedCreatureTypes[1] = 23;
     dungeon->tiles[0].squareCount = 9;
     dungeon->tiles[0].squareData = (unsigned char*)calloc(9, sizeof(unsigned char));
     if (!dungeon->tiles[0].squareData) goto fail;
@@ -207,8 +210,14 @@ static int rebuild_as_two_map_teleporter_world(struct GameWorld_Compat* world) {
 
     maps[0].width = 3;
     maps[0].height = 3;
+    maps[0].creatureTypeCount = 2;
+    maps[0].allowedCreatureTypes[0] = 0;
+    maps[0].allowedCreatureTypes[1] = 23;
     maps[1].width = 3;
     maps[1].height = 3;
+    maps[1].creatureTypeCount = 2;
+    maps[1].allowedCreatureTypes[0] = 0;
+    maps[1].allowedCreatureTypes[1] = 23;
     tiles[0].squareCount = 9;
     tiles[0].squareData = map0;
     tiles[1].squareCount = 9;
@@ -347,9 +356,15 @@ static int rebuild_as_two_map_pit_world(struct GameWorld_Compat* world) {
     maps[0].level = 0;
     maps[0].width = 3;
     maps[0].height = 3;
+    maps[0].creatureTypeCount = 2;
+    maps[0].allowedCreatureTypes[0] = 0;
+    maps[0].allowedCreatureTypes[1] = 23;
     maps[1].level = 1;
     maps[1].width = 3;
     maps[1].height = 3;
+    maps[1].creatureTypeCount = 2;
+    maps[1].allowedCreatureTypes[0] = 0;
+    maps[1].allowedCreatureTypes[1] = 23;
     tiles[0].squareCount = 9;
     tiles[0].squareData = map0;
     tiles[1].squareCount = 9;
@@ -662,6 +677,103 @@ static int test_c006_generated_group_preserves_projectile_without_impact(void) {
     return ok ? 0 : 1;
 }
 
+static int test_c006_generated_group_not_allowed_drops_without_insertion(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world generated disallowed group\n");
+        return 1;
+    }
+
+    world.dungeon->maps[0].allowedCreatureTypes[0] = 1;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime disallowed generator sensor");
+    ok &= expect(schedule_generator_trigger(&world), "schedule disallowed generator");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance disallowed generator tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "disallowed C006 group is not linked onto target square");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST &&
+                 world.things->groups[0].creatureType == 0,
+                 "disallowed C006 group slot remains unlinked after F0267 rejection");
+    ok &= expect(world.creatureAICount == 0,
+                 "disallowed C006 group does not seed active state");
+    ok &= expect(world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_GROUP_GENERATOR &&
+                 world.timeline.events[0].aux0 == GENERATOR_EVENT_AUX0_REENABLE,
+                 "disallowed C006 keeps only C65 re-enable event");
+    ok &= expect(result.emissionCount == 1 &&
+                 result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+                 result.emissions[0].payload[0] == DM1_SND_BUZZ,
+                 "disallowed C006 keeps only sensor-audible buzz");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    unsigned short dropped;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world event60 disallowed group\n");
+        return 1;
+    }
+
+    world.dungeon->maps[0].allowedCreatureTypes[0] = 1;
+    world.things->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(*world.things->weapons));
+    if (!world.things->weapons) {
+        F0883_WORLD_Free_Compat(&world);
+        fprintf(stderr, "FAIL: allocate disallowed carried weapon\n");
+        return 1;
+    }
+    world.things->weaponCount = 1;
+    world.things->thingCounts[THING_TYPE_WEAPON] = 1;
+    world.things->weapons[0].next = THING_ENDOFLIST;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.things->groups[0].health[0] = 180;
+    world.things->groups[0].count = 0;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule event60 disallowed group");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance event60 disallowed group");
+    dropped = world.things->squareFirstThings[0];
+    ok &= expect((dropped & 0x3FFFu) == (unsigned short)((THING_TYPE_WEAPON << 10) | 0),
+                 "event60 disallowed group drops carried slot on destination square");
+    ok &= expect(world.things->weapons[0].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "event60 disallowed carried slot preserves destination chain");
+    ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
+                 world.things->groups[0].next == THING_ENDOFLIST,
+                 "event60 disallowed group remains unlinked after drop");
+    ok &= expect(world.creatureAICount == 0 && world.timeline.count == 0,
+                 "event60 disallowed group does not insert or schedule retry");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int test_event60_deferred_group_preserves_projectile_without_impact(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -902,6 +1014,8 @@ int main(void) {
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     if (test_c006_generated_group_preserves_projectile_without_impact() != 0) return 1;
+    if (test_c006_generated_group_not_allowed_drops_without_insertion() != 0) return 1;
+    if (test_event60_group_not_allowed_drops_carried_slot_without_retry() != 0) return 1;
     if (test_event60_deferred_group_preserves_projectile_without_impact() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");
     return 0;

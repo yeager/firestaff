@@ -28,7 +28,7 @@ checks = {
         'lines 453-454 choose MASK0x0001_SCOPE_CREATURES',
         'lines 474-492 require an open teleporter',
         'lines 520-524 request M560',
-        'pit fall damage, projectile impact,',
+        'for generated/deferred insertion; group rotation remains outside it.',
     ],
     'tests/test_m10_c006_generator_reenable_dispatch_pc34_compat.c': [
         'blocked C006 generator keeps initialized group slot for event60',

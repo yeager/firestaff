@@ -1175,8 +1175,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      * group-teleporter destination subcase. GROUP.C:F0185:543 and
      * TIMELINE.C:F0252:1534 pass CM1_MAPX_NOT_ON_A_SQUARE, so the
      * MOVESENS.C:F0267:432-435 projectile-impact precheck is not entered
-     * for generated/deferred insertion; group rotation and
-     * creature-allowed-on-map deletion remain outside it. */
+     * for generated/deferred insertion; group rotation remains outside it. */
     for (remaining = 100; remaining > 0; --remaining) {
         const struct DungeonMapDesc_Compat* map;
         unsigned char squareByte;
@@ -1477,6 +1476,30 @@ static int orch_resolve_group_f0267_pit_destination_compat(
     return 1;
 }
 
+static int orch_is_group_creature_allowed_on_map_compat(
+    const struct GameWorld_Compat* world,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex)
+{
+    const struct DungeonMapDesc_Compat* map;
+    int i;
+
+    if (!world || !world->dungeon || !group || !world->dungeon->maps) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    map = &world->dungeon->maps[mapIndex];
+
+    /* ReDMCSB DUNGEON.C:F0139:1050-1079 reads the group creature type and
+     * scans the target map metadata creature list. MOVESENS.C:F0267:656-663
+     * performs this check after teleporter/pit resolution even when the source
+     * map X sentinel is CM1_MAPX_NOT_ON_A_SQUARE. */
+    for (i = 0; i < (int)map->creatureTypeCount && i < 16; ++i) {
+        if ((int)map->allowedCreatureTypes[i] == (int)group->creatureType) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int orch_is_lord_chaos_allowed_square_compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex,
@@ -1727,6 +1750,14 @@ static int orch_materialize_generated_group_compat(
             if (outGroupIndex) *outGroupIndex = groupIndex;
             return 0;
         }
+        if (!orch_is_group_creature_allowed_on_map_compat(world, group, destMapIndex)) {
+            if (!orch_drop_group_slot_possessions_compat(
+                    world, group, destMapIndex, destMapX, destMapY)) {
+                return 0;
+            }
+            if (outGroupIndex) *outGroupIndex = groupIndex;
+            return 0;
+        }
 
         if (orch_square_has_group_or_party_compat(world, destMapIndex, destMapX, destMapY)) {
             if (!orch_schedule_deferred_group_move_compat(world, &resolvedEvent, groupIndex, 0)) {
@@ -1787,6 +1818,22 @@ static int orch_handle_deferred_group_move_event_compat(
             return 0;
         }
         if (fallKilledGroup) {
+            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     targetMapX, targetMapY, retry.mapIndex);
+            }
+            if (teleporterBuzzMapIndex >= 0) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
+            }
+            return orch_drop_group_slot_possessions_compat(
+                world, group, retry.mapIndex, targetMapX, targetMapY);
+        }
+        if (!orch_is_group_creature_allowed_on_map_compat(world, group, retry.mapIndex)) {
+            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     targetMapX, targetMapY, retry.mapIndex);
+            }
             if (teleporterBuzzMapIndex >= 0) {
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
@@ -1882,17 +1929,20 @@ static int orch_handle_group_generator_trigger_runtime_compat(
             &world->timeline, &generator.reEnableEvent);
     }
 
-    if (orch_materialize_generated_group_compat(
+    {
+        int placed = orch_materialize_generated_group_compat(
             world, ev, &generator, 0,
-            &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY)) {
+            &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
         if (teleporterBuzzMapIndex >= 0) {
             emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                  teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
         }
-        /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
-         * M560_SOUND_BUZZ independently of the sensor's Audible flag. */
-        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-             ev->mapX, ev->mapY, ev->mapIndex);
+        if (placed) {
+            /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
+             * M560_SOUND_BUZZ independently of the sensor's Audible flag. */
+            emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                 ev->mapX, ev->mapY, ev->mapIndex);
+        }
     }
     if (generator.soundRequested) {
         /* ReDMCSB TIMELINE.C:975-977/F0245: sensor Audible requests a

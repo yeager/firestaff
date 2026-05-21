@@ -377,10 +377,19 @@ int F0502_DUNGEON_LoadTileData_Compat(
                 }
 
                 /* Square data is column-major: width columns of height bytes each.
-                 * After square data: metadata (creature types, ornament indices).
-                 * We read width * height bytes = just the squares. */
+                 * After square data: metadata begins with CreatureTypeCount
+                 * bytes used by DUNGEON.C:F0139_DUNGEON_IsCreatureAllowedOnMap. */
                 if ((int)fread(t->squareData, 1, squareCount, file) != squareCount) {
                         goto fail_tiles;
+                }
+                if (m->creatureTypeCount > 0) {
+                        if (m->creatureTypeCount > sizeof(m->allowedCreatureTypes)) {
+                                goto fail_tiles;
+                        }
+                        if ((int)fread(m->allowedCreatureTypes, 1, m->creatureTypeCount, file) !=
+                            (int)m->creatureTypeCount) {
+                                goto fail_tiles;
+                        }
                 }
         }
 
