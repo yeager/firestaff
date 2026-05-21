@@ -1280,29 +1280,27 @@ int F0859_LIFECYCLE_Init_Compat(
         dst->maxStamina = src->stamina.maximum;
         dst->maxMana = src->mana.maximum;
 
-        /* Seed statistics rows from Phase 10 attributes (max). Current
-         * equals maximum at init. */
-        /* Order mapping: Phase 10 CHAMPION_ATTR_* uses STR=0,DEX=1,
+        /* Seed statistics rows from Phase 10 current/max attributes.
+         * Order mapping: Phase 10 CHAMPION_ATTR_* uses STR=0,DEX=1,
          * WIS=2,VIT=3,ANTIMAGIC=4,ANTIFIRE=5. Phase 18 stat[1..6]
          * mirrors this; stat[0] (Luck) has no Phase 10 backing and
          * stays zero. */
-        dst->statistics[LIFECYCLE_STAT_STRENGTH][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_STRENGTH], 0, 255);
-        dst->statistics[LIFECYCLE_STAT_DEXTERITY][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_DEXTERITY], 0, 255);
-        dst->statistics[LIFECYCLE_STAT_WISDOM][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_WISDOM], 0, 255);
-        dst->statistics[LIFECYCLE_STAT_VITALITY][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_VITALITY], 0, 255);
-        dst->statistics[LIFECYCLE_STAT_ANTIMAGIC][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_ANTIMAGIC], 0, 255);
-        dst->statistics[LIFECYCLE_STAT_ANTIFIRE][LIFECYCLE_STAT_MAXIMUM]
-            = (uint8_t)clamp_int((int)src->attributes[CHAMPION_ATTR_ANTIFIRE], 0, 255);
-        /* Current = maximum on init. */
         for (j = 0; j < LIFECYCLE_STAT_COUNT; j++) {
-            dst->statistics[j][LIFECYCLE_STAT_CURRENT]
-                = dst->statistics[j][LIFECYCLE_STAT_MAXIMUM];
+            dst->statistics[j][LIFECYCLE_STAT_CURRENT] = 0;
+            dst->statistics[j][LIFECYCLE_STAT_MAXIMUM] = 0;
             dst->statistics[j][LIFECYCLE_STAT_MINIMUM] = 0;
+        }
+        for (j = 0; j < CHAMPION_ATTR_COUNT; j++) {
+            unsigned short current = 0;
+            unsigned short maximum = 0;
+            if (F0677_CHAMPION_GetAttributeStatisticRow_Compat(src, j,
+                    &current, &maximum)) {
+                const int dstIndex = j + 1;
+                dst->statistics[dstIndex][LIFECYCLE_STAT_CURRENT]
+                    = (uint8_t)clamp_int((int)current, 0, 255);
+                dst->statistics[dstIndex][LIFECYCLE_STAT_MAXIMUM]
+                    = (uint8_t)clamp_int((int)maximum, 0, 255);
+            }
         }
     }
     return 1;

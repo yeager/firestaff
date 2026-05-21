@@ -22,6 +22,7 @@
 #include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 
@@ -20180,9 +20181,21 @@ static void m11_format_v1_champion_stats_panel_pc34(
     }
 
     for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
-        m11_appendf_pc34(out, outSize, "  %s %u %s",
+        unsigned short current = 0;
+        unsigned short maximum = 0;
+        DM1_ChampionPanel_StatisticRowModel row;
+        if (!F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+                champ, (int)i, &current, &maximum)) {
+            continue;
+        }
+        if (!DM1_ChampionPanel_BuildStatisticRowModel(
+                (int)current, (int)maximum, &row)) {
+            continue;
+        }
+        m11_appendf_pc34(out, outSize, "  %s %s%s %s",
                          statAbbrev[i],
-                         (unsigned int)champ->attributes[i],
+                         row.currentText,
+                         row.maximumText,
                          statNames[i]);
     }
 }

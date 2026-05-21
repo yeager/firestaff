@@ -107,8 +107,11 @@ struct ChampionState_Compat {
     unsigned char  mirrorInventoryText[CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH]; /* [DUNGEON.DAT] encoded inventory text */
     int            present;                 /* 1 if this slot is occupied */
 
-    /* Attributes: base values [DUNGEON.DAT], current [RUNTIME] */
+    /* ReDMCSB DEFS.H Statistics[1..6][C1_CURRENT] runtime row. */
     unsigned short attributes[CHAMPION_ATTR_COUNT];
+    /* ReDMCSB DEFS.H Statistics[1..6][C0_MAXIMUM] maximum row.
+     * Zero means legacy/unknown and callers fall back to current. */
+    unsigned short attributeMaximums[CHAMPION_ATTR_COUNT];
 
     /* Skill levels [DUNGEON.DAT initial, RUNTIME modified] */
     unsigned short skillLevels[CHAMPION_SKILL_COUNT];
@@ -363,6 +366,12 @@ int F0633_CHAMPION_IsEncodedMirrorField_Compat(
 
 int F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(
     const struct ChampionState_Compat* champ);
+
+int F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+    const struct ChampionState_Compat* champ,
+    int attributeIndex,
+    unsigned short* outCurrent,
+    unsigned short* outMaximum);
 
 int F0635_CHAMPION_GetMirrorNameByOrdinal_Compat(
     const struct DungeonThings_Compat* things,

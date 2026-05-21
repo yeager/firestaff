@@ -223,6 +223,21 @@ int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
            (size_t)maximumWritten < maximumOutSize;
 }
 
+int DM1_ChampionPanel_BuildStatisticRowModel(
+    int currentValue, int maximumValue,
+    DM1_ChampionPanel_StatisticRowModel *outRow)
+{
+    if (!outRow) return 0;
+
+    outRow->currentValue = currentValue;
+    outRow->maximumValue = maximumValue;
+    outRow->currentColor = DM1_ChampionPanel_StatisticCurrentColor(currentValue, maximumValue);
+    outRow->maximumColor = DM1_ChampionPanel_StatisticMaximumColor();
+    return DM1_ChampionPanel_FormatStatisticValue(currentValue, maximumValue,
+                                                  outRow->currentText, sizeof(outRow->currentText),
+                                                  outRow->maximumText, sizeof(outRow->maximumText));
+}
+
 /* =====================================================================
  * Inventory champion load color/value - CHAMDRAW.C F0292.
  *
@@ -480,10 +495,20 @@ int DM1_ChampionPanel_SelfTest(void)
     {
         char currentValue[4];
         char maximumValue[5];
+        DM1_ChampionPanel_StatisticRowModel row;
         if (!DM1_ChampionPanel_FormatStatisticValue(49, 50, currentValue, sizeof(currentValue), maximumValue, sizeof(maximumValue)) ||
             strcmp(currentValue, " 49") != 0 || strcmp(maximumValue, "/ 50") != 0) {
             failures++;
             fprintf(stderr, "FAIL: statistic row format got %s %s\n", currentValue, maximumValue);
+        }
+        if (!DM1_ChampionPanel_BuildStatisticRowModel(51, 50, &row) ||
+            row.currentValue != 51 || row.maximumValue != 50 ||
+            row.currentColor != DM1_COLOR_LIGHT_GREEN ||
+            row.maximumColor != DM1_COLOR_LIGHTEST_GRAY ||
+            strcmp(row.currentText, " 51") != 0 ||
+            strcmp(row.maximumText, "/ 50") != 0) {
+            failures++;
+            fprintf(stderr, "FAIL: statistic row model\n");
         }
     }
 

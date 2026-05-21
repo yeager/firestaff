@@ -168,11 +168,23 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
 int DM1_ChampionPanel_StatusValueZone(int valueIndex);
 
 /* Inventory statistic current/max row color and value format - PANEL.C F0351 */
+typedef struct DM1_ChampionPanel_StatisticRowModel {
+    int currentValue;
+    int maximumValue;
+    int currentColor;
+    int maximumColor;
+    char currentText[4];
+    char maximumText[5];
+} DM1_ChampionPanel_StatisticRowModel;
+
 int DM1_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue);
 int DM1_ChampionPanel_StatisticMaximumColor(void);
 int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
                                            char *currentOut, size_t currentOutSize,
                                            char *maximumOut, size_t maximumOutSize);
+int DM1_ChampionPanel_BuildStatisticRowModel(
+    int currentValue, int maximumValue,
+    DM1_ChampionPanel_StatisticRowModel *outRow);
 
 /* Inventory load label/value color and value format - CHAMDRAW.C F0292 */
 int DM1_ChampionPanel_LoadColor(int load, int maximumLoad);

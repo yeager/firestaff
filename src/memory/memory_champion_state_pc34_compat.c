@@ -550,6 +550,31 @@ int F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(
            F0633_CHAMPION_IsEncodedMirrorField_Compat(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
 }
 
+int F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+    const struct ChampionState_Compat* champ,
+    int attributeIndex,
+    unsigned short* outCurrent,
+    unsigned short* outMaximum)
+{
+    unsigned short current;
+    unsigned short maximum;
+
+    if (!champ || attributeIndex < 0 || attributeIndex >= CHAMPION_ATTR_COUNT ||
+        !outCurrent || !outMaximum) {
+        return 0;
+    }
+
+    current = champ->attributes[attributeIndex];
+    maximum = champ->attributeMaximums[attributeIndex];
+    if (maximum == 0) {
+        maximum = current;
+    }
+
+    *outCurrent = current;
+    *outMaximum = maximum;
+    return 1;
+}
+
 int F0635_CHAMPION_GetMirrorNameByOrdinal_Compat(
     const struct DungeonThings_Compat* things,
     int mirrorOrdinal,
@@ -1014,7 +1039,7 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
  *   [11]    food (u8)
  *   [12]    water (u8)
  *   [13]    pad
- *   [14..25]  attributes[6] (u16 LE each)
+ *   [14..25]  attributes[6] current row (u16 LE each)
  *   [26..33]  skillLevels[4] (u16 LE each)
  *   [34..49]  skillExperience[4] (u32 LE each)
  *   [50..55]  hp (current/max/shifted, u16 LE each)
@@ -1030,7 +1055,8 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
  *   [157..172] mirrorStatsText[16]
  *   [173..188] mirrorSkillsText[16]
  *   [189..220] mirrorInventoryText[32]
- *   [221..255] reserved (zero)
+ *   [221..232] attributeMaximums[6] maximum row (u16 LE each)
+ *   [233..255] reserved (zero)
  */
 
 int F0602_CHAMPION_Serialize_Compat(
@@ -1092,6 +1118,12 @@ int F0602_CHAMPION_Serialize_Compat(
     memcpy(&buf[173], champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH);
     memcpy(&buf[189], champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
 
+    off = 221;
+    for (i = 0; i < CHAMPION_ATTR_COUNT; i++) {
+        write_u16_le(&buf[off], champ->attributeMaximums[i]);
+        off += 2;
+    }
+
     return CHAMPION_SERIALIZED_SIZE;
 }
 
@@ -1150,6 +1182,12 @@ int F0603_CHAMPION_Deserialize_Compat(
     memcpy(champ->mirrorStatsText, &buf[157], CHAMPION_MIRROR_FIELD_LENGTH);
     memcpy(champ->mirrorSkillsText, &buf[173], CHAMPION_MIRROR_FIELD_LENGTH);
     memcpy(champ->mirrorInventoryText, &buf[189], CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
+
+    off = 221;
+    for (i = 0; i < CHAMPION_ATTR_COUNT; i++) {
+        champ->attributeMaximums[i] = read_u16_le(&buf[off]);
+        off += 2;
+    }
 
     return CHAMPION_SERIALIZED_SIZE;
 }

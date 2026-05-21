@@ -445,6 +445,46 @@ static void test_eye_panel_potion_power_prefix_runtime(void) {
                 "empty flask keeps the original non-water potion prefix quirk");
 }
 
+static void test_champion_statistic_maximum_row_runtime_state(void) {
+    struct ChampionState_Compat champ;
+    struct ChampionState_Compat roundTrip;
+    unsigned char buf[CHAMPION_SERIALIZED_SIZE];
+    unsigned short current = 0;
+    unsigned short maximum = 0;
+
+    F0600_CHAMPION_InitEmpty_Compat(&champ);
+    champ.attributes[CHAMPION_ATTR_STRENGTH] = 41;
+    champ.attributeMaximums[CHAMPION_ATTR_STRENGTH] = 50;
+    champ.attributes[CHAMPION_ATTR_DEXTERITY] = 42;
+
+    ASSERT_EQ(F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+                  &champ, CHAMPION_ATTR_STRENGTH, &current, &maximum),
+              1,
+              "champion statistic row helper accepts strength");
+    ASSERT_EQ(current, 41, "champion statistic row exposes current value");
+    ASSERT_EQ(maximum, 50, "champion statistic row exposes maximum value");
+
+    ASSERT_EQ(F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+                  &champ, CHAMPION_ATTR_DEXTERITY, &current, &maximum),
+              1,
+              "champion statistic row helper accepts legacy zero maximum");
+    ASSERT_EQ(current, 42, "champion statistic fallback keeps current");
+    ASSERT_EQ(maximum, 42, "champion statistic fallback uses current as maximum");
+
+    ASSERT_EQ(F0602_CHAMPION_Serialize_Compat(&champ, buf, sizeof(buf)),
+              CHAMPION_SERIALIZED_SIZE,
+              "champion statistic maximum row serializes");
+    ASSERT_EQ(F0603_CHAMPION_Deserialize_Compat(&roundTrip, buf, sizeof(buf)),
+              CHAMPION_SERIALIZED_SIZE,
+              "champion statistic maximum row deserializes");
+    ASSERT_EQ(F0677_CHAMPION_GetAttributeStatisticRow_Compat(
+                  &roundTrip, CHAMPION_ATTR_STRENGTH, &current, &maximum),
+              1,
+              "champion statistic round-trip row helper accepts strength");
+    ASSERT_EQ(current, 41, "champion statistic round-trip current value");
+    ASSERT_EQ(maximum, 50, "champion statistic round-trip maximum value");
+}
+
 static void test_eye_panel_champion_stats_and_skills(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -460,11 +500,17 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     champ->mana.current = 12;
     champ->mana.maximum = 33;
     champ->attributes[CHAMPION_ATTR_STRENGTH] = 41;
-    champ->attributes[CHAMPION_ATTR_DEXTERITY] = 42;
+    champ->attributes[CHAMPION_ATTR_DEXTERITY] = 52;
     champ->attributes[CHAMPION_ATTR_WISDOM] = 43;
     champ->attributes[CHAMPION_ATTR_VITALITY] = 44;
     champ->attributes[CHAMPION_ATTR_ANTIMAGIC] = 45;
     champ->attributes[CHAMPION_ATTR_ANTIFIRE] = 46;
+    champ->attributeMaximums[CHAMPION_ATTR_STRENGTH] = 50;
+    champ->attributeMaximums[CHAMPION_ATTR_DEXTERITY] = 50;
+    champ->attributeMaximums[CHAMPION_ATTR_WISDOM] = 43;
+    champ->attributeMaximums[CHAMPION_ATTR_VITALITY] = 44;
+    champ->attributeMaximums[CHAMPION_ATTR_ANTIMAGIC] = 45;
+    champ->attributeMaximums[CHAMPION_ATTR_ANTIFIRE] = 46;
     champ->skillLevels[CHAMPION_SKILL_FIGHTER] = 2;
     champ->skillLevels[CHAMPION_SKILL_NINJA] = 3;
     champ->skillLevels[CHAMPION_SKILL_PRIEST] = 4;
@@ -475,19 +521,19 @@ static void test_eye_panel_champion_stats_and_skills(void) {
               "inventory eye click with empty leader hand opens champion stats");
     ASSERT_TRUE(strstr(state.inspectDetail, "MANA 12/33") != NULL,
                 "champion stats panel reports mana");
-    ASSERT_TRUE(strstr(state.inspectDetail, "STR 41") != NULL &&
-                strstr(state.inspectDetail, "DEX 42") != NULL &&
-                strstr(state.inspectDetail, "WIS 43") != NULL &&
-                strstr(state.inspectDetail, "VIT 44") != NULL,
-                "champion stats panel reports core statistics");
+    ASSERT_TRUE(strstr(state.inspectDetail, "STR  41/ 50") != NULL &&
+                strstr(state.inspectDetail, "DEX  52/ 50") != NULL &&
+                strstr(state.inspectDetail, "WIS  43/ 43") != NULL &&
+                strstr(state.inspectDetail, "VIT  44/ 44") != NULL,
+                "champion stats panel reports current/max statistic rows");
     ASSERT_TRUE(strstr(state.inspectDetail, "STRENGTH") != NULL &&
                 strstr(state.inspectDetail, "DEXTERITY") != NULL &&
                 strstr(state.inspectDetail, "WISDOM") != NULL &&
                 strstr(state.inspectDetail, "VITALITY") != NULL,
                 "champion stats panel reports source statistic names");
-    ASSERT_TRUE(strstr(state.inspectDetail, "AM 45") != NULL &&
-                strstr(state.inspectDetail, "AF 46") != NULL,
-                "champion stats panel reports anti-magic and anti-fire");
+    ASSERT_TRUE(strstr(state.inspectDetail, "AM  45/ 45") != NULL &&
+                strstr(state.inspectDetail, "AF  46/ 46") != NULL,
+                "champion stats panel reports anti-magic and anti-fire current/max rows");
     ASSERT_TRUE(strstr(state.inspectDetail, "ANTI-MAGIC") != NULL &&
                 strstr(state.inspectDetail, "ANTI-FIRE") != NULL,
                 "champion stats panel reports source anti-statistic names");
@@ -515,6 +561,7 @@ int main(void) {
     test_eye_panel_potion_power_prefix_runtime();
     test_object_description_layout_source_zones();
     test_eye_panel_weapon_attribute_flags();
+    test_champion_statistic_maximum_row_runtime_state();
     test_eye_panel_champion_stats_and_skills();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
