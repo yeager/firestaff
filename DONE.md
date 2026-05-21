@@ -77,6 +77,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ C006 generated/deferred groups now route through the narrow F0267 teleporter destination/cross-map placement path, including the covered audible buzz and target-square wandering scheduling case (191c9d3c)
 - ✅ C006/F0267 open-pit group movement is source-locked for generated lower-map insertion, fall damage/death, and carried group-slot fall-kill drops at the lower destination (9db12dbf)
 - ✅ C006 generated/deferred group insertion is source-locked to skip projectile impact/removal when ReDMCSB calls F0267 from a non-square source, preserving projectile links and queued projectile events (850c1541)
+- ✅ C006 generated/deferred group placement is source-locked to reject creature types not allowed on the destination map, drop carried-slot possessions, skip insertion/AI/wander scheduling, and avoid success buzz on failed generator placement (1741688d)
 - ✅ F0267 teleporter rotation parity is source-locked for party, projectile, object, and projectile-associated object rotation/cell behavior (9fd978af)
 
 ### Combat
