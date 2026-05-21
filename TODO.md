@@ -13,7 +13,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Movement & Collision
 
-- 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, D0, and D0C current-square evidence manifests and focused viewport regression coverage through 49f15769; the side-content center-blocker probe is enabled and validates the ReDMCSB side-wall occlusion source route (9b9cda30); pass608 records the same-viewport capture blocker, so remaining wall/viewport parity gaps still need promotable original/Firestaff capture-backed closure (49f15769)
+- 🔧 Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, D0, and D0C current-square evidence manifests and focused viewport regression coverage through 49f15769; the side-content center-blocker probe is enabled and validates the ReDMCSB side-wall occlusion source route (9b9cda30); pass608 same-viewport capture blocker is CTest-locked and source-contract backed (43c7a58a), so remaining wall/viewport parity gaps still need promotable original/Firestaff capture-backed closure (49f15769)
 - 🔧 Input command routing — release-mouse button identity and routed click acceptance are source-locked for the V1 command queue path (6a168a9e), and movement collision-before-sensor dispatch ordering is covered by the movement pipeline gate (2462666b); remaining input parity work should stay tied to original capture-backed movement/viewport scripts
 
 ### Creature System
