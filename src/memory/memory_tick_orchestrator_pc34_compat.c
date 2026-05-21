@@ -14,6 +14,7 @@
 #include <ctype.h>
 
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
 
 /* ================================================================
@@ -1348,33 +1349,244 @@ static int orch_group_set_creature_cell_compat(
     return (cells & ~(0x03 << shift)) | ((cell & 0x03) << shift);
 }
 
+static unsigned short orch_allocate_fixed_possession_thing_compat(
+    struct DungeonThings_Compat* things,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    int i;
+
+    if (!things || !drop) return THING_NONE;
+    switch (drop->thingType) {
+        case DM1_DROP_THING_TYPE_WEAPON:
+            if (!things->weapons) return THING_NONE;
+            for (i = 0; i < things->weaponCount; ++i) {
+                if (things->weapons[i].next == THING_NONE) {
+                    memset(&things->weapons[i], 0, sizeof(things->weapons[i]));
+                    things->weapons[i].next = THING_ENDOFLIST;
+                    things->weapons[i].type = (unsigned char)(drop->itemType & 0x7F);
+                    things->weapons[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    return orch_thing_with_cell_compat(
+                        orch_make_thing_ref_compat(THING_TYPE_WEAPON, i),
+                        drop->cell);
+                }
+            }
+            return THING_NONE;
+        case DM1_DROP_THING_TYPE_ARMOUR:
+            if (!things->armours) return THING_NONE;
+            for (i = 0; i < things->armourCount; ++i) {
+                if (things->armours[i].next == THING_NONE) {
+                    memset(&things->armours[i], 0, sizeof(things->armours[i]));
+                    things->armours[i].next = THING_ENDOFLIST;
+                    things->armours[i].type = (unsigned char)(drop->itemType & 0x7F);
+                    things->armours[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    return orch_thing_with_cell_compat(
+                        orch_make_thing_ref_compat(THING_TYPE_ARMOUR, i),
+                        drop->cell);
+                }
+            }
+            return THING_NONE;
+        case DM1_DROP_THING_TYPE_JUNK:
+            if (!things->junks) return THING_NONE;
+            for (i = 0; i < things->junkCount; ++i) {
+                if (things->junks[i].next == THING_NONE) {
+                    memset(&things->junks[i], 0, sizeof(things->junks[i]));
+                    things->junks[i].next = THING_ENDOFLIST;
+                    things->junks[i].type = (unsigned char)(drop->itemType & 0x7F);
+                    things->junks[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    return orch_thing_with_cell_compat(
+                        orch_make_thing_ref_compat(THING_TYPE_JUNK, i),
+                        drop->cell);
+                }
+            }
+            return THING_NONE;
+        default:
+            return THING_NONE;
+    }
+}
+
+static int orch_link_thing_to_square_tail_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thing)
+{
+    int sftIndex;
+    unsigned short current;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    if (!orch_set_next_thing_compat(world->things, thing, THING_ENDOFLIST)) {
+        return 0;
+    }
+    current = world->things->squareFirstThings[sftIndex];
+    if (current == THING_NONE || current == THING_ENDOFLIST) {
+        world->things->squareFirstThings[sftIndex] = thing;
+        return 1;
+    }
+    while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short next = orch_next_thing_compat(world->things, current);
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            return orch_set_next_thing_compat(world->things, current, thing);
+        }
+        current = next;
+    }
+    return 0;
+}
+
+static int orch_drop_creature_fixed_possessions_compat(
+    struct GameWorld_Compat* world,
+    int creatureType,
+    int sourceCell,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int dropCount = 0;
+    int weaponDropped = 0;
+    int droppedAny = 0;
+    int i;
+
+    if (!world || !world->things) return 0;
+    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+            creatureType, sourceCell, &world->masterRng, drops,
+            DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
+        return 0;
+    }
+
+    for (i = 0; i < dropCount; ++i) {
+        unsigned short thing =
+            orch_allocate_fixed_possession_thing_compat(world->things, &drops[i]);
+        if (thing == THING_NONE) {
+            continue;
+        }
+        if (orch_link_thing_to_square_tail_compat(world, mapIndex, mapX, mapY, thing)) {
+            droppedAny = 1;
+        } else {
+            (void)orch_set_next_thing_compat(world->things, thing, THING_NONE);
+        }
+    }
+    return droppedAny;
+}
+
+static int orch_drop_moving_fixed_possessions_compat(
+    struct GameWorld_Compat* world,
+    int creatureType,
+    const unsigned char* cells,
+    int cellCount,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int i;
+    int droppedAny = 0;
+
+    if (!cells || cellCount <= 0) return 1;
+    /* ReDMCSB GROUP.C:F0187:670-672 consumes the moving fixed-possession
+     * cell accumulator as a stack, passing C02_MODE_PLAY_ONE_TICK_LATER. */
+    for (i = cellCount - 1; i >= 0; --i) {
+        droppedAny |= orch_drop_creature_fixed_possessions_compat(
+            world, creatureType, cells[i], mapIndex, mapX, mapY);
+    }
+    return droppedAny || cellCount == 0;
+}
+
+static int orch_drop_group_fixed_possessions_compat(
+    struct GameWorld_Compat* world,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int creatureIndex;
+    int groupCells;
+
+    if (!world || !group) return 0;
+    creatureIndex = group->count;
+    if (creatureIndex < 0) creatureIndex = 0;
+    if (creatureIndex > 3) creatureIndex = 3;
+    groupCells = group->cells;
+
+    /* ReDMCSB GROUP.C:F0188:716-721 drops fixed possessions for each
+     * creature still represented by Count/cells before dropping Slot. */
+    do {
+        int cell = (groupCells == 0xFF)
+            ? DM1_SINGLE_CENTERED_CREATURE_CELL
+            : orch_group_creature_cell_compat(group, creatureIndex);
+        (void)orch_drop_creature_fixed_possessions_compat(
+            world, group->creatureType, cell, mapIndex, mapX, mapY);
+    } while (creatureIndex--);
+    return 1;
+}
+
+static int orch_drop_group_slot_possessions_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
+static int orch_drop_group_f0267_rejection_possessions_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    if (!world || !group) return 0;
+    (void)orch_drop_moving_fixed_possessions_compat(
+        world, group->creatureType, movingFixedDropCells,
+        movingFixedDropCellCount, mapIndex, mapX, mapY);
+    (void)orch_drop_group_fixed_possessions_compat(
+        world, group, mapIndex, mapX, mapY);
+    return orch_drop_group_slot_possessions_compat(world, group, mapIndex, mapX, mapY);
+}
+
 static int orch_damage_group_by_pit_fall_compat(
     struct GameWorld_Compat* world,
-    struct DungeonGroup_Compat* group)
+    struct DungeonGroup_Compat* group,
+    unsigned char movingFixedDropCells[4],
+    int* movingFixedDropCellCount)
 {
     int originalCount;
     int creatureIndex;
     int killedAny = 0;
 
     if (!world || !group) return 0;
+    if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
     originalCount = group->count;
     if (originalCount < 0) originalCount = 0;
     if (originalCount > 3) originalCount = 3;
 
     /* ReDMCSB GROUP.C:F0191:958-968 resets the moving fixed-drop cell
      * accumulator, then damages each creature from Count down to 0 with
-     * attack 20 adjusted by random(6).  F0190:831-905 removes killed
-     * creatures from multi-creature groups by compacting HP/cells. */
+     * attack 20 adjusted by random(6). GROUP.C:F0190:831-847 records the
+     * killed creature cell for moving fixed-possession drops instead of
+     * dropping them on the source map; F0190:892-905 then compacts HP/cells. */
     for (creatureIndex = originalCount; creatureIndex >= 0; --creatureIndex) {
         int damage = 17 + F0732_COMBAT_RngRandom_Compat(&world->masterRng, 6);
         if (creatureIndex > group->count) continue;
         if ((int)group->health[creatureIndex] <= damage) {
             int currentCount = group->count;
             int shiftIndex;
+            int killedCell = orch_group_creature_cell_compat(group, creatureIndex);
             killedAny = 1;
             if (currentCount <= 0) {
                 group->health[0] = 0;
                 return 2;
+            }
+            if (movingFixedDropCells && movingFixedDropCellCount &&
+                *movingFixedDropCellCount < 4) {
+                movingFixedDropCells[(*movingFixedDropCellCount)++] =
+                    (unsigned char)(killedCell & 0xFF);
             }
             for (shiftIndex = creatureIndex; shiftIndex < currentCount; ++shiftIndex) {
                 group->health[shiftIndex] = group->health[shiftIndex + 1];
@@ -1418,11 +1630,10 @@ static int orch_drop_group_slot_possessions_compat(
         unsigned short nextThing = orch_next_thing_compat(world->things, thing);
         unsigned short droppedThing = orch_thing_with_cell_compat(
             thing, F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4));
-        if (!orch_set_next_thing_compat(
-                world->things, droppedThing, world->things->squareFirstThings[sftIndex])) {
+        if (!orch_link_thing_to_square_tail_compat(
+                world, mapIndex, mapX, mapY, droppedThing)) {
             return 0;
         }
-        world->things->squareFirstThings[sftIndex] = droppedThing;
         thing = nextThing;
     }
     group->slot = THING_ENDOFLIST;
@@ -1435,11 +1646,14 @@ static int orch_resolve_group_f0267_pit_destination_compat(
     int* inOutMapIndex,
     int* inOutMapX,
     int* inOutMapY,
-    int* outFallKilledGroup)
+    int* outFallKilledGroup,
+    unsigned char movingFixedDropCells[4],
+    int* movingFixedDropCellCount)
 {
     int remaining;
 
     if (outFallKilledGroup) *outFallKilledGroup = 0;
+    if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
     if (!world || !world->dungeon || !group || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
 
     /* ReDMCSB MOVESENS.C:F0267:538-574 follows open, non-imaginary pits
@@ -1468,9 +1682,20 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         if (targetMapIndex < 0 || targetMapIndex >= (int)world->dungeon->header.mapCount) break;
         *inOutMapIndex = targetMapIndex;
 
-        if (orch_damage_group_by_pit_fall_compat(world, group) == 2) {
-            if (outFallKilledGroup) *outFallKilledGroup = 1;
-            return 1;
+        {
+            unsigned char fallDropCells[4];
+            int fallDropCellCount = 0;
+            int fallOutcome = orch_damage_group_by_pit_fall_compat(
+                world, group, fallDropCells, &fallDropCellCount);
+            int i;
+            for (i = 0; movingFixedDropCells && movingFixedDropCellCount &&
+                        i < fallDropCellCount && *movingFixedDropCellCount < 4; ++i) {
+                movingFixedDropCells[(*movingFixedDropCellCount)++] = fallDropCells[i];
+            }
+            if (fallOutcome == 2) {
+                if (outFallKilledGroup) *outFallKilledGroup = 1;
+                return 1;
+            }
         }
     }
     return 1;
@@ -1727,6 +1952,8 @@ static int orch_materialize_generated_group_compat(
         int destMapX = ev->mapX;
         int destMapY = ev->mapY;
         int fallKilledGroup = 0;
+        unsigned char movingFixedDropCells[4];
+        int movingFixedDropCellCount = 0;
         struct TimelineEvent_Compat resolvedEvent = *ev;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
@@ -1736,23 +1963,28 @@ static int orch_materialize_generated_group_compat(
             outTeleporterBuzzMapY);
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
-                &fallKilledGroup)) {
+                &fallKilledGroup, movingFixedDropCells,
+                &movingFixedDropCellCount)) {
             return 0;
         }
         resolvedEvent.mapIndex = destMapIndex;
         resolvedEvent.mapX = destMapX;
         resolvedEvent.mapY = destMapY;
         if (fallKilledGroup) {
-            if (!orch_drop_group_slot_possessions_compat(
-                    world, group, destMapIndex, destMapX, destMapY)) {
+            if (!orch_drop_group_f0267_rejection_possessions_compat(
+                    world, group, movingFixedDropCells, movingFixedDropCellCount,
+                    destMapIndex, destMapX, destMapY)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
             return 0;
         }
+        (void)orch_drop_moving_fixed_possessions_compat(
+            world, group->creatureType, movingFixedDropCells,
+            movingFixedDropCellCount, destMapIndex, destMapX, destMapY);
         if (!orch_is_group_creature_allowed_on_map_compat(world, group, destMapIndex)) {
-            if (!orch_drop_group_slot_possessions_compat(
-                    world, group, destMapIndex, destMapX, destMapY)) {
+            if (!orch_drop_group_f0267_rejection_possessions_compat(
+                    world, group, NULL, 0, destMapIndex, destMapX, destMapY)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -1812,9 +2044,12 @@ static int orch_handle_deferred_group_move_event_compat(
         &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
     {
         int fallKilledGroup = 0;
+        unsigned char movingFixedDropCells[4];
+        int movingFixedDropCellCount = 0;
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &retry.mapIndex, &targetMapX, &targetMapY,
-                &fallKilledGroup)) {
+                &fallKilledGroup, movingFixedDropCells,
+                &movingFixedDropCellCount)) {
             return 0;
         }
         if (fallKilledGroup) {
@@ -1826,9 +2061,13 @@ static int orch_handle_deferred_group_move_event_compat(
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
             }
-            return orch_drop_group_slot_possessions_compat(
-                world, group, retry.mapIndex, targetMapX, targetMapY);
+            return orch_drop_group_f0267_rejection_possessions_compat(
+                world, group, movingFixedDropCells, movingFixedDropCellCount,
+                retry.mapIndex, targetMapX, targetMapY);
         }
+        (void)orch_drop_moving_fixed_possessions_compat(
+            world, group->creatureType, movingFixedDropCells,
+            movingFixedDropCellCount, retry.mapIndex, targetMapX, targetMapY);
         if (!orch_is_group_creature_allowed_on_map_compat(world, group, retry.mapIndex)) {
             if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
@@ -1838,8 +2077,8 @@ static int orch_handle_deferred_group_move_event_compat(
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
             }
-            return orch_drop_group_slot_possessions_compat(
-                world, group, retry.mapIndex, targetMapX, targetMapY);
+            return orch_drop_group_f0267_rejection_possessions_compat(
+                world, group, NULL, 0, retry.mapIndex, targetMapX, targetMapY);
         }
     }
 

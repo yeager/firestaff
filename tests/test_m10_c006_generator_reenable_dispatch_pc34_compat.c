@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 
 static int build_world(struct GameWorld_Compat* world) {
@@ -93,6 +94,63 @@ static int expect(int cond, const char* label) {
     if (!cond) {
         fprintf(stderr, "FAIL: %s\n", label);
         return 0;
+    }
+    return 1;
+}
+
+static unsigned short test_next_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return THING_NONE;
+    switch (type) {
+    case THING_TYPE_SENSOR:
+        return (index < things->sensorCount) ? things->sensors[index].next : THING_NONE;
+    case THING_TYPE_GROUP:
+        return (index < things->groupCount) ? things->groups[index].next : THING_NONE;
+    case THING_TYPE_WEAPON:
+        return (index < things->weaponCount) ? things->weapons[index].next : THING_NONE;
+    case THING_TYPE_ARMOUR:
+        return (index < things->armourCount) ? things->armours[index].next : THING_NONE;
+    case THING_TYPE_JUNK:
+        return (index < things->junkCount) ? things->junks[index].next : THING_NONE;
+    case THING_TYPE_PROJECTILE:
+        return (index < things->projectileCount) ? things->projectiles[index].next : THING_NONE;
+    default:
+        return THING_NONE;
+    }
+}
+
+static int test_count_chain_type(
+    const struct DungeonThings_Compat* things,
+    unsigned short first,
+    int type)
+{
+    unsigned short thing = first;
+    int count = 0;
+    int safety = 0;
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if ((int)THING_GET_TYPE(thing) == type) ++count;
+        thing = test_next_thing(things, thing);
+    }
+    return count;
+}
+
+static int test_allocate_unused_junk_pool(
+    struct GameWorld_Compat* world,
+    int count)
+{
+    int i;
+    if (!world || !world->things || count <= 0) return 0;
+    world->things->junks =
+        (struct DungeonJunk_Compat*)calloc((size_t)count, sizeof(*world->things->junks));
+    if (!world->things->junks) return 0;
+    world->things->junkCount = count;
+    world->things->thingCounts[THING_TYPE_JUNK] = count;
+    for (i = 0; i < count; ++i) {
+        world->things->junks[i].next = THING_NONE;
     }
     return 1;
 }
@@ -443,6 +501,8 @@ static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
 
     ok &= expect(rebuild_as_two_map_pit_world(&world),
                  "build two-map open-pit event60 fixture");
+    ok &= expect(test_allocate_unused_junk_pool(&world, 10),
+                 "allocate red dragon fixed-drop junk pool");
     world.things->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(*world.things->weapons));
     if (!world.things->weapons) {
         F0883_WORLD_Free_Compat(&world);
@@ -454,7 +514,7 @@ static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
     world.things->weapons[0].next = THING_ENDOFLIST;
     world.things->groups[0].next = THING_ENDOFLIST;
     world.things->groups[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
     world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.things->groups[0].health[0] = 1;
     world.things->groups[0].count = 0;
@@ -476,15 +536,85 @@ static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
     ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
                  "event60 pit death leaves source pit sensor chain untouched");
     dropped = world.things->squareFirstThings[1];
-    ok &= expect((dropped & 0x3FFFu) == (unsigned short)((THING_TYPE_WEAPON << 10) | 0),
-                 "event60 pit death drops carried group slot on lower map square");
+    ok &= expect(THING_GET_TYPE(dropped) == THING_TYPE_JUNK,
+                 "event60 pit death drops fixed possessions before carried slot");
+    ok &= expect(test_count_chain_type(world.things, dropped, THING_TYPE_JUNK) >= 8,
+                 "event60 pit death materializes red dragon fixed possessions");
+    ok &= expect(test_count_chain_type(world.things, dropped, THING_TYPE_WEAPON) == 1,
+                 "event60 pit death also drops carried group slot on lower map square");
     ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
-                 "event60 pit death dropped weapon links onto empty lower chain");
+                 "event60 pit death dropped weapon terminates lower chain");
     ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
                  world.things->groups[0].health[0] == 0,
                  "event60 pit death clears carried slot and kills group before insertion");
     ok &= expect(world.creatureAICount == 0 && world.timeline.count == 0,
                  "event60 pit death does not insert group or schedule C37 retry");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_event60_group_pit_fall_partial_death_drops_fixed_possessions(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    unsigned short head;
+    unsigned short firstDrop;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world event60 pit partial death\n");
+        return 1;
+    }
+
+    ok &= expect(rebuild_as_two_map_pit_world(&world),
+                 "build two-map open-pit event60 partial-death fixture");
+    ok &= expect(test_allocate_unused_junk_pool(&world, 10),
+                 "allocate red dragon partial fixed-drop junk pool");
+    world.dungeon->maps[1].allowedCreatureTypes[0] = DM1_CREATURE_TYPE_RED_DRAGON;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    world.things->groups[0].cells = (unsigned char)((1u << 2) | 0u);
+    world.things->groups[0].health[0] = 180;
+    world.things->groups[0].health[1] = 1;
+    world.things->groups[0].count = 1;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule event60 group pit-fall partial death");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance event60 group pit-fall partial death");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "event60 pit partial death leaves source pit sensor chain untouched");
+    head = world.things->squareFirstThings[1];
+    ok &= expect(head == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "event60 pit partial death still inserts surviving group");
+    firstDrop = world.things->groups[0].next;
+    ok &= expect(THING_GET_TYPE(firstDrop) == THING_TYPE_JUNK,
+                 "event60 pit partial death links fixed drops behind surviving group");
+    ok &= expect(test_count_chain_type(world.things, firstDrop, THING_TYPE_JUNK) >= 8,
+                 "event60 pit partial death materializes killed creature fixed possessions");
+    ok &= expect(world.things->groups[0].count == 0 &&
+                 world.things->groups[0].health[0] > 0 &&
+                 world.things->groups[0].health[0] < 180 &&
+                 world.things->groups[0].health[1] == 0,
+                 "event60 pit partial death compacts survivor health/count");
+    ok &= expect(world.creatureAICount == 0 &&
+                 world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].mapIndex == 1,
+                 "event60 pit partial death schedules lower-map survivor C37 only");
 
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
@@ -720,7 +850,6 @@ static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void)
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     struct TimelineEvent_Compat event;
-    unsigned short dropped;
     int ok = 1;
 
     if (!build_world(&world)) {
@@ -759,11 +888,12 @@ static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void)
                  "schedule event60 disallowed group");
     ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
                  "advance event60 disallowed group");
-    dropped = world.things->squareFirstThings[0];
-    ok &= expect((dropped & 0x3FFFu) == (unsigned short)((THING_TYPE_WEAPON << 10) | 0),
-                 "event60 disallowed group drops carried slot on destination square");
-    ok &= expect(world.things->weapons[0].next == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
-                 "event60 disallowed carried slot preserves destination chain");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0) &&
+                 test_count_chain_type(world.things, world.things->squareFirstThings[0],
+                                       THING_TYPE_WEAPON) == 1,
+                 "event60 disallowed group appends carried slot to destination square");
+    ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
+                 "event60 disallowed carried slot terminates destination chain");
     ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
                  world.things->groups[0].next == THING_ENDOFLIST,
                  "event60 disallowed group remains unlinked after drop");
@@ -1011,6 +1141,7 @@ int main(void) {
     if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
     if (test_c006_generated_group_falls_through_pit_before_link() != 0) return 1;
     if (test_event60_group_pit_fall_death_drops_carried_slot() != 0) return 1;
+    if (test_event60_group_pit_fall_partial_death_drops_fixed_possessions() != 0) return 1;
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     if (test_c006_generated_group_preserves_projectile_without_impact() != 0) return 1;
