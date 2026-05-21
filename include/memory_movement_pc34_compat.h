@@ -55,6 +55,8 @@ struct PostMoveResolution_Compat {
     int finalDirection;
     int finalMapIndex;
     int championFallDamage[CHAMPION_MAX_PARTY];
+    int championFallKilled[CHAMPION_MAX_PARTY];
+    int partyKilledByFall;
 };
 
 /*

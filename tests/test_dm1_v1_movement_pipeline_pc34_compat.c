@@ -744,6 +744,9 @@ static void test_command_movement_viewport_wall_order_source_lock(void)
     EXPECT("cmd_move_view.evidence.projectile_precheck", strstr(movementEvidence, "MOVESENS.C:433-435") != NULL);
     EXPECT("cmd_move_view.evidence.post_move_teleporter", strstr(movementEvidence, "MOVESENS.C:475-535") != NULL);
     EXPECT("cmd_move_view.evidence.post_move_pit", strstr(movementEvidence, "MOVESENS.C:538-606") != NULL);
+    EXPECT("cmd_move_view.evidence.fall_damage_fanout", strstr(movementEvidence, "CHAMPION.C:1991-2022") != NULL);
+    EXPECT("cmd_move_view.evidence.fall_damage_kill_threshold", strstr(movementEvidence, "CHAMPION.C:1689-1737") != NULL);
+    EXPECT("cmd_move_view.evidence.fall_party_dead", strstr(movementEvidence, "CHAMPION.C:1552-1668") != NULL);
     EXPECT("cmd_move_view.evidence.group_interlock", strstr(movementEvidence, "MOVESENS.C:830-887") != NULL);
     EXPECT("cmd_move_view.evidence.projectile_sensor_exception", strstr(movementEvidence, "MOVESENS.C:893-897") != NULL);
     EXPECT("cmd_move_view.evidence.viewport_order", strstr(movementEvidence, "DUNVIEW.C:8446-8542") != NULL);
@@ -822,8 +825,24 @@ static void test_post_move_environment_side_effects(void)
     EXPECT_INT("post_pit_x", party.mapX, 2);
     EXPECT_INT("post_pit_y", party.mapY, 1);
     EXPECT_INT("post_pit_damage_recorded", result.postMove.championFallDamage[0], 20);
+    EXPECT_INT("post_pit_no_death_recorded", result.postMove.championFallKilled[0], 0);
+    EXPECT_INT("post_pit_party_survives", result.postMove.partyKilledByFall, 0);
     EXPECT_INT("post_pit_hp_applied", party.champions[0].hp.current, 80);
     EXPECT_INT("post_pit_any_movement", result.anyMovementOccurred, 1);
+
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_PIT, 0x08));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    party.champions[0].hp.current = 15;
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT_INT("post_pit_lethal_damage_recorded", result.postMove.championFallDamage[0], 20);
+    EXPECT_INT("post_pit_lethal_champion_recorded", result.postMove.championFallKilled[0], 1);
+    EXPECT_INT("post_pit_lethal_party_recorded", result.postMove.partyKilledByFall, 1);
+    EXPECT_INT("post_pit_lethal_hp_applied", party.champions[0].hp.current, 0);
 
     /* MOVESENS.C:475-535: teleporters only fire when open and scoped for
      * objects/party, then move the party to the target and apply absolute or

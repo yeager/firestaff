@@ -764,7 +764,21 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
             for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
                 if (party->champions[i].present && party->champions[i].hp.current > 0) {
                     outResolution->championFallDamage[i] += 20;
+                    if (outResolution->championFallDamage[i] >= party->champions[i].hp.current) {
+                        outResolution->championFallKilled[i] = 1;
+                    }
                 }
+            }
+            if (party->championCount > 0) {
+                int anyAliveAfterFall = 0;
+                for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
+                    if (party->champions[i].present && party->champions[i].hp.current > 0 &&
+                        outResolution->championFallDamage[i] < party->champions[i].hp.current) {
+                        anyAliveAfterFall = 1;
+                        break;
+                    }
+                }
+                outResolution->partyKilledByFall = !anyAliveAfterFall;
             }
             outResolution->transitioned = 1;
             outResolution->chainCount += 1;
