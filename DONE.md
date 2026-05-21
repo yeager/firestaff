@@ -142,6 +142,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Open action-hand chest icon remap is source-locked in M11 inventory rendering: closed container icon C144 becomes open chest C145 only for the active open action-hand chest (ba92e3a7)
 - ✅ Status-box hand-slot route resolution is source-locked into the equip-slot transaction path, including candidate/open/dead/current-inventory gates (6acbf589)
 - ✅ Object-description panel layout is source-locked for form-feed reset, PC34 body origin, 18-character wrap, text color, and 7-pixel line advance (440eaca1)
+- ✅ M11 item eye object-description runtime rendering is source-locked to the source panel, circle, icon, name, and wrapped body layout (48a05966)
 - ✅ Fountain interaction — empty-hand drink, waterskin/water refill, empty-flask-to-water-flask conversion, load delta, swallow sound ordinal, and front-wall sensor continuation are source-locked
 - 🚫 Direct key-on-locked-door action blocked: ReDMCSB source audit found no DM1 V1 door-square key route; keys/specific objects are source-backed through wall sensors/object mechanisms only
 
