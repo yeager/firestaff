@@ -13,8 +13,11 @@ extern "C" {
 #define M11_TELEPORTER_ROTATE_THING_PARTY      0
 #define M11_TELEPORTER_ROTATE_THING_PROJECTILE 1
 #define M11_TELEPORTER_ROTATE_THING_OBJECT     2
+#define M11_TELEPORTER_ROTATE_THING_GROUP      3
 
 #define M11_GROUP_MOVE_REMOVAL_REASON_NONE        0
+#define M11_GROUP_CELL_SINGLE_CENTERED             0xFF
+#define M11_CREATURE_SIZE_QUARTER_SQUARE           0
 #define M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED 1
 #define M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED 2
 #define M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER 2
@@ -62,6 +65,13 @@ int  m11_apply_teleporter_rotation(int thingKind,
                                    int inCell,
                                    int* outDirection,
                                    int* outCell);
+int  m11_apply_group_teleporter_rotation(const M11_TeleporterDef* teleporter,
+                                   int creatureCountMinusOne,
+                                   int creatureSize,
+                                   unsigned int inDirections,
+                                   unsigned int inCells,
+                                   unsigned int* outDirections,
+                                   unsigned int* outCells);
 const char* m11_teleporter_rotation_source_evidence(void);
 int  m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY, int startLevel, int levitating, int* finalX, int* finalY, int* finalLevel, int* totalDamage);
 int  m11_plan_group_move_removal_after_pit_teleporter(

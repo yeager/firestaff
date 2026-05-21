@@ -51,6 +51,66 @@ static int m11_normalize_direction_or_cell(int value) {
     return value & 3;
 }
 
+static unsigned int m11_get_group_value(unsigned int packed, int creatureIndex) {
+    return (packed >> (creatureIndex * 2)) & 3u;
+}
+
+static unsigned int m11_set_group_value(unsigned int packed, int creatureIndex, unsigned int value) {
+    unsigned int shift = (unsigned int)(creatureIndex * 2);
+    packed &= ~(3u << shift);
+    packed |= (value & 3u) << shift;
+    return packed;
+}
+
+int m11_apply_group_teleporter_rotation(const M11_TeleporterDef* teleporter,
+                                   int creatureCountMinusOne,
+                                   int creatureSize,
+                                   unsigned int inDirections,
+                                   unsigned int inCells,
+                                   unsigned int* outDirections,
+                                   unsigned int* outCells) {
+    int i;
+    int rotation;
+    int absoluteRotation;
+    unsigned int directions;
+    unsigned int cells;
+
+    if (!teleporter || !outDirections || !outCells || creatureCountMinusOne < 0) return 0;
+
+    rotation = m11_normalize_direction_or_cell(teleporter->destFacing);
+    absoluteRotation = teleporter->absoluteRotation != 0;
+    directions = inDirections;
+    cells = inCells;
+
+    for (i = 0; i <= creatureCountMinusOne; ++i) {
+        int oldDirection = (int)m11_get_group_value(inDirections, i);
+        int newDirection = absoluteRotation
+            ? rotation
+            : m11_normalize_direction_or_cell(oldDirection + rotation);
+        directions = m11_set_group_value(directions, i, (unsigned int)newDirection);
+
+        if (inCells != M11_GROUP_CELL_SINGLE_CENTERED) {
+            int cellRotation = 0;
+            if (creatureSize == M11_CREATURE_SIZE_QUARTER_SQUARE) {
+                cellRotation = absoluteRotation ? 0 : rotation;
+            } else {
+                cellRotation = absoluteRotation
+                    ? m11_normalize_direction_or_cell(rotation - oldDirection)
+                    : rotation;
+            }
+            if (cellRotation) {
+                int oldCell = (int)m11_get_group_value(inCells, i);
+                cells = m11_set_group_value(cells, i,
+                    (unsigned int)m11_normalize_direction_or_cell(oldCell + cellRotation));
+            }
+        }
+    }
+
+    *outDirections = directions;
+    *outCells = cells;
+    return 1;
+}
+
 int m11_apply_teleporter_rotation(int thingKind,
                                    int sourceMapX,
                                    const M11_TeleporterDef* teleporter,
@@ -59,12 +119,14 @@ int m11_apply_teleporter_rotation(int thingKind,
                                    int* outDirection,
                                    int* outCell) {
     int rotation;
+    int singleCenteredCell;
 
     if (!teleporter || !outDirection || !outCell) return 0;
 
     rotation = m11_normalize_direction_or_cell(teleporter->destFacing);
+    singleCenteredCell = (inCell == M11_GROUP_CELL_SINGLE_CENTERED);
     *outDirection = m11_normalize_direction_or_cell(inDirection);
-    *outCell = m11_normalize_direction_or_cell(inCell);
+    *outCell = singleCenteredCell ? M11_GROUP_CELL_SINGLE_CENTERED : m11_normalize_direction_or_cell(inCell);
 
     switch (thingKind) {
     case M11_TELEPORTER_ROTATE_THING_PARTY:
@@ -88,13 +150,25 @@ int m11_apply_teleporter_rotation(int thingKind,
             *outCell = m11_normalize_direction_or_cell(*outCell + rotation);
         }
         return 1;
+    case M11_TELEPORTER_ROTATE_THING_GROUP: {
+        unsigned int groupDirections;
+        unsigned int groupCells;
+        if (!m11_apply_group_teleporter_rotation(teleporter, 0,
+                M11_CREATURE_SIZE_QUARTER_SQUARE, (unsigned int)*outDirection,
+                (unsigned int)*outCell, &groupDirections, &groupCells)) {
+            return 0;
+        }
+        *outDirection = (int)(groupDirections & 3u);
+        *outCell = singleCenteredCell ? M11_GROUP_CELL_SINGLE_CENTERED : (int)(groupCells & 3u);
+        return 1;
+    }
     default:
         return 0;
     }
 }
 
 const char* m11_teleporter_rotation_source_evidence(void) {
-    return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
+    return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
 
 int m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY,

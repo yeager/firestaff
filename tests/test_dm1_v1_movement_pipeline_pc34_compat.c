@@ -1298,6 +1298,60 @@ static void test_teleporter_rotation_parity_source_lock(void)
     EXPECT_INT("teleporter_rotation_object_absolute_direction_ignored", outDirection, DIR_EAST);
     EXPECT_INT("teleporter_rotation_object_absolute_cell_unchanged", outCell, 1);
 
+    teleporter.absoluteRotation = 1;
+    EXPECT_INT("teleporter_rotation_group_absolute_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_GROUP, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_group_absolute_direction", outDirection, DIR_SOUTH);
+    EXPECT_INT("teleporter_rotation_group_absolute_cell_unchanged", outCell, 1);
+
+    teleporter.absoluteRotation = 0;
+    EXPECT_INT("teleporter_rotation_group_relative_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_GROUP, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_group_relative_direction", outDirection, DIR_WEST);
+    EXPECT_INT("teleporter_rotation_group_relative_cell", outCell, 3);
+
+    EXPECT_INT("teleporter_rotation_group_single_centered_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_GROUP, 0, &teleporter,
+            DIR_EAST, M11_GROUP_CELL_SINGLE_CENTERED, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_group_single_centered_cell", outCell, M11_GROUP_CELL_SINGLE_CENTERED);
+
+    {
+        unsigned int groupDirections;
+        unsigned int groupCells;
+        EXPECT_INT("teleporter_rotation_group_packed_relative_ok",
+            m11_apply_group_teleporter_rotation(&teleporter, 1,
+                M11_CREATURE_SIZE_QUARTER_SQUARE, 0x09u, 0x04u,
+                &groupDirections, &groupCells),
+            1);
+        EXPECT_INT("teleporter_rotation_group_packed_relative_directions", (int)groupDirections, 0x03);
+        EXPECT_INT("teleporter_rotation_group_packed_relative_cells", (int)groupCells, 0x0E);
+
+        teleporter.absoluteRotation = 1;
+        EXPECT_INT("teleporter_rotation_group_packed_absolute_ok",
+            m11_apply_group_teleporter_rotation(&teleporter, 1,
+                M11_CREATURE_SIZE_QUARTER_SQUARE, 0x09u, 0x04u,
+                &groupDirections, &groupCells),
+            1);
+        EXPECT_INT("teleporter_rotation_group_packed_absolute_directions", (int)groupDirections, 0x0A);
+        EXPECT_INT("teleporter_rotation_group_packed_absolute_cells", (int)groupCells, 0x04);
+
+        EXPECT_INT("teleporter_rotation_group_packed_single_centered_ok",
+            m11_apply_group_teleporter_rotation(&teleporter, 1,
+                M11_CREATURE_SIZE_QUARTER_SQUARE, 0x09u,
+                M11_GROUP_CELL_SINGLE_CENTERED, &groupDirections, &groupCells),
+            1);
+        EXPECT_INT("teleporter_rotation_group_packed_single_centered_cell",
+            (int)groupCells, M11_GROUP_CELL_SINGLE_CENTERED);
+    }
+
     teleporter.absoluteRotation = 0;
     EXPECT_INT("teleporter_rotation_projectile_assoc_object_relative_ok",
         m11_apply_teleporter_rotation(
@@ -1314,6 +1368,8 @@ static void test_teleporter_rotation_parity_source_lock(void)
         0);
 
     evidence = m11_teleporter_rotation_source_evidence();
+    EXPECT("teleporter_rotation_evidence_f0262_group", strstr(evidence, "MOVESENS.C:33-111") != NULL);
+    EXPECT("teleporter_rotation_evidence_f0267_group", strstr(evidence, "MOVESENS.C:520-524") != NULL);
     EXPECT("teleporter_rotation_evidence_f0263", strstr(evidence, "MOVESENS.C:120-133") != NULL);
     EXPECT("teleporter_rotation_evidence_f0267_party", strstr(evidence, "MOVESENS.C:493-518") != NULL);
     EXPECT("teleporter_rotation_evidence_f0267_object", strstr(evidence, "MOVESENS.C:526-531") != NULL);
