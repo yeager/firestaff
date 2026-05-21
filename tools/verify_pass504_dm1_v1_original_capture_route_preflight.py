@@ -148,7 +148,13 @@ REQUIRED_SCRIPT_TOKENS = [
     "NEW_FILE_TIMEOUT_MS",
 ]
 REQUIRED_COMMANDS = ["dosbox", "xvfb-run", "xdotool", "python3"]
-CANON_FILES = ["DUNGEON.DAT", "GRAPHICS.DAT", "TITLE", "DungeonMasterPC34/DM.EXE"]
+CANONICAL_DM1_VARIANT = "DM1 PC 3.4 I34E original runtime inputs"
+EXPECTED_CANONICAL_DM1_SHA256 = {
+    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "DungeonMasterPC34/DM.EXE": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+}
 
 
 def norm(text: str) -> str:
@@ -205,16 +211,19 @@ def audit_commands() -> list[dict[str, Any]]:
 
 def audit_canonical() -> list[dict[str, Any]]:
     rows = []
-    for rel in CANON_FILES:
+    for rel, expected_sha in EXPECTED_CANONICAL_DM1_SHA256.items():
         path = CANON_DM1 / rel
+        actual_sha = sha256(path)
         rows.append({
             "relative": rel,
             "path": str(path),
             "exists": path.exists(),
             "isSymlink": path.is_symlink(),
             "realpath": str(path.resolve()) if path.exists() else None,
-            "sha256": sha256(path),
-            "ok": path.exists() and (path.is_file() or path.is_symlink()),
+            "sha256": actual_sha,
+            "expectedSha256": expected_sha,
+            "variant": CANONICAL_DM1_VARIANT,
+            "ok": path.exists() and (path.is_file() or path.is_symlink()) and actual_sha == expected_sha,
         })
     return rows
 
@@ -282,6 +291,7 @@ def main() -> int:
         "sourceAudit": source,
         "n2CommandAudit": commands,
         "canonicalDm1Audit": canon,
+        "canonicalDm1Variant": CANONICAL_DM1_VARIANT,
         "captureScriptAudit": script,
         "secondaryReferenceAudit": secondary,
         "requiredOk": required_ok,
@@ -312,7 +322,7 @@ def main() -> int:
     lines += ["", "## N2 Preconditions"]
     lines.extend(f"- `{row['name']}`: `{row.get('path')}` ok=`{row['ok']}`" for row in commands)
     lines += ["", "## Canonical DM1 Inputs"]
-    lines.extend(f"- `{row['relative']}` sha256=`{row['sha256']}` ok=`{row['ok']}`" for row in canon)
+    lines.extend(f"- `{row['relative']}` sha256=`{row['sha256']}` expected=`{row['expectedSha256']}` ok=`{row['ok']}`" for row in canon)
     lines += [
         "",
         "## Capture Contract",

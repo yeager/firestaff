@@ -22,10 +22,10 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - `python3-pillow`: `python3 import PIL.Image` ok=`True`
 
 ## Canonical DM1 Inputs
-- `DUNGEON.DAT` sha256=`d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` ok=`True`
-- `GRAPHICS.DAT` sha256=`2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` ok=`True`
-- `TITLE` sha256=`adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745` ok=`True`
-- `DungeonMasterPC34/DM.EXE` sha256=`4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` ok=`True`
+- `DUNGEON.DAT` sha256=`d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` expected=`d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` ok=`True`
+- `GRAPHICS.DAT` sha256=`2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` expected=`2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` ok=`True`
+- `TITLE` sha256=`adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745` expected=`adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745` ok=`True`
+- `DungeonMasterPC34/DM.EXE` sha256=`4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` expected=`4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` ok=`True`
 
 ## Capture Contract
 - Program: `DM -vv -sn -pk`
