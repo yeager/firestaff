@@ -153,6 +153,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Open action-hand chest icon remap is source-locked in M11 inventory rendering: closed container icon C144 becomes open chest C145 only for the active open action-hand chest (ba92e3a7)
 - ✅ Middle visible chest-slot pickup compaction is source-locked in M11 inventory runtime, preserving the surrounding compacted list after removing the selected slot (e99b5839)
 - ✅ Full backpack source slot runtime round-trips are source-locked for C520..C536, covering route/zone mapping, leader-hand pickup, storage clear, exact-slot placement, and leader-hand clear (78412579)
+- ✅ Champion inventory slot pickup/place deterministic hash refresh is source-locked for C507..C536 mutations so C528 pickup and C536 placement update the M11 render/state hash like chest-slot mutations (fb747c23).
 - ✅ Status-box hand-slot route resolution is source-locked into the equip-slot transaction path, including candidate/open/dead/current-inventory gates (6acbf589)
 - ✅ Object-description panel layout is source-locked for form-feed reset, PC34 body origin, 18-character wrap, text color, and 7-pixel line advance (440eaca1)
 - ✅ M11 item eye object-description runtime rendering is source-locked to the source panel, circle, icon, name, and wrapped body layout (48a05966)
