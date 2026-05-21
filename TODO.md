@@ -32,9 +32,10 @@ Status per 2026-05-19 v2.4.0.
 - 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, leader-hand/chest slot swaps, middle visible chest-slot pickup compaction (e99b5839), all C520..C536 backpack source slot runtime round-trips (78412579), action-hand chest panel close/reopen persistence, PC34 open-chest slot setter (461139c9), and open chest C145 action-hand icon remap (ba92e3a7) are source-locked; broader full panel polish remains pending
 - 🔧 Item identification — potion eye-panel power-prefix display and M11 leader-hand runtime wiring are source-locked for Priest > 1, including the original empty-flask quirk; weapon eye-panel name/attribute description formatting is source-locked for POISONED/BROKEN/CURSED (94094865); item weight line display is source-locked (35461e0b); armor BROKEN/CURSED, junk consumable/compass/waterskin state lines, scroll/container panel routes, object-description panel layout (440eaca1), M11 item eye object-description runtime rendering in source layout (48a05966), leader-hand scroll eye-click routing to the source scroll panel renderer (4fa32322), leader-hand container eye-click routing to the source chest panel renderer (d206cb6c), and action-hand scroll panel C023 framebuffer pixels (64de7dcf) are source-locked; remaining item-identification polish is framebuffer/pixel parity for other routed panels and full original-vs-Firestaff framebuffer parity
 
-## DM1 V2.1 / V2.2 — Enhanced Modes
+## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
 
-- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
+- 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
+- ❌ V2.0 filtered presentation mode selectable from menu, using original DM1 graphics plus CRT scanlines, palette correction, and sharpening without changing DM1 V1 gameplay state, timing, collision, save/load, or source-locked command routes
 - 🔧 V2.1/V2.2 presentation modes selectable from menu
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
@@ -54,10 +55,11 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Utility/import flow: CSB utility disk behavior, champion import path, reincarnation/resurrection differences, and saved-party interoperability
 - ❌ Phase 7 — Verification suite: canonical CSB asset manifests, parser probes, deterministic input scripts, viewport/pixel gates, save/load round trips, and source-evidence manifests
 
-## CSB V2.1 / V2.2 — Enhanced Modes
+## CSB V2.0 / V2.1 / V2.2 — Enhanced Modes
 
-- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined CSB V2 value.
+- 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined CSB V2 value.
 - ❌ Phase 0 — V1 parity gate: CSB V2 may not change CSB V1 command semantics, dungeon timing, source-locked collision, save/load data, or CSB-specific mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 0.5 — V2.0 filtered presentation: original CSB graphics with CRT scanlines, palette correction, and sharpening, isolated from CSB V1 gameplay state and separately verifiable from V2.1 upscale and V2.2 modern visuals
 - ❌ Phase 1 — Presentation scaffold: split CSB V1 gameplay state from V2 render/input presentation, keep CSB V1 as the default runtime path, and add deterministic CSB V2 config/profile persistence
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for CSB walls, doors, ornaments, creatures, objects, projectiles, fonts, palette/light levels, title, and utility/import surfaces
 - ❌ Phase 3 — Modern UI overlay: optional CSB HUD, inventory, champion, rune, action, utility, and import panels that mirror CSB V1 commands without bypassing source-locked click routes or transactions
@@ -78,10 +80,11 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 7 — Save/import compatibility: support DM2 save/load, PC savegame interoperability where source-backed, champion state persistence, object/container state, and cross-version diagnostics
 - ❌ Phase 8 — Verification suite: canonical DM2 asset manifests, parser probes, GDAT/dungeon record fixtures, deterministic input scripts, pixel/viewport gates, save/load round trips, and source-evidence manifests tied to SKWin/skproject references
 
-## DM2 V2.1 / V2.2 — Enhanced Modes
+## DM2 V2.0 / V2.1 / V2.2 — Enhanced Modes
 
-- 🧭 V2 split: V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM2 V2 value.
+- 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM2 V2 value.
 - ❌ Phase 0 — V1 parity gate: DM2 V2 may not change Skullkeep command semantics, world timing, movement/collision, save/load data, object state, shop/trader behavior, or source-locked mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 0.5 — V2.0 filtered presentation: original DM2 graphics with CRT scanlines, palette correction, and sharpening, isolated from DM2 V1 gameplay state and separately verifiable from V2.1 upscale and V2.2 modern visuals
 - ❌ Phase 1 — Presentation scaffold: split DM2 V1 gameplay state from V2 render/input presentation, keep DM2 V1 as the default runtime path, and add deterministic DM2 V2 config/profile persistence
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for DM2 GDAT-backed walls, floors, doors, objects, creatures, clouds, projectiles, fonts, palette/light levels, title/intro, and UI surfaces
 - ❌ Phase 3 — Modern UI overlay: optional DM2 HUD, inventory, champion, rune/action, shop/trader, map/transition, and container panels that mirror DM2 V1 commands without bypassing source-locked transactions
@@ -102,10 +105,11 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Save/import compatibility: support Nexus save/load and champion/world persistence where format evidence is available, with explicit diagnostics for unknown or unsupported save variants
 - ❌ Phase 7 — Verification suite: canonical Nexus asset manifests, parser fixtures, deterministic input scripts, viewport/pixel or model-frame gates, save/load round trips, and source-evidence manifests tied to exact disc/version hashes
 
-## DM Nexus V2.1 / V2.2 — Enhanced Modes
+## DM Nexus V2.0 / V2.1 / V2.2 — Enhanced Modes
 
-- 🧭 V2 split: V2.1 is the 10x source/provenance-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM Nexus V2 value.
+- 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source/provenance-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM Nexus V2 value.
 - ❌ Phase 0 — V1 parity gate: Nexus V2 may not change Nexus V1 command semantics, world timing, movement/collision, save/load data, champion state, object state, or source/provenance-locked mechanics unless behavior is behind an explicit V2 presentation toggle
+- ❌ Phase 0.5 — V2.0 filtered presentation: original Nexus graphics/model-frame presentation with CRT scanlines, palette correction, and sharpening where provenance permits, isolated from Nexus V1 gameplay state and separately verifiable from V2.1 upscale and V2.2 modern visuals
 - ❌ Phase 1 — Presentation scaffold: split Nexus V1 gameplay state from V2 render/input presentation, keep Nexus V1 as the default runtime path, and add deterministic Nexus V2 config/profile persistence
 - ❌ Phase 2 — Graphics/model pipeline: source/provenance-preserving upscale or presentation path for Nexus textures, models, wall/floor/object/creature/projectile/UI/title assets, palettes/materials, and deterministic unsupported-asset fallbacks
 - ❌ Phase 3 — Modern UI overlay: optional Nexus HUD, inventory, champion, spell/action, map, and diagnostics panels that mirror Nexus V1 commands without bypassing source/provenance-locked routes or transactions
