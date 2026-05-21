@@ -20521,6 +20521,7 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
         if (championSlot == CHAMPION_SLOT_ACTION_HAND) {
             m11_refresh_v1_action_hand_chest_panel(state, slotThing, leaderThing);
         }
+        m11_refresh_hash(state);
         return 1;
     }
     if (slotThing == THING_NONE || slotThing == THING_ENDOFLIST) return 0;
@@ -20532,6 +20533,7 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     if (championSlot == CHAMPION_SLOT_ACTION_HAND) {
         m11_refresh_v1_action_hand_chest_panel(state, slotThing, THING_NONE);
     }
+    m11_refresh_hash(state);
     return 1;
 }
 

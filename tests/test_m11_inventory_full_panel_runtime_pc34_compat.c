@@ -52,6 +52,16 @@ static int g_fail = 0;
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
 
+static void assert_world_hash_matches(const M11_GameViewState* state,
+                                      const char* msg) {
+    uint32_t expected = 0;
+    ASSERT_EQ(F0891_ORCH_WorldHash_Compat(&state->world, &expected), 1,
+              "world hash helper accepts inventory world");
+    ASSERT_EQ(state->lastWorldHash, expected, msg);
+    ASSERT_TRUE(state->lastWorldHash != 0xBADF00Du,
+                "inventory click replaced stale world hash sentinel");
+}
+
 static const char* graphics_dat_path(void) {
     const char* env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
     if (env && env[0] != '\0') return env;
@@ -174,6 +184,7 @@ static void test_extended_backpack_runtime_clicks(void) {
               49,
               "C528 resolves to source command C049");
     ASSERT_EQ(zone, 528, "C528 resolves to source zone id 528");
+    state.lastWorldHash = 0xBADF00Du;
     ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
               M11_GAME_INPUT_REDRAW,
               "clicking C528 picks the extended backpack item");
@@ -181,9 +192,11 @@ static void test_extended_backpack_runtime_clicks(void) {
               "C528 pickup clears BACKPACK_9 storage");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
               "C528 pickup moves item to leader hand");
+    assert_world_hash_matches(&state, "C528 pickup refreshes deterministic world hash");
 
     ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(37, &sx, &sy, &sw, &sh),
                 "C536 zone exists");
+    state.lastWorldHash = 0xBADF00Du;
     ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
               M11_GAME_INPUT_REDRAW,
               "clicking C536 places leader hand into BACKPACK_17");
@@ -191,6 +204,7 @@ static void test_extended_backpack_runtime_clicks(void) {
               "C536 placement fills BACKPACK_17 storage");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
               "C536 placement clears leader hand");
+    assert_world_hash_matches(&state, "C536 placement refreshes deterministic world hash");
 }
 
 
