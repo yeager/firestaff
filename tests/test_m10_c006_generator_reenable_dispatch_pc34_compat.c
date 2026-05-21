@@ -307,6 +307,174 @@ static int schedule_generator_trigger(struct GameWorld_Compat* world) {
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event) == 1;
 }
 
+
+static int rebuild_as_two_map_pit_world(struct GameWorld_Compat* world) {
+    struct DungeonMapDesc_Compat* maps;
+    struct DungeonMapTiles_Compat* tiles;
+    unsigned char* map0;
+    unsigned char* map1;
+    unsigned short* squareFirstThings;
+    int i;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    free(world->dungeon->tiles[0].squareData);
+    free(world->dungeon->maps);
+    free(world->dungeon->tiles);
+    free(world->things->squareFirstThings);
+
+    maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(*maps));
+    tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(*tiles));
+    map0 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    map1 = (unsigned char*)calloc(9, sizeof(unsigned char));
+    squareFirstThings = (unsigned short*)calloc(2, sizeof(unsigned short));
+    if (!maps || !tiles || !map0 || !map1 || !squareFirstThings) {
+        free(maps);
+        free(tiles);
+        free(map0);
+        free(map1);
+        free(squareFirstThings);
+        return 0;
+    }
+
+    for (i = 0; i < 9; ++i) {
+        map0[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        map1[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    }
+    map0[(1 * 3) + 1] = (unsigned char)((DUNGEON_ELEMENT_PIT << 5) |
+                                        DUNGEON_SQUARE_MASK_THING_LIST | 0x08);
+    map1[(1 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+
+    maps[0].level = 0;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    maps[1].level = 1;
+    maps[1].width = 3;
+    maps[1].height = 3;
+    tiles[0].squareCount = 9;
+    tiles[0].squareData = map0;
+    tiles[1].squareCount = 9;
+    tiles[1].squareData = map1;
+
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+    squareFirstThings[1] = THING_ENDOFLIST;
+
+    world->dungeon->header.mapCount = 2;
+    world->dungeon->maps = maps;
+    world->dungeon->tiles = tiles;
+    world->things->squareFirstThingCount = 2;
+    world->things->squareFirstThings = squareFirstThings;
+    world->things->sensors[0].next = THING_ENDOFLIST;
+    world->partyMapIndex = 0;
+    world->party.mapIndex = 0;
+    world->party.mapX = 0;
+    world->party.mapY = 0;
+    return 1;
+}
+
+static int test_c006_generated_group_falls_through_pit_before_link(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world generator pit fall\n");
+        return 1;
+    }
+
+    ok &= expect(rebuild_as_two_map_pit_world(&world),
+                 "build two-map open-pit generator fixture");
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    ok &= expect(prime_generator_sensor(&world), "prime generator sensor on open pit square");
+    ok &= expect(schedule_generator_trigger(&world), "schedule generator on open pit square");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance generator pit fall side-effect tick");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "C006 F0267 pit fall leaves source pit sensor chain untouched");
+    ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                 "C006 F0267 pit fall links generated group on lower map square");
+    ok &= expect(world.things->groups[0].next == THING_ENDOFLIST,
+                 "C006 F0267 pit fall target group links onto empty lower chain");
+    ok &= expect(world.things->groups[0].health[0] > 0 &&
+                 world.things->groups[0].health[0] < 180,
+                 "C006 F0267 pit fall applies source fall damage before insertion");
+    ok &= expect(world.creatureAICount == 0,
+                 "C006 pit-fallen cross-map group does not seed party-map active state");
+    ok &= expect(world.timeline.count == 2 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+                 world.timeline.events[0].mapIndex == 1 &&
+                 world.timeline.events[0].mapX == 1 &&
+                 world.timeline.events[0].mapY == 1 &&
+                 world.timeline.events[1].kind == TIMELINE_EVENT_GROUP_GENERATOR,
+                 "C006 pit-fallen group schedules C37 at lower map square");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    unsigned short dropped;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world event60 pit death\n");
+        return 1;
+    }
+
+    ok &= expect(rebuild_as_two_map_pit_world(&world),
+                 "build two-map open-pit event60 fixture");
+    world.things->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(*world.things->weapons));
+    if (!world.things->weapons) {
+        F0883_WORLD_Free_Compat(&world);
+        fprintf(stderr, "FAIL: allocate carried weapon\n");
+        return 1;
+    }
+    world.things->weaponCount = 1;
+    world.things->thingCounts[THING_TYPE_WEAPON] = 1;
+    world.things->weapons[0].next = THING_ENDOFLIST;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.things->groups[0].health[0] = 1;
+    world.things->groups[0].count = 0;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule event60 group pit-fall death");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "advance event60 group pit-fall death");
+    ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
+                 "event60 pit death leaves source pit sensor chain untouched");
+    dropped = world.things->squareFirstThings[1];
+    ok &= expect((dropped & 0x3FFFu) == (unsigned short)((THING_TYPE_WEAPON << 10) | 0),
+                 "event60 pit death drops carried group slot on lower map square");
+    ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
+                 "event60 pit death dropped weapon links onto empty lower chain");
+    ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
+                 world.things->groups[0].health[0] == 0,
+                 "event60 pit death clears carried slot and kills group before insertion");
+    ok &= expect(world.creatureAICount == 0 && world.timeline.count == 0,
+                 "event60 pit death does not insert group or schedule C37 retry");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int test_c006_reuses_first_unused_group_slot(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -587,6 +755,8 @@ int main(void) {
     if (!ok) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
     if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
+    if (test_c006_generated_group_falls_through_pit_before_link() != 0) return 1;
+    if (test_event60_group_pit_fall_death_drops_carried_slot() != 0) return 1;
     if (test_c006_reuses_first_unused_group_slot() != 0) return 1;
     if (test_c006_no_unused_group_slot_does_not_append() != 0) return 1;
     puts("M10_C006_GENERATOR_REENABLE_AND_AUDIO_DISPATCH_OK");

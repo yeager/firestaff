@@ -1172,7 +1172,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      *   switch to TargetMapIndex/TargetMapX/TargetMapY.
      * - lines 520-524 request M560 at the target for audible group teleporters.
      * This helper intentionally owns only the C006/F0185 and event60/61
-     * group-teleporter destination subcase; pit fall damage, projectile impact,
+     * group-teleporter destination subcase; projectile impact,
      * group rotation, and creature-allowed-on-map deletion remain outside it. */
     for (remaining = 100; remaining > 0; --remaining) {
         const struct DungeonMapDesc_Compat* map;
@@ -1213,6 +1213,263 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
             if (outTeleporterBuzzMapY) *outTeleporterBuzzMapY = *inOutMapY;
         }
         if (destinationIsTeleporterTarget) break;
+    }
+    return 1;
+}
+
+
+static int orch_group_level_change_location_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int sourceMapIndex,
+    int levelDelta,
+    int* mapX,
+    int* mapY)
+{
+    const struct DungeonMapDesc_Compat* sourceMap;
+    int globalX;
+    int globalY;
+    int targetLevel;
+    int i;
+
+    if (!dungeon || !dungeon->maps || !mapX || !mapY ||
+        sourceMapIndex < 0 || sourceMapIndex >= (int)dungeon->header.mapCount) {
+        return -1;
+    }
+
+    sourceMap = &dungeon->maps[sourceMapIndex];
+    globalX = (int)sourceMap->offsetMapX + *mapX;
+    globalY = (int)sourceMap->offsetMapY + *mapY;
+    targetLevel = (int)sourceMap->level + levelDelta;
+
+    for (i = 0; i < (int)dungeon->header.mapCount; ++i) {
+        const struct DungeonMapDesc_Compat* targetMap = &dungeon->maps[i];
+        if ((int)targetMap->level == targetLevel &&
+            globalX >= (int)targetMap->offsetMapX &&
+            globalX < (int)targetMap->offsetMapX + (int)targetMap->width &&
+            globalY >= (int)targetMap->offsetMapY &&
+            globalY < (int)targetMap->offsetMapY + (int)targetMap->height) {
+            *mapX = globalX - (int)targetMap->offsetMapX;
+            *mapY = globalY - (int)targetMap->offsetMapY;
+            return i;
+        }
+    }
+    return -1;
+}
+
+static unsigned short orch_thing_with_cell_compat(unsigned short thing, int cell)
+{
+    return (unsigned short)((thing & 0x3FFFu) | (unsigned short)((cell & 0x03) << 14));
+}
+
+static int orch_set_next_thing_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned short nextThing)
+{
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+
+    if (!things || index < 0) return 0;
+    switch (type) {
+        case THING_TYPE_DOOR:
+            if (index >= things->doorCount || !things->doors) return 0;
+            things->doors[index].next = nextThing;
+            return 1;
+        case THING_TYPE_TELEPORTER:
+            if (index >= things->teleporterCount || !things->teleporters) return 0;
+            things->teleporters[index].next = nextThing;
+            return 1;
+        case THING_TYPE_TEXTSTRING:
+            if (index >= things->textStringCount || !things->textStrings) return 0;
+            things->textStrings[index].next = nextThing;
+            return 1;
+        case THING_TYPE_SENSOR:
+            if (index >= things->sensorCount || !things->sensors) return 0;
+            things->sensors[index].next = nextThing;
+            return 1;
+        case THING_TYPE_GROUP:
+            if (index >= things->groupCount || !things->groups) return 0;
+            things->groups[index].next = nextThing;
+            return 1;
+        case THING_TYPE_WEAPON:
+            if (index >= things->weaponCount || !things->weapons) return 0;
+            things->weapons[index].next = nextThing;
+            return 1;
+        case THING_TYPE_ARMOUR:
+            if (index >= things->armourCount || !things->armours) return 0;
+            things->armours[index].next = nextThing;
+            return 1;
+        case THING_TYPE_SCROLL:
+            if (index >= things->scrollCount || !things->scrolls) return 0;
+            things->scrolls[index].next = nextThing;
+            return 1;
+        case THING_TYPE_POTION:
+            if (index >= things->potionCount || !things->potions) return 0;
+            things->potions[index].next = nextThing;
+            return 1;
+        case THING_TYPE_CONTAINER:
+            if (index >= things->containerCount || !things->containers) return 0;
+            things->containers[index].next = nextThing;
+            return 1;
+        case THING_TYPE_JUNK:
+            if (index >= things->junkCount || !things->junks) return 0;
+            things->junks[index].next = nextThing;
+            return 1;
+        case THING_TYPE_PROJECTILE:
+            if (index >= things->projectileCount || !things->projectiles) return 0;
+            things->projectiles[index].next = nextThing;
+            return 1;
+        case THING_TYPE_EXPLOSION:
+            if (index >= things->explosionCount || !things->explosions) return 0;
+            things->explosions[index].next = nextThing;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static int orch_group_creature_cell_compat(
+    const struct DungeonGroup_Compat* group,
+    int creatureIndex)
+{
+    if (!group) return 0xFF;
+    if (group->cells == 0xFFu) return 0xFF;
+    return (group->cells >> (creatureIndex << 1)) & 0x03;
+}
+
+static int orch_group_set_creature_cell_compat(
+    int cells,
+    int creatureIndex,
+    int cell)
+{
+    int shift = creatureIndex << 1;
+    return (cells & ~(0x03 << shift)) | ((cell & 0x03) << shift);
+}
+
+static int orch_damage_group_by_pit_fall_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group)
+{
+    int originalCount;
+    int creatureIndex;
+    int killedAny = 0;
+
+    if (!world || !group) return 0;
+    originalCount = group->count;
+    if (originalCount < 0) originalCount = 0;
+    if (originalCount > 3) originalCount = 3;
+
+    /* ReDMCSB GROUP.C:F0191:958-968 resets the moving fixed-drop cell
+     * accumulator, then damages each creature from Count down to 0 with
+     * attack 20 adjusted by random(6).  F0190:831-905 removes killed
+     * creatures from multi-creature groups by compacting HP/cells. */
+    for (creatureIndex = originalCount; creatureIndex >= 0; --creatureIndex) {
+        int damage = 17 + F0732_COMBAT_RngRandom_Compat(&world->masterRng, 6);
+        if (creatureIndex > group->count) continue;
+        if ((int)group->health[creatureIndex] <= damage) {
+            int currentCount = group->count;
+            int shiftIndex;
+            killedAny = 1;
+            if (currentCount <= 0) {
+                group->health[0] = 0;
+                return 2;
+            }
+            for (shiftIndex = creatureIndex; shiftIndex < currentCount; ++shiftIndex) {
+                group->health[shiftIndex] = group->health[shiftIndex + 1];
+                if (group->cells != 0xFFu) {
+                    int nextCell = orch_group_creature_cell_compat(group, shiftIndex + 1);
+                    group->cells = (unsigned char)orch_group_set_creature_cell_compat(
+                        group->cells, shiftIndex, nextCell);
+                }
+            }
+            group->health[currentCount] = 0;
+            if (group->cells != 0xFFu) {
+                group->cells = (unsigned char)(group->cells & 0x3Fu);
+            }
+            group->count = (unsigned char)(currentCount - 1);
+        } else {
+            group->health[creatureIndex] = (unsigned short)(group->health[creatureIndex] - damage);
+        }
+    }
+    return killedAny ? 1 : 0;
+}
+
+static int orch_drop_group_slot_possessions_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !group || !world->dungeon || !world->things) return 0;
+    thing = group->slot;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
+
+    sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+        unsigned short droppedThing = orch_thing_with_cell_compat(
+            thing, F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4));
+        if (!orch_set_next_thing_compat(
+                world->things, droppedThing, world->things->squareFirstThings[sftIndex])) {
+            return 0;
+        }
+        world->things->squareFirstThings[sftIndex] = droppedThing;
+        thing = nextThing;
+    }
+    group->slot = THING_ENDOFLIST;
+    return safety < 64;
+}
+
+static int orch_resolve_group_f0267_pit_destination_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int* inOutMapIndex,
+    int* inOutMapX,
+    int* inOutMapY,
+    int* outFallKilledGroup)
+{
+    int remaining;
+
+    if (outFallKilledGroup) *outFallKilledGroup = 0;
+    if (!world || !world->dungeon || !group || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
+
+    /* ReDMCSB MOVESENS.C:F0267:538-574 follows open, non-imaginary pits
+     * for non-levitating groups through F0154 level-change coordinates.
+     * Lines 608-624 damage the group by attack 20 at each fall and stop the
+     * chain if all creatures die; lines 656-663 then drop possessions at the
+     * final destination and prevent insertion. */
+    for (remaining = 100; remaining > 0; --remaining) {
+        const struct DungeonMapDesc_Compat* map;
+        unsigned char squareByte;
+        int squareType;
+        int targetMapIndex;
+
+        if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
+        map = &world->dungeon->maps[*inOutMapIndex];
+        if (*inOutMapX < 0 || *inOutMapX >= map->width ||
+            *inOutMapY < 0 || *inOutMapY >= map->height) break;
+        if (!world->dungeon->tiles || !world->dungeon->tiles[*inOutMapIndex].squareData) break;
+
+        squareByte = world->dungeon->tiles[*inOutMapIndex].squareData[*inOutMapX * map->height + *inOutMapY];
+        squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        if (squareType != DUNGEON_ELEMENT_PIT || !(squareByte & 0x08) || (squareByte & 0x01)) break;
+
+        targetMapIndex = orch_group_level_change_location_compat(
+            world->dungeon, *inOutMapIndex, 1, inOutMapX, inOutMapY);
+        if (targetMapIndex < 0 || targetMapIndex >= (int)world->dungeon->header.mapCount) break;
+        *inOutMapIndex = targetMapIndex;
+
+        if (orch_damage_group_by_pit_fall_compat(world, group) == 2) {
+            if (outFallKilledGroup) *outFallKilledGroup = 1;
+            return 1;
+        }
     }
     return 1;
 }
@@ -1443,6 +1700,7 @@ static int orch_materialize_generated_group_compat(
         int destMapIndex = ev->mapIndex;
         int destMapX = ev->mapX;
         int destMapY = ev->mapY;
+        int fallKilledGroup = 0;
         struct TimelineEvent_Compat resolvedEvent = *ev;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
@@ -1450,9 +1708,22 @@ static int orch_materialize_generated_group_compat(
             outTeleporterBuzzMapIndex,
             outTeleporterBuzzMapX,
             outTeleporterBuzzMapY);
+        if (!orch_resolve_group_f0267_pit_destination_compat(
+                world, group, &destMapIndex, &destMapX, &destMapY,
+                &fallKilledGroup)) {
+            return 0;
+        }
         resolvedEvent.mapIndex = destMapIndex;
         resolvedEvent.mapX = destMapX;
         resolvedEvent.mapY = destMapY;
+        if (fallKilledGroup) {
+            if (!orch_drop_group_slot_possessions_compat(
+                    world, group, destMapIndex, destMapX, destMapY)) {
+                return 0;
+            }
+            if (outGroupIndex) *outGroupIndex = groupIndex;
+            return 0;
+        }
 
         if (orch_square_has_group_or_party_compat(world, destMapIndex, destMapX, destMapY)) {
             if (!orch_schedule_deferred_group_move_compat(world, &resolvedEvent, groupIndex, 0)) {
@@ -1503,6 +1774,22 @@ static int orch_handle_deferred_group_move_event_compat(
     (void)orch_resolve_group_f0267_teleporter_destination_compat(
         world, &retry.mapIndex, &targetMapX, &targetMapY,
         &teleporterBuzzMapIndex, &teleporterBuzzMapX, &teleporterBuzzMapY);
+    {
+        int fallKilledGroup = 0;
+        if (!orch_resolve_group_f0267_pit_destination_compat(
+                world, group, &retry.mapIndex, &targetMapX, &targetMapY,
+                &fallKilledGroup)) {
+            return 0;
+        }
+        if (fallKilledGroup) {
+            if (teleporterBuzzMapIndex >= 0) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     teleporterBuzzMapX, teleporterBuzzMapY, teleporterBuzzMapIndex);
+            }
+            return orch_drop_group_slot_possessions_compat(
+                world, group, retry.mapIndex, targetMapX, targetMapY);
+        }
+    }
 
     if (orch_square_has_group_or_party_compat(world, retry.mapIndex, targetMapX, targetMapY)) {
         if (orch_try_lord_chaos_random_adjacent_retry_compat(
