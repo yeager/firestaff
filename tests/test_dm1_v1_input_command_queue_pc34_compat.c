@@ -183,6 +183,57 @@ int main(void)
     ok &= expect_int("right button secondary command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
     ok &= expect_int("right button secondary leader command", peek.command, DM1_V1_COMMAND_TOGGLE_INVENTORY_LEADER);
 
+    /* Source lock: COMMAND.C:1507-1510 lets C04/C33 use reserved queue
+     * slots, and COMMAND.C:1632-1638 maps C33 to C129 and C04 to C254
+     * before normal mouse hit-table lookup.
+     */
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("left button up queues stop pressing",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 226, 180, DM1_V1_BUTTON_LEFT_UP }), 1);
+    ok &= expect_int("left button up command queued", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("left button up stop command", peek.command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("left button up dequeues stop command", result.command, DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL);
+    ok &= expect_int("left button up is not movement", result.dispatchedMove, 0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("leave champion icon queues release",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 281, 1, DM1_V1_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION }), 1);
+    ok &= expect_int("leave champion icon command queued", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("leave champion icon release command", peek.command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("locked leave champion icon pending",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 281, 1, DM1_V1_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION }), 0);
+    ok &= expect_int("locked leave champion icon pending command", queue.pendingClickCommand, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+    queue.locked = 0;
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("locked leave champion icon replayed", result.pendingReplayCount, 1);
+    ok &= expect_int("locked leave champion icon replay command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("locked leave champion icon queued release", peek.command, DM1_V1_COMMAND_RELEASE_CHAMPION_ICON);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    for (int reserved_i = 0; reserved_i < 5; ++reserved_i) {
+        ok &= expect_int("reserved route regular setup",
+            DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue,
+                DM1_V1_COMMAND_MOVE_FORWARD, reserved_i, reserved_i), 1);
+    }
+    ok &= expect_int("reserved route regular queue full at five", (int)queue.count, 5);
+    ok &= expect_int("left up uses first reserved route slot",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 226, 180, DM1_V1_BUTTON_LEFT_UP }), 1);
+    ok &= expect_int("leave icon uses second reserved route slot",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 281, 1, DM1_V1_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION }), 1);
+    ok &= expect_int("reserved route queue holds seven", (int)queue.count, 7);
+    ok &= expect_int("third reserved route drops at seven",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 226, 180, DM1_V1_BUTTON_LEFT_UP }), 0);
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("pc34 table left arrow turns left", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004B, 0, 0, 0 }), 1);

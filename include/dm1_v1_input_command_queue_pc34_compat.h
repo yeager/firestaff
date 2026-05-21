@@ -42,7 +42,10 @@ enum Dm1V1InputKindPc34Compat {
 
 enum Dm1V1ButtonPc34Compat {
     DM1_V1_BUTTON_LEFT = 2,
-    DM1_V1_BUTTON_RIGHT = 1
+    DM1_V1_BUTTON_RIGHT = 1,
+    DM1_V1_BUTTON_LEFT_UP = 4,
+    DM1_V1_BUTTON_RIGHT_UP = 8,
+    DM1_V1_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION = 33
 };
 
 struct Dm1V1QueuedCommandPc34Compat {

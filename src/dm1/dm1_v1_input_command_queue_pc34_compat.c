@@ -13,6 +13,9 @@
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
  * - COMMAND.C:729-812 and COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click; DEFS.H:3263-3264 gives PC-34 queue storage size 8 and DEFS.H:3507 defines C5.
  * - DEFS.H:3263-3264 sets M529_COMMAND_QUEUE_SIZE to 8 for later I34 builds; COMMAND.C:1506-1511 lets release/stop mouse events use the queue while regular events stop at C5 and reserve two slots.
+ * - COMMAND.C:1632-1638 maps C33 leave-champion-icon to C129 and C04
+ *   left-button-up to C254 before normal mouse-table lookup; COMMAND.C:2129-2147
+ *   and 2169-2171 dispatch those release/stop commands before movement.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
  * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement and preserves later-platform release/stop commands.
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
@@ -133,6 +136,17 @@ static int command_for_mouse(int x, int y, int buttonMask)
     int command = command_for_primary_mouse(x, y, buttonMask);
     if (command != DM1_V1_COMMAND_NONE) {
         return command;
+    }
+    /* Source lock: COMMAND.C:1632-1638 handles these mouse event ordinals
+     * before scanning primary/secondary mouse input tables. They are not
+     * coordinate hit-tests and must survive regular queue saturation through
+     * the reserved release-command slots.
+     */
+    if (buttonMask == DM1_V1_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {
+        return DM1_V1_COMMAND_RELEASE_CHAMPION_ICON;
+    }
+    if (buttonMask == DM1_V1_BUTTON_LEFT_UP) {
+        return DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL;
     }
     return command_for_secondary_mouse(x, y, buttonMask);
 }
@@ -342,5 +356,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,72-84,106-121,252-260,272-305,579-610,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,72-84,106-121,252-260,272-305,579-610,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1632-1638,1692-1707,1709-1813,2045-2156,2129-2147,2169-2171,2831-2928; DEFS.H:223-226,3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }
