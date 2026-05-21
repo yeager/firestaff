@@ -211,6 +211,51 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
               "closing the panel clears open chest state");
 }
 
+static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat container;
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned char framebuffer[320 * 200];
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&container, 0, sizeof(container));
+    things.containers = &container;
+    things.containerCount = 1;
+    weapon.type = 2;
+    weapon.next = THING_ENDOFLIST;
+    container.type = 0;
+    container.slot = daggerThing;
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand accepts source container thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye click with leader-hand container redraws source chest panel");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "leader-hand container eye route opens chest panel state");
+    ASSERT_EQ(M11_GameView_IsDialogOverlayActive(&state), 0,
+              "container eye route does not open the generic dialog overlay");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "container eye route does not mark object-description panel active");
+    ASSERT_EQ(state.v1ScrollPanelActive, 0,
+              "container eye route does not mark scroll panel active");
+    ASSERT_TRUE(strstr(state.inspectDetail, "CONTAINER CHEST PANEL") != NULL,
+                "container eye route records source chest-panel detail");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+                "C537 chest slot zone exists after leader-hand container eye click");
+    (void)sw;
+    (void)sh;
+    ASSERT_TRUE(framebuffer[(33 + sy) * 320 + sx] != 0,
+                "leader-hand container eye render reaches C537 chest slot frame");
+}
+
 static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -603,6 +648,7 @@ int main(void) {
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_open_chest_runtime_routes_and_clicks();
+    test_leader_hand_container_eye_routes_to_chest_panel();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();

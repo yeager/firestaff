@@ -19129,6 +19129,21 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     return 1;
 }
 
+static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
+                                             unsigned short thing) {
+    if (!state || !state->inventoryPanelActive ||
+        thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) {
+        return 0;
+    }
+    state->v1OpenChestThing = thing;
+    if (m11_v1_open_chest_container_index(state) < 0) {
+        state->v1OpenChestThing = THING_NONE;
+        return 0;
+    }
+    return 1;
+}
+
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
     if (!state) return;
     state->v1OpenChestThing = THING_NONE;
@@ -20270,6 +20285,30 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
                      "%s: %s", typeName, itemName);
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                      "SCROLL TEXT PANEL  ICON %d", itemIcon);
+            m11_set_status(state, "INSPECT", itemName);
+            return 1;
+        }
+
+        if (INVENTORY_Compat_ObjectEyePanelRoute((unsigned int)itemType, NULL) ==
+            INVENTORY_OBJECT_EYE_PANEL_ROUTE_CONTAINER_CHEST_PC34_COMPAT) {
+            /* ReDMCSB PANEL.C F0352 -> F0342 routes leader-hand containers to
+             * F0333 instead of the object-description body.  CHEST.C F0333
+             * opens G0426_T_OpenChest and redraws the C025 chest panel even
+             * while P0707_B_PressingEye suppresses the action-hand open icon. */
+            state->v1ObjectDescriptionPanelActive = 0;
+            state->v1ObjectDescriptionThing = THING_NONE;
+            state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ObjectDescriptionName[0] = 0;
+            state->v1ObjectDescriptionBody[0] = 0;
+            state->v1ScrollPanelActive = 0;
+            state->v1ScrollPanelThing = THING_NONE;
+            if (!m11_open_v1_chest_panel_for_thing(state, thing)) {
+                return 0;
+            }
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "%s: %s", typeName, itemName);
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "CONTAINER CHEST PANEL  ICON %d", itemIcon);
             m11_set_status(state, "INSPECT", itemName);
             return 1;
         }
