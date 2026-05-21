@@ -17,7 +17,7 @@ Status per 2026-05-19 v2.4.0.
 
 ### Creature System
 
-- 🔧 Creature type-specific behavior — Giggler steal, Ghost/non-material melee gating, quarter-square melee cell shuffle, adjacent creature projectile chance, fixed possession drop payloads, and fixed possession runtime materialization are source-locked (de044e27); ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
+- 🔧 Creature type-specific behavior — Giggler steal, Ghost/non-material melee gating, quarter-square melee cell shuffle, adjacent creature projectile chance, fixed possession drop payloads, fixed possession runtime materialization (de044e27), and Couatl idle aspect movement sound gate (a6541cf5) are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
 - 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with fixed group-slot reuse, square insertion, party-map active-state seed, F0180 event37 wandering hookup, delayed C65 re-enable, F0185/F0245 buzz dispatch, event60/61 blocked-destination defer (5ace9238), Lord Chaos adjacent random retry (0a12e07d), and narrow F0267 teleporter destination/cross-map placement with covered audible buzz/wandering scheduling (191c9d3c); remaining pit fall damage/death/drop, projectile impact/removal, creature-not-allowed deletion/drop, group-specific teleporter rotation, and multi-hop audible parity remain
 
 ### Champion System

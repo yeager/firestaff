@@ -68,6 +68,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Creature rendering — sprites load and source-locked aspect frames cycle
 - ✅ Creature projectile attacks - ReDMCSB F0207/F0212 payload now feeds M11 live runtime insertion with source-backed C48 first-move ignore-impact proof; broader exact creature AI event scheduling remains separate
 - ✅ Creature sound effects attack/movement ordinals and runtime trigger coverage are source-locked
+- ✅ Couatl idle aspect movement sound gate is source-locked for the random idle update path while attacking/resting and non-Couatl cases stay silent (a6541cf5)
 - ✅ Creature flee behavior — source-locked fear-triggered flee delay, flee direction, countdown expiry, and behavior dispatch are covered by the DM1 V1 creature AI gate
 - ✅ Creature special positioning — quarter-square melee cell shuffle and adjacent creature projectile chance are source-locked in the DM1 V1 creature AI gate (5121884b)
 - ✅ Creature fixed possession drop payloads and runtime materialization are source-locked for fixed source object pools, unused-slot allocation, raw object payload writes, cell tagging, square-list linking, death-path integration, and dead group unused-pool cleanup (de044e27)
