@@ -3068,6 +3068,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 viewport wall capture-closure gap gate -----------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass622_dm1_v1_viewport_wall_capture_closure_gap
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass622_dm1_v1_viewport_wall_capture_closure_gap.py
+    )
+endif()
+
 # -- DM1 V1 original capture route preflight gate -------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

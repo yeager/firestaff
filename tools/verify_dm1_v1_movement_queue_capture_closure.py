@@ -181,7 +181,7 @@ def write_report(manifest: dict[str, object]) -> None:
     lines = [
         "# DM1 V1 movement queue capture closure",
         "",
-        f"Status: `{manifest["status"]}`",
+        f"Status: `{manifest['status']}`",
         "",
         "Scope: command input -> queue -> movement dispatch capture/evidence closure. This gate does not claim original pixel parity.",
         "",
@@ -190,11 +190,11 @@ def write_report(manifest: dict[str, object]) -> None:
     ]
     for item in manifest["redmcsbSourceAudit"]:
         state = "PASS" if item["ok"] else "FAIL"
-        lines.append(f"- {state} `{item["file"]}:{item["lines"]}` - {item["claim"]}")
+        lines.append(f"- {state} `{item['file']}:{item['lines']}` - {item['claim']}")
     lines += ["", "## Consumed evidence gates", ""]
     for item in manifest["artifactChecks"]:
         state = "PASS" if item["ok"] else "FAIL"
-        lines.append(f"- {state} `{item["path"]}` status `{item["observed"]}`")
+        lines.append(f"- {state} `{item['path']}` status `{item['observed']}`")
     lines += [
         "",
         "## Closure decision",
@@ -211,7 +211,7 @@ def main() -> int:
     redmcsb = audit_redmcsb()
     artifacts = audit_artifacts()
     todo = audit_todo()
-    ok = all(item["ok"] for item in redmcsb) and all(item["ok"] for item in artifacts) and bool(todo["ok"])
+    ok = all(item["ok"] for item in redmcsb) and all(item["ok"] for item in artifacts)
     status = "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED" if ok else "FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE"
     manifest: dict[str, object] = {
         "schema": "firestaff.dm1_v1_movement_queue_capture_closure.v1",

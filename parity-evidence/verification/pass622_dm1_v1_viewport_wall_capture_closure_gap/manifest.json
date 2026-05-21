@@ -1,0 +1,96 @@
+{
+  "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
+  "decision": "The next viewport/wall closure gap after pass609 is still capture-backed, not renderer-backed: Firestaff has deterministic same-viewport fixture rows, but the original side has no source-bound command/state/redraw/present transcript and the latest crops are duplicate/non-promotable.",
+  "nonClaims": [
+    "no new original DOSBox capture was run",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no renderer behavior change",
+    "no V2/CSB/DM2 scope",
+    "no DANNESBURK use"
+  ],
+  "ok": true,
+  "pass608SameViewportBlocker": {
+    "decision": "No promotable same-viewport original/Firestaff manifest exists yet. Firestaff has exact fixture state and viewport hashes, and original PC34 assets/tools are present, but the latest N2 original diagnostic still lacks the command-state-redraw-present transcript required to bind an original frame to any Firestaff map/X/Y/direction row.",
+    "duplicateOriginalCropGroups": {
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "duplicateOriginalRawGroups": {
+      "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8": [
+        3,
+        4
+      ]
+    },
+    "exists": true,
+    "expectedStatus": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+    "firestaffStateCount": 6,
+    "firestaffViewportHashCount": 6,
+    "freshOriginalClassificationCount": 6,
+    "hasExpectedTranscriptBlocker": true,
+    "manifest": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
+    "ok": true,
+    "runtimeTranscriptOk": false,
+    "runtimeTranscriptProvided": false,
+    "runtimeTranscriptStatus": "not_provided",
+    "status": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE"
+  },
+  "pass609Contract": {
+    "currentAttemptNonPromotable": true,
+    "hasFutureCaptureContract": true,
+    "report": "parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md",
+    "reportExists": true,
+    "sourceLockRowCount": 5,
+    "statusLocked": true,
+    "tool": "tools/verify_pass609_dm1_v1_same_viewport_capture_contract.py",
+    "toolExists": true
+  },
+  "problems": [],
+  "promotionRequires": [
+    "one original runtime transcript row with F0380 dequeue/count delta for the sampled route label",
+    "matching F0365/F0366 state mutation or source-visible blocked/no-op proof for that row",
+    "later F0128 direction/X/Y tuple and F0097/VIDRV present boundary for the same original frame",
+    "one Firestaff viewport frame with the same map/X/Y/direction/wall-door tuple and reproducible viewport hash",
+    "no duplicate viewport crop hash across labels unless the manifest proves the labels share the same semantic tuple"
+  ],
+  "schema": "firestaff.parity.pass622_dm1_v1_viewport_wall_capture_closure_gap.v1",
+  "sourceAudit": [
+    {
+      "claim": "wall and door evidence must be sampled from the composed viewport bitmap, not isolated wall assets",
+      "file": "DUNVIEW.C",
+      "id": "wall_and_door_blits_target_g0296_viewport",
+      "lines": "3048-3107",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "D0C/current-square closure must be paired to the same F0128 order that already source-locks side and center walls",
+      "file": "DUNVIEW.C",
+      "id": "current_square_draws_after_d1_and_d0_side_squares",
+      "lines": "8533-8542",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "the accepted crop must bind to the same direction/X/Y tuple consumed by F0128",
+      "file": "DUNVIEW.C",
+      "id": "f0128_consumes_tuple_then_requests_present",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "original captures are promotable only at or after the source viewport-present boundary",
+      "file": "DRAWVIEW.C",
+      "id": "f0097_presents_g0296_viewport",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED"
+}
