@@ -5,6 +5,7 @@
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_input_poll_pc34_compat.h"
+#include "dm1_v1_teleporter_pit_pc34_compat.h"
 
 /*
  * Integration test for the complete DM1 V1 Movement Command Pipeline.
@@ -1109,6 +1110,91 @@ static void test_mouse_movement(void)
     EXPECT_INT("mouse_fwd_y", party.mapY, 4);
 }
 
+/* ---- Test: F0267 teleporter rotation side effects ---- */
+static void test_teleporter_rotation_parity_source_lock(void)
+{
+    M11_TeleporterDef teleporter;
+    int outDirection;
+    int outCell;
+    const char* evidence;
+
+    memset(&teleporter, 0, sizeof(teleporter));
+    teleporter.destFacing = DIR_SOUTH;
+    teleporter.absoluteRotation = 1;
+
+    EXPECT_INT("teleporter_rotation_party_absolute_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_PARTY, 0, &teleporter,
+            DIR_EAST, 3, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_party_absolute_direction", outDirection, DIR_SOUTH);
+    EXPECT_INT("teleporter_rotation_party_absolute_cell_unchanged", outCell, 3);
+
+    teleporter.absoluteRotation = 0;
+    EXPECT_INT("teleporter_rotation_party_relative_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_PARTY, 0, &teleporter,
+            DIR_EAST, 3, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_party_relative_direction", outDirection, DIR_WEST);
+    EXPECT_INT("teleporter_rotation_party_relative_cell_unchanged", outCell, 3);
+
+    teleporter.absoluteRotation = 1;
+    EXPECT_INT("teleporter_rotation_projectile_absolute_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_PROJECTILE, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_projectile_absolute_direction", outDirection, DIR_SOUTH);
+    EXPECT_INT("teleporter_rotation_projectile_absolute_cell", outCell, 1);
+
+    teleporter.absoluteRotation = 0;
+    EXPECT_INT("teleporter_rotation_projectile_relative_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_PROJECTILE, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_projectile_relative_direction", outDirection, DIR_WEST);
+    EXPECT_INT("teleporter_rotation_projectile_relative_cell", outCell, 3);
+
+    EXPECT_INT("teleporter_rotation_object_relative_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_OBJECT, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_object_relative_direction_ignored", outDirection, DIR_EAST);
+    EXPECT_INT("teleporter_rotation_object_relative_cell", outCell, 3);
+
+    teleporter.absoluteRotation = 1;
+    EXPECT_INT("teleporter_rotation_object_absolute_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_OBJECT, 0, &teleporter,
+            DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_object_absolute_direction_ignored", outDirection, DIR_EAST);
+    EXPECT_INT("teleporter_rotation_object_absolute_cell_unchanged", outCell, 1);
+
+    teleporter.absoluteRotation = 0;
+    EXPECT_INT("teleporter_rotation_projectile_assoc_object_relative_ok",
+        m11_apply_teleporter_rotation(
+            M11_TELEPORTER_ROTATE_THING_OBJECT,
+            M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT,
+            &teleporter, DIR_EAST, 1, &outDirection, &outCell),
+        1);
+    EXPECT_INT("teleporter_rotation_projectile_assoc_object_direction_ignored", outDirection, DIR_EAST);
+    EXPECT_INT("teleporter_rotation_projectile_assoc_object_cell_unchanged", outCell, 1);
+
+    EXPECT_INT("teleporter_rotation_unknown_kind_rejected",
+        m11_apply_teleporter_rotation(99, 0, &teleporter, DIR_EAST, 1,
+            &outDirection, &outCell),
+        0);
+
+    evidence = m11_teleporter_rotation_source_evidence();
+    EXPECT("teleporter_rotation_evidence_f0263", strstr(evidence, "MOVESENS.C:120-133") != NULL);
+    EXPECT("teleporter_rotation_evidence_f0267_party", strstr(evidence, "MOVESENS.C:493-518") != NULL);
+    EXPECT("teleporter_rotation_evidence_f0267_object", strstr(evidence, "MOVESENS.C:526-531") != NULL);
+}
+
 int main(void)
 {
     printf("DM1 V1 Movement Pipeline Integration Tests\n");
@@ -1132,6 +1218,7 @@ int main(void)
     test_direct_command_wrapper_forward_step();
     test_original_keyboard_buffer_forward_route_to_first_redraw();
     test_mouse_movement();
+    test_teleporter_rotation_parity_source_lock();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

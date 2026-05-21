@@ -14,7 +14,7 @@ int m11_add_teleporter(M11_TeleporterPitState* s, int x, int y, int destX, int d
     M11_TeleporterDef* t = &s->teleporters[s->teleporterCount++];
     t->x = x; t->y = y; t->destX = destX; t->destY = destY;
     t->destLevel = destLevel; t->destFacing = destFacing;
-    t->isVisible = visible; t->soundEffect = 0;
+    t->isVisible = visible; t->soundEffect = 0; t->absoluteRotation = 0;
     return 1;
 }
 
@@ -45,6 +45,56 @@ int m11_check_pit(const M11_TeleporterPitState* s, int x, int y, int currentLeve
         }
     }
     return 0;
+}
+
+static int m11_normalize_direction_or_cell(int value) {
+    return value & 3;
+}
+
+int m11_apply_teleporter_rotation(int thingKind,
+                                   int sourceMapX,
+                                   const M11_TeleporterDef* teleporter,
+                                   int inDirection,
+                                   int inCell,
+                                   int* outDirection,
+                                   int* outCell) {
+    int rotation;
+
+    if (!teleporter || !outDirection || !outCell) return 0;
+
+    rotation = m11_normalize_direction_or_cell(teleporter->destFacing);
+    *outDirection = m11_normalize_direction_or_cell(inDirection);
+    *outCell = m11_normalize_direction_or_cell(inCell);
+
+    switch (thingKind) {
+    case M11_TELEPORTER_ROTATE_THING_PARTY:
+        if (teleporter->absoluteRotation) {
+            *outDirection = rotation;
+        } else {
+            *outDirection = m11_normalize_direction_or_cell(*outDirection + rotation);
+        }
+        return 1;
+    case M11_TELEPORTER_ROTATE_THING_PROJECTILE:
+        if (teleporter->absoluteRotation) {
+            *outDirection = rotation;
+        } else {
+            *outDirection = m11_normalize_direction_or_cell(*outDirection + rotation);
+            *outCell = m11_normalize_direction_or_cell(*outCell + rotation);
+        }
+        return 1;
+    case M11_TELEPORTER_ROTATE_THING_OBJECT:
+        if (!teleporter->absoluteRotation &&
+            sourceMapX != M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT) {
+            *outCell = m11_normalize_direction_or_cell(*outCell + rotation);
+        }
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+const char* m11_teleporter_rotation_source_evidence(void) {
+    return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
 
 int m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY,
