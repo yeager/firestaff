@@ -39,12 +39,51 @@ No promotable same-viewport original/Firestaff manifest exists yet. Firestaff ha
 | 5 | forward_2 | dungeon_gameplay | dungeon_gameplay | `355a191cd07b` | `701689e73fc0` |
 | 6 | left_turn_probe | dungeon_gameplay | dungeon_gameplay | `48ed3743ab6a` | `701689e73fc0` |
 
+## Runtime transcript binding
+
+- Status: not_provided
+- Provided: False
+- Promotable rows: 0
+
+Required row fields:
+- runId
+- label
+- originalFrame.path
+- originalFrame.rawSha256
+- originalFrame.cropSha256
+- originalFrame.width
+- originalFrame.height
+- commandQueue.sourceFunction
+- commandQueue.command
+- commandQueue.countBefore
+- commandQueue.countAfter
+- commandQueue.firstIndexBefore
+- commandQueue.firstIndexAfter
+- dispatch.sourceFunction
+- dispatch.handler
+- partyAfter.mapIndex
+- partyAfter.mapX
+- partyAfter.mapY
+- partyAfter.direction
+- redraw.sourceFunction
+- redraw.mapX
+- redraw.mapY
+- redraw.direction
+- present.sourceFunction
+- present.viewportPresented
+- firestaffFrame.mapIndex
+- firestaffFrame.mapX
+- firestaffFrame.mapY
+- firestaffFrame.direction
+- firestaffFrame.viewportSha256
+
 ## Blockers
 
 - fresh original diagnostic class sequence is not the expected title/menu -> entrance -> gameplay route
 - fresh original diagnostic has duplicate raw 320x200 frames
 - fresh original diagnostic has duplicate 224x136 viewport crops
 - fresh original diagnostic produced no command/state/redraw transcript rows
+- no supplied transcript row satisfies the pass608 command/state/redraw binding contract
 - original rows do not bind map/X/Y/direction to F0380 -> F0365/F0366 -> F0128 -> F0097 for the same sampled frame
 
 ## Promotion requires
@@ -57,9 +96,9 @@ No promotable same-viewport original/Firestaff manifest exists yet. Firestaff ha
 
 ## Non-claims
 
-- no original-vs-Firestaff pixel parity is claimed
+- no original-vs-Firestaff pixel parity is claimed unless runtimeTranscript.ok is true
 - no ReDMCSB source-table gap is claimed
 - no Firestaff renderer behavior is changed
-- fresh original images are diagnostic-only and remain unpromoted
+- fresh original images are diagnostic-only and remain unpromoted without runtimeTranscript.ok
 
 Manifest: parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json
