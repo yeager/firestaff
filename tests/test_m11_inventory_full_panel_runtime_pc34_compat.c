@@ -24,6 +24,9 @@
  *     into C101 and C029 into C504 before icon/text overdraw
  *   CHEST.C F0333 lines 43-48 and 64-65: opened container state blits
  *     C025 open-chest panel, then C537..C544 slot boxes and object icons
+ *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
+ *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
+ *     C031/C032 into C101/C500/C501/C502 before drawing source bars
  */
 
 #include "m11_game_view.h"
@@ -230,6 +233,116 @@ static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* 
         }
     }
     return 1;
+}
+
+static int point_is_in_food_water_panel_overdraw(int x, int y, int poisoned) {
+    int foodX = 32, foodY = 8;
+    int waterX = 32, waterY = 31;
+    int poisonX = 32, poisonY = 50;
+    int barX = 33;
+
+    if (point_in_rect(x, y, foodX, foodY, 34, 9)) return 1;
+    if (point_in_rect(x, y, waterX, waterY, 46, 9)) return 1;
+    if (poisoned && point_in_rect(x, y, poisonX, poisonY, 96, 15)) return 1;
+    if (point_in_rect(x, y, barX, 17, 36, 8)) return 1;
+    if (point_in_rect(x, y, barX, 40, 48, 8)) return 1;
+    return 0;
+}
+
+static int framebuffer_matches_asset_at(const M11_AssetSlot* asset,
+                                        const unsigned char* framebuffer,
+                                        int dstX,
+                                        int dstY,
+                                        int transparentColor,
+                                        int* matched) {
+    int x, y;
+    if (!asset || !asset->pixels || !framebuffer) return 0;
+    for (y = 0; y < (int)asset->height; ++y) {
+        for (x = 0; x < (int)asset->width; ++x) {
+            unsigned char want = asset->pixels[y * (int)asset->width + x];
+            unsigned char got;
+            if (want == (unsigned char)transparentColor) continue;
+            got = framebuffer[(dstY + y) * 320 + (dstX + x)];
+            if (got != want) return 0;
+            if (matched) ++*matched;
+        }
+    }
+    return 1;
+}
+
+static int framebuffer_matches_food_water_source_panel_pixels(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer,
+    int poisoned) {
+    const M11_AssetSlot* panel;
+    const M11_AssetSlot* food;
+    const M11_AssetSlot* water;
+    const M11_AssetSlot* poison;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int panelMatched = 0;
+    int foodMatched = 0;
+    int waterMatched = 0;
+    int poisonMatched = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
+    food = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
+    water = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
+    poison = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                  (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
+    if (!panel || !panel->pixels || !food || !food->pixels ||
+        !water || !water->pixels ||
+        panel->width != (unsigned short)panelW ||
+        panel->height != (unsigned short)panelH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            unsigned char want = panel->pixels[y * (int)panel->width + x];
+            unsigned char got;
+            if (want == 8 || point_is_in_food_water_panel_overdraw(x, y, poisoned)) {
+                continue;
+            }
+            got = framebuffer[(33 + panelY + y) * 320 + (panelX + x)];
+            if (got != want) return 0;
+            panelMatched++;
+        }
+    }
+
+    if (!framebuffer_matches_asset_at(food, framebuffer,
+                                      panelX + 32,
+                                      33 + panelY + 13 - (((int)food->height + 1) / 2),
+                                      12, &foodMatched)) {
+        return 0;
+    }
+    if (!framebuffer_matches_asset_at(water, framebuffer,
+                                      panelX + 32,
+                                      33 + panelY + 36 - (((int)water->height + 1) / 2),
+                                      12, &waterMatched)) {
+        return 0;
+    }
+    if (poisoned) {
+        if (!poison || !poison->pixels ||
+            !framebuffer_matches_asset_at(poison, framebuffer,
+                                          panelX + 32,
+                                          33 + panelY + 58 - (((int)poison->height + 1) / 2),
+                                          12, &poisonMatched)) {
+            return 0;
+        }
+    }
+
+    return panelMatched > 1000 &&
+           foodMatched > 20 &&
+           waterMatched > 20 &&
+           (!poisoned || poisonMatched > 20);
 }
 
 static void seed_inventory_view(M11_GameViewState* state,
@@ -511,6 +624,47 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
                 "leader-hand container eye render blits source C025 open-chest panel into C101");
     ASSERT_TRUE(framebuffer[(33 + sy) * 320 + sx] != 0,
                 "leader-hand container eye render reaches C537 chest slot frame");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
+static void test_empty_hand_mouth_blits_source_food_water_panel_pixels(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned char framebuffer[320 * 200];
+
+    seed_inventory_view(&state, &things, &weapon);
+    state.world.party.champions[0].food = 1200;
+    state.world.party.champions[0].water = 700;
+    state.world.party.champions[0].poisonDose = 9;
+
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for source food/water panel blits");
+    state.assetsAvailable = 1;
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 56 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "empty-hand mouth click routes to the source food/water panel");
+    ASSERT_EQ(state.v1FoodWaterPanelActive, 1,
+              "empty-hand mouth click marks food/water panel active");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "food/water route clears object-description panel state");
+    ASSERT_EQ(state.v1ScrollPanelActive, 0,
+              "food/water route clears scroll panel state");
+    ASSERT_EQ(state.v1ChampionStatsPanelActive, 0,
+              "food/water route clears champion-stats panel state");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "food/water route closes any open chest panel state");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(framebuffer_matches_food_water_source_panel_pixels(&state, framebuffer, 1),
+                "empty-hand mouth render blits source C020/C030/C031/C032 pixels into C101/C500/C501/C502");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 56 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_IGNORED,
+              "second empty-hand mouth click keeps the already-active food/water panel");
 
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
@@ -1023,6 +1177,7 @@ int main(void) {
     test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
     test_leader_hand_container_eye_routes_to_chest_panel();
+    test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();

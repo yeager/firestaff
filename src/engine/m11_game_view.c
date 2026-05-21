@@ -5788,6 +5788,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->v1OpenChestThing = THING_NONE;
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
+    state->v1FoodWaterPanelActive = 0;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 
@@ -19046,6 +19047,7 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
         state, state->world.things, thing);
     state->v1ChampionStatsPanelActive = 0;
+    state->v1FoodWaterPanelActive = 0;
     return 1;
 }
 
@@ -19056,6 +19058,7 @@ void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
     state->leaderHandIconIndex = -1;
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
+    state->v1FoodWaterPanelActive = 0;
 }
 
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state) {
@@ -19128,6 +19131,7 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
     state->v1OpenChestThing = thing;
+    state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
         return 0;
@@ -19143,6 +19147,7 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
         return 0;
     }
     state->v1OpenChestThing = thing;
+    state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
         return 0;
@@ -20032,7 +20037,20 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
 
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE) {
-        m11_set_status(state, "MOUTH", "NOTHING IN HAND");
+        if (state->v1FoodWaterPanelActive) {
+            return 0;
+        }
+        M11_GameView_CloseV1OpenChest(state);
+        state->v1ObjectDescriptionPanelActive = 0;
+        state->v1ObjectDescriptionThing = THING_NONE;
+        state->v1ObjectDescriptionIconIndex = -1;
+        state->v1ObjectDescriptionName[0] = '\0';
+        state->v1ObjectDescriptionBody[0] = '\0';
+        state->v1ScrollPanelActive = 0;
+        state->v1ScrollPanelThing = THING_NONE;
+        state->v1ChampionStatsPanelActive = 0;
+        state->v1FoodWaterPanelActive = 1;
+        m11_set_status(state, "MOUTH", "FOOD/WATER");
         return 1;
     }
 
@@ -20345,6 +20363,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         state->v1ScrollPanelActive = 0;
         state->v1ScrollPanelThing = THING_NONE;
         state->v1ChampionStatsPanelActive = 1;
+        state->v1FoodWaterPanelActive = 0;
         /* Show champion skills and statistics */
         char champName[16];
         m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -20356,6 +20375,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         return 1;
     } else {
         state->v1ChampionStatsPanelActive = 0;
+        state->v1FoodWaterPanelActive = 0;
         /* Show detailed item description.
          * ReDMCSB F0352: eye click with item in hand shows object panel
          * with name, weight, type-specific stats (damage, armor, charges). */
@@ -23580,6 +23600,132 @@ static int m11_draw_v1_inventory_object_description_panel(
     return 1;
 }
 
+static int m11_v1_food_water_bar_color(int amount, int sourceColor) {
+    if (amount < -512) return M11_COLOR_RED;
+    if (amount < 0) return M11_COLOR_YELLOW;
+    return sourceColor;
+}
+
+static int m11_v1_food_water_bar_width(int amount, int fullWidth) {
+    int scaled;
+    if (fullWidth <= 0) return 0;
+    scaled = amount + 1024;
+    if (scaled <= 0) return 0;
+    if (scaled >= 3072) scaled = 3071;
+    return (scaled * fullWidth) / 3072;
+}
+
+static void m11_draw_v1_food_water_bar(unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       int x,
+                                       int y,
+                                       int w,
+                                       int h,
+                                       int shadowOffset,
+                                       int amount,
+                                       int sourceColor) {
+    int drawW = m11_v1_food_water_bar_width(amount, w);
+    int color = m11_v1_food_water_bar_color(amount, sourceColor);
+    if (drawW <= 0) return;
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x + shadowOffset, y + shadowOffset, drawW, h, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, drawW, h, color);
+}
+
+static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state,
+                                                  unsigned char* framebuffer,
+                                                  int framebufferWidth,
+                                                  int framebufferHeight) {
+    const struct ChampionState_Compat* champ;
+    int championIndex;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int drewPanel = 0;
+
+    if (!state || !framebuffer || !state->v1FoodWaterPanelActive ||
+        !state->inventoryPanelActive || state->showDebugHUD) {
+        return 0;
+    }
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* panel = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
+        if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
+            M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
+                                 M11_VIEWPORT_X + panelX,
+                                 M11_VIEWPORT_Y + panelY,
+                                 M11_COLOR_RED);
+            drewPanel = 1;
+        }
+    }
+    if (!drewPanel) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_LIGHT_GRAY);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                      panelW, panelH, M11_COLOR_BROWN);
+    }
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* food = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
+        const M11_AssetSlot* water = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
+        if (food && food->pixels && food->width > 0 && food->height > 0) {
+            M11_AssetLoader_Blit(food, framebuffer, framebufferWidth, framebufferHeight,
+                                 M11_VIEWPORT_X + panelX + 32,
+                                 M11_VIEWPORT_Y + panelY + 13 - (((int)food->height + 1) / 2),
+                                 M11_COLOR_DARK_GRAY);
+        }
+        if (water && water->pixels && water->width > 0 && water->height > 0) {
+            M11_AssetLoader_Blit(water, framebuffer, framebufferWidth, framebufferHeight,
+                                 M11_VIEWPORT_X + panelX + 32,
+                                 M11_VIEWPORT_Y + panelY + 36 - (((int)water->height + 1) / 2),
+                                 M11_COLOR_DARK_GRAY);
+        }
+        if (champ->poisonDose > 0) {
+            const M11_AssetSlot* poison = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
+            if (poison && poison->pixels && poison->width > 0 && poison->height > 0) {
+                M11_AssetLoader_Blit(poison, framebuffer, framebufferWidth, framebufferHeight,
+                                     M11_VIEWPORT_X + panelX + 32,
+                                     M11_VIEWPORT_Y + panelY + 58 - (((int)poison->height + 1) / 2),
+                                     M11_COLOR_DARK_GRAY);
+            }
+        }
+    }
+
+    {
+        int barX = 0, barY = 0, barW = 0, barH = 0, shadow = 0;
+        if (M11_GameView_GetV1FoodBarZone(&barX, &barY, &barW, &barH, &shadow)) {
+            m11_draw_v1_food_water_bar(framebuffer, framebufferWidth, framebufferHeight,
+                                       M11_VIEWPORT_X + barX, M11_VIEWPORT_Y + barY,
+                                       barW, barH, shadow,
+                                       (int)champ->food, 5);
+        }
+        if (M11_GameView_GetV1FoodWaterPanelZone(&barX, &barY, &barW, &barH, &shadow)) {
+            m11_draw_v1_food_water_bar(framebuffer, framebufferWidth, framebufferHeight,
+                                       M11_VIEWPORT_X + barX, M11_VIEWPORT_Y + barY,
+                                       barW, barH, shadow,
+                                       (int)champ->water, M11_COLOR_LIGHT_BLUE);
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_v1_mouth_visual_frame(const M11_GameViewState* state,
                                           unsigned char* framebuffer,
                                           int framebufferWidth,
@@ -23827,6 +23973,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                         iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
                 }
             }
+        }
+        if (m11_draw_v1_inventory_food_water_panel(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
+            return;
         }
         if (m11_draw_v1_inventory_object_description_panel(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
@@ -25259,6 +25409,7 @@ int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
     state->inventoryPanelActive = !state->inventoryPanelActive;
     m11_clear_v1_mouth_visual(state);
+    state->v1FoodWaterPanelActive = 0;
     if (state->inventoryPanelActive) {
         state->inventorySelectedSlot = 0;
     }
@@ -25341,6 +25492,7 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     state->v1ChampionStatsPanelActive = 0;
+    state->v1FoodWaterPanelActive = 0;
     return 1;
 }
 
