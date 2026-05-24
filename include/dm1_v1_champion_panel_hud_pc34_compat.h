@@ -116,6 +116,11 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_GFX_SLOT_WOUNDED    34
 #define DM1_GFX_SLOT_ACTING     35
 
+/* Food/Water/Poison label graphics — DEFS.H C030/C031/C032 */
+#define DM1_GFX_FOOD_LABEL     30
+#define DM1_GFX_WATER_LABEL    31
+#define DM1_GFX_POISONED_LABEL 32
+
 /* ── Viewport — DEFS.H ── */
 #define DM1_VIEWPORT_X   0
 #define DM1_VIEWPORT_Y  33
@@ -126,6 +131,11 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_ZONE_HEALTH_VALUE  550
 #define DM1_ZONE_MANA_VALUE    551
 #define DM1_ZONE_STAMINA_VALUE 552
+
+/* Food/Water/Poison label zones — PANEL.C:1598-1606 */
+#define DM1_ZONE_FOOD     500
+#define DM1_ZONE_WATER    501
+#define DM1_ZONE_POISONED 502
 
 /* Inventory empty-hand eye statistics panel zones - PANEL.C F0351 */
 #define DM1_ZONE_SKILL_VALUE      557
@@ -255,6 +265,9 @@ int DM1_ChampionPanel_NameColor(int champIdx, int leaderIdx);
 
 /* ── Dead status box predicate ── */
 int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth);
+
+/* Food/Water/Poison label rendering — PANEL.C:1598-1606 */
+void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned);
 
 /* ── Self-test: returns number of failures ── */
 int DM1_ChampionPanel_SelfTest(void);

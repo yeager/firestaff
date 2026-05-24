@@ -481,6 +481,38 @@ int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Food/Water/Poison label rendering — PANEL.C:1598-1606
+ *
+ *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+ *       C030_GRAPHIC_FOOD_LABEL,    C500_ZONE_FOOD,    C12_COLOR_DARKEST_GRAY);
+ *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+ *       C031_GRAPHIC_WATER_LABEL,  C501_ZONE_WATER,   C12_COLOR_DARKEST_GRAY);
+ *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+ *       C032_GRAPHIC_POISONED_LABEL, C502_ZONE_POISONED, C12_COLOR_DARKEST_GRAY);
+ *
+ * PANEL.C:1594-1606 only renders the poison label (C032) when the
+ * champion has an active PoisonEventCount > 0. The food and water
+ * labels are unconditional on the F0292 Food-Water-Poison panel.
+ * ══════════════════════════════════════════════════════════════════════ */
+void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned)
+{
+    /* Food label — C030_GRAPHIC_FOOD_LABEL → C500_ZONE_FOOD */
+    F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+        DM1_GFX_FOOD_LABEL, DM1_ZONE_FOOD, DM1_COLOR_DARKEST_GRAY);
+
+    /* Water label — C031_GRAPHIC_WATER_LABEL → C501_ZONE_WATER */
+    F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+        DM1_GFX_WATER_LABEL, DM1_ZONE_WATER, DM1_COLOR_DARKEST_GRAY);
+
+    /* Poisoned label — C032_GRAPHIC_POISONED_LABEL → C502_ZONE_POISONED
+     * Only rendered when poisoned (PoisonEventCount > 0 per PANEL.C:1594) */
+    if (poisoned) {
+        F0658_BlitBitmapIndexToZoneIndexWithTransparency(
+            DM1_GFX_POISONED_LABEL, DM1_ZONE_POISONED, DM1_COLOR_DARKEST_GRAY);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Self-test — validates source-locked constants and computations
  * ══════════════════════════════════════════════════════════════════════ */
 int DM1_ChampionPanel_SelfTest(void)
