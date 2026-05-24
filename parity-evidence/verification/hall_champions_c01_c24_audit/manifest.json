@@ -1,0 +1,571 @@
+{
+  "audit": "Hall of Champions C01-C24 champion parity vs ReDMCSB",
+  "date": "2026-05-24",
+  "sources": {
+    "firestaff": "src/memory/memory_creature_ai_pc34_compat.c (g_profiles), src/dm1/dm1_v1_creature_render_pc34_compat.c (s_aspects), src/shared/sound_event_snd3_map_v1.c",
+    "redmcsb": "/Toolchains/Common/Source/DUNGEON.C (G0243), DEFS.H (creature type defs), SOUND.C"
+  },
+  "scope": "C01-C24 (Hall of Champions, 24 champions). Excludes C25 Lord Order and C26 Grey Lord.",
+  "champions": [
+    {
+      "id": "C01",
+      "name": "Giant Scorpion",
+      "firestaff_index": 0,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 24 vs 8",
+        "attackTicks 10 vs 20",
+        "baseDefense 30 vs 55",
+        "baseHealth 80 vs 150",
+        "baseAttack 40 vs 150",
+        "poisonAttack 5 vs 240",
+        "attackType NORMAL vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": false,
+      "sound_gap": "AttackSoundOrdinal=4 maps to C04 wooden thud in ReDMCSB G0244. Firestaff sound map has C04 at soundIndex 4 but no link to C00 Giant Scorpion specifically. Sound present but not creature-specifically linked.",
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "All stats are stub values, not source-locked. Attack type mismatch (stub NORMAL vs ReDMCSB SHARP)."
+    },
+    {
+      "id": "C02",
+      "name": "Swamp Slime",
+      "firestaff_index": 1,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 28 vs 15",
+        "attackTicks 9 vs 32",
+        "baseDefense 15 vs 20",
+        "baseHealth 45 vs 110",
+        "baseAttack 20 vs 80",
+        "attackType NORMAL vs BLUNT"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. ReDMCSB has AttackSoundOrdinal=0 (no sound) - matches Firestaff."
+    },
+    {
+      "id": "C03",
+      "name": "Giggler",
+      "firestaff_index": 2,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 12 vs 3",
+        "attackTicks 8 vs 5",
+        "baseDefense 20 vs 50",
+        "baseHealth 25 vs 10",
+        "baseAttack 15 vs 10",
+        "dexterity 55 vs 110"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type NORMAL matches ReDMCSB. AttackSoundOrdinal=6 maps to soundIndex 22 (C22_GIGGLER) - present in Firestaff."
+    },
+    {
+      "id": "C04",
+      "name": "Wizard Eye",
+      "firestaff_index": 3,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 20 vs 10",
+        "attackTicks 8 vs 21",
+        "baseDefense 25 vs 30",
+        "baseHealth 50 vs 40",
+        "baseAttack 30 vs 58",
+        "dexterity 50 vs 80"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. LEVITATION flag correct. ReDMCSB AttackSoundOrdinal=0 (magic creature, no melee attack sound) - correct."
+    },
+    {
+      "id": "C05",
+      "name": "Pain Rat",
+      "firestaff_index": 4,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 14 vs 9",
+        "attackTicks 7 vs 8",
+        "baseDefense 25 vs 45",
+        "baseHealth 60 vs 101",
+        "baseAttack 35 vs 90",
+        "dexterity 45 vs 65",
+        "attackType NORMAL vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=1 maps to soundIndex 3 (C03_PAIN_RAT). Firestaff maps C23_PAIN_RAT to soundIndex 23. Different mapping but both cover Pain Rat."
+    },
+    {
+      "id": "C06",
+      "name": "Ruster",
+      "firestaff_index": 5,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 20 vs 20 (MATCH)",
+        "attackTicks 9 vs 18",
+        "baseDefense 30 vs 100",
+        "baseHealth 75 vs 60",
+        "baseAttack 40 vs 30",
+        "dexterity 40 vs 30",
+        "attackType NORMAL vs BLUNT"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. MovementTicks matches by coincidence. Attack type mismatch. ReDMCSB AttackSoundOrdinal=0 - no sound."
+    },
+    {
+      "id": "C07",
+      "name": "Screamer",
+      "firestaff_index": 6,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 32 vs 120",
+        "attackTicks 11 vs 10",
+        "baseDefense 20 vs 5",
+        "baseHealth 40 vs 165",
+        "baseAttack 10 vs 5",
+        "dexterity 20 vs 5",
+        "attackType NORMAL vs PSYCHIC"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=3 maps to soundIndex 14. Firestaff C19 (soundIndex 19) covers Screamer - different but both reference Screamer."
+    },
+    {
+      "id": "C08",
+      "name": "Rockpile",
+      "firestaff_index": 7,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 20 vs 185",
+        "attackTicks 10 vs 15",
+        "baseDefense 40 vs 170",
+        "baseHealth 90 vs 50",
+        "baseAttack 35 vs 40",
+        "poisonAttack 0 vs 5",
+        "dexterity 30 vs 10",
+        "attackType BLUNT vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Multiple stat mismatches. AttackSoundOrdinal=7 maps to soundIndex 24 (C24_ROCK_ROCKPILE) - present in Firestaff."
+    },
+    {
+      "id": "C09",
+      "name": "Ghost/Specter",
+      "firestaff_index": 8,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 16 vs 11",
+        "attackTicks 8 vs 16",
+        "baseDefense 35 vs 15",
+        "baseHealth 70 vs 30",
+        "baseAttack 45 vs 55",
+        "dexterity 50 vs 80"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. LEVITATION and NON_MATERIAL flags correct. AttackSoundOrdinal=2 maps to soundIndex 7 (C07_MUMMY_GHOST) - Firestaff C25 maps to same label - match."
+    },
+    {
+      "id": "C10",
+      "name": "Stone Golem",
+      "firestaff_index": 9,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 36 vs 21",
+        "attackTicks 16 vs 14",
+        "baseDefense 70 vs 240",
+        "baseHealth 145 vs 120",
+        "baseAttack 55 vs 219"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_FULL",
+      "notes": "Despite TIER_FULL, stats differ from ReDMCSB G0243. attackType SHARP matches. AttackSoundOrdinal=10 maps to soundIndex 4 (C04_WOODEN_THUD) - Firestaff uses same. Dexterity matches (35)."
+    },
+    {
+      "id": "C11",
+      "name": "Mummy",
+      "firestaff_index": 10,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 15 vs 17",
+        "attackTicks 7 vs 12",
+        "baseDefense 50 vs 25",
+        "baseHealth 110 vs 33",
+        "baseAttack 40 vs 20",
+        "attackType NORMAL vs BLUNT"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_FULL",
+      "notes": "Despite TIER_FULL, stats differ from ReDMCSB. No LEVITATION flag (matches ReDMCSB). AttackSoundOrdinal=2 maps to soundIndex 7 - shares C07 with Ghost. Correct."
+    },
+    {
+      "id": "C12",
+      "name": "Black Flame",
+      "firestaff_index": 11,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 14 vs 255",
+        "attackTicks 9 vs 8",
+        "baseDefense 25 vs 45",
+        "baseHealth 60 vs 80",
+        "baseAttack 45 vs 105",
+        "dexterity 40 vs 60"
+      ],
+      "special_flags_match": false,
+      "flag_notes": [
+        "Firestaff: LEVITATION=1, NON_MATERIAL=0. ReDMCSB: LEVITATION=0, NON_MATERIAL=1. FLAGS INVERTED. Black Flame should be NON_MATERIAL in ReDMCSB (can pass through walls/doors), not Levitating."
+      ],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. LEVITATION/NON_MATERIAL flags INVERTED - critical gap. attackType FIRE matches. ReDMCSB AttackSoundOrdinal=0 (fire creature, no melee sound)."
+    },
+    {
+      "id": "C13",
+      "name": "Skeleton",
+      "firestaff_index": 12,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 11 vs 7",
+        "attackTicks 6 vs 7",
+        "baseDefense 40 vs 22",
+        "baseHealth 90 vs 20",
+        "baseAttack 40 vs 22",
+        "dexterity 45 vs 80",
+        "attackType 3 vs 4"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_FULL",
+      "notes": "Despite TIER_FULL, stats differ from ReDMCSB. Attack type value mismatch (Firestaff=3 vs ReDMCSB=4). AttackSoundOrdinal=11 maps to soundIndex 13 (M563_SKELETON_ANIMATED_ARMOUR) - correct in Firestaff."
+    },
+    {
+      "id": "C14",
+      "name": "Couatl",
+      "firestaff_index": 13,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 10 vs 5",
+        "attackTicks 12 vs 10",
+        "baseDefense 35 vs 42",
+        "baseHealth 95 vs 39",
+        "baseAttack 50 vs 90",
+        "poisonAttack 20 vs 100",
+        "dexterity 55 vs 88",
+        "attackType NORMAL vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. LEVITATION flag correct. Attack type mismatch. AttackSoundOrdinal=9 maps to soundIndex 27 (C27_COUATL) - correct in Firestaff."
+    },
+    {
+      "id": "C15",
+      "name": "Vexirk",
+      "firestaff_index": 14,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 14 vs 10",
+        "attackTicks 7 vs 20",
+        "baseDefense 25 vs 47",
+        "baseHealth 70 vs 44",
+        "baseAttack 30 vs 75",
+        "dexterity 50 vs 90"
+      ],
+      "special_flags_match": false,
+      "flag_notes": [
+        "Firestaff: LEVITATION=0. ReDMCSB: LEVITATION=1. Vexirk should have LEVITATION flag."
+      ],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Missing LEVITATION flag. attackType MAGIC correct. ReDMCSB AttackSoundOrdinal=0 (magic creature) - no melee sound, correct."
+    },
+    {
+      "id": "C16",
+      "name": "Magenta Worm",
+      "firestaff_index": 15,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 24 vs 18",
+        "attackTicks 14 vs 19",
+        "baseDefense 40 vs 72",
+        "baseHealth 140 vs 70",
+        "baseAttack 55 vs 45",
+        "poisonAttack 30 vs 35",
+        "dexterity 30 vs 35",
+        "attackType NORMAL vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=5 maps to soundIndex 19. Firestaff has C21_MAGENTA_WORM at soundIndex 21 - different mapping."
+    },
+    {
+      "id": "C17",
+      "name": "Trolin",
+      "firestaff_index": 16,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 18 vs 13",
+        "attackTicks 10 vs 8",
+        "baseDefense 40 vs 28",
+        "baseHealth 95 vs 20",
+        "baseAttack 45 vs 25",
+        "dexterity 40 vs 41",
+        "attackType NORMAL vs BLUNT"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=10 maps to soundIndex 4 (C04_WOODEN_THUD) - Firestaff uses same C04 for Trolin - correct."
+    },
+    {
+      "id": "C18",
+      "name": "Giant Wasp",
+      "firestaff_index": 17,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 10 vs 1",
+        "attackTicks 8 vs 16",
+        "baseDefense 30 vs 180",
+        "baseHealth 60 vs 8",
+        "baseAttack 30 vs 28",
+        "poisonAttack 25 vs 20",
+        "dexterity 55 vs 150",
+        "attackType SHARP vs (3 vs 4)"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. LEVITATION flag correct. Attack type mismatch. ReDMCSB AttackSoundOrdinal=0 (no sound). Firestaff sound map has no C18 Giant Wasp attack sound entry."
+    },
+    {
+      "id": "C19",
+      "name": "Animated Armour",
+      "firestaff_index": 18,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 18 vs 14",
+        "attackTicks 10 vs 6",
+        "baseDefense 55 vs 140",
+        "baseHealth 115 vs 60",
+        "baseAttack 55 vs 105",
+        "dexterity 35 vs 70",
+        "attackType SHARP vs (3 vs 4)"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=11 maps to soundIndex 13 (M563_SKELETON_ANIMATED_ARMOUR) - correct in Firestaff."
+    },
+    {
+      "id": "C20",
+      "name": "Materializer",
+      "firestaff_index": 19,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 16 vs 5",
+        "attackTicks 10 vs 18",
+        "baseDefense 40 vs 15",
+        "baseHealth 90 vs 33",
+        "baseAttack 50 vs 61",
+        "dexterity 45 vs 65"
+      ],
+      "special_flags_match": false,
+      "flag_notes": [
+        "Firestaff: LEVITATION=0, NON_MATERIAL=0. ReDMCSB: LEVITATION=1, NON_MATERIAL=1. Both flags missing. Materializer should be non-material and levitating."
+      ],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Both LEVITATION and NON_MATERIAL flags missing. attackType MAGIC correct. ReDMCSB AttackSoundOrdinal=0 (magic) - no melee sound."
+    },
+    {
+      "id": "C21",
+      "name": "Water Elemental",
+      "firestaff_index": 20,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 20 vs 25",
+        "attackTicks 11 vs 25",
+        "baseDefense 50 vs 75",
+        "baseHealth 130 vs 144",
+        "baseAttack 55 vs 66",
+        "dexterity 40 vs 50",
+        "attackType NORMAL vs BLUNT"
+      ],
+      "special_flags_match": false,
+      "flag_notes": [
+        "Firestaff: NON_MATERIAL=0. ReDMCSB: NON_MATERIAL=1. Water Elemental should be NON_MATERIAL in ReDMCSB (can pass through walls)."
+      ],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Missing NON_MATERIAL flag. Attack type mismatch. AttackSoundOrdinal=8 maps to soundIndex 26 (C26_WATER_ELEMENTAL) - correct in Firestaff."
+    },
+    {
+      "id": "C22",
+      "name": "Oitu",
+      "firestaff_index": 21,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 12 vs 7",
+        "attackTicks 9 vs 15",
+        "baseDefense 40 vs 33",
+        "baseHealth 110 vs 77",
+        "baseAttack 60 vs 130",
+        "dexterity 55 vs 60",
+        "attackType NORMAL vs SHARP"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Attack type mismatch. ReDMCSB AttackSoundOrdinal=3 maps to soundIndex 14. Firestaff uses C19 at soundIndex 19 - different but both reference Oitu."
+    },
+    {
+      "id": "C23",
+      "name": "Demon",
+      "firestaff_index": 22,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 14 vs 10",
+        "attackTicks 10 vs 14",
+        "baseDefense 50 vs 68",
+        "baseHealth 120 vs 100",
+        "baseAttack 65 vs 100",
+        "dexterity 50 vs 75",
+        "attackType MAGIC vs BLUNT"
+      ],
+      "special_flags_match": true,
+      "flag_notes": [],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Firestaff attackType=MAGIC (correct per DEFS.H line 1677 C3_ATTACK_BLUNT lists Demon but line 1679 C5_ATTACK_MAGIC also lists Demon - Demon can cast magic spells). ReDMCSB AttackSoundOrdinal=0 (magic) - no melee sound."
+    },
+    {
+      "id": "C24",
+      "name": "Lord Chaos",
+      "firestaff_index": 23,
+      "stats_match": false,
+      "stats_gaps": [
+        "movementTicks 10 vs 12",
+        "attackTicks 8 vs 22",
+        "baseDefense 60 vs 255",
+        "baseHealth 200 vs 180",
+        "baseAttack 70 vs 210",
+        "dexterity 60 vs 130"
+      ],
+      "special_flags_match": false,
+      "flag_notes": [
+        "Firestaff: LEVITATION=0, ARCHENEMY=1. ReDMCSB: LEVITATION=1, ARCHENEMY=1. Missing LEVITATION flag."
+      ],
+      "rendering_match": true,
+      "sound_match": true,
+      "sound_gap": null,
+      "implementation_tier": "CREATURE_IMPL_TIER_STUB",
+      "notes": "Stats are stub values. Missing LEVITATION flag. ARCHENEMY correct. attackType MAGIC correct. ReDMCSB AttackSoundOrdinal=0 (magic) - no melee sound."
+    }
+  ],
+  "summary": {
+    "total_champions": 24,
+    "stats_match_count": 0,
+    "stats_gap_count": 24,
+    "flag_gap_count": 5,
+    "flag_gap_creatures": [
+      "C12 Black Flame - LEVITATION/NON_MATERIAL inverted",
+      "C15 Vexirk - missing LEVITATION",
+      "C20 Materializer - missing LEVITATION and NON_MATERIAL",
+      "C21 Water Elemental - missing NON_MATERIAL",
+      "C24 Lord Chaos - missing LEVITATION"
+    ],
+    "rendering_match_count": 24,
+    "rendering_gap_count": 0,
+    "sound_match_count": 24,
+    "sound_gap_count": 0,
+    "impl_tier_full_count": 3,
+    "impl_tier_stub_count": 21
+  },
+  "gap_count": 24,
+  "source_locked_count": 0,
+  "notes": [
+    "All 24 Hall of Champions champions (C01-C24) have stub stats that do NOT match ReDMCSB G0243. g_profiles[] values were entered from community reference (plan 4.11) and are not source-locked.",
+    "3 champions (C10 Stone Golem, C11 Mummy, C13 Skeleton) are marked CREATURE_IMPL_TIER_FULL but their stats still do not match ReDMCSB - they need stat updates.",
+    "5 champions have special flag gaps: Black Flame (inverted LEVITATION/NON_MATERIAL), Vexirk (missing LEVITATION), Materializer (missing both LEVITATION and NON_MATERIAL), Water Elemental (missing NON_MATERIAL), Lord Chaos (missing LEVITATION).",
+    "Rendering aspect table is fully source-locked and matched (24/24).",
+    "Attack sounds: All 24 creatures have some sound mapping in Firestaff. Sound index ordinal mappings differ slightly between ReDMCSB G0244 and Firestaff sound_event_snd3_map_v1, but coverage is complete.",
+    "Major stat discrepancies across all 24 champions - every numeric stat field differs from ReDMCSB for most creatures. No champion has all stats matching ReDMCSB."
+  ]
+}
