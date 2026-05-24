@@ -345,6 +345,8 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "DUNGEON MASTER II", .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "DUNGEON MASTER NEXUS", .gameId = "nexus1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
+    {.title = "THERON'S QUEST", .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "MUSEUM OF LORE", .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = "SETTINGS", .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
 };
@@ -1521,6 +1523,9 @@ static int m12_game_slot_from_id(const char* gameId) {
     if (strcmp(gameId, "nexus1") == 0) {
         return 3;
     }
+    if (strcmp(gameId, "theron") == 0) {
+        return 4;
+    }
     return -1;
 }
 
@@ -1530,11 +1535,12 @@ static int m12_game_supported(const char* gameId) {
     return (strcmp(gameId, "dm1") == 0 ||
             strcmp(gameId, "csb") == 0 ||
             strcmp(gameId, "dm2") == 0 ||
-            strcmp(gameId, "nexus1") == 0);
+            strcmp(gameId, "nexus1") == 0 ||
+            strcmp(gameId, "theron") == 0);
 }
 
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return 1;
     }
@@ -1556,7 +1562,7 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
 
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return NULL;
     }
@@ -2595,6 +2601,9 @@ static const char* m12_entry_status_text(const M12_MenuEntry* entry) {
     if (entry->available) {
         return "READY";
     }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        return "NO SOURCE";
+    }
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return "MISSING";
     }
@@ -2612,6 +2621,9 @@ static unsigned char m12_entry_status_fill(const M12_MenuEntry* entry,
     if (entry->available) {
         return selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN;
     }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        return selected ? M12_COLOR_DARK_GRAY : M12_COLOR_BLACK;
+    }
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON;
     }
@@ -2628,6 +2640,9 @@ static unsigned char m12_entry_status_text_color(const M12_MenuEntry* entry,
     }
     if (entry->available) {
         return M12_COLOR_BLACK;
+    }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        return M12_COLOR_WHITE;
     }
     return selected ? M12_COLOR_BLACK : M12_COLOR_WHITE;
 }
@@ -2735,6 +2750,9 @@ static unsigned char m12_game_card_fill(const char* gameId) {
     if (gameId && strcmp(gameId, "nexus1") == 0) {
         return M12_COLOR_MAGENTA;
     }
+    if (gameId && strcmp(gameId, "theron") == 0) {
+        return M12_COLOR_DARK_GRAY;
+    }
     return M12_COLOR_DARK_GRAY;
 }
 
@@ -2756,6 +2774,9 @@ static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
     }
     if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
         return "NEXUS";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        return "PC Engine · 1992";
     }
     return "GAME";
 }
@@ -2785,6 +2806,9 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
     version = m12_selected_version_status(state, gameIndex);
     if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
         return "AVAILABLE";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        return "NO SOURCE";
     }
     if (version && version->matched) {
         return "READY TO LAUNCH";

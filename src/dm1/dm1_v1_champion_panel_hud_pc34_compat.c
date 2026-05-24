@@ -494,22 +494,14 @@ int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth)
  * champion has an active PoisonEventCount > 0. The food and water
  * labels are unconditional on the F0292 Food-Water-Poison panel.
  * ══════════════════════════════════════════════════════════════════════ */
+/* DM1_ChampionPanel_DrawFoodWaterPoisonLabels — stubbed for m10/m11 linking
+ * PANEL.C:1598-1606 F0658 blit sequence (not yet available in m10):
+ *   F0658(C030, C500, C12), F0658(C031, C501, C12), if(poisoned) F0658(C032, C502, C12)
+ * F0658 = F0630_InitBitmapStruct2 + F0635_GetZoneTopLeft + F0132_VIDEO_Blit on G0296
+ * Requires base_frontend_pc34.c in M10_SOURCES — TBD. */
 void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned)
 {
-    /* Food label — C030_GRAPHIC_FOOD_LABEL → C500_ZONE_FOOD */
-    F0658_BlitBitmapIndexToZoneIndexWithTransparency(
-        DM1_GFX_FOOD_LABEL, DM1_ZONE_FOOD, DM1_COLOR_DARKEST_GRAY);
-
-    /* Water label — C031_GRAPHIC_WATER_LABEL → C501_ZONE_WATER */
-    F0658_BlitBitmapIndexToZoneIndexWithTransparency(
-        DM1_GFX_WATER_LABEL, DM1_ZONE_WATER, DM1_COLOR_DARKEST_GRAY);
-
-    /* Poisoned label — C032_GRAPHIC_POISONED_LABEL → C502_ZONE_POISONED
-     * Only rendered when poisoned (PoisonEventCount > 0 per PANEL.C:1594) */
-    if (poisoned) {
-        F0658_BlitBitmapIndexToZoneIndexWithTransparency(
-            DM1_GFX_POISONED_LABEL, DM1_ZONE_POISONED, DM1_COLOR_DARKEST_GRAY);
-    }
+    (void)poisoned; /* placeholder — function is a no-op until F0658 wiring is resolved */
 }
 
 /* ══════════════════════════════════════════════════════════════════════

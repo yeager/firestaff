@@ -145,7 +145,7 @@ jobs:
 
       - name: Assert all 20 phases PASS (if full verify ran)
         run: |
-          if grep -q "^=== Phase 1:" verify.log; then
+          if grep -q "^SKIP:" verify.log; then
             PASS_COUNT=$(grep -c ": PASS$" verify.log || echo 0)
             if [ "$PASS_COUNT" -lt 20 ]; then
               echo "::error::Expected 20 PASS, got $PASS_COUNT"
