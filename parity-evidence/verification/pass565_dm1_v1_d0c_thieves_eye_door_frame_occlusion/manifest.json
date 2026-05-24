@@ -3,32 +3,32 @@
     {
       "hits": [
         {
-          "line": 161,
+          "line": 192,
           "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
         },
         {
-          "line": 162,
+          "line": 193,
           "needle": "DUNVIEW.C:8185-8188"
         },
         {
-          "line": 163,
+          "line": 194,
           "needle": "DUNVIEW.C:8199-8201"
         },
         {
-          "line": 164,
+          "line": 195,
           "needle": "DUNVIEW.C:8206-8210"
         },
         {
-          "line": 165,
+          "line": 196,
           "needle": "DUNVIEW.C:8215-8216"
         },
         {
-          "line": 166,
+          "line": 197,
           "needle": "DUNVIEW.C:8240,8294"
         }
       ],
       "id": "firestaff-d0c-thieves-eye-metadata",
-      "lines": "150-185",
+      "lines": "188-200",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -36,32 +36,32 @@
     {
       "hits": [
         {
-          "line": 685,
+          "line": 808,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 688,
+          "line": 811,
           "needle": "dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)"
         },
         {
-          "line": 695,
+          "line": 818,
           "needle": "spec->door_frame_zone, 728"
         },
         {
-          "line": 696,
+          "line": 819,
           "needle": "spec->hole_zone, 736"
         },
         {
-          "line": 700,
+          "line": 823,
           "needle": "8215-8216"
         },
         {
-          "line": 701,
+          "line": 824,
           "needle": "8294"
         }
       ],
       "id": "firestaff-d0c-thieves-eye-test",
-      "lines": "675-705",
+      "lines": "808-835",
       "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -69,16 +69,16 @@
     {
       "hits": [
         {
-          "line": 1125,
+          "line": 1263,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
         },
         {
-          "line": 1125,
+          "line": 1263,
           "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
       "id": "firestaff-source-evidence-string",
-      "lines": "1115-1135",
+      "lines": "1203-1298",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -176,7 +176,7 @@
       "command": [
         "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.door_front_occlusion == 1\nPASS source_evidence.d2c_front_order == 1\nPASS source_evidence.far_door_front_occlusion == 1\nPASS source_evidence.d1_side_door_front_occlusion == 1\nPASS source_evidence.d1c_door_front_occlusion == 1\nPASS source_evidence.d1c_door_button_occlusion == 1\nPASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },

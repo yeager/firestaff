@@ -13,7 +13,7 @@ Status: FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK
 - m11_game_view.c:missing firestaff_party_tuple_flip_predicate status=FAIL
 - m11_game_view.c:missing firestaff_wallset_variant_binding_before_draw status=FAIL
 - m11_game_view.c:missing firestaff_center_wall_flip_path status=FAIL
-- m11_game_view.c:10278 firestaff_side_wall_lr_swap_path status=FAIL
+- m11_game_view.c:missing firestaff_side_wall_lr_swap_path status=FAIL
 
 ## Local references
 - dm1_pc34_graphics /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
@@ -24,7 +24,7 @@ Status: FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK
 
 ## Gates
 - /usr/bin/python3 tools/verify_pass509_dm1_v1_wallset_startup_binding.py -> rc=0 passed=True
-- /usr/bin/python3 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=0 passed=True
+- /usr/bin/python3 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=1 passed=False
 
 ## Scope
 - Locks the source-visible wall parity/native flip path after pass509 startup binding.

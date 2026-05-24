@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -55,13 +55,13 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:281-312)
+- FAIL local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:281-312)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
-- PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:139-171)
+- FAIL local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:139-171)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
-- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:234-310)
+- FAIL local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:234-310)
   - The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.
 
 ## Verification
@@ -70,25 +70,25 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
   - returncode: 0
   - output tail:
 ~~~
-PASS source_evidence.d1c_door_front_occlusion == 1
-PASS source_evidence.d1c_door_button_occlusion == 1
-PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
-PASS source_evidence.side_occlusion == 1
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
 PASS source_evidence.wall_empty_blit_gate == 1
 PASS source_evidence.occlusion == 1
 PASS source_evidence.command_dispatch == 1
 PASS source_evidence.next_redraw == 1
 PASS source_evidence.present_wait == 1
+PASS source_evidence.same_viewport_mouse == 1
+PASS source_evidence.same_viewport_turn == 1
+PASS source_evidence.same_viewport_move == 1
+PASS source_evidence.same_viewport_draw == 1
+PASS source_evidence.same_viewport_present == 1
+PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
 - command: /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 0
+  - returncode: 1
   - output tail:
 ~~~
-PASS pass516 check-only
+FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present,local-runtime-test-covers-d1-d0-wall-occlusion
 ~~~
 
 ## Non-Claims

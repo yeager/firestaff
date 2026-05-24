@@ -1,6 +1,6 @@
 # Pass563 DM1 V1 D1 side wall source lock
 
-Status: passed
+Status: failed
 
 Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1L then D1R before D1C, and each D1 side-wall case draws its side-specific wall zone and returns before open-lane content/field paths.
 
@@ -35,40 +35,34 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 
 ## Firestaff Evidence
 
-- PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:286-307)
-  - line 296: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 296: DM1_PC34_ZONE_WALL_D1L
-  - line 296: DUNVIEW.C:7445-7455
-  - line 296: DUNVIEW.C:7459-7460 side ornament then return
-  - line 297: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 297: DM1_PC34_ZONE_WALL_D1R
-  - line 297: DUNVIEW.C:7613-7623
-  - line 297: DUNVIEW.C:7627-7628 side ornament then return
+- FAIL firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:286-307)
+  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - missing: DM1_PC34_ZONE_WALL_D1L
+  - missing: DUNVIEW.C:7445-7455
+  - missing: DUNVIEW.C:7459-7460 side ornament then return
+  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - missing: DM1_PC34_ZONE_WALL_D1R
+  - missing: DUNVIEW.C:7613-7623
+  - missing: DUNVIEW.C:7627-7628 side ornament then return
 
-- PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:237-258)
-  - line 244: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 244: DM1_PC34_ZONE_WALL_D1L
-  - line 244: "7460"
-  - line 245: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 245: DM1_PC34_ZONE_WALL_D1R
-  - line 245: "7628"
+- FAIL firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:237-258)
+  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - missing: DM1_PC34_ZONE_WALL_D1L
+  - missing: "7460"
+  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - missing: DM1_PC34_ZONE_WALL_D1R
+  - missing: "7628"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1098-1145)
-  - line 1108: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 1109: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 1135: DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L
-  - line 1136: DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1098-1145)
+  - missing: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - missing: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - missing: DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L
+  - missing: DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R
 
 ## Verification
 
 - /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.far_door_front_occlusion == 1
-PASS source_evidence.d1_side_door_front_occlusion == 1
-PASS source_evidence.d1c_door_front_occlusion == 1
-PASS source_evidence.d1c_door_button_occlusion == 1
-PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
-PASS source_evidence.side_occlusion == 1
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
 PASS source_evidence.wall_empty_blit_gate == 1
@@ -76,10 +70,16 @@ PASS source_evidence.occlusion == 1
 PASS source_evidence.command_dispatch == 1
 PASS source_evidence.next_redraw == 1
 PASS source_evidence.present_wait == 1
+PASS source_evidence.same_viewport_mouse == 1
+PASS source_evidence.same_viewport_turn == 1
+PASS source_evidence.same_viewport_move == 1
+PASS source_evidence.same_viewport_draw == 1
+PASS source_evidence.same_viewport_present == 1
+PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=1
 ~~~
-PASS pass563 check-only
+FAIL pass563 check-only: firestaff-d1-side-wall-metadata,firestaff-d1-side-wall-runtime-test,firestaff-source-evidence-string
 ~~~

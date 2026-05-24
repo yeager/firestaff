@@ -26,36 +26,30 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 
 ## Firestaff Evidence
 
-- PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:150-185)
-  - line 161: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 162: DUNVIEW.C:8185-8188
-  - line 163: DUNVIEW.C:8199-8201
-  - line 164: DUNVIEW.C:8206-8210
-  - line 165: DUNVIEW.C:8215-8216
-  - line 166: DUNVIEW.C:8240,8294
+- PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:188-200)
+  - line 192: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 193: DUNVIEW.C:8185-8188
+  - line 194: DUNVIEW.C:8199-8201
+  - line 195: DUNVIEW.C:8206-8210
+  - line 196: DUNVIEW.C:8215-8216
+  - line 197: DUNVIEW.C:8240,8294
 
-- PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:675-705)
-  - line 685: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 688: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 695: spec->door_frame_zone, 728
-  - line 696: spec->hole_zone, 736
-  - line 700: 8215-8216
-  - line 701: 8294
+- PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:808-835)
+  - line 808: test_d0c_thieves_eye_door_frame_occlusion_order
+  - line 811: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - line 818: spec->door_frame_zone, 728
+  - line 819: spec->hole_zone, 736
+  - line 823: 8215-8216
+  - line 824: 8294
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1115-1135)
-  - line 1125: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 1125: copy front frame, composite hole, blit temporary frame before common F0115
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1203-1298)
+  - line 1263: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 1263: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
 - /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.door_front_occlusion == 1
-PASS source_evidence.d2c_front_order == 1
-PASS source_evidence.far_door_front_occlusion == 1
-PASS source_evidence.d1_side_door_front_occlusion == 1
-PASS source_evidence.d1c_door_front_occlusion == 1
-PASS source_evidence.d1c_door_button_occlusion == 1
 PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1
 PASS source_evidence.defs_zones == 1
@@ -65,6 +59,12 @@ PASS source_evidence.occlusion == 1
 PASS source_evidence.command_dispatch == 1
 PASS source_evidence.next_redraw == 1
 PASS source_evidence.present_wait == 1
+PASS source_evidence.same_viewport_mouse == 1
+PASS source_evidence.same_viewport_turn == 1
+PASS source_evidence.same_viewport_move == 1
+PASS source_evidence.same_viewport_draw == 1
+PASS source_evidence.same_viewport_present == 1
+PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

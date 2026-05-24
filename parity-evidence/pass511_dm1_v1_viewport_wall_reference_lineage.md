@@ -1,6 +1,6 @@
 # Pass511 DM1 V1 viewport/wall reference lineage
 
-Status: passed
+Status: failed
 
 ## ReDMCSB primary anchors
 - DUNVIEW.C:8318-8610 f0128_far_to_near_then_present

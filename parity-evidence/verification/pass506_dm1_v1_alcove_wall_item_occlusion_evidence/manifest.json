@@ -3,17 +3,17 @@
     {
       "file": "m11_game_view.c",
       "id": "sample-view-cell-preserves-wall-square-items",
-      "lines": "7393-7764"
+      "lines": "8683-9251"
     },
     {
       "file": "m11_game_view.c",
       "id": "alcove-pass-filters-to-source-subcell",
-      "lines": "9881-9924"
+      "lines": "11786-11829"
     },
     {
       "file": "m11_game_view.c",
       "id": "wall-ornament-before-alcove-item-pass",
-      "lines": "9962-10085"
+      "lines": "12087-12245"
     }
   ],
   "notClaimed": [
@@ -93,11 +93,11 @@
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence",
   "sourceHashes": {
-    "CMakeLists.txt": "e24c16e2949106934475232caf63a5c35763ffba721cda5d3c7a8e9843a1b184",
+    "CMakeLists.txt": "7d0f57a60425a9bfb57a1fd66489b06e424f9fc9370d21f18f358bd8bf722653",
     "DUNGEON.C": "57b2aba28bab373ce1cd0e09b906def30b7754210a7634595029c0611d79259c",
     "DUNVIEW.C": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
     "evidence": "122191ec472ad49a9dce4c4814b69489dd191e8be13105ef325940e4f5d89fd9",
-    "m11_game_view.c": "b40ad926ba382558600ab75c700b92071c3ca49691d9591853fa90feb600840e"
+    "m11_game_view.c": "50bcda31c87945fbb3ea3808dd088e9d4454bcf4ee86f9526af07d7babeb0d85"
   },
   "status": "passed"
 }
