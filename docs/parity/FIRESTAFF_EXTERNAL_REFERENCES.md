@@ -183,7 +183,28 @@ See `docs/parity/PARITY_REFERENCES.md` for:
 
 ---
 
-## G. Key rules for using these sources
+## G. Theron's Quest — 5th game (PC Engine/TurboGrafx-16)
+
+**URL:** `http://dmweb.free.fr/games/therons-quest/`
+
+**Platform:** TurboGrafx-16 / PC Engine. Japanese version released 1992-09-18, English version 1993 in USA.
+
+**Game nature:** "Light" adaptation of Dungeon Master. Key differences:
+- Only a subset of items, creatures, and spells from DM1
+- 7 small dungeons (instead of one large)
+- Some dungeons copied/inspired by DM1 and CSB dungeons
+- Play as Theron + 3 other champions
+- Champions lose skills/items upon completion of each dungeon
+- Theron keeps skills/stats but loses items between dungeons
+- Game only saved between dungeons (no in-dungeon saves)
+- Many Altars of Vi to resurrect dead champions
+- Goal: retrieve 7 valuable items, one per dungeon
+
+**Parity status:** OUT OF SCOPE FOR V1. Firestaff V1 targets 1:1 parity with DM1, CSB, DM2 only (per MEMORY.md product contract). Theron's Quest is documented here as reference knowledge only.
+
+---
+
+## H. Key rules for using these sources
 
 1. **Hash-lock before claiming:** All original file comparisons require SHA256 proof of exact file variant. PC34 ≠ PC34_MULTI ≠ Amiga ≠ Atari ST.
 2. **ReDMCSB is primary for DM1/CSB V1:** All Firestaff DM1 V1 implementation decisions cite ReDMCSB source lines, not emulator observation.
