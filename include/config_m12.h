@@ -11,7 +11,7 @@ enum {
     M12_CONFIG_PATH_CAPACITY = 512,
     M12_CONFIG_DATA_DIR_CAPACITY = 512,
     M12_CONFIG_LAST_SAVE_PATH_CAPACITY = 256,
-    M12_CONFIG_GAME_COUNT = 4  /* DM1, CSB, DM2, Nexus */
+    M12_CONFIG_GAME_COUNT = 5  /* DM1, CSB, DM2, Nexus, Theron */
 };
 
 typedef struct {

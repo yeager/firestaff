@@ -47,6 +47,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* F0658 blit — defined in firestaff_pc34_core_amalgam.c, included in m10 via GLOB_RECURSE * /
+extern void F0658_BlitBitmapIndexToZoneIndexWithTransparency(int16_t bitmapIndex, int16_t zoneIndex, int16_t transparentColor);
 
 /* ── Champion color table — G0046_auc_Graphic562_ChampionColor[4] ── */
 #define DM1_CHAMPION_COUNT 4

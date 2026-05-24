@@ -566,6 +566,7 @@ static int slot_for_game_id(const char* id) {
     if (strcmp(id, "csb") == 0) return 1;
     if (strcmp(id, "dm2") == 0) return 2;
     if (strcmp(id, "nexus1") == 0) return 3;
+    if (strcmp(id, "theron") == 0) return 4;
     return -1;
 }
 
@@ -574,7 +575,8 @@ static int game_supported(const char* id) {
     return (strcmp(id, "dm1") == 0 ||
             strcmp(id, "csb") == 0 ||
             strcmp(id, "dm2") == 0 ||
-            strcmp(id, "nexus1") == 0);
+            strcmp(id, "nexus1") == 0 ||
+            strcmp(id, "theron") == 0);
 }
 
 static M12_RGB muted_rgb(M12_RGB c) {

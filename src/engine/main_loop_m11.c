@@ -875,6 +875,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             strcmp(launchEntry->gameId, "dm1") == 0) {
             m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
+        /* Theron's Quest has no source -- no intro needed. */
         (void)titleIntroPlayed;
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {

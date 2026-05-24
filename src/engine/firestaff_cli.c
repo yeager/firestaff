@@ -18,6 +18,7 @@ void fs_cli_print_help(const char *prog) {
     printf("  csb              Chaos Strikes Back\n");
     printf("  dm2              Dungeon Master II: Skullkeep\n");
     printf("  nexus            Dungeon Master Nexus\n");
+    printf("  theron           Theron's Quest (PC Engine/TurboGrafx-16)\n");
     printf("\n");
     printf("Version:\n");
     printf("  --v1             Original faithful (320x200)\n");
@@ -55,8 +56,11 @@ void fs_cli_print_help(const char *prog) {
     printf("  --validate       Check game data files\n");
     printf("  --version, -V    Show version\n");
     printf("\n");
+    printf("Developer: Daniel Nylander\n");
+    printf("\n");
     printf("Examples:\n");
     printf("  %s dm1 --v21 --fullscreen --lang sv\n", prog);
+    printf("  %s csb --v1 --scale 4\n", prog);
     printf("  %s csb --v1 --scale 4\n", prog);
     printf("  %s dm2 --v22 --load 3\n", prog);
     printf("  %s --list-saves\n", prog);
@@ -68,6 +72,7 @@ static int match_game(const char *arg) {
     if (strcmp(arg, "csb") == 0 || strcmp(arg, "chaos") == 0) return FS_GAME_CSB;
     if (strcmp(arg, "dm2") == 0 || strcmp(arg, "skullkeep") == 0) return FS_GAME_DM2;
     if (strcmp(arg, "nexus") == 0) return FS_GAME_NEXUS;
+    if (strcmp(arg, "theron") == 0 || strcmp(arg, "therons-quest") == 0) return 5; /* FS_GAME_THERON - placeholder */
     return -1;
 }
 

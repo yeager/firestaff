@@ -3,7 +3,7 @@
 Status per 2026-05-19 v2.4.0.
 
 ## Legend
-- 🔧 Partially implemented
+
 - ❌ Not started
 - 🐛 Known bug
 
@@ -13,36 +13,22 @@ Status per 2026-05-19 v2.4.0.
 
 ### Movement & Collision
 
-- ✅ Viewport/wall occlusion — DM1 V1 side-field occlusion now has source-locked D3/D2, D1, D0, and D0C current-square evidence manifests and focused viewport regression coverage through 59fffa57; the side-content center-blocker probe is enabled and validates the ReDMCSB side-wall occlusion source route (9b9cda30); pass608 same-viewport capture blocker is CTest-locked and source-contract backed (43c7a58a), pass609 tightens the same-viewport capture contract with portable CTest coverage (59fffa57), pass610 locks Firestaff-side 224x136 viewport crop capture readiness (cbfad52e), pass622 pins the next capture-closure gap to the missing original command/state/redraw transcript, pass623 (a7de3704) binds the Firestaff input-script crop rows to that blocker, pass625 locks the first source-backed original transcript target row/preflight, and pass626 locks the original turn-redraw route target without promoting parity; pass627 (c53c7968) documents the remaining gap as missing original DOS runtime transcript (F0380 to F0097) blocking promotion — Firestaff same-viewport capture contract is fully implemented and CTest-locked, requires paired original DOS capture session to close
-- ✅ Input command routing — release-mouse button identity and routed click acceptance are source-locked for the V1 command queue path (6a168a9e), movement collision-before-sensor dispatch ordering is covered by the movement pipeline gate (2462666b), the stairs backstep movement-cooldown gate is source-locked by pass578 (06cedcf6), pending-click single-slot overwrite/replay is source-locked by pass624, and `dm1_v1_movement_queue_capture_closure` pins the current command input -> queue -> movement dispatch capture contract; pass623 (a7de3704) now ties the canonical Firestaff input script to viewport crop rows, and pass626 locks the original turn-redraw transcript route target; remaining input parity work is capture-only: a source-bound original PC/I34E transcript plus paired original/Firestaff viewport crops
-- ✅ Sensors & Mechanisms — floor/wall sensor type classification (F0720-F0723, F0727-F0728), effect dispatch (F0724, F0272), HOLD resolution, rotation deferral (F0271), once-only disable (F0272:1180), and all 10 floor (C000-C009) and 20 wall (C001-C018, C127) sensor types with per-type source-locked skip logic are source-locked with ReDMCSB line-level citations (MOVESENS.C F0268-F0276, TIMELINE.C F0241-F0248, CLIKVIEW.C F0372/F0377, DEFS.H); door animation timeline events (party-on-square damage BUG0_78, creature block/rattle, normal sequence) are source-locked via F0717_DOOR_ResolveClosingObstruction_Compat and Pass 418 orchestrator gate (22f9ae9c + e7c0e3be); GAP-3 C003 non-consuming ornament click is source-locked in F0723:326-328 (MOVESENS.C F0275:1412-1415, 1767, 1527); GAP-2 F0273/F0274 logic embedded in context fields, not independently callable; GAP-1 door animation already implemented (22f9ae9c + e7c0e3be); 7/7 sensor-related CTests pass
-
 ### Creature System
 
-- ✅ Creature type-specific behavior — Giggler steal, Ghost/non-material melee gating, quarter-square melee cell shuffle, adjacent creature projectile chance, fixed possession drop payloads, fixed possession runtime materialization (de044e27), Couatl idle aspect movement sound gate (a6541cf5), and Black Flame fireball-impact healing (63a905c8) are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
-
   **GAP (C25/C26):** C25 (Lord Order) and C26 (Grey Lord) are structurally safe (default: FIREBALL handles them) but not explicitly handled in dm1_v1_creature_ai_behavior_pc34_compat.c. No DM1_CREATURE_TYPE_LORD_ORDER/GREY_LORD constants in behavior header. Not reachable in any original dungeon (BUG0_13). Acceptable for normal play. Modder/dungeon-editor placement would work by-accident, not by-design.
-- 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with fixed group-slot reuse, square insertion, party-map active-state seed, F0180 event37 wandering hookup, delayed C65 re-enable, F0185/F0245 buzz dispatch, event60/61 blocked-destination defer (5ace9238), Lord Chaos adjacent random retry (0a12e07d), narrow F0267 teleporter destination/cross-map placement with covered audible buzz/wandering scheduling (191c9d3c), group move-removal planning coverage (91578481), F0267 open-pit fall damage/death, lower-map insertion, and carried group-slot fall-kill drops (9db12dbf), generated/deferred non-square insertion projectile non-impact preservation (850c1541), and generated/deferred creature-not-allowed rejection plus carried-slot drop handling (1741688d), and moving fixed-possession partial/death drops (365b4b8f); ordinary moving-group projectile impact/removal (dab7b40d), group-specific teleporter rotation, and multi-hop teleporter audible buzz order (d3ef5834) are source-locked; remaining C006/F0267 work is original capture parity for broader chained runtime proof
 
 ### Champion System
-
-- 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper and status box model (dc4cbb37), runtime current/maximum statistic row wiring (4c671c34), and the F0351 text-run layout/color model plus M11 stats text routing coverage (ac3efa45), and the Firestaff indexed-framebuffer draw path for the colored per-stat panel (2355619c) are source-locked; remaining polish is original PC 3.4 capture/comparator proof for true original-vs-Firestaff framebuffer parity
 
   **GAP (C01-C24 stats):** All 24 Hall of Champions champions (C01-C24) have STUB stat values — not source-locked to ReDMCSB G0243. 5 flag bugs: C12 Black Flame (LEVITATION/NON_MATERIAL inverted), C20 Materializer (missing both LEVITATION+NON_MATERIAL), C14 Couatl, C15 Vexirk, C21 Water Elemental, C24 Lord Chaos (each missing LEVITATION flag). TIER_FULL champions C10/C11/C13 need stat corrections.
   **GAP (portrait sensorData):** m11_game_view.c:8995 stores raw ordinal+1 without -1 correction for champion portrait sheet indexing. Latent gap — pass449/pass450 framebuffer evidence gates blocked on missing external artifacts.
 
 ### Inventory & Items
 
-- 🔧 Full inventory panel (8 body slots + 2 hand slots + backpack) — C507..C536 source slot-box bridge, full backpack runtime storage/pickup/place path plus all C520..C536 source slot round-trips (78412579), champion inventory slot pickup/place hash refresh (fb747c23), PC34 open-chest slot setter (461139c9), and open action-hand chest icon remap (ba92e3a7) are source-locked; remaining panel polish/chest runtime details stay open
-- 🔧 Equip/unequip items to body slots — partially: PC34 slot masks, status hand-slot route resolution, and leader-hand/body-slot swap transaction are source-locked (6acbf589); full inventory/backpack/chest storage expansion remains pending
-- 🔧 Backpack/chest container management — M11 V1 open action-hand chest state, C537..C544 panel route hit-testing, visible chest slot drawing, leader-hand/chest slot swaps, middle visible chest-slot pickup compaction (e99b5839), all C520..C536 backpack source slot runtime round-trips (78412579), action-hand chest panel close/reopen persistence, PC34 open-chest slot setter (461139c9), and open chest C145 action-hand icon remap (ba92e3a7) are source-locked; broader full panel polish remains pending
-- ✅ Item identification — potion eye-panel power-prefix display and M11 leader-hand runtime wiring are source-locked for Priest > 1, including the original empty-flask quirk; weapon eye-panel name/attribute description formatting is source-locked for POISONED/BROKEN/CURSED (94094865); item weight line display is source-locked (35461e0b); armor BROKEN/CURSED, junk consumable/compass/waterskin state lines, scroll/container panel routes, object-description panel layout (440eaca1), M11 item eye object-description runtime rendering in source layout (48a05966), leader-hand scroll eye-click routing to the source scroll panel renderer (4fa32322), leader-hand container eye-click routing to the source chest panel renderer (d206cb6c), action-hand scroll panel C023 framebuffer pixels (64de7dcf), and leader-hand object-description panel C020/C029 source pixels (772c12fc), and empty-hand mouth food/water/poisoned panel source pixels are source-locked; remaining item-identification polish is framebuffer/pixel parity for other routed panels and full original-vs-Firestaff framebuffer parity
-
 ## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
 
 - 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
 - ❌ V2.0 filtered presentation mode selectable from menu, using original DM1 graphics plus CRT scanlines, palette correction, and sharpening without changing DM1 V1 gameplay state, timing, collision, save/load, or source-locked command routes
-- 🔧 V2.1/V2.2 presentation modes selectable from menu
+
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions
 - ❌ Phase 4 — Lighting and visual effects: enhanced lighting/shadows, palette interpolation, field/teleporter/projectile effects, and HiDPI-safe composition with deterministic fallback
@@ -52,7 +38,6 @@ Status per 2026-05-19 v2.4.0.
 
 ## CSB V1 (Chaos Strikes Back)
 
-- 🔧 CSB launch entry in menu
 - ❌ Phase 1 — Boot/profile split: separate CSB runtime profile from DM1, including asset discovery, menu launch, save namespace, deterministic config, and variant-specific diagnostics
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics
 - ❌ Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
@@ -76,7 +61,6 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM2 V1 (Skullkeep)
 
-- 🔧 DM2 launch entry in menu
 - ❌ Phase 1 — Runtime profile split: separate DM2/Skullkeep boot profile from DM1/CSB, including menu launch, asset roots, save namespace, platform/version diagnostics, and deterministic config
 - ❌ Phase 2 — Data formats: source-lock DM2 dungeon and graphics formats from SKWin/SKWINSPX/DMDC2 references, including GDAT categories, dungeon records, text, item records, actuators, doors, pits, teleports, ornate data, and variant/platform differences
 - ❌ Phase 3 — Core world model: implement DM2 map loading, party placement, map transitions, outdoor/interior state, timers, object database, and deterministic world-state hashing
@@ -101,7 +85,6 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM Nexus V1
 
-- 🔧 Nexus launch entry in menu
 - ❌ Phase 0 — Provenance gate: hash-lock exact Dungeon Master Nexus disc/images, file manifests, compression/container formats, region/version metadata, and any available primary technical references before parser or runtime work
 - ❌ Phase 1 — Runtime profile split: separate Nexus boot/runtime profile from DM1/CSB/DM2, including menu launch, asset roots, save namespace, platform diagnostics, deterministic config, and unsupported-feature messaging
 - ❌ Phase 2 — Data formats: source-lock Nexus dungeon, map, object, text, champion, monster, sound, and graphics/model formats; document every variant before converting data into Firestaff structures
@@ -156,22 +139,17 @@ Status per 2026-05-19 v2.4.0.
 
 ### Touch Support
 
-- 🔧 Touch controls config option exists
 - ❌ Gesture navigation (swipe to turn, tap to move)
 - ❌ UI scaling for touch targets
 
 ### Accessibility
 
-- 🔧 Accessibility module exists (firestaff_accessibility)
 - ❌ Screen reader integration
 - ❌ High-contrast mode
 - ❌ Configurable font size
 
-
-
 ### Audio
 
-- 🔧 Audio/creature sound trigger system — 35 sound events verified SOURCE-LOCKED. Remaining KNOWN_DIFF items correctly bounded as original-faithfulness capture tasks (runtime SFX cadence/overlap). No code gaps.
 ## Known Bugs (need repro)
 
 1. No open wall/collision report without a capture manifest. Use the DM1 V1 wall/collision runtime capture gate for exact map/x/y/direction and screenshots before accepting new reports.
