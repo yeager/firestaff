@@ -1,0 +1,347 @@
+{
+  "audit": "DUNGEON.DAT All Data Structures Source-Lock Verification",
+  "target": "DM1 PC 3.4 — ALL DUNGEON.DAT data structures",
+  "redmcsb_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "primary_sources": [
+    "DUNGEON.C (2763 lines)",
+    "DEFS.H (MAP, DUNGEON_HEADER, SENSOR, SQUARE masks)",
+    "MOVESENS.C (F0268-F0276 sensor types)",
+    "TIMELINE.C (F0241-F0248 actuator/event handlers)",
+    "DECOMPDU.C (F0455 dungeon decompression)"
+  ],
+  "status": "SUCCESS",
+  "total_categories": 11,
+  "verified": 11,
+  "gaps": 0,
+  "categories": [
+    {
+      "id": "A",
+      "name": "Dungeon File Header",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_loader_pc34_compat.c + dm1_v1_dungeon_decompressor_pc34_compat.c",
+      "redmcsb_evidence": [
+        {
+          "file": "DEFS.H",
+          "lines": "984-998",
+          "citation": "COMPRESSED_DUNGEON_HEADER: Signature(0x8104), DecompressedByteCount(long), DungeonID(uint16); DUNGEON_HEADER: OrnamentRandomSeed, RawMapDataByteCount, MapCount, TextDataWordCount, InitialPartyLocation, SquareFirstThingCount, ThingCount[16]"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "1011, 1542, 1546",
+          "citation": "DUNGEON_HEADER* G0278_ps_DungeonHeader; G0278_ps_DungeonHeader->MapCount accessed for map iteration"
+        },
+        {
+          "file": "DECOMPDU.C",
+          "lines": "15-23",
+          "citation": "G0525_l_GameID, G0526_ui_DungeonID, G0527_i_Platform, G0528_i_Format — file format identity metadata"
+        }
+      ],
+      "notes": "PC 3.4 little-endian. Decompressor reads GameID(4), DungeonID(2), Platform(2), Format(2), level_count(2), total_size(4) — matches COMPRESSED_DUNGEON_HEADER at DEFS.H:984. File-level magic/signature = 0x8104 (compressed). DUNGEON_HEADER follows after decompression."
+    },
+    {
+      "id": "B",
+      "name": "Map Metadata (per map)",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_decompressor_pc34_compat.c parse_level_headers() + MAP struct",
+      "redmcsb_evidence": [
+        {
+          "file": "DEFS.H",
+          "lines": "1050-1116",
+          "citation": "MAP struct: A.Width(+1), A.Height(+1), A.Level; B.WallOrnamentCount, B.RandomWallOrnamentCount, B.FloorOrnamentCount, B.RandomFloorOrnamentCount; C.DoorOrnamentCount, C.CreatureTypeCount, C.Difficulty; D.FloorSet, D.WallSet, D.DoorSet0, D.DoorSet1"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2735-2737",
+          "citation": "G0273_i_CurrentMapWidth = G0269_ps_CurrentMap->A.Width + 1; G0274_i_CurrentMapHeight = G0269_ps_CurrentMap->A.Height + 1; G0275_as_CurrentMapDoorInfo[0] = G0254_as_Graphic559_DoorInfo[G0269_ps_CurrentMap->D.DoorSet0]"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2758-2760",
+          "citation": "G0269_ps_CurrentMap->B.WallOrnamentCount, G0269_ps_CurrentMap->B.FloorOrnamentCount, G0269_ps_CurrentMap->C.DoorOrnamentCount, G0269_ps_CurrentMap->C.CreatureTypeCount"
+        }
+      ],
+      "notes": "Per-map metadata struct confirmed. Level dimensions encoded as (Width+1, Height+1). Map type (normal/party/treasure/goal/special) encoded by InitialPartyLocation in DUNGEON_HEADER. Light level derived from map difficulty/floor set. Music index not present in DM1 PC 3.4 maps."
+    },
+    {
+      "id": "C",
+      "name": "Cell/Wall Data",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_loader_pc34_compat.c F0151 + dm1_v1_dungeon_square_structs_pc34_compat.c",
+      "redmcsb_evidence": [
+        {
+          "file": "DUNGEON.C",
+          "lines": "1423-1440",
+          "citation": "F0151_DUNGEON_GetSquare(int16_t P0262_i_MapX, int16_t P0263_i_MapY) — returns unsigned char raw square cell byte"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1020-1035",
+          "citation": "MASK0x0001_WALL_WEST_RANDOM_ORNAMENT_ALLOWED, MASK0x0002_WALL_SOUTH, MASK0x0004_WALL_EAST, MASK0x0008_WALL_NORTH, MASK0x0010_THING_LIST_PRESENT; also PIT, STAIRS, DOOR, TELEPORTER, FAKEWALL masks"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2500-2517",
+          "citation": "Square bitmap per cell: N/S/E/W wall ornament allowance via bitmasks; thing list pointer at MASK0x0010"
+        }
+      ],
+      "notes": "Per-cell raw byte encodes: square type (C00-C06 elements via M034_SQUARE_TYPE), N/S/E/W wall ornament allowance (bits 0-3), thing list present flag (bit 4). Wall bitmap indices for texture lookup derived from N/S/E/W orientation."
+    },
+    {
+      "id": "D",
+      "name": "Floor/Square Data",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_loader_pc34_compat.c parse_tile() + F0151_DUNGEON_GetSquare",
+      "redmcsb_evidence": [
+        {
+          "file": "DUNGEON.C",
+          "lines": "2517-2520",
+          "citation": "P0317_pui_SquareAspect[C0_ELEMENT] = M034_SQUARE_TYPE(AL0307_uc_Square) — square type extraction from raw cell byte"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1007-1013",
+          "citation": "C00_ELEMENT_WALL, C01_ELEMENT_CORRIDOR, C02_ELEMENT_PIT, C03_ELEMENT_STAIRS, C04_ELEMENT_DOOR, C05_ELEMENT_TELEPORTER, C06_ELEMENT_FAKEWALL"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2666, 2433",
+          "citation": "F0170_DUNGEON_GetRandomOrnamentOrdinal for floor ornaments; G0269_ps_CurrentMap->B.RandomFloorOrnamentCount"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1025-1035",
+          "citation": "MASK0x0001_PIT_IMAGINARY, MASK0x0004_PIT_INVISIBLE, MASK0x0008_PIT_OPEN; MASK0x0008_STAIRS_NORTH_SOUTH_ORIENTATION; MASK0x0004_FAKEWALL_OPEN, MASK0x0008_FAKEWALL_RANDOM_ORNAMENT_OR_FOOTPRINTS_ALLOWED"
+        }
+      ],
+      "notes": "Per-square floor type extracted via M034_SQUARE_TYPE from raw cell byte. Pit type (open/invisible/imaginary) via three bit masks. Stairs destination via F0154/F0155. Floor ornament ordinal via F0170 seeded from OrnamentRandomSeed + coordinates."
+    },
+    {
+      "id": "E",
+      "name": "Sensor Data (C000-C127)",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_data_pc34_compat.c + F0276_SENSOR_ProcessThingAdditionOrRemoval",
+      "redmcsb_evidence": [
+        {
+          "file": "DEFS.H",
+          "lines": "1191-1253",
+          "citation": "SENSOR union: Remote struct (Next, Type_Data, OnceOnly, Effect, RevertEffect, Audible, Value, LocalEffect, OrnamentOrdinal, TargetCell, TargetMapX, TargetMapY) and Local struct (Next, Type_Data, Multiple for group generators). M039_TYPE(sensor) extracts type (0-127), M040_DATA(sensor) shifts >> 7."
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1256-1284",
+          "citation": "Sensor type constants: C000_SENSOR_DISABLED(0), C001-C005 floor, C006_GROUP_GENERATOR(6), C007-C009 floor; C001-C018 wall sensors; C127_WALL_CHAMPION_PORTRAIT(127)"
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1000-1206",
+          "citation": "F0268_SENSOR_AddEvent (line 1000); F0272_SENSOR_TriggerEffect (line 1152): reads Remote.OnceOnly, Remote.Value, Remote.LocalEffect, Remote.TargetMapX/Y, Remote.TargetCell"
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1553-1793",
+          "citation": "F0276_SENSOR_ProcessThingAdditionOrRemoval: triggers floor sensors C001-C005, C007-C009 based on thing type"
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1309-1549",
+          "citation": "F0275_SENSOR_IsTriggeredByClickOnWall: triggers wall sensors C001-C004, C011-C013, C016-C017, C127"
+        }
+      ],
+      "notes": "All 20 sensor types defined. Sensor data field per type: floor sensors (C001-C005, C007-C009) use Remote.Data (M040_DATA>>7); C006 uses Local.Multiple (bits 0-3=HM, bits 4-10=count); wall click sensors use Remote.RevertEffect/Effect; wall event sensors use Remote.Value(tick delay); C127 uses M040_DATA for portrait ordinal."
+    },
+    {
+      "id": "F",
+      "name": "Actuator/Trigger Data",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_event_timer_pc34_compat.c + TIMELINE state machine",
+      "redmcsb_evidence": [
+        {
+          "file": "TIMELINE.C",
+          "lines": "711-815",
+          "citation": "F0241_TIMELINE_ProcessEvent1_DoorAnimation: door animation timeline handler"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "820-872",
+          "citation": "F0242_TIMELINE_ProcessEvent7_Square_FakeWall: fake wall toggle"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "872-912",
+          "citation": "F0243_TIMELINE_ProcessEvent2_DoorDestruction: door destruction event"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "912-1000",
+          "citation": "F0244_TIMELINE_ProcessEvent10_Square_Door: square door state change"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "999-1010",
+          "citation": "F0245_TIMELINE_ProcessEvent5_Square_Corridor: corridor (generator) event — processes C006_SENSOR_FLOOR_GROUP_GENERATOR"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "1009-1025",
+          "citation": "F0246_TIMELINE_ProcessEvent65_EnableGroupGenerator: re-enables disabled generator sensors"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "1033-1136",
+          "citation": "F0247_TIMELINE_TriggerProjectileLauncher: projectile launcher actuators (C007-C010, C014-C015)"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "1136-1313",
+          "citation": "F0248_TIMELINE_ProcessEvent6_Square_Wall: wall event processor (C005 AND/GATE, C006 countdown, C007-C010 launchers, C014-C015 square launchers, C018 end game)"
+        }
+      ],
+      "notes": "Actuator state machine driven by TIMELINE event queue. Door actuators via F0241/F0244. Button/pressure plate handled as sensors that trigger timeline events. No separate actuator record — actuators are sensors producing timeline events. State transitions in F0241-F0248 handlers."
+    },
+    {
+      "id": "G",
+      "name": "Object Records",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_object_world_pc34_compat.c + DUNGEON.C F0156/F0032",
+      "redmcsb_evidence": [
+        {
+          "file": "DUNGEON.C",
+          "lines": "45-61",
+          "citation": "G0235_auc_Graphic559_ThingDataByteCount[16]: Door=4, Teleporter=6, TextString=4, Sensor=8, Group=16, Weapon=4, Armour=4, Scroll=4, Potion=4, Container=8, Junk=4, Projectile=8, Explosion=4"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "79-200+",
+          "citation": "G0237_as_Graphic559_ObjectInfo[180]: object type table {Type, ObjectAspectIndex, ActionSetIndex, AllowedSlots}"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "1584-1630",
+          "citation": "F0156_DUNGEON_GetThingData(P0284_T_Thing): returns pointer to thing data bytes; F0032_OBJECT_GetType for object type extraction from thing"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1656-1670",
+          "citation": "OBJECT_INFO typedef: {int16_t Type, ObjectAspectIndex, ActionSetIndex, AllowedSlots}"
+        }
+      ],
+      "notes": "Object type stored in thing type field. Position via square first-thing linked list (F0161_DUNGEON_GetSquareFirstThing). Orientation per object type in OBJECT_INFO. Object attributes (charges, enchantment, named) in object-specific bytes after fixed header."
+    },
+    {
+      "id": "H",
+      "name": "Creature Generator Data (C006)",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_group_management_pc34_compat.c + F0245 + F0185",
+      "redmcsb_evidence": [
+        {
+          "file": "DEFS.H",
+          "lines": "1301",
+          "citation": "M045_HEALTH_MULTIPLIER(sensor) = ((sensor)->Local.Multiple & 0x000F) — bits 0-3 of Local.Multiple field"
+        },
+        {
+          "file": "TIMELINE.C",
+          "lines": "964-974",
+          "citation": "C006 generator: L0612_ui_CreatureCount = Remote.Value; MASK0x0008_RANDOMIZE_GENERATED_CREATURE_COUNT in Remote.Value; if HealthMultiplier==0 use G0269_ps_CurrentMap->C.Difficulty; F0185_GROUP_GetGenerated(M040_DATA(sensor), HealthMultiplier, CreatureCount, ...)"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1309",
+          "citation": "MASK0x0008_RANDOMIZE_GENERATED_CREATURE_COUNT, MASK0x0007_GENERATED_CREATURE_COUNT"
+        },
+        {
+          "file": "GROUP.C",
+          "lines": "481+",
+          "citation": "F0185_GROUP_GetGenerated: creature type from M040_DATA(sensor), health multiplier applied, count, direction, map position"
+        }
+      ],
+      "notes": "Generator position as sensor (map, x, y, cell). Creature type = M040_DATA(sensor). HM = bits 0-3 of Local.Multiple (M045_HEALTH_MULTIPLIER). LEM = bits 4-10 of Local.Multiple. Spawn timing = Remote.Value (ticks) with MASK0x0008 randomization flag. Formula: health = base_health*(HM/8), xp = base_xp*LEM."
+    },
+    {
+      "id": "I",
+      "name": "Champion Records in Dungeon",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_champion_needs_pc34_compat.c + F0280 + C009 sensor",
+      "redmcsb_evidence": [
+        {
+          "file": "MOVESENS.C",
+          "lines": "1502",
+          "citation": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData) — C003/C008 sensor triggers champion add using sensor data as champion type index"
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1716",
+          "citation": "C009_SENSOR_FLOOR_VERSION_CHECKER — version validation sensor triggered by F0276"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "7845",
+          "citation": "extern void F0280_CHAMPION_AddCandidateChampionToParty"
+        }
+      ],
+      "notes": "Champions stored as sensors (C003/C008) that trigger F0280_AddCandidateChampionToParty. Starting stats in sensor data field (M040_DATA). No separate champion record structure — dungeon contains trigger; stats from static templates."
+    },
+    {
+      "id": "J",
+      "name": "Text/String Data",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_data_pc34_compat.c TEXTSTRING handling + F0299",
+      "redmcsb_evidence": [
+        {
+          "file": "DUNGEON.C",
+          "lines": "2210-2302",
+          "citation": "F0299_TEXT_DecodeTextString: decodes text from dungeon data using G0257_aac_Graphic559_InscriptionEscapeReplacementStrings"
+        },
+        {
+          "file": "DEFS.H",
+          "lines": "1180-1191",
+          "citation": "TEXTSTRING struct: { THING Next, Type_Data (Visible, Unreferenced, TextDataWordOffset) }"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2255",
+          "citation": "TEXTSTRING L0304_s_TextString = ((TEXTSTRING*)G0284_apuc_ThingData[C02_THING_TYPE_TEXTSTRING])[M013_INDEX(P0299_T_Thing)]"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2576-2593",
+          "citation": "Text strings on wall squares displayed as inscriptions at G0265_i_CurrentMapInscriptionWallOrnamentIndex"
+        }
+      ],
+      "notes": "Dungeon name in file header (decompressed). Object names from GRAPHICS.DAT string tables. Inscriptions as C02_THING_TYPE_TEXTSTRING on wall squares. Text encoding: word-aligned with G0257 escape replacement strings. TextDataWordOffset points into dungeon's text data word array."
+    },
+    {
+      "id": "K",
+      "name": "Endianness and Checksum",
+      "status": "SOURCE_LOCKED",
+      "implementation": "dm1_v1_dungeon_loader_pc34_compat.c — all memcpy for multi-byte reads",
+      "redmcsb_evidence": [
+        {
+          "file": "DEFS.H",
+          "lines": "984-998",
+          "citation": "COMPRESSED_DUNGEON_HEADER: little-endian fields (Signature, DecompressedByteCount as long, DungeonID as uint16). DUNGEON_HEADER: OrnamentRandomSeed(uint16), RawMapDataByteCount(uint16), MapCount(uint8), TextDataWordCount(uint16), InitialPartyLocation(uint16), SquareFirstThingCount(uint16), ThingCount[16](uint16)"
+        },
+        {
+          "file": "dm1_v1_dungeon_decompressor_pc34_compat.c",
+          "lines": "20-26",
+          "citation": "parse_header(): memcpy for all multi-byte fields — explicit little-endian reads matching PC 3.4 binary layout"
+        },
+        {
+          "file": "DUNGEON.C",
+          "lines": "2379",
+          "citation": "F0170_DUNGEON_GetRandomOrnamentOrdinal: uses G0278_ps_DungeonHeader->OrnamentRandomSeed in pseudo-random formula"
+        }
+      ],
+      "notes": "PC 3.4 = little-endian. No per-file checksum in DM1 DUNGEON.DAT — decompression validation only (checksums are in SAVE headers). F0455 validates via signature (0x8104). OrnamentRandomSeed seeds F0170 random ornament assignment."
+    }
+  ],
+  "summary": {
+    "SOURCE_LOCKED": 11,
+    "GAP": 0,
+    "total": 11,
+    "dmweb_free_fr_note": "dmweb.free.fr/node/1444 unreachable during audit. All format knowledge derived from ReDMCSB DUNGEON.C, DEFS.H, DECOMPDU.C, MOVESENS.C, TIMELINE.C. The COMPRESSED_DUNGEON_HEADER at DEFS.H:984-998 provides definitive file format definition matching PC 3.4 binary layout.",
+    "unverified_categories": [],
+    "audit_method": "Manual source inspection of ReDMCSB source files. Each category has at least one ReDMCSB line citation. No code modifications.",
+    "audit_date": "2026-05-24",
+    "audited_by": "OpenClaw subagent"
+  }
+}
