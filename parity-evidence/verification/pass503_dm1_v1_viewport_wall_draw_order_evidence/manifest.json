@@ -37,28 +37,28 @@
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-draw-order-table",
-      "line": 82,
+      "line": 88,
       "needle": "static const DM1_ViewportDrawStep s_draw_order[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-wall-spec-table",
-      "line": 346,
+      "line": 352,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-thing-layer-table",
-      "line": 123,
+      "line": 129,
       "needle": "static const DM1_ViewportThingLayerSpec s_thing_layers[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-door-front-occlusion-table",
-      "line": 166,
+      "line": 172,
       "needle": "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]",
       "ok": true
     },

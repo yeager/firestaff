@@ -62,10 +62,10 @@ Status: PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
 
 ## Firestaff hooks
 
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 82 ok=True: firestaff-draw-order-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 346 ok=True: firestaff-wall-spec-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 123 ok=True: firestaff-thing-layer-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 166 ok=True: firestaff-door-front-occlusion-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 88 ok=True: firestaff-draw-order-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 352 ok=True: firestaff-wall-spec-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 129 ok=True: firestaff-thing-layer-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 172 ok=True: firestaff-door-front-occlusion-table
 - tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py line 15 ok=True: pass496-matrix-gate-present
 - parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line 38 ok=True: pass502-blocker-doc-present
 
