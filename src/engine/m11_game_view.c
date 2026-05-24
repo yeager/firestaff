@@ -8988,9 +8988,13 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
                     /* ReDMCSB DUNGEON.C:2612: C127_SENSOR_WALL_CHAMPION_PORTRAIT
-                     * stores portrait index in M040_DATA(sensor).  The portrait
-                     * ordinal is 1-based (M000_INDEX_TO_ORDINAL) in the original;
-                     * we store the 0-based index for direct sprite-sheet lookup. */
+                     * stores portrait index in M040_DATA(sensor).  ReDMCSB passes it
+                     * through M000_INDEX_TO_ORDINAL (= value+1) when storing G0289,
+                     * then blits using G0289's raw value for sheet coordinates.
+                     * We read the raw sensorData directly (same as M040_DATA from
+                     * dungeon.dat) and store it as a 0-based portrait-sheet index.
+                     * This matches ReDMCSB's effective 0-based blit without the +1.
+                     * Source: ReDMCSB DUNGEON.C:2612, DUNVIEW.C:3916 (sheet math). */
                     if (state->world.things->sensors[sIdx].sensorType == 127) {
                         cell.championPortraitOrdinal = (int)state->world.things->sensors[sIdx].sensorData;
                         /* Champion mirrors also have an ornament ordinal for the
