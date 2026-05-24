@@ -103,8 +103,8 @@ int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv) {
 
     /* Defaults */
     opts->game = FS_GAME_DM1;
-    opts->version = FS_VERSION_V21;
-    opts->scale = 2;
+    opts->version = FS_VERSION_V1;
+    opts->scale = 1;
     opts->vsync = 1;
     opts->lang = -1; /* auto-detect */
     opts->load_slot = -1;
@@ -120,7 +120,8 @@ int fs_cli_parse(FS_CLIOptions *opts, int argc, char **argv) {
         /* Version */
         if (strcmp(arg, "--v1") == 0) { opts->version = FS_VERSION_V1; opts->scale = 1; continue; }
         if (strcmp(arg, "--v2") == 0 || strcmp(arg, "--v21") == 0)
-            { opts->version = FS_VERSION_V21; opts->scale = 2; continue; }
+            { opts->version = FS_VERSION_V1;
+    opts->scale = 1; opts->scale = 2; continue; }
         if (strcmp(arg, "--v22") == 0) { opts->version = FS_VERSION_V22; opts->scale = 4; continue; }
 
         /* Display */
