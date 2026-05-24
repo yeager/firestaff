@@ -4067,81 +4067,74 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
     if (!state || !state->active) {
         return;
     }
-    /* Every 6 ticks, drain 1 food and 1 water from each champion */
+    /* Every 6 ticks, drain food and water from each champion.
+     * BUG-031 fix (ReDMCSB CHAMPION.C F0331 / F0325): call the source-locked
+     * dm1_needs_apply_time_effects for ALL champions, not just starving ones.
+     * This wires m11_fw_tick equivalent: food/water drain is stamina-gated
+     * (not fixed-rate) and starvation HP damage is produced by F0325. */
     if ((state->world.gameTick % 6U) != 0U) {
         return;
     }
     for (i = 0; i < state->world.party.championCount; ++i) {
         struct ChampionState_Compat* champ = &state->world.party.champions[i];
-        if (!champ->present) {
-            continue;
+        if (!champ->present || champ->hp.current == 0) {
+            continue; /* absent or dead */
         }
-        if (champ->hp.current == 0) {
-            continue; /* dead */
-        }
-        if (champ->food < DM1_NEEDS_STARVATION_THRESH ||
-            champ->water < DM1_NEEDS_STARVATION_THRESH) {
-            DM1_ChampionNeeds needs;
-            DM1_NeedsTickContext ctx;
-            DM1_NeedsTickResult out;
-            int hp;
-            memset(&needs, 0, sizeof(needs));
-            memset(&ctx, 0, sizeof(ctx));
-            memset(&out, 0, sizeof(out));
+        /* Build needs snapshot */
+        DM1_ChampionNeeds needs;
+        DM1_NeedsTickContext ctx;
+        DM1_NeedsTickResult out;
+        memset(&needs, 0, sizeof(needs));
+        memset(&ctx, 0, sizeof(ctx));
+        memset(&out, 0, sizeof(out));
 
-            needs.current_health = (int16_t)champ->hp.current;
-            needs.max_health = (int16_t)champ->hp.maximum;
-            needs.current_stamina = (int16_t)champ->stamina.current;
-            needs.max_stamina = (int16_t)champ->stamina.maximum;
-            needs.current_mana = (int16_t)champ->mana.current;
-            needs.max_mana = (int16_t)champ->mana.maximum;
-            needs.food = champ->food;
-            needs.water = champ->water;
-            needs.vitality_current = (uint8_t)champ->attributes[CHAMPION_ATTR_VITALITY];
-            needs.wisdom_current = (uint8_t)champ->attributes[CHAMPION_ATTR_WISDOM];
-            needs.wounds = champ->wounds;
-            needs.alive = 1;
-            needs.priest_skill_level = M11_GameView_GetSkillLevel(state, i, 2);
-            needs.wizard_skill_level = M11_GameView_GetSkillLevel(state, i, 3);
-            if (needs.priest_skill_level < 0) needs.priest_skill_level = 0;
-            if (needs.wizard_skill_level < 0) needs.wizard_skill_level = 0;
+        needs.current_health = (int16_t)champ->hp.current;
+        needs.max_health = (int16_t)champ->hp.maximum;
+        needs.current_stamina = (int16_t)champ->stamina.current;
+        needs.max_stamina = (int16_t)champ->stamina.maximum;
+        needs.current_mana = (int16_t)champ->mana.current;
+        needs.max_mana = (int16_t)champ->mana.maximum;
+        needs.food = champ->food;
+        needs.water = champ->water;
+        needs.vitality_current = (uint8_t)champ->attributes[CHAMPION_ATTR_VITALITY];
+        needs.wisdom_current = (uint8_t)champ->attributes[CHAMPION_ATTR_WISDOM];
+        needs.wounds = champ->wounds;
+        needs.alive = 1;
+        needs.priest_skill_level = M11_GameView_GetSkillLevel(state, i, 2);
+        needs.wizard_skill_level = M11_GameView_GetSkillLevel(state, i, 3);
+        if (needs.priest_skill_level < 0) needs.priest_skill_level = 0;
+        if (needs.wizard_skill_level < 0) needs.wizard_skill_level = 0;
 
-            ctx.game_time = state->world.gameTick;
-            ctx.last_movement_time = state->world.gameTick > 100U
-                ? state->world.gameTick - 100U
-                : 0U;
-            ctx.party_is_resting = state->resting ? 1 : 0;
+        ctx.game_time = state->world.gameTick;
+        ctx.last_movement_time = state->world.gameTick > 100U
+            ? state->world.gameTick - 100U
+            : 0U;
+        ctx.party_is_resting = state->resting ? 1 : 0;
 
-            dm1_needs_apply_time_effects(&needs, &ctx, &out);
-            champ->food = out.food_after;
-            champ->water = out.water_after;
-            if (out.stamina_delta < 0 &&
-                (int)champ->stamina.current < -(int)out.stamina_delta) {
-                champ->stamina.current = 0;
-            } else {
-                int stamina = (int)champ->stamina.current + (int)out.stamina_delta;
-                if (stamina < 0) stamina = 0;
-                if (stamina > (int)champ->stamina.maximum) stamina = (int)champ->stamina.maximum;
-                champ->stamina.current = (unsigned short)stamina;
-            }
-            if (out.pending_health_damage > 0) {
-                hp = (int)champ->hp.current - (int)out.pending_health_damage;
-                champ->hp.current = (unsigned short)(hp > 0 ? hp : 0);
-                M11_GameView_NotifyDamageFlash(state, -1);
-            }
-            continue;
+        /* ReDMCSB CHAMPION.C F0331: food/water drain embedded in stamina cycle.
+         * F0325_DecrementStamina clamps stamina and produces HP damage on underflow.
+         * BUG-031: previously called only for starving champions; normal champions
+         * used the fixed 1/tick drain below, bypassing the source formula entirely. */
+        dm1_needs_apply_time_effects(&needs, &ctx, &out);
+        champ->food = out.food_after;
+        champ->water = out.water_after;
+
+        /* Apply stamina delta (F0325 clamps current_stamina; underflow → HP damage) */
+        if (out.stamina_delta < 0 &&
+            (int)champ->stamina.current < -(int)out.stamina_delta) {
+            champ->stamina.current = 0;
+        } else {
+            int stamina = (int)champ->stamina.current + (int)out.stamina_delta;
+            if (stamina < 0) stamina = 0;
+            if (stamina > (int)champ->stamina.maximum) stamina = (int)champ->stamina.maximum;
+            champ->stamina.current = (unsigned short)stamina;
         }
-        if (champ->food > 0) {
-            --champ->food;
-        }
-        if (champ->water > 0) {
-            --champ->water;
-        }
-        /* Starvation/dehydration damage */
-        if (champ->food == 0 && champ->water == 0 && champ->hp.current > 0) {
-            if (champ->hp.current > 1) {
-                --champ->hp.current;
-            }
+
+        /* F0325 underflow produces pending HP damage */
+        if (out.pending_health_damage > 0) {
+            int hp = (int)champ->hp.current - (int)out.pending_health_damage;
+            champ->hp.current = (unsigned short)(hp > 0 ? hp : 0);
+            M11_GameView_NotifyDamageFlash(state, -1);
         }
     }
 }
