@@ -1,48 +1,63 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-d1-side-door-front-metadata",
-      "lines": "134-155",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039",
-        "DUNVIEW.C:7508-7536 pass2 front-right cell after door",
-        "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049",
-        "DUNVIEW.C:7676-7704 pass2 front-left cell after door"
+      "hits": [
+        {
+          "line": 175,
+          "needle": "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039"
+        },
+        {
+          "line": 176,
+          "needle": "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"
+        }
       ],
+      "id": "firestaff-d1-side-door-front-metadata",
+      "lines": "166-176",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 581,
-          "needle": "11"
+          "line": 710,
+          "needle": "DM1_VIEW_SQUARE_D1L"
+        },
+        {
+          "line": 711,
+          "needle": "DM1_VIEW_SQUARE_D1R"
+        },
+        {
+          "line": 715,
+          "needle": "door_front_occlusion.count"
+        },
+        {
+          "line": 753,
+          "needle": "door_front_occlusion.d1l_side_door_front_spec"
         }
       ],
       "id": "firestaff-d1-side-door-front-runtime-test",
-      "lines": "577-640",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L",
-        "0x0028, 0x0039",
-        "DM1_VIEW_SQUARE_D1R",
-        "0x0018, 0x0049",
-        "door_front_occlusion.count",
-        "door_front_occlusion.d1l_side_door_front_spec"
-      ],
+      "lines": "687-755",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-d1-side-door-front-source-evidence",
-      "lines": "1109-1130",
-      "missing": [
-        "DUNVIEW.C:7493-7536",
-        "DUNVIEW.C:7661-7704"
+      "hits": [
+        {
+          "line": 1257,
+          "needle": "DUNVIEW.C:7493-7536"
+        },
+        {
+          "line": 1258,
+          "needle": "DUNVIEW.C:7661-7704"
+        }
       ],
+      "id": "firestaff-d1-side-door-front-source-evidence",
+      "lines": "1248-1265",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -129,8 +144,8 @@
   ],
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d1_side_door_front_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -146,9 +161,9 @@
         "/home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass565 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }
