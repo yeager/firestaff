@@ -328,6 +328,14 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_fs_portable_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+
+# M11 Pass 418 -- DM1 V1 door closing obstruction parity probe
+add_executable(firestaff_m11_pass418_door_closing_obstruction_probe probes/firestaff_m11_pass418_door_closing_obstruction_probe.c)
+target_link_libraries(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M12 Startup Menu probe
 if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
     add_executable(firestaff_m12_startup_menu_probe probes/m12/firestaff_m12_startup_menu_probe.c)
