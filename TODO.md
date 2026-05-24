@@ -119,6 +119,34 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 6 — Touch/controller ergonomics: Nexus V2-only gesture/controller affordances mapped onto existing Nexus command routes, with Nexus V1 touch/click parity preserved where source/provenance evidence exists
 - ❌ Phase 7 — V2 verification suite: side-by-side Nexus V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus viewport/pixel or model-frame gates for V2 presentation
 
+## Theron's Quest V1 (PC Engine/TurboGrafx-16)
+
+- ❌ Theron's Quest launch entry in menu
+- ❌ Phase 0 — Provenance gate: hash-lock exact Theron's Quest PC Engine/TurboGrafx-16 disc/image, file manifests, data file formats, and primary technical references; Japanese version released 1992-09-18, English version 1993 in USA
+- ❌ Phase 1 — Runtime profile split: separate Theron's Quest boot/runtime profile from DM1/CSB/DM2/Nexus, including menu launch, asset roots, save namespace (no in-dungeon saves — only between dungeons), platform diagnostics, deterministic config
+- ❌ Phase 2 — Data formats: source-lock Theron's Quest dungeon, object, text, champion, creature, and graphics formats; "light" version — only a subset of DM1 items, creatures, and spells; 7 mini-dungeons, some copied/inspired by DM1/CSB
+- ❌ Phase 3 — Core world model: implement Theron's Quest map loading, party placement (Theron + 3 champions), transitions, timers, object database, champion skill/stat persistence (Theron keeps skills/stats between dungeons; champions lose skills/items)
+- ❌ Phase 4 — Rendering pipeline: source-lock Theron's Quest wall/floor/object/creature/projectile/UI/title rendering, palette handling, and deterministic fallback for PC Engine planar graphics
+- ❌ Phase 5 — Mechanics parity: implement movement, click/routes, doors, pits, teleporters, altar-of-vi resurrection, champion state, inventory, combat, creature AI, drops, sounds after source evidence is locked
+- ❌ Phase 6 — Dungeon progression: implement 7-dungeon sequence, per-dungeon item reset, between-dungeon save, and seven-quest-item retrieval goal
+- ❌ Phase 7 — Save/import compatibility: support between-dungeon save/load and champion/world persistence where format evidence is available
+- ❌ Phase 8 — Verification suite: canonical Theron's Quest asset manifests, parser fixtures, deterministic input scripts, viewport/pixel gates, save/load round trips
+
+**Reference:** http://dmweb.free.fr/games/therons-quest/
+
+## Theron's Quest V2.0 / V2.1 / V2.2 — Enhanced Modes
+
+- 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source/provenance-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track completion separately; never report a single combined Theron's Quest V2 value.
+- ❌ Phase 0 — V1 parity gate: Theron's Quest V2 may not change V1 command semantics, timing, or locked mechanics unless behind an explicit V2 toggle
+- ❌ Phase 0.5 — V2.0 filtered presentation: original PC Engine graphics with CRT scanlines, palette correction, and sharpening
+- ❌ Phase 1 — Presentation scaffold: split V1 gameplay state from V2 render/input presentation, keep V1 as default
+- ❌ Phase 2 — Graphics pipeline: source/provenance-preserving upscale for textures, walls, floors, objects, creatures, UI/title assets
+- ❌ Phase 3 — Modern UI overlay: optional HUD, inventory, champion, spell/action, map, and diagnostics panels that mirror V1 commands
+- ❌ Phase 4 — Lighting and visual effects: enhanced lighting, projectile/field effects, palette interpolation
+- ❌ Phase 5 — Smooth movement: interpolation between locked movement ticks without changing cooldowns, collisions, or timing
+- ❌ Phase 6 — Touch/controller ergonomics: V2-only gesture/controller affordances mapped onto existing command routes
+- ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes plus viewport/pixel gates for V2 presentation
+
 ## Cross-Cutting Features
 
 ### Touch Support
