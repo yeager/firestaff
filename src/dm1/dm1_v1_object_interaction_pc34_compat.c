@@ -45,19 +45,24 @@ int m11_obj_spawn(M11_ObjectState* s, int type, int x, int y, int level, int wei
 }
 
 int m11_obj_pickup(M11_ObjectState* s, int objIdx, int* outWeight) {
+    /* Source: DUNGEON.C:F0161_DUNGEON_GetSquareFirstThing (floor lookup),
+     * DUNGEON.C:F0156_DUNGEON_GetThingData (thing data pointer).
+     * The x=-1 / x=-2 marking convention (carried/in-flight) is derived
+     * from examining how ReDMCSB clears leader-hand things after use
+     * (PANEL.C:1891 F0298_CHAMPION_GetObjectRemovedFromLeaderHand) and
+     * how thrown objects are placed into flight state. */
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
-    if (obj->x == -1 || obj->x == -2) return -1; // Already picked up or in flight
+    if (obj->x == -1 || obj->x == -2) return -1; /* Already picked up or in flight */
 
     int x = obj->x;
     int y = obj->y;
     int level = obj->level;
 
-    // Remove from floor cell
+    /* Remove from floor cell */
     M11_FloorCell* cell = &s->floors[level][y][x];
     for (int i = 0; i < cell->floorCount; i++) {
         if (cell->floorObjects[i].objectId == objIdx) {
-            // Shift down
             for (int j = i; j < cell->floorCount - 1; j++) {
                 cell->floorObjects[j] = cell->floorObjects[j + 1];
             }
@@ -73,8 +78,12 @@ int m11_obj_pickup(M11_ObjectState* s, int objIdx, int* outWeight) {
     if (outWeight) *outWeight = obj->weight;
     return 0;
 }
-
 int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level) {
+    /* Source: DUNGEON.C:F0140_DUNGEON_GetObjectWeight (weight lookup), 
+     * DUNGEON.C:F0159_DUNGEON_GetNextThing (thing list traversal), 
+     * DUNGEON.C:1111-1117 (container weight includes contents recursively). 
+     * The floor cell API is a simplification of ReDMCSB THING linked-list 
+     * system anchored in dungeon squares (DUNGEON square data). */
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     if (x < 0 || x >= 32 || y < 0 || y >= 32 || level < 0 || level >= 16) return -1;
 
@@ -93,23 +102,28 @@ int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level) {
 }
 
 int m11_obj_use(M11_ObjectState* s, int objIdx) {
+    /* Source: PANEL.C:1743-1950 F0349_INVENTORY_ProcessCommand70_ClickOnMouth. 
+     * Full consumption effects (potions, food, water) are in 
+     * dm1_v1_inventory_consumables_pc34_compat.c; this stub checks the 
+     * usable flag and returns 1 if the item can be consumed. 
+     * TODO: delegate to consumables module for actual stat effects. */
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
     if (obj->usable) {
-        // Effect TBD
         return 1;
     }
     return 0;
 }
 
-int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir __attribute__((unused)), int force __attribute__((unused))) {
+int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force) {
+    /* Source: CLIKVIEW.C / DUNGEON.C -- thrown objects are marked as in-flight 
+     * (x=-2) until they land or are consumed. ReDMCSB thrown object handling 
+     * is in the click/viewport routing and THING projectile system. */
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
     if (!obj->throwable) return 0;
 
-    // Mark as in-flight
     obj->x = -2;
-    // Direction and force are not stored in struct, but action is recorded
     return 1;
 }
 
@@ -117,16 +131,23 @@ int m11_obj_activate(M11_ObjectState* s, int objIdx) {
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
     if (obj->activatable) {
-        // Toggle state logic would go here
         return 1;
     }
     return 0;
 }
 
 int m11_obj_examine(const M11_ObjectState* s, int objIdx, char* desc, int descLen) {
+    /* Source: OBJECT.C:F0033_OBJECT_GetIconIndex (icon), 
+     * OBJECT.C:237 (G0352_apc_ObjectNames[name]), 
+     * PANEL.C:1444-1469 (weight display format WEIGHS X.Y KG. 
+     * via F0140/10 and F0140%10, CHAMDRAW.C:349-392). 
+     * Note: obj->weight is the stored spawn weight; ReDMCSB recomputes 
+     * weight from type-specific tables (G0238/G0239/G0241) per F0140. 
+     * This means the displayed weight may diverge from ReDMCSB for items 
+     * whose weight varies by type detail (e.g. waterskin by charges). */
     if (!s || !m11_obj_is_valid(s, objIdx) || !desc || descLen <= 0) return -1;
     const M11_WorldObject* obj = &s->objects[objIdx];
-    const char* typeName = m11_obj_type_name(obj->objectType);
+    const char* typeName = m11_obj_type_name(obj->objectType); 
     snprintf(desc, descLen, "%s (Weight: %d)", typeName, obj->weight);
     return 0;
 }
@@ -151,7 +172,6 @@ int m11_obj_remove(M11_ObjectState* s, int objIdx) {
     int y = obj->y;
     int level = obj->level;
 
-    // Remove from floor cell if present
     if (x >= 0 && x < 32 && y >= 0 && y < 32 && level >= 0 && level < 16) {
         M11_FloorCell* cell = &s->floors[level][y][x];
         for (int i = 0; i < cell->floorCount; i++) {
@@ -165,7 +185,6 @@ int m11_obj_remove(M11_ObjectState* s, int objIdx) {
         }
     }
 
-    // Zero out object slot
     memset(obj, 0, sizeof(M11_WorldObject));
     return 0;
 }
@@ -197,37 +216,15 @@ int m11_obj_is_valid(const M11_ObjectState* s, int objIdx) {
     return 1;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
- * Pass601 — Object interaction source-lock extensions
- *
- * DUNGEON.C:F0140_DUNGEON_GetObjectWeight     — weight table lookup
- * DUNGEON.C:F0141_DUNGEON_GetObjectInfoIndex   — info index from thing type
- * DUNGEON.C:F0143_DUNGEON_GetArmourDefense     — armour defense value
- * DUNGEON.C:F0156_DUNGEON_GetThingData         — thing→data pointer
- * DUNGEON.C:F0159_DUNGEON_GetNextThing          — thing list traversal
- * DUNGEON.C:F0161_DUNGEON_GetSquareFirstThing   — first thing on square
- * OBJECT.C:F0032_OBJECT_GetType                 — thing type extraction
- * OBJECT.C:F0033_OBJECT_GetIconIndex            — icon bitmap index
+/* Source-lock evidence:
+ * DUNGEON.C:F0140_DUNGEON_GetObjectWeight     -- weight table lookup
+ * DUNGEON.C:F0141_DUNGEON_GetObjectInfoIndex   -- info index from thing type
+ * DUNGEON.C:F0143_DUNGEON_GetArmourDefense     -- armour defense value
+ * DUNGEON.C:F0156_DUNGEON_GetThingData         -- thing data pointer
+ * DUNGEON.C:F0159_DUNGEON_GetNextThing          -- thing list traversal
+ * DUNGEON.C:F0161_DUNGEON_GetSquareFirstThing   -- first thing on square
+ * OBJECT.C:F0032_OBJECT_GetType                 -- thing type extraction
+ * OBJECT.C:F0033_OBJECT_GetIconIndex            -- icon bitmap index
  * OBJECT.C:F0034_OBJECT_DrawLeaderHandObjectName
  * OBJECT.C:F0036_OBJECT_ExtractIconFromBitmap
- * ══════════════════════════════════════════════════════════════════════ */
-
-const char *dm1_object_pass601_object_source_evidence(void)
-{
-    return
-        "DUNGEON.C F0140_GetObjectWeight\n"
-        "DUNGEON.C F0141_GetObjectInfoIndex\n"
-        "DUNGEON.C F0143_GetArmourDefense\n"
-        "DUNGEON.C F0156_GetThingData\n"
-        "DUNGEON.C F0159_GetNextThing\n"
-        "DUNGEON.C F0161_GetSquareFirstThing\n"
-        "OBJECT.C F0032_GetType\n"
-        "OBJECT.C F0033_GetIconIndex\n";
-}
-
-/* ══════════════════════════════════════════════════════════════════════
- * Pass602 — Remaining OBJECT.C function citations for parity
- *
- *   OBJECT.C:345 F0037_OBJECT_D
- * ══════════════════════════════════════════════════════════════════════ */
-
+ */
