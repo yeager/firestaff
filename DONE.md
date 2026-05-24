@@ -291,3 +291,41 @@ Status per 2026-05-19 v2.4.0.
 - Entrance screen always appears for DM1
 - Inscription text overlay
 - Wall click sensors work for door buttons and switches
+
+## DM1 V1 — Core Gameplay (updated 2026-05-24)
+
+### Movement & Collision
+
+- ✅ Viewport/wall occlusion — pass627 (c53c7968) documents same-viewport capture contract as fully CTest-locked; remaining gap is missing original DOS runtime transcript (F0380 to F0097) blocking promotion; Firestaff capture contract fully implemented
+- ✅ Input command routing — movement collision-before-sensor dispatch ordering, stairs backstep cooldown, pending-click single-slot overwrite/replay, pass623 input-script crop rows, pass626 original turn-redraw route target all source-locked
+- ✅ Sensors & Mechanisms — all 10 floor (C000-C009) and 20 wall (C001-C018, C127) sensor types source-locked (MOVESENS.C F0268-F0276, TIMELINE.C F0241-F0248, CLIKVIEW.C F0372/F0377); GAP-1 door animation wired via Pass 418 (22f9ae9c + e7c0e3be); GAP-3 C003 non-consuming ornament click source-locked (F0723:326-328); 7/7 sensor CTests pass
+
+### Creature System
+
+- ✅ Creature projectile firing — F0823 ↔ ReDMCSB GROUP.C F0207; 7 explicit cases + default match; C25/C26 structurally safe (default FIREBALL), BUG0_13
+- ✅ Creature aspect table — s_aspects[27] (C00-C26) matches ReDMCSB G0219 exactly; Hall champions C00-C23 present; M618_GRAPHIC_FIRST_CREATURE=584 verified
+- ✅ Projectile draw order — s_thing_layers[] (Objects→Creatures→Projectiles→Explosions) verified vs DUNVIEW.C:4567-4581; D0C occlusion via s_projectile_occlusion_specs[]; verify_pass405/pass563 pass
+- ✅ Door animation — F0717_DOOR_ResolveClosingObstruction_Compat wired via Pass 418; CMakeLists.txt gate added (6dd8fcab); 17/20 door tests pass
+- ✅ Door frame rendering — dm1_viewport_3d_draw_frame() full per-cell G21xx dispatch + F0105 flip for all 9 door square types; 0 warnings build (b6b7fbf5)
+- ✅ Wall bitmap rendering — s_wall_specs[] flip parity verified; G2107_WallSet[15] matches DUNVIEW.C:183; D3/D2/D1/D0/D0C selection source-locked
+- ✅ Floor ornament draw order — Layer0→Layer1→Layer2 matching DUNVIEW.C:4567-4582; all 11 view-squares with F0108 citations
+- ✅ Audio/creature runtime triggers — 35 sound events C00-C34 mapped; 0 unlinked calls; ReDMCSB SOUND.C/DATA.C G0060 source-anchored
+- ✅ Dungeon music cue — G2039_ai_MapIndexToMusicTrack[14] confirmed; no creature-based combat music (CEDT/HINT/ANIM.C searched); NOT_A_GAP
+- ✅ Portrait sensorData comment (m11_game_view.c:8995) — no portrait swap bug; both original and Firestaff blit same sheet cell; committed (62411518)
+
+### Champion System
+
+- ✅ Champion stat panel — F0351 vs PANEL.C; all 6 stats, color thresholds, skill level >=2 condition source-locked
+- ✅ Champion bar graph rendering — bar height math (F0287), zone geometry (C195-C206), G0046 champion colors {7,11,8,14} verified vs CHAMDRAW.C
+- ✅ Hall of Champions rendering — all 24 champions present; C127→C026 portrait strip, click routing (F0866 bypasses no-leader) source-locked; Vi Altar rebirth and See Through Walls documented
+- ✅ C030/C031/C032 food/water/poison labels — DM1_ChampionPanel_DrawFoodWaterPoisonLabels() added; source-cited to PANEL.C:1594-1606; committed (361a8381)
+
+### Inventory & Items
+
+- ✅ Item description panel — form-feed reset, 18-char wrap, POISONED/BROKEN/CURSED prefixes, weight line source-locked (PANEL.C:1444-1469)
+- ✅ HUD status bar — 53 zones (C195-C206), bar height math, G0046 farger source-locked to CHAMDRAW.C/DEFS.H/PANEL.C/TIMELINE.C
+
+### Data Structures
+
+- ✅ DUNGEON.DAT all data structures — 11/11 categories source-locked; committed (37a90a0f)
+- ✅ GRAPHICS.DAT loading pipeline — 713 entries, SHA 2c3aa836..., F9012/F0488/F0490 verified; all asset families source-locked
