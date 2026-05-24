@@ -20,11 +20,16 @@ Status per 2026-05-19 v2.4.0.
 ### Creature System
 
 - 🔧 Creature type-specific behavior — Giggler steal, Ghost/non-material melee gating, quarter-square melee cell shuffle, adjacent creature projectile chance, fixed possession drop payloads, fixed possession runtime materialization (de044e27), Couatl idle aspect movement sound gate (a6541cf5), and Black Flame fireball-impact healing (63a905c8) are source-locked; ordinary melee weapons no longer hit non-material creatures, while Vorpal/Disrupt and materializer/projectile explosion harm paths are accepted; other type specials remain
+
+  **GAP (C25/C26):** C25 (Lord Order) and C26 (Grey Lord) are structurally safe (default: FIREBALL handles them) but not explicitly handled in dm1_v1_creature_ai_behavior_pc34_compat.c. No DM1_CREATURE_TYPE_LORD_ORDER/GREY_LORD constants in behavior header. Not reachable in any original dungeon (BUG0_13). Acceptable for normal play. Modder/dungeon-editor placement would work by-accident, not by-design.
 - 🔧 Creature group spawning (C006 floor sensor group generator) — successful empty-square materialization is source-locked with fixed group-slot reuse, square insertion, party-map active-state seed, F0180 event37 wandering hookup, delayed C65 re-enable, F0185/F0245 buzz dispatch, event60/61 blocked-destination defer (5ace9238), Lord Chaos adjacent random retry (0a12e07d), narrow F0267 teleporter destination/cross-map placement with covered audible buzz/wandering scheduling (191c9d3c), group move-removal planning coverage (91578481), F0267 open-pit fall damage/death, lower-map insertion, and carried group-slot fall-kill drops (9db12dbf), generated/deferred non-square insertion projectile non-impact preservation (850c1541), and generated/deferred creature-not-allowed rejection plus carried-slot drop handling (1741688d), and moving fixed-possession partial/death drops (365b4b8f); ordinary moving-group projectile impact/removal (dab7b40d), group-specific teleporter rotation, and multi-hop teleporter audible buzz order (d3ef5834) are source-locked; remaining C006/F0267 work is original capture parity for broader chained runtime proof
 
 ### Champion System
 
 - 🔧 Champion stats panel — eye-click runtime now shows source-locked HP/stamina/mana, all six statistic families, four base skill levels, F0351 skill-level/statistic names (2fcd982d), and CHAMDRAW status-value formatting/zone routing (d504de4c); true current-vs-maximum statistic color rows (ea743e8c), the panel-HUD statistic color/format helper and status box model (dc4cbb37), runtime current/maximum statistic row wiring (4c671c34), and the F0351 text-run layout/color model plus M11 stats text routing coverage (ac3efa45), and the Firestaff indexed-framebuffer draw path for the colored per-stat panel (2355619c) are source-locked; remaining polish is original PC 3.4 capture/comparator proof for true original-vs-Firestaff framebuffer parity
+
+  **GAP (C01-C24 stats):** All 24 Hall of Champions champions (C01-C24) have STUB stat values — not source-locked to ReDMCSB G0243. 5 flag bugs: C12 Black Flame (LEVITATION/NON_MATERIAL inverted), C20 Materializer (missing both LEVITATION+NON_MATERIAL), C14 Couatl, C15 Vexirk, C21 Water Elemental, C24 Lord Chaos (each missing LEVITATION flag). TIER_FULL champions C10/C11/C13 need stat corrections.
+  **GAP (portrait sensorData):** m11_game_view.c:8995 stores raw ordinal+1 without -1 correction for champion portrait sheet indexing. Latent gap — pass449/pass450 framebuffer evidence gates blocked on missing external artifacts.
 
 ### Inventory & Items
 
@@ -162,6 +167,11 @@ Status per 2026-05-19 v2.4.0.
 - ❌ High-contrast mode
 - ❌ Configurable font size
 
+
+
+### Audio
+
+- 🔧 Audio/creature sound trigger system — 35 sound events verified SOURCE-LOCKED. Remaining KNOWN_DIFF items correctly bounded as original-faithfulness capture tasks (runtime SFX cadence/overlap). No code gaps.
 ## Known Bugs (need repro)
 
 1. No open wall/collision report without a capture manifest. Use the DM1 V1 wall/collision runtime capture gate for exact map/x/y/direction and screenshots before accepting new reports.

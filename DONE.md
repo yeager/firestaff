@@ -59,6 +59,10 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Readable inscription rendering (source message zone centering)
 - ✅ Teleporter visual effect — source-backed GRAPHICS.DAT field bitmap overlay, not procedural sparkle
 
+
+- ✅ DM1 V1 floor ornament draw order (F0108→items→creatures), variant index mapping (G0191), ornament click routing (CLIKVIEW.F0377), wall ornament fountain/sensor routing — SOURCE-LOCKED, no gaps
+- ✅ DM1 V1 wall bitmap rendering parity — wall flip mechanism ((MapX+MapY+Direction)&1), D3/D2/D1/D0/D0C bitmap selection, draw order (s_thing_layers), explosion occlusion — SOURCE-LOCKED vs DUNVIEW.C
+- ✅ DM1 V1 projectile rendering (F0115/F0116/F0117) — draw order, projectile bitmap indices (454+offsets), creature targeting, travel blockers, 6 verify scripts PASS — SOURCE-LOCKED
 ### Creature System
 
 - ✅ Creature groups loaded from dungeon.dat
@@ -84,6 +88,9 @@ Status per 2026-05-19 v2.4.0.
 - ✅ C006 generated/deferred group placement is source-locked to reject creature types not allowed on the destination map, drop carried-slot possessions, skip insertion/AI/wander scheduling, and avoid success buzz on failed generator placement (1741688d)
 - ✅ C006/F0267 moving fixed-possession partial/death drops are source-locked for falling moving groups: partial death consumes killed moving-creature cells, surviving fixed possessions and carried slots drop at the destination, and deleted source groups are cleaned up in ReDMCSB order (365b4b8f)
 - ✅ F0267 teleporter rotation parity is source-locked for party, projectile, object, and projectile-associated object rotation/cell behavior (9fd978af)
+
+- ✅ DM1 V1 creature projectile firing decision (F0823 ↔ GROUP.C F0207, range>1 gate, distance gate 50% adjacent, kinetic energy [20,255], F0212_Create) — 7 explicit creature cases + default match ReDMCSB; C25/C26 structurally safe (default: FIREBALL) but not explicitly handled — not reachable in any original dungeon (BUG0_13)
+- ✅ DM1 V1 creature render aspect table (s_aspects[27]) — all entries match ReDMCSB G0219: firstNativeBitmapRelativeIndex, coordinateSet, replacementColorSetIndices, M618_GRAPHIC_FIRST_CREATURE=584 — SOURCE-LOCKED
 - ✅ C006/F0267 multi-hop teleporter audible buzz parity is source-locked for chained group teleporter traversal, preserving all per-hop buzzes before generator and sensor buzz dispatch (d3ef5834)
 
 ### Combat
@@ -215,7 +222,14 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Sound index emission system exists (M11_Audio_EmitSoundIndex)
 - ✅ Sound effect playback source-index fallback lanes are source-locked for doors/combat/creatures, including queued SDL source-index playback gate, Open Door projectile door-impact SFX, and source-silent CALM/BRANDISH/CONFUSE and FIREBALL/DISPELL/LIGHTNING action cues; party footsteps are provenance-locked absent in DM1 V1
 - 🚫 Ambient dungeon sound blocked: ReDMCSB source-lock found event-indexed SFX only, no DM1 V1 ambient loop
+- ✅ DM1 V1 audio/creature sound trigger system — 35 sound events (C00-C34 + M541/M542/M560/M561/M562/M563/M619/M620), all 27 creature types have attack/movement sound ordinals, 0 unlinked calls — SOURCE-LOCKED vs SOUND.C/DEFS.H
 - ✅ Music/title song (SONG.DAT runtime and opt-in SDL dummy-driver live playback source-locked)
+
+
+## DM1 V1 Data Structures
+
+- ✅ DM1 V1 DUNGEON.DAT complete source-lock: 11/11 categories — dungeon file header (COMPRESSED_DUNGEON_HEADER, DEFS.H:984), map metadata (MAP struct, DEFS.H:1050), cell/wall data (DUNGEON.C:1423), floor/square data (M034_SQUARE_TYPE), sensor data C000-C127 (DEFS.H:1191-1284), actuator/trigger data (TIMELINE.C:711-1313), object records (ThingDataByteCount), creature generator C006 (TIMELINE.C:964), champion records (MOVESENS.C F0280), text/string data (DUNGEON.C:2210), endianness+checksum (DEFS.H:984, DECOMPDU.C:20) — SOURCE-LOCKED
+- ✅ DM1 V1 GRAPHICS.DAT loading pipeline — header (0x8001, 713 entries, SHA 2c3aa836), F9012 entry classification, IMG3 RLE decompression, M11 asset cache via F0490 — SOURCE-LOCKED vs MEMORY.C:1212-2306
 
 ## DM1 V2.1 / V2.2 — Enhanced Modes
 
