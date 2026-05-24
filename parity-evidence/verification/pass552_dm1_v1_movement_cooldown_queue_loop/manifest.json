@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
   "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
-  "timestampUtc": "2026-05-24T13:50:22.127110+00:00",
+  "timestampUtc": "2026-05-24T23:15:12.579278+00:00",
   "branch": "main",
-  "head": "e6490c7c94c173a95636c731030eae97c5fa16b0",
+  "head": "5cb2e223783a2dd0fdbdc3af64ef4c3ed09192cc",
   "worktree": "/home/trv2/work/firestaff",
   "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
   "primarySourceAudit": {

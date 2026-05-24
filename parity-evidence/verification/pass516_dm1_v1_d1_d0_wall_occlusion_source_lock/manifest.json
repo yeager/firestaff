@@ -18,7 +18,7 @@
         "DUNVIEW.C:8142-8144 wall case returns"
       ],
       "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1831694c268f50e808dd7727bd91a32a13589b3b0923b0a732b463f8180d2a26",
+      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -34,7 +34,7 @@
         "DM1_VIEW_SQUARE_D0R, 0x0001"
       ],
       "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1831694c268f50e808dd7727bd91a32a13589b3b0923b0a732b463f8180d2a26",
+      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },

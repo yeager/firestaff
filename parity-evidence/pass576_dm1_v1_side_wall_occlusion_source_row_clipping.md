@@ -122,11 +122,11 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 - FAIL firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:779-818)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 790: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 802: int src_x = frame->blit_x;
-  - line 803: int src_y = frame->blit_y;
-  - line 810: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 817: if (src_x + width > source_width) width = source_width - src_x;
+  - missing: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - missing: int src_x = frame->blit_x;
+  - missing: int src_y = frame->blit_y;
+  - missing: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - missing: if (src_x + width > source_width) width = source_width - src_x;
   - missing: if (width <= 0 || height <= 0) return gate;
   - missing: gate.visible = true;
   - missing: gate.src_x = (int16_t)src_x;

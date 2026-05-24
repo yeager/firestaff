@@ -12,10 +12,10 @@ Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is 
 
 ## Firestaff coverage
 
-- `wall_spec_table` ok=True line=346
-- `wall_spec_accessor_count` ok=True line=940
-- `wall_spec_accessor_by_square` ok=True line=951
-- `door_front_occlusion_specs` ok=True line=166
+- `wall_spec_table` ok=True line=352
+- `wall_spec_accessor_count` ok=True line=1095
+- `wall_spec_accessor_by_square` ok=True line=1106
+- `door_front_occlusion_specs` ok=True line=172
 - `wall_contract_probe_expected_matrix` ok=True line=30
 - `wall_contract_probe_source_output` ok=True line=66
 - `door_contract_probe_output` ok=True line=128

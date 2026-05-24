@@ -54,45 +54,29 @@
         "DUNVIEW.C:8142-8144 wall case returns"
       ],
       "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1831694c268f50e808dd7727bd91a32a13589b3b0923b0a732b463f8180d2a26",
+      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
     {
       "claim": "The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.",
       "forbiddenHits": [],
-      "hits": [
-        {
-          "line": 790,
-          "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
-        },
-        {
-          "line": 802,
-          "needle": "int src_x = frame->blit_x;"
-        },
-        {
-          "line": 803,
-          "needle": "int src_y = frame->blit_y;"
-        },
-        {
-          "line": 810,
-          "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
-        },
-        {
-          "line": 817,
-          "needle": "if (src_x + width > source_width) width = source_width - src_x;"
-        }
-      ],
+      "hits": [],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "779-818",
       "missing": [
+        "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate",
+        "int src_x = frame->blit_x;",
+        "int src_y = frame->blit_y;",
+        "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }",
+        "if (src_x + width > source_width) width = source_width - src_x;",
         "if (width <= 0 || height <= 0) return gate;",
         "gate.visible = true;",
         "gate.src_x = (int16_t)src_x;",
         "gate.src_y = (int16_t)src_y;"
       ],
       "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1831694c268f50e808dd7727bd91a32a13589b3b0923b0a732b463f8180d2a26",
+      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },

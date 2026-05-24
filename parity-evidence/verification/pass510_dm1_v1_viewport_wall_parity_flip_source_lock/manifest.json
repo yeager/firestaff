@@ -23,7 +23,7 @@
         "state->world.party.direction) & 1;"
       ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "59c4c836be0186cf87904ce2ce81e8ca337fe1fbcbc94b0d2ce9c4af240c9b9d",
+      "sha256": "1467337d021b4ff9d05aa1a4df5e32b885ea24acebdf02fcae0ace77e26df369",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -38,7 +38,7 @@
         "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
       ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "59c4c836be0186cf87904ce2ce81e8ca337fe1fbcbc94b0d2ce9c4af240c9b9d",
+      "sha256": "1467337d021b4ff9d05aa1a4df5e32b885ea24acebdf02fcae0ace77e26df369",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -55,7 +55,7 @@
         "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
       ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "59c4c836be0186cf87904ce2ce81e8ca337fe1fbcbc94b0d2ce9c4af240c9b9d",
+      "sha256": "1467337d021b4ff9d05aa1a4df5e32b885ea24acebdf02fcae0ace77e26df369",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -73,7 +73,7 @@
         "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
       ],
       "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "59c4c836be0186cf87904ce2ce81e8ca337fe1fbcbc94b0d2ce9c4af240c9b9d",
+      "sha256": "1467337d021b4ff9d05aa1a4df5e32b885ea24acebdf02fcae0ace77e26df369",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     }

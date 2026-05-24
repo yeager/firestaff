@@ -3,35 +3,27 @@
     {
       "hits": [
         {
-          "line": 192,
+          "line": 198,
           "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
         },
         {
-          "line": 193,
+          "line": 199,
           "needle": "DUNVIEW.C:8185-8188"
         },
         {
-          "line": 194,
+          "line": 200,
           "needle": "DUNVIEW.C:8199-8201"
-        },
-        {
-          "line": 195,
-          "needle": "DUNVIEW.C:8206-8210"
-        },
-        {
-          "line": 196,
-          "needle": "DUNVIEW.C:8215-8216"
-        },
-        {
-          "line": 197,
-          "needle": "DUNVIEW.C:8240,8294"
         }
       ],
       "id": "firestaff-d0c-thieves-eye-metadata",
       "lines": "188-200",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:8206-8210",
+        "DUNVIEW.C:8215-8216",
+        "DUNVIEW.C:8240,8294"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
@@ -67,21 +59,15 @@
       "status": "PASS"
     },
     {
-      "hits": [
-        {
-          "line": 1263,
-          "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
-        },
-        {
-          "line": 1263,
-          "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
       "lines": "1203-1298",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion",
+        "copy front frame, composite hole, blit temporary frame before common F0115"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -169,8 +155,8 @@
   ],
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.v1",
-  "status": "passed",
-  "statusToken": "PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION",
   "verificationRuns": [
     {
       "command": [
@@ -186,9 +172,9 @@
         "/home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass565 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass565 check-only: firestaff-d0c-thieves-eye-metadata, firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

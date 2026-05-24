@@ -16,7 +16,7 @@
       ]
     }
   },
-  "head": "217fd9164f01f43701acafcad04a339870c8d587",
+  "head": "5cb2e223783a2dd0fdbdc3af64ef4c3ed09192cc",
   "notClaimed": [
     "new original DOS runtime trace",
     "actual random wound materialization parity beyond the recorded request",
@@ -64,8 +64,8 @@
     }
   },
   "status": "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED",
-  "testExecutable": "/home/trv2/work/firestaff/build/test_dm1_v1_movement_command_core_pc34_compat",
+  "testExecutable": "/home/trv2/work/firestaff/builds/n2-build/test_dm1_v1_movement_command_core_pc34_compat",
   "testOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1",
-  "timestampUtc": "2026-05-24T14:17:08.759087+00:00",
+  "timestampUtc": "2026-05-24T23:15:12.795531+00:00",
   "worktree": "/home/trv2/work/firestaff"
 }

@@ -106,5 +106,5 @@
     "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop"
   },
   "status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
-  "timestampUtc": "2026-05-24T13:50:21.308480+00:00"
+  "timestampUtc": "2026-05-24T23:15:11.754425+00:00"
 }

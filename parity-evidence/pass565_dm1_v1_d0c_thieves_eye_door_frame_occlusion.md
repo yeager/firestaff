@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D0C Thieves Eye door-frame occlusion
 
-Status: passed
+Status: failed
 
 Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door frame into a temporary bitmap, composites the hole-in-wall graphic into that temporary frame, blits the temporary frame to C728, then reaches the common D0C F0115 pass with C0x0021. This is a source-lock only.
 
@@ -26,13 +26,13 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 
 ## Firestaff Evidence
 
-- PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:188-200)
-  - line 192: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 193: DUNVIEW.C:8185-8188
-  - line 194: DUNVIEW.C:8199-8201
-  - line 195: DUNVIEW.C:8206-8210
-  - line 196: DUNVIEW.C:8215-8216
-  - line 197: DUNVIEW.C:8240,8294
+- FAIL firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:188-200)
+  - line 198: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 199: DUNVIEW.C:8185-8188
+  - line 200: DUNVIEW.C:8199-8201
+  - missing: DUNVIEW.C:8206-8210
+  - missing: DUNVIEW.C:8215-8216
+  - missing: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:808-835)
   - line 808: test_d0c_thieves_eye_door_frame_occlusion_order
@@ -42,9 +42,9 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
   - line 823: 8215-8216
   - line 824: 8294
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1203-1298)
-  - line 1263: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 1263: copy front frame, composite hole, blit temporary frame before common F0115
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1203-1298)
+  - missing: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - missing: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
@@ -68,7 +68,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=1
 ~~~
-PASS pass565 check-only
+FAIL pass565 check-only: firestaff-d0c-thieves-eye-metadata, firestaff-source-evidence-string
 ~~~

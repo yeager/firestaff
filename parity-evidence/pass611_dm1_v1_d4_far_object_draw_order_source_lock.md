@@ -64,7 +64,7 @@ Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes w
 - PASS far-object-evidence (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 
 ## Verification
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /home/trv2/work/firestaff/builds/n2-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
 PASS source_evidence.side_occlusion == 1

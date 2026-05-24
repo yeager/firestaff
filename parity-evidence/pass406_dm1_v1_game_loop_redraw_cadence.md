@@ -11,7 +11,7 @@ Status: `PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED`
 ## Firestaff executable guard
 - `m11_game_view.c:6175-6291` / `m11_apply_dm1_v1_pipeline_tick` — enqueues the route command, ages old cooldowns before processing, processes one pipeline tick, publishes game tick/hash, and returns redraw/dequeue state.
 - `dm1_v1_movement_pipeline_pc34_compat.c:244-443` / `DM1_V1_MovementPipeline_ProcessOneTickPc34Compat` — applies command/movement/post-move/timing before publishing `viewportDirty` provenance.
-- `main_loop_m11.c:1865-1877` — records whether input redraw followed a viewport-dirty pipeline result before calling `M11_GameView_Draw`.
+- `main_loop_m11.c:1866-1878` — records whether input redraw followed a viewport-dirty pipeline result before calling `M11_GameView_Draw`.
 
 ## Gates run
 - `build/test_m11_v1_turning_presentation_pc34_compat`
