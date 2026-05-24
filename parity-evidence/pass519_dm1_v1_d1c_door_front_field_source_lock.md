@@ -1,6 +1,6 @@
 # Pass519 DM1 V1 D1C door-front field source lock
 
-Status: passed
+Status: failed
 
 Claim: D1C door-front renders rear cells before frame/button/door, composes door ornaments/masks before final door blit, draws front cells after the door, then leaves teleporter field as a final overlay after F0115.
 
@@ -34,31 +34,31 @@ Claim: D1C door-front renders rear cells before frame/button/door, composes door
 
 ## Firestaff Evidence
 
-- PASS firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:136-156)
+- FAIL firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:136-156)
 
-- PASS firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:579-615)
+- FAIL firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:579-615)
 
 ## Verification
 
 - /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.d1c_door_front_occlusion == 1
-PASS source_evidence.d1c_door_button_occlusion == 1
-PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
-PASS source_evidence.side_occlusion == 1
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
 PASS source_evidence.wall_empty_blit_gate == 1
 PASS source_evidence.occlusion == 1
 PASS source_evidence.command_dispatch == 1
 PASS source_evidence.next_redraw == 1
 PASS source_evidence.present_wait == 1
+PASS source_evidence.same_viewport_mouse == 1
+PASS source_evidence.same_viewport_turn == 1
+PASS source_evidence.same_viewport_move == 1
+PASS source_evidence.same_viewport_draw == 1
+PASS source_evidence.same_viewport_present == 1
+PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=1
 ~~~
-PASS pass519 check-only
+FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test
 ~~~
 
 ## Non-Claims

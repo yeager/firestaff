@@ -1,5 +1,5 @@
 {
-  "branch": "main-land-movement-collision-cooldown-20260521-0820",
+  "branch": "main",
   "firestaffAudit": {
     "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
       "claim": "gated movement returns before queue pop",
@@ -17,10 +17,10 @@
         376
       ]
     },
-    "testExecutable": "/home/trv2/work/firestaff-builds/main-land-movement-collision-cooldown-20260521-0820/test_dm1_v1_movement_pipeline_pc34_compat",
-    "testOutputLastLine": "297 passed, 0 failed"
+    "testExecutable": "/home/trv2/work/firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testOutputLastLine": "351 passed, 0 failed"
   },
-  "head": "a56decb6f118faaa9dce40f7c4cc001a4f81b2a5",
+  "head": "e6490c7c94c173a95636c731030eae97c5fa16b0",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-21T06:23:40.217828+00:00",
-  "worktree": "/home/trv2/work/firestaff-worktrees/main-land-movement-collision-cooldown-20260521-0820"
+  "timestampUtc": "2026-05-24T13:50:22.613411+00:00",
+  "worktree": "/home/trv2/work/firestaff"
 }

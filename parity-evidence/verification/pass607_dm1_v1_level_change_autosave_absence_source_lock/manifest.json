@@ -12,7 +12,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "206a75558f408b953959ace0ba7fefd06ad46aa0",
+  "gitHeadAtVerification": "e6490c7c94c173a95636c731030eae97c5fa16b0",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +103,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-20T19:42:19.572167+00:00",
+  "timestampUtc": "2026-05-24T13:50:05.856556+00:00",
   "worktree": "/home/trv2/work/firestaff"
 }

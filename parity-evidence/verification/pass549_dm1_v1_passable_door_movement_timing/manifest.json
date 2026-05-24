@@ -2,9 +2,9 @@
   "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
-    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:405-490",
+    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:408-493",
     "acceptedMovementToTiming": "dm1_v1_movement_command_core_pc34_compat.c:286-374",
-    "doorFallthroughToMoveOk": "memory_movement_pc34_compat.c:470-488",
+    "doorFallthroughToMoveOk": "memory_movement_pc34_compat.c:473-491",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },

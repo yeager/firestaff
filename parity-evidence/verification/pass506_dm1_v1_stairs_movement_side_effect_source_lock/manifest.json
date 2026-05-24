@@ -5,7 +5,7 @@
     "commandCoreResult": "include/dm1_v1_movement_command_core_pc34_compat.h",
     "pipelineTest": "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
     "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
-    "runtimeOutputLastLine": "229 passed, 0 failed"
+    "runtimeOutputLastLine": "351 passed, 0 failed"
   },
   "notClaimed": [
     "viewport/capture parity",

@@ -115,16 +115,23 @@
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
       "lines": "6162-6225",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "case M12_MENU_INPUT_LEFT:",
+        "return DM1_V1_COMMAND_TURN_LEFT;",
+        "case M12_MENU_INPUT_RIGHT:",
+        "return DM1_V1_COMMAND_TURN_RIGHT;"
+      ],
+      "ok": false
     },
     {
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "6229-6297",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "state->world.gameTick++;"
+      ],
+      "ok": false
     },
     {
       "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
@@ -178,8 +185,11 @@
     "no non-N2 source path is used",
     "no push or release action"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "firestaff route audit failed: m11_input_maps_to_dm1_v1_commands",
+    "firestaff route audit failed: m11_records_movement_pipeline_capture_state"
+  ],
   "redmcsbSourceAudit": [
     {
       "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
@@ -253,6 +263,6 @@
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-05-21T07:12:03.460089+00:00"
+  "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+  "timestampUtc": "2026-05-24T13:50:19.216548+00:00"
 }

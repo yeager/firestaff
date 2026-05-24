@@ -11,8 +11,8 @@ Scope: source-lock and runtime-guard the F0380 branch where a cooldown-gated mov
 
 ## Firestaff guards
 
-- dm1_v1_input_command_queue_pc34_compat.c:286-328 - DM1_V1_InputCommandQueue_ProcessOnePc34Compat
-- dm1_v1_input_command_queue_pc34_compat.c:303-318 - gatedMovementReturnsAfterPendingReplay
+- dm1_v1_input_command_queue_pc34_compat.c:300-342 - DM1_V1_InputCommandQueue_ProcessOnePc34Compat
+- dm1_v1_input_command_queue_pc34_compat.c:317-332 - gatedMovementReturnsAfterPendingReplay
 - test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:pass559 labels - runtimeRegression
 - build/test_dm1_v1_command_movement_sensor_timing_pc34_compat - runtimeExecutable
 - dm1V1CommandMovementSensorTimingIntegrationOk=1 - runtimeOutputLastLine

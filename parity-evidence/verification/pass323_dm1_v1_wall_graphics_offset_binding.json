@@ -332,7 +332,7 @@
     "reason": "This ReDMCSB tree has no TILEDEFS.C; PC wall/tile ordinals and zones are in DEFS.H, while wall-set bitmap tables/load/draw offsets are in DUNVIEW.C.",
     "requestedFile": "TILEDEFS.C"
   },
-  "timestampUtc": "2026-05-07T14:08:08.550719+00:00",
+  "timestampUtc": "2026-05-24T14:31:18.085331+00:00",
   "wallSlotBindings": [
     {
       "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",

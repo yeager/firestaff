@@ -3,17 +3,17 @@
     {
       "file": "m11_game_view.c",
       "id": "sample-view-cell-preserves-wall-square-items",
-      "lines": "8683-9251"
+      "lines": "8676-9244"
     },
     {
       "file": "m11_game_view.c",
       "id": "alcove-pass-filters-to-source-subcell",
-      "lines": "11786-11829"
+      "lines": "11779-11822"
     },
     {
       "file": "m11_game_view.c",
       "id": "wall-ornament-before-alcove-item-pass",
-      "lines": "12087-12245"
+      "lines": "12080-12238"
     }
   ],
   "notClaimed": [
@@ -97,7 +97,7 @@
     "DUNGEON.C": "57b2aba28bab373ce1cd0e09b906def30b7754210a7634595029c0611d79259c",
     "DUNVIEW.C": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
     "evidence": "122191ec472ad49a9dce4c4814b69489dd191e8be13105ef325940e4f5d89fd9",
-    "m11_game_view.c": "50bcda31c87945fbb3ea3808dd088e9d4454bcf4ee86f9526af07d7babeb0d85"
+    "m11_game_view.c": "59c4c836be0186cf87904ce2ce81e8ca337fe1fbcbc94b0d2ce9c4af240c9b9d"
   },
   "status": "passed"
 }

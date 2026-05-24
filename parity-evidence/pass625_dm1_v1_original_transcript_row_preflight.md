@@ -1,6 +1,6 @@
 # Pass624 - DM1 V1 original transcript row preflight
 
-Status: PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED
+Status: FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT
 
 This gate narrows the pass622 blocker to one original runtime transcript row for `02_turn_right_west_1_3`. It does not run DOSBox and does not promote original-vs-Firestaff parity.
 
@@ -32,7 +32,7 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 ## Consumed gates
 - PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
 - PASS pass622_viewport_wall_capture_gap observed=BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED
-- PASS pass623_input_capture_bridge observed=PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED
+- FAIL pass623_input_capture_bridge observed=FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE
 
 ## Required original transcript fields
 - runId
@@ -86,3 +86,6 @@ The next original capture attempt has a machine-checked, source-backed target ro
 - no renderer, movement, or input behavior is changed
 - no non-N2 original asset path is used
 - no push, tag, package, or release action
+
+## Problems
+- gate status drifted: pass623_input_capture_bridge

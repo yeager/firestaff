@@ -12,8 +12,8 @@ Status: PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED
 - COMMAND.C:1305-1378 / F0357 flushes input, preserves C129/C254 reserved release/stop commands, unlocks, and replays one pending click.
 
 ## Firestaff guards
-- dm1_v1_input_command_queue_pc34_compat.c:286-328 pops and replays pending input before move dispatch.
-- dm1_v1_input_command_queue_pc34_compat.c:202-229 preserves only reserved release/stop commands during discard and replays pending click after unlock.
+- dm1_v1_input_command_queue_pc34_compat.c:300-342 pops and replays pending input before move dispatch.
+- dm1_v1_input_command_queue_pc34_compat.c:216-243 preserves only reserved release/stop commands during discard and replays pending click after unlock.
 - dm1_v1_movement_command_core_pc34_compat.c:182-376 returns from blocked collision before successful movement timing/cooldown.
 - test_dm1_v1_movement_command_core_pc34_compat covers: front move dequeued after cooldown clears, wall collision blocks, trailing nonreserved turn is dropped, pre-existing reserved release and replayed pending stop survive, one blocked VBlank is requested, input wait remains armed, and no successful-step cooldown is assigned.
 

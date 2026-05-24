@@ -14,10 +14,10 @@ Scope: source-lock the loop that decrements movement cooldowns before raw input 
 
 ## Firestaff guards
 
-- dm1_v1_input_command_queue_pc34_compat.c:286-328 - queueProcessOne
-- dm1_v1_input_command_queue_pc34_compat.c:303-318 - queueRetentionSpan
-- dm1_v1_movement_timing_pc34_compat.c:91-101 - cooldownDecrement
-- dm1_v1_movement_timing_pc34_compat.c:95-99 - cooldownDecrementSpan
+- dm1_v1_input_command_queue_pc34_compat.c:300-342 - queueProcessOne
+- dm1_v1_input_command_queue_pc34_compat.c:317-332 - queueRetentionSpan
+- dm1_v1_movement_timing_pc34_compat.c:92-102 - cooldownDecrement
+- dm1_v1_movement_timing_pc34_compat.c:96-100 - cooldownDecrementSpan
 - test_dm1_v1_movement_timing_pc34_compat - regression
 
 ## Gates

@@ -7,8 +7,10 @@
     "no non-N2 original asset path is used",
     "no push, tag, package, or release action"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "pass625 status is not locked"
+  ],
   "requiredCaptureEvents": [
     "queued C002 with queue index/count evidence",
     "F0380 dequeued C002 from the same queue slot",
@@ -69,7 +71,7 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED",
+  "status": "FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE",
   "targetRowAudit": {
     "expected": {
       "dispatchHandler": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
@@ -92,10 +94,12 @@
       "sourceCommandId": 2,
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     },
-    "ok": true,
+    "ok": false,
     "path": "parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json",
-    "problems": [],
-    "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+    "problems": [
+      "pass625 status is not locked"
+    ],
+    "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
     "target": {
       "f0128Tuple": {
         "direction": 3,
@@ -122,5 +126,5 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-05-21T07:55:55.971814+00:00"
+  "timestampUtc": "2026-05-24T13:50:19.375791+00:00"
 }

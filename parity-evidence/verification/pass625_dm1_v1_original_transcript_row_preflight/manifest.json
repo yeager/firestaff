@@ -31,8 +31,8 @@
     {
       "expected": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
       "id": "pass623_input_capture_bridge",
-      "observed": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-      "ok": true,
+      "observed": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+      "ok": false,
       "path": "parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json"
     }
   ],
@@ -43,7 +43,7 @@
     "no non-N2 original asset path is used",
     "no push, tag, package, or release action"
   ],
-  "ok": true,
+  "ok": false,
   "originalAssetLocks": [
     {
       "bytes": 12002,
@@ -123,7 +123,9 @@
       "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
     }
   ],
-  "problems": [],
+  "problems": [
+    "gate status drifted: pass623_input_capture_bridge"
+  ],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
     {
@@ -200,7 +202,7 @@
     }
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+  "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
   "targetRowAudit": {
     "ok": true,
     "pass623Row": {
@@ -257,7 +259,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-05-21T07:44:40.565256+00:00",
+  "timestampUtc": "2026-05-24T13:50:19.306199+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

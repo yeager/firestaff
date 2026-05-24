@@ -3,15 +3,15 @@
   "firestaffGuards": {
     "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:202-364",
     "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
-    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:202-229",
-    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:215-228",
-    "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
-    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
+    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:216-243",
+    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:229-242",
+    "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:317-332",
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:300-342",
     "staminaSideEffects": "dm1_v1_movement_command_core_pc34_compat.c:87-102",
-    "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:65-89",
-    "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:75-85"
+    "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
+    "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "be2554917adc48d1f512efa61dc880573125b554",
+  "head": "e6490c7c94c173a95636c731030eae97c5fa16b0",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -33,6 +33,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-05-18T05:56:30.824636+00:00",
+  "timestampUtc": "2026-05-24T13:50:22.244392+00:00",
   "worktree": "/home/trv2/work/firestaff"
 }

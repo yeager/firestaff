@@ -1,8 +1,8 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "DM1_V1_InputCommandQueue_ProcessOnePc34Compat": "dm1_v1_input_command_queue_pc34_compat.c:286-328",
-    "gatedMovementReturnsAfterPendingReplay": "dm1_v1_input_command_queue_pc34_compat.c:303-318",
+    "DM1_V1_InputCommandQueue_ProcessOnePc34Compat": "dm1_v1_input_command_queue_pc34_compat.c:300-342",
+    "gatedMovementReturnsAfterPendingReplay": "dm1_v1_input_command_queue_pc34_compat.c:317-332",
     "runtimeExecutable": "build/test_dm1_v1_command_movement_sensor_timing_pc34_compat",
     "runtimeOutputLastLine": "dm1V1CommandMovementSensorTimingIntegrationOk=1",
     "runtimeRegression": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:pass559 labels"
@@ -20,6 +20,6 @@
   "schema": "firestaff.parity.pass559_dm1_v1_gated_movement_pending_click_queue_replay.v1",
   "scope": "DM1 V1 PC-34 movement cooldown gate plus pending-click replay queue order",
   "status": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
-  "timestampUtc": "2026-05-18T05:56:30.925807+00:00",
+  "timestampUtc": "2026-05-24T13:50:22.426631+00:00",
   "worktree": "."
 }

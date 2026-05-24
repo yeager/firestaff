@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-18T05:54:33.377983+00:00",
+  "timestampUtc": "2026-05-24T13:48:15.601245+00:00",
   "status": "PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES",
   "repo": "/home/trv2/work/firestaff",
   "branch": "main",
-  "head": "be2554917adc48d1f512efa61dc880573125b554",
+  "head": "f0b028de4b0c900ecf7e91dfa8ae59a1023c2aea",
   "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
