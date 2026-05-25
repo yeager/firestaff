@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "dm1_v1_inventory_consumables_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -69,7 +71,19 @@ void m11_obj_init(M11_ObjectState* s);
 int m11_obj_spawn(M11_ObjectState* s, int type, int x, int y, int level, int weight);
 int m11_obj_pickup(M11_ObjectState* s, int objIdx, int* outWeight);
 int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level);
-int m11_obj_use(M11_ObjectState* s, int objIdx);
+
+/* m11_obj_use — OBJECT.C F0349 use/consume delegation.
+ * Delegates to dm1_v1_inventory_consumables_pc34_compat.c for
+ * potions, food, and water/junk consumption. Equipment types
+ * (weapon/armor/accessory) return 0 as they are handled by
+ * m11_inventory_equip() slot system.
+ * champData: DM1ConsumableChampionPc34* champion stats snapshot.
+ * result: DM1ConsumableResultPc34* output, caller commits deltas.
+ * Returns 1 on successful consumption, 0 if not consumable. */
+int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
+                DM1ConsumableChampionPc34* champData,
+                DM1ConsumableResultPc34* result);
+
 int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force);
 int m11_obj_activate(M11_ObjectState* s, int objIdx);
 int m11_obj_examine(const M11_ObjectState* s, int objIdx, char* desc, int descLen);

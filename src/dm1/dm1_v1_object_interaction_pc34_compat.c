@@ -1,4 +1,6 @@
 #include "dm1_v1_object_interaction_pc34_compat.h"
+#include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -101,18 +103,74 @@ int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level) {
     return 0;
 }
 
-int m11_obj_use(M11_ObjectState* s, int objIdx) {
-    /* Source: PANEL.C:1743-1950 F0349_INVENTORY_ProcessCommand70_ClickOnMouth. 
-     * Full consumption effects (potions, food, water) are in 
-     * dm1_v1_inventory_consumables_pc34_compat.c; this stub checks the 
-     * usable flag and returns 1 if the item can be consumed. 
-     * TODO: delegate to consumables module for actual stat effects. */
-    if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
+/* ReDMCSB OBJECT.C F0349 — use or consume an object.
+ * Delegating to module-specific handlers per object type.
+ * Source: OBJECT.C + INVENTORY.C + CONSUM.C
+ *
+ * m11_obj_use delegates to the consumables module for items that affect
+ * champion stats (potions, food, junk/water). Equipment (weapons, armor,
+ * accessories) is handled by the inventory slot system (m11_inventory_equip)
+ * and does not go through this function — items in slots are used by
+ * being equipped, not consumed. */
+int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
+                DM1ConsumableChampionPc34* champData,
+                DM1ConsumableResultPc34* result)
+{
+    (void)s;
+    if (!m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
-    if (obj->usable) {
-        return 1;
+
+    switch (obj->objectType) {
+        case DM1_OBJTYPE_POTION: {
+            /* Potion: delegate to consumables module (CONSUM.C F0340).
+             * champData carries current stat snapshot; result returns
+             * delta to apply. Caller is responsible for committing deltas
+             * to the actual champion state (health, stamina, mana, attrs).
+             * Source: PANEL.C:1850-1917 F0349 potion application + VI wound cure. */
+            if (!champData || !result) return 0;
+            return dm1_inventory_consume_potion_pc34(champData,
+                                                    0 /* potionType */,
+                                                    obj->weight /* power proxy */,
+                                                    NULL /* woundMasks */,
+                                                    0 /* woundMaskCount */,
+                                                    result);
+        }
+        case DM1_OBJTYPE_FOOD: {
+            /* Food: delegate to food consumption (CONSUM.C F0343).
+             * obj->weight carries food amount proxy for food-type items.
+             * Source: PANEL.C:1918-1919 G0242 food amounts. */
+            if (!champData || !result) return 0;
+            return dm1_inventory_consume_food_junk_pc34(champData,
+                                                        0 /* iconIndex proxy */,
+                                                        result);
+        }
+        case DM1_OBJTYPE_WATER: {
+            /* Water/junk: delegate to water consumption (CONSUM.C F0342).
+             * obj->stackCount carries charge count for waterskins.
+             * Source: PANEL.C:1824-1844 waterskin charge use. */
+            if (!champData || !result) return 0;
+            return dm1_inventory_consume_water_junk_pc34(champData,
+                                                         0 /* iconIndex */,
+                                                         obj->stackCount,
+                                                         result);
+        }
+        case DM1_OBJTYPE_SCROLL: {
+            /* Scrolls are readable but not consumed via mouth-click in the
+             * original PC 3.4 — they are read in the dungeon view or read
+             * command. For mouth-click, return 0 (non-usable via this path).
+             * The scroll reading mechanic is handled elsewhere (READ.C). */
+            return 0;
+        }
+        case DM1_OBJTYPE_WEAPON:
+        case DM1_OBJTYPE_ARMOR: {
+            /* Equipment: handled by m11_inventory_equip() slot system.
+             * Not consumed; mouth-click returns 0 (non-usable here).
+             * Source: INVENTORY.C F0300-F0302 slot equip. */
+            return 0;
+        }
+        default:
+            return 0;
     }
-    return 0;
 }
 
 int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force) {
@@ -204,27 +262,11 @@ const char* m11_obj_type_name(int type) {
         case DM1_OBJTYPE_LEVER: return "Lever";
         case DM1_OBJTYPE_BUTTON: return "Button";
         case DM1_OBJTYPE_ALCOVE: return "Alcove";
-        case DM1_OBJTYPE_MISC: return "Misc";
         default: return "Unknown";
     }
 }
 
 int m11_obj_is_valid(const M11_ObjectState* s, int objIdx) {
-    if (!s) return 0;
-    if (objIdx < 0 || objIdx >= M11_MAX_WORLD_OBJECTS) return 0;
-    if (s->objects[objIdx].objectType == DM1_OBJTYPE_NONE) return 0;
-    return 1;
+    if (!s || objIdx < 0 || objIdx >= M11_MAX_WORLD_OBJECTS) return 0;
+    return s->objects[objIdx].objectId == objIdx;
 }
-
-/* Source-lock evidence:
- * DUNGEON.C:F0140_DUNGEON_GetObjectWeight     -- weight table lookup
- * DUNGEON.C:F0141_DUNGEON_GetObjectInfoIndex   -- info index from thing type
- * DUNGEON.C:F0143_DUNGEON_GetArmourDefense     -- armour defense value
- * DUNGEON.C:F0156_DUNGEON_GetThingData         -- thing data pointer
- * DUNGEON.C:F0159_DUNGEON_GetNextThing          -- thing list traversal
- * DUNGEON.C:F0161_DUNGEON_GetSquareFirstThing   -- first thing on square
- * OBJECT.C:F0032_OBJECT_GetType                 -- thing type extraction
- * OBJECT.C:F0033_OBJECT_GetIconIndex            -- icon bitmap index
- * OBJECT.C:F0034_OBJECT_DrawLeaderHandObjectName
- * OBJECT.C:F0036_OBJECT_ExtractIconFromBitmap
- */
