@@ -24,7 +24,7 @@ Status per 2026-05-19 v2.4.0.
 ### Champion System
 
   **GAP (C01-C24 stats):** All 24 Hall of Champions champions (C01-C24) have STUB stat values — not source-locked to ReDMCSB G0243. 5 flag bugs: C12 Black Flame (LEVITATION/NON_MATERIAL inverted), C20 Materializer (missing both LEVITATION+NON_MATERIAL), C14 Couatl, C15 Vexirk, C21 Water Elemental, C24 Lord Chaos (each missing LEVITATION flag). TIER_FULL champions C10/C11/C13 need stat corrections.
-  **GAP (portrait sensorData):** m11_game_view.c:8995 stores raw ordinal+1 without -1 correction for champion portrait sheet indexing. Latent gap — pass449/pass450 framebuffer evidence gates blocked on missing external artifacts.
+  **OKLART (portrait sensorData):** m11_game_view.c:8995 is correct — ReDMCSB DUNGEON.C:2612 stores value+1 but DUNVIEW.C:3916 post-decrement cancels it; both code paths yield identical 0-based sheet index; confirmed no bug (commit 62411518).
 
 ### Inventory & Items
   **🔧 Save/load integration GAP** — m11_sl_* slot infrastructure has ZERO callers; F5/F9 keyboard shortcuts not wired; G2018 quit-guard absent
