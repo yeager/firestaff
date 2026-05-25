@@ -8,6 +8,7 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: \
  /home/trv2/work/firestaff/include/card_art_m12.h \
  /home/trv2/work/firestaff/include/creature_art_m12.h \
  /home/trv2/work/firestaff/include/bestiary_m12.h \
+ /home/trv2/work/firestaff/include/config_m12.h \
  /home/trv2/work/firestaff/include/changelog_m12.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -25,6 +26,7 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: \
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
+ /home/trv2/work/firestaff/include/firestaff_version.h \
  /home/trv2/work/firestaff/include/render_sdl_m11.h /usr/include/stdio.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \

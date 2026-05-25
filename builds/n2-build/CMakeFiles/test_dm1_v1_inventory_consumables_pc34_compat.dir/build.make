@@ -83,10 +83,24 @@ CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_i
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/trv2/work/firestaff/tests/test_dm1_v1_inventory_consumables_pc34_compat.c -o CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.s
 
+CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/flags.make
+CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c
+CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o -MF CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o.d -o CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o -c /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c
+
+CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c > CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
+
+CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c -o CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
+
 CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/flags.make
 CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
 CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o -MF CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o.d -o CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o -c /home/trv2/work/firestaff/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
 
 CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i: cmake_force
@@ -100,17 +114,19 @@ CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inve
 # Object files for target test_dm1_v1_inventory_consumables_pc34_compat
 test_dm1_v1_inventory_consumables_pc34_compat_OBJECTS = \
 "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.o" \
+"CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o" \
 "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o"
 
 # External object files for target test_dm1_v1_inventory_consumables_pc34_compat
 test_dm1_v1_inventory_consumables_pc34_compat_EXTERNAL_OBJECTS =
 
 test_dm1_v1_inventory_consumables_pc34_compat: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.o
+test_dm1_v1_inventory_consumables_pc34_compat: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 test_dm1_v1_inventory_consumables_pc34_compat: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
 test_dm1_v1_inventory_consumables_pc34_compat: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make
 test_dm1_v1_inventory_consumables_pc34_compat: libfirestaff_m10.a
 test_dm1_v1_inventory_consumables_pc34_compat: CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking C executable test_dm1_v1_inventory_consumables_pc34_compat"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking C executable test_dm1_v1_inventory_consumables_pc34_compat"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

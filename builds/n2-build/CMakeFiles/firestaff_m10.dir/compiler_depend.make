@@ -1448,7 +1448,10 @@ CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_movement_timing_pc34_compat.c.o: /ho
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
 
 CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_object_interaction_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_object_interaction_pc34_compat.c \
+  /home/trv2/work/firestaff/include/dm1_v1_inventory_consumables_pc34_compat.h \
   /home/trv2/work/firestaff/include/dm1_v1_object_interaction_pc34_compat.h \
+  /home/trv2/work/firestaff/include/dm1_v1_sound_pc34_compat.h \
+  /home/trv2/work/firestaff/include/memory_dungeon_dat_pc34_compat.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
   /usr/include/stdc-predef.h \

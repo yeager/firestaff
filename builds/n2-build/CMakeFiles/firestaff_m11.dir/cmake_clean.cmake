@@ -37,6 +37,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load.c.o.d"
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o"
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o.d"
+  "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o"
+  "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o.d"
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o"
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o.d"
   "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_title_screen_pc34_compat.c.o"

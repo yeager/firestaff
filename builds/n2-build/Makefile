@@ -4035,6 +4035,7 @@ src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
 .PHONY : src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
 
 src/dm1/dm1_v1_inventory_consumables_pc34_compat.i: src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
@@ -4045,6 +4046,7 @@ src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
 .PHONY : src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.i
 
 src/dm1/dm1_v1_inventory_consumables_pc34_compat.s: src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
@@ -4055,6 +4057,7 @@ src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
 .PHONY : src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
 
 src/dm1/dm1_v1_inventory_pc34_compat.o: src/dm1/dm1_v1_inventory_pc34_compat.c.o
@@ -4585,10 +4588,13 @@ src/dm1/dm1_v1_sound_pc34_compat.o: src/dm1/dm1_v1_sound_pc34_compat.c.o
 # target to build an object file
 src/dm1/dm1_v1_sound_pc34_compat.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 .PHONY : src/dm1/dm1_v1_sound_pc34_compat.c.o
 
 src/dm1/dm1_v1_sound_pc34_compat.i: src/dm1/dm1_v1_sound_pc34_compat.c.i
@@ -4597,10 +4603,13 @@ src/dm1/dm1_v1_sound_pc34_compat.i: src/dm1/dm1_v1_sound_pc34_compat.c.i
 # target to preprocess a source file
 src/dm1/dm1_v1_sound_pc34_compat.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
 .PHONY : src/dm1/dm1_v1_sound_pc34_compat.c.i
 
 src/dm1/dm1_v1_sound_pc34_compat.s: src/dm1/dm1_v1_sound_pc34_compat.c.s
@@ -4609,10 +4618,13 @@ src/dm1/dm1_v1_sound_pc34_compat.s: src/dm1/dm1_v1_sound_pc34_compat.c.s
 # target to generate assembly for a file
 src/dm1/dm1_v1_sound_pc34_compat.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m10.dir/build.make CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/firestaff_m11.dir/build.make CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_creature_render_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/build.make CMakeFiles/test_dm1_v1_sound_pc34_compat_integration.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_creature_sound_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/build.make CMakeFiles/test_dm1_v1_object_interaction_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
 .PHONY : src/dm1/dm1_v1_sound_pc34_compat.c.s
 
 src/dm1/dm1_v1_spell_casting_pc34_compat.o: src/dm1/dm1_v1_spell_casting_pc34_compat.c.o

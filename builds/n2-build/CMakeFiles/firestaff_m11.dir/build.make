@@ -573,10 +573,24 @@ CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/trv2/work/firestaff/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c -o CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.s
 
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/flags.make
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o -MF CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o.d -o CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o -c /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c
+
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c > CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.i
+
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c -o CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.s
+
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/flags.make
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_click_routing_pc34_compat.c
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o -MF CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o.d -o CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o -c /home/trv2/work/firestaff/src/dm1/dm1_v1_click_routing_pc34_compat.c
 
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.i: cmake_force
@@ -590,7 +604,7 @@ CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.s: cmake
 CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o: CMakeFiles/firestaff_m11.dir/flags.make
 CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o: /home/trv2/work/firestaff/src/shared/firestaff_po_loader.c
 CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o: CMakeFiles/firestaff_m11.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o -MF CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o.d -o CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o -c /home/trv2/work/firestaff/src/shared/firestaff_po_loader.c
 
 CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.i: cmake_force
@@ -604,7 +618,7 @@ CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.s: cmake_force
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/flags.make
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_engine_pc34_compat.c
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o: CMakeFiles/firestaff_m11.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o -MF CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o.d -o CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o -c /home/trv2/work/firestaff/src/dm1/dm1_v1_engine_pc34_compat.c
 
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.i: cmake_force
@@ -653,6 +667,7 @@ firestaff_m11_OBJECTS = \
 "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o" \
 "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o" \
 "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o" \
+"CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o" \
 "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o" \
 "CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o" \
 "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o"
@@ -696,12 +711,13 @@ libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_c
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o
+libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/build.make
 libfirestaff_m11.a: CMakeFiles/firestaff_m11.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Linking C static library libfirestaff_m11.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/trv2/work/firestaff/builds/n2-build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Linking C static library libfirestaff_m11.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/firestaff_m11.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/firestaff_m11.dir/link.txt --verbose=$(VERBOSE)
 

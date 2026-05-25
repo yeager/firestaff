@@ -8,6 +8,7 @@ CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_render_modern_m12.c.o: \
  /home/trv2/work/firestaff/include/card_art_m12.h \
  /home/trv2/work/firestaff/include/creature_art_m12.h \
  /home/trv2/work/firestaff/include/bestiary_m12.h \
+ /home/trv2/work/firestaff/include/config_m12.h \
  /home/trv2/work/firestaff/include/changelog_m12.h \
  /home/trv2/work/firestaff/include/asset_status_m12.h \
  /home/trv2/work/firestaff/include/branding_logo_readme_m12.h \

@@ -27,6 +27,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_room_transition_pc34_compat.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_room_transition_pc34_compat.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_room_transition_pc34_compat.c.o.d"
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_save_load.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load.c.o.d"
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_save_load_system_pc34_compat.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o.d"
+  "/home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o.d"
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_text_message_pc34_compat.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o.d"
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_title_screen_pc34_compat.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_title_screen_pc34_compat.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_title_screen_pc34_compat.c.o.d"
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_vblank_timing.c" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_vblank_timing.c.o" "gcc" "CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_vblank_timing.c.o.d"

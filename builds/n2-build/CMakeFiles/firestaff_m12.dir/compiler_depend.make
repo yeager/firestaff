@@ -360,6 +360,7 @@ CMakeFiles/firestaff_m12.dir/src/shared/campaign_m12.c.o: /home/trv2/work/firest
   /home/trv2/work/firestaff/include/campaign_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \
   /usr/include/alloca.h \
@@ -478,6 +479,7 @@ CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o: /home/trv2/work/firest
   /usr/include/features-time64.h \
   /usr/include/features.h \
   /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
   /usr/include/stdio.h \
   /usr/include/string.h \
   /usr/include/strings.h \
@@ -488,6 +490,9 @@ CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o: /home/trv2/work/firest
   /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
   /usr/include/x86_64-linux-gnu/bits/long-double.h \
   /usr/include/x86_64-linux-gnu/bits/stat.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
   /usr/include/x86_64-linux-gnu/bits/stdio.h \
   /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h \
   /usr/include/x86_64-linux-gnu/bits/stdio2.h \
@@ -510,13 +515,15 @@ CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o: /home/trv2/work/firest
   /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
   /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
   /usr/include/x86_64-linux-gnu/bits/typesizes.h \
+  /usr/include/x86_64-linux-gnu/bits/wchar.h \
   /usr/include/x86_64-linux-gnu/bits/wordsize.h \
   /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
   /usr/include/x86_64-linux-gnu/gnu/stubs.h \
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/stat.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
 
 CMakeFiles/firestaff_m12.dir/src/shared/changelog_m12.c.o: /home/trv2/work/firestaff/src/shared/changelog_m12.c \
   /home/trv2/work/firestaff/include/changelog_m12.h \
@@ -549,6 +556,7 @@ CMakeFiles/firestaff_m12.dir/src/shared/custom_dungeon_m12.c.o: /home/trv2/work/
   /home/trv2/work/firestaff/include/bestiary_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/custom_dungeon_m12.h \
   /home/trv2/work/firestaff/include/memory_dungeon_dat_pc34_compat.h \
@@ -1125,6 +1133,7 @@ CMakeFiles/firestaff_m12.dir/src/shared/presentation_preview_m12.c.o: /home/trv2
   /home/trv2/work/firestaff/include/bestiary_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \
   /home/trv2/work/firestaff/include/presentation_preview_m12.h \
@@ -1267,6 +1276,7 @@ CMakeFiles/firestaff_m12.dir/src/shared/screenshot_gallery_m12.c.o: /home/trv2/w
   /home/trv2/work/firestaff/include/bestiary_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \
   /home/trv2/work/firestaff/include/screenshot_gallery_m12.h \
@@ -1524,6 +1534,7 @@ CMakeFiles/firestaff_m12.dir/src/ui/menu_hit_m12.c.o: /home/trv2/work/firestaff/
   /home/trv2/work/firestaff/include/bestiary_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/menu_hit_m12.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \
@@ -1646,6 +1657,7 @@ CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_render_modern_m12.c.o: /home/tr
   /home/trv2/work/firestaff/include/card_art_generated_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
   /home/trv2/work/firestaff/include/firestaff_po_loader.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \

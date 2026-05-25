@@ -8,6 +8,7 @@ CMakeFiles/firestaff_m11.dir/src/engine/m11_game_view.c.o: \
  /home/trv2/work/firestaff/include/card_art_m12.h \
  /home/trv2/work/firestaff/include/creature_art_m12.h \
  /home/trv2/work/firestaff/include/bestiary_m12.h \
+ /home/trv2/work/firestaff/include/config_m12.h \
  /home/trv2/work/firestaff/include/changelog_m12.h \
  /home/trv2/work/firestaff/include/memory_tick_orchestrator_pc34_compat.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \

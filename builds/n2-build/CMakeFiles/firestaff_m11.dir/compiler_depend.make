@@ -918,6 +918,35 @@ CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o: /h
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
 
+CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c \
+  /home/trv2/work/firestaff/include/dm1_v1_sound_pc34_compat.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
+  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
+  /usr/include/x86_64-linux-gnu/bits/long-double.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+  /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
+  /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+  /usr/include/x86_64-linux-gnu/bits/time64.h \
+  /usr/include/x86_64-linux-gnu/bits/timesize.h \
+  /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/typesizes.h \
+  /usr/include/x86_64-linux-gnu/bits/wchar.h \
+  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
+
 CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o: /home/trv2/work/firestaff/src/dm1/dm1_v1_text_message_pc34_compat.c \
   /home/trv2/work/firestaff/include/dm1_v1_text_message_pc34_compat.h \
   /usr/include/features-time64.h \
@@ -1235,130 +1264,6 @@ CMakeFiles/firestaff_m11.dir/src/engine/firestaff_accessibility.c.o: /home/trv2/
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/stat.h \
-  /usr/include/x86_64-linux-gnu/sys/types.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
-
-CMakeFiles/firestaff_m11.dir/src/engine/m11_game_view.c.o: /home/trv2/work/firestaff/src/engine/m11_game_view.c \
-  /home/trv2/work/firestaff/include/asset_loader_m11.h \
-  /home/trv2/work/firestaff/include/asset_status_m12.h \
-  /home/trv2/work/firestaff/include/audio_sdl_m11.h \
-  /home/trv2/work/firestaff/include/bestiary_m12.h \
-  /home/trv2/work/firestaff/include/card_art_m12.h \
-  /home/trv2/work/firestaff/include/changelog_m12.h \
-  /home/trv2/work/firestaff/include/config_m12.h \
-  /home/trv2/work/firestaff/include/creature_art_m12.h \
-  /home/trv2/work/firestaff/include/dm1_v1_champion_needs_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_champion_panel_hud_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_creature_ai_behavior_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_creature_sound_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_endgame_system_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_input_command_queue_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_inventory_consumables_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_movement_command_core_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_movement_pipeline_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_movement_timing_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_resurrection_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_save_load.h \
-  /home/trv2/work/firestaff/include/dm1_v1_sensor_trigger_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_sound_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_text_message_pc34_compat.h \
-  /home/trv2/work/firestaff/include/dm1_v1_vblank_timing.h \
-  /home/trv2/work/firestaff/include/dm1_v1_viewport_fakewall_pc34_compat.h \
-  /home/trv2/work/firestaff/include/firestaff_accessibility.h \
-  /home/trv2/work/firestaff/include/firestaff_po_loader.h \
-  /home/trv2/work/firestaff/include/font_m11.h \
-  /home/trv2/work/firestaff/include/fs_portable_compat.h \
-  /home/trv2/work/firestaff/include/inventory_item_identification_pc34_compat.h \
-  /home/trv2/work/firestaff/include/m11_game_view.h \
-  /home/trv2/work/firestaff/include/m11_v1_turning_presentation_pc34_compat.h \
-  /home/trv2/work/firestaff/include/m11_v2_vertical_slice_assets.h \
-  /home/trv2/work/firestaff/include/memory_champion_lifecycle_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_champion_state_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_combat_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_creature_ai_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_door_action_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_dungeon_dat_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_magic_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_movement_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_projectile_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_runtime_dynamics_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_savegame_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_sensor_execution_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_tick_orchestrator_pc34_compat.h \
-  /home/trv2/work/firestaff/include/memory_timeline_pc34_compat.h \
-  /home/trv2/work/firestaff/include/menu_startup_m12.h \
-  /home/trv2/work/firestaff/include/render_sdl_m11.h \
-  /usr/include/alloca.h \
-  /usr/include/ctype.h \
-  /usr/include/endian.h \
-  /usr/include/features-time64.h \
-  /usr/include/features.h \
-  /usr/include/stdc-predef.h \
-  /usr/include/stdint.h \
-  /usr/include/stdio.h \
-  /usr/include/stdlib.h \
-  /usr/include/string.h \
-  /usr/include/strings.h \
-  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
-  /usr/include/x86_64-linux-gnu/bits/byteswap.h \
-  /usr/include/x86_64-linux-gnu/bits/endian.h \
-  /usr/include/x86_64-linux-gnu/bits/endianness.h \
-  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
-  /usr/include/x86_64-linux-gnu/bits/floatn.h \
-  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
-  /usr/include/x86_64-linux-gnu/bits/long-double.h \
-  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
-  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
-  /usr/include/x86_64-linux-gnu/bits/select-decl.h \
-  /usr/include/x86_64-linux-gnu/bits/select.h \
-  /usr/include/x86_64-linux-gnu/bits/select2.h \
-  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
-  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
-  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
-  /usr/include/x86_64-linux-gnu/bits/stdio.h \
-  /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h \
-  /usr/include/x86_64-linux-gnu/bits/stdio2.h \
-  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
-  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
-  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
-  /usr/include/x86_64-linux-gnu/bits/stdlib.h \
-  /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
-  /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
-  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
-  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
-  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
-  /usr/include/x86_64-linux-gnu/bits/time64.h \
-  /usr/include/x86_64-linux-gnu/bits/timesize.h \
-  /usr/include/x86_64-linux-gnu/bits/types.h \
-  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
-  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
-  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
-  /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
-  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
-  /usr/include/x86_64-linux-gnu/bits/typesizes.h \
-  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
-  /usr/include/x86_64-linux-gnu/bits/waitflags.h \
-  /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
-  /usr/include/x86_64-linux-gnu/bits/wchar.h \
-  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
-  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
-  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
-  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
-  /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
@@ -2450,23 +2355,7 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/src/engine/render_sdl_m11.c:
 
-/usr/local/include/SDL3/SDL_version.h:
-
-/usr/local/include/SDL3/SDL_tray.h:
-
-/usr/local/include/SDL3/SDL_timer.h:
-
-/usr/local/include/SDL3/SDL_system.h:
-
-/usr/local/include/SDL3/SDL_surface.h:
-
-/usr/local/include/SDL3/SDL_storage.h:
-
-/usr/local/include/SDL3/SDL_stdinc.h:
-
 /usr/include/errno.h:
-
-/home/trv2/work/firestaff/src/engine/m11_game_view.c:
 
 /home/trv2/work/firestaff/include/dm1_v1_sound_pc34_compat.h:
 
@@ -2532,6 +2421,8 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
 
+/usr/local/include/SDL3/SDL_system.h:
+
 /home/trv2/work/firestaff/src/dm1/dm1_v1_wall_ornament_pc34_compat.c:
 
 /home/trv2/work/firestaff/include/dm1_v1_input_command_queue_pc34_compat.h:
@@ -2556,15 +2447,7 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/include/memory_sensor_execution_pc34_compat.h:
 
-/usr/local/include/SDL3/SDL_time.h:
-
-/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
-
 /home/trv2/work/firestaff/include/m11_game_view.h:
-
-/usr/local/include/SDL3/SDL_touch.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_event_timer_pc34_compat.h:
 
 /usr/local/include/SDL3/SDL_messagebox.h:
 
@@ -2579,6 +2462,8 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
 
 /usr/include/strings.h:
+
+/usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
 
 /home/trv2/work/firestaff/include/dm1_v1_blit_fill_pc34_compat.h:
 
@@ -2606,6 +2491,8 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/local/include/SDL3/SDL_asyncio.h:
 
+/usr/include/x86_64-linux-gnu/bits/typesizes.h:
+
 /home/trv2/work/firestaff/include/render_sdl_m11.h:
 
 /home/trv2/work/firestaff/include/dm1_v1_movement_timing_pc34_compat.h:
@@ -2625,8 +2512,6 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /usr/include/x86_64-linux-gnu/asm/errno.h:
 
 /usr/include/x86_64-linux-gnu/sys/cdefs.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_viewport_fakewall_pc34_compat.h:
 
 /home/trv2/work/firestaff/include/vga_palette_pc34_compat.h:
 
@@ -2658,6 +2543,10 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/include/dm1_v1_dungeon_square_structs_pc34_compat.h:
 
+/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
+
+/usr/local/include/SDL3/SDL_time.h:
+
 /home/trv2/work/firestaff/src/dm1/dm1_v1_creature_viewport_pc34_compat.c:
 
 /home/trv2/work/firestaff/src/shared/fs_portable_compat.c:
@@ -2671,6 +2560,8 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /home/trv2/work/firestaff/include/dm1_v1_game_loop_pc34_compat.h:
 
 /home/trv2/work/firestaff/include/dm1_v1_dungeon_data_pc34_compat.h:
+
+/usr/local/include/SDL3/SDL_stdinc.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
 
@@ -2708,17 +2599,11 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c:
 
-/home/trv2/work/firestaff/include/memory_door_action_pc34_compat.h:
-
 /home/trv2/work/firestaff/src/dm1/dm1_v1_click_routing_pc34_compat.c:
 
 /usr/local/include/SDL3/SDL_events.h:
 
 /usr/include/x86_64-linux-gnu/bits/floatn-common.h:
-
-/usr/local/include/SDL3/SDL_video.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
 
@@ -2734,6 +2619,10 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/include/stdio.h:
 
+/home/trv2/work/firestaff/include/dm1_v1_event_timer_pc34_compat.h:
+
+/usr/local/include/SDL3/SDL_touch.h:
+
 /home/trv2/work/firestaff/include/memory_graphics_dat_pc34_compat.h:
 
 /home/trv2/work/firestaff/src/dm1/dm1_v1_fade_transition_pc34_compat.c:
@@ -2748,6 +2637,8 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/include/x86_64-linux-gnu/bits/getopt_posix.h:
 
+/usr/local/include/SDL3/SDL_timer.h:
+
 /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h:
 
 /home/trv2/work/firestaff/src/dm1/dm1_v1_game_loop_integration_pc34_compat.c:
@@ -2761,6 +2652,10 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /home/trv2/work/firestaff/src/dm1/dm1_v1_portrait_panel_pc34_compat.c:
 
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
+
+/home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c:
+
+/home/trv2/work/firestaff/src/engine/firestaff_accessibility.c:
 
 /usr/local/include/SDL3/SDL_loadso.h:
 
@@ -2830,15 +2725,13 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/include/dm1_v1_vblank_timing.h:
 
+/usr/local/include/SDL3/SDL_surface.h:
+
 /home/trv2/work/firestaff/include/dm1_v1_wall_ornament_pc34_compat.h:
 
 /usr/include/asm-generic/errno-base.h:
 
 /usr/include/asm-generic/errno.h:
-
-/home/trv2/work/firestaff/src/engine/firestaff_accessibility.c:
-
-/home/trv2/work/firestaff/include/dm1_v1_champion_panel_hud_pc34_compat.h:
 
 /usr/include/linux/errno.h:
 
@@ -2872,6 +2765,12 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/include/x86_64-linux-gnu/bits/unistd_ext.h:
 
+/home/trv2/work/firestaff/src/engine/main_loop_m11.c:
+
+/home/trv2/work/firestaff/src/shared/song_dat_loader_v1.c:
+
+/usr/local/include/SDL3/SDL_filesystem.h:
+
 /usr/local/include/SDL3/SDL_pixels.h:
 
 /home/trv2/work/firestaff/src/dm1/dm1_v1_vblank_timing.c:
@@ -2881,8 +2780,6 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /home/trv2/work/firestaff/include/dm1_v1_input_poll_pc34_compat.h:
 
 /home/trv2/work/firestaff/include/audio_sdl_m11.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_endgame_system_pc34_compat.h:
 
 /home/trv2/work/firestaff/include/changelog_m12.h:
 
@@ -2894,51 +2791,25 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /home/trv2/work/firestaff/include/creature_art_m12.h:
 
-/home/trv2/work/firestaff/include/dm1_v1_champion_needs_pc34_compat.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_creature_sound_pc34_compat.h:
-
-/usr/include/x86_64-linux-gnu/bits/typesizes.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_resurrection_pc34_compat.h:
-
-/usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
-
-/home/trv2/work/firestaff/include/dm1_v1_sensor_trigger_pc34_compat.h:
-
-/home/trv2/work/firestaff/include/firestaff_po_loader.h:
-
-/usr/local/include/SDL3/SDL_thread.h:
-
-/home/trv2/work/firestaff/include/fs_portable_compat.h:
-
-/usr/local/include/SDL3/SDL_gamepad.h:
-
-/home/trv2/work/firestaff/include/inventory_item_identification_pc34_compat.h:
-
-/home/trv2/work/firestaff/include/m11_v2_vertical_slice_assets.h:
-
-/home/trv2/work/firestaff/include/entrance_mouse_routes_pc34_compat.h:
-
-/home/trv2/work/firestaff/include/menu_startup_m12.h:
-
-/home/trv2/work/firestaff/include/title_frontend_v1.h:
-
-/usr/include/ctype.h:
-
-/home/trv2/work/firestaff/src/engine/main_loop_m11.c:
-
-/home/trv2/work/firestaff/src/shared/song_dat_loader_v1.c:
-
-/usr/local/include/SDL3/SDL_filesystem.h:
-
 /home/trv2/work/firestaff/src/dm1/dm1_v1_room_transition_pc34_compat.c:
 
 /home/trv2/work/firestaff/include/entrance_frontend_pc34_compat.h:
 
+/usr/local/include/SDL3/SDL_storage.h:
+
+/home/trv2/work/firestaff/include/entrance_mouse_routes_pc34_compat.h:
+
+/home/trv2/work/firestaff/include/firestaff_po_loader.h:
+
+/usr/local/include/SDL3/SDL_gamepad.h:
+
 /home/trv2/work/firestaff/include/main_loop_m11.h:
 
 /usr/local/include/SDL3/SDL_hints.h:
+
+/home/trv2/work/firestaff/include/menu_startup_m12.h:
+
+/home/trv2/work/firestaff/include/title_frontend_v1.h:
 
 /usr/include/inttypes.h:
 
@@ -3004,9 +2875,15 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 
 /usr/local/include/SDL3/SDL_power.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
+
+/usr/local/include/SDL3/SDL_video.h:
+
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
 /usr/local/include/SDL3/SDL_process.h:
+
+/usr/local/include/SDL3/SDL_tray.h:
 
 /home/trv2/work/firestaff/include/memory_frontend_pc34_compat.h:
 
@@ -3019,3 +2896,9 @@ CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o: /home/trv2/
 /home/trv2/work/firestaff/src/dm1/dm1_v1_engine_pc34_compat.c:
 
 /usr/local/include/SDL3/SDL_sensor.h:
+
+/home/trv2/work/firestaff/include/fs_portable_compat.h:
+
+/usr/local/include/SDL3/SDL_thread.h:
+
+/usr/local/include/SDL3/SDL_version.h:

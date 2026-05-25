@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/trv2/work/firestaff/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o" "gcc" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o.d"
+  "/home/trv2/work/firestaff/src/dm1/dm1_v1_sound_pc34_compat.c" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o" "gcc" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o.d"
   "/home/trv2/work/firestaff/tests/test_dm1_v1_inventory_consumables_pc34_compat.c" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.o" "gcc" "CMakeFiles/test_dm1_v1_inventory_consumables_pc34_compat.dir/tests/test_dm1_v1_inventory_consumables_pc34_compat.c.o.d"
   )
 

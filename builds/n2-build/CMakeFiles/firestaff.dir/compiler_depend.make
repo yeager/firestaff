@@ -6,7 +6,9 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
   /home/trv2/work/firestaff/include/bestiary_m12.h \
   /home/trv2/work/firestaff/include/card_art_m12.h \
   /home/trv2/work/firestaff/include/changelog_m12.h \
+  /home/trv2/work/firestaff/include/config_m12.h \
   /home/trv2/work/firestaff/include/creature_art_m12.h \
+  /home/trv2/work/firestaff/include/firestaff_version.h \
   /home/trv2/work/firestaff/include/main_loop_m11.h \
   /home/trv2/work/firestaff/include/menu_startup_m12.h \
   /home/trv2/work/firestaff/include/render_sdl_m11.h \
@@ -108,9 +110,7 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
 
 /usr/include/x86_64-linux-gnu/bits/types/locale_t.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/time_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
+/usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/endianness.h:
 
@@ -135,6 +135,8 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
+
+/usr/include/features.h:
 
 /usr/include/stdint.h:
 
@@ -162,6 +164,16 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
 
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
+/home/trv2/work/firestaff/include/menu_startup_m12.h:
+
+/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
+
+/home/trv2/work/firestaff/include/main_loop_m11.h:
+
+/usr/include/stdlib.h:
+
+/home/trv2/work/firestaff/include/creature_art_m12.h:
+
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h:
 
 /home/trv2/work/firestaff/include/render_sdl_m11.h:
@@ -174,19 +186,13 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
 
 /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
 
-/home/trv2/work/firestaff/include/main_loop_m11.h:
+/home/trv2/work/firestaff/include/firestaff_version.h:
 
-/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
+/usr/include/x86_64-linux-gnu/bits/types/time_t.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
+/home/trv2/work/firestaff/include/config_m12.h:
 
-/usr/include/stdlib.h:
-
-/home/trv2/work/firestaff/include/creature_art_m12.h:
-
-/home/trv2/work/firestaff/include/menu_startup_m12.h:
-
-/usr/include/features.h:
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
 
@@ -214,9 +220,9 @@ CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o: /home/trv2/work/fire
 
 /usr/include/x86_64-linux-gnu/bits/types.h:
 
-/usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h:
-
 /usr/include/stdc-predef.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
 

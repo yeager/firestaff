@@ -386,4 +386,3 @@ pass462_dm1_v1_title_end_original_capture_parity 3 0.222155
 endgame_frontend_source_animation_schedule 1 0.00284452
 dm1_v1_ambient_dungeon_sound_source_lock 0 0
 ---
-pass508_dm1_v1_viewport_wall_runtime_readiness
