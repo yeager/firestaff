@@ -5,6 +5,7 @@
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
 #include "bestiary_m12.h"
+#include "config_m12.h"
 #include "changelog_m12.h"
 
 #ifdef __cplusplus
