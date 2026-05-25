@@ -1,4 +1,4 @@
-/* auto-generated - do not edit */
+/* auto-generated from CMakeLists.txt - do not edit */
 #ifndef FIRESTAFF_VERSION_H
 #define FIRESTAFF_VERSION_H
 #define FIRESTAFF_VERSION_MAJOR 2

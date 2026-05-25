@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--version") == 0) {
-            fprintf(stderr, "Firestaff v2.4.8\n");
+            fprintf(stderr, "Firestaff " FIRESTAFF_VERSION_STRING "\n");
             return 0;
         }
         if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {
