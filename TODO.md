@@ -27,6 +27,11 @@ Status per 2026-05-19 v2.4.0.
   **GAP (portrait sensorData):** m11_game_view.c:8995 stores raw ordinal+1 without -1 correction for champion portrait sheet indexing. Latent gap — pass449/pass450 framebuffer evidence gates blocked on missing external artifacts.
 
 ### Inventory & Items
+  **🔧 Save/load integration GAP** — m11_sl_* slot infrastructure has ZERO callers; F5/F9 keyboard shortcuts not wired; G2018 quit-guard absent
+  **🔧 Object interaction stub GAP** — m11_obj_use() is a stub; zero call sites; needs delegation to item handlers (ITEM.C/ITEMUSE.C)
+  **🔧 Group management wiring GAP** — m11_group_add_active() defined but never called; C006/F0267 group spawning not wired
+  **🔧 Teleporter/pit wiring GAP** — ALL 10 functions in dm1_v1_teleporter_pit_pc34_compat.c are orphaned; no movement pipeline wiring
+
 
 ## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
 

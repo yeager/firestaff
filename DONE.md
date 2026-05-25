@@ -464,11 +464,11 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Inventory equip/unequip — m11_inventory_can_equip/equip/unequip slot validation added; CHAMPION.C F0300-F0302 source citations; committed (a85fb55d)
 - ✅ Save/load serialization — DM1_SaveGame/LoadGame via F0897_WORLD_Serialize_Compat complete; champions/inventory/stats serialized; dungeon state correctly excluded from save blob
 - ✅ Item pickup API — m11_obj_examine/pickup/drop exist; m11_inventory_pickup_mouse() exists (line 107)
-- ⚠️ Save/load integration GAP — DM1_SaveGame/LoadGame never called from any input handler or menu; m11_sl_* slot infrastructure has ZERO callers; G2018 quit-guard not found; 512-byte header replaced by 64-byte CRC32 (not original-compatible)
-- ⚠️ Item pickup wiring GAP — m11_inventory_pickup_mouse() no backpack capacity check; m11_inventory_can_pickup() absent; m11_obj_pickup() defined but not wired into viewport click path; no pickup command bridging viewport click → inventory
-- ⚠️ Object interaction GAP — m11_obj_use() is a stub (checks usable flag only, no stat effects); zero call sites outside own definition; module registered in engine manifest but no input/champion-action integration
-- ⚠️ Group management GAP — m11_group_add_active() defined in group_management_pc34_compat.c but NEVER called from sensor_trigger, game_loop, or any other module; C006/F0267 group spawning not wired
-- ⚠️ Teleporter wiring GAP — ALL 10 public API functions in dm1_v1_teleporter_pit_pc34_compat.c are ORPHANED; F0267 referenced in comments but no actual calls exist from movement_pipeline or game_loop
+- 
+- ✅ Item pickup wiring GAP — inventory slot pre-flight check in m11_c080_grab_leader_hand (m11_game_view.c:9335-9358); committed v2.4.10 (4f4432b7); m11_obj_pickup() defined but not wired into viewport click path; no pickup command bridging viewport click → inventory
+- 
+- 
+- 
 - ✅ HUD status bar — GAP documented: DM1 V1 top strip (dungeon name/floor/clock/gold/food/water) does not exist in ReDMCSB source; DM2/CSB feature only; not a Firestaff gap
 
 
@@ -477,7 +477,7 @@ Status per 2026-05-19 v2.4.0.
 - ✅ s_draw_order[19] defined correctly (back-to-front, D4L→D0C) — lines 78–101
 - ✅ s_wall_specs[], s_projectile_occlusion_specs[], wall flip parity all correct
 - ✅ Draw primitives (F0098/F0100/F0101) implemented in dm1_v1_draw_primitives_pc34_compat.c
-- ⚠️ VIEWPORT RENDERING GAP — dm1_viewport_3d_draw_frame() is skeleton only; for loop over s_draw_order[] (lines 507–578) has comments but NO executable code for Steps 4–11; all wall drawing, door occlusion, far-object rendering is absent; build still passes because primitives exist but are never called
+- 🔧 VIEWPORT RENDERING — door frames implemented (D3/D2/D1 via dm1_viewport_3d_get_wall_frame + F0104/F0105); non-door walls D4/D3/D2/D1/D0 not yet wired; committed (30ccdfc0); all wall drawing, door occlusion, far-object rendering is absent; build still passes because primitives exist but are never called
 - ✅ Build: 100% clean (all targets link)
 
 
