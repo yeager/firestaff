@@ -1,0 +1,18 @@
+{
+  "schema": "firestaff.dm1_v1_wall_collision_runtime_capture.v1",
+  "sourceEvidence": [
+    "DUNGEON.C:1371-1391 F0150 relative coordinate update",
+    "CLIKMENU.C:180-347 F0366 step dispatch and wall/door blocker path",
+    "MOVESENS.C:438-444 F0267 accepted movement coordinate mutation",
+    "DUNVIEW.C:8318-8618 F0128 viewport redraw from party map/x/y/direction",
+    "COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions",
+    "DRAWVIEW.C:842-857 F0097 presents G0296 through C007_ZONE_VIEWPORT"
+  ],
+  "honesty": "Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs; not an original DOS pixel-parity claim.",
+  "captures": [
+    {"label":"01_start_south_1_3","action":"start","result":1,"party":{"mapIndex":0,"mapX":1,"mapY":3,"direction":2},"pipeline":{"command":0,"turnApplied":0,"stepApplied":0,"movementBlocked":0,"viewportDirty":0},"screenshot":"01_start_south_1_3.ppm","viewportCrop":"01_start_south_1_3_viewport_224x136.ppm"},
+    {"label":"02_turn_right_west_1_3","action":"turn_right","result":1,"party":{"mapIndex":0,"mapX":1,"mapY":3,"direction":3},"pipeline":{"command":2,"turnApplied":1,"stepApplied":0,"movementBlocked":0,"viewportDirty":1},"screenshot":"02_turn_right_west_1_3.ppm","viewportCrop":"02_turn_right_west_1_3_viewport_224x136.ppm"},
+    {"label":"03_blocked_west_wall_1_3","action":"forward_into_west_wall","result":1,"party":{"mapIndex":0,"mapX":1,"mapY":3,"direction":3},"pipeline":{"command":3,"turnApplied":0,"stepApplied":0,"movementBlocked":1,"viewportDirty":0},"screenshot":"03_blocked_west_wall_1_3.ppm","viewportCrop":"03_blocked_west_wall_1_3_viewport_224x136.ppm"},
+    {"label":"04_forward_south_1_4","action":"turn_left_then_forward_south","result":1,"party":{"mapIndex":0,"mapX":1,"mapY":4,"direction":2},"pipeline":{"command":3,"turnApplied":0,"stepApplied":1,"movementBlocked":0,"viewportDirty":1},"screenshot":"04_forward_south_1_4.ppm","viewportCrop":"04_forward_south_1_4_viewport_224x136.ppm"}
+  ]
+}

@@ -293,6 +293,116 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Linux build verification (Ubuntu 24.04 x86_64 CMake/Ninja build, CI-equivalent smoke probes, and local DEB/RPM preview - docs/platform/linux-build-verification-20260520.md)
 - ✅ Windows build verification (GitHub Actions windows-2022/MSYS2 release job, ZIP, NSIS installer, and SHA256 published for v2.4.1 - docs/platform/windows-build-verification-20260520.md)
 
+
+## DM1 V1 — Source-Lock Audit (completed 2026-05-24/25)
+
+### Movement & Collision
+- ✅ Movement forward step — F0101/F0102 source-locked
+- ✅ Movement turning — F0100/F0128 flip parity verified
+- ✅ Movement timing — GAMELOOP pipeline source-locked
+- ✅ Movement collision — s_wall_specs[] flip parity verified
+
+### Creature System
+- ✅ Creature aspect table — s_aspects[27] C00-C26 vs ReDMCSB G0219
+- ✅ Creature projectile firing — F0823 vs GROUP.C F0207
+- ✅ Projectile draw order — s_thing_layers[] vs DUNVIEW.C:4567-4581
+- ✅ Door animation — F0717 via Pass 418 CMakeLists.txt gate
+- ✅ Door frame rendering — dm1_viewport_3d_draw_frame() per-cell G21xx
+- ✅ Wall bitmap rendering — s_wall_specs[] vs DUNVIEW.C:183
+
+### Champion System
+- ✅ Champion stat panel — F0351 vs PANEL.C:1965-2096
+- ✅ Champion bar graph — F0287 zone geometry C195-C206
+- ✅ Hall of Champions — C127→C026 portrait strip, click routing
+- ✅ C030/C031/C032 labels — PANEL.C:1594-1606 source-cited
+- ✅ Portrait sensorData — m11_game_view.c:8995 no portrait swap bug
+
+### Inventory & Items
+- ✅ Item description panel — PANEL.C:1444-1469
+- ✅ HUD status bar — 53 zones C195-C206, G0046 farger
+
+### Data Structures
+- ✅ DUNGEON.DAT — 11/11 categories source-locked (37a90a0f)
+- ✅ GRAPHICS.DAT — 713 entries, SHA 2c3aa836, F9012/F0488/F0490 verified
+
+### Audio/Triggers
+- ✅ Audio/creature runtime triggers — 35 sound events C00-C34 mapped
+- ✅ Dungeon music cue — G2039 confirmed, no creature-based combat music
+- ✅ Triggers/scripting — floor/wall sensors C000-C127, timeline, F0268-F0276
+
+### Systems
+- ✅ Combat system — hit/damage formula source-locked
+- ✅ AI behavior — creature FSM WANDER/ATTACK/APPROACH/FLEE source-locked
+- ✅ Menu system — startup/champion select/ingame source-locked
+- ✅ Overworld — no overworld in DM1 V1, entrance index 255
+- ✅ Network/serialization — 512-byte header, checksum pipeline
+- ✅ Performance — 60Hz VBLANK, GAMELOOP pipeline, chip/fast/heap memory
+- ✅ Platform/build — SDL2/SDL3 CMake alias, TITLE file discovery
+- ✅ Terrain/environment — 7 terrain types, square encoding, G0039 light table
+- ✅ Modding — no mod loader, checksum-obfuscation binary saves
+- ✅ Multiplayer — DM1 V1 NO multiplayer
+- ✅ Variants — I34E vs I34M confirmed, SHA256 locked
+- ✅ QA — 387 tests, 89% pass rate, BUG0_02 timeline overflow critical
+
+### Spells
+- ✅ DM1 V1 spells/magic — 25 spells, 4-step symbol grid, mana formula
+
+### Dungeon
+- ✅ DM1 V1 dungeon audit — map metadata, cell/wall/floor data, C006 generators
+- ✅ DM1 V1 triggers — events, conditional, puzzle, spawn, timer docs
+
+## CSB V1 — Source-Lock Audit (completed 2026-05-24/25)
+
+- ✅ CSB V1 deep audit — Grey Lord (0x1a) only new creature, 24 levels vs 14
+- ✅ CSB V1 source-lock — champions/combat/creatures/dungeon/graphics/items/mechanics
+- ✅ Key findings: BUG0_04 Lord Chaos palette NOT fixed, projectile speed normalization
+- ✅ Grey Lord encounter details documented
+- ✅ NEOPHYTE rank below NOVICE, reincarnation penalty changes
+
+## Nexus V1 — Source-Lock Audit (completed 2026-05-24/25)
+
+- ✅ Nexus overview/overview (Java/Android origin, 3D IsoEngine)
+- ✅ Nexus features — DMDF 3D models, CD audio, FMV, 16 levels
+- ✅ Nexus creatures — AI stub vs DM1 full system, SDDRVS.TSK
+- ✅ Nexus dungeon — 16 levels, 32×32 grid, DGN format
+- ✅ Nexus champions — Japanese roster, Ninja class, FACE.BIN
+- ✅ Nexus combat — 3-state patrol/chase/attack
+- ✅ Nexus AI — ~30-line Manhattan-distance stub
+- ✅ Nexus menus — VDP2 layers not emulated, FONT256.S2D glyph only
+- ✅ Nexus HUD — compass, movement arrows, stat bars not rendered
+- ✅ Nexus items — 30-slot inventory vs DM1 12, flask GAP
+- ✅ Nexus sound — CD-DA, SNDLEV*.SAL not reverse-engineered
+- ✅ Nexus triggers — SDDRVS.TSK scripting vs DM1 hardwired
+- ✅ Nexus modding — zero cheat codes, BUG0_02 overflow
+- ✅ Nexus platform — Saturn big-endian SH2, 30 FPS
+- ✅ Nexus QA — 0% test coverage, no disc image
+- ✅ Nexus save — NOT IMPLEMENTED
+- ✅ Nexus variants — Windows/Saturn/Java, English only
+
+## DM2 V1 — Source-Lock Audit (completed 2026-05-24/25)
+
+- ✅ DM2 overview/story/tech — SKULL.ASM 522K lines, Lord Dragoth boss
+- ✅ DM2 creatures — 64-entry AI index, companion/minion system
+- ✅ DM2 spells — 34 spells vs ~25 in DM1, minion summons
+- ✅ DM2 combat — hit/damage formula, 12 AI_ATTACK_FLAGS
+- ✅ DM2 save — SUPPRESS codec, 10 slots, no autosave
+- ✅ DM2 input — SDL keyboard/mouse, c_Tmouse FIFO
+- ✅ DM2 platform — CMake SKULLWIN/SKWINDOS, Allegro 5 + SDL 1.x
+- ✅ DM2 variants — English only, DOS/Win95/Android/iOS
+- ✅ DM2 AI — b_1a bytecode dispatch, companion loyalty system
+- ✅ DM2 modding — DMDC2/DM2GDED/DMute editors
+- ✅ DM2 QA — 0% test coverage, 7 source files no fixtures
+- ✅ DM2 network — single-player only, FSTP is Firestaff stub
+- ✅ DM2 dungeon — 30 levels, X-teleporter system, OUTDOOR/INDOOR/BUILDING
+- ✅ DM2 graphics — 8-bit VGA still, outdoor renderer, dual palettes
+- ✅ DM2 mechanics — Tech/Magic/Hybrid affinity, 24h day/night clock
+- ✅ DM2 items — 6 categories, tech_level gun gate, Merchant NPC AI 0x21
+- ✅ DM2 start-up — ANIM title, no FMV, SkCodeParam flags
+- ✅ DM2 sound — HMP/MIDI, GDAT2 V5 SFX, QUEUE_NOISE system
+- ✅ DM2 triggers — actuator records, gametick timeline
+- ✅ DM2 story — Torham Zed protagonist, 9-phase walkthrough
+- ✅ DM2 source — SKULL.ASM 16-layer module hierarchy, 16-bit memory model
+
 ## Recently Fixed (v2.0.0 → v2.4.0, 2026-05-19)
 
 - Champion mirror portrait, front-wall inscription, and viewport floor-object placement source-path cleanup (DUNVIEW.C/F0115/C2500, pass606)

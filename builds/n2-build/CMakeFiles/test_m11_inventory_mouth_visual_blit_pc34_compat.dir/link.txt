@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_m11_inventory_mouth_visual_blit_pc34_compat.dir/tests/test_m11_inventory_mouth_visual_blit_pc34_compat.c.o -o test_m11_inventory_mouth_visual_blit_pc34_compat  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

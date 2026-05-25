@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfirestaff_dm2_v2.a CMakeFiles/firestaff_dm2_v2.dir/src/dm2/dm2_v2_companion_ui.c.o CMakeFiles/firestaff_dm2_v2.dir/src/dm2/dm2_v2_outdoor_enhanced.c.o CMakeFiles/firestaff_dm2_v2.dir/src/dm2/dm2_v2_tech_crafting.c.o CMakeFiles/firestaff_dm2_v2.dir/src/dm2/dm2_v2_viewport_renderer.c.o
+/usr/bin/ranlib libfirestaff_dm2_v2.a

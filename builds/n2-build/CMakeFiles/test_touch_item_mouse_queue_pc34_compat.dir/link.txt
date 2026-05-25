@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_touch_item_mouse_queue_pc34_compat.dir/tests/test_touch_item_mouse_queue_pc34_compat.c.o -o test_touch_item_mouse_queue_pc34_compat  libfirestaff_m10.a 

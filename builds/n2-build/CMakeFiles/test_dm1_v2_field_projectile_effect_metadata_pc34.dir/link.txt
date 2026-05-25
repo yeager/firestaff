@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v2_field_projectile_effect_metadata_pc34.dir/tests/test_dm1_v2_field_projectile_effect_metadata_pc34.c.o -o test_dm1_v2_field_projectile_effect_metadata_pc34  libfirestaff_v2.a libfirestaff_m10.a -lm 

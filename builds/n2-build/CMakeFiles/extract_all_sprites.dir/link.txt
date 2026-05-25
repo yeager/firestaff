@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/extract_all_sprites.dir/tools/extract_all_sprites.c.o CMakeFiles/extract_all_sprites.dir/src/engine/firestaff_graphics_dat_reader.c.o -o extract_all_sprites  libfirestaff_m10.a 

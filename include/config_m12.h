@@ -86,3 +86,6 @@ void M12_Config_SetLastSavePath(const char* path);
 #endif
 
 #endif /* FIRESTAFF_CONFIG_M12_H */
+
+/* Bug-patch settings count */
+#define M12_BUG_PATCH_COUNT 9

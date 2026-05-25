@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/firestaff_dm1_v1_wall_composition_contract_probe.dir/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c.o -o firestaff_dm1_v1_wall_composition_contract_probe  libfirestaff_m10.a 

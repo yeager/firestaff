@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_endgame_system_pc34_compat.dir/tests/test_dm1_v1_endgame_system_pc34_compat.c.o CMakeFiles/test_dm1_v1_endgame_system_pc34_compat.dir/src/dm1/dm1_v1_endgame_system_pc34_compat.c.o -o test_dm1_v1_endgame_system_pc34_compat 

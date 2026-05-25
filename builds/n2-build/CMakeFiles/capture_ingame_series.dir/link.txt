@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG "CMakeFiles/capture_ingame_series.dir/verification-screens/capture_firestaff_ingame_series.c.o" -o capture_ingame_series  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

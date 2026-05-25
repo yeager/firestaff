@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfirestaff_csb_v2.a CMakeFiles/firestaff_csb_v2.dir/src/csb/csb_v2_chaos_enhanced.c.o CMakeFiles/firestaff_csb_v2.dir/src/csb/csb_v2_minimap.c.o CMakeFiles/firestaff_csb_v2.dir/src/csb/csb_v2_smooth_movement.c.o CMakeFiles/firestaff_csb_v2.dir/src/csb/csb_v2_viewport_renderer.c.o
+/usr/bin/ranlib libfirestaff_csb_v2.a

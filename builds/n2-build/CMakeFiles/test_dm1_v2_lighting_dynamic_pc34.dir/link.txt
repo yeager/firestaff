@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v2_lighting_dynamic_pc34.dir/tests/test_dm1_v2_lighting_dynamic_pc34.c.o CMakeFiles/test_dm1_v2_lighting_dynamic_pc34.dir/src/dm1v2/dm1_v2_lighting_dynamic_pc34.c.o CMakeFiles/test_dm1_v2_lighting_dynamic_pc34.dir/src/dm1v2/dm1_v2_anim_timing_pc34.c.o -o test_dm1_v2_lighting_dynamic_pc34  -lm 

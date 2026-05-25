@@ -1,0 +1,2 @@
+# Empty dependencies file for test_dm1_v1_object_interaction_pc34_compat.
+# This may be replaced when dependencies are built.

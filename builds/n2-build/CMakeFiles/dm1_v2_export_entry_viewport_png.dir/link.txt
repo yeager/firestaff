@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/dm1_v2_export_entry_viewport_png.dir/tools/dm1_v2_export_entry_viewport_png.c.o CMakeFiles/dm1_v2_export_entry_viewport_png.dir/src/dm1v2/dm1_v2_viewport_renderer_pc34.c.o -o dm1_v2_export_entry_viewport_png 

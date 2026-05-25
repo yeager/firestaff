@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_menu_hit_launch_direct_click_m12.dir/tests/test_menu_hit_launch_direct_click_m12.c.o -o test_menu_hit_launch_direct_click_m12  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

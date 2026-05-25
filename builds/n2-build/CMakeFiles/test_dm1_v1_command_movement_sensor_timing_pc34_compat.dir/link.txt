@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_command_movement_sensor_timing_pc34_compat.dir/tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c.o -o test_dm1_v1_command_movement_sensor_timing_pc34_compat  libfirestaff_m10.a 

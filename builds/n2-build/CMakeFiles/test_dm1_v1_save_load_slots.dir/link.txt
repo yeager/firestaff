@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_save_load_slots.dir/tests/test_dm1_v1_save_load_slots.c.o CMakeFiles/test_dm1_v1_save_load_slots.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o -o test_dm1_v1_save_load_slots  libfirestaff_m10.a 

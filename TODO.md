@@ -11,6 +11,10 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM1 V1 — Core Gameplay
 
+  **✅ AUDIT COMPLETE (2026-05-24/25)** — All core gameplay systems source-locked and documented. See DONE.md for full list.
+  **🔧 REMAINING: Implementation phases (V2.0-V2.2)** — See V2 sections below.
+
+
 ### Movement & Collision
 
 ### Creature System
@@ -37,6 +41,10 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 7 — V2 verification suite: side-by-side V1/V2 deterministic probes proving identical gameplay state hashes for the same input script plus screenshot/pixel gates for V2 presentation
 
 ## CSB V1 (Chaos Strikes Back)
+
+  **✅ AUDIT COMPLETE (2026-05-24/25)** — All CSB V1 systems source-locked and documented in docs/source-lock/csb*.md and docs/.
+  **🔧 REMAINING: Implementation phases (Phase 1-7)** — See TODO below.
+
 
 - ❌ Phase 1 — Boot/profile split: separate CSB runtime profile from DM1, including asset discovery, menu launch, save namespace, deterministic config, and variant-specific diagnostics
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics

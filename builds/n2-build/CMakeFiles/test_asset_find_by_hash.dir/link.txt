@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_asset_find_by_hash.dir/tests/test_asset_find_by_hash.c.o -o test_asset_find_by_hash  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

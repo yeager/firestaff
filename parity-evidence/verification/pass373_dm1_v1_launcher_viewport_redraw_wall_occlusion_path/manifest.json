@@ -178,7 +178,7 @@
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"1.8.1\") \n-- Found SDL3\n-- Configuring done (0.6s)\n-- Generating done (0.2s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"1.8.1\") \n-- Found SDL3\n-- Configuring done (0.7s)\n-- Generating done (0.2s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "5cb2e223783a2dd0fdbdc3af64ef4c3ed09192cc",
+  "head": "e4a91520fa36b2578d580a51066a8419d24489d0",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-05-24T23:15:53.885686+00:00"
+  "timestampUtc": "2026-05-24T23:19:17.850671+00:00"
 }

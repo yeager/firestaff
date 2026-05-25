@@ -7,15 +7,15 @@
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
-      "ok": true,
+      "ok": false,
       "path": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
+      "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
     },
     {
       "id": "pass374-completion-credit-green",
-      "ok": true,
+      "ok": false,
       "path": "parity-evidence/verification/pass374_dm1_v1_completion_viewport_wall_credit/manifest.json",
-      "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED"
+      "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT"
     },
     {
       "id": "completion-matrix-current-after-pass374",
@@ -126,5 +126,5 @@
   },
   "repo": "/home/trv2/work/firestaff",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
-  "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
+  "status": "FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT"
 }

@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_entrance_runtime_dispatch_source_lock.dir/tests/test_entrance_runtime_dispatch_source_lock.c.o -o test_entrance_runtime_dispatch_source_lock  -Wl,-rpath,/usr/local/lib libfirestaff_m12.a libfirestaff_m11.a libfirestaff_m12.a libfirestaff_m10.a libfirestaff_m11.a libfirestaff_m10.a /usr/local/lib/libSDL3.so.0.2.24 -lm 

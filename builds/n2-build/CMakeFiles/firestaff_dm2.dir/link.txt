@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfirestaff_dm2.a CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_combat.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_companion.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_dungeon_loader.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_game.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_outdoor_renderer.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_save_load.c.o CMakeFiles/firestaff_dm2.dir/src/dm2/dm2_v1_tech_magic.c.o
+/usr/bin/ranlib libfirestaff_dm2.a

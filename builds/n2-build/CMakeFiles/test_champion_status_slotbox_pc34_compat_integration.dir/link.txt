@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_champion_status_slotbox_pc34_compat_integration.dir/tests/test_champion_status_slotbox_pc34_compat_integration.c.o -o test_champion_status_slotbox_pc34_compat_integration  libfirestaff_m10.a 

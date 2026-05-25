@@ -177,6 +177,7 @@ typedef struct {
     int gameSpeed;
     int aspectRatio;
     int resolution;
+    int bug_patches[M12_BUG_PATCH_COUNT];
 } M12_GameOptions;
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts);

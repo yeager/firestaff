@@ -1,0 +1,2 @@
+# Empty dependencies file for firestaff_m11_wall_collision_capture_probe.
+# This may be replaced when dependencies are built.
