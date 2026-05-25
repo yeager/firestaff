@@ -929,17 +929,45 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
         bool flip_h = false;
         DM1_WallSetIndex wall_idx = dm1_viewport_3d_select_wall_bitmap(
             spec, state->parity_flip, &flip_h);
-        (void)wall_idx;
 
-        /* Locate bitmap row for this spec (matches s_wall_draw_specs order) */
-        size_t spec_idx = 0;
-        for (size_t j = 0; j < dm1_viewport_3d_wall_draw_spec_count(); ++j) {
-            const DM1_ViewportWallDrawSpec *s = dm1_viewport_3d_get_wall_draw_spec(j);
-            if (s && s->square == step->square) { spec_idx = j; break; }
+        /* Compute bitmap pointer from wall_idx.
+         * G2107_WallSet[wall_idx] is negative (e.g. -3 for D3L2),
+         * bm_base is the base of the wall bitmap array in G2107 ordinal order.
+         * state->wall_set[] / state->wall_set_flipped[] hold these indices.
+         * For D0L/D0R the wall set entry already encodes the correct bitmap
+         * offset; for other positions we use the G2107 entry directly.
+         *
+         * D0L/D0R don't use G2107 door frame bitmaps -- they use the regular
+         * wall set, with D0L using C0x0002 order (DUNVIEW.C:8005) and D0R
+         * using C0x0001 (DUNVIEW.C:8115).  They use wall_set_flipped/native
+         * per the parity flag (DUNVIEW.C:8016-8038 D0L, 8126-8139 D0R).
+         *
+         * Reference: ReDMCSB DEFS.H G2107 zone (MEDIA720_I34E):
+         *   D0R=-17, D0L=-16, D1R=-15, D1L=-14, D1C=-13,
+         *   D2R2=-9, D2L2=-8, D2R=-12, D2L=-11, D2C=-10,
+         *   D3R2=-4, D3L2=-3, D3R=-7, D3L=-6, D3C=-5
+         */
+        const uint8_t *wall_bmp = NULL;
+        if (step->square == DM1_VIEW_SQUARE_D0L || step->square == DM1_VIEW_SQUARE_D0R) {
+            /* D0L/D0R: use wall_set_flipped (parity) or wall_set_native (native).
+             * ReDMCSB DUNVIEW.C:8016-8033 (D0L), 8126-8139 (D0R).
+             * wall_idx from select_wall_bitmap() already encodes D0L/D0R indices. */
+            int16_t ws_idx = state->parity_flip
+                ? state->wall_set_flipped[wall_idx]
+                : state->wall_set_native[wall_idx];
+            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
+        } else {
+            /* D3L2/D3R2/D2L2/D2R2: use G2107-derived bitmap offset.
+             * The G2107 wall set indices (-3, -4, -8, -9 etc.) directly
+             * index into the bm_base bitmap array. */
+            int16_t ws_idx = state->parity_flip
+                ? state->wall_set_flipped[wall_idx]
+                : state->wall_set_native[wall_idx];
+            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
         }
-        const uint8_t *wall_bmp = bm_base + (int)spec_idx * BMP_STRIDE;
+
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(step->square);
-        if (!fr) continue;
+        if (!fr || !wall_bmp) continue;
 
         /* F0105 (flipped) -> copy+flip to temp then blit
          * F0100/F0104 (native) -> direct blit */
