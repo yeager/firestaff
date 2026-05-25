@@ -1,271 +1,188 @@
-# Dungeon Master Nexus V1 — Items vs DM1/DM2/CSB
+# Nexus V1 — Item System: Categories and Types
 
-## Sources
-- `src/nexus/nexus_v1_combat.c` (weapon_power, defense in combat formula)
-- `src/nexus/nexus_v1_champions.c` (champion roster, no item refs)
-- `docs/NEXUS_FILE_CLASSIFICATION.md` (item-related file list)
-- DM1 item system from ReDMCSB equivalents
-- `docs/spells_items.md` (DM1 V1 spell items reference)
+**Audit date:** 2026-05-25
+**Sources:** `include/firestaff_item_encyclopedia.h`, `src/ui/firestaff_item_encyclopedia.c`, `include/firestaff_inventory_ui.h`, `src/nexus/nexus_v1_champions.c`, `src/nexus/nexus_v1_combat.c`, `docs/nexus_combat_items.md`
 
 ---
 
-## Overview
+## 1. Item Categories
 
-Nexus inherits the **DM1 item system** without major additions. Items in Nexus
-follow the same categories and behavior as DM1 (weapons, armor, consumables,
-magic items, dungeon objects). The primary difference is that Nexus items
-are rendered in the 3D viewport (e.g., dropped items on the floor are
-3D-projected) rather than as 2D sprites.
+Nexus V1 defines 7 item categories via `FS_ItemCategory`:
 
-No dedicated `nexus_v1_items.c` exists — item logic is embedded in combat
-and dungeon systems, mirroring DM1's structure.
+| Enum Value | Category | Notes |
+|---|---|---|
+| `FS_ITEM_CAT_WEAPON` | Weapons | Melee, ranged, thrown |
+| `FS_ITEM_CAT_ARMOR` | Armor | Body, shields, helmets, boots |
+| `FS_ITEM_CAT_POTION` | Potions | Consumable stat boosters |
+| `FS_ITEM_CAT_SCROLL` | Scrolls | Spell containers (CSB/DM2 carried forward) |
+| `FS_ITEM_CAT_CONTAINER` | Containers | Chests, sacks |
+| `FS_ITEM_CAT_MISC` | Misc | Torch, compass, food, flasks, etc. |
+| `FS_ITEM_CAT_KEY` | Keys | Gold, silver, skeleton keys |
 
-| Aspect | DM1 | CSB | DM2 | Nexus |
-|--------|-----|-----|-----|-------|
-| Item categories | Weapons, Armor, Consumables, Dungeon Objects | Same + Scrolls, Wands | Same + more | **Same as DM1** |
-| Item rendering | 2D sprite | 2D sprite | 2D sprite | **3D viewport projection** |
-| Inventory slots | 12 per champion | 12 | 12 | **12 per champion** |
-| Hand slots | 2 (action + shield) | 2 | 2 | **2 (same)** |
-| Potion system | Flask-based 10 spells | Same | Same + more | **Same as DM1** |
-| New item types | None | Scrolls, Wands added | More magic items | **None (DM1-based)** |
+Source: `include/firestaff_item_encyclopedia.h`, `src/ui/firestaff_item_encyclopedia.c`
 
 ---
 
-## Item Categories in Nexus (DM1 Inheritance)
+## 2. Item Entry Structure
 
-### 1. Weapons
-
-Weapons are equipped in the action hand and provide `weapon_power` to the
-combat formula. Nexus inherits DM1's weapon roster:
-
-| Weapon Type | DM1 Power | Nexus Notes |
-|-------------|-----------|-------------|
-| Dagger | 2-4 | Lowest damage, fast |
-| Short Sword | 4-6 | Common starting weapon |
-| Hand Axe | 5-7 | Moderate |
-| Broad Sword | 7-9 | Better damage |
-| katana | 8-12 | High-end |
-| Two-Handed Sword | 10-14 | Max physical damage |
-| Spear | 6-8 | Reach advantage |
-| Staff | 1-3 | Low, Wizard can use |
-
-Combat formula (from `nexus_v1_combat.c`):
 ```c
-damage = weapon_power + str_bonus + rng(str_bonus);
+typedef struct {
+    const char *name;
+    FS_ItemCategory category;
+    const char *description;
+    int weight;
+    int attack;     /* 0 for non-weapons */
+    int defense;    /* 0 for non-armor */
+} FS_ItemEntry;
 ```
 
-Where `weapon_power` comes from the equipped item and `str_bonus` is the
-champion's Strength stat.
+This is a **shared Firestaff UI structure**, not specific to Nexus V1. It is used
+by the item encyclopedia UI to display item stats. The Nexus V1 core (in `src/nexus/`)
+does not use this struct — it passes raw `weapon_power` and `defense` integers directly
+to the combat function.
 
-Source: `nexus_v1_combat.c` (`nexus_v1_attack`).
+Source: `include/firestaff_item_encyclopedia.h`
 
 ---
 
-### 2. Armor
+## 3. Complete Item Roster
 
-Armor is equipped in the shield/armor slot and provides `defense` to reduce
-incoming damage. Nexus inherits DM1's armor roster:
+The item encyclopedia (`src/ui/firestaff_item_encyclopedia.c`) defines the following
+representative items, drawn from the general DM franchise:
 
-| Armor Type | DM1 Defense | Nexus Notes |
-|------------|-------------|-------------|
-| Leather Armor | 2-4 | Light, common |
-| Chain Mail | 5-8 | Medium |
-| Plate Mail | 9-12 | Heavy, high defense |
-| Magic Armor | 12-18 | Enchanted variants |
-| Shield | +2-4 | Additional defense when equipped |
+### Weapons
 
-Defense formula (from `nexus_v1_combat.c`):
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Falchion | 30 | 0 | 18 |
+| Rapier | 24 | 4 | 14 |
+| Mace | 32 | 0 | 30 |
+| Club | 16 | 0 | 20 |
+| Staff | 10 | 2 | 12 |
+| Sword | 34 | 2 | 22 |
+| Axe | 36 | 0 | 26 |
+| Dagger | 14 | 0 | 6 |
+| Arrow | 10 | 0 | 1 |
+| Slayer | 50 | 6 | 28 |
+| Vorpal Blade | 48 | 4 | 20 |
+| Firestaff | 40 | 10 | 16 |
+
+### Armor
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Leather Jerkin | 0 | 8 | 8 |
+| Mail Aketon | 0 | 14 | 24 |
+| Plate Armor | 0 | 22 | 40 |
+| Shield | 0 | 12 | 16 |
+| Helmet | 0 | 6 | 10 |
+| Boots | 0 | 4 | 6 |
+
+### Potions
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Health Potion | 0 | 0 | 2 |
+| Mana Potion | 0 | 0 | 2 |
+| Stamina Potion | 0 | 0 | 2 |
+| Antidote | 0 | 0 | 2 |
+
+### Scrolls
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Scroll | 0 | 0 | 1 |
+
+### Containers
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Chest | 0 | 0 | 10 |
+| Sack | 0 | 0 | 2 |
+
+### Keys
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Gold Key | 0 | 0 | 1 |
+| Silver Key | 0 | 0 | 1 |
+| Skeleton Key | 0 | 0 | 1 |
+
+### Misc
+
+| Name | Attack | Defense | Weight |
+|---|---|---|---|
+| Torch | 8 | 0 | 6 |
+| Compass | 0 | 0 | 2 |
+| Rabbit Foot | 0 | 0 | 1 |
+| Corn | 0 | 0 | 3 |
+| Water Flask | 0 | 0 | 4 |
+
+---
+
+## 4. No Dedicated Nexus V1 Item File
+
+Nexus V1 has **no `nexus_v1_items.c`** source file. Item logic is distributed:
+
+| File | Role |
+|---|---|
+| `src/nexus/nexus_v1_combat.c` | Weapon power and defense in combat formula |
+| `src/nexus/nexus_v1_magic.c` | Flask/potion crafting (inherited from DM1) |
+| `src/nexus/nexus_v1_champions.c` | Champion struct with inventory array |
+| `src/ui/firestaff_item_encyclopedia.c` | UI-facing item encyclopedia (shared) |
+| `include/firestaff_inventory_ui.h` | Inventory UI layout and item structures |
+
+The `Nexus_V1_Champion` struct holds items as:
 ```c
-def_reduce = defense / 2 + rng(defense / 2);
-final_damage = raw_damage - def_reduce;
+uint8_t inventory[30];  /* item indices — 30 slots, not DM1s 12 */
 ```
 
-Where `defense` comes from equipped armor/shield. Note: this differs from
-DM1's defense formula (Nexus uses `defense / 2 + RNG` vs DM1's exact formula).
-
-Source: `nexus_v1_combat.c` (`nexus_v1_attack`).
+Source: `include/nexus_v1_champions.h` (30-slot inventory, differs from DM1s 12-slot grid)
 
 ---
 
-### 3. Consumables (Potions and Flask System)
+## 5. Category Access Functions
 
-Nexus inherits the **DM1 flask-based potion system**:
-
-**Potion spells (10 spells requiring empty flask in hand):**
-
-| Spell | Symbols | Effect | Flask Consumed |
-|-------|---------|--------|---------------|
-| STRENGTH POTION | Ful Bro Ku | Temp STR boost | Yes |
-| WISDOM POTION | Ya Bro Dain | Temp WIS boost | Yes |
-| VITALITY POTION | Ya Bro Neta | Temp VIT boost | Yes |
-| HEALTH POTION | Vi | Heal missing HP | Yes |
-| CURE POISON POTION | Vi Bro | Remove poison | Yes |
-| DEXTERITY POTION | Oh Bro Ros | Temp DEX boost | Yes |
-| MANA POTION | Zo Bro Ra | Restore mana | Yes |
-| STAMINA POTION | Ya | Restore stamina | Yes |
-| POISON POTION | Zo Ven | Poison target | Yes |
-| SHIELD POTION | Ya Bro | Shield defense | Yes |
-
-Casting requires empty flask in hand. Flask is consumed on success,
-potion item is created, then potion is consumed separately for the effect.
-
-Pre-placed dungeon potions (found bottles, not crafted):
-- Health Potion (restore HP)
-- Mana Potion (restore mana)
-- Poison (damage champion)
-- Water Flask (quenches thirst)
-
-All consumed potion bottles become empty flasks (C195/C20) — reusable reagent.
-
-Source: `docs/spells_items.md` (DM1 V1), `nexus_v1_magic.c` (inherited).
-
----
-
-### 4. Magic Items
-
-Magic items in Nexus (same as DM1):
-
-| Item | Effect | Notes |
-|------|--------|-------|
-| Magic Map (Illumulet) | Required for MAGIC MAP spell | Held in action hand |
-| Torch / Candle | Light source | Illuminates dungeon |
-| Goggles | See in dark | Extended vision |
-| Amulet of Purity | Anti-poison | Resist poison attacks |
-| Ring of Protect | Extra defense | Equipped in ring slot |
-| Scrolls (CSB+) | Not in DM1/V1 | Added in CSB, likely absent in Nexus |
-| Wands (CSB+) | Not in DM1/V1 | Added in CSB, likely absent in Nexus |
-
-Nexus does NOT add new magic items vs DM1. Scrolls and wands (introduced in
-CSB) are not confirmed present in Nexus — DM1 had no scroll/wand system.
-
-Source: `docs/spells_items.md` (DM1 V1 scroll/wand absence).
-
----
-
-### 5. Dungeon Objects (Interactive)
-
-Dungeon objects are not inventory items but interact with champions:
-
-| Object | Interaction | Notes |
-|--------|-------------|-------|
-| Fountain | Fill empty flask | Creates water flask |
-| Pressure Plate | Trigger events | Activates traps/doors |
-| Lever | Toggle doors | Puzzle element |
-| Teleport Square | Warp champion | Damages HP on arrival |
-| Pit | Fall damage | Open or covered |
-| Chest | Contains items | May be trapped |
-| Rune Inscription | Cast spell | 4-symbol system |
-
----
-
-## Inventory System (12 Slots + 2 Hands)
-
-Each champion has:
-- **12 inventory slots** (grid/bag space)
-- **2 hand slots**: Action hand (weapon/tool) + Shield hand (armor/shield)
-- **2 ring slots** (left/right)
-- **2 amulet slots** (neck)
-
-Max party: 4 champions × 12 slots = 48 item slots total.
-
-Item weight affects champion movement speed (encumbrance system).
-Food and water are stored separately (not in inventory slots).
-
-Source: DM1 inventory system (inherited by Nexus).
-
----
-
-## Item Rendering: 3D vs 2D
-
-| Aspect | DM1/DM2/CSB | Nexus |
-|--------|-------------|-------|
-| Item sprites | 2D sprite sheets | **3D geometry projected into viewport** |
-| Floor items | Sprite at position | **3D-projected model at world coords** |
-| Champion items | Panel sprite | **3D viewport; panel shows stat/value only** |
-| Weapon swing | Sprite animation | **3D model animation in viewport** |
-
-Dropped items on the dungeon floor are now 3D-projected objects in the
-viewport, replacing DM1's 2D sprite representation. The item type/quality
-determines its 3D model (weapons, armor, potions each have distinct shapes).
-
----
-
-## Weapon/Armor Stats in Nexus Combat
-
-From `nexus_v1_combat.c`:
 ```c
-int nexus_v1_attack(Nexus_V1_Champion *attacker, int weapon_power, int defense) {
-    int damage, str_bonus, def_reduce;
-    str_bonus = attacker->strength / 4;
-    damage = weapon_power + str_bonus + rng(str_bonus);
-    def_reduce = defense / 2 + rng(defense / 2);
-    return damage - def_reduce;
-}
+int fs_item_encyclopedia_count(void);
+const FS_ItemEntry *fs_item_encyclopedia_get(int index);
+int fs_item_encyclopedia_count_in_category(FS_ItemCategory cat);
+const char *fs_item_category_name(FS_ItemCategory cat);
 ```
 
-Parameters:
-- `weapon_power`: from equipped weapon item
-- `defense`: from equipped armor/shield
-- `strength_bonus`: champion's STR stat / 4
-- `def_reduce`: defense / 2 + random(0 to defense/2)
+These functions provide read-only access to the static item encyclopedia.
+They are used by the UI layer for the in-game item browser/encyclopedia.
 
-Note: DM1 used a different defense formula. Nexus's `defense / 2 + RNG`
-gives a more variable damage reduction vs DM1's more deterministic model.
+Source: `src/ui/firestaff_item_encyclopedia.c`
 
 ---
 
-## What's NEW in Nexus Item System
+## 6. Nexus V1 vs DM1 vs DM2
 
-1. **3D viewport rendering** — items projected as 3D geometry in first-person
-   view instead of 2D sprites; dropped items on floor are 3D objects
-2. **No new item types** — Nexus adds nothing new vs DM1 items (no scrolls,
-   wands, or new magic items beyond DM1's base set)
-3. **Per-level item placement** — DM1 had global item spawns; Nexus's level
-   scripts (SLEV*.BIN) may control per-level item placement
+| Aspect | DM1 | Nexus V1 | DM2 |
+|---|---|---|---|
+| Item categories | 6 | 7 (scrolls added) | 7+ (scrolls, tech) |
+| Inventory slots/champion | 12 | **30** (`uint8_t[30]`) | 12 |
+| Hand slots | 2 | 2 | 2 |
+| Flask system | Yes | Yes (inherited) | Yes (inherited) |
+| Scroll system | No | **Yes** (carried from CSB) | Yes |
+| Tech items | No | No | Yes |
+| Gun/bomb weapons | No | No | Yes |
+| New rings/amulets | No | No | Yes |
+| Item encyclopedia UI | No | Yes | Yes |
 
----
-
-## What's the Same as DM1
-
-- All weapon and armor types (same damage/defense values)
-- Flask-based potion crafting (10 spells, empty flask reagent)
-- 12-slot inventory per champion
-- Food/water resource model (separate from inventory)
-- Champion can carry up to ~400 lbs before slowed
-- Dungeon objects (fountains, levers, pressure plates, teleporters, pits)
-
----
-
-## What's MISSING vs DM2
-
-DM2 added many items not present in Nexus:
-- Scrolls (CSB/DM2): spell items usable by any champion
-- Wands (CSB/DM2): limited-use spell devices
-- New magic items (rings, amulets with special properties)
-- Enhanced weapon/armor variants
-- Quest-specific items with unique effects
-
-Nexus is a DM1 visual remake — it does not incorporate DM2's expanded
-item roster. The DM2 Ninja class was added to Nexus, but DM2's scroll/wand
-system was not.
-
----
-
-## File References
-
-No dedicated items file in Nexus. Item data is distributed across:
-- `nexus_v1_combat.c` — weapon_power, defense in attack formula
-- `nexus_v1_dungeon.c` — dungeon object interactions
-- `nexus_v1_magic.c` — potion spell crafting (inherited from DM1)
-- DM1 item definitions — used directly (same item types, same stats)
-
-Source: `src/nexus/` (no nexus_v1_items.c exists).
+**Notable:** Nexus V1's `inventory[30]` array is **larger than DM1's 12 slots**.
+This may be a Firestaff extension of the champion struct, or it may include
+hand/ring/amulet slots as part of the 30-element array. No dedicated
+Nexus V1 inventory-management code was found in the source audit.
 
 ---
 
 ## Status: PARTIALLY SOURCE-LOCKED
 
-Weapon/armor stats are from `nexus_v1_combat.c` (explicit formula).
-Potion system is inherited from DM1 (no Nexus-specific potion code).
-No dedicated items source file — item logic is embedded in combat/dungeon/magic.
-No byte verification of actual item data from ISO.
+- Category enum and item roster: **source-locked** — `firestaff_item_encyclopedia.c`
+- Champion inventory array: **source-locked** — `nexus_v1_champions.h` (`uint8_t inventory[30]`)
+- Combat integration (weapon_power, defense): **source-locked** — `nexus_v1_combat.c`
+- Flask/potion magic: **inherited** from DM1 patterns in `nexus_v1_magic.c`
+- Item encyclopedia UI functions: **source-locked** — `firestaff_item_encyclopedia.c`
+- **NOTE:** 30-slot inventory vs DM1's 12-slot — Firestaff extension, needs verification
