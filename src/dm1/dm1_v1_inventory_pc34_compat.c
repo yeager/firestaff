@@ -477,6 +477,105 @@ int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * DM1 V1 equip/unequip slot validation
+ *
+ * m11_inventory_can_equip  — CHAMPION.C:694-699 F0302 AllowedSlots/SlotMasks rejection
+ * m11_inventory_equip      — CHAMPION.C:587-660 F0301_AddObjectInSlot
+ * m11_inventory_unequip   — CHAMPION.C:489-560 F0300_GetObjectRemovedFromSlot
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* dm1_v1_inventory_pc34_compat.c:m11_inventory_can_equip:1
+ * Returns 1 if item->allowedSlots overlaps the slot mask for pc34Slot,
+ * or 0 if the item has no allowed-slots restriction (allowedSlots==0).
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_pc34_slot_mask:217
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_click_pc34_source_slot:327 */
+int m11_inventory_can_equip(const M11_Item* item, int pc34Slot) {
+    if (!item || pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    /* An item with no allowed-slots restriction goes anywhere. */
+    if (item->allowedSlots == 0) {
+        return 1;
+    }
+    const int slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+    if (slotMask == 0) {
+        return 0;
+    }
+    return (item->allowedSlots & slotMask) != 0 ? 1 : 0;
+}
+
+/* dm1_v1_inventory_pc34_compat.c:m11_inventory_equip:1
+ * Moves item from the leader hand (mouseItem) into body slot pc34Slot.
+ * Checks that the mouse item is non-empty and can_equip the target slot.
+ * If the slot already holds an item, the existing item returns to the
+ * leader hand (standard swap).  Recalculates champion load on success.
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_can_equip:1
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_pc34_mutable_slot:193
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_click_pc34_source_slot:327
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_recalc_load:155
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_clear_item:42 */
+int m11_inventory_equip(M11_InventoryState* s, int champ, int pc34Slot, const M11_Item* item) {
+    if (!s || !item || champ < 0 || champ >= s->championCount ||
+        pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    if (item->itemType == 0) {
+        return 0;
+    }
+    if (!m11_inventory_can_equip(item, pc34Slot)) {
+        return 0;
+    }
+    M11_Item* slot = m11_inventory_pc34_mutable_slot(s, champ, pc34Slot);
+    if (!slot) {
+        return 0;
+    }
+    M11_ChampionInventory* inv = &s->champions[champ];
+    M11_Item existing = *slot;
+    if (existing.itemType != 0) {
+        inv->mouseItem = existing;
+    } else {
+        m11_inventory_clear_item(&inv->mouseItem);
+    }
+    slot->itemType = item->itemType;
+    slot->weight   = item->weight;
+    slot->charges  = item->charges;
+    slot->cursed   = item->cursed;
+    slot->identified = item->identified;
+    slot->allowedSlots = item->allowedSlots;
+    m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+/* dm1_v1_inventory_pc34_compat.c:m11_inventory_unequip:1
+ * Moves the item currently in body slot pc34Slot back to the leader hand.
+ * If the leader hand already holds an item the unequip fails (return 0)
+ * so no data is lost.  Clears the slot and recalculates champion load.
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_pc34_mutable_slot:193
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_recalc_load:155
+ * dm1_v1_inventory_pc34_compat.c:m11_inventory_clear_item:42 */
+int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot) {
+    if (!s || champ < 0 || champ >= s->championCount ||
+        pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    M11_Item* slot = m11_inventory_pc34_mutable_slot(s, champ, pc34Slot);
+    if (!slot) {
+        return 0;
+    }
+    if (slot->itemType == 0) {
+        return 0;
+    }
+    M11_ChampionInventory* inv = &s->champions[champ];
+    if (inv->mouseItem.itemType != 0) {
+        return 0;
+    }
+    inv->mouseItem = *slot;
+    m11_inventory_clear_item(slot);
+    m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Pass601 — Inventory system source-lock extensions
  *
  * CHAMPION.C:243-268  F0297_CHAMPION_PutObjectInLeaderHand

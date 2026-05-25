@@ -169,6 +169,9 @@ int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int c
                                          int itemType, int weight, int charges, int allowedSlots);
 int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
                                          int chestSlotIndex, M11_Item* out);
+int m11_inventory_can_equip(const M11_Item* item, int pc34Slot);
+int m11_inventory_equip(M11_InventoryState* s, int champ, int pc34Slot, const M11_Item* item);
+int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot);
 
 #ifdef __cplusplus
 }
