@@ -161,3 +161,12 @@ Status per 2026-05-19 v2.4.0.
 ## Known Bugs (need repro)
 
 1. No open wall/collision report without a capture manifest. Use the DM1 V1 wall/collision runtime capture gate for exact map/x/y/direction and screenshots before accepting new reports.
+
+## DM1 V1 — GAP Fixes (2026-05-25)
+
+- 🔧 Save/load integration — wire DM1_SaveGame/LoadGame to menu/input; add m11_sl_* slot picker callers; implement G2018 quit-guard prompt
+- 🔧 Item pickup wiring — add m11_inventory_can_pickup(); wire m11_obj_pickup() to viewport click path; add pickup command bridging
+- 🔧 Object interaction — replace m11_obj_use() stub with real implementation delegating to dm1_inventory_consume_potion_pc34 etc.
+- 🔧 Group management wiring — call m11_group_add_active() from sensor_trigger when C006 triggers; wire C006/F0267 chain
+- 🔧 Teleporter wiring — connect m11_check_teleporter() to movement_pipeline; add F0267 activation calls from sensor_trigger
+

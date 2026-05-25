@@ -458,3 +458,16 @@ Status per 2026-05-19 v2.4.0.
 
 - ✅ DUNGEON.DAT all data structures — 11/11 categories source-locked; committed (37a90a0f)
 - ✅ GRAPHICS.DAT loading pipeline — 713 entries, SHA 2c3aa836..., F9012/F0488/F0490 verified; all asset families source-locked
+
+### DM1 V1 — Audit Findings 2026-05-25
+
+- ✅ Inventory equip/unequip — m11_inventory_can_equip/equip/unequip slot validation added; CHAMPION.C F0300-F0302 source citations; committed (a85fb55d)
+- ✅ Save/load serialization — DM1_SaveGame/LoadGame via F0897_WORLD_Serialize_Compat complete; champions/inventory/stats serialized; dungeon state correctly excluded from save blob
+- ✅ Item pickup API — m11_obj_examine/pickup/drop exist; m11_inventory_pickup_mouse() exists (line 107)
+- ⚠️ Save/load integration GAP — DM1_SaveGame/LoadGame never called from any input handler or menu; m11_sl_* slot infrastructure has ZERO callers; G2018 quit-guard not found; 512-byte header replaced by 64-byte CRC32 (not original-compatible)
+- ⚠️ Item pickup wiring GAP — m11_inventory_pickup_mouse() no backpack capacity check; m11_inventory_can_pickup() absent; m11_obj_pickup() defined but not wired into viewport click path; no pickup command bridging viewport click → inventory
+- ⚠️ Object interaction GAP — m11_obj_use() is a stub (checks usable flag only, no stat effects); zero call sites outside own definition; module registered in engine manifest but no input/champion-action integration
+- ⚠️ Group management GAP — m11_group_add_active() defined in group_management_pc34_compat.c but NEVER called from sensor_trigger, game_loop, or any other module; C006/F0267 group spawning not wired
+- ⚠️ Teleporter wiring GAP — ALL 10 public API functions in dm1_v1_teleporter_pit_pc34_compat.c are ORPHANED; F0267 referenced in comments but no actual calls exist from movement_pipeline or game_loop
+- ✅ HUD status bar — GAP documented: DM1 V1 top strip (dungeon name/floor/clock/gold/food/water) does not exist in ReDMCSB source; DM2/CSB feature only; not a Firestaff gap
+
