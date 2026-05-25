@@ -9332,6 +9332,30 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     if (!state || !state->active) return 0;
     if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) return 0;
 
+    /* Pre-flight: active champion must have a free inventory slot.
+     * Source: CHAMPION.C:694 F0302 empty-slot guard.
+     * CLIKVIEW.C F0373: grab only succeeds if leader hand is empty and
+     * a free slot exists in the active champion inventory. */
+    if (state->world.party.activeChampionIndex >= 0 &&
+        state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY) {
+        struct ChampionState_Compat* champ =
+            &state->world.party.champions[state->world.party.activeChampionIndex];
+        if (champ->present) {
+            int slot;
+            int hasFree = 0;
+            for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+                if (champ->inventory[slot] == THING_NONE) {
+                    hasFree = 1;
+                    break;
+                }
+            }
+            if (!hasFree) {
+                m11_set_status(state, "PICKUP", "INVENTORY FULL");
+                return 0;
+            }
+        }
+    }
+
     memset(&cell, 0, sizeof(cell));
     if (viewCell >= 2) {
         /* Cells 2,3 = front cell (back-right/back-left of front square) */

@@ -2,6 +2,7 @@
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -266,7 +267,10 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
     if (!art) {
         return;
     }
-    if (!gameId) {
+    /* Guard against garbage gameId (non-NULL but invalid pointer).
+     * Corrupted pointers are often in kernel-space range (>0xFFFF000000000000).
+     * strlen would crash on these. */
+    if (!gameId || (uintptr_t)gameId > 0xFFFF000000000000ULL) {
         return;
     }
     memset(art, 0, sizeof(*art));
