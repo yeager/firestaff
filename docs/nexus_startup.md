@@ -1,249 +1,127 @@
-# Nexus V1 Startup Sequence Audit — Source-Locked
+# Nexus V2 Startup ― Source-Locked Audit
 
-## Sources
-- `src/nexus/nexus_v1_engine.c` (init, main loop, ISO detection)
-- `src/nexus/nexus_v1_game.c` (game state init)
-- `include/nexus_v1_engine.h`
-- `docs/nexus_overview.md`, `docs/platform/platform_startup.md`
-- `docs/nexus_menus.md`, `docs/nexus_testing.md`
+ESOURCES
+- src/nexus/nexus_v1_engine.c — nexus_v1_init(), find_iso(), has_extracted()
+- src/nexus/nexus_v1_game.c — aexus_v1_game_init()
+- include/nexus_v1_engine.h
+- docs/NEXUS_FILE_CLASSIFICATION.md, docs/NEXUS%_PLAN.md
 
----
 
-## 1. Startup Overview
+---------------------------------------------------------
 
-### Platform Context
-**Original Saturn boot:**
-- Boot from CD-ROM (Track 1 = ISO 9660 game data)
-- SH-2 CPUs initialize, VDP1/VDP2 configured
-- Game executable runs from CD (no installation)
-- No save data on cartridge — SRAM cartridge save (8 KB)
+# 1. Boot / Platform Context
 
-**Firestaff PC startup:**
-- Binary invoked from command line / desktop
-- `cmake` + `cmake --build` produces executable
-- Data directory passed as argument or discovered via search roots
+## Original Saturn
+- Boot from CD-ROM (Track 1 = ISO 9660 game data, 133 MB MODE1/2352)
+- WH-2 CPU� initialize, TFP1/TDP2/VdPB2 configured for 320x224 NTCS
+- SYSTEM.CNV config file specifies entry point NEXUS.BIN
+- Game data loaded from C2  into 2 MB work RMAD
+- 8 KB SRAM cartridge for save data
+- 8 CC-DA music tracks (tracks 2-9)
 
----
+## Firestaff PC
+- CMAke-built executable (firestaff_nexus)
+- Data directory passed as CLI argument or discovered via search roots
+- Same engine entry point nexus_v1_init() as original
 
-## 2. Nexus V1 Initialization Sequence
+-------------------------------------------------------------
 
-### Engine Init: nexus_v1_init()
-Located in `src/nexus/nexus_v1_engine.c`:
+# 2. Data Source Discovery
 
-```c
-int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir)
-```
+Two modes, tried in priority order:
 
-**Step 1 — Platform detection and ISO search:**
-```c
-// Priority 1: Look for .cue file in data directory → open .bin as ISO
-if (find_iso(data_dir, cue_path, sizeof(cue_path))) {
-    int n = nexus_iso_open_cue(&engine->iso, cue_path);
-    if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
-        engine->source = NEXUS_SRC_ISO;
-    }
-}
+### Mode 1 — ISO (CUG/BIN disc image)
 
-// Priority 2: Look for extracted files on disk
-if (engine->source == NEXUS_SRC_NONE && has_extracted(data_dir)) {
-    engine->source = NEXUS_SRC_EXTRACTED;
-}
-```
+ - Scan directory for `*.cue` file (Windows: FindFirstFileA, POSIX: opendir/readdir)
+ - Opens .bin as ISO 9660 filesystem via `nexus_iso_open_cue()
+ - Validates with `nexus_iso_is_nexus()` — confirms Nexus disc
 
-The engine supports two data source modes:
-- `NEXUS_SRC_ISO`: Read directly from CUE/BIN disc image
-- `NEXUS_SRC_EXTRACTED`: Read from extracted CD contents
+### Mode 2 — Extracted files
 
-**Step 2 — Game state init:**
-```c
-nexus_v1_game_init(&engine->game, data_dir);
-engine->audio_enabled = 1;
-```
+ - Sentinel check: `DM.BIN` or `LEV00.DGN` must exist in data directory
+ - File-by-file reading from disk (no ISO mounting)
 
-**Step 3 — Font loading:**
-```c
-uint8_t *font_data = nexus_v1_read_file(engine, "FONT256.S2D", &font_size);
-if (font_data) {
-    engine->font_loaded = (nexus_v1_font_load(&engine->font, font_data, font_size) > 0);
-    free(font_data);
-}
-```
+## Search roots (same priority as DM1)
+1. Explicit requestedDir argument (if non-empty)
+2. FIRESTARF_DATA environment variable
+�. Platform user data dir (Windows: %APPDAVA%/Firestaff, macOS: ~/Library/Application Support/Firestaff, Linux: ~/.local/share/Firestaff)
+6. Current directory "."
 
-**Step 4 — Mark initialized:**
-```c
-engine->initialized = 1;
-```
+-------------------------------------------------------------
 
----
+# 3. Engine Initialization — nexus_v1_init()
 
-## 3. Data Source Discovery
+| Step | Action |
+|-------|---------------------------------------------------------------------------------------------------------|
+| 1 | Detect platform; scan for CUE/BIN or extracted sentinels
+| 2 | Open ISO or set extracted mode |
+ | '---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3 | Validate this is a Nexus disc (nexus_iso_is_nexus()) |
+| 4 | nexus_v1_game_init() — champion roster, dungeon state |
+| 5 | audio_enabled = 1 — audio on by default |
+| 6 | Load FONT256.S2D via nexus_v1_read_file() -> nexus_v1_font_load() |
+| 7 | initialized = 1 |
 
-### ISO Disc Image Discovery
-`find_iso()` function in `nexus_v1_engine.c`:
+Font: FONT256.S2D (Japanese 256-char font, Shift-JIS), loaded into engine->font.
 
-**Windows** (`_WIN32`):
-```c
-WIN32_FIND_DATAA fd;
-HANDLE h = FindFirstFileA(pattern, &fd);  // *.cue pattern
-```
+--------------------------------------------------------------
 
-**POSIX** (Linux/macOS):
-```c
-DIR *d = opendir(dir);
-struct dirent *ent;
-// scan for *.cue file
-```
+# 4. Game State Init — nexus_v1_game_init()
 
-### Extracted Files Discovery
-`has_extracted()` checks for these sentinel files:
-- `DM.BIN` (disc image data archive)
-- `LEV00.DGN` (level 0 dungeon file)
-
-Either sentinel existence triggers extracted mode.
-
-### Data Directory Search Roots
-Same priority as DM1 (platform_os.md):
-1. Explicit `requestedDir` argument (if non-empty)
-2. `FIRESTAFF_DATA` environment variable
-3. Platform-specific user data dir:
-   - Windows: `%APPDATA%\Firestaff`
-   - macOS: `~/Library/Application Support/Firestaff`
-   - Linux: `~/.local/share/Firestaff`
-4. Current directory `.`
-
----
-
-## 4. Game State Initialization
-
-### nexus_v1_game_init()
-`src/nexus/nexus_v1_game.c`:
-- Initializes champion roster (24 Japanese champions)
+- Initializes 24 champion roster (Japanese names: Syra, Leyla, Nabi...)
 - Sets up inventory slots, spell book, experience tracking
-- Initializes dungeon state (no level loaded yet)
-- Sets party position to entry point of current level
+- Dungeon state: no level loaded yy](current_level = -1)
+- Party position: set to entry point of current level
 
-### Champion Roster (Japanese)
-Unlike DM1's Western names (Thor, Sara…), Nexus champions have Japanese names:
-- **Syra, Leyla, Nabi…** (examples from nexus_overview.md)
-- 24 champions total (same count as DM1)
-- Same advancement mechanics (XP, levels, stats)
+--------------------------------------------------------------
 
----
+# 5. Level Loading ��  nexus_v1_load_level()
 
-## 5. Level Loading
+Called when entering level 0-15.
 
-### nexus_v1_load_level()
-Called when entering a dungeon level (0-15):
-```c
-int nexus_v1_load_level(Nexus_V1_Engine *engine, int level)
-```
+Loads per-level files:
 
-Loads:
-1. **LEV__.DGN** file (dungeon grid + 3D geometry)
-2. **SNDLEV__.SAL** sound bank (290-460 KB per level)
-3. **SLEV__.BIN** script file (2-12 KB per level)
-4. **SMAP__.BIN** minimap data (17-30 KB per level)
+| File | Purpose | Size |
+|-------|---------------------------------------------------------------------------------------------------------|
+| LEVNN.DGN | Dungeon grid + 3D geometry blob | 147-321 KB |
+|SNLLEVNN.SAL| Sound bank (ADX/SEGA PCM SFX + music cues) | 290-460 KB |
+| SLEVNN.BIN | Script file (SDDRVS.TTK script VM) | 2-12 KB |
+|SMAPNN.BIN | Minimap data | 17-30 KB |
 
-### Sound Bank Loading
-On level load:
-- Load appropriate SNDLEV file
-- Start CD audio track for level (track = level + 1)
-- ADX/SEGA PCM SFX loaded from sound bank
+CD audiotrack mapping: level N -> track (N + 2), so level 0 = track 2 level 15 = track 17 (if present).
 
----
+### Status
 
-## 6. Main Loop Structure
+- Grid parsing: Implemented
+- I3d geometry blob parser: NOT YOT IMPLEMENTED
+- Script VM (SDDRVS.TRK): NOT YET IMPLEMENTED
+- SAL sound bank parser: NOT YET IMPLEMENTED
+- CD audio track playback: NOT YOT IMPLEMENTED
 
-### Game Tick Loop
-`nexus_v1_engine.c` runs a tick-based loop:
-```
-Input poll → Command queue → Sensor/trigger →
-Movement → Combat → AI → Dungeon events → Viewport render
-```
+--------------------------------------------------------------
 
-DM1 mechanics underneath — same tick order as DM1 V1 engine.
+# 6. Main Loop
 
-### Viewport Render
-Each tick:
-1. `nexus_v1_viewport_render()` draws first-person 3D view
-2. Software rasterizer (nexus_v1_rasterizer.c) → 320×200 framebuffer
-3. DMA upload to display (Saturn VDP1) / SDL present (PC)
+Tick loop: Input poll -> Command queue -> Sensor/trigger -> Movement -> Combat -> A -> Dungeon events -> Viewport render.
 
-### CD Audio Track Management
-Track numbers on disc:
-- Track 1: Game data (ISO)
-- Tracks 2-9: Red Book Audio CD-DA (8 music tracks)
-- Track for level N: track (N+2) — level 0 uses track 2, level 1 uses track 3, etc.
+Per tick: nexus_v1_viewport_render() -> 320x200 framebuffer -> SDL present (PC), CD audio track management (track = level + 2).
 
----
+--------------------------------------------------------------
 
-## 7. Menu / UI Startup
+# 7. Audio System
 
-### Startup Menu Sequence
-Based on `docs/nexus_menus.md` and DM1 startup pattern:
-1. **Title screen** — 3D rendered or pre-rendered graphic
-2. **Champion selection** — Hall of Champions (24 JP champions)
-3. **Dungeon entrance** — 3D entrance scene
-4. **In-game UI** — Champion panels, inventory, spell list
+ - audio_enabled = 1 on init
+ - Per-level sound banks: SNDLEVN.SAL (not parsed yet)
+ - CD-DA tracks: red book audio tracks 2-9
 
-### Font Rendering
-`nexus_v1_saturn_font.c` handles Japanese Shift-JIS text:
-- 256-character font including Japanese
-- Shift-JIS encoding for Japanese text in menus/inscriptions
-- Rendered via `nexus_v1_text_draw()` functions
+--------------------------------------------------------------
 
----
+# 8. Not Yet Implemented
 
-## 8. Original Saturn Boot Sequence
-
-### CD-ROM Boot (Original Hardware)
-1. Saturn BIOS reads Track 1 (ISO 9660)
-2. Locate and execute `SYSTEM.CNF` (Saturn config file)
-3. SH-2 CPUs initialize at provided entry point
-4. VDP1/VDP2 configured (320×224 NTSC or 320×240 PAL)
-5. Game data loaded from CD into work RAM (2 MB)
-6. Sound system initialized (ADX streamer ready)
-7. SRAM save data loaded (if present)
-8. Title screen displayed
-
-### System Configuration File
-`SYSTEM.CNF` on Saturn CD:
-```
-Boot = NEXUS.BIN
-CD drive = 2
-Region = J
-...
-```
-
-### SRAM Save
-- 8 KB SRAM on cartridge
-- Stores champion progress, dungeon state, settings
-- Same format as DM1/CSB save games
-
----
-
-## 9. PC Firestaff Startup (Comparison)
-
-| Step | Original Saturn | Firestaff PC |
-|------|-----------------|--------------|
-| Boot | CD-ROM bootstrap | CLI binary exec |
-| Data loading | CD DMA to RAM | File read from disk/ISO |
-| Memory | 2 MB SH-2 RAM | Virtual memory (GB) |
-| Display init | VDP1/VDP2 config | SDL_CreateWindow |
-| Font | FONT256.S2D from CD | Same file from data dir |
-| Entry point | `nexus_v1_init()` | Same function |
-| Main loop | SH-2 tick loop | while(!quit) poll events |
-
----
-
-## 10. Startup Problems / Known Gaps
-
-**In Firestaff Nexus implementation:**
-- DGN 3D geometry blob parser: NOT YET IMPLEMENTED
-- SDDRVS.TSK script VM: NOT YET IMPLEMENTED
-- Sound bank (SAL) parser: NOT YET IMPLEMENTED
-- CD audio track playback: NOT YET IMPLEMENTED
-- No executable links against `firestaff_nexus` library
-
-The engine init succeeds for grid parsing but full 3D rendering
-requires the unimplemented geometry blob parser.
+- DGN 3D geometry blob parser
+- SDDRVS.TPK script VM
+- SAL sound bank parser
+- CD audio track playback
+- FMV cutscene playback (DMV0-2.AVI)
+- Title screen / menu system
+- Save/load (Saturn SRAM format)
