@@ -43,32 +43,61 @@ Switch between modes at runtime — no restart needed.
 ## Download
 
 **[Latest release →](https://github.com/yeager/firestaff/releases/latest)**
+— macOS DMG · Windows EXE/ZIP · Linux DEB/RPM (x86_64 + ARM64)
 
-| Platform | Formats |
-|----------|---------|
-| macOS | DMG, ZIP |
-| Windows | Installer (EXE), ZIP |
-| Linux x86_64 | DEB, RPM |
-| Linux ARM64 (Steam Deck) | DEB, RPM |
+| Platform | Download |
+|----------|----------|
+| macOS (Apple Silicon / Intel) | [Firestaff-macos.dmg](https://github.com/yeager/firestaff/releases/latest) |
+| Windows | [Firestaff-windows.exe](https://github.com/yeager/firestaff/releases/latest) · [ZIP](https://github.com/yeager/firestaff/releases/latest) |
+| Linux x86_64 | [DEB](https://github.com/yeager/firestaff/releases/latest) · [RPM](https://github.com/yeager/firestaff/releases/latest) |
+| Linux ARM64 (Steam Deck) | [DEB](https://github.com/yeager/firestaff/releases/latest) · [RPM](https://github.com/yeager/firestaff/releases/latest) |
+
+All releases include SHA256 checksums. See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for what's new.
 
 ## Quick Start
 
-1. Download and install Firestaff for your platform
-2. Run Firestaff — it creates `~/.firestaff/data/` automatically
-3. Place your original game files:
+1. **Download and install** from [Releases](https://github.com/yeager/firestaff/releases/latest)
+2. **Run Firestaff once** — it creates `~/.firestaff/data/` automatically
+3. **Place your original game files** (auto-detected by SHA256 hash):
+
+   **Dungeon Master (DM1)**
    ```
    ~/.firestaff/data/
-     DUNGEON.DAT        ← DM1 (auto-detected by hash)
-     GRAPHICS.DAT       ← DM1
-     csb/DUNGEON.DAT    ← Chaos Strikes Back
-     csb/GRAPHICS.DAT
-     dm2/DUNGEON.DAT    ← Dungeon Master II
-     dm2/GRAPHICS.DAT
-     nexus/             ← DM Nexus files
+     DUNGEON.DAT   ← DM1 dungeon data
+     GRAPHICS.DAT  ← DM1 graphics
    ```
-4. Play!
 
-> **Windows**: Files go in `%APPDATA%\Firestaff\data\`
+   **Chaos Strikes Back**
+   ```
+   ~/.firestaff/data/csb/
+     DUNGEON.DAT   ← CSB dungeon data
+     GRAPHICS.DAT  ← CSB graphics
+   ```
+
+   **Dungeon Master II**
+   ```
+   ~/.firestaff/data/dm2/
+     DUNGEON.DAT   ← DM2 dungeon data
+     GRAPHICS.DAT  ← DM2 graphics
+   ```
+
+   **DM Nexus** (Saturn format)
+   ```
+   ~/.firestaff/data/nexus/
+     (all Nexus data files)
+   ```
+4. **Play!** Firestaff auto-detects which game you have.
+
+> **Windows**: `%APPDATA%\Firestaff\data\`
+> **macOS**: `~/Library/Application Support/Firestaff/data/`
+
+Run with `--help` to see all options:
+```bash
+firestaff --help
+firestaff --scale-mode 2      # V2.1 upscaled graphics
+firestaff --scale-mode 3      # V2.2 modern graphics
+firestaff --data-dir ~/my/dm1 # custom data directory
+```
 
 ## Building from Source
 
@@ -77,6 +106,7 @@ git clone https://github.com/yeager/firestaff.git
 cd firestaff
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
+./build/firestaff --help
 ```
 
 ### Requirements
@@ -94,32 +124,38 @@ cd build && ctest --output-on-failure
 ```
 src/
   engine/    — Core engine: game loop, rendering, input, save, audio
-  dm1/       — DM1 V1 source-locked engine (movement, combat, spells, creatures)
-  dm1v2/     — DM1 V2 enhanced features (weather, viewport, settings)
+  dm1/       — DM1 V1 source-locked engine (movement, viewport, sensors)
+  dm1v2/     — DM1 V2 enhanced features (viewport, weather, settings)
   csb/       — Chaos Strikes Back engine
   dm2/       — Dungeon Master II engine
   nexus/     — DM Nexus (Saturn format support)
-  memory/    — Graphics cache, memory management, savegame serialization
-  ui/        — Menu system, bestiary, spell reference, map viewer
   shared/    — Asset loading, audio, fonts, localization, data validation
+  ui/        — Menu system, bestiary, spell reference, map viewer
   frontend/  — Title screen, entrance, endgame, boot sequence
-include/     — All headers (364 files)
-tests/       — 304 automated tests
-tools/       — Asset extraction, verification gates, probe tools
-parity-evidence/ — Source-lock manifests and verification reports
+  probes/    — Live-capture probes for parity verification
+include/     — All headers
+tests/       — Automated tests (parity gates, unit tests)
+tools/       — Asset extraction, hash verification, probe tools
+parity-evidence/ — Source-lock manifests per feature/game
 ```
 
 ## Source Fidelity
 
 Every game system is cross-referenced against the original source code:
 
-- **Movement**: `MOVESENS.C` F0267 collision, F0268 step, turning, stairs
-- **Combat**: `CHAMPION.C` F0304 experience, `COMBAT.C` attack/defense
-- **Spells**: `SYMBOL.C` F0399 encoding, mana cost multipliers
-- **Creatures**: `GROUPMAN.C` AI behavior, movement timing
-- **Viewport**: `DUNVIEW.C` F0128 wall composition, depth rendering
-- **Save/Load**: `LOADSAVE.C` F0433/F0435 serialization with CRC32
-- **Memory**: Cache allocator, defrag, graphics block management
+- **ReDMCSB** ([dmweb.free.fr](http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z)) — Primary DM1 reference: `MOVESENS.C`, `CHAMPION.C`, `PANEL.C`, `DUNVIEW.C`, `COMBAT.C`, `LOADSAVE.C`
+- **skproject** ([github.com/gbsphenx/skproject](https://github.com/gbsphenx/skproject)) — DM2 source reference
+- **CSBWin** ([github.com/BeipDev/CSBWin](https://github.com/BeipDev/CSBWin)) — CSB reference source
+- **CSB** ([github.com/zelurker/CSB](https://github.com/zelurker/CSB)) — CSB lineage reference
+- **Greatstone** ([greatstone.free.fr](http://greatstone.free.fr/dm/)) — Dungeon map and graphics atlas
+
+Key reference files:
+- `DUNVIEW.C` — Viewport wall rendering, depth draw order (F0128)
+- `MOVESENS.C` — Movement, collision, turn, step (F0267–F0268)
+- `PANEL.C` — Champion HUD, food/water/poison labels, stat panel
+- `CHAMPION.C` — Combat, experience, equipment slots (F0300–F0302)
+- `TIMELINE.C` / `CLIKVIEW.C` — Floor sensors and wall interactions
+- `LOADSAVE.C` — Save/load serialization with CRC32 (F0433–F0435)
 
 Verification gates ensure no regression against source evidence.
 
@@ -143,7 +179,10 @@ MIT
 
 ## Credits & References
 
-- **[ReDMCSB](http://dmweb.free.fr/)** — Primary reference implementation (WIP 2021-02-06)
-- **[CSBWin](https://github.com/BeipDev/CSBWin)** — CSB reference source
+- **[ReDMCSB](http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z)** — Primary DM1 source reference (WIP 2021-02-06)
+- **[skproject](https://github.com/gbsphenx/skproject)** — DM2/Skullkeep source reference
+- **[CSBWin](https://github.com/BeipDev/CSBWin)** — Chaos Strikes Back reference source
+- **[CSB](https://github.com/zelurker/CSB)** — CSB lineage reference
 - **[Greatstone](http://greatstone.free.fr/dm/)** — DM data format documentation and atlas
 - **[DMWeb](http://dmweb.free.fr/)** — Dungeon Master community and resources
+- **[Theron's Quest](http://dmweb.free.fr/?q=node/1585)** — Additional DM1 quest pack reference
