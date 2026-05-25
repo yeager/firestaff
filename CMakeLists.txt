@@ -160,6 +160,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
     src/dm1/dm1_v1_text_message_pc34_compat.c
     src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+        src/dm1/dm1_v1_sound_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
     src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
@@ -670,7 +671,9 @@ if(BUILD_TESTING)
 
     add_executable(test_dm1_v1_inventory_consumables_pc34_compat
         tests/test_dm1_v1_inventory_consumables_pc34_compat.c
+        src/dm1/dm1_v1_sound_pc34_compat.c
         src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+        src/dm1/dm1_v1_sound_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_inventory_consumables_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -2320,6 +2323,7 @@ if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
     add_executable(test_dm1_v1_object_interaction_pc34_compat
         tests/test_dm1_v1_object_interaction_pc34_compat.c
         src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+        src/dm1/dm1_v1_sound_pc34_compat.c
         src/dm1/dm1_v1_object_interaction_pc34_compat.c
     )
     if(NOT MSVC)
