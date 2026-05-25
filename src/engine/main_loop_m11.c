@@ -1393,20 +1393,56 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
-                case SDLK_F5:
-                    if (gameView && gameView->active && M11_GameView_QuickSave(gameView)) {
-                        if (gameViewResult) {
-                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                case SDLK_F5: {
+                    /* F5 = quick save */
+                    if (gameView && gameView->active) {
+                        char savePath[512];
+                        const char* sid = (gameView->sourceId[0] != '\0')
+                                         ? gameView->sourceId : "dm1";
+                        int rc = snprintf(savePath, sizeof(savePath),
+                                         "firestaff-%s-dm1save.sav", sid);
+                        if (rc > 0 && rc < (int)sizeof(savePath)) {
+                            int saveResult = DM1_SaveGame(&gameView->world,
+                                                         savePath,
+                                                         gameView->dm1GameID,
+                                                         1,
+                                                         gameView->dm1MusicOn);
+                            if (saveResult == DM1_SAVE_OK) {
+                                fprintf(stderr, "SAVE: saved to %s\n", savePath);
+                            } else {
+                                fprintf(stderr, "SAVE FAILED: %s\n",
+                                        DM1_SaveLoadErrorString(saveResult));
+                            }
+                        }
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                }
+                case SDLK_F9: {
+                    /* F9 = quick load */
+                    if (gameView && gameView->active) {
+                        char savePath[512];
+                        const char* sid = (gameView->sourceId[0] != '\0')
+                                         ? gameView->sourceId : "dm1";
+                        snprintf(savePath, sizeof(savePath),
+                                "firestaff-%s-dm1save.sav", sid);
+                        struct DM1SaveHeader saveHeader;
+                        int usedBackup = 0;
+                        int loadResult = DM1_LoadGameWithBackup(savePath,
+                                                               &gameView->world,
+                                                               &saveHeader,
+                                                               &usedBackup);
+                        if (loadResult == DM1_SAVE_OK) {
+                            fprintf(stderr, "LOAD: loaded from %s%s\n",
+                                    savePath, usedBackup ? " (backup)" : "");
+                            if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        } else {
+                            fprintf(stderr, "LOAD FAILED: no save found at %s\n",
+                                    savePath);
                         }
                     }
                     return M12_MENU_INPUT_NONE;
-                case SDLK_F9:
-                    if (gameView && gameView->active && M11_GameView_QuickLoad(gameView)) {
-                        if (gameViewResult) {
-                            *gameViewResult = M11_GAME_INPUT_REDRAW;
-                        }
-                    }
-                    return M12_MENU_INPUT_NONE;
+                }
                 case SDLK_R:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -1606,20 +1642,56 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
-                case SDLK_F5:
-                    if (gameView && gameView->active && M11_GameView_QuickSave(gameView)) {
-                        if (gameViewResult) {
-                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                case SDLK_F5: {
+                    /* F5 = quick save */
+                    if (gameView && gameView->active) {
+                        char savePath[512];
+                        const char* sid = (gameView->sourceId[0] != '\0')
+                                         ? gameView->sourceId : "dm1";
+                        int rc = snprintf(savePath, sizeof(savePath),
+                                         "firestaff-%s-dm1save.sav", sid);
+                        if (rc > 0 && rc < (int)sizeof(savePath)) {
+                            int saveResult = DM1_SaveGame(&gameView->world,
+                                                         savePath,
+                                                         gameView->dm1GameID,
+                                                         1,
+                                                         gameView->dm1MusicOn);
+                            if (saveResult == DM1_SAVE_OK) {
+                                fprintf(stderr, "SAVE: saved to %s\n", savePath);
+                            } else {
+                                fprintf(stderr, "SAVE FAILED: %s\n",
+                                        DM1_SaveLoadErrorString(saveResult));
+                            }
+                        }
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                }
+                case SDLK_F9: {
+                    /* F9 = quick load */
+                    if (gameView && gameView->active) {
+                        char savePath[512];
+                        const char* sid = (gameView->sourceId[0] != '\0')
+                                         ? gameView->sourceId : "dm1";
+                        snprintf(savePath, sizeof(savePath),
+                                "firestaff-%s-dm1save.sav", sid);
+                        struct DM1SaveHeader saveHeader;
+                        int usedBackup = 0;
+                        int loadResult = DM1_LoadGameWithBackup(savePath,
+                                                               &gameView->world,
+                                                               &saveHeader,
+                                                               &usedBackup);
+                        if (loadResult == DM1_SAVE_OK) {
+                            fprintf(stderr, "LOAD: loaded from %s%s\n",
+                                    savePath, usedBackup ? " (backup)" : "");
+                            if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        } else {
+                            fprintf(stderr, "LOAD FAILED: no save found at %s\n",
+                                    savePath);
                         }
                     }
                     return M12_MENU_INPUT_NONE;
-                case SDLK_F9:
-                    if (gameView && gameView->active && M11_GameView_QuickLoad(gameView)) {
-                        if (gameViewResult) {
-                            *gameViewResult = M11_GAME_INPUT_REDRAW;
-                        }
-                    }
-                    return M12_MENU_INPUT_NONE;
+                }
                 case SDLK_r:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
