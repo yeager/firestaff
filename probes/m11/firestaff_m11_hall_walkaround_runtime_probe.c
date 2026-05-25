@@ -213,7 +213,7 @@ static int write_outputs(const char* outDir, const HallStepProbe* rows, int rowC
 }
 
 static int open_game(const char* dataDir, M12_StartupMenuState* menu, M11_GameViewState* game) {
-    M12_StartupMenu_InitWithDataDir(menu, dataDir);
+    M12_StartupMenu_InitWithDataDir(menu, dataDir, NULL);
     M11_GameView_Init(game);
     return M11_GameView_OpenSelectedMenuEntry(game, menu);
 }

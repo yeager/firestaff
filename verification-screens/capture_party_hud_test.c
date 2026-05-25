@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     outDir = argv[1];
     dataDir = argv[2];
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr, "failed to open DM1 game view\n");

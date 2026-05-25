@@ -39,7 +39,7 @@ int main(void) {
     const int launchCenterX = 960;
     const int launchCenterY = 669;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 0, NULL);
@@ -58,7 +58,7 @@ int main(void) {
     if (!expect(state.launchRequested == 1, "Launch direct click should request launch")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "Launch direct click should show ready-to-launch message")) return 1;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     {
         const int museumCenterX = 48 + 5 * (cardW + 22) + cardW / 2;
         changed = M12_ModernMenu_HandlePointer(&state, museumCenterX, cardCenterY, 0, NULL);
@@ -67,7 +67,7 @@ int main(void) {
         if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM, "Museum click should open museum view")) return 1;
     }
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     {
         const int settingsCenterX = 48 + 6 * (cardW + 22) + cardW / 2;
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, cardCenterY, 0, NULL);

@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     outDir = argv[1];
     dataDir = argv[2];
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     paletteLevel = (unsigned int)M12_StartupMenu_GetRenderPaletteLevel(&menu);
     if (!save_menu(outDir, "01_start_menu", &menu, paletteLevel)) {
         fprintf(stderr, "failed to save start menu\n");
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr, "failed to open DM1 game view\n");

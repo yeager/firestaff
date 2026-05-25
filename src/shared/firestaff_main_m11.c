@@ -10,6 +10,8 @@
  */
 
 #include "main_loop_m11.h"
+
+#include "firestaff_version.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -74,7 +76,7 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--version") == 0) {
-            fprintf(stderr, "Firestaff v2.4.6\n");
+            fprintf(stderr, "Firestaff v2.4.8\n");
             return 0;
         }
         if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {

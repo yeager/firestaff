@@ -39,7 +39,7 @@ int main(void) {
     DM1_V2_MovementCommandRoute sourceRoute;
     DM1_V2_MovementCommandResult move;
 
-    M12_StartupMenu_InitWithDataDir(&menu, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&menu, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&menu);
 
     /* Phase 1 launch-smoke source anchors:

@@ -164,7 +164,7 @@ int main(void) {
         return 2;
     }
 
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     force_dm1_version_ready(&state, 0U);
     M11_ApplyStartupMenuRuntime(&state);
 

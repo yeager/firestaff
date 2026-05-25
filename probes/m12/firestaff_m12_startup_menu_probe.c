@@ -250,7 +250,7 @@ int main(void) {
     }
 
     portable_setenv("LANG", "C", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     probe_record(&tally,
                  "INV_M12_00_ORIGINALS_POPUP",
                  state.view == M12_MENU_VIEW_MESSAGE &&
@@ -266,7 +266,7 @@ int main(void) {
     portable_unsetenv("LC_ALL");
     portable_unsetenv("LC_MESSAGES");
     portable_setenv("LANG", "sv_SE.UTF-8", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -282,7 +282,7 @@ int main(void) {
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
 
     probe_record(&tally,
                  "INV_M12_01",
@@ -304,7 +304,7 @@ int main(void) {
                  "startup state loads defaults, writes config, seeds built-in card art, and points the validator at the requested originals directory");
 
     make_file_with_text(cardPath, "future art slot");
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     probe_record(&tally,
                  "INV_M12_02B",
                  M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
@@ -567,7 +567,7 @@ int main(void) {
                         "renderer_backend_index = 0\n"
                         "window_mode_index = 0\n"
                         "data_dir = \"probe-data\"\n");
-    M12_StartupMenu_InitWithDataDir(&reloaded, dataDir);
+    M12_StartupMenu_InitWithDataDir(&reloaded, dataDir, NULL);
     probe_record(&tally,
                  "INV_M12_11D",
                  reloaded.settings.graphicsIndex == M12_PRESENTATION_V22_MODERN &&
@@ -579,7 +579,7 @@ int main(void) {
     portable_unsetenv("LC_ALL");
     portable_unsetenv("LC_MESSAGES");
     portable_setenv("LANG", "fr_FR.UTF-8", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
@@ -593,7 +593,7 @@ int main(void) {
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     state.settings.languageIndex = 3;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -606,7 +606,7 @@ int main(void) {
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
 
     M12_StartupMenu_Draw(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
@@ -624,7 +624,7 @@ int main(void) {
         unsigned char english[320 * 200];
         unsigned long checksumA = 0UL;
         unsigned long checksumB = 0UL;
-        M12_StartupMenu_InitWithDataDir(&reloaded, dataDir);
+        M12_StartupMenu_InitWithDataDir(&reloaded, dataDir, NULL);
         reloaded.settings.languageIndex = 1;
         reloaded.settings.graphicsIndex = 1;
         M12_StartupMenu_Draw(&reloaded, localized, 320, 200);
@@ -651,7 +651,7 @@ int main(void) {
         unsigned long cEN = 0, cSV = 0, cFR = 0, cDE = 0;
 
         /* Startup menu: flag changes with language index */
-        M12_StartupMenu_InitWithDataDir(&langState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&langState, dataDir, NULL);
         langState.settings.languageIndex = 0;
         M12_StartupMenu_Draw(&langState, fbEN, 320, 200);
         langState.settings.languageIndex = 1;
@@ -673,7 +673,7 @@ int main(void) {
                      "runtime Swedish and French renders differ from English, while uncatalogued locales still fall back safely");
 
         /* Per-game language selector: each game has independent language */
-        M12_StartupMenu_InitWithDataDir(&langState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&langState, dataDir, NULL);
         langState.gameOptions[0].languageIndex = 1; /* DM1 = SV */
         langState.gameOptions[1].languageIndex = 2; /* CSB = FR */
         langState.gameOptions[2].languageIndex = 3; /* DM2 = DE */
@@ -692,7 +692,7 @@ int main(void) {
         M12_LaunchIntent intent;
 
         /* V1 mode: aspect and resolution locked to original */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         /* Select DM1 (available) and open game options */
@@ -732,7 +732,7 @@ int main(void) {
                      "RowLockedByMode reports correct constraints per mode");
 
         /* V2 mode: aspect and resolution cycle freely */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
@@ -749,7 +749,7 @@ int main(void) {
                      "V2 mode allows free aspect and resolution cycling");
 
         /* Launch intent for V1 */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         modeState.selectedIndex = 0;
@@ -766,7 +766,7 @@ int main(void) {
                      "V1 launch intent carries the selected version, correct mode, and constrained options");
 
         /* Launch intent for V2 with explicit resolution set */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         /* Reset DM1 resolution to 0 so we can verify cycling works */
@@ -786,7 +786,7 @@ int main(void) {
                      "V2 launch intent carries the selected version and enhanced resolution options");
 
         /* V3 launch intent is invalid (coming soon) */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V22_MODERN;
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V22_MODERN;
@@ -809,7 +809,7 @@ int main(void) {
                      "V3 launch attempt shows COMING SOON message without requesting launch");
 
         /* Launch button requests runtime handoff for a matched V1/V2 game. */
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         modeState.selectedIndex = 0;
@@ -834,7 +834,7 @@ int main(void) {
                          modeState.view == M12_MENU_VIEW_MAIN,
                      "space/action dismisses message view safely");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         modeState.selectedIndex = 0;
@@ -858,7 +858,7 @@ int main(void) {
                      modeState.launchRequested == 1 && intent.valid == 1,
                      "mouse launch hit follows the same launch request path");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         modeState.selectedIndex = 1;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         probe_record(&tally,
@@ -869,7 +869,7 @@ int main(void) {
                          strcmp(modeState.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
                      "CSB is not launchable and reports unsupported/coming-soon without requesting launch");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         modeState.assetStatus.csbAvailable = 1;
         modeState.assetStatus.dm2Available = 1;
         modeState.assetStatus.versions[1][0].matched = 1;
@@ -896,7 +896,7 @@ int main(void) {
                          strcmp(modeState.messageLine1, "COMING SOON") == 0,
                      "CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.view = M12_MENU_VIEW_MAIN;
         modeState.shouldExit = 0;
@@ -906,7 +906,7 @@ int main(void) {
                      modeState.view == M12_MENU_VIEW_MAIN && modeState.shouldExit == 0,
                      "left arrow on the top-level launcher is a no-op, not an exit/crash path");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         exercise_startup_input_matrix(modeState);
         probe_record(&tally,
@@ -932,7 +932,7 @@ int main(void) {
                          M12_StartupMenu_RendererBackendAvailable(M12_RENDERER_BACKEND_SOFTWARE) == 1,
                      "renderer backend API exposes selectable Vulkan with honest availability status");
 
-        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.languageIndex = 0;
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;

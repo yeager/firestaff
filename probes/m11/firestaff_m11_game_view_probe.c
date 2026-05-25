@@ -561,7 +561,7 @@ int main(int argc, char** argv) {
 
     memset(&syntheticView, 0, sizeof(syntheticView));
 
-    M12_StartupMenu_InitWithDataDir(&menuState, dataDir);
+    M12_StartupMenu_InitWithDataDir(&menuState, dataDir, NULL);
     probe_record(&tally,
                  "INV_GV_01",
                  menuState.selectedIndex == 0 &&

@@ -71,7 +71,7 @@ int main(void) {
     m12_test_setenv("HOME", tmpTemplate);
 
     M12_Config_SetLastSavePath("");
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 0, "no-save must disable quick Resume")) return 1;
 
@@ -79,7 +79,7 @@ int main(void) {
     if (!expect(write_fake_quicksave(savePath), "should write fake quicksave")) return 1;
     M12_Config_SetLastSavePath(savePath);
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 1, "valid DM1 quicksave must enable quick Resume")) return 1;
     if (!expect(strcmp(state.quickResumeGameId, "dm1") == 0, "quick Resume should identify dm1")) return 1;
@@ -94,7 +94,7 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS,
                 "default Enter on DM1 should enter the normal launch path")) return 1;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     state.selectedIndex = -1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -106,7 +106,7 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, savePath) == 0,
                 "Resume launch intent must carry exact save path")) return 1;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);

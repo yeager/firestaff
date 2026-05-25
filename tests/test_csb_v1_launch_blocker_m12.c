@@ -63,7 +63,7 @@ int main(void) {
     const int launchCenterX = 960;
     const int launchCenterY = 669;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets");
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);

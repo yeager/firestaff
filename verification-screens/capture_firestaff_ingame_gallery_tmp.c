@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
     outDir = argv[1];
     dataDir = argv[2];
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     paletteLevel = (unsigned int)M12_StartupMenu_GetRenderPaletteLevel(&menu);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
