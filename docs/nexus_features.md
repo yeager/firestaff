@@ -26,6 +26,8 @@ movement, champion advancement) is derived from DM1.
 | FMV                   | None                            | 3 AVI cutscenes (34+28+39 MB)      |
 | Viewport distance    | 2 squares (DM1)                | 4 squares, first-person 3D          |
 | Minimap               | ASCII chart                     | SMAP00-15.BIN binary (17-30 KB)    |
+| Sound effects         | Global SND.GAM                  | Per-level SNDLEV*.SAL (290-460 KB) |
+| Level scripts         | None                            | SLEV*.BIN (2-12 KB per level)      |
 
 ---
 
@@ -73,6 +75,8 @@ All creature models stored in the proprietary **DMDF format** (.MNS files):
   GRN_DRA, MINI_DRA, RED_DRA, SKELETON, DRAGON, SPIDER, and variants
 - Models include idle/attack/death animation frames (exact count TBD)
 - Loaded by `nexus_v1_dmdf_model.c` and cached in creature manager
+- DMDF stores per-vertex position (x,y,z floats), normal vector (nx,ny,nz),
+  UV coordinates, triangle index list, and texture reference per face
 
 Source: `nexus_v1_dmdf_model.c`, `docs/NEXUS_FILE_CLASSIFICATION.md`.
 
@@ -95,10 +99,10 @@ Source: `nexus_v1_dungeon.c` (`nexus_v1_level_load`).
 
 ## 5. Per-Level CD Audio (Red Book Audio, Tracks 2-9)
 
-- **8 CD audio tracks** (Red Book Audio, 44.1kHz stereo) mapped to game situations
+- **8 CD audio tracks** (Red Book Audio, 44.1kHz stereo) mapped to level pairs
 - Per-level sound effect banks: SNDLEV00-15.SAL (290-460 KB each)
 - Sound mapping tables: SNDLEV00-15.MAP (66-90 bytes each)
-- `nexus_v1_game.c` manages track selection and crossfade on level transition
+- `nexus_v1_game.c` manages track selection (track 2 + level/2) and crossfade
 - Audio driver: SDDRVS.TSK (26 KB)
 
 Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/NEXUS_PLAN.md`.
@@ -108,9 +112,9 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/NEXUS_PLAN.md`.
 ## 6. Japanese Language Support
 
 - **FONT256.S2D** (24 KB) — 256-entry sprite font including Japanese glyphs
-- Champion roster: 8 Japanese champions (Syra, Leyla, Nabi, Gando, Torham,
-  Elija, Wu Tse, Stamm) with ASCII romanization + JP Shift-JIS name
+- Champion roster: 8 Japanese champions with ASCII + JP Shift-JIS name
 - Inscriptions, monster names, spell names in Shift-JIS
+- Saturn SFC-style font renderer in `nexus_v1_saturn_font.c`
 
 Source: `nexus_v1_champions.c` (roster), `nexus_v1_saturn_font.c`.
 
@@ -119,10 +123,11 @@ Source: `nexus_v1_champions.c` (roster), `nexus_v1_saturn_font.c`.
 ## 7. Champion Identity and Progression
 
 - **24-member roster** with unique portraits (FACE.BIN, 44 KB)
-- **Alignment system** — Fighter/Neutral, Priest/Good, Wizard/Chaos
+- **Alignment system** — Fighter/Neutral, Priest/Good, Wizard/Chaos, Ninja/Neutral
 - **Food/water** — 1500 units each at creation; starvation triggers death
-- **Anti-magic / Anti-fire** — initially 5 each (Nexus sets defaults)
-- **Resurrection** — champions killed can be resurrected at 25% max HP/SP
+- **Anti-magic / Anti-fire** — initially 5 each (Nexus sets defaults vs DM1's 0)
+- **Resurrection** — champions killed can be resurrected at 25% max HP/STA
+- **Ninja class** — added from DM2; DM1 had only Fighter/Wizard/Priest
 
 Source: `nexus_v1_champions.c`.
 
@@ -138,7 +143,17 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`.
 
 ---
 
-## 9. Saturn Platform Adaptation
+## 9. Per-Level Sound Effect Banks
+
+- **SNDLEV00-15.SAL** (290-460 KB each) — per-level sound effects
+- **SNDLEV00-15.MAP** (66-90 bytes each) — sound effect index mapping
+- vs DM1's global SND.GAM which applied to all levels
+
+Source: `docs/NEXUS_FILE_CLASSIFICATION.md`.
+
+---
+
+## 10. Saturn Platform Adaptation
 
 - **SH-2 big-endian CPU** — all binary structures byte-swapped vs x86
 - **VDP1/VDP2 hardware** — VDP1: 3D polygons; VDP2: background + compositing
@@ -154,7 +169,7 @@ Source: `docs/NEXUS_PLAN.md`, ISO sector analysis.
 
 | Aspect                  | DM1        | CSB        | DM2         | Nexus V1           |
 |-------------------------|------------|------------|-------------|--------------------|
-| Graphics engine         | 2D sprites | 2D sprites | 2D sprites  | **3D polygons**   |
+| Graphics engine         | 2D sprites | 2D sprites | 2D sprites | **3D polygons**   |
 | Dungeon data per level  | ~33 KB     | ~33 KB     | ~39 KB      | **148-321 KB**     |
 | CD audio                | None       | None       | Per-level   | **8 tracks + SFX** |
 | Creature models         | 2D sprites | 2D sprites | 2D sprites  | **DMDF .MNS 3D**   |
@@ -162,6 +177,8 @@ Source: `docs/NEXUS_PLAN.md`, ISO sector analysis.
 | Champion roster         | Western    | Western    | Western     | **Japanese**       |
 | FMV                     | None       | None       | None        | **3 AVI cutscenes**|
 | Platform                | 16-bit HW  | 16-bit HW  | 32-bit PC   | **Sega Saturn**   |
+| Level scripts           | None       | None       | None        | **SLEV*.BIN**      |
+| Per-level SFX           | None       | None       | None        | **SNDLEV*.SAL**    |
 
 ---
 

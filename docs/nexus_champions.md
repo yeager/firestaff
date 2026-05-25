@@ -1,7 +1,7 @@
 # Dungeon Master Nexus V1 — Champion System vs DM1/DM2/CSB
 
 ## Sources
-- `src/nexus/nexus_v1_champions.c`
+- `src/nexus/nexus_v1_champions.c` (full roster + stat definitions)
 - `docs/NEXUS_PLAN.md`
 - `docs/NEXUS_FILE_CLASSIFICATION.md` (FACE.BIN, 44 KB)
 - DM1 champion system (from ReDMCSB equivalents)
@@ -16,9 +16,21 @@ inventory/spell system) but with **Japanese names and a Japanese-specific
 roster**. It introduces no new classes vs DM1 — the roster is 8 champions
 (active selection from a pool of 24, mirroring DM1's structure).
 
+| Aspect | DM1 | CSB | DM2 | Nexus |
+|--------|-----|-----|-----|-------|
+| Classes | 3 (Fighter, Wizard, Priest) | 4 (+ Ninja unlockable) | 4 (formalized) | **4 (same as DM2)** |
+| Roster size | 24 | 24 | 24+ | **24** |
+| Party size | 4 | 4 | 4 + companions | **4** |
+| Names | Western (Thor, Sara...) | Western | Western | **Japanese (Syra, Leyla...)** |
+| Food/Water | 1500 each | 1500 | 1500 | **1500 each** |
+| Anti-Magic default | 0 | 0 | 0 | **5** |
+| Anti-Fire default | 0 | 0 | 0 | **5** |
+| Portrait format | Sprite sheet (~8 KB) | Sprite sheet | Sprite sheet | **FACE.BIN (44 KB)** |
+| Alignment system | Yes | Yes | Yes | **Yes (same)** |
+
 ---
 
-## Champion Roster (from nexus_v1_champions.c)
+## Champion Roster (from `nexus_v1_champions.c`)
 
 ```c
 static const struct g_nexus_roster[] = {
@@ -37,14 +49,14 @@ Format: ASCII name, Shift-JIS JP name, class, HP, STA, MP, STR, DEX, WIS, VIT.
 
 ---
 
-## Classes: 4 vs DM1's 3 (DM1 + Ninja)
+## Classes: 4 vs DM1's 3
 
 | Class | DM1 | CSB | DM2 | Nexus |
 |-------|-----|-----|-----|-------|
 | Fighter | Yes | Yes | Yes | Yes |
 | Wizard | Yes | Yes | Yes | Yes |
 | Priest | Yes | Yes | Yes | Yes |
-| Ninja | No | No | Yes | **Yes** |
+| Ninja | No | No (unlockable) | Yes | **Yes** |
 
 Nexus includes the **Ninja class** introduced in DM2. This is the only class
 difference vs DM1. The Ninja class (high DEX, moderate HP, no magic, fast
@@ -176,6 +188,8 @@ int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {
 - Face portraits: FACE.BIN (44 KB) — contains champion portrait images
   for all 24 roster members
 
+Source: `nexus_v1_champions.c`.
+
 ---
 
 ## Party System
@@ -205,24 +219,6 @@ expected of a Saturn title and the Japanese art style. Portraits are used at:
 
 ---
 
-## Comparison: DM1 vs Nexus Champion System
-
-| Aspect | DM1 | Nexus |
-|--------|-----|-------|
-| Classes | 3 (Fighter, Wizard, Priest) | **4 (adds Ninja)** |
-| Roster size | 24 | **24** |
-| Party size | 4 | 4 |
-| Names | Western (Thor, Sara...) | **Japanese (Syra, Leyla...)** |
-| Food/Water | 1500 each | 1500 each |
-| Anti-Magic default | 0 | **5** |
-| Anti-Fire default | 0 | **5** |
-| Resurrection | Yes (25% HP/STA) | Yes (25% HP/STA) |
-| Portrait format | Sprite sheet (~8 KB) | FACE.BIN (44 KB) |
-| Alignment system | Yes | Yes (same) |
-| Stat advancement | XP-based | XP-based (same DM1 formulas) |
-
----
-
 ## What's NEW in Nexus Champion System
 
 1. **Ninja class** — DM2 addition, present in Nexus
@@ -242,6 +238,24 @@ expected of a Saturn title and the Japanese art style. Portraits are used at:
 - Resurrection at 25% HP/STA
 - Inventory system (same 12 slots per champion)
 - Spell learning system (16 spells from runes)
+
+---
+
+## Comparison: DM1 vs Nexus Champion System
+
+| Aspect | DM1 | Nexus |
+|--------|-----|-------|
+| Classes | 3 (Fighter, Wizard, Priest) | **4 (adds Ninja)** |
+| Roster size | 24 | 24 |
+| Party size | 4 | 4 |
+| Names | Western (Thor, Sara...) | **Japanese (Syra, Leyla...)** |
+| Food/Water | 1500 each | 1500 each |
+| Anti-Magic default | 0 | **5** |
+| Anti-Fire default | 0 | **5** |
+| Resurrection | Yes (25% HP/STA) | Yes (25% HP/STA) |
+| Portrait format | Sprite sheet (~8 KB) | FACE.BIN (44 KB) |
+| Alignment system | Yes | Yes (same) |
+| Stat advancement | XP-based | XP-based (same DM1 formulas) |
 
 ---
 
