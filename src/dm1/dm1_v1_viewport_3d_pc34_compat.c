@@ -873,16 +873,86 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
     }
 
 
-    /* Draw depth 0 walls (party square sides) */
-    /* D0L, D0R, D0C */
+    /*
+     * Wall draw loop -- regular (non-door) wall panels
+     * ReDMCSB DUNVIEW.C F0128: each DrawSquare function (F0116-F0127)
+     * queries the dungeon element at the computed map coordinate and
+     * branches on C00_ELEMENT_WALL to call F0100/F0104 (native) or
+     * F0105 (flipped).  The parity flag (state->parity_flip) selects
+     * which G2107_WallSet[] entry is used.
+     *
+     * Source citations (DUNVIEW.C):
+     *   D3L2: 6254-6260  D3R2: 6321-6327  D3L:  6421-6427
+     *   D3R:  6554-6564  D3C:  6707-6714  D2L2: 6849-6858
+     *   D2R2: 6880-6889  D2L:  6954-6964  D2R:  7105-7115
+     *   D2C:  7299-7306  D1L:  7445-7455  D1R:  7613-7623
+     *   D1C:  7833-7840  D0L:  8016-8033  D0R:  8126-8139
+     *
+     * The door frame section (steps 4-11) already covers D3L/D3R/D3C/
+     * D2L/D2R/D2C/D1L/D1R/D1C.  This loop handles the remaining positions
+     * that have no door frame: D3L2, D3R2, D2L2, D2R2, D0L, D0R, D0C.
+     * Skip D4L/D4R/D4C (object-only) and the door-covered squares.
+     */
 
-    /* Step 12: Native wall set remains stable on PC34/I34E; other platform
-     * paths restore at DUNVIEW.C:8553-8579 after temporary flipped pointers. */
+    for (size_t i = 0; i < dm1_viewport_3d_draw_order_count(); ++i) {
+        const DM1_ViewportDrawStep *step = &s_draw_order[i];
 
-    /* Step 13: Mark floor/ceiling for anticipatory redraw.
-     * ReDMCSB F0128 lines 8607-8609:
-     *   if (G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE)
-     *     F0098_DUNGEONVIEW_DrawFloorAndCeiling(); */
+        /* Skip object-only positions */
+        if (step->square == DM1_VIEW_SQUARE_D4L ||
+            step->square == DM1_VIEW_SQUARE_D4R ||
+            step->square == DM1_VIEW_SQUARE_D4C) {
+            continue;
+        }
+
+        /* Skip squares already handled by the door frame section above.
+         * Door frame covers: D3L, D3R, D3C, D2L, D2R, D2C, D1L, D1R, D1C */
+        switch (step->square) {
+        case DM1_VIEW_SQUARE_D3L:  case DM1_VIEW_SQUARE_D3R:
+        case DM1_VIEW_SQUARE_D3C:  case DM1_VIEW_SQUARE_D2L:
+        case DM1_VIEW_SQUARE_D2R:  case DM1_VIEW_SQUARE_D2C:
+        case DM1_VIEW_SQUARE_D1L:  case DM1_VIEW_SQUARE_D1R:
+        case DM1_VIEW_SQUARE_D1C:
+            continue;
+        default:
+            break;
+        }
+
+        const DM1_ViewportWallDrawSpec *spec =
+            dm1_viewport_3d_get_wall_draw_spec_for_square(step->square);
+        if (!spec) continue;
+        if (!bm_base) continue;
+
+        /* Parity-driven bitmap selection.
+         * DUNVIEW.C:6354-6365, 6492-6503, 6625-6636, 6767-6778,
+         * 7360-7371, 7505-7516, 7673-7684, 7900-7911,
+         * 8039-8050, 8145-8156 */
+        bool flip_h = false;
+        DM1_WallSetIndex wall_idx = dm1_viewport_3d_select_wall_bitmap(
+            spec, state->parity_flip, &flip_h);
+        (void)wall_idx;
+
+        /* Locate bitmap row for this spec (matches s_wall_draw_specs order) */
+        size_t spec_idx = 0;
+        for (size_t j = 0; j < dm1_viewport_3d_wall_draw_spec_count(); ++j) {
+            const DM1_ViewportWallDrawSpec *s = dm1_viewport_3d_get_wall_draw_spec(j);
+            if (s && s->square == step->square) { spec_idx = j; break; }
+        }
+        const uint8_t *wall_bmp = bm_base + (int)spec_idx * BMP_STRIDE;
+        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(step->square);
+        if (!fr) continue;
+
+        /* F0105 (flipped) -> copy+flip to temp then blit
+         * F0100/F0104 (native) -> direct blit */
+        if (flip_h) {
+            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
+        }
+    }
+
+    /* Step 12: Native wall set remains stable on PC34/I34E.
+     * Step 13: Mark floor/ceiling dirty for next frame.
+     * ReDMCSB F0128 lines 8607-8609 */
     state->floor_ceiling_dirty = true;
 }
 
