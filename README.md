@@ -91,12 +91,34 @@ All releases include SHA256 checksums. See [RELEASE_NOTES.md](./RELEASE_NOTES.md
 > **Windows**: `%APPDATA%\Firestaff\data\`
 > **macOS**: `~/Library/Application Support/Firestaff/data/`
 
-Run with `--help` to see all options:
+### Command-Line Options
+
+```
+firestaff [options]
+  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)
+  --width <px>        Window width (default: 640)
+  --height <px>       Window height (default: 400)
+  --scale-mode <n>    Graphics mode: 1=V1 (original), 2=V2.1 (enhanced), 3=V2.2 (modern)
+  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc
+  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var or system location)
+  --fullscreen        Run in fullscreen mode
+  --no-vsync          Disable vertical sync
+  --fps               Show FPS counter
+  --version           Show version and exit
+  --help, -h          Show this help
+```
+
+**Game detection:** Firestaff auto-detects which game you have from the `data/` directory.
+Game order: Dungeon Master → Chaos Strikes Back → Dungeon Master II → Dungeon Master Nexus.
+
+**Scale modes:** V1 (original 320×200 upscaled), V2.1 (640×400), V2.2 (960×600 with smooth scaling).
+
+Examples:
 ```bash
-firestaff --help
-firestaff --scale-mode 2      # V2.1 upscaled graphics
-firestaff --scale-mode 3      # V2.2 modern graphics
-firestaff --data-dir ~/my/dm1 # custom data directory
+firestaff --duration 5000       # run for 5 seconds then exit
+firestaff --scale-mode 2        # V2.1 enhanced graphics
+firestaff --data-dir ~/my/dm1   # custom data directory
+firestaff --fullscreen --fps    # fullscreen with FPS display
 ```
 
 ## Building from Source

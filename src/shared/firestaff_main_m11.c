@@ -24,16 +24,15 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static void usage(const char* prog) {
     fprintf(stderr,
             "Usage: %s [options]\n"
-            "  --duration <ms>    Run for specified milliseconds (<0 = run until exit, 0 = single frame)\n"
+            "  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)\n"
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
-            "  --scale-mode <n>    Scale mode: 1=V1, 2=V2.1, 3=V2.2\n"
+            "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2 (not yet wired)\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
-            "  --data-dir <path>   Override asset directory (default: FIRESTAFF_DATA env var)\n"
-            "  --game <id>         Game mode: dm1, csb, dm2, nexus, theron, m12\n"
-            "  --fullscreen        Run in fullscreen mode\n"
-            "  --no-vsync          Disable vertical sync\n"
-            "  --fps               Show FPS counter\n"
+            "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --fullscreen        Run in fullscreen mode (not yet wired)\n"
+            "  --no-vsync          Disable vertical sync (not yet wired)\n"
+            "  --fps               Show FPS counter (not yet wired)\n"
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);
@@ -67,6 +66,26 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--version") == 0) {
+            fprintf(stderr, "Firestaff v2.4.6\n");
+            return 0;
+        }
+        if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {
+            opts.scaleMode = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--fullscreen") == 0) {
+            /* not yet wired */
+            continue;
+        }
+        if (strcmp(a, "--no-vsync") == 0) {
+            /* not yet wired */
+            continue;
+        }
+        if (strcmp(a, "--fps") == 0) {
+            /* not yet wired */
             continue;
         }
         fprintf(stderr, "firestaff: unknown argument '%s'\n", a);
