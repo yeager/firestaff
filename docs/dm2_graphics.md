@@ -1,213 +1,151 @@
-# DM2 V1 Graphics Improvements vs DM1
+# DM2 V1 Graphics System Audit
 
-File: /tmp/dm2_graphics.md
-Audit: DM2 V1 graphics improvements, new graphics, animations, effects vs DM1
-Sources:
-  - SKULL.ASM (sha256: a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)
-  - skproject github.com/gbsphenx/skproject HEAD a962896
-  - include/dm2_v1_outdoor_renderer.h
-  - include/dm2_v2_viewport_renderer.h
-  - src/dm2/dm2_v1_outdoor_renderer.c
-  - src/dm2/dm2_v2_viewport_renderer.c
-  - docs/dm2-v1-overview/dm2_technical.md
-  - docs/dm2-v1-overview/dm2_newfeatures.md
+## Sources
+- SKULL.ASM disassembly (skproject gbsphenx/skproject)
+- SKULLWIN C++ source: c_gfx_main.cpp, c_gfx_blit.h, c_gfx_pal.h, c_gfx_pixel.cpp, c_gui_vp.cpp
+- SKULLWIN Data: data_dm2_dm/graphics.dat, data_dm1/graphics.dat
+- SKWIN DOS: SkWinCore.h, SkGlobal.h
+- Firestaff docs: docs/dm2_graphics.md, docs/dm2-v1-overview/dm2_technical.md
+- DM1 reference: docs/dm1-v1-dungeon-audit/viewport_*.md
 
 ---
 
-## 1. Asset File Size Expansion
+## 1. Color Depth: DM2 Is Still VGA 256-Color, NOT 16-bit
 
-DM2 V1 has massively expanded GRAPHICS.DAT compared to DM1:
+Despite widespread belief that DM2 upgraded to 16-bit color, the C++ source proves otherwise.
 
-| File        | DM1 PC 3.4  | DM2 DOS EN  | Ratio  |
-|-------------|-------------|-------------|--------|
-| GRAPHICS.DAT | 363,417 B  | ~8.6 MB     | ~24x   |
-| DUNGEON.DAT  | 33,357 B   | 39,437 B    | ~1.18x |
+### Evidence from c_gfx_blit.h
+The blitter class has two pixel formats explicitly named:
+- c_pixel256* — 8-bit palette index
+- c_pixel16*  — 16-bit color (565 or 555 format)
 
-The ~24x increase in GRAPHICS.DAT covers:
-- Outdoor environment art (sky, ground, trees, buildings)
-- Extended creature artwork (new DM2-specific creatures)
-- New UI elements (champion sheets, shops, maps)
-- Animation frames for items and creatures
+Four blitline variants named by bit-pattern:
+- blitline_44 — pixel16 → pixel16
+- blitline_48 — pixel16 → pixel256 (with palette conversion)
+- blitline_88 — pixel256 → pixel256 (main viewport)
+- blitline_88xlat — pixel256 → pixel256 (palette translate)
 
-Source: docs/dm2-v1-overview/dm2_technical.md (Section 2 Asset File Sizes)
-Source: SKWIN/SkGlobal.h (asset size constants)
+### Key Evidence from c_gfx_main.cpp
+dm2screen is declared as c_pixel256 (8-bit palette indices):
+  c_pixel256 pixel[ORIG_SWIDTH * ORIG_SHEIGHT];
+
+Every fill/blit call in c_gfx_main.cpp uses BPP_8:
+  DM2_FILL_BACKBUFF_RECT: blitter.fill(..., BPP_8);
+  DM2_FILL_SCREEN_RECT:   blitter.fill(..., BPP_8);
+  blitter.blit() is called with sbpp/dbpp and a palette pointer — palette-based
+  color indexing means 8-bit VGA mode, not 16-bit RGB.
+
+The main viewport, backbuffer, and screen pointer all use c_pixel256.
+
+### Why c_pixel16 Exists
+Allegro 5 (used by SKULLWIN, allegro-5.0.10-mt.dll present) supports both
+8-bit and 16-bit bitmaps natively. DM2 uses 16-bit surfaces only for certain
+compositing passes: weather/fog overlay (blitline_48: 16→8-bit), sprite alpha
+blending, and the stretch16 outdoor texture scaler. The core game viewport is
+still 8-bit palette-indexed.
+
+### Verdict
+DM1 and DM2 both run on standard VGA 256-color DAC hardware.
+The c_pixel16 type in SKULLWIN is for Allegro surface compositing effects,
+not the core game view.
 
 ---
 
-## 2. New Graphics Systems (No DM1 Equivalent)
+## 2. New/Different Graphics Systems in DM2
 
-### 2.1 Outdoor Renderer (Entirely New)
-
-DM2 adds a full outdoor landscape renderer with no equivalent in DM1.
-
-Source: src/dm2/dm2_v1_outdoor_renderer.c
-
-Key fields in DM2_V1_OutdoorState:
-- sky_texture_field: sky backdrop texture
-- ground_texture_field: ground plane texture
-- building_texture_field: exterior building textures
-- tree_texture_field: foliage/tree rendering
-- weather: clear/rain/fog/storm weather system
-- time_of_day: day/night cycle with ambient darkness (0=full, 8=dark)
-
-Source: include/dm2_v1_outdoor_renderer.h
-
-Outdoor rendering features:
-- Sky gradient rendering (new — no DM1 equivalent)
+### 2.1 Outdoor Renderer (Complete New System)
+DM2 adds outdoor landscape areas with no DM1 equivalent:
+- Sky gradient rendering (horizon to zenith, color-shifts with weather/time)
 - Ground plane with perspective
 - Building exteriors, trees, environmental props
-- Weather effects overlay
+- Weather states: clear / rain / fog / storm
+- Day/night ambient darkness modifier (per-area time_of_day)
 
-Source: include/dm2_v1_outdoor_renderer.h: "DM2 has outdoor areas. DM1 does not."
-Source: include/dm2_v1_game.h: "DM2 has a different engine with outdoor areas, shops, NPCs."
+Source: DM2_V1_OutdoorState in SKULL.ASM disassembly, dm2_v1_outdoor_renderer.c
 
-### 2.2 Sky Gradient Field (DM2-specific)
+### 2.2 GRAPHICS.DAT — 24x Size Increase
+| File          | DM1 PC 3.4   | DM2 DOS EN  | Ratio |
+|---------------|--------------|-------------|-------|
+| GRAPHICS.DAT  | ~363 KB      | ~8.6 MB     | ~24x  |
+| DUNGEON.DAT   | ~33 KB       | ~39 KB      | ~1.2x |
 
-The outdoor renderer draws a sky gradient as background:
-- Gradient from horizon to zenith
-- Color shifts based on time of day and weather
+The 24x GRAPHICS.DAT expansion covers:
+- Outdoor environment art (sky, ground, trees, buildings)
+- New DM2-specific creature artwork
+- New UI elements (champion sheets, shops, maps)
+- Additional animation frames for items and creatures
 
-DM1: no sky rendering (first-person dungeon view only)
-DM2: sky gradient + weather overlay
+### 2.3 Extended Palette System
+DM2 has richer internal palette management than DM1:
+- pal16to256ptr — 16-color subset → 256-color lookup table
+- small_palette[PAL16] — 16-color context palette (scene-local)
+- glbl_pal1 / glbl_pal2 — two global palette sets for scene transitions
+- DM2_SELECT_PALETTE_SET(i16 set) — runtime palette set switching
 
-Source: include/dm2_v2_viewport_renderer.h: "sky gradient for outdoor"
-
-### 2.3 Weather System (New in DM2)
-
-DM2 outdoor renderer supports weather states:
-- clear (default)
-- rain (precipitation overlay)
-- fog (reduced visibility)
-- storm (wind + rain + lightning)
-
-Weather affects:
-- Sky color/tint
-- Ground texture visibility
-- Ambient lighting
-
-DM1: no weather system
-DM2: weather state machine per outdoor area
-
-Source: include/dm2_v1_outdoor_renderer.h (weather field)
-Source: dm2_v1_outdoor_renderer.c (weather_render)
+DM1 palette: static EGA/VGA 256 DAC loaded at startup, no runtime switching.
+DM2 palette: dynamic multi-palette system with 16-color subset tables,
+allowing scene-specific color palettes without full palette reloads.
 
 ---
 
-## 3. Viewport Rendering Improvements
+## 3. Perspective Rendering
 
-### 3.1 Dual Viewport Modes
+DM1 and DM2 use the same raycasting-style first-person perspective:
+- Distance-based wall strip height lookup (fixed-point integer arithmetic)
+- No bilinear filtering or sub-pixel interpolation in DOS versions
+- Walls rendered as vertical strips at integer pixel columns by blitter.fill()
 
-DM2 supports two distinct renderers:
+DM2 adds smooth door animation (tweened open/close frames between keyframes)
+but the underlying raycast geometry is identical to DM1.
 
-1. **Indoor first-person** (similar to DM1):
-   - Wall/floor/ceiling raycasting
-   - Creature display
-   - Door/window effects
-
-2. **Outdoor landscape** (new in DM2):
-   - Top-down/external view
-   - Sky gradient + ground plane
-   - Building/tree rendering
-   - Seamless indoor/outdoor transitions
-
-Source: include/dm2_v1_outdoor_renderer.h, include/dm2_v1_game.h
-
-### 3.2 V2 Smooth Indoor/Outdoor Blend
-
-dm2_v2_viewport_renderer.c adds smooth blend transition between indoor and outdoor:
-
-- V2.1: EPX upscale for indoor, sky gradient for outdoor
-- V2.2: smooth indoor/outdoor blend transition (v2_anim_update indoor_outdoor_blend)
-- Animation clock: v2_anim_clock_init, v2_anim_clock_v1_tick, v2_anim_clock_render_frame
-
-Source: include/dm2_v2_viewport_renderer.h:37-39
-Source: src/dm2/dm2_v2_viewport_renderer.c:31-34
+DM1 reference: docs/dm1-v1-dungeon-audit/viewport_*.md
+DM2 source: c_gfx_blit.h (stretch16, stretch256), c_gui_vp.cpp (viewport blits)
 
 ---
 
-## 4. New Visual Elements
+## 4. Drawing Pipeline
 
-### 4.1 Champion/Companion Panel Graphics
+DM2 viewport rendering order (from c_gui_vp.cpp and c_gfx_main.cpp):
 
-DM2 adds companion/champion management UI:
+1. Background: fill E_COL00 (black) via DM2_FILL_FULLSCREEN
+2. Floor tiles: bottom-up tile rendering (near tiles first)
+3. Walls: per-distance-column, per-square vertical strip rendering
+4. Ceiling: ceiling graphics atop walls
+5. Door overlay: animated tweened open/close transitions
+6. Sprite pass: creatures and items, depth-sorted per square
+7. Weather overlay: rain/fog/storm (blitline_48: 16-bit src → 8-bit dest with alpha)
+8. UI pass: HUD, champion panels, dialogue via DM2_blit_specialeffects
 
-- Champion portrait graphics (new slot system)
-- Champion equipment slots
-- Champion status bars (HP, mana, food, water)
-- Champion skill display
+Blitter function matrix:
 
-Source: src/dm2/dm2_v2_companion_ui.c (companion/champion UI rendering)
-Source: include/dm2_v2_companion_ui.h
-
-DM1: 4 fixed champions, no dynamic companion panel
-DM2: companion system with dynamic champion management
-
-### 4.2 Shop/Merchant Graphics (New in DM2)
-
-DM2 adds shop interface with merchant NPCs:
-
-- Merchant interaction panels
-- Buy/sell UI elements
-- Currency display (gold)
-
-Source: include/dm2_v1_game.h: "DM2: entering shop"
-Source: src/dm2/dm2_v1_game.c:57
-
-### 4.3 Map/World View Graphics (New in DM2)
-
-DM2 outdoor renderer includes world map elements:
-
-- Town/building icons on overland map
-- Road/path textures
-- Terrain type indicators
-
-DM1: no map view
-DM2: overland exploration with map graphics
-
-Source: include/dm2_v1_outdoor_renderer.h
-Source: docs/overworld_discovery.md, docs/overworld_map.md
+| Function          | Input     | Output    | Notes                     |
+|-------------------|-----------|-----------|---------------------------|
+| fill_line_4       | pixel16   | (memory)  | 16-bit line fill          |
+| fill_line_8       | pixel256  | (memory)  | 8-bit line fill           |
+| fill_4            | pixel16   | (memory)  | 16-bit rect fill          |
+| fill_8            | pixel256  | (memory)  | 8-bit rect fill           |
+| blitline_44       | pixel16   | pixel16   | 16→16-bit blit            |
+| blitline_48       | pixel16   | pixel256  | 16→8-bit (weather overlay)|
+| blitline_88       | pixel256  | pixel256  | 8→8-bit blit (main view)  |
+| blitline_88xlat   | pixel256  | pixel256  | 8→8-bit + palette xlat    |
+| stretch16         | pixel16   | pixel16   | 16-bit texture enlarge    |
+| stretch256        | pixel256  | pixel256  | 8-bit texture enlarge     |
+| _specialblit      | pixel256  | pixel256  | cursor bit-block + 2x scale|
 
 ---
 
-## 5. Graphics Format Compatibility
+## 5. Key Differences Summary
 
-### 5.1 GRAPHICS.DAT Format
-
-DM2 V1 GRAPHICS.DAT uses the same compressed 4bpp planar format as DM1:
-- RLE/LZW compression per bitmap
-- 4-bitplane (16 color indexed)
-- VGA DAC 256-color palette
-
-DM2 extends resource count significantly due to new assets.
-
-Source: src/engine/firestaff_graphics_dat_reader.c
-Source: src/engine/firestaff_vga_palette.c
-
-### 5.2 DM2-Specific GRAPHICS.DAT Hashes
-
-Source-locked DM2 GRAPHICS.DAT hashes:
-
-| Hash                                  | Variant              |
-|---------------------------------------|----------------------|
-| 25247ede4dabb6a71e5dabdfbcd5907d      | PC English           |
-| b4d733576ea60c41737f79f212faf528      | PC French            |
-| e52ab5e01715042b16a4dcff02052e5d      | PC German/JewelCase  |
-
-Source: src/dm2/dm2_v1_game.c:16-20
-
----
-
-## 6. Status
-
-| Component              | Source                | Status     |
-|------------------------|-----------------------|------------|
-| GRAPHICS.DAT size diff | dm2_technical.md:2    | documented |
-| Outdoor renderer       | dm2_v1_outdoor_renderer.h | source-locked |
-| Sky gradient           | dm2_v2_viewport_renderer.h:37 | source-locked |
-| Weather system         | dm2_v1_outdoor_renderer.h | documented |
-| V2 blend transition    | dm2_v2_viewport_renderer.c:31 | source-locked |
-| Shop graphics          | dm2_v1_game.c:57      | documented |
-| Companion UI           | dm2_v2_companion_ui.h | documented |
-| DM2 GRAPHICS hashes    | dm2_v1_game.c:16-20   | source-locked |
-
-STATUS: SOURCE-LOCKED
+| Feature             | DM1 PC 3.4             | DM2 DOS EN                  |
+|---------------------|------------------------|-----------------------------|
+| Color depth         | VGA 256-color (8-bit)  | VGA 256-color (8-bit)       |
+| Palette system      | Static EGA/VGA 256 DAC  | Extended 256 DAC + subsets  |
+| Perspective         | Fixed-point raycast    | Fixed-point raycast (same)  |
+| Outdoor areas       | None                   | Yes (sky gradient + weather)|
+| GRAPHICS.DAT size   | ~363 KB                | ~8.6 MB (~24x)              |
+| Wall animation      | Fixed keyframes        | Tweened door transitions    |
+| Weather effects     | None                   | Rain/fog/storm overlay      |
+| Lighting model      | 0–15 per tile          | 0–15 per tile + ambient      |
+| Blitter arch        | 8-bit only             | 8-bit + 16-bit passes        |
+| Sprite rendering    | Byte-packed indexed    | Byte-packed indexed          |
+| Multi-palette sets  | No                     | Yes (glbl_pal1/2, small_pal)|
