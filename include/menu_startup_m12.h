@@ -293,7 +293,8 @@ typedef struct M12_StartupMenuState {
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
 void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
-                                     const char* dataDir);
+                                     const char* dataDir,
+                                     const char* gameId);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,

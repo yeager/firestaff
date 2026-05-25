@@ -1173,11 +1173,12 @@ static void m12_show_missing_original_files_popup(M12_StartupMenuState* state) {
 }
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
-    M12_StartupMenu_InitWithDataDir(state, NULL);
+    M12_StartupMenu_InitWithDataDir(state, NULL, NULL);
 }
 
 void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
-                                     const char* dataDir) {
+                                     const char* dataDir,
+                                     const char* gameId) {
     if (!state) {
         return;
     }
@@ -1196,6 +1197,13 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
                          (unsigned int)time(NULL));
     m12_probe_quick_resume(state);
     state->selectedIndex = 0;
+    /* --game CLI override: pre-select specific game */
+    if (gameId) {
+        int gi = m12_game_slot_from_id(gameId);
+        if (gi >= 0) {
+            state->selectedIndex = gi;
+        }
+    }
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
@@ -1595,6 +1603,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         }
     } else {
         state->selectedIndex = 0;
+    /* --game CLI override: pre-select specific game */
     }
     state->settingsSelectedIndex = m12_clamp_index(state->settingsSelectedIndex,
                                                    M12_SETTINGS_ROW_COUNT);
@@ -2196,6 +2205,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (state->quickResumeAvailable) {
                 if (state->selectedIndex == -1) {
                     state->selectedIndex = 0;
+    /* --game CLI override: pre-select specific game */
                 } else if (state->selectedIndex >= count - 1) {
                     state->selectedIndex = -1;
                 } else {

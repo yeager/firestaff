@@ -31,6 +31,8 @@ typedef struct {
                               up,down,left,right,enter,esc. */
     const char* dataDir;   /* Optional override for asset detection.
                               Falls back to FIRESTAFF_DATA. */
+    const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
+                              nexus1, theron. Overrides auto-detection. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

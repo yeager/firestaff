@@ -27,12 +27,13 @@ static void usage(const char* prog) {
             "  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)\n"
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
-            "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2 (not yet wired)\n"
+            "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
-            "  --fullscreen        Run in fullscreen mode (not yet wired)\n"
-            "  --no-vsync          Disable vertical sync (not yet wired)\n"
-            "  --fps               Show FPS counter (not yet wired)\n"
+            "  --fullscreen        Run in fullscreen mode\n"
+            "  --no-vsync          Disable vertical sync\n"
+            "  --fps               Show FPS counter\n"
+            "  --game <id>         Pre-select game: dm1, csb, dm2, nexus1, theron\n"
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);
@@ -66,6 +67,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--game") == 0 && i + 1 < argc) {
+            opts.gameId = argv[++i];
             continue;
         }
         if (strcmp(a, "--version") == 0) {

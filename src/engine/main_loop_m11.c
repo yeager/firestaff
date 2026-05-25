@@ -1723,7 +1723,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
-    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
+    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir, o->gameId);
     menuState.settings.windowWidth = M11_Render_GetWindowWidth();
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
     useModern = m11_should_use_modern_launcher(&menuState);
