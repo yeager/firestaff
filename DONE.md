@@ -471,3 +471,19 @@ Status per 2026-05-19 v2.4.0.
 - ⚠️ Teleporter wiring GAP — ALL 10 public API functions in dm1_v1_teleporter_pit_pc34_compat.c are ORPHANED; F0267 referenced in comments but no actual calls exist from movement_pipeline or game_loop
 - ✅ HUD status bar — GAP documented: DM1 V1 top strip (dungeon name/floor/clock/gold/food/water) does not exist in ReDMCSB source; DM2/CSB feature only; not a Firestaff gap
 
+
+### DM1 V1 — Rendering Pipeline Audit 2026-05-25 (Continued)
+
+- ✅ s_draw_order[19] defined correctly (back-to-front, D4L→D0C) — lines 78–101
+- ✅ s_wall_specs[], s_projectile_occlusion_specs[], wall flip parity all correct
+- ✅ Draw primitives (F0098/F0100/F0101) implemented in dm1_v1_draw_primitives_pc34_compat.c
+- ⚠️ VIEWPORT RENDERING GAP — dm1_viewport_3d_draw_frame() is skeleton only; for loop over s_draw_order[] (lines 507–578) has comments but NO executable code for Steps 4–11; all wall drawing, door occlusion, far-object rendering is absent; build still passes because primitives exist but are never called
+- ✅ Build: 100% clean (all targets link)
+
+
+## DM1 V1 GAP Fixes (2026-05-25) — Completed Today
+
+- ✅ ESC-dialog YES/NO buttons — m11_draw_dialog_choices_source() was never called for return-to-menu branch because drawnSourceBackdrop was 0; added choice-drawing loop after cdlgX/cdlgY assignment; commit 4ae014dd
+- ✅ Object interaction (m11_obj_use stub) — replaced stub with real implementation delegating to dm1_inventory_consume_potion_pc34 / dm1_inventory_consume_water_junk_pc34 / dm1_inventory_consume_food_junk_pc34; wired sound module to test; commits cb8b1586 + da06e726
+- ✅ CardArt NULL guard + Theron card art — M12_CardArt_Resolve now guards against NULL gameId before any strlen call (crash fix); Theron uses nexus card art candidates; commit a9ac95dc
+- ✅ Equip/unequip slot validation — added m11_inventory_can_equip/equip/unequip with F0300-F0302 source citations and 6-slot capacity check; commit a85fb55d
