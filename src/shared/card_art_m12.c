@@ -69,18 +69,8 @@ static void m12_copy_text(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
         return;
     }
-    out[0] = (char)0;
-    if (!value) {
-        return;
-    }
-    /* Use strnlen to avoid reading unbounded memory on bad pointers */
-    size_t len = strnlen(value, outSize - 1);
-    if (len > 0) {
-        memcpy(out, value, len);
-    }
-    out[len] = (char)0;
+    snprintf(out, outSize, "%s", value ? value : "");
 }
-
 static const M12_CardArtSpec* m12_find_card_spec(const char* gameId) {
     size_t i;
     if (!gameId) {
