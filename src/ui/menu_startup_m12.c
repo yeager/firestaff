@@ -341,14 +341,14 @@ static void m12_clamp_game_options(M12_GameOptions* opts) {
 }
 
 static const M12_MenuEntry g_entryTemplate[] = {
-    {.title = "DUNGEON MASTER", .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    {.title = "DUNGEON MASTER II", .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    {.title = "DUNGEON MASTER NEXUS", .gameId = "nexus1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("DUNGEON MASTER"), .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("CHAOS STRIKES BACK"), .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("DUNGEON MASTER II"), .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
-    {.title = "THERON'S QUEST", .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    {.title = "MUSEUM OF LORE", .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
-    {.title = "SETTINGS", .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
+    {.title = _("THERON'S QUEST"), .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("MUSEUM OF LORE"), .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
+    {.title = _("SETTINGS"), .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
 };
 
 typedef struct {
@@ -360,52 +360,52 @@ typedef struct {
 
 static const M12_MuseumCategory g_museumCategories[M12_MUSEUM_CATEGORY_COUNT] = {
     {
-        "DUNGEON MASTER",
-        "THE ORIGINAL DUNGEON CRAWL",
+        _("DUNGEON MASTER"),
+        _("THE ORIGINAL DUNGEON CRAWL"),
         {
-            {"1987 FTL GAMES", "CHAMPIONS ENTER THE DUNGEON", "FOUR PORTRAITS BECOME A PARTY", "THE FIRESTAFF IS THE CENTRAL RELIC", "REAL TIME PRESSURE DEFINES THE LEGEND"},
-            {"KEY LORE THREADS", "LORD CHAOS SHATTERS ORDER", "THE GREY LORD IS DIVIDED", "RA RETURNS AS MASTER OF BALANCE", "THE DUNGEON IS BOTH TEST AND PRISON"},
-            {"PRESERVATION NOTES", "PC AND ATARI ST LINEAGE MATTERS", "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED", "HASHED ORIGINAL DATA STAYS USER SUPPLIED", "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"}
+            {_("1987 FTL GAMES"), _("CHAMPIONS ENTER THE DUNGEON"), _("FOUR PORTRAITS BECOME A PARTY"), _("THE FIRESTAFF IS THE CENTRAL RELIC"), _("REAL TIME PRESSURE DEFINES THE LEGEND")},
+            {_("KEY LORE THREADS"), _("LORD CHAOS SHATTERS ORDER"), _("THE GREY LORD IS DIVIDED"), _("RA RETURNS AS MASTER OF BALANCE"), _("THE DUNGEON IS BOTH TEST AND PRISON")},
+            {_("PRESERVATION NOTES"), _("PC AND ATARI ST LINEAGE MATTERS"), _("GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"), _("HASHED ORIGINAL DATA STAYS USER SUPPLIED"), _("FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK")}
         },
         3
     },
     {
-        "CHAOS STRIKES BACK",
-        "THE CHAMPIONS RETURN",
+        _("CHAOS STRIKES BACK"),
+        _("THE CHAMPIONS RETURN"),
         {
-            {"EXPANSION AND SEQUEL DESIGN", "DUNGEON MASTER SYSTEMS BECOME DENSER", "THE CORBUM QUEST REPLACES SIMPLE DESCENT", "FOUR PATHS TEST MASTERY", "CSB REWARDS MAP MEMORY AND NERVE"},
-            {"LORE SHAPE", "CHAOS STILL CASTS A LONG SHADOW", "THE PLAYER HUNTS CORBUM MATERIAL", "RETURNING CHAMPIONS FACE A HARDER MAZE", "THE WORLD FEELS OLDER AND LESS SAFE"},
-            {"ARCHIVE STATUS", "CSBGRAPH DAT AND CSB DAT ARE TRACKED", "VERSION SLOTS USE HASH EVIDENCE", "LAUNCHER SHOWS READY ONLY WHEN MATCHED", "MUSEUM CONTENT STAYS STATIC AND BOUNDED"}
+            {_("EXPANSION AND SEQUEL DESIGN"), _("DUNGEON MASTER SYSTEMS BECOME DENSER"), _("THE CORBUM QUEST REPLACES SIMPLE DESCENT"), _("FOUR PATHS TEST MASTERY"), _("CSB REWARDS MAP MEMORY AND NERVE")},
+            {_("LORE SHAPE"), _("CHAOS STILL CASTS A LONG SHADOW"), _("THE PLAYER HUNTS CORBUM MATERIAL"), _("RETURNING CHAMPIONS FACE A HARDER MAZE"), _("THE WORLD FEELS OLDER AND LESS SAFE")},
+            {_("ARCHIVE STATUS"), _("CSBGRAPH DAT AND CSB DAT ARE TRACKED"), _("VERSION SLOTS USE HASH EVIDENCE"), _("LAUNCHER SHOWS READY ONLY WHEN MATCHED"), _("MUSEUM CONTENT STAYS STATIC AND BOUNDED")}
         },
         3
     },
     {
-        "DUNGEON MASTER II",
-        "THE LEGEND OUTSIDE THE FIRST DUNGEON",
+        _("DUNGEON MASTER II"),
+        _("THE LEGEND OUTSIDE THE FIRST DUNGEON"),
         {
-            {"THE SKULLKEEP ERA", "THE SERIES MOVES BEYOND THE ORIGINAL MAZE", "OUTDOOR AND SHOP SPACES EXPAND THE FORM", "MINIONS AND WEATHER CHANGE THE RHYTHM", "DM2 KEEPS THE PARTY SURVIVAL CORE"},
-            {"LORE SHAPE", "TECHNOLOGY AND MAGIC SHARE THE STAGE", "THE WORLD IS BROADER THAN MOUNT ANAIAS", "THE PLAYER ASSEMBLES AND SURVIVES", "THE TONE IS STRANGER AND MORE MECHANICAL"},
-            {"ARCHIVE STATUS", "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED", "SUPPORTED VERSIONS CAN GROW OVER TIME", "CONTENT HERE IS A GUIDE NOT A DATA DUMP", "BINARY ASSETS REMAIN OUTSIDE THIS PASS"}
+            {_("THE SKULLKEEP ERA"), _("THE SERIES MOVES BEYOND THE ORIGINAL MAZE"), _("OUTDOOR AND SHOP SPACES EXPAND THE FORM"), _("MINIONS AND WEATHER CHANGE THE RHYTHM"), _("DM2 KEEPS THE PARTY SURVIVAL CORE")},
+            {_("LORE SHAPE"), _("TECHNOLOGY AND MAGIC SHARE THE STAGE"), _("THE WORLD IS BROADER THAN MOUNT ANAIAS"), _("THE PLAYER ASSEMBLES AND SURVIVES"), _("THE TONE IS STRANGER AND MORE MECHANICAL")},
+            {_("ARCHIVE STATUS"), _("DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"), _("SUPPORTED VERSIONS CAN GROW OVER TIME"), _("CONTENT HERE IS A GUIDE NOT A DATA DUMP"), _("BINARY ASSETS REMAIN OUTSIDE THIS PASS")}
         },
         3
     },
     {
-        "FIRESTAFF PROJECT",
-        "ABOUT AND CREDITS",
+        _("FIRESTAFF PROJECT"),
+        _("ABOUT AND CREDITS"),
         {
-            {"PROJECT PURPOSE", "OPEN DUNGEON MASTER ENGINE", "DETERMINISTIC MODULAR MUSEUM GRADE", "ORIGINAL DATA IS VERIFIED NOT BUNDLED", "V1 PRESERVES BASELINE BEHAVIOUR"},
-            {"CREDITS", "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS", "DOUG BELL AND ANDY JAROS LED THE CLASSIC DESIGN", "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY", "FIRESTAFF BUILDS ON PRESERVATION RESEARCH"},
-            {"PROJECT BOUNDARIES", "NO CLAIM OF OFFICIAL AFFILIATION", "USER SUPPLIED RETAIL DATA IS REQUIRED", "REGRESSION PROBES GUARD MENU STABILITY", "TRACKED TEXT STAYS ENGLISH IN THE REPO"}
+            {_("PROJECT PURPOSE"), _("OPEN DUNGEON MASTER ENGINE"), _("DETERMINISTIC MODULAR MUSEUM GRADE"), _("ORIGINAL DATA IS VERIFIED NOT BUNDLED"), _("V1 PRESERVES BASELINE BEHAVIOUR")},
+            {_("CREDITS"), _("FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"), _("DOUG BELL AND ANDY JAROS LED THE CLASSIC DESIGN"), _("CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"), _("FIRESTAFF BUILDS ON PRESERVATION RESEARCH")},
+            {_("PROJECT BOUNDARIES"), _("NO CLAIM OF OFFICIAL AFFILIATION"), _("USER SUPPLIED RETAIL DATA IS REQUIRED"), _("REGRESSION PROBES GUARD MENU STABILITY"), _("TRACKED TEXT STAYS ENGLISH IN THE REPO")}
         },
         3
     },
     {
-        "TECHNICAL ARCHIVE",
-        "SOURCE EVIDENCE AND VERIFICATION",
+        _("TECHNICAL ARCHIVE"),
+        _("SOURCE EVIDENCE AND VERIFICATION"),
         {
-            {"EVIDENCE MODEL", "KNOWN FILES ARE MATCHED BY HASH", "VERSION MATRICES STAY EXPLICIT", "RUNTIME PATHS REPORT MISSING DATA SAFELY", "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"},
-            {"STARTUP MENU", "KEYBOARD INPUT IS BOUNDED", "MOUSE HITS ROUTE THROUGH SHARED STATE", "UNKNOWN KEYS ARE NO OPS", "ESCAPE RETURNS BEFORE EXITING"},
-            {"FUTURE MUSEUM WORK", "ADD MANUAL EXCERPT REFERENCES", "ADD INTERVIEW AND TIMELINE SOURCES", "ADD SMALL CURATED SCREEN PANELS", "KEEP LARGE ASSETS OUT UNTIL LICENSED"}
+            {_("EVIDENCE MODEL"), _("KNOWN FILES ARE MATCHED BY HASH"), _("VERSION MATRICES STAY EXPLICIT"), _("RUNTIME PATHS REPORT MISSING DATA SAFELY"), _("NO SILENT FALLBACK TO UNKNOWN ORIGINALS")},
+            {_("STARTUP MENU"), _("KEYBOARD INPUT IS BOUNDED"), _("MOUSE HITS ROUTE THROUGH SHARED STATE"), _("UNKNOWN KEYS ARE NO OPS"), _("ESCAPE RETURNS BEFORE EXITING")},
+            {_("FUTURE MUSEUM WORK"), _("ADD MANUAL EXCERPT REFERENCES"), _("ADD INTERVIEW AND TIMELINE SOURCES"), _("ADD SMALL CURATED SCREEN PANELS"), _("KEEP LARGE ASSETS OUT UNTIL LICENSED")}
         },
         3
     }
@@ -544,35 +544,35 @@ typedef struct {
 } M12_RuntimeCatalog;
 
 static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
-    "FRONTEND PREVIEW",
-    "SELECT A DESTINATION",
+    _("FRONTEND PREVIEW"),
+    _("SELECT A DESTINATION"),
     "SETTINGS",
-    "STATUS",
-    "LAUNCHER DESTINATIONS",
-    "DATA DIR",
-    "UP/DOWN MOVE   ENTER OPEN   ESC EXIT",
-    "PERSISTED OPTIONS",
-    "LANGUAGE",
-    "PRESENTATION MODE",
-    "RENDERER BACKEND",
-    "RENDERER BACKEND UNAVAILABLE",
-    "WINDOW MODE",
-    "CHANGES SAVE IMMEDIATELY TO CONFIG",
-    "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK",
-    "ENTER OR ESC RETURNS TO MENU",
-    "READY TO LAUNCH",
-    "ESC RETURNS TO MENU",
-    "VALIDATOR SCAFFOLD ONLY",
-    "ADD VERIFIED RETAIL HASHES",
-    "GAME DATA NOT FOUND",
-    "CHECK FIRESTAFF DATA DIR",
-    "ORIGINAL FILES NOT FOUND",
-    "COPY YOUR RETAIL GAME FILES INTO:",
-    "ART SLOT READY",
-    "ART SLOT EMPTY",
-    "DROP ART INTO SLOT",
-    "CARD ART ACTIVE",
-    "CARD ART SLOT"
+    _("STATUS"),
+    _("LAUNCHER DESTINATIONS"),
+    _("DATA DIR"),
+    _("UP/DOWN MOVE   ENTER OPEN   ESC EXIT"),
+    _("PERSISTED OPTIONS"),
+    _("LANGUAGE"),
+    _("PRESENTATION MODE"),
+    _("RENDERER BACKEND"),
+    _("RENDERER BACKEND UNAVAILABLE"),
+    _("WINDOW MODE"),
+    _("CHANGES SAVE IMMEDIATELY TO CONFIG"),
+    _("LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"),
+    _("ENTER OR ESC RETURNS TO MENU"),
+    _("READY TO LAUNCH"),
+    _("ESC RETURNS TO MENU"),
+    _("VALIDATOR SCAFFOLD ONLY"),
+    _("ADD VERIFIED RETAIL HASHES"),
+    _("GAME DATA NOT FOUND"),
+    _("CHECK FIRESTAFF DATA DIR"),
+    _("ORIGINAL FILES NOT FOUND"),
+    _("COPY YOUR RETAIL GAME FILES INTO:"),
+    _("ART SLOT READY"),
+    _("ART SLOT EMPTY"),
+    _("DROP ART INTO SLOT"),
+    _("CARD ART ACTIVE"),
+    _("CARD ART SLOT")
 };
 
 static M12_RuntimeCatalog g_runtimeCatalogs[4];
@@ -2602,7 +2602,7 @@ static const char* m12_entry_status_text(const M12_MenuEntry* entry) {
         return "READY";
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return "NO SOURCE";
+        return _("NO SOURCE");
     }
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return "MISSING";
@@ -2801,19 +2801,19 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
         return "SETTINGS";
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
-        return "SETTINGS";
+        return _("SETTINGS");
     }
     version = m12_selected_version_status(state, gameIndex);
     if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
-        return "AVAILABLE";
+        return _("AVAILABLE");
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return "NO SOURCE";
+        return _("NO SOURCE");
     }
     if (version && version->matched) {
-        return "READY TO LAUNCH";
+        return _("READY TO LAUNCH");
     }
-    return "MISSING OR MISMATCHED";
+    return _("MISSING OR MISMATCHED");
 }
 
 static void m12_draw_status_icon(unsigned char* framebuffer,
@@ -3363,19 +3363,19 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
  * ══════════════════════════════════════════════════════════════════════ */
 
 static const char *g_main_menu_labels[M12_MAIN_MENU_COUNT] = {
-    "PLAY", "SETTINGS", "EXTRAS", "QUIT"
+    _("PLAY"), _("SETTINGS"), _("EXTRAS"), _("QUIT")
 };
 
 static const char *g_main_menu_descriptions[M12_MAIN_MENU_COUNT] = {
-    "Start or continue a game",
-    "Display, video, audio and controls",
-    "Museum, bestiary, spell reference and more",
-    "Exit Firestaff"
+    _("Start or continue a game"),
+    _("Display, video, audio and controls"),
+    _("Museum, bestiary, spell reference and more"),
+    _("Exit Firestaff")
 };
 
 static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
-    "Dungeon Master", "Chaos Strikes Back",
-    "Dungeon Master II", "Dungeon Master Nexus"
+    _("Dungeon Master"), _("Chaos Strikes Back"),
+    _("Dungeon Master II"), _("Dungeon Master Nexus")
 };
 
 static const char *g_game_select_tags_ready[] = {_("V1 / V2.1 / V2.2"), _("V1 / V2"), _("V1 / V2"), _("V1 / V2")};
@@ -3399,11 +3399,11 @@ static const char *m12_game_tag(int index) {
 }
 
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
-    "New Game (Original)",
-    "New Game (Original + Filters)",
-    "New Game (Original 10x Upscale)",
-    "Continue Saved Game",
-    "New Game (Modern Graphics)"
+    _("New Game (Original)"),
+    _("New Game (Original + Filters)"),
+    _("New Game (Original 10x Upscale)"),
+    _("Continue Saved Game"),
+    _("New Game (Modern Graphics)")
 };
 
 static const int g_game_mode_available[M12_GAME_MODE_COUNT] = {
@@ -3411,8 +3411,8 @@ static const int g_game_mode_available[M12_GAME_MODE_COUNT] = {
 };
 
 static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
-    "Museum of Lore", "Bestiary", "Spell Reference",
-    "Map Viewer", "Item Encyclopedia", "Changelog", "Screenshot Gallery"
+    _("Museum of Lore"), _("Bestiary"), _("Spell Reference"),
+    _("Map Viewer"), _("Item Encyclopedia"), _("Changelog"), _("Screenshot Gallery")
 };
 
 static const int g_extras_available[M12_EXTRAS_COUNT] = {
@@ -3499,7 +3499,7 @@ static void m12_draw_game_select(const M12_StartupMenuState *state,
     int i;
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
-        "SELECT GAME", &g_textMediumShadow);
+        _("SELECT GAME"), &g_textMediumShadow);
 
     for (i = 0; i < M12_GAME_SELECT_COUNT; i++) {
         int y = startY + i * itemH;
@@ -3510,7 +3510,7 @@ static void m12_draw_game_select(const M12_StartupMenuState *state,
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        "Escape Back  |  Up/Down Navigate  |  Enter Select", &g_textSmallMuted);
+        _("Escape Back  |  Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
 }
 
 static void m12_draw_game_mode(const M12_StartupMenuState *state,
@@ -3520,9 +3520,9 @@ static void m12_draw_game_mode(const M12_StartupMenuState *state,
     int startY = fh / 4;
     int itemH = 32;
     int i;
-    const char *game_name = "DUNGEON MASTER";
+    const char *game_name = _("DUNGEON MASTER");
 
-    if (state->selectedGameId == M12_GAME_SELECT_CSB) game_name = "CHAOS STRIKES BACK";
+    if (state->selectedGameId == M12_GAME_SELECT_CSB) game_name = _("CHAOS STRIKES BACK");
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
         game_name, &g_textMediumShadow);
@@ -3539,7 +3539,7 @@ static void m12_draw_game_mode(const M12_StartupMenuState *state,
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        "Escape Back  |  Up/Down Navigate  |  Enter Start", &g_textSmallMuted);
+        _("Escape Back  |  Up/Down Navigate  |  Enter Start"), &g_textSmallMuted);
 }
 
 static void m12_draw_extras_menu(const M12_StartupMenuState *state,
@@ -3551,7 +3551,7 @@ static void m12_draw_extras_menu(const M12_StartupMenuState *state,
     int i;
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
-        "EXTRAS", &g_textMediumShadow);
+        _("EXTRAS"), &g_textMediumShadow);
 
     for (i = 0; i < M12_EXTRAS_COUNT; i++) {
         int y = startY + i * itemH;
@@ -3563,7 +3563,7 @@ static void m12_draw_extras_menu(const M12_StartupMenuState *state,
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        "Escape Back  |  Up/Down Navigate  |  Enter Open", &g_textSmallMuted);
+        _("Escape Back  |  Up/Down Navigate  |  Enter Open"), &g_textSmallMuted);
 }
 
 static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
@@ -3586,7 +3586,7 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
 
     /* Draw title */
     m12_draw_text(framebuffer, fw, fh, margin + 8, margin + 8,
-        "SETTINGS", &g_textTitleShadow);
+        _("SETTINGS"), &g_textTitleShadow);
 
     /* Draw tab bar */
     for (i = 0; i < M12_SETTINGS_TAB_COUNT; i++) {
@@ -3687,7 +3687,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                                    int framebufferWidth,
                                    int framebufferHeight) {
     M12_MenuEntry settingsCard = {
-        .title = "SETTINGS",
+        .title = _("SETTINGS"),
         .gameId = NULL,
         .kind = M12_MENU_ENTRY_SETTINGS,
         .sourceKind = M12_MENU_SOURCE_SYSTEM,
@@ -3918,7 +3918,7 @@ static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
                                framebufferWidth,
                                framebufferHeight,
                                titleY,
-                               "DUNGEON MASTER",
+                               _("DUNGEON MASTER"),
                                &g_textMediumShadow);
     }
     m12_draw_centered_text(framebuffer,
@@ -3932,7 +3932,7 @@ static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
                                framebufferWidth,
                                framebufferHeight,
                                titleY + 10,
-                               "CHAOS STRIKES BACK",
+                               _("CHAOS STRIKES BACK"),
                                &g_textSmallMuted);
     }
     if (phase >= 2) {
@@ -4748,10 +4748,10 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     {
-        int mw = m12_measure_text("MUSEUM OF LORE", g_textSmallMuted.scale, g_textSmallMuted.tracking);
+        int mw = m12_measure_text(_("MUSEUM OF LORE"), g_textSmallMuted.scale, g_textSmallMuted.tracking);
         m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       x + 8 + (w - 16 - mw) / 2, btnY + 6,
-                      "MUSEUM OF LORE", &g_textSmallMuted);
+                      _("MUSEUM OF LORE"), &g_textSmallMuted);
     }
     btnY += 24;
     /* Credits */
@@ -4765,10 +4765,10 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     {
-        int cw2 = m12_measure_text("CREDITS", g_textSmallMuted.scale, g_textSmallMuted.tracking);
+        int cw2 = m12_measure_text(_("CREDITS"), g_textSmallMuted.scale, g_textSmallMuted.tracking);
         m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       x + 8 + (w - 16 - cw2) / 2, btnY + 6,
-                      "CREDITS", &g_textSmallMuted);
+                      _("CREDITS"), &g_textSmallMuted);
     }
     btnY += 24;
     /* Settings */
@@ -4783,10 +4783,10 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                    settingsFill);
     {
         const M12_TextStyle* sStyle = settingsSelected ? &g_textSmallShadow : &g_textSmallMuted;
-        int sw2 = m12_measure_text("SETTINGS", sStyle->scale, sStyle->tracking);
+        int sw2 = m12_measure_text(_("SETTINGS"), sStyle->scale, sStyle->tracking);
         m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       x + 8 + (w - 16 - sw2) / 2, btnY + 8,
-                      "SETTINGS", sStyle);
+                      _("SETTINGS"), sStyle);
     }
     /* Creature art showcase above data dir */
     if (M12_CreatureArt_HasSelection(&state->creatureArt)) {
@@ -4930,7 +4930,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                           int framebufferWidth,
                                           int framebufferHeight) {
     M12_MenuEntry settingsCard = {
-        .title = "SETTINGS",
+        .title = _("SETTINGS"),
         .gameId = NULL,
         .kind = M12_MENU_ENTRY_SETTINGS,
         .sourceKind = M12_MENU_SOURCE_SYSTEM,
