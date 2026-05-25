@@ -63,14 +63,23 @@ static const M12_CardArtSpec g_cardSpecs[] = {
     {"theron", "GENERATED NEXUS CARD", g_theronCardCandidates},
 };
 
+/* Bounded string copy - avoids strlen on garbage pointers.
+ * Uses strnlen to cap reads at outSize-1, then memcpy. */
 static void m12_copy_text(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
         return;
     }
-    snprintf(out, outSize, "%s", value ? value : "");
+    out[0] = (char)0;
+    if (!value) {
+        return;
+    }
+    /* Use strnlen to avoid reading unbounded memory on bad pointers */
+    size_t len = strnlen(value, outSize - 1);
+    if (len > 0) {
+        memcpy(out, value, len);
+    }
+    out[len] = (char)0;
 }
-
-/* m12_join_path and m12_file_exists replaced by fs_portable_compat. */
 
 static const M12_CardArtSpec* m12_find_card_spec(const char* gameId) {
     size_t i;
