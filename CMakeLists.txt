@@ -2319,6 +2319,7 @@ endif()
 if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
     add_executable(test_dm1_v1_object_interaction_pc34_compat
         tests/test_dm1_v1_object_interaction_pc34_compat.c
+        src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
         src/dm1/dm1_v1_object_interaction_pc34_compat.c
     )
     if(NOT MSVC)

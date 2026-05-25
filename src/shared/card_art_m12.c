@@ -19,6 +19,13 @@ static const char* const g_dm1CardCandidates[] = {
     "cards/dungeon-master.png",
     NULL
 };
+static const char* const g_theronCardCandidates[] = {
+    "cards/nexus1.png",
+    "cards/nexus.png",
+    "cards/dungeon-master-nexus.png",
+    NULL
+};
+
 
 static const char* const g_csbCardCandidates[] = {
     "cards/csb.png",
@@ -51,7 +58,8 @@ static const M12_CardArtSpec g_cardSpecs[] = {
     {"dm1", "ORIGINAL DM1 CARD", g_dm1CardCandidates},
     {"csb", "ORIGINAL CSB CARD", g_csbCardCandidates},
     {"dm2", "ORIGINAL DM2 CARD", g_dm2CardCandidates},
-    {"nexus1", "GENERATED NEXUS CARD", g_nexusCardCandidates}
+    {"nexus1", "GENERATED NEXUS CARD", g_nexusCardCandidates},
+    {"theron", "GENERATED NEXUS CARD", g_theronCardCandidates},
 };
 
 static void m12_copy_text(char* out, size_t outSize, const char* value) {
@@ -255,6 +263,9 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
                          const char* dataDir) {
     const M12_CardArtSpec* spec;
     size_t i;
+    if (!gameId) {
+        return;
+    }
     if (!art) {
         return;
     }
