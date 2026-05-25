@@ -23,7 +23,19 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static void usage(const char* prog) {
     fprintf(stderr,
-            "Usage: %s [--duration <ms>] [--width <px>] [--height <px>] [--script <commands>] [--data-dir <path>]\n",
+            "Usage: %s [options]\n"
+            "  --duration <ms>    Run for specified milliseconds (<0 = run until exit, 0 = single frame)\n"
+            "  --width <px>        Window width (default: 640)\n"
+            "  --height <px>       Window height (default: 400)\n"
+            "  --scale-mode <n>    Scale mode: 1=V1, 2=V2.1, 3=V2.2\n"
+            "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
+            "  --data-dir <path>   Override asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --game <id>         Game mode: dm1, csb, dm2, nexus, theron, m12\n"
+            "  --fullscreen        Run in fullscreen mode\n"
+            "  --no-vsync          Disable vertical sync\n"
+            "  --fps               Show FPS counter\n"
+            "  --version           Show version and exit\n"
+            "  --help, -h          Show this help\n",
             prog);
 }
 
