@@ -25061,6 +25061,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           cdlgX + 1, cdlgY + 1, cdlgW - 2, cdlgH - 2, M11_COLOR_DARK_GRAY);
             dlgX = cdlgX; dlgY = cdlgY; dlgW = cdlgW; dlgH = cdlgH;
             drewSourceBackdrop = 0;
+            /* Always draw YES/NO choices for return-to-menu confirm.
+             * Choices are stored in dialogChoices[0..dialogChoiceCount-1].
+             * ReDMCSB CLIKVIEW.C F0378/F0379/F0380: bottom row button clicks. */
+            if (state->dialogChoiceCount > 0) {
+                int choiceY = cdlgY + cdlgH - 16;
+                int choiceW = cdlgW / state->dialogChoiceCount;
+                int i;
+                for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
+                    m11_draw_text_centered_in_rect(framebuffer,
+                        framebufferWidth, framebufferHeight,
+                        cdlgX + i * choiceW, choiceY, choiceW,
+                        state->dialogChoices[i], &g_text_small);
+                }
+            }
         } else if (m11_v1_chrome_mode_enabled()) {
             drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
                 state, framebuffer, framebufferWidth, framebufferHeight);
