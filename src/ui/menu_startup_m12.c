@@ -88,7 +88,7 @@ enum {
 };
 
 static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
-    "GAME", "GRAPHICS", "CONTROLS", "AUDIO", "ACCESSIBILITY"
+    _("GAME"), _("GRAPHICS"), _("CONTROLS"), _("AUDIO"), _("ACCESSIBILITY")
 };
 
 /* ── Extended settings rows per tab ───────────────────────────────── */
@@ -101,22 +101,22 @@ typedef struct {
 
 static M12_ExtSettingsRow m12_ext_settings[] = {
     /* ── GAME tab ── */
-    {"Graphics Mode",       "Original",  1, M12_SETTINGS_TAB_GAME},
-    {"Game Version",        "V1",           1, M12_SETTINGS_TAB_GAME},
-    {"Language",            "English",      1, M12_SETTINGS_TAB_GAME},
-    {"Game Speed",          "Normal",       1, M12_SETTINGS_TAB_GAME},
-    {"Movement Mode",       "Classic",      1, M12_SETTINGS_TAB_GAME},
-    {"Cheats",              "Off",          1, M12_SETTINGS_TAB_GAME},
+    {_("Graphics Mode"),       _("Original"),  1, M12_SETTINGS_TAB_GAME},
+    {_("Game Version"),        _("V1"),           1, M12_SETTINGS_TAB_GAME},
+    {_("Language"),            _("English"),      1, M12_SETTINGS_TAB_GAME},
+    {_("Game Speed"),          _("Normal"),       1, M12_SETTINGS_TAB_GAME},
+    {_("Movement Mode"),       _("Classic"),      1, M12_SETTINGS_TAB_GAME},
+    {_("Cheats"),              _("Off"),          1, M12_SETTINGS_TAB_GAME},
     {"Auto-Save",           "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Minimap",             "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Journal",             "Off",          0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     /* ── GRAPHICS tab ── */
-    {"Window Mode",         "Maximized",    1, M12_SETTINGS_TAB_GRAPHICS},
-    {"Display Format",      "16:9",         1, M12_SETTINGS_TAB_GRAPHICS},
-    {"VSync",               "On",           1, M12_SETTINGS_TAB_GRAPHICS},
-    {"Integer Scaling",     "On",           1, M12_SETTINGS_TAB_GRAPHICS},
-    {"Viewport Style",      "Original",     1, M12_SETTINGS_TAB_GRAPHICS},
-    {"Palette Mode",        "Original VGA", 1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("Window Mode"),         _("Maximized"),    1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("Display Format"),      _("16:9"),         1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("VSync"),               _("On"),           1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("Integer Scaling"),     _("On"),           1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("Viewport Style"),      _("Original"),     1, M12_SETTINGS_TAB_GRAPHICS},
+    {_("Palette Mode"),        _("Original VGA"), 1, M12_SETTINGS_TAB_GRAPHICS},
     {"CRT Filter",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
     {"Palette Correction",  "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
     {"Dither Cleanup",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
@@ -204,28 +204,28 @@ static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 
-static const char* g_aspectRatios[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
+static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10"};
 static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
-static const char* g_patchModes[] = {"ORIGINAL", "PATCHED"};
-static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
-static const char* g_languageNames[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
-static const char* g_cheatsToggle[] = {"OFF", "ON"};
-static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
-static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", "FIT", "STRETCH"};
+static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
+static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE")};
+static const char* g_languageNames[] = {_("ENGLISH"), _("SVENSKA"), _("FRANCAIS"), _("DEUTSCH")};
+static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
+static const char* g_speedLabels[] = {_("SLOWER"), _("NORMAL"), _("FASTER")};
+static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", _("FIT"), _("STRETCH")};
 static const char* g_displayAspectModes[] = {"4:3", "16:9"};
-static const char* g_toggleModes[] = {"OFF", "ON"};
-static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
-static const char* g_rendererBackendLabels[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
-static const char* g_rendererBackendAvailable[] = {"AVAILABLE", "AVAILABLE", "AVAILABLE", "UNAVAILABLE", "UNAVAILABLE"};
-static const char* g_viewportStyleLabels[] = {"ORIGINAL", "EXPANDED", "WIDESCREEN"};
-static const char* g_inputModeLabels[] = {"AUTO", "KEYBOARD+MOUSE", "TOUCH", "GAMEPAD"};
-static const char* g_touchControlsLabels[] = {"OFF", "MINIMAL", "FULL", "LARGE"};
-static const char* g_movementModeLabels[] = {"ORIGINAL", "FAST", "SMOOTH"};
-static const char* g_debugOverlayLabels[] = {"OFF", "COORDS", "QUEUE", "DRAW ORDER"};
-static const char* g_developerGatesLabels[] = {"OFF", "QUICK", "FULL"};
-static const char* g_colorblindModes[] = {"OFF", "DEUT", "PROT", "TRIT"};
-static const char* g_themeLabels[] = {"CLASSIC", "DARK", "AMIGA", "CGA"};
-static const char* g_bgPresetLabels[] = {"STATIC", "DUNGEON", "TORCH", "STARS"};
+static const char* g_toggleModes[] = {_("OFF"), _("ON")};
+static const char* g_scalingFilters[] = {_("NEAREST"), _("LINEAR")};
+static const char* g_rendererBackendLabels[] = {_("AUTO"), _("SOFTWARE"), _("SDL"), _("OPENGL"), _("VULKAN")};
+static const char* g_rendererBackendAvailable[] = {_("AVAILABLE"), _("AVAILABLE"), _("AVAILABLE"), _("UNAVAILABLE"), _("UNAVAILABLE")};
+static const char* g_viewportStyleLabels[] = {_("ORIGINAL"), _("EXPANDED"), _("WIDESCREEN")};
+static const char* g_inputModeLabels[] = {_("AUTO"), _("KEYBOARD+MOUSE"), _("TOUCH"), _("GAMEPAD")};
+static const char* g_touchControlsLabels[] = {_("OFF"), _("MINIMAL"), _("FULL"), _("LARGE")};
+static const char* g_movementModeLabels[] = {_("ORIGINAL"), _("FAST"), _("SMOOTH")};
+static const char* g_debugOverlayLabels[] = {_("OFF"), _("COORDS"), _("QUEUE"), _("DRAW ORDER")};
+static const char* g_developerGatesLabels[] = {_("OFF"), _("QUICK"), _("FULL")};
+static const char* g_colorblindModes[] = {_("OFF"), _("DEUT"), _("PROT"), _("TRIT")};
+static const char* g_themeLabels[] = {_("CLASSIC"), _("DARK"), _("AMIGA"), _("CGA")};
+static const char* g_bgPresetLabels[] = {_("STATIC"), _("DUNGEON"), _("TORCH"), _("STARS")};
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     if (!opts) {
@@ -475,7 +475,7 @@ static const char* g_presentationModes[] = {
     "V2 ENHANCED 2D",
     "V3 MODERN/3D"
 };
-static const char* g_windowModes[] = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
+static const char* g_windowModes[] = {_("WINDOWED"), _("MAXIMIZED"), _("FULLSCREEN")};
 
 static const M12_TextStyle g_textSmall = {1, 1, M12_COLOR_WHITE, 0, 0, M12_COLOR_BLACK};
 static const M12_TextStyle g_textSmallMuted = {1, 1, M12_COLOR_LIGHT_GRAY, 0, 0, M12_COLOR_BLACK};
@@ -3378,8 +3378,8 @@ static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
     "Dungeon Master II", "Dungeon Master Nexus"
 };
 
-static const char *g_game_select_tags_ready[] = {"V1 / V2.1 / V2.2", "V1 / V2", "V1 / V2", "V1 / V2"};
-static const char *g_game_select_tags_missing[] = {"No data files", "No data files", "No data files", "No data files"};
+static const char *g_game_select_tags_ready[] = {_("V1 / V2.1 / V2.2"), _("V1 / V2"), _("V1 / V2"), _("V1 / V2")};
+static const char *g_game_select_tags_missing[] = {_("No data files"), _("No data files"), _("No data files"), _("No data files")};
 
 static int g_game_select_available[M12_GAME_SELECT_COUNT] = {
     0, 0, 0, 0  /* set at runtime by fs_startup_check_games */
