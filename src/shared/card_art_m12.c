@@ -263,10 +263,10 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
                          const char* dataDir) {
     const M12_CardArtSpec* spec;
     size_t i;
-    if (!gameId) {
+    if (!art) {
         return;
     }
-    if (!art) {
+    if (!gameId) {
         return;
     }
     memset(art, 0, sizeof(*art));
