@@ -6,23 +6,22 @@
  * Pits, Doors, Pressure Plates, End Conditions, and Dungeon Logic.
  *
  * Source-locked to ReDMCSB TIMELINE.C (F0248/F0249), MOVESENS.C (F0276),
- * DUNGEON.C (door table), ENDGAME.C (F0666), DEFS.H.
+ * DUNGEON.C (door table), ENDGAME.C (F0666), GROUP.C (F0175), DEFS.H.
  *
  * Phase 4 elements that diverge from DM1:
  *   - C009_VERSION_CHECKER  (CSB-only floor sensor, CHANGE7_23)
  *   - C018_END_GAME         (CSB-only wall sensor, CHANGE7_21)
- *   - F0249 group-first teleporter/pit processing (CHANGE7_22_FIX)
- *   - Door defense-point table (wooden=42, iron=230, Ra=255 HP)
- *   - CHANGE7_17_FIX: sensor squares skipped during thing discard
- *   - CHANGE7_18_FIX: bit-15 always cleared before type check
- *   - CHANGE7_19_FIX: Lord Chaos teleporter direction (GROUP.C)
+ *   - F0249 group-first teleporter/pit processing (CHANGE7_22_FIX, BUG0_22)
+ *   - Door defense-point table (portcullis=110, wooden=42, iron=230, Ra=255 HP)
+ *   - CHANGE7_17_FIX (BUG0_09): sensor squares skipped during thing discard
+ *   - CHANGE7_18_FIX (BUG0_10): bit-15 always cleared before type check
+ *   - CHANGE7_19_FIX (BUG0_69): Lord Chaos teleporter direction
  *   - G0302_B_GameWon flag + F0666_endgame() sequence
  *
- * CSB 2.0 engine version: 20  (CHANGE8_06)
- * CSB 2.1 engine version: 21  (CHANGE8_06)
+ * CSB 2.0 engine version: 20  (CHANGE8_06 / MEDIA337)
+ * CSB 2.1 engine version: 21  (CHANGE8_06 / MEDIA342)
  *
- * Reference: docs/
- * source-lock/csb_v1_phase4_mechanics_parity_H2239.md
+ * Reference: docs/source-lock/csb_v1_phase4_mechanics_parity_H2239.md
  */
 
 #include <stdint.h>
@@ -77,13 +76,12 @@ typedef struct CSB_Level_s {
 
 typedef struct CSB_DungeonWorld_s {
     CSB_Level levels[CSB_MAX_LEVELS];
-    int      levelCount;
-    int      currentLevel;
+    int       levelCount;
+    int       currentLevel;
 } CSB_DungeonWorld;
 
 /* ================================================================
- *  Thing type helpers -- M012_TYPE equivalent
- *  Source: DEFS.H:399
+ *  Thing type helpers -- M012_TYPE / DEFS.H:399
  *
  *  THING handle layout (16-bit):
  *    [15:14 unused] [13:10 type, 0..15] [9:0 index]
@@ -120,7 +118,7 @@ enum {
 enum {
     CSB_SENSOR_DISABLED = 0,
 
-    /* Floor sensors -- F0276 context */
+    /* Floor sensors -- F0276 context (MOVESENS.C:1553+) */
     CSB_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT = 1,
     CSB_SENSOR_FLOOR_THERON_PARTY_CREATURE        = 2,
     CSB_SENSOR_FLOOR_PARTY                        = 3,
@@ -131,7 +129,7 @@ enum {
     CSB_SENSOR_FLOOR_PARTY_POSSESSION             = 8,
     CSB_SENSOR_FLOOR_VERSION_CHECKER             = 9,
 
-    /* Wall sensors -- F0248/F0275 context */
+    /* Wall sensors -- F0248 context (TIMELINE.C:1136+) */
     CSB_SENSOR_WALL_ORNAMENT_CLICK                                     =  1,
     CSB_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT                     =  2,
     CSB_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT                =  3,
@@ -146,7 +144,7 @@ enum {
     CSB_SENSOR_WALL_OBJECT_GENERATOR_ROTATE                           = 12,
     CSB_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE                      = 13,
     CSB_SENSOR_WALL_SINGLE_PROJECTILE_LAUNCHER_SQUARE_OBJECT         = 14,
-    CSB_SENSOR_WALL_DOUBLE_PROJECTILE_LAUNCHER_SQUARE_OBJECT          = 15,
+    CSB_SENSOR_WALL_DOUBLE_PROJECTILE_LAUNCHER_SQUARE_OBJECT        = 15,
     CSB_SENSOR_WALL_OBJECT_EXCHANGER                                   = 16,
     CSB_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR                   = 17,
     CSB_SENSOR_WALL_END_GAME                                          = 18,
@@ -188,12 +186,12 @@ extern const CSB_DoorInfo CSB_doorInfo[4];
  * ================================================================ */
 
 typedef struct {
-    int gameWon;
-    int restartAllowed;
-    int delayTicks;
-    int paletteSetCurtain;
-    int endgameFnCalled;
-    int startendEndgameFn;
+    int gameWon;          /* G0302_B_GameWon — set before calling F0666 */
+    int restartAllowed;   /* G0524_B_RestartGameAllowed — cleared before credits */
+    int delayTicks;       /* CHANGE8_02: 60 * delaySeconds */
+    int paletteSetCurtain;/* MEDIA671: palette curtain */
+    int endgameFnCalled;  /* F0666_endgame() — checks G0302_B_GameWon guard */
+    int startendEndgameFn;/* F0444_STARTEND_Endgame(TRUE) — draws credits */
 } CSB_EndgameResult;
 
 /* ================================================================
@@ -201,17 +199,42 @@ typedef struct {
  * ================================================================ */
 
 typedef struct {
-    int movingGroup;
-    int thingType;
-    int moved;
-    int oldMapX;
+    int movingGroup;   /* 1 if this was a GROUP thing */
+    int thingType;     /* M012_TYPE extracted from thing */
+    int moved;         /* 1 if move was attempted */
+    int oldMapX;       /* square coordinate before move */
     int oldMapY;
-    int newMapX;
+    int newMapX;       /* square coordinate after move (set by move_fn) */
     int newMapY;
 } CSB_TeleporterPitResult;
 
 /* ================================================================
- *  Door helpers -- source-locked to DUNGEON.C:560-565
+ *  Dungeon-layer accessor stubs (M10 integration points)
+ *
+ *  These are the integration points between CSB compat layer and
+ *  the M10 dungeon layer.  The default stubs return ENDOF / 0;
+ *  replace them by wiring real F0161/F0159/F0175/F0156/F0267
+ *  from M10 once those accessors are available.
+ *
+ *  ReDMCSB: GROUP.C:52 (F0175), DUNGEON.C:?? (F0161/F0159),
+ *           DUNGEON.C:?? (F0156), MOVE.C:?? (F0267)
+ * ================================================================ */
+
+/*
+ * csb_dungeon_get_group -- F0175_GROUP_GetThing equivalent.
+ *
+ *   Walk the square's thing list via F0161/F0159.
+ *   Return the first THING with type GROUP (type index 4) or ENDOF.
+ *
+ * ReDMCSB: GROUP.C:52-70 (F0175_GROUP_GetThing)
+ */
+uint16_t csb_dungeon_get_group(
+    uint16_t (*fn_get_first)(int mapX, int mapY),
+    uint16_t (*fn_get_next)(uint16_t thing),
+    int mapX, int mapY);
+
+/* ================================================================
+ *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)
  * ================================================================ */
 
 int csb_door_get_defense_points(int doorType);
@@ -221,8 +244,13 @@ int csb_door_minimum_attack_power(int doorType);
  *  Sensor segment accessors -- M039_TYPE / M040_DATA
  *
  *  CHANGE7_18_FIX (BUG0_10): bit 15 always cleared from raw
- *  Type_Data before type extraction and M012_TYPE shift.
- *  DUNGEON.C:2099 (MEDIA291 compat)
+ *  Type_Data before type extraction (DUNGEON.C:2099 / MEDIA291).
+ *
+ *  Type_Data layout: [15:7 data] [6:0 type]
+ *    M039_TYPE = Type_Data & 0x7F  (after bit 15 cleared)
+ *    M040_DATA = Type_Data >> 7
+ *
+ * ReDMCSB: DEFS.H:1295-1296, DUNGEON.C:2099-2101 (MEDIA291)
  * ================================================================ */
 
 uint8_t  csb_sensor_get_type(uint16_t typeData);
@@ -233,12 +261,17 @@ int      csb_sensor_is_csb_end_game(uint16_t typeData);
 /*
  * csb_version_checker_triggered -- version gate in C009 sensor.
  *
- *   sensorData <= csbEngineVersion  -->  trigger fires
+ *   condition: sensorData <= csbEngineVersion  -->  trigger fires
  *
  *  CSB 2.0: version 20 (CHANGE8_06 / MEDIA337)
  *  CSB 2.1: version 21 (CHANGE8_06 / MEDIA342)
  *
- *  ReDMCSB: MOVESENS.C:1716-1750 (F0276 switch case C009,
+ *  Trigger guard (MOVESENS.C:1716-1750):
+ *    - P0590_T_Thing must be THING_PARTY
+ *    - P0592_B_AddThing must be TRUE
+ *    - P0591_B_PartySquare must be FALSE
+ *
+ * ReDMCSB: MOVESENS.C:1716-1750 (F0276 switch case C009,
  *           CHANGE7_23, CHANGE8_06)
  */
 int csb_version_checker_triggered(uint16_t sensorData, int csbEngineVersion);
@@ -250,68 +283,69 @@ int csb_version_checker_triggered(uint16_t sensorData, int csbEngineVersion);
 /*
  * csb_endgame_trigger -- execute C018 END_GAME trigger sequence.
  *
- * Sequence mirrors TIMELINE.C:1319-1340:
+ * Sequence (TIMELINE.C:1319-1340):
  *   1. F1012_PALETTE_SetCurtain(C0_BLACK_PALETTE)   [MEDIA671]
  *   2. F0694_SetMultipleColorsInPalette(blackIdx)  [MEDIA671]
  *   3. F0022_MAIN_Delay(60 * delaySeconds)         [CHANGE8_02]
- *   4. G0524_B_RestartGameAllowed = FALSE          [MEDIA277]
+ *   4. G0524_B_RestartGameAllowed = FALSE           [MEDIA277]
  *   5. G0302_B_GameWon = TRUE
  *   6. F0666_endgame()                             [MEDIA629]
  *   7. F0444_STARTEND_Endgame(TRUE)               [MEDIA277]
  *
  * delaySeconds: sensor->Remote.Value (0 = no delay, original dungeons)
  *
- * ReDMCSB: TIMELINE.C:1319-1340, ENDGAME.C:984-1002, DEFS.H:1202_comment
+ * BUG0_00 guard: F0666_endgame() checks G0302_B_GameWon and returns
+ * immediately if not set.  Step 5 must precede step 6.
+ *
+ * ReDMCSB: TIMELINE.C:1319-1340, ENDGAME.C:984-1002,
+ *          DEFS.H:1202_comment, BugsAndChanges.htm:CHANGE7_21,CHANGE8_02
  */
 void csb_endgame_trigger(int delaySeconds, CSB_EndgameResult* pOut);
 
 /* ================================================================
- *  Teleporter / pit processing -- F0249 CHANGE7_22_FIX
+ *  Teleporter / pit processing -- F0249 CHANGE7_22_FIX (BUG0_22)
  *
- *  Bug (DM1 BUG0_22): arbitrary linked-list order causes infinite
- *  loops or missed things when >=2 things on a closed square open.
+ *  Bug (DM1): arbitrary linked-list order causes infinite loops or
+ *  missed things when >=2 things on a closed square open.
  *
  *  Fix (TIMELINE.C:1398-1476):
  *    1. Group processed FIRST via F0175_GROUP_GetThing().
- *    2. Non-group things counted:  M012_TYPE > GROUP(4).
+ *    2. Non-group things counted: M012_TYPE > GROUP(4).
  *    3. while(thing && ThingsToMoveCount) { ... ThingsToMoveCount--; }
- *       Count guard prevents infinite loops.
- *    4. NextThing read BEFORE call to moveFn (mid-traversal removal
- *       resilience: projectile impacts group, group goes away, loop
- *       continues with valid NextThing).
+ *    4. NextThing read BEFORE call to moveFn.
  *
- * ReDMCSB: TIMELINE.C:1398-1476, BugsAndChanges.htm:CHANGE7_22
+ * ReDMCSB: TIMELINE.C:1398-1476, BugsAndChanges.htm:CHANGE7_22,BUG0_22
  */
 
 /*
  * csb_teleporter_pit_process -- apply CHANGE7_22_FIX on a square.
  *
- *  - Group (if any) moved first.
- *  - Non-group things moved exactly once, count-guarded.
- *  - Next link read before each move.
+ *  Dungeon-layer accessors are caller-supplied:
+ *    get_group_fn  -- F0175_GROUP_GetThing equivalent
+ *    get_first_fn   -- F0161_DUNGEON_GetSquareFirstThing equivalent
+ *    get_next_fn    -- F0159_DUNGEON_GetNextThing equivalent
+ *    move_fn        -- F0267_MOVE_GetMoveResult_CPSCE equivalent
  *
- *  Parameters:
- *    tile        -- tile being processed (non-null)
- *    mapX, mapY  -- coordinates of this square
- *    moveFn      -- void moveFn(uint16_t thing, void* ctx)
- *    ctx         -- forwarded to moveFn
- *    pOut        -- result array (non-null)
- *    maxResults  -- array capacity
- *    pResultCount -- receives written count (non-null)
+ *  Until M10 integration: use csb_dungeon_get_group() with stub
+ *  accessors (csb_dungeon_get_first_thing_default, etc.) for testing.
  *
- *  Returns: 0 on success, -1 if tile null or no moveFn.
+ * Returns: 0 on success, -1 if tile null or no moveFn.
  *
  * ReDMCSB: TIMELINE.C:1398-1476 (full F0249 body)
  */
 int csb_teleporter_pit_process(
-    const CSB_Tile*              tile,
-    int                          mapX,
-    int                          mapY,
-    void                       (*moveFn)(uint16_t thing, void* ctxOpaque),
-    void*                        ctxOpaque,
-    CSB_TeleporterPitResult*     pOut,
-    int                          maxResults,
-    int*                         pResultCount);
+    const CSB_Tile*   tile,
+    int               mapX,
+    int               mapY,
+    uint16_t        (*get_group_fn)(int mapX, int mapY),
+    uint16_t        (*get_first_fn)(int mapX, int mapY),
+    uint16_t        (*get_next_fn)(uint16_t thing),
+    void             (*move_fn)(uint16_t thing, int oldMapX, int oldMapY,
+                                int* newMapX, int* newMapY, void* ctxOpaque),
+    void*            ctxOpaque,
+    CSB_TeleporterPitResult* pOut,
+    int              maxResults,
+    int*             pResultCount);
 
 /* ================================================================
  *  Dungeon bug-fix helpers
@@ -324,32 +358,51 @@ int csb_teleporter_pit_process(
  * meaning the square is safe for thing-discard during allocation.
  *
  * Problem (DM1 BUG0_09): discard search could land on a sensor square,
- * inadvertently triggering it (e.g., closing a door under a pressure
- * plate, opening a pit under a champion).
+ * inadvertently triggering it (pressure plate closes door, etc.).
  *
  * Fix: squares with any enabled sensor are skipped in discard.
  *
  * ReDMCSB: DUNGEON.C:1996-2001 (CHANGE7_17_FIX / MEDIA278),
  *          BugsAndChanges.htm:CHANGE7_17,BUG0_09
  */
-int csb_bugfix_is_sensor_square_clear_for_discard(const CSB_Tile* tile);
+int csb_bugfix_is_sensor_square_clear_for_discard(
+    int                          mapX,
+    int                          mapY,
+    uint16_t                   (*get_first_fn)(int mapX, int mapY),
+    uint16_t                   (*get_next_fn)(uint16_t thing),
+    uint16_t                   (*thing_data_fn)(uint16_t thing, int offset),
+    int                         sensorTypeDataOffset);
 
 /*
  * csb_bugfix_thing_type_bit15_clearly -- CHANGE7_18_FIX.
  *
  * Returns the 4-bit thing type with bit 15 masked off before shift.
  *
- * Problem (DM1 BUG0_10): bone-creation path sets bit 15 in the raw
- * THING type to indicate "use reserved thing pool". Megamax compiler
- * silently ignores this (signed right-shift discards bit 15). Other
- * compilers need it explicitly cleared before type comparisons.
+ * Problem (DM1 BUG0_10): bone-creation sets bit 15 in raw THING type
+ * to indicate "use reserved thing pool".  Megamax compiler silently
+ * drops this bit.  Other compilers need it explicitly cleared.
  *
- * Fix: always apply (raw & ~0x8000) before M012_TYPE extraction.
+ * Fix: raw &= ~0x8000 before M012_TYPE shift.
  *
  * ReDMCSB: DUNGEON.C:2099-2101 (CHANGE7_18_FIX / MEDIA291/MEDIA178),
- *          BugsAndChanges.htm:CHANGE7_18,BUG0_10
+ *          DEFS.H:399 comment, BugsAndChanges.htm:CHANGE7_18,BUG0_10
  */
 uint8_t csb_bugfix_thing_type_bit15_clearly(uint16_t rawThingType);
+
+/*
+ * csb_bugfix_lord_chaos_teleport_dir -- CHANGE7_19_FIX (BUG0_69).
+ *
+ * Returns a properly initialized Lord Chaos teleport direction.
+ *
+ * Problem (DM1 BUG0_69): primary direction variable used as array
+ * index without initialization, causing memory corruption.
+ *
+ * Fix: primaryDir = M004_RANDOM(4); secondaryDir = M017_NEXT(primaryDir).
+ *
+ * ReDMCSB: GROUP.C:2208-2215 (CHANGE7_19_FIX / MEDIA297),
+ *          BugsAndChanges.htm:CHANGE7_19,BUG0_69
+ */
+int csb_bugfix_lord_chaos_teleport_dir(int (*random4)(void));
 
 /* ================================================================
  *  Core dungeon world API
@@ -359,20 +412,20 @@ void         csb_world_init(CSB_DungeonWorld* w);
 int          csb_world_add_level(CSB_DungeonWorld* w, int width, int height);
 CSB_Tile*    csb_world_get_tile(CSB_DungeonWorld* w, int level, int x, int y);
 const CSB_Tile* csb_world_get_tile_const(const CSB_DungeonWorld* w,
-                                         int level, int x, int y);
+                                          int level, int x, int y);
 int          csb_world_is_walkable(const CSB_DungeonWorld* w,
-                                   int level, int x, int y);
+                                    int level, int x, int y);
 int          csb_world_is_wall(const CSB_DungeonWorld* w,
-                                int level, int x, int y);
+                                 int level, int x, int y);
 void         csb_world_set_tile_type(CSB_DungeonWorld* w,
-                                     int level, int x, int y,
-                                     uint8_t type);
+                                       int level, int x, int y,
+                                       uint8_t type);
 void         csb_world_set_wall(CSB_DungeonWorld* w,
-                                int level, int x, int y,
-                                int dir, uint8_t wallType);
+                                  int level, int x, int y,
+                                  int dir, uint8_t wallType);
 void         csb_world_set_ornament(CSB_DungeonWorld* w,
-                                    int level, int x, int y,
-                                    int dir, uint8_t ornament);
+                                      int level, int x, int y,
+                                      int dir, uint8_t ornament);
 int          csb_world_get_level_count(const CSB_DungeonWorld* w);
 void         csb_world_set_current_level(CSB_DungeonWorld* w, int level);
 
