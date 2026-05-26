@@ -41,7 +41,8 @@ static void fs_mkdir_p(const char *path) {
 
 /* Create data directories if they don't exist */
 void fs_startup_ensure_data_dirs(const char *base_dir) {
-    const char *subdirs[] = {"dm1", "csb", "dm2", "dm1-multilingual", "nexus", NULL};
+    const char *subdirs[] = {"dm1", "csb", "dm2", "dm1-multilingual", "nexus", "theron", NULL};
+
     int i;
     char path[512];
 
@@ -66,6 +67,8 @@ void fs_startup_ensure_data_dirs(const char *base_dir) {
                 fprintf(f, "  csb/    - Chaos Strikes Back\n");
                 fprintf(f, "  dm2/    - Dungeon Master II\n");
                 fprintf(f, "  nexus/  - DM Nexus (extracted Saturn ISO)\n");
+                fprintf(f, "  theron/ - Theron's Quest (PC Engine HuCard)\n");
+
                 fprintf(f, "Run: firestaff --validate\n");
                 fclose(f);
             }
@@ -75,12 +78,13 @@ void fs_startup_ensure_data_dirs(const char *base_dir) {
     }
 }
 
-/* Validate and return which games are available */
+/* Validate and return which games are available (local typedef mirrors firestaff_startup.h) */
 typedef struct {
     int dm1_available;
     int csb_available;
     int dm2_available;
     int nexus_available;
+    int theron_available;  /* PC Engine/TurboGrafx-16; Phase 0 gate: no hash set yet */
     const char *data_dir;
 } FS_GameAvailability;
 
@@ -100,10 +104,13 @@ void fs_startup_check_games(const char *data_dir, FS_GameAvailability *avail) {
         avail->dm2_available = report.dm2_ready;
         avail->nexus_available = report.nexus_ready;
     }
+    /* Theron: Phase 0 (provenance gate) not yet complete — no hash evidence locked. */
+    avail->theron_available = 0;
 
-    printf("Game data: DM1=%s CSB=%s DM2=%s Nexus=%s\n",
+    printf("Game data: DM1=%s CSB=%s DM2=%s Nexus=%s Theron=%s\n",
         avail->dm1_available ? "YES" : "no",
         avail->csb_available ? "YES" : "no",
         avail->dm2_available ? "YES" : "no",
-        avail->nexus_available ? "YES" : "no");
+        avail->nexus_available ? "YES" : "no",
+        avail->theron_available ? "YES" : "no");
 }

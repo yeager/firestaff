@@ -131,6 +131,10 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
         if (report->nexus_ready) total_ok++;
     }
 
+    /* Theron: Phase 0 (provenance gate) not yet complete — no hash evidence locked.
+     * report->theron_ready stays 0 until version/file manifests are locked. */
+    (void)0;  /* placeholder until Phase 0 provides file candidates */
+
     return total_ok;
 }
 
@@ -158,8 +162,12 @@ void fs_validate_print_report(const FS_ValidationReport *report) {
 
     printf("DM Nexus:              %s\n\n", report->nexus_ready ? "READY" : "NOT FOUND");
 
-    int total = report->dm1_ready + report->csb_ready + report->dm2_ready + report->nexus_ready;
-    printf("Games ready: %d/4\n", total);
+    printf("Theron's Quest:        %s\n\n",
+           report->theron_ready ? "READY" : "NOT FOUND (Phase 0 pending)");
+
+    int total = report->dm1_ready + report->csb_ready + report->dm2_ready
+              + report->nexus_ready + report->theron_ready;
+    printf("Games ready: %d/5\n", total);
     if (total == 0) {
         printf("\nNo game data found. See docs/DATA_SETUP.md for instructions.\n");
         printf("Place game files in ~/.firestaff/data/ or use --data DIR\n");

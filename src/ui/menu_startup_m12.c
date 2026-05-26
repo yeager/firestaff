@@ -327,6 +327,11 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
         opts->aspectRatio = M12_ASPECT_ORIGINAL;
         opts->resolution = M12_RES_320x200;
     }
+    /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
+     * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
+     * Lock presentation mode if attempting a non-V1 mode for nexus1.
+     * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
+    /* (presentation mode enforcement for non-Nexus games handled by caller) */
 }
 
 static void m12_clamp_game_options(M12_GameOptions* opts) {
@@ -3406,14 +3411,32 @@ static const char *g_main_menu_descriptions[M12_MAIN_MENU_COUNT] = {
 
 static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
     _("Dungeon Master"), _("Chaos Strikes Back"),
-    _("Dungeon Master II"), _("Dungeon Master Nexus")
+    _("Dungeon Master II"), _("DM Nexus"), _("Theron's Quest")
 };
 
-static const char *g_game_select_tags_ready[] = {_("V1 / V2.1 / V2.2"), _("V1 / V2"), _("V1 / V2"), _("V1 / V2")};
-static const char *g_game_select_tags_missing[] = {_("No data files"), _("No data files"), _("No data files"), _("No data files")};
+/* g_game_select_tags_ready: per-game display tags for game-select menu.
+ * DM1: V1/V2.0/V2.1/V2.2 all available.
+ * CSB/DM2: V1 + V2 available.
+ * Nexus: V1 only (Phase 1 gate — V2 not yet implemented).
+ * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
+static const char *g_game_select_tags_ready[] = {
+    _("V1 / V2.0 / V2.1 / V2.2"),
+    _("V1 / V2"),
+    _("V1 / V2"),
+    _("V1 Only (Phase 1)"),    /* nexus1 — V2 not yet available */
+    _("V1 Only (Phase 0)")      /* theron — Phase 0 provenance gate */
+};
+static const char *g_game_select_tags_missing[] = {
+    _("No data files"),
+    _("No data files"),
+    _("No data files"),
+    _("No data files"),
+    _("No data files")
+};
+
 
 static int g_game_select_available[M12_GAME_SELECT_COUNT] = {
-    0, 0, 0, 0  /* set at runtime by fs_startup_check_games */
+    0, 0, 0, 0, 0  /* set at runtime by fs_startup_check_games */
 };
 
 void m12_update_game_availability(const FS_GameAvailability *avail) {
@@ -3422,6 +3445,7 @@ void m12_update_game_availability(const FS_GameAvailability *avail) {
     g_game_select_available[1] = avail->csb_available;
     g_game_select_available[2] = avail->dm2_available;
     g_game_select_available[3] = avail->nexus_available;
+    g_game_select_available[4] = avail->theron_available;
 }
 
 static const char *m12_game_tag(int index) {
@@ -5884,6 +5908,15 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
                    intent.rendererBackendAvailable &&
                    state->entries[state->activatedIndex].available &&
                    version && version->matched ? 1 : 0;
+    /* Nexus Phase 1 gate: only V1.ORIGINAL is supported.
+     * Block V2.0/V2.1/V2.2 for nexus1 until those render paths are implemented.
+     * Ref: ReDMCSB COMMAND.C F0359.
+     * Diagnosed in: docs/source-lock/nexus_v1_phase1_boot_H2318.md */
+    if (intent.valid && strcmp(intent.gameId, "nexus1") == 0) {
+        if (intent.presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
+            intent.valid = 0;
+        }
+    }
     return intent;
 }
 

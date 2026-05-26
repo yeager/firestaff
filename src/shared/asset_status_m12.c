@@ -33,7 +33,13 @@ typedef struct {
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
-static const char* const g_nexusArchiveNames[] = {"DM.BIN", "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip", NULL};
+static const char* const g_nexusArchiveNames[] = {
+    /* Sega Saturn CD image / extracted archive markers */
+    "DM.BIN",           /* primary Saturn CD image marker */
+    "SEGADATA.BIN",     /* Saturn data track */
+    "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
+    NULL
+};
 
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
@@ -60,11 +66,22 @@ static const M12_VersionSpec g_nexusVersions[] = {
     {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
 };
 
+/* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
+ * BLOCKED_ON_REFERENCE: no verified hash set yet.
+ * Versions array is present to maintain structural parity with other games.
+ * Asset scanning subdirs include "theron" but match only succeeds once
+ * hash evidence is locked (Phase 0 gate). */
+static const M12_VersionSpec g_theronVersions[] = {
+    {"theron", "pce-en", "PC Engine English (HuCard)", "PCE EN", NULL, ""},
+    {"theron", "pce-jp", "PC Engine Japanese (HuCard)", "PCE JP", NULL, ""}
+};
+
 static const M12_GameVersionSpec g_games[] = {
     {"dm1", g_dm1Versions, sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0])},
     {"csb", g_csbVersions, sizeof(g_csbVersions) / sizeof(g_csbVersions[0])},
     {"dm2", g_dm2Versions, sizeof(g_dm2Versions) / sizeof(g_dm2Versions[0])},
-    {"nexus1", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])}
+    {"nexus1", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])},
+    {"theron", g_theronVersions, sizeof(g_theronVersions) / sizeof(g_theronVersions[0])}
 };
 
 static const char* const g_originalCandidateNames[] = {
@@ -77,6 +94,8 @@ static const char* const g_originalCandidateNames[] = {
     "DM2GRAPHICS.DAT",
     "DM2DUNGEON.DAT",
     "SKULLKEEP.GFX",
+    "DM.BIN",                  /* Nexus Sega Saturn primary CD image */
+    "SEGADATA.BIN",       /* Nexus Sega Saturn data track */
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
     NULL
 };
@@ -358,7 +377,8 @@ static int m12_try_match_version(const char* root,
     char md5Hex[M12_ASSET_MD5_CAPACITY];
     size_t i;
     /* Game subdirectory names to search */
-    static const char* const subdirs[] = {"", "dm1", "csb", "dm2", "nexus", "dm1-multilingual", NULL};
+    static const char* const subdirs[] = {"", "dm1", "csb", "dm2", "nexus", "nexus1", "dm1-multilingual", "theron", NULL};
+
     int s;
     if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
         return 0;
@@ -438,6 +458,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         status->dm2Available = matchedAny;
     } else if (strcmp(gameSpec->gameId, "nexus1") == 0) {
         status->nexusAvailable = matchedAny;
+    } else if (strcmp(gameSpec->gameId, "theron") == 0) {
+        status->theronAvailable = matchedAny;
     }
 }
 
@@ -478,6 +500,9 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
     }
     if (strcmp(gameId, "nexus1") == 0) {
         return status->nexusAvailable;
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return status->theronAvailable;
     }
     return 0;
 }

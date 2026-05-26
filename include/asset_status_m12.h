@@ -11,7 +11,8 @@ enum {
     M12_ASSET_DATA_DIR_CAPACITY = 512,
     M12_ASSET_MD5_CAPACITY = 33,
     M12_ASSET_MAX_VERSIONS_PER_GAME = 3,
-    M12_ASSET_GAME_COUNT = 4
+    M12_ASSET_GAME_COUNT = 5  /* DM1, CSB, DM2, Nexus, Theron */
+
 };
 
 typedef struct {
@@ -31,6 +32,8 @@ typedef struct {
     int csbAvailable;
     int dm2Available;
     int nexusAvailable;
+    int theronAvailable;
+
     int originalFileCandidateFound;
     M12_AssetVersionStatus versions[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
 } M12_AssetStatus;

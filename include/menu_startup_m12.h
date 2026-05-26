@@ -211,6 +211,7 @@ typedef enum {
     M12_GAME_SELECT_CSB,
     M12_GAME_SELECT_DM2,
     M12_GAME_SELECT_NEXUS,
+    M12_GAME_SELECT_THERON,   /* PC Engine / TurboGrafx-16 */
     M12_GAME_SELECT_COUNT
 } M12_GameSelectItem;
 

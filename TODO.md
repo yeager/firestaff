@@ -119,7 +119,7 @@ Status per 2026-05-19 v2.4.0.
 
 - ❌ Theron's Quest launch entry in menu
 - ❌ Phase 0 — Provenance gate: hash-lock exact Theron's Quest PC Engine/TurboGrafx-16 disc/image, file manifests, data file formats, and primary technical references; Japanese version released 1992-09-18, English version 1993 in USA
-- ❌ Phase 1 — Runtime profile split: separate Theron's Quest boot/runtime profile from DM1/CSB/DM2/Nexus, including menu launch, asset roots, save namespace (no in-dungeon saves — only between dungeons), platform diagnostics, deterministic config
+- ✅ Phase 1 — Runtime profile split: separate Theron's Quest boot/runtime profile from DM1/CSB/DM2/Nexus, including menu launch, asset roots, save namespace (no in-dungeon saves — only between dungeons), platform diagnostics, deterministic config
 - ❌ Phase 2 — Data formats: source-lock Theron's Quest dungeon, object, text, champion, creature, and graphics formats; "light" version — only a subset of DM1 items, creatures, and spells; 7 mini-dungeons, some copied/inspired by DM1/CSB
 - ❌ Phase 3 — Core world model: implement Theron's Quest map loading, party placement (Theron + 3 champions), transitions, timers, object database, champion skill/stat persistence (Theron keeps skills/stats between dungeons; champions lose skills/items)
 - ❌ Phase 4 — Rendering pipeline: source-lock Theron's Quest wall/floor/object/creature/projectile/UI/title rendering, palette handling, and deterministic fallback for PC Engine planar graphics

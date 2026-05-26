@@ -7,6 +7,7 @@ typedef struct {
     int csb_available;
     int dm2_available;
     int nexus_available;
+    int theron_available;  /* PC Engine / TurboGrafx-16 */
     const char *data_dir;
 } FS_GameAvailability;
 
