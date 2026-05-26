@@ -2,8 +2,15 @@
  * DM1 V1 Central Dungeon Data Store — implementation.
  *
  * Pure data aggregator with convenience accessors.  Delegates to
- * dm1_v1_dungeon_loader, dm1_v1_group_management, dm1_v1_event_timer,
- * and dm1_v1_object_world for actual logic.
+ * dm1_v1_dungeon_loader, dm1_v1_event_timer, and dm1_v1_object_world
+ * for actual logic.
+ *
+ * Creature group plumbing (M11_GroupState / m11_group_*) was removed
+ * on 2026-05-26: the orchestrator drives groups directly through
+ * world->creatureAI[]/world->groups in GameWorld_Compat, and the
+ * dungeon-data store was never wired into that path.  See the
+ * commit message for full audit (dm1_v1_engine modules list stays
+ * the central catalogue of in-use modules).
  *
  * Source lock: see header for ReDMCSB global variable references.
  */
@@ -17,7 +24,6 @@ void m11_dd_init(M11_DD_DungeonData *dd)
 {
     memset(dd, 0, sizeof(*dd));
     m11_dl_init(&dd->dungeon);
-    m11_group_init(&dd->groups);
     dm1v1_event_queue_init(&dd->events, 0);
     m11_ow_init(&dd->objects);
     dd->currentMapIndex = -1;
@@ -150,20 +156,6 @@ bool m11_dd_has_expired_events(const M11_DD_DungeonData *dd)
     return dm1v1_event_is_first_expired(&dd->events);
 }
 
-/* ── Group convenience ────────────────────────────────────────────── */
-
-M11_Group *m11_dd_get_group_at(M11_DD_DungeonData *dd,
-                                int mapX, int mapY)
-{
-    if (!dd) return NULL;
-    return m11_group_get_at(&dd->groups, mapX, mapY);
-}
-
-int m11_dd_active_group_count(const M11_DD_DungeonData *dd)
-{
-    return dd ? dd->groups.activeGroupCount : 0;
-}
-
 /* ── Source evidence ──────────────────────────────────────────────── */
 
 const char *m11_dd_source_evidence(void)
@@ -171,7 +163,7 @@ const char *m11_dd_source_evidence(void)
     return
         "DM1 V1 Central Dungeon Data Store\n"
         "Aggregates: DUNGEON.C (G0271,G0273,G0274,G0283,G0285,G0286), "
-        "GROUP.C (G0375-G0390), TIMELINE.C (G0370-G0373), "
+        "TIMELINE.C (G0370-G0373), "
         "GAMELOOP.C (G0310,G0303), CHAMPION.C (G0410,G0411)\n"
         "Source: ReDMCSB WIP20210206 Toolchains/Common/Source/\n";
 }

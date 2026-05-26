@@ -42,7 +42,6 @@ static const char * const s_moduleNames[] = {
     "dm1_v1_game_over_pc34_compat",
     "dm1_v1_game_state_pc34_compat",
     "dm1_v1_graphics_loader_pc34_compat",
-    "dm1_v1_group_management_pc34_compat",
     "dm1_v1_input_command_queue_pc34_compat",
     "dm1_v1_input_poll_pc34_compat",
     "dm1_v1_inventory_pc34_compat",

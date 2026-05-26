@@ -44,7 +44,6 @@
 
 #include "dm1_v1_dungeon_loader_pc34_compat.h"
 #include "dm1_v1_dungeon_square_structs_pc34_compat.h"
-#include "dm1_v1_group_management_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_object_world_pc34_compat.h"
 
@@ -87,9 +86,6 @@ typedef struct {
     M11_DD_PartyPos              party;
     M11_DD_ChampionSlot          champions[M11_DD_MAX_CHAMPIONS];
     int                          championCount; /* G0411 */
-
-    /* ─ Creature groups ─ */
-    M11_GroupState               groups;
 
     /* ─ Event queue / timeline ─ */
     struct DM1_EventQueue_V1     events;
@@ -184,13 +180,6 @@ int m11_dd_add_event(M11_DD_DungeonData *dd,
                      const struct DM1_Event_V1 *event);
 
 bool m11_dd_has_expired_events(const M11_DD_DungeonData *dd);
-
-/* ── Group convenience (delegates to dm1_v1_group_management) ────── */
-
-M11_Group *m11_dd_get_group_at(M11_DD_DungeonData *dd,
-                                int mapX, int mapY);
-
-int m11_dd_active_group_count(const M11_DD_DungeonData *dd);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *m11_dd_source_evidence(void);
