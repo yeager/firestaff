@@ -329,13 +329,13 @@ properly initialized, and allowed-map checks are fixed.
 
 | Element | Status | File(s) |
 |---------|--------|---------|
-| `C018_SENSOR_WALL_END_GAME` trigger | Skeleton | `csb_v1_dungeon_world_pc34_compat.c` stub only |
-| `C009_SENSOR_FLOOR_VERSION_CHECKER` | Skeleton | `csb_v1_dungeon_world_pc34_compat.c` stub only |
-| `F0248_TIMELINE_ProcessEvent6_Square_Wall` actuator pipeline | Not implemented | Source-locked only |
-| `F0249_TIMELINE_MoveTeleporterOrPitSquareThings` (CHANGE7_22) | Not implemented | Source-locked only |
-| `F0666_endgame()` / `G0302_B_GameWon` | Not implemented | Source-locked only |
-| Door types (wooden/iron/Ra) | Skeleton | `csb_v1_dungeon_world_pc34_compat.c` tile types defined |
-| Bug fixes (CHANGE7_17/18/19/22) | Not implemented | Source-locked only |
+| `C018_SENSOR_WALL_END_GAME` trigger | ✅ Implemented | `csb_v1_dungeon_world_pc34_compat.c` · `csb_endgame_trigger()`, `csb_sensor_is_csb_end_game()` |
+| `C009_SENSOR_FLOOR_VERSION_CHECKER` | ✅ Implemented | `csb_v1_dungeon_world_pp34_compat.c` · `csb_sensor_is_csb_version_checker()`, `csb_version_checker_triggered()` |
+| `F0248_TIMELINE_ProcessEvent6_Square_Wall` actuator pipeline | Source-locked only | F0248 documented; full pipeline needs M10/M11 integration |
+| `F0249_TIMELINE_MoveTeleporterOrPitSquareThings` (CHANGE7_22) | ✅ Loop structure | `csb_v1_dungeon_world_pc34_compat.c` · `csb_teleporter_pit_process()`; dungeon accessors caller-supplied |
+| `F0666_endgame()` / `G0302_B_GameWon` | ✅ Implemented | `csb_v1_dungeon_world_pc34_compat.c` · `csb_endgame_trigger()`; CSB_EndgameResult struct |
+| Door types (wooden/iron/Ra) | ✅ Implemented | `csb_v1_dungeon_world_pc34_compat.c` · `CSB_doorInfo[4]`, `csb_door_get_defense_points()`, `csb_door_minimum_attack_power()` |
+| Bug fixes (CHANGE7_17/18) | ✅ Implemented | `csb_bugfix_is_sensor_square_clear_for_discard()` (CHANGE7_17), `csb_bugfix_thing_type_bit15_clearly()` (CHANGE7_18) |
 
 ---
 
