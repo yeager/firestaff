@@ -247,8 +247,8 @@ typedef enum {
 } M12_SettingsTab2;
 
 typedef struct M12_StartupMenuState {
-    M12_MenuEntry entries[6];
-    M12_GameCardArt cardArt[6];
+    M12_MenuEntry entries[7];
+    M12_GameCardArt cardArt[7];
     int selectedIndex;
     int settingsSelectedIndex;
     int settingsTabIndex;      /* 0=Display 1=Video 2=Audio 3=Misc */
