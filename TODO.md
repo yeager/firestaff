@@ -48,7 +48,13 @@ Status per 2026-05-19 v2.4.0.
 
 - ❌ Phase 1 — Boot/profile split: separate CSB runtime profile from DM1, including asset discovery, menu launch, save namespace, deterministic config, and variant-specific diagnostics
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics
-- ❌ Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
+- 🔧 Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
+  - ✅ Back-wall (D3L2/D3R2) frame tables, wall draw spec entries, and element routing
+  - ✅ Near-wall (D2L2/D2R2) frame tables and WALL/TELEPORTER routing
+  - ✅ D3L2/D3R2 parity-aware wall bitmap selection (F0676/F0677)
+  - ✅ D2L2/D2R2 parity-aware wall bitmap selection (F0678/F0679)
+  - ✅ csb_v1_viewport_render_frame wires dungeon_grid for element routing
+  - 🔧 Deferred (pass604+): F0107 wall ornaments, F0108 floor ornaments, F0115 creature/item/projectile, F0111 door panel, CustomBackgrounds (CSBWin/CSBCode.cpp:26)
 - ✅ Phase 4 — Mechanics parity: CSB-specific sensors, actuators, teleporters, pits, doors, pressure plates, end conditions, and dungeon logic that diverge from DM1 (docs/source-lock/csb_v1_phase4_mechanics_parity_H2239.md)
 - ✅ Phase 5 — Creature/combat parity: CSB creature roster, AI differences, attacks/projectiles, drops, sounds, and combat constants (docs/source-lock/csb_v1_phase5_creature_combat_H2242.md · src/csb/csb_v1_monster_pc34_compat.{c,h})
 - ❌ Phase 6 — Utility/import flow: CSB utility disk behavior, champion import path, reincarnation/resurrection differences, and saved-party interoperability
