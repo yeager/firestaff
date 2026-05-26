@@ -115,6 +115,17 @@ Source: PROJEXPL.C (CHANGE7_20) · csb_combat.md audit
 
 ---
 
+## Detailed Mechanics — Phase 4
+
+The following areas are covered in full detail in:
+**`csb_v1_phase4_mechanics_parity_H2239.md`**
+
+- `F0248_TIMELINE_ProcessEvent6_Square_Wall` — actuator pipeline (all sensor types)
+- `F0249_TIMELINE_MoveTeleporterOrPitSquareThings` — CHANGE7_22_FIX group processing order
+- Door defense point values (wooden=42, iron=230, Ra=255)
+- Endgame flow: `F0666_endgame()`, `G0302_B_GameWon`, `F0444_STARTEND_Endgame()`
+- Bug fixes: CHANGE7_17_FIX (sensor squares in discard), CHANGE7_18_FIX (bit 15), CHANGE7_19_FIX (Lord Chaos teleport)
+
 ## Summary
 
 | Dungeon Feature | DM1 | CSB Delta |
@@ -140,14 +151,17 @@ Source: PROJEXPL.C (CHANGE7_20) · csb_combat.md audit
 
 | File | Lines | Content |
 |------|-------|---------|
-| ReDMCSB DEFS.H | 1202,1213,1234,1243 | Sensor Value field: seconds for end game |
-| ReDMCSB DEFS.H | 1283 | `C018_SENSOR_WALL_END_GAME` type 18 |
-| ReDMCSB DEFS.H | 3827–3848 | Endgame UI zones (412–438) |
-| ReDMCSB DEFS.H | 9295 | `F0666_endgame()` extern |
+| ReDMCSB DEFS.H | 1202,1265,1283,3827–3848 | Sensor Value = seconds for end game; C009_VERSION_CHECKER; C018_END_GAME; UI zones |
+| ReDMCSB DUNGEON.C | 561–565 | Door defense point values (42/230/255 HP) |
+| ReDMCSB DUNGEON.C | 1996–2001 | CHANGE7_17_FIX: sensor squares in discard |
+| ReDMCSB TIMELINE.C | 1136–1350 | F0248 (actuator pipeline), F0249 (teleporter/pit group fix) |
+| ReDMCSB TIMELINE.C | 1319–1340 | C018_END_GAME trigger + CHANGE8_02 delay |
+| ReDMCSB MOVESENS.C | 1716–1750 | C009_VERSION_CHECKER + CHANGE8_06 |
+| ReDMCSB ENDGAME.C | 101–327,984–1002 | F0444_STARTEND_Endgame(), F0666_endgame() |
+| ReDMCSB GROUP.C | CHANGE7_19 | Lord Chaos teleporter direction fix |
+| ReDMCSB PROJEXPL.C | CHANGE7_20 | Projectile speed normalization |
+| ReDMCSB CEDTINC8.C | 101–118 | CSBGAME.DAT vs DMSAVE.DAT routing |
 | CSBWin Timer.cpp | 2325 | Endgame timer check |
 | CSBWin DECOMPDU.C | — | Compressed dungeon decompression |
-| CSBWin MOVESENS.C | — | Version checker sensor |
-| ReDMCSB PROJEXPL.C | — | Projectile speed normalization |
-| ReDMCSB CEDTINC8.C | 101–118 | CSBGAME.DAT vs DMSAVE.DAT routing |
 | M13_PLAN.md | 303 | 24 levels in CSB vs 14 in DM1 |
-| BugsAndChanges.htm | CHANGE7_20,21,23,30 | Improvement descriptions |
+| BugsAndChanges.htm | CHANGE7_17,18,19,20,21,22,23, CHANGE8_02,06 | All dungeon-related changes |
