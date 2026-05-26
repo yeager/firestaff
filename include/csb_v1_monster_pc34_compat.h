@@ -189,15 +189,36 @@ typedef struct {
 #define CSB_PROJECTILE_OPEN_DOOR         0x07  /* RNOpenDoor */
 
 /* ============================================================
- *  Attack Type Constants (DEFS.H:1673-1680)
+ *  Attack Type Constants (DEFS.H:1673-1681 — all 8 types)
  * ============================================================ */
 
 #define CSB_ATTACK_NORMAL                0  /* Giggler, poison, stamina drain; no wounds */
-#define CSB_ATTACK_SLAYER                1  /* Slayer weapons */
-#define CSB_ATTACK_FIRE                  2  /* Fire-based */
+#define CSB_ATTACK_FIRE                  1  /* Fireball explosions, Black Flame */
+#define CSB_ATTACK_SELF                  2  /* Party walks into wall, falls through pit */
 #define CSB_ATTACK_BLUNT                 3  /* Non-explosion projectiles, Demon/Mummy/Ruster/etc. */
 #define CSB_ATTACK_MATERIAL_PROJECTILE   4  /* Material projectiles; +50% defense */
 #define CSB_ATTACK_MAGIC                 5  /* Grey Lord, Lord Chaos, Lord Order, Zytaz, Vexirk, Wizard Eye */
+#define CSB_ATTACK_PSYCHIC               6  /* Ghost/Rive, Screamer */
+#define CSB_ATTACK_LIGHTNING             7  /* Lightning Bolt explosions */
+
+/* ============================================================
+ *  Sound Constants (DEFS.H:63-133, MEDIA529 I34E PC34)
+ *
+ *  Only the two drop-trigger sounds are needed here (GROUP.C:645).
+ *  Full CSB sound constants (C00-C34) mirror DEFS.H:63-133.
+ * ============================================================ */
+
+#define CSB_SOUND_METALLIC_THUD  0  /* C00_SOUND_METALLIC_THUD — weapon drop */
+#define CSB_SOUND_WOODEN_THUD     4  /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM — non-weapon drop */
+
+/* ============================================================
+ *  Drop Thing Type Constants (DEFS.H thing type values)
+ *  Same values as DM1: WEAPON=5, ARMOUR=6, JUNK=10
+ * ============================================================ */
+
+#define CSB_DROP_THING_TYPE_WEAPON  5
+#define CSB_DROP_THING_TYPE_ARMOUR  6
+#define CSB_DROP_THING_TYPE_JUNK    10
 
 /* ============================================================
  *  DSA Filter Location Keys
@@ -400,6 +421,22 @@ int csb_v1_dsa_filter_movement_preprocess(
     const struct CSB_V1_DungeonData_Compat *dungeon);
 
 /* ============================================================
+ *  API — Drop Sound
+ * ============================================================ */
+
+/*
+ * csb_v1_drop_sound_for_item — Get drop sound for an item type
+ *
+ * Source: GROUP.C:645 F0064_SOUND_RequestPlay_CPSD
+ *   Weapon dropped: C00_SOUND_METALLIC_THUD (0)
+ *   No weapon (armour/junk): C04_SOUND_WOODEN_THUD (4)
+ *
+ * @param itemType   CSB_DROP_THING_TYPE_* (WEAPON=5, ARMOUR=6, JUNK=10)
+ * @return            CSB_SOUND_METALLIC_THUD or CSB_SOUND_WOODEN_THUD
+ */
+int csb_v1_drop_sound_for_item(int itemType);
+
+/* ============================================================
  *  API — Fixed Possessions Drop
  * ============================================================ */
 
@@ -409,7 +446,7 @@ int csb_v1_dsa_filter_movement_preprocess(
  * Mirrors GROUP.C F0186_GROUP_DropCreatureFixedPossessions.
  * Drop table for creature type indexed by G0245-G0253.
  *
- * Source: GROUP.C:716-750
+ * Source: GROUP.C:550-648 F0186_GROUP_DropCreatureFixedPossessions
  *         DEFS.H:5618-5626 (drop table globals)
  *
  * @param creatureType   CSB_CREATURE_TYPE_*
