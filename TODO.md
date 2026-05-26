@@ -22,7 +22,6 @@ Status per 2026-05-19 v2.4.0.
 ### Champion System
 
 
-  **OKLART (portrait sensorData):** m11_game_view.c:8995 is correct — ReDMCSB DUNGEON.C:2612 stores value+1 but DUNVIEW.C:3916 post-decrement cancels it; both code paths yield identical 0-based sheet index; confirmed no bug (commit 62411518).
 
 ### Inventory & Items
 

@@ -3,7 +3,9 @@
 Status per 2026-05-19 v2.4.0.
 
 
-## 2026-05-26 — DM1 V1 Final GAPs + V2.0 + Crash Fix
+## 2026-05-26
+
+- ✅ **Portrait sensorData OKLART → STÄNGD** — m11_game_view.c:8995 korrekt. ReDMCSB DUNGEON.C:2612 stores value+1, DUNVIEW.C:3916 post-decrement cancels it; both paths yield identical 0-based sheet index. Confirmed no bug (commit 62411518). — DM1 V1 Final GAPs + V2.0 + Crash Fix
 
 ### DM1 V1 Core
 - ✅ **C00-C26 creature numeric stats source-locked** — movementTicks, defense, baseHealth, attackPower, poisonAttack, experience, woundProbabilities all matched to ReDMCSB G0243_as_Graphic559_CreatureInfo (DUNGEON.C). Commit 1b743667.
