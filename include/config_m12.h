@@ -83,6 +83,10 @@ typedef struct {
     int dm1V2DitherCleanupEnabled;       /* 0 = off, 1 = on (3x3 mode filter on indexed) */
     int dm1V2SharpeningEnabled;          /* 0 = off, 1 = on */
     int dm1V2SharpeningStrength;         /* 0-100, percent; default 30 */
+
+    /* DM1 V2.0 visual extras: phosphor persistence (CRT afterglow). */
+    int dm1V2PhosphorPersistenceEnabled; /* 0 = off, 1 = on */
+    int dm1V2PhosphorDecay;              /* 0-100, decay percent; default 60 */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

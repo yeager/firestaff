@@ -197,6 +197,15 @@ int  M11_Render_GetV2Filters(int* outCrtEnabled,
                              int* outSharpenEnabled,
                              int* outSharpenStrength);
 
+/* DM1 V2.0 visual extras.  All extras default off so V1 paths stay
+ * bit-identical to the original. */
+
+/* Phosphor persistence: CRT-style afterglow on bright pixels.  Decay
+ * is the percent of previous-frame intensity that bleeds through
+ * (0..100, default 60). */
+int  M11_Render_SetPhosphor(int enabled, int decay);
+int  M11_Render_GetPhosphor(int* outEnabled, int* outDecay);
+
 #ifdef __cplusplus
 }
 #endif

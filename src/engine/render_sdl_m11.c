@@ -75,6 +75,14 @@ typedef struct {
     int v2_sharpen_strength;
     int v2_palette_lut_built;
     unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3];
+
+    /* V2.0 visual extras (Firestaff-only, no ReDMCSB analogue). */
+    int v2_phosphor_enabled;
+    int v2_phosphor_decay;          /* 0..100 percent of previous frame */
+
+    unsigned char* previousFrameBuffer;  /* prev RGBA frame at logical size */
+    int previousFrameW;
+    int previousFrameH;
 } M11_RenderState;
 
 static M11_RenderState g_state = {0};
@@ -86,6 +94,39 @@ static void m11_free_present_buffer(void) {
         free(g_state.presentBuffer);
         g_state.presentBuffer = NULL;
     }
+    if (g_state.previousFrameBuffer) {
+        free(g_state.previousFrameBuffer);
+        g_state.previousFrameBuffer = NULL;
+    }
+    g_state.previousFrameW = 0;
+    g_state.previousFrameH = 0;
+}
+
+/* Ensure previousFrameBuffer matches the requested size.  On size
+ * change, the buffer is reallocated and zeroed so the first blend pass
+ * does not pull in stale pixels.  Returns 0 on success, -1 on alloc
+ * failure (the caller should treat that as "skip the effect"). */
+static int m11_ensure_prev_frame_buffer(int w, int h) {
+    size_t bytes;
+    unsigned char* nb;
+    if (w <= 0 || h <= 0) {
+        return -1;
+    }
+    if (g_state.previousFrameBuffer
+            && g_state.previousFrameW == w
+            && g_state.previousFrameH == h) {
+        return 0;
+    }
+    bytes = (size_t)w * (size_t)h * 4U;
+    nb = (unsigned char*)realloc(g_state.previousFrameBuffer, bytes);
+    if (!nb) {
+        return -1;
+    }
+    g_state.previousFrameBuffer = nb;
+    memset(g_state.previousFrameBuffer, 0, bytes);
+    g_state.previousFrameW = w;
+    g_state.previousFrameH = h;
+    return 0;
 }
 
 static void m11_retire_texture(SDL_Texture* texture) {
@@ -414,6 +455,61 @@ static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
     }
 }
 
+/* Phosphor persistence: bright pixels from the previous frame bleed
+ * through using max(current, previous * decay).  Operates on the RGBA
+ * present buffer at logical resolution. */
+static void m11_apply_phosphor_persistence(int w, int h) {
+    unsigned char* cur;
+    unsigned char* prev;
+    int pixelCount;
+    int i;
+    int decayNum;
+    if (!g_state.v2_phosphor_enabled || g_state.v2_phosphor_decay <= 0) {
+        return;
+    }
+    cur = g_state.presentBuffer;
+    if (!cur) {
+        return;
+    }
+    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
+        return;
+    }
+    prev = g_state.previousFrameBuffer;
+    pixelCount = w * h;
+    decayNum = g_state.v2_phosphor_decay;
+    if (decayNum > 100) decayNum = 100;
+    for (i = 0; i < pixelCount; ++i) {
+        int o = i * 4;
+        int pr = (prev[o + 0] * decayNum) / 100;
+        int pg = (prev[o + 1] * decayNum) / 100;
+        int pb = (prev[o + 2] * decayNum) / 100;
+        int cr = cur[o + 0];
+        int cg = cur[o + 1];
+        int cb = cur[o + 2];
+        cur[o + 0] = (unsigned char)(pr > cr ? pr : cr);
+        cur[o + 1] = (unsigned char)(pg > cg ? pg : cg);
+        cur[o + 2] = (unsigned char)(pb > cb ? pb : cb);
+        /* alpha unchanged */
+    }
+}
+
+/* Snapshot the current present buffer into previousFrameBuffer so the
+ * next frame can read it.  Called once per present, after all RGBA
+ * filters but before the SDL upload. */
+static void m11_snapshot_prev_frame(int w, int h) {
+    if (!g_state.v2_phosphor_enabled) {
+        return;
+    }
+    if (!g_state.presentBuffer) {
+        return;
+    }
+    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
+        return;
+    }
+    memcpy(g_state.previousFrameBuffer, g_state.presentBuffer,
+           (size_t)w * (size_t)h * 4U);
+}
+
 static void m11_apply_v2_filters_rgba_post(int w, int h) {
     unsigned char* rgba = g_state.presentBuffer;
     if (!rgba) {
@@ -425,6 +521,8 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     if (g_state.v2_crt_enabled && g_state.v2_crt_strength > 0) {
         (void)dm1_v2_filter_crt_scanlines_rgba(rgba, w, h, g_state.v2_crt_strength);
     }
+    m11_apply_phosphor_persistence(w, h);
+    m11_snapshot_prev_frame(w, h);
 }
 
 static void m11_framebuffer_to_rgba_special(const unsigned char* src,
@@ -1315,5 +1413,35 @@ int M11_Render_GetV2Filters(int* outCrtEnabled,
     if (outDitherEnabled) *outDitherEnabled = g_state.v2_dither_enabled;
     if (outSharpenEnabled) *outSharpenEnabled = g_state.v2_sharpen_enabled;
     if (outSharpenStrength) *outSharpenStrength = g_state.v2_sharpen_strength;
+    return M11_RENDER_OK;
+}
+
+/* ---------------- DM1 V2.0 visual extras API ---------------- */
+
+static void m11_maybe_release_prev_frame(void) {
+    /* Free the prev-frame buffer only when no consumer (currently only
+     * phosphor) needs it.  Keeps V1 launches at zero memory cost. */
+    if (!g_state.v2_phosphor_enabled) {
+        if (g_state.previousFrameBuffer) {
+            free(g_state.previousFrameBuffer);
+            g_state.previousFrameBuffer = NULL;
+            g_state.previousFrameW = 0;
+            g_state.previousFrameH = 0;
+        }
+    }
+}
+
+int M11_Render_SetPhosphor(int enabled, int decay) {
+    if (decay < 0) decay = 0;
+    if (decay > 100) decay = 100;
+    g_state.v2_phosphor_enabled = enabled ? 1 : 0;
+    g_state.v2_phosphor_decay = decay;
+    m11_maybe_release_prev_frame();
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetPhosphor(int* outEnabled, int* outDecay) {
+    if (outEnabled) *outEnabled = g_state.v2_phosphor_enabled;
+    if (outDecay) *outDecay = g_state.v2_phosphor_decay;
     return M11_RENDER_OK;
 }
