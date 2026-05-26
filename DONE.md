@@ -470,6 +470,12 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Build: 100% clean (all targets link)
 
 
+## DM1 V1 GAP Fixes (2026-05-26) — Completed
+
+- ✅ Creature attribute flags C11/C14/C19/C20/C23/C25/C26 — source-locked to ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo attribute words. Fixed Black Flame LEVITATION/NON_MATERIAL swap, added missing LEVITATION to Vexirk / Lord Chaos / Lord Order / Grey Lord, added missing LEVITATION+NON_MATERIAL to Materializer, added missing NON_MATERIAL to Water Elemental. ARCHENEMY flag also added to Grey Lord. memory_combat_pc34_compat.c:281-282 NON_MATERIAL gate and F0264 LEVITATION pit-fall gate now read source-correct flags. Commit 2e7c2d8d.
+- ✅ C25/C26 Lord Order/Grey Lord projectile fallback — DM1_CREATURE_TYPE_LORD_ORDER (25) and DM1_CREATURE_TYPE_GREY_LORD (26) constants added to dm1_v1_creature_ai_behavior_pc34_compat.h. Behavior code now has explicit case rows that fall through to FIREBALL via the MEDIA529 default, matching ReDMCSB GROUP.C:1707-1763 BUG0_13 behavior. Creatures still unreachable in any original dungeon; modder/dungeon-editor placement is now deterministic instead of relying on the implicit switch default. Commit 2e7c2d8d.
+- ✅ Teleporter/pit parallel state removed — dead M11_TeleporterPitState registry and its add/check/init helpers + m11_resolve_pit_chain (no callers outside its own file) removed from include/dm1_v1_teleporter_pit_pc34_compat.h and src/dm1/dm1_v1_teleporter_pit_pc34_compat.c. Kept m11_apply_teleporter_rotation (MOVESENS.C F0262/F0263/F0267), m11_apply_group_teleporter_rotation (MOVESENS.C F0262), and m11_plan_group_move_removal_after_pit_teleporter (MOVESENS.C F0267 + GROUP.C F0187/F0188/F0189) which the movement pipeline and group-removal tests still use. Header gained an explicit architecture note that the orchestrator owns the single control path via world->things->teleporters[] + DungeonTeleporter_Compat. Commit 4fb1b050.
+
 ## DM1 V1 GAP Fixes (2026-05-25) — Completed Today
 
 - ✅ ESC-dialog YES/NO buttons — m11_draw_dialog_choices_source() was never called for return-to-menu branch because drawnSourceBackdrop was 0; added choice-drawing loop after cdlgX/cdlgY assignment; commit 4ae014dd

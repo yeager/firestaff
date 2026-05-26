@@ -19,18 +19,14 @@ Status per 2026-05-19 v2.4.0.
 
 ### Creature System
 
-  **GAP (C25/C26):** C25 (Lord Order) and C26 (Grey Lord) are structurally safe (default: FIREBALL handles them) but not explicitly handled in dm1_v1_creature_ai_behavior_pc34_compat.c. No DM1_CREATURE_TYPE_LORD_ORDER/GREY_LORD constants in behavior header. Not reachable in any original dungeon (BUG0_13). Acceptable for normal play. Modder/dungeon-editor placement would work by-accident, not by-design.
-
 ### Champion System
 
-  **GAP (C01-C24 stats):** All 24 Hall of Champions champions (C01-C24) have STUB stat values — not source-locked to ReDMCSB G0243. 5 flag bugs: C12 Black Flame (LEVITATION/NON_MATERIAL inverted), C20 Materializer (missing both LEVITATION+NON_MATERIAL), C14 Couatl, C15 Vexirk, C21 Water Elemental, C24 Lord Chaos (each missing LEVITATION flag). TIER_FULL champions C10/C11/C13 need stat corrections.
+  **🔧 C00-C24 creature stat values still STUB** — flag bugs in g_profiles[] are now source-locked to ReDMCSB G0243 attribute words (commit 2e7c2d8d covers C11/C14/C19/C20/C23/C25/C26 attribute fixes). Remaining work: source-lock the actual numeric stat values (movementTicks, attackTicks, defense, baseHealth, attack, poisonAttack, dexterity, woundProbabilities) to G0243_as_Graphic559_CreatureInfo for C00-C24 stubs. TIER_FULL C09 Stone Golem, C10 Mummy, C12 Skeleton remain reference rows; spot-check their wound probabilities and ranges against DUNGEON.C lines 439-490.
   **OKLART (portrait sensorData):** m11_game_view.c:8995 is correct — ReDMCSB DUNGEON.C:2612 stores value+1 but DUNVIEW.C:3916 post-decrement cancels it; both code paths yield identical 0-based sheet index; confirmed no bug (commit 62411518).
 
 ### Inventory & Items
-  **🔧 Save/load integration GAP** — F5/F9 quick save wired and SERIALIZES world; F9 quick load installs the deserialized world into gameView->world (mind the F0883_WORLD_Free_Compat call before overwrite); G2018 quit-guard absent from m11_sl_* flow
-  **⚠️ Object interaction stub** — DISSIGN: m11_process_v1_mouth_click() wires FOOD/POTION/WATER via consumables module; m11_obj_use() is cosmetic stub with no callers (ITEM.C routed via panel mouth-click, not viewport clicks)
-  **🔧 Group management wiring GAP** — m11_group_add_active() has no callers; orchestrator (memory_tick_orchestrator_pc34_compat.c) has no access to M11_DD_DungeonData* needed to call it; world->creatureAI[] and dd->groups.activeGroups[] are separate tracking systems; architecture change required
-  **⚠️ Teleporter/pit wiring GAP** — DELVIS FIXAD: m11_apply_teleporter_rotation() and m11_resolve_pit_chain() are called from orchestrator; M11_TeleporterPitState (m11_add_teleporter/pit) is orphaned parallel state; orchestrator uses DungeonTeleporter_Compat directly; architectural decision needed: consolidate or remove parallel system
+  **🔧 G2018 quit-guard prompt** — F5/F9 quick save/load and F0883_WORLD_Free_Compat installation are complete (commit 3bf01317). Remaining: hook the LOADSAVE.C G2018_ul_LastSaveTime / G0319_ul_LoadGameTime quit-guard dialog into the M11 quit path so unsaved progress prompts before exit.
+  **🔧 m11_group_* helpers are unused; orchestrator owns active-group state via world->creatureAI[]** — orch_add_generated_group_active_state_compat() in memory_tick_orchestrator_pc34_compat.c is the source-locked path for ReDMCSB GROUP.C F0183 active-group creation. m11_group_add_active / M11_DD_DungeonData->groups are leftover scaffolding from an earlier design. Future cleanup: either remove the M11_DD_DungeonData groups field or migrate its existing in-tree callers (currently none in src/) to creatureAI[]. Not a runtime bug, but adds noise.
 
 
 ## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
