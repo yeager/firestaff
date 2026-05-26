@@ -187,3 +187,18 @@ These subsystems have source-locked code present but explicit gaps remain. Track
 - 🔧 Accessibility module exists (firestaff_accessibility) — src/engine/firestaff_accessibility.c (250 lines) and include/firestaff_accessibility.h scaffolded; **remaining**: screen reader integration, high-contrast mode, configurable font size (see Cross-Cutting Features → Accessibility)
 - 🔧 VIEWPORT RENDERING wall draw loop — door frames implemented (D3/D2/D1 via dm1_viewport_3d_get_wall_frame + F0104/F0105) committed 30ccdfc0; non-door wall draw loop wired via s_draw_order/wall_set in dm1_viewport_3d_draw_frame committed 54be3b3c; **remaining**: asset system to populate `g_dm1_wall_frame_bitmaps` (still NULL), D4 far-object rendering pass, full door occlusion verification
 
+
+## DM1 V1 — P1 Visual Bugs (from LIST.md 2026-05-26)
+
+- 🔴 Viewport walls not rendering — walls missing from viewport, but map shows correct layout; need runtime capture with exact map/x/y/direction and screenshots before fixing
+- 🔴 Champion Z-order / floating — champion images rendered at wrong Z-layer; VBLANK.C draw order issue
+- 🔴 Champion mirrors not visible — GRAPHICS.DAT bitmap indices for mirror objects not wired to viewport render
+- 🔴 Wall inscriptions blurry — PANEL.C/DUNVIEW.C inscription blit resolution issue
+- 🔴 Mac app icon missing — firestaff.icns needs to be added to .app bundle Contents/Resources
+
+## CSB V1 — Runtime Handoff (NEW 2026-05-26)
+
+- 🔴 CSB V1 launch handoff — m12_game_supported("csb") returns true but launch shows "RUNTIME NOT READY"; need to trace menu→game loop path and implement M12_MENU_INPUT_ACCEPT handler for CSB entry
+- 🔴 CSB V1 viewport rendering — csb_v1_viewport_pc34_compat.c needs integration into main_loop_m11.c game loop
+- 🔴 CSB V1 dungeon entrance — load sequence: CSB Title → Import DM1 Champions → Dungeon entrance; csb_v1_character_pc34_compat.c::csb_v1_import_dm1_save() needs wiring
+- 🔴 CSB V1 title screen — csb_v1_game.c has title screen logic but not wired to M12 menu handoff
