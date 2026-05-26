@@ -308,6 +308,12 @@ int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
         /* FALLTHROUGH */
     case DM1_CREATURE_TYPE_DEMON:
     case DM1_CREATURE_TYPE_RED_DRAGON:
+    case DM1_CREATURE_TYPE_LORD_ORDER:  /* C25: ReDMCSB BUG0_13 — undefined in source;
+                                         * MEDIA529 (PC34) default makes FIREBALL the
+                                         * safe fallback. Not reachable in original
+                                         * dungeons. Explicit case so modders/dungeon
+                                         * editors get deterministic behavior. */
+    case DM1_CREATURE_TYPE_GREY_LORD:   /* C26: same BUG0_13 fallback as Lord Order. */
     default:
         out->projectileThing = DM1_PROJECTILE_THING_FIREBALL;
         break;

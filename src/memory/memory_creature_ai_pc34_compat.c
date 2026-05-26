@@ -116,14 +116,14 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     {  9, 3, 0, 36, 16,  55, 70, 145, 35,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C10 Mummy            (FULL — plan §4.11) */
     { 10, 3, 4, 15,  7,  40, 50, 110, 40,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 45, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C11 Black Flame      (stub) */
-    { 11, 4, 0, 14,  9,  45, 25,  60, 40,  0, COMBAT_ATTACK_FIRE,   0x0000, CREATURE_ATTR_MASK_LEVITATION, 40, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C11 Black Flame      (stub) — DUNGEON.C G0243[11].Attributes=0x18C6: NON_MATERIAL=1, LEV=0 */
+    { 11, 4, 0, 14,  9,  45, 25,  60, 40,  0, COMBAT_ATTACK_FIRE,   0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_STUB, 0 },
     /* C12 Skeleton         (FULL — plan §4.11) */
     { 12, 3, 4, 11,  6,  40, 40,  90, 45,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C13 Couatl           (stub) */
     { 13, 3, 0, 10, 12,  50, 35,  95, 55, 20, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_LEVITATION, 55, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C14 Vexirk           (stub — spell-caster deferred to v2) */
-    { 14, 4, 0, 14,  7,  30, 25,  70, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C14 Vexirk           (stub — spell-caster deferred to v2) — DUNGEON.C G0243[14].Attributes=0x05B8: LEVITATION=1 */
+    { 14, 4, 0, 14,  7,  30, 25,  70, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 40, CREATURE_IMPL_TIER_STUB, 0 },
     /* C15 Magenta Worm     (stub) */
     { 15, 3, 0, 24, 14,  55, 40, 140, 30, 30, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 50, CREATURE_IMPL_TIER_STUB, 0 },
     /* C16 Trolin / Anti-Mage (stub) */
@@ -132,22 +132,22 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     { 17, 3, 0, 10,  8,  30, 30,  60, 55, 25, COMBAT_ATTACK_SHARP,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 45, CREATURE_IMPL_TIER_STUB, 0 },
     /* C18 Animated Armour  (stub) */
     { 18, 3, 0, 18, 10,  55, 55, 115, 35,  0, COMBAT_ATTACK_SHARP,  0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C19 Materializer     (stub — spell-caster deferred) */
-    { 19, 4, 0, 16, 10,  50, 40,  90, 45,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C20 Water Elemental  (stub) */
-    { 20, 3, 0, 20, 11,  55, 50, 130, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C19 Materializer     (stub — spell-caster deferred) — DUNGEON.C G0243[19].Attributes=0x0060: LEVITATION=1, NON_MATERIAL=1 */
+    { 19, 4, 0, 16, 10,  50, 40,  90, 45,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_NON_MATERIAL, 45, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C20 Water Elemental  (stub) — DUNGEON.C G0243[20].Attributes=0x10DE: NON_MATERIAL=1, LEV=0 */
+    { 20, 3, 0, 20, 11,  55, 50, 130, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_STUB, 0 },
     /* C21 Oitu             (stub) */
     { 21, 4, 0, 12,  9,  60, 40, 110, 55,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 55, CREATURE_IMPL_TIER_STUB, 0 },
     /* C22 Demon            (stub) */
     { 22, 4, 0, 14, 10,  65, 50, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 55, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C23 Lord Chaos       (stub — archenemy / teleport deferred) */
-    { 23, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C23 Lord Chaos       (stub — archenemy / teleport deferred) — DUNGEON.C G0243[23].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
+    { 23, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
     /* C24 Red Dragon       (stub — AoE flame deferred) */
     { 24, 5, 0, 12, 12,  70, 55, 180, 45,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x0000, 70, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C25 Lord Order       (stub — archenemy mirror of Lord Chaos) */
-    { 25, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C26 Grey Lord        (stub) */
-    { 26, 4, 0, 14, 10,  55, 45, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 50, CREATURE_IMPL_TIER_STUB, 0 }
+    /* C25 Lord Order       (stub — archenemy mirror of Lord Chaos) — DUNGEON.C G0243[25].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
+    { 25, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C26 Grey Lord        (stub) — DUNGEON.C G0243[26].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
+    { 26, 4, 0, 14, 10,  55, 45, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 50, CREATURE_IMPL_TIER_STUB, 0 }
 };
 
 _Static_assert((sizeof(g_profiles) / sizeof(g_profiles[0])) ==

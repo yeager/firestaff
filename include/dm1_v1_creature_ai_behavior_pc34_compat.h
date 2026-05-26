@@ -149,6 +149,13 @@ struct DM1CreatureInfo_Compat {
 #define DM1_CREATURE_TYPE_DEMON 22
 #define DM1_CREATURE_TYPE_LORD_CHAOS 23
 #define DM1_CREATURE_TYPE_RED_DRAGON 24
+/* C25 Lord Order / C26 Grey Lord are PROJEXPL/GROUP.C BUG0_13:
+ * ReDMCSB has no explicit projectile branch for them. They are not
+ * reachable in any original dungeon, but to keep MEDIA529 (PC34) default
+ * FIREBALL safe even if a modder places them, dm1_v1_creature_ai_behavior
+ * matches them by name through the default fallthrough. */
+#define DM1_CREATURE_TYPE_LORD_ORDER 25
+#define DM1_CREATURE_TYPE_GREY_LORD  26
 #define DM1_SLOT_READY_HAND       0
 #define DM1_SLOT_ACTION_HAND      1
 
