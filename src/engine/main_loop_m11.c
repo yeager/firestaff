@@ -17,6 +17,7 @@
 #include "firestaff_accessibility.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
+#include "m11_qol_runtime.h"
 #include "title_frontend_v1.h"
 #include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
@@ -1458,6 +1459,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 }
+                case SDLK_F6: {
+                    int m = M11_QolRuntime_CycleSpeedMultiplier();
+                    fprintf(stderr, "QoL: game speed %d%% (%.1fx)\n", m, m / 100.0);
+                    if (gameViewResult && gameView && gameView->active) {
+                        *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                }
                 case SDLK_R:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -1866,6 +1875,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int runRc = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+    {
+        M12_Config qolCfg;
+        M12_Config_Load(&qolCfg, o->dataDir);
+        M11_QolRuntime_InitFromConfig(&qolCfg);
+    }
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns
        Uint64 in SDL3 and Uint32 in SDL2. Both are fine for our math. */
@@ -1877,7 +1891,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const Uint64 interval = (Uint64)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
-    const Uint64 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
+    Uint64 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
 #else
     Uint32 start = SDL_GetTicks();
     Uint32 now = start;
@@ -1886,7 +1900,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const Uint32 interval = (Uint32)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
-    const Uint32 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
+    Uint32 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
 #endif
 
     /* Always present at least once so the window actually has content. */
@@ -1898,6 +1912,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         uint32_t tickBeforeEvents = gameView.world.gameTick;
         uint32_t tickBeforeInput = gameView.world.gameTick;
 
+        {
+            int speedMul = M11_QolRuntime_GetSpeedMultiplier();
+            if (speedMul < 50)  speedMul = 50;
+            if (speedMul > 400) speedMul = 400;
+            /* Original 200ms tick divided by (multiplier/100).
+             * 0.5x -> 400ms, 1x -> 200ms, 1.5x -> 133ms, 2x -> 100ms. */
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            gameTickInterval = (Uint64)((200 * 100 + speedMul / 2) / speedMul);
+#else
+            gameTickInterval = (Uint32)((200 * 100 + speedMul / 2) / speedMul);
+#endif
+            if (gameTickInterval < 1) gameTickInterval = 1;
+        }
         now = SDL_GetTicks();
         if (gameView.active) {
             idleAccumulatorMs += (uint32_t)(now - lastLoopTick);

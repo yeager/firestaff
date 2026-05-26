@@ -98,6 +98,15 @@ typedef struct {
     /* DM1 V2.0 motion blur during active movement. */
     int dm1V2MotionBlurEnabled;          /* 0 = off, 1 = on */
     int dm1V2MotionBlurStrength;         /* 0-100, percent; default 30 */
+
+    /* Gameplay & QoL */
+    int gameSpeedMultiplier;     /* 50/100/150/200; default 100 */
+    int minimapEnabled;          /* 0=off, 1=on; default 0 */
+    int minimapSize;             /* 64-256; default 128 */
+    int minimapCorner;           /* 0=TR,1=TL,2=BR,3=BL; default 0 */
+    int autoMapEnabled;          /* 0=off, 1=on; default 1 */
+    int combatLogEnabled;        /* 0=off, 1=on; default 0 */
+    int combatLogMaxLines;       /* 50-500; default 200 */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

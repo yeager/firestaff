@@ -263,6 +263,13 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->dm1V2PixelGridIntensity = 20;
     config->dm1V2MotionBlurEnabled = 0;
     config->dm1V2MotionBlurStrength = 30;
+    config->gameSpeedMultiplier = 100;
+    config->minimapEnabled = 0;
+    config->minimapSize = 128;
+    config->minimapCorner = 0;
+    config->autoMapEnabled = 1;
+    config->combatLogEnabled = 0;
+    config->combatLogMaxLines = 200;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -384,6 +391,42 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "audio_muted")) {
         config->audioMuted = m12_parse_int(value, config->audioMuted);
+        return;
+    }
+    if (m12_string_equals(key, "game_speed_multiplier")) {
+        int v = m12_parse_int(value, config->gameSpeedMultiplier);
+        if (v != 50 && v != 100 && v != 150 && v != 200) v = 100;
+        config->gameSpeedMultiplier = v;
+        return;
+    }
+    if (m12_string_equals(key, "minimap_enabled")) {
+        config->minimapEnabled = m12_parse_int(value, config->minimapEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "minimap_size")) {
+        int v = m12_parse_int(value, config->minimapSize);
+        if (v < 64) v = 64; else if (v > 256) v = 256;
+        config->minimapSize = v;
+        return;
+    }
+    if (m12_string_equals(key, "minimap_corner")) {
+        int v = m12_parse_int(value, config->minimapCorner);
+        if (v < 0 || v > 3) v = 0;
+        config->minimapCorner = v;
+        return;
+    }
+    if (m12_string_equals(key, "auto_map_enabled")) {
+        config->autoMapEnabled = m12_parse_int(value, config->autoMapEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "combat_log_enabled")) {
+        config->combatLogEnabled = m12_parse_int(value, config->combatLogEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "combat_log_max_lines")) {
+        int v = m12_parse_int(value, config->combatLogMaxLines);
+        if (v < 50) v = 50; else if (v > 500) v = 500;
+        config->combatLogMaxLines = v;
         return;
     }
     if (strncmp(key, "game_", 5) == 0) {
@@ -630,6 +673,13 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "audio_music_volume = %d\n", config->audioMusicVolume);
     fprintf(fp, "audio_sfx_volume = %d\n", config->audioSfxVolume);
     fprintf(fp, "audio_muted = %d\n", config->audioMuted ? 1 : 0);
+    fprintf(fp, "game_speed_multiplier = %d\n", config->gameSpeedMultiplier);
+    fprintf(fp, "minimap_enabled = %d\n", config->minimapEnabled ? 1 : 0);
+    fprintf(fp, "minimap_size = %d\n", config->minimapSize);
+    fprintf(fp, "minimap_corner = %d\n", config->minimapCorner);
+    fprintf(fp, "auto_map_enabled = %d\n", config->autoMapEnabled ? 1 : 0);
+    fprintf(fp, "combat_log_enabled = %d\n", config->combatLogEnabled ? 1 : 0);
+    fprintf(fp, "combat_log_max_lines = %d\n", config->combatLogMaxLines);
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
