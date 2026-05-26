@@ -897,6 +897,25 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
     int vy = y - M11_VIEWPORT_Y;
     int i;
     if (!state || state->dialogChoiceCount <= 0) return 0;
+
+    /* ESC quit-dialog (returnToMenuConfirmActive) uses a centered 200x50
+     * dialog at (cdlgX, cdlgY) = ((fbW-200)/2, (fbH-50)/2).  YES/NO are
+     * drawn at choiceY = cdlgY + cdlgH - 16 with choiceW = cdlgW/2.
+     * The generic zone table uses viewport-relative y values (hy=67/104)
+     * that don't match the drawn choiceY=109.  Compute hit zones directly
+     * from the actual drawn positions. */
+    if (state->returnToMenuConfirmActive && state->dialogChoiceCount == 2) {
+        int cdlgX = (M11_FB_WIDTH - 200) / 2;
+        int cdlgY = (M11_FB_HEIGHT - 50) / 2;
+        int choiceY = cdlgY + 50 - 16; /* drawn choice Y in framebuffer coords */
+        int choiceW = 200 / 2;          /* 100 px per slot for 2 choices */
+        if (vy >= choiceY && vy < choiceY + 20) {
+            if (vx >= cdlgX && vx < cdlgX + choiceW) return 1;       /* YES */
+            if (vx >= cdlgX + choiceW && vx < cdlgX + 2 * choiceW) return 2; /* NO */
+        }
+        return 0;
+    }
+
     if (vx < 0 || vy < 0 || vx >= M11_VIEWPORT_W || vy >= M11_VIEWPORT_H) return 0;
     for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
         int hx, hy, hw, hh;
