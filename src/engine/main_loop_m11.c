@@ -19,6 +19,7 @@
 #include "render_sdl_m11.h"
 #include "m11_qol_runtime.h"
 #include "dm1_v1_minimap_pc34_compat.h"
+#include "dm1_v1_automap_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
@@ -1476,6 +1477,18 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
                     return M12_MENU_INPUT_NONE;
+                case SDLK_F8:
+                    /* F8 = export auto-map for current level
+                     * (Ctrl+M alias: ReDMCSB M already triggers a
+                     * fullscreen map overlay so we keep that key for
+                     * the V1 chrome and add a dedicated export key.) */
+                    if (gameView && gameView->active) {
+                        int ex = DM1_AutoMap_ExportCurrentLevel(gameView);
+                        fprintf(stderr, "QoL: auto-map export %s\n",
+                                ex ? "ok" : "FAILED");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_R:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -1743,6 +1756,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     if (gameView && gameView->active) {
                         int on = M11_QolRuntime_ToggleMinimap();
                         fprintf(stderr, "QoL: minimap %s\n", on ? "on" : "off");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F8:
+                    if (gameView && gameView->active) {
+                        int ex = DM1_AutoMap_ExportCurrentLevel(gameView);
+                        fprintf(stderr, "QoL: auto-map export %s\n",
+                                ex ? "ok" : "FAILED");
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
                     return M12_MENU_INPUT_NONE;
@@ -2064,6 +2085,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             idleAccumulatorMs -= (uint32_t)gameTickInterval;
         }
         if (gameView.active) {
+            DM1_AutoMap_RecordVisit(&gameView);
             DM1_Minimap_Render(&gameView,
                                M11_Render_GetFramebuffer(),
                                M11_FB_WIDTH, M11_FB_HEIGHT);

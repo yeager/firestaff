@@ -50,6 +50,7 @@ file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -130,6 +131,7 @@ set(M11_SOURCES
     src/engine/m11_game_view.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
+    src/dm1/dm1_v1_automap_pc34_compat.c
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
     src/shared/audio_sdl_m11.c
