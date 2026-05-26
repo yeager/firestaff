@@ -72,6 +72,17 @@ typedef struct {
     int dm1V2DynamicLightingEnabled;       /* 0 = off, 1 = V2 lighting overlays */
     int dm1V2AccessibilityTouchEnabled;    /* 0 = off, 1 = larger/touch-friendly V2 controls */
     int dm1V2AspectMode;                   /* 0 = 4:3 original, 1 = 16:9 widescreen envelope */
+
+    /* DM1 V2.0 filter chain (V2-only; V1 launch path ignores these) */
+    int dm1V2CrtScanlinesEnabled;        /* 0 = off, 1 = on (darken even rows) */
+    int dm1V2CrtScanlineStrength;        /* 0-100, percent darken; default 35 */
+    int dm1V2PaletteCorrectionEnabled;   /* 0 = off, 1 = on */
+    int dm1V2PaletteGamma;               /* 80-260 (= 0.80..2.60 x100); default 220 */
+    int dm1V2PaletteBrightness;          /* -50..+50 percent; default 0 */
+    int dm1V2PaletteContrast;            /* -50..+50 percent; default 0 */
+    int dm1V2DitherCleanupEnabled;       /* 0 = off, 1 = on (3x3 mode filter on indexed) */
+    int dm1V2SharpeningEnabled;          /* 0 = off, 1 = on */
+    int dm1V2SharpeningStrength;         /* 0-100, percent; default 30 */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

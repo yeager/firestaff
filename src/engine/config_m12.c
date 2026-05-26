@@ -247,6 +247,15 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->dm1V2DynamicLightingEnabled = 1;
     config->dm1V2AccessibilityTouchEnabled = 0;
     config->dm1V2AspectMode = 0;
+    config->dm1V2CrtScanlinesEnabled = 0;
+    config->dm1V2CrtScanlineStrength = 35;
+    config->dm1V2PaletteCorrectionEnabled = 0;
+    config->dm1V2PaletteGamma = 220;
+    config->dm1V2PaletteBrightness = 0;
+    config->dm1V2PaletteContrast = 0;
+    config->dm1V2DitherCleanupEnabled = 0;
+    config->dm1V2SharpeningEnabled = 0;
+    config->dm1V2SharpeningStrength = 30;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -467,6 +476,57 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->dm1V2AspectMode = m12_parse_int(value, config->dm1V2AspectMode) == 1 ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "dm1_v2_crt_scanlines_enabled")) {
+        config->dm1V2CrtScanlinesEnabled = m12_parse_int(value, config->dm1V2CrtScanlinesEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_crt_scanline_strength")) {
+        int val = m12_parse_int(value, config->dm1V2CrtScanlineStrength);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        config->dm1V2CrtScanlineStrength = val;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_palette_correction_enabled")) {
+        config->dm1V2PaletteCorrectionEnabled = m12_parse_int(value, config->dm1V2PaletteCorrectionEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_palette_gamma")) {
+        int val = m12_parse_int(value, config->dm1V2PaletteGamma);
+        if (val < 80) val = 80;
+        if (val > 260) val = 260;
+        config->dm1V2PaletteGamma = val;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_palette_brightness")) {
+        int val = m12_parse_int(value, config->dm1V2PaletteBrightness);
+        if (val < -50) val = -50;
+        if (val > 50) val = 50;
+        config->dm1V2PaletteBrightness = val;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_palette_contrast")) {
+        int val = m12_parse_int(value, config->dm1V2PaletteContrast);
+        if (val < -50) val = -50;
+        if (val > 50) val = 50;
+        config->dm1V2PaletteContrast = val;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_dither_cleanup_enabled")) {
+        config->dm1V2DitherCleanupEnabled = m12_parse_int(value, config->dm1V2DitherCleanupEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_sharpening_enabled")) {
+        config->dm1V2SharpeningEnabled = m12_parse_int(value, config->dm1V2SharpeningEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_sharpening_strength")) {
+        int val = m12_parse_int(value, config->dm1V2SharpeningStrength);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        config->dm1V2SharpeningStrength = val;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -547,6 +607,15 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "dm1_v2_dynamic_lighting_enabled = %d\n", config->dm1V2DynamicLightingEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_accessibility_touch_enabled = %d\n", config->dm1V2AccessibilityTouchEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_aspect_mode = %d\n", config->dm1V2AspectMode == 1 ? 1 : 0);
+    fprintf(fp, "dm1_v2_crt_scanlines_enabled = %d\n", config->dm1V2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_crt_scanline_strength = %d\n", config->dm1V2CrtScanlineStrength);
+    fprintf(fp, "dm1_v2_palette_correction_enabled = %d\n", config->dm1V2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_palette_gamma = %d\n", config->dm1V2PaletteGamma);
+    fprintf(fp, "dm1_v2_palette_brightness = %d\n", config->dm1V2PaletteBrightness);
+    fprintf(fp, "dm1_v2_palette_contrast = %d\n", config->dm1V2PaletteContrast);
+    fprintf(fp, "dm1_v2_dither_cleanup_enabled = %d\n", config->dm1V2DitherCleanupEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_sharpening_enabled = %d\n", config->dm1V2SharpeningEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_sharpening_strength = %d\n", config->dm1V2SharpeningStrength);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);
