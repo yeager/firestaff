@@ -14,6 +14,7 @@
 #include "firestaff_wall_graphics.h"
 #include "firestaff_dungeon_query.h"
 #include "dm1_v2_anim_timing.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -95,7 +96,12 @@ void fs_init_default_palette(void) {
 }
 
 /* Render a simple first-person dungeon view based on party position.
- * This is the bridge between game state and pixels. */
+ * This is the bridge between game state and pixels.
+ *
+ * For FS_GAME_CSB: delegates to csb_v1_viewport_render_frame() which
+ *   uses the DM1 V1 viewport engine with CSB-specific wall sets.
+ * For other games: uses the existing placeholder rendering.
+ */
 static void fs_game_render_viewport(FS_GameState *state) {
     int x, y, px, py, dir;
     if (!state) return;
@@ -107,6 +113,36 @@ static void fs_game_render_viewport(FS_GameState *state) {
 
     /* Clear framebuffer */
     memset(g_framebuffer, 0, sizeof(g_framebuffer));
+
+    /* ── CSB path: wire viewport into CSB V1 renderer ── */
+    if (state->config.game == FS_GAME_CSB) {
+        /* Configure CSB viewport with the global framebuffer.
+         * The viewport occupies rows [DM1_VIEWPORT_SCREEN_Y..168]
+         * within the 320×200 screen: rows 33..168 inclusive. */
+        CSB_V1_ViewportConfig *cv = &state->csb_viewport;
+        cv->viewport_pixels = g_framebuffer;
+        cv->viewport_stride  = FS_FB_W;  /* 320 bytes/row */
+
+        /* Wire dungeon grid for wall/door decision making.
+         * Use the same test maze pattern as the legacy fallback,
+         * so the view cone has valid data even without CSB DUNGEON.DAT. */
+        static uint8_t s_csb_dungeon[32*32];
+        static int s_csb_maze_init = 0;
+        if (!s_csb_maze_init) {
+            for (int my = 0; my < 32; my++)
+                for (int mx = 0; mx < 32; mx++)
+                    s_csb_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
+            s_csb_maze_init = 1;
+        }
+        cv->dungeon_grid  = s_csb_dungeon;
+        cv->dungeon_width  = 32;
+        cv->dungeon_height = 32;
+
+        /* Delegate to the CSB viewport renderer (which calls
+         * dm1_viewport_3d_draw_frame internally). */
+        csb_v1_viewport_render_frame(cv, dir, px, py);
+
+    } else {
 
     /* Blit viewport background from GRAPHICS.DAT #0 (224x136) */
     if (g_assets_ready) {

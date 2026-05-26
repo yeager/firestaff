@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "firestaff_input.h"
 #include "nexus_v1_engine.h"
+#include "csb_v1_viewport_pc34_compat.h"
 
 /* Firestaff Game Loop — connects V1 engine, V2 rendering, SDL.
  *
@@ -64,6 +65,7 @@ typedef struct {
     int in_menu;
     FS_InputQueue input_queue;
     Nexus_V1_Engine nexus_engine;
+    CSB_V1_ViewportConfig csb_viewport;  /* CSB V1 viewport state */
     FS_StartupError last_error;
 } FS_GameState;
 
