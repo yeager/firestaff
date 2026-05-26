@@ -18,6 +18,7 @@
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "m11_qol_runtime.h"
+#include "dm1_v1_minimap_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
@@ -1467,6 +1468,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 }
+                case SDLK_F7:
+                    /* F7 = toggle dungeon minimap overlay */
+                    if (gameView && gameView->active) {
+                        int on = M11_QolRuntime_ToggleMinimap();
+                        fprintf(stderr, "QoL: minimap %s\n", on ? "on" : "off");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_R:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -1730,6 +1739,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 }
+                case SDLK_F7:
+                    if (gameView && gameView->active) {
+                        int on = M11_QolRuntime_ToggleMinimap();
+                        fprintf(stderr, "QoL: minimap %s\n", on ? "on" : "off");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_r:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -2048,6 +2064,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             idleAccumulatorMs -= (uint32_t)gameTickInterval;
         }
         if (gameView.active) {
+            DM1_Minimap_Render(&gameView,
+                               M11_Render_GetFramebuffer(),
+                               M11_FB_WIDTH, M11_FB_HEIGHT);
             M11_Render_Present();
         } else {
             /* Redraw the launcher every tick so animations (pulse,
