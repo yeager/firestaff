@@ -21,18 +21,18 @@ Status per 2026-05-19 v2.4.0.
 
 ### Champion System
 
-  **🔧 C00-C24 creature stat values still STUB** — flag bugs in g_profiles[] are now source-locked to ReDMCSB G0243 attribute words (commit 2e7c2d8d covers C11/C14/C19/C20/C23/C25/C26 attribute fixes). Remaining work: source-lock the actual numeric stat values (movementTicks, attackTicks, defense, baseHealth, attack, poisonAttack, dexterity, woundProbabilities) to G0243_as_Graphic559_CreatureInfo for C00-C24 stubs. TIER_FULL C09 Stone Golem, C10 Mummy, C12 Skeleton remain reference rows; spot-check their wound probabilities and ranges against DUNGEON.C lines 439-490.
+
   **OKLART (portrait sensorData):** m11_game_view.c:8995 is correct — ReDMCSB DUNGEON.C:2612 stores value+1 but DUNVIEW.C:3916 post-decrement cancels it; both code paths yield identical 0-based sheet index; confirmed no bug (commit 62411518).
 
 ### Inventory & Items
-  **🔧 G2018 quit-guard prompt** — F5/F9 quick save/load and F0883_WORLD_Free_Compat installation are complete (commit 3bf01317). Remaining: hook the LOADSAVE.C G2018_ul_LastSaveTime / G0319_ul_LoadGameTime quit-guard dialog into the M11 quit path so unsaved progress prompts before exit.
-  **🔧 m11_group_* helpers are unused; orchestrator owns active-group state via world->creatureAI[]** — orch_add_generated_group_active_state_compat() in memory_tick_orchestrator_pc34_compat.c is the source-locked path for ReDMCSB GROUP.C F0183 active-group creation. m11_group_add_active / M11_DD_DungeonData->groups are leftover scaffolding from an earlier design. Future cleanup: either remove the M11_DD_DungeonData groups field or migrate its existing in-tree callers (currently none in src/) to creatureAI[]. Not a runtime bug, but adds noise.
+
+
 
 
 ## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
 
 - 🧭 V2 split: V2.0 is the README-defined filtered original-graphics path with CRT scanlines, palette correction, and sharpening; V2.1 is the 10x source-preserving upscale path; V2.2 is the modern Dungeon Master feel with hybrid generated graphics. Track TODO, status, completion %, and worker scope separately; never report a single combined DM1 V2 value.
-- ❌ V2.0 filtered presentation mode selectable from menu, using original DM1 graphics plus CRT scanlines, palette correction, and sharpening without changing DM1 V1 gameplay state, timing, collision, save/load, or source-locked command routes
+- ✅ V2.0 filtered presentation mode — CRT scanlines, palette correction, dither cleanup, sharpening implemented (commits 72162e42, 5267edf1, ac493c36, f6ee27aa)
 
 - ❌ Phase 2 — Graphics pipeline: source-asset-preserving upscale path for walls, creatures, objects, projectiles, fonts, palette/light levels, and title/entrance surfaces
 - ❌ Phase 3 — Modern UI overlay: optional HUD/inventory/champion/rune/action panels that mirror V1 commands without bypassing source-locked click routes or inventory transactions

@@ -2,6 +2,31 @@
 
 Status per 2026-05-19 v2.4.0.
 
+
+## 2026-05-26 — DM1 V1 Final GAPs + V2.0 + Crash Fix
+
+### DM1 V1 Core
+- ✅ **C00-C26 creature numeric stats source-locked** — movementTicks, defense, baseHealth, attackPower, poisonAttack, experience, woundProbabilities all matched to ReDMCSB G0243_as_Graphic559_CreatureInfo (DUNGEON.C). Commit 1b743667.
+- ✅ **G2018 quit-guard prompt** — ESC/quit now checks unsaved progress and shows confirmation dialog before exit, matching LOADSAVE.C G2018_ul_LastSaveTime. Commit 239b9d6e.
+- ✅ **m11_group_* orphaned helpers removed** — m11_group_add_active, M11_GroupState, M11_DD_DungeonData groups field deleted. Orchestrator owns active-group state via world->creatureAI[]. Commit ef05bc70.
+- ✅ **CardArt startup crash fixed** — Two bugs: (1) entries[6]/cardArt[6] overflow (commit e8595be4), (2) uninitialized opts->gameId in M11_PhaseA_SetDefaultOptions (commit 05e312b8). Both fixed.
+- ✅ **C25/C26 Lord creature constants** — DM1_CREATURE_TYPE_LORD_ORDER/GREY_LORD added with FIREBALL fallback. 7 champion flag bugs fixed. Commit 2e7c2d8d.
+- ✅ **Orphaned M11_TeleporterPitState removed** — orchestrator owns teleporter path directly. Commit 4fb1b050.
+
+### DM1 V2.0 Filtered Presentation
+- ✅ **V2.0 config fields (M1)** — 9 new config fields: v20CrtFilter, v20PaletteCorrection, v20DitherCleanup, v20Sharpening + intensity/gamma/brightness/contrast. Commit 72162e42.
+- ✅ **V2.0 filter implementations (M2-M5)** — CRT scanlines (30% darken alternate rows), palette LUT correction, 3x3 mode-filter dither cleanup, 3x3 unsharp mask sharpening. All CPU-based. Commit 5267edf1.
+- ✅ **V2.0 pipeline integration (M6)** — M11_Render_SetV2Filters() API, filter chain wired into M11_Render_PresentIndexed after m11_framebuffer_to_rgba(). Commit ac493c36.
+- ✅ **V2.0 menu wiring (M7)** — Settings GRAPHICS tab rows enabled, config pushed to renderer at startup. Commit f6ee27aa.
+
+### Documentation
+- ✅ **DM1_V2_PLAN.md** — 461-line implementation plan for V2.0 + SDL graphics settings. Commit 3791ba8f.
+- ✅ **DONE.md wrench audit** — All 14 wrench markers cleared; 12 partial items moved to TODO.md. Commit ac4764e5.
+- ✅ **TODO.md GAP reclassification** — 4 GAPs closed, 3 reclassified. Commit 577b51e6.
+
+### Release
+- ✅ **v2.5.0 released** — macOS DMG, Windows EXE/ZIP, Linux DEB/RPM (x86_64+ARM64). All CI green. Tag v2.5.0, commit 7ee999dd.
+
 ## Legend
 - ✅ Done
 - 🚫 Source-blocked / intentionally not implemented
