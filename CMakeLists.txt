@@ -134,6 +134,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_minimap_pc34_compat.c
     src/dm1/dm1_v1_automap_pc34_compat.c
     src/dm1/dm1_v1_combat_log_pc34_compat.c
+    src/dm1/dm1_v1_custom_dungeon_loader.c
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
     src/engine/colorblind_m11.c
