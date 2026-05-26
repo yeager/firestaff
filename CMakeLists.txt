@@ -137,6 +137,7 @@ set(M11_SOURCES
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
     src/engine/colorblind_m11.c
+    src/engine/input_remap_m11.c
     src/engine/ui_scale_m11.c
     src/audio/soundtrack_selector_m11.c
     src/audio/ambient_layer_m11.c
