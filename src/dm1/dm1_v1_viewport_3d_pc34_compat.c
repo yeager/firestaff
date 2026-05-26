@@ -46,6 +46,31 @@
  * TBT-XXX: production asset system wires this from GRAPHICS.DAT. */
 const uint8_t *g_dm1_wall_frame_bitmaps = NULL;
 
+/* CSB back-wall / near-wall frame tables (4 CSB-specific positions).
+ * Derived from ReDMCSB DUNVIEW.C G0711/G0712 (D3L2/D3R2, lines 579-580)
+ * and DUNGEON.C G0163-equivalent (D2L2/D2R2, derived from D2L/D2R perspective).
+ * These are separate from the 12-entry s_wall_frames[] array so that the
+ * main DM1 draw path is undisturbed.
+ *
+ * D3L2 frame: G0711_auc_Graphic558_Frame_Wall_D3L2 { 0, 15, 25, 73, 8, 49, 0, 0 }
+ * D3R2 frame: G0712_auc_Graphic558_Frame_Wall_D3R2 { 208, 223, 25, 73, 8, 49, 0, 0 }
+ * D2L2 frame: scaled D2L (x/2, viewport-projected to D2L2 position)
+ * D2R2 frame: scaled D2R (x/2, viewport-projected to D2R2 position)
+ *
+ * Source: DUNVIEW.C:579-580 (G0711/G0712) · DUNVIEW.C:584-585 (D2L/D2R reference)
+ */
+static const DM1_WallFrame s_csb_back_wall_frames[2] = {
+    /* D3L2 */ {   0,  15, 25,  73,  8, 49,  0, 0 },   /* G0711, DUNVIEW.C:579 */
+    /* D3R2 */ { 208, 223, 25,  73,  8, 49,  0, 0 },   /* G0712, DUNVIEW.C:580 */
+};
+
+static const DM1_WallFrame s_csb_near_wall_frames[2] = {
+    /* D2L2 */ {   0,  37, 20,  90, 36, 71,  30, 0 },  /* scaled D2L left half, DUNVIEW.C:6954-6964 */
+    /* D2R2 */ { 186, 223, 20,  90, 36, 71,   0, 0 },  /* scaled D2R right half, DUNVIEW.C:7105-7115 */
+};
+
+/* Standard wall frame table (12 entries, D3C..D0R).
+ * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static const DM1_WallFrame s_wall_frames[12] = {
     /* D3C */ {  74, 149, 25,  75,  64,  51,  18, 0 },
     /* D3L */ {   0,  83, 25,  75,  64,  51,  32, 0 },
@@ -61,8 +86,60 @@ static const DM1_WallFrame s_wall_frames[12] = {
     /* D0R */ { 192, 223,  0, 135,  16, 136,   0, 0 },
 };
 
-/* View square → wall frame table index mapping */
+/* View square → wall frame table index mapping.
+ * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
+{
+    switch (sq) {
+        case DM1_VIEW_SQUARE_D3C: return 0;
+        case DM1_VIEW_SQUARE_D3L: return 1;
+        case DM1_VIEW_SQUARE_D3R: return 2;
+        case DM1_VIEW_SQUARE_D2C: return 3;
+        case DM1_VIEW_SQUARE_D2L: return 4;
+        case DM1_VIEW_SQUARE_D2R: return 5;
+        case DM1_VIEW_SQUARE_D1C: return 6;
+        case DM1_VIEW_SQUARE_D1L: return 7;
+        case DM1_VIEW_SQUARE_D1R: return 8;
+        case DM1_VIEW_SQUARE_D0C: return 9;
+        case DM1_VIEW_SQUARE_D0L: return 10;
+        case DM1_VIEW_SQUARE_D0R: return 11;
+        default: return -1;
+    }
+}
+
+/* View square → back-wall frame table index mapping */
+static int csb_back_wall_frame_index(DM1_ViewSquareIndex sq)
+{
+    switch (sq) {
+        case DM1_VIEW_SQUARE_D3L2: return 0;
+        case DM1_VIEW_SQUARE_D3R2: return 1;
+        default: return -1;
+    }
+}
+
+/* View square → near-wall frame table index mapping */
+static int csb_near_wall_frame_index(DM1_ViewSquareIndex sq)
+{
+    switch (sq) {
+        case DM1_VIEW_SQUARE_D2L2: return 0;
+        case DM1_VIEW_SQUARE_D2R2: return 1;
+        default: return -1;
+    }
+}
+
+/* Extended frame lookup — covers all DM1 squares (0-12) PLUS the 4 CSB
+ * back/near-wall squares (D3L2=-101, D3R2=-102, D2L2=-103, D2R2=-104).
+ * Returns NULL for squares without a wall frame (D4L/D4R/D4C). */
+const DM1_WallFrame *csb_v1_vp_get_wall_frame(DM1_ViewSquareIndex square)
+{
+    int idx = view_square_to_frame_index(square);
+    if (idx >= 0 && idx < 12) return &s_wall_frames[idx];
+    idx = csb_back_wall_frame_index(square);
+    if (idx >= 0) return &s_csb_back_wall_frames[idx];
+    idx = csb_near_wall_frame_index(square);
+    if (idx >= 0) return &s_csb_near_wall_frames[idx];
+    return NULL;
+}
 {
     switch (sq) {
         case DM1_VIEW_SQUARE_D3C: return 0;
@@ -922,6 +999,63 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
         if (!spec) continue;
         if (!bm_base) continue;
 
+        /* ── CSB-specific squares (D3L2, D3R2, D2L2, D2R2) ──────────────────
+         * These squares use element-specific routing via F0676/F0677/F0678/F0679.
+         * The dungeon element is looked up at the computed map position, and
+         * the appropriate draw function is called for the element type
+         * (wall, door, stairs, pit, teleporter, corridor).
+         *
+         * For D3L2/D3R2: dm1_viewport_3d_draw_csb_back_wall handles all
+         * element types (WALL, TELEPORTER, STAIRS_FRONT, PIT, CORRIDOR,
+         * DOOR_SIDE, DOOR_FRONT, STAIRS_SIDE).
+         *
+         * For D2L2/D2R2: dm1_viewport_3d_draw_csb_near_wall handles
+         * WALL and TELEPORTER only (no stairs, pits, floor ornaments,
+         * creatures, items, or projectiles in these squares).
+         *
+         * For WALL elements, the CSB functions perform parity-aware bitmap
+         * selection matching F0676/F0677/F0678/F0679.
+         *
+         * Source: ReDMCSB DUNVIEW.C:6226-6353 F0676/F0677 (D3L2/D3R2);
+         *   6837-6896 F0678/F0679 (D2L2/D2R2)
+         * ─────────────────────────────────────────────────────────────────── */
+        if (step->square == DM1_VIEW_SQUARE_D3L2 ||
+            step->square == DM1_VIEW_SQUARE_D3R2) {
+            /* Resolve map coords for D3L2/D3R2 via F0150 */
+            int16_t sq_map_x = 0, sq_map_y = 0;
+            dm1_viewport_3d_resolve_relative_map_xy(
+                state->party_direction,
+                step->rel_depth,
+                step->rel_lateral,
+                state->party_map_x,
+                state->party_map_y,
+                &sq_map_x,
+                &sq_map_y);
+            dm1_viewport_3d_draw_csb_back_wall(
+                state, step->square,
+                state->party_direction,
+                (int)sq_map_x, (int)sq_map_y);
+            continue; /* CSB function handles full element routing */
+        }
+        if (step->square == DM1_VIEW_SQUARE_D2L2 ||
+            step->square == DM1_VIEW_SQUARE_D2R2) {
+            /* Resolve map coords for D2L2/D2R2 via F0150 */
+            int16_t sq_map_x = 0, sq_map_y = 0;
+            dm1_viewport_3d_resolve_relative_map_xy(
+                state->party_direction,
+                step->rel_depth,
+                step->rel_lateral,
+                state->party_map_x,
+                state->party_map_y,
+                &sq_map_x,
+                &sq_map_y);
+            dm1_viewport_3d_draw_csb_near_wall(
+                state, step->square,
+                state->party_direction,
+                (int)sq_map_x, (int)sq_map_y);
+            continue; /* CSB function handles full element routing */
+        }
+
         /* Parity-driven bitmap selection.
          * DUNVIEW.C:6354-6365, 6492-6503, 6625-6636, 6767-6778,
          * 7360-7371, 7505-7516, 7673-7684, 7900-7911,
@@ -1030,14 +1164,13 @@ void dm1_viewport_3d_present(DM1_Viewport3DState *state,
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_get_wall_frame
  *
- * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8]
+ * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8] · G0711 · G0712
  *   Returns the frame descriptor for the given view square position.
+ *   Extended to cover CSB D3L2/D3R2/D2L2/D2R2 via csb_v1_vp_get_wall_frame().
  * ──────────────────────────────────────────────────────────────────────── */
 const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square)
 {
-    int idx = view_square_to_frame_index(square);
-    if (idx < 0 || idx >= 12) return NULL;
-    return &s_wall_frames[idx];
+    return csb_v1_vp_get_wall_frame(square);
 }
 
 DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_WallFrame *frame,
@@ -1448,6 +1581,404 @@ const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spe
 const DM1_ViewportSameViewportCaptureContract *dm1_viewport_3d_same_viewport_capture_contract(void)
 {
     return &s_same_viewport_capture_contract;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_get_dungeon_element
+ *
+ * Returns the raw dungeon.dat cell value at (map_x, map_y).
+ * When dungeon_grid is NULL (DM1 mode), returns 0 (WALL).
+ *
+ * The raw cell is a 16-bit value stored in the dungeon grid as a byte.
+ * Low 5 bits = M034_SQUARE_TYPE = element type:
+ *   0=WALL, 1=CORRIDOR, 2=PIT, 3=STAIRS, 4=DOOR,
+ *   5=TELEPORTER, 6=FAKEWALL
+ *
+ * Extended aspect types (16-19) are derived by F0172 from raw type
+ * plus wall configuration context.  Those require additional dungeon
+ * lookups and are handled by the caller (dm1_viewport_3d_draw_csb_*).
+ *
+ * Source: ReDMCSB DUNGEON.C:1371-1421 F0150; DEFS.H M034_SQUARE_TYPE (sq>>5)
+ * ──────────────────────────────────────────────────────────────────────── */
+int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state,
+                                        int map_x, int map_y)
+{
+    if (!state || !state->dungeon_grid) return 0;
+    if (map_x < 0 || map_x >= state->dungeon_width) return 0;
+    if (map_y < 0 || map_y >= state->dungeon_height) return 0;
+    /* Dungeon grid is row-major: [y * width + x]
+     * Note: CSB uses column-major dungeon.dat layout, but the firestaff
+     * dungeon loader converts to row-major when populating the grid. */
+    return (int)(state->dungeon_grid[(unsigned)map_y * (unsigned)state->dungeon_width + (unsigned)map_x]);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_field
+ *
+ * Draw a field effect (teleporter/fluxcage) at the viewport position
+ * corresponding to the given zone constant.
+ *
+ * This is a simplified placeholder: it draws a solid colored rectangle
+ * at the zone's known viewport position.  The full implementation would
+ * look up the field graphic from G0188_aauc_Graphic558_FieldAspects and
+ * call F0113_DUNGEONVIEW_DrawField with proper zone resolution.
+ *
+ * field_color: VGA palette index for the field effect (default 0x1C=cyan).
+ * zone: the viewport zone constant (e.g. DM1_PC34_ZONE_WALL_D2L2=707).
+ *
+ * Source: ReDMCSB DUNVIEW.C F0113_DUNGEONVIEW_DrawField (line 4119)
+ * ──────────────────────────────────────────────────────────────────────── */
+static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
+                                        int zone,
+                                        int field_color)
+{
+    if (!state || !state->viewport_pixels) return;
+
+    /* Zone-to-viewport-position mapping for CSB back/near-wall field effects.
+     * These are derived from the frame descriptors in s_csb_back_wall_frames
+     * and s_csb_near_wall_frames.
+     *
+     * Zone 702/703: D3L2/D3R2 back wall — not used for field effects
+     * Zone 707: D2L2 near wall — draws in the D2L2 viewport region
+     * Zone 708: D2R2 near wall — draws in the D2R2 viewport region
+     *
+     * Source: ReDMCSB DUNVIEW.C:6863-6865 (F0678/F0679 TELEPORTER branch).
+     * The zone constant is passed directly to F0113 as the viewport blit zone. */
+    int dst_x = 0, dst_y = 0, width = 0, height = 0;
+
+    switch (zone) {
+    case 707: /* D2L2 — uses D2L2 frame position */
+        /* D2L2 frame: left_x=0, right_x=37, top_y=20, bottom_y=90 */
+        dst_x = 0; dst_y = 20; width = 38; height = 71;
+        break;
+    case 708: /* D2R2 — uses D2R2 frame position */
+        /* D2R2 frame: left_x=186, right_x=223, top_y=20, bottom_y=90 */
+        dst_x = 186; dst_y = 20; width = 38; height = 71;
+        break;
+    case 702: /* D3L2 wall zone — also used for D3L2 teleporter field */
+        /* D3L2 frame: left_x=0, right_x=15, top_y=25, bottom_y=73 */
+        dst_x = 0; dst_y = 25; width = 16; height = 49;
+        break;
+    case 703: /* D3R2 wall zone — also used for D3R2 teleporter field */
+        /* D3R2 frame: left_x=208, right_x=223, top_y=25, bottom_y=73 */
+        dst_x = 208; dst_y = 25; width = 16; height = 49;
+        break;
+    default:
+        /* Unknown zone — no-op */
+        return;
+    }
+
+    /* Clip to viewport bounds */
+    if (dst_x < 0) { width += dst_x; dst_x = 0; }
+    if (dst_y < 0) { height += dst_y; dst_y = 0; }
+    if (dst_x + width > DM1_VIEWPORT_WIDTH) width = DM1_VIEWPORT_WIDTH - dst_x;
+    if (dst_y + height > DM1_VIEWPORT_HEIGHT) height = DM1_VIEWPORT_HEIGHT - dst_y;
+    if (width <= 0 || height <= 0) return;
+
+    /* Draw solid field color rectangle */
+    uint8_t *vp = state->viewport_pixels;
+    int stride = state->viewport_stride;
+    for (int y = 0; y < height; y++) {
+        uint8_t *row = vp + (dst_y + y) * stride + dst_x;
+        for (int x = 0; x < width; x++) {
+            row[x] = (uint8_t)field_color;
+        }
+    }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_csb_back_wall
+ *
+ * Draw a CSB back-wall square (D3L2 or D3R2) with full element routing.
+ *
+ * This implements ReDMCSB F0676_DrawD3L2 (line 6226) and F0677_DrawD3R2
+ * (line 6293).  These functions are CSB-specific: they render the back
+ * wall of a corridor when viewed from a perpendicular direction.
+ *
+ * Element routing:
+ *   WALL        → draw wall bitmap (parity-aware) + wall ornament → return
+ *   TELEPORTER  → draw field effect at wall zone → return
+ *   STAIRS_FRONT→ draw stairs up/down bitmap → return
+ *   PIT         → draw pit bitmap (if not visible) → fall through
+ *   CORRIDOR    → draw floor ornament + F0115 (TODO) → return
+ *   DOOR_SIDE   → draw floor ornament + F0115 (TODO) → return
+ *   STAIRS_SIDE → draw floor ornament + F0115 (TODO) → return
+ *   DOOR_FRONT  → floor ornament + F0115 (pass1, TODO) + door panel +
+ *                  F0115 (pass2, TODO) → return
+ *
+ * Source: ReDMCSB DUNVIEW.C F0676 (line 6226) · F0677 (line 6293)
+ * ──────────────────────────────────────────────────────────────────────── */
+void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
+                                         DM1_ViewSquareIndex square,
+                                         int direction,
+                                         int map_x, int map_y)
+{
+    if (!state) return;
+
+    int element = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    int raw_element = element & 0x1F; /* M034_SQUARE_TYPE */
+
+    const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
+    if (!bm_base) return;
+
+    /* D3L2 uses D3L2 frame; D3R2 uses D3R2 frame */
+    const DM1_WallFrame *fr = NULL;
+    int wall_zone = 0;
+    DM1_WallSetIndex native_wall = DM1_WALL_D3L2;
+    DM1_WallSetIndex parity_wall = DM1_WALL_D3R2;
+
+    if (square == DM1_VIEW_SQUARE_D3L2) {
+        fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3L2);
+        wall_zone = DM1_PC34_ZONE_WALL_D3L2; /* 702 */
+        native_wall = DM1_WALL_D3L2;
+        parity_wall = DM1_WALL_D3R2;
+    } else if (square == DM1_VIEW_SQUARE_D3R2) {
+        fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3R2);
+        wall_zone = DM1_PC34_ZONE_WALL_D3R2; /* 703 */
+        native_wall = DM1_WALL_D3R2;
+        parity_wall = DM1_WALL_D3L2;
+    } else {
+        return; /* Not a back-wall square */
+    }
+
+    /* ── WALL case: draw wall bitmap + wall ornament, then return ──
+     * ReDMCSB F0676 lines 6240-6264 / F0677 lines 6304-6331.
+     * Uses G2107_WallSet[parity ? parity_wall : native_wall] bitmap.
+     * Then calls F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF
+     * for the appropriate wall ornament position. */
+    if (raw_element == 0) { /* C00_ELEMENT_WALL */
+        bool flip_h = state->parity_flip;
+        DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
+        int16_t ws_idx = flip_h
+            ? state->wall_set_flipped[wall_idx]
+            : state->wall_set_native[wall_idx];
+        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+
+        if (flip_h) {
+            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
+        }
+
+        /* Wall ornament rendering via F0107 placeholder.
+         * F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF renders
+         * the wall ornament bitmap at the appropriate ornament slot.
+         * TODO (pass603): wire F0107 once ornament module is integrated.
+         * Source: DUNVIEW.C:6263-6264 (D3L2) · DUNVIEW.C:6330-6331 (D3R2) */
+        /* F0107 wall ornament rendering — TODO when ornament module is ready */
+        (void)wall_zone; /* unused in current stub */
+        return;
+    }
+
+    /* ── TELEPORTER case: draw field effect, then return ──
+     * ReDMCSB F0676 line 6290 / F0677 line 6356.
+     * F0113_DUNGEONVIEW_DrawField draws the teleporter swirl effect
+     * at the wall zone. */
+    if (raw_element == 5) { /* C05_ELEMENT_TELEPORTER */
+        dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
+        return;
+    }
+
+    /* ── STAIRS_FRONT case: draw stairs bitmap, then return ──
+     * ReDMCSB F0676 lines 6237-6251 / F0677 lines 6304-6319.
+     * M555_STAIRS_UP in aspect[2] (M555) determines up vs down.
+     * Uses zone C800/C801 (up) or C813/C814 (down) for the stairs bitmap.
+     *
+     * Stairs bitmap indices (relative to GRAPHICS.DAT base):
+     *   M714_NEGGRAPHIC_STAIRS_UP_D3L2   — stairs up, D3L2, index 0
+     *   M715_NEGGRAPHIC_STAIRS_UP_D3R2   — stairs up, D3R2, index 1
+     *   M716_NEGGRAPHIC_STAIRS_DOWN_D3L2 — stairs down, D3L2, index 2
+     *   M717_NEGGRAPHIC_STAIRS_DOWN_D3R2 — stairs down, D3R2, index 3
+     *
+     * These map to stairs_indices[0..3] in DM1_Viewport3DState.
+     * TODO (pass603): wire stairs_indices from asset system before enabling.
+     * Source: DUNVIEW.C:6237-6251 (F0676) · DUNVIEW.C:6304-6319 (F0677) */
+    /* Check for stairs by examining bit 5 of raw cell (STAIRS type = 3).
+     * The extended aspect type 19 (STAIRS_FRONT) is detected by
+     * checking if raw_element == 3 AND this is a front-facing stairs.
+     * For simplicity, we check the extended aspect in the upper bits. */
+    {
+        /* Detect STAIRS_FRONT: raw_element == 3 with front orientation.
+         * The extended aspect type 19 (STAIRS_FRONT) is set when the
+         * stairs face toward the party (i.e., are on the front wall
+         * of a corridor).  We detect this from the upper bits of the
+         * raw cell (bit 5 = element type, but the front/stairs orientation
+         * is encoded differently in the dungeon data).
+         *
+         * For now, detect as: raw_element == 3 AND the upper bits indicate
+         * stairs facing forward.  A more accurate implementation would call
+         * F0172_SetSquareAspect to get the aspect array and check for
+         * M555_STAIRS_UP. */
+        int upper_bits = (element >> 5) & 0x7;
+        /* If upper_bits == 3 (STAIRS), check if it's front-facing by
+         * examining bit 10 of the original cell (not available here).
+         * As a heuristic: if the stairs_indices are populated, assume it's
+         * a valid stairs position. */
+        if (raw_element == 3 && state->stairs_indices[0] != 0) {
+            /* STAIRS_FRONT detected — draw stairs bitmap.
+             * Uses dm1_viewport_3d_draw_wall with the stairs bitmap
+             * from stairs_indices[0..3] at the appropriate zone.
+             * TODO (pass603): look up stairs bitmap from stairs_indices[]
+             * using the M714-M717 index pattern. */
+            /* Stairs bitmap drawing — TODO (pass603): requires stairs_indices wiring */
+            return;
+        }
+    }
+
+    /* ── PIT case: draw pit bitmap if not visible, then fall through ──
+     * ReDMCSB F0676 line 6276 / F0677 line 6342.
+     * M554_PIT_OR_TELEPORTER_VISIBLE in aspect[4] (M554) determines if
+     * the pit is invisible (masked).  If visible, no pit bitmap is drawn.
+     * If invisible (M554==1), the pit graphic is NOT drawn.
+     *
+     * TODO (pass603): check M554 from aspect array, then draw pit bitmap
+     * using zone C850 (D3L2) or C851 (D3R2) if visible.
+     * Source: DUNVIEW.C:6275-6278 (F0676) · DUNVIEW.C:6342-6345 (F0677) */
+    if (raw_element == 2) { /* C02_ELEMENT_PIT */
+        /* PIT drawing — TODO (pass603): requires M554 check and pit bitmap */
+        /* Pit falls through to TELEPORTER/CORRIDOR common path below */
+    }
+
+    /* ── CORRIDOR / TELEPORTER: draw floor ornament + F0115 + field ──
+     * ReDMCSB F0676 lines 6282-6289 / F0677 lines 6349-6356.
+     * T0676016 / T0676018 common path:
+     *   1. F0108_DUNGEONVIEW_DrawFloorOrnament (floor ornament)
+     *   2. F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF
+     *      (things: creatures, items, projectiles, explosions)
+     *   3. F0113_DUNGEONVIEW_DrawField (teleporter field, if TELEPORTER)
+     *
+     * DOOR_SIDE (16) and STAIRS_SIDE (18) also route here.
+     * DOOR_FRONT (17) additionally calls F0111 before the second F0115.
+     *
+     * F0115 is not yet implemented in Firestaff; creatures/items/projectiles
+     * are TODO (pass603+).  The floor ornament and field effect are the
+     * only visible elements rendered at this stage.
+     *
+     * Source: DUNVIEW.C:6282-6289 (F0676 corridor/teleporter) ·
+     *         DUNVIEW.C:6349-6356 (F0677 corridor/teleporter) */
+    {
+        /* Floor ornament drawing via F0108 — TODO (pass603).
+         * F0108_DUNGEONVIEW_DrawFloorOrnament composites the floor
+         * ornament bitmap at the D3L2/D3R2 position.
+         * Source: DUNVIEW.C:6282-6284 (F0676) · DUNVIEW.C:6349-6351 (F0677) */
+        /* F0108 floor ornament — TODO (pass603) */
+
+        /* F0115 creature/item/projectile/explosion pass — TODO (pass603+).
+         * This is the core things-rendering pipeline from F0115.
+         * Requires: thing list traversal, z-order, occlusion specs for
+         * D3L2/D3R2 (s_projectile_occlusion_specs[12/13],
+         *   s_explosion_occlusion_specs[12/13]).
+         * Source: DUNVIEW.C:6286 (F0676) · DUNVIEW.C:6353 (F0677) */
+        /* F0115 things pass — TODO (pass603+) */
+
+        /* Teleporter field effect — only for TELEPORTER element.
+         * Source: DUNVIEW.C:6288-6289 (F0676) · DUNVIEW.C:6355-6356 (F0677) */
+        if (raw_element == 5) { /* TELEPORTER */
+            dm1_viewport_3d_draw_field(state, wall_zone, 0x1C);
+        }
+    }
+
+    /* ── DOOR_FRONT case: also calls F0111 between the two F0115 passes ──
+     * ReDMCSB F0676 lines 6271-6286 / F0677 lines 6337-6353.
+     * DOOR_FRONT (17) path:
+     *   1. F0108_DUNGEONVIEW_DrawFloorOrnament
+     *   2. F0115 with order 0x0128 (pass1: rear cells)
+     *   3. F0111_DUNGEONVIEW_DrawDoor → C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2
+     *   4. F0115 with order 0x0349 (pass2: front cells)
+     *
+     * TODO (pass603): implement F0111 door panel drawing for D3L2/D3R2.
+     * Source: DUNVIEW.C:6272 (F0676) · DUNVIEW.C:6339 (F0677) */
+    /* DOOR_FRONT F0111 door panel — TODO (pass603) */
+    (void)direction; /* unused in current stub */
+    (void)fr;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_csb_near_wall
+ *
+ * Draw a CSB near-wall square (D2L2 or D2R2) with element routing.
+ *
+ * This implements ReDMCSB F0678_DrawD2L2 (line 6837) and F0679_DrawD2R2
+ * (line 6868).  Unlike D3L2/D3R2, D2L2/D2R2 are simpler: they only
+ * render the wall bitmap (for WALL) or the teleporter field effect
+ * (for TELEPORTER).  They do NOT call F0115 (no thing rendering),
+ * do NOT render stairs/pits/floor ornaments, and do NOT handle doors.
+ *
+ * Element routing:
+ *   WALL       → draw wall bitmap (parity-aware) → return
+ *   TELEPORTER → draw field effect at wall zone → return
+ *   all others → no-op
+ *
+ * Source: ReDMCSB DUNVIEW.C F0678 (line 6837) · F0679 (line 6868)
+ * ──────────────────────────────────────────────────────────────────────── */
+void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
+                                          DM1_ViewSquareIndex square,
+                                          int direction,
+                                          int map_x, int map_y)
+{
+    (void)direction; /* unused — parity comes from viewport state */
+    if (!state) return;
+
+    int element = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    int raw_element = element & 0x1F; /* M034_SQUARE_TYPE */
+
+    const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
+    if (!bm_base) return;
+
+    /* D2L2 uses D2L2 frame; D2R2 uses D2R2 frame */
+    const DM1_WallFrame *fr = NULL;
+    int wall_zone = 0;
+    DM1_WallSetIndex native_wall = DM1_WALL_D2L2;
+    DM1_WallSetIndex parity_wall = DM1_WALL_D2R2;
+
+    if (square == DM1_VIEW_SQUARE_D2L2) {
+        fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L2);
+        wall_zone = DM1_PC34_ZONE_WALL_D2L2; /* 707 */
+        native_wall = DM1_WALL_D2L2;
+        parity_wall = DM1_WALL_D2R2;
+    } else if (square == DM1_VIEW_SQUARE_D2R2) {
+        fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R2);
+        wall_zone = DM1_PC34_ZONE_WALL_D2R2; /* 708 */
+        native_wall = DM1_WALL_D2R2;
+        parity_wall = DM1_WALL_D2L2;
+    } else {
+        return; /* Not a near-wall square */
+    }
+
+    /* ── WALL case: draw wall bitmap, then return ──
+     * ReDMCSB F0678 lines 6848-6862 / F0679 lines 6879-6893.
+     * For D2L2/D2R2, the wall zone is C707/C708 and the bitmap
+     * comes from G2107_WallSet[C06_WALL_D2L2] or C05_WALL_D2R2
+     * with optional horizontal flip for parity. */
+    if (raw_element == 0) { /* C00_ELEMENT_WALL */
+        bool flip_h = state->parity_flip;
+        DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
+        int16_t ws_idx = flip_h
+            ? state->wall_set_flipped[wall_idx]
+            : state->wall_set_native[wall_idx];
+        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+
+        if (flip_h) {
+            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
+        }
+        return;
+    }
+
+    /* ── TELEPORTER case: draw field effect, then return ──
+     * ReDMCSB F0678 lines 6863-6865 / F0679 lines 6894-6896.
+     * F0113_DUNGEONVIEW_DrawField draws the teleporter field at
+     * zone C707 (D2L2) or C708 (D2R2). */
+    if (raw_element == 5) { /* C05_ELEMENT_TELEPORTER */
+        dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
+        return;
+    }
+
+    /* ── All other elements: no-op ──
+     * D2L2/D2R2 do NOT render stairs, pits, floor ornaments,
+     * creatures, items, or projectiles.  Only walls and teleporters.
+     * Source: DUNVIEW.C:6846-6865 (F0678) · DUNVIEW.C:6877-6896 (F0679) */
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

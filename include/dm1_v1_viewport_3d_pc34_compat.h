@@ -458,6 +458,24 @@ typedef struct {
 #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
 #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
 
+/* Stairs zone constants (CSB back-wall, ReDMCSB DEFS.H).
+ * Used by F0676/F0677 when D3L2/D3R2 is STAIRS_FRONT element. */
+#define DM1_PC34_ZONE_STAIRS_UP_FRONT_D3L2    800
+#define DM1_PC34_ZONE_STAIRS_UP_FRONT_D3R2    801
+#define DM1_PC34_ZONE_STAIRS_DOWN_FRONT_D3L2  813
+#define DM1_PC34_ZONE_STAIRS_DOWN_FRONT_D3R2  814
+
+/* Pit zone constants (CSB back-wall, ReDMCSB DEFS.H).
+ * Used by F0676/F0677 when D3L2/D3R2 is PIT element. */
+#define DM1_PC34_ZONE_FLOORPIT_D3L2           850
+#define DM1_PC34_ZONE_FLOORPIT_D3R2           851
+
+/* Door panel zone constants for D3L2/D3R2 (CSB back-wall).
+ * Used by F0111_DUNGEONVIEW_DrawDoor in F0676/F0677 door-front branch.
+ * ReDMCSB DEFS.H: C3700, C3710. */
+#define DM1_PC34_ZONE_DOOR_D3L2               3700
+#define DM1_PC34_ZONE_DOOR_D3R2               3710
+
 typedef struct {
     uint8_t left_x;     /* Viewport-relative clip left X (pixel) */
     uint8_t right_x;    /* Viewport-relative clip right boundary */
@@ -557,6 +575,20 @@ typedef struct {
     /* Whether floor and ceiling need redraw.
      * From DUNVIEW.C G0297_B_DrawFloorAndCeilingRequested. */
     bool     floor_ceiling_dirty;
+
+    /* Dungeon grid for element routing in CSB back-wall rendering.
+     * Optional: when NULL, element routing returns WALL for all squares.
+     * Grid layout: dungeon_grid[y * dungeon_width + x] = raw square type.
+     * ReDMCSB DUNGEON.C F0151 (column-major) is converted to row-major here.
+     * The raw byte is the dungeon.dat cell value; M034_SQUARE_TYPE(cell>>5)
+     * maps to element type (0=WALL, 1=CORRIDOR, 2=PIT, 3=STAIRS,
+     * 4=DOOR, 5=TELEPORTER, 6=FAKEWALL). Extended aspect types
+     * (16=DOOR_SIDE, 17=DOOR_FRONT, 18=STAIRS_SIDE, 19=STAIRS_FRONT)
+     * are derived by F0172 from the raw type + wall context.
+     * Source: ReDMCSB DUNGEON.C:1371-1421 F0150; DUNVIEW.C:6226-6353 F0676/F0677. */
+    const uint8_t *dungeon_grid;
+    int            dungeon_width;
+    int            dungeon_height;
 
 } DM1_Viewport3DState;
 
@@ -675,7 +707,10 @@ void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
  * Get viewport wall frame data for a given view square.
  * Returns a pointer to the frame descriptor, or NULL if invalid.
  *
- * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8]
+ * Covers standard 12 squares (D3L..D0R) plus CSB back/near-wall squares
+ * (D3L2, D3R2, D2L2, D2R2) via csb_v1_vp_get_wall_frame().
+ *
+ * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8] · G0711 · G0712
  */
 const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
 DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_WallFrame *frame,
@@ -752,6 +787,73 @@ const DM1_ViewportSameViewportCaptureContract *dm1_viewport_3d_same_viewport_cap
  * Source evidence string for verification.
  */
 const char *dm1_viewport_3d_source_evidence(void);
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * CSB-Specific Viewport Rendering (Phase 3)
+ *
+ * These functions implement the CSB-specific back-wall (D3L2/D3R2) and
+ * near-wall (D2L2/D2R2) rendering from ReDMCSB DUNVIEW.C F0676-F0679.
+ * They are gated by the presence of a dungeon grid in the viewport state;
+ * when dungeon_grid is NULL, they are no-ops.
+ *
+ * Source: ReDMCSB DUNVIEW.C:
+ *   F0676_DrawD3L2 (line 6226) — back-wall square at depth 3, left-2
+ *   F0677_DrawD3R2 (line 6293) — back-wall square at depth 3, right-2
+ *   F0678_DrawD2L2 (line 6837) — near-wall square at depth 2, left-2
+ *   F0679_DrawD2R2 (line 6868) — near-wall square at depth 2, right-2
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/*
+ * Get the raw dungeon element type at a given map position.
+ * Returns the raw dungeon.dat cell value (low 5 bits = element type).
+ * When dungeon_grid is NULL, returns 0 (WALL).
+ *
+ * element_type = raw_element & 0x1F
+ *   0 = WALL, 1 = CORRIDOR, 2 = PIT, 3 = STAIRS,
+ *   4 = DOOR, 5 = TELEPORTER, 6 = FAKEWALL
+ *
+ * Extended aspect types (derived from raw type + wall context):
+ *   16 = DOOR_SIDE, 17 = DOOR_FRONT, 18 = STAIRS_SIDE, 19 = STAIRS_FRONT
+ *
+ * Source: ReDMCSB DUNGEON.C:1371-1421 F0150; DEFS.H M034_SQUARE_TYPE
+ */
+int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state, int map_x, int map_y);
+
+/*
+ * Draw CSB back-wall square (D3L2 or D3R2) with full element routing.
+ *
+ * ReDMCSB F0676_DrawD3L2 (D3L2) / F0677_DrawD3R2 (D3R2):
+ *   - WALL: draw wall bitmap (parity-aware) + wall ornament → return
+ *   - STAIRS_FRONT: draw stairs up/down bitmap → return
+ *   - PIT: draw pit bitmap if not visible
+ *   - TELEPORTER/CORRIDOR: draw floor ornament + F0115 (TODO) + field
+ *   - DOOR_SIDE/STAIRS_SIDE: floor ornament + F0115 (TODO)
+ *   - DOOR_FRONT: floor ornament + F0115 (TODO, pass1) + door panel + F0115 (TODO, pass2)
+ *
+ * Source: ReDMCSB DUNVIEW.C F0676 (line 6226) · F0677 (line 6293)
+ */
+void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
+                                         DM1_ViewSquareIndex square,
+                                         int direction,
+                                         int map_x, int map_y);
+
+/*
+ * Draw CSB near-wall square (D2L2 or D2R2).
+ *
+ * ReDMCSB F0678_DrawD2L2 (D2L2) / F0679_DrawD2R2 (D2R2):
+ *   - WALL: draw wall bitmap (parity-aware) → return
+ *   - TELEPORTER: draw field effect at wall zone → return
+ *   - all other elements: no-op
+ *
+ * Unlike D3L2/D3R2, D2L2/D2R2 do NOT call F0115 (no thing rendering)
+ * and do NOT render stairs, pits, or floor ornaments.
+ *
+ * Source: ReDMCSB DUNVIEW.C F0678 (line 6837) · F0679 (line 6868)
+ */
+void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
+                                          DM1_ViewSquareIndex square,
+                                          int direction,
+                                          int map_x, int map_y);
 
 #ifdef __cplusplus
 }

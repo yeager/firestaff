@@ -40,6 +40,13 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
 
+/* Wire dungeon grid for element routing in back-wall rendering.
+ * Must be called before render if using CSB back-wall squares (D3L2/D3R2).
+ * Source: ReDMCSB DUNVIEW.C:6233 F0172_SetSquareAspect · dm1_viewport_3d_get_dungeon_element */
+void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
+                                       const uint8_t *grid,
+                                       int width, int height);
+
 /* Render one dungeon view frame using the DM1 viewport engine.
  * party_dir: facing direction (0=N, 1=E, 2=S, 3=W)
  * party_x, party_y: position on dungeon grid
