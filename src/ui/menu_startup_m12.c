@@ -2072,19 +2072,6 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                             state->launchRequested = 1;
                             state->quickResumeLaunchRequested = 0;
                         }
-                    } else if (!m12_game_supported(state->entries[gi].gameId)) {
-                        /* CSB/DM2/Nexus may have hash-matched catalog entries, but
-                         * the current runtime handoff is DM1-only.  Keep the menu
-                         * source-locked as a launch blocker instead of claiming a
-                         * CSB launch smoke from matched assets alone.  CSB references:
-                         * CSB/src README:1-30 lists separate CSB runtime payloads;
-                         * CSBWin Game/readme.txt:1-30 routes through CSB Utility /
-                         * Make New Adventure before adventuring. */
-                        state->launchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
-                        state->messageLine1 = m12_tr(state, "RUNTIME NOT READY");
-                        state->messageLine2 = state->entries[gi].title;
-                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->launchRequested = 1;
                         state->quickResumeLaunchRequested = 0;
