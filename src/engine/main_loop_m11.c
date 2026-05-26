@@ -956,6 +956,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->presentEveryMs = 16;
     opts->script         = NULL;
     opts->dataDir        = NULL;
+    opts->gameId         = NULL;
 }
 
 

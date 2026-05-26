@@ -261,15 +261,11 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
                          const char* gameId,
                          const char* dataDir) {
     const M12_CardArtSpec* spec;
-    fprintf(stderr, "[DEBUG] M12_CardArt_Resolve: gameId=%p canary=0xDEADBEEF\n", (void*)gameId);
     size_t i;
     if (!art) {
         return;
     }
-    /* Guard against garbage gameId (non-NULL but invalid pointer).
-     * Corrupted pointers are often in kernel-space range (>0xFFFF000000000000).
-     * strlen would crash on these. */
-    if (!gameId || (uintptr_t)gameId > 0xFFFF000000000000ULL) {
+    if (!gameId) {
         return;
     }
     memset(art, 0, sizeof(*art));
