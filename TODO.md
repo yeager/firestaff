@@ -27,10 +27,10 @@ Status per 2026-05-19 v2.4.0.
   **OKLART (portrait sensorData):** m11_game_view.c:8995 is correct — ReDMCSB DUNGEON.C:2612 stores value+1 but DUNVIEW.C:3916 post-decrement cancels it; both code paths yield identical 0-based sheet index; confirmed no bug (commit 62411518).
 
 ### Inventory & Items
-  **🔧 Save/load integration GAP** — m11_sl_* slot infrastructure has ZERO callers; F5/F9 keyboard shortcuts not wired; G2018 quit-guard absent
-  **🔧 Object interaction stub GAP** — m11_obj_use() is a stub; zero call sites; needs delegation to item handlers (ITEM.C/ITEMUSE.C)
-  **🔧 Group management wiring GAP** — m11_group_add_active() defined but never called; C006/F0267 group spawning not wired
-  **🔧 Teleporter/pit wiring GAP** — ALL 10 functions in dm1_v1_teleporter_pit_pc34_compat.c are orphaned; no movement pipeline wiring
+  **🔧 Save/load integration GAP** — F5/F9 quick save wired and SERIALIZES world; F9 quick load installs the deserialized world into gameView->world (mind the F0883_WORLD_Free_Compat call before overwrite); G2018 quit-guard absent from m11_sl_* flow
+  **⚠️ Object interaction stub** — DISSIGN: m11_process_v1_mouth_click() wires FOOD/POTION/WATER via consumables module; m11_obj_use() is cosmetic stub with no callers (ITEM.C routed via panel mouth-click, not viewport clicks)
+  **🔧 Group management wiring GAP** — m11_group_add_active() has no callers; orchestrator (memory_tick_orchestrator_pc34_compat.c) has no access to M11_DD_DungeonData* needed to call it; world->creatureAI[] and dd->groups.activeGroups[] are separate tracking systems; architecture change required
+  **⚠️ Teleporter/pit wiring GAP** — DELVIS FIXAD: m11_apply_teleporter_rotation() and m11_resolve_pit_chain() are called from orchestrator; M11_TeleporterPitState (m11_add_teleporter/pit) is orphaned parallel state; orchestrator uses DungeonTeleporter_Compat directly; architectural decision needed: consolidate or remove parallel system
 
 
 ## DM1 V2.0 / V2.1 / V2.2 — Enhanced Modes
