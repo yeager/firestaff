@@ -6021,6 +6021,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
              "F9 RESTORES TICK %u FROM %s",
              (unsigned int)state->world.gameTick,
              path);
+    /* G2018_ul_LastSaveTime mirror (ReDMCSB LOADSAVE.C:1714).  The quit-guard
+     * in the ESC handler compares world.gameTick against this to decide
+     * whether to surface a "GAME NOT SAVED" prompt. */
+    state->lastSaveTick = (uint32_t)state->world.gameTick;
     /* Update config with last save path for quick resume */
     M12_Config_SetLastSavePath(path);
     return 1;
@@ -6103,6 +6107,12 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     m11_mark_explored(state);
+    /* G0319_ul_LoadGameTime / G2018_ul_LastSaveTime mirror
+     * (ReDMCSB LOADSAVE.C:2724).  After a load, both anchors point at the
+     * just-restored tick so the quit-guard treats the reloaded state as
+     * already-saved until the player advances. */
+    state->loadGameTick = (uint32_t)state->world.gameTick;
+    state->lastSaveTick = (uint32_t)state->world.gameTick;
     m11_set_status(state, "LOAD", "QUICKSAVE RESTORED");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTORED");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -6684,11 +6694,37 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->dialogOverlayActive) {
         if (state->returnToMenuConfirmActive) {
             if (input == M12_MENU_INPUT_BACK) {
+                int wasGuard = state->quitGuardActive;
+                state->quitGuardActive = 0;
                 M11_GameView_DismissDialogOverlay(state);
-                m11_set_status(state, "RETURN", "CANCELLED");
+                m11_set_status(state, "RETURN",
+                               wasGuard ? "CANCELLED (UNSAVED)" : "CANCELLED");
                 return M11_GAME_INPUT_REDRAW;
             }
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                /* G2018 quit-guard branch: SAVE-AND-QUIT must persist the game
+                 * before leaving (ReDMCSB LOADSAVE.C:1382-1384 invokes
+                 * F0078_MOUSE_DisableScreenUpdate + sets Quit only after the
+                 * save path has been taken; we collapse that into a direct
+                 * DM1_SaveGame call so the same invariant holds). */
+                if (state->quitGuardActive) {
+                    char savePath[512];
+                    const char* sid = (state->sourceId[0] != '\0')
+                                      ? state->sourceId : "dm1";
+                    int rc = snprintf(savePath, sizeof(savePath),
+                                      "firestaff-%s-dm1save.sav", sid);
+                    if (rc > 0 && rc < (int)sizeof(savePath)) {
+                        int saveResult = DM1_SaveGame(&state->world, savePath,
+                                                      state->dm1GameID, 1,
+                                                      state->dm1MusicOn);
+                        if (saveResult == DM1_SAVE_OK) {
+                            state->lastSaveTick =
+                                (uint32_t)state->world.gameTick;
+                            M12_Config_SetLastSavePath(savePath);
+                        }
+                    }
+                    state->quitGuardActive = 0;
+                }
                 state->dialogSelectedChoice = 1;
                 M11_GameView_DismissDialogOverlay(state);
                 m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -6929,6 +6965,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                                state->dm1MusicOn);
                 if (saveResult == DM1_SAVE_OK) {
                     m11_set_status(state, "SAVE", "GAME SAVED");
+                    /* G2018_ul_LastSaveTime mirror (ReDMCSB LOADSAVE.C:1714). */
+                    state->lastSaveTick = (uint32_t)state->world.gameTick;
                     M12_Config_SetLastSavePath(savePath);
                 } else {
                     m11_set_status(state, "SAVE",
@@ -6947,14 +6985,38 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->inventoryPanelActive = 0;
             state->mapOverlayActive = 0;
             state->spellPanelOpen = 0;
-            M11_GameView_ShowDialogOverlayChoices(state,
-                                                  _("RETURN TO START MENU?"),
-                                                  _("YES"),
-                                                  _("NO"),
-                                                  NULL,
-                                                  NULL);
-            state->returnToMenuConfirmActive = 1;
-            m11_set_status(state, "RETURN", "CONFIRM");
+            /* G2018_ul_LastSaveTime quit-guard (ReDMCSB LOADSAVE.C:1371-1379).
+             * When the dungeon tick has advanced more than 100 ticks past the
+             * last save AND past the last load, surface the original game's
+             * "GAME NOT SAVED" prompt with SAVE-AND-QUIT / CANCEL choices
+             * instead of the plain confirm.  The compound condition matches
+             * LOADSAVE.C verbatim: both inequalities must hold. */
+            {
+                uint32_t tick = (uint32_t)state->world.gameTick;
+                int unsaved = (tick > state->lastSaveTick + 100u) &&
+                              (tick > state->loadGameTick + 100u);
+                if (unsaved) {
+                    M11_GameView_ShowDialogOverlayChoices(state,
+                                                          _("GAME NOT SAVED. SAVE AND QUIT?"),
+                                                          _("SAVE AND QUIT"),
+                                                          _("CANCEL"),
+                                                          NULL,
+                                                          NULL);
+                    state->returnToMenuConfirmActive = 1;
+                    state->quitGuardActive = 1;
+                    m11_set_status(state, "RETURN", "UNSAVED");
+                } else {
+                    M11_GameView_ShowDialogOverlayChoices(state,
+                                                          _("RETURN TO START MENU?"),
+                                                          _("YES"),
+                                                          _("NO"),
+                                                          NULL,
+                                                          NULL);
+                    state->returnToMenuConfirmActive = 1;
+                    state->quitGuardActive = 0;
+                    m11_set_status(state, "RETURN", "CONFIRM");
+                }
+            }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_NONE:
         default:
@@ -7065,15 +7127,37 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         int choice = m11_dialog_choice_at_point(state, x, y);
         if (state->returnToMenuConfirmActive) {
             if (choice == 1) {
+                /* G2018 quit-guard: SAVE-AND-QUIT path also saves on click. */
+                if (state->quitGuardActive) {
+                    char savePath[512];
+                    const char* sid = (state->sourceId[0] != '\0')
+                                      ? state->sourceId : "dm1";
+                    int rc = snprintf(savePath, sizeof(savePath),
+                                      "firestaff-%s-dm1save.sav", sid);
+                    if (rc > 0 && rc < (int)sizeof(savePath)) {
+                        int saveResult = DM1_SaveGame(&state->world, savePath,
+                                                      state->dm1GameID, 1,
+                                                      state->dm1MusicOn);
+                        if (saveResult == DM1_SAVE_OK) {
+                            state->lastSaveTick =
+                                (uint32_t)state->world.gameTick;
+                            M12_Config_SetLastSavePath(savePath);
+                        }
+                    }
+                    state->quitGuardActive = 0;
+                }
                 state->dialogSelectedChoice = choice;
                 M11_GameView_DismissDialogOverlay(state);
                 m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
             if (choice == 2 || choice == 0) {
+                int wasGuard = state->quitGuardActive;
+                state->quitGuardActive = 0;
                 if (choice == 2) state->dialogSelectedChoice = choice;
                 M11_GameView_DismissDialogOverlay(state);
-                m11_set_status(state, "RETURN", "CANCELLED");
+                m11_set_status(state, "RETURN",
+                               wasGuard ? "CANCELLED (UNSAVED)" : "CANCELLED");
                 return M11_GAME_INPUT_REDRAW;
             }
         }
@@ -25524,6 +25608,7 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     if (!state || !state->dialogOverlayActive) return 0;
     state->dialogOverlayActive = 0;
     state->returnToMenuConfirmActive = 0;
+    state->quitGuardActive = 0;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));

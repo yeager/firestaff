@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_M11_GAME_VIEW_H
 #define FIRESTAFF_M11_GAME_VIEW_H
 
+#include <stdint.h>
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
@@ -224,6 +225,18 @@ typedef struct {
      * dismisses it with any key or click. */
     int dialogOverlayActive;
     int returnToMenuConfirmActive; /* Esc confirmation modal before leaving gameplay */
+    /* G2018_ul_LastSaveTime quit-guard (source: ReDMCSB LOADSAVE.C:267,1371,1714).
+     * lastSaveTick mirrors G2018; updated by M11_GameView_QuickSave and the
+     * Ctrl-S save command.  loadGameTick mirrors G0319_ul_LoadGameTime.
+     * The ESC quit handler (m11_game_view.c, M12_MENU_INPUT_BACK case) consults
+     * these to decide whether to show the "GAME NOT SAVED" prompt instead of
+     * the plain "RETURN TO START MENU?" dialog. */
+    uint32_t lastSaveTick;
+    uint32_t loadGameTick;
+    /* quitGuardActive: 1 while the GAME-NOT-SAVED prompt is on screen.  When
+     * the user picks SAVE&QUIT the dialog handler honors this flag and runs
+     * a save before returning to the launcher. */
+    int quitGuardActive;
     char dialogOverlayText[128];
     int dialogChoiceCount;
     int dialogSelectedChoice;

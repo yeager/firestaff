@@ -593,6 +593,18 @@ if(BUILD_TESTING)
         COMMAND test_m11_quick_resume_roundtrip
     )
 
+    add_executable(test_m11_quit_guard
+        tests/test_m11_quit_guard.c
+    )
+    target_link_libraries(test_m11_quit_guard PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_quit_guard PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_quit_guard
+        COMMAND test_m11_quit_guard
+    )
+
     add_executable(firestaff_m11_touch_pointer_dispatch_probe
         probes/m11/firestaff_m11_touch_pointer_dispatch_probe.c
     )
