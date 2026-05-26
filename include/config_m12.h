@@ -90,6 +90,10 @@ typedef struct {
 
     /* DM1 V2.0 color grading preset (0 = Original/identity). */
     int dm1V2ColorPreset;                /* 0..M11_COLOR_PRESET_COUNT-1 */
+
+    /* DM1 V2.0 pixel grid overlay (post-upscale). */
+    int dm1V2PixelGridEnabled;           /* 0 = off, 1 = on */
+    int dm1V2PixelGridIntensity;         /* 0-100, percent darken; default 20 */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

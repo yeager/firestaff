@@ -211,6 +211,13 @@ int  M11_Render_GetPhosphor(int* outEnabled, int* outDecay);
 int  M11_Render_SetColorPreset(int preset);
 int  M11_Render_GetColorPreset(int* outPreset);
 
+/* Pixel grid overlay: thin darkening lines at every scaled-pixel
+ * boundary on the output texture.  Intensity is percent darken
+ * (0..100, default 20).  Auto-disables when the upscale factor is
+ * below 3x to keep the grid from swamping the image. */
+int  M11_Render_SetPixelGrid(int enabled, int intensity);
+int  M11_Render_GetPixelGrid(int* outEnabled, int* outIntensity);
+
 #ifdef __cplusplus
 }
 #endif

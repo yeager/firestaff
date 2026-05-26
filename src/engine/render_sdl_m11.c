@@ -28,6 +28,10 @@
 #include "dm1v2/dm1_v2_filters.h"
 #include "color_presets_m11.h"
 
+/* When the logical resolution is larger than this, fall back to a
+ * bounded line count for the pixel-grid overlay. */
+#define M11_PIXEL_GRID_MAX_LINES 4096
+
 #if SDL_VERSION_ATLEAST(3, 0, 0)
 #define M11_SDL_MAJOR 3
 #else
@@ -81,6 +85,8 @@ typedef struct {
     int v2_phosphor_enabled;
     int v2_phosphor_decay;          /* 0..100 percent of previous frame */
     int v2_color_preset;            /* 0..M11_COLOR_PRESET_COUNT-1 */
+    int v2_pixel_grid_enabled;
+    int v2_pixel_grid_intensity;    /* 0..100 percent darken */
 
     unsigned char* previousFrameBuffer;  /* prev RGBA frame at logical size */
     int previousFrameW;
@@ -531,6 +537,71 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     m11_snapshot_prev_frame(w, h);
 }
 
+/* Pixel-grid overlay: draw thin darkening lines at every scaled-pixel
+ * boundary in the destination rect.  Called after SDL_RenderTexture
+ * (so the upscale is already on the back buffer) but before
+ * SDL_RenderPresent.  Uses SDL_BLENDMODE_BLEND so the grid darkens
+ * whatever colour is currently behind it without needing to read the
+ * back buffer back. */
+static void m11_apply_pixel_grid_overlay(int destX, int destY,
+                                        int destW, int destH,
+                                        int logicalW, int logicalH) {
+    int intensity;
+    int alpha;
+    int i;
+    float scaleX;
+    float scaleY;
+    if (!g_state.v2_pixel_grid_enabled || g_state.v2_pixel_grid_intensity <= 0) {
+        return;
+    }
+    if (logicalW <= 0 || logicalH <= 0 || destW <= 0 || destH <= 0) {
+        return;
+    }
+    if (!g_state.renderer) {
+        return;
+    }
+    scaleX = (float)destW / (float)logicalW;
+    scaleY = (float)destH / (float)logicalH;
+    /* Only draw the grid when each logical pixel is at least 3 device
+     * pixels wide — below that the grid swamps the image. */
+    if (scaleX < 3.0f || scaleY < 3.0f) {
+        return;
+    }
+    intensity = g_state.v2_pixel_grid_intensity;
+    if (intensity > 100) intensity = 100;
+    alpha = (intensity * 255) / 100;
+    if (alpha > 255) alpha = 255;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_SetRenderDrawBlendMode(g_state.renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(g_state.renderer, 0, 0, 0, (Uint8)alpha);
+    for (i = 1; i < logicalW && i < M11_PIXEL_GRID_MAX_LINES; ++i) {
+        float x = (float)destX + (float)i * scaleX;
+        SDL_RenderLine(g_state.renderer,
+                       x, (float)destY,
+                       x, (float)(destY + destH));
+    }
+    for (i = 1; i < logicalH && i < M11_PIXEL_GRID_MAX_LINES; ++i) {
+        float y = (float)destY + (float)i * scaleY;
+        SDL_RenderLine(g_state.renderer,
+                       (float)destX, y,
+                       (float)(destX + destW), y);
+    }
+    SDL_SetRenderDrawBlendMode(g_state.renderer, SDL_BLENDMODE_NONE);
+#else
+    SDL_SetRenderDrawBlendMode(g_state.renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(g_state.renderer, 0, 0, 0, (Uint8)alpha);
+    for (i = 1; i < logicalW && i < M11_PIXEL_GRID_MAX_LINES; ++i) {
+        int x = destX + (int)((float)i * scaleX);
+        SDL_RenderDrawLine(g_state.renderer, x, destY, x, destY + destH);
+    }
+    for (i = 1; i < logicalH && i < M11_PIXEL_GRID_MAX_LINES; ++i) {
+        int y = destY + (int)((float)i * scaleY);
+        SDL_RenderDrawLine(g_state.renderer, destX, y, destX + destW, y);
+    }
+    SDL_SetRenderDrawBlendMode(g_state.renderer, SDL_BLENDMODE_NONE);
+#endif
+}
+
 static void m11_framebuffer_to_rgba_special(const unsigned char* src,
                                             int logicalWidth,
                                             int logicalHeight,
@@ -856,6 +927,8 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     if (!SDL_RenderPresent(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -881,6 +954,8 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     SDL_RenderPresent(g_state.renderer);
 #endif
     return M11_RENDER_OK;
@@ -943,6 +1018,8 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     if (!SDL_RenderPresent(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -964,6 +1041,8 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     SDL_RenderPresent(g_state.renderer);
 #endif
     return M11_RENDER_OK;
@@ -1031,6 +1110,8 @@ int M11_Render_PresentRGBA(const unsigned char* rgba,
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     if (!SDL_RenderPresent(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1056,6 +1137,8 @@ int M11_Render_PresentRGBA(const unsigned char* rgba,
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 logicalWidth, logicalHeight);
     SDL_RenderPresent(g_state.renderer);
 #endif
     return M11_RENDER_OK;
@@ -1462,5 +1545,19 @@ int M11_Render_SetColorPreset(int preset) {
 
 int M11_Render_GetColorPreset(int* outPreset) {
     if (outPreset) *outPreset = g_state.v2_color_preset;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_SetPixelGrid(int enabled, int intensity) {
+    if (intensity < 0) intensity = 0;
+    if (intensity > 100) intensity = 100;
+    g_state.v2_pixel_grid_enabled = enabled ? 1 : 0;
+    g_state.v2_pixel_grid_intensity = intensity;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetPixelGrid(int* outEnabled, int* outIntensity) {
+    if (outEnabled) *outEnabled = g_state.v2_pixel_grid_enabled;
+    if (outIntensity) *outIntensity = g_state.v2_pixel_grid_intensity;
     return M11_RENDER_OK;
 }
