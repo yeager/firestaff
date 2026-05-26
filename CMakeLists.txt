@@ -138,6 +138,7 @@ set(M11_SOURCES
     src/engine/color_presets_m11.c
     src/engine/colorblind_m11.c
     src/audio/soundtrack_selector_m11.c
+    src/audio/ambient_layer_m11.c
     src/shared/audio_sdl_m11.c
     src/shared/graphics_dat_snd3_loader_v1.c
     src/shared/song_dat_loader_v1.c
