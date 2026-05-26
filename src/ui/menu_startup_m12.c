@@ -11,6 +11,7 @@
 #include "branding_logo_m12.h"
 #include "config_m12.h"
 #include "render_sdl_m11.h"
+#include "color_presets_m11.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -123,6 +124,7 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"Dither Cleanup",      "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
     {"Sharpening",          "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
     {"Phosphor Persistence","Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 visual extras */
+    {"Color Preset",        "Original",     1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 visual extras */
     {"AI Upscale (10x)",    "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
     {"Smooth Movement",     "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
     {"Smooth Turning",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
@@ -1169,6 +1171,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                             config.dm1V2SharpeningStrength);
     M11_Render_SetPhosphor(config.dm1V2PhosphorPersistenceEnabled,
                            config.dm1V2PhosphorDecay);
+    M11_Render_SetColorPreset(config.dm1V2ColorPreset);
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);

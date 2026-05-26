@@ -26,6 +26,7 @@
 
 #include "vga_palette_pc34_compat.h"
 #include "dm1v2/dm1_v2_filters.h"
+#include "color_presets_m11.h"
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
 #define M11_SDL_MAJOR 3
@@ -79,6 +80,7 @@ typedef struct {
     /* V2.0 visual extras (Firestaff-only, no ReDMCSB analogue). */
     int v2_phosphor_enabled;
     int v2_phosphor_decay;          /* 0..100 percent of previous frame */
+    int v2_color_preset;            /* 0..M11_COLOR_PRESET_COUNT-1 */
 
     unsigned char* previousFrameBuffer;  /* prev RGBA frame at logical size */
     int previousFrameW;
@@ -520,6 +522,10 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     }
     if (g_state.v2_crt_enabled && g_state.v2_crt_strength > 0) {
         (void)dm1_v2_filter_crt_scanlines_rgba(rgba, w, h, g_state.v2_crt_strength);
+    }
+    if (g_state.v2_color_preset > 0
+            && M11_ColorPreset_IsValid(g_state.v2_color_preset)) {
+        M11_ColorPreset_ApplyRGBA(g_state.v2_color_preset, rgba, w, h);
     }
     m11_apply_phosphor_persistence(w, h);
     m11_snapshot_prev_frame(w, h);
@@ -1443,5 +1449,18 @@ int M11_Render_SetPhosphor(int enabled, int decay) {
 int M11_Render_GetPhosphor(int* outEnabled, int* outDecay) {
     if (outEnabled) *outEnabled = g_state.v2_phosphor_enabled;
     if (outDecay) *outDecay = g_state.v2_phosphor_decay;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_SetColorPreset(int preset) {
+    if (!M11_ColorPreset_IsValid(preset)) {
+        preset = 0;
+    }
+    g_state.v2_color_preset = preset;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetColorPreset(int* outPreset) {
+    if (outPreset) *outPreset = g_state.v2_color_preset;
     return M11_RENDER_OK;
 }

@@ -128,6 +128,7 @@ set(M11_SOURCES
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
     src/engine/render_sdl_m11.c
+    src/engine/color_presets_m11.c
     src/shared/audio_sdl_m11.c
     src/shared/graphics_dat_snd3_loader_v1.c
     src/shared/song_dat_loader_v1.c

@@ -258,6 +258,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->dm1V2SharpeningStrength = 30;
     config->dm1V2PhosphorPersistenceEnabled = 0;
     config->dm1V2PhosphorDecay = 60;
+    config->dm1V2ColorPreset = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -540,6 +541,13 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->dm1V2PhosphorDecay = val;
         return;
     }
+    if (m12_string_equals(key, "dm1_v2_color_preset")) {
+        int val = m12_parse_int(value, config->dm1V2ColorPreset);
+        if (val < 0) val = 0;
+        if (val > 6) val = 6;
+        config->dm1V2ColorPreset = val;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -631,6 +639,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "dm1_v2_sharpening_strength = %d\n", config->dm1V2SharpeningStrength);
     fprintf(fp, "dm1_v2_phosphor_persistence_enabled = %d\n", config->dm1V2PhosphorPersistenceEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_phosphor_decay = %d\n", config->dm1V2PhosphorDecay);
+    fprintf(fp, "dm1_v2_color_preset = %d\n", config->dm1V2ColorPreset);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);

@@ -206,6 +206,11 @@ int  M11_Render_GetV2Filters(int* outCrtEnabled,
 int  M11_Render_SetPhosphor(int enabled, int decay);
 int  M11_Render_GetPhosphor(int* outEnabled, int* outDecay);
 
+/* Color preset: 0 = Original (identity), 1..6 = named LUTs.  See
+ * color_presets_m11.h for the index map. */
+int  M11_Render_SetColorPreset(int preset);
+int  M11_Render_GetColorPreset(int* outPreset);
+
 #ifdef __cplusplus
 }
 #endif
