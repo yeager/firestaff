@@ -17,6 +17,13 @@
 #include <string.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define MKDIR(p) _mkdir(p)
+#else
+#include <unistd.h>
+#define MKDIR(p) mkdir((p), 0755)
+#endif
 #include <sys/types.h>
 
 /* DM1 dungeons are bounded; we mirror the 32x32 cap the runtime
@@ -112,11 +119,11 @@ static int am_mkdir_p(const char* path) {
     for (i = 1; i < n; ++i) {
         if (buf[i] == '/') {
             buf[i] = '\0';
-            mkdir(buf, 0755);
+            MKDIR(buf);
             buf[i] = '/';
         }
     }
-    mkdir(buf, 0755);
+    MKDIR(buf);
     return 1;
 }
 
