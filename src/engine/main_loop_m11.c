@@ -20,6 +20,7 @@
 #include "m11_qol_runtime.h"
 #include "dm1_v1_minimap_pc34_compat.h"
 #include "dm1_v1_automap_pc34_compat.h"
+#include "dm1_v1_combat_log_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
@@ -1489,6 +1490,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
                     return M12_MENU_INPUT_NONE;
+                case SDLK_L:
+                    /* L = toggle combat log overlay */
+                    if (gameView && gameView->active) {
+                        int on = M11_QolRuntime_ToggleCombatLog();
+                        fprintf(stderr, "QoL: combat log %s\n", on ? "on" : "off");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_R:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_REST_TOGGLE;
@@ -1764,6 +1773,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         int ex = DM1_AutoMap_ExportCurrentLevel(gameView);
                         fprintf(stderr, "QoL: auto-map export %s\n",
                                 ex ? "ok" : "FAILED");
+                        if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_l:
+                    if (gameView && gameView->active) {
+                        int on = M11_QolRuntime_ToggleCombatLog();
+                        fprintf(stderr, "QoL: combat log %s\n", on ? "on" : "off");
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
                     return M12_MENU_INPUT_NONE;
@@ -2089,6 +2105,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             DM1_Minimap_Render(&gameView,
                                M11_Render_GetFramebuffer(),
                                M11_FB_WIDTH, M11_FB_HEIGHT);
+            DM1_CombatLog_Render(&gameView,
+                                 M11_Render_GetFramebuffer(),
+                                 M11_FB_WIDTH, M11_FB_HEIGHT);
             M11_Render_Present();
         } else {
             /* Redraw the launcher every tick so animations (pulse,

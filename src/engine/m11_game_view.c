@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "firestaff_accessibility.h"
@@ -4678,6 +4679,15 @@ static void m11_creature_attack_party(
                       champName,
                       m11_creature_name(group->creatureType),
                       damage);
+        DM1_CombatLog_OnCreatureAttack(state->world.gameTick,
+                                       m11_creature_name(group->creatureType),
+                                       champName);
+        DM1_CombatLog_Pushf(state->world.gameTick,
+                            M11_COMBAT_LOG_TYPE_CHAMP_HIT,
+                            "T%u: %s hit for %d by %s",
+                            (unsigned int)state->world.gameTick,
+                            champName, damage,
+                            m11_creature_name(group->creatureType));
         M11_GameView_NotifyDamageFlash(state, group->creatureType);
         m11_audio_emit_creature_attack_sound(state, group->creatureType, mapX, mapY);
     }
