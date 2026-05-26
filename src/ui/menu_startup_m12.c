@@ -12,6 +12,8 @@
 #include "config_m12.h"
 #include "render_sdl_m11.h"
 #include "color_presets_m11.h"
+#include "ui_scale_m11.h"
+#include "ambient_layer_m11.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -1181,6 +1183,9 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                             config.dm1V2PixelGridIntensity);
     M11_Render_SetMotionBlur(config.dm1V2MotionBlurEnabled,
                              config.dm1V2MotionBlurStrength);
+    M11_UIScale_SetPercent(config.uiScale);
+    M11_Ambient_SetEnabled(config.ambientEnabled);
+    M11_Ambient_SetVolume(config.ambientVolume);
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);
