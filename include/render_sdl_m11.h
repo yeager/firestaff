@@ -174,6 +174,29 @@ int  M11_Render_GetVSync(void);
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
 
+/* DM1 V2.0 filter chain controls. All four filters default off (V2.0
+ * starts identical to V1). The corrected palette LUT is rebuilt only
+ * when gamma/brightness/contrast change. Strength values are clamped
+ * to [0,100]; gamma100 to [80,260]; brightness/contrast to [-50,50]. */
+int  M11_Render_SetV2Filters(int crtEnabled,
+                             int crtStrength,
+                             int paletteEnabled,
+                             int paletteGamma100,
+                             int paletteBrightness,
+                             int paletteContrast,
+                             int ditherEnabled,
+                             int sharpenEnabled,
+                             int sharpenStrength);
+int  M11_Render_GetV2Filters(int* outCrtEnabled,
+                             int* outCrtStrength,
+                             int* outPaletteEnabled,
+                             int* outPaletteGamma100,
+                             int* outPaletteBrightness,
+                             int* outPaletteContrast,
+                             int* outDitherEnabled,
+                             int* outSharpenEnabled,
+                             int* outSharpenStrength);
+
 #ifdef __cplusplus
 }
 #endif

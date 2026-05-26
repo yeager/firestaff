@@ -168,7 +168,7 @@ set(M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_m10 SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_v2 firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -229,7 +229,7 @@ endif()
 add_executable(firestaff src/shared/firestaff_main_m11.c)
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
-target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()
@@ -237,14 +237,14 @@ endif()
 # ── Probe executables ────────────────────────────────────────────────
 # M11 Phase A probe (only needs render_sdl + vga_palette, linked via m10)
 add_executable(firestaff_m11_phase_a_probe probes/m11/firestaff_m11_phase_a_probe.c)
-target_link_libraries(firestaff_m11_phase_a_probe PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+target_link_libraries(firestaff_m11_phase_a_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M11 Game View probe (needs full M10 + M11 + M12)
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
-target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
@@ -268,63 +268,63 @@ endif()
 
 # Deterministic Firestaff capture-route state anchor (same route as screenshot fixture)
 add_executable(firestaff_m11_capture_route_state_probe probes/m11/firestaff_m11_capture_route_state_probe.c)
-target_link_libraries(firestaff_m11_capture_route_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_capture_route_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_capture_route_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # DM1 V1 wall/collision runtime repro capture with exact map coordinates.
 add_executable(firestaff_m11_wall_collision_capture_probe probes/m11/firestaff_m11_wall_collision_capture_probe.c)
-target_link_libraries(firestaff_m11_wall_collision_capture_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_wall_collision_capture_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_wall_collision_capture_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # Source-locked turn-left/turn-right viewport orientation anchor.
 add_executable(firestaff_m11_turn_viewport_orientation_probe probes/m11/firestaff_m11_turn_viewport_orientation_probe.c)
-target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_turn_viewport_orientation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # DM1 V1 Hall of Champions walkaround runtime smoke probe.
 add_executable(firestaff_m11_hall_walkaround_runtime_probe probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c)
-target_link_libraries(firestaff_m11_hall_walkaround_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_hall_walkaround_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_hall_walkaround_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
-target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(capture_ingame_series PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M11 Audio probe (fallback-safe audio marker pipeline)
 add_executable(firestaff_m11_audio_probe probes/m11/firestaff_m11_audio_probe.c)
-target_link_libraries(firestaff_m11_audio_probe PRIVATE firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_audio_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_audio_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M11 creature attack/movement runtime source-index audio probe
 add_executable(firestaff_m11_creature_runtime_audio_probe probes/m11/firestaff_m11_creature_runtime_audio_probe.c)
-target_link_libraries(firestaff_m11_creature_runtime_audio_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_creature_runtime_audio_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_creature_runtime_audio_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M11 title-song runtime source-lock probe (SONG.DAT only; no generic SFX lane)
 add_executable(firestaff_m11_pass54_song_runtime_probe probes/m11/firestaff_m11_pass54_song_runtime_probe.c)
-target_link_libraries(firestaff_m11_pass54_song_runtime_probe PRIVATE firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_pass54_song_runtime_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_pass54_song_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M11 FS Portable probe (cross-platform filesystem helpers)
 add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
-target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_fs_portable_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -332,7 +332,7 @@ endif()
 
 # M11 Pass 418 -- DM1 V1 door closing obstruction parity probe
 add_executable(firestaff_m11_pass418_door_closing_obstruction_probe probes/firestaff_m11_pass418_door_closing_obstruction_probe.c)
-target_link_libraries(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE firestaff_m11 firestaff_m10)
+target_link_libraries(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -340,7 +340,7 @@ endif()
 # M12 Startup Menu probe
 if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
     add_executable(firestaff_m12_startup_menu_probe probes/m12/firestaff_m12_startup_menu_probe.c)
-    target_link_libraries(firestaff_m12_startup_menu_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(firestaff_m12_startup_menu_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(firestaff_m12_startup_menu_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
     endif()
@@ -2433,7 +2433,7 @@ if(NOT TARGET test_m11_inventory_scroll_panel_render_pc34_compat)
     add_executable(test_m11_inventory_scroll_panel_render_pc34_compat
         tests/test_m11_inventory_scroll_panel_render_pc34_compat.c
     )
-    target_link_libraries(test_m11_inventory_scroll_panel_render_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_inventory_scroll_panel_render_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_inventory_scroll_panel_render_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2447,7 +2447,7 @@ if(NOT TARGET test_m11_rest_runtime_pc34_compat)
     add_executable(test_m11_rest_runtime_pc34_compat
         tests/test_m11_rest_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_rest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_rest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_rest_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2461,7 +2461,7 @@ if(NOT TARGET test_m11_creature_projectile_runtime_pc34_compat)
     add_executable(test_m11_creature_projectile_runtime_pc34_compat
         tests/test_m11_creature_projectile_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_creature_projectile_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_creature_projectile_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_creature_projectile_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2475,7 +2475,7 @@ if(NOT TARGET test_m11_creature_fixed_possession_runtime_pc34_compat)
     add_executable(test_m11_creature_fixed_possession_runtime_pc34_compat
         tests/test_m11_creature_fixed_possession_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_creature_fixed_possession_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_creature_fixed_possession_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_creature_fixed_possession_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2489,7 +2489,7 @@ if(NOT TARGET test_m11_open_door_spell_runtime_pc34_compat)
     add_executable(test_m11_open_door_spell_runtime_pc34_compat
         tests/test_m11_open_door_spell_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_open_door_spell_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_open_door_spell_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_open_door_spell_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2503,7 +2503,7 @@ if(NOT TARGET test_m11_action_stamina_runtime_pc34_compat)
     add_executable(test_m11_action_stamina_runtime_pc34_compat
         tests/test_m11_action_stamina_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_action_stamina_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_action_stamina_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_action_stamina_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2517,7 +2517,7 @@ if(NOT TARGET test_m11_starvation_runtime_pc34_compat)
     add_executable(test_m11_starvation_runtime_pc34_compat
         tests/test_m11_starvation_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_starvation_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_starvation_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_starvation_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2531,7 +2531,7 @@ if(NOT TARGET test_m11_inventory_full_panel_runtime_pc34_compat)
     add_executable(test_m11_inventory_full_panel_runtime_pc34_compat
         tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_inventory_full_panel_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_inventory_full_panel_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_inventory_full_panel_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2545,7 +2545,7 @@ if(NOT TARGET test_m11_inventory_mouth_visual_blit_pc34_compat)
     add_executable(test_m11_inventory_mouth_visual_blit_pc34_compat
         tests/test_m11_inventory_mouth_visual_blit_pc34_compat.c
     )
-    target_link_libraries(test_m11_inventory_mouth_visual_blit_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    target_link_libraries(test_m11_inventory_mouth_visual_blit_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_inventory_mouth_visual_blit_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()

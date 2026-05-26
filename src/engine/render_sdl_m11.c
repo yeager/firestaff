@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "vga_palette_pc34_compat.h"
+#include "dm1v2/dm1_v2_filters.h"
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
 #define M11_SDL_MAJOR 3
@@ -61,6 +62,19 @@ typedef struct {
 
     unsigned char  framebuffer[M11_FB_BYTES];
     unsigned char* presentBuffer; /* 320*200*4 bytes RGBA */
+
+    /* DM1 V2.0 filter chain (V2-only; V1 launch path leaves these zero). */
+    int v2_crt_enabled;
+    int v2_crt_strength;
+    int v2_palette_enabled;
+    int v2_palette_gamma100;
+    int v2_palette_brightness;
+    int v2_palette_contrast;
+    int v2_dither_enabled;
+    int v2_sharpen_enabled;
+    int v2_sharpen_strength;
+    int v2_palette_lut_built;
+    unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3];
 } M11_RenderState;
 
 static M11_RenderState g_state = {0};
@@ -364,6 +378,7 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
                                     int logicalHeight) {
     unsigned char* dst = g_state.presentBuffer;
     const int globalLevel = g_state.paletteLevel;
+    const int useV2Palette = (g_state.v2_palette_enabled && g_state.v2_palette_lut_built);
     int pixelCount;
     if (!dst) {
         return;
@@ -378,11 +393,37 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
         if (level >= M11_PALETTE_LEVELS) {
             level = M11_PALETTE_LEVELS - 1;
         }
-        rgb = G9010_auc_VgaPaletteAll_Compat[level][idx];
+        rgb = useV2Palette
+            ? g_state.v2_palette_corrected[level][idx]
+            : G9010_auc_VgaPaletteAll_Compat[level][idx];
         dst[i * 4 + 0] = rgb[0];
         dst[i * 4 + 1] = rgb[1];
         dst[i * 4 + 2] = rgb[2];
         dst[i * 4 + 3] = 0xFF;
+    }
+}
+
+/* DM1 V2.0 post-process hook. Called from M11_Render_PresentIndexed
+ * after framebuffer-to-RGBA expansion, before SDL_UpdateTexture.
+ * V1 launch path leaves all v2_* flags zero so this short-circuits. */
+static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
+                                             int w,
+                                             int h) {
+    if (g_state.v2_dither_enabled) {
+        (void)dm1_v2_filter_dither_cleanup_indexed(fb, w, h);
+    }
+}
+
+static void m11_apply_v2_filters_rgba_post(int w, int h) {
+    unsigned char* rgba = g_state.presentBuffer;
+    if (!rgba) {
+        return;
+    }
+    if (g_state.v2_sharpen_enabled && g_state.v2_sharpen_strength > 0) {
+        (void)dm1_v2_filter_sharpen_rgba(rgba, w, h, g_state.v2_sharpen_strength);
+    }
+    if (g_state.v2_crt_enabled && g_state.v2_crt_strength > 0) {
+        (void)dm1_v2_filter_crt_scanlines_rgba(rgba, w, h, g_state.v2_crt_strength);
     }
 }
 
@@ -669,7 +710,17 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     g_state.contentW = logicalWidth;
     g_state.contentH = logicalHeight;
-    m11_framebuffer_to_rgba(framebuffer, logicalWidth, logicalHeight);
+    if (g_state.v2_dither_enabled
+            && logicalWidth == M11_FB_WIDTH
+            && logicalHeight == M11_FB_HEIGHT) {
+        static unsigned char v2DitherScratch[M11_FB_BYTES];
+        memcpy(v2DitherScratch, framebuffer, (size_t)M11_FB_BYTES);
+        m11_apply_v2_filters_indexed_pre(v2DitherScratch, logicalWidth, logicalHeight);
+        m11_framebuffer_to_rgba(v2DitherScratch, logicalWidth, logicalHeight);
+    } else {
+        m11_framebuffer_to_rgba(framebuffer, logicalWidth, logicalHeight);
+    }
+    m11_apply_v2_filters_rgba_post(logicalWidth, logicalHeight);
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -1188,4 +1239,81 @@ int M11_Render_GetVSync(void) {
 
 int M11_Render_GetSdlMajorVersion(void) {
     return M11_SDL_MAJOR;
+}
+
+
+/* ---------------- DM1 V2.0 filter chain API ---------------- */
+
+int M11_Render_SetV2Filters(int crtEnabled,
+                            int crtStrength,
+                            int paletteEnabled,
+                            int paletteGamma100,
+                            int paletteBrightness,
+                            int paletteContrast,
+                            int ditherEnabled,
+                            int sharpenEnabled,
+                            int sharpenStrength) {
+    int needRebuild = 0;
+
+    if (crtStrength < 0) crtStrength = 0;
+    if (crtStrength > 100) crtStrength = 100;
+    if (sharpenStrength < 0) sharpenStrength = 0;
+    if (sharpenStrength > 100) sharpenStrength = 100;
+    if (paletteGamma100 < 80) paletteGamma100 = 80;
+    if (paletteGamma100 > 260) paletteGamma100 = 260;
+    if (paletteBrightness < -50) paletteBrightness = -50;
+    if (paletteBrightness > 50) paletteBrightness = 50;
+    if (paletteContrast < -50) paletteContrast = -50;
+    if (paletteContrast > 50) paletteContrast = 50;
+
+    if (paletteEnabled
+            && (!g_state.v2_palette_lut_built
+                || paletteGamma100 != g_state.v2_palette_gamma100
+                || paletteBrightness != g_state.v2_palette_brightness
+                || paletteContrast != g_state.v2_palette_contrast)) {
+        needRebuild = 1;
+    }
+
+    g_state.v2_crt_enabled = crtEnabled ? 1 : 0;
+    g_state.v2_crt_strength = crtStrength;
+    g_state.v2_palette_enabled = paletteEnabled ? 1 : 0;
+    g_state.v2_palette_gamma100 = paletteGamma100;
+    g_state.v2_palette_brightness = paletteBrightness;
+    g_state.v2_palette_contrast = paletteContrast;
+    g_state.v2_dither_enabled = ditherEnabled ? 1 : 0;
+    g_state.v2_sharpen_enabled = sharpenEnabled ? 1 : 0;
+    g_state.v2_sharpen_strength = sharpenStrength;
+
+    if (needRebuild) {
+        if (dm1_v2_filter_palette_build_lut(paletteGamma100,
+                                            paletteBrightness,
+                                            paletteContrast,
+                                            g_state.v2_palette_corrected) == 0) {
+            g_state.v2_palette_lut_built = 1;
+        } else {
+            g_state.v2_palette_lut_built = 0;
+        }
+    }
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetV2Filters(int* outCrtEnabled,
+                            int* outCrtStrength,
+                            int* outPaletteEnabled,
+                            int* outPaletteGamma100,
+                            int* outPaletteBrightness,
+                            int* outPaletteContrast,
+                            int* outDitherEnabled,
+                            int* outSharpenEnabled,
+                            int* outSharpenStrength) {
+    if (outCrtEnabled) *outCrtEnabled = g_state.v2_crt_enabled;
+    if (outCrtStrength) *outCrtStrength = g_state.v2_crt_strength;
+    if (outPaletteEnabled) *outPaletteEnabled = g_state.v2_palette_enabled;
+    if (outPaletteGamma100) *outPaletteGamma100 = g_state.v2_palette_gamma100;
+    if (outPaletteBrightness) *outPaletteBrightness = g_state.v2_palette_brightness;
+    if (outPaletteContrast) *outPaletteContrast = g_state.v2_palette_contrast;
+    if (outDitherEnabled) *outDitherEnabled = g_state.v2_dither_enabled;
+    if (outSharpenEnabled) *outSharpenEnabled = g_state.v2_sharpen_enabled;
+    if (outSharpenStrength) *outSharpenStrength = g_state.v2_sharpen_strength;
+    return M11_RENDER_OK;
 }
