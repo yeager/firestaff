@@ -2,6 +2,7 @@
 #define NEXUS_V1_WORLD_H
 
 #include "nexus_v1_dungeon.h"
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -258,5 +259,77 @@ void     nexus_v1_world_hash_inject(Nexus_V1_World *world, uint64_t seed);
 #define NEXUS_HASH_SEED_EVENT     0x4556454EUL  /* 'EVEN'         */
 #define FNV64_OFFSET 0xCBF29CE484222325UL  /* FNV-1a 64-bit offset basis */
 #define NEXUS_HASH_SEED_TICK      0x5449434BUL  /* 'TICK'         */
+
+/* ── Binary serialization ───────────────────────────────────────────── */
+
+/* World save format (magic = 'FNXW'):
+ *
+ *   uint32_t magic            = 'FNXW'
+ *   uint16_t format_version   = 1
+ *   uint16_t _pad0
+ *   int32_t  party_level
+ *   int32_t  party_x, party_y, party_dir
+ *   int32_t  party_foot_step
+ *   int32_t  object_count
+ *   [for i = 0..object_count-1:]
+ *     uint8_t  type, state
+ *     int32_t  x, y
+ *     int32_t  level
+ *     int32_t  quantity
+ *     int32_t  linked_id
+ *     uint32_t flags
+ *   int32_t  event_count
+ *   [for i = 0..event_count-1:]
+ *     uint32_t type
+ *     int32_t  level
+ *     int32_t  x, y
+ *     int32_t  arg0, arg1
+ *     int32_t  fired
+ *     int32_t  repeat
+ *   int32_t  timer_count
+ *   [for i = 0..timer_count-1:]
+ *     int32_t  id
+ *     uint32_t kind
+ *     int32_t  level
+ *     int32_t  remaining_ticks
+ *     int32_t  interval_ticks
+ *     uint32_t flags
+ *     uint32_t userdata (= 0 on restore; caller must re-bind)
+ *   uint64_t world_tick
+ *   int32_t  transition_pending
+ *   int32_t  transition_target
+ *   int32_t  transition_x, transition_y
+ *   uint64_t state_hash
+ *
+ * Notes:
+ *   - Dungeon grid squares are NOT serialized; they are restored by
+ *     re-parsing the DGN files at load time using level_loaded flags.
+ *   - 3D geometry data is NOT serialized; it is restored from DGN files.
+ *   - userdata pointers in timers are zeroed; caller must re-establish
+ *     timer callbacks after loading.
+ *
+ * Source-lock reference:
+ *   ReDMCSB LOADSAVE.C: F0433/F0434 (DM1 world save structure)
+ *   DM Nexus (Saturn): memory card 8 KB blocks (proprietary, undocumented)
+ *     — the Firestaff native format serializes the equivalent state. */
+
+/* Magic: 'FNXW' = 'F' + ('N'<<8) + ('X'<<16) + ('W'<<24) = 0x57584E46 */
+#define NEXUS_WORLD_SAVE_MAGIC   0x57584E46U
+#define NEXUS_WORLD_SAVE_VERSION 1
+
+/* Returns the number of bytes required for a serialized world.
+ * Returns 0 if world is NULL. */
+size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world);
+
+/* Serialize world into buf (must be >= nexus_v1_world_serialize_size()).
+ * Returns bytes written, or 0 on error. */
+size_t nexus_v1_world_serialize(const Nexus_V1_World *world,
+                               void *buf, size_t bufsize);
+
+/* Deserialize world from buf into world (must be allocated).
+ * Returns NEXUS_SAVE_OK (0) on success, negative error code on failure.
+ * On error, world contents are undefined. */
+int nexus_v1_world_deserialize(Nexus_V1_World *world,
+                              const void *buf, size_t bufsize);
 
 #endif /* NEXUS_V1_WORLD_H */

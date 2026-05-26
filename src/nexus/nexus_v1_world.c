@@ -1,6 +1,19 @@
 #include "nexus_v1_world.h"
+#include "nexus_v1_squares.h"
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/* ── Save result codes (matches nexus_v1_save.h) ─────────────────────── */
+typedef enum {
+    NEXUS_SAVE_OK          =  0,
+    NEXUS_SAVE_ERR_NULL   = -1,
+    NEXUS_SAVE_ERR_SIZE   = -2,
+    NEXUS_SAVE_ERR_MAGIC  = -3,
+    NEXUS_SAVE_ERR_VERSION= -4
+} Nexus_WorldSaveResult;
+
 
 /* ------------------------------------------------------------------ */
 /* FNV-1a 64-bit hash                                                  */
@@ -375,6 +388,260 @@ int nexus_v1_transition_execute(Nexus_V1_World *world) {
 /* ------------------------------------------------------------------ */
 /* World tick                                                          */
 /* ------------------------------------------------------------------ */
+
+/*
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Binary serialization — world state (magic = 'FNXW')
+ * Source-lock: ReDMCSB LOADSAVE.C F0433/F0434 world state layout.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Format:
+ *   uint32_t magic            = 'FNXW'
+ *   uint16_t format_version  = 1
+ *   uint16_t _pad0
+ *   int32_t  party_level
+ *   int32_t  party_x, party_y, party_dir
+ *   int32_t  party_foot_step
+ *   int32_t  object_count
+ *   [for i = 0..object_count-1:]
+ *     uint8_t  type, state
+ *     int32_t  x, y
+ *     int32_t  level
+ *     int32_t  quantity
+ *     int32_t  linked_id
+ *     uint32_t flags
+ *   int32_t  event_count
+ *   [for i = 0..event_count-1:]
+ *     uint32_t type
+ *     int32_t  level
+ *     int32_t  x, y
+ *     int32_t  arg0, arg1
+ *     int32_t  fired
+ *     int32_t  repeat
+ *   int32_t  timer_count
+ *   [for i = 0..timer_count-1 (active only):]
+ *     int32_t  id
+ *     uint32_t kind
+ *     int32_t  level
+ *     int32_t  remaining_ticks
+ *     int32_t  interval_ticks
+ *     uint32_t flags
+ *   uint64_t world_tick
+ *   int32_t  transition_pending
+ *   int32_t  transition_target
+ *   int32_t  transition_x, transition_y
+ *   uint64_t state_hash
+ *
+ * Notes:
+ *   - Dungeon grid squares are NOT serialized; they are restored by
+ *     re-parsing the DGN files at load time.
+ *   - 3D geometry data is NOT serialized; restored from DGN files.
+ *   - userdata pointers in timers are zeroed; caller must re-establish.
+ *   - level_loaded[] and models are NOT part of the world state struct;
+ *     they are owned by Nexus_V1_Engine, not Nexus_V1_World.
+ */
+
+static uint8_t *wr8(uint8_t *p, uint8_t v)  { *p++ = v;  return p; }
+static uint8_t *wr16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v);      p[1] = (uint8_t)(v >> 8);
+    return p + 2;
+}
+static uint8_t *wr32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v);      p[1] = (uint8_t)(v >> 8);
+    p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24);
+    return p + 4;
+}
+static uint8_t *wr64(uint8_t *p, uint64_t v) {
+    int i; for (i = 0; i < 8; i++, v >>= 8) p[i] = (uint8_t)(v & 0xFF);
+    return p + 8;
+}
+static const uint8_t *rd8(const uint8_t *p, uint8_t *v)    { *v = *p++; return p; }
+static const uint8_t *rd16(const uint8_t *p, uint16_t *v) {
+    *v = ((uint16_t)p[0])|((uint16_t)p[1]<<8); return p + 2;
+}
+static const uint8_t *rd32(const uint8_t *p, uint32_t *v) {
+    *v = ((uint32_t)p[0])|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
+    return p + 4;
+}
+static const uint8_t *rd64(const uint8_t *p, uint64_t *v) {
+    int i; *v = 0;
+    for (i = 0; i < 8; i++) { *v |= ((uint64_t)p[i]) << (i*8); }
+    return p + 8;
+}
+
+size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world) {
+    /* Fixed header: magic(4)+ver(2)+pad(2)+all scalars */
+    size_t n = 4 + 2 + 2 + 4*8;
+    /* Objects */
+    n += 4 + world->object_count * (1+1+4+4+4+4+4+4);
+    /* Events */
+    n += 4 + world->event_count * (4+4+4+4+4+4+4);
+    /* Active timers */
+    {
+        int tc = 0, i;
+        for (i = 0; i < NEXUS_MAX_TIMERS; i++)
+            if (world->timers[i].flags & NEXUS_TIMER_F_ACTIVE) tc++;
+        n += 4 + tc * (4+4+4+4+4+4);
+    }
+    /* Transition + hash */
+    n += 4 + 4 + 4 + 8;
+    return n;
+}
+
+
+size_t nexus_v1_world_serialize(const Nexus_V1_World *world,
+                                 void *buf, size_t bufsize) {
+    uint8_t *p = (uint8_t *)buf;
+    size_t needed = nexus_v1_world_serialize_size(world);
+    if (!world || !buf || bufsize < needed) return 0;
+
+    p = wr32(p, NEXUS_WORLD_SAVE_MAGIC);
+    p = wr16(p, NEXUS_WORLD_SAVE_VERSION);
+    p = wr16(p, 0);
+    p = wr32(p, (uint32_t)world->party_level);
+    p = wr32(p, (uint32_t)world->party_x);
+    p = wr32(p, (uint32_t)world->party_y);
+    p = wr32(p, (uint32_t)world->party_dir);
+    p = wr32(p, (uint32_t)world->party_foot_step);
+    p = wr32(p, (uint32_t)world->object_count);
+
+    {
+        int i;
+        for (i = 0; i < world->object_count; i++) {
+            const Nexus_V1_Object *o = &world->objects[i];
+            p = wr8(p, o->type);
+            p = wr8(p, o->state);
+            p = wr32(p, (uint32_t)o->x);
+            p = wr32(p, (uint32_t)o->y);
+            p = wr32(p, (uint32_t)o->level);
+            p = wr32(p, (uint32_t)o->quantity);
+            p = wr32(p, (uint32_t)o->linked_id);
+            p = wr32(p, o->flags);
+        }
+    }
+    p = wr32(p, (uint32_t)world->event_count);
+    {
+        int i;
+        for (i = 0; i < world->event_count; i++) {
+            const Nexus_V1_EventRecord *e = &world->events[i];
+            p = wr32(p, (uint32_t)e->type);
+            p = wr32(p, (uint32_t)e->level);
+            p = wr32(p, (uint32_t)e->x);
+            p = wr32(p, (uint32_t)e->y);
+            p = wr32(p, (uint32_t)e->arg0);
+            p = wr32(p, (uint32_t)e->arg1);
+            p = wr32(p, (uint32_t)(e->fired ? 1 : 0));
+            p = wr32(p, (uint32_t)(e->repeat ? 1 : 0));
+        }
+    }
+    {
+        int tc = 0, i;
+        for (i = 0; i < NEXUS_MAX_TIMERS; i++)
+            if (world->timers[i].flags & NEXUS_TIMER_F_ACTIVE) tc++;
+        p = wr32(p, (uint32_t)tc);
+        for (i = 0; i < NEXUS_MAX_TIMERS; i++) {
+            const Nexus_V1_Timer *t = &world->timers[i];
+            if (!(t->flags & NEXUS_TIMER_F_ACTIVE)) continue;
+            p = wr32(p, (uint32_t)t->id);
+            p = wr32(p, (uint32_t)t->kind);
+            p = wr32(p, (uint32_t)t->level);
+            p = wr32(p, (uint32_t)t->remaining_ticks);
+            p = wr32(p, (uint32_t)t->interval_ticks);
+            p = wr32(p, t->flags);
+        }
+    }
+    p = wr64(p, world->world_tick);
+    p = wr32(p, world->transition_pending ? 1U : 0U);
+    p = wr32(p, (uint32_t)world->transition_target);
+    p = wr32(p, (uint32_t)world->transition_x);
+    p = wr32(p, (uint32_t)world->transition_y);
+    p = wr64(p, world->state_hash);
+    return (size_t)(p - (uint8_t *)buf);
+}
+
+int nexus_v1_world_deserialize(Nexus_V1_World *world,
+                               const void *buf, size_t bufsize) {
+    const uint8_t *p = (const uint8_t *)buf;
+    uint32_t magic;
+    uint16_t version, pad16;
+    uint32_t v32;
+    (void)pad16; /* consumed via rd16 side-effect */
+    if (!world || !buf || bufsize < 4) return NEXUS_SAVE_ERR_NULL;
+
+
+    p = rd32(p, &magic);
+    if (magic != NEXUS_WORLD_SAVE_MAGIC) return NEXUS_SAVE_ERR_MAGIC;
+    p = rd16(p, &version);
+    if (version != NEXUS_WORLD_SAVE_VERSION) return NEXUS_SAVE_ERR_VERSION;
+    p = rd16(p, &pad16);
+
+    p = rd32(p, &v32); world->party_level  = (int)v32;
+    p = rd32(p, &v32); world->party_x      = (int)v32;
+    p = rd32(p, &v32); world->party_y      = (int)v32;
+    p = rd32(p, &v32); world->party_dir    = (int)v32;
+    p = rd32(p, &v32); world->party_foot_step = (int)v32;
+    p = rd32(p, &v32); world->object_count = (int)v32;
+    if (world->object_count > NEXUS_MAX_OBJECTS) world->object_count = NEXUS_MAX_OBJECTS;
+    {
+        int i;
+        for (i = 0; i < world->object_count; i++) {
+            Nexus_V1_Object *o = &world->objects[i];
+            p = rd8(p, &o->type);
+            p = rd8(p, &o->state);
+            p = rd32(p, &v32); o->x         = (int)v32;
+            p = rd32(p, &v32); o->y         = (int)v32;
+            p = rd32(p, &v32); o->level     = (int)v32;
+            p = rd32(p, &v32); o->quantity  = (int)v32;
+            p = rd32(p, &v32); o->linked_id = (int)v32;
+            p = rd32(p, &o->flags);
+        }
+    }
+    p = rd32(p, &v32); world->event_count = (int)v32;
+    if (world->event_count > NEXUS_MAX_EVENTS) world->event_count = NEXUS_MAX_EVENTS;
+    {
+        int i;
+        for (i = 0; i < world->event_count; i++) {
+            Nexus_V1_EventRecord *e = &world->events[i];
+            uint32_t u32;
+            p = rd32(p, &u32); e->type   = (Nexus_V1_EventType)u32;
+            p = rd32(p, &u32); e->level  = (int)u32;
+            p = rd32(p, &u32); e->x      = (int)u32;
+            p = rd32(p, &u32); e->y      = (int)u32;
+            p = rd32(p, &u32); e->arg0   = (int)u32;
+            p = rd32(p, &u32); e->arg1   = (int)u32;
+            p = rd32(p, &u32); e->fired  = (int)u32;
+            p = rd32(p, &u32); e->repeat = (int)u32;
+        }
+    }
+    p = rd32(p, &v32);
+    {
+        int i, tc = (int)v32;
+        memset(world->timers, 0, sizeof(world->timers));
+        for (i = 0; i < tc && i < NEXUS_MAX_TIMERS; i++) {
+            Nexus_V1_Timer *t = &world->timers[i];
+            uint32_t u32;
+            p = rd32(p, &u32); t->id = (int)u32;
+            p = rd32(p, &u32); t->kind = (Nexus_TimerKind)u32;
+            p = rd32(p, &u32); t->level = (int)u32;
+            p = rd32(p, &u32); t->remaining_ticks = (int)u32;
+            p = rd32(p, &u32); t->interval_ticks = (int)u32;
+            p = rd32(p, &t->flags);
+        }
+        /* Clear remainder slots */
+        for (; i < NEXUS_MAX_TIMERS; i++) world->timers[i].flags &= ~NEXUS_TIMER_F_ACTIVE;
+    }
+    p = rd64(p, &world->world_tick);
+    p = rd32(p, &v32); world->transition_pending = (int)v32;
+    p = rd32(p, &v32); world->transition_target = (int)v32;
+    p = rd32(p, &v32); world->transition_x = (int)v32;
+    p = rd32(p, &v32); world->transition_y = (int)v32;
+    p = rd64(p, &world->state_hash);
+    return NEXUS_SAVE_OK;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* World tick entry point                                            */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ReDMCSB: DUNGEON.C F0001 — main tick entry point.
  * nexus_v1_world_tick is called once per V1 tick (55 ms).

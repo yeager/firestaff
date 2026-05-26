@@ -12,23 +12,26 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
     if (!level || !data || size < 64) return -1;
     memset(level, 0, sizeof(*level));
 
-    /* DGN file structure (to be reverse-engineered):
-     * The files are 147-321 KB — much larger than DM1's ~20 KB per level.
-     * This suggests embedded 3D geometry (wall polygons, floor/ceiling meshes).
+    /*
+     * DGN file structure (Nexus Saturn LEV00-LEV15, 147-321 KB each):
+     *   16-byte LEV header block may contain width/height + metadata.
+     *   Square grid follows (32x32 uint16_t, little-endian, 2048 bytes).
+     *   Remaining bytes: 3D wall/floor geometry + thing list (provenance-locked).
      *
-     * Hypothesis based on DM1 structure:
-     * - First section: map grid (32x32 uint16 = 2048 bytes)
-     * - Second section: thing list
-     * - Third section: 3D geometry data (bulk of the file)
-     *
-     * Try reading first 2 bytes as width/height: */
+     * Decodes both possible header layouts:
+     *   - Layout A (LE): bytes 0-1 = width, 2-3 = height (big-endian read)
+     *   - Layout B (DM1-style): raw 32x32 grid at offset 0
+     * Source: DM1 DUNGEON.C F0001 grid parsing; Saturn SH-2 big-endian
+     * note from nexus_v1_dmdf_model.c; docs/nexus_squares.md.
+     */
+
+    /* --- Layout A: width/height header at byte 0-3 (big-endian u16) --- */
     {
         uint16_t w = rb16(data);
         uint16_t h = rb16(data + 2);
         if (w > 0 && w <= 32 && h > 0 && h <= 32) {
             level->width = w;
             level->height = h;
-            /* Read square grid */
             int grid_offset = 4;
             for (int y = 0; y < h && grid_offset + 2 <= size; y++) {
                 for (int x = 0; x < w && grid_offset + 2 <= size; x++) {
@@ -39,36 +42,36 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
             level->has_3d_geometry = 1;
             level->geometry_offset = grid_offset;
             level->geometry_size = size - grid_offset;
-        } else {
-            /* Alternative: grid might be elsewhere in the file */
-            level->width = 32;
-            level->height = 32;
-            level->has_3d_geometry = 1;
-            level->geometry_size = size;
+            printf("Nexus level %d: %dx%d, geometry=%d bytes [Layout A: w/h header at 0]\n",
+                   level_index, level->width, level->height, level->geometry_size);
+            return 0;
         }
     }
 
-    /* ENHANCED: try multiple DGN header interpretations */
-    /* Try DM1-style: first 4 bytes = header, then 16-bit square entries */
-    if (size >= 2048 + 4) {
-        /* Alternate: fixed 32x32 grid at offset 0 */
+    /* --- Layout B: raw 32x32 grid at offset 0 (DM1-style fallback) --- */
+    {
         int grid_bytes = 32 * 32 * 2;
-        if (size > grid_bytes) {
-            for (int gy = 0; gy < 32; gy++)
+        if (size >= grid_bytes) {
+            for (int gy = 0; gy < 32; gy++) {
                 for (int gx = 0; gx < 32; gx++) {
                     int off = (gy * 32 + gx) * 2;
                     level->squares[gy][gx] = rb16(data + off) & 0x1F;
                 }
+            }
             level->width = 32;
             level->height = 32;
+            level->has_3d_geometry = 1;
             level->geometry_offset = grid_bytes;
             level->geometry_size = size - grid_bytes;
+            printf("Nexus level %d: 32x32, geometry=%d bytes [Layout B: raw grid at 0]\n",
+                   level_index, level->geometry_size);
+            return 0;
         }
     }
 
-    printf("Nexus level %d: %dx%d, geometry=%d bytes\n",
-        level_index, level->width, level->height, level->geometry_size);
-    return 0;
+    printf("Nexus level %d: could not parse DGN header (size=%d)\n",
+           level_index, size);
+    return -1;
 }
 
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y) {
