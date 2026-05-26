@@ -87,6 +87,9 @@ typedef struct {
     int v2_color_preset;            /* 0..M11_COLOR_PRESET_COUNT-1 */
     int v2_pixel_grid_enabled;
     int v2_pixel_grid_intensity;    /* 0..100 percent darken */
+    int v2_motion_blur_enabled;
+    int v2_motion_blur_strength;    /* 0..100 percent of previous frame */
+    int v2_movement_active;
 
     unsigned char* previousFrameBuffer;  /* prev RGBA frame at logical size */
     int previousFrameW;
@@ -501,11 +504,54 @@ static void m11_apply_phosphor_persistence(int w, int h) {
     }
 }
 
+/* Motion blur during active movement: output = current * (1-s) +
+ * previous * s, applied only when v2_movement_active is set.  Reuses
+ * the same previousFrameBuffer as the phosphor effect. */
+static void m11_apply_motion_blur(int w, int h) {
+    unsigned char* cur;
+    unsigned char* prev;
+    int pixelCount;
+    int i;
+    int s;
+    if (!g_state.v2_motion_blur_enabled || g_state.v2_motion_blur_strength <= 0) {
+        return;
+    }
+    if (!g_state.v2_movement_active) {
+        return;
+    }
+    cur = g_state.presentBuffer;
+    if (!cur) {
+        return;
+    }
+    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
+        return;
+    }
+    prev = g_state.previousFrameBuffer;
+    pixelCount = w * h;
+    s = g_state.v2_motion_blur_strength;
+    if (s > 100) s = 100;
+    for (i = 0; i < pixelCount; ++i) {
+        int o = i * 4;
+        int cr = cur[o + 0];
+        int cg = cur[o + 1];
+        int cb = cur[o + 2];
+        int pr = prev[o + 0];
+        int pg = prev[o + 1];
+        int pb = prev[o + 2];
+        int outR = (cr * (100 - s) + pr * s) / 100;
+        int outG = (cg * (100 - s) + pg * s) / 100;
+        int outB = (cb * (100 - s) + pb * s) / 100;
+        cur[o + 0] = (unsigned char)outR;
+        cur[o + 1] = (unsigned char)outG;
+        cur[o + 2] = (unsigned char)outB;
+    }
+}
+
 /* Snapshot the current present buffer into previousFrameBuffer so the
  * next frame can read it.  Called once per present, after all RGBA
  * filters but before the SDL upload. */
 static void m11_snapshot_prev_frame(int w, int h) {
-    if (!g_state.v2_phosphor_enabled) {
+    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) {
         return;
     }
     if (!g_state.presentBuffer) {
@@ -533,8 +579,12 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
             && M11_ColorPreset_IsValid(g_state.v2_color_preset)) {
         M11_ColorPreset_ApplyRGBA(g_state.v2_color_preset, rgba, w, h);
     }
+    m11_apply_motion_blur(w, h);
     m11_apply_phosphor_persistence(w, h);
     m11_snapshot_prev_frame(w, h);
+    /* Movement flag is one-shot per present so the gameplay code does
+     * not need to clear it after every tick. */
+    g_state.v2_movement_active = 0;
 }
 
 /* Pixel-grid overlay: draw thin darkening lines at every scaled-pixel
@@ -1508,9 +1558,9 @@ int M11_Render_GetV2Filters(int* outCrtEnabled,
 /* ---------------- DM1 V2.0 visual extras API ---------------- */
 
 static void m11_maybe_release_prev_frame(void) {
-    /* Free the prev-frame buffer only when no consumer (currently only
-     * phosphor) needs it.  Keeps V1 launches at zero memory cost. */
-    if (!g_state.v2_phosphor_enabled) {
+    /* Free the prev-frame buffer only when no consumer (phosphor or
+     * motion blur) needs it.  Keeps V1 launches at zero memory cost. */
+    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) {
         if (g_state.previousFrameBuffer) {
             free(g_state.previousFrameBuffer);
             g_state.previousFrameBuffer = NULL;
@@ -1560,4 +1610,27 @@ int M11_Render_GetPixelGrid(int* outEnabled, int* outIntensity) {
     if (outEnabled) *outEnabled = g_state.v2_pixel_grid_enabled;
     if (outIntensity) *outIntensity = g_state.v2_pixel_grid_intensity;
     return M11_RENDER_OK;
+}
+
+int M11_Render_SetMotionBlur(int enabled, int strength) {
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+    g_state.v2_motion_blur_enabled = enabled ? 1 : 0;
+    g_state.v2_motion_blur_strength = strength;
+    m11_maybe_release_prev_frame();
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetMotionBlur(int* outEnabled, int* outStrength) {
+    if (outEnabled) *outEnabled = g_state.v2_motion_blur_enabled;
+    if (outStrength) *outStrength = g_state.v2_motion_blur_strength;
+    return M11_RENDER_OK;
+}
+
+void M11_Render_SetMovementActive(int active) {
+    g_state.v2_movement_active = active ? 1 : 0;
+}
+
+int M11_Render_GetMovementActive(void) {
+    return g_state.v2_movement_active;
 }

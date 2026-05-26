@@ -218,6 +218,18 @@ int  M11_Render_GetColorPreset(int* outPreset);
 int  M11_Render_SetPixelGrid(int enabled, int intensity);
 int  M11_Render_GetPixelGrid(int* outEnabled, int* outIntensity);
 
+/* Motion blur during active movement: previous-frame mix-in while the
+ * game reports active movement.  Strength is percent of the previous
+ * frame (0..100, default 30). */
+int  M11_Render_SetMotionBlur(int enabled, int strength);
+int  M11_Render_GetMotionBlur(int* outEnabled, int* outStrength);
+
+/* Movement signal used by the motion-blur path.  Set non-zero on
+ * frames where the party position or facing has changed; cleared
+ * automatically after the next present. */
+void M11_Render_SetMovementActive(int active);
+int  M11_Render_GetMovementActive(void);
+
 #ifdef __cplusplus
 }
 #endif

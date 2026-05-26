@@ -94,6 +94,10 @@ typedef struct {
     /* DM1 V2.0 pixel grid overlay (post-upscale). */
     int dm1V2PixelGridEnabled;           /* 0 = off, 1 = on */
     int dm1V2PixelGridIntensity;         /* 0-100, percent darken; default 20 */
+
+    /* DM1 V2.0 motion blur during active movement. */
+    int dm1V2MotionBlurEnabled;          /* 0 = off, 1 = on */
+    int dm1V2MotionBlurStrength;         /* 0-100, percent; default 30 */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);
