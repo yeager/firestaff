@@ -29,6 +29,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
+#include "swsh_frontend_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -768,6 +769,62 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     }
 }
 
+
+
+/* Find the FTL logo (SWOOSH binary) from canonical DM1 PC 3.4 original data.
+ * ReDMCSB SWSH.C T0901006: logo is a raw IMG1 bitmap expanded to Physbase. */
+static int m11_find_ftl_swoosh_logo_path(const char* dataDir, char* outPath, size_t outPathBytes) {
+    static const char* homeSuffixes[] = {
+        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/SWOOSH",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
+    };
+    if (!outPath || outPathBytes == 0U) return 0;
+    outPath[0] = '\0';
+    { const char* e = getenv("FIRESTAFF_SWOOSH"); if (e && e[0] != '\0') { snprintf(outPath, outPathBytes, "%s", e); return 1; } }
+    { const char* home = getenv("HOME"); if (home && home[0] != '\0') {
+        for (size_t i = 0U; i < sizeof(homeSuffixes)/sizeof(homeSuffixes[0]); ++i) {
+            char cand[FSP_PATH_MAX]; snprintf(cand, sizeof(cand), "%s/%s", home, homeSuffixes[i]); FILE* tf = fopen(cand,"rb"); if (tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } } }
+    if (dataDir && dataDir[0] != '\0') {
+        char cand[FSP_PATH_MAX]; static const char* suf[] = {"SWOOSH","SWOOSH.DAT"};
+        for (size_t i = 0U; i < sizeof(suf)/sizeof(suf[0]); ++i) { snprintf(cand,sizeof(cand),"%s/%s",dataDir,suf[i]); FILE* tf=fopen(cand,"rb"); if(tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } }
+    return 0;
+}
+
+/* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
+ * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
+ * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
+static void m11_play_ftl_swoosh_if_available(const char* dataDir, int skipSwoosh) {
+    char logoPath[FSP_PATH_MAX];
+    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; FILE* f = NULL; long fsize = 0;
+    if (skipSwoosh) return;
+    if (!m11_find_ftl_swoosh_logo_path(dataDir, logoPath, sizeof(logoPath))) return;
+    f = fopen(logoPath, "rb"); if (!f) return;
+    fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
+    logoImg = (unsigned char*)malloc((size_t)fsize);
+    screenFb = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
+    if (!logoImg || !screenFb) goto cleanup;
+    if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
+    SWSH_Compat_ExpandLogoToBitmap(logoImg, screenFb);
+
+    /* V0901006_PaletteCommands from ReDMCSB SWSH.C: word < 0x0008 = wait-count, else color-set. */
+    { static const uint16_t cmds[] = {
+        0x1777u,0x0001u,0x2777u,0x0001u,0x3777u,0x0002u,0x4777u,0x0002u,
+        0x5777u,0x0003u,0x6777u,0x0003u,0x7777u,0x0003u,0x8777u,0x9777u,
+        0xA555u,0xF777u,0x0003u,0x8000u,0xB777u,0xC555u,0xD222u,0x0003u,0xF770u,0xE770u
+    }; size_t n = sizeof(cmds)/sizeof(cmds[0]);
+      SDL_Delay(20);
+      M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
+      for (size_t i = 0; i < n; ++i) {
+          if (M11_Render_PumpEvents()) break;
+          uint16_t w = cmds[i];
+          if (w < 0x0008u) { for (uint16_t v=0;v<w;++v) SDL_Delay(16); }
+          else { M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE); SDL_Delay(16); } }
+      SDL_Delay(120); }
+cleanup:
+    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (f) fclose(f);
+}
+
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                       int* outPlayedAnyFrame) {
     char titlePath[FSP_PATH_MAX];
@@ -858,7 +915,8 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
 
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
-                                     uint32_t* idleAccumulatorMs) {
+                                     uint32_t* idleAccumulatorMs,
+                                     const char* dataDir) {
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
@@ -873,10 +931,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * Entrance is mandatory for every DM1 presentation mode, and TITLE must
          * be the visible handoff immediately before it.  CSB/DM2/Nexus keep
          * their own intro paths. */
+
+
         const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
             menuState, menuState->activatedIndex);
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
+            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order. */
+            m11_play_ftl_swoosh_if_available(dataDir, 0);
             m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
         /* Theron's Quest has no source -- no intro needed. */
@@ -2007,7 +2069,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
-            if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+            if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
                 launchedEver = 1;
                 if (exitAfterLaunch) {
                     break;
@@ -2079,7 +2141,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     if (menuState.shouldExit) {
                         break;
                     }
-                    if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                    if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
                         launchedEver = 1;
                         if (exitAfterLaunch) {
                             break;

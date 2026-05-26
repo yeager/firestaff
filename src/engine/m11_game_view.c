@@ -6642,7 +6642,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    championIndex = state->candidateMirrorPartyIndex;
+    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
         !state->world.party.champions[championIndex].present) {
@@ -6673,7 +6673,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     if (!state || !state->active || !state->candidateMirrorPanelActive) {
         return 0;
     }
-    championIndex = state->candidateMirrorPartyIndex;
+    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
         (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                    championIndex);
