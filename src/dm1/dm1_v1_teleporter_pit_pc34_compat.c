@@ -3,50 +3,6 @@
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include <string.h>
 
-void m11_teleporter_pit_init(M11_TeleporterPitState* s) {
-    if (!s) return;
-    memset(s, 0, sizeof(*s));
-    s->chainDepthLimit = 1000; /* ReDMCSB F0267: 1000 for party/creature, 100 for projectile */
-}
-
-int m11_add_teleporter(M11_TeleporterPitState* s, int x, int y, int destX, int destY, int destLevel, int destFacing, int visible) {
-    if (!s || s->teleporterCount >= M11_MAX_TELEPORTERS) return 0;
-    M11_TeleporterDef* t = &s->teleporters[s->teleporterCount++];
-    t->x = x; t->y = y; t->destX = destX; t->destY = destY;
-    t->destLevel = destLevel; t->destFacing = destFacing;
-    t->isVisible = visible; t->soundEffect = 0; t->absoluteRotation = 0;
-    return 1;
-}
-
-int m11_add_pit(M11_TeleporterPitState* s, int x, int y, int open, int damage, int sourceLevel, int destLevel, int destX, int destY) {
-    if (!s || s->pitCount >= M11_MAX_PITS) return 0;
-    M11_PitDef* p = &s->pits[s->pitCount++];
-    p->x = x; p->y = y; p->isOpen = open; p->damageOnFall = damage;
-    p->level = sourceLevel;
-    p->destLevel = destLevel; p->destX = destX; p->destY = destY;
-    return 1;
-}
-
-int m11_check_teleporter(const M11_TeleporterPitState* s, int x, int y, M11_TeleporterDef* out) {
-    if (!s || !out) return 0;
-    for (int i = 0; i < s->teleporterCount; i++) {
-        if (s->teleporters[i].x == x && s->teleporters[i].y == y) {
-            *out = s->teleporters[i]; return 1;
-        }
-    }
-    return 0;
-}
-
-int m11_check_pit(const M11_TeleporterPitState* s, int x, int y, int currentLevel, M11_PitDef* out) {
-    if (!s || !out) return 0;
-    for (int i = 0; i < s->pitCount; i++) {
-        if (s->pits[i].x == x && s->pits[i].y == y && s->pits[i].level == currentLevel) {
-            *out = s->pits[i]; return 1;
-        }
-    }
-    return 0;
-}
-
 static int m11_normalize_direction_or_cell(int value) {
     return value & 3;
 }
@@ -170,31 +126,6 @@ int m11_apply_teleporter_rotation(int thingKind,
 const char* m11_teleporter_rotation_source_evidence(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
-
-int m11_resolve_pit_chain(const M11_TeleporterPitState* s, int startX, int startY,
-                           int startLevel, int levitating,
-                           int* finalX, int* finalY, int* finalLevel, int* totalDamage) {
-    /* ReDMCSB F0267: pit fall chains — party falls through consecutive open pits.
-     * F0264_MOVE_IsLevitating gate: levitating entities (flying creatures,
-     * projectiles) do not fall into pits (ReDMCSB MOVESENS.C ~line 493-500). */
-    if (levitating) return 0;
-
-    if (!s || !finalX || !finalY || !finalLevel || !totalDamage) return 0;
-    int cx = startX, cy = startY, currentLevel = startLevel, lastLevel = startLevel, fallen = 0;
-    *totalDamage = 0;
-    for (int i = 0; i < s->chainDepthLimit; i++) {
-        M11_PitDef pit;
-        if (!m11_check_pit(s, cx, cy, currentLevel, &pit) || !pit.isOpen) break;
-        *totalDamage += pit.damageOnFall;
-        currentLevel = pit.destLevel;
-        lastLevel = pit.destLevel;
-        cx = pit.destX; cy = pit.destY;
-        fallen++;
-    }
-    *finalX = cx; *finalY = cy; *finalLevel = lastLevel;
-    return fallen;
-}
-
 
 int m11_plan_group_move_removal_after_pit_teleporter(
         int fallKilledGroup,
