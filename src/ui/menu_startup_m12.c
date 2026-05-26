@@ -1006,6 +1006,9 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config_SetDefaults(&config);
     M12_Config_Load(&config, NULL);
 
+    if (!config.quickResumeEnabled) {
+        return;
+    }
     if (!m12_is_valid_quicksave_path(config.lastSavePath)) {
         return;
     }

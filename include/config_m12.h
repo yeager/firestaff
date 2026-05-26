@@ -119,6 +119,15 @@ typedef struct {
     /* UI scale (accessibility extra). Multiplier in percent for
      * HUD and menu text rendering. */
     int uiScale;                         /* 100, 150, 200 (default 100) */
+
+    /* Quick resume gating. */
+    int quickResumeEnabled;              /* 0 = off, 1 = on; default 1 */
+
+    /* Custom dungeon directory (community dungeons). */
+    char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
+
+    /* Screenshot output directory. */
+    char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);
