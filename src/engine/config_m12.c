@@ -270,6 +270,11 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->autoMapEnabled = 1;
     config->combatLogEnabled = 0;
     config->combatLogMaxLines = 200;
+    config->soundtrackMode = 0;
+    config->customMusicPath[0] = '\0';
+    config->ambientEnabled = 0;
+    config->ambientVolume = 40;
+    config->uiScale = 100;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -617,6 +622,37 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->dm1V2MotionBlurStrength = val;
         return;
     }
+    if (m12_string_equals(key, "soundtrack_mode")) {
+        int val = m12_parse_int(value, config->soundtrackMode);
+        if (val < 0) val = 0;
+        if (val > 2) val = 2;
+        config->soundtrackMode = val;
+        return;
+    }
+    if (m12_string_equals(key, "custom_music_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->customMusicPath, sizeof(config->customMusicPath), quoted);
+        return;
+    }
+    if (m12_string_equals(key, "ambient_enabled")) {
+        config->ambientEnabled = m12_parse_int(value, config->ambientEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "ambient_volume")) {
+        int val = m12_parse_int(value, config->ambientVolume);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        config->ambientVolume = val;
+        return;
+    }
+    if (m12_string_equals(key, "ui_scale")) {
+        int val = m12_parse_int(value, config->uiScale);
+        if (val <= 100) val = 100;
+        else if (val <= 150) val = 150;
+        else val = 200;
+        config->uiScale = val;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -720,6 +756,13 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "dm1_v2_pixel_grid_intensity = %d\n", config->dm1V2PixelGridIntensity);
     fprintf(fp, "dm1_v2_motion_blur_enabled = %d\n", config->dm1V2MotionBlurEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_motion_blur_strength = %d\n", config->dm1V2MotionBlurStrength);
+    fprintf(fp, "soundtrack_mode = %d\n", config->soundtrackMode);
+    fputs("custom_music_path = ", fp);
+    m12_escape_and_write(fp, config->customMusicPath);
+    fputc('\n', fp);
+    fprintf(fp, "ambient_enabled = %d\n", config->ambientEnabled ? 1 : 0);
+    fprintf(fp, "ambient_volume = %d\n", config->ambientVolume);
+    fprintf(fp, "ui_scale = %d\n", config->uiScale);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);

@@ -107,6 +107,18 @@ typedef struct {
     int autoMapEnabled;          /* 0=off, 1=on; default 1 */
     int combatLogEnabled;        /* 0=off, 1=on; default 0 */
     int combatLogMaxLines;       /* 50-500; default 200 */
+
+    /* Soundtrack selector (audio extra). */
+    int soundtrackMode;                  /* 0 = Original, 1 = Remastered, 2 = Custom */
+    char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
+
+    /* Ambient sound layer (audio extra). */
+    int ambientEnabled;                  /* 0 = off, 1 = on */
+    int ambientVolume;                   /* 0-100, default 40 */
+
+    /* UI scale (accessibility extra). Multiplier in percent for
+     * HUD and menu text rendering. */
+    int uiScale;                         /* 100, 150, 200 (default 100) */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

@@ -149,12 +149,15 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"SFX Volume",          "100%",         1, M12_SETTINGS_TAB_AUDIO},
     {"Muted",               "No",           1, M12_SETTINGS_TAB_AUDIO},
     {"Audio Mixer",         "Stereo",       1, M12_SETTINGS_TAB_AUDIO},
+    {"Soundtrack",          "Original",     1, M12_SETTINGS_TAB_AUDIO},   /* V2.0 audio extra */
+    {"Ambient Sounds",      "Off",          1, M12_SETTINGS_TAB_AUDIO},   /* V2.0 audio extra */
+    {"Ambient Volume",      "40%",          1, M12_SETTINGS_TAB_AUDIO},   /* V2.0 audio extra */
     {"Footstep Audio",      "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
-    {"Ambient Sounds",      "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
     {"Creature Voices",     "Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.2 */
     {"PC Speaker Emulation","Off",          0, M12_SETTINGS_TAB_AUDIO},   /* V2.1 */
     /* ── ACCESSIBILITY tab ── */
     {"Font Scale",          "100%",         1, M12_SETTINGS_TAB_ACCESSIBILITY},
+    {"UI Scale",            "100%",         1, M12_SETTINGS_TAB_ACCESSIBILITY},   /* V2.0 a11y extra */
     {"High Contrast",       "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
     {"Colorblind Mode",     "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
     {"Large Touch Targets", "Off",          1, M12_SETTINGS_TAB_ACCESSIBILITY},
