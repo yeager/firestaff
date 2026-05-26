@@ -50,7 +50,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 2 — Dungeon data model: source-lock CSB dungeon.dat parsing differences, map metadata, object records, wall formats, champion transfer/import state, and start-position semantics
 - ❌ Phase 3 — Rendering parity: CSB wall/door/floor/ornament/creature/item/projectile rendering, including back-wall ornaments and four-sided wall decoration rules
 - ✅ Phase 4 — Mechanics parity: CSB-specific sensors, actuators, teleporters, pits, doors, pressure plates, end conditions, and dungeon logic that diverge from DM1 (docs/source-lock/csb_v1_phase4_mechanics_parity_H2239.md)
-- ❌ Phase 5 — Creature/combat parity: CSB creature roster, AI differences, attacks/projectiles, drops, sounds, and combat constants
+- ✅ Phase 5 — Creature/combat parity: CSB creature roster, AI differences, attacks/projectiles, drops, sounds, and combat constants (docs/source-lock/csb_v1_phase5_creature_combat_H2242.md · src/csb/csb_v1_monster_pc34_compat.{c,h})
 - ❌ Phase 6 — Utility/import flow: CSB utility disk behavior, champion import path, reincarnation/resurrection differences, and saved-party interoperability
 - ❌ Phase 7 — Verification suite: canonical CSB asset manifests, parser probes, deterministic input scripts, viewport/pixel gates, save/load round trips, and source-evidence manifests
 
@@ -96,7 +96,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 0 — Provenance gate: hash-lock exact Dungeon Master Nexus disc/images, file manifests, compression/container formats, region/version metadata, and any available primary technical references before parser or runtime work
 - ❌ Phase 1 — Runtime profile split: separate Nexus boot/runtime profile from DM1/CSB/DM2, including menu launch, asset roots, save namespace, platform diagnostics, deterministic config, and unsupported-feature messaging
 - ❌ Phase 2 — Data formats: source-lock Nexus dungeon, map, object, text, champion, monster, sound, and graphics/model formats; document every variant before converting data into Firestaff structures
-- ❌ Phase 3 — Core world model: implement Nexus map loading, party placement, transitions, timers, object database, event/trigger records, and deterministic world-state hashing from provenance-locked fixtures
+- ✅ Phase 3 — Core world model: implement Nexus map loading, party placement, transitions, timers, object database, event/trigger records, and deterministic world-state hashing from provenance-locked fixtures
 - ❌ Phase 4 — Rendering pipeline: source-lock Nexus-specific wall/floor/object/creature/projectile/UI/title rendering, palette/texture/model handling, and deterministic fallback paths for unsupported 3D assets
 - ❌ Phase 5 — Mechanics parity: implement Nexus movement, click/input routes, item interactions, doors, pits, teleporters, triggers, champion state, inventory, spells, combat, creature AI, drops, and sounds only after source/provenance evidence is locked
 - ❌ Phase 6 — Save/import compatibility: support Nexus save/load and champion/world persistence where format evidence is available, with explicit diagnostics for unknown or unsupported save variants
