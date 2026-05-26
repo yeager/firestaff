@@ -10,6 +10,7 @@
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"
+#include "render_sdl_m11.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -117,10 +118,10 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {_("Integer Scaling"),     _("On"),           1, M12_SETTINGS_TAB_GRAPHICS},
     {_("Viewport Style"),      _("Original"),     1, M12_SETTINGS_TAB_GRAPHICS},
     {_("Palette Mode"),        _("Original VGA"), 1, M12_SETTINGS_TAB_GRAPHICS},
-    {"CRT Filter",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
-    {"Palette Correction",  "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
-    {"Dither Cleanup",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
-    {"Sharpening",          "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"CRT Filter",          "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Palette Correction",  "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Dither Cleanup",      "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
+    {"Sharpening",          "Off",          1, M12_SETTINGS_TAB_GRAPHICS},   /* V2.0 */
     {"AI Upscale (10x)",    "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
     {"Smooth Movement",     "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
     {"Smooth Turning",      "Off",          0, M12_SETTINGS_TAB_GRAPHICS},   /* V2.1 */
@@ -1155,6 +1156,16 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
         state->gameOptions[gi].resolution = config.gameResolution[gi];
         m12_clamp_game_options(&state->gameOptions[gi]);
     }
+    /* Push DM1 V2.0 filter chain to the SDL renderer (no-op when V1). */
+    M11_Render_SetV2Filters(config.dm1V2CrtScanlinesEnabled,
+                            config.dm1V2CrtScanlineStrength,
+                            config.dm1V2PaletteCorrectionEnabled,
+                            config.dm1V2PaletteGamma,
+                            config.dm1V2PaletteBrightness,
+                            config.dm1V2PaletteContrast,
+                            config.dm1V2DitherCleanupEnabled,
+                            config.dm1V2SharpeningEnabled,
+                            config.dm1V2SharpeningStrength);
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);
