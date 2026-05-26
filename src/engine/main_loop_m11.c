@@ -1427,6 +1427,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         snprintf(savePath, sizeof(savePath),
                                 "firestaff-%s-dm1save.sav", sid);
                         struct DM1SaveHeader saveHeader;
+                        F0883_WORLD_Free_Compat(&gameView->world);
                         int usedBackup = 0;
                         int loadResult = DM1_LoadGameWithBackup(savePath,
                                                                &gameView->world,
@@ -1435,6 +1436,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         if (loadResult == DM1_SAVE_OK) {
                             fprintf(stderr, "LOAD: loaded from %s%s\n",
                                     savePath, usedBackup ? " (backup)" : "");
+                            memset(&gameView->lastTickResult, 0,
+                                   sizeof(gameView->lastTickResult));
+                            (void)F0891_ORCH_WorldHash_Compat(
+                                &gameView->world, &gameView->lastWorldHash);
+                            {
+                                unsigned int cell = (unsigned int)
+                                    (gameView->world.party.mapX * 32 +
+                                     gameView->world.party.mapY);
+                                if (cell < 1024U) {
+                                    gameView->exploredBits[cell / 32U] |=
+                                        (1U << (cell % 32U));
+                                }
+                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
                             fprintf(stderr, "LOAD FAILED: no save found at %s\n",
@@ -1676,6 +1690,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         snprintf(savePath, sizeof(savePath),
                                 "firestaff-%s-dm1save.sav", sid);
                         struct DM1SaveHeader saveHeader;
+                        F0883_WORLD_Free_Compat(&gameView->world);
                         int usedBackup = 0;
                         int loadResult = DM1_LoadGameWithBackup(savePath,
                                                                &gameView->world,
@@ -1684,6 +1699,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         if (loadResult == DM1_SAVE_OK) {
                             fprintf(stderr, "LOAD: loaded from %s%s\n",
                                     savePath, usedBackup ? " (backup)" : "");
+                            memset(&gameView->lastTickResult, 0,
+                                   sizeof(gameView->lastTickResult));
+                            (void)F0891_ORCH_WorldHash_Compat(
+                                &gameView->world, &gameView->lastWorldHash);
+                            {
+                                unsigned int cell = (unsigned int)
+                                    (gameView->world.party.mapX * 32 +
+                                     gameView->world.party.mapY);
+                                if (cell < 1024U) {
+                                    gameView->exploredBits[cell / 32U] |=
+                                        (1U << (cell % 32U));
+                                }
+                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
                             fprintf(stderr, "LOAD FAILED: no save found at %s\n",
