@@ -33,7 +33,7 @@ validating game data files. Called during startup to scan for original files.
 | Version ID | Label | Required Files |
 |---|---|---|
 | nexus-saturn-jp | Saturn JP extracted | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
-| nexus1 | Nexus original Saturn JP | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
+| nexus | Nexus original Saturn JP | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
 | nexus2 | Nexus V2 upscaled | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
 
 ### Scan Search Roots

@@ -7,7 +7,7 @@
 | Entry | Hash (MD5) | File | Verified |
 |-------|------------|------|----------|
 | nexus-saturn-jp (extracted) | e88d60859f65f08fa622e1992b02280f | DM.BIN | ✅ YES |
-| nexus1 (original) | 96e511c8d36ccbe30a48ba36c59df194 | DM.BIN | ❓ TBD |
+| nexus (original) | 96e511c8d36ccbe30a48ba36c59df194 | DM.BIN | ❓ TBD |
 
 ## Key File Hashes (MD5 + SHA256)
 
@@ -54,7 +54,7 @@ Total: 138 files
 
 ## Notes
 
-- "nexus1" hash 96e511c8d36ccbe30a48ba36c59df194 refers to a second
+- "nexus" hash 96e511c8d36ccbe30a48ba36c59df194 refers to a second
   DM.BIN variant not present in current extracted set.
 - Full 138-file manifest with all MD5/SHA256: parity-evidence/nexus/file_manifest.json
 - Phase 0 status: COMPLETE for extracted-file provenance

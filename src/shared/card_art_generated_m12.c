@@ -21611,7 +21611,7 @@ static const unsigned char g_dm2_card_art_rgb[129600] = {
     40, 36, 29, 30, 30, 26, 11, 10, 10, 3, 7, 11, 8, 10, 14, 2, 4, 8,
 };
 
-static const unsigned char g_nexus1_card_art_rgb[129600] = {
+static const unsigned char g_nexus_card_art_rgb[129600] = {
     8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24,
     8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24,
     8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24, 8, 10, 24,
@@ -28818,7 +28818,7 @@ static const M12_GeneratedCardArt g_generatedCardArt[] = {
     {"dm1", 180, 240, g_dm1_card_art_rgb},
     {"csb", 180, 240, g_csb_card_art_rgb},
     {"dm2", 180, 240, g_dm2_card_art_rgb},
-    {"nexus1", 180, 240, g_nexus1_card_art_rgb},
+    {"nexus", 180, 240, g_nexus_card_art_rgb},
 };
 
 const M12_GeneratedCardArt* M12_GeneratedCardArt_Find(const char* gameId) {

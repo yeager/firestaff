@@ -1028,21 +1028,21 @@ const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int idx);
 
 ---
 
-## 9. Save Format — `saves/nexus1/*.fssv`
+## 9. Save Format — `saves/nexus/*.fssv`
 
 ### 9.1 Save Namespace
 
 **Source:** `src/nexus/nexus_v1_save_load.c`, `src/engine/firestaff_save.c`
 
-Saves namespaced under `saves/nexus1/`:
+Saves namespaced under `saves/nexus/`:
 ```
-saves/nexus1/slot0.fssv  (Firestaff Save Format)
-saves/nexus1/slot1.fssv
+saves/nexus/slot0.fssv  (Firestaff Save Format)
+saves/nexus/slot1.fssv
 ...
-saves/nexus1/slot9.fssv  (max 10 slots)
+saves/nexus/slot9.fssv  (max 10 slots)
 ```
 
-Namespace is **`nexus1`** (not `nexus`), matching `FS_GameId` string.
+Namespace is **`nexus`** (not `nexus`), matching `FS_GameId` string.
 
 ### 9.2 Save Structure
 

@@ -329,7 +329,7 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
     }
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
      * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
-     * Lock presentation mode if attempting a non-V1 mode for nexus1.
+     * Lock presentation mode if attempting a non-V1 mode for nexus.
      * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
     /* (presentation mode enforcement for non-Nexus games handled by caller) */
 }
@@ -360,7 +360,7 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = _("DUNGEON MASTER"), .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("CHAOS STRIKES BACK"), .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("DUNGEON MASTER II"), .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
     {.title = _("THERON'S QUEST"), .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("MUSEUM OF LORE"), .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
@@ -1609,7 +1609,7 @@ static int m12_game_slot_from_id(const char* gameId) {
     if (strcmp(gameId, "dm2") == 0) {
         return 2;
     }
-    if (strcmp(gameId, "nexus1") == 0) {
+    if (strcmp(gameId, "nexus") == 0) {
         return 3;
     }
     if (strcmp(gameId, "theron") == 0) {
@@ -1624,12 +1624,12 @@ static int m12_game_supported(const char* gameId) {
     return (strcmp(gameId, "dm1") == 0 ||
             strcmp(gameId, "csb") == 0 ||
             strcmp(gameId, "dm2") == 0 ||
-            strcmp(gameId, "nexus1") == 0 ||
+            strcmp(gameId, "nexus") == 0 ||
             strcmp(gameId, "theron") == 0);
 }
 
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus", "theron"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return 1;
     }
@@ -1651,7 +1651,7 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
 
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus", "theron"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return NULL;
     }
@@ -2096,7 +2096,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         /* Auto-select first matched version if available */
                         int found_match = 0;
                         {
-                            static const char* const gids[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
+                            static const char* const gids[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus", "theron"};
                             size_t vc = M12_AssetStatus_GetVersionCount(gids[gi]);
                             for (size_t vi = 0; vi < vc; vi++) {
                                 const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
@@ -2829,7 +2829,7 @@ static unsigned char m12_game_card_fill(const char* gameId) {
     if (gameId && strcmp(gameId, "dm2") == 0) {
         return M12_COLOR_GREEN;
     }
-    if (gameId && strcmp(gameId, "nexus1") == 0) {
+    if (gameId && strcmp(gameId, "nexus") == 0) {
         return M12_COLOR_MAGENTA;
     }
     if (gameId && strcmp(gameId, "theron") == 0) {
@@ -2854,7 +2854,7 @@ static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
     if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
         return "DM2";
     }
-    if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
+    if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
         return "NEXUS";
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
@@ -2886,7 +2886,7 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
         return _("SETTINGS");
     }
     version = m12_selected_version_status(state, gameIndex);
-    if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
+    if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
         return _("AVAILABLE");
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
@@ -3469,7 +3469,7 @@ static const char *g_game_select_tags_ready[] = {
     _("V1 / V2.0 / V2.1 / V2.2"),
     _("V1 / V2"),
     _("V1 / V2"),
-    _("V1 Only (Phase 1)"),    /* nexus1 — V2 not yet available */
+    _("V1 Only (Phase 1)"),    /* nexus — V2 not yet available */
     _("V1 Only (Phase 1)")      /* theron — Track 02 provenance gate passed */
 };
 static const char *g_game_select_tags_missing[] = {
@@ -5962,10 +5962,10 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
                    state->entries[state->activatedIndex].available &&
                    version && version->matched ? 1 : 0;
     /* Nexus Phase 1 gate: only V1.ORIGINAL is supported.
-     * Block V2.0/V2.1/V2.2 for nexus1 until those render paths are implemented.
+     * Block V2.0/V2.1/V2.2 for nexus until those render paths are implemented.
      * Ref: ReDMCSB COMMAND.C F0359.
      * Diagnosed in: docs/source-lock/nexus_v1_phase1_boot_H2318.md */
-    if (intent.valid && strcmp(intent.gameId, "nexus1") == 0) {
+    if (intent.valid && strcmp(intent.gameId, "nexus") == 0) {
         if (intent.presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
             intent.valid = 0;
         }

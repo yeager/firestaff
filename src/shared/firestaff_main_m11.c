@@ -35,7 +35,7 @@ static void usage(const char* prog) {
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
-            "  --game <id>         Pre-select game: dm1, csb, dm2, nexus1, theron\n"
+            "  --game <id>         Pre-select game: dm1, csb, dm2, nexus, theron\n"
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);

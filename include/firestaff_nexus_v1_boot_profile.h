@@ -17,8 +17,8 @@
  * Reference: ReDMCSB COMMAND.C / ENTRANCE.C; Greatstone DM Nexus map data;
  *            Sega Saturn developer documentation
  *
- * Game ID for this profile: "nexus1"
- * Saturn assets live under: FIRESTAFF_DATA/nexus1/ or
+ * Game ID for this profile: "nexus"
+ * Saturn assets live under: FIRESTAFF_DATA/nexus/ or
  *                           FIRESTAFF_DATA/<saturn-cd-hash>/
  */
 
@@ -29,14 +29,14 @@ extern "C" {
 #endif
 
 /* ── Game identifier ─────────────────────────────────────────────── */
-#define NEXUS_V1_GAME_ID          "nexus1"
+#define NEXUS_V1_GAME_ID          "nexus"
 #define NEXUS_V1_GAME_LABEL       "DUNGEON MASTER NEXUS"
 #define NEXUS_V1_PLATFORM_LABEL   "SEGA SATURN"
 
 /* ── Config directory root ─────────────────────────────────────────── */
-#define NEXUS_V1_CONFIG_DIR       "firestaff/nexus1"
-#define NEXUS_V1_SAVE_SUB_DIR     "saves/nexus1"
-#define NEXUS_V1_USER_DATA_SUB_DIR "userdata/nexus1"
+#define NEXUS_V1_CONFIG_DIR       "firestaff/nexus"
+#define NEXUS_V1_SAVE_SUB_DIR     "saves/nexus"
+#define NEXUS_V1_USER_DATA_SUB_DIR "userdata/nexus"
 
 /* ── Deterministic tick rate for V1 engine ─────────────────────────── */
 /*
@@ -147,24 +147,24 @@ typedef struct {
     unsigned int runtimeFlags;
 
     /* dataDir:
-     *   Root path for nexus1 game assets. When USE_SATURN_CD is
+     *   Root path for nexus game assets. When USE_SATURN_CD is
      *   active, this directory must contain a DM.BIN or a
      *   SATURNDAT/ directory with extracted CD image contents.
-     *   Defaults to $FIRESTAFF_DATA/nexus1/ or ~/.firestaff/data/nexus1/
+     *   Defaults to $FIRESTAFF_DATA/nexus/ or ~/.firestaff/data/nexus/
      */
     const char *dataDir;
 
     /* saveDir:
      *   Directory for Nexus savegames. Saved to
-     *   $saveDir/nexus1/slot_N.fssv
-     *   Defaults to $FIRESTAFF_SAVES/nexus1/
+     *   $saveDir/nexus/slot_N.fssv
+     *   Defaults to $FIRESTAFF_SAVES/nexus/
      */
     const char *saveDir;
 
     /* configPath:
      *   Per-game config file for Nexus (graphics mode, audio settings,
      *   Saturn-specific display output). Path is game-namespaced.
-     *   Defaults to $FIRESTAFF_CONFIG/nexus1/firestaff.ini
+     *   Defaults to $FIRESTAFF_CONFIG/nexus/firestaff.ini
      */
     const char *configPath;
 

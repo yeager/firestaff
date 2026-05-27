@@ -111,7 +111,7 @@ firestaff [options]
   --scale-mode <n>    Graphics mode: 1=V1 (original), 2=V2.1 (enhanced), 3=V2.2 (modern)
   --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc
   --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var or system location)
-  --game <id>         Pre-select game: dm1, csb, dm2, nexus1, theron
+  --game <id>         Pre-select game: dm1, csb, dm2, nexus, theron
   --fullscreen        Run in fullscreen mode
   --no-vsync          Disable vertical sync
   --fps               Show FPS counter
