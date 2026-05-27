@@ -9,7 +9,7 @@ This gate locks the ReDMCSB draw contract for the inventory eye-panel champion s
 - PASS `PANEL.C:F0351 draws the empty panel then statistic text runs` - PANEL.C:2013-2108
 - PASS `DEFS.H statistic and zone ids` - DEFS.H:743-754,3919-3927
 - PASS `COORD.C text metrics and one-pixel zone margin` - COORD.C:1753-1758,2434-2448
-- PASS `Greatstone PC 3.4 data index` - /home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html
+- PASS `Greatstone PC 3.4 data index` - <greatstone-atlas>/raw/greatstone.free.fr__dm__g_dm.html.html
 - PASS `Original PC34 canonical GRAPHICS.DAT` - _canonical/dm1/GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - PASS `Original PC34 canonical DUNGEON.DAT` - _canonical/dm1/DUNGEON.DAT sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 
