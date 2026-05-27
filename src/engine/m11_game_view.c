@@ -7524,21 +7524,27 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             &space,
             &zoneId);
         (void)space;
-        switch (command) {
-            case 1:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_LEFT);
-            case 2:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_RIGHT);
-            case 3:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_UP);
-            case 4:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_RIGHT);
-            case 5:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_DOWN);
-            case 6:
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_LEFT);
-            default:
-                break;
+        /* ReDMCSB COMMAND.C G0448: C068/C070/C069/C073/C072/C071 →
+         * commands 1/3/2/6/5/4. Commands 1/2 are absolute turn;
+         * commands 3/5 are direction-aware forward/back;
+         * commands 4/6 are absolute strafe. Route directly to the
+         * matching M12_MENU_INPUT_* so keyboard and mouse share the
+         * same switch-case pipeline (m11_apply_dm1_v1_pipeline_tick
+         * or m11_apply_tick). */
+        if (command >= 1 && command <= 6) {
+            M12_MenuInput arrowInput;
+            switch (command) {
+                case 1: arrowInput = M12_MENU_INPUT_LEFT;         break;
+                case 2: arrowInput = M12_MENU_INPUT_RIGHT;        break;
+                case 3: arrowInput = M12_MENU_INPUT_UP;           break;
+                case 5: arrowInput = M12_MENU_INPUT_DOWN;         break;
+                case 4: arrowInput = M12_MENU_INPUT_STRAFE_RIGHT;  break;
+                case 6: arrowInput = M12_MENU_INPUT_STRAFE_LEFT;   break;
+                default: arrowInput = M12_MENU_INPUT_NONE;        break;
+            }
+            if (arrowInput != M12_MENU_INPUT_NONE) {
+                return M11_GameView_HandleInput(state, (int)arrowInput);
+            }
         }
     }
 
