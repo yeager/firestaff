@@ -202,6 +202,27 @@ int  csb_v1_character_import_dm1_buffer(CSB_V1_PartyState *party,
 void csb_v1_character_init_default(CSB_V1_PartyState *party);
 void csb_v1_champion_init(CSB_V1_Champion *c);
 
+/* DM1 save format offsets — for DM1→CSB champion import (CEDTINC7.C).
+ * These describe the on-disk layout of a DM1 save champion record.
+ * Header:  [0] champ_count (1 byte, 0–4), [1..9] unused, [10..13] game tick.
+ * Champion record: 116 bytes each, starting at offset 24. */
+#define CSB_V1_DM1_CHAMP_OFF_NAME       0  /* 8 bytes, null-padded */
+#define CSB_V1_DM1_CHAMP_OFF_HEALTH      8  /* 2 bytes LE: current health */
+#define CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH 10  /* 2 bytes LE: max health */
+#define CSB_V1_DM1_CHAMP_OFF_STAMINA    12  /* 2 bytes LE: current stamina */
+#define CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA 14 /* 2 bytes LE: max stamina */
+#define CSB_V1_DM1_CHAMP_OFF_MANA       16  /* 2 bytes LE: current mana */
+#define CSB_V1_DM1_CHAMP_OFF_MAX_MANA   18  /* 2 bytes LE: max mana */
+#define CSB_V1_DM1_CHAMP_OFF_STR        20  /* uint8_t */
+#define CSB_V1_DM1_CHAMP_OFF_DEX        21  /* uint8_t */
+#define CSB_V1_DM1_CHAMP_OFF_WIS        22  /* uint8_t */
+#define CSB_V1_DM1_CHAMP_OFF_VIT        23  /* uint8_t */
+#define CSB_V1_DM1_CHAMP_OFF_SKILLS     24  /* 16 bytes: skill values */
+#define CSB_V1_DM1_CHAMP_OFF_EQUIP      40  /* 30×2 bytes: slot THING values */
+#define CSB_V1_DM1_CHAMP_SIZE           116 /* bytes per champion record */
+#define CSB_V1_DM1_HDR_CHAMP_COUNT       0  /* uint8_t: number of champions */
+#define CSB_V1_DM1_HDR_CHAMPION_START   24 /* first champion record offset */
+
 /* Reincarnation and resurrection
  * Resurrect: restores dead champion to life, stats unchanged
  * Reincarnate: restores dead champion, halves HP/Mana/Stamina,
