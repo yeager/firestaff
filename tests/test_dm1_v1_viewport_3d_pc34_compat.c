@@ -5,6 +5,7 @@
 #include <string.h>
 
 static int g_failures = 0;
+extern const uint8_t *g_dm1_wall_frame_bitmaps;
 
 static void check_int(const char *id, int got, int want)
 {
@@ -408,6 +409,25 @@ static void test_parity_flip_restore(void)
     dm1_viewport_3d_draw_frame(&state, 0, 2, 0);
     check_int("F0128.parity.false", state.parity_flip, 0);
     check_int("F0128.native.wall_stable", memcmp(state.wall_set, native, sizeof(native)) == 0, 1);
+}
+
+static void test_wall_frame_bitmap_global_null_guard(void)
+{
+    unsigned char viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    unsigned char expected[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    DM1_Viewport3DState state;
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(expected, 0x5a, sizeof(expected));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+
+    check_int("g_dm1_wall_frame_bitmaps.default_null", g_dm1_wall_frame_bitmaps == NULL, 1);
+
+    dm1_viewport_3d_draw_frame(&state, 0, 2, 0);
+    check_int("g_dm1_wall_frame_bitmaps.null_guard_no_viewport_write",
+              memcmp(viewport, expected, sizeof(viewport)) == 0, 1);
+    check_int("g_dm1_wall_frame_bitmaps.null_guard_parity_still_updates", state.parity_flip, 0);
 }
 
 static void test_floor_ceiling_bands_and_zones(void)
@@ -1166,6 +1186,7 @@ int main(void)
     test_floor_field_stairs_pit_teleporter_order();
     test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
+    test_wall_frame_bitmap_global_null_guard();
     test_floor_ceiling_bands_and_zones();
     test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();

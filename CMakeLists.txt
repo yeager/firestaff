@@ -3082,6 +3082,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass611_dm1_v1_d4_far_object_draw_order_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
+# -- DM1 V1 wall-frame bitmap global guard/source-lock gate --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass628_dm1_v1_wall_frame_bitmap_global_gate
+        COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py
+    )
+    set_tests_properties(pass628_dm1_v1_wall_frame_bitmap_global_gate PROPERTIES TIMEOUT 75)
+endif()
+
 # -- DM1 V1 D0/D1 visible-square draw-order source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
