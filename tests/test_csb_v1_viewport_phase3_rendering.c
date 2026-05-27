@@ -182,6 +182,57 @@ static void test_csb_frame_and_zone_contracts(void)
     }
 }
 
+static void test_csb_wall_ornament_route_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int zone;
+        int draws_wall_ornament;
+        int ornament_slot;
+        int view_wall_index;
+        const char *function_name;
+        const char *source_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, DM1_PC34_ZONE_WALL_D3L2, 1, 1, 0, "F0676_DrawD3L2", "6254-6263" },
+        { DM1_VIEW_SQUARE_D3R2, DM1_PC34_ZONE_WALL_D3R2, 1, 3, 1, "F0677_DrawD3R2", "6321-6330" },
+        { DM1_VIEW_SQUARE_D2L2, DM1_PC34_ZONE_WALL_D2L2, 0, -1, -1, "F0678_DrawD2L2", "6848-6865" },
+        { DM1_VIEW_SQUARE_D2R2, DM1_PC34_ZONE_WALL_D2R2, 0, -1, -1, "F0679_DrawD2R2", "6877-6896" },
+    };
+
+    check_int("csb.ornament_route.count",
+              (int)csb_v1_viewport_wall_ornament_route_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportWallOrnamentRouteSpec *spec =
+            csb_v1_viewport_get_wall_ornament_route_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.present", i);
+        check_true(id, spec != NULL);
+        if (!spec) continue;
+
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.zone", i);
+        check_int(id, spec->wall_zone, expected[i].zone);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.draws", i);
+        check_int(id, spec->draws_wall_ornament, expected[i].draws_wall_ornament);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.slot", i);
+        check_int(id, spec->ornament_ordinal_slot, expected[i].ornament_slot);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.view_wall", i);
+        check_int(id, spec->view_wall_index, expected[i].view_wall_index);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.ornament_route.%zu.source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].source_anchor) != NULL);
+    }
+
+    check_true("csb.ornament_route.out_of_range",
+               csb_v1_viewport_get_wall_ornament_route_spec(4) == NULL);
+    check_true("csb.ornament_route.unknown_square",
+               csb_v1_viewport_get_wall_ornament_route_spec_for_square(999) == NULL);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -191,6 +242,9 @@ static void test_source_evidence(void)
     check_true("evidence.f0678", e && strstr(e, "F0678") != NULL);
     check_true("evidence.f0679", e && strstr(e, "F0679") != NULL);
     check_true("evidence.f0128", e && strstr(e, "F0128") != NULL);
+    check_true("evidence.f0107", e && strstr(e, "F0107") != NULL);
+    check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
+    check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
     check_true("evidence.custom_backgrounds", e && strstr(e, "CustomBackgrounds") != NULL);
 }
 
@@ -200,6 +254,7 @@ int main(void)
     test_null_framebuffer_render_is_noop();
     test_csb_only_draw_order_and_coordinates();
     test_csb_frame_and_zone_contracts();
+    test_csb_wall_ornament_route_contracts();
     test_source_evidence();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
