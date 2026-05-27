@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_CSB_V1_VIEWPORT_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_VIEWPORT_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* CSB V1 Viewport — CSB-specific rendering differences
@@ -36,6 +37,16 @@ typedef struct {
     int dungeon_height;
 } CSB_V1_ViewportConfig;
 
+typedef struct {
+    int view_square;
+    int wall_zone;
+    int draws_wall_ornament;
+    int ornament_ordinal_slot;
+    int view_wall_index;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportWallOrnamentRouteSpec;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -60,6 +71,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                                    int party_dir,
                                    int party_x,
                                    int party_y);
+
+size_t csb_v1_viewport_wall_ornament_route_spec_count(void);
+const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec(size_t index);
+const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec_for_square(int view_square);
 
 const char *csb_v1_viewport_source_evidence(void);
 

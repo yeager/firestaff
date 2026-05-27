@@ -24,6 +24,54 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <string.h>
 
+enum {
+    CSB_V1_ORNAMENT_SLOT_RIGHT = 1, /* M551_RIGHT_WALL_ORNAMENT_ORDINAL */
+    CSB_V1_ORNAMENT_SLOT_LEFT = 3,  /* M553_LEFT_WALL_ORNAMENT_ORDINAL */
+    CSB_V1_VIEW_WALL_D3L2_RIGHT = 0,
+    CSB_V1_VIEW_WALL_D3R2_LEFT = 1,
+    CSB_V1_NO_ORNAMENT_SLOT = -1,
+    CSB_V1_NO_VIEW_WALL = -1
+};
+
+static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        DM1_PC34_ZONE_WALL_D3L2,
+        1,
+        CSB_V1_ORNAMENT_SLOT_RIGHT,
+        CSB_V1_VIEW_WALL_D3L2_RIGHT,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6254-6263 wall panel then F0107(M551_RIGHT_WALL_ORNAMENT_ORDINAL, C00_VIEW_WALL_D3L2_RIGHT); DEFS.H:2696"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        DM1_PC34_ZONE_WALL_D3R2,
+        1,
+        CSB_V1_ORNAMENT_SLOT_LEFT,
+        CSB_V1_VIEW_WALL_D3R2_LEFT,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6321-6330 wall panel then F0107(M553_LEFT_WALL_ORNAMENT_ORDINAL, C01_VIEW_WALL_D3R2_LEFT); DEFS.H:2697"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D2L2,
+        DM1_PC34_ZONE_WALL_D2L2,
+        0,
+        CSB_V1_NO_ORNAMENT_SLOT,
+        CSB_V1_NO_VIEW_WALL,
+        "F0678_DrawD2L2",
+        "DUNVIEW.C:6848-6865 wall case returns without F0107; teleporter field is the only non-wall draw"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D2R2,
+        DM1_PC34_ZONE_WALL_D2R2,
+        0,
+        CSB_V1_NO_ORNAMENT_SLOT,
+        CSB_V1_NO_VIEW_WALL,
+        "F0679_DrawD2R2",
+        "DUNVIEW.C:6877-6896 wall case returns without F0107; teleporter field is the only non-wall draw"
+    },
+};
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     if (!cfg) return;
     memset(cfg, 0, sizeof(*cfg));
@@ -128,15 +176,40 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
 }
 
+size_t csb_v1_viewport_wall_ornament_route_spec_count(void)
+{
+    return sizeof(s_wall_ornament_routes) / sizeof(s_wall_ornament_routes[0]);
+}
+
+const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_wall_ornament_route_spec_count()) return NULL;
+    return &s_wall_ornament_routes[index];
+}
+
+const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_wall_ornament_route_spec_count(); ++i) {
+        if (s_wall_ornament_routes[i].view_square == view_square) {
+            return &s_wall_ornament_routes[i];
+        }
+    }
+    return NULL;
+}
+
 const char *csb_v1_viewport_source_evidence(void) {
     return
         "ReDMCSB WIP20210206 Toolchains/Common/Source/DUNVIEW.C:\n"
         "  6226-6353 F0676/F0677 back-wall D3L2/D3R2 element routing\n"
+        "  6254-6263 F0676 D3L2 wall panel then F0107 right-wall ornament route\n"
+        "  6321-6330 F0677 D3R2 wall panel then F0107 left-wall ornament route\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
+        "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
         "  G3048 WallSetFlipped (lines 277-295)\n"
+        "ReDMCSB DEFS.H:2696-2697 C00_VIEW_WALL_D3L2_RIGHT / C01_VIEW_WALL_D3R2_LEFT\n"
         "CSBWin/Viewport.cpp: 7290 lines viewport rendering\n"
         "CSBWin/Graphics.cpp: 3186 lines asset cache\n"
         "CSBWin/CSBCode.cpp:26 CustomBackgrounds\n"
