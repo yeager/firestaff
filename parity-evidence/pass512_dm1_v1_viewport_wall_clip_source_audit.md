@@ -9,10 +9,10 @@ Status: passed
 - DUNVIEW.C:8446-8542 far_to_near_wall_square_replay
 
 ## Firestaff evidence
-- dm1_v1_viewport_3d_pc34_compat.c:765-818 local_clip_gate_contract
-- dm1_v1_viewport_3d_pc34_compat.c:517-541 local_transparent_wall_rows_use_clip_gate
-- dm1_v1_viewport_3d_pc34_compat.c:551-569 local_opaque_wall_rows_use_clip_gate
-- test_dm1_v1_viewport_3d_pc34_compat.c:876-952 local_clip_tests_cover_source_and_viewport_occlusion
+- dm1_v1_viewport_3d_pc34_compat.c:1159-1205 local_clip_gate_contract
+- dm1_v1_viewport_3d_pc34_compat.c:594-618 local_transparent_wall_rows_use_clip_gate
+- dm1_v1_viewport_3d_pc34_compat.c:628-645 local_opaque_wall_rows_use_clip_gate
+- test_dm1_v1_viewport_3d_pc34_compat.c:965-1022 local_clip_tests_cover_source_and_viewport_occlusion
 
 ## Secondary references
 - $OPENCLAW_DATA/firestaff-greatstone-atlas/index/pages.json greatstone_pc34_context_index
