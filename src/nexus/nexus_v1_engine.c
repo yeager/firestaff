@@ -241,7 +241,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
      * combat, resource drain, and script VM.
      * Source: DM1 CLIKMENU.C:269-323 (step result + cooldown),
      * CLIKMENU.C F0366 (game loop tick). */
-    redraw = nexus_mechanics_tick(&engine->mechanics, engine);
+    redraw = nexus_mechanics_tick(engine->mechanics, engine);
 
     /* Handle pending level change (stairs/chute/pit).
      * Loaded here so the level data is ready for next tick's render.
@@ -290,4 +290,3 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     memset(engine, 0, sizeof(*engine));
     printf("Nexus V1 engine shut down\n");
 }
-

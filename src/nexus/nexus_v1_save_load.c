@@ -38,6 +38,13 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define NEXUS_MKDIR(path) _mkdir(path)
+#else
+#define NEXUS_MKDIR(path) mkdir((path), 0755)
+#endif
+
 /* ── CRC-32 (zlib variant, used by many save formats including ReDMCSB) ── */
 
 static uint32_t crc32_table[256];
@@ -84,11 +91,11 @@ static int make_dirs(const char *path) {
     for (i = 0; i < len; i++) {
         if (tmp[i] == '/' || tmp[i] == '\\') {
             tmp[i] = '\0';
-            mkdir(tmp, 0755);
+            (void)NEXUS_MKDIR(tmp);
             tmp[i] = '/';
         }
     }
-    mkdir(tmp, 0755);
+    (void)NEXUS_MKDIR(tmp);
     return 0;
 }
 
