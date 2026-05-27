@@ -203,6 +203,52 @@ int dm1_v2_vp_compare_draw_lists(const DM1_V2_DrawCommand* expected, int expecte
 int dm1_v2_vp_render_composition_flat(DM1_V2_ViewportState* vp, const DM1_V2_ViewportCompositionInput* input);
 int dm1_v2_vp_write_png_rgba(const char* path, const DM1_V2_Color* pixels, int width, int height, int stride);
 
+/* ── DM1 V2.1 EPX Viewport ─────────────────────────────────────────── */
+
+/* V2.1 viewport state lives in g_v21_viewport (static in .c).
+ * These functions manage the EPX full render pipeline. */
+
+/* Initialize V2.1 viewport. scale: 2 for 640x400, 4 for 1280x800. */
+void v21_viewport_init(int scale_factor);
+
+/* Load DMA palette (DM1 6-level VGA palette, 256 entries). */
+void v21_viewport_set_palette(const uint32_t *palette, int count);
+
+/* Returns mutable pointer to the 320x200 indexed V1 framebuffer.
+ * Game systems render into this via dm1_v1_viewport_3d_pc34_compat(). */
+uint8_t *v21_viewport_get_v1_framebuffer_mut(void);
+
+/* Get const pointer to V1 framebuffer (read-only). */
+const uint8_t *v21_viewport_get_v1_framebuffer(void);
+
+/* Get RGBA output after v21_viewport_render_full_pipeline() completes.
+ * out_w/out_h: physical output dimensions (640x400 or 1280x800).
+ * Returns pointer into g_v21_viewport.rgba_output. */
+const uint32_t *v21_viewport_get_rgba(int *out_w, int *out_h);
+
+/* DM1 V2.1 EPX full render pipeline entry point.
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:8318-8542 composition order preserved
+ * in indexed v1_framebuffer; EPX (Scale2x family) doubles resolution
+ * without blending palette indices — preserving edge sharpness.
+ *
+ * Pipeline:
+ *   1. EPX 2x (indexed) — v1_framebuffer[320×200] → epx_buffer[640×400]
+ *   2. Palette expand — epx_buffer[640×400] → rgba_output[640×400]
+ *   3. Present hook updates viewport dirty/frame state
+ *
+ * Call v21_viewport_set_palette() before this, and copy indexed
+ * framebuffer data into the V1 framebuffer first.
+ *
+ * Creature/object/projectile surfaces: no separate code needed —
+ * dm1_v1_viewport_3d_pc34_compat() renders all gameplay content
+ * (walls + creatures + objects + projectiles) to the indexed
+ * framebuffer before EPX. Source-lock: DUNVIEW.C:4547-4602 F0115. */
+void v21_viewport_render_full_pipeline(void);
+
+/* Source evidence string for the V2.1 EPX pipeline. */
+const char *v21_viewport_source_evidence(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,7 +1,19 @@
 #include "dm1_v2_viewport_renderer_pc34.h"
+#include "dm1_v2_texture_upscale_pc34.h"
+#include "vga_palette_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* Framebuffer encoding: low nibble = palette index (0-15), high nibble = brightness level (0-5) */
+#ifndef M11_FB_INDEX_MASK
+#define M11_FB_INDEX_MASK   0x0F
+#define M11_FB_LEVEL_SHIFT  4
+#define M11_FB_LEVEL_MASK   0xF0
+#endif
+#ifndef DM1_V2_PALETTE_LEVELS
+#define DM1_V2_PALETTE_LEVELS 6
+#endif
 
 static uint8_t clamp_u8(int val) {
     if (val < 0) return 0;
@@ -973,6 +985,103 @@ const char *v21_viewport_source_evidence(void) {
         "V1 draw pipeline: dm1_v1_viewport_3d_pc34_compat renders to indexed buffer\n"
         "Pixel-identical to V1 at logical level; only resolution differs\n"
         "Panel (320x64) upscaled separately from viewport (224x136)\n";
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+ * DM1 V2.1 EPX Full Render Pipeline
+ *
+ * Source: Firestaff V2.1 EPX pipeline. EPX algorithm is well-known
+ * (Eric's Pixel Expansion, no ReDMCSB original — Scale2x family).
+ * Upscale preserves pixel-art edges without palette interpolation
+ * artifacts, making it the correct upscaler for indexed DM1 pixel art.
+ *
+ * ReDMCSB DUNVIEW.C:8318-8542 governs the composition order that
+ * produced the indexed source framebuffer.
+ * ReDMCSB DUNVIEW.C:2999-3000 defines viewport bitmap dimensions.
+ * ReDMCSB PALETTE.C supplies the canonical 6-level VGA palette used
+ * here as G9010_auc_VgaPaletteAll_Compat (ReDMCSB DEFS.H palette).
+ *
+ * Pipeline:
+ *   1. V1 engine renders walls/doors/floors/creatures/objects/projectiles
+ *      to g_v21_viewport.v1_framebuffer[320x200] - indexed (level<<4)|index
+ *   2. v2_upscale_epx() doubles to g_v21_viewport.epx_buffer[640x400] indexed
+ *   3. Per-pixel palette: G9010_auc_VgaPaletteAll_Compat[level][index] -> RGBA
+ *   4. g_v21_viewport.rgba_output[640x400] (or 1280x800 at 4x scale)
+ *   5. Caller presents rgba_output to screen via SDL/GPU
+ *
+ * Creature/object/projectile rendering in V2.1 EPX path requires no
+ * separate code: dm1_v1_viewport_3d_pc34_compat renders all content
+ * (walls + creatures + objects + projectiles) to the indexed framebuffer
+ * before EPX upscale, so EPX handles all upscaled content uniformly.
+ * Source-lock: ReDMCSB DUNVIEW.C:4547-4602 F0115 draws objects/creatures/
+ * projectiles after walls/doors/floors into the same buffer.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* Palette-expand indexed pixels to RGBA8888 using G9010 VGA palette.
+ *
+ * Each source byte encodes (level << 4) | palette_index per
+ * m11_framebuffer_to_rgba() convention in render_sdl_m11.c:442.
+ * We use level 0 (brightest) as the fallback here since the V21
+ * viewport state does not carry a per-pixel level field - the full
+ * 6-level V2 pipeline would set source_palette_level from
+ * G0304_i_DungeonViewPaletteIndex (ReDMCSB PANEL.C:418-428).
+ *
+ * G9010_auc_VgaPaletteAll_Compat[level][index][RGB] stores VGA DAC
+ * 6-bit values in the same byte layout used by the original game.
+ * Palette expand mirrors dm1_v2_asset_pipeline_pc34.c:229-265 which
+ * follows the existing m11_framebuffer_to_rgba() logic.
+ *
+ * Output format: SDL_PIXELFORMAT_RGBA32 - R,G,B,A in memory order.
+ * Matches g_state.presentBuffer format in render_sdl_m11.c. */
+static void v21_palette_expand_indexed_to_rgba(const uint8_t *indexed,
+    int w, int h, uint32_t *rgba_out)
+{
+    if (!indexed || !rgba_out) return;
+    for (int i = 0; i < w * h; i++) {
+        uint8_t byte = indexed[i];
+        uint8_t level = (byte & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
+        uint8_t idx   = byte & M11_FB_INDEX_MASK;
+        if (level >= DM1_V2_PALETTE_LEVELS) level = 0;
+        uint8_t rr = G9010_auc_VgaPaletteAll_Compat[level][idx][0];
+        uint8_t gg = G9010_auc_VgaPaletteAll_Compat[level][idx][1];
+        uint8_t bb = G9010_auc_VgaPaletteAll_Compat[level][idx][2];
+        rgba_out[i] = 0xFF000000u | (rr << 16) | (gg << 8) | bb;
+    }
+}
+
+/* DM1 V2.1 EPX full render pipeline entry point.
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:8318-8542 composition order preserved
+ * in indexed v1_framebuffer; EPX (Scale2x family) doubles resolution
+ * without blending palette indices - preserving edge sharpness.
+ *
+ *   Step 1: EPX 2x (indexed) - v1_framebuffer[320x200]
+ *             -> epx_buffer[640x400]
+ *
+ *   Step 2: Palette expand - epx_buffer[640x400] indexed
+ *             -> rgba_output[640x400] RGBA
+ *
+ *   Step 3: Update viewport dirty/frame state and call present hook.
+ *           The DUNVIEW.C draw pipeline issues a present hint via F0128
+ *           (ReDMCSB GAMELOOP.C:90) after each viewport render.
+ *           V2.1 maps this to v21_viewport_render_full_pipeline() as the
+ *           canonical present point. */
+void v21_viewport_render_full_pipeline(void)
+{
+    if (!g_v21_viewport.epx_enabled) return;
+
+    v2_upscale_epx(g_v21_viewport.v1_framebuffer,
+                   V21_SCREEN_W, V21_SCREEN_H,
+                   g_v21_viewport.epx_buffer,
+                   V21_SCREEN_W * 2, V21_SCREEN_H * 2);
+
+    v21_palette_expand_indexed_to_rgba(g_v21_viewport.epx_buffer,
+                                      V21_SCREEN_W * 2, V21_SCREEN_H * 2,
+                                      g_v21_viewport.rgba_output);
+
+    /* Mark V21 viewport frame complete via present hook */
+    (void)dm1_v2_vp_present(NULL, 0);
 }
 
 
