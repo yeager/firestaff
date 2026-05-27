@@ -1,0 +1,60 @@
+# Nexus V1 Provenance Gate — Canonical Hashes
+# Computed 2026-05-27 from ~/.firestaff/data/nexus/ (138 files)
+# Primary version catalog: src/shared/asset_status_m12.c (g_nexusVersions[])
+
+## Version Catalog — Verified
+
+| Entry | Hash (MD5) | File | Verified |
+|-------|------------|------|----------|
+| nexus-saturn-jp (extracted) | e88d60859f65f08fa622e1992b02280f | DM.BIN | ✅ YES |
+| nexus1 (original) | 96e511c8d36ccbe30a48ba36c59df194 | DM.BIN | ❓ TBD |
+
+## Key File Hashes (MD5 + SHA256)
+
+DM.BIN (555144 bytes):
+  MD5:    e88d60859f65f08fa622e1992b02280f
+  SHA256: 3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124
+
+LEV00.DGN (147456 bytes):
+  MD5:    603ec9c531a92539babdda84ab09e78e
+  SHA256: 24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a
+
+FONT256.S2D (25012 bytes):
+  MD5:    427735a9997e4324815867105788bf49
+  SHA256: b820d606b4de4fbaa21d4e32f1df56b4cce6898939fb04f73cb6f55f4ebd13af
+
+GOLEM.MNS (48140 bytes):
+  MD5:    9cd105a43119faf50537de026a9fd034
+  SHA256: fbdff3ae8ab5834b08076dad5a636ed9b96de7efc45b1655ca151d3ebb33ef43
+
+SCORPION.MNS (53052 bytes):
+  MD5:    3655bfa98a005beabdcdea13058ab18f
+
+## Platform Metadata
+
+Product ID:     T-9111G
+Version:         V1.003
+Release date:    1998-02-03
+Region:          Japan only (JP)
+Volume label:    DUNGEONMASTERNEXUS
+File system:     ISO 9660 Level 2
+Disc:            1 CD-ROM + 8 CD-DA audio tracks
+
+## File Count
+Total: 138 files
+  .DGN (levels):     16
+  .MNS (models):    31 (DMDF format)
+  .SAL + .MAP:       32 (audio)
+  .BIN (game):      15
+  .BIN (scripts):   16
+  .BIN (minimap):   16
+  .AVI (FMV):        3
+  Graphics:          4
+  Other:             5
+
+## Notes
+
+- "nexus1" hash 96e511c8d36ccbe30a48ba36c59df194 refers to a second
+  DM.BIN variant not present in current extracted set.
+- Full 138-file manifest with all MD5/SHA256: parity-evidence/nexus/file_manifest.json
+- Phase 0 status: COMPLETE for extracted-file provenance
