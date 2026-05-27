@@ -34,11 +34,14 @@ int main(void) {
     int changed;
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
-    const int cardH = ((1080 - 130) - 152 - 22) / 2;
+    const int cardH = ((1080 - 130) - 40 - 22) / 2;
     const int dm1CardCenterX = gridLeft + cardW / 2;
-    const int cardCenterY = 152 + cardH / 2;
+    const int cardCenterY = 40 + cardH / 2;
     const int launchCenterX = 960;
-    const int launchCenterY = 270 + 560 - 54 - 24 + 27;
+    const int launchCenterY = 190 + 780 - 54 - 24 + 27;
+    const int originalModeCenterX = 132 + 408;
+    const int customModeCenterX = 132 + 817 + 22 + 408;
+    const int modeChoiceCenterY = 190 + 34 + 78;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
@@ -51,6 +54,15 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "DM1 card direct click should enter game options")) return 1;
     if (!expect(state.activatedIndex == 0, "DM1 direct click should activate DM1")) return 1;
 
+    changed = M12_ModernMenu_HandlePointer(&state, customModeCenterX, modeChoiceCenterY, 1, NULL);
+    if (!expect(changed == 1, "Custom mode column should be clickable")) return 1;
+    if (!expect(state.gameOptions[0].presentationModeIndex != M12_PRESENTATION_V1_ORIGINAL,
+                "Custom mode column should switch away from Original")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, originalModeCenterX, modeChoiceCenterY, 1, NULL);
+    if (!expect(changed == 1, "Original mode column should be clickable")) return 1;
+    if (!expect(state.gameOptions[0].presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL,
+                "Original mode column should restore original presentation")) return 1;
+
     hit = M12_ModernMenu_HitTest(&state, launchCenterX, launchCenterY);
     if (!expect(hit.kind == M12_HIT_GAMEOPT_LAUNCH, "visible centered V1 Launch button should hit launch action")) return 1;
 
@@ -62,7 +74,7 @@ int main(void) {
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     {
         const int settingsCenterX = gridLeft + 2 * (cardW + 22) + cardW / 2;
-        const int settingsCenterY = 152 + cardH + 22 + cardH / 2;
+        const int settingsCenterY = 40 + cardH + 22 + cardH / 2;
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 0, NULL);
         if (!expect(changed == 1 && state.selectedIndex == 6, "Firestaff hover should navigate to global settings card")) return 1;
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 1, NULL);

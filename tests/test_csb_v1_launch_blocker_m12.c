@@ -57,11 +57,11 @@ int main(void) {
     int changed;
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
-    const int cardH = ((1080 - 130) - 152 - 22) / 2;
+    const int cardH = ((1080 - 130) - 40 - 22) / 2;
     const int csbCardCenterX = gridLeft + 1 * (cardW + 22) + cardW / 2;
-    const int cardCenterY = 152 + cardH / 2;
+    const int cardCenterY = 40 + cardH / 2;
     const int launchCenterX = 960;
-    const int launchCenterY = 270 + 560 - 54 - 24 + 27;
+    const int launchCenterY = 190 + 780 - 54 - 24 + 27;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
