@@ -140,23 +140,6 @@ const DM1_WallFrame *csb_v1_vp_get_wall_frame(DM1_ViewSquareIndex square)
     if (idx >= 0) return &s_csb_near_wall_frames[idx];
     return NULL;
 }
-{
-    switch (sq) {
-        case DM1_VIEW_SQUARE_D3C: return 0;
-        case DM1_VIEW_SQUARE_D3L: return 1;
-        case DM1_VIEW_SQUARE_D3R: return 2;
-        case DM1_VIEW_SQUARE_D2C: return 3;
-        case DM1_VIEW_SQUARE_D2L: return 4;
-        case DM1_VIEW_SQUARE_D2R: return 5;
-        case DM1_VIEW_SQUARE_D1C: return 6;
-        case DM1_VIEW_SQUARE_D1L: return 7;
-        case DM1_VIEW_SQUARE_D1R: return 8;
-        case DM1_VIEW_SQUARE_D0C: return 9;
-        case DM1_VIEW_SQUARE_D0L: return 10;
-        case DM1_VIEW_SQUARE_D0R: return 11;
-        default: return -1;
-    }
-}
 
 /* ReDMCSB DUNVIEW.C F0128 draw sequence, lines 8446-8542.
  * rel_depth/rel_lateral are the F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement

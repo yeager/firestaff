@@ -99,6 +99,10 @@ void nexus_draw_wall(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette);
 
+/* convenience overloads with no texture — flat-shaded wall */
+void nexus_draw_wall_simple(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, int wall_dir, uint8_t color);
+
 /* Floor + ceiling for a passable square (type != 0) */
 void nexus_draw_floor(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z,

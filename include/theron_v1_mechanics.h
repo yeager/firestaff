@@ -61,6 +61,13 @@ extern const int8_t g_theron_dir_dy[THERON_DIR_COUNT];
 #define THERON_TELEPORTER_CHAIN_MAX  100
 
 /* ── Click/command routes ─────────────────────────────────────────── */
+#define THERON_CMD_MOVE     1
+#define THERON_CMD_LOOK     2
+#define THERON_CMD_USE      3
+#define THERON_CMD_TAKE     4
+#define THERON_CMD_ATTACK   5
+#define THERON_CMD_DROP     6
+#define THERON_CMD_EXAMINE  7
 /*
  * theron_v1_click_route — resolve a mouse/touch click at grid (x,y)
  *   world:    IN/OUT game world

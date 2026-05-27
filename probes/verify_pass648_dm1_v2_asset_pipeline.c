@@ -49,7 +49,7 @@ static int check_test(int cond, const char* msg) {
     if (!cond) {
         printf("FAIL: %s\n", msg);
     }
-    return cond ? 0 : 1;
+    return cond ? 1 : 0;
 }
 
 /* ── EPX correctness test ─────────────────────────────────────────── */
@@ -119,7 +119,7 @@ static void test_epx_single_pixel(void) {
             100,100,100,100,
             100,100,100,200,
             100,100,100,200,
-            100,100,100,200
+            100,100,200,200
         };
         /* Pixel (2,2): P=100, A=src[1*4+2]=100, B=src[2*4+3]=200,
          *   C=src[2*4+1]=100, D=src[3*4+2]=200 */

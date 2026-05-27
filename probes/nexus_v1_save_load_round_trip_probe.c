@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
+#include <unistd.h>
 #include "nexus_v1_save.h"
 #include "nexus_v1_world.h"
 #include "nexus_v1_champions.h"
@@ -127,8 +129,9 @@ int main(int argc, char **argv) {
 
     /* ── Save to buffer (synthetic path) ──────────────────────────── */
     printf("\n[Serialize Champion Pool]\n");
-    size_t champ_size = nexus_v1_champion_pool_serialize_size(&world.object_count < 0 ?
-        (Nexus_V1_ChampionPool){0} : (Nexus_V1_ChampionPool){0});
+    Nexus_V1_ChampionPool empty_pool;
+    memset(&empty_pool, 0, sizeof(empty_pool));
+    size_t champ_size = nexus_v1_champion_pool_serialize_size(&empty_pool);
     /* Note: Champion pool is empty in this synthetic world (no champions loaded).
      * Use minimal allocation. */
     uint8_t *champ_buf = (uint8_t *)malloc(champ_size > 0 ? champ_size : 64);
@@ -157,59 +160,29 @@ int main(int argc, char **argv) {
     crc = crc32_update(crc, world_buf, world_written);
     crc = crc32_final(crc);
 
-    /* Build header */
-    uint8_t header[64];
-    memset(header, 0, sizeof(header));
-
-    /* magic = 'FNXS' */
-    header[0] = 'F'; header[1] = 'N'; header[2] = 'X'; header[3] = 'S';
-    /* version = 2 */
-    header[4] = 2; header[5] = 0;
-    /* header_size = 64 */
-    header[6] = 64; header[7] = 0;
-    /* data_size */
-    uint32_t ds = (uint32_t)(champ_written + world_written);
-    header[8]  = (uint8_t)(ds >> 24); header[9]  = (uint8_t)(ds >> 16);
-    header[10] = (uint8_t)(ds >> 8);  header[11] = (uint8_t)(ds & 0xFF);
-    /* champion_data_size */
-    header[12] = (uint8_t)(champ_written >> 24); header[13] = (uint8_t)(champ_written >> 16);
-    header[14] = (uint8_t)(champ_written >> 8);   header[15] = (uint8_t)(champ_written & 0xFF);
-    /* world_data_size */
-    header[16] = (uint8_t)(world_written >> 24); header[17] = (uint8_t)(world_written >> 16);
-    header[18] = (uint8_t)(world_written >> 8);   header[19] = (uint8_t)(world_written & 0xFF);
-    /* game_time = world_tick */
-    uint32_t gt = (uint32_t)world.world_tick;
-    header[20] = (uint8_t)(gt >> 24); header[21] = (uint8_t)(gt >> 16);
-    header[22] = (uint8_t)(gt >> 8);  header[23] = (uint8_t)(gt & 0xFF);
-    /* crc32 */
-    header[24] = (uint8_t)(crc >> 24); header[25] = (uint8_t)(crc >> 16);
-    header[26] = (uint8_t)(crc >> 8);  header[27] = (uint8_t)(crc & 0xFF);
-    /* current_level */
-    header[28] = (uint8_t)(world.party_level >> 24); header[29] = (uint8_t)(world.party_level >> 16);
-    header[30] = (uint8_t)(world.party_level >> 8);   header[31] = (uint8_t)(world.party_level & 0xFF);
-    /* party_x */
-    header[32] = (uint8_t)(world.party_x >> 24); header[33] = (uint8_t)(world.party_x >> 16);
-    header[34] = (uint8_t)(world.party_x >> 8);  header[35] = (uint8_t)(world.party_x & 0xFF);
-    /* party_y */
-    header[36] = (uint8_t)(world.party_y >> 24); header[37] = (uint8_t)(world.party_y >> 16);
-    header[38] = (uint8_t)(world.party_y >> 8);  header[39] = (uint8_t)(world.party_y & 0xFF);
-    /* party_dir */
-    header[40] = (uint8_t)(world.party_dir >> 24); header[41] = (uint8_t)(world.party_dir >> 16);
-    header[42] = (uint8_t)(world.party_dir >> 8);  header[43] = (uint8_t)(world.party_dir & 0xFF);
-    /* state_hash (low 32 bits) */
-    uint32_t sh = (uint32_t)h_before;
-    header[44] = (uint8_t)(sh >> 24); header[45] = (uint8_t)(sh >> 16);
-    header[46] = (uint8_t)(sh >> 8);  header[47] = (uint8_t)(sh & 0xFF);
-    /* description */
+    /* Build header in the native Firestaff format. */
+    Nexus_V1_SaveHeader header;
+    memset(&header, 0, sizeof(header));
+    header.magic = NEXUS_SAVE_MAGIC;
+    header.version = NEXUS_SAVE_VERSION;
+    header.header_size = (uint16_t)sizeof(header);
+    header.data_size = (uint32_t)(champ_written + world_written);
+    header.champion_data_size = (uint32_t)champ_written;
+    header.world_data_size = (uint32_t)world_written;
+    header.game_time = (uint32_t)world.world_tick;
+    header.crc32 = crc;
+    header.current_level = world.party_level;
+    header.party_x = world.party_x;
+    header.party_y = world.party_y;
+    header.party_dir = world.party_dir;
+    header.state_hash = (uint32_t)h_before;
     const char *desc = "Nexus V1 Phase 7 round-trip test";
-    size_t dlen = strlen(desc);
-    if (dlen >= 16) dlen = 15;
-    memcpy(&header[48], desc, dlen);
+    snprintf(header.description, sizeof(header.description), "%s", desc);
 
     /* Write file */
     FILE *f = fopen(tmp_path, "wb");
     if (!f) { printf("  FAIL: cannot open %s for write\n", tmp_path); free(champ_buf); free(world_buf); return 1; }
-    fwrite(header, 1, 64, f);
+    fwrite(&header, 1, sizeof(header), f);
     fwrite(champ_buf, 1, champ_written, f);
     fwrite(world_buf, 1, world_written, f);
     fclose(f);
@@ -222,21 +195,15 @@ int main(int argc, char **argv) {
     printf("\n[Probe Save File Header]\n");
     f = fopen(tmp_path, "rb");
     if (f) {
-        uint8_t hbuf[64];
-        if (fread(hbuf, 64, 1, f) == 1) {
+        Nexus_V1_SaveHeader hbuf;
+        if (fread(&hbuf, sizeof(hbuf), 1, f) == 1) {
             pass += check_pass("magic 'FNXS' at byte 0",
-                                hbuf[0]=='F' && hbuf[1]=='N' && hbuf[2]=='X' && hbuf[3]=='S');
-            pass += check_pass("version = 2",
-                                hbuf[4] == 2 && hbuf[5] == 0);
-            pass += check_pass("header_size = 64",
-                                hbuf[6] == 64 && hbuf[7] == 0);
+                                hbuf.magic == NEXUS_SAVE_MAGIC);
+            pass += check_pass("version = 2", hbuf.version == NEXUS_SAVE_VERSION);
+            pass += check_pass("header_size = 64", hbuf.header_size == sizeof(hbuf));
             /* party position encoded correctly */
-            int32_t px = ((int32_t)hbuf[32] << 24) | ((int32_t)hbuf[33] << 16) |
-                         ((int32_t)hbuf[34] << 8) | hbuf[35];
-            pass += check_pass("party_x = 11", px == 11);
-            int32_t py = ((int32_t)hbuf[36] << 24) | ((int32_t)hbuf[37] << 16) |
-                         ((int32_t)hbuf[38] << 8) | hbuf[39];
-            pass += check_pass("party_y = 29", py == 29);
+            pass += check_pass("party_x = 11", hbuf.party_x == 11);
+            pass += check_pass("party_y = 29", hbuf.party_y == 29);
         }
         fclose(f);
     } else {

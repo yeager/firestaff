@@ -66,16 +66,16 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         if (sq == 0) {
             /* Solid wall — draw front face */
             int wall_face = (pdir + 2) & 3; /* facing toward party */
-            nexus_draw_wall(&vp->fb, &vp->cam, (float)cx, (float)cy, wall_face, 5 + (d % 3));
+            nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, wall_face, 5 + (d % 3));
         } else {
             /* Open square — draw side walls if neighbors are walls */
             if (sq_l == 0) {
                 int side = (pdir + 3) & 3; /* left wall */
-                nexus_draw_wall(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
+                nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
             }
             if (sq_r == 0) {
                 int side = (pdir + 1) & 3; /* right wall */
-                nexus_draw_wall(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
+                nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
             }
         }
     }

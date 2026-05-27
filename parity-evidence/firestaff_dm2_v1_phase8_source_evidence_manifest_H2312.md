@@ -13,7 +13,7 @@ Master source-evidence index for DM2 V1 Phase 8 verification suite. Collects all
 ## Source Paths
 - **SKULL.ASM:** `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source`
 - **skproject:** `unavailable`
-- **docs:** `/Users/bosse/.openclaw/workspace-main/docs`
+- **docs:** `unavailable`
 
 ## Source Files
 ### `firestaff_m11_game_view.c` (M11 engine)

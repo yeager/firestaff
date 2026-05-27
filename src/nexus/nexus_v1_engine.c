@@ -1,5 +1,8 @@
 
 #include "nexus_v1_engine.h"
+#include "nexus_v1_mechanics.h"
+#include "nexus_v1_squares.h"
+#include "nexus_v1_movement.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -82,6 +85,15 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
 
+    /* Init champion pool */
+    nexus_v1_champions_init(&engine->champions);
+
+    /* Init creature manager */
+    nexus_v1_creatures_init(&engine->creatures);
+
+    /* Init sound engine */
+    nexus_sound_init(&engine->audio);
+
     /* Load font */
     {
         int font_size = 0;
@@ -90,6 +102,16 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
             engine->font_loaded = (nexus_v1_font_load(&engine->font, font_data, font_size) > 0);
             free(font_data);
         }
+    }
+
+    /* Allocate and init mechanics state (opaque pointer).
+     * mechanics owns its memory; freed in nexus_v1_shutdown().
+     * Source: DM1 CLIKMENU.C F0366. */
+    engine->mechanics = (Nexus_MechanicsState *)calloc(1, sizeof(Nexus_MechanicsState));
+    if (engine->mechanics) {
+        nexus_mechanics_init(engine->mechanics,
+            engine->game.party_x, engine->game.party_y,
+            engine->game.party_dir);
     }
 
     engine->initialized = 1;
@@ -187,18 +209,79 @@ int nexus_v1_load_model(Nexus_V1_Engine *engine, const char *name) {
     return idx;
 }
 
+/* nexus_v1_engine_level_change — handle pending level transition.
+ * Called by the M11 layer after mechanics_tick signals a level change.
+ * Source: DM1 CLIKMENU.C F0364 — stairs/chute level load. */
+int nexus_v1_engine_level_change(Nexus_V1_Engine *engine, int *out_new_level) {
+    if (!engine || !out_new_level) return -1;
+    *out_new_level = engine->mechanics->pending_level_change;
+    if (engine->mechanics->pending_level_change < 0) return -1;
+    /* Load new level */
+    int r = nexus_v1_load_level(engine, engine->mechanics->pending_level_change);
+    if (r < 0) return r;
+    /* Reset stairs registry for new level */
+    nexus_stairs_init();
+    nexus_teleporters_init();
+    nexus_doors_init();
+    /* Initialize party position for new level */
+    engine->game.party_x = engine->mechanics->party_x;
+    engine->game.party_y = engine->mechanics->party_y;
+    engine->mechanics->map_index = engine->mechanics->pending_level_change;
+    engine->mechanics->pending_level_change = -1;
+    return 0;
+}
+
 void nexus_v1_tick(Nexus_V1_Engine *engine) {
+    int redraw = 0;
+
     if (!engine || !engine->initialized) return;
-    /* Nexus uses same V1 tick rate as DM1 (55ms / 18.2 Hz).
-     * Game logic: movement, combat, creature AI, timer events.
-     * FUTURE: full game logic integration.
-     * DM Nexus uses a different engine from DM1/CSB — Saturn-specific
-     * tile format (DGN/BIN), scripted events, and 3D rendering. */
+
+    /* Nexus uses the same V1 tick rate as DM1 (55ms / 18.2 Hz).
+     * Game logic tick: process input, movement, square events, creature AI,
+     * combat, resource drain, and script VM.
+     * Source: DM1 CLIKMENU.C:269-323 (step result + cooldown),
+     * CLIKMENU.C F0366 (game loop tick). */
+    redraw = nexus_mechanics_tick(&engine->mechanics, engine);
+
+    /* Handle pending level change (stairs/chute/pit).
+     * Loaded here so the level data is ready for next tick's render.
+     * Source: DM1 CLIKMENU.C F0364 — load new dungeon on stairs step. */
+    if (engine->mechanics && engine->mechanics->pending_level_change >= 0) {
+        int new_level = -1;
+        if (nexus_v1_engine_level_change(engine, &new_level) == 0) {
+            printf("Nexus: party moved to level %d\n", new_level);
+        }
+        redraw = 1;
+    }
+
+    /* Handle pending teleport (SDDRVS.TSK or square-triggered).
+     * Teleport target already committed in mechanics state;
+     * sound effect already played in mechanics_tick.
+     * Source: DM1 DUNGEON.C teleporter processing. */
+    if (engine->mechanics && engine->mechanics->pending_teleport) {
+        /* Teleport committed in mechanics_tick — just log it here */
+        printf("Nexus: party teleported to (%d,%d) level %d\n",
+               engine->mechanics->party_x, engine->mechanics->party_y,
+               engine->mechanics->teleport_target_level);
+        redraw = 1;
+    }
+
+    if (redraw && engine->game.game_started) {
+        /* Signal viewport redraw — caller (M11 layer) should call
+         * nexus_v1_viewport_render after this tick returns. */
+    }
+
+    /* Increment game tick counter */
+    engine->game.tick_count++;
+    (void)redraw;
 }
 
 void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     int i;
     if (!engine) return;
+    /* Free mechanics state */
+    free(engine->mechanics);
+    engine->mechanics = NULL;
     for (i = 0; i < engine->model_count; i++)
         nexus_v1_dmdf_free(&engine->models[i]);
     nexus_v1_font_free(&engine->font);

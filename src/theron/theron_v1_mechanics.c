@@ -109,7 +109,7 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
 /* Forward-declare for mutual recursion */
 static int move_party_internal(Theron_V1_World *world, int direction);
 
-int theron_v1_get_move_result(const Theron_V1_World *world, int direction) {
+Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int direction) {
     if (!world) return THERON_MOVE_BLOCKED;
     int dir = normalize_dir(direction);
     int nx = world->party.leader_x + g_theron_dir_dx[dir];

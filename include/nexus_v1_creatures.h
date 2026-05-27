@@ -36,7 +36,21 @@ typedef struct {
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr);
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir);
-void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y);
+void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,
+                              const uint8_t squares[32][32], int map_index);
+
+/* Alert all creatures on a level (e.g. on alarm square trigger).
+ * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
+void nexus_v1_creatures_alert_all(Nexus_V1_CreatureManager *mgr, int level);
+
+/* Manhattan distance between two map positions. */
+int nexus_v1_creature_distance(int ax, int ay, int bx, int by);
+
+/* Creature attacks adjacent party. Returns 1 if attack landed.
+ * damage output set to damage amount dealt.
+ * Source: DM1 CREATURE.C creature attack resolution, F0209 creature AI. */
+int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
+                               int champion_defense, int *out_damage);
 
 #endif
 

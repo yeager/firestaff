@@ -25,8 +25,8 @@ static inline int mini(int a, int b)  { return a < b ? a : b; }
 static inline int maxi(int a, int b)  { return a > b ? a : b; }
 static inline int clampi(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
-static inline float fminf(float a, float b) { return a < b ? a : b; }
-static inline float fmaxf(float a, float b) { return a > b ? a : b; }
+static inline float fminf_local(float a, float b) { return a < b ? a : b; }
+static inline float fmaxf_local(float a, float b) { return a > b ? a : b; }
 
 static inline float fclamp(float v, float lo, float hi) {
     return v < lo ? lo : (v > hi ? hi : v);
@@ -85,14 +85,15 @@ static const Vec3 g_cam_right[4] = {
     { 0, 0,  1}    /* West:  screen right = +Z */
 };
 
-void nexus_cam_init(Nexus_Camera *cam, Vec3 pos, int facing_dir) {
+/* Public camera API — matches nexus_v1_rasterizer.h declarations */
+void nexus_camera_init(Nexus_Camera *cam, Vec3 pos, int facing_dir) {
     if (!cam) return;
     cam->pos = pos;
     cam->dir = g_cam_dir[facing_dir & 3];
     cam->fov = 60.0f;
-    nexus_cam_update(cam);
+    nexus_camera_update(cam);
 }
-void nexus_cam_update(Nexus_Camera *cam) {
+void nexus_camera_update(Nexus_Camera *cam) {
     Vec3 target, up = {0, 1, 0};
     if (!cam) return;
     target = v3_add(cam->pos, cam->dir);
@@ -101,12 +102,6 @@ void nexus_cam_update(Nexus_Camera *cam) {
         (float)NEXUS_FB_W / (float)NEXUS_FB_H, 0.1f, 100.0f);
     cam->view_proj = m4_multiply(cam->proj, cam->view);
 }
-
-/* Compatibility aliases to match header declarations */
-void nexus_camera_init(Nexus_Camera *cam, Vec3 pos, int facing_dir) {
-    nexus_cam_init(cam, pos, facing_dir);
-}
-void nexus_camera_update(Nexus_Camera *cam) { nexus_cam_update(cam); }
 
 /* ── Triangle rasterizer (shared core) ──────────────────────────── */
 
@@ -235,7 +230,11 @@ void nexus_raster_quad_tex(Nexus_Framebuffer *fb,
         tex_data, tex_w, tex_h, tex_palette);
 }
 
-/* ── Wall rendering ─────────────────────────────────────────────────── */
+void nexus_draw_wall_simple(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, int wall_dir, uint8_t color) {
+    nexus_draw_wall(fb, cam, x, z, wall_dir, color,
+        -1, NULL, 0, 0, NULL);
+}
 /* Wall face quad corners per direction.
  * Source-lock: DUNGEON.C F0108 wall quad at grid square (x,z).    */
 static void wall_quad_verts(int wall_dir, float x, float z,

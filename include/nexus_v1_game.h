@@ -9,6 +9,7 @@ typedef struct {
     int current_level;
     int party_x, party_y, party_dir;
     int champion_count;
+    int tick_count;        /* total game ticks since start */
     int game_started;
     const char *data_dir;
 } Nexus_V1_GameState;

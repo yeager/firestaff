@@ -87,6 +87,12 @@ typedef enum {
     THERON_OBJTYPE_KEY          = 8,
     THERON_OBJTYPE_WEAPON       = 9,
     THERON_OBJTYPE_ARMOR        = 10,
+    THERON_OBJTYPE_ALTAR_VI     = 11,   /* altar-of-vi resurrection point */
+    THERON_OBJTYPE_TELEPORTER   = 12,   /* teleporter warp pad */
+    THERON_OBJTYPE_POOL         = 13,   /* water/food recovery pool */
+    THERON_OBJTYPE_ALARM        = 14,   /* alert all creatures */
+    THERON_OBJTYPE_CREATURE_SPAWNER = 15, /* creature generator */
+    THERON_OBJTYPE_TRIGGER      = 16,   /* event trigger */
     THERON_OBJTYPE_QUEST_ITEM   = 128,
 } Theron_V1_ObjectType;
 

@@ -5,6 +5,34 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* ──────────────────────────────────────────────────────────────────
+ * Script VM opcodes — SDDRVS.TSK bytecode for Nexus V1.
+ * These mirror the WHEN-condition / THEN-action opcodes in the
+ * Nexus script engine. Source: docs/nexus_triggers.md.
+ * ────────────────────────────────────────────────────────────────── */
+typedef enum {
+    /* WHEN condition opcodes */
+    NEXUS_OP_NONE             = 0,
+    NEXUS_OP_WHEN_PARTY_ON_XY = 1,   /* party stepped at (x,y,level) */
+    NEXUS_OP_WHEN_CHAMPION_HAS = 2,  /* champion has item            */
+    NEXUS_OP_WHEN_LEVEL_LOADED = 3,  /* level N was loaded           */
+    NEXUS_OP_WHEN_CREATURE_DEAD = 4, /* creature type N died         */
+    NEXUS_OP_WHEN_DOOR_OPEN   = 5,   /* door at (x,y) opened         */
+    NEXUS_OP_WHEN_ITEM_USED   = 6,   /* item N was consumed           */
+    /* THEN action opcodes */
+    NEXUS_OP_TELEPORT         = 10,  /* teleport party to (x,y,level)*/
+    NEXUS_OP_SPAWN            = 11,  /* spawn creature at (x,y,level)*/
+    NEXUS_OP_SET_SQUARE       = 12,  /* set square (x,y) to type     */
+    NEXUS_OP_SOUND            = 13,  /* play sound N                 */
+    NEXUS_OP_TRIGGER_DOOR     = 14,  /* toggle door at (x,y)         */
+    NEXUS_OP_GIVE_ITEM        = 15,  /* give item to party           */
+    NEXUS_OP_AWARD_XP         = 16,  /* award XP to party             */
+    NEXUS_OP_DISPLAY_MESSAGE  = 17,  /* show message id to player   */
+    NEXUS_OP_SET_FLAG         = 18,  /* set script flag N to value   */
+    NEXUS_OP_END_GAME         = 19,  /* trigger end-game sequence    */
+    NEXUS_OP_COUNT
+} Nexus_WorldOpcode;
+
 /*
  * Nexus V1 Phase 3 — Core World Model
  * ==================================

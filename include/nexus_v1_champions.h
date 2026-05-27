@@ -15,11 +15,11 @@
 #define NEXUS_MAX_PARTY 4
 
 /* NEXUS_SLOT_* slot indices are defined in nexus_v1_inventory.h
- * (Nexus_EquipSlot enum). champions.c uses NEXUS_SLOT_COUNT==9
- * matching the 9 equipment slots (WEAPON..AMULET, no RING1/RING2 in DM1).
+ * (Nexus_EquipSlot enum). Keep the local slot array large enough for
+ * the Nexus inventory slot ids, including ring slots and amulet.
  * Source: ReDMCSB CHAMPION.C F0309 (equipment layout). */
 
-#define NEXUS_SLOT_COUNT    9
+#define NEXUS_SLOT_COUNT    NEXUS_EQUIP_SLOTS
 
 /* Wound bitmasks — matches DM1 MASK0x00XX_WOUND_* */
 #define NEXUS_WOUND_HEAD    (1 << 0)
@@ -51,6 +51,7 @@ typedef struct {
     int fighter_level, ninja_level, priest_level, wizard_level;
     int food, water;
     int alive;
+    int direction;            /* 0=N 1=E 2=S 3=W, used by Vi altar rebirth */
     int portrait_index;       /* CG texture index for portrait */
     uint8_t inventory[30];    /* item indices (30 slots) */
 
@@ -142,4 +143,3 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
                                         const void *buf, size_t bufsize);
 
 #endif
-

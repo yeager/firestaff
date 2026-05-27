@@ -165,6 +165,16 @@ typedef struct {
     int                champion_count;   /* 0..4, starts at 4 */
     int                active_slot;       /* 0-based index of leader */
     uint32_t           gold;             /* shared party gold */
+    /* Leader (party front) position and facing direction.
+     * Source: THQUEST.ASM T520 — party placement / start position. */
+    int16_t            leader_x;
+    int16_t            leader_y;
+    int8_t             leader_dir;        /* 0=N 1=E 2=S 3=W */
+    int8_t             _pad1;
+    int                levitating;        /* non-zero while pit fall is suppressed */
+    /* Door state override: per-door state snapshot for state hashing.
+     * Source: THQUEST.ASM T900 door object state. */
+    int                door_state_override;
 } Theron_V1_Party;
 
 /* ── Persistence mode descriptors ─────────────────────────────────── */

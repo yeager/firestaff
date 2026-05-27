@@ -1181,6 +1181,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                             config.dm1V2PaletteGamma,
                             config.dm1V2PaletteBrightness,
                             config.dm1V2PaletteContrast,
+                            0,
+                            0,
                             config.dm1V2DitherCleanupEnabled,
                             config.dm1V2SharpeningEnabled,
                             config.dm1V2SharpeningStrength);

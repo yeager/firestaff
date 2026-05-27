@@ -73,6 +73,7 @@ typedef enum {
     /* Dungeon 2 — Crypt of Shadows */
     THERON_QUEST_ITEM_2_SHADOW_KEY = (1 << 1),        /* Bit 1 */
 
+
     /* Dungeon 3 — Abyss of Flames */
     THERON_QUEST_ITEM_3_FLAME_ORBS = (1 << 2),       /* Bit 2 */
 

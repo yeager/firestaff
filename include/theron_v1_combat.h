@@ -43,7 +43,7 @@ typedef enum {
     THERON_CREATURE_ORC          = 3,
     THERON_CREATURE_SKELETON      = 4,
     THERON_CREATURE_ZOMBIE       = 5,
-    THERIN_CREATURE_KOBOLD       = 6,
+    THERON_CREATURE_KOBOLD       = 6,
     THERON_CREATURE_TROLL        = 7,
     THERON_CREATURE_WRAITH       = 8,
     THERON_CREATURE_DEMON        = 9,

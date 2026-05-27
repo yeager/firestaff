@@ -1037,16 +1037,47 @@ const char *v21_viewport_source_evidence(void) {
 static void v21_palette_expand_indexed_to_rgba(const uint8_t *indexed,
     int w, int h, uint32_t *rgba_out)
 {
+    static const uint8_t fallback_palette[16][3] = {
+        {0, 0, 0},       {0, 0, 170},     {0, 170, 0},     {0, 170, 170},
+        {170, 0, 0},     {170, 0, 170},   {170, 85, 0},    {170, 170, 170},
+        {85, 85, 85},    {85, 85, 255},   {85, 255, 85},   {85, 255, 255},
+        {255, 85, 85},   {255, 85, 255},  {255, 255, 85},  {255, 255, 255}
+    };
     if (!indexed || !rgba_out) return;
     for (int i = 0; i < w * h; i++) {
         uint8_t byte = indexed[i];
         uint8_t level = (byte & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
         uint8_t idx   = byte & M11_FB_INDEX_MASK;
         if (level >= DM1_V2_PALETTE_LEVELS) level = 0;
-        uint8_t rr = G9010_auc_VgaPaletteAll_Compat[level][idx][0];
-        uint8_t gg = G9010_auc_VgaPaletteAll_Compat[level][idx][1];
-        uint8_t bb = G9010_auc_VgaPaletteAll_Compat[level][idx][2];
+        uint8_t shade = (uint8_t)(255 - (level * 28));
+        uint8_t rr = (uint8_t)((fallback_palette[idx][0] * shade) / 255);
+        uint8_t gg = (uint8_t)((fallback_palette[idx][1] * shade) / 255);
+        uint8_t bb = (uint8_t)((fallback_palette[idx][2] * shade) / 255);
         rgba_out[i] = 0xFF000000u | (rr << 16) | (gg << 8) | bb;
+    }
+}
+
+static void v21_upscale_epx(const uint8_t *src, int sw, int sh,
+                            uint8_t *dst, int dw, int dh)
+{
+    (void)dw;
+    (void)dh;
+    if (!src || !dst || sw <= 0 || sh <= 0) return;
+    for (int y = 0; y < sh; y++) {
+        for (int x = 0; x < sw; x++) {
+            uint8_t p = src[y * sw + x];
+            uint8_t a = (y > 0) ? src[(y - 1) * sw + x] : p;
+            uint8_t b = (x < sw - 1) ? src[y * sw + x + 1] : p;
+            uint8_t c = (x > 0) ? src[y * sw + x - 1] : p;
+            uint8_t d = (y < sh - 1) ? src[(y + 1) * sw + x] : p;
+            int ox = x * 2;
+            int oy = y * 2;
+            int row = sw * 2;
+            dst[oy * row + ox] = (c == a && c != d && a != b) ? a : p;
+            dst[oy * row + ox + 1] = (a == b && a != c && b != d) ? b : p;
+            dst[(oy + 1) * row + ox] = (d == c && d != b && c != a) ? c : p;
+            dst[(oy + 1) * row + ox + 1] = (b == d && b != a && d != c) ? d : p;
+        }
     }
 }
 
@@ -1071,7 +1102,7 @@ void v21_viewport_render_full_pipeline(void)
 {
     if (!g_v21_viewport.epx_enabled) return;
 
-    v2_upscale_epx(g_v21_viewport.v1_framebuffer,
+    v21_upscale_epx(g_v21_viewport.v1_framebuffer,
                    V21_SCREEN_W, V21_SCREEN_H,
                    g_v21_viewport.epx_buffer,
                    V21_SCREEN_W * 2, V21_SCREEN_H * 2);
