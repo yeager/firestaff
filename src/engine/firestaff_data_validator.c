@@ -1,5 +1,6 @@
 
 #include "firestaff_data_validator.h"
+#include "asset_status_m12.h"
 #include "nexus_v1_iso_reader.h"
 #ifdef _WIN32
 #include <io.h>
@@ -131,9 +132,16 @@ int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report) {
         if (report->nexus_ready) total_ok++;
     }
 
-    /* Theron: Phase 0 (provenance gate) not yet complete — no hash evidence locked.
-     * report->theron_ready stays 0 until version/file manifests are locked. */
-    (void)0;  /* placeholder until Phase 0 provides file candidates */
+    /* Theron's Quest uses a single PC Engine/TurboGrafx-CD Track 02 data BIN.
+     * Source-lock: docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
+     * lines 39-46 records the JP/US Track 02 MD5s; asset_status_m12.c owns
+     * the shared hash/provenance table used by the M12 launcher. */
+    {
+        M12_AssetStatus status;
+        M12_AssetStatus_Scan(&status, data_dir);
+        report->theron_ready = status.theronAvailable ? 1 : 0;
+        if (report->theron_ready) total_ok++;
+    }
 
     return total_ok;
 }
@@ -163,7 +171,7 @@ void fs_validate_print_report(const FS_ValidationReport *report) {
     printf("DM Nexus:              %s\n\n", report->nexus_ready ? "READY" : "NOT FOUND");
 
     printf("Theron's Quest:        %s\n\n",
-           report->theron_ready ? "READY" : "NOT FOUND (Phase 0 pending)");
+           report->theron_ready ? "READY" : "NOT FOUND");
 
     int total = report->dm1_ready + report->csb_ready + report->dm2_ready
               + report->nexus_ready + report->theron_ready;

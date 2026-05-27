@@ -16,18 +16,17 @@
  *   - Deterministic config (PC Engine fixed-tick, no chivalry)
  *
  * Platform reference:
- *   PC Engine HuCard — Hudson Soft / NEC, 1992 (JP) / 1993 (US)
+ *   PC Engine / TurboGrafx-CD — Hudson Soft / NEC, 1992 (JP) / 1993 (US)
  *   CPU: 7.16 MHz HuC6280 (65C02 derivative)
  *   Resolution: 256x224 (NTSC) / 320x224 (x1/x2 pixel modes)
  *   Palette: 512 colors, 16-color per-sprite tiles
- *   Data storage: HuCard ROM (HuCard, no CD) — mapped as  banks
+ *   Data storage: CD-ROM Track 02 data BIN — game code, graphics, dungeon data
  *
  * Provenance (Phase 0 — PASSED, docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md):
  *   JP MD5: b7afb338ad31be1025b53f9aff12d73a (Track 02 BIN, cdromance.org)
  *   US MD5: f23601102138f87c33025877767ebf76 (Track 02 BIN, cdromance.org)
- *   g_theronVersions[] version slots (pce-jp, pce-en) structurally wired
- *   in asset_status_m12.c; MD5 slots empty awaiting extraction of
- *   THQUEST.GFX / THQUEST.DUN from Track 02 BIN.
+ *   g_theronVersions[] version slots (pce-jp, pce-en) are wired in
+ *   asset_status_m12.c with Track 02 MD5s.
  *
  * Save namespace design (distinct from DM1/CSB/DM2):
  *   Theron's Quest was a "light" version — smaller dungeon set,
@@ -124,7 +123,7 @@ typedef struct {
     char    asset_root[512];    /* ~/.firestaff/data/theron/ */
     char    graphics_path[512]; /* resolved: THQUEST.GFX or GRAPHICS.DAT */
     char    dungeon_path[512];  /* resolved: THQUEST.DUN or DUNGEON.DAT */
-    int     assets_verified;   /* 0 — Phase 0 gate (no hash yet) */
+    int     assets_verified;   /* 1 when Track 02 matches a known JP/US MD5 */
 
     /* ── Save namespace (between-dungeon only) ─────────── */
     char    save_root[512];     /* saves/theron/ — NOT saves/dm1/ */
@@ -152,9 +151,8 @@ typedef struct {
 void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile);
 
 /* Scan for Theron's Quest assets in data_dir.
- * Phase 0 gate: assets_verified stays 0 until Phase 0 hash lock.
- * Probes for THQUEST.GFX / THQUEST.DUN / GRAPHICS.DAT / DUNGEON.DAT
- * in theron/ subdir.
+ * Phase 0 gate: assets_verified is set only for known Track 02 hashes.
+ * Probes for Track 02 BIN names in theron/, theron/jp/, theron/us/.
  *
  * Returns 0 on success (assets found, even if unverified),
  * -1 if no Theron assets detected. */

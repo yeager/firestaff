@@ -84,7 +84,7 @@ typedef struct {
     int csb_available;
     int dm2_available;
     int nexus_available;
-    int theron_available;  /* PC Engine/TurboGrafx-16; Phase 0 gate: no hash set yet */
+    int theron_available;  /* PC Engine/TurboGrafx-CD Track 02 hash-verified */
     const char *data_dir;
 } FS_GameAvailability;
 
@@ -103,9 +103,8 @@ void fs_startup_check_games(const char *data_dir, FS_GameAvailability *avail) {
         avail->csb_available = report.csb_ready;
         avail->dm2_available = report.dm2_ready;
         avail->nexus_available = report.nexus_ready;
+        avail->theron_available = report.theron_ready;
     }
-    /* Theron: Phase 0 (provenance gate) not yet complete — no hash evidence locked. */
-    avail->theron_available = 0;
 
     printf("Game data: DM1=%s CSB=%s DM2=%s Nexus=%s Theron=%s\n",
         avail->dm1_available ? "YES" : "no",

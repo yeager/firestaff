@@ -24,7 +24,7 @@ typedef struct {
     int csb_ready;
     int dm2_ready;
     int nexus_ready;
-    int theron_ready;  /* PC Engine / TurboGrafx-16; Phase 0 gate: no hash set yet */
+    int theron_ready;  /* PC Engine / TurboGrafx-CD Track 02 hash-verified */
 } FS_ValidationReport;
 
 int fs_validate_data_dir(const char *data_dir, FS_ValidationReport *report);

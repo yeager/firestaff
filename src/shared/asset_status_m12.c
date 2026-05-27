@@ -96,6 +96,11 @@ static const M12_GameVersionSpec g_games[] = {
     {"theron", g_theronVersions, sizeof(g_theronVersions) / sizeof(g_theronVersions[0])}
 };
 
+static const char* const g_assetCandidateSubdirs[] = {
+    "", "dm1", "csb", "dm2", "nexus", "nexus1",
+    "dm1-multilingual", "theron", "theron/jp", "theron/us", NULL
+};
+
 static const char* const g_originalCandidateNames[] = {
     "GRAPHICS.DAT",
     "DUNGEON.DAT",
@@ -109,6 +114,10 @@ static const char* const g_originalCandidateNames[] = {
     "DM.BIN",                  /* Nexus Sega Saturn primary CD image */
     "SEGADATA.BIN",       /* Nexus Sega Saturn data track */
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
+    "track02.bin",
+    "Theron's Quest (Japan) (Track 02).bin",
+    "Theron's Quest (US) (Track 02).bin",
+    "THQUEST.BIN",
     NULL
 };
 
@@ -349,18 +358,27 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
 static int m12_root_has_original_candidate(const char* root) {
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     size_t i;
+    int s;
     if (!root || root[0] == '\0') {
         return 0;
     }
-    for (i = 0U; g_originalCandidateNames[i] != NULL; ++i) {
-        FILE* fp;
-        if (!FSP_JoinPath(path, sizeof(path), root, g_originalCandidateNames[i])) {
-            continue;
+    for (s = 0; g_assetCandidateSubdirs[s] != NULL; ++s) {
+        char subroot[M12_ASSET_DATA_DIR_CAPACITY];
+        if (g_assetCandidateSubdirs[s][0] == '\0') {
+            m12_copy_string(subroot, sizeof(subroot), root);
+        } else {
+            snprintf(subroot, sizeof(subroot), "%s/%s", root, g_assetCandidateSubdirs[s]);
         }
-        fp = fopen(path, "rb");
-        if (fp) {
-            fclose(fp);
-            return 1;
+        for (i = 0U; g_originalCandidateNames[i] != NULL; ++i) {
+            FILE* fp;
+            if (!FSP_JoinPath(path, sizeof(path), subroot, g_originalCandidateNames[i])) {
+                continue;
+            }
+            fp = fopen(path, "rb");
+            if (fp) {
+                fclose(fp);
+                return 1;
+            }
         }
     }
     return 0;
@@ -388,19 +406,16 @@ static int m12_try_match_version(const char* root,
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     char md5Hex[M12_ASSET_MD5_CAPACITY];
     size_t i;
-    /* Game subdirectory names to search */
-    static const char* const subdirs[] = {"", "dm1", "csb", "dm2", "nexus", "nexus1", "dm1-multilingual", "theron", NULL};
-
     int s;
     if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
         return 0;
     }
-    for (s = 0; subdirs[s] != NULL; ++s) {
+    for (s = 0; g_assetCandidateSubdirs[s] != NULL; ++s) {
         char subroot[M12_ASSET_DATA_DIR_CAPACITY];
-        if (subdirs[s][0] == 0) {
+        if (g_assetCandidateSubdirs[s][0] == 0) {
             m12_copy_string(subroot, sizeof(subroot), root);
         } else {
-            snprintf(subroot, sizeof(subroot), "%s/%s", root, subdirs[s]);
+            snprintf(subroot, sizeof(subroot), "%s/%s", root, g_assetCandidateSubdirs[s]);
         }
         for (i = 0U; spec->names[i] != NULL; ++i) {
             if (!FSP_JoinPath(path, sizeof(path), subroot, spec->names[i])) {

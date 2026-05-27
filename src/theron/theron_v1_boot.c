@@ -191,6 +191,18 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
         strncpy(profile->dungeon_path, profile->graphics_path,
                 sizeof(profile->dungeon_path) - 1);
         profile->dungeon_size = profile->graphics_size;
+    } else if (resolve_asset(base, "theron/jp", g_theron_track02_candidates,
+                              profile->graphics_path,
+                              &profile->graphics_size)) {
+        strncpy(profile->dungeon_path, profile->graphics_path,
+                sizeof(profile->dungeon_path) - 1);
+        profile->dungeon_size = profile->graphics_size;
+    } else if (resolve_asset(base, "theron/us", g_theron_track02_candidates,
+                              profile->graphics_path,
+                              &profile->graphics_size)) {
+        strncpy(profile->dungeon_path, profile->graphics_path,
+                sizeof(profile->dungeon_path) - 1);
+        profile->dungeon_size = profile->graphics_size;
     } else if (resolve_asset(base, "", g_theron_track02_candidates,
                               profile->graphics_path,
                               &profile->graphics_size)) {
@@ -275,23 +287,10 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
  * Used by M12 launcher menu to show TQ availability.
  */
 int theron_v1_boot_probe_available(const char *data_dir) {
-    char path[512];
-    const char *base = data_dir && data_dir[0] ? data_dir : ".";
-
-    /* Quick check: look for THQUEST.GFX or THQUEST.DUN in theron/ */
-    snprintf(path, sizeof(path), "%s%ctheron%cTHQUEST.GFX",
-             base, TRV_PATH_SEP, TRV_PATH_SEP);
-    if (file_exists(path)) return 1;
-
-    snprintf(path, sizeof(path), "%s%ctheron%cGRAPHICS.DAT",
-             base, TRV_PATH_SEP, TRV_PATH_SEP);
-    if (file_exists(path)) return 1;
-
-    snprintf(path, sizeof(path), "%s%ctheron%cthquest.gfx",
-             base, TRV_PATH_SEP, TRV_PATH_SEP);
-    if (file_exists(path)) return 1;
-
-    return 0;
+    Theron_V1_BootProfile profile;
+    theron_v1_boot_profile_init(&profile);
+    return theron_v1_boot_scan_assets(&profile, data_dir) == 0 &&
+           profile.assets_verified ? 1 : 0;
 }
 
 /* ── Save root ────────────────────────────────────────────────────── */
@@ -415,7 +414,8 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         "JP MD5:         b7afb338ad31be1025b53f9aff12d73a\n"
         "US MD5:         f23601102138f87c33025877767ebf76\n"
         "Next step:       Phase 2 — source-lock TQ dungeon/graphics data formats\n"
-        "                 from extracted Track 02 BIN (CDRomance JP/US images)\n",
+        "                 from extracted Track 02 BIN (CDRomance JP/US images)\n"
+        "Asset verdict:   %s\n",
         profile->game_id,
         profile->platform_label,
         profile->version_id,

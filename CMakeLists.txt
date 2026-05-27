@@ -3454,6 +3454,26 @@ endif()
 # the rest of firestaff_theron which has pre-existing cross-file errors
 # tracked in the Theron V1 Phase 2+ work backlog.
 if(BUILD_TESTING)
+    add_executable(test_theron_v1_availability
+        tests/theron_v1_availability_test.c
+        src/engine/firestaff_data_validator.c
+        src/engine/firestaff_startup.c
+        src/shared/asset_status_m12.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_iso_reader.c
+        src/theron/theron_v1_boot.c
+    )
+    target_include_directories(test_theron_v1_availability PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_availability PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_availability
+        COMMAND test_theron_v1_availability
+    )
+
     add_executable(test_tqr_v1_boot_profile_smoke
         tests/tqr_v1_boot_profile_smoke.c
         src/tqr/tqr_v1_boot_profile.c
