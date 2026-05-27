@@ -551,6 +551,19 @@ int main(void) {
 
     state.settings.windowWidth = 1234;
     state.settings.windowHeight = 777;
+    state.settings.quickResumeEnabled = 0;
+    state.settings.minimapEnabled = 1;
+    state.settings.autoMapEnabled = 0;
+    state.settings.combatLogEnabled = 1;
+    state.settings.soundtrackMode = 2;
+    state.settings.ambientEnabled = 1;
+    state.settings.ambientVolume = 70;
+    state.settings.uiScale = 150;
+    snprintf(state.settings.customMusicPath, sizeof(state.settings.customMusicPath), "%s", "/tmp/firestaff-music");
+    snprintf(state.settings.customDungeonPath, sizeof(state.settings.customDungeonPath), "%s", "/tmp/firestaff-dungeons");
+    snprintf(state.settings.screenshotPath, sizeof(state.settings.screenshotPath), "%s", "/tmp/firestaff-shots");
+    state.gameOptions[4].languageIndex = 2;
+    state.gameOptions[4].cheatsEnabled = 1;
     M12_StartupMenu_SaveConfig(&state);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_Init(&reloaded);
@@ -563,6 +576,17 @@ int main(void) {
                      reloaded.settings.windowModeIndex == 2 &&
                      reloaded.settings.windowWidth == 1234 &&
                      reloaded.settings.windowHeight == 777 &&
+                     reloaded.settings.quickResumeEnabled == 0 &&
+                     reloaded.settings.minimapEnabled == 1 &&
+                     reloaded.settings.autoMapEnabled == 0 &&
+                     reloaded.settings.combatLogEnabled == 1 &&
+                     reloaded.settings.soundtrackMode == 2 &&
+                     reloaded.settings.ambientEnabled == 1 &&
+                     reloaded.settings.ambientVolume == 70 &&
+                     reloaded.settings.uiScale == 150 &&
+                     strcmp(reloaded.settings.customMusicPath, "/tmp/firestaff-music") == 0 &&
+                     strcmp(reloaded.settings.customDungeonPath, "/tmp/firestaff-dungeons") == 0 &&
+                     strcmp(reloaded.settings.screenshotPath, "/tmp/firestaff-shots") == 0 &&
                      reloaded.gameOptions[0].versionIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
                      reloaded.gameOptions[0].languageIndex == 1 &&
@@ -580,6 +604,8 @@ int main(void) {
                      reloaded.gameOptions[2].languageIndex == 0 &&
                      reloaded.gameOptions[2].cheatsEnabled == 0 &&
                      reloaded.gameOptions[2].gameSpeed == 1 &&
+                     reloaded.gameOptions[4].languageIndex == 2 &&
+                     reloaded.gameOptions[4].cheatsEnabled == 1 &&
                      M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
                      file_contains(configPath, "language_explicit = 1") &&
                      file_contains(configPath, "game_0_version_index = 1") &&
@@ -589,8 +615,20 @@ int main(void) {
                      file_contains(configPath, "renderer_backend_index = 1") &&
                      file_contains(configPath, "window_width = 1234") &&
                      file_contains(configPath, "window_height = 777") &&
+                     file_contains(configPath, "quick_resume_enabled = 0") &&
+                     file_contains(configPath, "minimap_enabled = 1") &&
+                     file_contains(configPath, "auto_map_enabled = 0") &&
+                     file_contains(configPath, "combat_log_enabled = 1") &&
+                     file_contains(configPath, "soundtrack_mode = 2") &&
+                     file_contains(configPath, "ambient_enabled = 1") &&
+                     file_contains(configPath, "ambient_volume = 70") &&
+                     file_contains(configPath, "ui_scale = 150") &&
+                     file_contains(configPath, "custom_music_path = \"/tmp/firestaff-music\"") &&
+                     file_contains(configPath, "custom_dungeon_path = \"/tmp/firestaff-dungeons\"") &&
+                     file_contains(configPath, "screenshot_path = \"/tmp/firestaff-shots\"") &&
+                     file_contains(configPath, "game_4_language_index = 2") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, and per-game language");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, per-game language, and QoL/start-menu extras");
 
     make_file_with_text(configPath,
                         "# Firestaff startup menu config\n"

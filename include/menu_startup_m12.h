@@ -113,8 +113,19 @@ typedef struct {
     int autoPause;
     int themeIndex;
     int bgAnimationPreset;
+    int quickResumeEnabled;
+    int minimapEnabled;
+    int autoMapEnabled;
+    int combatLogEnabled;
+    int soundtrackMode;
+    int ambientEnabled;
+    int ambientVolume;
+    int uiScale;
     int windowWidth;
     int windowHeight;
+    char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
+    char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
+    char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
 } M12_MenuSettingsState;
 
 typedef enum {
@@ -269,7 +280,7 @@ typedef struct M12_StartupMenuState {
     M12_MenuSettingsState settings;
     int languageExplicit;
     M12_AssetStatus assetStatus;
-    M12_GameOptions gameOptions[4];
+    M12_GameOptions gameOptions[M12_CONFIG_GAME_COUNT];
     int gameOptSelectedRow;
     int museumSelectedIndex;
     int museumPageIndex;
