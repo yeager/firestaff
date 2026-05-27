@@ -1058,7 +1058,7 @@ static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right
 }
 
 static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    const char* dir = state->assetStatus.dataDir;
+    const char* dir = M12_StartupMenu_GetVisibleDataDir(state);
     if (!dir || dir[0] == '\0') dir = "UNSET";
     /* Elide extremely long paths to keep the footer label legible at
      * scale 2. Budget: ~72 glyphs for the full line, minus 10 for the

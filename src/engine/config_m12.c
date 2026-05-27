@@ -287,6 +287,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->quickResumeEnabled = 1;
     config->customDungeonPath[0] = '\0';
     config->screenshotPath[0] = '\0';
+    config->streamerMode = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -684,6 +685,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
         m12_copy_string(config->screenshotPath, sizeof(config->screenshotPath), quoted);
         return;
     }
+    if (m12_string_equals(key, "streamer_mode")) {
+        config->streamerMode = m12_parse_int(value, config->streamerMode) ? 1 : 0;
+        return;
+    }
     if (m12_string_equals(key, "last_save_path") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->lastSavePath, sizeof(config->lastSavePath), quoted);
@@ -792,6 +797,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "quick_resume_enabled = %d\n", config->quickResumeEnabled ? 1 : 0);
     fputs("custom_dungeon_path = ", fp); m12_escape_and_write(fp, config->customDungeonPath); fputc('\n', fp);
     fputs("screenshot_path = ", fp); m12_escape_and_write(fp, config->screenshotPath); fputc('\n', fp);
+    fprintf(fp, "streamer_mode = %d\n", config->streamerMode ? 1 : 0);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);
