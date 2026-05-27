@@ -396,6 +396,8 @@ Status per 2026-05-19 v2.4.0.
 - ✅ Nexus save — NOT IMPLEMENTED
 - ✅ Nexus variants — Windows/Saturn/Java, English only
 
+- ✅ Phase 3 — Core world model: Nexus map loading, party placement, transitions, timers, object database, event/trigger records, deterministic world-state hashing (FNV-1a) from provenance-locked fixtures. Files: `nexus_v1_world.c`, `nexus_v1_dungeon.c`, `nexus_v1_squares.c`, `nexus_v1_squares.h`, `nexus_v1_world.h`. Source-lock: DUNGEON.C F0029/F0044, MOVESENS.C F0067/F0071.
+
 ## DM2 V1 — Source-Lock Audit (completed 2026-05-24/25)
 
 - ✅ DM2 overview/story/tech — SKULL.ASM 522K lines, Lord Dragoth boss

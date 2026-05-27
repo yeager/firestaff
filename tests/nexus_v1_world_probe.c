@@ -306,11 +306,14 @@ static void probe_tick(void) {
 /* ── DGN level parse (synthetic) ─────────────────────────────────── */
 static void probe_dungeon_parse(void) {
     printf("\n[DGN Level Parse — synthetic fixture]\n");
-    /* Build a minimal 32x32 LEV00.DGN-like blob: 2048 bytes of
-     * big-endian uint16 (square type, lower 5 bits), rest = geometry */
+    /* Build a minimal 32x32 LEV00.DGN-like blob.
+     * Layout B fallback: raw 32x32 big-endian grid at offset 0.
+     * Grid is all floor except one wall at (5,5). */
     uint8_t buf[2048 + 64];
     memset(buf, 0, sizeof(buf));
-    /* offset 0: grid — all floor except one wall at (5,5) */
+    /* Force Layout B: set byte 0 = 33 (> 32 so Layout A header check fails).
+     * Grid is all floor except one wall at (5,5). */
+    buf[0] = 33;
     int gy, gx;
     for (gy = 0; gy < 32; gy++) {
         for (gx = 0; gx < 32; gx++) {

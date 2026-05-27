@@ -224,6 +224,12 @@ void    nexus_v1_timers_clear_level(Nexus_V1_World *world, int level);
 int     nexus_v1_transition_queue(Nexus_V1_World *world,
                                    int target_level,
                                    int spawn_x, int spawn_y);
+
+/* Place party at (x,y,level) — immediate, no level transition.
+ * For stairs/teleporter use nexus_v1_transition_queue() instead. */
+void    nexus_v1_party_place(Nexus_V1_World *world,
+                              int level, int x, int y, int dir);
+
 int     nexus_v1_transition_execute(Nexus_V1_World *world);
 
 /* ------------------------------------------------------------------ */

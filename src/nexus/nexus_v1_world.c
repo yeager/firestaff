@@ -132,6 +132,19 @@ void nexus_v1_world_reset(Nexus_V1_World *world) {
     world->state_hash = FNV64_OFFSET;
 }
 
+/* nexus_v1_party_place — place party at grid position on given level.
+ * ReDMCSB: DUNGEON.C F0155 (party placement after stairs/door/teleport).
+ * Updates party position immediately; callers needing level-change
+ * semantics should use nexus_v1_transition_queue() instead. */
+void nexus_v1_party_place(Nexus_V1_World *world,
+                           int level, int x, int y, int dir) {
+    if (!world) return;
+    world->party_level = level;
+    world->party_x     = x;
+    world->party_y     = y;
+    if (dir >= 0) world->party_dir = dir;
+}
+
 /* ------------------------------------------------------------------ */
 /* Object database                                                     */
 /* ------------------------------------------------------------------ */
