@@ -490,12 +490,14 @@ static void draw_title_centered(M12_ModernCanvas* c) {
 
 static M12_RGB mode_color(int mode) {
     if (mode == M12_PRESENTATION_V20_FILTERED) return COLOR_V2();
+    if (mode == M12_PRESENTATION_V21_UPSCALED) return COLOR_V2();
     if (mode == M12_PRESENTATION_V22_MODERN)   return COLOR_V3();
     return COLOR_V1();
 }
 
 static const char* mode_short(int mode) {
-    if (mode == M12_PRESENTATION_V20_FILTERED) return "V2 ENHANCED 2D";
+    if (mode == M12_PRESENTATION_V20_FILTERED) return "V2 FILTERED";
+    if (mode == M12_PRESENTATION_V21_UPSCALED) return "V2 ENHANCED 2D";
     if (mode == M12_PRESENTATION_V22_MODERN)   return "V3 MODERN 3D";
     return "V1 ORIGINAL";
 }
@@ -1294,6 +1296,9 @@ static void draw_presentation_row(M12_ModernCanvas* c, int x, int y, int w,
     const char* val;
     M12_RGB valCol;
     if (modeIndex == M12_PRESENTATION_V20_FILTERED) {
+        val = "V2 FILTERED";
+        valCol = COLOR_V2();
+    } else if (modeIndex == M12_PRESENTATION_V21_UPSCALED) {
         val = "V2 ENHANCED 2D";
         valCol = COLOR_V2();
     } else if (modeIndex == M12_PRESENTATION_V22_MODERN) {

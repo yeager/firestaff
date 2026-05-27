@@ -30,7 +30,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### CSB V1
 
-- ❌ Phase 1 - Boot/profile split: add selectable CSB profile, boot state, profile-specific asset discovery, and launch transitions.
 - ❌ Phase 2 - Dungeon data model: map CSB dungeon records into Firestaff memory/runtime structures without reusing DM1-only assumptions.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, and initial viewport gates exist; remaining work includes F0107 ornaments, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
 - ❌ Phase 6 - Utility/import flow: implement utility-disk style champion import and CSB-specific setup flow.
@@ -91,7 +90,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
-- ❌ Launch/data availability: menu entry exists, but asset validator/startup still reports Theron unavailable; wire asset hash/provenance into startup and launch path.
+- 🔧 Runtime handoff/playability proof: hash-verified Track 02 availability is wired through validator/startup/menu state; remaining work is positive real-asset launch through the Theron parser/rendering path.
 - ❌ Phase 4 - Rendering pipeline: implement Theron viewport/UI presentation and asset selection.
 - 🔧 Phase 5 - Mechanics parity hardening: initial movement, click route, door, pit, teleporter, altar, combat, drop, and sound behavior is implemented; remaining work is focused runtime/probe coverage.
 - ❌ Phase 7 - Save/import compatibility: implement and verify Theron save/load behavior and any transfer/import constraints.
@@ -118,8 +117,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Accessibility
 
 - ❌ Screen reader integration for launcher and game-critical state.
-- ❌ High-contrast presentation mode.
-- ❌ Configurable font sizing for launcher and overlays.
+- 🔧 High-contrast presentation hardening: launcher output is remapped to a restricted high-contrast palette; remaining work is in-game overlay coverage.
+- 🔧 Configurable font sizing hardening: launcher `fontScale` affects M12 text rendering; remaining work is in-game overlays and UI-fit coverage.
 
 ## Known Bugs
 

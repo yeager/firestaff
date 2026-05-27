@@ -136,6 +136,34 @@ static void force_dm1_version_ready(M12_StartupMenuState* state, size_t versionI
     state->gameOptions[0].versionIndex = (int)versionIndex;
 }
 
+static void force_csb_version_ready(M12_StartupMenuState* state, size_t versionIndex) {
+    M12_AssetVersionStatus* version;
+    if (!state || versionIndex >= M12_AssetStatus_GetVersionCount("csb")) {
+        return;
+    }
+    state->assetStatus.csbAvailable = 1;
+    state->entries[1].available = 1;
+    version = &state->assetStatus.versions[1][versionIndex];
+    version->matched = 1;
+    snprintf(version->matchedPath, sizeof(version->matchedPath), "%s", "probe://forced-csb");
+    snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", "forced");
+    state->gameOptions[1].versionIndex = (int)versionIndex;
+}
+
+static void force_dm2_version_ready(M12_StartupMenuState* state, size_t versionIndex) {
+    M12_AssetVersionStatus* version;
+    if (!state || versionIndex >= M12_AssetStatus_GetVersionCount("dm2")) {
+        return;
+    }
+    state->assetStatus.dm2Available = 1;
+    state->entries[2].available = 1;
+    version = &state->assetStatus.versions[2][versionIndex];
+    version->matched = 1;
+    snprintf(version->matchedPath, sizeof(version->matchedPath), "%s", "probe://forced-dm2");
+    snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", "forced");
+    state->gameOptions[2].versionIndex = (int)versionIndex;
+}
+
 static void exercise_startup_input_matrix(M12_StartupMenuState seed) {
     static const M12_MenuInput inputs[] = {
         M12_MENU_INPUT_NONE,
@@ -286,8 +314,8 @@ int main(void) {
 
     probe_record(&tally,
                  "INV_M12_01",
-                 M12_StartupMenu_GetEntryCount() == 6,
-                 "startup menu exposes four games, museum, and settings");
+                 M12_StartupMenu_GetEntryCount() == 7,
+                 "startup menu exposes five games, museum, and settings");
     probe_record(&tally,
                  "INV_M12_02",
                  file_exists(configPath) &&
@@ -300,7 +328,8 @@ int main(void) {
                      strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataDir) == 0 &&
                      state.entries[1].available == 0 &&
                      state.entries[2].available == 0 &&
-                     state.entries[3].available == 0,
+                     state.entries[3].available == 0 &&
+                     state.entries[4].available == 0,
                  "startup state loads defaults, writes config, seeds built-in card art, and points the validator at the requested originals directory");
 
     make_file_with_text(cardPath, "future art slot");
@@ -329,9 +358,9 @@ int main(void) {
                      M12_AssetStatus_GameHasCompleteHashSet("nexus1") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("theron") == 1 &&
                      M12_AssetStatus_GameKnownHashCount("dm1") == 3U &&
-                     M12_AssetStatus_GameKnownHashCount("csb") == 3U &&
+                     M12_AssetStatus_GameKnownHashCount("csb") == 4U &&
                      M12_AssetStatus_GameKnownHashCount("dm2") == 3U &&
-                     M12_AssetStatus_GameKnownHashCount("nexus1") == 1U &&
+                     M12_AssetStatus_GameKnownHashCount("nexus1") == 2U &&
                      M12_AssetStatus_GameKnownHashCount("theron") == 2U,
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
 
@@ -423,11 +452,12 @@ int main(void) {
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      state.launchRequested == 0 &&
-                     strcmp(state.messageLine1, "COMING SOON") == 0 &&
-                     strcmp(state.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
-                 "enter on CSB shows unsupported/coming-soon messaging without requesting launch");
+                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
+                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
+                 "enter on unmatched CSB shows data-missing messaging without requesting launch");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -496,6 +526,7 @@ int main(void) {
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* museum */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* theron */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* nexus */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm2 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
@@ -553,7 +584,7 @@ int main(void) {
                      file_contains(configPath, "language_explicit = 1") &&
                      file_contains(configPath, "game_0_version_index = 1") &&
                      file_contains(configPath, "game_0_language_index = 1") &&
-                     file_contains(configPath, "presentation_mode = \"v2-enhanced-2d\"") &&
+                     file_contains(configPath, "presentation_mode = \"v2-filtered\"") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      file_contains(configPath, "renderer_backend_index = 1") &&
                      file_contains(configPath, "window_width = 1234") &&
@@ -602,9 +633,9 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "COMING SOON") == 0 &&
-                     strcmp(state.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
-                 "missing runtime catalog falls back safely while unsupported games stay coming-soon");
+                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
+                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
+                 "missing runtime catalog falls back safely while hash-verified games stay non-launching without matched data");
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
@@ -909,36 +940,38 @@ int main(void) {
                      "INV_M12_28",
                      modeState.launchRequested == 0 &&
                          modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         strcmp(modeState.messageLine1, "COMING SOON") == 0 &&
-                         strcmp(modeState.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
-                     "CSB is not launchable and reports unsupported/coming-soon without requesting launch");
+                         strcmp(modeState.messageLine1, "GAME DATA NOT FOUND") == 0 &&
+                         strcmp(modeState.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
+                     "CSB stays non-launching without matched data and reports the data-dir gate");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
-        modeState.assetStatus.csbAvailable = 1;
-        modeState.assetStatus.dm2Available = 1;
-        modeState.assetStatus.versions[1][0].matched = 1;
-        modeState.assetStatus.versions[2][0].matched = 1;
-        modeState.entries[1].available = 0;
-        modeState.entries[2].available = 0;
+        force_csb_version_ready(&modeState, 0U);
+        force_dm2_version_ready(&modeState, 0U);
         modeState.selectedIndex = 1;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
         int csbBlocked = modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         modeState.launchRequested == 0 &&
-                         intent.valid == 0 &&
-                         strcmp(modeState.messageLine1, "COMING SOON") == 0;
+                         modeState.launchRequested == 1 &&
+                         intent.valid == 1 &&
+                         strcmp(intent.gameId, "csb") == 0 &&
+                         strcmp(modeState.messageLine1, "READY TO LAUNCH") == 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_BACK);
         modeState.selectedIndex = 2;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
         probe_record(&tally,
                      "INV_M12_28B",
                      csbBlocked &&
                          modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         modeState.launchRequested == 0 &&
-                         intent.valid == 0 &&
-                         strcmp(modeState.messageLine1, "COMING SOON") == 0,
-                     "CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches");
+                         modeState.launchRequested == 1 &&
+                         intent.valid == 1 &&
+                         strcmp(intent.gameId, "dm2") == 0 &&
+                         strcmp(modeState.messageLine1, "READY TO LAUNCH") == 0,
+                     "CSB and DM2 become launchable only when the selected version is hash-matched");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);

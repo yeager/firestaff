@@ -488,6 +488,7 @@ static const M12_Glyph g_font[] = {
 
 static const char* g_presentationModes[] = {
     "V1 ORIGINAL",
+    "V2 FILTERED",
     "V2 ENHANCED 2D",
     "V3 MODERN/3D"
 };
@@ -1618,7 +1619,7 @@ static int m12_game_slot_from_id(const char* gameId) {
 }
 
 static int m12_game_supported(const char* gameId) {
-    /* All four games are now supported in the runtime. */
+    /* All five catalogued games now have runtime launch boundaries. */
     if (!gameId) return 0;
     return (strcmp(gameId, "dm1") == 0 ||
             strcmp(gameId, "csb") == 0 ||
@@ -2082,7 +2083,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
-                        state->messageLine2 = state->entries[gi].available ? m12_tr(state, "ENTER FOR GAME MENU") : m12_tr(state, "DATA FILES NOT FOUND");
+                        state->messageLine2 = m12_tr(state, "COMING SOON");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex)) {
                         state->launchRequested = 0;
@@ -2095,7 +2096,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         /* Auto-select first matched version if available */
                         int found_match = 0;
                         {
-                            static const char* const gids[] = {"dm1","csb","dm2","nexus1"};
+                            static const char* const gids[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1", "theron"};
                             size_t vc = M12_AssetStatus_GetVersionCount(gids[gi]);
                             for (size_t vi = 0; vi < vc; vi++) {
                                 const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
@@ -4968,7 +4969,7 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
     if (cardH < 100) {
         cardH = 100;
     }
-    settingsSelected = (state->selectedIndex == 5);
+    settingsSelected = (state->selectedIndex == m12_entry_count() - 1);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
 

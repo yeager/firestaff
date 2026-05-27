@@ -93,14 +93,21 @@ static int m12_parse_presentation_mode(const char* raw, int fallback) {
         return 0;
     }
     if (m12_string_equals(value, "v2") ||
-        m12_string_equals(value, "v2-enhanced-2d") ||
-        m12_string_equals(value, "enhanced-2d")) {
+        m12_string_equals(value, "v2-filtered") ||
+        m12_string_equals(value, "filtered")) {
         return 1;
+    }
+    if (m12_string_equals(value, "v2.1") ||
+        m12_string_equals(value, "v21") ||
+        m12_string_equals(value, "v2-enhanced-2d") ||
+        m12_string_equals(value, "enhanced-2d") ||
+        m12_string_equals(value, "upscaled")) {
+        return 2;
     }
     if (m12_string_equals(value, "v3") ||
         m12_string_equals(value, "v3-modern-3d") ||
         m12_string_equals(value, "modern-3d")) {
-        return 2;
+        return 3;
     }
     return fallback;
 }
@@ -110,8 +117,10 @@ static const char* m12_presentation_mode_id(int index) {
         case 0:
             return "v1-original";
         case 1:
-            return "v2-enhanced-2d";
+            return "v2-filtered";
         case 2:
+            return "v2-enhanced-2d";
+        case 3:
             return "v3-modern-3d";
         default:
             return "v1-original";

@@ -32,6 +32,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### CSB V1
 
 - ✅ Phase 0 - Provenance and source audit setup.
+- ✅ Phase 1 - Boot/profile split, profile-specific asset discovery, boot state, diagnostics, and hash-matched launch boundary.
 - ✅ Source-lock audit coverage for CSB startup, utility, dungeon loading, wall rendering, champion import, weapons, magic, creatures, combat, and save behavior.
 - ✅ Phase 4 - Mechanics parity slices for CSB-specific movement/interaction/runtime behavior.
 - ✅ Phase 5 - Creature and combat parity slices.
@@ -69,6 +70,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 1 - Runtime profile and launch/profile scaffolding.
 - ✅ Phase 2 - Dungeon/data model ingestion.
 - ✅ Phase 3 - Core world/progression state mapping.
+- ✅ Launch/data availability now uses Track 02 hash/provenance discovery through validator, startup, and menu availability state.
 - ✅ Phase 5 - Initial mechanics implementation for movement, click routes, doors, pits, teleporters, altar behavior, combat, drops, and sounds.
 - ✅ Phase 6 - Dungeon progression probe coverage.
 - 🔒 Source-lock audit coverage for Theron profile, dungeon progression, mechanics, and launch/runtime boundaries.
@@ -83,6 +85,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### Accessibility
 
 - ✅ Accessibility manifest writer and launcher/game-state scaffold.
+- ✅ Launcher high-contrast palette and configurable font-scale foundation with M12 probe coverage.
 
 ### Platform and Packaging
 
