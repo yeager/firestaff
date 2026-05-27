@@ -99,7 +99,7 @@ Status per 2026-05-19 v2.4.0.
 
 ## DM Nexus V1
 
-- ❌ Phase 0 — Provenance gate: hash-lock exact Dungeon Master Nexus disc/images, file manifests, compression/container formats, region/version metadata, and any available primary technical references before parser or runtime work
+- ✅ Phase 0 — Provenance gate: hash-lock exact Dungeon Master Nexus disc/images, file manifests, compression/container formats, region/version metadata, and any available primary technical references before parser or runtime work (docs/source-lock/nexus_v1_phase0_provenance_gate_H2315.md · parity-evidence/nexus/; 138 files locked at ~/.firestaff/data/nexus/)
 - ❌ Phase 1 — Runtime profile split: separate Nexus boot/runtime profile from DM1/CSB/DM2, including menu launch, asset roots, save namespace, platform diagnostics, deterministic config, and unsupported-feature messaging
 - ✅ Phase 2 — Data formats: source-lock Nexus dungeon, map, object, text, champion, monster, sound, and graphics/model formats; document every variant before converting data into Firestaff structures (docs/source-lock/nexus_v1_phase2_data_formats_H2321.md)
 - ✅ Phase 3 — Core world model: implement Nexus map loading, party placement, transitions, timers, object database, event/trigger records, and deterministic world-state hashing from provenance-locked fixtures
