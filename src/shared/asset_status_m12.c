@@ -275,7 +275,7 @@ static void m12_md5_final(M12_Md5Context* ctx, char outHex[33]) {
     outHex[32] = '\0';
 }
 
-static int m12_file_md5_hex(const char* path, char outHex[33]) {
+int m12_file_md5_hex(const char* path, char outHex[33]) {
     unsigned char buffer[4096];
     size_t bytesRead;
     FILE* fp;

@@ -49,32 +49,42 @@
 
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
-/*
- * Theron's Quest data files — tentative naming (Phase 2 extraction pending):
+/* Theron's Quest data files — Phase 0 locked (2026-05-27).
  *
- *   THQUEST.GFX   — ROM bank 0, graphics tile data
- *                   (HuCard banked ROM, no standard extension)
- *   THQUEST.DUN   — ROM bank 1, dungeon / map data
- *                   (HuCard banked ROM, no standard extension)
+ * CD-ROM disc structure: CUE/BIN, 18 tracks, Track 02 = data track.
+ * The data track contains the HuC6280 executable, graphics tiles
+ * (tile/sprite format), and dungeon data — embedded in one binary blob
+ * per region.  Unlike DM1's dual-file structure (GRAPHICS.DAT +
+ * DUNGEON.DAT), Theron's Quest uses a single Track 02 per region.
  *
- * These names are guesses based on DM1/DM2 naming convention
- * adapted for TQ. Phase 2 will lock the exact filenames.
+ * JP Track 02 MD5: b7afb338ad31be1025b53f9aff12d73a
+ * US Track 02 MD5: f23601102138f87c33025877767ebf76
+ * Source: cdromance.org (2026-05-27)
  *
- * Fallback candidates that match the Firestaff GRAPHICS.DAT/DUNGEON.DAT
- * convention allow existing assets to be found:
- *   GRAPHICS.DAT / DUNGEON.DAT in theron/ subdir
+ * Subdir candidates: theron/jp/, theron/us/, theron/
+ *
+ * File candidates (in order of precedence):
+ *   track02.bin                    — canonical CD-ROM data track name
+ *   "Theron's Quest (Japan) (Track 02).bin"
+ *   "Theron's Quest (US) (Track 02).bin"
+ *   THQUEST.BIN
+ *   GRAPHICS.DAT / DUNGEON.DAT   — legacy fallback (extracted from Track 02)
  */
-static const char *const g_theron_graphics_candidates[] = {
-    "THQUEST.GFX",
-    "THQUEST.GFX.bank",
+static const char *const g_theron_track02_candidates[] = {
+    "track02.bin",
+    "Theron's Quest (Japan) (Track 02).bin",
+    "Theron's Quest (US) (Track 02).bin",
+    "THQUEST.BIN",
+    NULL
+};
+
+static const char *const g_theron_graphics_fallback[] = {
     "GRAPHICS.DAT",
     "graphics.dat",
     NULL
 };
 
-static const char *const g_theron_dungeon_candidates[] = {
-    "THQUEST.DUN",
-    "THQUEST.DUN.bank",
+static const char *const g_theron_dungeon_fallback[] = {
     "DUNGEON.DAT",
     "dungeon.dat",
     NULL
@@ -163,11 +173,9 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
 /*
  * theron_v1_boot_scan_assets — probe for TQ assets.
  *
- * Searches data_dir/theron/ for THQUEST.GFX / THQUEST.DUN (or
- * GRAPHICS.DAT / DUNGEON.DAT as fallback).
- *
- * Phase 0 gate: assets_verified stays 0 until Phase 2 hashes are extracted.
- * Assets are considered "found" if at least one file is present.
+ * Searches data_dir/theron/ for Track 02 BIN (CD-ROM data track).
+ * Phase 0: verifies Track 02 against known JP/US MD5 hashes.
+ * Fallback: extracted GRAPHICS.DAT / DUNGEON.DAT (no hash verification).
  *
  * Returns 0 on success (assets found), -1 if none detected.
  */
@@ -175,58 +183,82 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
                                 const char *data_dir) {
     const char *base = data_dir && data_dir[0] ? data_dir : ".";
 
-    /* Resolve graphics */
-    if (resolve_asset(base, "theron", g_theron_graphics_candidates,
+    /* Resolve Track 02 BIN (primary CD-ROM data track) */
+    if (resolve_asset(base, "theron", g_theron_track02_candidates,
                        profile->graphics_path,
                        &profile->graphics_size)) {
-        /* found */
+        /* Track 02 found — same file for graphics + dungeon */
+        strncpy(profile->dungeon_path, profile->graphics_path,
+                sizeof(profile->dungeon_path) - 1);
+        profile->dungeon_size = profile->graphics_size;
+    } else if (resolve_asset(base, "", g_theron_track02_candidates,
+                              profile->graphics_path,
+                              &profile->graphics_size)) {
+        strncpy(profile->dungeon_path, profile->graphics_path,
+                sizeof(profile->dungeon_path) - 1);
+        profile->dungeon_size = profile->graphics_size;
     } else {
-        /* Fallback: check without subdir */
-        resolve_asset(base, "", g_theron_graphics_candidates,
+        /* Second fallback: extracted GRAPHICS.DAT / DUNGEON.DAT */
+        resolve_asset(base, "theron", g_theron_graphics_fallback,
                        profile->graphics_path,
                        &profile->graphics_size);
-    }
-
-    /* Resolve dungeon */
-    if (resolve_asset(base, "theron", g_theron_dungeon_candidates,
-                       profile->dungeon_path,
-                       &profile->dungeon_size)) {
-        /* found */
-    } else {
-        resolve_asset(base, "", g_theron_dungeon_candidates,
+        resolve_asset(base, "theron", g_theron_dungeon_fallback,
                        profile->dungeon_path,
                        &profile->dungeon_size);
+        if (!profile->graphics_path[0]) {
+            resolve_asset(base, "", g_theron_graphics_fallback,
+                           profile->graphics_path,
+                           &profile->graphics_size);
+        }
+        if (!profile->dungeon_path[0]) {
+            resolve_asset(base, "", g_theron_dungeon_fallback,
+                           profile->dungeon_path,
+                           &profile->dungeon_size);
+        }
     }
 
     /* Build asset root */
     snprintf(profile->asset_root, sizeof(profile->asset_root),
              "%s%ctheron", base, TRV_PATH_SEP);
 
-    /* Phase 0 gate: do NOT set assets_verified until MD5 hash is locked.
-     * All assets found here are considered provisional. */
-    profile->assets_verified = 0;
-    profile->graphics_md5[0] = '\0';
-    profile->dungeon_md5[0] = '\0';
+    /* Phase 0 gate: verify Track 02 MD5 against known hashes.
+     * JP: b7afb338ad31be1025b53f9aff12d73a
+     * US: f23601102138f87c33025877767ebf76 */
+    if (profile->graphics_path[0]) {
+        char md5hex[33] = {0};
+        if (m12_file_md5_hex(profile->graphics_path, md5hex)) {
+            if (strcmp(md5hex, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
+                strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0) {
+                profile->assets_verified = 1;
+                strncpy(profile->graphics_md5, md5hex, 32);
+                profile->graphics_md5[32] = '\0';
+                strncpy(profile->dungeon_md5, md5hex, 32);
+                profile->dungeon_md5[32] = '\0';
+            } else {
+                profile->assets_verified = 0;
+            }
+        } else {
+            profile->assets_verified = 0;
+        }
+    } else {
+        profile->assets_verified = 0;
+    }
 
-    /* Detect platform from file presence heuristics.
-     * THQUEST.GFX / THQUEST.DUN (uppercase) → pce-jp (likely JP HuCard)
-     * graphics.dat / dungeon.dat (lowercase) → pce-us (US TurboGrafx brand)
-     * This is a weak heuristic; Phase 2 ROM header read will confirm. */
-    profile->platform = THERON_PLATFORM_PCE_JP;
-    strncpy(profile->platform_label,
-            g_platform_labels[THERON_PLATFORM_PCE_JP],
-            sizeof(profile->platform_label) - 1);
-    strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
-
-    /* Check for lowercase (US TurboGrafx convention) */
-    if (strstr(profile->graphics_path, "graphics.dat") ||
-        strstr(profile->graphics_path, "GRAPHICS.DAT") == NULL) {
-        /* lowercase variant detected — likely US TurboGrafx-16 */
+    /* Platform detection from filename heuristics */
+    if (strstr(profile->graphics_path, "Japan") ||
+        strstr(profile->graphics_path, "pce-jp")) {
+        profile->platform = THERON_PLATFORM_PCE_JP;
+        strncpy(profile->platform_label,
+                g_platform_labels[THERON_PLATFORM_PCE_JP],
+                sizeof(profile->platform_label) - 1);
+        strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
+    } else if (strstr(profile->graphics_path, "US") ||
+               strstr(profile->graphics_path, "pce-en")) {
         profile->platform = THERON_PLATFORM_PCE_US;
         strncpy(profile->platform_label,
                 g_platform_labels[THERON_PLATFORM_PCE_US],
                 sizeof(profile->platform_label) - 1);
-        strncpy(profile->version_id, "pce-us", sizeof(profile->version_id) - 1);
+        strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
     }
 
     /* Require both graphics and dungeon before returning success */

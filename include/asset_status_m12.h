@@ -54,6 +54,9 @@ const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* 
                                                          size_t index);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
 
+/* MD5 hex of a file — used for asset hash verification (Theron Phase 0). */
+int m12_file_md5_hex(const char* path, char outHex[33]);
+
 #ifdef __cplusplus
 }
 #endif

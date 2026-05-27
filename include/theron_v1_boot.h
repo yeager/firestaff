@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "asset_status_m12.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * Theron's Quest V1 Boot Profile — Phase 1: Runtime Profile Split
