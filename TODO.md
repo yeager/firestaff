@@ -52,7 +52,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### DM2 V1
 
-- ❌ Phase 1 - Boot/profile split: wire DM2 profile, asset discovery, launcher state, and runtime selection.
 - ❌ Phase 2 - Dungeon/world data model: complete DM2 map, object, tile, and world-state ingestion.
 - ❌ Phase 3 - Rendering pipeline: implement DM2 viewport, UI chrome, items, outdoor/indoor presentation, and palette behavior.
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.

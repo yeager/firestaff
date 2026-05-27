@@ -42,6 +42,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### DM2 V1
 
 - ✅ Phase 0 - Provenance and source audit setup.
+- ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
 - ✅ Phase 7 - Save/import compatibility verification.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
