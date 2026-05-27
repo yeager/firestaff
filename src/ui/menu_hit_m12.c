@@ -17,7 +17,7 @@
 #define M12_HIT_MAIN_RAIL_X         42
 #define M12_HIT_MAIN_RAIL_W         390
 #define M12_HIT_MAIN_GRID_LEFT      (M12_HIT_MAIN_RAIL_X + M12_HIT_MAIN_RAIL_W + 44)
-#define M12_HIT_MAIN_GRID_TOP       152
+#define M12_HIT_MAIN_GRID_TOP       40
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
 #define M12_HIT_MAIN_CARD_GAP       22
 #define M12_HIT_MAIN_CARD_MAX_COUNT 6
@@ -26,11 +26,11 @@
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
 #define M12_HIT_PANEL_Y        260
-#define M12_HIT_GAMEOPT_PANEL_Y 270
+#define M12_HIT_GAMEOPT_PANEL_Y 190
 #define M12_HIT_PANEL_W        (M12_HIT_CANVAS_W - 2 * M12_HIT_PANEL_X)
 #define M12_HIT_PANEL_H        400
-#define M12_HIT_GAMEOPT_PANEL_H_V1  560
-#define M12_HIT_GAMEOPT_PANEL_H_V2  680
+#define M12_HIT_GAMEOPT_PANEL_H_V1  780
+#define M12_HIT_GAMEOPT_PANEL_H_V2  780
 #define M12_HIT_ROW_INDENT     36
 #define M12_HIT_ROW_HEIGHT     50
 
@@ -119,14 +119,14 @@ static int m12_hit_settings_row_rect(int row, int* rx, int* ry, int* rw, int* rh
 
 static int m12_hit_gameopt_row_rect(int row, int* rx, int* ry, int* rw, int* rh) {
     static const int yOffsets[M12_GAME_OPT_ROW_COUNT] = {
-        76, 158, 210, 262, 314, 366, 448, 500
+        34, 220, 220, 220, 300, 300, 380, 380
     };
     /* Rows 0..M12_GAME_OPT_ROW_COUNT-1 are drawn in the panel. */
     if (row < 0 || row >= M12_GAME_OPT_ROW_COUNT) return 0;
     *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
     *ry = M12_HIT_GAMEOPT_PANEL_Y + yOffsets[row];
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
-    *rh = M12_HIT_ROW_HEIGHT;
+    *rh = (row == M12_GAME_OPT_ROW_PRESENTATION) ? 156 : 64;
     return 1;
 }
 
@@ -241,6 +241,12 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             for (i = 0; i < M12_GAME_OPT_ROW_COUNT; ++i) {
                 if (m12_hit_gameopt_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
+                    if (i == M12_GAME_OPT_ROW_PRESENTATION) {
+                        hit.kind = M12_HIT_GAMEOPT_CYCLE;
+                        hit.index = i;
+                        hit.delta = (x < rx + rw / 2) ? -1 : 1;
+                        return hit;
+                    }
                     if (m12_hit_is_cycle_plus(rx, rw, x)) {
                         hit.kind = M12_HIT_GAMEOPT_CYCLE;
                         hit.index = i;
@@ -345,6 +351,22 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                                        : M12_MENU_INPUT_UP;
                 M12_StartupMenu_HandleInput(state, mv);
                 if (state->gameOptSelectedRow == before) break;
+            }
+            if (hit.index == M12_GAME_OPT_ROW_PRESENTATION &&
+                state->activatedIndex >= 0 &&
+                state->activatedIndex < M12_CONFIG_GAME_COUNT) {
+                if (hit.delta < 0) {
+                    int guard = 0;
+                    while (state->gameOptions[state->activatedIndex].presentationModeIndex !=
+                               M12_PRESENTATION_V1_ORIGINAL &&
+                           guard++ < M12_PRESENTATION_MODE_COUNT) {
+                        M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_LEFT);
+                    }
+                } else if (state->gameOptions[state->activatedIndex].presentationModeIndex ==
+                           M12_PRESENTATION_V1_ORIGINAL) {
+                    M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_RIGHT);
+                }
+                return 1;
             }
             M12_StartupMenu_HandleInput(state,
                                         hit.delta >= 0 ? M12_MENU_INPUT_RIGHT

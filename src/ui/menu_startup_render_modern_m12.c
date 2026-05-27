@@ -91,13 +91,11 @@ static M12_RGB COLOR_TEXT_DIM(void)    { return rgb(176, 170, 192); }
 static M12_RGB COLOR_TEXT_FAINT(void)  { return rgb(120, 112, 148); }
 static M12_RGB COLOR_ACCENT(void)      { return rgb(232, 184, 88); }
 static M12_RGB COLOR_ACCENT_HI(void)   { return rgb(255, 222, 148); }
-static M12_RGB COLOR_ACCENT_LO(void)   { return rgb(168, 118, 40); }
 static M12_RGB COLOR_OK(void)          { return rgb(120, 200, 130); }
 static M12_RGB COLOR_WARN(void)        { return rgb(220, 170, 90); }
 static M12_RGB COLOR_BAD(void)         { return rgb(210, 96, 96); }
 static M12_RGB COLOR_V1(void)          { return rgb(232, 184, 88); }
 static M12_RGB COLOR_V2(void)          { return rgb(120, 196, 236); }
-static M12_RGB COLOR_V3(void)          { return rgb(176, 132, 240); }
 static M12_RGB COLOR_SHADOW(void)      { return rgb(6, 6, 14); }
 
 /* -------------------------------------------------------------------------- */
@@ -515,77 +513,12 @@ static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
 /* Header: logo + title + mode badge                                          */
 /* -------------------------------------------------------------------------- */
 
-static void draw_title_centered(M12_ModernCanvas* c) {
-    /* Quiet top band for mode/status. The main brand mark lives in the
-     * tall left rail on the front menu. */
-    for (int y = 20; y < 104; ++y) {
-        int alpha = 90 - (y - 20) * 48 / 108;
-        for (int x = 0; x < c->w; ++x) {
-            blend_pixel(c, x, y, rgb(0, 0, 0), alpha < 0 ? 0 : alpha);
-        }
-    }
-
-    int scale = 5;
-    const char* label = "FIRESTAFF";
-    ModernTextStyle probe = text_style_make(scale, COLOR_ACCENT_HI(), 0);
-    int w = text_width_px(label, &probe);
-    draw_text_gradient(c, (c->w - w) / 2, 34, label, scale,
-                       COLOR_ACCENT_HI(), COLOR_ACCENT_LO(), COLOR_SHADOW());
-    ModernTextStyle tag = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text_centered(c, c->w / 2, 110,
-                       "SOURCE FAITHFUL DUNGEON MASTER ENGINE", &tag);
-}
-
-static M12_RGB mode_color(int mode) {
-    if (mode == M12_PRESENTATION_V20_FILTERED) return COLOR_V2();
-    if (mode == M12_PRESENTATION_V21_UPSCALED) return COLOR_V2();
-    if (mode == M12_PRESENTATION_V22_MODERN)   return COLOR_V3();
-    return COLOR_V1();
-}
-
-static const char* mode_short(int mode) {
-    if (mode == M12_PRESENTATION_V20_FILTERED) return "V2 FILTERED";
-    if (mode == M12_PRESENTATION_V21_UPSCALED) return "V2 ENHANCED 2D";
-    if (mode == M12_PRESENTATION_V22_MODERN)   return "V3 MODERN 3D";
-    return "V1 ORIGINAL";
-}
-
-
 static const char* language_short(const M12_StartupMenuState* state) {
     int li = state ? state->settings.languageIndex : 0;
     if (li == 1) return "SV";
     if (li == 2) return "FR";
     if (li == 3) return "DE";
     return "EN";
-}
-
-static void draw_mode_badge(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    int mode = M12_StartupMenu_GetPresentationMode(state);
-    M12_RGB col = mode_color(mode);
-    int x = c->w - 300;
-    int y = 40;
-    int w = 260;
-    int h = 48;
-    /* Outer glow */
-    for (int i = 1; i <= 6; ++i) {
-        int alpha = 90 - i * 12;
-        for (int xx = x - i; xx < x + w + i; ++xx) {
-            blend_pixel(c, xx, y - i, col, alpha);
-            blend_pixel(c, xx, y + h + i - 1, col, alpha);
-        }
-        for (int yy = y - i; yy < y + h + i; ++yy) {
-            blend_pixel(c, x - i, yy, col, alpha);
-            blend_pixel(c, x + w + i - 1, yy, col, alpha);
-        }
-    }
-    fill_rounded_rect(c, x, y, w, h, 10, scale_rgb(col, 120, 255));
-    stroke_rounded_rect(c, x, y, w, h, 10, col);
-    ModernTextStyle lbl = text_style_make(2, COLOR_TEXT(), 1);
-    draw_text(c, x + 16, y + 8, "MODE", &lbl);
-    ModernTextStyle big = text_style_make(2, col, 2);
-    const char* s = mode_short(mode);
-    int tw = text_width_px(s, &big);
-    draw_text(c, x + w - tw - 16, y + h - 18, s, &big);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -683,39 +616,105 @@ static void draw_readme_logo_image(M12_ModernCanvas* c, int x, int y, int w, int
 static void draw_tall_firestaff_rail(M12_ModernCanvas* c, const M12_StartupMenuState* state,
                                      int x, int y, int w, int h) {
     unsigned int tick = state ? state->frameTick : 0U;
-    draw_panel(c, x, y, w, h, rgb(10, 8, 18), rgb(118, 76, 38), 22);
+    int cx = x + w / 2;
+    int titleY = y + 34;
+    int staffTop = y + 178;
+    int staffBot = y + h - 118;
 
-    /* Animated fire column behind the README logo. */
-    for (int fy = y + 24; fy < y + h - 24; ++fy) {
-        int rel = fy - y;
-        int center = x + w / 2 + (int)(((tick + (unsigned int)rel) % 30U) / 3U) - 5;
-        int flameW = (w * (h - rel)) / h;
-        int wave = (int)((tick * 5U + (unsigned int)rel * 3U) % 54U);
-        if (wave > 27) wave = 54 - wave;
-        flameW = flameW / 2 + wave;
-        if (flameW < 18) flameW = 18;
-        if (flameW > w - 42) flameW = w - 42;
-        for (int fx = center - flameW / 2; fx < center + flameW / 2; ++fx) {
-            int dist = fx > center ? fx - center : center - fx;
-            int alpha = 76 - (dist * 80) / flameW;
-            M12_RGB flame = rel < h / 3 ? rgb(255, 218, 92)
-                            : rel < (h * 2) / 3 ? rgb(238, 112, 34)
-                                                 : rgb(136, 40, 22);
-            if (alpha > 0) blend_pixel(c, fx, fy, flame, alpha);
+    draw_panel(c, x, y, w, h, rgb(8, 7, 14), rgb(154, 86, 34), 22);
+
+    fill_vgradient(c, x + 2, y + 2, w - 4, h - 4,
+                   rgb(18, 12, 22), rgb(5, 6, 12));
+
+    /* Slow living heat field behind the staff. */
+    for (int yy = y + 24; yy < y + h - 24; ++yy) {
+        int rel = yy - y;
+        int heatW = w - 74 - (rel % 5);
+        int wave = (int)((tick * 4U + (unsigned int)rel * 5U) % 64U);
+        if (wave > 32) wave = 64 - wave;
+        for (int xx = cx - heatW / 2; xx < cx + heatW / 2; ++xx) {
+            int dx = xx - cx;
+            int dist = dx < 0 ? -dx : dx;
+            int alpha = 46 - (dist * 58) / (heatW / 2 + 1);
+            alpha += wave / 5;
+            if (alpha <= 0) continue;
+            blend_pixel(c, xx, yy,
+                        rel < h / 2 ? rgb(132, 42, 18) : rgb(48, 24, 34),
+                        alpha);
         }
     }
 
+    /* FIRESTAFF is part of the animated mark, not a separate lower label. */
     {
-        int logoPad = w / 9;
-        int logoY = y + h / 2 - (w - logoPad * 2) / 2;
-        draw_readme_logo_image(c, x + logoPad, logoY, w - logoPad * 2, w - logoPad * 2);
+        int scale = 5;
+        const char* label = "FIRESTAFF";
+        ModernTextStyle probe = text_style_make(scale, COLOR_ACCENT_HI(), 0);
+        int tw = text_width_px(label, &probe);
+        draw_text_gradient(c, cx - tw / 2, titleY, label, scale,
+                           rgb(255, 238, 166), rgb(214, 96, 30), COLOR_SHADOW());
     }
 
-    ModernTextStyle title = text_style_make(5, COLOR_ACCENT_HI(), 3);
-    draw_text_centered(c, x + w / 2, y + h - 170, "FIRESTAFF", &title);
-    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text_centered(c, x + w / 2, y + h - 106, "YEAGER/FIRESTAFF", &sub);
-    draw_text_centered(c, x + w / 2, y + h - 74, "GITHUB.COM/YEAGER/FIRESTAFF", &sub);
+    /* Burning staff shaft: dark iron edges, hot core and pulsing runes. */
+    fill_rounded_rect(c, cx - 34, staffTop, 68, staffBot - staffTop, 26, rgb(18, 13, 13));
+    stroke_rounded_rect(c, cx - 34, staffTop, 68, staffBot - staffTop, 26, rgb(120, 74, 42));
+    fill_rounded_rect(c, cx - 15, staffTop + 22, 30, staffBot - staffTop - 44, 12,
+                      rgb(90, 42, 20));
+    for (int yy = staffTop + 30; yy < staffBot - 30; ++yy) {
+        int phase = (int)((tick * 7U + (unsigned int)yy * 3U) % 80U);
+        if (phase > 40) phase = 80 - phase;
+        M12_RGB core = rgb(clamp_u8(190 + phase), clamp_u8(76 + phase / 2), 28);
+        hline(c, cx - 7, yy, 14, core);
+        blend_pixel(c, cx - 10, yy, rgb(255, 170, 54), 90);
+        blend_pixel(c, cx + 9, yy, rgb(255, 170, 54), 90);
+    }
+
+    for (int r = 0; r < 9; ++r) {
+        int ry = staffTop + 68 + r * 54;
+        int pulse = (int)((tick + (unsigned int)r * 11U) % 42U);
+        if (pulse > 21) pulse = 42 - pulse;
+        M12_RGB rune = rgb(255, clamp_u8(156 + pulse * 3), 58);
+        fill_rect(c, cx - 22, ry, 44, 4, rune);
+        fill_rect(c, cx - 4, ry - 11, 8, 26, rune);
+        blend_pixel(c, cx - 26, ry, rune, 160);
+        blend_pixel(c, cx + 25, ry, rune, 160);
+    }
+
+    /* Crown flame. Layered, deterministic particles keep it animated
+     * without external assets. */
+    for (int layer = 0; layer < 4; ++layer) {
+        M12_RGB flame = layer == 0 ? rgb(255, 236, 136)
+                        : layer == 1 ? rgb(255, 156, 48)
+                        : layer == 2 ? rgb(210, 64, 24)
+                                     : rgb(88, 28, 46);
+        int top = staffTop - 128 + layer * 26;
+        int bottom = staffTop + 58;
+        for (int yy = top; yy < bottom; ++yy) {
+            int rel = yy - top;
+            int total = bottom - top;
+            int baseW = (w / 2) - (rel * (w / 2)) / (total + 1);
+            int sway = (int)((tick * (5U + (unsigned int)layer) + (unsigned int)yy * 2U) % 50U);
+            if (sway > 25) sway = 50 - sway;
+            sway -= 12;
+            if (baseW < 10) baseW = 10;
+            for (int xx = cx - baseW / 2 + sway; xx < cx + baseW / 2 + sway; ++xx) {
+                int dx = xx - (cx + sway);
+                int dist = dx < 0 ? -dx : dx;
+                int alpha = 118 - (dist * 150) / (baseW / 2 + 1) - layer * 12;
+                if (alpha > 0) blend_pixel(c, xx, yy, flame, alpha);
+            }
+        }
+    }
+
+    for (int i = 0; i < 90; ++i) {
+        int px = x + 28 + (int)((i * 83U + tick * (3U + (unsigned int)(i % 5))) % (unsigned int)(w - 56));
+        int py = y + 118 + (int)((i * 151U + tick * (7U + (unsigned int)(i % 3))) % (unsigned int)(h - 220));
+        int a = 50 + (i * 17) % 130;
+        blend_pixel(c, px, py, rgb(255, 144, 44), a);
+        blend_pixel(c, px + 1, py, rgb(255, 214, 96), a / 2);
+    }
+
+    ModernTextStyle link = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text_centered(c, cx, y + h - 58, "GITHUB.COM/YEAGER/FIRESTAFF", &link);
 }
 
 static void draw_generated_card_art(M12_ModernCanvas* c,
@@ -1102,10 +1101,7 @@ static void draw_card(M12_ModernCanvas* c,
         draw_box_art_panel(c, entry->gameId, slotIdx, artX, artY, artW, artH, !game_supported(entry->gameId));
     }
 
-    {
-        ModernTextStyle hint = text_style_make(2, COLOR_TEXT_DIM(), 1);
-        draw_text(c, x + 24, y + h - 48, "ENTER FOR GAME MENU", &hint);
-    }
+    (void)selected;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1182,11 +1178,11 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
      * shared state and keyboard route; the visible touch grid keeps the
      * requested 3+3 structure. */
     int railX = 42;
-    int railY = 118;
+    int railY = 40;
     int railW = 390;
-    int railH = c->h - 220;
+    int railH = c->h - 132;
     int gridLeft = railX + railW + 44;
-    int gridTop = 152;
+    int gridTop = 40;
     int gridBottom = c->h - 130;
     int entryCount = M12_StartupMenu_GetEntryCount();
     int settingsIndex = entryCount - 1;
@@ -1210,12 +1206,6 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
             draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
         }
     }
-
-    /* Section title */
-    ModernTextStyle h = text_style_make(3, COLOR_ACCENT(), 2);
-    draw_text(c, gridLeft, 112, _("SELECT A DESTINATION"), &h);
-    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, gridLeft, 134, "FIVE GAMES AND FIRESTAFF SETTINGS", &sub);
 
     /* Faded creature silhouette in the upper-right background so the
      * screen feels like a Dungeon Master front door without stealing
@@ -1370,41 +1360,62 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
     }
 }
 
-static void draw_section_header(M12_ModernCanvas* c, int x, int y, int w, const char* label) {
-    /* Thin dim line + label for section grouping */
-    M12_RGB lineCol = rgb(60, 56, 80);
-    hline(c, x, y + 6, w, lineCol);
-    ModernTextStyle lbl = text_style_make(1, COLOR_TEXT_FAINT(), 0);
-    draw_text(c, x + 4, y + 14, label, &lbl);
+static void draw_mode_choice_card(M12_ModernCanvas* c,
+                                  int x, int y, int w, int h,
+                                  const char* label,
+                                  const char* line1,
+                                  const char* line2,
+                                  int active,
+                                  M12_RGB accent) {
+    M12_RGB fill = active ? scale_rgb(accent, 78, 255) : rgb(18, 20, 42);
+    M12_RGB edge = active ? accent : COLOR_PANEL_EDGE();
+    fill_rounded_rect(c, x, y, w, h, 14, fill);
+    stroke_rounded_rect(c, x, y, w, h, 14, edge);
+    if (active) {
+        for (int i = 1; i <= 5; ++i) {
+            int alpha = 74 - i * 10;
+            for (int xx = x - i; xx < x + w + i; ++xx) {
+                blend_pixel(c, xx, y - i, accent, alpha);
+                blend_pixel(c, xx, y + h + i - 1, accent, alpha);
+            }
+            for (int yy = y - i; yy < y + h + i; ++yy) {
+                blend_pixel(c, x - i, yy, accent, alpha);
+                blend_pixel(c, x + w + i - 1, yy, accent, alpha);
+            }
+        }
+    }
+    ModernTextStyle title = text_style_make(4, active ? COLOR_ACCENT_HI() : COLOR_TEXT(), 2);
+    draw_text_centered(c, x + w / 2, y + 24, label, &title);
+    ModernTextStyle detail = text_style_make(2, active ? COLOR_TEXT() : COLOR_TEXT_DIM(), 1);
+    draw_text_centered(c, x + w / 2, y + 88, line1, &detail);
+    draw_text_centered(c, x + w / 2, y + 120, line2, &detail);
 }
 
-static void draw_presentation_row(M12_ModernCanvas* c, int x, int y, int w,
-                                  int modeIndex, int selected) {
-    M12_RGB fill = selected ? rgb(36, 42, 84) : rgb(20, 22, 48);
+static void draw_info_tile(M12_ModernCanvas* c,
+                           int x, int y, int w, int h,
+                           const char* label,
+                           const char* value,
+                           int selected,
+                           int muted) {
+    M12_RGB fill = selected ? rgb(36, 42, 84) : rgb(18, 20, 42);
     M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
-    fill_rounded_rect(c, x, y, w, 50, 10, fill);
-    stroke_rounded_rect(c, x, y, w, 50, 10, edge);
-    ModernTextStyle L = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, x + 20, y + 14, "PRESENTATION", &L);
-    /* Color-coded value */
-    const char* val;
-    M12_RGB valCol;
-    if (modeIndex == M12_PRESENTATION_V20_FILTERED) {
-        val = "V2 FILTERED";
-        valCol = COLOR_V2();
-    } else if (modeIndex == M12_PRESENTATION_V21_UPSCALED) {
-        val = "V2 ENHANCED 2D";
-        valCol = COLOR_V2();
-    } else if (modeIndex == M12_PRESENTATION_V22_MODERN) {
-        val = "V3 COMING SOON";
-        valCol = rgb(100, 96, 110); /* greyed out */
-    } else {
-        val = "V1 ORIGINAL";
-        valCol = COLOR_V1();
+    if (muted) {
+        fill = rgb(18, 18, 28);
+        edge = rgb(74, 72, 86);
     }
-    ModernTextStyle V = text_style_make(2, valCol, 1);
-    int vw = text_width_px(val, &V);
-    draw_text(c, x + w - 20 - vw, y + 14, val, &V);
+    fill_rounded_rect(c, x, y, w, h, 10, fill);
+    stroke_rounded_rect(c, x, y, w, h, 10, edge);
+    ModernTextStyle lab = text_style_make(1, muted ? COLOR_TEXT_FAINT() : COLOR_TEXT_DIM(), 0);
+    ModernTextStyle val = text_style_make(2, muted ? COLOR_TEXT_FAINT() : (selected ? COLOR_ACCENT_HI() : COLOR_TEXT()), 1);
+    draw_text(c, x + 16, y + 14, label, &lab);
+    if (value && value[0] != '\0') {
+        int vw = text_width_px(value, &val);
+        if (vw > w - 32) {
+            val = text_style_make(1, muted ? COLOR_TEXT_FAINT() : (selected ? COLOR_ACCENT_HI() : COLOR_TEXT()), 0);
+            vw = text_width_px(value, &val);
+        }
+        draw_text(c, x + w - 16 - vw, y + h - 28, value, &val);
+    }
 }
 
 static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
@@ -1416,6 +1427,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     if (mode < 0) mode = 0;
     if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;
     int isV1 = (mode == M12_PRESENTATION_V1_ORIGINAL);
+    int isCustom = !isV1;
 
     /* Dim background so options panel is clearly on top */
     for (int y = 0; y < c->h; y++) {
@@ -1430,16 +1442,14 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
 
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 130, entry->title, &h);
+    draw_text(c, 160, 74, entry->title, &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 160, 188, game_description(entry->gameId), &sub);
-    draw_text(c, 160, 222, "QUICK CHOICE: ORIGINAL = V1    CUSTOM = V2.0 / V2.1 / V2.2", &sub);
+    draw_text(c, 160, 132, game_description(entry->gameId), &sub);
 
     int panelX = 96;
-    int panelY = 270;
+    int panelY = 190;
     int panelW = c->w - 2 * panelX;
-    /* Taller panel to accommodate presentation row + section headers */
-    int panelH = isV1 ? 560 : 680;
+    int panelH = 780;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1447,6 +1457,9 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10", "32:9"};
     static const char* res[] = {"320X200", "640X400", "800X600", "1024X768", "1280X960"};
     static const char* speeds[] = {"SLOWER", "NORMAL", "FASTER"};
+    static const char* renderer[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
+    static const char* windows[] = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
+    static const char* soundtracks[] = {"ORIGINAL", "REMASTERED", "CUSTOM"};
 
     const M12_AssetVersionStatus* ver = NULL;
     int vc = (int)M12_AssetStatus_GetVersionCount(entry->gameId);
@@ -1464,6 +1477,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     const char* langLabel  = (opts->languageIndex >= 0 && opts->languageIndex < 4)
                               ? langs[opts->languageIndex] : "EN";
     const char* cheatsLabel = opts->cheatsEnabled ? "ON" : "OFF";
+    const char* hotkeysLabel = M12_GameOptions_SpeedHotkeysEnabled(opts) ? "ON" : "OFF";
     int speedIdx = opts->gameSpeed;
     if (speedIdx < 0) speedIdx = 0;
     if (speedIdx > 2) speedIdx = 2;
@@ -1473,80 +1487,108 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     int resIdx = opts->resolution;
     if (resIdx < 0) resIdx = 0;
     if (resIdx > 4) resIdx = 4;
+    int rendererIdx = state->settings.rendererBackendIndex;
+    if (rendererIdx < 0) rendererIdx = 0;
+    if (rendererIdx > 4) rendererIdx = 4;
+    int windowIdx = state->settings.windowModeIndex;
+    if (windowIdx < 0) windowIdx = 0;
+    if (windowIdx > 2) windowIdx = 2;
+    int soundtrackIdx = state->settings.soundtrackMode;
+    if (soundtrackIdx < 0) soundtrackIdx = 0;
+    if (soundtrackIdx > 2) soundtrackIdx = 2;
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
-    int curY = panelY + 24;
-    int step = 52;
-    int sectionGap = 30; /* space for section header */
     int sel = state->gameOptSelectedRow;
+    int choiceY = panelY + 34;
+    int choiceGap = 22;
+    int choiceW = (rowW - choiceGap) / 2;
+    int choiceH = 156;
 
-    /* --- PRESENTATION MODE row (quick choice: Original vs Custom) --- */
+    draw_mode_choice_card(c, rowX, choiceY, choiceW, choiceH,
+                          "ORIGINAL",
+                          "SOURCE-FAITHFUL RULES",
+                          "LOCKED DISPLAY PARITY",
+                          isV1, COLOR_V1());
+    draw_mode_choice_card(c, rowX + choiceW + choiceGap, choiceY, choiceW, choiceH,
+                          "CUSTOM",
+                          "ENHANCED PRESENTATION",
+                          "ADJUSTABLE DISPLAY",
+                          isCustom, COLOR_V2());
+
     {
-        int originalActive = (mode == M12_PRESENTATION_V1_ORIGINAL);
-        int pillW = (rowW - 18) / 2;
-        fill_rounded_rect(c, rowX, curY, pillW, 50, 10,
-                          originalActive ? rgb(72, 52, 24) : rgb(20, 22, 48));
-        stroke_rounded_rect(c, rowX, curY, pillW, 50, 10,
-                            originalActive ? COLOR_ACCENT_HI() : COLOR_PANEL_EDGE());
-        fill_rounded_rect(c, rowX + pillW + 18, curY, pillW, 50, 10,
-                          !originalActive ? rgb(30, 54, 88) : rgb(20, 22, 48));
-        stroke_rounded_rect(c, rowX + pillW + 18, curY, pillW, 50, 10,
-                            !originalActive ? COLOR_V2() : COLOR_PANEL_EDGE());
-        ModernTextStyle qt = text_style_make(2, COLOR_TEXT(), 1);
-        draw_text_centered(c, rowX + pillW / 2, curY + 14, "ORIGINAL  V1", &qt);
-        draw_text_centered(c, rowX + pillW + 18 + pillW / 2, curY + 14, "CUSTOM  V2+", &qt);
-        curY += step;
-    }
+        int gridY = panelY + 220;
+        int tileGap = 16;
+        int cols = 4;
+        int tileW = (rowW - tileGap * (cols - 1)) / cols;
+        int tileH = 64;
+        int x0 = rowX;
+        int y0 = gridY;
+        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "VERSION", verLabel,
+                       sel == M12_GAME_OPT_ROW_VERSION, 0);
+        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "DATA", ver && ver->matched ? "VERIFIED" : "MISSING",
+                       sel == M12_GAME_OPT_ROW_VERSION, ver && ver->matched ? 0 : 1);
+        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "PATCH", patchLabel,
+                       sel == M12_GAME_OPT_ROW_PATCH, 0);
+        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "LANGUAGE", langLabel,
+                       sel == M12_GAME_OPT_ROW_LANGUAGE, 0);
 
-    draw_presentation_row(c, rowX, curY, rowW, mode,
-                          sel == M12_GAME_OPT_ROW_PRESENTATION);
-    curY += step;
+        y0 += tileH + tileGap;
+        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CHEATS", cheatsLabel,
+                       sel == M12_GAME_OPT_ROW_CHEATS, 0);
+        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SPEED", speeds[speedIdx],
+                       sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
+        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "SPEED HOTKEYS", hotkeysLabel,
+                       sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
+        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "QUICK RESUME",
+                       state->settings.quickResumeEnabled ? "ON" : "OFF", 0, 0);
 
-    /* --- GAME section header --- */
-    draw_section_header(c, rowX, curY, rowW, "GAME");
-    curY += sectionGap;
+        y0 += tileH + tileGap;
+        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "ASPECT", aspects[aspIdx],
+                       sel == M12_GAME_OPT_ROW_ASPECT, isV1);
+        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "RESOLUTION", res[resIdx],
+                       sel == M12_GAME_OPT_ROW_RESOLUTION, isV1);
+        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "RENDERER", renderer[rendererIdx],
+                       0, 0);
+        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "WINDOW", windows[windowIdx],
+                       0, 0);
 
-    draw_setting_row(c, rowX, curY, rowW, "VERSION",     verLabel,
-                     sel == M12_GAME_OPT_ROW_VERSION);
-    curY += step;
-    draw_setting_row(c, rowX, curY, rowW, "PATCH",       patchLabel,
-                     sel == M12_GAME_OPT_ROW_PATCH);
-    curY += step;
-    draw_setting_row(c, rowX, curY, rowW, "LANGUAGE",    langLabel,
-                     sel == M12_GAME_OPT_ROW_LANGUAGE);
-    curY += step;
-    draw_setting_row(c, rowX, curY, rowW, "CHEATS",      cheatsLabel,
-                     sel == M12_GAME_OPT_ROW_CHEATS);
-    curY += step;
-    draw_setting_row(c, rowX, curY, rowW, "SPEED",       speeds[speedIdx],
-                     sel == M12_GAME_OPT_ROW_SPEED);
-    curY += step;
+        y0 += tileH + tileGap;
+        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "MINIMAP",
+                       state->settings.minimapEnabled ? "ON" : "OFF", 0, 0);
+        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "AUTOMAP",
+                       state->settings.autoMapEnabled ? "ON" : "OFF", 0, 0);
+        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "COMBAT LOG",
+                       state->settings.combatLogEnabled ? "ON" : "OFF", 0, 0);
+        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "SOUNDTRACK",
+                       soundtracks[soundtrackIdx], 0, 0);
 
-    /* --- DISPLAY section (hidden in V1) --- */
-    if (!isV1) {
-        draw_section_header(c, rowX, curY, rowW, "DISPLAY");
-        curY += sectionGap;
+        y0 += tileH + tileGap;
+        {
+            char amb[24];
+            char ui[24];
+            snprintf(amb, sizeof(amb), "%s %d%%",
+                     state->settings.ambientEnabled ? "ON" : "OFF",
+                     state->settings.ambientVolume);
+            snprintf(ui, sizeof(ui), "%d%%", state->settings.uiScale);
+            draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "AMBIENT", amb, 0, 0);
+            draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "UI SCALE", ui, 0, 0);
+            draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "STREAMER",
+                           state->settings.streamerMode ? "ON" : "OFF", 0, 0);
+            draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM MUSIC",
+                           state->settings.customMusicPath[0] ? "SET" : "NONE", 0, 0);
+        }
 
-        draw_setting_row(c, rowX, curY, rowW, "ASPECT",      aspects[aspIdx],
-                         sel == M12_GAME_OPT_ROW_ASPECT);
-        curY += step;
-        draw_setting_row(c, rowX, curY, rowW, "RESOLUTION",  res[resIdx],
-                         sel == M12_GAME_OPT_ROW_RESOLUTION);
-        curY += step;
-    }
-
-    /* Mode constraint notice */
-    if (isV1) {
-        ModernTextStyle note = text_style_make(1, COLOR_WARN(), 0);
-        draw_text(c, panelX + 36, curY + 8,
-                  "V1 ORIGINAL LOCKS ASPECT AND RESOLUTION FOR AUTHENTICITY",
-                  &note);
-    } else if (mode == M12_PRESENTATION_V22_MODERN) {
-        ModernTextStyle note = text_style_make(1, COLOR_V3(), 0);
-        draw_text(c, panelX + 36, curY + 8,
-                  "V3 MODERN 3D IS A LATER MILESTONE (COMING SOON)",
-                  &note);
+        y0 += tileH + tileGap;
+        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM DUNGEON",
+                       state->settings.customDungeonPath[0] ? "SET" : "NONE", 0, 0);
+        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SCREENSHOTS",
+                       state->settings.screenshotPath[0] ? "CUSTOM" : "DEFAULT", 0, 0);
+        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",
+                       state->settings.audioMuted ? "MUTED" : "ON", 0, 0);
+        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "STATUS",
+                       mode == M12_PRESENTATION_V22_MODERN ? "COMING SOON" : "READY", 0,
+                       mode == M12_PRESENTATION_V22_MODERN);
     }
 
     /* Launch button: centered horizontally, positioned below last visible row */
@@ -1751,8 +1793,6 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
         return;
     }
     draw_background(&c, state);
-    draw_title_centered(&c);
-    draw_mode_badge(&c, state);
 
     const char* footerLeft  = "UP DOWN MOVE    ENTER SELECT    ESC BACK";
 
@@ -1781,10 +1821,9 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
 
     draw_data_dir(&c, state);
 
-    const char* modeStr = mode_short(M12_StartupMenu_GetPresentationMode(state));
     const char* langStr = language_short(state);
     char modeHint[80];
-    snprintf(modeHint, sizeof(modeHint), "PRESENTATION  %s    LANG  %s", modeStr, langStr);
+    snprintf(modeHint, sizeof(modeHint), "LANG  %s", langStr);
     draw_footer(&c, footerLeft, modeHint);
 }
 
