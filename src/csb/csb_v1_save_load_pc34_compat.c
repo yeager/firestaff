@@ -73,9 +73,11 @@ static const char *default_save_dir(void)
 
 static void ensure_save_dir(void)
 {
-    /* Create save directory if it doesn't exist */
-    /* In a real implementation, use mkdir() with appropriate flags */
+    /* Create save directory if it doesn't exist. */
+    /* In a real implementation, use mkdir() with appropriate flags. */
     (void)default_save_dir();
+    /* TODO: implement mkdir on all platforms. Called before save writes. */
+    /* Until then, suppress unused warning: */
 }
 
 /* ── Source evidence ──────────────────────────────────────────────────── */
@@ -241,7 +243,6 @@ int csb_v1_save_header_build(CSB_V1_SaveHeader *hdr,
 {
     uint16_t *obf;
     uint16_t key_index;
-    int ki;
 
     if (!hdr) return -1;
     memset(hdr, 0, sizeof(*hdr));
@@ -260,7 +261,6 @@ int csb_v1_save_header_build(CSB_V1_SaveHeader *hdr,
     hdr->PlayTimeMs = play_time_ms;
 
     key_index = (uint16_t)csb_v1_save_header_get_key_index(magic);
-    ki = (int)(key_index & 0x1F);
 
     /* Build the obfuscated block (bytes 256-383, i.e. uint16_t[0-63]) */
     obf = (uint16_t *)((uint8_t *)hdr + 256);
