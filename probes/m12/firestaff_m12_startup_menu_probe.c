@@ -559,6 +559,7 @@ int main(void) {
     state.settings.ambientEnabled = 1;
     state.settings.ambientVolume = 70;
     state.settings.uiScale = 150;
+    state.settings.streamerMode = 1;
     snprintf(state.settings.customMusicPath, sizeof(state.settings.customMusicPath), "%s", "/tmp/firestaff-music");
     snprintf(state.settings.customDungeonPath, sizeof(state.settings.customDungeonPath), "%s", "/tmp/firestaff-dungeons");
     snprintf(state.settings.screenshotPath, sizeof(state.settings.screenshotPath), "%s", "/tmp/firestaff-shots");
@@ -584,6 +585,8 @@ int main(void) {
                      reloaded.settings.ambientEnabled == 1 &&
                      reloaded.settings.ambientVolume == 70 &&
                      reloaded.settings.uiScale == 150 &&
+                     reloaded.settings.streamerMode == 1 &&
+                     strcmp(M12_StartupMenu_GetVisibleDataDir(&reloaded), "(hidden)") == 0 &&
                      strcmp(reloaded.settings.customMusicPath, "/tmp/firestaff-music") == 0 &&
                      strcmp(reloaded.settings.customDungeonPath, "/tmp/firestaff-dungeons") == 0 &&
                      strcmp(reloaded.settings.screenshotPath, "/tmp/firestaff-shots") == 0 &&
@@ -623,6 +626,7 @@ int main(void) {
                      file_contains(configPath, "ambient_enabled = 1") &&
                      file_contains(configPath, "ambient_volume = 70") &&
                      file_contains(configPath, "ui_scale = 150") &&
+                     file_contains(configPath, "streamer_mode = 1") &&
                      file_contains(configPath, "custom_music_path = \"/tmp/firestaff-music\"") &&
                      file_contains(configPath, "custom_dungeon_path = \"/tmp/firestaff-dungeons\"") &&
                      file_contains(configPath, "screenshot_path = \"/tmp/firestaff-shots\"") &&

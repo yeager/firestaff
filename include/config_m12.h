@@ -128,6 +128,9 @@ typedef struct {
 
     /* Screenshot output directory. */
     char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
+
+    /* Privacy option for captures/streams: hide local filesystem paths. */
+    int streamerMode;
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

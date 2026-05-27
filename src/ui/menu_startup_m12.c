@@ -80,6 +80,7 @@ enum {
     M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH,
     M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH,
     M12_SETTINGS_ROW_SCREENSHOT_PATH,
+    M12_SETTINGS_ROW_STREAMER_MODE,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -1151,6 +1152,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.ambientEnabled = state->settings.ambientEnabled;
     config.ambientVolume = state->settings.ambientVolume;
     config.uiScale = state->settings.uiScale;
+    config.streamerMode = state->settings.streamerMode;
     snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
     snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
     snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
@@ -1235,6 +1237,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     if (config.uiScale <= 100) state->settings.uiScale = 100;
     else if (config.uiScale <= 150) state->settings.uiScale = 150;
     else state->settings.uiScale = 200;
+    state->settings.streamerMode = config.streamerMode ? 1 : 0;
     snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
     snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
     snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);
@@ -1578,6 +1581,17 @@ static const char* m12_settings_value_path_status(const M12_StartupMenuState* st
     return (path && path[0] != '\0') ? "SET" : "DEFAULT";
 }
 
+static const char* m12_settings_value_streamer_mode(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.streamerMode ? 1 : 0]);
+}
+
+const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state) {
+    if (state && state->settings.streamerMode) {
+        return "(hidden)";
+    }
+    return state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
+}
+
 static const char* m12_settings_label(const M12_StartupMenuState* state, int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_text(state, M12_TEXT_LANGUAGE);
@@ -1618,6 +1632,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_tr(state, "CUSTOM MUSIC");
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
+        case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
         default: return "";
     }
 }
@@ -1662,6 +1677,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_settings_value_path_status(state, state ? state->settings.customMusicPath : NULL);
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
+        case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
         default: return "";
     }
 }
@@ -1852,6 +1868,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     if (state->settings.uiScale <= 100) state->settings.uiScale = 100;
     else if (state->settings.uiScale <= 150) state->settings.uiScale = 150;
     else state->settings.uiScale = 200;
+    state->settings.streamerMode = state->settings.streamerMode ? 1 : 0;
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
     state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
@@ -2148,6 +2165,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH:
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH:
         case M12_SETTINGS_ROW_SCREENSHOT_PATH:
+            break;
+        case M12_SETTINGS_ROW_STREAMER_MODE:
+            state->settings.streamerMode = m12_cycle_index(
+                state->settings.streamerMode,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         default:
             break;
@@ -3538,7 +3561,7 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                   framebufferHeight,
                   84,
                   175,
-                  M12_AssetStatus_GetDataDir(&state->assetStatus),
+                  M12_StartupMenu_GetVisibleDataDir(state),
                   &g_textSmallShadow);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
@@ -5118,7 +5141,7 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                   framebufferHeight,
                   x + 6,
                   y + h - 12,
-                  M12_AssetStatus_GetDataDir(&state->assetStatus),
+                  M12_StartupMenu_GetVisibleDataDir(state),
                   &g_textSmallMuted);
 }
 

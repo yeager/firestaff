@@ -121,6 +121,7 @@ typedef struct {
     int ambientEnabled;
     int ambientVolume;
     int uiScale;
+    int streamerMode;
     int windowWidth;
     int windowHeight;
     char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
@@ -324,6 +325,7 @@ int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
+const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
