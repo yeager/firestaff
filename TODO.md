@@ -108,6 +108,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Cross-Cutting
 
+### Launcher and Settings
+
+- 🔧 Start-menu feature hardening: first-pass persistence exists for quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, custom music, custom dungeon, screenshot path, and all five per-game option slots; remaining work is polished UI flow, runtime handoff for every option, save export/import, session timer, streamer mode, manual/docs launcher, and cloud sync.
+
 ### Touch and Controller Support
 
 - ❌ Gesture navigation for runtime movement and turning.

@@ -82,6 +82,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Cross-Cutting
 
+### Launcher and Settings
+
+- ✅ M12 settings persistence bridge: quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, custom music, custom dungeon, screenshot path, and all five per-game option slots round-trip through the startup menu probe.
+
 ### Touch and Input
 
 - ✅ Launcher and entrance click-zone scaffolding.

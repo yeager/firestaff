@@ -69,6 +69,17 @@ enum {
     M12_SETTINGS_ROW_AUTO_PAUSE,
     M12_SETTINGS_ROW_THEME,
     M12_SETTINGS_ROW_BACKGROUND,
+    M12_SETTINGS_ROW_QUICK_RESUME,
+    M12_SETTINGS_ROW_MINIMAP,
+    M12_SETTINGS_ROW_AUTOMAP,
+    M12_SETTINGS_ROW_COMBAT_LOG,
+    M12_SETTINGS_ROW_SOUNDTRACK,
+    M12_SETTINGS_ROW_AMBIENT,
+    M12_SETTINGS_ROW_AMBIENT_VOLUME,
+    M12_SETTINGS_ROW_UI_SCALE,
+    M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH,
+    M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH,
+    M12_SETTINGS_ROW_SCREENSHOT_PATH,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -237,6 +248,7 @@ static const char* g_developerGatesLabels[] = {_("OFF"), _("QUICK"), _("FULL")};
 static const char* g_colorblindModes[] = {_("OFF"), _("DEUT"), _("PROT"), _("TRIT")};
 static const char* g_themeLabels[] = {_("CLASSIC"), _("DARK"), _("AMIGA"), _("CGA")};
 static const char* g_bgPresetLabels[] = {_("STATIC"), _("DUNGEON"), _("TORCH"), _("STARS")};
+static const char* g_soundtrackLabels[] = {_("ORIGINAL"), _("REMASTERED"), _("CUSTOM")};
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     if (!opts) {
@@ -1131,6 +1143,17 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.autoPause = state->settings.autoPause;
     config.themeIndex = state->settings.themeIndex;
     config.bgAnimationPreset = state->settings.bgAnimationPreset;
+    config.quickResumeEnabled = state->settings.quickResumeEnabled;
+    config.minimapEnabled = state->settings.minimapEnabled;
+    config.autoMapEnabled = state->settings.autoMapEnabled;
+    config.combatLogEnabled = state->settings.combatLogEnabled;
+    config.soundtrackMode = state->settings.soundtrackMode;
+    config.ambientEnabled = state->settings.ambientEnabled;
+    config.ambientVolume = state->settings.ambientVolume;
+    config.uiScale = state->settings.uiScale;
+    snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
+    snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
+    snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
     config.windowWidth = state->settings.windowWidth;
     config.windowHeight = state->settings.windowHeight;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -1201,6 +1224,20 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                  (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])));
     state->settings.bgAnimationPreset = m12_clamp_index(config.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
+    state->settings.quickResumeEnabled = config.quickResumeEnabled ? 1 : 0;
+    state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
+    state->settings.autoMapEnabled = config.autoMapEnabled ? 1 : 0;
+    state->settings.combatLogEnabled = config.combatLogEnabled ? 1 : 0;
+    state->settings.soundtrackMode = m12_clamp_index(config.soundtrackMode,
+                                                     (int)(sizeof(g_soundtrackLabels) / sizeof(g_soundtrackLabels[0])));
+    state->settings.ambientEnabled = config.ambientEnabled ? 1 : 0;
+    state->settings.ambientVolume = m12_clamp_index(config.ambientVolume, 101);
+    if (config.uiScale <= 100) state->settings.uiScale = 100;
+    else if (config.uiScale <= 150) state->settings.uiScale = 150;
+    else state->settings.uiScale = 200;
+    snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
+    snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
+    snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);
     state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -1490,6 +1527,57 @@ static const char* m12_settings_value_background(const M12_StartupMenuState* sta
     return m12_tr(state, g_bgPresetLabels[index]);
 }
 
+static const char* m12_settings_value_quick_resume(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.quickResumeEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_minimap(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.minimapEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_automap(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.autoMapEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_combat_log(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.combatLogEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_soundtrack(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.soundtrackMode,
+                                        (int)(sizeof(g_soundtrackLabels) / sizeof(g_soundtrackLabels[0])))
+                      : 0;
+    return m12_tr(state, g_soundtrackLabels[index]);
+}
+
+static const char* m12_settings_value_ambient(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.ambientEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_ambient_volume(const M12_StartupMenuState* state) {
+    static char text[8];
+    int value = state ? state->settings.ambientVolume : 40;
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+    snprintf(text, sizeof(text), "%d%%", value);
+    return text;
+}
+
+static const char* m12_settings_value_ui_scale(const M12_StartupMenuState* state) {
+    static char text[8];
+    int value = state ? state->settings.uiScale : 100;
+    if (value <= 100) value = 100;
+    else if (value <= 150) value = 150;
+    else value = 200;
+    snprintf(text, sizeof(text), "%d%%", value);
+    return text;
+}
+
+static const char* m12_settings_value_path_status(const M12_StartupMenuState* state, const char* path) {
+    (void)state;
+    return (path && path[0] != '\0') ? "SET" : "DEFAULT";
+}
+
 static const char* m12_settings_label(const M12_StartupMenuState* state, int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_text(state, M12_TEXT_LANGUAGE);
@@ -1519,6 +1607,17 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_tr(state, "AUTO PAUSE");
         case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
+        case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
+        case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
+        case M12_SETTINGS_ROW_AUTOMAP: return m12_tr(state, "AUTOMAP");
+        case M12_SETTINGS_ROW_COMBAT_LOG: return m12_tr(state, "COMBAT LOG");
+        case M12_SETTINGS_ROW_SOUNDTRACK: return m12_tr(state, "SOUNDTRACK");
+        case M12_SETTINGS_ROW_AMBIENT: return m12_tr(state, "AMBIENT SOUND");
+        case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_tr(state, "AMBIENT VOLUME");
+        case M12_SETTINGS_ROW_UI_SCALE: return m12_tr(state, "UI SCALE");
+        case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_tr(state, "CUSTOM MUSIC");
+        case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
+        case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
         default: return "";
     }
 }
@@ -1552,6 +1651,17 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_settings_value_auto_pause(state);
         case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
+        case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
+        case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
+        case M12_SETTINGS_ROW_AUTOMAP: return m12_settings_value_automap(state);
+        case M12_SETTINGS_ROW_COMBAT_LOG: return m12_settings_value_combat_log(state);
+        case M12_SETTINGS_ROW_SOUNDTRACK: return m12_settings_value_soundtrack(state);
+        case M12_SETTINGS_ROW_AMBIENT: return m12_settings_value_ambient(state);
+        case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_settings_value_ambient_volume(state);
+        case M12_SETTINGS_ROW_UI_SCALE: return m12_settings_value_ui_scale(state);
+        case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_settings_value_path_status(state, state ? state->settings.customMusicPath : NULL);
+        case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
+        case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
         default: return "";
     }
 }
@@ -1731,6 +1841,17 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                  (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])));
     state->settings.bgAnimationPreset = m12_clamp_index(state->settings.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
+    state->settings.quickResumeEnabled = state->settings.quickResumeEnabled ? 1 : 0;
+    state->settings.minimapEnabled = state->settings.minimapEnabled ? 1 : 0;
+    state->settings.autoMapEnabled = state->settings.autoMapEnabled ? 1 : 0;
+    state->settings.combatLogEnabled = state->settings.combatLogEnabled ? 1 : 0;
+    state->settings.soundtrackMode = m12_clamp_index(state->settings.soundtrackMode,
+                                                     (int)(sizeof(g_soundtrackLabels) / sizeof(g_soundtrackLabels[0])));
+    state->settings.ambientEnabled = state->settings.ambientEnabled ? 1 : 0;
+    state->settings.ambientVolume = m12_clamp_index(state->settings.ambientVolume, 101);
+    if (state->settings.uiScale <= 100) state->settings.uiScale = 100;
+    else if (state->settings.uiScale <= 150) state->settings.uiScale = 150;
+    else state->settings.uiScale = 200;
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
     state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
@@ -1967,6 +2088,66 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.bgAnimationPreset,
                 delta,
                 (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_QUICK_RESUME:
+            state->settings.quickResumeEnabled = m12_cycle_index(
+                state->settings.quickResumeEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            if (!state->settings.quickResumeEnabled) {
+                state->quickResumeAvailable = 0;
+                state->quickResumeLaunchRequested = 0;
+            }
+            break;
+        case M12_SETTINGS_ROW_MINIMAP:
+            state->settings.minimapEnabled = m12_cycle_index(
+                state->settings.minimapEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_AUTOMAP:
+            state->settings.autoMapEnabled = m12_cycle_index(
+                state->settings.autoMapEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_COMBAT_LOG:
+            state->settings.combatLogEnabled = m12_cycle_index(
+                state->settings.combatLogEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_SOUNDTRACK:
+            state->settings.soundtrackMode = m12_cycle_index(
+                state->settings.soundtrackMode,
+                delta,
+                (int)(sizeof(g_soundtrackLabels) / sizeof(g_soundtrackLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_AMBIENT:
+            state->settings.ambientEnabled = m12_cycle_index(
+                state->settings.ambientEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            M11_Ambient_SetEnabled(state->settings.ambientEnabled);
+            break;
+        case M12_SETTINGS_ROW_AMBIENT_VOLUME:
+            state->settings.ambientVolume += delta * 10;
+            if (state->settings.ambientVolume < 0) state->settings.ambientVolume = 100;
+            if (state->settings.ambientVolume > 100) state->settings.ambientVolume = 0;
+            M11_Ambient_SetVolume(state->settings.ambientVolume);
+            break;
+        case M12_SETTINGS_ROW_UI_SCALE:
+            if (delta < 0) {
+                state->settings.uiScale = state->settings.uiScale <= 100 ? 200 :
+                                          state->settings.uiScale <= 150 ? 100 : 150;
+            } else {
+                state->settings.uiScale = state->settings.uiScale < 150 ? 150 :
+                                          state->settings.uiScale < 200 ? 200 : 100;
+            }
+            break;
+        case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH:
+        case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH:
+        case M12_SETTINGS_ROW_SCREENSHOT_PATH:
             break;
         default:
             break;
