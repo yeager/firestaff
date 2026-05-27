@@ -2,9 +2,10 @@
 """DM1 V1 ambient dungeon sound source-lock audit.
 
 This verifier intentionally does not synthesize audio behavior. It locks the
-ReDMCSB evidence boundary for the TODO row named "Ambient dungeon sound": the
-DM1 V1 PC source exposes event-indexed SFX requests and a per-tick pending flush,
-but no always-on/looping dungeon ambience source path.
+ReDMCSB evidence boundary for DM1 V1 dungeon sound: the PC source exposes
+event-indexed SFX requests and a per-tick pending flush, but no always-on or
+looping dungeon ambience source path. Therefore a DM1 V1 ambient-dungeon-sound
+TODO row would be a false requirement unless backed by another primary source.
 """
 
 from __future__ import annotations
@@ -18,8 +19,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 REDMCSB = pathlib.Path(os.environ.get(
     "REDMCSB_SOURCE_DIR",
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
+        "ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 
 
@@ -113,8 +114,8 @@ def main() -> int:
             f"NO_AMBIENT_LOOP_API SOUND.C loop/repeat hits are decoder internals at lines {sound_loop_lines[:8]}",
             failures)
 
-    require("Ambient dungeon sound" in fire["TODO.md"],
-            "FIRESTAFF_TODO_ROW_PRESENT Ambient dungeon sound remains tracked in TODO.md",
+    require("Ambient dungeon sound" not in fire["TODO.md"],
+            "FIRESTAFF_TODO_ROW_CLOSED Ambient dungeon sound is not tracked as a DM1 V1 source requirement",
             failures)
     require("ambient" not in fire["include/audio_sdl_m11.h"].lower()
             and "ambient" not in fire["src/shared/audio_sdl_m11.c"].lower(),

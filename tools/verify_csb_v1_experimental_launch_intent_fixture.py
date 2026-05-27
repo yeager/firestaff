@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Verify the experimental CSB V1 launch-intent fixture boundary.
+"""Verify the CSB V1 launch-intent fixture boundary.
 
-Evidence-only gate. This consumes the Atari ST media manifest and records the
-smallest launch-intent contract Firestaff may eventually wire for CSB. It does
-not enable production CSB launch; the current M12 menu handoff must remain
-DM1-only until a separate runtime/capture gate exists.
+This consumes the Atari ST media manifest and records the smallest launch-intent
+contract Firestaff now wires for CSB. It proves only the launcher/profile
+boundary: hash-matched CSB assets may produce a valid M12 intent, while deeper
+runtime, gameplay, save, and pixel-parity claims remain separate gates.
 """
 from __future__ import annotations
 
@@ -21,10 +21,10 @@ CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 
 FIXTURE = {
-    "schema": "firestaff.csb_v1.experimental_launch_intent_fixture.v1",
-    "fixture_id": "csb_v1_atari_st_v2x_experimental_launch_intent",
-    "experiment_only": True,
-    "production_launch_enabled": False,
+    "schema": "firestaff.csb_v1.launch_intent_fixture.v2",
+    "fixture_id": "csb_v1_atari_st_v2x_launch_intent",
+    "experiment_only": False,
+    "production_launch_enabled": True,
     "selected_lane": "csb_atari_st_v2x_harddisk_2009_02_22_pp",
     "game_id": "csb",
     "version_id": "atari-st-v20",
@@ -34,7 +34,7 @@ FIXTURE = {
     "required_media_roles": ["pair", "runtime_support", "canonical_pair"],
     "required_runtime_payloads": ["GRAPHICS.DAT", "DUNGEON.DAT", "HCSB.DAT", "HCSB.HTC", "MINI.DAT"],
     "deferred_runtime_inputs": ["config.txt", "CSBGAME.DAT/csbgame.dat save-game slot", "CSB prison -> Make New Adventure workflow state"],
-    "valid_intent_allowed": False,
+    "valid_intent_allowed": True,
 }
 
 SOURCE_ANCHORS = [
@@ -65,9 +65,9 @@ SOURCE_ANCHORS = [
 ]
 
 NON_CLAIMS = [
-    "No CSB runtime, rendering, gameplay, save compatibility, or pixel parity is enabled by this fixture.",
-    "The fixture is an experiment-only contract and must not make M12_StartupMenu_GetLaunchIntent return a valid CSB intent.",
-    "The selected Atari ST media manifest is necessary but not sufficient launch clearance.",
+    "No CSB gameplay, save compatibility, New Adventure, or pixel parity is claimed by this fixture.",
+    "The fixture proves only that hash-matched CSB assets may cross the M12 launch-intent boundary.",
+    "The selected Atari ST media manifest is necessary launch clearance for the profile boundary, not full playability proof.",
 ]
 
 
@@ -93,8 +93,8 @@ def main() -> int:
         failures.append("required CSB Atari media manifest is missing, wrong schema, or failing")
     if not media.get("asset_pair_ready") or not media.get("runtime_support_payloads_ready"):
         failures.append("media manifest does not prove both asset pair and runtime support payloads")
-    if media.get("launch_intent_allowed") is not False:
-        failures.append("media manifest must keep launch_intent_allowed=false")
+    if media.get("launch_intent_allowed") is not True:
+        failures.append("media manifest must now allow launch_intent_allowed=true for the CSB profile boundary")
 
     asset_roles = {row.get("role") for row in media.get("asset_refs", []) if row.get("ok")}
     for role in FIXTURE["required_media_roles"]:
@@ -106,14 +106,16 @@ def main() -> int:
             failures.append(f"media manifest missing payload path containing {payload}")
 
     menu = MENU.read_text(encoding="utf-8", errors="replace") if MENU.exists() else ""
-    if 'return gameId && strcmp(gameId, "dm1") == 0;' not in menu:
-        failures.append("M12 production launch support is no longer DM1-only; fixture must be reviewed before CSB launch")
+    if 'strcmp(gameId, "csb") == 0' not in menu:
+        failures.append("M12 production launch support must include CSB for this fixture")
     if "intent.valid = m12_game_supported(intent.gameId)" not in menu:
         failures.append("M12 launch intent validity is no longer guarded by m12_game_supported")
+    if "csb_v1_boot_enter_game" not in (ROOT / "src/csb/csb_v1_boot.c").read_text(encoding="utf-8", errors="replace"):
+        failures.append("CSB boot/profile boundary must expose csb_v1_boot_enter_game")
 
     doc = DOC.read_text(encoding="utf-8", errors="replace") if DOC.exists() else ""
-    if "experimental CSB launch-intent fixture" not in doc:
-        failures.append("CSB parity doc must mention the experimental launch-intent fixture boundary")
+    if "CSB launch-intent fixture" not in doc:
+        failures.append("CSB parity doc must mention the reviewed launch-intent fixture boundary")
 
     source_rows = []
     for anchor in SOURCE_ANCHORS:
@@ -145,7 +147,7 @@ def main() -> int:
         },
         "production_guard": {
             "path": str(MENU.relative_to(ROOT)),
-            "dm1_only_supported": 'return gameId && strcmp(gameId, "dm1") == 0;' in menu,
+            "csb_supported": 'strcmp(gameId, "csb") == 0' in menu,
             "intent_valid_guarded_by_supported_game": "intent.valid = m12_game_supported(intent.gameId)" in menu,
         },
         "source_anchors": source_rows,
@@ -155,7 +157,7 @@ def main() -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     status = "PASS" if result["pass"] else "FAIL"
-    print(f"{status} csb v1 experimental launch-intent fixture: experiment_only=true production_launch_enabled=false payloads={len(FIXTURE['required_runtime_payloads'])}")
+    print(f"{status} csb v1 launch-intent fixture: experiment_only=false production_launch_enabled=true payloads={len(FIXTURE['required_runtime_payloads'])}")
     for failure in failures:
         print(f"- {failure}")
     return 0 if result["pass"] else 1
