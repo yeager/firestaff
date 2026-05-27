@@ -15,7 +15,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Original DOS capture parity: paired original PC 3.4 transcripts/screenshots are still needed before promoting exact framebuffer parity for viewport, wall, collision, creature-chain, and champion-panel cases. Firestaff-side gates, source locks, and runtime routing are already complete.
 - 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
 - 🔧 Viewport wall evidence hardening: wall draw loop, door frames, and source-locked viewport rendering are implemented; remaining work is narrow verification of `g_dm1_wall_frame_bitmaps`, D4 far-object pass, and full door-occlusion pixel gates.
-- 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls, champion Z-order/floating, champion mirrors not visible, blurry wall inscriptions, and macOS app icon bundle resource. Treat each as unconfirmed until it has a reproducible capture or focused probe.
+- 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls, champion Z-order/floating, champion mirrors not visible, and blurry wall inscriptions. Treat each as unconfirmed until it has a reproducible capture or focused probe.
 
 ### DM1 V2.0 / V2.1 / V2.2
 
@@ -120,10 +120,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Screen reader integration for launcher and game-critical state.
 - ❌ High-contrast presentation mode.
 - ❌ Configurable font sizing for launcher and overlays.
-
-### Platform Polish
-
-- ❌ macOS app icon bundle resource verification.
 
 ## Known Bugs
 

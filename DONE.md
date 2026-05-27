@@ -89,3 +89,4 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ macOS Debug CMake build path.
 - ✅ CI Phase A headless probe path.
 - ✅ Release packaging scripts for macOS, Windows, and Linux preview builds.
+- ✅ macOS app bundle icon resource wiring.
