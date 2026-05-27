@@ -3607,7 +3607,6 @@ set_tests_properties(pass558_dm1_v1_pass514_io_blocker_classifier PROPERTIES WIL
 
 set_tests_properties(pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass563_dm1_v1_pc34_original_c254_boundary PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass362_dm1_v1_viewport_walls_source_lock_landable PROPERTIES WILL_FAIL TRUE)
 
 
 set_tests_properties(dm1_v2_completion_matrix_gate PROPERTIES WILL_FAIL TRUE)
