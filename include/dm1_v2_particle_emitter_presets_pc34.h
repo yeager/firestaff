@@ -33,6 +33,9 @@ typedef struct {
 void v2_emitter_preset_init(void);
 M11_V2_EmitterConfig v2_emitter_preset_get(M11_V2_EmitterPreset preset);
 int v2_emitter_preset_count(void);
+const char* v2_emitter_preset_name(M11_V2_EmitterPreset preset);
+int v2_emitter_preset_validate(const M11_V2_EmitterConfig* cfg);
+int v22_emitter_create_from_preset(M11_V2_EmitterPreset preset, float x, float y);
 
 #ifdef __cplusplus
 }

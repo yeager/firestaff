@@ -18,6 +18,7 @@ typedef struct {
     uint32_t color;
     float size;
     float alpha;
+    float gravity;
 } M11_V2_Particle;
 
 typedef struct {
@@ -25,6 +26,7 @@ typedef struct {
     float rate;
     float spread;
     M11_V2_Particle particle_template;
+    float gravity;
     int max_particles;
     int active_count;
     float accumulator;
@@ -35,6 +37,13 @@ void v2_particle_emit(int emitter_idx, float x, float y);
 void v2_particle_update(float dt);
 void v2_particle_draw_all(void);
 void v2_particle_clear(void);
+
+/* Create an emitter and return its index, or -1 on failure.
+ * Use v2_emitter_preset_get() + this function for preset-based creation.
+ * Source: Firestaff DM1 V2 Phase 4. */
+int v2_particle_emitter_create(float x, float y, float rate,
+    float spread, float life, float size, float gravity,
+    uint32_t color, int max_count);
 
 #ifdef __cplusplus
 }

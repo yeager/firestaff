@@ -299,6 +299,34 @@ typedef struct {
     struct DM1SaveMenuContext saveMenu;
     uint32_t dm1GameID;  /* Persistent game ID for save file matching */
     int dm1MusicOn;      /* ReDMCSB G2024_B_PendingMusicOn runtime state */
+
+    /* DM1 V2 Phase 5 smooth movement camera state.
+     * These fields carry the presentation-layer interpolation offsets
+     * produced by dm1_v2_camera_controller_pc34 between V1 movement
+     * ticks.  The game state (party.mapX/Y, direction, cooldowns,
+     * sensors, creature AI, redraw cadence) is untouched.
+     *
+     * camera_offset_x/y: pixel-space sub-grid camera nudge (0 when idle).
+     *   Source-lock: DUNGEON.C:1371-1391 applies direction-step tables
+     *   to produce discrete map coordinates; DUNVIEW.C:8606-8612 renders
+     *   from those coordinates without any presentation offset.
+     *   camera_offset is V2-only presentation smoothing.
+     *
+     * camera_interpolated_facing: 8-way facing (0..7) sampled during
+     *   a turn animation.  Source-lock: GAMELOOP.C:90 redraws from
+     *   G0308_i_PartyDirection (discrete).  V2 turns interpolate the
+     *   visual facing without changing creature/sensor timing.
+     *
+     * camera_duration_ms: configured camera animation duration.
+     *   Default 96ms (~2 V1 ticks) from dm1_v2_movement_command_adapter.
+     *
+     * Source anchors: COMMAND.C:2096-2106 cooldown gate, CLIKMENU.C:278-329
+     * collision, MOVESENS.C:752-818 sensor/scent, GAMELOOP.C:69-155
+     * timeline/redraw cadence. */
+    int camera_offset_x;
+    int camera_offset_y;
+    int16_t camera_interpolated_facing;
+    int camera_duration_ms;
 } M11_GameViewState;
 
 /* Spell casting API */
@@ -307,6 +335,25 @@ int M11_GameView_CloseSpellPanel(M11_GameViewState* state);
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex);
 int M11_GameView_CastSpell(M11_GameViewState* state);
 int M11_GameView_ClearSpell(M11_GameViewState* state);
+
+/* DM1 V2 Phase 5 smooth movement camera accessors.
+ *
+ * M11_GameView_SetCameraOffset — called by the V2 presentation lane
+ * after each V1 game tick to propagate the camera controller's
+ * interpolation state.  Does NOT mutate game state, collision,
+ * sensors, creature timing, or redraw cadence.
+ *
+ * M11_GameView_GetCameraOffset — called by m11_draw_viewport during
+ * the render pass to retrieve the interpolated offset/facing for the
+ * viewport's view-cone sampling.  When offsets are zero (V1 paths),
+ * this is a no-op.
+ *
+ * Source-lock: see M11_GameViewState.camera_offset_x documentation.
+ * These functions are safe for V1 callers (V1 sets offsets to 0). */
+void M11_GameView_SetCameraOffset(M11_GameViewState* state,
+                                   int offsetX, int offsetY, int16_t facingDir);
+void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
+                                   int* outOffsetX, int* outOffsetY, int16_t* outFacingDir);
 
 void M11_GameView_Init(M11_GameViewState* state);
 void M11_GameView_Shutdown(M11_GameViewState* state);

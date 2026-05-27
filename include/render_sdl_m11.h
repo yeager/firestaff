@@ -22,6 +22,7 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -174,16 +175,19 @@ int  M11_Render_GetVSync(void);
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
 
-/* DM1 V2.0 filter chain controls. All four filters default off (V2.0
- * starts identical to V1). The corrected palette LUT is rebuilt only
- * when gamma/brightness/contrast change. Strength values are clamped
- * to [0,100]; gamma100 to [80,260]; brightness/contrast to [-50,50]. */
+/* DM1 V2.0 filter chain controls. All filters default off (V2.0
+ * starts identical to V1). Palette interpolation uses the 4-bit
+ * per-pixel brightness field to blend smoothly between canonical
+ * palette levels. Strength values clamped [0,100]; gamma [80,260];
+ * brightness/contrast [-50,50]. */
 int  M11_Render_SetV2Filters(int crtEnabled,
                              int crtStrength,
                              int paletteEnabled,
                              int paletteGamma100,
                              int paletteBrightness,
                              int paletteContrast,
+                             int paletteInterpEnabled,
+                             int paletteInterpStrength,
                              int ditherEnabled,
                              int sharpenEnabled,
                              int sharpenStrength);
@@ -193,6 +197,8 @@ int  M11_Render_GetV2Filters(int* outCrtEnabled,
                              int* outPaletteGamma100,
                              int* outPaletteBrightness,
                              int* outPaletteContrast,
+                             int* outPaletteInterpEnabled,
+                             int* outPaletteInterpStrength,
                              int* outDitherEnabled,
                              int* outSharpenEnabled,
                              int* outSharpenStrength);
@@ -229,6 +235,26 @@ int  M11_Render_GetMotionBlur(int* outEnabled, int* outStrength);
  * automatically after the next present. */
 void M11_Render_SetMovementActive(int active);
 int  M11_Render_GetMovementActive(void);
+
+/* DM1 V2 Phase 5 smooth movement: set the camera interpolation offset
+ * and interpolated facing direction for the current render frame.
+ *
+ * offsetX/offsetY: pixel-space sub-grid camera nudge (0 = no offset).
+ *   In 320x200 logical space; applied as a presentation nudge only.
+ *   Source-lock: DUNGEON.C:1371-1391 direction-step movement is
+ *   discrete; DUNVIEW.C:8606-8612 draws from G0306/G0307/G0308 without
+ *   offset — this function is purely a V2 presentation layer.
+ *
+ * facingDir: interpolated 8-way facing direction (0..7) used by
+ *   m11_draw_viewport to shift creature animation frames during turns.
+ *   Source-lock: GAMELOOP.C:90 redraws from G0308_i_PartyDirection;
+ *   interpolation is V2-only, does not change creature AI timing.
+ *
+ * These fields are set by the camera controller tick (dm1_v2_camera_*)
+ * in the V2 presentation lane, consumed by m11_draw_viewport in
+ * m11_game_view.c to offset the view cone during interpolation.
+ * V1 paths leave them zero. */
+int  M11_Render_SetCameraOffset(int offsetX, int offsetY, int16_t facingDir);
 
 #ifdef __cplusplus
 }

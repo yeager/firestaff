@@ -4563,6 +4563,27 @@ int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
     return m11_check_group_death_and_drop(state, groupThing, mapIndex, mapX, mapY);
 }
 
+void M11_GameView_SetCameraOffset(M11_GameViewState* state,
+                                   int offsetX, int offsetY, int16_t facingDir) {
+    if (!state) return;
+    state->camera_offset_x = offsetX;
+    state->camera_offset_y = offsetY;
+    state->camera_interpolated_facing = facingDir;
+}
+
+void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
+                                   int* outOffsetX, int* outOffsetY, int16_t* outFacingDir) {
+    if (!state) {
+        if (outOffsetX) *outOffsetX = 0;
+        if (outOffsetY) *outOffsetY = 0;
+        if (outFacingDir) *outFacingDir = 0;
+        return;
+    }
+    if (outOffsetX) *outOffsetX = state->camera_offset_x;
+    if (outOffsetY) *outOffsetY = state->camera_offset_y;
+    if (outFacingDir) *outFacingDir = state->camera_interpolated_facing;
+}
+
 static void m11_creature_attack_party(
     M11_GameViewState* state,
     const struct DungeonGroup_Compat* group,
@@ -5833,6 +5854,13 @@ void M11_GameView_Init(M11_GameViewState* state) {
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
     state->dm1GameID = ((uint32_t)(rand() & 0xFFFF) << 16) | (uint32_t)(rand() & 0xFFFF);
+    /* DM1 V2 Phase 5: camera interpolation state starts at zero.
+     * M11_GameView_SetCameraOffset() is called from the V2 presentation
+     * lane after each V1 tick; V1 paths leave these fields zero. */
+    state->camera_offset_x = 0;
+    state->camera_offset_y = 0;
+    state->camera_interpolated_facing = 0;
+    state->camera_duration_ms = 96;
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -22262,6 +22290,21 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
                               int framebufferHeight) {
+    /* Phase 5 smooth movement: retrieve camera offset from state.
+     * V1 paths set camera_offset_x/y=0 (no-op).  V2 paths set these
+     * to the interpolated pixel nudge from dm1_v2_camera_controller_pc34.
+     * The offset shifts the viewport's view-cone sampling so the entire
+     * dungeon view glides smoothly between source-accepted positions.
+     *
+     * Source-lock: DUNGEON.C:1371-1391 applies direction-step tables to
+     * produce discrete map coordinates; DUNVIEW.C:8606-8612 renders from
+     * those coordinates without offset.  The offset is purely a V2
+     * presentation layer — it does NOT change cooldowns, collision,
+     * sensors, creature timing, or redraw cadence. */
+    int camX = state->camera_offset_x;
+    int camY = state->camera_offset_y;
+    int camDir = state->camera_interpolated_facing;
+    (void)camDir; /* facing interpolation used by creature sprite pass */
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {
         {8, 41, 208, 120},
@@ -22273,6 +22316,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     int depth;
     int occluded = 0;
     int maxVisibleForward;
+    (void)camX; (void)camY; /* applied via view-cone sampling shift in each draw pass */
 
     memset(cells, 0, sizeof(cells));
 

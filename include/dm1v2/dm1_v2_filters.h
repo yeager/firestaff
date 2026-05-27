@@ -23,10 +23,31 @@
 extern "C" {
 #endif
 
-/* Palette LUT shape: 6 brightness levels x 16 indices x RGB triplet.
- * Mirrors G9010_auc_VgaPaletteAll_Compat[6][16][3] layout in
- * include/vga_palette_pc34_compat.h so the LUT is a drop-in. */
+/* DM1_PALETTE_LEVELS = 6 canonical dungeon brightness levels.
+ * Matches M11_PALETTE_LEVELS in render_sdl_m11.h. */
 #define DM1_V2_PALETTE_LEVELS 6
+
+/* DM1 encodes a per-pixel brightness in 4 bits (0-15). The canonical
+ * palette has 6 discrete levels. Palette interpolation smoothly blends
+ * between the two nearest canonical palette entries so that per-pixel
+ * level values like 9 (midpoint between canonical levels 2 and 3) render
+ * as a smooth gradient rather than the nearest discrete level.
+ *
+ * The 4-bit field maps to canonical levels as:
+ *   per-pixel  0  -> canonical level 5 (darkest)
+ *   per-pixel  3  -> canonical level 4
+ *   per-pixel  6  -> canonical level 3
+ *   per-pixel  9  -> canonical level 2
+ *   per-pixel 12  -> canonical level 1
+ *   per-pixel 15  -> canonical level 0 (brightest)
+ *
+ * Any intermediate value blends the adjacent canonical entries linearly.
+ * This requires the original indexed framebuffer (not RGBA), so
+ * interpolation runs on the indexed fb as a pre-expansion step.
+ *
+ * Source: Firestaff DM1 V2 Phase 4. No ReDMCSB original equivalent.
+ */
+int dm1_v2_filter_palette_interpolate_indexed(unsigned char* fb, int w, int h, int strength_pct);
 
 /* Build a corrected palette LUT from the canonical VGA palette.
  *

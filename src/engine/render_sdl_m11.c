@@ -76,6 +76,8 @@ typedef struct {
     int v2_palette_brightness;
     int v2_palette_contrast;
     int v2_dither_enabled;
+    int v2_palette_interp_enabled;
+    int v2_palette_interp_strength;  /* 0..100 */
     int v2_sharpen_enabled;
     int v2_sharpen_strength;
     int v2_palette_lut_built;
@@ -90,6 +92,18 @@ typedef struct {
     int v2_motion_blur_enabled;
     int v2_motion_blur_strength;    /* 0..100 percent of previous frame */
     int v2_movement_active;
+
+    /* DM1 V2 Phase 5 smooth movement camera offset (pixels in 320x200 logical space).
+     * These are the presentation-layer interpolation deltas produced by
+     * dm1_v2_camera_controller_pc34 after a source-locked movement tick.
+     * Source-lock anchors: ReDMCSB DUNGEON.C:1371-1391 direction-step tables
+     * update map coordinates; ReDMCSB DUNVIEW.C:8606-8612 draw the viewport
+     * from G0306/G0307/G0308 logical state without any presentation offset.
+     * The offset is purely a V2 presentation layer — V1 cooldowns, collision,
+     * sensors, creature timing, and redraw cadence are unchanged. */
+    int camera_offset_x;  /* sub-pixel pixel offset for movement interpolation */
+    int camera_offset_y;
+    int16_t camera_interpolated_dir;  /* interpolated facing dir during turn */
 
     unsigned char* previousFrameBuffer;  /* prev RGBA frame at logical size */
     int previousFrameW;
@@ -461,6 +475,14 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
 static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
                                              int w,
                                              int h) {
+    /* Run on indexed framebuffer before palette expansion.
+     * Order: palette_interpolate -> dither_cleanup.
+     * Palette interpolation requires the original indexed level field
+     * to compute smooth blend factors; dither cleanup refines the
+     * resulting index field afterward. */
+    if (g_state.v2_palette_interp_enabled && g_state.v2_palette_interp_strength > 0) {
+        (void)dm1_v2_filter_palette_interpolate_indexed(fb, w, h, g_state.v2_palette_interp_strength);
+    }
     if (g_state.v2_dither_enabled) {
         (void)dm1_v2_filter_dither_cleanup_indexed(fb, w, h);
     }
@@ -1336,6 +1358,31 @@ int M11_Render_GetDisplayAspectMode(void) {
     return g_state.displayAspectMode;
 }
 
+/* M11_Render_SetCameraOffset — Phase 5 smooth movement integration.
+ *
+ * Called once per render frame from the V2 presentation lane with the
+ * camera-controller offsets produced by dm1_v2_camera_controller_pc34.
+ * The offsets are in logical 320x200 pixel space (sub-pixel resolution
+ * via DM1_V2_SUBPIXEL_SCALE 8.8 fixed-point, scaled down to integer pixels
+ * here for the framebuffer blit path).
+ *
+ * The offset is applied as a presentation nudge only — it does NOT mutate
+ * game state, collision, sensors, creature timing, or redraw cadence.
+ * Source-lock anchors: DUNGEON.C:1371-1391 movement, DUNVIEW.C:8606-8612
+ * viewport draw, CLIKMENU.C:278-329 collision, GAMELOOP.C:69-155 cadence.
+ *
+ * The facing dir is forwarded to m11_draw_viewport to shift creature
+ * animation frames during a turn animation. */
+int M11_Render_SetCameraOffset(int offsetX, int offsetY, int16_t facingDir) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    g_state.camera_offset_x = offsetX;
+    g_state.camera_offset_y = offsetY;
+    g_state.camera_interpolated_dir = facingDir;
+    return M11_RENDER_OK;
+}
+
 int M11_Render_ToggleFullscreen(void) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
@@ -1487,6 +1534,8 @@ int M11_Render_SetV2Filters(int crtEnabled,
                             int paletteGamma100,
                             int paletteBrightness,
                             int paletteContrast,
+                            int paletteInterpEnabled,
+                            int paletteInterpStrength,
                             int ditherEnabled,
                             int sharpenEnabled,
                             int sharpenStrength) {
@@ -1494,6 +1543,8 @@ int M11_Render_SetV2Filters(int crtEnabled,
 
     if (crtStrength < 0) crtStrength = 0;
     if (crtStrength > 100) crtStrength = 100;
+    if (paletteInterpStrength < 0) paletteInterpStrength = 0;
+    if (paletteInterpStrength > 100) paletteInterpStrength = 100;
     if (sharpenStrength < 0) sharpenStrength = 0;
     if (sharpenStrength > 100) sharpenStrength = 100;
     if (paletteGamma100 < 80) paletteGamma100 = 80;
@@ -1517,6 +1568,8 @@ int M11_Render_SetV2Filters(int crtEnabled,
     g_state.v2_palette_gamma100 = paletteGamma100;
     g_state.v2_palette_brightness = paletteBrightness;
     g_state.v2_palette_contrast = paletteContrast;
+    g_state.v2_palette_interp_enabled = paletteInterpEnabled ? 1 : 0;
+    g_state.v2_palette_interp_strength = paletteInterpStrength;
     g_state.v2_dither_enabled = ditherEnabled ? 1 : 0;
     g_state.v2_sharpen_enabled = sharpenEnabled ? 1 : 0;
     g_state.v2_sharpen_strength = sharpenStrength;
@@ -1540,6 +1593,8 @@ int M11_Render_GetV2Filters(int* outCrtEnabled,
                             int* outPaletteGamma100,
                             int* outPaletteBrightness,
                             int* outPaletteContrast,
+                            int* outPaletteInterpEnabled,
+                            int* outPaletteInterpStrength,
                             int* outDitherEnabled,
                             int* outSharpenEnabled,
                             int* outSharpenStrength) {
@@ -1549,6 +1604,8 @@ int M11_Render_GetV2Filters(int* outCrtEnabled,
     if (outPaletteGamma100) *outPaletteGamma100 = g_state.v2_palette_gamma100;
     if (outPaletteBrightness) *outPaletteBrightness = g_state.v2_palette_brightness;
     if (outPaletteContrast) *outPaletteContrast = g_state.v2_palette_contrast;
+    if (outPaletteInterpEnabled) *outPaletteInterpEnabled = g_state.v2_palette_interp_enabled;
+    if (outPaletteInterpStrength) *outPaletteInterpStrength = g_state.v2_palette_interp_strength;
     if (outDitherEnabled) *outDitherEnabled = g_state.v2_dither_enabled;
     if (outSharpenEnabled) *outSharpenEnabled = g_state.v2_sharpen_enabled;
     if (outSharpenStrength) *outSharpenStrength = g_state.v2_sharpen_strength;

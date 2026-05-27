@@ -14,8 +14,42 @@ void v2_particle_init(void) {
     for (i = 0; i < M11_V2_MAX_EMITTERS; i++) {
         g_emitters[i].active_count = 0;
         g_emitters[i].accumulator = 0.0f;
+        g_emitters[i].particle_template.life = 0.0f;
     }
     g_particle_count = 0;
+}
+
+int v2_particle_emitter_create(float x, float y, float rate,
+    float spread, float life, float size, float gravity,
+    uint32_t color, int max_count)
+{
+    int idx;
+    if (g_emitters[M11_V2_MAX_EMITTERS - 1].particle_template.life != 0.0f) {
+        /* All slots full — search for one with zero active particles */
+        for (idx = 0; idx < M11_V2_MAX_EMITTERS; idx++) {
+            if (g_emitters[idx].active_count == 0 && g_emitters[idx].accumulator == 0.0f)
+                break;
+        }
+        if (idx == M11_V2_MAX_EMITTERS) return -1;
+    } else {
+        idx = 0;
+        while (g_emitters[idx].particle_template.life != 0.0f) {
+            idx++;
+            if (idx >= M11_V2_MAX_EMITTERS) return -1;
+        }
+    }
+    g_emitters[idx].x = x;
+    g_emitters[idx].y = y;
+    g_emitters[idx].rate = rate;
+    g_emitters[idx].spread = spread;
+    g_emitters[idx].max_particles = max_count;
+    g_emitters[idx].accumulator = 0.0f;
+    g_emitters[idx].active_count = 0;
+    g_emitters[idx].particle_template.life = life;
+    g_emitters[idx].particle_template.size = size;
+    g_emitters[idx].particle_template.gravity = gravity;
+    g_emitters[idx].particle_template.color = color;
+    return idx;
 }
 
 void v2_particle_emit(int emitter_idx, float x, float y) {
@@ -23,6 +57,7 @@ void v2_particle_emit(int emitter_idx, float x, float y) {
     M11_V2_Particle *p;
     float angle, speed;
     if (emitter_idx < 0 || emitter_idx >= M11_V2_MAX_EMITTERS) return;
+    if (g_emitters[emitter_idx].particle_template.life == 0.0f) return;
     em = &g_emitters[emitter_idx];
 
     em->accumulator += em->rate;
@@ -40,6 +75,7 @@ void v2_particle_emit(int emitter_idx, float x, float y) {
             p->color = em->particle_template.color;
             p->size = em->particle_template.size;
             p->alpha = em->particle_template.alpha;
+            p->gravity = em->particle_template.gravity;
             em->active_count++;
         }
     }
@@ -51,6 +87,7 @@ void v2_particle_update(float dt) {
         M11_V2_Particle *p = &g_particles[i];
         p->life -= dt;
         if (p->life > 0.0f) {
+            p->vy += p->gravity * dt;
             p->x += p->vx * dt;
             p->y += p->vy * dt;
             p->alpha = fminf(1.0f, p->life);
