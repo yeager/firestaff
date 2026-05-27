@@ -5,8 +5,9 @@
 #include <time.h>
 
 const char *fs_save_slot_path(int game_id, int slot, char *buf, int bufsize) {
-    const char *game_names[] = {"dm1", "csb", "dm2", "nexus"};
-    if (game_id < 0 || game_id > 3 || !buf) return NULL;
+    /* Game IDs: 0=dm1, 1=csb, 2=dm2, 3=nexus, 4=theron */
+    static const char* const game_names[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+    if (game_id < 0 || game_id > 4 || !buf) return NULL;
     snprintf(buf, bufsize, "saves/%s_slot%d.sav", game_names[game_id], slot);
     return buf;
 }

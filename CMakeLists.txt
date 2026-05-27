@@ -3449,6 +3449,28 @@ if(BUILD_TESTING)
 endif()
 
 
+# ── Theron V1 Phase 1 boot profile smoke test ────────────────────────
+# Note: compiles tqr_v1_boot_profile.c standalone to avoid pulling in
+# the rest of firestaff_theron which has pre-existing cross-file errors
+# tracked in the Theron V1 Phase 2+ work backlog.
+if(BUILD_TESTING)
+    add_executable(test_tqr_v1_boot_profile_smoke
+        tests/tqr_v1_boot_profile_smoke.c
+        src/tqr/tqr_v1_boot_profile.c
+    )
+    target_include_directories(test_tqr_v1_boot_profile_smoke PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_tqr_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME tqr_v1_boot_profile_smoke
+        COMMAND test_tqr_v1_boot_profile_smoke
+    )
+endif()
+
+
 # ── Nexus V1 Phase 6/7 save/load round-trip probe ──────────────────────
 # Source-lock: src/nexus/nexus_v1_save_load.c (NEXUS_SAVE_MAGIC='FNXS'),
 #              ReDMCSB LOADSAVE.C F0433/F0434, CHAMPION.C F0309.
