@@ -2,21 +2,22 @@
 
 **Source-faithful Dungeon Master engine for modern hardware.**
 
-Play all four Dungeon Master games — DM1, Chaos Strikes Back, Dungeon Master II, and DM Nexus — with original fidelity, enhanced filters, AI-upscaled graphics, or fully modern visuals.
+Play all five Dungeon Master games — DM1, Chaos Strikes Back, Dungeon Master II, DM Nexus, and Theron's Quest — with original fidelity, enhanced filters, AI-upscaled graphics, or fully modern visuals.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-297%2F304-brightgreen)](https://github.com/yeager/firestaff/actions)
+[![Tests](https://img.shields.io/badge/tests-361%2F392-brightgreen)](https://github.com/yeager/firestaff/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Steam%20Deck-orange)]()
 
 ## Games
 
-| Game | Status | Source Reference |
-|------|--------|-----------------|
-| Dungeon Master (DM1) | ✅ Playable | ReDMCSB (primary) |
-| Chaos Strikes Back | ✅ Playable | ReDMCSB + CSBWin |
-| Dungeon Master II: Skullkeep | 🔧 In progress | — |
-| DM Nexus (Saturn) | 🔧 In progress | — |
+| Game | Status | Phases | Source Reference |
+|------|--------|--------|-----------------|
+| Dungeon Master (DM1) | ✅ Playable | Complete | ReDMCSB (primary) |
+| Chaos Strikes Back | ✅ Playable | Complete | ReDMCSB + CSBWin |
+| Dungeon Master II: Skullkeep | 🔧 In progress | Stable | skproject |
+| DM Nexus (Saturn) | 🔧 In progress | 2 of 8 | Saturn DMDF/DGN |
+| Theron's Quest | 🔧 In progress | 2 of 8 | ReDMCSB (subset) |
 
 ## Graphics Modes
 
@@ -32,13 +33,15 @@ Switch between modes at runtime — no restart needed.
 ## Features
 
 - **Source-locked**: Every system cross-referenced against [ReDMCSB](http://dmweb.free.fr/) source code
-- **307 source files** with full code review, **297/304 tests passing**
+- **307 source files**, **365 headers**, **245K+ lines of C** — all code-reviewed
+- **361/392 tests passing** — 31 integration gates actively in development
 - **Cross-platform**: macOS (Apple Silicon + Intel), Windows, Linux x86_64, Linux ARM64 (Steam Deck)
 - **Touchscreen & gamepad**: Full touch/click zones, controller support
 - **20 languages**: EN, SV, DE, FR, ES, IT, PT, NL, PL, CS, RU, JA, KO, ZH, DA, NO, FI, HU, TR + auto-detection
 - **Save system**: FSSV format with CRC32 integrity, 10 slots per game
 - **Data validation**: SHA256 hash verification for all game files
 - **Asset discovery**: Hash-based — place your files anywhere, Firestaff finds them
+- **95 headless probes**: Live-capture verification gates for CI and local regression testing
 
 ## Download
 
@@ -86,6 +89,13 @@ All releases include SHA256 checksums. See [RELEASE_NOTES.md](./RELEASE_NOTES.md
    ~/.firestaff/data/nexus/
      (all Nexus data files)
    ```
+
+   **Theron's Quest** (PC Engine CD)
+   ```
+   ~/.firestaff/data/theron/
+     (all Theron's Quest data files — JP and US releases supported)
+   ```
+
 4. **Play!** Firestaff auto-detects which game you have.
 
 > **Windows**: `%APPDATA%\Firestaff\data\`
@@ -110,7 +120,7 @@ firestaff [options]
 ```
 
 **Game detection:** Firestaff auto-detects which game you have from the `data/` directory.
-Game order: Dungeon Master → Chaos Strikes Back → Dungeon Master II → Dungeon Master Nexus.
+Game order: Dungeon Master → Chaos Strikes Back → Dungeon Master II → Dungeon Master Nexus → Theron's Quest.
 
 **Scale modes:** V1 (original 320×200 upscaled), V2.1 (640×400), V2.2 (960×600 with smooth scaling).
 
@@ -120,6 +130,7 @@ firestaff --duration 5000       # run for 5 seconds then exit
 firestaff --scale-mode 2        # V2.1 enhanced graphics
 firestaff --data-dir ~/my/dm1   # custom data directory
 firestaff --fullscreen --fps    # fullscreen with FPS display
+firestaff --game theron         # launch Theron's Quest directly
 ```
 
 ## Building from Source
@@ -146,19 +157,20 @@ cd build && ctest --output-on-failure
 
 ```
 src/
-  engine/    — Core engine: game loop, rendering, input, save, audio
+  engine/    — Core engine: game loop, rendering, input, save, audio (M11/M12)
   dm1/       — DM1 V1 source-locked engine (movement, viewport, sensors)
   dm1v2/     — DM1 V2 enhanced features (viewport, weather, settings)
   csb/       — Chaos Strikes Back engine
   dm2/       — Dungeon Master II engine
   nexus/     — DM Nexus (Saturn format support)
+  theron/    — Theron's Quest engine (subset of DM1, PC Engine CD)
   shared/    — Asset loading, audio, fonts, localization, data validation
   ui/        — Menu system, bestiary, spell reference, map viewer
   frontend/  — Title screen, entrance, endgame, boot sequence
-  probes/    — Live-capture probes for parity verification
-include/     — All headers
-tests/       — Automated tests (parity gates, unit tests)
-tools/       — Asset extraction, hash verification, probe tools
+  memory/    — Dungeon, graphics, movement, combat, timeline, savegame
+probes/      — 95 live-capture headless probes for CI and regression
+include/     — All 365 headers
+tests/       — Integration tests
 parity-evidence/ — Source-lock manifests per feature/game
 ```
 
@@ -182,6 +194,24 @@ Key reference files:
 
 Verification gates ensure no regression against source evidence.
 
+## Theron's Quest — Development Status
+
+Theron's Quest (1990, Working Designs) is a "light" version of DM1 for the PC Engine CD. It uses a subset of DM1 items, creatures, and spells across 7 mini-dungeons. Development is at Phase 2 of 8:
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 0 — Provenance | ✅ Complete | Extracted file set (138 files), MD5/SHA256 verified |
+| Phase 1 — Runtime Profile | ✅ Complete | Separate boot/runtime, asset roots, save namespace, diagnostics |
+| Phase 2 — Data Formats | ✅ Complete | All dungeon, object, text, champion, creature, graphics formats |
+| Phase 3 — Core World Model | ❌ Pending | Map loading, party placement, transitions, timers |
+| Phase 4 — Rendering Pipeline | ❌ Pending | Wall/floor/object/creature rendering, palette, PC Engine planar fallback |
+| Phase 5 — Gameplay Systems | ❌ Pending | Combat, magic, puzzles, dungeon logic |
+| Phase 6 — Audio | ❌ Pending | Speech, music, SFX (CD audio) |
+| Phase 7 — UI/UX | ❌ Pending | Menus, champion management, save/load |
+| Phase 8 — Verification Suite | ❌ Pending | Asset manifests, parser fixtures, deterministic input scripts |
+
+Both JP (MD5: b7afb338ad31be1025b53f9aff12d73a) and US (MD5: f23601102138f87c33025877767ebf76) releases are supported.
+
 ## Localization
 
 All strings use gettext PO files. Add a new language:
@@ -195,6 +225,7 @@ Firestaff is a clean-room engine reimplementation based on publicly available so
 
 Dungeon Master, Chaos Strikes Back, and Dungeon Master II are trademarks of FTL Games.
 DM Nexus is a trademark of Victor Interactive Software.
+Theron's Quest is a trademark of Working Designs / Victor Interactive Software.
 
 ## License
 
