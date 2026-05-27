@@ -69,7 +69,18 @@ static void assert_world_hash_matches(const M11_GameViewState* state,
 
 static const char* graphics_dat_path(void) {
     const char* env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    const char* home = getenv("HOME");
+    static char homePath[1024];
     if (env && env[0] != '\0') return env;
+    if (home && home[0] != '\0') {
+        FILE* f;
+        snprintf(homePath, sizeof(homePath), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+        f = fopen(homePath, "rb");
+        if (f) {
+            fclose(f);
+            return homePath;
+        }
+    }
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
 }
 
