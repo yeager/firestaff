@@ -3427,6 +3427,28 @@ if(BUILD_TESTING)
 endif()
 
 
+# ── Nexus V1 Phase 1 boot profile smoke test ────────────────────────
+# Note: compiles nexus_v1_boot_profile.c standalone to avoid pulling in
+# the rest of firestaff_nexus which has pre-existing cross-file errors
+# tracked in the nexus V1 Phase 2+ work backlog.
+if(BUILD_TESTING)
+    add_executable(test_nexus_v1_boot_profile_smoke
+        tests/nexus_v1_boot_profile_smoke.c
+        src/nexus/nexus_v1_boot_profile.c
+    )
+    target_include_directories(test_nexus_v1_boot_profile_smoke PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_boot_profile_smoke
+        COMMAND test_nexus_v1_boot_profile_smoke
+    )
+endif()
+
+
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
 add_executable(firestaff_gfx_extract_proof
     probes/dm1/firestaff_gfx_extract_proof.c
