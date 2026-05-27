@@ -194,6 +194,24 @@ Key reference files:
 
 Verification gates ensure no regression against source evidence.
 
+## Theron's Quest — Development Status
+
+Theron's Quest (1990, Working Designs) is a "light" version of DM1 for the PC Engine CD. It uses a subset of DM1 items, creatures, and spells across 7 mini-dungeons. Development is at Phase 2 of 8:
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 0 — Provenance | ✅ Complete | Extracted file set (138 files), MD5/SHA256 verified |
+| Phase 1 — Runtime Profile | ✅ Complete | Separate boot/runtime, asset roots, save namespace, diagnostics |
+| Phase 2 — Data Formats | ✅ Complete | All dungeon, object, text, champion, creature, graphics formats |
+| Phase 3 — Core World Model | ❌ Pending | Map loading, party placement, transitions, timers |
+| Phase 4 — Rendering Pipeline | ❌ Pending | Wall/floor/object/creature rendering, palette, PC Engine planar fallback |
+| Phase 5 — Gameplay Systems | ❌ Pending | Combat, magic, puzzles, dungeon logic |
+| Phase 6 — Audio | ❌ Pending | Speech, music, SFX (CD audio) |
+| Phase 7 — UI/UX | ❌ Pending | Menus, champion management, save/load |
+| Phase 8 — Verification Suite | ❌ Pending | Asset manifests, parser fixtures, deterministic input scripts |
+
+Both JP (MD5: b7afb338ad31be1025b53f9aff12d73a) and US (MD5: f23601102138f87c33025877767ebf76) releases are supported.
+
 ## Localization
 
 All strings use gettext PO files. Add a new language:
