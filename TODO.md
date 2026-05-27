@@ -130,7 +130,7 @@ Status per 2026-05-19 v2.4.0.
 - ❌ Phase 3 — Core world model: implement Theron's Quest map loading, party placement (Theron + 3 champions), transitions, timers, object database, champion skill/stat persistence (Theron keeps skills/stats between dungeons; champions lose skills/items)
 - ❌ Phase 4 — Rendering pipeline: source-lock Theron's Quest wall/floor/object/creature/projectile/UI/title rendering, palette handling, and deterministic fallback for PC Engine planar graphics
 - ❌ Phase 5 — Mechanics parity: implement movement, click/routes, doors, pits, teleporters, altar-of-vi resurrection, champion state, inventory, combat, creature AI, drops, sounds after source evidence is locked
-- ❌ Phase 6 — Dungeon progression: implement 7-dungeon sequence, per-dungeon item reset, between-dungeon save, and seven-quest-item retrieval goal
+- ✅ Phase 6 — Dungeon progression: implement 7-dungeon sequence, per-dungeon item reset, between-dungeon save, and seven-quest-item retrieval goal (commit 5a9375b4)
 - ❌ Phase 7 — Save/import compatibility: support between-dungeon save/load and champion/world persistence where format evidence is available
 - ❌ Phase 8 — Verification suite: canonical Theron's Quest asset manifests, parser fixtures, deterministic input scripts, viewport/pixel gates, save/load round trips
 
