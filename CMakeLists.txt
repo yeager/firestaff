@@ -3449,6 +3449,25 @@ if(BUILD_TESTING)
 endif()
 
 
+# ── Nexus V1 Phase 6/7 save/load round-trip probe ──────────────────────
+# Source-lock: src/nexus/nexus_v1_save_load.c (NEXUS_SAVE_MAGIC='FNXS'),
+#              ReDMCSB LOADSAVE.C F0433/F0434, CHAMPION.C F0309.
+add_executable(firestaff_nexus_v1_save_load_round_trip_probe
+    probes/nexus_v1_save_load_round_trip_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
 add_executable(firestaff_gfx_extract_proof
     probes/dm1/firestaff_gfx_extract_proof.c
@@ -3493,6 +3512,26 @@ set_tests_properties(v1_inventory_panel_open_redmcsb_gate PROPERTIES WILL_FAIL T
 set_tests_properties(v1_inventory_toggle_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_chest_actionhand_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_entrance_input_wait_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
+
+# ── Theron V1 Phase 6 — Dungeon Progression Tests ──────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_dungeon_progression
+        tests/theron_v1_dungeon_progression_test.c
+    )
+    target_link_libraries(test_theron_v1_dungeon_progression PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_dungeon_progression PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_dungeon_progression PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_dungeon_progression
+        COMMAND test_theron_v1_dungeon_progression
+    )
+endif()
 
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
 add_executable(extract_all_sprites tools/extract_all_sprites.c src/engine/firestaff_graphics_dat_reader.c)
