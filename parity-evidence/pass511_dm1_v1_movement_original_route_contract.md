@@ -28,12 +28,12 @@ The next landable DM1 V1 movement step is a fresh original-runtime route transcr
 
 ## Original/Greatstone anchors
 
-- PASS canonicalDm1DungeonDat /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- PASS canonicalDm1GraphicsDat /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- PASS canonicalDm1Title /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-- PASS canonicalDm1Readme /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md sha256=e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc
-- PASS greatstoneOverview /home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html sha256=7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c
-- PASS greatstonePc34DiffManifest /home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json sha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
+- PASS canonicalDm1DungeonDat /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- PASS canonicalDm1GraphicsDat /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- PASS canonicalDm1Title /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
+- PASS canonicalDm1Readme /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md sha256=6bffffe6a147d34c9273975fa9f3e6888c3c690466ba1157cbfa17300baee056
+- PASS greatstoneOverview /Users/bosse/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_dm.html.html sha256=7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c
+- PASS greatstonePc34DiffManifest /Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json sha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
 
 ## Artifact contract for the next landing step
 

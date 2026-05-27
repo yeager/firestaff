@@ -61,7 +61,7 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -79,7 +79,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=1
 ~~~
 FAIL pass563 check-only: firestaff-d1-side-wall-metadata,firestaff-d1-side-wall-runtime-test,firestaff-source-evidence-string
 ~~~

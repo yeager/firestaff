@@ -241,7 +241,7 @@
       "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "file": "GRAPHICS.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
@@ -249,7 +249,7 @@
       "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "file": "DUNGEON.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
@@ -257,7 +257,7 @@
       "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
       "file": "TITLE",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
@@ -534,7 +534,7 @@
         "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "A capture must be after command processing lets the wait loop exit.",
@@ -551,7 +551,7 @@
         "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "Each original shot needs F0380 pop/count delta and F0365/F0366 dispatch.",
@@ -567,7 +567,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "Turn shots must prove source direction mutation.",
@@ -582,7 +582,7 @@
         "F0284_CHAMPION_SetPartyDirection"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "Move shots must prove accepted movement or source-visible blocked/no-op handling.",
@@ -598,7 +598,7 @@
         "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "The viewport bitmap must be composed from the same direction/X/Y tuple.",
@@ -616,7 +616,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "A promotable crop belongs after the PC34 viewport-present blit.",
@@ -631,9 +631,9 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE"
 }

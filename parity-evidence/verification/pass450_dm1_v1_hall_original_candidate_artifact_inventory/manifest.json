@@ -1,21 +1,21 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-24T23:18:28.058899+00:00",
-  "status": "PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES",
-  "repo": "/home/trv2/work/firestaff",
+  "timestampUtc": "2026-05-27T20:52:08.225400+00:00",
+  "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "branch": "main",
-  "head": "e4a91520fa36b2578d580a51066a8419d24489d0",
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "head": "1e982267bfd03d6b786fb083cf74268616d71b7f",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
       "label": "dm1_pc34_english_graphics",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "filename": "GRAPHICS.DAT",
       "variant": "DM PC 3.4 English / I34E",
       "bytes": 363417,
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "md5": "fa6b1aa29e191418713bf2cda93d962e",
-      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
       "exists": true,
       "ok": true,
       "actual": {
@@ -26,13 +26,13 @@
     },
     {
       "label": "dm1_pc34_english_dungeon",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "filename": "DUNGEON.DAT",
       "variant": "DM PC 3.4 English / I34E",
       "bytes": 33357,
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "exists": true,
       "ok": true,
       "actual": {
@@ -45,7 +45,7 @@
   "sourceLocks": [
     {
       "file": "COMMAND.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "lines": "397-403,2322-2323",
       "claim": "Viewport left-click dispatches to the type-80 dungeon-view handler.",
       "needles": [
@@ -59,7 +59,7 @@
     },
     {
       "file": "CLIKVIEW.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "lines": "21-25,348-349,407-431",
       "claim": "PC34 screen click is converted to viewport coordinates and front-wall sensor dispatch.",
       "needles": [
@@ -74,7 +74,7 @@
     },
     {
       "file": "MOVESENS.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "lines": "1392,1501-1502",
       "claim": "C127 wall champion portrait sensor enters candidate champion creation.",
       "needles": [
@@ -87,7 +87,7 @@
     },
     {
       "file": "DUNGEON.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
       "lines": "2558,2608-2612",
       "claim": "Visible wall portrait ordinal is sourced from the same C127 sensor data.",
       "needles": [
@@ -100,7 +100,7 @@
     },
     {
       "file": "DUNVIEW.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "lines": "525,3913-3928",
       "claim": "D1C front-wall portrait draw/click geometry anchor.",
       "needles": [
@@ -113,7 +113,7 @@
     },
     {
       "file": "COORD.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
       "lines": "1693-1698",
       "claim": "PC viewport origin maps source portrait center to screen x=111 y=82.",
       "needles": [
@@ -126,7 +126,7 @@
     },
     {
       "file": "PANEL.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "lines": "1619-1636,1654-1656,2376-2385",
       "claim": "Candidate inventory redraw forces the resurrect/reincarnate panel and hides save/rest/close.",
       "needles": [
@@ -141,7 +141,7 @@
     },
     {
       "file": "REVIVE.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "lines": "272-294,744-807",
       "claim": "Candidate append, cancel cleanup, confirm cleanup, sensor disable, and reincarnate branch.",
       "needles": [
@@ -157,7 +157,7 @@
     },
     {
       "file": "COMMAND.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "lines": "228-240,1985-1991,2159-2184,2336-2370",
       "claim": "Panel command dispatch and candidate modal blocking for status/rest/save/close paths.",
       "needles": [
@@ -173,7 +173,7 @@
     },
     {
       "file": "CHAMDRAW.C",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "lines": "536-545,1210-1212",
       "claim": "Candidate-aware champion slot/hand draw suppression.",
       "needles": [
@@ -2096,7 +2096,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2104,7 +2104,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2134,7 +2134,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2142,7 +2142,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2172,7 +2172,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2180,7 +2180,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2210,7 +2210,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2218,7 +2218,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2248,7 +2248,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2256,7 +2256,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2286,7 +2286,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2294,7 +2294,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2324,7 +2324,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2332,7 +2332,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2362,7 +2362,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2370,7 +2370,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2400,7 +2400,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2408,7 +2408,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2438,7 +2438,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2446,7 +2446,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2476,7 +2476,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2484,7 +2484,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2514,7 +2514,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2522,7 +2522,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2552,7 +2552,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2560,7 +2560,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2590,7 +2590,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2598,7 +2598,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2628,7 +2628,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2636,7 +2636,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2666,7 +2666,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2674,7 +2674,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2704,7 +2704,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2712,7 +2712,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2742,7 +2742,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2750,7 +2750,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2780,7 +2780,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2788,7 +2788,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2818,7 +2818,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2826,7 +2826,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2856,7 +2856,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2864,7 +2864,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2894,7 +2894,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2902,7 +2902,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2932,7 +2932,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2940,7 +2940,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -2970,7 +2970,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -2978,7 +2978,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3008,7 +3008,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3016,7 +3016,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3046,7 +3046,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3054,7 +3054,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3084,7 +3084,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3092,7 +3092,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3122,7 +3122,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3130,7 +3130,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3160,7 +3160,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3168,7 +3168,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3198,7 +3198,7 @@
           "filename": "GRAPHICS.DAT",
           "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
           "bytes": 363417,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         },
         {
           "label": "dm1_pc34_english_dungeon",
@@ -3206,7 +3206,7 @@
           "filename": "DUNGEON.DAT",
           "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
           "bytes": 33357,
-          "resolvedPath": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
+          "resolvedPath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         }
       ],
       "promotionUse": "review_only_not_promotable_static_no_party",
@@ -3215,7 +3215,7 @@
   ],
   "n2HallDosboxArtifact": {
     "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-    "exists": false,
+    "exists": true,
     "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
     "sha256SumsPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/SHA256SUMS.txt",
     "readmePath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/README.md",
@@ -3223,9 +3223,465 @@
     "promotableLabel": "03_panel_visible_north_front_mirror",
     "promotionUse": "panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity",
     "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.",
-    "ok": false,
-    "errors": [],
-    "externalArtifactMissing": "missing N2 Hall artifact root /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"
+    "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+    "host": "firestaff-worker",
+    "created": "2026-05-09T14:15:00+02:00",
+    "entryCount": 11,
+    "sourceProvenance": {
+      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+    },
+    "requiredSourceProvenance": {
+      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    "promotableEntry": {
+      "root": "raw_root/03_panel_visible_north_front_mirror.png",
+      "root_sha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+      "pc320": "pc320/03_panel_visible_north_front_mirror_pc320.png",
+      "pc320_sha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+      "viewport224x136": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+      "viewport_sha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f"
+    },
+    "checkedFiles": [
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/00_start_hall_initial_south_pc320.png",
+        "rel": "pc320/00_start_hall_initial_south_pc320.png",
+        "expectedSha256": "30a6a0da0257da8c45cfaa0716fe377321e14819bb88de2c7c4b7f597bcf73df",
+        "exists": true,
+        "actualSha256": "30a6a0da0257da8c45cfaa0716fe377321e14819bb88de2c7c4b7f597bcf73df",
+        "bytes": 12762,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/00_start_hall_initial_south_viewport224x136.png",
+        "rel": "viewport224x136/00_start_hall_initial_south_viewport224x136.png",
+        "expectedSha256": "fdbf7981bb8820d67ced049d8a4c987e214fe093095b0970da3a58cd004a29d4",
+        "exists": true,
+        "actualSha256": "fdbf7981bb8820d67ced049d8a4c987e214fe093095b0970da3a58cd004a29d4",
+        "bytes": 11293,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/00_start_hall_initial_south.png",
+        "rel": "raw_root/00_start_hall_initial_south.png",
+        "expectedSha256": "d4ea63a79bd292fdd0918a36c2a9754d06b38653c6b05863672d1cccab28fb0d",
+        "exists": true,
+        "actualSha256": "d4ea63a79bd292fdd0918a36c2a9754d06b38653c6b05863672d1cccab28fb0d",
+        "bytes": 8605,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/01_turn_left_east_pc320.png",
+        "rel": "pc320/01_turn_left_east_pc320.png",
+        "expectedSha256": "066f3d32f908568125ba7e84dd1a11a4c6f6fee34556218ae9c04ed611e24bdd",
+        "exists": true,
+        "actualSha256": "066f3d32f908568125ba7e84dd1a11a4c6f6fee34556218ae9c04ed611e24bdd",
+        "bytes": 8370,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/01_turn_left_east_viewport224x136.png",
+        "rel": "viewport224x136/01_turn_left_east_viewport224x136.png",
+        "expectedSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "exists": true,
+        "actualSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "bytes": 7200,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/01_turn_left_east.png",
+        "rel": "raw_root/01_turn_left_east.png",
+        "expectedSha256": "43be621a551cc7b6461be756f323eac7aacd3d856426917279225e33a52632fc",
+        "exists": true,
+        "actualSha256": "43be621a551cc7b6461be756f323eac7aacd3d856426917279225e33a52632fc",
+        "bytes": 5716,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/02_step_east_blocked_pc320.png",
+        "rel": "pc320/02_step_east_blocked_pc320.png",
+        "expectedSha256": "71d168641789d97d896eedbca6f5046a6dc08c844afba684b124c26c1130ec5a",
+        "exists": true,
+        "actualSha256": "71d168641789d97d896eedbca6f5046a6dc08c844afba684b124c26c1130ec5a",
+        "bytes": 8368,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/02_step_east_blocked_viewport224x136.png",
+        "rel": "viewport224x136/02_step_east_blocked_viewport224x136.png",
+        "expectedSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "exists": true,
+        "actualSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "bytes": 7200,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/02_step_east_blocked.png",
+        "rel": "raw_root/02_step_east_blocked.png",
+        "expectedSha256": "1b4e91925637130e81100018156d6c2144d223c71452256a152af531b9e401ed",
+        "exists": true,
+        "actualSha256": "1b4e91925637130e81100018156d6c2144d223c71452256a152af531b9e401ed",
+        "bytes": 5735,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/03_panel_visible_north_front_mirror_pc320.png",
+        "rel": "pc320/03_panel_visible_north_front_mirror_pc320.png",
+        "expectedSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+        "exists": true,
+        "actualSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+        "bytes": 9391,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+        "rel": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+        "expectedSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+        "exists": true,
+        "actualSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+        "bytes": 8145,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/03_panel_visible_north_front_mirror.png",
+        "rel": "raw_root/03_panel_visible_north_front_mirror.png",
+        "expectedSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+        "exists": true,
+        "actualSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+        "bytes": 6555,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/04_candidate_select_click_111_82_pc320.png",
+        "rel": "pc320/04_candidate_select_click_111_82_pc320.png",
+        "expectedSha256": "ebc67fe61f3c18e93af8ae2126de535445096333a18f7eb223e7f8f891e137b3",
+        "exists": true,
+        "actualSha256": "ebc67fe61f3c18e93af8ae2126de535445096333a18f7eb223e7f8f891e137b3",
+        "bytes": 9415,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/04_candidate_select_click_111_82_viewport224x136.png",
+        "rel": "viewport224x136/04_candidate_select_click_111_82_viewport224x136.png",
+        "expectedSha256": "27d60a5609d05fb8110b1d417b164de5bc1386fc05bc5f086f5745eff395111f",
+        "exists": true,
+        "actualSha256": "27d60a5609d05fb8110b1d417b164de5bc1386fc05bc5f086f5745eff395111f",
+        "bytes": 8227,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/04_candidate_select_click_111_82.png",
+        "rel": "raw_root/04_candidate_select_click_111_82.png",
+        "expectedSha256": "701fd7bf31b49045c839da08c625bb1c0d82b77e8e90167ff3bdb1066a26f12f",
+        "exists": true,
+        "actualSha256": "701fd7bf31b49045c839da08c625bb1c0d82b77e8e90167ff3bdb1066a26f12f",
+        "bytes": 6620,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/05_resurrect_confirm_130_115_pc320.png",
+        "rel": "pc320/05_resurrect_confirm_130_115_pc320.png",
+        "expectedSha256": "7eb5e6348ffa1236ca8d7815eea774cea2d5d2147141162e0b6c618e50bc639c",
+        "exists": true,
+        "actualSha256": "7eb5e6348ffa1236ca8d7815eea774cea2d5d2147141162e0b6c618e50bc639c",
+        "bytes": 9404,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/05_resurrect_confirm_130_115_viewport224x136.png",
+        "rel": "viewport224x136/05_resurrect_confirm_130_115_viewport224x136.png",
+        "expectedSha256": "b1f6523666a87eeb8f60dfbe4995e9077b91dad34a81ed03411cc493ac983783",
+        "exists": true,
+        "actualSha256": "b1f6523666a87eeb8f60dfbe4995e9077b91dad34a81ed03411cc493ac983783",
+        "bytes": 8220,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/05_resurrect_confirm_130_115.png",
+        "rel": "raw_root/05_resurrect_confirm_130_115.png",
+        "expectedSha256": "0e5aee2cd42046ccb84ca167d2d6d20197d223bdcd8700ddffff3b52740ebfc5",
+        "exists": true,
+        "actualSha256": "0e5aee2cd42046ccb84ca167d2d6d20197d223bdcd8700ddffff3b52740ebfc5",
+        "bytes": 6583,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/run12_01_turn_left_east_pc320.png",
+        "rel": "pc320/run12_01_turn_left_east_pc320.png",
+        "expectedSha256": "066f3d32f908568125ba7e84dd1a11a4c6f6fee34556218ae9c04ed611e24bdd",
+        "exists": true,
+        "actualSha256": "066f3d32f908568125ba7e84dd1a11a4c6f6fee34556218ae9c04ed611e24bdd",
+        "bytes": 8370,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/run12_01_turn_left_east_viewport224x136.png",
+        "rel": "viewport224x136/run12_01_turn_left_east_viewport224x136.png",
+        "expectedSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "exists": true,
+        "actualSha256": "0ceff3d2254eccc6f57bca086d5f3b661a7ffcc318356dd8852cbb8748737d31",
+        "bytes": 7200,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/run12_01_turn_left_east.png",
+        "rel": "raw_root/run12_01_turn_left_east.png",
+        "expectedSha256": "43be621a551cc7b6461be756f323eac7aacd3d856426917279225e33a52632fc",
+        "exists": true,
+        "actualSha256": "43be621a551cc7b6461be756f323eac7aacd3d856426917279225e33a52632fc",
+        "bytes": 5716,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/run12_02_turn_left_north_front_mirror_pc320.png",
+        "rel": "pc320/run12_02_turn_left_north_front_mirror_pc320.png",
+        "expectedSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+        "exists": true,
+        "actualSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+        "bytes": 9391,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/run12_02_turn_left_north_front_mirror_viewport224x136.png",
+        "rel": "viewport224x136/run12_02_turn_left_north_front_mirror_viewport224x136.png",
+        "expectedSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+        "exists": true,
+        "actualSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+        "bytes": 8145,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/run12_02_turn_left_north_front_mirror.png",
+        "rel": "raw_root/run12_02_turn_left_north_front_mirror.png",
+        "expectedSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+        "exists": true,
+        "actualSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+        "bytes": 6555,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/run12_03_click_left_center_pc320.png",
+        "rel": "pc320/run12_03_click_left_center_pc320.png",
+        "expectedSha256": "434ebf49621e3bd244a1f9caead37f8f4b9c354ba0d0b4df3ed81ef76a473aab",
+        "exists": true,
+        "actualSha256": "434ebf49621e3bd244a1f9caead37f8f4b9c354ba0d0b4df3ed81ef76a473aab",
+        "bytes": 9395,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/run12_03_click_left_center_viewport224x136.png",
+        "rel": "viewport224x136/run12_03_click_left_center_viewport224x136.png",
+        "expectedSha256": "470f81b855a6edcb2edc3e26bec1297900a954cacce600d57b9a393f7472edb7",
+        "exists": true,
+        "actualSha256": "470f81b855a6edcb2edc3e26bec1297900a954cacce600d57b9a393f7472edb7",
+        "bytes": 8210,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/run12_03_click_left_center.png",
+        "rel": "raw_root/run12_03_click_left_center.png",
+        "expectedSha256": "fffc40f44f247dec168e2f8f4a1e8b2a125abe33f844ff3fdd3acdc38f388c7e",
+        "exists": true,
+        "actualSha256": "fffc40f44f247dec168e2f8f4a1e8b2a125abe33f844ff3fdd3acdc38f388c7e",
+        "bytes": 6588,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/run12_04_click_right_center_pc320.png",
+        "rel": "pc320/run12_04_click_right_center_pc320.png",
+        "expectedSha256": "db26e5b599cd78f7e26be1c8a1a8f1be78409f6e6f6114b5cc885ae248d2f394",
+        "exists": true,
+        "actualSha256": "db26e5b599cd78f7e26be1c8a1a8f1be78409f6e6f6114b5cc885ae248d2f394",
+        "bytes": 9387,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/run12_04_click_right_center_viewport224x136.png",
+        "rel": "viewport224x136/run12_04_click_right_center_viewport224x136.png",
+        "expectedSha256": "88aa4772aa22f1c857a3a1ae670319dc7575ccfb44a20a8ca1a1cc10e372a7dd",
+        "exists": true,
+        "actualSha256": "88aa4772aa22f1c857a3a1ae670319dc7575ccfb44a20a8ca1a1cc10e372a7dd",
+        "bytes": 8202,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/run12_04_click_right_center.png",
+        "rel": "raw_root/run12_04_click_right_center.png",
+        "expectedSha256": "83574a17c65e0c0a0ff962da15f4e69432b7eca3b7f802d06d4772d4f13e88e4",
+        "exists": true,
+        "actualSha256": "83574a17c65e0c0a0ff962da15f4e69432b7eca3b7f802d06d4772d4f13e88e4",
+        "bytes": 6584,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/run12_05_confirm_resurrect_pc320.png",
+        "rel": "pc320/run12_05_confirm_resurrect_pc320.png",
+        "expectedSha256": "7eb5e6348ffa1236ca8d7815eea774cea2d5d2147141162e0b6c618e50bc639c",
+        "exists": true,
+        "actualSha256": "7eb5e6348ffa1236ca8d7815eea774cea2d5d2147141162e0b6c618e50bc639c",
+        "bytes": 9404,
+        "pngDims": [
+          320,
+          200
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/run12_05_confirm_resurrect_viewport224x136.png",
+        "rel": "viewport224x136/run12_05_confirm_resurrect_viewport224x136.png",
+        "expectedSha256": "b1f6523666a87eeb8f60dfbe4995e9077b91dad34a81ed03411cc493ac983783",
+        "exists": true,
+        "actualSha256": "b1f6523666a87eeb8f60dfbe4995e9077b91dad34a81ed03411cc493ac983783",
+        "bytes": 8220,
+        "pngDims": [
+          224,
+          136
+        ],
+        "ok": true
+      },
+      {
+        "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/run12_05_confirm_resurrect.png",
+        "rel": "raw_root/run12_05_confirm_resurrect.png",
+        "expectedSha256": "0e5aee2cd42046ccb84ca167d2d6d20197d223bdcd8700ddffff3b52740ebfc5",
+        "exists": true,
+        "actualSha256": "0e5aee2cd42046ccb84ca167d2d6d20197d223bdcd8700ddffff3b52740ebfc5",
+        "bytes": 6583,
+        "pngDims": [
+          800,
+          600
+        ],
+        "ok": true
+      }
+    ],
+    "sha256SumsSha256": "2fb1c894ef39914bb2a715b853b006b3b50a5aef9112f7573541a918eba698f7",
+    "sha256SumsLineCount": 22,
+    "readmeSha256": "8ed6f5874f39482fe5404914fdd8cd8af82e9e5a04ba1984543cbe8d0f872529",
+    "ok": true,
+    "errors": []
   },
   "availablePromotableOriginalFrames": [
     "probe-initial-south-corrected/image0002-raw.png (candidate_select/panel_visible corrected initial-south transition)",
@@ -3238,30 +3694,21 @@
   ],
   "correctedHallArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
   "correctedAvailableScenes": {
-    "candidate_select_portrait_click_before_panel": false,
-    "candidate_panel_visible_after_append": false,
-    "candidate_cancel_after_panel": false,
-    "candidate_confirm_resurrect_after_panel": false,
-    "candidate_confirm_reincarnate_after_panel": false,
-    "hud_status_after_cancel": false,
-    "hud_status_after_resurrect": false,
-    "hud_status_after_reincarnate": false
+    "candidate_select_portrait_click_before_panel": true,
+    "candidate_panel_visible_after_append": true,
+    "candidate_cancel_after_panel": true,
+    "candidate_confirm_resurrect_after_panel": true,
+    "candidate_confirm_reincarnate_after_panel": true,
+    "hud_status_after_cancel": true,
+    "hud_status_after_resurrect": true,
+    "hud_status_after_reincarnate": true
   },
-  "missingPromotableScenes": [
-    "candidate_select_portrait_click_before_panel",
-    "candidate_panel_visible_after_append",
-    "candidate_cancel_after_panel",
-    "candidate_confirm_resurrect_after_panel",
-    "candidate_confirm_reincarnate_after_panel",
-    "hud_status_after_cancel",
-    "hud_status_after_resurrect",
-    "hud_status_after_reincarnate"
-  ],
+  "missingPromotableScenes": [],
   "captureEnvironment": {
     "localHostCaptureReady": true,
-    "platform": "Linux",
-    "machine": "x86_64",
-    "path": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "platform": "Darwin",
+    "machine": "arm64",
+    "path": "/Users/bosse/.cargo/bin:/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/opt/homebrew/Cellar/node@22/22.22.2_2/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/sbin:/Users/bosse/Library/pnpm:/Users/bosse/.bun/bin",
     "display": null,
     "dosboxCandidates": [
       {
@@ -3271,47 +3718,47 @@
       },
       {
         "name": "dosbox",
-        "path": "/usr/bin/dosbox",
+        "path": "/opt/homebrew/bin/dosbox",
         "available": true
       },
       {
         "name": "dosbox-x",
-        "path": "/usr/bin/dosbox-x",
-        "available": true
+        "path": null,
+        "available": false
       }
     ],
     "selectedDosbox": {
       "name": "dosbox",
-      "path": "/usr/bin/dosbox",
+      "path": "/opt/homebrew/bin/dosbox",
       "available": true
     },
-    "dosbox": "/usr/bin/dosbox",
-    "dosboxX": "/usr/bin/dosbox-x",
-    "xvfbRun": "/usr/bin/xvfb-run",
-    "needsXvfb": true,
-    "stageDir": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "dosbox": "/opt/homebrew/bin/dosbox",
+    "dosboxX": null,
+    "xvfbRun": null,
+    "needsXvfb": false,
+    "stageDir": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "stageExists": true,
     "captureTool": "tools/pass173_source_portrait_route_gate_probe.py",
     "captureToolExists": true,
     "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
-    "externalParentExists": false,
+    "externalParentExists": true,
     "configuredRunBase": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
     "missingTools": [],
     "blockingReason": "capture-ready",
-    "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/usr/bin/dosbox /usr/bin/xvfb-run -a python3 tools/pass173_source_portrait_route_gate_probe.py",
+    "nextExecutableStep": "FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py",
     "postCaptureVerificationStep": "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
   },
   "terminalHudCompleteness": {
-    "complete": false,
+    "complete": true,
     "requiredScenes": [
       "hud_status_after_cancel",
       "hud_status_after_resurrect",
       "hud_status_after_reincarnate"
     ],
     "availableScenes": {
-      "hud_status_after_cancel": false,
-      "hud_status_after_resurrect": false,
-      "hud_status_after_reincarnate": false
+      "hud_status_after_cancel": true,
+      "hud_status_after_resurrect": true,
+      "hud_status_after_reincarnate": true
     },
     "scope": "inventory completeness only; pixel-delta parity remains pass449 comparator work"
   },

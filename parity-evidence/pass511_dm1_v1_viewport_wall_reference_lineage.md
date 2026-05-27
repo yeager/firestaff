@@ -9,10 +9,10 @@ Status: failed
 - DRAWVIEW.C:709-858 drawview_viewport_present_boundary
 
 ## Secondary lineage anchors
-- /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp csbwin_wall_decoration_alcove_lineage
-- /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Code390e.cpp csbwin_level_wall_bitmap_binding
-- /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBCode.cpp csb_lineage_wall_decoration_alcove
-- /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Code390e.cpp csb_lineage_level_wall_bitmap_binding
+- /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp csbwin_wall_decoration_alcove_lineage
+- /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Code390e.cpp csbwin_level_wall_bitmap_binding
+- /Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBCode.cpp csb_lineage_wall_decoration_alcove
+- /Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Code390e.cpp csb_lineage_level_wall_bitmap_binding
 
 ## DM1 canonical anchors
 - GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes 363417

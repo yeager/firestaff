@@ -66,7 +66,7 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Verification
 
-- command: /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
+- command: /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -84,7 +84,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
   - returncode: 1
   - output tail:
 ~~~

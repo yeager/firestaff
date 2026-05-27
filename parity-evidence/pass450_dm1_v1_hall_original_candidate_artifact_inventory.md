@@ -1,12 +1,12 @@
 # pass450_dm1_v1_hall_original_candidate_artifact_inventory
 
-- status: `PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES`
+- status: `PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED`
 - parity claim: **not made**
 - frame rows inventoried: 30
 
 ## Original data provenance
-- `DM PC 3.4 English / I34E` `GRAPHICS.DAT` sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` bytes `363417` resolved `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT` ok=True
-- `DM PC 3.4 English / I34E` `DUNGEON.DAT` sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` bytes `33357` resolved `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT` ok=True
+- `DM PC 3.4 English / I34E` `GRAPHICS.DAT` sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` bytes `363417` resolved `/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT` ok=True
+- `DM PC 3.4 English / I34E` `DUNGEON.DAT` sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` bytes `33357` resolved `/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT` ok=True
 
 ## ReDMCSB source anchors
 - `COMMAND.C:397-403,2322-2323` — Viewport left-click dispatches to the type-80 dungeon-view handler. ok=True
@@ -53,49 +53,44 @@
 - `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate/image0015-after_f4_probe.png` sha12 `48ed3743ab6a` dims=[320, 200] class=`dungeon_gameplay` pass173=`blocked/static-no-party-after-gate` use=`review_only_not_promotable_static_no_party`
 
 ## N2 DOSBox original Hall artifact
-- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
-- status: `None` host=`None` created=`None` entries=None
+- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=True ok=True
+- status: `NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION` host=`firestaff-worker` created=`2026-05-09T14:15:00+02:00` entries=11
 - promotable/narrowed label: `03_panel_visible_north_front_mirror` use=`panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity`
-- DUNGEON.DAT sha256 `None`; GRAPHICS.DAT sha256 `None`; TITLE sha256 `None`
+- DUNGEON.DAT sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`; GRAPHICS.DAT sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`; TITLE sha256 `adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745`
+- pc320 `pc320/03_panel_visible_north_front_mirror_pc320.png` sha256 `766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0`
+- viewport224x136 `viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png` sha256 `66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f`
 - historical blocker: candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.
 
 ## Corrected Hall artifact
 - root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
-- `candidate_select_portrait_click_before_panel` available=False
-- `candidate_panel_visible_after_append` available=False
-- `candidate_cancel_after_panel` available=False
-- `candidate_confirm_resurrect_after_panel` available=False
-- `candidate_confirm_reincarnate_after_panel` available=False
-- `hud_status_after_cancel` available=False
-- `hud_status_after_resurrect` available=False
-- `hud_status_after_reincarnate` available=False
+- `candidate_select_portrait_click_before_panel` available=True
+- `candidate_panel_visible_after_append` available=True
+- `candidate_cancel_after_panel` available=True
+- `candidate_confirm_resurrect_after_panel` available=True
+- `candidate_confirm_reincarnate_after_panel` available=True
+- `hud_status_after_cancel` available=True
+- `hud_status_after_resurrect` available=True
+- `hud_status_after_reincarnate` available=True
 
 ## Remaining promotable scenes
-- `candidate_select_portrait_click_before_panel`
-- `candidate_panel_visible_after_append`
-- `candidate_cancel_after_panel`
-- `candidate_confirm_resurrect_after_panel`
-- `candidate_confirm_reincarnate_after_panel`
-- `hud_status_after_cancel`
-- `hud_status_after_resurrect`
-- `hud_status_after_reincarnate`
+- none; corrected terminal original frames and terminal HUD frames are inventoried
 
 ## Capture tooling readiness
 - local host capture ready: `True`
-- platform: `Linux` `x86_64`
-- dosbox: `/usr/bin/dosbox`
-- dosbox-x: `/usr/bin/dosbox-x`
-- selected DOSBox: `/usr/bin/dosbox`
-- xvfb-run: `/usr/bin/xvfb-run` needsXvfb=`True` display=`None`
-- stage exists: `True` `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
-- external artifact root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe` parentExists=`False`
+- platform: `Darwin` `arm64`
+- dosbox: `/opt/homebrew/bin/dosbox`
+- dosbox-x: `None`
+- selected DOSBox: `/opt/homebrew/bin/dosbox`
+- xvfb-run: `None` needsXvfb=`False` display=`None`
+- stage exists: `True` `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
+- external artifact root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe` parentExists=`True`
 - configured run base: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe`
 - missing tools/data: `[]`
 - reason: capture-ready
-- next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/usr/bin/dosbox /usr/bin/xvfb-run -a python3 tools/pass173_source_portrait_route_gate_probe.py`
+- next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/opt/homebrew/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py`
 - post-capture verification: `python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`
 
 ## Terminal HUD completeness
-- complete: `False`
-- available: `{'hud_status_after_cancel': False, 'hud_status_after_resurrect': False, 'hud_status_after_reincarnate': False}`
+- complete: `True`
+- available: `{'hud_status_after_cancel': True, 'hud_status_after_resurrect': True, 'hud_status_after_reincarnate': True}`
 - scope: inventory completeness only; pixel-delta parity remains pass449 comparator work

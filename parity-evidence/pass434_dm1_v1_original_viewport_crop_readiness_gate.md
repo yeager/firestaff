@@ -20,7 +20,7 @@ This gate keeps the original viewport crop/source-lock prerequisites executable 
 - pass86 self-test return code: `0`
 - pass376 prior manifest status: `BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED`; ok=`True`
 - capture script crop locks: `{'path': 'scripts/dosbox_dm1_original_viewport_reference_capture.sh', 'has_normalize_only': True, 'has_pillow_crop_0_33_224_169': True, 'has_imagemagick_crop': True, 'has_manifest_geometry_check': True}`
-- DOSBox available: `True`; xvfb-run available: `True`; required for this gate: `False`
+- DOSBox available: `True`; xvfb-run available: `False`; required for this gate: `False`
 
 ## Blocker honesty
 

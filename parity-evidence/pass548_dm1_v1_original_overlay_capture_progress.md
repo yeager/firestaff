@@ -1,6 +1,6 @@
 # Pass548 - DM1 V1 original overlay/capture progress
 
-Status: BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE
+Status: BLOCKED_PASS548_MISSING_N2_PREREQUISITE
 
 ## ReDMCSB source anchors
 
@@ -17,7 +17,7 @@ Status: BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE
 
 ## Result
 
-no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10
+missing prerequisite(s): dosbox-debug, Xvfb, xdotool
 
 ## Evidence
 

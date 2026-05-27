@@ -6,7 +6,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_pass375_dm1_v1_deferred_explosion_pass.py"
         ],
         "outputTail": "status=PASS_PASS375_DM1_V1_DEFERRED_EXPLOSION_PASS\nredmcsb_f0115_signature_line=4547\nredmcsb_projectile_contract_line=4576\nredmcsb_packed_cell_loop_end_line=5915\nredmcsb_explosion_phase_line=5916\nredmcsb_explosion_restart_line=5931\nimplementation=m11_draw_dm1_deferred_explosion_pass after side+center contents\n",
@@ -52,7 +52,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_firestaff_completion_matrix.py"
         ],
         "outputTail": "firestaff completion matrix verifier OK\n",
@@ -64,7 +64,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/firestaff_completion_status.py"
         ],
         "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=20% | points=20/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
@@ -73,15 +73,15 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "e4a91520fa36b2578d580a51066a8419d24489d0",
+  "head": "1e982267bfd03d6b786fb083cf74268616d71b7f",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "full object/creature/projectile gameplay parity",
     "original DOS runtime explosion overlay comparison"
   ],
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-24T23:18:25.917261+00:00"
+  "timestampUtc": "2026-05-27T20:47:47.074580+00:00"
 }

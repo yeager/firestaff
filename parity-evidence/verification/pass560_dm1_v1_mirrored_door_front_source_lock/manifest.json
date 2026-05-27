@@ -158,14 +158,14 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass560_dm1_v1_mirrored_door_front_source_lock.v1",
   "status": "failed",
   "statusToken": "FAILED_PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -173,8 +173,8 @@
     },
     {
       "command": [
-        "/usr/bin/python3",
-        "/home/trv2/work/firestaff/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
         "--check-only"
       ],
       "outputTail": "FAIL pass560 check-only: firestaff-mirrored-door-front-metadata,firestaff-mirrored-door-front-runtime-test",

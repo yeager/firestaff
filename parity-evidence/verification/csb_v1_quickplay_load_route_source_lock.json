@@ -1,12 +1,12 @@
 {
   "schema": "firestaff.csb_v1_quickplay_load_route_source_lock.v1",
-  "pass": true,
+  "pass": false,
   "scope": "CSB V1 launch-surface source-lock evidence only; no Firestaff runtime launch claim.",
   "source_anchors": [
     {
       "id": "redmcsb_save_file_router_csbgame",
       "role": "primary",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC8.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC8.C",
       "lines": "101-118",
       "needles": [
         "M746_FILE_ID_SAVE_CSBGAME_DAT",
@@ -20,7 +20,7 @@
     {
       "id": "redmcsb_make_new_adventure_requires_csb_game",
       "role": "primary",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "49-64",
       "needles": [
         "F1996_",
@@ -34,7 +34,7 @@
     {
       "id": "csb_lineage_quickplay_playfile_gate",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
       "lines": "502-508",
       "needles": [
         "IDC_QuickPlay",
@@ -48,7 +48,7 @@
     {
       "id": "csb_lineage_quickplay_menu_enable",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
       "lines": "1207-1216",
       "needles": [
         "PlayfileIsOpen",
@@ -62,7 +62,7 @@
     {
       "id": "csbwin_quickplay_playfile_gate",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
       "lines": "536-542",
       "needles": [
         "IDC_QuickPlay",
@@ -76,7 +76,7 @@
     {
       "id": "csbwin_quickplay_menu_enable",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
       "lines": "1236-1242",
       "needles": [
         "PlayfileIsOpen",
@@ -90,7 +90,7 @@
     {
       "id": "csb_game_state_constants",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSB.h",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSB.h",
       "lines": "42-48",
       "needles": [
         "GAMESTATE_ResumeSavedGame",
@@ -103,7 +103,7 @@
     {
       "id": "csb_load_dungeon_signature",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
       "lines": "1591-1607",
       "needles": [
         "GAMESTATE_ResumeSavedGame",
@@ -117,7 +117,7 @@
     {
       "id": "csb_load_graphics_timers_mouse",
       "role": "secondary",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/SaveGame.cpp",
       "lines": "2046-2075",
       "needles": [
         "openGraphicsFile",
@@ -132,14 +132,14 @@
   "git_refs": [
     {
       "id": "csb_lineage",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src",
       "expected_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
       "actual_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
       "ok": true
     },
     {
       "id": "csbwin_lineage",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin",
       "expected_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
       "actual_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
       "ok": true
@@ -159,5 +159,8 @@
     "The remaining launch blocker is true CSB runtime/capture handling after the guarded M12 front door."
   ],
   "remaining_blocker": "Production CSB runtime/capture handling remains blocked after the guarded M12 front door.",
-  "failures": []
+  "failures": [
+    "CSB V1 parity matrix missing '`launch_smoke` | 2/10'",
+    "CSB V1 parity matrix missing 'No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.'"
+  ]
 }

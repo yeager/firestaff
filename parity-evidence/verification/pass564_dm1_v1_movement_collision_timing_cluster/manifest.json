@@ -1,7 +1,7 @@
 {
   "schema": "firestaff.pass564.dm1_v1_movement_collision_timing_cluster.v1",
   "status": "pass",
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "relative movement, collision blockers, party coordinate update, cooldown install/decrement, queued command behavior",
   "sourceAnchors": [
     {

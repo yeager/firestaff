@@ -31,7 +31,7 @@
       "DUNVIEW.C:4218-4339": "0b4026932517b4c8d13ab52b8106d58464389497b9cc14f9b3c846e4cfa9ee8c"
     }
   },
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass542_laneB_dm1_v1_door_composition_occlusion_source_lock.v1",
   "status": "PASS542_LANEB_DM1_V1_DOOR_COMPOSITION_OCCLUSION_SOURCE_LOCKED"
 }

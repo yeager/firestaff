@@ -93,7 +93,7 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -111,7 +111,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=1
 ~~~
 FAIL pass570 check-only: firestaff-d2c-door-front-metadata,firestaff-d2c-floor-field-metadata,firestaff-d2c-wall-metadata,firestaff-d2c-zone-defines,firestaff-d2c-runtime-test,firestaff-d2c-source-evidence
 ~~~

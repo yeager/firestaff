@@ -25,7 +25,7 @@ Original DM1 V1 overlay/crop promotion remains blocked only at source-visible po
 
 ## Greatstone local reference
 
-- atlasRoot: /home/trv2/.openclaw/data/firestaff-greatstone-atlas
+- atlasRoot: /Users/bosse/.openclaw/data/firestaff-greatstone-atlas
 - pagesIndexExists=True; filesIndexExists=True; pc34DiffManifestExists=True; pc34DiffManifestSha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
 - Greatstone remains a local secondary atlas/provenance reference; ReDMCSB source and N2-local PC34 asset hashes are the promotion boundary.
 

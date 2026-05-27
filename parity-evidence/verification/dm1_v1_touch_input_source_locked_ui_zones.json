@@ -30,6 +30,6 @@
     "system.freeze_game"
   ],
   "parity_behavior_changed": false,
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "DM1_V1_TOUCH_INPUT_SOURCE_LOCKED_UI_ZONES_VERIFIED"
 }

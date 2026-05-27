@@ -22,8 +22,8 @@
     }
   ],
   "branch": "main",
-  "buildDir": "/home/trv2/.openclaw/data/firestaff-builds/pass383-verify",
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\nTest project /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\n    Start  49: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test  #49: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 104: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #104: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.02 sec\n",
+  "buildDir": "/Users/bosse/.openclaw/data/firestaff-builds/pass383-verify",
+  "ctestTail": "Test project /Users/bosse/.openclaw/data/firestaff-builds/pass383-verify\n    Start 25: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #25: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.01 sec\n    Start 58: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #58: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.01 sec\n",
   "proofs": [
     {
       "claim": "movement cooldown gate returns before dequeue, so the queued C003..C006 command is retained",
@@ -98,6 +98,6 @@
     "pixelParityClaim": false
   },
   "schema": "firestaff.parity.pass383.dm1_v1_movement_timing_integration.v1",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_DM1_V1_MOVEMENT_TIMING_GATES_SOURCE_LOCKED_RUNTIME_BOUNDARY_CLASSIFIED"
 }

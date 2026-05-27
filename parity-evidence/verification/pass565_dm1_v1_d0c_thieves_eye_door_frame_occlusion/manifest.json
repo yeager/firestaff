@@ -1,23 +1,13 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 198,
-          "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
-        },
-        {
-          "line": 199,
-          "needle": "DUNVIEW.C:8185-8188"
-        },
-        {
-          "line": 200,
-          "needle": "DUNVIEW.C:8199-8201"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d0c-thieves-eye-metadata",
       "lines": "188-200",
       "missing": [
+        "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736",
+        "DUNVIEW.C:8185-8188",
+        "DUNVIEW.C:8199-8201",
         "DUNVIEW.C:8206-8210",
         "DUNVIEW.C:8215-8216",
         "DUNVIEW.C:8240,8294"
@@ -28,35 +18,24 @@
     {
       "hits": [
         {
-          "line": 808,
+          "line": 828,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 811,
+          "line": 831,
           "needle": "dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)"
-        },
-        {
-          "line": 818,
-          "needle": "spec->door_frame_zone, 728"
-        },
-        {
-          "line": 819,
-          "needle": "spec->hole_zone, 736"
-        },
-        {
-          "line": 823,
-          "needle": "8215-8216"
-        },
-        {
-          "line": 824,
-          "needle": "8294"
         }
       ],
       "id": "firestaff-d0c-thieves-eye-test",
       "lines": "808-835",
-      "missing": [],
+      "missing": [
+        "spec->door_frame_zone, 728",
+        "spec->hole_zone, 736",
+        "8215-8216",
+        "8294"
+      ],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [],
@@ -153,14 +132,14 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.v1",
   "status": "failed",
   "statusToken": "FAILED_PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -168,11 +147,11 @@
     },
     {
       "command": [
-        "/usr/bin/python3",
-        "/home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass565 check-only: firestaff-d0c-thieves-eye-metadata, firestaff-source-evidence-string",
+      "outputTail": "FAIL pass565 check-only: firestaff-d0c-thieves-eye-metadata, firestaff-d0c-thieves-eye-test, firestaff-source-evidence-string",
       "passed": false,
       "returncode": 1
     }

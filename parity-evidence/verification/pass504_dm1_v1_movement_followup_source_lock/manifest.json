@@ -19,7 +19,7 @@
     "No viewport/walls, CSB, DM2, Nexus, or pass435 capture files changed",
     "No original DOS pixel overlay parity claim"
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceSliceSha256": {
     "F0267": "4efad370cbbbc11e9d9183dd39e45b376be8f11a818ea9063b087ac154bf8795",
     "F0276": "ce62bb9a0bc176a164b4b7fedcb7f56ec534413802878644d0bb848ef12d5d29",

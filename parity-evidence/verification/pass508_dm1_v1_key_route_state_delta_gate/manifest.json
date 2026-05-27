@@ -22,7 +22,7 @@
     "later redraw/present over mutated direction/X/Y tuple, or explicit source-proven blocked/no-op",
     "reject repeated 48ed static gameplay frames and route-label-only filenames"
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "requiredObserved": {
     "pass387_keyboard_queue_write_proven": true,
     "pass391_f0365_or_f0366_dispatch_observed": true,
@@ -39,8 +39,8 @@
       "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     },
-    "csbwinMoveObject": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Code11f52.cpp",
-    "greatstoneSummary": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md"
+    "csbwinMoveObject": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Code11f52.cpp",
+    "greatstoneSummary": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md"
   },
   "sourceAudit": [
     {

@@ -6,7 +6,7 @@
       "label": "canonical_dm1_dungeon_dat",
       "matchesExpected": true,
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
@@ -15,7 +15,7 @@
       "label": "extracted_dm1_pc34_dungeon_dat",
       "matchesExpected": true,
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     }
   ],
@@ -25,14 +25,14 @@
     "exists": true,
     "indexFilesExists": true,
     "indexPagesExists": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas"
+    "path": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas"
   },
   "nonClaims": [
     "Does not execute DOSBox or original Dungeon Master.",
     "Does not modify or verify movement, viewport drawing, or Firestaff runtime state.",
     "Does not promote any original capture artifact to parity evidence."
   ],
-  "originalDmRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "originalDmRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
   "packetBoundaries": [
     {
       "byteSum16": 2070,
@@ -251,7 +251,7 @@
     "trailingBytesAfterChecksum": 0
   },
   "pass": true,
-  "redmcsbSource": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSource": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass512_dm1_v1_original_dungeon_packet_boundary.v1",
   "scope": "DM1 V1 original DUNGEON.DAT packet/order/checksum evidence only; no movement, viewport, runtime, or pixel-parity claim.",
   "sourceLocks": [
@@ -263,7 +263,7 @@
       "lines": "989-998",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
     },
     {
       "claim": "For PC34/I34E, each MAP record is 16 bytes and supplies the width used to count columns.",
@@ -273,7 +273,7 @@
       "lines": "1049-1116",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
     },
     {
       "claim": "Thing-data packet lengths are ThingCount[type] multiplied by the ReDMCSB byte-count table.",
@@ -283,7 +283,7 @@
       "lines": "45-61",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C"
     },
     {
       "claim": "ReDMCSB reads header, maps, cumulative columns, square-first-things, text, 16 thing packets, raw map data, then compares the appended checksum.",
@@ -293,7 +293,7 @@
       "lines": "17-113",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCA.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCA.C"
     },
     {
       "claim": "The packet checksum is the 16-bit running sum of all payload bytes.",
@@ -303,7 +303,7 @@
       "lines": "129-155",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC6.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC6.C"
     },
     {
       "claim": "Runtime loading uses the same checksum packet boundary, then expands new-game runtime pools after reading original packet counts.",
@@ -313,7 +313,7 @@
       "lines": "1928-2088",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C"
     }
   ],
   "status": "PASS512_DM1_V1_ORIGINAL_DUNGEON_PACKET_BOUNDARY_LOCKED"

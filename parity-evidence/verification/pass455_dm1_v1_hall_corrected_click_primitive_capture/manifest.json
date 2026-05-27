@@ -1,6 +1,400 @@
 {
   "schema": "pass455_dm1_v1_hall_corrected_click_primitive_capture.v1",
-  "status": "BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING",
+  "timestampUtc": "2026-05-27T20:52:08.447839+00:00",
+  "status": "PASS_PASS455_CORRECTED_CLICK_PRIMITIVE_AND_CANDIDATE_TRANSITION_PROVEN",
   "artifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
-  "blocker": "external corrected-click capture artifact is not mounted on this host"
+  "pc34Provenance": {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "stage": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+  },
+  "expectedPc34Provenance": {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+  },
+  "runs": [
+    {
+      "run": "probe-initial-south-corrected",
+      "exists": true,
+      "clickCount": 2,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          111,
+          82
+        ],
+        [
+          130,
+          115
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 6,
+      "uniqueImageSha256Count": 3,
+      "firstImageSha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-initial-south-corrected/image0001-raw.png",
+          "sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+          "bytes": 17995
+        },
+        {
+          "file": "probe-initial-south-corrected/image0002-raw.png",
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "bytes": 25550
+        },
+        {
+          "file": "probe-initial-south-corrected/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-initial-south-corrected/image0004-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-initial-south-corrected/image0005-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-initial-south-corrected/image0006-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    },
+    {
+      "run": "probe-turn-click-primitive-stable",
+      "exists": true,
+      "clickCount": 2,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          276,
+          140
+        ],
+        [
+          248,
+          136
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 3,
+      "uniqueImageSha256Count": 1,
+      "firstImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-turn-click-primitive-stable/image0001-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-primitive-stable/image0002-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-primitive-stable/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    },
+    {
+      "run": "probe-turn-click-grid",
+      "exists": true,
+      "clickCount": 7,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          276,
+          140
+        ],
+        [
+          248,
+          136
+        ],
+        [
+          248,
+          150
+        ],
+        [
+          260,
+          150
+        ],
+        [
+          276,
+          136
+        ],
+        [
+          276,
+          150
+        ],
+        [
+          304,
+          136
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 7,
+      "uniqueImageSha256Count": 1,
+      "firstImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-turn-click-grid/image0001-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0002-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0004-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0005-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0006-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid/image0007-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    },
+    {
+      "run": "probe-turn-click-grid-pm",
+      "exists": true,
+      "clickCount": 4,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          276,
+          140
+        ],
+        [
+          248,
+          136
+        ],
+        [
+          276,
+          136
+        ],
+        [
+          304,
+          136
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 4,
+      "uniqueImageSha256Count": 1,
+      "firstImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-turn-click-grid-pm/image0001-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-pm/image0002-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-pm/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-pm/image0004-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    },
+    {
+      "run": "probe-turn-click-grid-globalmouse",
+      "exists": true,
+      "clickCount": 4,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          276,
+          140
+        ],
+        [
+          248,
+          136
+        ],
+        [
+          276,
+          136
+        ],
+        [
+          304,
+          136
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 4,
+      "uniqueImageSha256Count": 1,
+      "firstImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-turn-click-grid-globalmouse/image0001-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-globalmouse/image0002-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-globalmouse/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-globalmouse/image0004-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    },
+    {
+      "run": "probe-turn-click-grid-cliclick",
+      "exists": true,
+      "clickCount": 4,
+      "allClicksClientCorrect": true,
+      "allClicksAbsoluteConsistent": true,
+      "requestedPcClicks": [
+        [
+          276,
+          140
+        ],
+        [
+          248,
+          136
+        ],
+        [
+          276,
+          136
+        ],
+        [
+          304,
+          136
+        ]
+      ],
+      "windowSamples": [
+        "1067x832@426,108"
+      ],
+      "imageCount": 4,
+      "uniqueImageSha256Count": 1,
+      "firstImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "lastImageSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "images": [
+        {
+          "file": "probe-turn-click-grid-cliclick/image0001-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-cliclick/image0002-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-cliclick/image0003-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        },
+        {
+          "file": "probe-turn-click-grid-cliclick/image0004-raw.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095
+        }
+      ]
+    }
+  ],
+  "correctedCoordinateRuns": [
+    "probe-initial-south-corrected",
+    "probe-turn-click-primitive-stable",
+    "probe-turn-click-grid",
+    "probe-turn-click-grid-pm",
+    "probe-turn-click-grid-globalmouse",
+    "probe-turn-click-grid-cliclick"
+  ],
+  "clickPrimitiveProven": true,
+  "candidateTransitionPromoted": true,
+  "expectedCandidateSelectSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+  "expectedTerminalHudSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+  "provenTransitions": [
+    {
+      "label": "candidate_select",
+      "trigger": "click:111,82",
+      "image": {
+        "file": "probe-initial-south-corrected/image0002-raw.png",
+        "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "bytes": 25550
+      },
+      "sourceLock": "CLIKVIEW.C C080 viewport click -> MOVESENS.C C127 champion portrait -> REVIVE.C F0280 candidate append"
+    },
+    {
+      "label": "resurrect_confirm_or_terminal_hud_after_c160",
+      "trigger": "click:130,115",
+      "image": {
+        "file": "probe-initial-south-corrected/image0003-raw.png",
+        "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "bytes": 13095
+      },
+      "sourceLock": "COMMAND.C C160 panel command -> REVIVE.C F0282 confirm/cleanup path"
+    }
+  ],
+  "promotableLabels": [
+    "candidate_select",
+    "resurrect_confirm_or_terminal_hud_after_c160"
+  ],
+  "blockedLabels": [],
+  "blocker": null,
+  "errors": []
 }

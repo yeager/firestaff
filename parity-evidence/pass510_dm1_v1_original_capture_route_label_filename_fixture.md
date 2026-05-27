@@ -23,7 +23,7 @@ The capture normalizer now uses each `shot:<label>` token as the normalized crop
 - `TITLE` exists=True sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
 
 ## GreatStone cross-check
-- manifest: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json`
+- manifest: `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json`
 - result: `PASS`; pc34 graphics items: `713`; dungeon maps: `14`; mismatches: `0`
 
 ## Non-claims

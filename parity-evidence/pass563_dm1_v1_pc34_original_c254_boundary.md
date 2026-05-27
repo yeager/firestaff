@@ -11,7 +11,7 @@ Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this ch
 - DM.EXE: PASS sha256 4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
 - DATA/GRAPHICS.DAT: PASS sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - DATA/DUNGEON.DAT: PASS sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- original manifest: PASS /home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
+- original manifest: PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
 
 ## ReDMCSB locks
 - PASS GAMELOOP.C:166-215 pc34_game_loop_consumes_io_before_queue_dispatch - DM1 PC/I34E consumes keyboard-present/read before F0361 enqueue and F0380 dispatch.
@@ -24,7 +24,7 @@ Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this ch
 
 ## Pass chain
 
-- pass514: BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380
+- pass514: BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE
 - pass558: BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE
 - pass560: BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED
 - pass562: PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED
