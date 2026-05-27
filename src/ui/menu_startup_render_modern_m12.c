@@ -214,9 +214,10 @@ static void fill_vgradient(M12_ModernCanvas* c, int x, int y, int w, int h, M12_
 /* Background with subtle diagonal highlight + noise grid                     */
 /* -------------------------------------------------------------------------- */
 
-static void draw_background(M12_ModernCanvas* c) {
+static void draw_background(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     M12_RGB top = COLOR_BG_TOP();
     M12_RGB bot = COLOR_BG_BOTTOM();
+    unsigned int tick = state ? state->frameTick : 0U;
     for (int y = 0; y < c->h; ++y) {
         M12_RGB row = mix_rgb(top, bot, y, c->h - 1);
         for (int x = 0; x < c->w; ++x) {
@@ -232,7 +233,10 @@ static void draw_background(M12_ModernCanvas* c) {
             int b = row.b + highlight / 2;
             /* Stable deterministic texture noise so same state ->
              * same output. */
-            int n = ((x * 131 + y * 197 + (x ^ y) * 17) & 0x1F) - 16;
+            int torch = (int)((tick * 3U + (unsigned int)(x / 18) + (unsigned int)(y / 11)) % 46U);
+            if (torch > 23) torch = 46 - torch;
+            highlight += torch / 5;
+            int n = ((x * 131 + y * 197 + (x ^ y) * 17 + (int)(tick & 15U) * 23) & 0x1F) - 16;
             r += n / 8;
             g += n / 10;
             b += n / 6;
@@ -240,15 +244,61 @@ static void draw_background(M12_ModernCanvas* c) {
         }
     }
 
-    /* Faint star field in the upper half (deterministic). */
-    for (int i = 0; i < 180; ++i) {
-        int x = (i * 3571) % c->w;
-        int y = (i * 1607) % (c->h / 2);
-        int brightness = 120 + (i * 37) % 110;
-        M12_RGB star = rgb(clamp_u8(brightness + 30), clamp_u8(brightness + 10), clamp_u8(brightness));
-        blend_pixel(c, x, y, star, 180);
-        blend_pixel(c, x + 1, y, star, 80);
-        blend_pixel(c, x, y + 1, star, 80);
+    /* Faded generated dungeon hall: perspective stones, door glow, and
+     * torch movement. It behaves like a muted background video without
+     * competing with the interactive cards. */
+    {
+        int cx = c->w / 2 + 150;
+        int horizon = c->h / 2 - 42;
+        M12_RGB stone = rgb(54, 48, 64);
+        M12_RGB line = rgb(96, 78, 74);
+        for (int i = -8; i <= 8; ++i) {
+            int floorX = cx + i * 190;
+            int topX = cx + i * 22;
+            for (int t = 0; t < 100; ++t) {
+                int x = topX + (floorX - topX) * t / 99;
+                int y = horizon + (c->h - horizon) * t / 99;
+                blend_pixel(c, x, y, line, 42);
+                blend_pixel(c, x + 1, y, stone, 22);
+            }
+        }
+        for (int j = 0; j < 10; ++j) {
+            int y = horizon + 28 + j * j * 8;
+            int w = 120 + j * 150;
+            hline(c, cx - w / 2, y, w, rgb(78, 62, 64));
+        }
+        fill_rounded_rect(c, cx - 118, horizon - 130, 236, 276, 28, rgb(8, 7, 14));
+        stroke_rounded_rect(c, cx - 118, horizon - 130, 236, 276, 28, rgb(94, 70, 54));
+        for (int gy = 0; gy < 148; ++gy) {
+            int alpha = 48 - gy / 4;
+            if (alpha <= 0) break;
+            hline(c, cx - 84 + gy / 3, horizon + 54 + gy, 168 - (gy * 2) / 3, rgb(214, 104, 40));
+            for (int gx = cx - 84 + gy / 3; gx < cx + 84 - gy / 3; ++gx) {
+                blend_pixel(c, gx, horizon + 54 + gy, rgb(238, 126, 48), alpha);
+            }
+        }
+        for (int side = -1; side <= 1; side += 2) {
+            int tx = cx + side * 330;
+            int flame = (int)((tick + (unsigned int)(side > 0 ? 13 : 0)) % 36U);
+            if (flame > 18) flame = 36 - flame;
+            fill_rect(c, tx - 10, horizon - 24, 20, 120, rgb(30, 22, 16));
+            for (int r = 0; r < 80; ++r) {
+                int ww = 70 - r / 2 + flame / 2;
+                int yy = horizon - 74 + r;
+                int a = 52 - r / 2;
+                if (a <= 0) break;
+                for (int xx = tx - ww / 2; xx < tx + ww / 2; ++xx) {
+                    blend_pixel(c, xx, yy, rgb(232, 116, 38), a);
+                }
+            }
+        }
+    }
+
+    /* Dark veil keeps the living image behind the UI. */
+    for (int y = 0; y < c->h; ++y) {
+        for (int x = 0; x < c->w; ++x) {
+            blend_pixel(c, x, y, rgb(0, 0, 0), 118);
+        }
     }
 }
 
@@ -465,27 +515,25 @@ static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
 /* Header: logo + title + mode badge                                          */
 /* -------------------------------------------------------------------------- */
 
-static void draw_firestaff_logo_block(M12_ModernCanvas* c, int x, int y);
-
 static void draw_title_centered(M12_ModernCanvas* c) {
-    /* Translucent band behind title */
-    for (int y = 20; y < 128; ++y) {
+    /* Quiet top band for mode/status. The main brand mark lives in the
+     * tall left rail on the front menu. */
+    for (int y = 20; y < 104; ++y) {
         int alpha = 90 - (y - 20) * 48 / 108;
         for (int x = 0; x < c->w; ++x) {
             blend_pixel(c, x, y, rgb(0, 0, 0), alpha < 0 ? 0 : alpha);
         }
     }
-    draw_firestaff_logo_block(c, 44, 28);
 
-    int scale = 10;
+    int scale = 5;
     const char* label = "FIRESTAFF";
     ModernTextStyle probe = text_style_make(scale, COLOR_ACCENT_HI(), 0);
     int w = text_width_px(label, &probe);
-    draw_text_gradient(c, (c->w - w) / 2, 30, label, scale,
+    draw_text_gradient(c, (c->w - w) / 2, 34, label, scale,
                        COLOR_ACCENT_HI(), COLOR_ACCENT_LO(), COLOR_SHADOW());
-    ModernTextStyle tag = text_style_make(3, COLOR_TEXT_DIM(), 2);
+    ModernTextStyle tag = text_style_make(2, COLOR_TEXT_DIM(), 1);
     draw_text_centered(c, c->w / 2, 110,
-                       "THE DEFINITIVE DUNGEON MASTER FRONT DOOR", &tag);
+                       "SOURCE FAITHFUL DUNGEON MASTER ENGINE", &tag);
 }
 
 static M12_RGB mode_color(int mode) {
@@ -581,6 +629,26 @@ static int game_supported(const char* id) {
             strcmp(id, "theron") == 0);
 }
 
+static const char* game_description(const char* id) {
+    if (!id) return "Source-faithful runtime profile.";
+    if (strcmp(id, "dm1") == 0) {
+        return "The original real-time dungeon crawl, rebuilt around verified PC 3.4 data.";
+    }
+    if (strcmp(id, "csb") == 0) {
+        return "A denser return to the dungeon with CSB boot, profile and viewport gates.";
+    }
+    if (strcmp(id, "dm2") == 0) {
+        return "Skullkeep expands the formula with outdoor spaces, shops and broader systems.";
+    }
+    if (strcmp(id, "nexus") == 0) {
+        return "Saturn Dungeon Master Nexus support, built from DMDF/DGN format evidence.";
+    }
+    if (strcmp(id, "theron") == 0) {
+        return "Theron's Quest support, tracking Track 02 data availability and runtime handoff.";
+    }
+    return "Source-faithful runtime profile.";
+}
+
 static M12_RGB muted_rgb(M12_RGB c) {
     int avg = ((int)c.r + (int)c.g + (int)c.b) / 3;
     return rgb(clamp_u8(avg * 7 / 10 + 34),
@@ -612,12 +680,42 @@ static void draw_readme_logo_image(M12_ModernCanvas* c, int x, int y, int w, int
     }
 }
 
-static void draw_firestaff_logo_block(M12_ModernCanvas* c, int x, int y) {
-    int logoW = 150;
-    int logoH = 150;
-    fill_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, rgb(14, 12, 24));
-    stroke_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, COLOR_ACCENT());
-    draw_readme_logo_image(c, x, y, logoW, logoH);
+static void draw_tall_firestaff_rail(M12_ModernCanvas* c, const M12_StartupMenuState* state,
+                                     int x, int y, int w, int h) {
+    unsigned int tick = state ? state->frameTick : 0U;
+    draw_panel(c, x, y, w, h, rgb(10, 8, 18), rgb(118, 76, 38), 22);
+
+    /* Animated fire column behind the README logo. */
+    for (int fy = y + 24; fy < y + h - 24; ++fy) {
+        int rel = fy - y;
+        int center = x + w / 2 + (int)(((tick + (unsigned int)rel) % 30U) / 3U) - 5;
+        int flameW = (w * (h - rel)) / h;
+        int wave = (int)((tick * 5U + (unsigned int)rel * 3U) % 54U);
+        if (wave > 27) wave = 54 - wave;
+        flameW = flameW / 2 + wave;
+        if (flameW < 18) flameW = 18;
+        if (flameW > w - 42) flameW = w - 42;
+        for (int fx = center - flameW / 2; fx < center + flameW / 2; ++fx) {
+            int dist = fx > center ? fx - center : center - fx;
+            int alpha = 76 - (dist * 80) / flameW;
+            M12_RGB flame = rel < h / 3 ? rgb(255, 218, 92)
+                            : rel < (h * 2) / 3 ? rgb(238, 112, 34)
+                                                 : rgb(136, 40, 22);
+            if (alpha > 0) blend_pixel(c, fx, fy, flame, alpha);
+        }
+    }
+
+    {
+        int logoPad = w / 9;
+        int logoY = y + h / 2 - (w - logoPad * 2) / 2;
+        draw_readme_logo_image(c, x + logoPad, logoY, w - logoPad * 2, w - logoPad * 2);
+    }
+
+    ModernTextStyle title = text_style_make(5, COLOR_ACCENT_HI(), 3);
+    draw_text_centered(c, x + w / 2, y + h - 170, "FIRESTAFF", &title);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text_centered(c, x + w / 2, y + h - 106, "YEAGER/FIRESTAFF", &sub);
+    draw_text_centered(c, x + w / 2, y + h - 74, "GITHUB.COM/YEAGER/FIRESTAFF", &sub);
 }
 
 static void draw_generated_card_art(M12_ModernCanvas* c,
@@ -713,6 +811,27 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rect(c, x + w - 62, y + 34, 28, h - 62, rgb(104, 110, 124));
         fill_rect(c, x + w/2 - 16, y + h - 54, 32, 42, ink);
         fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
+    } else if (slotIdx == 4) {
+        /* Theron's Quest: handheld-era dungeon gate and moonlit tower. */
+        for (int gy = y + 12; gy < y + h - 16; gy++) {
+            int t = (gy - y) * 255 / h;
+            fill_rect(c, x + 8, gy, w - 16, 1, rgb(14 + t / 18, 20 + t / 16, 24 + t / 10));
+        }
+        fill_rect(c, x + 26, y + h - 76, w - 52, 42, rgb(18, 28, 24));
+        fill_rect(c, x + w / 2 - 42, y + 54, 84, h - 118, rgb(54, 58, 64));
+        stroke_rounded_rect(c, x + w / 2 - 44, y + 52, 88, h - 114, 8, accent);
+        fill_rect(c, x + w / 2 - 18, y + h - 80, 36, 46, ink);
+        for (int a = 0; a < 42; ++a) {
+            int yy = y + 34 + a;
+            int ww = 74 - a;
+            blend_pixel(c, x + 44 - ww / 2, yy, COLOR_ACCENT_HI(), 110 - a * 2);
+            hline(c, x + 44 - ww / 2, yy, ww, rgb(210, 214, 190));
+        }
+        fill_rect(c, x + 42, y + h - 118, w - 84, 5, accent);
+        for (int step = 0; step < 5; ++step) {
+            fill_rect(c, x + w / 2 - 54 + step * 12, y + h - 108 + step * 10,
+                      108 - step * 24, 5, rgb(76, 60, 42));
+        }
     } else {
         /* Saturn/Nexus — 3D dungeon stairway descending into darkness. */
         /* Background: deep space gradient */
@@ -843,36 +962,6 @@ static int pulse_modulation(unsigned int frameTick) {
     return amp;
 }
 
-static void draw_firestaff_brand_card(M12_ModernCanvas* c,
-                                     const M12_StartupMenuState* state,
-                                     int x, int y, int w, int h) {
-    (void)state;
-    M12_RGB fill = COLOR_PANEL_FILL();
-    fill_vgradient(c, x, y, w, h,
-                   rgb(fill.r + 10, fill.g + 8, fill.b + 18),
-                   rgb(18, 14, 24));
-    stroke_rounded_rect(c, x, y, w, h, 12, COLOR_ACCENT());
-
-    fill_vgradient(c, x + 2, y + 2, w - 4, 46,
-                   rgb(86, 58, 28), rgb(42, 25, 13));
-    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
-    draw_text(c, x + 16, y + 12, "FIRESTAFF", &title);
-
-    /* Cover-first brand card: use the exact same logo artwork as README.md
-     * (`assets/branding/firestaff-logo.png`) instead of the old tiny
-     * in-renderer emblem. */
-    int artX = x + 22;
-    int artY = y + 76;
-    int artW = w - 44;
-    int artH = h - 142;
-    fill_rounded_rect(c, artX, artY, artW, artH, 12, rgb(12, 10, 20));
-    stroke_rounded_rect(c, artX, artY, artW, artH, 12, COLOR_ACCENT());
-    draw_readme_logo_image(c, artX + 8, artY + 8, artW - 16, artH - 16);
-
-    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, x + 32, y + h - 58, "ENTER THE FRONT DOOR", &sub);
-}
-
 static void draw_card(M12_ModernCanvas* c,
                       const M12_StartupMenuState* state,
                       int slot,
@@ -916,41 +1005,41 @@ static void draw_card(M12_ModernCanvas* c,
 
     ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
     title.tracking = 1;
+    const char* cardTitle = isSettings ? "FIRESTAFF" : entry->title;
     /* If title is too wide, fall back to scale 2. */
-    if (text_width_px(entry->title, &title) > w - 32) {
+    if (text_width_px(cardTitle, &title) > w - 32) {
         title = text_style_make(2, COLOR_TEXT(), 1);
     }
     if (entry->kind == M12_MENU_ENTRY_GAME && !game_supported(entry->gameId)) {
         title.color = rgb(174, 174, 182);
     }
-    draw_text(c, x + 16, y + 12, entry->title, &title);
+    draw_text(c, x + 16, y + 12, cardTitle, &title);
 
     if (isSettings) {
+        draw_readme_logo_image(c, x + w - 148, y + 64, 112, 112);
         ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
-        draw_text(c, x + 16, y + 72,  "LANGUAGE", &p);
-        draw_text(c, x + 16, y + 108, "PRESENTATION", &p);
-        draw_text(c, x + 16, y + 144, "WINDOW",   &p);
+        draw_text(c, x + 16, y + 66,  "GLOBAL SETTINGS", &p);
+        draw_text(c, x + 16, y + 96,  "DISPLAY  CONTROLS  AUDIO", &p);
+        draw_text(c, x + 16, y + 126, "LANGUAGE  CREDITS  GITHUB", &p);
+        draw_text(c, x + 16, y + 170, "THANKS TO CHRISTOPHE FONTANEL", &p);
+        draw_text(c, x + 16, y + 200, "AND THE PRESERVATION PROJECTS", &p);
+        draw_text(c, x + 16, y + 230, "DANIEL NYLANDER", &p);
 
         static const char* langs[] = {"EN", "SV", "FR", "DE"};
-        static const char* grf[]   = {"Original", "Original + Filters", "Original 10x Upscale", "Modern Graphics"};
-        static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
+        static const char* grf[]   = {"V1", "V2.0", "V2.1", "V2.2"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
         int li = state->settings.languageIndex;
         int gi = state->settings.graphicsIndex;
-        int wi = state->settings.windowModeIndex;
         if (li < 0) li = 0;
         if (li > 3) li = 3;
         if (gi < 0) gi = 0;
         if (gi > 3) gi = 3;
-        if (wi < 0) wi = 0;
-        if (wi > 2) wi = 2;
-        draw_text(c, x + 200, y + 72,  langs[li], &v);
-        draw_text(c, x + 200, y + 108, grf[gi], &v);
-        draw_text(c, x + 200, y + 144, win[wi], &v);
+        draw_text(c, x + 16, y + h - 92,  langs[li], &v);
+        draw_text(c, x + 86, y + h - 92, grf[gi], &v);
 
         ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
         draw_text(c, x + 16, y + h - 32,
-                  "PRESS ENTER TO CONFIGURE SETTINGS", &hint);
+                  "OPEN FIRESTAFF SETTINGS AND CREDITS", &hint);
         return;
     }
 
@@ -1048,9 +1137,9 @@ static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right
     fill_rounded_rect(c, 24, y, c->w - 48, h, 10, rgb(14, 14, 28));
     stroke_rounded_rect(c, 24, y, c->w - 48, h, 10, COLOR_PANEL_EDGE());
     ModernTextStyle t = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    if (left)  draw_text(c, 48,            y + 14, left, &t);
     snprintf(version, sizeof(version), "v%s", M12_Changelog_VersionString());
-    draw_text_centered(c, c->w / 2, y + 14, version, &t);
+    draw_text(c, 48, y + 14, version, &t);
+    if (left) draw_text_centered(c, c->w / 2, y + 14, left, &t);
     if (right) {
         int rw = text_width_px(right, &t);
         draw_text(c, c->w - 48 - rw, y + 14, right, &t);
@@ -1088,40 +1177,45 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    /* Front-door cards: one Firestaff brand card plus every real
-     * top-level destination in the shared M12 menu state. Mouse hit
-     * testing uses the same geometry, so entries must not be hidden
-     * here; otherwise keyboard-only destinations become impossible to
-     * reach by pointer. */
-    int gridTop = 170;
+    /* Front door: five game covers plus one Firestaff card for global
+     * settings, credits and project information. Museum remains in the
+     * shared state and keyboard route; the visible touch grid keeps the
+     * requested 3+3 structure. */
+    int railX = 42;
+    int railY = 118;
+    int railW = 390;
+    int railH = c->h - 220;
+    int gridLeft = railX + railW + 44;
+    int gridTop = 152;
     int gridBottom = c->h - 130;
-    int gridH = gridBottom - gridTop;
     int entryCount = M12_StartupMenu_GetEntryCount();
-    int cardCount = entryCount + 1;
+    int settingsIndex = entryCount - 1;
     int gap = 22;
-    int sideMargin = 48;
-    int cardW;
-    int cardH = gridH;
-    if (cardCount < 1) cardCount = 1;
-    cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
+    int cols = 3;
+    int rows = 2;
+    int cardW = (c->w - gridLeft - 48 - gap * (cols - 1)) / cols;
+    int cardH = (gridBottom - gridTop - gap * (rows - 1)) / rows;
+    if (settingsIndex < 0) settingsIndex = 0;
 
-    for (int i = 0; i < cardCount; ++i) {
-        int x = sideMargin + i * (cardW + gap);
-        int y = gridTop;
-        if (i == 0) {
-            draw_firestaff_brand_card(c, state, x, y, cardW, cardH);
-        } else {
-            int entryIndex = i - 1;
-            int selected = (state->selectedIndex == entryIndex);
-            if (entryIndex >= 0 && entryIndex < entryCount) {
-                draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
-            }
+    draw_tall_firestaff_rail(c, state, railX, railY, railW, railH);
+
+    for (int i = 0; i < 6; ++i) {
+        int entryIndex = i < 5 ? i : settingsIndex;
+        int col = i % cols;
+        int row = i / cols;
+        int x = gridLeft + col * (cardW + gap);
+        int y = gridTop + row * (cardH + gap);
+        int selected = (state->selectedIndex == entryIndex);
+        if (entryIndex >= 0 && entryIndex < entryCount) {
+            draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
         }
     }
 
     /* Section title */
     ModernTextStyle h = text_style_make(3, COLOR_ACCENT(), 2);
-    draw_text(c, 48, 142, _("SELECT A DESTINATION"), &h);
+    draw_text(c, gridLeft, 112, _("SELECT A DESTINATION"), &h);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, gridLeft, 134, "FIVE GAMES AND FIRESTAFF SETTINGS", &sub);
 
     /* Faded creature silhouette in the upper-right background so the
      * screen feels like a Dungeon Master front door without stealing
@@ -1336,20 +1430,21 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
 
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 130, "GAME OPTIONS", &h);
+    draw_text(c, 160, 130, entry->title, &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 160, 210, entry->title, &sub);
+    draw_text(c, 160, 188, game_description(entry->gameId), &sub);
+    draw_text(c, 160, 222, "QUICK CHOICE: ORIGINAL = V1    CUSTOM = V2.0 / V2.1 / V2.2", &sub);
 
     int panelX = 96;
-    int panelY = 260;
+    int panelY = 270;
     int panelW = c->w - 2 * panelX;
     /* Taller panel to accommodate presentation row + section headers */
-    int panelH = isV1 ? 460 : 560;
+    int panelH = isV1 ? 560 : 680;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
     static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
-    static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
+    static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10", "32:9"};
     static const char* res[] = {"320X200", "640X400", "800X600", "1024X768", "1280X960"};
     static const char* speeds[] = {"SLOWER", "NORMAL", "FASTER"};
 
@@ -1374,7 +1469,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     if (speedIdx > 2) speedIdx = 2;
     int aspIdx = opts->aspectRatio;
     if (aspIdx < 0) aspIdx = 0;
-    if (aspIdx > 3) aspIdx = 3;
+    if (aspIdx > 4) aspIdx = 4;
     int resIdx = opts->resolution;
     if (resIdx < 0) resIdx = 0;
     if (resIdx > 4) resIdx = 4;
@@ -1386,7 +1481,24 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     int sectionGap = 30; /* space for section header */
     int sel = state->gameOptSelectedRow;
 
-    /* --- PRESENTATION MODE row (always first) --- */
+    /* --- PRESENTATION MODE row (quick choice: Original vs Custom) --- */
+    {
+        int originalActive = (mode == M12_PRESENTATION_V1_ORIGINAL);
+        int pillW = (rowW - 18) / 2;
+        fill_rounded_rect(c, rowX, curY, pillW, 50, 10,
+                          originalActive ? rgb(72, 52, 24) : rgb(20, 22, 48));
+        stroke_rounded_rect(c, rowX, curY, pillW, 50, 10,
+                            originalActive ? COLOR_ACCENT_HI() : COLOR_PANEL_EDGE());
+        fill_rounded_rect(c, rowX + pillW + 18, curY, pillW, 50, 10,
+                          !originalActive ? rgb(30, 54, 88) : rgb(20, 22, 48));
+        stroke_rounded_rect(c, rowX + pillW + 18, curY, pillW, 50, 10,
+                            !originalActive ? COLOR_V2() : COLOR_PANEL_EDGE());
+        ModernTextStyle qt = text_style_make(2, COLOR_TEXT(), 1);
+        draw_text_centered(c, rowX + pillW / 2, curY + 14, "ORIGINAL  V1", &qt);
+        draw_text_centered(c, rowX + pillW + 18 + pillW / 2, curY + 14, "CUSTOM  V2+", &qt);
+        curY += step;
+    }
+
     draw_presentation_row(c, rowX, curY, rowW, mode,
                           sel == M12_GAME_OPT_ROW_PRESENTATION);
     curY += step;
@@ -1638,7 +1750,7 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
         draw_sparse_view_modern(&c, state);
         return;
     }
-    draw_background(&c);
+    draw_background(&c, state);
     draw_title_centered(&c);
     draw_mode_badge(&c, state);
 

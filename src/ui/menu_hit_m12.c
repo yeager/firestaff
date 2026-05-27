@@ -14,19 +14,23 @@
 #define M12_HIT_CANVAS_H 1080
 
 /* --- Main view layout (mirrors draw_main_view) --- */
-#define M12_HIT_MAIN_GRID_TOP       170
+#define M12_HIT_MAIN_RAIL_X         42
+#define M12_HIT_MAIN_RAIL_W         390
+#define M12_HIT_MAIN_GRID_LEFT      (M12_HIT_MAIN_RAIL_X + M12_HIT_MAIN_RAIL_W + 44)
+#define M12_HIT_MAIN_GRID_TOP       152
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
-#define M12_HIT_MAIN_SIDE_MARGIN    48
 #define M12_HIT_MAIN_CARD_GAP       22
-#define M12_HIT_MAIN_CARD_MAX_COUNT 7
+#define M12_HIT_MAIN_CARD_MAX_COUNT 6
+#define M12_HIT_MAIN_CARD_COLS      3
 
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
 #define M12_HIT_PANEL_Y        260
+#define M12_HIT_GAMEOPT_PANEL_Y 270
 #define M12_HIT_PANEL_W        (M12_HIT_CANVAS_W - 2 * M12_HIT_PANEL_X)
 #define M12_HIT_PANEL_H        400
-#define M12_HIT_GAMEOPT_PANEL_H_V1  460
-#define M12_HIT_GAMEOPT_PANEL_H_V2  560
+#define M12_HIT_GAMEOPT_PANEL_H_V1  560
+#define M12_HIT_GAMEOPT_PANEL_H_V2  680
 #define M12_HIT_ROW_INDENT     36
 #define M12_HIT_ROW_HEIGHT     50
 
@@ -37,7 +41,7 @@
 /* Game options rows (8 rows: version, patch, language, cheats, speed,
  * aspect, resolution, launch). Renderer draws rows 0..6 at step 52,
  * and the launch row as a dedicated button at the panel bottom. */
-#define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_PANEL_Y + 28)
+#define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
 /* Settings view row count. Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
@@ -85,16 +89,22 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
     int gridTop = M12_HIT_MAIN_GRID_TOP;
     int gridBottom = M12_HIT_MAIN_GRID_BOTTOM;
     int gridH = gridBottom - gridTop;
-    int side = M12_HIT_MAIN_SIDE_MARGIN;
     int gap = M12_HIT_MAIN_CARD_GAP;
+    int col;
+    int row;
     int cardW;
+    int cardH;
     if (count <= 0 || count > M12_HIT_MAIN_CARD_MAX_COUNT) return 0;
-    cardW = (M12_HIT_CANVAS_W - 2 * side - gap * (count - 1)) / count;
+    cardW = (M12_HIT_CANVAS_W - M12_HIT_MAIN_GRID_LEFT - 48 - gap * (M12_HIT_MAIN_CARD_COLS - 1)) /
+            M12_HIT_MAIN_CARD_COLS;
+    cardH = (gridH - gap) / 2;
     if (index < 0 || index >= count) return 0;
-    *rx = side + index * (cardW + gap);
-    *ry = gridTop;
+    col = index % M12_HIT_MAIN_CARD_COLS;
+    row = index / M12_HIT_MAIN_CARD_COLS;
+    *rx = M12_HIT_MAIN_GRID_LEFT + col * (cardW + gap);
+    *ry = gridTop + row * (cardH + gap);
     *rw = cardW;
-    *rh = gridH;
+    *rh = cardH;
     return 1;
 }
 
@@ -108,10 +118,13 @@ static int m12_hit_settings_row_rect(int row, int* rx, int* ry, int* rw, int* rh
 }
 
 static int m12_hit_gameopt_row_rect(int row, int* rx, int* ry, int* rw, int* rh) {
+    static const int yOffsets[M12_GAME_OPT_ROW_COUNT] = {
+        76, 158, 210, 262, 314, 366, 448, 500
+    };
     /* Rows 0..M12_GAME_OPT_ROW_COUNT-1 are drawn in the panel. */
     if (row < 0 || row >= M12_GAME_OPT_ROW_COUNT) return 0;
     *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_GAMEOPT_ROW_Y0 + row * M12_HIT_GAMEOPT_ROW_STEP;
+    *ry = M12_HIT_GAMEOPT_PANEL_Y + yOffsets[row];
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
     *rh = M12_HIT_ROW_HEIGHT;
     return 1;
@@ -127,7 +140,7 @@ static int m12_hit_launch_rect(const M12_StartupMenuState* state,
     *rw = M12_HIT_LAUNCH_W;
     *rh = M12_HIT_LAUNCH_H;
     *rx = M12_HIT_PANEL_X + (M12_HIT_PANEL_W - *rw) / 2;
-    *ry = M12_HIT_PANEL_Y + panelH - *rh - M12_HIT_LAUNCH_BOTTOM_PAD;
+    *ry = M12_HIT_GAMEOPT_PANEL_Y + panelH - *rh - M12_HIT_LAUNCH_BOTTOM_PAD;
     return 1;
 }
 
@@ -160,18 +173,14 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
     switch (state->view) {
         case M12_MENU_VIEW_MAIN: {
             int entryCount = M12_StartupMenu_GetEntryCount();
-            int cardCount = entryCount + 1;
-            if (cardCount > M12_HIT_MAIN_CARD_MAX_COUNT) {
-                cardCount = M12_HIT_MAIN_CARD_MAX_COUNT;
-                entryCount = cardCount - 1;
-            }
-            /* Brand card is decorative; every following visible card
-             * maps directly to its top-level entry index. */
-            for (i = 1; i < cardCount; ++i) {
+            int cardCount = M12_HIT_MAIN_CARD_MAX_COUNT;
+            int settingsIndex = entryCount - 1;
+            if (settingsIndex < 0) settingsIndex = 0;
+            for (i = 0; i < cardCount; ++i) {
                 if (m12_hit_main_card_rect(i, cardCount, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     hit.kind = M12_HIT_MAIN_CARD;
-                    hit.index = i - 1;
+                    hit.index = (i < 5) ? i : settingsIndex;
                     if (hit.index >= entryCount) hit.kind = M12_HIT_NONE;
                     return hit;
                 }

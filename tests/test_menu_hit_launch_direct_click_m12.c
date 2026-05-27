@@ -32,12 +32,13 @@ int main(void) {
     M12_StartupMenuState state;
     M12_MouseHit hit;
     int changed;
-    const int visualCardCount = M12_StartupMenu_GetEntryCount() + 1;
-    const int cardW = (1920 - 2 * 48 - 22 * (visualCardCount - 1)) / visualCardCount;
-    const int dm1CardCenterX = 48 + 1 * (cardW + 22) + cardW / 2;
-    const int cardCenterY = (170 + (1080 - 130)) / 2;
+    const int gridLeft = 42 + 390 + 44;
+    const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
+    const int cardH = ((1080 - 130) - 152 - 22) / 2;
+    const int dm1CardCenterX = gridLeft + cardW / 2;
+    const int cardCenterY = 152 + cardH / 2;
     const int launchCenterX = 960;
-    const int launchCenterY = 669;
+    const int launchCenterY = 270 + 560 - 54 - 24 + 27;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
@@ -60,22 +61,14 @@ int main(void) {
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     {
-        const int museumCenterX = 48 + 5 * (cardW + 22) + cardW / 2;
-        changed = M12_ModernMenu_HandlePointer(&state, museumCenterX, cardCenterY, 0, NULL);
-        if (!expect(changed == 1 && state.selectedIndex == 4, "Museum hover should navigate main selection")) return 1;
-        changed = M12_ModernMenu_HandlePointer(&state, museumCenterX, cardCenterY, 1, NULL);
-        if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM, "Museum click should open museum view")) return 1;
+        const int settingsCenterX = gridLeft + 2 * (cardW + 22) + cardW / 2;
+        const int settingsCenterY = 152 + cardH + 22 + cardH / 2;
+        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 0, NULL);
+        if (!expect(changed == 1 && state.selectedIndex == 6, "Firestaff hover should navigate to global settings card")) return 1;
+        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 1, NULL);
+        if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Firestaff click should open settings view")) return 1;
     }
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
-    {
-        const int settingsCenterX = 48 + 6 * (cardW + 22) + cardW / 2;
-        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, cardCenterY, 0, NULL);
-        if (!expect(changed == 1 && state.selectedIndex == 5, "Settings hover should navigate main selection")) return 1;
-        changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, cardCenterY, 1, NULL);
-        if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Settings click should open settings view")) return 1;
-    }
-
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Museum, Settings and launch DM1");
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1");
     return 0;
 }

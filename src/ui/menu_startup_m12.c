@@ -227,7 +227,7 @@ static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 
-static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10"};
+static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10", "32:9"};
 static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE")};
