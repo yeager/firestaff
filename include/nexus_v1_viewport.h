@@ -26,5 +26,14 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine);
 /* Convert indexed framebuffer to RGBA for SDL presentation */
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);
 
+/* Full render frame — orchestrates all rendering layers */
+#include "nexus_v1_rendering.h"
+void nexus_v1_render_frame(Nexus_Framebuffer *fb,
+    Nexus_Camera *cam,
+    Nexus_V1_Engine *engine,
+    const Nexus_Projectile *projectiles, int projectile_count,
+    const Nexus_V1_CreatureManager *creatures,
+    int frame);
+
 #endif
 

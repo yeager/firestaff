@@ -8,6 +8,7 @@
 #include "nexus_v1_dmdf_model.h"
 #include "nexus_v1_saturn_font.h"
 #include "nexus_v1_text.h"
+#include "nexus_v1_creatures.h"
 #include <stdint.h>
 
 /* Maximum creatures with 3D models */
@@ -39,6 +40,16 @@ typedef struct {
     /* Font */
     Nexus_V1_Font font;
     int font_loaded;
+
+    /* Creatures */
+    Nexus_V1_CreatureManager creatures;
+
+    /* Title screen */
+    struct Nexus_TitleScreen_ {
+        uint8_t *pixels;
+        int width, height;
+        int loaded;
+    } title_screen;
 
     /* Audio */
     int current_cd_track;

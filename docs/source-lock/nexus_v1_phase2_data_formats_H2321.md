@@ -3,7 +3,7 @@
 **Cron task:** `Nexus_V1_Phase2_DataFormats_0424`
 **Status:** ✅ COMPLETE — all known formats documented
 **Author:** Firestaff agent (cron)
-**Last revised:** 2026-05-27T03:45 UTC
+**Last revised:** 2026-05-27T06:02 UTC — source audit of new Phase 4 rendering files
 
 ---
 
@@ -167,12 +167,20 @@ Parsing at offset `grid_offset` reads uint16 per cell (`rb16() & 0x1F`).
 Source: `nexus_v1_dungeon.c:nexus_v1_level_load()`, doc comment citing
 `DUNGEON.C F0001` from ReDMCSB.
 
-**Section 2 — Post-grid geometry blob (all remaining bytes):**
+**Section 2 — Post-grid geometry blob (all remaining bytes after grid):**
 - Pre-computed wall polygon data per grid position
 - Floor/ceiling mesh vertices per open square
 - Per-square mesh identifiers (wall type, door state, stairs variant)
-- **NOT YET PARSED** — `nexus_v1_dungeon.c` sets `has_3d_geometry = 1` and
-  records `geometry_offset` / `geometry_size` as a gap marker
+- **VDP1 BITMAP texture pages** (4-bit per pixel, 256×256 pages, 32,768 bytes each)
+  embedded in the geometry blob. Hypothesized layout (from `nexus_v1_wall_render.c`):
+  - Offset 0: `uint32_t texture_page_count` (big-endian, 0 if not confirmed)
+  - Offset 4: `uint32[page_count]` byte offsets for each page
+  - Offset N: packed VDP1 BITMAP data per page (32,768 bytes each)
+- **Status:** HYPOTHESIS — confirmed from `nexus_wall_load_textures_from_dgn()` in
+  `nexus_v1_wall_render.c`. Requires DGN geometry reverse-engineering to confirm.
+  See `docs/nexus_issues.md` M2.
+
+Source: `src/nexus/nexus_v1_wall_render.c:nexus_wall_load_textures_from_dgn()`, `nexus_v1_dungeon.c`
 
 ### 3.3 Square Type Encoding
 
@@ -224,7 +232,8 @@ int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 | Sub-format | Status | Evidence |
 |-----------|--------|---------|
 | Grid section | ✅ Parsed (Layout A & B) | `nexus_v1_dungeon.c` |
-| 3D geometry blob | ❌ NOT PARSED | Gap marker set; `has_3d_geometry` signals future work |
+| 3D geometry blob | ⚠️ HYPOTHESIS (texture pages) | `nexus_v1_wall_render.c` |
+| DGN VDP1 texture format | ❌ NOT CONFIRMED | Hypothesis only; needs RE |
 | Thing list (items) | ❌ NOT PARSED | No thing data extraction in current source |
 | Creature placement | ❌ NOT PARSED | No per-level creature spawn records |
 
@@ -336,14 +345,42 @@ typedef struct {
 
 Source: `include/nexus_v1_inventory.h`
 
-### 5.4 Item Format Status
+### 5.4 ITEM.IBS — Item Sprite Sheet
+
+- File: `ITEM.IBS` (98 KB) — Saturn VDP1 BITMAP sprite sheet for all in-game items
+- Format: VDP1 BITMAP (4-bit per pixel, 256×256 page), same as DMDF textures
+- Sprite IDs: 0–255 per item type
+- **Category ranges** (from `include/nexus_v1_rendering.h:Nexus_ItemCategory`):
+
+| Sprite Range | Category | Color Theme |
+|-------------|----------|-------------|
+| 0–31 | Weapons | Steel/silver |
+| 32–63 | Armor | Leather/plate |
+| 64–95 | Potions | Red/blue/green |
+| 96–127 | Scrolls | Parchment brown |
+| 128–159 | Gold/gems | Yellow/red/blue |
+| 160–175 | Keys | Gold |
+| 176–191 | Torches | Orange/yellow |
+| 192–255 | Other/misc | Various |
+
+- **Item billboard fallback** (`src/nexus/nexus_v1_object.c:nexus_render_item()`):
+  When `ITEM.IBS` is not loaded, procedural fallback renders colored shapes per category:
+  Weapon → silver rectangle | Armor → brown rectangle | Potion → colored circle
+  (red=health, blue=mana, green=antidote) | Scroll → tan rectangle | Gold → yellow square
+  (size scales with quantity)
+- **Status:** STUB — raw VDP1 BITMAP format, not yet parsed. `nexus_item_get_category()`
+  stub exists as future hook.
+
+Source: `src/nexus/nexus_v1_object.c`, `include/nexus_v1_rendering.h`
+
+### 5.5 Object / Item Format Status
 
 | Sub-format | Status | Evidence |
 |-----------|--------|---------|
 | Global item catalog | ✅ DM1-style (enumerated) | `nexus_v1_inventory.c` |
 | Champion inventory | ✅ In-memory (flat 30-slot) | `nexus_v1_champions.h` |
 | Floor items | ✅ In-memory struct defined | `nexus_v1_inventory.h` |
-| Item-on-discord format | ❌ NOT REVERSED | No .BIN item file parsed |
+| ITEM.IBS sprite sheet | ❌ STUB (VDP1 BITMAP, 98 KB) | `nexus_v1_object.c` fallback + `nexus_item_get_category()` stub |
 | Object placement (DGN) | ❌ NOT PARSED | No per-square thing loading |
 
 ---
@@ -805,9 +842,63 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 | 3D rasterization | ✅ Implemented | `nexus_v1_rasterizer.c` |
 | Math3D transforms | ✅ Implemented | `nexus_v1_math3d.c` |
 | TITLE.BIN/CG surfaces | ⚠️ Raw read only | No VDP2 parser |
-| ITEM.IBS icons | ❌ NOT PARSED | Format unknown |
-| VDP1 texture decompression | ❌ NOT IMPLEMENTED | No VDP1 decompressor |
+| ITEM.IBS icons | ❌ STUB (VDP1 BITMAP, 98 KB) | `nexus_v1_object.c` fallback + category stub |
+| VDP1 texture decompression | ❌ NOT IMPLEMENTED | No VDP1 decompressor (see also §10.4 DGN geometry) |
 | Minimap rendering | ❌ NOT IMPLEMENTED | SMAP\*.BIN not parsed |
+| Projectile types | ✅ In-memory struct defined | `include/nexus_v1_rendering.h:Nexus_ProjectileType` |
+
+---
+
+## 10.6 Projectile Format
+
+### 10.5.1 In-Memory Projectile Structure
+
+`include/nexus_v1_rendering.h`:
+
+```c
+typedef enum {
+    NEXUS_PROJ_FIREBALL,  /* firebrick — fast, tracked */
+    NEXUS_PROJ_ICEBOLT,   /* royal blue — fast */
+    NEXUS_PROJ_LIGHTNING, /* white — instant */
+    NEXUS_PROJ_ARROW,     /* medium gray — medium speed */
+    NEXUS_PROJ_POISON,    /* brown/green — slow */
+    NEXUS_PROJ_DEATHRAY,  /* purple — instant */
+    NEXUS_PROJ_ACID,      /* brown/green — medium */
+    NEXUS_PROJ_COUNT
+} Nexus_ProjectileType;
+
+typedef struct {
+    Nexus_ProjectileType type;  /* projectile classification */
+    Vec3 pos;                   /* world position */
+    Vec3 dir;                   /* normalized travel direction */
+    float speed;               /* units per second */
+    int damage;
+    int owner_id;               /* champion or creature who fired */
+    int alive;
+} Nexus_Projectile;
+```
+
+Source: `include/nexus_v1_rendering.h:96–103`
+
+### 10.5.2 Projectile Rendering
+
+`src/nexus/nexus_v1_projectile.c` — procedural fallback rendering:
+
+| Type | Sprite ID | Color (palette index) | Speed |
+|------|-----------|---------------------|-------|
+| FIREBALL | — | 12 (firebrick) | fast |
+| ICEBOLT | — | 13 (royal blue) | fast |
+| LIGHTNING | — | 15 (white) | instant |
+| ARROW | — | 6 (medium gray) | medium |
+| POISON | — | 10 (brown) | slow |
+| DEATHRAY | — | 4 (purple) | instant |
+| ACID | — | 10 (brown/green) | medium |
+
+Fallback renders a circle with a directional tail indicating travel direction.
+Projectiles are billboard sprites (2D overlay on 3D scene).
+
+**Status:** ✅ In-memory struct defined; rendering uses procedural fallback.
+  Disc format (sprite sheet) not yet parsed.
 
 ---
 
@@ -899,7 +990,7 @@ Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
 | Format / File | Variant(s) | Endianness | Size/Record | Parser Status |
 |--------------|------------|-----------|-------------|--------------|
 | LEV\*.DGN grid | All 16 levels | BE uint16 LE storage | 2048 bytes (32×32×2) | ✅ Parsed (`nexus_v1_dungeon.c`) |
-| LEV\*.DGN 3D geometry | All 16 levels | BE (mixed polygons) | variable (147–322 KB minus grid) | ❌ NOT PARSED |
+| LEV\*.DGN 3D geometry | All 16 levels | BE (VDP1 BITMAP textures hypothesis) | variable (147–322 KB minus grid) | ⚠️ HYPOTHESIS only (`nexus_wall_load_textures_from_dgn()`) |
 | \*.MNS DMDF | All creature models | BE uint32/16 | 46–89 KB each | ✅ Parsed (header+verts+faces) |
 | SNDLEV\*.SAL | Per level | Unknown (compressed?) | 290–460 KB | ❌ NOT PARSED |
 | SNDLEV\*.MAP | Per level | Unknown | 66–90 B | ❌ NOT PARSED |
@@ -909,7 +1000,7 @@ Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
 | SMAP\*.BIN | Per level | Unknown bitmap | 17–30 KB | ❌ NOT PARSED |
 | FONT256.S2D | Single | BE with SCR header | 24 KB | ✅ Parsed (Saturn SCR loader) |
 | FACE.BIN | Single | Unknown bitmap | 44 KB | ❌ NOT PARSED |
-| ITEM.IBS | Single | Unknown bitmap | 98 KB | ❌ NOT PARSED |
+| ITEM.IBS | Single | VDP1 BITMAP (hypothesis) | 98 KB | ❌ STUB (VDP1 BITMAP) |
 | TITLE.BIN | Single | Unknown surface | 110 KB | ⚠️ Raw read only |
 | TITLE.CG | Single | Unknown (color graphics) | 164 KB | ⚠️ Raw read only |
 | STABG.BIN | Single | Unknown surface | 52 KB | ⚠️ Raw read only |
