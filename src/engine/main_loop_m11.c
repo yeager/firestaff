@@ -214,6 +214,8 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     static const char* suffixes[] = {
         "TITLE",
         "TITLE.DAT",
+        "dm1/TITLE",
+        "dm1/TITLE.DAT",
         "DungeonMasterPC34/TITLE",
         "DungeonMasterPC34/TITLE.DAT",
         "DungeonMasterPC34Multilingual/TITLE",
@@ -224,6 +226,8 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
         "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
     };
     static const char* homeSuffixes[] = {
+        ".firestaff/data/TITLE",
+        ".firestaff/data/dm1/TITLE",
         ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
         ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
         ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
@@ -938,6 +942,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
             /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order. */
+            M11_Render_RaiseWindow();
             m11_play_ftl_swoosh_if_available(dataDir, 0);
             m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
