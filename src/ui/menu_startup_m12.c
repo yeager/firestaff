@@ -500,6 +500,45 @@ static const M12_TextStyle g_textSmallShadow = {1, 1, M12_COLOR_WHITE, 1, 1, M12
 static const M12_TextStyle g_textMediumShadow = {2, 1, M12_COLOR_WHITE, 1, 1, M12_COLOR_BLACK};
 static const M12_TextStyle g_textTitleShadow = {4, 1, M12_COLOR_YELLOW, 2, 2, M12_COLOR_MAROON};
 
+static int g_m12_active_font_scale = 1;
+static int g_m12_active_high_contrast = 0;
+
+static int m12_effective_text_scale(int baseScale) {
+    int scale = baseScale;
+    if (scale <= 0) {
+        return 1;
+    }
+    if (g_m12_active_font_scale > 1 && scale < 4) {
+        scale += g_m12_active_font_scale - 1;
+        if (scale > 4) {
+            scale = 4;
+        }
+    }
+    return scale;
+}
+
+static unsigned char m12_presented_color(unsigned char color) {
+    if (!g_m12_active_high_contrast) {
+        return color;
+    }
+    switch (color) {
+        case M12_COLOR_BLACK:
+            return M12_COLOR_BLACK;
+        case M12_COLOR_NAVY:
+        case M12_COLOR_MAROON:
+        case M12_COLOR_BROWN:
+        case M12_COLOR_DARK_GRAY:
+            return M12_COLOR_BLACK;
+        case M12_COLOR_YELLOW:
+            return M12_COLOR_YELLOW;
+        case M12_COLOR_LIGHT_CYAN:
+        case M12_COLOR_CYAN:
+            return M12_COLOR_LIGHT_CYAN;
+        default:
+            return M12_COLOR_WHITE;
+    }
+}
+
 typedef enum {
     M12_TEXT_EYEBROW = 0,
     M12_TEXT_SELECT_DESTINATION,
@@ -2311,7 +2350,7 @@ static void m12_put_pixel(unsigned char* framebuffer,
     if (x < 0 || y < 0 || x >= framebufferWidth || y >= framebufferHeight) {
         return;
     }
-    framebuffer[(y * framebufferWidth) + x] = color;
+    framebuffer[(y * framebufferWidth) + x] = m12_presented_color(color);
 }
 
 static void m12_fill_rect(unsigned char* framebuffer,
@@ -2502,9 +2541,11 @@ static void m12_draw_text(unsigned char* framebuffer,
                           const char* text,
                           const M12_TextStyle* style) {
     const M12_TextStyle* resolved = style ? style : &g_textSmall;
+    int scale;
     if (!text) {
         return;
     }
+    scale = m12_effective_text_scale(resolved->scale);
     if (resolved->shadowDx != 0 || resolved->shadowDy != 0) {
         m12_draw_text_raw(framebuffer,
                           framebufferWidth,
@@ -2512,7 +2553,7 @@ static void m12_draw_text(unsigned char* framebuffer,
                           x + resolved->shadowDx,
                           y + resolved->shadowDy,
                           text,
-                          resolved->scale,
+                          scale,
                           resolved->tracking,
                           resolved->shadowColor);
     }
@@ -2522,7 +2563,7 @@ static void m12_draw_text(unsigned char* framebuffer,
                       x,
                       y,
                       text,
-                      resolved->scale,
+                      scale,
                       resolved->tracking,
                       resolved->color);
 }
@@ -2539,7 +2580,9 @@ static void m12_draw_centered_text(unsigned char* framebuffer,
     if (!text) {
         return;
     }
-    width = m12_measure_text(text, resolved->scale, resolved->tracking);
+    width = m12_measure_text(text,
+                             m12_effective_text_scale(resolved->scale),
+                             resolved->tracking);
     x = (framebufferWidth - width) / 2;
     m12_draw_text(framebuffer,
                   framebufferWidth,
@@ -5769,6 +5812,13 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     if (!state || !framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    g_m12_active_font_scale = state->settings.fontScale;
+    if (g_m12_active_font_scale < 1) {
+        g_m12_active_font_scale = 1;
+    } else if (g_m12_active_font_scale > 3) {
+        g_m12_active_font_scale = 3;
+    }
+    g_m12_active_high_contrast = state->settings.highContrast ? 1 : 0;
     memset(framebuffer,
            M12_COLOR_BLACK,
            (size_t)framebufferWidth * (size_t)framebufferHeight);

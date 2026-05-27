@@ -620,6 +620,48 @@ int main(void) {
                  "draw renders structured non-empty menu pixels for the visual pass");
 
     {
+        unsigned char normal[320 * 200];
+        unsigned char largeText[320 * 200];
+        unsigned char highContrast[320 * 200];
+        unsigned long normalChecksum = 0UL;
+        unsigned long largeChecksum = 0UL;
+        unsigned long contrastChecksum = 0UL;
+        size_t disallowedContrastPixels = 0U;
+        M12_StartupMenuState visualState;
+
+        M12_StartupMenu_InitWithDataDir(&visualState, dataDir, NULL);
+        visualState.view = M12_MENU_VIEW_SETTINGS;
+        visualState.settingsSelectedIndex = 21; /* Font Scale row */
+        visualState.settings.fontScale = 1;
+        visualState.settings.highContrast = 0;
+        M12_StartupMenu_Draw(&visualState, normal, 320, 200);
+
+        visualState.settings.fontScale = 3;
+        M12_StartupMenu_Draw(&visualState, largeText, 320, 200);
+
+        visualState.settings.fontScale = 1;
+        visualState.settings.highContrast = 1;
+        M12_StartupMenu_Draw(&visualState, highContrast, 320, 200);
+
+        for (i = 0; i < sizeof(normal); ++i) {
+            unsigned char px = highContrast[i];
+            normalChecksum = (normalChecksum * 131UL) + normal[i];
+            largeChecksum = (largeChecksum * 131UL) + largeText[i];
+            contrastChecksum = (contrastChecksum * 131UL) + highContrast[i];
+            if (px != 0U && px != 11U && px != 14U && px != 15U) {
+                ++disallowedContrastPixels;
+            }
+        }
+
+        probe_record(&tally,
+                     "INV_M12_12C",
+                     normalChecksum != largeChecksum &&
+                         normalChecksum != contrastChecksum &&
+                         disallowedContrastPixels == 0U,
+                     "font scale and high-contrast accessibility settings measurably alter launcher rendering with a restricted contrast palette");
+    }
+
+    {
         unsigned char localized[320 * 200];
         unsigned char english[320 * 200];
         unsigned long checksumA = 0UL;
