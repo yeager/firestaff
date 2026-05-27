@@ -68,7 +68,7 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 
 ### Asset Discovery
 
-Firestaff finds game files by **MD5 hash**, not filename or path. Place original `GRAPHICS.DAT` and `DUNGEON.DAT` anywhere under `~/.firestaff/data/` and Firestaff will find them.
+Firestaff finds game files by **MD5 hash**, not filename or path. Place original DM1 `GRAPHICS.DAT` and `DUNGEON.DAT` under `~/.firestaff/data/dm1/`; other games use their own subdirectories under `~/.firestaff/data/`.
 
 Default data directory: `~/.firestaff/data/`
 Subdirectories: `dm1/`, `csb/`, `dm2/`, `nexus/`, `dm1-multilingual/`

@@ -83,7 +83,7 @@ static void fail(const char* name, const char* detail) {
 static const char* resolve_graphics_path(void) {
     const char* env = getenv("GRAPHICS_DAT_PATH");
     if (env && env[0]) return env;
-    return "<local-home>/.firestaff/data/GRAPHICS.DAT";
+    return "<local-home>/.firestaff/data/dm1/GRAPHICS.DAT";
 }
 
 int main(void) {

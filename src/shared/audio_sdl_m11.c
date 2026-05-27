@@ -432,7 +432,9 @@ static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes
     if (m11_file_exists("GRAPHICS.DAT")) return "GRAPHICS.DAT";
     home = getenv("HOME");
     if (home && homeBuf && homeBufBytes > 0) {
-        int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/GRAPHICS.DAT", home);
+        int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/GRAPHICS.DAT", home);
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
     }
     return NULL;
