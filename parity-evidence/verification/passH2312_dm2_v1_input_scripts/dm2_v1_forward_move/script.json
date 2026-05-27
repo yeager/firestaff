@@ -1,0 +1,62 @@
+{
+  "script_id": "dm2_v1_forward_move",
+  "description": "Move forward one square from dungeon entrance",
+  "target_state": "dm2_dungeon_forward",
+  "source_evidence": {
+    "forward_command": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3000-T3010",
+      "needles": [
+        "CMD_MOVE_FORWARD",
+        "move_north",
+        "collision_check"
+      ],
+      "claim": "SKULL.ASM T3000 dispatches forward movement command and checks collision."
+    },
+    "collision_check": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3020-T3030",
+      "needles": [
+        "SQUARE_WALL",
+        "blocked",
+        "movement_rejected"
+      ],
+      "claim": "Forward movement is rejected if the target square is a wall."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes dm2_v1_title_to_first_dungeon has been replayed to reach the dm2_first_dungeon_entrance state. This script adds a forward move."
+  ]
+}

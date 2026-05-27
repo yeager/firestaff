@@ -1,0 +1,10 @@
+Script: dm2_v1_cast_spell
+Description: Issue cast spell command (open spell selection)
+Target state: dm2_dungeon_cast
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0x2E
+  t=  500ms  WAIT
+  t=  600ms  WAIT
+
+Notes: ("Assumes dm2_v1_title_to_first_dungeon prerequisite state. Key 'C' opens the spell selection interface. DM2 spellcasting uses mana; confirmation selects the spell target.",)

@@ -1,0 +1,10 @@
+Script: dm2_v1_turn_right
+Description: Turn party right (90 degrees clockwise)
+Target state: dm2_dungeon_turn_right
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0xCD
+  t=  300ms  WAIT
+  t=  400ms  WAIT
+
+Notes: Assumes dm2_v1_title_to_first_dungeon prerequisite state.

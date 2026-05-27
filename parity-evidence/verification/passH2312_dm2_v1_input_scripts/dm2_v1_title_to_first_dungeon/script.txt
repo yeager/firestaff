@@ -1,0 +1,38 @@
+Script: dm2_v1_title_to_first_dungeon
+Description: DM2 title screen → New Adventure → name 4 champions → first dungeon
+Target state: dm2_first_dungeon_entrance
+Events (31 total):
+
+  t=    0ms  WAIT
+  t=  500ms  KEY_PRESS  code=0x1C
+  t= 1200ms  WAIT
+  t= 1300ms  KEY_DOWN  code=0xD0
+  t= 1500ms  KEY_PRESS  code=0x1C
+  t= 2100ms  KEY_PRESS  code=0x13
+  t= 2150ms  KEY_PRESS  code=0x18
+  t= 2200ms  KEY_PRESS  code=0x30
+  t= 2250ms  KEY_PRESS  code=0x17
+  t= 2300ms  KEY_PRESS  code=0x31
+  t= 2600ms  KEY_PRESS  code=0x1C
+  t= 3100ms  KEY_PRESS  code=0x1E
+  t= 3150ms  KEY_PRESS  code=0x26
+  t= 3200ms  KEY_PRESS  code=0x12
+  t= 3250ms  KEY_PRESS  code=0x2D
+  t= 3600ms  KEY_PRESS  code=0x1C
+  t= 4100ms  KEY_PRESS  code=0x14
+  t= 4150ms  KEY_PRESS  code=0x1E
+  t= 4200ms  KEY_PRESS  code=0x31
+  t= 4250ms  KEY_PRESS  code=0x17
+  t= 4300ms  KEY_PRESS  code=0x1E
+  t= 4600ms  KEY_PRESS  code=0x1C
+  t= 5100ms  KEY_PRESS  code=0x30
+  t= 5150ms  KEY_PRESS  code=0x13
+  t= 5200ms  KEY_PRESS  code=0x3C
+  t= 5250ms  KEY_PRESS  code=0x31
+  t= 5300ms  KEY_PRESS  code=0x18
+  t= 5600ms  KEY_PRESS  code=0x1C
+  t= 6200ms  WAIT
+  t= 6500ms  KEY_PRESS  code=0x1C
+  t= 7500ms  WAIT
+
+Notes: This script targets the first reachable DM2 V1 game state: four named champions standing at the entrance of the first dungeon level (level 0). DM2 does not have a prison sequence like CSB — dungeon entry is immediate after naming the party. The state hash should match across runs on the same platform. WAIT events allow variable transition latency.

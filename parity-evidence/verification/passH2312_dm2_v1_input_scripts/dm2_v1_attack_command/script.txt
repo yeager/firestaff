@@ -1,0 +1,10 @@
+Script: dm2_v1_attack_command
+Description: Issue attack command (face forward and strike)
+Target state: dm2_dungeon_attack
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0x1E
+  t=  500ms  WAIT
+  t=  600ms  WAIT
+
+Notes: ("Assumes dm2_v1_title_to_first_dungeon prerequisite state. Attack is the primary combat command in DM2 V1. Key 'A' triggers the attack command (0x41 + ALT flag or similar routing).",)

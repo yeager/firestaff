@@ -1,0 +1,306 @@
+{
+  "schema": "firestaff.dm2_v1.save_load_round_trip.v1",
+  "test_id": "passH2312_dm2_v1_save_load_round_trip",
+  "source_anchors": [
+    {
+      "id": "skull_save_load_entry",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T4000-T4010",
+      "needles": [
+        "SAVE_GAME",
+        "LOAD_GAME",
+        "slot_number",
+        "SKSave"
+      ],
+      "claim": "SKULL.ASM T4000-T4010 are the save/load entry points for DM2 V1."
+    },
+    {
+      "id": "dm2_save_header_format",
+      "source": "dm2_v1_save_load.c",
+      "path": "src/dm2/dm2_v1_save_load.c",
+      "lines": "165-200",
+      "needles": [
+        "sksave_header_asc",
+        "version_flag",
+        "DM2_SLOT_MAGIC_1",
+        "DM2_SLOT_MAGIC_2"
+      ],
+      "claim": "dm2_v1_save_load.c defines the 42-byte slot header: version flag, name (33 chars), slot+0x30, magic 0xBEEF/0xDEAD."
+    },
+    {
+      "id": "dm2_suppress_codec",
+      "source": "dm2_v1_save_load.c",
+      "path": "src/dm2/dm2_v1_save_load.c",
+      "lines": "25-90",
+      "needles": [
+        "dm2_suppress_encode",
+        "dm2_suppress_decode",
+        "mask_nibble",
+        "bit_plane_RLE"
+      ],
+      "claim": "SUPPRESS is a bit-plane RLE codec: mask low nibble 0\u2192skip, 1..7\u2192store that many LSBs of data[i]. LSB-first packing."
+    },
+    {
+      "id": "skull_slot_namespace",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T4020-T4030",
+      "needles": [
+        "SKSave",
+        "SKSave.dat",
+        "SKSave%02d.dat",
+        "slot_0"
+      ],
+      "claim": "SKULL.ASM T4020 defines the save slot namespace: SKSave00.dat through SKSave09.dat plus SKSave.bak."
+    },
+    {
+      "id": "dm2_slot_scan",
+      "source": "dm2_v1_save_load.c",
+      "path": "src/dm2/dm2_v1_save_load.c",
+      "lines": "191-220",
+      "needles": [
+        "dm2_sl_scan_slots",
+        "DM2_SLOT_MAGIC_1",
+        "DM2_SLOT_MAGIC_2",
+        "occupied"
+      ],
+      "claim": "dm2_sl_scan_slots identifies occupied slots by magic markers at offsets 38-41 of the 42-byte header."
+    },
+    {
+      "id": "dm2_suppress_self_verification",
+      "source": "dm2_v1_save_load.c",
+      "path": "src/dm2/dm2_v1_save_load.c",
+      "lines": "109-125",
+      "needles": [
+        "dm2_suppress_self_verification",
+        "data[i]",
+        "mask[i]",
+        "encode_decode_round_trip"
+      ],
+      "claim": "dm2_suppress_self_verification() tests encode\u2192decode round-trip on a known vector."
+    }
+  ],
+  "tests": [
+    {
+      "name": "T1_slot_header_size_is_42",
+      "status": "PASS",
+      "detail": "actual=42, expected=42"
+    },
+    {
+      "name": "T2_magic1_is_beef",
+      "status": "PASS",
+      "detail": "magic1=0xBEEF, expected=0xBEEF"
+    },
+    {
+      "name": "T2_magic2_is_dead",
+      "status": "PASS",
+      "detail": "magic2=0xDEAD, expected=0xDEAD"
+    },
+    {
+      "name": "T2_magic_valid",
+      "status": "PASS",
+      "detail": "magic_valid=True"
+    },
+    {
+      "name": "T3_version_flag_is_1",
+      "status": "PASS",
+      "detail": "version=1, expected=1"
+    },
+    {
+      "name": "T4_slot_number_encoded",
+      "status": "PASS",
+      "detail": "decoded slot=0, expected=0"
+    },
+    {
+      "name": "T4_slot_plus30",
+      "status": "PASS",
+      "detail": "slot_plus30=0x30, expected=0x30"
+    },
+    {
+      "name": "T5_name_roundtrip_slot0",
+      "status": "PASS",
+      "detail": "name='Slot 0', expected='Slot 0'"
+    },
+    {
+      "name": "T5_name_roundtrip_slot9",
+      "status": "PASS",
+      "detail": "name='Slot 9', expected='Slot 9'"
+    },
+    {
+      "name": "T6_suppress_encode_roundtrip",
+      "status": "PASS",
+      "detail": "decoded==expected: True, got=[1, 2, 3, 4, 5, 6, 7, 8]"
+    },
+    {
+      "name": "T7_suppress_byte_0_match",
+      "status": "PASS",
+      "detail": "byte[0]: 0x01 == 0x01"
+    },
+    {
+      "name": "T7_suppress_byte_1_match",
+      "status": "PASS",
+      "detail": "byte[1]: 0x02 == 0x02"
+    },
+    {
+      "name": "T7_suppress_byte_2_match",
+      "status": "PASS",
+      "detail": "byte[2]: 0x03 == 0x03"
+    },
+    {
+      "name": "T7_suppress_byte_3_match",
+      "status": "PASS",
+      "detail": "byte[3]: 0x04 == 0x04"
+    },
+    {
+      "name": "T7_suppress_byte_4_match",
+      "status": "PASS",
+      "detail": "byte[4]: 0x05 == 0x05"
+    },
+    {
+      "name": "T7_suppress_byte_5_match",
+      "status": "PASS",
+      "detail": "byte[5]: 0x06 == 0x06"
+    },
+    {
+      "name": "T7_suppress_byte_6_match",
+      "status": "PASS",
+      "detail": "byte[6]: 0x07 == 0x07"
+    },
+    {
+      "name": "T7_suppress_byte_7_match",
+      "status": "PASS",
+      "detail": "byte[7]: 0x08 == 0x08"
+    },
+    {
+      "name": "T8_suppress_empty_mask_empty_output",
+      "status": "PASS",
+      "detail": "empty_mask produces empty encoded and 0xFF fill"
+    },
+    {
+      "name": "T9_suppress_nibble_8_is_skip",
+      "status": "PASS",
+      "detail": "mask nibble 8 (value 0) skips: encoded=b''"
+    },
+    {
+      "name": "T10_suppress_nibble_encode_4bytes",
+      "status": "PASS",
+      "detail": "8 nibbles \u2192 4 bytes, got 4"
+    },
+    {
+      "name": "T10_suppress_nibble_roundtrip",
+      "status": "PASS",
+      "detail": "decoded lower nibbles: ['0x1', '0x2', '0x3', '0x4', '0x5', '0x6', '0x7', '0x8']"
+    },
+    {
+      "name": "T11_save_load_same_bytes",
+      "status": "PASS",
+      "detail": "loaded 298 bytes == expected 298"
+    },
+    {
+      "name": "T11_loaded_header_magic_valid",
+      "status": "PASS",
+      "detail": "magic_valid=True"
+    },
+    {
+      "name": "T11_loaded_header_name_match",
+      "status": "PASS",
+      "detail": "name='Skullkeep Level 1' == 'Skullkeep Level 1'"
+    },
+    {
+      "name": "T11_loaded_header_slot_match",
+      "status": "PASS",
+      "detail": "slot=3 == 3"
+    },
+    {
+      "name": "T11_loaded_body_matches",
+      "status": "PASS",
+      "detail": "body matches: True"
+    },
+    {
+      "name": "T11_backup_not_created_on_first_save",
+      "status": "PASS",
+      "detail": "bak should not exist after first save: True"
+    },
+    {
+      "name": "T12_identical_header_same_hash",
+      "status": "PASS",
+      "detail": "SHA256(header1)=6a4ad1d2dfacdcd4..., SHA256(header2)=6a4ad1d2dfacdcd4..."
+    },
+    {
+      "name": "T13_different_name_different_hash",
+      "status": "PASS",
+      "detail": "Different names produce different hashes"
+    },
+    {
+      "name": "T14_slot_0_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 0: decoded=0"
+    },
+    {
+      "name": "T14_slot_1_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 1: decoded=1"
+    },
+    {
+      "name": "T14_slot_2_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 2: decoded=2"
+    },
+    {
+      "name": "T14_slot_3_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 3: decoded=3"
+    },
+    {
+      "name": "T14_slot_4_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 4: decoded=4"
+    },
+    {
+      "name": "T14_slot_5_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 5: decoded=5"
+    },
+    {
+      "name": "T14_slot_6_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 6: decoded=6"
+    },
+    {
+      "name": "T14_slot_7_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 7: decoded=7"
+    },
+    {
+      "name": "T14_slot_8_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 8: decoded=8"
+    },
+    {
+      "name": "T14_slot_9_decodes_correctly",
+      "status": "PASS",
+      "detail": "slot 9: decoded=9"
+    },
+    {
+      "name": "T16_suppress_self_verification",
+      "status": "PASS",
+      "detail": "self-verification round-trip: True"
+    },
+    {
+      "name": "T17_suppress_fill_00_matches_original",
+      "status": "PASS",
+      "detail": "fill=0x00 round-trip: True"
+    },
+    {
+      "name": "T18_large_data_suppress_roundtrip",
+      "status": "PASS",
+      "detail": "256-byte large data SUPPRESS round-trip"
+    }
+  ],
+  "summary": {
+    "total": 43,
+    "passed": 43,
+    "failed": 0
+  }
+}

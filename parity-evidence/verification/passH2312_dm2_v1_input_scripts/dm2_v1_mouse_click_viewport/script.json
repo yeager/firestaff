@@ -1,0 +1,61 @@
+{
+  "script_id": "dm2_v1_mouse_click_viewport",
+  "description": "Move mouse to viewport center and click (explore action)",
+  "target_state": "dm2_dungeon_mouse_explore",
+  "source_evidence": {
+    "mouse_click": {
+      "source": "skproject/SKWIN/SkWinCore.cpp",
+      "path": "N/A",
+      "lines": "415-437",
+      "needles": [
+        "mouse_click",
+        "viewport",
+        "Dungeon_Click",
+        "GAMESTATE_ADVENTURING"
+      ],
+      "claim": "SkWinCore.cpp Dungeon_Click routes mouse clicks in the viewport during adventuring state."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "MOUSE_MOVE",
+      "code": 0,
+      "dx": 160,
+      "dy": 100,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 200,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 220,
+      "kind": "CLICK",
+      "code": 1,
+      "dx": 0,
+      "dy": 0,
+      "x": 160,
+      "y": 100
+    },
+    {
+      "tick_ms": 420,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes dm2_v1_title_to_first_dungeon prerequisite state. Viewport center coordinates are in 320x200 game-pixel space. Actual screen coordinates depend on presentation mode (V1/V2)."
+  ]
+}

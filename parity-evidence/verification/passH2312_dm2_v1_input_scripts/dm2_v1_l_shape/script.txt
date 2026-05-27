@@ -1,0 +1,13 @@
+Script: dm2_v1_l_shape
+Description: L-shaped path: forward, turn right, forward
+Target state: dm2_dungeon_l_shape
+Events (6 total):
+
+  t=    0ms  KEY_PRESS  code=0xC8
+  t=  400ms  WAIT
+  t=  500ms  KEY_PRESS  code=0xCD
+  t=  800ms  WAIT
+  t=  900ms  KEY_PRESS  code=0xC8
+  t= 1300ms  WAIT
+
+Notes: Assumes dm2_v1_title_to_first_dungeon prerequisite state.

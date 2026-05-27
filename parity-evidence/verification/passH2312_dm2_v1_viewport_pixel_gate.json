@@ -1,0 +1,311 @@
+{
+  "schema": "firestaff.dm2_v1.viewport_pixel_gate.v1",
+  "gate_id": "passH2312_dm2_v1_viewport_pixel_gate",
+  "description": "Canonical pixel-capture gate for DM2 V1 (Skullkeep). Defines capture regions and geometry in 320\u00d7200 game-pixel space. Each fixture has a locked state label and source evidence from SKULL.ASM. expected_sha256 is empty (TBD) for all fixtures; downstream probe must populate from known-good runs.",
+  "platform_notes": {
+    "V1_original": "320\u00d7200 pixel-perfect, palette-indexed VGA",
+    "V2_filtered": "320\u00d7200 + CRT scanlines + palette correction (same pixel geometry)",
+    "V2_upscaled": "3200\u00d72000 10\u00d7 upscale, same geometry",
+    "V2_modern": "1920\u00d71080 HD, remapped geometry (not 1:1 with V1)"
+  },
+  "fixture_count": 9,
+  "fixtures": [
+    {
+      "fixture_id": "dm2_v1_first_dungeon_viewport_full",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "viewport_bounds": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T100-T110",
+          "needles": [
+            "320",
+            "200",
+            "viewport_width",
+            "viewport_height"
+          ],
+          "claim": "SKULL.ASM T100 establishes the 320\u00d7200 pixel viewport for DM2 V1."
+        },
+        "first_dungeon_entrance": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T2100-T2110",
+          "needles": [
+            "enter_dungeon",
+            "level_0",
+            "party_placement"
+          ],
+          "claim": "T2100 places the party at the first dungeon entrance (level 0)."
+        }
+      },
+      "notes": "First reachable in-game viewport state for DM2 V1. Canonical starting point for all DM2 V1 visual regression."
+    },
+    {
+      "fixture_id": "dm2_v1_first_dungeon_dungeon_view",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "dungeon_view",
+      "x": 0,
+      "y": 28,
+      "w": 320,
+      "h": 144,
+      "expected_sha256": "",
+      "source_evidence": {
+        "dungeon_view_geometry": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T120-T130",
+          "needles": [
+            "status_bar_height",
+            "dungeon_view_height",
+            "action_strip"
+          ],
+          "claim": "SKULL.ASM T120-T130 define the dungeon view region below status bar and above action strip."
+        }
+      },
+      "notes": "Pure dungeon rendering area \u2014 walls, floor, creatures, items. No chrome at all."
+    },
+    {
+      "fixture_id": "dm2_v1_first_dungeon_viewport_center",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "viewport_center",
+      "x": 48,
+      "y": 28,
+      "w": 224,
+      "h": 144,
+      "expected_sha256": "",
+      "source_evidence": {
+        "center_crop": {
+          "source": "M11 engine",
+          "path": "firestaff_m11_game_view.c",
+          "lines": "1-30",
+          "needles": [
+            "viewport",
+            "center",
+            "224",
+            "136"
+          ],
+          "claim": "M11 viewport center crop is 224\u00d7136 pixels (DM2 uses 224\u00d7144 due to different chrome split)."
+        }
+      },
+      "notes": "Action area without chrome. DM2 chrome differs from DM1 \u2014 status bar 28px, action strip 28px, portrait 80px."
+    },
+    {
+      "fixture_id": "dm2_v1_first_dungeon_status_bar",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "status_bar",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 28,
+      "expected_sha256": "",
+      "source_evidence": {
+        "status_bar_geometry": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T130-T140",
+          "needles": [
+            "status_bar",
+            "champion_health",
+            "champion_magic",
+            "condition_icon"
+          ],
+          "claim": "SKULL.ASM T130 defines the status bar: champion portraits, health/magic bars, condition icons."
+        }
+      },
+      "notes": "Shows champion health bars (4\u00d7), magic shields, and dungeon condition icons."
+    },
+    {
+      "fixture_id": "dm2_v1_first_dungeon_action_strip",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "chrome_bottom",
+      "x": 0,
+      "y": 172,
+      "w": 320,
+      "h": 28,
+      "expected_sha256": "",
+      "source_evidence": {
+        "action_strip": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T150-T160",
+          "needles": [
+            "action_strip",
+            "Attack",
+            "Cast",
+            "Move",
+            "icon_buttons"
+          ],
+          "claim": "SKULL.ASM T150 defines the action strip: Attack, Cast, Use, Drop, Move icons."
+        }
+      },
+      "notes": "DM2 action icons: Attack, Cast Spell, Use Item, Drop Item, Move, Rest. In outdoor levels, weather icon also appears."
+    },
+    {
+      "fixture_id": "dm2_v1_first_dungeon_panel_right",
+      "game_state_label": "dm2_first_dungeon_entrance",
+      "capture_region": "panel_right",
+      "x": 240,
+      "y": 28,
+      "w": 80,
+      "h": 144,
+      "expected_sha256": "",
+      "source_evidence": {
+        "portrait_panel": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T170-T180",
+          "needles": [
+            "portrait_panel",
+            "champion_portrait",
+            "champion_slot"
+          ],
+          "claim": "SKULL.ASM T170 defines the portrait panel: 4 champion portrait slots, 20px each."
+        }
+      },
+      "notes": "4 champion portrait slots in the right panel. Shows front 4 champions (or fewer in outdoor view)."
+    },
+    {
+      "fixture_id": "dm2_v1_forward_viewport_full",
+      "game_state_label": "dm2_dungeon_forward",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "forward_state": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T3000-T3010",
+          "needles": [
+            "CMD_MOVE_FORWARD",
+            "viewport_redraw",
+            "tile_update"
+          ],
+          "claim": "SKULL.ASM T3000 moves the party forward and redraws the viewport."
+        }
+      },
+      "notes": "Same region as fixture 1 but after one forward step. Used to verify movement changes viewport content."
+    },
+    {
+      "fixture_id": "dm2_v1_lshape_viewport_full",
+      "game_state_label": "dm2_dungeon_l_shape",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "lshape_state": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T3000-T3070",
+          "needles": [
+            "CMD_MOVE_FORWARD",
+            "CMD_TURN_RIGHT",
+            "viewport_redraw"
+          ],
+          "claim": "SKULL.ASM T3000-T3070: forward \u2192 turn-right \u2192 forward changes both position and facing."
+        }
+      },
+      "notes": "L-shaped navigation path. Viewport content differs significantly from both start and forward-only states."
+    },
+    {
+      "fixture_id": "dm2_v1_inventory_viewport_full",
+      "game_state_label": "dm2_inventory_open",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "inventory_open": {
+          "source": "SKULL.ASM",
+          "path": "SKULL.ASM",
+          "lines": "T3300-T3310",
+          "needles": [
+            "CMD_INVENTORY",
+            "inventory_screen",
+            "item_grid",
+            "slot_panel"
+          ],
+          "claim": "SKULL.ASM T3300 opens the inventory screen overlay on top of the dungeon view."
+        }
+      },
+      "notes": "Inventory screen replaces dungeon view with item grid, equipment slots, and champion stats."
+    }
+  ],
+  "capture_conventions": {
+    "pixel_format": "PPM P6 (24-bit RGB)",
+    "game_pixel_space": "320\u00d7200 (V1 original)",
+    "palette": "VGA 256-color indexed (palette in GRAPHICS.DAT / GDAT)",
+    "capture_tool": "firestaff_headless_dm2_v1_viewport_capture_probe",
+    "capture_env": "SDL_VIDEODRIVER=dummy, SDL_AUDIODRIVER=dummy",
+    "game_data_root": "~/.firestaff/data/dm2"
+  },
+  "source_anchors": [
+    {
+      "id": "skull_viewport_pixel_geometry",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T100-T180",
+      "needles": [
+        "320",
+        "200",
+        "viewport_width",
+        "viewport_height",
+        "status_bar",
+        "action_strip"
+      ],
+      "claim": "SKULL.ASM T100-T180 establishes DM2 V1 viewport as 320\u00d7200 pixels with status bar, dungeon view, action strip, and portrait panel."
+    },
+    {
+      "id": "m11_viewport_layout",
+      "source": "M11 engine",
+      "path": "firestaff_m11_game_view.c",
+      "lines": "1-60",
+      "needles": [
+        "viewport",
+        "status_bar",
+        "action",
+        "icon",
+        "portrait"
+      ],
+      "claim": "M11 divides the 320\u00d7200 viewport into status bar, dungeon view, action strip, and portrait panel."
+    },
+    {
+      "id": "skwin_ui_layout",
+      "source": "skproject/SkWinCore.cpp",
+      "path": "N/A",
+      "lines": "415-437",
+      "needles": [
+        "Dungeon_Click",
+        "GAMESTATE_ADVENTURING",
+        "viewport",
+        "portrait_panel"
+      ],
+      "claim": "SkWinCore.cpp confirms the UI layout: status bar, dungeon view, action strip, portrait panel."
+    },
+    {
+      "id": "skull_dungeon_entrance",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T2100-T2110",
+      "needles": [
+        "enter_dungeon",
+        "level_0",
+        "party_placement"
+      ],
+      "claim": "T2100 places the party at the first dungeon entrance (level 0) as the canonical starting state."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+Script: dm2_v1_open_inventory
+Description: Open champion inventory panel
+Target state: dm2_inventory_open
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0x17
+  t=  500ms  WAIT
+  t=  600ms  WAIT
+
+Notes: ("Assumes dm2_v1_title_to_first_dungeon prerequisite state. Inventory shows the front champion's carried items and equipment slots.",)

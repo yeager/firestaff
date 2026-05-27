@@ -1,0 +1,76 @@
+{
+  "script_id": "dm2_v1_l_shape",
+  "description": "L-shaped path: forward, turn right, forward",
+  "target_state": "dm2_dungeon_l_shape",
+  "source_evidence": {
+    "movement_chain": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3000-T3070",
+      "needles": [
+        "CMD_MOVE_FORWARD",
+        "CMD_TURN_RIGHT",
+        "command_queue"
+      ],
+      "claim": "SKULL.ASM dispatches movement commands in sequence: forward, then turn-right, then forward."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "KEY_PRESS",
+      "code": 205,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 800,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 900,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1300,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "Assumes dm2_v1_title_to_first_dungeon prerequisite state."
+}

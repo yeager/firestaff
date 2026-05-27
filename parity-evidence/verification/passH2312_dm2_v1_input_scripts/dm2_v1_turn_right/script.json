@@ -1,0 +1,49 @@
+{
+  "script_id": "dm2_v1_turn_right",
+  "description": "Turn party right (90 degrees clockwise)",
+  "target_state": "dm2_dungeon_turn_right",
+  "source_evidence": {
+    "turn_right": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3060-T3070",
+      "needles": [
+        "CMD_TURN_RIGHT",
+        "rotate_party",
+        "direction_update"
+      ],
+      "claim": "SKULL.ASM T3060 processes turn-right command and updates party direction."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 205,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 300,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "Assumes dm2_v1_title_to_first_dungeon prerequisite state."
+}

@@ -1,0 +1,10 @@
+Script: dm2_v1_forward_move
+Description: Move forward one square from dungeon entrance
+Target state: dm2_dungeon_forward
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0xC8
+  t=  400ms  WAIT
+  t=  500ms  WAIT
+
+Notes: ('Assumes dm2_v1_title_to_first_dungeon has been replayed to reach the dm2_first_dungeon_entrance state. This script adds a forward move.',)

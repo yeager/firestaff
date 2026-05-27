@@ -1,0 +1,52 @@
+{
+  "schema": "firestaff.dm2_v1.deterministic_input_script.v1",
+  "manifest_id": "passH2312_dm2_v1_deterministic_input_scripts",
+  "script_count": 9,
+  "scripts": [
+    {
+      "script_id": "dm2_v1_title_to_first_dungeon",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_title_to_first_dungeon/script.json",
+      "target_state": "dm2_first_dungeon_entrance"
+    },
+    {
+      "script_id": "dm2_v1_forward_move",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_forward_move/script.json",
+      "target_state": "dm2_dungeon_forward"
+    },
+    {
+      "script_id": "dm2_v1_turn_left",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_turn_left/script.json",
+      "target_state": "dm2_dungeon_turn_left"
+    },
+    {
+      "script_id": "dm2_v1_turn_right",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_turn_right/script.json",
+      "target_state": "dm2_dungeon_turn_right"
+    },
+    {
+      "script_id": "dm2_v1_l_shape",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_l_shape/script.json",
+      "target_state": "dm2_dungeon_l_shape"
+    },
+    {
+      "script_id": "dm2_v1_attack_command",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_attack_command/script.json",
+      "target_state": "dm2_dungeon_attack"
+    },
+    {
+      "script_id": "dm2_v1_cast_spell",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_cast_spell/script.json",
+      "target_state": "dm2_dungeon_cast"
+    },
+    {
+      "script_id": "dm2_v1_mouse_click_viewport",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_mouse_click_viewport/script.json",
+      "target_state": "dm2_dungeon_mouse_explore"
+    },
+    {
+      "script_id": "dm2_v1_open_inventory",
+      "path": "passH2312_dm2_v1_input_scripts/dm2_v1_open_inventory/script.json",
+      "target_state": "dm2_inventory_open"
+    }
+  ]
+}

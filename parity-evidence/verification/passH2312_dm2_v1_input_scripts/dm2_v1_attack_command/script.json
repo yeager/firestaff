@@ -1,0 +1,62 @@
+{
+  "script_id": "dm2_v1_attack_command",
+  "description": "Issue attack command (face forward and strike)",
+  "target_state": "dm2_dungeon_attack",
+  "source_evidence": {
+    "attack_command": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3200-T3210",
+      "needles": [
+        "CMD_ATTACK",
+        "combat_initiated",
+        "attack_roll"
+      ],
+      "claim": "SKULL.ASM T3200 processes attack command and resolves combat."
+    },
+    "initiative_check": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3220-T3230",
+      "needles": [
+        "initiative",
+        "attack_rating",
+        "defense_rating"
+      ],
+      "claim": "Attack command triggers initiative check before striking."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 30,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 600,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes dm2_v1_title_to_first_dungeon prerequisite state. Attack is the primary combat command in DM2 V1. Key 'A' triggers the attack command (0x41 + ALT flag or similar routing)."
+  ]
+}

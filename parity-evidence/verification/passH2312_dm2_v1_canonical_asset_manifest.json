@@ -1,0 +1,128 @@
+{
+  "schema": "firestaff.dm2_v1.canonical_asset_manifest.v1",
+  "manifest_id": "passH2312_dm2_v1_canonical_asset_manifest",
+  "data_root": "/Users/bosse/.firestaff/data/dm2",
+  "source_anchors": [
+    {
+      "id": "skull_graphics_dat_open",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T547-T551",
+      "needles": [
+        "GRAPHICS.DAT",
+        "GDAT_LoadGraphics",
+        "file open mode"
+      ],
+      "claim": "SKULL.ASM T547 opens GRAPHICS.DAT for GDAT resource loading; mode 'rb'."
+    },
+    {
+      "id": "skull_dungeon_dat_load",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T560-T565",
+      "needles": [
+        "DUNGEON.DAT",
+        "DUNGEON_Load",
+        "level_count",
+        "multi-level"
+      ],
+      "claim": "SKULL.ASM T560 parses DUNGEON.DAT header \u2014 uint16 level_count at offset 0, then level descriptors."
+    },
+    {
+      "id": "skwin_gdat_category_limit",
+      "source": "skproject/SkGlobal.h",
+      "path": "N/A",
+      "lines": "705-716",
+      "needles": [
+        "GDAT_CATEGORY_LIMIT",
+        "CREATURE_AI_TAB_SIZE",
+        "MAXAI",
+        "MAXSPELL"
+      ],
+      "claim": "skproject SkGlobal.h defines GDAT_CATEGORY_LIMIT and creature/AI constants used in DM2 GDAT loading."
+    },
+    {
+      "id": "skwin_extended_load_ai_definition",
+      "source": "skproject/SKWIN/SkWinCore.cpp",
+      "path": "N/A",
+      "lines": "415-437, 27038-27096",
+      "needles": [
+        "EXTENDED_LOAD_AI_DEFINITION",
+        "getAIName",
+        "GDAT_CATEGORY"
+      ],
+      "claim": "SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION maps GDAT category indices to AI names."
+    },
+    {
+      "id": "dm2_dungeon_multi_level_format",
+      "source": "dm2_v1_dungeon_loader.c",
+      "path": "src/dm2/dm2_v1_dungeon_loader.c",
+      "lines": "1-60",
+      "needles": [
+        "level_count",
+        "level_offsets",
+        "DM2_LEVEL_OUTDOOR",
+        "DM2_LEVEL_INDOOR"
+      ],
+      "claim": "DM2 DUNGEON.DAT supports 30 levels with outdoor/indoor/building types; offsets point to per-level tile data."
+    },
+    {
+      "id": "skull_gdat_resource_loading",
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T600-T620",
+      "needles": [
+        "GDAT_Load",
+        "category_index",
+        "frame_count",
+        "GDG2_format"
+      ],
+      "claim": "SKULL.ASM T600-T620 loads GDAT resources: category index \u2192 frame count \u2192 GDG2 decompress."
+    }
+  ],
+  "assets": {
+    "pc34_graphics": {
+      "id": "pc34_graphics",
+      "path_hint": "GRAPHICS.DAT",
+      "role": "pair",
+      "expected_sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+      "expected_size": 8639757,
+      "platform": "PC English",
+      "present_local": true,
+      "actual_sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+      "actual_size": 8639757,
+      "status": "present"
+    },
+    "pc34_dungeon": {
+      "id": "pc34_dungeon",
+      "path_hint": "DUNGEON.DAT",
+      "role": "pair",
+      "expected_sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+      "expected_size": 39437,
+      "platform": "PC English",
+      "present_local": true,
+      "actual_sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+      "actual_size": 39437,
+      "status": "present"
+    }
+  },
+  "forbidden_check": {
+    "forbidden_files": [
+      "DMGAME.DAT",
+      "dmgame.dat",
+      "SAVEGAME.DAT",
+      "savegame.dat",
+      "HCSB.DAT",
+      "MINI.DAT"
+    ],
+    "found": [],
+    "status": "clear"
+  },
+  "summary": {
+    "total_assets": 2,
+    "present": 2,
+    "absent": 0,
+    "hash_mismatch": 0,
+    "size_mismatch": 0
+  }
+}

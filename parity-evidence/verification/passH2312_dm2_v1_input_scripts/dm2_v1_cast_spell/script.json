@@ -1,0 +1,51 @@
+{
+  "script_id": "dm2_v1_cast_spell",
+  "description": "Issue cast spell command (open spell selection)",
+  "target_state": "dm2_dungeon_cast",
+  "source_evidence": {
+    "cast_command": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T3250-T3260",
+      "needles": [
+        "CMD_CAST",
+        "spell_selection",
+        "mana_cost"
+      ],
+      "claim": "SKULL.ASM T3250 opens spell selection and deducts mana on confirmation."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 46,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 600,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes dm2_v1_title_to_first_dungeon prerequisite state. Key 'C' opens the spell selection interface. DM2 spellcasting uses mana; confirmation selects the spell target."
+  ]
+}

@@ -1,0 +1,334 @@
+{
+  "script_id": "dm2_v1_title_to_first_dungeon",
+  "description": "DM2 title screen \u2192 New Adventure \u2192 name 4 champions \u2192 first dungeon",
+  "target_state": "dm2_first_dungeon_entrance",
+  "source_evidence": {
+    "title_screen": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T1800-T1820",
+      "needles": [
+        "DM2_TITLE",
+        "PRESS_ANY_KEY",
+        "title_screen_loop"
+      ],
+      "claim": "SKULL.ASM T1800 shows DM2 title screen, waits for key press."
+    },
+    "new_adventure": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T1850-T1860",
+      "needles": [
+        "NEW_ADVENTURE",
+        "create_new_party",
+        "champion_count"
+      ],
+      "claim": "SKULL.ASM T1850 initiates New Adventure: party creation for up to 4 champions."
+    },
+    "champion_name_entry": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T1900-T1920",
+      "needles": [
+        "enter_name",
+        "champion_name",
+        "name_character"
+      ],
+      "claim": "SKULL.ASM T1900 handles per-champion name entry character by character."
+    },
+    "dungeon_entrance": {
+      "source": "SKULL.ASM",
+      "path": "SKULL.ASM",
+      "lines": "T2100-T2110",
+      "needles": [
+        "enter_dungeon",
+        "level_0",
+        "party_placement"
+      ],
+      "claim": "SKULL.ASM T2100 places the named party on level 0 of the first dungeon."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1200,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1300,
+      "kind": "KEY_DOWN",
+      "code": 208,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1500,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2100,
+      "kind": "KEY_PRESS",
+      "code": 19,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2150,
+      "kind": "KEY_PRESS",
+      "code": 24,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2200,
+      "kind": "KEY_PRESS",
+      "code": 48,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2250,
+      "kind": "KEY_PRESS",
+      "code": 23,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2300,
+      "kind": "KEY_PRESS",
+      "code": 49,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2600,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 3100,
+      "kind": "KEY_PRESS",
+      "code": 30,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 3150,
+      "kind": "KEY_PRESS",
+      "code": 38,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 3200,
+      "kind": "KEY_PRESS",
+      "code": 18,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 3250,
+      "kind": "KEY_PRESS",
+      "code": 45,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 3600,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4100,
+      "kind": "KEY_PRESS",
+      "code": 20,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4150,
+      "kind": "KEY_PRESS",
+      "code": 30,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4200,
+      "kind": "KEY_PRESS",
+      "code": 49,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4250,
+      "kind": "KEY_PRESS",
+      "code": 23,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4300,
+      "kind": "KEY_PRESS",
+      "code": 30,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4600,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5100,
+      "kind": "KEY_PRESS",
+      "code": 48,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5150,
+      "kind": "KEY_PRESS",
+      "code": 19,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5200,
+      "kind": "KEY_PRESS",
+      "code": 60,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5250,
+      "kind": "KEY_PRESS",
+      "code": 49,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5300,
+      "kind": "KEY_PRESS",
+      "code": 24,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5600,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 6200,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 6500,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 7500,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "This script targets the first reachable DM2 V1 game state: four named champions standing at the entrance of the first dungeon level (level 0). DM2 does not have a prison sequence like CSB \u2014 dungeon entry is immediate after naming the party. The state hash should match across runs on the same platform. WAIT events allow variable transition latency."
+}

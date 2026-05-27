@@ -1,0 +1,11 @@
+Script: dm2_v1_mouse_click_viewport
+Description: Move mouse to viewport center and click (explore action)
+Target state: dm2_dungeon_mouse_explore
+Events (4 total):
+
+  t=    0ms  MOUSE_MOVE  dx=160 dy=100
+  t=  200ms  WAIT
+  t=  220ms  CLICK  code=0x01
+  t=  420ms  WAIT
+
+Notes: ('Assumes dm2_v1_title_to_first_dungeon prerequisite state. Viewport center coordinates are in 320x200 game-pixel space. Actual screen coordinates depend on presentation mode (V1/V2).',)
