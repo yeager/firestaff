@@ -379,7 +379,7 @@
       "mapY": 3
     },
     "initialPartyLocationLE": "0x0861",
-    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "verified": true,
     "why": "The canonical DM1 V1 asset starts the party at map 0, x=1, y=3, direction=2 (south)."
   },
@@ -619,7 +619,7 @@
       "why": "Viewport rows are traversed source-order far-to-near using relative coordinates from current party state."
     }
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "route_evidence_checks": [
     {
       "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:01_ingame_start_latest",

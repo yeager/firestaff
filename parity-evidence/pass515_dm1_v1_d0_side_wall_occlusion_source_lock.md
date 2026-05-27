@@ -57,7 +57,7 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Verification
 
-- command: /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
+- command: /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -75,7 +75,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
   - returncode: 1
   - output tail:
 ~~~
@@ -83,9 +83,9 @@ FAIL check-only
 ~~~
 
 ## Local References
-- dm1_graphics_dat: exists=True path=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT, sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- dm1_dungeon_dat: exists=True path=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT, sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- greatstone_root: exists=True path=/home/trv2/.openclaw/data/firestaff-greatstone-atlas
+- dm1_graphics_dat: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT, sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- dm1_dungeon_dat: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT, sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- greatstone_root: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-greatstone-atlas
 
 ## Non-Claims
 

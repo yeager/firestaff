@@ -17,8 +17,8 @@
         "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
         "DUNVIEW.C:8142-8144 wall case returns"
       ],
-      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -33,8 +33,8 @@
         "DM1_VIEW_SQUARE_D0L, 0x0002",
         "DM1_VIEW_SQUARE_D0R, 0x0001"
       ],
-      "path": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -42,23 +42,23 @@
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
       "hits": [
         {
-          "line": 293,
+          "line": 294,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 294,
+          "line": 295,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 295,
+          "line": 296,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 296,
+          "line": 297,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 297,
+          "line": 298,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         }
       ],
@@ -67,8 +67,8 @@
       "missing": [
         "test_wall_item_occlusion_alcove_exception"
       ],
-      "path": "/home/trv2/work/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "d91d9c5544c3ba0b5af285b2849d2c4f9178dd5bb3f105fa73df47d6e6208286",
+      "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "f1478c6d5f6d82672af69be26df259f7ca3a1d196e8dff6418c8aba6e188209b",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     }
@@ -78,29 +78,29 @@
       "bytes": 363417,
       "exists": true,
       "id": "dm1-graphics.dat",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
       "bytes": 33357,
       "exists": true,
       "id": "dm1-dungeon.dat",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
       "bytes": 12002,
       "exists": true,
       "id": "dm1-title",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     },
     {
-      "bytes": 1962,
+      "bytes": 1107,
       "exists": true,
       "id": "dm1-readme.md",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
-      "sha256": "e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc"
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "sha256": "6bffffe6a147d34c9273975fa9f3e6888c3c690466ba1157cbfa17300baee056"
     }
   ],
   "redmcsbChecks": [
@@ -135,7 +135,7 @@
       "id": "f0128-d1-then-d0-near-order",
       "lines": "8524-8542",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -167,7 +167,7 @@
       "id": "f0122-d1l-side-wall-return",
       "lines": "7436-7460",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -199,7 +199,7 @@
       "id": "f0123-d1r-side-wall-return",
       "lines": "7604-7628",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -227,7 +227,7 @@
       "id": "f0124-d1c-front-wall-alcove-exception",
       "lines": "7828-7844",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -279,20 +279,20 @@
       "id": "f0125-f0126-d0-side-walls-return-before-field",
       "lines": "8007-8159",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1",
   "status": "failed",
   "statusToken": "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -300,8 +300,8 @@
     },
     {
       "command": [
-        "/usr/bin/python3",
-        "/home/trv2/work/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
       "outputTail": "FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present,local-runtime-test-covers-d1-d0-wall-occlusion",

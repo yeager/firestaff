@@ -1,5 +1,5 @@
 {
-  "firestaffViewport3dSha256": "df1720c938110e1bb73a16714f0d8c2d2c680de0730febe52b69a4c81edf30c8",
+  "firestaffViewport3dSha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416",
   "nonClaims": [
     "no pixel parity promotion",
     "no runtime capture promotion",
@@ -352,7 +352,7 @@
   ],
   "problems": [],
   "redmcsbDunviewSha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass557_dm1_v1_viewport_f0128_draw_order_source_lock.v1",
   "sourceLock": "DUNVIEW.C F0128 F0150 relative-coordinate calls through F0127 draw sequence",
   "status": "PASS_PASS557_DM1_V1_VIEWPORT_F0128_DRAW_ORDER_SOURCE_LOCK"

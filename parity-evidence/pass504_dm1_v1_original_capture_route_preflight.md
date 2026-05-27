@@ -14,11 +14,11 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - `DRAWVIEW.C:709-858` / `F0097_DUNGEONVIEW_DrawViewport` - the capture seam is after the PC34 viewport-present blit, not setup/menu echo. ok=`True`
 
 ## N2 Preconditions
-- `dosbox`: `/usr/bin/dosbox` ok=`True`
-- `xvfb-run`: `/usr/bin/xvfb-run` ok=`True`
-- `xdotool`: `/usr/bin/xdotool` ok=`True`
+- `dosbox`: `/opt/homebrew/bin/dosbox` ok=`True`
+- `xvfb-run`: `None` ok=`True`
+- `xdotool`: `None` ok=`True`
 - `python3`: `/usr/bin/python3` ok=`True`
-- `dosbox-debug`: `/usr/bin/dosbox-debug` ok=`True`
+- `dosbox-debug`: `None` ok=`False`
 - `python3-pillow`: `python3 import PIL.Image` ok=`True`
 
 ## Canonical DM1 Inputs
@@ -34,9 +34,9 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - Click centers are source-locked from `COMMAND.C`, but labels become promotable only after F0380 -> F0365/F0366 -> F0128 -> F0097/VIDRV proof.
 
 ## Secondary References
-- Greatstone atlas: `/home/trv2/.openclaw/data/firestaff-greatstone-atlas` exists=`True`
-- Original DM canonical data: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1` exists=`True`
-- CSBWin: `/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin` exists=`True`; not used for this DM1 PC34 gate.
+- Greatstone atlas: `/Users/bosse/.openclaw/data/firestaff-greatstone-atlas` exists=`True`
+- Original DM canonical data: `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1` exists=`True`
+- CSBWin: `/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin` exists=`True`; not used for this DM1 PC34 gate.
 
 ## Gate
 

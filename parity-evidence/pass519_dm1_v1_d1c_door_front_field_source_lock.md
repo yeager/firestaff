@@ -40,7 +40,7 @@ Claim: D1C door-front renders rear cells before frame/button/door, composes door
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.wall_empty_blit_gate == 1
 PASS source_evidence.occlusion == 1
@@ -56,7 +56,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=1
 ~~~
 FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test
 ~~~

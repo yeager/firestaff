@@ -24,8 +24,8 @@ Movement/key-route processing is source/runtime proven through F0380 and F0365/F
 - canonical DM1 DUNGEON.DAT sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 - canonical DM1 GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - canonical DM1 TITLE sha256 adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-- Greatstone atlas: /home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md
-- CSBWin movement cross-check: /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Code11f52.cpp
+- Greatstone atlas: /Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md
+- CSBWin movement cross-check: /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Code11f52.cpp
 
 ## Gate
 - python3 tools/verify_pass508_dm1_v1_key_route_state_delta_gate.py

@@ -14,7 +14,7 @@
     }
   ],
   "greatstoneAnchor": {
-    "diff": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
+    "diff": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
     "indexedPages": [
       "http://greatstone.free.fr/dm/g_dm.html",
       "http://greatstone.free.fr/dm/index.html"
@@ -30,7 +30,7 @@
       "total_mismatches": 0
     }
   },
-  "greatstoneRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+  "greatstoneRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
   "notClaimed": [
     "original DOS keyboard-buffer transcript",
     "representative original movement/HUD/viewport overlay parity",
@@ -38,20 +38,20 @@
   ],
   "originalDm1Anchors": [
     {
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
-  "originalsRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "originalsRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "redmcsbSourceAudit": [
     {
       "claim": "PC-34 shifted cursor input is normalized into K/L/M/P command-table codes before command enqueue.",

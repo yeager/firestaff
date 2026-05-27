@@ -14,43 +14,43 @@
       "missing": [],
       "positions": [
         {
-          "line": 22146,
+          "line": 22452,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 22159,
+          "line": 22465,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 22163,
+          "line": 22469,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 22165,
+          "line": 22471,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 22166,
+          "line": 22472,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 22178,
+          "line": 22484,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 22193,
+          "line": 22499,
           "marker": "m11_dm1_nearest_blocking_center_depth_index(cells)"
         },
         {
-          "line": 22209,
+          "line": 22515,
           "marker": "m11_draw_dm1_side_contents(state"
         },
         {
-          "line": 22232,
+          "line": 22538,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 22241,
+          "line": 22547,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -62,27 +62,27 @@
       "missing": [],
       "positions": [
         {
-          "line": 11783,
+          "line": 12073,
           "marker": "static void m11_draw_dm1_alcove_wall_items"
         },
         {
-          "line": 11798,
+          "line": 12088,
           "marker": "C0x0000_CELL_ORDER_ALCOVE"
         },
         {
-          "line": 11798,
+          "line": 12088,
           "marker": "C04_VIEW_CELL_ALCOVE"
         },
         {
-          "line": 11799,
+          "line": 12089,
           "marker": "M018_OPPOSITE(direction)"
         },
         {
-          "line": 11804,
+          "line": 12094,
           "marker": "cell->floorItemCells[ii] != alcoveCellRelativeToParty"
         },
         {
-          "line": 11807,
+          "line": 12097,
           "marker": "m11_draw_item_sprite(state"
         }
       ],
@@ -92,7 +92,7 @@
   "gates": [
     {
       "command": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_alcove_wall_item_gate.py"
       ],
       "outputTail": "FAIL: Firestaff alcove global index guard: missing 'globalIndex == 1'",
@@ -101,19 +101,19 @@
     },
     {
       "command": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py"
       ],
-      "outputTail": "- Firestaff viewport side doors batch: line 22172\n- Firestaff viewport center doors batch: line 22178\n- Firestaff viewport center door ornaments batch: line 22179\n- Firestaff viewport center door buttons batch: line 22182\n- Firestaff viewport source gap warning: line 22188\n- Firestaff viewport near-side replay guard: line 22193\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
+      "outputTail": "- Firestaff viewport side doors batch: line 22478\n- Firestaff viewport center doors batch: line 22484\n- Firestaff viewport center door ornaments batch: line 22485\n- Firestaff viewport center door buttons batch: line 22488\n- Firestaff viewport source gap warning: line 22494\n- Firestaff viewport near-side replay guard: line 22499\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py"
       ],
-      "outputTail": "PASSED d3-front-side-wall-occlusion: DUNVIEW.C F0116/F0117/F0118 D3 wall branches lines 6361-6832\nPASSED d2-d1-d0-side-front-wall-returns: DUNVIEW.C F0678/F0679/F0122-F0127 wall branches lines 6837-8308\nPASSED front-door-two-pass-content-occlusion: DUNVIEW.C F0124_DUNGEONVIEW_DrawSquareD1C door branch lines 7873-7938\nPASSED viewport-final-present-after-buffer: DRAWVIEW.C F0097_DUNGEONVIEW_DrawViewport lines 709-858\nFOUND dm1-anchor GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e\nFOUND dm1-anchor DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85\nFOUND dm1-anchor TITLE sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745\nFOUND dm1-anchor README.md sha256=e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc",
+      "outputTail": "PASSED d3-front-side-wall-occlusion: DUNVIEW.C F0116/F0117/F0118 D3 wall branches lines 6361-6832\nPASSED d2-d1-d0-side-front-wall-returns: DUNVIEW.C F0678/F0679/F0122-F0127 wall branches lines 6837-8308\nPASSED front-door-two-pass-content-occlusion: DUNVIEW.C F0124_DUNGEONVIEW_DrawSquareD1C door branch lines 7873-7938\nPASSED viewport-final-present-after-buffer: DRAWVIEW.C F0097_DUNGEONVIEW_DrawViewport lines 709-858\nFOUND dm1-anchor GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e\nFOUND dm1-anchor DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85\nFOUND dm1-anchor TITLE sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745\nFOUND dm1-anchor README.md sha256=6bffffe6a147d34c9273975fa9f3e6888c3c690466ba1157cbfa17300baee056",
       "passed": true,
       "returncode": 0
     }
@@ -283,34 +283,34 @@
       "status": "PASS"
     }
   ],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass508_dm1_v1_viewport_wall_runtime_readiness.v1",
   "secondaryReferences": [
     {
       "exists": true,
       "id": "dm1_pc34_graphics",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "use": "PC34 bitmap source"
     },
     {
       "exists": true,
       "id": "dm1_pc34_dungeon",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "use": "PC34 route/object source"
     },
     {
       "exists": true,
       "id": "greatstone_index",
-      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md",
+      "path": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md",
       "sha256": "b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d",
       "use": "secondary local atlas index"
     },
     {
       "exists": true,
       "id": "csbwin_cpp",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
       "sha256": "89418e01b0a8eef330451320d19078a3510cbc699f635c8af22820365e4ceb23",
       "use": "secondary lineage reference only"
     }

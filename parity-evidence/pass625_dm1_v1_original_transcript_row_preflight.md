@@ -20,9 +20,9 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 - PASS GRAPHICS.DAT bytes=363417 sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - PASS DUNGEON.DAT bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 - PASS DungeonMasterPC34/DM.EXE bytes=11471 sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
-- PASS DungeonMasterPC34/VGA bytes=4503 sha256=4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b
-- PASS DungeonMasterPC34/SELECTOR bytes=15474 sha256=1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4
-- PASS Dungeon-Master_DOS_EN.zip bytes=896553 sha256=aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275
+- FAIL DungeonMasterPC34/VGA bytes=None sha256=None
+- FAIL DungeonMasterPC34/SELECTOR bytes=None sha256=None
+- FAIL Dungeon-Master_DOS_EN.zip bytes=None sha256=None
 
 ## Target transcript row
 - label=02_turn_right_west_1_3 input=M12_MENU_INPUT_RIGHT command=2 C002_COMMAND_TURN_RIGHT
@@ -88,4 +88,7 @@ The next original capture attempt has a machine-checked, source-backed target ro
 - no push, tag, package, or release action
 
 ## Problems
+- asset lock failed: DungeonMasterPC34/VGA
+- asset lock failed: DungeonMasterPC34/SELECTOR
+- asset lock failed: Dungeon-Master_DOS_EN.zip
 - gate status drifted: pass623_input_capture_bridge

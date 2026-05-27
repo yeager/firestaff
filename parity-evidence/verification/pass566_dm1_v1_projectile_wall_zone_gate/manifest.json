@@ -51,7 +51,7 @@
     "does not claim pixel parity",
     "does not launch original DOS runtime"
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass566_dm1_v1_projectile_wall_zone_gate.v1",
   "source_audit": [
     {

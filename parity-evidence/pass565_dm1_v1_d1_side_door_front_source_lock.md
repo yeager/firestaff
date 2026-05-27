@@ -30,11 +30,11 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
   - missing: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
   - missing: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
-- PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:687-755)
-  - line 710: DM1_VIEW_SQUARE_D1L
-  - line 711: DM1_VIEW_SQUARE_D1R
-  - line 715: door_front_occlusion.count
-  - line 753: door_front_occlusion.d1l_side_door_front_spec
+- FAIL firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:687-755)
+  - line 730: DM1_VIEW_SQUARE_D1L
+  - line 731: DM1_VIEW_SQUARE_D1R
+  - line 735: door_front_occlusion.count
+  - missing: door_front_occlusion.d1l_side_door_front_spec
 
 - FAIL firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1248-1265)
   - missing: DUNVIEW.C:7493-7536
@@ -42,7 +42,7 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -60,9 +60,9 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=1
 ~~~
-FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-source-evidence
+FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence
 ~~~
 
 ## Non-Claims

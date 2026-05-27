@@ -95,7 +95,7 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "staticDuplicateEvidence": {
     "firstFrameStillEntranceMenu": true,
     "manifest": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",
@@ -106,5 +106,5 @@
     "trueStopClassification": "static_no_state_delta_after_entrance_not_movement_processor_stop"
   },
   "status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
-  "timestampUtc": "2026-05-24T23:18:29.567894+00:00"
+  "timestampUtc": "2026-05-27T20:48:01.672255+00:00"
 }

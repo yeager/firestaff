@@ -70,7 +70,7 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE",
   "targetRowAudit": {
     "expected": {
@@ -126,5 +126,5 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-05-24T23:18:21.578987+00:00"
+  "timestampUtc": "2026-05-27T20:48:52.010172+00:00"
 }

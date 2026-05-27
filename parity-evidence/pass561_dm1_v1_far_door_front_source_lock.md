@@ -27,15 +27,15 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 - FAIL firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:126-155)
 
 - FAIL firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:572-985)
-  - line 702: DM1_VIEW_SQUARE_D3L2, "6270"
-  - line 703: DM1_VIEW_SQUARE_D3R2, "6337"
-  - line 715: door_front_occlusion_spec_count(), 11
+  - line 722: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 723: DM1_VIEW_SQUARE_D3R2, "6337"
+  - line 735: door_front_occlusion_spec_count(), 11
 
 - FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1102-1123)
 
 ## Verification
 
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS source_evidence.defs_zones == 1
 PASS source_evidence.wall_source_clip_gate == 1
@@ -53,7 +53,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /usr/bin/python3 /home/trv2/work/firestaff/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
 ~~~
 FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-far-door-front-runtime-test,firestaff-source-evidence-string
 ~~~

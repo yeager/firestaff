@@ -125,7 +125,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/live_code_window_dump.clean.txt size=3235
 - parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/manifest.json size=14931
 - parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/route_candidate_window_keylog.json size=3931
-- parity-evidence/verification/pass296_dm1_v1_input_tuple_proof_without_direct_f0380/manifest.json size=8375
+- parity-evidence/verification/pass296_dm1_v1_input_tuple_proof_without_direct_f0380/manifest.json size=8377
 - parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt.json size=7580
 - parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/dosbox_debug_noise_reduced.clean.txt size=223872
 - parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/manifest.json size=16880
@@ -159,7 +159,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_keyboard_route_keylog.json size=1690
 - parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json size=1951
 - parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
-- parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10551
+- parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10565
 - parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8456
 - verification-screens/pass112-n2-stable-hud-route/original-viewpoint-route-keys.log size=586
 - verification-screens/pass209-delayed-click-zone-route/original_viewport_route_keys.swift size=5604

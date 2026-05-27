@@ -1,20 +1,20 @@
 # pass454_dm1_v1_hall_original_input_mapping_blocker
 
-- status: `BLOCKED_EXTERNAL_HALL_TRUE_STOP_ARTIFACT_MISSING`
+- status: `PASS_PASS454_STALE_MAPPING_BLOCKER_SUPERSEDED_BY_CORRECTED_RERUN`
 - artifact manifest: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json`
-- artifact manifest sha256: `missing`
+- artifact manifest sha256: `33b54c69685392e80b3450ffdecf618b6ad0d176edde68a0a68ec1332c33fc12`
 - parity claim: **not made here**; this gate only retires the stale coordinate-space blocker when pass455 evidence exists.
 
 ## Diagnosis
 
-External hall true-stop artifact is not mounted on this host.
+The original hall-true-stop fresh-entry logs used stale coordinate mapping. The corrected-coordinate rerun now supersedes that blocker when it logs client-relative and absolute/root coordinates separately and produces the expected candidate/terminal frame transition.
 
 ## Evidence summary
 
-- stale fresh attempts with mismapped clicks: `0`
-- corrected rerun ok: `False`
-- corrected requested PC clicks: `[]`
-- corrected images: `0` images / `0` unique hashes
+- stale fresh attempts with mismapped clicks: `13`
+- corrected rerun ok: `True`
+- corrected requested PC clicks: `[[111, 82], [130, 115]]`
+- corrected images: `6` images / `3` unique hashes
 - PC34 data provenance remained hash-locked; no filename-only comparison was used.
 
 ## Resolution

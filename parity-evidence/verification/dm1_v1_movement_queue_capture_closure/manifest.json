@@ -32,7 +32,7 @@
     }
   ],
   "closedSourceGap": "No uncovered source-table or Firestaff queue-dispatch gap remains for command input -> queue -> movement dispatch.",
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "redmcsbSourceAudit": [
     {
       "claim": "PC34 movement mouse zones feed the command queue labels used by capture routes.",

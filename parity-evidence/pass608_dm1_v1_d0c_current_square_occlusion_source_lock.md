@@ -13,7 +13,7 @@ Primary evidence:
 - PASS DEFS.H:4055-4219: PC34/I34E zone ids bind D0C field, frame, thieves-eye, stairs, floor pit, and ceiling pit draw destinations.
 
 Verification:
-- /home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 
 Non-claims:
 - Does not duplicate pass517 D3/D2 side-field occlusion.

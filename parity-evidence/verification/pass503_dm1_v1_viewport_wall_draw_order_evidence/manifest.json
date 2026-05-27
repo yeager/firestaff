@@ -1,64 +1,64 @@
 {
-  "csbRoot": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
-  "csbwinRoot": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+  "csbRoot": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB",
+  "csbwinRoot": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin",
   "dm1Anchors": [
     {
       "bytes": 363417,
       "exists": true,
       "name": "GRAPHICS.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
       "bytes": 33357,
       "exists": true,
       "name": "DUNGEON.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
       "bytes": 12002,
       "exists": true,
       "name": "TITLE",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     },
     {
-      "bytes": 1962,
+      "bytes": 1107,
       "exists": true,
       "name": "README.md",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
-      "sha256": "e8e82274f72fbdbe15ff8afd76aa0032ea96d4919b32435b7c1817a27cd004dc"
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "sha256": "6bffffe6a147d34c9273975fa9f3e6888c3c690466ba1157cbfa17300baee056"
     }
   ],
-  "dm1CanonicalRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "dmOriginalsRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "dm1CanonicalRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "dmOriginalsRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
   "firestaffChecks": [
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-draw-order-table",
-      "line": 88,
+      "line": 148,
       "needle": "static const DM1_ViewportDrawStep s_draw_order[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-wall-spec-table",
-      "line": 352,
+      "line": 412,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-thing-layer-table",
-      "line": 129,
+      "line": 189,
       "needle": "static const DM1_ViewportThingLayerSpec s_thing_layers[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-door-front-occlusion-table",
-      "line": 172,
+      "line": 232,
       "needle": "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]",
       "ok": true
     },
@@ -77,7 +77,7 @@
       "ok": true
     }
   ],
-  "greatstoneAtlasRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+  "greatstoneAtlasRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
   "nonClaims": [
     "no original-vs-Firestaff pixel parity promotion",
     "no runtime capture promotion",
@@ -85,12 +85,12 @@
   ],
   "ok": true,
   "problems": [],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass503_dm1_v1_viewport_wall_draw_order_evidence.v1",
   "secondaryReferences": [
     {
       "claim": "Greatstone local atlas is present as data-extraction context for DM/CSB graphics and dungeon assets.",
-      "file": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/pages.json",
+      "file": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/pages.json",
       "id": "greatstone-local-atlas-index",
       "lineRange": "1-120",
       "missing": [],
@@ -99,7 +99,7 @@
     },
     {
       "claim": "CSBWin carries a table-driven viewport cell/draw-order model with door-facing two-phase object/door/object rows.",
-      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "file": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
       "id": "csbwin-viewport-cell-script-order",
       "lineRange": "935-1938",
       "missing": [],
@@ -108,7 +108,7 @@
     },
     {
       "claim": "CSBWin DrawViewport summarizes each relative cell and interprets the selected draw script in cell order.",
-      "file": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "file": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
       "id": "csbwin-drawviewport-present-loop",
       "lineRange": "6694-6819",
       "missing": [],
@@ -117,7 +117,7 @@
     },
     {
       "claim": "CSB lineage source mirrors the same viewport cell/draw-order and door-facing script structure.",
-      "file": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp",
+      "file": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp",
       "id": "csb-source-viewport-cell-script-order",
       "lineRange": "935-1938",
       "missing": [],
@@ -126,7 +126,7 @@
     },
     {
       "claim": "DM originals include a local PC34-vs-Greatstone manifest for asset provenance cross-checking.",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
+      "file": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
       "id": "dm-originals-manifest-pc34-greatstone-diff",
       "lineRange": "1-220",
       "missing": [],

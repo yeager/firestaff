@@ -1,6 +1,6 @@
 # Pass374 — DM1 V1 viewport/wall completion credit
 
-Status: `BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT`
+Status: `PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED`
 
 ## ReDMCSB source audit first
 
@@ -27,7 +27,7 @@ The credit is narrow: live Firestaff launcher movement now reaches the source-lo
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
-- `pass373_prerequisite` ok=False
+- `pass373_prerequisite` ok=True
 - `completion_matrix_credit` ok=True
 - `completion_doc_credit` ok=True
 - `firestaff_completion_matrix_verifier` ok=True

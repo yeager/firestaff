@@ -29,7 +29,7 @@
     "d3rButtonChecks": 10,
     "viewportOrderChecks": 6
   },
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceSliceSha256": {
     "DUNVIEW.C:1210-1216": "501a1a93cc8d0142c573974ff7a874ecf74eb6f24afeae76c4c3200eefb6f417",
     "DUNVIEW.C:4119-4216": "07ba10d0b6ab169c547e2b0b3926ba2a27f5fc1f544ad332b625e13c3fc5231a",

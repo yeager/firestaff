@@ -1,6 +1,6 @@
 # Pass514 - DM1 V1 PC/I34E runtime transcript capture path
 
-Status: BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380
+Status: BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE
 
 ## Source anchors
 
@@ -20,7 +20,7 @@ Status: BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMP
 
 ## Decision
 
-keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45
+missing prerequisite: dosbox-debug, Xvfb, xdotool
 
 ## Evidence
 

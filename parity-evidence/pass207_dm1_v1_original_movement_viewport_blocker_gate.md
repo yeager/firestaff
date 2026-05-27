@@ -33,7 +33,7 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 ## Current N2 original-runner attempt
 
-- pass206 manifest: `/home/trv2/work/firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
+- pass206 manifest: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
 - pass206 status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 - attempt status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - attempt dir: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`

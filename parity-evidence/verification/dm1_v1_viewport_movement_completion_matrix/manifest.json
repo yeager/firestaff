@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/home/trv2/work/firestaff/build",
+        "/Users/bosse/.openclaw/workspace-main/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,9 +15,9 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
+        "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target firestaff_m10",
+        "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
@@ -25,7 +25,7 @@
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 90%] Built target firestaff_m10",
+        "[ 92%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -35,11 +35,11 @@
   "chainedGates": [
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py",
         "--json",
         "--source",
-        "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
       ],
       "covers": "command queue -> movement/turn state -> viewport wall redraw and presentation source chain",
       "expectedStatus": null,
@@ -63,7 +63,7 @@
         "  ],",
         "  \"gate\": \"pass381_dm1_v1_movement_viewport_walls_source_lock\",",
         "  \"passed\": true,",
-        "  \"sourceRoot\": \"/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source\"",
+        "  \"sourceRoot\": \"/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source\"",
         "}"
       ],
       "passed": true,
@@ -72,14 +72,14 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py"
       ],
       "covers": "PC34 input, queue, F0380, F0365/F0366 and command-core regressions",
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/trv2/work/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
       "passed": true,
       "returncode": 0,
@@ -87,7 +87,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_pass402_dm1_v1_movement_cooldown_order.py"
       ],
       "covers": "cooldown ageing before F0380 and no same-tick post-decrement",
@@ -121,7 +121,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py"
       ],
       "covers": "party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain",
@@ -140,7 +140,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass406_dm1_v1_game_loop_redraw_cadence.py"
       ],
       "covers": "game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering",
@@ -149,7 +149,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:6175-6291; main_loop_m11.c:1866-1878; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:6252-6422; main_loop_m11.c:2114-2126; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -159,7 +159,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_pass395_dm1_v1_viewport_walls_source_runtime_lock.py"
       ],
       "covers": "wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract",
@@ -193,7 +193,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"
       ],
       "covers": "projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards",
@@ -211,7 +211,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py"
       ],
       "covers": "visible viewport cells are map-backed and agree with movement collision square state",
@@ -240,7 +240,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_field_zone_aspect_clip_gate.py"
       ],
       "covers": "field/teleporter zone/aspect clipping behind nearer blockers",
@@ -248,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /home/trv2/work/firestaff/src/engine/m11_game_view.c:12327",
-        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/src/engine/m11_game_view.c:22117",
+        "- Firestaff field rows/zones: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:12617",
+        "- Firestaff source viewport draw order: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:22407",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -257,10 +257,10 @@
         "- ReDMCSB DUNVIEW.C:6831 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);",
         "- ReDMCSB DUNVIEW.C:7554 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M607_VIEW_SQUARE_D1L]], C713_ZONE_WALL_D1L);",
         "- ReDMCSB DUNVIEW.C:8159 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);",
-        "- ReDMCSB F0113 field clip: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
-        "- ReDMCSB F0791 source-zone bitmap clip: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
-        "- ReDMCSB F0635 layout-zone clip: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C:2052",
-        "- ReDMCSB DEFS wall zones: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
+        "- ReDMCSB F0113 field clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
+        "- ReDMCSB F0791 source-zone bitmap clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
+        "- ReDMCSB F0635 layout-zone clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C:2052",
+        "- ReDMCSB DEFS wall zones: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
       ],
       "passed": true,
       "returncode": 0,
@@ -268,7 +268,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_palette_source_lock_gate.py"
       ],
       "covers": "single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming",
@@ -276,11 +276,11 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /home/trv2/work/firestaff/src/engine/m11_game_view.c:15462",
-        "- Firestaff palette apply: /home/trv2/work/firestaff/src/engine/m11_game_view.c:10771",
-        "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
-        "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
-        "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
+        "- Firestaff palette compute: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:15752",
+        "- Firestaff palette apply: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:11061",
+        "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
+        "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
+        "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
       ],
       "passed": true,
       "returncode": 0,
@@ -288,7 +288,7 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass434_dm1_v1_original_viewport_crop_readiness_gate.py"
       ],
       "covers": "original viewport crop/source readiness is available",
@@ -310,7 +310,7 @@
   "expectedBlockerGates": [
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py"
       ],
       "covers": "remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven",
@@ -334,7 +334,7 @@
   "gate": "dm1_v1_viewport_movement_completion_matrix",
   "passed": true,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
     {
       "function": "GAMELOOP main input/redraw loop",
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-24T23:18:26.227109+00:00"
+  "timestampUtc": "2026-05-27T20:52:07.603899+00:00"
 }
