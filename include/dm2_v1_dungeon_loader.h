@@ -12,6 +12,31 @@
  *   - Weather zones (rain, fog)
  * Source: SKULL.ASM (522128 lines disassembly) */
 
+/* PROBE_NOTES — DM2 DUNGEON.DAT header contract (PC English, 39437 bytes):
+ *
+ *   Byte offset  0: uint16_le: 0x0000 (reserved/padding)
+ *   Byte offset  2: uint16_le: 0x4731 ("G1" format magic/version, ASCII)
+ *   Byte offset  4: uint16_le: 0x002c (44) — first level data offset or header size
+ *   Byte offset  6: uint16_le: 0x001c (28) — LEVEL COUNT
+ *   Byte offset  8: uint16_le: 0x0101 (257) — dungeon seed
+ *   Byte offset 10: uint16_le: 0x0938 (2360) — dungeon flags/metadata
+ *   Byte offset 12: uint16_le: 0x0035 (53) — ???
+ *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
+ *   Byte offset 16: uint16_le: 0x0240 (576) — ???
+ *   ...
+ *   Level descriptors follow header, 8 bytes each:
+ *     byte[0]: level_type (0=OUTDOOR, 1=INDOOR, 2=BUILDING)
+ *     byte[1]: level_width (1-64)
+ *     byte[2]: level_height (1-64)
+ *     bytes[4-5]: offset low word (LE uint16)
+ *     bytes[6-7]: offset high word (LE uint16)
+ *   Tile data: column-major uint16[level_width * level_height]
+ *   Square type stored in lower 5 bits (0x1F mask).
+ *
+ *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
+ *   NOTE: Current loader reads level_count from byte offset 0 (returns 0).
+ *   Correct reading: byte offset 6. Stub needs SKULL.ASM confirmation update. */
+
 #define DM2_V1_MAX_LEVELS 30
 #define DM2_V1_MAX_MAP_SIZE 64
 

@@ -15,6 +15,7 @@
 #include "firestaff_dungeon_query.h"
 #include "dm1_v2_anim_timing.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "dm2_v1_boot.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -141,6 +142,22 @@ static void fs_game_render_viewport(FS_GameState *state) {
         /* Delegate to the CSB viewport renderer (which calls
          * dm1_viewport_3d_draw_frame internally). */
         csb_v1_viewport_render_frame(cv, dir, px, py);
+
+    } else if (state->config.game == FS_GAME_DM2) {
+        /* ── DM2 path: DM2 V1 viewport renderer ── */
+        DM2_V1_BootProfile *boot = (DM2_V1_BootProfile *)state->dm2_boot;
+        if (boot && boot->dm2_state) {
+            (void)dm2_v1_runtime_render_frame(state->party_direction,
+                                               state->party_x, state->party_y);
+        } else {
+            /* DM2 boot not complete — render placeholder ceiling/floor */
+            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 4;  /* dark red ceiling */
+            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 6;  /* brown floor */
+        }
 
     } else {
 
@@ -337,6 +354,38 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             config->game, config->version,
             state->config.window_width, state->config.window_height);
     }
+
+    /* ── DM2 V1 boot profile init ── */
+    if (state->config.game == FS_GAME_DM2) {
+        static DM2_V1_BootProfile s_dm2_boot;
+        dm2_v1_boot_profile_init(&s_dm2_boot);
+        /* Scan assets in data_dir/dm2/ */
+        if (state->config.data_dir) {
+            char scan_dir[512];
+            snprintf(scan_dir, sizeof(scan_dir), "%s/dm2", state->config.data_dir);
+            (void)dm2_v1_boot_scan_assets(&s_dm2_boot, scan_dir);
+        } else {
+            (void)dm2_v1_boot_scan_assets(&s_dm2_boot, "~/.firestaff/data/dm2");
+        }
+        /* Set save root */
+        if (state->config.save_dir) {
+            dm2_v1_boot_set_save_root(&s_dm2_boot, state->config.save_dir);
+        } else {
+            dm2_v1_boot_set_save_root(&s_dm2_boot, NULL);
+        }
+        dm2_v1_boot_print_summary(&s_dm2_boot);
+        /* Store in state */
+        state->dm2_boot = (void *)&s_dm2_boot;
+        /* Print diagnostics */
+        if (!config->skip_menu) {
+            char diag[1024];
+            size_t dn = dm2_v1_diagnostic_report(&s_dm2_boot, diag, sizeof(diag));
+            if (dn > 0 && dn < sizeof(diag)) {
+                printf("%.*s", (int)dn, diag);
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -448,6 +497,12 @@ void fs_game_tick_v1(FS_GameState *state) {
     /* dm1_creature_ai_tick() — when fully wired */
     /* 4. Apply pending damage */
     /* dm1_combat_apply_pending_damage_pc34() — when fully wired */
+
+    /* DM2 V1: delegate to DM2 runtime tick if DM2 boot profile is active */
+    if (state->config.game == FS_GAME_DM2 && state->dm2_boot) {
+        dm2_v1_runtime_tick();
+    }
+
     state->frame_count++;
 }
 
