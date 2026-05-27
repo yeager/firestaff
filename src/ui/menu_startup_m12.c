@@ -3469,7 +3469,7 @@ static const char *g_game_select_tags_ready[] = {
     _("V1 / V2"),
     _("V1 / V2"),
     _("V1 Only (Phase 1)"),    /* nexus1 — V2 not yet available */
-    _("V1 Only (Phase 0)")      /* theron — Phase 0 provenance gate */
+    _("V1 Only (Phase 1)")      /* theron — Track 02 provenance gate passed */
 };
 static const char *g_game_select_tags_missing[] = {
     _("No data files"),
