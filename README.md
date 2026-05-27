@@ -65,7 +65,7 @@ All releases include SHA256 checksums. See [RELEASE_NOTES.md](./RELEASE_NOTES.md
 
    **Dungeon Master (DM1)**
    ```
-   ~/.firestaff/data/
+   ~/.firestaff/data/dm1/
      DUNGEON.DAT   ← DM1 dungeon data
      GRAPHICS.DAT  ← DM1 graphics
    ```

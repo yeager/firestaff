@@ -97,7 +97,7 @@ static const M12_GameVersionSpec g_games[] = {
 };
 
 static const char* const g_assetCandidateSubdirs[] = {
-    "", "dm1", "csb", "dm2", "nexus",
+    "dm1", "", "csb", "dm2", "nexus",
     "dm1-multilingual", "theron", "theron/jp", "theron/us", NULL
 };
 

@@ -45,7 +45,9 @@ static const char* find_graphics_dat(char* buf, size_t cap) {
     if (file_exists("GRAPHICS.DAT")) return "GRAPHICS.DAT";
     home = getenv("HOME");
     if (home && buf && cap > 0) {
-        int n = snprintf(buf, cap, "%s/.firestaff/data/GRAPHICS.DAT", home);
+        int n = snprintf(buf, cap, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        n = snprintf(buf, cap, "%s/.firestaff/data/GRAPHICS.DAT", home);
         if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
     }
     return NULL;
