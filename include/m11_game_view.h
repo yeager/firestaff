@@ -322,11 +322,23 @@ typedef struct {
      *
      * Source anchors: COMMAND.C:2096-2106 cooldown gate, CLIKMENU.C:278-329
      * collision, MOVESENS.C:752-818 sensor/scent, GAMELOOP.C:69-155
-     * timeline/redraw cadence. */
+     * timeline/redraw cadence.
+     *
+     * p5_camera: private camera controller for V2 presentation interpolation.
+     *   Initialized in M11_GameView_Init, ticked in m11_apply_dm1_v1_pipeline_tick
+     *   after each accepted movement command.  When smoothing is disabled the
+     *   camera stays inactive and camera_offset_x/y remain zero (V1 path unchanged). */
     int camera_offset_x;
     int camera_offset_y;
     int16_t camera_interpolated_facing;
     int camera_duration_ms;
+    struct DM1_V2_CameraController_P5 {
+        int logicalX, logicalY, visualX, visualY;
+        int fromX, fromY, targetX, targetY;
+        int16_t facingDir, fromFacingDir, targetFacingDir;
+        int32_t elapsedMs, durationMs;
+        int active, turning;
+    } p5_camera;
 } M11_GameViewState;
 
 /* Spell casting API */

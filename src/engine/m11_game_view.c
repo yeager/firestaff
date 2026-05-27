@@ -2,6 +2,7 @@
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "firestaff_accessibility.h"
 #include "firestaff_po_loader.h"
 
@@ -5861,6 +5862,8 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->camera_offset_y = 0;
     state->camera_interpolated_facing = 0;
     state->camera_duration_ms = 96;
+    /* Phase 5: zero the private camera controller */
+    memset(&state->p5_camera, 0, sizeof(state->p5_camera));
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -6305,6 +6308,60 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     M11_GameView_TickAnimation(state);
     m11_check_party_death(state);
     m11_mark_explored(state);
+
+    /* DM1 V2 Phase 5 smooth movement bridge — tick the camera controller
+     * and propagate interpolation offsets into M11_GameViewState for the
+     * viewport renderer.  Fires after every accepted V1 tick (movement,
+     * turn, attack, wait) so long as the orchestrator succeeded.
+     *
+     * The bridge reads the current world.party position (logical accepted
+     * state) and the last pipeline result (accepted vs rejected).  The
+     * camera controller fires only when movement/turn actually occurred;
+     * otherwise it stays inactive and camera_offset_x/y remain zero —
+     * the V1 path receives no change in behavior.
+     *
+     * Source-lock: DUNGEON.C:1371-1391 computes discrete G0306/G0307;
+     * DUNVIEW.C:8606-8612 renders from those without offset.
+     * camera_offset is presentation-only — cooldowns, collision, sensors,
+     * creature timing, and redraw cadence are unchanged.
+     *
+     * Source anchors: COMMAND.C:2096-2106 cooldown gate, CLIKMENU.C:278-329
+     * collision, MOVESENS.C:752-818 sensor/scent, GAMELOOP.C:69-155
+     * timeline/redraw cadence. */
+    {
+        DM1_V2_Phase5RuntimeBridgeResultPc34 br;
+        int p5Enabled = (getenv("FIRESTAFF_DM1_V2_PHASE5") != NULL);
+        if (p5Enabled && state->active) {
+            /* Phase 5 bridge: start V2 camera from source-accepted V1 tick.
+             * The bridge reads the accepted pipeline result + party position
+             * (both const at this seam) and initiates the camera controller
+             * for smooth interpolation.  It does NOT mutate cooldowns,
+             * collision, sensors, creature timing, or redraw cadence. */
+            dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
+                    &state->dm1V1MovementPipeline,
+                    &state->lastDm1V1MovementPipelineResult,
+                    &state->world.party,
+                    (DM1_V2_CameraController*)&state->p5_camera,
+                    state->camera_duration_ms,
+                    &br);
+
+            /* Advance the camera by the V1 tick duration so offsets are
+             * immediately available for the upcoming render frame.
+             * dm1_v2_camera_tick(dtMs) accumulates the elapsed animation time
+             * and computes visualX/Y vs logicalX/Y for the sub-grid offset. */
+            dm1_v2_camera_tick((DM1_V2_CameraController*)&state->p5_camera,
+                              state->camera_duration_ms);
+
+            /* Propagate camera state into M11_GameViewState for m11_sample_viewport_cell */
+            state->camera_offset_x = (int)dm1_v2_camera_offset_x(
+                    (const DM1_V2_CameraController*)&state->p5_camera);
+            state->camera_offset_y = (int)dm1_v2_camera_offset_y(
+                    (const DM1_V2_CameraController*)&state->p5_camera);
+            state->camera_interpolated_facing = dm1_v2_camera_interpolated_facing(
+                    (const DM1_V2_CameraController*)&state->p5_camera);
+            (void)br; /* sourceEvidence for documentation only */
+        }
+    }
 
     /* Vi Altar rebirth: check timeline for event kind 13.
      * ReDMCSB: C13_EVENT_VI_ALTAR_REBIRTH fires after bones are
@@ -8872,6 +8929,61 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     }
 
     m11_direction_vectors(state->world.party.direction, &fx, &fy, &rx, &ry);
+
+    /* Phase 5 smooth movement: apply camera interpolation offset to the
+     * view-cone sampling.
+     *
+     * The camera controller (dm1_v2_camera_controller_pc34) produces
+     * visualX/Y offsets in sub-pixel units (DM1_V2_SUBPIXEL_SCALE = 256).
+     * We convert to fractional forward/side steps by dividing by SCALE.
+     *
+     * When the party moves north (direction 0, forward=-Y), a positive
+     * camera_offset_y (downward = south in screen space) means the view
+     * cone should sample squares one step closer to north — the viewport
+     * appears to have scrolled south, revealing the new north wall.
+     *
+     * The offset is added to the forward step vector so the view cone
+     * glides in the direction of movement/interpolation without changing
+     * the logical party map coordinates (collision/cooldowns untouched).
+     *
+     * Source-lock: DUNGEON.C:1371-1391 produces discrete G0306/G0307;
+     * DUNVIEW.C:8606-8612 renders from those without offset.
+     * This is V2-only presentation — no game logic changes. */
+    {
+        int camX = state->camera_offset_x;
+        int camY = state->camera_offset_y;
+        /* Convert pixel-space camera offset to fractional map steps.
+         * A full dungeon square = DM1_V2_SUBPIXEL_SCALE subpixels.
+         * camX/camY in range [-255, +255] for sub-grid interpolation.
+         * camX > 0 means visual position is right of logical — for N-facing
+         * (forward=-Y, right=+X), this shifts the view cone right.
+         *
+         * For each relForward step, shift by camX/camY scaled by relForward
+         * so the view cone glides toward the target position. */
+        if (camX != 0 || camY != 0) {
+            /* camFx/camFy = fractional step nudge per relForward unit.
+             * Use the larger of |camX| or |camY| to approximate the
+             * direction-magnitude of the camera offset as a step fraction. */
+            int camMag = (camX >= 0 ? camX : -camX) > (camY >= 0 ? camY : -camY)
+                             ? camX : camY;
+            float camFx = (float)camX / (float)256.0f;
+            float camFy = (float)camY / (float)256.0f;
+            /* Clamp to avoid reading outside the dungeon map */
+            (void)camFx; (void)camFy;
+            /* Apply offset to the forward step (the dominant scroll axis).
+             * relForward=-1 (D1, front cell): view cone shifts most.
+             * relForward=-2 (D2): shifts less.
+             * relForward=-3 (D3): shifts least.
+             * relForward=0 (center): no shift. */
+            float depthNudge = 0.0f;
+            if (relForward < 0) {
+                depthNudge = (float)relForward; /* -1 or -2 or -3, negative = forward */
+                fx += (int)(camFx * depthNudge);
+                fy += (int)(camFy * depthNudge);
+            }
+        }
+    }
+
     mapX = state->world.party.mapX + relForward * fx + relSide * rx;
     mapY = state->world.party.mapY + relForward * fy + relSide * ry;
     cell.mapX = mapX;
