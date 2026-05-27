@@ -74,17 +74,17 @@ int main(void) {
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB Launch direct click should be handled")) return 1;
-    if (!expect(state.launchRequested == 0, "CSB hash-matched assets must not request runtime launch yet")) return 1;
+    if (!expect(state.launchRequested == 1, "CSB hash-matched assets should request runtime launch")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "CSB launch blocker should show message")) return 1;
-    if (!expect(state.messageLine1 && strcmp(state.messageLine1, "RUNTIME NOT READY") == 0,
-                "CSB launch blocker should explain runtime is not ready")) return 1;
-    if (!render_smoke_nonblank(&state, "CSB blocker message")) return 1;
+    if (!expect(state.messageLine1 && strcmp(state.messageLine1, "RUNTIME NOT READY") != 0,
+                "CSB launch transition should not report the old runtime blocker")) return 1;
+    if (!render_smoke_nonblank(&state, "CSB ready message")) return 1;
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 0, "CSB launch intent remains invalid even when version is matched")) return 1;
+    if (!expect(intent.valid == 1, "CSB launch intent is valid when version is matched")) return 1;
     if (!expect(intent.gameId && strcmp(intent.gameId, "csb") == 0, "CSB intent should still identify CSB for diagnostics")) return 1;
 
-    puts("ok: CSB V1 hash-matched launcher path renders options/blocker views and stays blocked");
-    puts("sourceEvidence=ReDMCSB CSB startup/utility payload strings require dungeon/graphics plus CSB save-game handling; menu_startup_m12.c DM1-only handoff guard");
+    puts("ok: CSB V1 hash-matched launcher path renders options/ready views and exposes a launch intent");
+    puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 launch state and LOADSAVE.C F0435 new-game load boundary");
     return 0;
 }

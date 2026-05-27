@@ -66,6 +66,8 @@ typedef struct {
     FS_InputQueue input_queue;
     Nexus_V1_Engine nexus_engine;
     CSB_V1_ViewportConfig csb_viewport;  /* CSB V1 viewport state */
+    /* CSB V1 boot profile — NULL when game != FS_GAME_CSB */
+    void *csb_boot;  /* actually CSB_V1_BootProfile* — use void to avoid circular include */
     /* DM2 V1 boot profile — NULL when game != FS_GAME_DM2 */
     void *dm2_boot;  /* actually DM2_V1_BootProfile* — use void to avoid circular include */
     FS_StartupError last_error;
@@ -80,4 +82,3 @@ void fs_game_run(FS_GameState *state);
 void fs_game_shutdown(FS_GameState *state);
 
 #endif
-

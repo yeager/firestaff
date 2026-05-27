@@ -15,6 +15,7 @@
 #include "firestaff_dungeon_query.h"
 #include "dm1_v2_anim_timing.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v1_boot.h"
 #include "dm2_v1_boot.h"
 #include <string.h>
 #include <stdio.h>
@@ -355,6 +356,32 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             state->config.window_width, state->config.window_height);
     }
 
+    /* ── CSB V1 boot profile init ── */
+    if (state->config.game == FS_GAME_CSB) {
+        static CSB_V1_BootProfile s_csb_boot;
+        csb_v1_boot_profile_init(&s_csb_boot);
+        if (state->config.data_dir) {
+            (void)csb_v1_boot_scan_assets(&s_csb_boot, state->config.data_dir);
+        } else {
+            (void)csb_v1_boot_scan_assets(&s_csb_boot, "~/.firestaff/data");
+        }
+        if (state->config.save_dir) {
+            csb_v1_boot_set_save_root(&s_csb_boot, state->config.save_dir);
+        } else {
+            csb_v1_boot_set_save_root(&s_csb_boot, NULL);
+        }
+        (void)csb_v1_boot_enter_game(&s_csb_boot);
+        csb_v1_boot_print_summary(&s_csb_boot);
+        state->csb_boot = (void *)&s_csb_boot;
+        if (!config->skip_menu) {
+            char diag[1024];
+            size_t dn = csb_v1_boot_diagnostic_report(&s_csb_boot, diag, sizeof(diag));
+            if (dn > 0 && dn < sizeof(diag)) {
+                printf("%.*s", (int)dn, diag);
+            }
+        }
+    }
+
     /* ── DM2 V1 boot profile init ── */
     if (state->config.game == FS_GAME_DM2) {
         static DM2_V1_BootProfile s_dm2_boot;
@@ -601,4 +628,3 @@ void fs_game_shutdown(FS_GameState *state) {
     printf("Firestaff: shutdown\n");
     state->running = 0;
 }
-

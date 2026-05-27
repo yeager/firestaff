@@ -145,6 +145,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_automap_pc34_compat.c
     src/dm1/dm1_v1_combat_log_pc34_compat.c
     src/dm1/dm1_v1_custom_dungeon_loader.c
+    src/csb/csb_v1_boot.c
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
     src/engine/colorblind_m11.c
@@ -587,6 +588,23 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_launch_blocker_m12
         COMMAND test_csb_v1_launch_blocker_m12
+    )
+
+    add_executable(test_csb_v1_boot_profile_smoke
+        tests/test_csb_v1_boot_profile_smoke.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_boot_profile_smoke PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_boot_profile_smoke
+        COMMAND test_csb_v1_boot_profile_smoke
     )
 
     add_executable(test_asset_find_by_hash
