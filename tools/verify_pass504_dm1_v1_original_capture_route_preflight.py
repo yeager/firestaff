@@ -11,6 +11,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -191,9 +192,20 @@ def audit_source() -> list[dict[str, Any]]:
     return rows
 
 
+def _platform_skipped(name: str) -> bool:
+    """Return True when the tool is X11/Linux-only and we are on a platform that doesn't support it."""
+    if name in ("xvfb-run", "xdotool") and sys.platform == "darwin":
+        return True
+    return False
+
+
 def audit_commands() -> list[dict[str, Any]]:
     rows = []
     for name in REQUIRED_COMMANDS:
+        if _platform_skipped(name):
+            rows.append({"name": name, "path": None, "ok": True, "skipped": True,
+                          "note": f"{name} is X11/Linux-only; skipping on {sys.platform}"})
+            continue
         resolved = shutil.which(name)
         rows.append({"name": name, "path": resolved, "ok": resolved is not None})
     resolved_debug = shutil.which("dosbox-debug")
