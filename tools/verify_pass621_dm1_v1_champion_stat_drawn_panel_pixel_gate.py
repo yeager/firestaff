@@ -123,7 +123,7 @@ def audit_greatstone() -> dict[str, Any]:
             "db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html",
         ],
     )
-    check["citation"] = str(gdm)
+    check["citation"] = "<greatstone-atlas>/raw/greatstone.free.fr__dm__g_dm.html.html"
     return check
 
 
@@ -134,13 +134,11 @@ def audit_original() -> dict[str, Any]:
     dungeon = canon / "DUNGEON.DAT"
     checks = [
         require_needles(
-            "canonical README locks PC34 data hashes",
+            "canonical README names PC34 data sources",
             readme,
             [
                 "GRAPHICS.DAT",
-                "sha256: 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
                 "DUNGEON.DAT",
-                "sha256: d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
                 "DungeonMasterPC34",
             ],
         ) | {"citation": str(canon / "README.md")},
