@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-10
 
-Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane. This matrix is a source/evidence contract only; it does not enable CSB launch, rendering, gameplay, save compatibility, or original-overlay claims.
+Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane. This matrix now recognizes the hash-matched M12 launch/profile boundary; rendering, gameplay, save compatibility, New Adventure, and original-overlay parity still require their own gates.
 
 Primary references stay local on N2:
 
@@ -17,7 +17,7 @@ Primary references stay local on N2:
 |---|---:|---|---|---|
 | `reference_inventory` | 8/10 | `SOURCE_LOCKED_PARTIAL` | CSB-specific source and original payload identities must be fixed before launch/runtime work counts. | Fill remaining platform/version inventory gaps without substituting Amiga/Atari assets. |
 | `definition_matrix` | 10/10 | `MATCHED_DEFINITION_ONLY` | This document plus `csb_v1_parity_surface_matrix` define the CSB V1 DoD surfaces and non-claims. | Keep the matrix verified whenever completion points change. |
-| `launch_smoke` | 2/10 | `POSITIVE_BLOCKER_RENDER_SMOKE` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the DM1-only startup gate. Current proof is a positive front-door render smoke plus source-locked CSB reference QuickPlay/load-route boundaries and a deliberate runtime blocker: matched CSB assets can render options/blocker surfaces, but cannot request runtime launch. | The experimental CSB launch-intent fixture now consumes the explicit Atari ST media manifest and source workflow anchors while keeping production CSB intent invalid; next proof must add runtime/capture handling before launch is enabled. |
+| `launch_smoke` | 4/10 | `PROFILE_INTENT_READY` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the old DM1-only startup gate. Current proof is a positive front-door render smoke plus source-locked CSB reference QuickPlay/load-route boundaries: matched CSB assets can now request a CSB M12 launch intent, but full playability and capture parity remain outside this row. | Next proof must add runtime/capture handling after the CSB profile handoff. |
 | `core_input_movement` | 0/15 | `BLOCKED_RUNTIME` | CSB input must prove mode-specific mouse/keyboard routing from CSB state, including Utility/reincarnate/adventuring modes. | Add CSB state-backed input/movement fixtures. |
 | `viewport_ui_render` | 0/20 | `BLOCKED_CAPTURE` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. | Build capture/overlay fixtures and compare against Firestaff output. |
 | `gameplay_systems` | 0/15 | `BLOCKED_RUNTIME` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points; it needs CSB source/runtime gates. | Land narrow CSB gameplay source/runtime gates. |
@@ -26,8 +26,8 @@ Primary references stay local on N2:
 
 ## CSB front-door render smoke and launch blocker gate
 
-- `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and blocker-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 0` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 0`. This is a positive front-door render smoke with a deliberate runtime blocker: it prevents matched CSB assets from falling into the DM1-only runtime while preserving diagnostic game/version identity.
-- `csb_v1_experimental_launch_intent_fixture` is an evidence-only fixture for the future CSB launch-intent contract. It consumes `csb_v1_atari_asset_pair_manifest.json`, requires the selected Atari ST `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT`, audits ReDMCSB primary CSB dungeon/new-adventure gates, and verifies `menu_startup_m12.c` still keeps production launch support DM1-only. It explicitly keeps `valid_intent_allowed=false` and makes no runtime/render/gameplay claim.
+- `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and ready-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 1` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 1` for the CSB game ID. This is a positive front-door render smoke for the launcher/profile boundary, not a full gameplay claim.
+- `csb_v1_experimental_launch_intent_fixture` is the reviewed CSB launch-intent fixture. It consumes `csb_v1_atari_asset_pair_manifest.json`, requires the selected Atari ST `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT`, audits ReDMCSB primary CSB dungeon/new-adventure gates, and verifies `menu_startup_m12.c` includes CSB in the production launch-intent guard. It keeps full runtime/render/gameplay parity as non-claims.
 - `csb_v1_quickplay_load_route_source_lock` source-locks the CSB/CSBWin reference QuickPlay route as replay playback only (`PlayfileIsOpen()` gates `OPT_QUICKPLAY`) and the shared load path as dungeon/signature/graphics/timer setup (`_ReadEntireGame`, `openGraphicsFile`, `HandleMouseEvents`). It also audits ReDMCSB primary CSB save/new-adventure routing so this launch evidence cannot be misread as production CSB runtime support in Firestaff.
 - pass547_csb_v1_runtime_readiness_backfill source-locks the remaining runtime/capture readiness blocker: ReDMCSB requires a CSB-specific save/header/runtime lane while Firestaff still blocks CSB launch before the downstream DM1-shaped M11 title/entrance handoff, CSB.DAT built-in resolver, and DM1 capture fixture. It keeps CSB V1 at 20/100 and makes no launch/runtime/render claim.
 
@@ -47,7 +47,7 @@ Primary references stay local on N2:
 
 ## Non-claims
 
-- No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.
+- No CSB render, gameplay, save compatibility, New Adventure, or pixel parity is claimed by this matrix.
 - No Firestaff runtime code is modified by this matrix.
 - DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence.
 

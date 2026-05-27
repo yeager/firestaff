@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
 STATUS = "PASS577_DM1_V1_D0_D1_VISIBLE_SQUARE_DRAW_ORDER_SOURCE_LOCKED"
 
@@ -133,7 +133,7 @@ REDMCSB_CHECKS = [
 ]
 
 LOCAL_CHECKS = [
-    ("firestaff_combined_c_test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", 858, 1012, [
+    ("firestaff_combined_c_test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", 1024, 1195, [
         "static void test_d0_d1_visible_square_draw_order_gate(void)",
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
@@ -146,7 +146,7 @@ LOCAL_CHECKS = [
         "dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C)",
         "test_d0_d1_visible_square_draw_order_gate();",
     ]),
-    ("firestaff_metadata_tables", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", 80, 170, [
+    ("firestaff_metadata_tables", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", 150, 265, [
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
         "DM1_VIEW_SQUARE_D1C, 1,  0",

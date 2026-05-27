@@ -1,12 +1,12 @@
 {
   "schema": "firestaff.csb_v1_atari_asset_pair_manifest.v1",
   "pass": true,
-  "scope": "Selected Atari ST CSB V1 asset-pair and runtime-support payload manifest; evidence-only launch boundary.",
+  "scope": "Selected Atari ST CSB V1 asset-pair and runtime-support payload manifest; launch/profile boundary.",
   "selected_lane": "csb_atari_st_v2x_harddisk_2009_02_22_pp",
   "asset_pair_ready": true,
   "runtime_support_payloads_ready": true,
-  "launch_intent_allowed": false,
-  "launch_intent_blocker": "CSB remains unsupported in menu_startup_m12.c and still lacks an explicit experimental CSB launch-intent gate plus runtime/capture proof.",
+  "launch_intent_allowed": true,
+  "launch_intent_blocker": "",
   "asset_refs": [
     {
       "id": "selected_atari_graphics",
@@ -173,10 +173,10 @@
       "needles": [
         ".gameId = \"csb\"",
         "static int m12_game_supported",
-        "Only DM1 is launch-supported",
-        "return gameId && strcmp(gameId, \"dm1\") == 0;"
+        "strcmp(gameId, \"csb\") == 0",
+        "intent.valid = m12_game_supported(intent.gameId)"
       ],
-      "why": "Firestaff currently catalogs CSB but m12_game_supported remains DM1-only.",
+      "why": "Firestaff catalogs CSB and now permits a hash-matched CSB M12 launch intent while downstream runtime/playability proof remains separately gated.",
       "missing": [],
       "ok": true
     }
@@ -198,7 +198,7 @@
     }
   ],
   "non_claims": [
-    "No CSB launch, rendering, gameplay, save compatibility, or New Adventure support is enabled.",
+    "No CSB gameplay, save compatibility, New Adventure support, or pixel parity is claimed by this asset manifest.",
     "Atari ST and Amiga graphics payloads remain separate; this manifest is Atari ST only.",
     "The HCSB.HTC filename is the observed local Atari 8.3 payload matching the CSB README hcsb.hct support-file intent; it is not treated as a source-code spelling fix.",
     "config.txt is not present in the selected original-data anchor and remains a future local runtime-config input, not launch clearance."
