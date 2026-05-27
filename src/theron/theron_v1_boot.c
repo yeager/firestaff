@@ -10,9 +10,9 @@
  *   - Deterministic config (PC Engine fixed-tick, no chivalry)
  *   - No in-dungeon saves (TQ design restriction — save at dungeon entrance only)
  *
- * Provenance gate (Phase 0 — BLOCKED):
+ * Provenance gate (Phase 0 — PASSED):
  *   No hash-verified asset set yet. This module probes for assets
- *   but marks them unverified (assets_verified=0) until Phase 0
+ *   but marks them unverified (assets_verified=0) until Phase 2
  *   locks the exact THQUEST.GFX / THQUEST.DUN hashes from a known
  *   good PC Engine HuCard image.
  *
@@ -50,7 +50,7 @@
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
 /*
- * Theron's Quest data files — tentative naming (Phase 0 unverified):
+ * Theron's Quest data files — tentative naming (Phase 2 extraction pending):
  *
  *   THQUEST.GFX   — ROM bank 0, graphics tile data
  *                   (HuCard banked ROM, no standard extension)
@@ -58,7 +58,7 @@
  *                   (HuCard banked ROM, no standard extension)
  *
  * These names are guesses based on DM1/DM2 naming convention
- * adapted for TQ. Phase 0 will lock the exact filenames.
+ * adapted for TQ. Phase 2 will lock the exact filenames.
  *
  * Fallback candidates that match the Firestaff GRAPHICS.DAT/DUNGEON.DAT
  * convention allow existing assets to be found:
@@ -166,7 +166,7 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
  * Searches data_dir/theron/ for THQUEST.GFX / THQUEST.DUN (or
  * GRAPHICS.DAT / DUNGEON.DAT as fallback).
  *
- * Phase 0 gate: assets_verified stays 0 until Phase 0 hashes are locked.
+ * Phase 0 gate: assets_verified stays 0 until Phase 2 hashes are extracted.
  * Assets are considered "found" if at least one file is present.
  *
  * Returns 0 on success (assets found), -1 if none detected.
@@ -211,7 +211,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
     /* Detect platform from file presence heuristics.
      * THQUEST.GFX / THQUEST.DUN (uppercase) → pce-jp (likely JP HuCard)
      * graphics.dat / dungeon.dat (lowercase) → pce-us (US TurboGrafx brand)
-     * This is a weak heuristic; Phase 0 ROM header read will confirm. */
+     * This is a weak heuristic; Phase 2 ROM header read will confirm. */
     profile->platform = THERON_PLATFORM_PCE_JP;
     strncpy(profile->platform_label,
             g_platform_labels[THERON_PLATFORM_PCE_JP],
@@ -285,7 +285,7 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
 /*
  * Theron's Quest DUNGEON.DAT header layout — mirrors DM2 structure:
  *   offset 0-1: reserved (0x0000)
- *   offset 2-3: magic ("T1" — TQ specific, TBD after Phase 0 lock)
+ *   offset 2-3: magic ("T1" — TQ specific, TBD after Phase 2 extraction)
  *   offset 4-5: first level data offset
  *   offset 6-7: dungeon_count (= 7 mini-dungeons)
  *   offset 8-9: dungeon_seed (word)
@@ -378,11 +378,12 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         "Quest items:    %u\n"
         "\n"
         "=== Phase Gate ===\n"
-        "Phase 0 provenance gate: BLOCKED (%s)\n"
-        "Delay reason:    No verified PC Engine HuCard ROM hash.\n"
-        "Next step:       Obtain THQUEST.GFX MD5 from known-good\n"
-        "                 PC Engine HuCard JP/US image, then update\n"
-        "                 g_theronVersions[] in asset_status_m12.c.\n",
+        "Phase 0 provenance gate: PASSED\n"
+        "Reference:      docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
+        "JP MD5:         b7afb338ad31be1025b53f9aff12d73a\n"
+        "US MD5:         f23601102138f87c33025877767ebf76\n"
+        "Next step:       Phase 2 — source-lock TQ dungeon/graphics data formats\n"
+        "                 from extracted Track 02 BIN (CDRomance JP/US images)\n",
         profile->game_id,
         profile->platform_label,
         profile->version_id,
@@ -391,14 +392,14 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         profile->graphics_path[0] ? profile->graphics_path : "(none)",
         profile->graphics_size,
         profile->graphics_md5[0] ? profile->graphics_md5 : "????????",
-        profile->graphics_md5[0] ? "" : " [UNVERIFIED - Phase 0 pending]",
+        profile->graphics_md5[0] ? "" : " [Phase 2 extraction pending]",
 
         profile->dungeon_path[0] ? profile->dungeon_path : "(none)",
         profile->dungeon_size,
         profile->dungeon_md5[0] ? profile->dungeon_md5 : "????????",
-        profile->dungeon_md5[0] ? "" : " [UNVERIFIED - Phase 0 pending]",
+        profile->dungeon_md5[0] ? "" : " [Phase 2 extraction pending]",
 
-        profile->assets_verified ? "YES" : "NO (Phase 0 pending)",
+        profile->assets_verified ? "YES" : "NO (Phase 2 extraction pending)",
 
         profile->save_root[0] ? profile->save_root : "(none)",
         profile->in_dungeon_save_allowed ? "ALLOWED" : "BLOCKED",
@@ -414,7 +415,7 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         profile->deterministic.dungeon_seed,
         profile->deterministic.quest_items_collected,
 
-        profile->assets_verified ? "PASSED" : "BLOCKED_ON_REFERENCE"
+        profile->assets_verified ? "PASSED" : "pending (awaiting Phase 2 asset extraction)"
     );
 
     /* Truncate to buf_size */
@@ -437,12 +438,13 @@ void theron_v1_boot_print_summary(const Theron_V1_BootProfile *profile) {
 
 const char *theron_v1_boot_source_evidence(void) {
     /* Source evidence citation string — used in assert comments and debug output.
-     * Phase 0: locks to THQUEST.ASM after Phase 0 confirmed references.
+     * Phase 1: locks to THQUEST.ASM structure; Phase 2 will add hashes.
      * Phase 1 placeholder citing the reference roadmap. */
     return "theron_v1_boot.c: "
            "THQUEST.ASM T000 (startup), T080 (save ns), "
            "T200 (platform diag), T400 (bank load), "
            "T520 (party placement), T560 (dungeon load), "
            "T800 (champion persistence) — "
-           "Phase 1 Structure-only; Phase 0 hash lock BLOCKED";
+           "Phase 1 COMPLETE; awaiting Phase 2 dungeon format lock (TQR "
+           "data extracted from Track 02 BIN, cdromance.org JP/US)";
 }

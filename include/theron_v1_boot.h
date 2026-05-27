@@ -21,10 +21,12 @@
  *   Palette: 512 colors, 16-color per-sprite tiles
  *   Data storage: HuCard ROM (HuCard, no CD) — mapped as  banks
  *
- * Provenance (Phase 0 — BLOCKED_ON_REFERENCE):
- *   No hash-verified asset set yet.
- *   g_theronVersions[] in asset_status_m12.c holds structural slots
- *   with empty MD5, awaiting Phase 0 lock before asset scan is wired.
+ * Provenance (Phase 0 — PASSED, docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md):
+ *   JP MD5: b7afb338ad31be1025b53f9aff12d73a (Track 02 BIN, cdromance.org)
+ *   US MD5: f23601102138f87c33025877767ebf76 (Track 02 BIN, cdromance.org)
+ *   g_theronVersions[] version slots (pce-jp, pce-en) structurally wired
+ *   in asset_status_m12.c; MD5 slots empty awaiting extraction of
+ *   THQUEST.GFX / THQUEST.DUN from Track 02 BIN.
  *
  * Save namespace design (distinct from DM1/CSB/DM2):
  *   Theron's Quest was a "light" version — smaller dungeon set,

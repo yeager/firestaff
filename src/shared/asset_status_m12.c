@@ -67,13 +67,25 @@ static const M12_VersionSpec g_nexusVersions[] = {
 };
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
- * BLOCKED_ON_REFERENCE: no verified hash set yet.
- * Versions array is present to maintain structural parity with other games.
- * Asset scanning subdirs include "theron" but match only succeeds once
- * hash evidence is locked (Phase 0 gate). */
+ * Phase 0 gate PASSED (2026-05-27): CD-ROM Track 02 hashes confirmed from cdromance.org.
+ * Data track is Track 02 .bin from CUE/BIN disc images.
+ * JP: MD5 b7afb338ad31be1025b53f9aff12d73a (Track 02 .bin)
+ * US: MD5 f23601102138f87c33025877767ebf76 (Track 02 .bin)
+ * OneDrive: 1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8 (DMFiles/Games folder)
+ * Subdir candidates: theron/jp/, theron/us/, theron/ */
+static const char* const g_theronTrack02Names[] = {
+    "track02.bin",
+    "Theron's Quest (Japan) (Track 02).bin",
+    "Theron's Quest (US) (Track 02).bin",
+    "THQUEST.BIN",
+    NULL
+};
+
 static const M12_VersionSpec g_theronVersions[] = {
-    {"theron", "pce-en", "PC Engine English (HuCard)", "PCE EN", NULL, ""},
-    {"theron", "pce-jp", "PC Engine Japanese (HuCard)", "PCE JP", NULL, ""}
+    {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
+     g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a"},
+    {"theron", "pce-en", "TurboGrafx-16 US (Track 02)", "TG16 US",
+     g_theronTrack02Names, "f23601102138f87c33025877767ebf76"}
 };
 
 static const M12_GameVersionSpec g_games[] = {
