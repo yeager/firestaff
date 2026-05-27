@@ -55,13 +55,13 @@ int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
     int changed;
-    const int entryCount = M12_StartupMenu_GetEntryCount();
-    const int cardCount = entryCount + 1; /* brand card + entries */
-    const int cardW = (1920 - 2 * 48 - 22 * (cardCount - 1)) / cardCount;
-    const int csbCardCenterX = 48 + 2 * (cardW + 22) + cardW / 2;
-    const int cardCenterY = (170 + (1080 - 130)) / 2;
+    const int gridLeft = 42 + 390 + 44;
+    const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
+    const int cardH = ((1080 - 130) - 152 - 22) / 2;
+    const int csbCardCenterX = gridLeft + 1 * (cardW + 22) + cardW / 2;
+    const int cardCenterY = 152 + cardH / 2;
     const int launchCenterX = 960;
-    const int launchCenterY = 669;
+    const int launchCenterY = 270 + 560 - 54 - 24 + 27;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);

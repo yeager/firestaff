@@ -151,6 +151,7 @@ typedef enum {
     M12_ASPECT_4_3,
     M12_ASPECT_16_9,
     M12_ASPECT_16_10,
+    M12_ASPECT_32_9,
     M12_ASPECT_COUNT
 } M12_AspectRatio;
 
