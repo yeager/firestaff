@@ -20,7 +20,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### DM1 V2.0 / V2.1 / V2.2
 
 - 🔧 Phase 3 - Modern UI overlay hardening: HUD/action route gates exist; remaining work is optional inventory, champion, rune, and action-panel polish without bypassing V1 command routes or inventory transactions.
-- 🔧 Phase 4 - Lighting and visual effects hardening: palette/projectile metadata gates exist; remaining work is full enhanced lighting, shadows, field effects, and deterministic fallback coverage.
+- 🔧 Phase 4 - Lighting and visual effects hardening: palette/projectile metadata gates and field/projectile VFX binding gates exist; remaining work is full enhanced lighting, shadows, broader field effects, and deterministic fallback coverage.
 - 🔧 Phase 5 - Smooth movement presentation hardening: runtime bridge/gates exist; remaining work is broader interpolation coverage while preserving V1 cooldowns, collision, sensors, creature timing, and redraw cadence.
 - 🔧 Phase 6 - Touch/controller ergonomics hardening: route gates exist; remaining work is broader V2-only gesture/controller affordances with V1 touch/click parity preserved.
 - 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash gate exists; remaining work is full side-by-side V1/V2 deterministic input scripts plus screenshot/pixel gates for enhanced presentation.

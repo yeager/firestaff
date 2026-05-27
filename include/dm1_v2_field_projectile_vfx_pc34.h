@@ -28,6 +28,14 @@
 extern "C" {
 #endif
 
+/* Map a DM1 V2 effect family to its V2 particle emitter preset.
+ * Returns -1 when the family has no V2 presentation emitter.
+ *
+ * Source: Firestaff DM1 V2 Phase 4; family inputs are source-locked through
+ * ReDMCSB DEFS.H:421-430 and PROJEXPL.C:95-166. */
+int dm1_v2_vfx_family_to_emitter_preset(
+    DM1_V2_FieldProjectileEffectFamily family);
+
 /* Trigger VFX for a DM1 explosion thing at the given dungeon tile.
  * Fires both the spell overlay and particle emitter.
  * Returns 1 if the thing was recognised, 0 otherwise.
