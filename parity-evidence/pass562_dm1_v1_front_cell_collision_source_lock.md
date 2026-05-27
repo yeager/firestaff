@@ -9,8 +9,8 @@ Status: PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED
 
 ## Firestaff guard
 - dm1_v1_movement_command_core_pc34_compat.c:266-355 keeps blockers before party tuple commit.
-- memory_movement_pc34_compat.c:405-490 owns wall/door/fake-wall legality.
-- memory_movement_pc34_compat.c:820-890 owns the champion-count gated group blocker.
+- memory_movement_pc34_compat.c:408-493 owns wall/door/fake-wall legality.
+- memory_movement_pc34_compat.c:837-911 owns the champion-count gated group blocker.
 - test_dm1_v1_movement_command_core_pc34_compat.c asserts closed door, closed fake-wall, and group blocked-command behavior.
 
 Manifest: parity-evidence/verification/pass562_dm1_v1_front_cell_collision_source_lock/manifest.json

@@ -52,7 +52,7 @@ def main():
     f0702_s,f0702_e,f0702=fn(move,"F0702_MOVEMENT_TryMove_Compat","int")
     order(f0702,["F0701_MOVEMENT_GetStepDelta_Compat(party->direction, moveAction, &dx, &dy);","nx = party->mapX + dx;","if (nx < 0 || nx >= map->width || ny < 0 || ny >= map->height)","if (elementType == DUNGEON_ELEMENT_WALL)","if (elementType == DUNGEON_ELEMENT_DOOR)","if (doorState != 0 && doorState != 1 && doorState != 5)","} else if (elementType == DUNGEON_ELEMENT_FAKEWALL)","if (!(squareByte & 0x04) && !(squareByte & 0x01))","outResult->newMapX = nx;","outResult->resultCode = MOVE_OK;"],"firestaff f0702")
     f0708_s,f0708_e,f0708=fn(move,"F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat","int")
-    order(f0708,["if (party->championCount <= 0) return 0;","if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, moveAction, &moveResult) ||","if (!(squareByte & DUNGEON_SQUARE_MASK_THING_LIST)) return 0;","if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) return 1;"],"firestaff f0708")
+    order(f0708,["if (party->championCount <= 0) return 0;","if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, moveAction, &moveResult) ||","if (!(squareByte & DUNGEON_SQUARE_MASK_THING_LIST)) return 0;","if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {","return 1;"],"firestaff f0708")
     for n in ["pass547 closed door reports door block","pass547 closed fakewall reports wall block","pass547 group marked","pass547 group reaction requested","pass547 group keeps source x","pass547 group keeps source y"]: req(test,n,"runtime assertions")
     runtime="static-runtime-assertions-source-locked"
     status="PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED"
