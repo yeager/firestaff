@@ -105,6 +105,16 @@ if(NEXUS_SOURCES)
     endif()
 endif()
 
+# ── Theron V1 static library ─────────────────────────────────────────
+file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c")
+if(THERON_SOURCES)
+    add_library(firestaff_theron STATIC ${THERON_SOURCES})
+    target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── DM2 V2 static library ──────────────────────────────────────────
 file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c")
 if(DM2_V2_SOURCES)
