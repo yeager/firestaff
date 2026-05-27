@@ -37,6 +37,7 @@ cp "$BIN_SRC" "$MACOS_DIR/Firestaff"
 cp "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
+cp "$ROOT/assets/icons/firestaff.icns" "$RESOURCES_DIR/firestaff.icns"
 cp "$ROOT/assets/branding/firestaff-logo.png" "$RESOURCES_DIR/firestaff-logo.png"
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
