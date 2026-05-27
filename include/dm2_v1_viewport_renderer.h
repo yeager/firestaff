@@ -178,6 +178,7 @@ typedef struct {
 
     /* Rendering state */
     int dirty;                 /* 1=viewport needs full redraw */
+    int tick_count;           /* frame counter for weather animation */
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
