@@ -203,7 +203,7 @@ typedef enum {
     /* Party reordering in dungeon */
     NX_UNSUPPFEAT_PARTY_REORDER   = (1 << 3),
     /* Gangulf revival at temple */
-    NX_UNSUPPFEAT_GANGULF_REvival  = (1 << 4),
+    NX_UNSUPPFEAT_GANGULF_REVIVAL  = (1 << 4),
     /* Kings Wisdom scroll equivalent */
     NX_UNSUPPFEAT_KINGS_WISDOM    = (1 << 5),
     /* Cross-game champion import from DM1/CSB */

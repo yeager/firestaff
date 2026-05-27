@@ -65,7 +65,7 @@ static const Nexus_V1_BootProfile g_defaultProfile = {
                                          | NX_UNSUPPFEAT_SMOOTH_MOVEMENT
                                          | NX_UNSUPPFEAT_SPELL_BOOK_UI
                                          | NX_UNSUPPFEAT_PARTY_REORDER
-                                         | NX_UNSUPPFEAT_GANGULF_REvival
+                                         | NX_UNSUPPFEAT_GANGULF_REVIVAL
                                          | NX_UNSUPPFEAT_KINGS_WISDOM
                                          | NX_UNSUPPFEAT_CROSS_IMPORT
                                          | NX_UNSUPPFEAT_V2_MODES,
