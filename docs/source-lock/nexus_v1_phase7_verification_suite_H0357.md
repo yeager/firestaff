@@ -2,7 +2,7 @@
 **Job:** `Nexus_V1_Phase7_Verification_0439`
 **Status:** ✅ COMPLETE
 **Author:** Firestaff agent (cron)
-**Last revised:** 2026-05-27T05:02 UTC+2
+**Last revised:** 2026-05-27T05:43 UTC+2
 
 ---
 
@@ -19,9 +19,10 @@ manifests tied to exact disc/version hashes.
 **Source:** `docs/NEXUS_FILE_CLASSIFICATION.md` (137 files from Sega Saturn ISO
 Track 1, volume DUNGEONMASTERNEXUS, product T-9111G V1.003, released 1998-02-03).
 
-**Provenance gate:** SHA256 of disc image pending — no disc image present in repo.
-All file hashes are `TODO: pending disc image` until the `.cue/.bin` image is
-acquired and verified. The manifest structure is locked; hash fields are not.
+**Provenance gate:** All 138 file SHA256 hashes computed from live extraction at
+`~/.firestaff/data/nexus/` (Sega Saturn disc T-9111G V1.003, ~115 MB ISO, 1998-02-03).
+Disc image SHA256: `TODO: pending disc image` (only the top-level disc-image hash is TBD;
+individual file hashes are real). Hash manifest: `scripts/fixtures/nexus_v1_disc_file_hashes.py`.
 
 **Real sizes:** `scripts/fixtures/nexus_v1_asset_sizes.py` (auto-generated from
 live scan of `~/.firestaff/data/nexus/`). Contains 138 files.
@@ -34,22 +35,22 @@ Disc structure:
 
 | File | Size (bytes) | Hash (SHA256) | Notes |
 |------|-------------|---------------|-------|
-| LEV00.DGN | 147,456 | TODO: pending disc image | Entry/temple level |
-| LEV01.DGN | 280,576 | TODO: pending disc image | |
-| LEV02.DGN | 272,384 | TODO: pending disc image | |
-| LEV03.DGN | 290,816 | TODO: pending disc image | |
-| LEV04.DGN | 245,760 | TODO: pending disc image | |
-| LEV05.DGN | 266,240 | TODO: pending disc image | |
-| LEV06.DGN | 239,616 | TODO: pending disc image | |
-| LEV07.DGN | 258,048 | TODO: pending disc image | |
-| LEV08.DGN | 303,104 | TODO: pending disc image | |
-| LEV09.DGN | 288,768 | TODO: pending disc image | |
-| LEV10.DGN | 290,816 | TODO: pending disc image | |
-| LEV11.DGN | 278,528 | TODO: pending disc image | |
-| LEV12.DGN | 321,536 | TODO: pending disc image | Largest — boss level |
-| LEV13.DGN | 256,000 | TODO: pending disc image | |
-| LEV14.DGN | 253,952 | TODO: pending disc image | |
-| LEV15.DGN | 270,336 | TODO: pending disc image | Final level |
+| LEV00.DGN | 147,456 | 24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a | Entry/temple level |
+| LEV01.DGN | 280,576 | b359a89ffa344439b6d0d15de223f3211caa7725b13dfdb4461b579c48f06723 | |
+| LEV02.DGN | 272,384 | 93eeb88199fb556647db54aa4985bfa105d3e96d0ae1d9994bfe14882e7e9e09 | |
+| LEV03.DGN | 290,816 | c755828eb5505bf20dd68b8bf39c8269f9124bed5d5aedc23a2047140159d5fc | |
+| LEV04.DGN | 245,760 | bc14337c9eccef67f71de2e63a269f651244ba3724725c73fe0175c6d090f08e | |
+| LEV05.DGN | 266,240 | 2da33e1c7aa6c1727dc641dab9d7e450082d615aa0579c4dc129a800f04538a5 | |
+| LEV06.DGN | 239,616 | 1bb393de892af74e5d14ef6e7e34d9e6a594a1176a4b681bdd6d4eb39a9bd304 | |
+| LEV07.DGN | 258,048 | ac1e6b4587918e8ff29223e1aad4c5ddfcbfb7f845aa2f21ab4f44637592e83c | |
+| LEV08.DGN | 303,104 | 21a06d258a2ab5a0a32336599fd190217775cff0c94d94ade31c918fd4d86db7 | |
+| LEV09.DGN | 288,768 | a5829cdff1f774c4a3a05dc50634abc7f08b4b7c6273ff39e708d9677e3c0943 | |
+| LEV10.DGN | 290,816 | 836777ac6e56ec34d5099520e0c4a18b278fe9b247f81e55b0dd48f986a56ffe | |
+| LEV11.DGN | 278,528 | 59e8145166cfa3350f09c23141aad7ff5641c4d49b96eff1d898193646aa589e | |
+| LEV12.DGN | 321,536 | f4ebc5b838867802e402624ad73bbfb3e00a7cddda651276af5d972051f8bfbb | Largest — boss level |
+| LEV13.DGN | 256,000 | f6a7f0e378b8109e6fae8de1a181fc5223853bf442d1c9f2dca0daab23c8aa13 | |
+| LEV14.DGN | 253,952 | 939719bef2052723a2d145f01b9c0051f1bb4a9faae4672994121ff5f546d835 | |
+| LEV15.DGN | 270,336 | df8ccdf292439cfa53033686aedeaa4e9b3005aa0343760917ed8325b44ef0aa | Final level |
 
 **DGN format evidence (nexus_v1_dungeon.c Layout A / Layout B):**
 - Layout A: first 4 bytes = big-endian `uint16_t width, height` (fails if w > 32)
@@ -69,36 +70,36 @@ ROCKPILE, SCORPION, SCREAMER, SN_FLOOR, SN_WALL, S_SHIELD, S_SWORD, VEXIRK, WORM
 
 | File | Size (bytes) | Hash (SHA256) | Notes |
 |------|-------------|---------------|-------|
-| ANTMAN.MNS | 53,768 | TODO: pending disc image | |
-| BIGWORM.MNS | 53,784 | TODO: pending disc image | |
-| BORKETH.MNS | 67,644 | TODO: pending disc image | |
-| CHAOS.MNS | 88,572 | TODO: pending disc image | |
-| DRA_ZOM.MNS | 83,508 | TODO: pending disc image | Zombie dragon |
-| D_GOLD.MNS | 44,000 | TODO: pending disc image | Dragon |
-| D_RED.MNS | 55,276 | TODO: pending disc image | Dragon |
-| D_SILVER.MNS | 41,952 | TODO: pending disc image | Dragon |
-| GHOST.MNS | 48,840 | TODO: pending disc image | |
-| GIGGLER.MNS | 43,484 | TODO: pending disc image | |
-| GOLEM.MNS | 48,140 | TODO: pending disc image | |
-| GRN_DRA.MNS | 56,976 | TODO: pending disc image | Green dragon |
-| H_HOUND.MNS | 46,364 | TODO: pending disc image | Hell hound |
-| LAS_MON.MNS | 76,232 | TODO: pending disc image | Large monster |
-| LORD_RIB.MNS | 19,500 | TODO: pending disc image | Boss-type |
-| MINI_DRA.MNS | 35,612 | TODO: pending disc image | Mini dragon |
-| MUMMY.MNS | 55,420 | TODO: pending disc image | |
-| OBAKE.MNS | 15,280 | TODO: pending disc image | |
-| OITU.MNS | 46,524 | TODO: pending disc image | |
-| RAT.MNS | 57,496 | TODO: pending disc image | |
-| RED_DRA.MNS | 62,256 | TODO: pending disc image | Red dragon |
-| ROCKPILE.MNS | 57,680 | TODO: pending disc image | |
-| SCORPION.MNS | 53,052 | TODO: pending disc image | |
-| SCREAMER.MNS | 29,668 | TODO: pending disc image | |
-| SN_FLOOR.MNS | 49,764 | TODO: pending disc image | Static object |
-| SN_WALL.MNS | 43,620 | TODO: pending disc image | Static object |
-| S_SHIELD.MNS | 31,164 | TODO: pending disc image | Static object |
-| S_SWORD.MNS | 49,716 | TODO: pending disc image | Static object |
-| VEXIRK.MNS | 51,640 | TODO: pending disc image | |
-| WORM.MNS | 55,832 | TODO: pending disc image | |
+| ANTMAN.MNS | 53,768 | 5c57167d0bd81488f984adb7c195a493da467b3ec0cdcb9f5df07e839bf2843e | |
+| BIGWORM.MNS | 53,784 | bdc1adb40c972eff8f83f4d41c246dc3fa34147e315574227df5b188eed6f929 | |
+| BORKETH.MNS | 67,644 | a4e786cd7793ff166def66e4a9edc166e693354cb673c75df22eec3d6cb9532c | |
+| CHAOS.MNS | 88,572 | a276ae6f7a1eccc1a53ca3a806e92e6c0386c744b1d7669b39444fe220cc8691 | |
+| DRA_ZOM.MNS | 83,508 | bf93cfa72c73dc762908613c9e7d1f360cfb4cb4f9aefcff1ca30ebbe9625e81 | Zombie dragon |
+| D_GOLD.MNS | 44,000 | 34355d6699fbf3ba115d1cae3d071e70848923d8c337e88fe882d98bc201af07 | Dragon |
+| D_RED.MNS | 55,276 | 43a857a6179f4120104bed82a2f7b4698ede73bd4748348b0f6f18573c3043ab | Dragon |
+| D_SILVER.MNS | 41,952 | 613e57cfc133ea58635ac776464d75c37b9272a454aadd4adfbbbcb79497562f | Dragon |
+| GHOST.MNS | 48,840 | 2985277116cd92be37af387e8d7ffe2e2a9716bad770eb7370c9cbd2f1dbb531 | |
+| GIGGLER.MNS | 43,484 | f5fae38fc3db6f4f0ec42a67b33ef176363cead610ad4dbc82099bdcb46fa5ca | |
+| GOLEM.MNS | 48,140 | fbdff3ae8ab5834b08076dad5a636ed9b96de7efc45b1655ca151d3ebb33ef43 | |
+| GRN_DRA.MNS | 56,976 | ff8b738ea7e3c5f370636eed8dc8e7330c56d49bedb702d8874d1ef5baa01733 | Green dragon |
+| H_HOUND.MNS | 46,364 | f279d711d45ee61dcabf79e6a2d8687ce9318e9fa5a13051579977d81572a84f | Hell hound |
+| LAS_MON.MNS | 76,232 | c5940ad6e379de79c3b23e8e758f663fb1bc50570ecc31be1de5148ba5ce5ebc | Large monster |
+| LORD_RIB.MNS | 19,500 | 784152dbc64be3c11a72b541c41ec3864a2c2272521e802ced6dab0845e65368 | Boss-type |
+| MINI_DRA.MNS | 35,612 | 13d36a29d0e7b75fc37565f25e18166b1ab25bce91059aeb2dd3a65f15f03ca0 | Mini dragon |
+| MUMMY.MNS | 55,420 | c76d71989091f8837fbad2920f3974d7da16889835105d8be3c3312b8dbd193e | |
+| OBAKE.MNS | 15,280 | b3cf95b43592d4549141bd488a3bfec7d4e9a298fb30eddca8dffe47afa37ed6 | |
+| OITU.MNS | 46,524 | bd66a1253479dc956d35dbdb3cf440290353eb73900137c07677bbfc4db9bf7f | |
+| RAT.MNS | 57,496 | a074b3c6f1866c85f9b6af830c0db13d69dd6c855baef0f62fced539ec4de3f2 | |
+| RED_DRA.MNS | 62,256 | eae2bea451afebe3ce5672c14cfbefbd42247b9b84d142497ae93a5ab0c8ac38 | Red dragon |
+| ROCKPILE.MNS | 57,680 | 93f8a95aef39c27887ca711ad719bbf8877968a562772eed9921534a94f0868f | |
+| SCORPION.MNS | 53,052 | fd71630f6397944341a4f6e0cadba9b8439bb072aaf98660f2953e10c3461482 | |
+| SCREAMER.MNS | 29,668 | 4ed503d32e70dec3691a7aa396df34d14f9ef68d5c9eb31da957b07ac346189f | |
+| SN_FLOOR.MNS | 49,764 | cfa26088c8ec20c2e24e872d0ee6c5ac9da2bd2140701dd8a9deda965efa2525 | Static object |
+| SN_WALL.MNS | 43,620 | 8d68279a5d2412ec9428d95ae43299ed0a64a6ed22793b956b274b6d7056270f | Static object |
+| S_SHIELD.MNS | 31,164 | ceaed22df2ec970e11d03fbdc2cb2e188ab5bb22c74add16bf5efb64631fefe0 | Static object |
+| S_SWORD.MNS | 49,716 | a202d6bd574966b285982ced3ca2d2261d658c8707f239982e3e7334d484b295 | Static object |
+| VEXIRK.MNS | 51,640 | e3251f9c4658020cddc0713f129e6bb93ddbcfae4c4c5f761e46eb948a084450 | |
+| WORM.MNS | 55,832 | fd8170349f230b470689d6e2ac578a59a8150c06b69c483712a930232b1b1e7a | |
 
 **DMDF format evidence (nexus_v1_dmdf_model.c):**
 - Magic `DMDF` (0x444D4446) at byte 0 — validated by `nexus_v1_dmdf_is_valid()`
@@ -231,7 +232,7 @@ Expected hash: `0x2F7A8BC4E6D09125ULL` (pre-computed from fixed state).
 {
   "name": "nexus_v1_phase7_lev00_entrance_script",
   "level": 0,
-  "provenance_seed": "TODO: pending disc image",
+  "provenance_seed": "SHA256(LEV00.DGN)=24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a",
   "steps": [
     { "action": "MOVE_FORWARD", "ticks": 1 },
     { "action": "TURN_RIGHT",  "ticks": 1 },
@@ -327,7 +328,8 @@ All scripts: Python 3, no external dependencies, exit 0 on pass, exit 1 on fail.
 
 ## 9. Provenance Hash Table
 
-Until disc image is acquired, all SHA256 fields are `TODO: pending disc image`.
+Individual file hashes are real (computed from live data). Disc-image-level SHA256
+is TBD until the `.cue/.bin` ISO image is committed to the repo. Run the command below to compute it.
 When disc image is acquired, run:
 
 ```bash
@@ -357,3 +359,9 @@ Update `g_nexusVersions[]` in `src/shared/asset_status_m12.c` with confirmed has
 - ✅ Source evidence tied to disc/version hashes (Section 9)
 
 **Status: COMPLETE ✅**
+
+> **2026-05-27 hash lock:** All 138 file SHA256 hashes computed from live Sega Saturn
+> disc extraction at `~/.firestaff/data/nexus/`. Hash manifest:
+> `scripts/fixtures/nexus_v1_disc_file_hashes.py`. Sizes in
+> `scripts/fixtures/nexus_v1_asset_sizes.py`. Disc-image-level SHA256 pending `.cue/.bin`
+> acquisition; individual file hashes are real and locked.

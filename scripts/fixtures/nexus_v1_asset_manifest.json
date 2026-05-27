@@ -1,7 +1,6 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/nexus",
   "total_files": 138,
-  "total_bytes": 120233135,
   "files": {
     "0DMSTRT.BIN": 39516,
     "ANTMAN.MNS": 53768,
@@ -141,5 +140,6 @@
     "VEXIRK.MNS": 51640,
     "WARNING.BIN": 101256,
     "WORM.MNS": 55832
-  }
+  },
+  "total_bytes": 120233135
 }
