@@ -12032,6 +12032,13 @@ static int m11_decode_visible_wall_text(const M11_GameViewState* state,
                                                             outText,
                                                             (int)outTextSize) >= 0 &&
                     outText[0] != '\0') {
+                    /* Normalize 0x80 inscription separator (DUNGEON_TEXT_TYPE_INSCRIPTION
+                     * uses 0x80 as line-break per ReDMCSB DUNGEON.C:2329) to \n so that
+                     * m11_dm1_decoded_inscription_line_count and m11_draw_text see
+                     * proper line boundaries. */
+                    for (char* p = outText; *p; ++p) {
+                        if (*p == (char)0x80) *p = '\n';
+                    }
                     return 1;
                 }
             }
