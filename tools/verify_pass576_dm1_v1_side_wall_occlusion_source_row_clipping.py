@@ -187,7 +187,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "335-350",
+        "lines": "412-428",
         "claim": "Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.",
         "ordered": [
             "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
@@ -214,7 +214,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "779-818",
+        "lines": "1159-1198",
         "claim": "The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.",
         "ordered": [
             "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate",
@@ -232,7 +232,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
         "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "222-248",
+        "lines": "276-330",
         "claim": "Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.",
         "ordered": [
             "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
@@ -259,7 +259,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_clip_row_runtime_assertions_are_registered",
         "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "896-952",
+        "lines": "965-1021",
         "claim": "Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.",
         "ordered": [
             "static void test_wall_source_row_clip_occlusion_gate(void)",
