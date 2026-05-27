@@ -41,10 +41,10 @@ int main(void) {
         CHECK(prof.saveDir != NULL, "saveDir != NULL after Init");
         CHECK(prof.configPath != NULL, "configPath != NULL after Init");
         if (prof.dataDir) {
-            CHECK(strstr(prof.dataDir, "nexus1") != NULL, "dataDir contains 'nexus1'");
+            CHECK(strstr(prof.dataDir, "nexus") != NULL, "dataDir contains 'nexus'");
         }
         if (prof.saveDir) {
-            CHECK(strstr(prof.saveDir, "nexus1") != NULL, "saveDir contains 'nexus1'");
+            CHECK(strstr(prof.saveDir, "nexus") != NULL, "saveDir contains 'nexus'");
         }
     }
 

@@ -1154,7 +1154,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
         if (strcmp(gameId, "dm1") == 0) subdir = "dm1";
         else if (strcmp(gameId, "csb") == 0) { subdir = "csb"; }
         else if (strcmp(gameId, "dm2") == 0) { subdir = "dm2"; }
-        else if (strcmp(gameId, "nexus1") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
+        else if (strcmp(gameId, "nexus") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
 
         if (subdir) {
             snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);

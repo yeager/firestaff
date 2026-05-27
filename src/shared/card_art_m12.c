@@ -21,7 +21,6 @@ static const char* const g_dm1CardCandidates[] = {
     NULL
 };
 static const char* const g_theronCardCandidates[] = {
-    "cards/nexus1.png",
     "cards/nexus.png",
     "cards/dungeon-master-nexus.png",
     NULL
@@ -47,11 +46,10 @@ static const char* const g_dm2CardCandidates[] = {
 };
 
 static const char* const g_nexusCardCandidates[] = {
-    "cards/nexus1.png",
     "cards/nexus.png",
     "cards/dungeon-master-nexus.png",
-    "cards/nexus1.jpg",
-    "cards/nexus1.webp",
+    "cards/nexus.jpg",
+    "cards/nexus.webp",
     NULL
 };
 
@@ -59,7 +57,7 @@ static const M12_CardArtSpec g_cardSpecs[] = {
     {"dm1", "ORIGINAL DM1 CARD", g_dm1CardCandidates},
     {"csb", "ORIGINAL CSB CARD", g_csbCardCandidates},
     {"dm2", "ORIGINAL DM2 CARD", g_dm2CardCandidates},
-    {"nexus1", "GENERATED NEXUS CARD", g_nexusCardCandidates},
+    {"nexus", "GENERATED NEXUS CARD", g_nexusCardCandidates},
     {"theron", "GENERATED NEXUS CARD", g_theronCardCandidates},
 };
 

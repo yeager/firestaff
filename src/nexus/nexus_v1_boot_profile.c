@@ -12,7 +12,7 @@
  *   • Asset validation with Saturn-specific diagnostics
  *   • Feature flag queries
  *
- * Game ID:      "nexus1"
+ * Game ID:      "nexus"
  * Platform:     Sega Saturn (SH-2 × 2 @ 28.6 MHz, 2 MB RAM)
  * Engine tick:  55 ms  (matches DM1/CSB world tick)
  * Render tick: 33 ms  (Saturn 30 fps 2D mode)
@@ -150,7 +150,7 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
         snprintf(diags[diagCount].message, sizeof(diags[0].message),
                  "%s", g_diagStrings[NEXUS_V1_DIAG_MISSING_DM_BIN]);
         snprintf(diags[diagCount].detail, sizeof(diags[0].detail),
-                 "Could not resolve data directory for nexus1 assets.");
+                 "Could not resolve data directory for nexus assets.");
         snprintf(diags[diagCount].suggestion, sizeof(diags[0].suggestion),
                  "Set --data-dir or FIRESTAFF_DATA environment variable.");
         return 1;
@@ -273,31 +273,31 @@ static int nexus_v1_boot_resolve_paths(Nexus_V1_BootProfile *profile,
 
     g_pathsInitialized = 0;
 
-    /* Resolve data directory: baseDataDir/nexus1/ or baseDataDir/ */
+    /* Resolve data directory: baseDataDir/nexus/ or baseDataDir/ */
     {
         size_t len = strlen(dataDir);
         int needsSep = (len == 0) || (dataDir[len - 1] != '/');
         if (needsSep) {
             snprintf(g_resolvedDataDir, sizeof(g_resolvedDataDir),
-                     "%s/%s", dataDir, "nexus1");
+                     "%s/%s", dataDir, "nexus");
         } else {
             snprintf(g_resolvedDataDir, sizeof(g_resolvedDataDir),
-                     "%s%s", dataDir, "nexus1");
+                     "%s%s", dataDir, "nexus");
         }
         profile->dataDir = g_resolvedDataDir;
     }
 
-    /* Resolve save directory: baseSaveDir/saves/nexus1/ */
+    /* Resolve save directory: baseSaveDir/saves/nexus/ */
     {
         snprintf(g_resolvedSaveDir, sizeof(g_resolvedSaveDir),
-                 "%s/%s", saveDir, "saves/nexus1");
+                 "%s/%s", saveDir, "saves/nexus");
         profile->saveDir = g_resolvedSaveDir;
     }
 
-    /* Resolve config path: baseSaveDir/nexus1/firestaff.ini */
+    /* Resolve config path: baseSaveDir/nexus/firestaff.ini */
     {
         snprintf(g_resolvedConfigPath, sizeof(g_resolvedConfigPath),
-                 "%s/%s/firestaff.ini", saveDir, "nexus1");
+                 "%s/%s/firestaff.ini", saveDir, "nexus");
         profile->configPath = g_resolvedConfigPath;
     }
 

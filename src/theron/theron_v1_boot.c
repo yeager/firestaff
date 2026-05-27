@@ -303,7 +303,7 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
     } else {
         /* Default: <data_dir>/../saves/theron/ */
         /* Note: saves/theron/ is distinct from saves/dm1/, saves/csb/,
-         * saves/dm2/, saves/nexus1/ — TQ has its own save namespace. */
+         * saves/dm2/, saves/nexus/ — TQ has its own save namespace. */
         snprintf(profile->save_root, sizeof(profile->save_root),
                  "%s%c..%csaves%ctheron",
                  profile->asset_root[0] ? profile->asset_root : ".",

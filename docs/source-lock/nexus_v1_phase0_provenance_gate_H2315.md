@@ -563,7 +563,7 @@ Firestaff's version catalog in `src/shared/asset_status_m12.c` records:
 ```c
 // DM.BIN MD5 e88d60859f65f08fa622e1992b02280f
 // Hash for: nexus-saturn-jp (extracted from T-9111G V1.003)
-// Second hash 96e511c8d36ccbe30a48ba36c59df194 for "nexus1" (original) unknown variant
+// Second hash 96e511c8d36ccbe30a48ba36c59df194 for "nexus" (original) unknown variant
 ```
 
 **Verified:** `md5 ~/.firestaff/data/nexus/DM.BIN` = `e88d60859f65f08fa622e1992b02280f`

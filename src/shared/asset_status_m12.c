@@ -61,9 +61,9 @@ static const M12_VersionSpec g_dm2Versions[] = {
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
-    {"nexus1", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f"},
-    {"nexus1", "nexus1", "Nexus original Sega Saturn JP", "nexus1", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194"},
-    {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
+    {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f"},
+    {"nexus", "nexus", "Nexus original Sega Saturn JP", "nexus", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194"},
+    {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
 };
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
@@ -92,12 +92,12 @@ static const M12_GameVersionSpec g_games[] = {
     {"dm1", g_dm1Versions, sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0])},
     {"csb", g_csbVersions, sizeof(g_csbVersions) / sizeof(g_csbVersions[0])},
     {"dm2", g_dm2Versions, sizeof(g_dm2Versions) / sizeof(g_dm2Versions[0])},
-    {"nexus1", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])},
+    {"nexus", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])},
     {"theron", g_theronVersions, sizeof(g_theronVersions) / sizeof(g_theronVersions[0])}
 };
 
 static const char* const g_assetCandidateSubdirs[] = {
-    "", "dm1", "csb", "dm2", "nexus", "nexus1",
+    "", "dm1", "csb", "dm2", "nexus",
     "dm1-multilingual", "theron", "theron/jp", "theron/us", NULL
 };
 
@@ -483,7 +483,7 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         status->csbAvailable = matchedAny;
     } else if (strcmp(gameSpec->gameId, "dm2") == 0) {
         status->dm2Available = matchedAny;
-    } else if (strcmp(gameSpec->gameId, "nexus1") == 0) {
+    } else if (strcmp(gameSpec->gameId, "nexus") == 0) {
         status->nexusAvailable = matchedAny;
     } else if (strcmp(gameSpec->gameId, "theron") == 0) {
         status->theronAvailable = matchedAny;
@@ -525,7 +525,7 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
     if (strcmp(gameId, "dm2") == 0) {
         return status->dm2Available;
     }
-    if (strcmp(gameId, "nexus1") == 0) {
+    if (strcmp(gameId, "nexus") == 0) {
         return status->nexusAvailable;
     }
     if (strcmp(gameId, "theron") == 0) {

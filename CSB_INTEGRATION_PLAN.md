@@ -123,7 +123,7 @@ CSB-specific extensions:
 
 ### 2.2 Game Type
 
-The launcher already uses string-based `gameId`: `"dm1"`, `"csb"`, `"dm2"`, `"nexus1"`.
+The launcher already uses string-based `gameId`: `"dm1"`, `"csb"`, `"dm2"`, `"nexus"`.
 
 **No new enum needed.** The `gameId` string drives compatibility layer selection.
 
