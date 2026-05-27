@@ -1521,6 +1521,14 @@ int M11_Render_GetVSync(void) {
     return g_state.vsync;
 }
 
+void M11_Render_RaiseWindow(void) {
+    if (!g_state.initialised || !g_state.window) {
+        return;
+    }
+    SDL_ShowWindow(g_state.window);
+    SDL_RaiseWindow(g_state.window);
+}
+
 int M11_Render_GetSdlMajorVersion(void) {
     return M11_SDL_MAJOR;
 }

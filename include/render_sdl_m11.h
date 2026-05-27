@@ -171,6 +171,7 @@ int  M11_Render_SetScaleFilter(int filterIndex);
 int  M11_Render_GetScaleFilter(void);
 int  M11_Render_SetVSync(int vsyncIndex);
 int  M11_Render_GetVSync(void);
+void M11_Render_RaiseWindow(void);
 
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
