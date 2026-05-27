@@ -30,7 +30,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### CSB V1
 
 - ❌ Phase 2 - Dungeon data model: map CSB dungeon records into Firestaff memory/runtime structures without reusing DM1-only assumptions.
-- 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, and initial viewport gates exist; remaining work includes F0107 ornaments, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
+- 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, and initial viewport gates exist; remaining work includes F0107 ornaments, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
 - ❌ Phase 6 - Utility/import flow: implement utility-disk style champion import and CSB-specific setup flow.
 - ❌ Phase 7 - Verification suite: add deterministic boot, dungeon, combat, save/import, and rendering probes.
 - 🐛 Runtime handoff: title/intro/import path and CSB-specific viewport integration still need end-to-end launch verification.
