@@ -1,0 +1,607 @@
+{
+  "schema": "firestaff.csb_v1.source_evidence_manifest.v1",
+  "manifest_id": "passH2248_csb_v1_source_evidence_manifest",
+  "description": "Master source-evidence index for CSB V1 Phase 7 verification suite. Collects all source anchors cited in: canonical asset manifest, dungeon parser probe, deterministic input scripts, viewport/pixel gate, and save/load round-trip verification.",
+  "total_anchors": 19,
+  "phases_covered": [
+    "P1",
+    "P2",
+    "P3",
+    "P5",
+    "P6"
+  ],
+  "phases_missing": [
+    "P4",
+    "P7"
+  ],
+  "source_file_count": 14,
+  "by_source": {
+    "CSB lineage::Chaos.cpp": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "csb_lineage_csbgame_save",
+        "source": "CSB lineage",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+        "lines": "507-623",
+        "needles": [
+          "CSBGAME",
+          "csbgame.dat",
+          "csbgame.bak",
+          "SAVING NEW ADVENTURE",
+          "MINI.DAT"
+        ],
+        "claim": "CSB Utility / Make New Adventure route uses CSBGAME slots and MINI.DAT support.",
+        "phase": "P6"
+      }
+    ],
+    "CSB lineage::Graphics.cpp": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "csb_lineage_graphics_open",
+        "source": "CSB lineage",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+        "lines": "1814-1915",
+        "needles": [
+          "OpenCSBgraphicsFile",
+          "graphics.dat",
+          "Cannot find 'graphics.dat'",
+          "CSBgraphics.dat"
+        ],
+        "claim": "CSB graphics open route is separate from DM; optional CSBgraphics.dat boundary.",
+        "phase": "P3"
+      }
+    ],
+    "CSB lineage::README": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "csb_lineage_payload_contract",
+        "source": "CSB lineage",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+        "lines": "14-21",
+        "needles": [
+          "dungeon.dat",
+          "hcsb.dat",
+          "hcsb.hct",
+          "mini.dat",
+          "graphics.dat",
+          "config.txt"
+        ],
+        "claim": "CSB runtime requires the full payload set: GRAPHICS.DAT, DUNGEON.DAT, HCSB.DAT, HCSB.HTC, MINI.DAT, CONFIG.TXT.",
+        "phase": "P1"
+      }
+    ],
+    "CSB lineage::Reqdisk.cpp": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "csb_lineage_disk_type",
+        "source": "CSB lineage",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
+        "lines": "1-30",
+        "needles": [
+          "GetDiskType_CPSB",
+          "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
+        ],
+        "claim": "CSB disk type detection returns a format namespace distinct from DM.",
+        "phase": "P1"
+      }
+    ],
+    "CSBWin::CSBCode.cpp": [
+      {
+        "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
+        "id": "csbwin_dungeon_init",
+        "source": "CSBWin",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
+        "lines": "318-480",
+        "needles": [
+          "DBank::Initialize",
+          "TAG00332a",
+          "LoadDungeon"
+        ],
+        "claim": "CSBWin DBank::Initialize parses the dungeon header at offset 4 with level descriptors.",
+        "phase": "P2"
+      }
+    ],
+    "CSBWin::readme.txt": [
+      {
+        "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+        "id": "csbwin_adventuring_mode",
+        "source": "CSBWin",
+        "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+        "lines": "1-30",
+        "needles": [
+          "Enter the dungeon",
+          "choose prison",
+          "Make New Adventure",
+          "GAMESTATE_EnterPrison"
+        ],
+        "claim": "CSBWin confirms the workflow: prison entry precedes Make New Adventure and adventuring mode.",
+        "phase": "P6"
+      }
+    ],
+    "M11 engine::firestaff_m11_game_view.c": [
+      {
+        "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+        "id": "m11_viewport_layout",
+        "source": "M11 engine",
+        "path": "firestaff_m11_game_view.c",
+        "lines": "1-60",
+        "needles": [
+          "viewport",
+          "status_bar",
+          "action",
+          "icon",
+          "portrait"
+        ],
+        "claim": "M11 divides the 320\u00d7200 viewport into status bar, dungeon view, action strip, and portrait panel.",
+        "phase": "P3"
+      }
+    ],
+    "ReDMCSB::CEDTINCH.C": [
+      {
+        "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+        "id": "redmcsb_cedtinch_new_adventure",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+        "lines": "5-63",
+        "needles": [
+          "F7086_IsReadyToMakeNewAdventure",
+          "C13_DUNGEON_CSB_GAME",
+          "C12_DUNGEON_CSB_PRISON"
+        ],
+        "claim": "New Adventure readiness is gated on valid CSB game dungeon source (C13), not just catalog match.",
+        "phase": "P6"
+      },
+      {
+        "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+        "id": "redmcsb_prison_state",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+        "lines": "5-63",
+        "needles": [
+          "C13_DUNGEON_CSB_GAME",
+          "C12_DUNGEON_CSB_PRISON"
+        ],
+        "claim": "Prison entrance is dungeon C12, the first state after Make New Adventure.",
+        "phase": "P2"
+      }
+    ],
+    "ReDMCSB::COMMAND.C": [
+      {
+        "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+        "id": "redmcsb_command_forward",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "lines": "1-80",
+        "needles": [
+          "C0x41_CMD_MOVE_FORWARD",
+          "F0201_COMMAND_ProcessMoveForward",
+          "C0x43_CMD_TURN_RIGHT"
+        ],
+        "claim": "Forward movement (0x41) and turn-right (0x43) are documented in COMMAND.C.",
+        "phase": "P5"
+      }
+    ],
+    "ReDMCSB::DEFS.H": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "redmcsb_csb_dungeon_ids",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+        "lines": "519-523",
+        "needles": [
+          "C12_DUNGEON_CSB_PRISON",
+          "C13_DUNGEON_CSB_GAME",
+          "Value used in CSB MINI.DAT"
+        ],
+        "claim": "CSB prison/game dungeon IDs and association with MINI.DAT.",
+        "phase": "P2"
+      },
+      {
+        "artifact": "passH2248_csb_v1_save_load_round_trip",
+        "id": "redmcsb_csb_dungeon_id",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+        "lines": "519-523",
+        "needles": [
+          "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
+          "C13_DUNGEON_CSB_GAME",
+          "C12_DUNGEON_CSB_PRISON"
+        ],
+        "claim": "CSB save header uses key index C29; dungeon IDs C12/C13 identify CSB prison/game.",
+        "phase": "P6"
+      }
+    ],
+    "ReDMCSB::DUNGEON.C": [
+      {
+        "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
+        "id": "redmcsb_dungeon_format",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+        "lines": "1-100",
+        "needles": [
+          "F0148_DUNGEON_GetSquareFirstThingType",
+          "F0151_DUNGEON_GetSquare",
+          "column-major"
+        ],
+        "claim": "ReDMCSB DUNGEON.C F0148-F0170 defines the shared dungeon.dat format; column-major indexing.",
+        "phase": "P2"
+      },
+      {
+        "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+        "id": "redmcsb_viewport_geometry",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+        "lines": "1-30",
+        "needles": [
+          "320",
+          "200",
+          "viewport",
+          "pixel"
+        ],
+        "claim": "CSB V1 viewport is fixed at 320\u00d7200 game pixels.",
+        "phase": "P3"
+      }
+    ],
+    "ReDMCSB::LOADSAVE.C": [
+      {
+        "artifact": "passH2248_csb_v1_save_load_round_trip",
+        "id": "redmcsb_save_load_funcs",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+        "lines": "1-50",
+        "needles": [
+          "F0435_STARTEND_LoadGame",
+          "F0433_STARTEND_SaveGame",
+          "CSBGAME"
+        ],
+        "claim": "F0433/F0435 are the primary save/load functions; CSBGAME is the CSB save namespace.",
+        "phase": "P6"
+      }
+    ],
+    "ReDMCSB::MOVESENS.C": [
+      {
+        "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+        "id": "redmcsb_movesens_collision",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "lines": "1-50",
+        "needles": [
+          "F0230_MOVE_CheckBlocked",
+          "C0x01_SQUARE_WALL"
+        ],
+        "claim": "Forward movement collision check is in MOVESENS.C F0230.",
+        "phase": "P5"
+      }
+    ],
+    "ReDMCSB::SAVEHEAD.C": [
+      {
+        "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+        "id": "redmcsb_save_header_format",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "lines": "14-63",
+        "needles": [
+          "F0417_SAVEUTIL_GetChecksumAndObfuscate",
+          "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
+          "128"
+        ],
+        "claim": "CSB save header uses key index C29, not the DM key index C10.",
+        "phase": "P6"
+      },
+      {
+        "artifact": "passH2248_csb_v1_save_load_round_trip",
+        "id": "redmcsb_save_header_obfuscate",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "lines": "1-80",
+        "needles": [
+          "F0417_SAVEUTIL_GetChecksumAndObfuscate",
+          "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX"
+        ],
+        "claim": "F0417 obfuscates 128 uint16_t words using a 32-entry key table (XOR), then computes checksum.",
+        "phase": "P6"
+      },
+      {
+        "artifact": "passH2248_csb_v1_save_load_round_trip",
+        "id": "redmcsb_header_read_checksum",
+        "source": "ReDMCSB",
+        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "lines": "14-63",
+        "needles": [
+          "F0429_STARTEND_IsReadSaveHeaderSuccessful",
+          "L1321_i_ExpectedChecksum",
+          "L1322_i_Checksum"
+        ],
+        "claim": "F0429 computes checksum over first 256 bytes (interleaved +/-/XOR), then deobfuscates last 256 and sums to verify.",
+        "phase": "P6"
+      }
+    ]
+  },
+  "all_anchors": [
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "redmcsb_csb_dungeon_ids",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME",
+        "Value used in CSB MINI.DAT"
+      ],
+      "claim": "CSB prison/game dungeon IDs and association with MINI.DAT.",
+      "phase": "P2"
+    },
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "redmcsb_save_header_format",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "lines": "14-63",
+      "needles": [
+        "F0417_SAVEUTIL_GetChecksumAndObfuscate",
+        "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
+        "128"
+      ],
+      "claim": "CSB save header uses key index C29, not the DM key index C10.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "csb_lineage_payload_contract",
+      "source": "CSB lineage",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "lines": "14-21",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "hcsb.hct",
+        "mini.dat",
+        "graphics.dat",
+        "config.txt"
+      ],
+      "claim": "CSB runtime requires the full payload set: GRAPHICS.DAT, DUNGEON.DAT, HCSB.DAT, HCSB.HTC, MINI.DAT, CONFIG.TXT.",
+      "phase": "P1"
+    },
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "csb_lineage_graphics_open",
+      "source": "CSB lineage",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "lines": "1814-1915",
+      "needles": [
+        "OpenCSBgraphicsFile",
+        "graphics.dat",
+        "Cannot find 'graphics.dat'",
+        "CSBgraphics.dat"
+      ],
+      "claim": "CSB graphics open route is separate from DM; optional CSBgraphics.dat boundary.",
+      "phase": "P3"
+    },
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "csb_lineage_csbgame_save",
+      "source": "CSB lineage",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "lines": "507-623",
+      "needles": [
+        "CSBGAME",
+        "csbgame.dat",
+        "csbgame.bak",
+        "SAVING NEW ADVENTURE",
+        "MINI.DAT"
+      ],
+      "claim": "CSB Utility / Make New Adventure route uses CSBGAME slots and MINI.DAT support.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_canonical_asset_manifest",
+      "id": "csb_lineage_disk_type",
+      "source": "CSB lineage",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
+      "lines": "1-30",
+      "needles": [
+        "GetDiskType_CPSB",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
+      ],
+      "claim": "CSB disk type detection returns a format namespace distinct from DM.",
+      "phase": "P1"
+    },
+    {
+      "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
+      "id": "csbwin_dungeon_init",
+      "source": "CSBWin",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
+      "lines": "318-480",
+      "needles": [
+        "DBank::Initialize",
+        "TAG00332a",
+        "LoadDungeon"
+      ],
+      "claim": "CSBWin DBank::Initialize parses the dungeon header at offset 4 with level descriptors.",
+      "phase": "P2"
+    },
+    {
+      "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
+      "id": "redmcsb_dungeon_format",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "lines": "1-100",
+      "needles": [
+        "F0148_DUNGEON_GetSquareFirstThingType",
+        "F0151_DUNGEON_GetSquare",
+        "column-major"
+      ],
+      "claim": "ReDMCSB DUNGEON.C F0148-F0170 defines the shared dungeon.dat format; column-major indexing.",
+      "phase": "P2"
+    },
+    {
+      "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+      "id": "redmcsb_cedtinch_new_adventure",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-63",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "C13_DUNGEON_CSB_GAME",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "claim": "New Adventure readiness is gated on valid CSB game dungeon source (C13), not just catalog match.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+      "id": "csbwin_adventuring_mode",
+      "source": "CSBWin",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "lines": "1-30",
+      "needles": [
+        "Enter the dungeon",
+        "choose prison",
+        "Make New Adventure",
+        "GAMESTATE_EnterPrison"
+      ],
+      "claim": "CSBWin confirms the workflow: prison entry precedes Make New Adventure and adventuring mode.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+      "id": "redmcsb_command_forward",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "lines": "1-80",
+      "needles": [
+        "C0x41_CMD_MOVE_FORWARD",
+        "F0201_COMMAND_ProcessMoveForward",
+        "C0x43_CMD_TURN_RIGHT"
+      ],
+      "claim": "Forward movement (0x41) and turn-right (0x43) are documented in COMMAND.C.",
+      "phase": "P5"
+    },
+    {
+      "artifact": "passH2248_csb_v1_deterministic_input_scripts",
+      "id": "redmcsb_movesens_collision",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "lines": "1-50",
+      "needles": [
+        "F0230_MOVE_CheckBlocked",
+        "C0x01_SQUARE_WALL"
+      ],
+      "claim": "Forward movement collision check is in MOVESENS.C F0230.",
+      "phase": "P5"
+    },
+    {
+      "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+      "id": "redmcsb_viewport_geometry",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "lines": "1-30",
+      "needles": [
+        "320",
+        "200",
+        "viewport",
+        "pixel"
+      ],
+      "claim": "CSB V1 viewport is fixed at 320\u00d7200 game pixels.",
+      "phase": "P3"
+    },
+    {
+      "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+      "id": "m11_viewport_layout",
+      "source": "M11 engine",
+      "path": "firestaff_m11_game_view.c",
+      "lines": "1-60",
+      "needles": [
+        "viewport",
+        "status_bar",
+        "action",
+        "icon",
+        "portrait"
+      ],
+      "claim": "M11 divides the 320\u00d7200 viewport into status bar, dungeon view, action strip, and portrait panel.",
+      "phase": "P3"
+    },
+    {
+      "artifact": "passH2248_csb_v1_viewport_pixel_gate",
+      "id": "redmcsb_prison_state",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-63",
+      "needles": [
+        "C13_DUNGEON_CSB_GAME",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "claim": "Prison entrance is dungeon C12, the first state after Make New Adventure.",
+      "phase": "P2"
+    },
+    {
+      "artifact": "passH2248_csb_v1_save_load_round_trip",
+      "id": "redmcsb_save_header_obfuscate",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "lines": "1-80",
+      "needles": [
+        "F0417_SAVEUTIL_GetChecksumAndObfuscate",
+        "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX"
+      ],
+      "claim": "F0417 obfuscates 128 uint16_t words using a 32-entry key table (XOR), then computes checksum.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_save_load_round_trip",
+      "id": "redmcsb_header_read_checksum",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "lines": "14-63",
+      "needles": [
+        "F0429_STARTEND_IsReadSaveHeaderSuccessful",
+        "L1321_i_ExpectedChecksum",
+        "L1322_i_Checksum"
+      ],
+      "claim": "F0429 computes checksum over first 256 bytes (interleaved +/-/XOR), then deobfuscates last 256 and sums to verify.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_save_load_round_trip",
+      "id": "redmcsb_csb_dungeon_id",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
+        "C13_DUNGEON_CSB_GAME",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "claim": "CSB save header uses key index C29; dungeon IDs C12/C13 identify CSB prison/game.",
+      "phase": "P6"
+    },
+    {
+      "artifact": "passH2248_csb_v1_save_load_round_trip",
+      "id": "redmcsb_save_load_funcs",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "lines": "1-50",
+      "needles": [
+        "F0435_STARTEND_LoadGame",
+        "F0433_STARTEND_SaveGame",
+        "CSBGAME"
+      ],
+      "claim": "F0433/F0435 are the primary save/load functions; CSBGAME is the CSB save namespace.",
+      "phase": "P6"
+    }
+  ],
+  "source_paths": {
+    "ReDMCSB_common": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "ReDMCSB_ibm_pc": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+    "CSB_lineage": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src",
+    "CSBWin": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin"
+  },
+  "artifacts": [
+    "verify_passH2248_csb_v1_canonical_asset_manifest.py",
+    "probes/firestaff_csb_v1_dungeon_parser_probe.c",
+    "verify_passH2248_csb_v1_deterministic_input_scripts.py",
+    "verify_passH2248_csb_v1_viewport_pixel_gate.py",
+    "verify_passH2248_csb_v1_save_load_round_trip.py"
+  ]
+}

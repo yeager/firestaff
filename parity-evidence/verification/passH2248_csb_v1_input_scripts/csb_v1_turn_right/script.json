@@ -1,0 +1,48 @@
+{
+  "script_id": "csb_v1_turn_right",
+  "description": "Turn party right (90 degrees clockwise)",
+  "target_state": "csb_prison_turn_right",
+  "source_evidence": {
+    "turn_command": {
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "lines": "1-60",
+      "needles": [
+        "C0x43_CMD_TURN_RIGHT",
+        "F0203_COMMAND_ProcessTurnRight"
+      ],
+      "claim": "Turn right is command 0x43, processed by F0203."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 205,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 300,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "Assumes csb_v1_title_to_prison prerequisite state."
+}

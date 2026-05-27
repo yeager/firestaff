@@ -1,0 +1,10 @@
+Script: csb_v1_forward_move
+Description: Move forward one square in prison
+Target state: csb_prison_forward
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0xC8
+  t=  400ms  WAIT
+  t=  500ms  WAIT
+
+Notes: ('Assumes script csb_v1_title_to_prison has been replayed to reach the prison_entrance state. This script adds a forward move. The expected state hash should match regardless of whether it is replayed standalone after the prerequisite or as part of a combined script.',)

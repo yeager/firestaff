@@ -1,0 +1,75 @@
+{
+  "script_id": "csb_v1_l_shape",
+  "description": "L-shaped path: forward, turn right, forward",
+  "target_state": "csb_prison_l_shape",
+  "source_evidence": {
+    "movement_chain": {
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "lines": "1-80",
+      "needles": [
+        "C0x41_CMD_MOVE_FORWARD",
+        "C0x43_CMD_TURN_RIGHT"
+      ],
+      "claim": "Forward and turn-right are sequential commands in a movement chain."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "KEY_PRESS",
+      "code": 205,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 800,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 900,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1300,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "Assumes csb_v1_title_to_prison prerequisite state."
+}

@@ -1,0 +1,60 @@
+{
+  "script_id": "csb_v1_forward_move",
+  "description": "Move forward one square in prison",
+  "target_state": "csb_prison_forward",
+  "source_evidence": {
+    "forward_command": {
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "lines": "1-60",
+      "needles": [
+        "C0x41_CMD_MOVE_FORWARD",
+        "F0201_COMMAND_ProcessMoveForward"
+      ],
+      "claim": "Forward movement is command 0x41, processed by F0201."
+    },
+    "collision_check": {
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "lines": "1-50",
+      "needles": [
+        "F0230_MOVE_CheckBlocked",
+        "C0x01_SQUARE_WALL"
+      ],
+      "claim": "Forward movement checks wall collision before allowing step."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 200,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 400,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 500,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes script csb_v1_title_to_prison has been replayed to reach the prison_entrance state. This script adds a forward move. The expected state hash should match regardless of whether it is replayed standalone after the prerequisite or as part of a combined script."
+  ]
+}

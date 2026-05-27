@@ -1,0 +1,140 @@
+{
+  "schema": "firestaff.csb_v1.save_load_round_trip.v1",
+  "test_id": "passH2248_csb_v1_save_load_round_trip",
+  "source_anchors": [
+    {
+      "id": "redmcsb_save_header_obfuscate",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "lines": "1-80",
+      "needles": [
+        "F0417_SAVEUTIL_GetChecksumAndObfuscate",
+        "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX"
+      ],
+      "claim": "F0417 obfuscates 128 uint16_t words using a key table, then computes checksum."
+    },
+    {
+      "id": "redmcsb_header_read_checksum",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "lines": "14-63",
+      "needles": [
+        "F0429_STARTEND_IsReadSaveHeaderSuccessful",
+        "L1321_i_ExpectedChecksum",
+        "L1322_i_Checksum"
+      ],
+      "claim": "F0429 computes checksum over first 256 bytes, then deobfuscates last 256 bytes and sums to verify."
+    },
+    {
+      "id": "redmcsb_csb_dungeon_id",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
+        "C13_DUNGEON_CSB_GAME",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "claim": "CSB save header uses key index C29; dungeon IDs C12/C13 identify CSB prison/game."
+    },
+    {
+      "id": "redmcsb_save_load_funcs",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "lines": "1-50",
+      "needles": [
+        "F0435_STARTEND_LoadGame",
+        "F0433_STARTEND_SaveGame",
+        "CSBGAME"
+      ],
+      "claim": "F0433/F0435 are the primary save/load functions; CSBGAME is the save file namespace."
+    }
+  ],
+  "tests": [
+    {
+      "name": "T1_build_canonical_header",
+      "status": "PASS",
+      "detail": "Built 512-byte header, magic=0x43534201"
+    },
+    {
+      "name": "T2_header_size_is_512",
+      "status": "PASS",
+      "detail": "actual=512, expected=512"
+    },
+    {
+      "name": "T3_magic_is_csb",
+      "status": "PASS",
+      "detail": "magic=0x43534201, expected=0x43534201"
+    },
+    {
+      "name": "T4_compute_header_checksum",
+      "status": "PASS",
+      "detail": "checksum=0xDCFB"
+    },
+    {
+      "name": "T5_apply_csb_obfuscation",
+      "status": "PASS",
+      "detail": "Obfuscation applied to last 256 bytes"
+    },
+    {
+      "name": "T6_obfuscated_differs_from_raw",
+      "status": "PASS",
+      "detail": "Obfuscation changed the header bytes"
+    },
+    {
+      "name": "T7_obfuscation_self_inverse",
+      "status": "PASS",
+      "detail": "XOR self-inverse: w^K^K=w, so double-obfuscation restores raw"
+    },
+    {
+      "name": "T8_deobfuscate_and_verify_checksum",
+      "status": "PASS",
+      "detail": "checksum=0x0000, valid=True"
+    },
+    {
+      "name": "T9_wrong_key_fails_verification",
+      "status": "PASS",
+      "detail": "Using DM key on CSB header correctly fails: True"
+    },
+    {
+      "name": "T10_dm_header_uses_dm_key",
+      "status": "PASS",
+      "detail": "DM header with KEY_INDEX_DM=10 valid=True"
+    },
+    {
+      "name": "T11_csb_header_fails_dm_key",
+      "status": "PASS",
+      "detail": "CSB header with DM key correctly fails: True"
+    },
+    {
+      "name": "T12_obfuscation_block_at_offset_256",
+      "status": "PASS",
+      "detail": "first_256_unchanged=True, last_256_changed=True"
+    },
+    {
+      "name": "T13_identical_state_same_hash",
+      "status": "PASS",
+      "detail": "SHA256(header1)=833e75278e5bbaad..., SHA256(header2)=833e75278e5bbaad..."
+    },
+    {
+      "name": "T14_different_state_different_hash",
+      "status": "PASS",
+      "detail": "game_id=13 \u2192 833e75278e5bbaad..., game_id=99 \u2192 118bdc17c1bc4937..."
+    },
+    {
+      "name": "T15_party_direction_valid",
+      "status": "PASS",
+      "detail": "party_dir=0, expected 0..3"
+    },
+    {
+      "name": "T16_champion_count_valid",
+      "status": "PASS",
+      "detail": "champ_count=2, expected 1..4"
+    }
+  ],
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0
+  }
+}

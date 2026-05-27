@@ -1,0 +1,196 @@
+{
+  "script_id": "csb_v1_title_to_prison",
+  "description": "CSB title screen \u2192 Make New Adventure \u2192 prison entrance",
+  "target_state": "csb_prison_entrance",
+  "source_evidence": {
+    "title_enter": {
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-63",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "claim": "New Adventure readiness requires valid CSB game dungeon source."
+    },
+    "adventuring_mode": {
+      "source": "CSB lineage",
+      "path": "Mouse.cpp",
+      "lines": "1830-1952",
+      "needles": [
+        "GAMESTATE_EnterPrison",
+        "D6W == 80",
+        "The Viewport while adventuring"
+      ],
+      "claim": "Adventuring mode is reached after exiting prison entrance."
+    },
+    "prison_entrance": {
+      "source": "CSB lineage",
+      "path": "Chaos.cpp",
+      "lines": "507-623",
+      "needles": [
+        "CSBGAME",
+        "csbgame.dat",
+        "MINI.DAT"
+      ],
+      "claim": "Prison entrance is the first dungeon state after Make New Adventure."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 600,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 620,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1200,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1300,
+      "kind": "KEY_PRESS",
+      "code": 30,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1350,
+      "kind": "KEY_PRESS",
+      "code": 38,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1400,
+      "kind": "KEY_PRESS",
+      "code": 23,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1450,
+      "kind": "KEY_PRESS",
+      "code": 46,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1500,
+      "kind": "KEY_PRESS",
+      "code": 18,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 1700,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2200,
+      "kind": "KEY_PRESS",
+      "code": 48,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2250,
+      "kind": "KEY_PRESS",
+      "code": 24,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2300,
+      "kind": "KEY_PRESS",
+      "code": 48,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 2500,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4000,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 4100,
+      "kind": "KEY_PRESS",
+      "code": 28,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 5000,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": "This script targets the first reachable CSB V1 game state: party standing in the prison entrance after Make New Adventure. The state hash should match across runs on the same platform.Timing is approximate; the WAIT events allow variable transition latency."
+}

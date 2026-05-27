@@ -1,0 +1,10 @@
+Script: csb_v1_turn_left
+Description: Turn party left (90 degrees counterclockwise)
+Target state: csb_prison_turn_left
+Events (3 total):
+
+  t=    0ms  KEY_PRESS  code=0xCB
+  t=  300ms  WAIT
+  t=  400ms  WAIT
+
+Notes: Assumes csb_v1_title_to_prison prerequisite state.

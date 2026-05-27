@@ -1,0 +1,60 @@
+{
+  "script_id": "csb_v1_mouse_click_viewport",
+  "description": "Move mouse to viewport center and click (explore action)",
+  "target_state": "csb_prison_mouse_explore",
+  "source_evidence": {
+    "mouse_input": {
+      "source": "CSB lineage",
+      "path": "Mouse.cpp",
+      "lines": "1830-1952",
+      "needles": [
+        "D6W == 80",
+        "GAMESTATE_EnterPrison",
+        "Viewport click"
+      ],
+      "claim": "Mouse clicks in the viewport (D6W==80) trigger explore/proceed actions."
+    }
+  },
+  "events": [
+    {
+      "tick_ms": 0,
+      "kind": "MOUSE_MOVE",
+      "code": 0,
+      "dx": 160,
+      "dy": 100,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 200,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "tick_ms": 220,
+      "kind": "CLICK",
+      "code": 1,
+      "dx": 0,
+      "dy": 0,
+      "x": 160,
+      "y": 100
+    },
+    {
+      "tick_ms": 420,
+      "kind": "WAIT",
+      "code": 0,
+      "dx": 0,
+      "dy": 0,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "expected_state_hash": "",
+  "notes": [
+    "Assumes csb_v1_title_to_prison prerequisite state. Viewport center coordinates are in 320x200 game-pixel space. Actual screen coordinates depend on the presentation mode (V1/V2)."
+  ]
+}

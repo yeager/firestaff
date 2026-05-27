@@ -1,0 +1,207 @@
+{
+  "schema": "firestaff.csb_v1.viewport_pixel_gate.v1",
+  "gate_id": "passH2248_csb_v1_viewport_pixel_gate",
+  "description": "Canonical pixel-capture gate for CSB V1. Defines capture regions and geometry in 320\u00d7200 game-pixel space. Each fixture has a locked state label and source evidence. expected_sha256 is empty (TBD) for all fixtures; downstream probe must populate from known-good runs.",
+  "platform_notes": {
+    "V1_original": "320\u00d7200 pixel-perfect, palette-indexed VGA",
+    "V2_filtered": "320\u00d7200 + CRT scanlines + palette correction (same pixel geometry)",
+    "V2_upscaled": "3200\u00d72000 10\u00d7 upscale, same geometry",
+    "V2_modern": "1920\u00d71080 HD, remapped geometry (not 1:1 with V1)"
+  },
+  "fixture_count": 6,
+  "fixtures": [
+    {
+      "fixture_id": "csb_v1_prison_entrance_viewport_full",
+      "game_state_label": "csb_prison_entrance",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "viewport_bounds": {
+          "source": "ReDMCSB",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+          "lines": "1-30",
+          "needles": [
+            "320",
+            "200",
+            "viewport"
+          ],
+          "claim": "CSB V1 viewport is 320\u00d7200 pixels (DUNGEON.C viewport geometry)."
+        },
+        "prison_entrance_state": {
+          "source": "ReDMCSB",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+          "lines": "5-63",
+          "needles": [
+            "C13_DUNGEON_CSB_GAME",
+            "C12_DUNGEON_CSB_PRISON"
+          ],
+          "claim": "Prison entrance is the first dungeon map after Make New Adventure."
+        }
+      },
+      "notes": "First reachable in-game viewport state. Canonical starting point for all CSB V1 visual regression."
+    },
+    {
+      "fixture_id": "csb_v1_prison_entrance_viewport_center",
+      "game_state_label": "csb_prison_entrance",
+      "capture_region": "viewport_center",
+      "x": 48,
+      "y": 28,
+      "w": 224,
+      "h": 136,
+      "expected_sha256": "",
+      "source_evidence": {
+        "center_crop": {
+          "source": "M11 engine",
+          "path": "firestaff_m11_game_view.c",
+          "lines": "1-30",
+          "needles": [
+            "viewport",
+            "center",
+            "224",
+            "136"
+          ],
+          "claim": "M11 viewport center crop is 224\u00d7136 pixels, inset 48px left/right and 28px top/bottom from 320\u00d7200."
+        }
+      },
+      "notes": "The action area without chrome. Used for pure dungeon-rendering regression."
+    },
+    {
+      "fixture_id": "csb_v1_prison_entrance_status_bar",
+      "game_state_label": "csb_prison_entrance",
+      "capture_region": "status_bar",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 28,
+      "expected_sha256": "",
+      "source_evidence": {
+        "status_bar_geometry": {
+          "source": "M11 engine",
+          "path": "firestaff_m11_game_view.c",
+          "lines": "1-40",
+          "needles": [
+            "status",
+            "28",
+            "G2090_i_StatusBarHeight"
+          ],
+          "claim": "Status bar is 28px tall at the top of the screen."
+        }
+      },
+      "notes": "Champion health bars, magic shields, and dungeon info."
+    },
+    {
+      "fixture_id": "csb_v1_prison_entrance_chrome_bottom",
+      "game_state_label": "csb_prison_entrance",
+      "capture_region": "chrome_bottom",
+      "x": 0,
+      "y": 152,
+      "w": 320,
+      "h": 48,
+      "expected_sha256": "",
+      "source_evidence": {
+        "bottom_chrome": {
+          "source": "M11 engine",
+          "path": "firestaff_m11_game_view.c",
+          "lines": "1-50",
+          "needles": [
+            "action",
+            "icon",
+            "message",
+            "line"
+          ],
+          "claim": "Bottom chrome contains action icons (top 32px) and message line (bottom 16px)."
+        }
+      },
+      "notes": "Action strip and message display area."
+    },
+    {
+      "fixture_id": "csb_v1_prison_entrance_panel_right",
+      "game_state_label": "csb_prison_entrance",
+      "capture_region": "panel_right",
+      "x": 240,
+      "y": 28,
+      "w": 80,
+      "h": 172,
+      "expected_sha256": "",
+      "source_evidence": {
+        "right_panel": {
+          "source": "M11 engine",
+          "path": "firestaff_m11_game_view.c",
+          "lines": "1-60",
+          "needles": [
+            "portrait",
+            "80",
+            "right",
+            "panel"
+          ],
+          "claim": "Right panel is 80px wide, contains champion portraits and inventory icons."
+        }
+      },
+      "notes": "Champion portrait strip. In prison entrance state shows 1-2 party members."
+    },
+    {
+      "fixture_id": "csb_v1_prison_forward_viewport_full",
+      "game_state_label": "csb_prison_forward",
+      "capture_region": "viewport_full",
+      "x": 0,
+      "y": 0,
+      "w": 320,
+      "h": 200,
+      "expected_sha256": "",
+      "source_evidence": {
+        "forward_state": {
+          "source": "ReDMCSB",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+          "lines": "1-60",
+          "needles": [
+            "C0x41_CMD_MOVE_FORWARD",
+            "F0201_COMMAND_ProcessMoveForward"
+          ],
+          "claim": "Forward movement command 0x41 changes the viewport content."
+        }
+      },
+      "notes": "Same region as fixture 1 but after one forward step. Used to verify movement changes viewport."
+    }
+  ],
+  "capture_conventions": {
+    "pixel_format": "PPM P6 (24-bit RGB)",
+    "game_pixel_space": "320\u00d7200 (V1 original)",
+    "palette": "VGA 256-color indexed (palette in GRAPHICS.DAT)",
+    "capture_tool": "firestaff_headless_csb_v1_viewport_capture_probe",
+    "capture_env": "SDL_VIDEODRIVER=dummy, SDL_AUDIODRIVER=dummy",
+    "game_data_root": "~/.firestaff/data/csb"
+  },
+  "source_anchors": [
+    {
+      "id": "viewport_pixel_geometry",
+      "source": "ReDMCSB",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "lines": "1-30",
+      "needles": [
+        "320",
+        "200",
+        "viewport",
+        "pixel"
+      ],
+      "claim": "CSB V1 viewport is fixed at 320\u00d7200 game pixels."
+    },
+    {
+      "id": "m11_viewport_layout",
+      "source": "M11 engine",
+      "path": "firestaff_m11_game_view.c",
+      "lines": "1-60",
+      "needles": [
+        "viewport",
+        "status_bar",
+        "action",
+        "icon",
+        "portrait"
+      ],
+      "claim": "M11 divides the 320\u00d7200 viewport into status bar, dungeon view, action strip, and portrait panel."
+    }
+  ]
+}

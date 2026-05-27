@@ -1,0 +1,37 @@
+{
+  "schema": "firestaff.csb_v1.deterministic_input_script.v1",
+  "manifest_id": "passH2248_csb_v1_deterministic_input_scripts",
+  "script_count": 6,
+  "scripts": [
+    {
+      "script_id": "csb_v1_title_to_prison",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_title_to_prison/script.json",
+      "target_state": "csb_prison_entrance"
+    },
+    {
+      "script_id": "csb_v1_forward_move",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_forward_move/script.json",
+      "target_state": "csb_prison_forward"
+    },
+    {
+      "script_id": "csb_v1_turn_left",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_turn_left/script.json",
+      "target_state": "csb_prison_turn_left"
+    },
+    {
+      "script_id": "csb_v1_turn_right",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_turn_right/script.json",
+      "target_state": "csb_prison_turn_right"
+    },
+    {
+      "script_id": "csb_v1_l_shape",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_l_shape/script.json",
+      "target_state": "csb_prison_l_shape"
+    },
+    {
+      "script_id": "csb_v1_mouse_click_viewport",
+      "path": "passH2248_csb_v1_input_scripts/csb_v1_mouse_click_viewport/script.json",
+      "target_state": "csb_prison_mouse_explore"
+    }
+  ]
+}
