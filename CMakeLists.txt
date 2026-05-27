@@ -2690,13 +2690,23 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
+    add_executable(firestaff_dm1_v1_door_occlusion_pixel_gate
+        probes/dm1/firestaff_dm1_v1_door_occlusion_pixel_gate.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
+    target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v1_viewport_3d_source_lock
         COMMAND test_dm1_v1_viewport_3d_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_door_occlusion_pixel_gate
+        COMMAND firestaff_dm1_v1_door_occlusion_pixel_gate
     )
     if(Python3_Interpreter_FOUND)
         add_test(
