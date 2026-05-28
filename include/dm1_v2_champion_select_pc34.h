@@ -32,4 +32,9 @@ int v2_champion_select_current_index_pc34(void);
 const struct M11_V2_ChampionEntry* v2_champion_select_get(void);
 int v2_champion_select_count(void);
 
+/* Source-lock gate for V2 champion select.  Consumes V1 CLIKCHAM/CHAMPION
+ * touch matrix; no command replay and no inventory transaction side effects. */
+unsigned int v2_champion_select_source_lock_ok(void);
+const char* v2_champion_select_get_source_evidence(void);
+
 #endif
