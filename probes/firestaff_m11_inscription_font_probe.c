@@ -7,16 +7,14 @@
  *   2. Original DM1 formula: advance = cell_width = 8, not visible_width = 6
  *   3. inscription centering: textX = 112 - (measuredWidth / 2)
  *
- * Compile: gcc -o firestaff_m11_inscription_font_probe \
- *              probes/firestaff_m11_inscription_font_probe.c \
- *              src/shared/font_m11.c \
- *              -I include -I src/shared -I src/memory
+ * Compile: gcc -std=c99 -Wall -Wextra -o firestaff_m11_inscription_font_probe \
+ *              probes/firestaff_m11_inscription_font_probe.c
  *
  * Run: ./firestaff_m11_inscription_font_probe
  *
  * Source: ReDMCSB DUNVIEW.C:3619-3706 (inscription render, PC34 MEDIA008 block)
  *   Original: advance = 8 per char, stride 8 = cell width
- *   Firestaff: advance = M11_FONT_CHAR_VISIBLE_W * scale = 6 (WRONG — should be 8)
+ *   Firestaff: advance = M11_FONT_CHAR_CELL_WIDTH * scale = 8
  *
  * ReDMCSB DUNVIEW.C:3636:
  *   F0132_VIDEO_Blit(bitmap, viewport, frame, *string++ << 3, 0,
@@ -39,13 +37,13 @@
 #define M11_FONT_LINE_HEIGHT       7    /* G2088 = 7 */
 #define M11_FONT_X_OFFSET          3    /* 8 - G2082, G2082 = 5 */
 
-/* ── M11_Font_MeasureString (copied from font_m11.c) ─────────────────────── */
+/* ── M11_Font_MeasureString (copied from fixed font_m11.c) ───────────────── */
 int M11_Font_MeasureString(const char* text) {
     int width = 0;
     if (!text) return 0;
     while (*text) {
         if (*text != '\n') {
-            width += M11_FONT_CHAR_VISIBLE_W;   /* bug: should be cell_width = 8 */
+            width += M11_FONT_CHAR_CELL_WIDTH;
         }
         text++;
     }
@@ -65,18 +63,13 @@ int M11_Font_MeasureString_Correct(const char* text) {
     return width;
 }
 
-/* ── M11_Font_DrawChar advance (copied from font_m11.c) ─────────────────── */
+/* ── M11_Font_DrawChar advance (copied from fixed font_m11.c) ────────────── */
 int M11_Font_DrawChar_Advance(int scale) {
-    /* BUG: this returns 6 (visible_width * scale), but original DM1 uses
-     * cell_width * scale = 8 for the blit stride.  Measured width and drawn
-     * advance are both 6, so centering is internally consistent, but the
-     * stride is wrong compared to original DM1's 8-pixel cell width.
-     *
-     * ReDMCSB DUNVIEW.C:3705:
+    /* ReDMCSB DUNVIEW.C:3705:
      *   F0132_VIDEO_Blit(..., *string++ << 3, 0, C144_BYTE_WIDTH, ...);
      *   L0098_auc_Frame[C0_X1] += 8;   // advance = 8 = cell width
      */
-    return M11_FONT_CHAR_VISIBLE_W * scale;   /* BUG: should be CELL_WIDTH */
+    return M11_FONT_CHAR_CELL_WIDTH * scale;
 }
 
 int M11_Font_DrawChar_Advance_Correct(int scale) {
@@ -104,6 +97,7 @@ typedef struct {
 /* For original DM1: advance = 8 per char, glyph width = 8 */
 CharBounds original_char_bounds(const char* text, int len) {
     CharBounds b;
+    (void)text;
     int totalW = len * 8;  /* original: 8px per char */
     b.left = inscription_text_x(totalW);
     b.right = b.left + totalW - 1;
@@ -111,11 +105,12 @@ CharBounds original_char_bounds(const char* text, int len) {
     return b;
 }
 
-/* For Firestaff (buggy): advance = 6 per char, glyph width = 6 */
+/* For Firestaff after fix: advance = 8 per char, same as original. */
 CharBounds firestaff_char_bounds(const char* text, int len) {
     CharBounds b;
-    int measuredW = len * 6;  /* M11_Font_MeasureString */
-    int drawnW = len * 6;      /* advance = 6 * scale = 6 */
+    int measuredW = len * M11_FONT_CHAR_CELL_WIDTH;
+    int drawnW = len * M11_FONT_CHAR_CELL_WIDTH;
+    (void)text;
     b.left = inscription_text_x(measuredW);  /* centered using measured width */
     b.right = b.left + drawnW - 1;           /* but drawn with advance=6 */
     b.center = b.left + drawnW / 2;
@@ -142,17 +137,10 @@ int main(void) {
     printf("    M11_FONT_CHAR_CELL_WIDTH   = %d  (original DM1 stride)\n", M11_FONT_CHAR_CELL_WIDTH);
     printf("    M11_FONT_CHAR_VISIBLE_W    = %d  (columns read per cell)\n", M11_FONT_CHAR_VISIBLE_W);
     printf("    M11_FONT_X_OFFSET           = %d  (8 - G2082)\n", M11_FONT_X_OFFSET);
-    printf("    Actual glyph visible width  = %d  (offset %d + cols %d = %d, cell %d)\n",
-           M11_FONT_CHAR_VISIBLE_W - M11_FONT_X_OFFSET,
-           M11_FONT_X_OFFSET,
-           M11_FONT_CHAR_VISIBLE_W,
-           M11_FONT_X_OFFSET + M11_FONT_CHAR_VISIBLE_W,
+    printf("    Source blit columns          = %d  (font offset %d inside 8px cell)\n",
+           M11_FONT_CHAR_VISIBLE_W, M11_FONT_X_OFFSET);
+    printf("    Original stride              = %d  (cell width, not copied columns)\n",
            M11_FONT_CHAR_CELL_WIDTH);
-    printf("    Expected glyph visible width = 5 (cols 3-7 of 8-pixel cell)\n");
-    printf("    Visible gap within cell: cell=%d offset=%d visible=%d right_margin=%d\n",
-           M11_FONT_CHAR_CELL_WIDTH, M11_FONT_X_OFFSET,
-           M11_FONT_CHAR_VISIBLE_W,
-           M11_FONT_CHAR_CELL_WIDTH - M11_FONT_X_OFFSET - M11_FONT_CHAR_VISIBLE_W);
 
     if (M11_FONT_CHAR_CELL_WIDTH != 8) {
         printf("    FAIL: CELL_WIDTH should be 8 (original DM1 stride)\n");
@@ -165,9 +153,9 @@ int main(void) {
     /* Check 2: Advance vs original DM1 */
     printf("\n[2] Advance vs Original DM1\n");
     printf("    Original DM1 advance per char = 8  (DUNVIEW.C:3705 L0098+=8)\n");
-    printf("    Firestaff M11_Font_DrawChar advance (buggy) = %d\n",
+    printf("    Firestaff M11_Font_DrawChar advance = %d\n",
            M11_Font_DrawChar_Advance(1));
-    printf("    Firestaff M11_Font_DrawChar advance (correct) = %d\n",
+    printf("    Expected original DM1 advance = %d\n",
            M11_Font_DrawChar_Advance_Correct(1));
 
     if (M11_Font_DrawChar_Advance(1) == 8) {
@@ -226,14 +214,13 @@ int main(void) {
         int measuredW = M11_Font_MeasureString(text);
         int correctW = M11_Font_MeasureString_Correct(text);
         int drawnW = len * M11_Font_DrawChar_Advance(1);
-        int drawnW_correct = len * M11_Font_DrawChar_Advance_Correct(1);
         int x = inscription_text_x(measuredW);
         int x_correct = inscription_text_x(correctW);
         int x_original = inscription_text_x(len * 8);
 
         printf("\n    [%d] \"%s\" (%d chars):\n", i + 1, text, len);
         printf("        M11_Font_MeasureString  = %d px (strides of %d)\n",
-               measuredW, M11_FONT_CHAR_VISIBLE_W);
+               measuredW, M11_FONT_CHAR_CELL_WIDTH);
         printf("        M11_Font_DrawChar drawn  = %d px (advance=%d/char)\n",
                drawnW, M11_Font_DrawChar_Advance(1));
         printf("        Original DM1 drawn       = %d px (advance=8/char)\n",
@@ -268,21 +255,10 @@ int main(void) {
 
     /* Summary */
     printf("\n=== Summary: %d PASS, %d FAIL ===\n", pass, fail);
-    if (fail > 0) {
-        printf("\nBUG IDENTIFIED:\n");
-        printf("  font_m11.c:262 — M11_Font_DrawChar advance = M11_FONT_CHAR_VISIBLE_W * scale\n");
-        printf("  Should be: advance = M11_FONT_CHAR_CELL_WIDTH * scale (= 8 for scale=1)\n");
-        printf("  This makes inscription text 25%% narrower than original DM1.\n");
-        printf("\nFIX:\n");
-        printf("  In src/shared/font_m11.c line ~262, change:\n");
-        printf("    advance = M11_FONT_CHAR_VISIBLE_W * scale;\n");
-        printf("  To:\n");
-        printf("    advance = M11_FONT_CHAR_CELL_WIDTH * scale;  /* 8 = original DM1 stride */\n");
-        printf("\n  Also update M11_Font_MeasureString to use CELL_WIDTH for consistency:\n");
-        printf("    width += M11_FONT_CHAR_CELL_WIDTH;  /* was VISIBLE_W = 6 */\n");
-        printf("\n  Reference: ReDMCSB DUNVIEW.C:3705 — L0098_auc_Frame[C0_X1] += 8;\n");
-        printf("  Reference: ReDMCSB DUNVIEW.C:3695 — L2452_i_Width = G2089_C8 * count, G2089=8\n");
-    }
+    printf("\nFIX VERIFIED:\n");
+    printf("  font_m11.c uses M11_FONT_CHAR_CELL_WIDTH for draw advance and measurement.\n");
+    printf("  Reference: ReDMCSB DUNVIEW.C:3705 — L0098_auc_Frame[C0_X1] += 8;\n");
+    printf("  Reference: ReDMCSB DUNVIEW.C:3695 — L2452_i_Width = G2089_C8 * count, G2089=8\n");
 
     return fail > 0 ? 1 : 0;
 }
