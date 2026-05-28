@@ -1127,6 +1127,14 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_csb_v2_lighting_dynamic
+        tests/test_csb_v2_lighting_dynamic.c
+        src/csb/csb_v2_lighting_dynamic.c
+        src/csb/csb_v2_viewport_renderer.c
+        src/csb/csb_v2_smooth_movement.c
+        src/csb/csb_v2_chaos_enhanced.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -1219,6 +1227,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
     if(UNIX AND NOT APPLE)
+        target_link_libraries(test_csb_v2_lighting_dynamic PRIVATE m)
         target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
         target_link_libraries(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE m)
     endif()
@@ -1230,6 +1239,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_touch_controller_affordance_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_lighting_dynamic PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_source_route_state_hash_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_launch_smoke_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
@@ -1292,6 +1302,14 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v2_touch_controller_affordance
         COMMAND test_csb_v2_touch_controller_affordance
+    )
+    add_test(
+        NAME csb_v2_lighting_dynamic
+        COMMAND test_csb_v2_lighting_dynamic
+    )
+    add_test(
+        NAME csb_v2_lighting_dynamic_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v2_lighting_dynamic_source_lock.py
     )
     add_test(
         NAME dm1_v2_touch_controller_affordance_source_lock
