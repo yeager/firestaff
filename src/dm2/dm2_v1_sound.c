@@ -27,11 +27,11 @@ static const char *const g_std_sound_names[] = {
 static const char *const g_champion_sound_names[] = {
     [0x00] = "Champion Attack",
     [0x01] = "Champion Shoot",
-    [0x82] = "Champion Gethit",
+    [0x82] = "Champion Gethit",   /* hex=130, fits in 160-bound array */
     [0x83] = "Champion Eat/Drink",
-    [0x87] = "Champion Scream",
-    [0x8A] = "Champion Bump",
-    [0x92] = "Champion Footstep",
+    [0x87] = "Champion Scream",    /* hex=135 */
+    [0x8A] = "Champion Bump",      /* hex=138 */
+    [0x92] = "Champion Footstep",  /* hex=146 */
 };
 
 static const char *const g_creature_sound_names[] = {
@@ -82,8 +82,10 @@ static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
 
 int dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx) {
     (void)cat; (void)c1; (void)c2;
-    /* Stub: just return sound_id as the entry index */
-    return (sfx >= 0 && sfx < 128) ? sfx : -1;
+    /* Stub: accepts sound IDs 0-127. Real GDAT lookup deferred.
+     * Accept same range that sound_play() accepts: IDs < 128.
+     * DM2 SFX IDs 0x81, 0x84-0x89, 0x8A, 0x8E, etc. are all < 128. */
+    return (sfx < 128u) ? (int)sfx : -1;
 }
 
 /* dm2_v1_sound_play — play a sound effect
@@ -139,17 +141,22 @@ int dm2_v1_sound_stop_music(void) {
 /* dm2_v1_sound_name — human-readable sound name
  * Source: docs/dm2_audio.md, docs/dm2_sound_combat.md */
 const char *dm2_v1_sound_name(int category, int sound_id) {
+    if (sound_id < 0) return "?";
     switch (category) {
         case DM2_SOUND_CATEGORY_STANDARD:
-            if (sound_id >= 0 && sound_id < 128 && g_std_sound_names[sound_id])
+            /* IDs 0x81, 0x84-0x89 are in the standard sparse array.
+             * Allow up to 160 entries so 0x81 (=129) fits. */
+            if (sound_id < 160 && g_std_sound_names[sound_id])
                 return g_std_sound_names[sound_id];
             break;
         case DM2_SOUND_CATEGORY_CHAMPION:
-            if (sound_id < 128 && g_champion_sound_names[sound_id])
+            /* Champion SFX IDs include hex values 0x82, 0x83, 0x87, 0x8A, 0x92.
+             * These map to indices 130, 131, 135, 138, 146 — extend bound to 160. */
+            if (sound_id < 160 && g_champion_sound_names[sound_id])
                 return g_champion_sound_names[sound_id];
             break;
         case DM2_SOUND_CATEGORY_CREATURE:
-            if (sound_id < 128 && g_creature_sound_names[sound_id])
+            if (sound_id < 160 && g_creature_sound_names[sound_id])
                 return g_creature_sound_names[sound_id];
             break;
     }

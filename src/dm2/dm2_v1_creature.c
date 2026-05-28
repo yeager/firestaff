@@ -125,12 +125,20 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
  * Source: SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM, DM2_CREATURE_ATTACKS_PARTY
  * Attack decision: based on AI_ATTACK_FLAGS and distance check.
  * b_1a command byte 0x17+ = fallback to CREATURE_ATTACKS_PARTY.
- * Melee range: distance == 1 tile. Ranged: AI_ATTACK_FLAGS__SHOOT. */
+ * Melee range: distance == 1 tile. Ranged: AI_ATTACK_FLAGS__SHOOT.
+ * Stub: non-mobile AIs (pillars, trees, objects, merchants) do not attack. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
-    /* Stub: all mobile creatures attack at melee range (distance <= 1) */
-    (void)ai_index;
-    return (distance <= 1) ? 1 : 0;
+    /* Stub: static/object AI indices do not attack (0,1,4,5,6,7,8,9,10,11,12,20,45,59,60) */
+    if (ai_index == 0  || ai_index == 1  || ai_index == 4
+     || ai_index == 5  || ai_index == 6  || ai_index == 7
+     || ai_index == 8  || ai_index == 9  || ai_index == 10
+     || ai_index == 11 || ai_index == 12 || ai_index == 20
+     || ai_index == 33 || ai_index == 45 || ai_index == 59
+     || ai_index == 60) {
+        return 0;
+    }
+    return (distance <= 1 && distance >= 0) ? 1 : 0;
 }
 
 /* dm2_v1_creature_resolves_spell — map AI_ATTACK_FLAGS to spell effect
