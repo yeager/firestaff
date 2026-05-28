@@ -28,6 +28,7 @@
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "vga_palette_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include "dm1v2/dm1_v2_filters.h"
 
 #include <string.h>
 
@@ -276,6 +277,12 @@ void dm1_v2_asset_palette_expand(const uint8_t* indexed,
  * Input:  V1 indexed pixel at src_w × src_h (typically 320×200 or cropped)
  * Output: RGBA at 2×src_w × 2×src_h (when epx_enabled) or src_w × src_h
  * ══════════════════════════════════════════════════════════════════════ */
+/* FIXED Phase 8: Corrected palette cache. Definitions are populated by
+ * dm1_v2_asset_rebuild_palette_lut() below.
+ */
+static unsigned char s_corrected_palette[DM1_V2_PALETTE_LEVELS][16][3];
+static int s_corrected_lut_valid = 0;
+
 
 int dm1_v2_asset_upscale_surface(DM1_V2_SurfaceCategory category,
     const uint8_t* src_indexed, int src_w, int src_h,
@@ -307,12 +314,11 @@ int dm1_v2_asset_upscale_surface(DM1_V2_SurfaceCategory category,
         int pi;
         for (pi = 0; pi < 16; pi++) {
             uint8_t rr, gg, bb;
-            if (g_config.palette_enhanced) {
-                /* Use precomputed corrected palette (from filter module) */
-                /* Fall back to original if filter not yet initialized */
-                rr = G9010_auc_VgaPaletteAll_Compat[lv][pi][0];
-                gg = G9010_auc_VgaPaletteAll_Compat[lv][pi][1];
-                bb = G9010_auc_VgaPaletteAll_Compat[lv][pi][2];
+            if (g_config.palette_enhanced && s_corrected_lut_valid) {
+                /* FIXED Phase 8: read from cache (previously identical to else branch). */
+                rr = s_corrected_palette[lv][pi][0];
+                gg = s_corrected_palette[lv][pi][1];
+                bb = s_corrected_palette[lv][pi][2];
             } else {
                 rr = G9010_auc_VgaPaletteAll_Compat[lv][pi][0];
                 gg = G9010_auc_VgaPaletteAll_Compat[lv][pi][1];
@@ -361,9 +367,14 @@ int dm1_v2_asset_pipeline_process(DM1_V2_SurfaceCategory category,
  * brightness: -50..+50
  * contrast: -50..+50 */
 void dm1_v2_asset_rebuild_palette_lut(int gamma100, int brightness, int contrast) {
-    (void)gamma100; (void)brightness; (void)contrast;
-    /* Full palette correction is in dm1_v2_filter_palette_build_lut().
-     * Here we just validate the parameters and acknowledge the call. */
+    /* FIXED Phase 8: previously a stub. Now calls dm1_v2_filter_palette_build_lut(). */
+    int rv = dm1_v2_filter_palette_build_lut(gamma100, brightness, contrast,
+                                              s_corrected_palette);
+    s_corrected_lut_valid = (rv == 0) ? 1 : 0;
+}
+
+void dm1_v2_asset_invalidate_cached_palette(void) {
+    s_corrected_lut_valid = 0;
 }
 
 const char* dm1_v2_asset_pipeline_source_evidence(void) {
