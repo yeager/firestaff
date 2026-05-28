@@ -224,6 +224,7 @@ set(M12_SOURCES
     src/shared/asset_find_by_hash.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
+    src/ui/branding_firestaff_rail_m12.c
     src/ui/branding_logo_m12.c
     src/ui/branding_logo_readme_m12.c
     src/shared/bestiary_m12.c
