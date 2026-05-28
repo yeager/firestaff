@@ -1,0 +1,76 @@
+# Firestaff startup-menu domain.
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+msgid "GRAPHICS MODE"
+msgstr "グラフィック設定"
+
+msgid "SETTINGS"
+msgstr "設定"
+
+msgid "PLAY"
+msgstr "プレイ"
+
+msgid "EXTRAS"
+msgstr "追加"
+
+msgid "QUIT"
+msgstr "終了"
+
+msgid "SELECT GAME"
+msgstr "ゲーム選択"
+
+msgid "Start or continue a game"
+msgstr "ゲームを開始または続行"
+
+msgid "Display, video, audio and controls"
+msgstr "表示、映像、音声、操作"
+
+msgid "Museum, bestiary, spell reference and more"
+msgstr "資料館、図鑑、呪文など"
+
+msgid "Exit Firestaff"
+msgstr "Firestaffを終了"
+
+msgid "Up/Down Navigate  |  Enter Select"
+msgstr "上下で移動  |  Enterで選択"
+
+msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+msgstr "Escで戻る  |  上下で移動  |  Enterで選択"
+
+msgid "New Game (Original)"
+msgstr "新規ゲーム（オリジナル）"
+
+msgid "Continue Saved Game"
+msgstr "保存から続行"
+
+msgid "New Game (Modern Graphics)"
+msgstr "新規ゲーム（現代グラフィック）"
+
+msgid "Coming soon"
+msgstr "近日公開"
+
+msgid "No data files"
+msgstr "データファイルなし"
+
+msgid "Graphics Mode"
+msgstr "グラフィック設定"
+
+msgid "Language"
+msgstr "言語"
+
+msgid "Window Mode"
+msgstr "ウィンドウモード"
+
+msgid "On"
+msgstr "オン"
+
+msgid "Off"
+msgstr "オフ"
+
+msgid "Original"
+msgstr "オリジナル"

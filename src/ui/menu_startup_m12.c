@@ -7,6 +7,7 @@
 #include "firestaff_bestiary.h"
 #include "firestaff_spell_ref.h"
 #include "firestaff_item_encyclopedia.h"
+#include "menu_unicode_glyphs_m12.h"
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"
@@ -227,12 +228,17 @@ static const char* m12_selected_version_label(const M12_StartupMenuState* state,
 static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
+const char *m12_localized_main_label(int index);
+const char *m12_localized_extras_label(int index);
 
 static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10", "32:9"};
 static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
-static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE")};
-static const char* g_languageNames[] = {_("ENGLISH"), _("SVENSKA"), _("FRANCAIS"), _("DEUTSCH")};
+static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH")};
+static const char* g_languageNames[] = {
+    _("ENGLISH"), _("SVENSKA"), _("FRANCAIS"), _("DEUTSCH"), "日本語", "简体中文"
+};
+enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0])) };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
 static const char* g_speedLabels[] = {_("SLOWER"), _("NORMAL"), _("FASTER")};
 static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", _("FIT"), _("STRETCH")};
@@ -283,6 +289,23 @@ static void m12_init_game_options(M12_GameOptions* opts) {
     opts->resolution = 0;
 }
 
+static FS_Language m12_fs_language_from_menu_index(int index) {
+    switch (m12_clamp_index(index, M12_UI_LANGUAGE_COUNT)) {
+        case 1: return FS_LANG_SV;
+        case 2: return FS_LANG_FR;
+        case 3: return FS_LANG_DE;
+        case 4: return FS_LANG_JA;
+        case 5: return FS_LANG_ZH;
+        case 0:
+        default: return FS_LANG_EN;
+    }
+}
+
+static void m12_sync_l10n_language(const M12_StartupMenuState* state) {
+    int index = state ? state->settings.languageIndex : 0;
+    fs_l10n_set_language(m12_fs_language_from_menu_index(index));
+}
+
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode) {
     if (!opts) {
         return;
@@ -309,7 +332,7 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
         case M12_GAME_OPT_ROW_LANGUAGE:
             opts->languageIndex = m12_cycle_index(opts->languageIndex,
                                                   delta,
-                                                  (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                                                  M12_UI_LANGUAGE_COUNT);
             break;
         case M12_GAME_OPT_ROW_CHEATS:
             opts->cheatsEnabled = m12_cycle_index(opts->cheatsEnabled, delta, 2);
@@ -359,7 +382,7 @@ static void m12_clamp_game_options(M12_GameOptions* opts) {
     }
     opts->usePatch = m12_clamp_index(opts->usePatch, 2);
     opts->languageIndex = m12_clamp_index(opts->languageIndex,
-                                          (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                                          M12_UI_LANGUAGE_COUNT);
     opts->cheatsEnabled = m12_clamp_index(opts->cheatsEnabled, 2);
     if (opts->cheatsEnabled) {
         opts->gameSpeed = m12_clamp_index(opts->gameSpeed, 3);
@@ -596,7 +619,7 @@ typedef struct {
 } M12_GraphicsTheme;
 
 enum {
-    M12_RUNTIME_CATALOG_MAX_ENTRIES = 128,
+    M12_RUNTIME_CATALOG_MAX_ENTRIES = 512,
     M12_RUNTIME_CATALOG_MSGID_CAPACITY = 128,
     M12_RUNTIME_CATALOG_MSGSTR_CAPACITY = 256
 };
@@ -623,7 +646,7 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("UP/DOWN MOVE   ENTER OPEN   ESC EXIT"),
     _("PERSISTED OPTIONS"),
     _("LANGUAGE"),
-    _("PRESENTATION MODE"),
+    _("GRAPHICS MODE"),
     _("RENDERER BACKEND"),
     _("RENDERER BACKEND UNAVAILABLE"),
     _("WINDOW MODE"),
@@ -645,7 +668,7 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("CARD ART SLOT")
 };
 
-static M12_RuntimeCatalog g_runtimeCatalogs[4];
+static M12_RuntimeCatalog g_runtimeCatalogs[M12_UI_LANGUAGE_COUNT];
 
 static const M12_GraphicsTheme g_graphicsThemes[] = {
     {M12_COLOR_NAVY, M12_COLOR_DARK_GRAY, M12_COLOR_BROWN, M12_COLOR_YELLOW, 0},
@@ -772,79 +795,11 @@ static void m12_append_string(char* out, size_t outSize, const char* value) {
     snprintf(out + len, outSize - len, "%s", value);
 }
 
-static char m12_fold_utf8_char(const unsigned char* src, int* consumed) {
-    if (!src || !consumed) {
-        return '\0';
-    }
-    *consumed = 1;
-    if (src[0] < 0x80U) {
-        unsigned char ch = src[0];
-        if (ch >= 'a' && ch <= 'z') {
-            ch = (unsigned char)(ch - 'a' + 'A');
-        }
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
-            ch == ' ' || ch == '-' || ch == '.' || ch == ':' || ch == '/' || ch == '>') {
-            return (char)ch;
-        }
-        if (ch == '\'' || ch == '`') {
-            return ' ';
-        }
-        return ' ';
-    }
-    if (src[0] == 0xC3U) {
-        *consumed = 2;
-        switch (src[1]) {
-            case 0x80U: case 0x82U: case 0x84U: case 0x85U:
-            case 0x87U:
-            case 0xA0U: case 0xA2U: case 0xA4U: case 0xA5U:
-                return (src[1] == 0x87U) ? 'C' : 'A';
-            case 0x89U: case 0x88U: case 0x8AU: case 0x8BU:
-            case 0xA9U: case 0xA8U: case 0xAAU: case 0xABU:
-                return 'E';
-            case 0x8EU: case 0x8FU: case 0xAEU: case 0xAFU:
-                return 'I';
-            case 0x94U: case 0x96U: case 0xB4U: case 0xB6U:
-                return 'O';
-            case 0x99U: case 0x9BU: case 0x9CU: case 0xB9U: case 0xBBU: case 0xBCU:
-                return 'U';
-            default:
-                return ' ';
-        }
-    }
-    return ' ';
-}
-
-static void m12_sanitize_display_text(char* out, size_t outSize, const char* value) {
-    size_t dst = 0U;
-    size_t src = 0U;
-    if (!out || outSize == 0U) {
-        return;
-    }
-    out[0] = '\0';
-    if (!value) {
-        return;
-    }
-    while (value[src] != '\0' && dst + 1U < outSize) {
-        int consumed = 1;
-        char folded = m12_fold_utf8_char((const unsigned char*)&value[src], &consumed);
-        if (folded != '\0') {
-            out[dst++] = folded;
-        }
-        src += (size_t)(consumed > 0 ? consumed : 1);
-    }
-    out[dst] = '\0';
-}
-
 static int m12_store_catalog_entry(M12_RuntimeCatalog* catalog,
                                    const char* msgid,
                                    const char* msgstr) {
-    char sanitized[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY];
     if (!catalog || !msgid || !msgstr || msgid[0] == '\0' || msgstr[0] == '\0' ||
         catalog->entryCount >= M12_RUNTIME_CATALOG_MAX_ENTRIES) {
-        return 0;
-    }
-    m12_sanitize_display_text(sanitized, sizeof(sanitized), msgstr);
-    if (sanitized[0] == '\0') {
         return 0;
     }
     m12_copy_string(catalog->entries[catalog->entryCount].msgid,
@@ -852,14 +807,14 @@ static int m12_store_catalog_entry(M12_RuntimeCatalog* catalog,
                     msgid);
     m12_copy_string(catalog->entries[catalog->entryCount].msgstr,
                     sizeof(catalog->entries[catalog->entryCount].msgstr),
-                    sanitized);
+                    msgstr);
     catalog->entryCount += 1;
     return 1;
 }
 
 static int m12_resolve_catalog_path(int localeIndex, char* out, size_t outSize) {
     char path[FSP_PATH_MAX];
-    if (!out || outSize == 0U || localeIndex < 0 || localeIndex >= 4) {
+    if (!out || outSize == 0U || localeIndex < 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return 0;
     }
     if (snprintf(path, sizeof(path), "po/startup-menu.%s.po", g_languages[localeIndex]) <= 0) {
@@ -885,7 +840,7 @@ static void m12_load_runtime_catalog(int localeIndex) {
     char msgstr[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY] = "";
     int inMsgid = 0;
     int inMsgstr = 0;
-    if (localeIndex < 0 || localeIndex >= 4) {
+    if (localeIndex < 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return;
     }
     catalog = &g_runtimeCatalogs[localeIndex];
@@ -949,7 +904,7 @@ static const char* m12_translate_for_locale(int localeIndex, const char* english
     if (!english || english[0] == '\0') {
         return "";
     }
-    if (localeIndex <= 0 || localeIndex >= 4) {
+    if (localeIndex <= 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return english;
     }
     m12_load_runtime_catalog(localeIndex);
@@ -966,7 +921,7 @@ static const char* m12_translate_for_locale(int localeIndex, const char* english
 }
 
 static int m12_locale_index(const M12_StartupMenuState* state) {
-    return state ? m12_clamp_index(state->settings.languageIndex, 4) : 0;
+    return state ? m12_clamp_index(state->settings.languageIndex, M12_UI_LANGUAGE_COUNT) : 0;
 }
 
 static const char* m12_text(const M12_StartupMenuState* state, M12_TextId id) {
@@ -1183,7 +1138,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     }
     M12_Config_Load(&config, dataDirOverride);
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
-                                                    (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                                                    M12_UI_LANGUAGE_COUNT);
+    m12_sync_l10n_language(state);
     state->languageExplicit = config.languageExplicit ? 1 : 0;
     state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
                                                     (int)(sizeof(g_presentationModes) /
@@ -1351,7 +1307,7 @@ static const char* m12_settings_value_language(const M12_StartupMenuState* state
 static const char* m12_game_value_language_name(const M12_StartupMenuState* state,
                                                 const M12_GameOptions* opts) {
     int index = opts ? m12_clamp_index(opts->languageIndex,
-                                       (int)(sizeof(g_languageNames) / sizeof(g_languageNames[0])))
+                                       M12_UI_LANGUAGE_COUNT)
                      : 0;
     return m12_tr(state, g_languageNames[index]);
 }
@@ -1688,7 +1644,7 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
         return m12_tr(state, "GENERAL");
     }
     if (row <= M12_SETTINGS_ROW_GRAPHICS) {
-        return m12_tr(state, "PRESENTATION");
+        return m12_tr(state, "GRAPHICS");
     }
     if (row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) {
         return m12_tr(state, "RENDERER");
@@ -1816,7 +1772,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     state->settingsSelectedIndex = m12_clamp_index(state->settingsSelectedIndex,
                                                    M12_SETTINGS_ROW_COUNT);
     state->settings.languageIndex = m12_clamp_index(state->settings.languageIndex,
-                                                    (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                                                    M12_UI_LANGUAGE_COUNT);
+    m12_sync_l10n_language(state);
     state->settings.graphicsIndex = m12_clamp_index(state->settings.graphicsIndex,
                                                     M12_PRESENTATION_MODE_COUNT);
     state->settings.rendererBackendIndex = m12_clamp_index(state->settings.rendererBackendIndex,
@@ -1951,7 +1908,8 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
             state->settings.languageIndex = m12_cycle_index(
                 state->settings.languageIndex,
                 delta,
-                (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                M12_UI_LANGUAGE_COUNT);
+            m12_sync_l10n_language(state);
             state->languageExplicit = 1;
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
@@ -2604,7 +2562,7 @@ static void m12_draw_language_flag(unsigned char* framebuffer,
                                    int y,
                                    int languageIndex) {
     int idx = m12_clamp_index(languageIndex,
-                              (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+                              M12_UI_LANGUAGE_COUNT);
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    x, y, 18, 12, M12_COLOR_WHITE, M12_COLOR_BLACK);
     switch (idx) {
@@ -2681,6 +2639,52 @@ static int m12_glyph_visible_width(const unsigned char* glyph) {
     return right + 1;
 }
 
+static unsigned int m12_utf8_next_codepoint(const char** p) {
+    const unsigned char* s;
+    unsigned int cp;
+    if (!p || !*p || **p == '\0') {
+        return 0U;
+    }
+    s = (const unsigned char*)*p;
+    if (s[0] < 0x80U) {
+        *p += 1;
+        return (unsigned int)s[0];
+    }
+    if ((s[0] & 0xE0U) == 0xC0U && (s[1] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x1FU) << 6) | (unsigned int)(s[1] & 0x3FU);
+        *p += 2;
+        return cp;
+    }
+    if ((s[0] & 0xF0U) == 0xE0U &&
+        (s[1] & 0xC0U) == 0x80U &&
+        (s[2] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x0FU) << 12) |
+             ((unsigned int)(s[1] & 0x3FU) << 6) |
+             (unsigned int)(s[2] & 0x3FU);
+        *p += 3;
+        return cp;
+    }
+    if ((s[0] & 0xF8U) == 0xF0U &&
+        (s[1] & 0xC0U) == 0x80U &&
+        (s[2] & 0xC0U) == 0x80U &&
+        (s[3] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x07U) << 18) |
+             ((unsigned int)(s[1] & 0x3FU) << 12) |
+             ((unsigned int)(s[2] & 0x3FU) << 6) |
+             (unsigned int)(s[3] & 0x3FU);
+        *p += 4;
+        return cp;
+    }
+    *p += 1;
+    return '?';
+}
+
+static int m12_unicode_advance(unsigned int cp, int scale) {
+    const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(cp);
+    int width = glyph ? (int)glyph->width : 8;
+    return (width + 1) * scale;
+}
+
 static int m12_measure_text(const char* text,
                             int scale,
                             int tracking) {
@@ -2689,16 +2693,71 @@ static int m12_measure_text(const char* text,
     if (!text || scale <= 0) {
         return 0;
     }
-    for (p = text; *p != '\0'; ++p) {
-        const unsigned char* glyph = m12_find_glyph(*p);
-        int glyphWidth = m12_glyph_visible_width(glyph);
-        int advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
+    p = text;
+    while (*p != '\0') {
+        unsigned int cp = m12_utf8_next_codepoint(&p);
+        int advance;
+        if (cp < 0x80U) {
+            const unsigned char* glyph = m12_find_glyph((char)cp);
+            int glyphWidth = m12_glyph_visible_width(glyph);
+            advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
+        } else {
+            advance = m12_unicode_advance(cp, scale);
+        }
         width += advance + tracking;
     }
     if (width > 0) {
         width -= tracking;
     }
     return width;
+}
+
+static void m12_draw_unicode_fallback(unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight,
+                                      int x,
+                                      int y,
+                                      int scale,
+                                      unsigned char color) {
+    int w = 8 * scale;
+    int h = 10 * scale;
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, w, scale, color);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y + h - scale, w, scale, color);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, scale, h, color);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + w - scale, y, scale, h, color);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 2 * scale, y + 4 * scale,
+                  w - 4 * scale, scale, color);
+}
+
+static void m12_draw_unicode_glyph(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   unsigned int cp,
+                                   int scale,
+                                   unsigned char color) {
+    const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(cp);
+    if (!glyph) {
+        m12_draw_unicode_fallback(framebuffer, framebufferWidth, framebufferHeight,
+                                  x, y, scale, color);
+        return;
+    }
+    for (int row = 0; row < glyph->height; ++row) {
+        uint16_t bits = glyph->rows[row];
+        for (int col = 0; col < glyph->width; ++col) {
+            if ((bits >> (15 - col)) & 1U) {
+                m12_fill_rect(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              x + (col * scale),
+                              y + (row * scale),
+                              scale,
+                              scale,
+                              color);
+            }
+        }
+    }
 }
 
 static void m12_draw_text_raw(unsigned char* framebuffer,
@@ -2715,25 +2774,34 @@ static void m12_draw_text_raw(unsigned char* framebuffer,
     if (!text || scale <= 0) {
         return;
     }
-    for (p = text; *p != '\0'; ++p) {
+    p = text;
+    while (*p != '\0') {
         int row;
-        const unsigned char* glyph = m12_find_glyph(*p);
-        int glyphWidth = m12_glyph_visible_width(glyph);
-        int advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
-        for (row = 0; row < 7; ++row) {
-            int col;
-            for (col = 0; col < 5; ++col) {
-                if ((glyph[row] >> (4 - col)) & 1U) {
-                    m12_fill_rect(framebuffer,
-                                  framebufferWidth,
-                                  framebufferHeight,
-                                  cursorX + (col * scale),
-                                  y + (row * scale),
-                                  scale,
-                                  scale,
-                                  color);
+        unsigned int cp = m12_utf8_next_codepoint(&p);
+        int advance;
+        if (cp < 0x80U) {
+            const unsigned char* glyph = m12_find_glyph((char)cp);
+            int glyphWidth = m12_glyph_visible_width(glyph);
+            advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
+            for (row = 0; row < 7; ++row) {
+                int col;
+                for (col = 0; col < 5; ++col) {
+                    if ((glyph[row] >> (4 - col)) & 1U) {
+                        m12_fill_rect(framebuffer,
+                                      framebufferWidth,
+                                      framebufferHeight,
+                                      cursorX + (col * scale),
+                                      y + (row * scale),
+                                      scale,
+                                      scale,
+                                      color);
+                    }
                 }
             }
+        } else {
+            m12_draw_unicode_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                                   cursorX, y, cp, scale, color);
+            advance = m12_unicode_advance(cp, scale);
         }
         cursorX += advance + tracking;
     }
@@ -3792,7 +3860,7 @@ static void m12_draw_redesigned_main_menu(const M12_StartupMenuState *state,
     for (i = 0; i < M12_MAIN_MENU_COUNT; i++) {
         int y = centerY + i * itemH;
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            g_main_menu_labels[i], NULL,
+            m12_localized_main_label(i), NULL,
             (int)state->mainMenuSelected == i, 1, i);
 
         /* Description under selected item */
@@ -3800,13 +3868,13 @@ static void m12_draw_redesigned_main_menu(const M12_StartupMenuState *state,
             M12_TextStyle descStyle = g_textSmall;
             descStyle.color = M12_COLOR_LIGHT_GRAY;
             m12_draw_text(fb, fw, fh, margin + 36, y + 14,
-                g_main_menu_descriptions[i], &descStyle);
+                m12_tr(state, g_main_menu_descriptions[i]), &descStyle);
         }
     }
 
     /* Footer */
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        "v0.4.0  |  Up/Down Navigate  |  Enter Select", &g_textSmallMuted);
+        m12_tr(state, "Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
 }
 
 static void m12_draw_game_select(const M12_StartupMenuState *state,
@@ -3818,18 +3886,18 @@ static void m12_draw_game_select(const M12_StartupMenuState *state,
     int i;
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
-        _("SELECT GAME"), &g_textMediumShadow);
+        fs_l10n_get(FS_STR_SELECT_GAME), &g_textMediumShadow);
 
     for (i = 0; i < M12_GAME_SELECT_COUNT; i++) {
         int y = startY + i * itemH;
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            g_game_select_labels[i], m12_game_tag(i),
+            m12_tr(state, g_game_select_labels[i]), m12_tr(state, m12_game_tag(i)),
             (int)state->gameSelectSelected == i,
             g_game_select_available[i], i);
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        _("Escape Back  |  Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
+        m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
 }
 
 static void m12_draw_game_mode(const M12_StartupMenuState *state,
@@ -3844,7 +3912,7 @@ static void m12_draw_game_mode(const M12_StartupMenuState *state,
     if (state->selectedGameId == M12_GAME_SELECT_CSB) game_name = _("CHAOS STRIKES BACK");
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
-        game_name, &g_textMediumShadow);
+        m12_tr(state, game_name), &g_textMediumShadow);
 
     for (i = 0; i < M12_GAME_MODE_COUNT; i++) {
         int y = startY + i * itemH;
@@ -3852,13 +3920,13 @@ static void m12_draw_game_mode(const M12_StartupMenuState *state,
         /* Continue only available if save exists */
         if (i == M12_GAME_MODE_CONTINUE && !state->quickResumeAvailable) avail = 0;
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            g_game_mode_labels[i],
-            avail ? NULL : "[Soon]",
+            m12_tr(state, g_game_mode_labels[i]),
+            avail ? NULL : fs_l10n_get(FS_STR_COMING_SOON),
             (int)state->gameModeSelected == i, avail, i);
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        _("Escape Back  |  Up/Down Navigate  |  Enter Start"), &g_textSmallMuted);
+        m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Start"), &g_textSmallMuted);
 }
 
 static void m12_draw_extras_menu(const M12_StartupMenuState *state,
@@ -3870,19 +3938,19 @@ static void m12_draw_extras_menu(const M12_StartupMenuState *state,
     int i;
 
     m12_draw_text(fb, fw, fh, margin, margin + 10,
-        _("EXTRAS"), &g_textMediumShadow);
+        fs_l10n_get(FS_STR_EXTRAS), &g_textMediumShadow);
 
     for (i = 0; i < M12_EXTRAS_COUNT; i++) {
         int y = startY + i * itemH;
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            g_extras_labels[i],
-            g_extras_available[i] ? NULL : "[Soon]",
+            m12_localized_extras_label(i),
+            g_extras_available[i] ? NULL : fs_l10n_get(FS_STR_COMING_SOON),
             (int)state->extrasSelected == i,
             g_extras_available[i], i);
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
-        _("Escape Back  |  Up/Down Navigate  |  Enter Open"), &g_textSmallMuted);
+        m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Open"), &g_textSmallMuted);
 }
 
 static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
@@ -3905,7 +3973,7 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
 
     /* Draw title */
     m12_draw_text(framebuffer, fw, fh, margin + 8, margin + 8,
-        _("SETTINGS"), &g_textTitleShadow);
+        fs_l10n_get(FS_STR_SETTINGS), &g_textTitleShadow);
 
     /* Draw tab bar */
     for (i = 0; i < M12_SETTINGS_TAB_COUNT; i++) {
@@ -3914,7 +3982,7 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
             (i == tab) ? M12_COLOR_LIGHT_BLUE : M12_COLOR_DARK_GRAY,
             (i == tab) ? M12_COLOR_NAVY : M12_COLOR_BLACK);
         m12_draw_text(framebuffer, fw, fh, tabX + 8, tabY + 4,
-            m12_settings_tab_labels[i],
+            m12_tr(state, m12_settings_tab_labels[i]),
             (i == tab) ? &g_textSmallShadow : &g_textSmall);
     }
 
@@ -3962,7 +4030,7 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
             M12_TextStyle style = g_textSmall;
             style.color = labelColor;
             m12_draw_text(framebuffer, fw, fh,
-                margin + 16, rowY + 2, r->label, &style);
+                margin + 16, rowY + 2, m12_tr(state, r->label), &style);
         }
 
         /* Value (right-aligned) */
@@ -3970,7 +4038,7 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
             M12_TextStyle style = g_textSmall;
             style.color = valueColor;
             m12_draw_text(framebuffer, fw, fh,
-                fw - margin - 120, rowY + 2, r->value, &style);
+                fw - margin - 120, rowY + 2, m12_tr(state, r->value), &style);
         }
 
         /* Gray out indicator */
@@ -3995,9 +4063,9 @@ static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
     }
 
     /* Tab navigation hint */
-    m12_draw_text(framebuffer, fw, fh,
-        margin + 8, fh - 32,
-        "< > Switch tab   Up/Down Navigate   Enter Change",
+        m12_draw_text(framebuffer, fw, fh,
+            margin + 8, fh - 32,
+        m12_tr(state, "< > Switch tab   Up/Down Navigate   Enter Change"),
         &g_textSmall);
 }
 
@@ -4212,7 +4280,7 @@ static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
     int menuX = centerX - 44;
     int menuY = 108;
     const char* languageCode = g_languages[m12_clamp_index(state ? state->settings.languageIndex : 0,
-                                                           (int)(sizeof(g_languages) / sizeof(g_languages[0])) )];
+                                                           M12_UI_LANGUAGE_COUNT)];
 
     m12_put_pixel(framebuffer, framebufferWidth, framebufferHeight, 0, 0, M12_COLOR_DARK_GRAY);
     m12_fill_rect(framebuffer,
@@ -4328,7 +4396,7 @@ static void m12_draw_sparse_settings_view(const M12_StartupMenuState* state,
     char line2[64];
     char line3[64];
     snprintf(line2, sizeof(line2), "LANGUAGE  %s", m12_settings_value_language(state));
-    snprintf(line3, sizeof(line3), "PRESENTATION  %s", m12_settings_value_graphics(state));
+    snprintf(line3, sizeof(line3), "%s  %s", m12_tr(state, "GRAPHICS"), m12_settings_value_graphics(state));
     m12_draw_sparse_center_box(framebuffer,
                                framebufferWidth,
                                framebufferHeight,
@@ -6380,12 +6448,13 @@ const char *m12_localized_tab_label(int tab) {
 const char *m12_localized_extras_label(int index) {
     switch (index) {
         case 0: return fs_l10n_get(FS_STR_MUSEUM);
-        case 1: return fs_l10n_get(FS_STR_BESTIARY);
-        case 2: return fs_l10n_get(FS_STR_SPELLS);
-        case 3: return fs_l10n_get(FS_STR_MAP_VIEWER);
-        case 4: return fs_l10n_get(FS_STR_ITEMS);
-        case 5: return fs_l10n_get(FS_STR_CHANGELOG);
-        case 6: return fs_l10n_get(FS_STR_SCREENSHOTS);
+        case 1: return fs_l10n_get(FS_STR_MANUAL);
+        case 2: return fs_l10n_get(FS_STR_BESTIARY);
+        case 3: return fs_l10n_get(FS_STR_SPELLS);
+        case 4: return fs_l10n_get(FS_STR_MAP_VIEWER);
+        case 5: return fs_l10n_get(FS_STR_ITEMS);
+        case 6: return fs_l10n_get(FS_STR_CHANGELOG);
+        case 7: return fs_l10n_get(FS_STR_SCREENSHOTS);
         default: return "???";
     }
 }

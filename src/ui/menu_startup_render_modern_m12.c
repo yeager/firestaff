@@ -29,6 +29,8 @@
 #include "card_art_generated_m12.h"
 #include "changelog_m12.h"
 #include "creature_art_m12.h"
+#include "firestaff_l10n.h"
+#include "menu_unicode_glyphs_m12.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -379,6 +381,40 @@ static const ModernGlyph* find_glyph(char ch) {
     return &g_glyphs[0]; /* space */
 }
 
+static unsigned int utf8_next_codepoint(const char** p) {
+    const unsigned char* s;
+    unsigned int cp;
+    if (!p || !*p || **p == '\0') return 0U;
+    s = (const unsigned char*)*p;
+    if (s[0] < 0x80U) {
+        *p += 1;
+        return (unsigned int)s[0];
+    }
+    if ((s[0] & 0xE0U) == 0xC0U && (s[1] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x1FU) << 6) | (unsigned int)(s[1] & 0x3FU);
+        *p += 2;
+        return cp;
+    }
+    if ((s[0] & 0xF0U) == 0xE0U && (s[1] & 0xC0U) == 0x80U && (s[2] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x0FU) << 12) |
+             ((unsigned int)(s[1] & 0x3FU) << 6) |
+             (unsigned int)(s[2] & 0x3FU);
+        *p += 3;
+        return cp;
+    }
+    if ((s[0] & 0xF8U) == 0xF0U && (s[1] & 0xC0U) == 0x80U &&
+        (s[2] & 0xC0U) == 0x80U && (s[3] & 0xC0U) == 0x80U) {
+        cp = ((unsigned int)(s[0] & 0x07U) << 18) |
+             ((unsigned int)(s[1] & 0x3FU) << 12) |
+             ((unsigned int)(s[2] & 0x3FU) << 6) |
+             (unsigned int)(s[3] & 0x3FU);
+        *p += 4;
+        return cp;
+    }
+    *p += 1;
+    return '?';
+}
+
 typedef struct {
     int scale;
     int tracking;       /* extra pixels between glyphs at unit scale (x scale) */
@@ -403,8 +439,18 @@ static int glyph_width_px(int scale, int tracking) {
 
 static int text_width_px(const char* s, const ModernTextStyle* st) {
     if (!s) return 0;
-    int n = (int)strlen(s);
-    int w = n * glyph_width_px(st->scale, st->tracking);
+    int w = 0;
+    const char* p = s;
+    while (*p != '\0') {
+        unsigned int cp = utf8_next_codepoint(&p);
+        if (cp < 0x80U) {
+            w += glyph_width_px(st->scale, st->tracking);
+        } else {
+            const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(cp);
+            int gw = glyph ? (int)glyph->width : 8;
+            w += (gw + st->tracking) * st->scale;
+        }
+    }
     w -= st->tracking * st->scale;
     if (w < 0) w = 0;
     return w;
@@ -431,13 +477,47 @@ static void draw_glyph(M12_ModernCanvas* c, int x, int y,
     }
 }
 
+static void draw_unicode_glyph(M12_ModernCanvas* c, int x, int y,
+                               unsigned int cp, const ModernTextStyle* st) {
+    const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(cp);
+    int scale = st->scale;
+    if (!glyph) {
+        fill_rect(c, x, y, 8 * scale, scale, st->color);
+        fill_rect(c, x, y + 9 * scale, 8 * scale, scale, st->color);
+        fill_rect(c, x, y, scale, 10 * scale, st->color);
+        fill_rect(c, x + 7 * scale, y, scale, 10 * scale, st->color);
+        return;
+    }
+    for (int row = 0; row < glyph->height; ++row) {
+        uint16_t bits = glyph->rows[row];
+        for (int col = 0; col < glyph->width; ++col) {
+            if (!((bits >> (15 - col)) & 1U)) continue;
+            int px = x + col * scale;
+            int py = y + row * scale;
+            if (st->shadow > 0) {
+                fill_rect(c, px + st->shadow, py + st->shadow, scale, scale, st->shadowColor);
+            }
+            fill_rect(c, px, py, scale, scale, st->color);
+        }
+    }
+}
+
 static void draw_text(M12_ModernCanvas* c, int x, int y,
                       const char* s, const ModernTextStyle* st) {
     if (!s) return;
-    int step = glyph_width_px(st->scale, st->tracking);
-    for (int i = 0; s[i] != '\0'; ++i) {
-        const ModernGlyph* g = find_glyph(s[i]);
-        draw_glyph(c, x + i * step, y, g, st);
+    int cursor = x;
+    const char* p = s;
+    while (*p != '\0') {
+        unsigned int cp = utf8_next_codepoint(&p);
+        if (cp < 0x80U) {
+            const ModernGlyph* g = find_glyph((char)cp);
+            draw_glyph(c, cursor, y, g, st);
+            cursor += glyph_width_px(st->scale, st->tracking);
+        } else {
+            const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(cp);
+            draw_unicode_glyph(c, cursor, y, cp, st);
+            cursor += ((glyph ? (int)glyph->width : 8) + st->tracking) * st->scale;
+        }
     }
 }
 
@@ -518,6 +598,8 @@ static const char* language_short(const M12_StartupMenuState* state) {
     if (li == 1) return "SV";
     if (li == 2) return "FR";
     if (li == 3) return "DE";
+    if (li == 4) return "JA";
+    if (li == 5) return "ZH";
     return "EN";
 }
 
@@ -1017,20 +1099,20 @@ static void draw_card(M12_ModernCanvas* c,
     if (isSettings) {
         draw_readme_logo_image(c, x + w - 148, y + 64, 112, 112);
         ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
-        draw_text(c, x + 16, y + 66,  "GLOBAL SETTINGS", &p);
+        draw_text(c, x + 16, y + 66,  fs_l10n_get(FS_STR_SETTINGS), &p);
         draw_text(c, x + 16, y + 96,  "DISPLAY  CONTROLS  AUDIO", &p);
-        draw_text(c, x + 16, y + 126, "LANGUAGE  CREDITS  GITHUB", &p);
+        draw_text(c, x + 16, y + 126, fs_l10n_get(FS_STR_LANGUAGE), &p);
         draw_text(c, x + 16, y + 170, "THANKS TO CHRISTOPHE FONTANEL", &p);
         draw_text(c, x + 16, y + 200, "AND THE PRESERVATION PROJECTS", &p);
         draw_text(c, x + 16, y + 230, "DANIEL NYLANDER", &p);
 
-        static const char* langs[] = {"EN", "SV", "FR", "DE"};
+        static const char* langs[] = {"EN", "SV", "FR", "DE", "JA", "ZH"};
         static const char* grf[]   = {"V1", "V2.0", "V2.1", "V2.2"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
         int li = state->settings.languageIndex;
         int gi = state->settings.graphicsIndex;
         if (li < 0) li = 0;
-        if (li > 3) li = 3;
+        if (li > 5) li = 5;
         if (gi < 0) gi = 0;
         if (gi > 3) gi = 3;
         draw_text(c, x + 16, y + h - 92,  langs[li], &v);
@@ -1238,7 +1320,7 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 130, _("SETTINGS"), &h);
+    draw_text(c, 160, 130, fs_l10n_get(FS_STR_SETTINGS), &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
     draw_text(c, 160, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
 
@@ -1249,14 +1331,14 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
-    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
+    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH", "日本語", "简体中文"};
     static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
     int wi = state->settings.windowModeIndex;
     if (li < 0) li = 0;
-    if (li > 3) li = 3;
+    if (li > 5) li = 5;
     if (gi < 0) gi = 0;
     if (gi > 3) gi = 3;
     if (wi < 0) wi = 0;
@@ -1265,9 +1347,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
     int rowY = panelY + 36;
-    draw_setting_row(c, rowX, rowY,      rowW, "LANGUAGE",       langs[li],
+    draw_setting_row(c, rowX, rowY,      rowW, fs_l10n_get(FS_STR_LANGUAGE), langs[li],
                      state->settingsSelectedIndex == 0);
-    draw_setting_row(c, rowX, rowY + 70, rowW, "PRESENTATION MODE", grf[gi],
+    draw_setting_row(c, rowX, rowY + 70, rowW, "GRAPHICS MODE", grf[gi],
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
                      state->settingsSelectedIndex == 2);
@@ -1453,7 +1535,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
-    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
+    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH", "日本語", "简体中文"};
     static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10", "32:9"};
     static const char* res[] = {"320X200", "640X400", "800X600", "1024X768", "1280X960"};
     static const char* speeds[] = {"SLOWER", "NORMAL", "FASTER"};
@@ -1474,7 +1556,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
                                                    : (ver->label ? ver->label : "-"))
                                 : "-";
     const char* patchLabel = opts->usePatch ? "PATCHED" : "ORIGINAL";
-    const char* langLabel  = (opts->languageIndex >= 0 && opts->languageIndex < 4)
+    const char* langLabel  = (opts->languageIndex >= 0 && opts->languageIndex < 6)
                               ? langs[opts->languageIndex] : "EN";
     const char* cheatsLabel = opts->cheatsEnabled ? "ON" : "OFF";
     const char* hotkeysLabel = M12_GameOptions_SpeedHotkeysEnabled(opts) ? "ON" : "OFF";
@@ -1512,7 +1594,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
                           isV1, COLOR_V1());
     draw_mode_choice_card(c, rowX + choiceW + choiceGap, choiceY, choiceW, choiceH,
                           "CUSTOM",
-                          "ENHANCED PRESENTATION",
+                          "ENHANCED GRAPHICS",
                           "ADJUSTABLE DISPLAY",
                           isCustom, COLOR_V2());
 

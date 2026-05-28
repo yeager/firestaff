@@ -54,8 +54,8 @@ msgid "LANGUAGE"
 msgstr "LANGUE"
 
 #. Settings row label
-msgid "PRESENTATION MODE"
-msgstr "MODE DE PRÉSENTATION"
+msgid "GRAPHICS MODE"
+msgstr "MODE GRAPHIQUE"
 
 #. Settings row label
 msgid "WINDOW MODE"

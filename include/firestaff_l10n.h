@@ -23,7 +23,7 @@ typedef enum {
     FS_LANG_FI,    /* Finnish */
     FS_LANG_HU,    /* Hungarian */
     FS_LANG_TR,    /* Turkish */
-    FS_LANG_COUNT  /* 20 languages */
+    FS_LANG_COUNT  /* 19 languages */
 } FS_Language;
 
 typedef enum {
@@ -44,13 +44,13 @@ typedef enum {
     FS_STR_CONTROLS,
     FS_STR_ACCESSIBILITY,
     FS_STR_MUSEUM,
+    FS_STR_MANUAL,
     FS_STR_BESTIARY,
     FS_STR_SPELLS,
     FS_STR_MAP_VIEWER,
     FS_STR_ITEMS,
     FS_STR_CHANGELOG,
     FS_STR_SCREENSHOTS,
-    FS_STR_MANUAL,
     FS_STR_LANGUAGE,
     FS_STR_ON,
     FS_STR_OFF,
@@ -68,4 +68,3 @@ int fs_l10n_to_asset_language(FS_Language ui_lang);
 void fs_l10n_init_from_system(void);
 
 #endif
-
