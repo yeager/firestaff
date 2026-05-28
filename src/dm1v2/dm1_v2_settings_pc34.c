@@ -12,6 +12,9 @@
  *   but they must not redefine gameplay-space geometry.
  * - ReDMCSB DEFS.H:238-243 and CLIKMENU.C:142-290 keep V1 command ids,
  *   turn handling, and movement/collision timing outside presentation config.
+ * - ReDMCSB COMMAND.C:2150-2152 and CLIKMENU.C:142-173 keep accepted
+ *   turn-left/turn-right commands as immediate logical direction changes;
+ *   smoothTurnPanEnabled is only a V2 camera presentation preference.
  * - V2 settings live in the existing M12 config file so data-dir/package
  *   behavior stays unchanged.
  * - V1 behavior is not read from these fields; V2 consumers opt in through
@@ -46,6 +49,7 @@ void dm1_v2_settings_defaults(DM1_V2_Settings* settings) {
     settings->dynamicLightingEnabled = 1;
     settings->accessibilityTouchEnabled = 0;
     settings->aspectMode = DM1_V2_ASPECT_ORIGINAL_4_3;
+    settings->smoothTurnPanEnabled = 0;
     dm1_v2_settings_apply_v21_presentation_defaults(settings);
 }
 
@@ -60,6 +64,7 @@ void dm1_v2_settings_sanitize(DM1_V2_Settings* settings) {
     settings->smoothingEnabled = settings->smoothingEnabled ? 1 : 0;
     settings->dynamicLightingEnabled = settings->dynamicLightingEnabled ? 1 : 0;
     settings->accessibilityTouchEnabled = settings->accessibilityTouchEnabled ? 1 : 0;
+    settings->smoothTurnPanEnabled = settings->smoothTurnPanEnabled ? 1 : 0;
     if (settings->aspectMode != DM1_V2_ASPECT_WIDESCREEN_16_9) {
         settings->aspectMode = DM1_V2_ASPECT_ORIGINAL_4_3;
     }
@@ -90,6 +95,7 @@ void dm1_v2_settings_from_m12_config(DM1_V2_Settings* settings,
         settings->aspectMode = config->dm1V2AspectMode == 1
             ? DM1_V2_ASPECT_WIDESCREEN_16_9
             : DM1_V2_ASPECT_ORIGINAL_4_3;
+        settings->smoothTurnPanEnabled = config->dm1V2SmoothTurnPanEnabled;
     }
     dm1_v2_settings_sanitize(settings);
 }
@@ -109,6 +115,7 @@ void dm1_v2_settings_apply_to_m12_config(M12_Config* config,
     config->dm1V2DynamicLightingEnabled = copy.dynamicLightingEnabled;
     config->dm1V2AccessibilityTouchEnabled = copy.accessibilityTouchEnabled;
     config->dm1V2AspectMode = (copy.aspectMode == DM1_V2_ASPECT_WIDESCREEN_16_9) ? 1 : 0;
+    config->dm1V2SmoothTurnPanEnabled = copy.smoothTurnPanEnabled;
 }
 
 const char* dm1_v2_settings_aspect_id(DM1_V2_AspectMode mode) {
@@ -155,6 +162,7 @@ int v2_settings_save_to_file(const DM1_V2_Settings *s, const char *path) {
     fprintf(f, "dynamic_lighting=%d\n", copy.dynamicLightingEnabled);
     fprintf(f, "touch=%d\n", copy.accessibilityTouchEnabled);
     fprintf(f, "aspect_mode=%d\n", (int)copy.aspectMode);
+    fprintf(f, "smooth_turn_pan=%d\n", copy.smoothTurnPanEnabled);
     fprintf(f, "\n[video]\n");
     fprintf(f, "viewport_scale=%d\n", copy.viewport_scale);
     fprintf(f, "epx=%d\n", copy.use_epx);
@@ -194,6 +202,7 @@ int v2_settings_load_from_file(DM1_V2_Settings *s, const char *path) {
     s->dynamicLightingEnabled = ini_read_int(buf, "dynamic_lighting", s->dynamicLightingEnabled);
     s->accessibilityTouchEnabled = ini_read_int(buf, "touch", s->accessibilityTouchEnabled);
     s->aspectMode = (DM1_V2_AspectMode)ini_read_int(buf, "aspect_mode", (int)s->aspectMode);
+    s->smoothTurnPanEnabled = ini_read_int(buf, "smooth_turn_pan", s->smoothTurnPanEnabled);
     s->viewport_scale = ini_read_int(buf, "viewport_scale", s->viewport_scale);
     s->use_epx = ini_read_int(buf, "epx", s->use_epx);
     s->use_bilinear = ini_read_int(buf, "bilinear", s->use_bilinear);

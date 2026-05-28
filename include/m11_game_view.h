@@ -337,7 +337,9 @@ typedef struct {
         int fromX, fromY, targetX, targetY;
         int16_t facingDir, fromFacingDir, targetFacingDir;
         int32_t elapsedMs, durationMs;
+        int32_t turnPanOffsetX;
         int active, turning;
+        int turnPanEnabled;
     } p5_camera;
 } M11_GameViewState;
 

@@ -10,6 +10,11 @@
  *   facing direction plus forward/right step counts.
  * - ReDMCSB GAMELOOP.C:90 redraws the dungeon view from the mutated party
  *   direction and map coordinates.
+ * - ReDMCSB COMMAND.C:2150-2152 dispatches C001/C002 turns to
+ *   F0365_COMMAND_ProcessTypes1To2_TurnParty.
+ * - ReDMCSB CLIKMENU.C:142-173 sets StopWaitingForPlayerInput, highlights
+ *   the source turn box, updates G0308_i_PartyDirection, and processes
+ *   departure/arrival sensors on the same square.
  * - ReDMCSB GAMELOOP.C:215-219 processes one command queue pass, then waits
  *   for stop-waiting/game-time before the next loop.
  *
@@ -27,6 +32,52 @@ static int32_t dm1_v2_camera_lerp(int32_t from, int32_t to, int32_t elapsed, int
     if (elapsed <= 0) return from;
     delta = (int64_t)(to - from) * (int64_t)elapsed;
     return from + (int32_t)(delta / duration);
+}
+
+static int dm1_v2_camera_cardinal_turn_delta(int16_t fromFacingDir, int16_t targetFacingDir) {
+    int from = (int)(fromFacingDir & 3);
+    int target = (int)(targetFacingDir & 3);
+    int delta = target - from;
+    if (delta > 2) delta -= 4;
+    if (delta < -2) delta += 4;
+    return delta;
+}
+
+static int32_t dm1_v2_camera_turn_pan_offset(int16_t fromFacingDir,
+                                             int16_t targetFacingDir,
+                                             int32_t elapsed,
+                                             int32_t duration) {
+    int delta;
+    int turnSign;
+    int32_t half;
+    int32_t localElapsed;
+    int32_t magnitude;
+    if (elapsed <= 0 || duration <= 0 || elapsed >= duration) {
+        return 0;
+    }
+    delta = dm1_v2_camera_cardinal_turn_delta(fromFacingDir, targetFacingDir);
+    if (delta == 0) {
+        return 0;
+    }
+    turnSign = delta < 0 ? -1 : 1;
+    half = duration / 2;
+    if (half <= 0) {
+        half = 1;
+    }
+    if (elapsed <= half) {
+        localElapsed = elapsed;
+    } else {
+        localElapsed = duration - elapsed;
+        turnSign = -turnSign;
+    }
+    if (localElapsed < 0) {
+        localElapsed = 0;
+    }
+    magnitude = (int32_t)(((int64_t)DM1_V2_SUBPIXEL_SCALE * (int64_t)localElapsed) / (int64_t)half);
+    if (magnitude > DM1_V2_SUBPIXEL_SCALE) {
+        magnitude = DM1_V2_SUBPIXEL_SCALE;
+    }
+    return (int32_t)(turnSign * magnitude);
 }
 
 void dm1_v2_camera_init(DM1_V2_CameraController* camera, const DM1_V2_PlayerPos* player) {
@@ -62,6 +113,8 @@ void dm1_v2_camera_begin_move(DM1_V2_CameraController* camera, const DM1_V2_Play
     camera->durationMs = dm1_v2_camera_clamp_duration(durationMs);
     camera->active = (camera->fromX != camera->targetX || camera->fromY != camera->targetY);
     camera->turning = 0;
+    camera->turnPanEnabled = 0;
+    camera->turnPanOffsetX = 0;
     if (!camera->active) {
         camera->visualX = camera->targetX;
         camera->visualY = camera->targetY;
@@ -77,6 +130,14 @@ void dm1_v2_camera_begin_turn(DM1_V2_CameraController* camera, int16_t fromFacin
     camera->durationMs = dm1_v2_camera_clamp_duration(durationMs);
     camera->active = camera->fromFacingDir != camera->targetFacingDir;
     camera->turning = camera->active;
+    camera->turnPanEnabled = 0;
+    camera->turnPanOffsetX = 0;
+}
+
+void dm1_v2_camera_begin_turn_pan(DM1_V2_CameraController* camera, int16_t fromFacingDir, int16_t targetFacingDir, int32_t durationMs) {
+    if (!camera) return;
+    dm1_v2_camera_begin_turn(camera, fromFacingDir, targetFacingDir, durationMs);
+    camera->turnPanEnabled = camera->active;
 }
 
 void dm1_v2_camera_tick(DM1_V2_CameraController* camera, int32_t dtMs) {
@@ -90,13 +151,21 @@ void dm1_v2_camera_tick(DM1_V2_CameraController* camera, int32_t dtMs) {
         camera->facingDir = camera->targetFacingDir;
         camera->active = 0;
         camera->turning = 0;
+        camera->turnPanOffsetX = 0;
         return;
     }
     if (camera->turning) {
         camera->facingDir = dm1_v2_camera_interpolated_facing(camera);
+        camera->turnPanOffsetX = camera->turnPanEnabled
+            ? dm1_v2_camera_turn_pan_offset(camera->fromFacingDir,
+                                            camera->targetFacingDir,
+                                            camera->elapsedMs,
+                                            camera->durationMs)
+            : 0;
     } else {
         camera->visualX = dm1_v2_camera_lerp(camera->fromX, camera->targetX, camera->elapsedMs, camera->durationMs);
         camera->visualY = dm1_v2_camera_lerp(camera->fromY, camera->targetY, camera->elapsedMs, camera->durationMs);
+        camera->turnPanOffsetX = 0;
     }
 }
 
@@ -127,4 +196,9 @@ int32_t dm1_v2_camera_offset_x(const DM1_V2_CameraController* camera) {
 int32_t dm1_v2_camera_offset_y(const DM1_V2_CameraController* camera) {
     if (!camera) return 0;
     return camera->visualY - camera->logicalY;
+}
+
+int32_t dm1_v2_camera_turn_pan_offset_x(const DM1_V2_CameraController* camera) {
+    if (!camera || !camera->turnPanEnabled) return 0;
+    return camera->turnPanOffsetX;
 }

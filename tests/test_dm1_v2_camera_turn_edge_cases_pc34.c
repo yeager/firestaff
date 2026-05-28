@@ -25,6 +25,7 @@ static void test_duration_clamp(void) {
 
     /* incomplete: in first half, offset is 0 */
     CHECK(dm1_v2_camera_offset_x(&camera) == 0);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
 
     /* tick once -> complete */
     dm1_v2_camera_tick(&camera, 1);
@@ -171,6 +172,32 @@ static void test_negative_duration(void) {
     CHECK(!dm1_v2_camera_is_active(&camera));
 }
 
+/* 11. optional turn pan is presentation-only and follows source cardinal turn side */
+static void test_optional_turn_pan_direction(void) {
+    DM1_V2_CameraController camera;
+    dm1_v2_camera_init(&camera, NULL);
+
+    dm1_v2_camera_begin_turn_pan(&camera, 0, 3, 100);
+    CHECK(dm1_v2_camera_is_active(&camera));
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
+
+    dm1_v2_camera_tick(&camera, 25);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == -128);
+    CHECK(camera.logicalX == 0);
+    CHECK(camera.logicalY == 0);
+
+    dm1_v2_camera_tick(&camera, 25);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == -256);
+    CHECK(camera.facingDir == 3);
+
+    dm1_v2_camera_tick(&camera, 25);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 128);
+
+    dm1_v2_camera_tick(&camera, 25);
+    CHECK(!dm1_v2_camera_is_active(&camera));
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
+}
+
 int main(void) {
     test_duration_clamp();
     test_zero_dt_does_not_advance();
@@ -182,6 +209,7 @@ int main(void) {
     test_early_tick_rejects_inactive();
     test_2ms_duration_steps();
     test_negative_duration();
+    test_optional_turn_pan_direction();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

@@ -256,6 +256,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->dm1V2DynamicLightingEnabled = 1;
     config->dm1V2AccessibilityTouchEnabled = 0;
     config->dm1V2AspectMode = 0;
+    config->dm1V2SmoothTurnPanEnabled = 0;
     config->dm1V2CrtScanlinesEnabled = 0;
     config->dm1V2CrtScanlineStrength = 35;
     config->dm1V2PaletteCorrectionEnabled = 0;
@@ -544,6 +545,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->dm1V2AspectMode = m12_parse_int(value, config->dm1V2AspectMode) == 1 ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "dm1_v2_smooth_turn_pan_enabled")) {
+        config->dm1V2SmoothTurnPanEnabled = m12_parse_int(value, config->dm1V2SmoothTurnPanEnabled) ? 1 : 0;
+        return;
+    }
     if (m12_string_equals(key, "dm1_v2_crt_scanlines_enabled")) {
         config->dm1V2CrtScanlinesEnabled = m12_parse_int(value, config->dm1V2CrtScanlinesEnabled) ? 1 : 0;
         return;
@@ -771,6 +776,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "dm1_v2_dynamic_lighting_enabled = %d\n", config->dm1V2DynamicLightingEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_accessibility_touch_enabled = %d\n", config->dm1V2AccessibilityTouchEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_aspect_mode = %d\n", config->dm1V2AspectMode == 1 ? 1 : 0);
+    fprintf(fp, "dm1_v2_smooth_turn_pan_enabled = %d\n", config->dm1V2SmoothTurnPanEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_crt_scanlines_enabled = %d\n", config->dm1V2CrtScanlinesEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_crt_scanline_strength = %d\n", config->dm1V2CrtScanlineStrength);
     fprintf(fp, "dm1_v2_palette_correction_enabled = %d\n", config->dm1V2PaletteCorrectionEnabled ? 1 : 0);

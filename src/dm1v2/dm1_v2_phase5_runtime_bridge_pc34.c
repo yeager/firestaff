@@ -74,6 +74,25 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
     int32_t cameraDurationMs,
     DM1_V2_Phase5RuntimeBridgeResultPc34* outResult)
 {
+    return dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
+        sourcePipeline,
+        sourceTick,
+        acceptedParty,
+        camera,
+        cameraDurationMs,
+        0,
+        outResult);
+}
+
+int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
+    const struct Dm1V1MovementPipelinePc34Compat* sourcePipeline,
+    const struct Dm1V1MovementPipelineResultPc34Compat* sourceTick,
+    const struct PartyState_Compat* acceptedParty,
+    DM1_V2_CameraController* camera,
+    int32_t cameraDurationMs,
+    int smoothTurnPanEnabled,
+    DM1_V2_Phase5RuntimeBridgeResultPc34* outResult)
+{
     DM1_V2_PlayerPos sourcePlayer;
     int accepted;
 
@@ -99,8 +118,17 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
     }
 
     if (sourceTick->anyTurnOccurred || sourceTick->core.turnApplied) {
-        dm1_v2_camera_begin_turn(camera, (int16_t)sourceTick->core.sourceDirection,
-                                 (int16_t)acceptedParty->direction, cameraDurationMs);
+        if (smoothTurnPanEnabled) {
+            dm1_v2_camera_begin_turn_pan(camera,
+                                         (int16_t)sourceTick->core.sourceDirection,
+                                         (int16_t)acceptedParty->direction,
+                                         cameraDurationMs);
+        } else {
+            dm1_v2_camera_begin_turn(camera,
+                                     (int16_t)sourceTick->core.sourceDirection,
+                                     (int16_t)acceptedParty->direction,
+                                     cameraDurationMs);
+        }
         if (outResult) {
             outResult->cameraStarted = dm1_v2_camera_is_active(camera);
             outResult->cameraTurnStarted = outResult->cameraStarted;

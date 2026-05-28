@@ -38,9 +38,23 @@ int main(void) {
     CHECK(dm1_v2_camera_interpolated_facing(&camera) == 0);
     dm1_v2_camera_tick(&camera, 500);
     CHECK(dm1_v2_camera_interpolated_facing(&camera) == 7);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
     dm1_v2_camera_tick(&camera, 500);
     CHECK(!dm1_v2_camera_is_active(&camera));
     CHECK(camera.facingDir == 7);
+
+    dm1_v2_camera_begin_turn_pan(&camera, 0, 1, 1000);
+    CHECK(dm1_v2_camera_is_active(&camera));
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
+    dm1_v2_camera_tick(&camera, 250);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 128);
+    dm1_v2_camera_tick(&camera, 250);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 256);
+    dm1_v2_camera_tick(&camera, 250);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == -128);
+    dm1_v2_camera_tick(&camera, 250);
+    CHECK(!dm1_v2_camera_is_active(&camera));
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

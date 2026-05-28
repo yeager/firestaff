@@ -42,6 +42,15 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
     int32_t cameraDurationMs,
     DM1_V2_Phase5RuntimeBridgeResultPc34* outResult);
 
+int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
+    const struct Dm1V1MovementPipelinePc34Compat* sourcePipeline,
+    const struct Dm1V1MovementPipelineResultPc34Compat* sourceTick,
+    const struct PartyState_Compat* acceptedParty,
+    DM1_V2_CameraController* camera,
+    int32_t cameraDurationMs,
+    int smoothTurnPanEnabled,
+    DM1_V2_Phase5RuntimeBridgeResultPc34* outResult);
+
 const char* dm1_v2_phase5_runtime_bridge_source_evidence_pc34(void);
 
 #ifdef __cplusplus
