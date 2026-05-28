@@ -12508,6 +12508,19 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + nativeOffset;
             slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                         (unsigned int)blit.graphicIndex);
+            /* ReDMCSB DUNVIEW.C F0107 lines 3590-3639 decodes the current
+             * map inscription, and lines 3608-3717 handle D1C front-facing
+             * inscriptions by patching the wall and drawing the inscription
+             * font, then jumping past the normal wall-ornament blit.  The
+             * unreadable inscription bitmap is only the distant/side ornament
+             * when there is decoded front text; drawing it under that readable
+             * text makes Hall inscriptions look double-exposed and illegible. */
+            if (ornGlobalIdx == 0 && kWallOrnaments[i].viewWallIndex == 12 &&
+                m11_dm1_visible_wall_text_line_count(state, &cell) > 0) {
+                m11_draw_dm1_front_wall_inscription_text(state, &cell,
+                                                         framebuffer, fbW, fbH);
+                continue;
+            }
             if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
                 m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
                                                        M11_VIEWPORT_X + blit.dstX,
@@ -12517,10 +12530,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
                                                        kWallOrnaments[i].flipHorizontal);
                 if (kWallOrnaments[i].viewWallIndex == 12) {
-                    if (ornGlobalIdx == 0) {
-                        m11_draw_dm1_front_wall_inscription_text(state, &cell,
-                                                                 framebuffer, fbW, fbH);
-                    }
                     m11_draw_dm1_front_champion_portrait(state, &cell,
                                                          framebuffer, fbW, fbH);
                 }
