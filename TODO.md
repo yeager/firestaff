@@ -29,7 +29,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### CSB V1
 
-- ❌ Phase 2 - Dungeon data model: map CSB dungeon records into Firestaff memory/runtime structures without reusing DM1-only assumptions.
+- 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists and loader/free-cycle safety is covered; remaining work is real CSB asset ingestion and runtime structure parity without DM1-only assumptions.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, F0107 back-wall ornament routing, and initial viewport gates exist; remaining work includes actual ornament blits, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
 - ❌ Phase 6 - Utility/import flow: implement utility-disk style champion import and CSB-specific setup flow.
 - ❌ Phase 7 - Verification suite: add deterministic boot, dungeon, combat, save/import, and rendering probes.
@@ -63,7 +63,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and outdoor effects.
-- ❌ Phase 5 - Smooth movement and viewport interpolation.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: smooth-state scaffold and viewport query hooks exist; remaining work is runtime binding, deterministic input coverage, and pixel/presentation gates.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - ❌ Phase 7 - V2 verification suite.
 
