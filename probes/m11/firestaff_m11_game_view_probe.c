@@ -301,6 +301,159 @@ static void probe_capture_vga_frame(const M11_GameViewState* state,
     probe_dump_m11_vga_ppm(path, fb, 320, 200);
 }
 
+static unsigned short probe_raw_next_thing(const struct DungeonThings_Compat* things,
+                                           unsigned short thing) {
+    static const unsigned char s_byteCount[16] = {
+        4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+    };
+    int type;
+    int idx;
+    const unsigned char* raw;
+    if (!things || thing == THING_ENDOFLIST || thing == THING_NONE) {
+        return THING_ENDOFLIST;
+    }
+    type = THING_GET_TYPE(thing);
+    idx = THING_GET_INDEX(thing);
+    if (type < 0 || type >= 16 || idx < 0 ||
+        idx >= things->thingCounts[type] || !things->rawThingData[type] ||
+        s_byteCount[type] == 0) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type] + idx * s_byteCount[type];
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
+static int probe_best_front_portrait_index(const M11_AssetSlot* portraits,
+                                           const unsigned char* fb) {
+    int bestIdx = -1;
+    int bestMatched = -1;
+    int portraitIdx;
+    if (!portraits || !portraits->loaded || !portraits->pixels || !fb) {
+        return -1;
+    }
+    for (portraitIdx = 0; portraitIdx < 24; ++portraitIdx) {
+        int x;
+        int y;
+        int matched = 0;
+        int compared = 0;
+        for (y = 0; y < 29; ++y) {
+            for (x = 0; x < 32; ++x) {
+                int srcX = (portraitIdx & 7) * 32 + x;
+                int srcY = (portraitIdx >> 3) * 29 + y;
+                unsigned char src = (unsigned char)(portraits->pixels[srcY * portraits->width + srcX] & 0x0F);
+                unsigned char dst = M11_FB_DECODE_INDEX(fb[(PROBE_DM1_VIEWPORT_Y + 35 + y) * 320 +
+                                                           (PROBE_DM1_VIEWPORT_X + 96 + x)]);
+                if (src == 1) {
+                    continue;
+                }
+                ++compared;
+                if (dst == src) {
+                    ++matched;
+                }
+            }
+        }
+        if (compared > 0 && matched > bestMatched) {
+            bestMatched = matched;
+            bestIdx = portraitIdx;
+        }
+    }
+    return bestIdx;
+}
+
+static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
+                                                        M11_GameViewState* state) {
+    const struct DungeonMapDesc_Compat* map;
+    const M11_AssetSlot* portraits;
+    int map0Base = 0;
+    int seen = 0;
+    int assetsAvailable;
+    int savedMapIndex;
+    int savedMapX;
+    int savedMapY;
+    int savedDirection;
+    int x;
+    int y;
+    if (!state || !state->active || !state->world.dungeon || !state->world.things ||
+        !state->world.things->squareFirstThings || !state->world.things->sensors ||
+        state->world.dungeon->header.mapCount <= 0) {
+        probe_record(tally,
+                     "INV_GV_407D",
+                     0,
+                     "Hall of Champions champion mirror C127 sensors are available for all source mirror portraits");
+        return;
+    }
+    map = &state->world.dungeon->maps[0];
+    savedMapIndex = state->world.party.mapIndex;
+    savedMapX = state->world.party.mapX;
+    savedMapY = state->world.party.mapY;
+    savedDirection = state->world.party.direction;
+    portraits = M11_AssetLoader_Load(&state->assetLoader,
+                                     (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
+    assetsAvailable = portraits && portraits->loaded && portraits->pixels;
+    for (x = 0; x < (int)map->width; ++x) {
+        for (y = 0; y < (int)map->height; ++y) {
+            int squareIndex = map0Base + x * (int)map->height + y;
+            unsigned short thing = state->world.things->squareFirstThings[squareIndex];
+            int guard = 0;
+            while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                    int sensorIndex = THING_GET_INDEX(thing);
+                    if (sensorIndex >= 0 && sensorIndex < state->world.things->sensorCount &&
+                        state->world.things->sensors[sensorIndex].sensorType == 127) {
+                        ++seen;
+                    }
+                }
+                thing = probe_raw_next_thing(state->world.things, thing);
+            }
+        }
+    }
+    /* ReDMCSB DUNGEON.C:2573 and 2608-2612 bind C127 wall sensors to the
+     * current wall aspect before DUNVIEW.C:3913-3928 blits the fixed D1C
+     * champion portrait-on-wall rectangle.  DM1 Hall of Champions has 24
+     * source mirror portraits. */
+    probe_record(tally,
+                 "INV_GV_407D",
+                 seen == 24,
+                 "all Hall of Champions C127 champion mirror sensors are present in source data");
+    if (assetsAvailable) {
+        unsigned char fb[320 * 200];
+        int firstRoute;
+        int secondRoute;
+        int firstBest;
+        int secondBest;
+        state->world.party.mapIndex = 0;
+        state->world.party.mapX = 1;
+        state->world.party.mapY = 3;
+        state->world.party.direction = DIR_NORTH;
+        firstRoute = M11_GameView_GetFrontMirrorOrdinal(state);
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(state, fb, 320, 200);
+        firstBest = probe_best_front_portrait_index(portraits, fb);
+        state->world.party.mapX = 1;
+        state->world.party.mapY = 4;
+        state->world.party.direction = DIR_NORTH;
+        secondRoute = M11_GameView_GetFrontMirrorOrdinal(state);
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(state, fb, 320, 200);
+        secondBest = probe_best_front_portrait_index(portraits, fb);
+        probe_record(tally,
+                     "INV_GV_407E",
+                     firstRoute == 1 &&
+                         secondRoute == 2 &&
+                         firstBest == 1 &&
+                         secondBest == 2,
+                     "Hall of Champions door/teleporter front mirrors blit matching D1C source portraits");
+    } else {
+        probe_skip(tally,
+                   "INV_GV_407E",
+                   "Hall of Champions mirror portrait pixel gate requires GRAPHICS.DAT");
+    }
+    state->world.party.mapIndex = savedMapIndex;
+    state->world.party.mapX = savedMapX;
+    state->world.party.mapY = savedMapY;
+    state->world.party.direction = savedDirection;
+}
+
 
 static int probe_find_nonzero_difficulty_map(const M11_GameViewState* state) {
     unsigned int i;
@@ -1033,6 +1186,7 @@ int main(int argc, char** argv) {
                      "M11 mirror panel resurrect command recruits the selected champion");
         M11_GameView_Shutdown(&mirrorView);
     }
+    probe_record_hall_champion_mirror_portraits(&tally, &gameView);
     {
         int vx = -1, vy = -1, vw = -1, vh = -1;
         int zx = -1, zy = -1, zw = -1, zh = -1;
