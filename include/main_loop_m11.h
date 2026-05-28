@@ -33,6 +33,7 @@ typedef struct {
                               Falls back to FIRESTAFF_DATA. */
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
                               nexus, theron. Overrides auto-detection. */
+    int directLaunch;      /* Non-zero when --game should bypass M12. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

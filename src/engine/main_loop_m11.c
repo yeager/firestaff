@@ -1146,6 +1146,30 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     return 0;
 }
 
+static int m11_prepare_direct_launch(M12_StartupMenuState* menuState,
+                                     const char* gameId) {
+    int i;
+    int entryCount;
+    if (!menuState || !gameId || gameId[0] == '\0') {
+        return 0;
+    }
+    entryCount = M12_StartupMenu_GetEntryCount();
+    for (i = 0; i < entryCount; ++i) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(menuState, i);
+        if (entry &&
+            entry->kind == M12_MENU_ENTRY_GAME &&
+            entry->gameId &&
+            strcmp(entry->gameId, gameId) == 0) {
+            menuState->selectedIndex = i;
+            menuState->activatedIndex = i;
+            menuState->launchRequested = 1;
+            menuState->quickResumeLaunchRequested = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     if (!opts) {
         return;
@@ -1158,6 +1182,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->script         = NULL;
     opts->dataDir        = NULL;
     opts->gameId         = NULL;
+    opts->directLaunch   = 0;
 }
 
 
@@ -2124,7 +2149,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
-    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
     {
         M12_Config qolCfg;
         M12_Config_Load(&qolCfg, o->dataDir);
@@ -2154,7 +2178,34 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
 
     /* Always present at least once so the window actually has content. */
-    m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
+    if (o->directLaunch) {
+        if (!m11_prepare_direct_launch(&menuState, o->gameId)) {
+            fprintf(stderr, "firestaff: unknown game id for --game: %s\n",
+                    o->gameId ? o->gameId : "(null)");
+            runRc = 2;
+            goto cleanup;
+        }
+        /* CLI direct launch bypasses only the M12 menu. The launch still
+         * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
+         * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
+         * ENTRANCE.C F0441). */
+        if (!m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
+            fprintf(stderr, "firestaff: direct launch failed for --game %s\n", o->gameId);
+            runRc = 3;
+            goto cleanup;
+        }
+        launchedEver = 1;
+        if (exitAfterLaunch) {
+            goto cleanup;
+        }
+    } else {
+        m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+    }
+    if (gameView.active) {
+        M11_Render_Present();
+    } else {
+        m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
+    }
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -2321,6 +2372,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: launch smoke failed: no launch reached before exit\n");
         runRc = 3;
     }
+cleanup:
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
                                      launchedEver,
                                      &gameView,

@@ -35,10 +35,20 @@ static void usage(const char* prog) {
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
-            "  --game <id>         Pre-select game: dm1, csb, dm2, nexus, theron\n"
+            "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
+            "  --menu              Show startup menu even when --game is set\n"
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);
+}
+
+static int is_game_id(const char* value) {
+    return value &&
+           (strcmp(value, "dm1") == 0 ||
+            strcmp(value, "csb") == 0 ||
+            strcmp(value, "dm2") == 0 ||
+            strcmp(value, "nexus") == 0 ||
+            strcmp(value, "theron") == 0);
 }
 
 int main(int argc, char** argv) {
@@ -73,6 +83,11 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
             opts.gameId = argv[++i];
+            opts.directLaunch = 1;
+            continue;
+        }
+        if (strcmp(a, "--menu") == 0) {
+            opts.directLaunch = 0;
             continue;
         }
         if (strcmp(a, "--version") == 0) {
@@ -93,6 +108,11 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--fps") == 0) {
             /* not yet wired */
+            continue;
+        }
+        if (is_game_id(a)) {
+            opts.gameId = a;
+            opts.directLaunch = 1;
             continue;
         }
         fprintf(stderr, "firestaff: unknown argument '%s'\n", a);
