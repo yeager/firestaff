@@ -1,11 +1,20 @@
 # Nexus V1 Phase 2 — Data Formats: Source-Lock Document
 **Job:** `Nexus_V1_DataFormats_H2321`
-**Status:** ✅ Source-locked (with documented gaps)
+**Status:** ⚠️ Superseded for Nexus DGN/SMAP/ITEM.IBS/MNS details by
+`docs/source-lock/nexus_v1_dmweb_format_crawl_20260528.md`
 **Author:** Firestaff agent (cron)
 **Last revised:** 2026-05-27T00:03 UTC+2
 **Sources:** `src/nexus/`, `include/nexus_v1_*.h`, `docs/`, `docs/NEXUS_FILE_CLASSIFICATION.md`, ReDMCSB cross-reference for DM1/DM2 format inheritance.
 
 ---
+
+> 2026-05-28 update: DMWeb's Dungeon Master Nexus documentation contradicts
+> several early Firestaff assumptions in this file. In particular, Nexus DGN
+> files are 2048-byte block containers with a 64x64 Structure1B grid, not a raw
+> 32x32 grid at offset 0; SMAP files are tilemap/palette/tileset automap images;
+> ITEM.IBS and MNS have documented section layouts. Treat the older sections
+> below as historical notes until they are rewritten from the DMWeb crawl.
+> Source-lock: `docs/source-lock/nexus_v1_dmweb_format_crawl_20260528.md`.
 
 ## Scope
 
