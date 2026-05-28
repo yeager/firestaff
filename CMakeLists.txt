@@ -379,6 +379,14 @@ if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
     endif()
 endif()
 
+# M12 config persistence probe
+if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
+    add_executable(firestaff_m12_config_persist_probe probes/m12/firestaff_m12_config_persist_probe.c)
+    target_link_libraries(firestaff_m12_config_persist_probe PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_config_persist_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
 
 # DM1 V1 viewport draw-order evidence probe
 if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
@@ -3696,6 +3704,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_save_load
         COMMAND test_theron_v1_save_load
+    )
+endif()
+
+# ── Theron V1 Phase 5 — Teleporter Chain Probe ───────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_teleporter_chain_probe
+        probes/theron/firestaff_theron_v1_teleporter_chain_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_teleporter_chain_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_teleporter_chain_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_teleporter_chain_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_teleporter_chain
+        COMMAND firestaff_theron_v1_teleporter_chain_probe
     )
 endif()
 
