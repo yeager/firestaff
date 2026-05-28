@@ -910,10 +910,11 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
         int cdlgX = (M11_FB_WIDTH - 200) / 2;
         int cdlgY = (M11_FB_HEIGHT - 50) / 2;
         int choiceY = cdlgY + 50 - 16; /* drawn choice Y in framebuffer coords */
+        int hitY = choiceY - 5;
         int choiceW = 200 / 2;          /* 100 px per slot for 2 choices */
-        if (vy >= choiceY && vy < choiceY + 20) {
-            if (vx >= cdlgX && vx < cdlgX + choiceW) return 1;       /* YES */
-            if (vx >= cdlgX + choiceW && vx < cdlgX + 2 * choiceW) return 2; /* NO */
+        if (y >= hitY && y < hitY + 25) {
+            if (x >= cdlgX && x < cdlgX + choiceW) return 1;       /* YES */
+            if (x >= cdlgX + choiceW && x < cdlgX + 2 * choiceW) return 2; /* NO */
         }
         return 0;
     }
@@ -5158,11 +5159,9 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     base = m11_map_square_base(state->world.dungeon, mapIdx);
     if (base < 0) return;
 
-    /* ReDMCSB: Hall of Champions (map 0) has no active creatures.
-     * In the original, creatures only exist on dungeon levels 1+.
-     * Map 0 contains champion mirrors and text plaques only. */
-    if (mapIdx == 0) return;
-
+    /* ReDMCSB GROUP.C F0209/F0215 process the active map's group events by
+     * thing presence, not by rejecting map 0.  The stock Hall of Champions has
+     * no GROUP things, but synthetic/custom maps may, so scan the current map. */
     /* Scan all squares on the current map for groups */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
@@ -9863,8 +9862,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
             state->world.things->doors[doorIdx].button) {
             if (M11_GameView_GetV1LeaderHandThing(state) == THING_NONE) {
-                /* Empty hand: click on door button toggles it */
-                if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB DUNVIEW.C lines 4207-4212 copies the rendered
+                 * D1C door-button zone (C1950 + C3_VIEW_DOOR_BUTTON_D1C)
+                 * into G2210[C05], then CLIKVIEW.C lines 356-390 tests
+                 * C080 clicks against that zone before scheduling C10
+                 * EVENT_DOOR.  The D1C bitmap zone is 160..175,44..52;
+                 * the wall-ornament box is only for front-wall ornaments. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
                     m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
                     if (!m11_toggle_front_door(state)) {
                         return M11_GAME_INPUT_IGNORED;
@@ -25549,15 +25554,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
                 m11_dialog_source_message_width_for_choices(state->dialogChoiceCount));
             int msgX = 0, msgY = 0, msgW = M11_VIEWPORT_W, msgH = 0;
+            int msgLeft;
             textY = (state->dialogChoiceCount > 1)
                         ? M11_GameView_GetV1DialogMultiChoiceMessageTextY(lineCount)
                         : M11_GameView_GetV1DialogSingleChoiceMessageTextY(lineCount);
             (void)M11_GameView_GetV1DialogMessageZone(state->dialogChoiceCount,
                                                       &msgX, &msgY, &msgW, &msgH);
+            /* COORD.C layout-696 records C469/C471 as a centered type-0
+             * text zone: d1 is the center x, not a left edge. */
+            msgLeft = M11_VIEWPORT_X + msgX - (msgW / 2);
             m11_draw_text_centered_in_rect(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
-                                           M11_VIEWPORT_X + msgX,
+                                           msgLeft,
                                            textY,
                                            msgW,
                                            line1,
@@ -25566,7 +25575,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 m11_draw_text_centered_in_rect(framebuffer,
                                                framebufferWidth,
                                                framebufferHeight,
-                                               M11_VIEWPORT_X + msgX,
+                                               msgLeft,
                                                textY + 8,
                                                msgW,
                                                line2,
