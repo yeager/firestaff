@@ -899,13 +899,14 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
     int i;
     if (!state || state->dialogChoiceCount <= 0) return 0;
 
-    /* ESC quit-dialog (returnToMenuConfirmActive) uses a centered 200x50
-     * dialog at (cdlgX, cdlgY) = ((fbW-200)/2, (fbH-50)/2).  YES/NO are
-     * drawn at choiceY = cdlgY + cdlgH - 16 with choiceW = cdlgW/2.
-     * The generic zone table uses viewport-relative y values (hy=67/104)
-     * that don't match the drawn choiceY=109.  Compute hit zones directly
-     * from the actual drawn positions. */
-    if (state->returnToMenuConfirmActive && state->dialogChoiceCount == 2) {
+    /* The plain ESC confirm uses a centered 200x50 YES/NO dialog.  The
+     * unsaved-game guard is different: ReDMCSB LOADSAVE.C lines 1371-1379
+     * draws the ordinary two-choice source dialog with SAVE AND QUIT first
+     * and CANCEL second, then F0424_DIALOG_GetChoice returns C2_CANCEL for
+     * the lower choice.  Let that guard use C456/C457 below so its click
+     * zones match what is drawn. */
+    if (state->returnToMenuConfirmActive && !state->quitGuardActive &&
+        state->dialogChoiceCount == 2) {
         int cdlgX = (M11_FB_WIDTH - 200) / 2;
         int cdlgY = (M11_FB_HEIGHT - 50) / 2;
         int choiceY = cdlgY + 50 - 16; /* drawn choice Y in framebuffer coords */
@@ -25474,7 +25475,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int dlgX = 30, dlgY = 50, dlgW = 260, dlgH = 80;
         int textY;
         int drewSourceBackdrop = 0;
-        if (state->returnToMenuConfirmActive) {
+        if (state->returnToMenuConfirmActive && !state->quitGuardActive) {
             /* Dim the current game content heavily — the actual game view
              * (dungeon, inventory, whatever was on screen) stays visible
              * but darkened, with the confirm dialog centered on top. */

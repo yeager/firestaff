@@ -1626,6 +1626,31 @@ int main(int argc, char** argv) {
                      M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_RETURN_TO_MENU,
                  "escape opens the source-style return confirmation and YES returns to the launcher");
 
+    {
+        M11_GameViewState quitView;
+        int hx, hy, hw, hh;
+        memcpy(&quitView, &gameView, sizeof(quitView));
+        M11_GameView_ShowDialogOverlayChoices(&quitView,
+                                              "GAME NOT SAVED. SAVE AND QUIT?",
+                                              "SAVE AND QUIT",
+                                              "CANCEL",
+                                              NULL,
+                                              NULL);
+        quitView.returnToMenuConfirmActive = 1;
+        quitView.quitGuardActive = 1;
+        probe_record(&tally,
+                     "INV_GV_13G",
+                     M11_GameView_GetV1DialogChoiceHitZone(2, 0,
+                                                           &hx, &hy, &hw, &hh) &&
+                         M11_GameView_HandlePointer(&quitView,
+                                                    PROBE_DM1_VIEWPORT_X + hx + hw / 2,
+                                                    PROBE_DM1_VIEWPORT_Y + hy + hh / 2,
+                                                    1) == M11_GAME_INPUT_RETURN_TO_MENU &&
+                         quitView.quitGuardActive == 0 &&
+                         M11_GameView_GetDialogSelectedChoice(&quitView) == 1,
+                     "unsaved SAVE AND QUIT click uses source C457 first-choice zone and returns to launcher");
+    }
+
     probe_record(&tally,
                  "INV_GV_13B",
                  M11_GameView_GetQuickSavePath(&gameView, quicksavePath, sizeof(quicksavePath)) == 1 &&
