@@ -22,18 +22,22 @@ typedef struct {
     int16_t targetFacingDir;
     int32_t elapsedMs;
     int32_t durationMs;
+    int32_t turnPanOffsetX;
     int active;
     int turning;
+    int turnPanEnabled;
 } DM1_V2_CameraController;
 
 void dm1_v2_camera_init(DM1_V2_CameraController* camera, const DM1_V2_PlayerPos* player);
 void dm1_v2_camera_begin_move(DM1_V2_CameraController* camera, const DM1_V2_PlayerPos* player, int32_t durationMs);
 void dm1_v2_camera_begin_turn(DM1_V2_CameraController* camera, int16_t fromFacingDir, int16_t targetFacingDir, int32_t durationMs);
+void dm1_v2_camera_begin_turn_pan(DM1_V2_CameraController* camera, int16_t fromFacingDir, int16_t targetFacingDir, int32_t durationMs);
 void dm1_v2_camera_tick(DM1_V2_CameraController* camera, int32_t dtMs);
 int dm1_v2_camera_is_active(const DM1_V2_CameraController* camera);
 int16_t dm1_v2_camera_interpolated_facing(const DM1_V2_CameraController* camera);
 int32_t dm1_v2_camera_offset_x(const DM1_V2_CameraController* camera);
 int32_t dm1_v2_camera_offset_y(const DM1_V2_CameraController* camera);
+int32_t dm1_v2_camera_turn_pan_offset_x(const DM1_V2_CameraController* camera);
 
 #ifdef __cplusplus
 }

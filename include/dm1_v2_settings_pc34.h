@@ -18,6 +18,7 @@ typedef struct {
     int dynamicLightingEnabled;
     int accessibilityTouchEnabled;
     DM1_V2_AspectMode aspectMode;
+    int smoothTurnPanEnabled;
     int viewport_scale;
     int use_epx;
     int use_bilinear;

@@ -72,6 +72,7 @@ typedef struct {
     int dm1V2DynamicLightingEnabled;       /* 0 = off, 1 = V2 lighting overlays */
     int dm1V2AccessibilityTouchEnabled;    /* 0 = off, 1 = larger/touch-friendly V2 controls */
     int dm1V2AspectMode;                   /* 0 = 4:3 original, 1 = 16:9 widescreen envelope */
+    int dm1V2SmoothTurnPanEnabled;         /* 0 = source snap, 1 = V2 visual turn pan */
 
     /* DM1 V2.0 filter chain (V2-only; V1 launch path ignores these) */
     int dm1V2CrtScanlinesEnabled;        /* 0 = off, 1 = on (darken even rows) */

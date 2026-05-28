@@ -257,8 +257,21 @@ static void test_turn_source_tick_starts_turn_camera_without_cooldown(void)
     dm1_v2_camera_tick(&camera, 80);
     CHECK(!dm1_v2_camera_is_active(&camera));
     CHECK(camera.facingDir == DIR_WEST);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
     CHECK(memcmp(&pipeline, &pipelineAfterSource, sizeof(pipeline)) == 0);
     CHECK(memcmp(&sourceTick, &sourceTickAfterSource, sizeof(sourceTick)) == 0);
+
+    init_camera_from_party(&camera, &party);
+    CHECK(dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
+        &pipeline, &sourceTick, &party, &camera, 80, 1, &bridge) == 1);
+    CHECK(bridge.sourceTurnAccepted == 1);
+    CHECK(bridge.cameraTurnStarted == 1);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
+    dm1_v2_camera_tick(&camera, 20);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == -128);
+    CHECK(party.mapX == 4);
+    CHECK(party.mapY == 4);
+    CHECK(party.direction == DIR_WEST);
 }
 
 int main(void)

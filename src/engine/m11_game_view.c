@@ -6432,18 +6432,20 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     {
         DM1_V2_Phase5RuntimeBridgeResultPc34 br;
         int p5Enabled = (getenv("FIRESTAFF_DM1_V2_PHASE5") != NULL);
+        int smoothTurnPanEnabled = (getenv("FIRESTAFF_DM1_V2_SMOOTH_TURN_PAN") != NULL);
         if (p5Enabled && state->active) {
             /* Phase 5 bridge: start V2 camera from source-accepted V1 tick.
              * The bridge reads the accepted pipeline result + party position
              * (both const at this seam) and initiates the camera controller
              * for smooth interpolation.  It does NOT mutate cooldowns,
              * collision, sensors, creature timing, or redraw cadence. */
-            dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
+            dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
                     &state->dm1V1MovementPipeline,
                     &state->lastDm1V1MovementPipelineResult,
                     &state->world.party,
                     (DM1_V2_CameraController*)&state->p5_camera,
                     state->camera_duration_ms,
+                    smoothTurnPanEnabled,
                     &br);
 
             /* Advance the camera by the V1 tick duration so offsets are
@@ -22568,6 +22570,58 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     }
 }
 
+static void m11_apply_viewport_turn_pan(unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight,
+                                        int x,
+                                        int y,
+                                        int w,
+                                        int h,
+                                        int turnPanOffsetX) {
+    int panPixels;
+    int yy;
+    int maxPanPixels;
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        w <= 0 || h <= 0 || turnPanOffsetX == 0) {
+        return;
+    }
+    maxPanPixels = w / 4;
+    if (maxPanPixels < 1) {
+        return;
+    }
+    panPixels = (int)(((int64_t)turnPanOffsetX * (int64_t)maxPanPixels) /
+                      (int64_t)DM1_V2_SUBPIXEL_SCALE);
+    if (panPixels == 0) {
+        panPixels = turnPanOffsetX > 0 ? 1 : -1;
+    }
+    if (panPixels > maxPanPixels) panPixels = maxPanPixels;
+    if (panPixels < -maxPanPixels) panPixels = -maxPanPixels;
+
+    /* V2-only presentation pan. ReDMCSB COMMAND.C:2150-2152 and
+     * CLIKMENU.C:142-173 still own the accepted logical turn and
+     * GAMELOOP.C:90 redraws from the discrete party direction. This pass
+     * only translates the already-rendered viewport pixels for Custom/V2. */
+    for (yy = 0; yy < h; ++yy) {
+        int py = y + yy;
+        unsigned char* row;
+        if (py < 0 || py >= framebufferHeight) {
+            continue;
+        }
+        if (x < 0 || x + w > framebufferWidth) {
+            continue;
+        }
+        row = &framebuffer[py * framebufferWidth + x];
+        if (panPixels > 0) {
+            memmove(row + panPixels, row, (size_t)(w - panPixels));
+            memset(row, M11_COLOR_BLACK, (size_t)panPixels);
+        } else {
+            int shift = -panPixels;
+            memmove(row, row + shift, (size_t)(w - shift));
+            memset(row + (w - shift), M11_COLOR_BLACK, (size_t)shift);
+        }
+    }
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -22586,6 +22640,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     int camX = state->camera_offset_x;
     int camY = state->camera_offset_y;
     int camDir = state->camera_interpolated_facing;
+    int turnPanX = dm1_v2_camera_turn_pan_offset_x(
+        (const DM1_V2_CameraController*)&state->p5_camera);
     (void)camDir; /* facing interpolation used by creature sprite pass */
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {
@@ -22843,6 +22899,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
     }
+    m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,
+                                M11_VIEWPORT_X, M11_VIEWPORT_Y,
+                                M11_VIEWPORT_W, M11_VIEWPORT_H,
+                                turnPanX);
 }
 
 static void m11_format_champion_name(const unsigned char* raw,

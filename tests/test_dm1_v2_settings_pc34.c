@@ -60,6 +60,7 @@ int main(void) {
     CHECK(settings.dynamicLightingEnabled == 1);
     CHECK(settings.accessibilityTouchEnabled == 0);
     CHECK(settings.aspectMode == DM1_V2_ASPECT_ORIGINAL_4_3);
+    CHECK(settings.smoothTurnPanEnabled == 0);
     CHECK(settings.viewport_scale == 2);
     CHECK(settings.use_epx == 1);
     CHECK(settings.use_bilinear == 0);
@@ -75,6 +76,7 @@ int main(void) {
     settings.dynamicLightingEnabled = 0;
     settings.accessibilityTouchEnabled = 1;
     settings.aspectMode = DM1_V2_ASPECT_WIDESCREEN_16_9;
+    settings.smoothTurnPanEnabled = 1;
     dm1_v2_settings_apply_to_m12_config(&cfg, &settings);
 
     CHECK(cfg.graphicsIndex == 0); /* V1 remains the default presentation mode. */
@@ -83,6 +85,7 @@ int main(void) {
     CHECK(cfg.dm1V2DynamicLightingEnabled == 0);
     CHECK(cfg.dm1V2AccessibilityTouchEnabled == 1);
     CHECK(cfg.dm1V2AspectMode == 1);
+    CHECK(cfg.dm1V2SmoothTurnPanEnabled == 1);
     cfg.displayAspectMode = 0;
     CHECK(M12_Config_Save(&cfg) == 1);
 
@@ -91,6 +94,7 @@ int main(void) {
     CHECK(file_contains(path, "dm1_v2_dynamic_lighting_enabled = 0"));
     CHECK(file_contains(path, "dm1_v2_accessibility_touch_enabled = 1"));
     CHECK(file_contains(path, "dm1_v2_aspect_mode = 1"));
+    CHECK(file_contains(path, "dm1_v2_smooth_turn_pan_enabled = 1"));
     CHECK(file_contains(path, "display_aspect_mode = 0"));
 
     CHECK(M12_Config_Load(&loaded, NULL) == 1);
@@ -100,6 +104,7 @@ int main(void) {
     CHECK(roundtrip.dynamicLightingEnabled == 0);
     CHECK(roundtrip.accessibilityTouchEnabled == 1);
     CHECK(roundtrip.aspectMode == DM1_V2_ASPECT_WIDESCREEN_16_9);
+    CHECK(roundtrip.smoothTurnPanEnabled == 1);
     CHECK(loaded.displayAspectMode == 0);
     CHECK(strcmp(dm1_v2_settings_aspect_id(roundtrip.aspectMode), "16:9-widescreen") == 0);
 
@@ -108,12 +113,14 @@ int main(void) {
     cfg.dm1V2DynamicLightingEnabled = 7;
     cfg.dm1V2AccessibilityTouchEnabled = 42;
     cfg.dm1V2AspectMode = 99;
+    cfg.dm1V2SmoothTurnPanEnabled = -2;
     dm1_v2_settings_from_m12_config(&settings, &cfg);
     CHECK(settings.scalePercent == 400);
     CHECK(settings.smoothingEnabled == 1);
     CHECK(settings.dynamicLightingEnabled == 1);
     CHECK(settings.accessibilityTouchEnabled == 1);
     CHECK(settings.aspectMode == DM1_V2_ASPECT_ORIGINAL_4_3);
+    CHECK(settings.smoothTurnPanEnabled == 1);
 
     home = getenv("HOME");
     snprintf(standalonePath, sizeof(standalonePath), "%s/dm1-v2-settings.ini", home ? home : ".");
@@ -124,6 +131,7 @@ int main(void) {
     settings.dynamicLightingEnabled = 2;
     settings.accessibilityTouchEnabled = 0;
     settings.aspectMode = DM1_V2_ASPECT_WIDESCREEN_16_9;
+    settings.smoothTurnPanEnabled = 3;
     settings.viewport_scale = 64;
     settings.use_epx = 5;
     settings.use_bilinear = 0;
@@ -134,6 +142,7 @@ int main(void) {
     settings.vsync = 9;
     CHECK(v2_settings_save_to_file(&settings, standalonePath) == 0);
     CHECK(file_contains(standalonePath, "scale_percent=400"));
+    CHECK(file_contains(standalonePath, "smooth_turn_pan=1"));
     CHECK(file_contains(standalonePath, "viewport_scale=16"));
     CHECK(file_contains(standalonePath, "epx=1"));
     CHECK(file_contains(standalonePath, "palette_enhanced=1"));
@@ -146,6 +155,7 @@ int main(void) {
     CHECK(roundtrip.dynamicLightingEnabled == 1);
     CHECK(roundtrip.accessibilityTouchEnabled == 0);
     CHECK(roundtrip.aspectMode == DM1_V2_ASPECT_WIDESCREEN_16_9);
+    CHECK(roundtrip.smoothTurnPanEnabled == 1);
     CHECK(roundtrip.viewport_scale == 16);
     CHECK(roundtrip.use_epx == 1);
     CHECK(roundtrip.use_bilinear == 0);
