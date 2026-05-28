@@ -14,8 +14,13 @@ typedef struct {
     int particle_emitter_id;
 } CSB_V2_ScriptVisual;
 
+void csb_v2_chaos_init(void);
 void csb_v2_chaos_on_trigger(int script_id, int flag_index);
 void csb_v2_chaos_tick(float dt);
+int csb_v2_chaos_active_count(void);
+void csb_v2_chaos_render_overlay(float *outR,
+                                 float *outG,
+                                 float *outB,
+                                 float *outAlpha);
 const char *csb_v2_chaos_source_evidence(void);
 #endif
-
