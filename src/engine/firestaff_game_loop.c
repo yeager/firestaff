@@ -401,6 +401,8 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             dm2_v1_boot_set_save_root(&s_dm2_boot, NULL);
         }
         dm2_v1_boot_print_summary(&s_dm2_boot);
+        /* Enter game: allocate dungeon data and DM2 game state */
+        (void)dm2_v1_boot_enter_game(&s_dm2_boot);
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */
