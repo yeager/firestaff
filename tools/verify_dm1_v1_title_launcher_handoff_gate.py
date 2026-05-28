@@ -42,6 +42,13 @@ else:
         errors.append("TITLE intro call is still guarded by presentation mode; DM1 TITLE must run before Entrance in every DM1 presentation mode")
     if title_idx >= 0 and 'strcmp(launchEntry->gameId, "dm1") == 0' not in body:
         errors.append("TITLE intro call must remain guarded to DM1 launches only")
+    fallback_idx = body.find('if (!titleIntroPlayed && strcmp(gameView->sourceId, "dm1") == 0)')
+    if fallback_idx < 0:
+        errors.append("launcher handoff needs a post-open DM1 TITLE visibility fallback")
+    if fallback_idx >= 0 and open_idx >= 0 and entrance_idx >= 0 and not open_idx < fallback_idx < entrance_idx:
+        errors.append("post-open TITLE fallback must run after launch spec resolution but before entrance transition")
+    if fallback_idx >= 0 and "F0437_STARTEND_DrawTitle before" not in body[fallback_idx:fallback_idx + 700]:
+        errors.append("post-open TITLE fallback must cite ReDMCSB title-before-entrance source order")
 
 phase = re.search(r"int M11_PhaseA_Run\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
 if phase:
@@ -64,6 +71,7 @@ else:
         "M11_Audio_Shutdown(&titleAudio)",
         "V1_TitleFrontend_RenderFrameToScreen",
         "M11_Render_PresentIndexed",
+        "M11_RENDER_OK",
     ]:
         if needle not in body:
             errors.append(f"TITLE intro missing required runtime step: {needle}")

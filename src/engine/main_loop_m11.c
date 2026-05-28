@@ -895,10 +895,18 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             break;
         }
         m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
+        if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
+                                                        M11_FB_WIDTH,
+                                                        M11_FB_HEIGHT,
+                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+            fprintf(stderr,
+                    "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
+                    d.renderFrameOrdinal);
+            break;
+        }
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        M11_Render_PresentIndexedWithSpecialPalette(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
         /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
          * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
          * smash straight into the entrance screen.  Bind the runtime delay
@@ -921,11 +929,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
+    int titleIntroPlayed = 0;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
     {
-        int titleIntroPlayed = 0;
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
          * the original TITLE animation and title-song/swoosh cue must run at the
@@ -947,13 +955,21 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
         /* Theron's Quest has no source -- no intro needed. */
-        (void)titleIntroPlayed;
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
         menuState->launchRequested = 0;
         (void)M11_Render_SetPaletteLevel(0);
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
+        }
+        if (!titleIntroPlayed && strcmp(gameView->sourceId, "dm1") == 0) {
+            /* Visibility fallback for alternate launcher paths: ReDMCSB
+             * STARTEND still orders F0437_STARTEND_DrawTitle before
+             * F0441_STARTEND_ProcessEntrance.  If the pre-open DM1 guard did
+             * not produce a presented TITLE frame, retry after the launch spec
+             * has resolved, but still before entrance/gameplay is shown. */
+            M11_Render_RaiseWindow();
+            m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
         /* ReDMCSB: the entrance screen always plays for DM1 regardless
          * of presentation mode.  F0441_STARTEND_ProcessEntrance is the
