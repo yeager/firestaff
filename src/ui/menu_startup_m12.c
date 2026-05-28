@@ -1233,6 +1233,21 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                             config.dm1V2PixelGridIntensity);
     M11_Render_SetMotionBlur(config.dm1V2MotionBlurEnabled,
                              config.dm1V2MotionBlurStrength);
+    {
+        int turnPanEnabled = config.dm1V2SmoothTurnPanEnabled && config.graphicsIndex != 0;
+#if defined(_WIN32)
+        (void)_putenv_s("FIRESTAFF_DM1_V2_SMOOTH_TURN_PAN", turnPanEnabled ? "1" : "");
+        (void)_putenv_s("FIRESTAFF_DM1_V2_PHASE5", turnPanEnabled ? "1" : "");
+#else
+        if (turnPanEnabled) {
+            (void)setenv("FIRESTAFF_DM1_V2_SMOOTH_TURN_PAN", "1", 1);
+            (void)setenv("FIRESTAFF_DM1_V2_PHASE5", "1", 1);
+        } else {
+            (void)unsetenv("FIRESTAFF_DM1_V2_SMOOTH_TURN_PAN");
+            (void)unsetenv("FIRESTAFF_DM1_V2_PHASE5");
+        }
+#endif
+    }
     M11_UIScale_SetPercent(config.uiScale);
     M11_Ambient_SetEnabled(config.ambientEnabled);
     M11_Ambient_SetVolume(config.ambientVolume);
