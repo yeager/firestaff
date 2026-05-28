@@ -1,0 +1,76 @@
+# Firestaff startup-menu domain.
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+msgid "GRAPHICS MODE"
+msgstr "图形模式"
+
+msgid "SETTINGS"
+msgstr "设置"
+
+msgid "PLAY"
+msgstr "开始"
+
+msgid "EXTRAS"
+msgstr "附加"
+
+msgid "QUIT"
+msgstr "退出"
+
+msgid "SELECT GAME"
+msgstr "选择游戏"
+
+msgid "Start or continue a game"
+msgstr "开始或继续游戏"
+
+msgid "Display, video, audio and controls"
+msgstr "显示、视频、音频和控制"
+
+msgid "Museum, bestiary, spell reference and more"
+msgstr "资料馆、图鉴、法术等"
+
+msgid "Exit Firestaff"
+msgstr "退出 Firestaff"
+
+msgid "Up/Down Navigate  |  Enter Select"
+msgstr "上下导航  |  Enter 选择"
+
+msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+msgstr "Esc 返回  |  上下导航  |  Enter 选择"
+
+msgid "New Game (Original)"
+msgstr "新游戏（原版）"
+
+msgid "Continue Saved Game"
+msgstr "继续存档"
+
+msgid "New Game (Modern Graphics)"
+msgstr "新游戏（现代图形）"
+
+msgid "Coming soon"
+msgstr "即将推出"
+
+msgid "No data files"
+msgstr "没有数据文件"
+
+msgid "Graphics Mode"
+msgstr "图形模式"
+
+msgid "Language"
+msgstr "语言"
+
+msgid "Window Mode"
+msgstr "窗口模式"
+
+msgid "On"
+msgstr "开"
+
+msgid "Off"
+msgstr "关"
+
+msgid "Original"
+msgstr "原版"

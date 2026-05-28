@@ -54,8 +54,8 @@ msgid "LANGUAGE"
 msgstr "SPRÅK"
 
 #. Settings row label
-msgid "PRESENTATION MODE"
-msgstr "PRESENTATIONSLÄGE"
+msgid "GRAPHICS MODE"
+msgstr "GRAFIKLÄGE"
 
 #. Settings row label
 msgid "WINDOW MODE"
@@ -304,3 +304,339 @@ msgstr "FILTER"
 #. Renderer/settings label
 msgid "VSYNC"
 msgstr "VSYNC"
+
+msgid "GRAPHICS MODE"
+msgstr "GRAFIKLÄGE"
+
+msgid "GRAPHICS"
+msgstr "GRAFIK"
+
+msgid "PLAY"
+msgstr "SPELA"
+
+msgid "EXTRAS"
+msgstr "EXTRA"
+
+msgid "QUIT"
+msgstr "AVSLUTA"
+
+msgid "SELECT GAME"
+msgstr "VÄLJ SPEL"
+
+msgid "Start or continue a game"
+msgstr "Starta eller fortsätt ett spel"
+
+msgid "Display, video, audio and controls"
+msgstr "Bild, video, ljud och kontroller"
+
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Museum, bestiarium, trollformler och mer"
+
+msgid "Exit Firestaff"
+msgstr "Avsluta Firestaff"
+
+msgid "Up/Down Navigate  |  Enter Select"
+msgstr "Upp/ned navigerar  |  Enter väljer"
+
+msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter väljer"
+
+msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
+msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter startar"
+
+msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
+msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter öppnar"
+
+msgid "< > Switch tab   Up/Down Navigate   Enter Change"
+msgstr "< > byter flik   Upp/ned navigerar   Enter ändrar"
+
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+msgid "V1 Only (Phase 1)"
+msgstr "Endast V1 (fas 1)"
+
+msgid "No data files"
+msgstr "Inga datafiler"
+
+msgid "New Game (Original)"
+msgstr "Nytt spel (original)"
+
+msgid "New Game (Original + Filters)"
+msgstr "Nytt spel (original + filter)"
+
+msgid "New Game (Original 10x Upscale)"
+msgstr "Nytt spel (original 10x uppskalning)"
+
+msgid "Continue Saved Game"
+msgstr "Fortsätt sparat spel"
+
+msgid "New Game (Modern Graphics)"
+msgstr "Nytt spel (modern grafik)"
+
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "GAME"
+msgstr "SPEL"
+
+msgid "CONTROLS"
+msgstr "KONTROLLER"
+
+msgid "AUDIO"
+msgstr "LJUD"
+
+msgid "ACCESSIBILITY"
+msgstr "TILLGÄNGLIGHET"
+
+msgid "Graphics Mode"
+msgstr "Grafikläge"
+
+msgid "Game Version"
+msgstr "Spelversion"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Game Speed"
+msgstr "Spelhastighet"
+
+msgid "Movement Mode"
+msgstr "Rörelseläge"
+
+msgid "Cheats"
+msgstr "Fusk"
+
+msgid "Auto-Save"
+msgstr "Autospara"
+
+msgid "Minimap"
+msgstr "Minikarta"
+
+msgid "Journal"
+msgstr "Journal"
+
+msgid "Window Mode"
+msgstr "Fönsterläge"
+
+msgid "Display Format"
+msgstr "Bildformat"
+
+msgid "VSync"
+msgstr "VSync"
+
+msgid "Integer Scaling"
+msgstr "Heltalsskalning"
+
+msgid "Viewport Style"
+msgstr "Vyformat"
+
+msgid "Palette Mode"
+msgstr "Palettläge"
+
+msgid "CRT Filter"
+msgstr "CRT-filter"
+
+msgid "Palette Correction"
+msgstr "Palettkorrigering"
+
+msgid "Dither Cleanup"
+msgstr "Dither-rensning"
+
+msgid "Sharpening"
+msgstr "Skärpa"
+
+msgid "Phosphor Persistence"
+msgstr "Fosforpersistens"
+
+msgid "Color Preset"
+msgstr "Färgförval"
+
+msgid "Pixel Grid"
+msgstr "Pixelrutnät"
+
+msgid "Motion Blur"
+msgstr "Rörelseoskärpa"
+
+msgid "AI Upscale (10x)"
+msgstr "AI-uppskalning (10x)"
+
+msgid "Smooth Movement"
+msgstr "Mjuk rörelse"
+
+msgid "Smooth Turning"
+msgstr "Mjuk sväng"
+
+msgid "Animation Interpolation"
+msgstr "Animationsinterpolering"
+
+msgid "Dynamic Lighting"
+msgstr "Dynamiskt ljus"
+
+msgid "Particle Effects"
+msgstr "Partikeleffekter"
+
+msgid "Weather FX"
+msgstr "Vädereffekter"
+
+msgid "Camera Easing"
+msgstr "Kamerautjämning"
+
+msgid "Screen Transitions"
+msgstr "Skärmövergångar"
+
+msgid "Control Scheme"
+msgstr "Kontrollschema"
+
+msgid "Input Mode"
+msgstr "Inmatningsläge"
+
+msgid "Touch Controls"
+msgstr "Pekkontroller"
+
+msgid "Gamepad"
+msgstr "Handkontroll"
+
+msgid "Key Bindings"
+msgstr "Tangentbindningar"
+
+msgid "Auto-Pause on Focus Loss"
+msgstr "Pausa när fokus förloras"
+
+msgid "Master Volume"
+msgstr "Huvudvolym"
+
+msgid "Music Volume"
+msgstr "Musikvolym"
+
+msgid "SFX Volume"
+msgstr "Effektvolym"
+
+msgid "Muted"
+msgstr "Tystat"
+
+msgid "Audio Mixer"
+msgstr "Ljudmixer"
+
+msgid "Soundtrack"
+msgstr "Ljudspår"
+
+msgid "Ambient Sounds"
+msgstr "Omgivningsljud"
+
+msgid "Ambient Volume"
+msgstr "Omgivningsvolym"
+
+msgid "Footstep Audio"
+msgstr "Stegljud"
+
+msgid "Creature Voices"
+msgstr "Varelseljud"
+
+msgid "PC Speaker Emulation"
+msgstr "PC speaker-emulering"
+
+msgid "Font Scale"
+msgstr "Textstorlek"
+
+msgid "UI Scale"
+msgstr "Gränssnittsskala"
+
+msgid "High Contrast"
+msgstr "Hög kontrast"
+
+msgid "Colorblind Mode"
+msgstr "Färgblindhetsläge"
+
+msgid "Large Touch Targets"
+msgstr "Stora pekytor"
+
+msgid "Damage Numbers"
+msgstr "Skadenummer"
+
+msgid "Screenshot Key"
+msgstr "Skärmbildstangent"
+
+msgid "Message Log"
+msgstr "Meddelandelogg"
+
+msgid "Tooltip"
+msgstr "Verktygstips"
+
+msgid "Achievements"
+msgstr "Prestationer"
+
+msgid "Stat Tracker"
+msgstr "Statistikspårning"
+
+msgid "Pathfinding Overlay"
+msgstr "Vägvisningslager"
+
+msgid "Inventory Sort"
+msgstr "Sortera inventarie"
+
+msgid "Data Status"
+msgstr "Datastatus"
+
+msgid "Debug Overlay"
+msgstr "Debuglager"
+
+msgid "Developer Gates"
+msgstr "Utvecklarspärrar"
+
+msgid "Original"
+msgstr "Original"
+
+msgid "English"
+msgstr "Engelska"
+
+msgid "Normal"
+msgstr "Normal"
+
+msgid "Classic"
+msgstr "Klassiskt"
+
+msgid "Off"
+msgstr "Av"
+
+msgid "On"
+msgstr "På"
+
+msgid "Maximized"
+msgstr "Maximerat"
+
+msgid "Original VGA"
+msgstr "Original-VGA"
+
+msgid "Fade"
+msgstr "Toning"
+
+msgid "Keyboard"
+msgstr "Tangentbord"
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Auto-detect"
+msgstr "Autodetektera"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "No"
+msgstr "Nej"
+
+msgid "Stereo"
+msgstr "Stereo"
+
+msgid "OK"
+msgstr "OK"

@@ -81,4 +81,8 @@ void fs_game_handle_sdl_event(FS_GameState *state, const void *sdl_event);
 void fs_game_run(FS_GameState *state);
 void fs_game_shutdown(FS_GameState *state);
 
+/* Get the global FS_InputQueue pointer used by fs_game_tick_v1().
+ * Used by firestaff_touch.c to enqueue swipe gesture commands. */
+FS_InputQueue *fs_g_input_queue_get(void);
+
 #endif

@@ -190,6 +190,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_click_routing_pc34_compat.c
     src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
+    src/engine/firestaff_touch.c
+    src/engine/firestaff_input.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -207,6 +209,7 @@ endif()
 set(M12_SOURCES
     src/ui/menu_startup_m12.c
     src/ui/menu_startup_render_modern_m12.c
+    src/ui/menu_unicode_glyphs_m12.c
     src/shared/firestaff_l10n.c
     src/ui/firestaff_bestiary.c
     src/ui/firestaff_spell_ref.c
