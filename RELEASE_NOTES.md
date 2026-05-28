@@ -1,21 +1,23 @@
-# Firestaff v2.5.4
+# Firestaff v2.5.5
 
-Gameplay and launcher polish release on top of the v2.5.x release pipeline.
+V2 expansion and DM1 launcher/gameplay polish release on top of the v2.5.x release pipeline.
 
 ## What's New
 
-- Fixed DM1 V1 Hall of Champions mirror routing, candidate vitals decoding, and reincarnate handling so mirror recruits no longer trigger an all-dead Game Over path.
-- Added M12 touch gestures, refreshed launcher locales, and added Japanese and Simplified Chinese startup-menu resources.
-- Added DM2 V2 HUD overlay and interaction feedback scaffolding with smoke coverage.
-- Added DM1 V2 champion-select source-lock gates and HUD health-pulse support.
+- Restored DM1 Hall of Champions mirror portraits and tightened the startup/title path so the intro remains visible at launch.
+- Added CSB V2 enhanced lighting, touch/controller affordance coverage, smooth-movement bridge work, and a V2 verification suite gate.
+- Added DM2 V1 utility/import flow coverage for new game, session save/load, and starter party behavior.
+- Added DM2 V2 enhanced lighting/outdoor effects and Nexus V2 HUD overlay sources with smoke coverage.
+- Fixed DM1 viewport/blocker polish, including viewport border walls, inscription rendering, save-and-quit dialog clicks, and hidden Hall mirror payload items.
+- Fixed the Windows CI save/load test process-id helper used by the release verification matrix.
 
 ## Verification
 
 - GitHub Actions verify workflow passed on `main` before release.
-- Local CMake build completed.
-- Phase A probe passed 21/21 invariants.
-- DM2 V2 HUD overlay smoke test passed 76/76 checks.
-- DM1 V1 resurrection and Hall mirror probes passed in the release line.
+- Local CMake configure/build completed.
+- Phase A probe passed.
+- Audio probe passed.
+- DM2 V2, CSB V2, and Nexus V2 smoke/source tests are included in the release line.
 
 ## Platforms
 

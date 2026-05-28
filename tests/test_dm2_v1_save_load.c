@@ -28,7 +28,7 @@
 #include <process.h>
 #define FS_MKDIR(path) _mkdir(path)
 #define FS_RMDIR(path) _rmdir(path)
-#define FS_GETPID() _FS_GETPID()
+#define FS_GETPID() _getpid()
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
