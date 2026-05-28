@@ -1163,6 +1163,17 @@ int main(int argc, char** argv) {
                  "INV_GV_03",
                  litPixels > 4000U,
                  "game view renders a non-empty dungeon-backed frame");
+    {
+        size_t hallObjectWarmPixels =
+            probe_count_color(framebuffer, 320, 70, 75, 96, 55, PROBE_COLOR_RED) +
+            probe_count_color(framebuffer, 320, 70, 75, 96, 55, PROBE_COLOR_ORANGE) +
+            probe_count_color(framebuffer, 320, 70, 75, 96, 55, PROBE_COLOR_YELLOW);
+        probe_record_asset_required(&tally,
+                                    "INV_GV_03B",
+                                    gameView.assetsAvailable,
+                                    hallObjectWarmPixels < 30U,
+                                    "Hall of Champions initial view does not draw candidate equipment as floor/fireball objects");
+    }
 
     probe_record(&tally,
                  "INV_GV_04",
