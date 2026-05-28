@@ -20,6 +20,18 @@ It is a coverage map, not a claim of finished remastering.
 
 ## Notes by class
 
+## Shared V2 asset approval rule
+
+All graphical asset classes now use the same approval pattern:
+
+- lock the original/source silhouette, pose, crop role, scale, and gameplay read first
+- make V2.1 a high-resolution source-preserving upscale that is visibly less pixelated than V1/V2.0
+- make V2.2 a high-resolution modern redraw of the same form, not a different design
+- reject old V2.2 assets that do not match the source form
+- approve assets only after a side-by-side V1 / V2.0 / V2.1 / V2.2 comparison at matching perceived scale
+
+This applies across DM1, CSB, DM2, Nexus, and Theron. The game-specific source-lock still decides the exact reference asset, but the V2 review shape is shared.
+
 ### UI / HUD shells
 - Already covered by the current Wave 1 UI pack.
 - `viewport-frame` remains explicitly provisional/blocked until the `0000` mapping is re-locked.
