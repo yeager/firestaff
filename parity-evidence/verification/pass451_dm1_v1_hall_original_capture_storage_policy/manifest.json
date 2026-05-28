@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-27T20:52:08.305119+00:00",
+  "timestampUtc": "2026-05-27T23:14:43.006306+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
   "repo": "/Users/bosse/.openclaw/workspace-main",
   "branch": "main",
-  "head": "1e982267bfd03d6b786fb083cf74268616d71b7f",
+  "head": "2d20969c00ffc23af771c30a49866ebbf7973d15",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": true,

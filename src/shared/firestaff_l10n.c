@@ -9,7 +9,7 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "SELECT GAME", "New Game (V1 Original)", "New Game (V2.1 Upscaled)",
         "New Game (V2.2 Enhanced)", "Continue Saved Game", "Coming soon",
         "Back", "Display", "Video", "Audio", "Controls", "Accessibility",
-        "Museum of Lore", "Bestiary", "Spell Reference", "Map Viewer",
+        "Museum of Lore", "Manual / Docs", "Bestiary", "Spell Reference", "Map Viewer",
         "Item Encyclopedia", "Changelog", "Screenshot Gallery",
         "Language", "On", "Off"
     },
@@ -19,7 +19,7 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "VÄLJ SPEL", "Nytt spel (V1 Original)", "Nytt spel (V2.1 Uppskalat)",
         "Nytt spel (V2.2 Förbättrat)", "Fortsätt sparat spel", "Kommer snart",
         "Tillbaka", "BILDSKÄRM", "Video", "Ljud", "Kontroller", "Tillgänglighet",
-        "Kunskapsmuseet", "Bestiary", "Trollformler", "Kartvisare",
+        "Kunskapsmuseet", "Handbok / Dokument", "Bestiary", "Trollformler", "Kartvisare",
         "FÖREMÅLSENCYKLOPEDI", "ÄNDRINGSLOGG", "SKÄRMBILDSGALLERI",
         "Språk", "På", "Av"
     },
@@ -29,7 +29,7 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "SPIEL WÄHLEN", "Neues Spiel (V1 Original)", "Neues Spiel (V2.1 Hochskaliert)",
         "Neues Spiel (V2.2 Erweitert)", "Gespeichertes Spiel fortsetzen", "Demnächst",
         "Zurück", "Anzeige", "Video", "Audio", "Steuerung", "Barrierefreiheit",
-        "Wissensmuseum", "Bestiarium", "Zaubersprüche", "Kartenansicht",
+        "Wissensmuseum", "Handbuch / Dokumentation", "Bestiarium", "Zaubersprüche", "Kartenansicht",
         "Gegenstandslexikon", "Änderungsprotokoll", "Screenshot-Galerie",
         "Sprache", "An", "Aus"
     },
@@ -39,7 +39,7 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "CHOISIR UN JEU", "Nouvelle partie (V1 Original)", "Nouvelle partie (V2.1 Amélioré)",
         "Nouvelle partie (V2.2 Enrichi)", "Continuer la partie", "Bientôt disponible",
         "Retour", "Affichage", "Vidéo", "Audio", "Contrôles", "Accessibilité",
-        "Musée du Savoir", "Bestiaire", "Référence des Sorts", "Visionneuse de Carte",
+        "Musée du Savoir", "Manuel / Documentation", "Bestiaire", "Référence des Sorts", "Visionneuse de Carte",
         "Encyclopédie des Objets", "Journal des Modifications", "Galerie de Captures",
         "Langue", "Activé", "Désactivé"
     },

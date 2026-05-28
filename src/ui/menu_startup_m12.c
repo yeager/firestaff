@@ -16,6 +16,7 @@
 #include "ambient_layer_m11.h"
 #include "fs_portable_compat.h"
 
+#include <SDL3/SDL_misc.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -3716,12 +3717,25 @@ static const int g_game_mode_available[M12_GAME_MODE_COUNT] = {
 };
 
 static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
-    _("Museum of Lore"), _("Bestiary"), _("Spell Reference"),
-    _("Map Viewer"), _("Item Encyclopedia"), _("Changelog"), _("Screenshot Gallery")
+    /* 0 M12_EXTRAS_MUSEUM    */ _("Museum of Lore"),
+    /* 1 M12_EXTRAS_MANUAL    */ _("Manual / Docs"),
+    /* 2 M12_EXTRAS_BESTIARY  */ _("Bestiary"),
+    /* 3 M12_EXTRAS_SPELLS    */ _("Spell Reference"),
+    /* 4 M12_EXTRAS_MAP_VIEWER*/ _("Map Viewer"),
+    /* 5 M12_EXTRAS_ITEMS     */ _("Item Encyclopedia"),
+    /* 6 M12_EXTRAS_CHANGELOG */ _("Changelog"),
+    /* 7 M12_EXTRAS_SCREENSHOTS*/ NULL /* stub */
 };
 
 static const int g_extras_available[M12_EXTRAS_COUNT] = {
-    1, 0, 0, 0, 0, 1, 0
+    1, /* museum */
+    1, /* manual — opens docs URL */
+    0, /* bestiary */
+    0, /* spells */
+    0, /* map viewer */
+    0, /* items */
+    1, /* changelog */
+    0  /* screenshots */
 };
 
 static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
@@ -6272,6 +6286,10 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
             if (key_enter && g_extras_available[state->extrasSelected]) {
                 switch (state->extrasSelected) {
                     case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
+                    case M12_EXTRAS_MANUAL: {
+                        /* Open the Firestaff documentation site */
+                        SDL_OpenURL("https://github.com/yeager/firestaff#readme");
+                    } break;
                     case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
                     default: break; /* Others not implemented yet */
                 }

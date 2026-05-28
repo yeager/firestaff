@@ -1352,6 +1352,20 @@ uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *sp
         : 0x0000u;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_set_wall_frame_bitmaps
+ *
+ * Wires wall-frame bitmaps into the V1 viewport drawing pipeline.
+ * This is the asset-population step: the M11 engine calls this after
+ * loading GRAPHICS.DAT wall-set bitmaps via its own asset system.
+ *
+ * Source: DUNVIEW.C F0096 (line 2225) · DEFS.H G2107/G2110-G2120 (I34E)
+ * ──────────────────────────────────────────────────────────────────────── */
+void dm1_viewport_3d_set_wall_frame_bitmaps(const uint8_t *bitmap)
+{
+    g_dm1_wall_frame_bitmaps = bitmap;
+}
+
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order)
 {
     DM1_ViewportCellOrder out;

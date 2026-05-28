@@ -23,7 +23,7 @@
   ],
   "branch": "main",
   "buildDir": "/Users/bosse/.openclaw/data/firestaff-builds/pass383-verify",
-  "ctestTail": "Test project /Users/bosse/.openclaw/data/firestaff-builds/pass383-verify\n    Start 25: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #25: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.01 sec\n    Start 58: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #58: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.01 sec\n",
+  "ctestTail": "Test project /Users/bosse/.openclaw/data/firestaff-builds/pass383-verify\n    Start 25: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #25: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 58: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #58: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.01 sec\n",
   "proofs": [
     {
       "claim": "movement cooldown gate returns before dequeue, so the queued C003..C006 command is retained",

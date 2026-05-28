@@ -742,6 +742,34 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
 bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 
+/*
+ * Wire wall-frame bitmaps into the V1 viewport drawing pipeline.
+ *
+ * This is the asset-population step: the M11 engine calls this after
+ * loading GRAPHICS.DAT wall-set bitmaps via its own asset system.
+ * The bitmaps must be in the merged-buffer layout:
+ *   23 entries × DM1_VIEWPORT_BYTE_WIDTH (224) bytes/entry = 5,152 bytes
+ *   ordinal  0-14: 15 wall strips (D0R..D3C)
+ *   ordinal 15:    unused
+ *   ordinal 16:   G2112 DoorFrameTop_D1C
+ *   ordinal 17:   G2113 DoorFrameTop_D2R
+ *   ordinal 18:   G2114 DoorFrameTop_D2L
+ *   ordinal 19:   G2119 DoorFrameLeft_D3C
+ *   ordinal 20:   G2116/G2120 DoorFrameFront_D0C / DoorFrameLeft_D3L
+ *   ordinal 21:   G2117 DoorFrameLeft_D1C
+ *   ordinal 22:   G2118 DoorFrameLeft_D2C
+ *
+ * The caller is responsible for loading the GRAPHICS.DAT wall-set bitmaps
+ * (indices 69-83 for walls, 51-57 for door frames at wall-set 0)
+ * into merged-buffer format, then passing the pointer here.
+ *
+ * Call after dm1_viewport_3d_init() and before any dm1_viewport_3d_draw_*().
+ * Pass bitmap=NULL to release (e.g. on asset shutdown).
+ *
+ * Source: DUNVIEW.C F0096 (line 2225) · DEFS.H G2107/G2110-G2120 (I34E)
+ */
+void dm1_viewport_3d_set_wall_frame_bitmaps(const uint8_t *bitmap);
+
 /* Decode F0115's packed cell-order nibbles (DUNVIEW.C:4561-4564). */
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
 size_t dm1_viewport_3d_thing_layer_spec_count(void);
