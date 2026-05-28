@@ -279,6 +279,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_pass648_dm1_v2_asset_pipeline_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 chest slot zone validation probe — headless, no game data needed.
+# Validates kV1ChestSlotBoxZones (m11_game_view.c) against ReDMCSB
+# COMMAND.C:215-227 G0456_as_Graphic561_MouseInput_PanelChest zone coords.
+add_executable(firestaff_m11_chest_slot_zones_probe
+    probes/firestaff_m11_chest_slot_zones_probe.c)
+target_link_libraries(firestaff_m11_chest_slot_zones_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_chest_slot_zones_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 Game View probe (needs full M10 + M11 + M12)
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
 target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
