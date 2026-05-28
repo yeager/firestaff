@@ -19,6 +19,9 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 #include "theron_v1_save_load.h"
 #include "theron_v1_dungeon_progression.h"
 
@@ -26,16 +29,39 @@
 
 static char g_test_dir[256];
 
+static int test_mkdir(const char *path) {
+#ifdef _WIN32
+    return _mkdir(path);
+#else
+    return mkdir(path, 0755);
+#endif
+}
+
+static void test_dir_remove(void) {
+    char cmd[512];
+#ifdef _WIN32
+    snprintf(cmd, sizeof(cmd), "rmdir /S /Q \"%s\" >NUL 2>NUL", g_test_dir);
+#else
+    snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", g_test_dir);
+#endif
+    system(cmd);
+}
+
 static void test_dir_setup(void) {
+#ifdef _WIN32
+    const char *tmp = getenv("TEMP");
+#else
+    const char *tmp = getenv("TMPDIR");
+#endif
     snprintf(g_test_dir, sizeof(g_test_dir), "%s/test_theron_save",
-             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+             tmp ? tmp : ".");
     /* Remove any old test dir */
-    system("rm -rf /tmp/test_theron_save");
-    mkdir(g_test_dir, 0755);
+    test_dir_remove();
+    test_mkdir(g_test_dir);
 }
 
 static void test_dir_teardown(void) {
-    system("rm -rf /tmp/test_theron_save");
+    test_dir_remove();
 }
 
 /* ── Test helpers ─────────────────────────────────────────────────── */

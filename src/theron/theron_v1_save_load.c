@@ -288,6 +288,8 @@ static int parse_save_image(
 
     /* Verify footer checksum */
     uint16_t footer_cs = *(uint16_t *)(deobuf + image_size - THERON_SAVE_FOOTER_SIZE);
+    deobuf[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
+    deobuf[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
     uint16_t computed_footer_cs = compute_checksum16(deobuf, image_size - THERON_SAVE_FOOTER_SIZE);
     if (footer_cs != computed_footer_cs) {
         free(deobuf);
@@ -540,6 +542,8 @@ int theron_v1_save_verify_slot(const char *save_root, int slot_index) {
         copy[THERON_SAVE_OFF_VERSION] == 1) {
         /* Verify footer */
         uint16_t footer_cs = *(uint16_t *)(copy + file_size - THERON_SAVE_FOOTER_SIZE);
+        copy[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
+        copy[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
         uint16_t computed_cs = compute_checksum16(copy, file_size - THERON_SAVE_FOOTER_SIZE);
         valid = (footer_cs == computed_cs) ? 1 : 0;
     }
