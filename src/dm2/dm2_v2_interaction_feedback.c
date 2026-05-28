@@ -74,6 +74,23 @@ DM2_V2_InteractionResult dm2_v2_hit_test(int screen_x, int screen_y,
         return r;
     }
 
+    /* Portrait panel (indoor only, right 80px at x=240..319).
+     * Source-lock: DM2 SKULL.ASM keeps the champion/status panel in the
+     * dungeon viewport band; the bottom action strip owns its full row. */
+    if (!is_outdoor && screen_x >= DM2_ZONE_PORTRAIT_X0) {
+        if (screen_y >= DM2_ZONE_STATUS_Y1 && screen_y < DM2_ZONE_ACTION_Y0) {
+            r.hit = 1;
+            r.zone_id = DM2_V2_ZONE_PORTRAIT_PANEL;
+            return r;
+        }
+    }
+
+    /* Dungeon area — no overlay zone */
+    if (screen_y < DM2_ZONE_ACTION_Y0) {
+        r.zone_id = DM2_V2_ZONE_MISS;
+        return r;
+    }
+
     /* Action strip (bottom 28px): icons only for valid slots. Remaining
      * strip pixels still belong to the action row chrome; the right-side
      * portrait panel is indoor-only dungeon-area geometry, not a bottom
@@ -91,22 +108,6 @@ DM2_V2_InteractionResult dm2_v2_hit_test(int screen_x, int screen_y,
         }
         r.hit = 1;
         r.zone_id = DM2_V2_ZONE_ACTION_ROW;
-        return r;
-    }
-
-    /* Portrait panel (indoor only, right 80px at x=240..319) */
-    if (!is_outdoor && screen_x >= DM2_ZONE_PORTRAIT_X0) {
-        /* Only in dungeon area (y=28..171); action strip y=172+ is handled above. */
-        if (screen_y >= DM2_ZONE_STATUS_Y1 && screen_y < DM2_ZONE_ACTION_Y0) {
-            r.hit = 1;
-            r.zone_id = DM2_V2_ZONE_PORTRAIT_PANEL;
-            return r;
-        }
-    }
-
-    /* Dungeon area — no overlay zone */
-    if (screen_y < DM2_ZONE_ACTION_Y0) {
-        r.zone_id = DM2_V2_ZONE_MISS;
         return r;
     }
 
