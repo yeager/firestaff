@@ -9010,6 +9010,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     int mapY;
     unsigned char square = 0;
     unsigned short firstThing = THING_ENDOFLIST;
+    int visibleWallCell = -1;
     M11_ViewportCell cell;
 
     memset(&cell, 0, sizeof(cell));
@@ -9049,6 +9050,15 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     }
 
     m11_direction_vectors(state->world.party.direction, &fx, &fy, &rx, &ry);
+    {
+        int viewDir = state->world.party.direction;
+        if (relSide < 0) {
+            viewDir = (viewDir + 3) & 3;
+        } else if (relSide > 0) {
+            viewDir = (viewDir + 1) & 3;
+        }
+        visibleWallCell = (viewDir + 2) & 3;
+    }
 
     /* Phase 5 smooth movement: apply camera interpolation offset to the
      * view-cone sampling.
@@ -9377,15 +9387,17 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
-                    /* ReDMCSB DUNGEON.C:2612: C127_SENSOR_WALL_CHAMPION_PORTRAIT
-                     * stores portrait index in M040_DATA(sensor).  ReDMCSB passes it
-                     * through M000_INDEX_TO_ORDINAL (= value+1) when storing G0289,
-                     * then blits using G0289's raw value for sheet coordinates.
-                     * We read the raw sensorData directly (same as M040_DATA from
-                     * dungeon.dat) and store it as a 0-based portrait-sheet index.
-                     * This matches ReDMCSB's effective 0-based blit without the +1.
-                     * Source: ReDMCSB DUNGEON.C:2612, DUNVIEW.C:3916 (sheet math). */
                     if (state->world.things->sensors[sIdx].sensorType == 127) {
+                        /* ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against
+                         * the view direction, DUNGEON.C:2610-2612 lets only the
+                         * front wall aspect set G0289, and DUNVIEW.C:3913-3928
+                         * blits that D1C front champion portrait. */
+                        if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) &&
+                            (int)THING_GET_CELL(scanThing) != visibleWallCell) {
+                            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+                            ++scanSafety;
+                            continue;
+                        }
                         cell.championPortraitOrdinal = (int)state->world.things->sensors[sIdx].sensorData;
                         /* Champion mirrors also have an ornament ordinal for the
                          * mirror frame; keep scanning or use it for the frame. */
@@ -10246,6 +10258,9 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         int thingIndex = THING_GET_INDEX(thing);
         if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
             thingIndex < state->world.things->textStringCount) {
+            /* ReDMCSB MOVESENS.C:1501-1503 passes the C127 sensor data to
+             * REVIVE.C F0280; Firestaff keeps the source TextString catalog as
+             * the identity lookup once the front wall square has been chosen. */
             int mirrorOrdinal = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
                 &state->mirrorCatalog, thingIndex);
             if (mirrorOrdinal >= 0) {
@@ -12457,13 +12472,31 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     };
     M11_DM1ZoneBlit blit;
     const M11_AssetSlot* slot;
+    M11_ViewportCell mirrorCell;
     int mapIdx;
     int localIdx;
     int ornGlobalIdx = 43;
-    if (!state || !frontCell || frontCell->championPortraitOrdinal < 0 ||
-        !M11_DM1_ViewportSquareIsWallLikePc34(frontCell->square)) {
+    int portraitOrdinal;
+    if (!state || !frontCell) {
         return;
     }
+    mirrorCell = *frontCell;
+    portraitOrdinal = mirrorCell.championPortraitOrdinal;
+    if (portraitOrdinal < 0) {
+        portraitOrdinal = m11_front_cell_mirror_ordinal(state);
+        mirrorCell.championPortraitOrdinal = portraitOrdinal;
+    }
+    if (portraitOrdinal < 0) {
+        return;
+    }
+    /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
+     * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
+     * rectangle from that state.  The Firestaff loader can expose some Hall
+     * mirror front cells as door/teleporter squares while the C127 route still
+     * owns the source portrait, so do not gate this draw on wall-like type.
+     * When the front route is represented by the paired mirror TextString
+     * instead, use the same ordinal as MOVESENS.C:1501-1503/REVIVE.C F0280
+     * candidate selection so rendering and click ownership stay together. */
     mapIdx = state->world.party.mapIndex;
     if (state->world.dungeon && mapIdx >= 0 &&
         mapIdx < (int)state->world.dungeon->header.mapCount &&
@@ -12492,7 +12525,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                                kOrnD2Palette,
                                                0);
     }
-    m11_draw_dm1_front_champion_portrait(state, frontCell, framebuffer, fbW, fbH);
+    m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }
 
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
