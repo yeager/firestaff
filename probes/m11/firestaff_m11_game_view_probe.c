@@ -882,8 +882,9 @@ int main(int argc, char** argv) {
                          M11_GameView_RecruitChampionByMirrorName(&recruitView, "STAMM") == 1 &&
                          recruitView.world.party.championCount == 1 &&
                          memcmp(recruitView.world.party.champions[0].name, "STAMM   ", 8) == 0 &&
-                         memcmp(recruitView.world.party.champions[0].title, "BLADECASTER         ", 20) == 0,
-                     "M11 can recruit champion identity by mirror catalog display name");
+                         memcmp(recruitView.world.party.champions[0].title, "BLADECASTER         ", 20) == 0 &&
+                         recruitView.world.party.champions[0].hp.current > 0,
+                     "M11 can recruit champion identity and alive source vitals by mirror catalog display name");
         probe_record(&tally,
                      "INV_GV_404",
                      M11_GameView_RecruitChampionByMirrorOrdinal(&recruitView, 11) == 1 &&
@@ -980,6 +981,20 @@ int main(int argc, char** argv) {
                              pointerMirror.candidateMirrorPanelActive == 1 &&
                              pointerMirror.candidateMirrorOrdinal == mirrorOrdinal,
                          "source portrait click center x111/y82 opens the mirror candidate panel when a mirror TextString is in the front cell");
+            {
+                M11_GameViewState pointerArrow;
+                int arrowX = -1, arrowY = -1, arrowW = -1, arrowH = -1;
+                memcpy(&pointerArrow, &pointerMirrorMiss, sizeof(pointerArrow));
+                (void)M11_GameView_GetV1MovementArrowZone(2, &arrowX, &arrowY, &arrowW, &arrowH);
+                probe_record(&tally,
+                             "INV_GV_407A1",
+                             M11_GameView_HandlePointerButton(
+                                 &pointerArrow,
+                                 arrowX + (arrowW / 2), arrowY + (arrowH / 2),
+                                 M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+                                 pointerArrow.candidateMirrorPanelActive == 0,
+                             "V1 forward-arrow click is owned by ReDMCSB G0448 and does not fall through to the mirror ACCEPT shortcut");
+            }
         }
         {
             M11_GameViewState pointerMirrorReincarnate;
@@ -989,8 +1004,10 @@ int main(int argc, char** argv) {
                          "INV_GV_407C",
                          M11_GameView_HandlePointer(&pointerMirrorReincarnate, 186, 115, 1) == M11_GAME_INPUT_REDRAW &&
                              pointerMirrorReincarnate.candidateMirrorPanelActive == 0 &&
-                             pointerMirrorReincarnate.world.party.championCount == 1,
-                         "source C161 reincarnate center x186/y115 confirms the open mirror candidate panel");
+                             pointerMirrorReincarnate.world.party.championCount == 1 &&
+                             pointerMirrorReincarnate.world.party.champions[0].hp.current > 0 &&
+                             pointerMirrorReincarnate.partyDead == 0,
+                         "source C161 reincarnate center x186/y115 confirms the open mirror candidate panel without all-dead Game Over");
         }
         {
             M11_GameViewState pointerMirrorResurrect;

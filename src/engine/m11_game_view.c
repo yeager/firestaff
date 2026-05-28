@@ -6614,7 +6614,14 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
         unsigned short next = m11_raw_next_thing(state->world.things, thing);
-        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
+        if (thingType == THING_TYPE_SENSOR && state->world.things->sensors &&
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount) {
+            /* ReDMCSB REVIVE.C F0282 disables the first C03 sensor thing
+             * after a confirmed resurrect/reincarnate action.  The mirror
+             * TextString is still Firestaff's local catalog route, so keep
+             * scanning and unlink the matching text entry below too. */
+            state->world.things->sensors[thingIndex].sensorType = 0;
+        } else if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
             thingIndex < state->world.things->textStringCount &&
             F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
                 &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
@@ -7502,12 +7509,18 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
-    if (m11_point_in_rect(x, y,
-                          M11_PROMPT_STRIP_X,
-                          M11_PROMPT_STRIP_Y,
-                          M11_PROMPT_STRIP_W,
-                          M11_PROMPT_STRIP_H) ||
-        m11_point_in_rect(x, y, 218, 106, 86, 34)) {
+    /* Firestaff focus-card shortcuts are debug/non-V1 helpers only.  In
+     * authentic V1 chrome, ReDMCSB COMMAND.C G0448 owns the right-column
+     * movement-arrow rectangles (C068..C073) below; the old focus-card box
+     * at x=218..303/y=106..139 overlaps the top arrow row and must not
+     * preempt C001/C002/C003. */
+    if ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) &&
+        (m11_point_in_rect(x, y,
+                           M11_PROMPT_STRIP_X,
+                           M11_PROMPT_STRIP_Y,
+                           M11_PROMPT_STRIP_W,
+                           M11_PROMPT_STRIP_H) ||
+         m11_point_in_rect(x, y, 218, 106, 86, 34))) {
         return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
     }
 
@@ -12297,13 +12310,6 @@ static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
     }
     portraitIdx = cell->championPortraitOrdinal;
     if (portraitIdx < 0) {
-        /* The Hall of Champions mirror text and C127 portrait sensor are
-         * adjacent wall-face routes in DM1.  If the sampled wall cell only
-         * exposes the TextString, use the source mirror catalog ordinal as
-         * the C026 portrait-sheet index for the same front mirror. */
-        portraitIdx = m11_front_cell_mirror_ordinal(state);
-    }
-    if (portraitIdx < 0) {
         return;
     }
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -12337,7 +12343,8 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     int mapIdx;
     int localIdx;
     int ornGlobalIdx = 43;
-    if (!state || !frontCell || m11_front_cell_mirror_ordinal(state) < 0) {
+    if (!state || !frontCell || frontCell->championPortraitOrdinal < 0 ||
+        !M11_DM1_ViewportSquareIsWallLikePc34(frontCell->square)) {
         return;
     }
     mapIdx = state->world.party.mapIndex;
@@ -12434,7 +12441,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         M11_DM1ZoneBlit blit;
         int localIdx;
         int mapIdx;
-        int frontMirrorOrdinal = -1;
         int ornGlobalIdx = -1;
         if (kWallOrnaments[i].relForward > maxVisibleForward) {
             continue;
@@ -12447,17 +12453,16 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
             continue;
         }
-        if (kWallOrnaments[i].viewWallIndex == 12) {
-            frontMirrorOrdinal = m11_front_cell_mirror_ordinal(state);
-        }
         if (!cell.valid) {
             continue;
         }
-        if (!m11_viewport_cell_is_wall_like(&cell) && frontMirrorOrdinal < 0) {
+        if (!m11_viewport_cell_is_wall_like(&cell)) {
             continue;
         }
         mapIdx = state->world.party.mapIndex;
-        if (cell.wallOrnamentOrdinal <= 0 && frontMirrorOrdinal >= 0 &&
+        if (cell.wallOrnamentOrdinal <= 0 &&
+            kWallOrnaments[i].viewWallIndex == 12 &&
+            cell.championPortraitOrdinal >= 0 &&
             state->world.dungeon && mapIdx >= 0 &&
             mapIdx < (int)state->world.dungeon->header.mapCount &&
             state->world.dungeon->maps[mapIdx].wallOrnamentCount > 0) {

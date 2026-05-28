@@ -66,6 +66,62 @@ static const char* mirror_text_find_separator(const char* s) {
     return 0;
 }
 
+static unsigned short mirror_text_decode_value(const unsigned char* packed,
+                                               int packedLen,
+                                               int offset,
+                                               int count) {
+    unsigned int value = 0;
+    int i;
+    if (!packed || offset < 0 || count <= 0 || offset + count > packedLen) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        unsigned char c = packed[offset + i];
+        if (c < 'A' || c > 'P') {
+            return 0;
+        }
+        value = (value << 4) + (unsigned int)(c - 'A');
+    }
+    return (unsigned short)value;
+}
+
+static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {
+    int attr;
+    if (!champ) return;
+
+    /* ReDMCSB REVIVE.C F0279/F0280 lines 37-45 and 227-242:
+     * candidate mirror text stores values as A..P nibbles.  F0280 decodes
+     * 4 nibbles each for Current/Maximum Health, Stamina, and Mana before
+     * the resurrect/reincarnate panel is shown, then decodes seven 2-nibble
+     * statistics.  Firestaff keeps the raw packed fields for save/probe
+     * parity and also materializes the runtime vitals so a selected mirror
+     * candidate is alive while the panel is active, matching the original. */
+    champ->hp.current = champ->hp.maximum =
+        mirror_text_decode_value(champ->mirrorStatsText,
+                                 CHAMPION_MIRROR_FIELD_LENGTH, 0, 4);
+    champ->hp.shifted = (unsigned short)(champ->hp.maximum << 1);
+    champ->stamina.current = champ->stamina.maximum =
+        mirror_text_decode_value(champ->mirrorStatsText,
+                                 CHAMPION_MIRROR_FIELD_LENGTH, 4, 4);
+    champ->stamina.shifted = (unsigned short)(champ->stamina.maximum << 1);
+    champ->mana.current = champ->mana.maximum =
+        mirror_text_decode_value(champ->mirrorStatsText,
+                                 CHAMPION_MIRROR_FIELD_LENGTH, 8, 4);
+    champ->mana.shifted = (unsigned short)(champ->mana.maximum << 1);
+
+    for (attr = 0; attr < CHAMPION_ATTR_COUNT; ++attr) {
+        unsigned short value = mirror_text_decode_value(
+            champ->mirrorSkillsText,
+            CHAMPION_MIRROR_FIELD_LENGTH,
+            2 + attr * 2,
+            2);
+        champ->attributes[attr] = value;
+        champ->attributeMaximums[attr] = value;
+    }
+    champ->food = 1500;
+    champ->water = 1500;
+}
+
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* mirrorText,
     struct ChampionState_Compat* champ)
@@ -125,6 +181,7 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                 if (!inventoryEnd) inventoryEnd = inventoryStart + strlen(inventoryStart);
                 pack_text_field(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH,
                                 inventoryStart, (int)(inventoryEnd - inventoryStart));
+                apply_mirror_candidate_values(champ);
             }
         }
     } else {
@@ -253,12 +310,10 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
     slot = F0624_PARTY_GetNextFreeChampionSlot_Compat(party);
     if (slot < 0 || slot >= CHAMPION_MAX_PARTY) return 0;
     F0600_CHAMPION_InitEmpty_Compat(&party->champions[slot]);
-    memcpy(party->champions[slot].name, parsed.name, CHAMPION_NAME_LENGTH);
-    memcpy(party->champions[slot].title, parsed.title, CHAMPION_TITLE_LENGTH);
-    party->champions[slot].sex = parsed.sex;
-    memcpy(party->champions[slot].mirrorStatsText, parsed.mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH);
-    memcpy(party->champions[slot].mirrorSkillsText, parsed.mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH);
-    memcpy(party->champions[slot].mirrorInventoryText, parsed.mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
+    /* ReDMCSB REVIVE.C F0280 materializes the full candidate state before
+     * the Resurrect/Reincarnate panel opens; keep the decoded vitals and
+     * attributes from the parsed mirror text, not just name/title metadata. */
+    memcpy(&party->champions[slot], &parsed, sizeof(parsed));
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = textStringIndex;
     party->champions[slot].direction = (unsigned char)party->direction;
