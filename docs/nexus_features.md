@@ -87,9 +87,10 @@ Source: `nexus_v1_dmdf_model.c`, `docs/NEXUS_FILE_CLASSIFICATION.md`.
 Nexus dungeon files (LEV00-15.DGN, 148-321 KB each) are **10x larger than DM1's
 DUNGEON.DAT** because they embed full 3D wall/floor/ceiling polygon meshes:
 
-- **Square type grid** (32x32 x 2 bytes = 2048 bytes) stored at known offset
-- **3D geometry section** — polygon vertex/index data for walls, floors, ceilings;
-  extracted at `geometry_offset`/`geometry_size` in `Nexus_V1_Level` struct
+- **DMWeb DGN block container** — 2048-byte blocks; Structure1B is a
+  64x64 grid with 8 bytes per cell
+- **3D geometry and collision sections** — Structure1C through Structure1F and
+  later render payloads are still being split out
 - **Level script** — SLEV*.BIN (2-12 KB): trigger/events per level
 - **Level minimap** — SMAP*.BIN (17-30 KB): binary automap data
 

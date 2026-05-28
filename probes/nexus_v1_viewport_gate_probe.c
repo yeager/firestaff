@@ -177,23 +177,23 @@ static int parse_hex64(const char *s, uint64_t *out) {
 /* ── Load synthetic level fixture ─────────────────────────────────────── */
 
 static void load_synthetic_level(Nexus_V1_World *world) {
-    /* Build 32x32 LEV00.DGN equivalent (Layout B) */
-    uint8_t buf[2048 + 64];
+    /* Build a 64x64 synthetic level. Real Nexus DGN uses DMWeb Structure1B:
+     * 64x64 cells, 8 bytes per cell. This probe writes the already-decoded
+     * square grid directly because it exercises movement/hash gating. */
+    uint8_t buf[NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE];
     memset(buf, 0, sizeof(buf));
-    buf[0] = 33; /* force Layout B */
 
-    for (int gy = 0; gy < 32; gy++) {
-        for (int gx = 0; gx < 32; gx++) {
-            int off = (gy * 32 + gx) * 2;
+    for (int gy = 0; gy < NEXUS_MAX_MAP_SIZE; gy++) {
+        for (int gx = 0; gx < NEXUS_MAX_MAP_SIZE; gx++) {
+            int off = gy * NEXUS_MAX_MAP_SIZE + gx;
             /* Most of the map is open — walls only on edges and specific spots */
-            uint16_t val = 1; /* floor */
-            if (gx == 0 || gx == 31) val = 0; /* side walls */
-            if (gy == 0 || gy == 31) val = 0; /* top/bottom walls */
+            uint8_t val = 1; /* floor */
+            if (gx == 0 || gx == NEXUS_MAX_MAP_SIZE - 1) val = 0; /* side walls */
+            if (gy == 0 || gy == NEXUS_MAX_MAP_SIZE - 1) val = 0; /* top/bottom walls */
             /* Some interior pillars */
             if (gx == 10 && gy == 10) val = 0;
             if (gx == 15 && gy == 15) val = 0;
-            buf[off]   = (uint8_t)(val >> 8);
-            buf[off+1] = (uint8_t)(val & 0xFF);
+            buf[off] = val;
         }
     }
 
@@ -201,17 +201,17 @@ static void load_synthetic_level(Nexus_V1_World *world) {
     if (world->level_loaded[0] == 0) {
         Nexus_V1_Level *lvl = &world->levels[0];
         /* Parse the grid */
-        for (int gy = 0; gy < 32; gy++) {
-            for (int gx = 0; gx < 32; gx++) {
-                int off = (gy * 32 + gx) * 2;
-                lvl->squares[gy][gx] = ((uint16_t)buf[off] << 8) | buf[off+1];
+        for (int gy = 0; gy < NEXUS_MAX_MAP_SIZE; gy++) {
+            for (int gx = 0; gx < NEXUS_MAX_MAP_SIZE; gx++) {
+                int off = gy * NEXUS_MAX_MAP_SIZE + gx;
+                lvl->squares[gy][gx] = buf[off];
             }
         }
-        lvl->width = 32;
-        lvl->height = 32;
+        lvl->width = NEXUS_MAX_MAP_SIZE;
+        lvl->height = NEXUS_MAX_MAP_SIZE;
         lvl->has_3d_geometry = 1;
-        lvl->geometry_offset = 2048;
-        lvl->geometry_size = (int)sizeof(buf) - 2048;
+        lvl->geometry_offset = NEXUS_DGN_BLOCK_SIZE;
+        lvl->geometry_size = 0;
         world->level_loaded[0] = 1;
     }
 }

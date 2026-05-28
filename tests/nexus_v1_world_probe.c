@@ -25,6 +25,18 @@ static int g_fail = 0;
     else      { printf("  FAIL: %s\n", msg); g_fail++; } \
 } while (0)
 
+static void write_be16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v >> 8);
+    p[1] = (uint8_t)(v & 0xFFU);
+}
+
+static void write_be32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v >> 24);
+    p[1] = (uint8_t)((v >> 16) & 0xFFU);
+    p[2] = (uint8_t)((v >> 8) & 0xFFU);
+    p[3] = (uint8_t)(v & 0xFFU);
+}
+
 /* ── World init ─────────────────────────────────────────────────── */
 static void probe_init(void) {
     printf("\n[World Init]\n");
@@ -306,38 +318,46 @@ static void probe_tick(void) {
 /* ── DGN level parse (synthetic) ─────────────────────────────────── */
 static void probe_dungeon_parse(void) {
     printf("\n[DGN Level Parse — synthetic fixture]\n");
-    /* Build a minimal 32x32 LEV00.DGN-like blob.
-     * Layout B fallback: raw 32x32 big-endian grid at offset 0.
-     * Grid is all floor except one wall at (5,5). */
-    uint8_t buf[2048 + 64];
+    /* Build a minimal DMWeb-style DGN block container.
+     * Structure1B is a 64x64 grid, 8 bytes per cell. */
+    uint8_t buf[NEXUS_DGN_BLOCK_SIZE * 20];
+    uint8_t *structure1;
+    uint8_t *grid;
+    const int structure1_block = 1;
+    const int structure1_blocks = 18;
+    const int structure1_offset = structure1_block * NEXUS_DGN_BLOCK_SIZE;
+    const int structure1b_rel = 0x40;
     memset(buf, 0, sizeof(buf));
-    /* Force Layout B: set byte 0 = 33 (> 32 so Layout A header check fails).
-     * Grid is all floor except one wall at (5,5). */
-    buf[0] = 33;
-    int gy, gx;
-    for (gy = 0; gy < 32; gy++) {
-        for (gx = 0; gx < 32; gx++) {
-            int off = (gy * 32 + gx) * 2;
-            uint16_t val = 1; /* floor */
-            if (gx == 5 && gy == 5) val = 0; /* wall */
-            buf[off]   = (uint8_t)(val >> 8);
-            buf[off+1] = (uint8_t)(val & 0xFF);
-        }
+    write_be16(buf + 0x0C, (uint16_t)structure1_block);
+    write_be16(buf + 0x0E, (uint16_t)structure1_blocks);
+    write_be32(buf + 0x10, (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES));
+    structure1 = buf + structure1_offset;
+    structure1[0] = 0x00;
+    structure1[1] = 0x50;
+    structure1[2] = 0x40;
+    structure1[3] = 0x40;
+    write_be32(structure1 + 0x14, (uint32_t)structure1b_rel);
+    write_be32(structure1 + 0x18, (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES));
+    grid = structure1 + structure1b_rel;
+    {
+        int wall_off = (5 * NEXUS_MAX_MAP_SIZE + 5) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+        grid[wall_off + 6] = 0x0F;
+        grid[wall_off + 7] = 0xFF;
     }
 
     Nexus_V1_Level level;
     int r = nexus_v1_level_load(&level, buf, (int)sizeof(buf), 0);
     CHECK(r == 0, "nexus_v1_level_load succeeds on synthetic DGN");
-    CHECK(level.width == 32, "level width = 32");
-    CHECK(level.height == 32, "level height = 32");
+    CHECK(level.width == 64, "level width = 64");
+    CHECK(level.height == 64, "level height = 64");
     CHECK(level.squares[5][5] == 0, "wall at (5,5)");
-    CHECK(level.squares[0][0] == 1, "floor at (0,0)");
+    CHECK(level.squares[1][1] == 1, "floor at (1,1)");
     CHECK(level.has_3d_geometry, "has_3d_geometry flag set");
     CHECK(level.geometry_offset > 0, "geometry_offset > 0");
 
     int sq = nexus_v1_level_get_square(&level, 5, 5);
     CHECK(sq == 0, "level_get_square returns wall");
-    sq = nexus_v1_level_get_square(&level, 0, 0);
+    sq = nexus_v1_level_get_square(&level, 1, 1);
     CHECK(sq == 1, "level_get_square returns floor");
 
     /* Out-of-bounds returns wall */

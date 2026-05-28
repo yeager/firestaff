@@ -52,13 +52,14 @@ Disc structure:
 | LEV14.DGN | 253,952 | 939719bef2052723a2d145f01b9c0051f1bb4a9faae4672994121ff5f546d835 | |
 | LEV15.DGN | 270,336 | df8ccdf292439cfa53033686aedeaa4e9b3005aa0343760917ed8325b44ef0aa | Final level |
 
-**DGN format evidence (nexus_v1_dungeon.c Layout A / Layout B):**
-- Layout A: first 4 bytes = big-endian `uint16_t width, height` (fails if w > 32)
-- Layout B: raw 32×32 grid at offset 0 (little-endian uint16_t, fallback)
-- Grid cell low 5 bits = square type (0=wall, 1=floor, 2=pit, etc.)
-- Remainder of file = 3D geometry + thing list (unparsed, provenance-locked)
+**DGN format evidence (DMWeb source-lock, 2026-05-28):**
+- DGN files are 2048-byte block containers.
+- Header fields at `0x0C`, `0x0E` and `0x10` locate Structure1.
+- Structure1 offset `0x14` locates Structure1B.
+- Structure1B is always `0x8000` bytes: 64x64 cells, 8 bytes each.
+- The old raw 32x32 offset-0 reader is a synthetic-fixture fallback only.
 - Parser: `nexus_v1_level_load()` in `src/nexus/nexus_v1_dungeon.c`
-- Probe: `probes/nexus_dgn_probe.c` + `probes/nexus_v1_asset_manifest_probe.c`
+- Probe: `probes/nexus_v1_asset_manifest_probe.c`
 
 ### 1.2 Creature Models (.MNS) — 30 files, 1,522,764 bytes total
 

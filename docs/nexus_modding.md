@@ -27,8 +27,9 @@ Unbrick Path: Disc image + disassembly + DGN 3D blob reverse-engineering + SDDRV
 ## 2. Data File Formats
 
 Dungeon Levels (LEV files):
-- 16 levels, 32x32 grid of 5-bit square types, 147-322 KB each
-- Grid at bytes 0-1023; 3D geometry blob at bytes 1024+ (UNPARSED)
+- 16 levels, 147-322 KB each, stored as DMWeb 2048-byte block containers
+- Structure1B is a 64x64 grid with 8 bytes per cell; later structures hold
+  collision, doors, floor objects, sensors and decorations
 
 Creature Models (DMDF format):
 - Magic: 0x444D4446, Big-endian SH2

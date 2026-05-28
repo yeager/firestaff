@@ -2,8 +2,9 @@
 #define NEXUS_V1_MOVEMENT_H
 
 #include <stdint.h>
+#include "nexus_v1_dungeon.h"
 
-/* Nexus V1 party movement — DM1-compatible grid movement on 32x32 maps.
+/* Nexus V1 party movement — DM1-compatible grid movement on Nexus maps.
  * Source: DM1 CLIKMENU.C / MOVESENS.C movement pipeline;
  * docs/nexus_input.md (keyboard mapping); ReDMCSB COMMAND.C/F0380.
  *
@@ -131,7 +132,7 @@ void nexus_input_queue_discard(Nexus_InputQueue *q);
  * Source: DM1 CLIKMENU.C F0366 COMMAND_ProcessTypes3To6_MoveParty
  *         MOVESENS.C F0267 F0268 movement resolution */
 int nexus_try_move(int dir, int forward,
-                   const uint8_t squares[32][32],
+                   const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                    int *in_out_map_x, int *in_out_map_y,
                    int *out_result,
                    int *out_new_map_x, int *out_new_map_y);
@@ -148,7 +149,7 @@ int nexus_target_square(int map_x, int map_y, int dir,
                         int *out_x, int *out_y);
 
 /* Get square type at map coordinates */
-int nexus_get_square(const uint8_t squares[32][32], int x, int y);
+int nexus_get_square(const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE], int x, int y);
 
 /* ═══════════════════════════════════════════════════════════════════
  * Movement tick — call nexus_v1_tick_movement() each 55ms game tick
@@ -164,11 +165,11 @@ typedef struct {
 
 void nexus_movement_init(Nexus_MovementState *ms, int start_x, int start_y, int start_dir);
 void nexus_movement_tick(Nexus_MovementState *ms,
-                          const uint8_t squares[32][32],
+                          const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                           int *out_cmd,
                           Nexus_MoveResultData *out_result);
 int nexus_movement_step(Nexus_MovementState *ms,
-                        const uint8_t squares[32][32],
+                        const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                         int cmd,
                         Nexus_MoveResultData *out_result);
 void nexus_movement_turn(Nexus_MovementState *ms, int turn_right,

@@ -149,8 +149,9 @@ int nexus_square_is_passable(int sq) {
 }
 
 /* Get square type from dungeon grid */
-int nexus_get_square(const uint8_t squares[32][32], int x, int y) {
-    if (x < 0 || x >= 32 || y < 0 || y >= 32) return 0; /* wall = out of bounds */
+int nexus_get_square(const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE], int x, int y) {
+    if (x < 0 || x >= NEXUS_MAX_MAP_SIZE ||
+        y < 0 || y >= NEXUS_MAX_MAP_SIZE) return 0; /* wall = out of bounds */
     return squares[y][x] & 0x1F;
 }
 
@@ -209,7 +210,7 @@ void nexus_turn(int *in_out_dir, int turn_right) {
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_try_move(int dir, int forward,
-                   const uint8_t squares[32][32],
+                   const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                    int *in_out_map_x, int *in_out_map_y,
                    int *out_result,
                    int *out_new_map_x, int *out_new_map_y) {
@@ -337,7 +338,7 @@ void nexus_movement_init(Nexus_MovementState *ms, int start_x, int start_y, int 
 }
 
 void nexus_movement_tick(Nexus_MovementState *ms,
-                          const uint8_t squares[32][32],
+                          const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                           int *out_cmd,
                           Nexus_MoveResultData *out_result) {
     int cmd = 0;
@@ -377,7 +378,7 @@ void nexus_movement_tick(Nexus_MovementState *ms,
 }
 
 int nexus_movement_step(Nexus_MovementState *ms,
-                        const uint8_t squares[32][32],
+                        const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                         int cmd,
                         Nexus_MoveResultData *out_result) {
     int dir, forward, success;
