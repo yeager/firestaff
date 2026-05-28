@@ -1,4 +1,5 @@
 #include "dm1_v2_touch_controller_affordance_pc34.h"
+#include "dm1_v2_minimap_pc34.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -58,6 +59,13 @@ static const AffordanceCase kCases[] = {
      DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 6, 6, "controller_left_bumper"},
     {DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_BUMPER, DM1_V2_AFFORDANCE_INPUT_CONTROLLER,
      DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 4, 5, "controller_right_bumper"},
+};
+
+static const AffordanceCase kPinchCases[] = {
+    {DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN, DM1_V2_AFFORDANCE_INPUT_TOUCH,
+     DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_pinch_zoom_in"},
+    {DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT, DM1_V2_AFFORDANCE_INPUT_TOUCH,
+     DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_pinch_zoom_out"},
 };
 
 static void test_v2_affordances_map_to_source_locked_routes(void) {
@@ -143,6 +151,45 @@ static void test_v1_off_rejects_v2_only_affordances(void) {
     }
 }
 
+static void test_pinch_zoom_is_v2_only_without_movement_command(void) {
+    size_t i;
+    M11_V2_Minimap minimap;
+
+    /* Pinch-to-zoom V2 UI guard: ReDMCSB GAMELOOP.C:164-219 waits on
+     * source command records only. SDL3 finger events can label the V2
+     * gesture, but they must not inject C001..C006 or runtime movement. */
+    for (i = 0; i < sizeof(kPinchCases) / sizeof(kPinchCases[0]); ++i) {
+        DM1_V2_TouchControllerAffordanceRoute route =
+            dm1_v2_touch_controller_affordance_route(1, kPinchCases[i].affordance);
+        CHECK(route.accepted == 1);
+        CHECK(route.v2Only == 1);
+        CHECK(route.inputKind == kPinchCases[i].inputKind);
+        CHECK(route.affordance == kPinchCases[i].affordance);
+        CHECK(route.movementCommand == DM1_V2_MOVEMENT_COMMAND_NONE);
+        CHECK(route.route.routeKind == DM1_V2_MOVEMENT_ROUTE_V2_PRESENTATION);
+        CHECK(route.route.v2PresentationEnabled == 1);
+        CHECK(route.route.sourceCommand == 0);
+        CHECK(route.route.runtimeCommand == 0);
+        CHECK(dm1_v2_touch_controller_affordance_movement_command(kPinchCases[i].affordance) ==
+              DM1_V2_MOVEMENT_COMMAND_NONE);
+        CHECK(dm1_v2_touch_controller_affordance_input_kind(kPinchCases[i].affordance) ==
+              DM1_V2_AFFORDANCE_INPUT_TOUCH);
+        CHECK(strcmp(dm1_v2_touch_controller_affordance_name(kPinchCases[i].affordance),
+                     kPinchCases[i].name) == 0);
+    }
+
+    v2_minimap_init(&minimap);
+    CHECK(minimap.zoom == 1.0f);
+    v2_minimap_zoom(&minimap, true);
+    CHECK(minimap.zoom == 1.25f);
+    v2_minimap_zoom(&minimap, false);
+    CHECK(minimap.zoom == 1.0f);
+    for (i = 0; i < 8; ++i) v2_minimap_zoom(&minimap, false);
+    CHECK(minimap.zoom == 0.5f);
+    for (i = 0; i < 8; ++i) v2_minimap_zoom(&minimap, true);
+    CHECK(minimap.zoom == 2.0f);
+}
+
 static void test_invalid_affordance_is_not_a_command(void) {
     DM1_V2_TouchControllerAffordanceRoute route;
 
@@ -175,12 +222,16 @@ static void test_source_evidence_string_names_referenced_routes(void) {
     CHECK(strstr(evidence, "COMMAND.C:2045-2155") != NULL);
     CHECK(strstr(evidence, "CLIKMENU.C:142-174,180-390") != NULL);
     CHECK(strstr(evidence, "GAMELOOP.C:164-219") != NULL);
+    CHECK(strstr(evidence, "DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN/OUT") != NULL);
+    CHECK(strstr(evidence, "v2_minimap_zoom") != NULL);
+    CHECK(strstr(evidence, "SDL_FINGER") != NULL);
 }
 
 int main(void) {
     test_v2_affordances_map_to_source_locked_routes();
     test_v2_affordance_runtime_bridge_uses_existing_command_routes();
     test_v1_off_rejects_v2_only_affordances();
+    test_pinch_zoom_is_v2_only_without_movement_command();
     test_invalid_affordance_is_not_a_command();
     test_route_probe_does_not_mutate_runtime_state();
     test_source_evidence_string_names_referenced_routes();

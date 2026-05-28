@@ -1115,6 +1115,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_minimap_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_csb_v2_touch_controller_affordance
