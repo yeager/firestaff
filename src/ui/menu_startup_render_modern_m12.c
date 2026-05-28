@@ -24,6 +24,7 @@
 #include "menu_startup_render_modern_m12.h"
 
 #include "asset_status_m12.h"
+#include "branding_firestaff_rail_m12.h"
 #include "branding_logo_readme_m12.h"
 #include "card_art_m12.h"
 #include "card_art_generated_m12.h"
@@ -695,35 +696,72 @@ static void draw_readme_logo_image(M12_ModernCanvas* c, int x, int y, int w, int
     }
 }
 
+static int rail_round_clip_contains(int px, int py, int x, int y, int w, int h, int radius) {
+    int left = x + radius;
+    int right = x + w - 1 - radius;
+    int top = y + radius;
+    int bottom = y + h - 1 - radius;
+    int dx = 0;
+    int dy = 0;
+    if (px >= left && px <= right) return 1;
+    if (py >= top && py <= bottom) return 1;
+    dx = px < left ? left - px : px - right;
+    dy = py < top ? top - py : py - bottom;
+    return dx * dx + dy * dy <= radius * radius;
+}
+
+static void draw_firestaff_rail_image(M12_ModernCanvas* c, int x, int y, int w, int h) {
+    if (!c || w <= 0 || h <= 0) return;
+    for (int yy = 0; yy < h; ++yy) {
+        int sy = yy * M12_FIRESTAFF_RAIL_HEIGHT / h;
+        int py = y + yy;
+        if (py < 0 || py >= c->h) continue;
+        for (int xx = 0; xx < w; ++xx) {
+            int sx = xx * M12_FIRESTAFF_RAIL_WIDTH / w;
+            int px = x + xx;
+            const unsigned char* p;
+            if (px < 0 || px >= c->w) continue;
+            if (!rail_round_clip_contains(px, py, x, y, w, h, 20)) continue;
+            p = g_m12FirestaffRailRgb + ((sy * M12_FIRESTAFF_RAIL_WIDTH + sx) * 3);
+            put_pixel(c, px, py, rgb(p[0], p[1], p[2]));
+        }
+    }
+}
+
 static void draw_tall_firestaff_rail(M12_ModernCanvas* c, const M12_StartupMenuState* state,
                                      int x, int y, int w, int h) {
     unsigned int tick = state ? state->frameTick : 0U;
     int cx = x + w / 2;
     int titleY = y + 34;
-    int staffTop = y + 178;
-    int staffBot = y + h - 118;
 
     draw_panel(c, x, y, w, h, rgb(8, 7, 14), rgb(154, 86, 34), 22);
+    draw_firestaff_rail_image(c, x + 3, y + 3, w - 6, h - 6);
 
-    fill_vgradient(c, x + 2, y + 2, w - 4, h - 4,
-                   rgb(18, 12, 22), rgb(5, 6, 12));
-
-    /* Slow living heat field behind the staff. */
+    /* The base rail is generated bitmap art; this layer keeps the menu mark
+     * subtly animated without making the naturalistic staff look synthetic. */
     for (int yy = y + 24; yy < y + h - 24; ++yy) {
         int rel = yy - y;
-        int heatW = w - 74 - (rel % 5);
-        int wave = (int)((tick * 4U + (unsigned int)rel * 5U) % 64U);
-        if (wave > 32) wave = 64 - wave;
+        int heatW = w - 134 - (rel % 7);
+        int wave = (int)((tick * 3U + (unsigned int)rel * 5U) % 80U);
+        if (wave > 40) wave = 80 - wave;
         for (int xx = cx - heatW / 2; xx < cx + heatW / 2; ++xx) {
             int dx = xx - cx;
             int dist = dx < 0 ? -dx : dx;
-            int alpha = 46 - (dist * 58) / (heatW / 2 + 1);
-            alpha += wave / 5;
+            int alpha = 20 - (dist * 28) / (heatW / 2 + 1);
+            alpha += wave / 9;
             if (alpha <= 0) continue;
             blend_pixel(c, xx, yy,
-                        rel < h / 2 ? rgb(132, 42, 18) : rgb(48, 24, 34),
+                        rel < h / 2 ? rgb(170, 64, 20) : rgb(64, 30, 22),
                         alpha);
         }
+    }
+
+    for (int i = 0; i < 46; ++i) {
+        int px = x + 38 + (int)((i * 71U + tick * (2U + (unsigned int)(i % 4))) % (unsigned int)(w - 76));
+        int py = y + 176 + (int)((i * 139U + tick * (5U + (unsigned int)(i % 3))) % (unsigned int)(h - 292));
+        int a = 34 + (i * 13) % 74;
+        blend_pixel(c, px, py, rgb(255, 148, 50), a);
+        blend_pixel(c, px + 1, py, rgb(255, 210, 108), a / 2);
     }
 
     /* FIRESTAFF is part of the animated mark, not a separate lower label. */
@@ -736,67 +774,9 @@ static void draw_tall_firestaff_rail(M12_ModernCanvas* c, const M12_StartupMenuS
                            rgb(255, 238, 166), rgb(214, 96, 30), COLOR_SHADOW());
     }
 
-    /* Burning staff shaft: dark iron edges, hot core and pulsing runes. */
-    fill_rounded_rect(c, cx - 34, staffTop, 68, staffBot - staffTop, 26, rgb(18, 13, 13));
-    stroke_rounded_rect(c, cx - 34, staffTop, 68, staffBot - staffTop, 26, rgb(120, 74, 42));
-    fill_rounded_rect(c, cx - 15, staffTop + 22, 30, staffBot - staffTop - 44, 12,
-                      rgb(90, 42, 20));
-    for (int yy = staffTop + 30; yy < staffBot - 30; ++yy) {
-        int phase = (int)((tick * 7U + (unsigned int)yy * 3U) % 80U);
-        if (phase > 40) phase = 80 - phase;
-        M12_RGB core = rgb(clamp_u8(190 + phase), clamp_u8(76 + phase / 2), 28);
-        hline(c, cx - 7, yy, 14, core);
-        blend_pixel(c, cx - 10, yy, rgb(255, 170, 54), 90);
-        blend_pixel(c, cx + 9, yy, rgb(255, 170, 54), 90);
-    }
-
-    for (int r = 0; r < 9; ++r) {
-        int ry = staffTop + 68 + r * 54;
-        int pulse = (int)((tick + (unsigned int)r * 11U) % 42U);
-        if (pulse > 21) pulse = 42 - pulse;
-        M12_RGB rune = rgb(255, clamp_u8(156 + pulse * 3), 58);
-        fill_rect(c, cx - 22, ry, 44, 4, rune);
-        fill_rect(c, cx - 4, ry - 11, 8, 26, rune);
-        blend_pixel(c, cx - 26, ry, rune, 160);
-        blend_pixel(c, cx + 25, ry, rune, 160);
-    }
-
-    /* Crown flame. Layered, deterministic particles keep it animated
-     * without external assets. */
-    for (int layer = 0; layer < 4; ++layer) {
-        M12_RGB flame = layer == 0 ? rgb(255, 236, 136)
-                        : layer == 1 ? rgb(255, 156, 48)
-                        : layer == 2 ? rgb(210, 64, 24)
-                                     : rgb(88, 28, 46);
-        int top = staffTop - 128 + layer * 26;
-        int bottom = staffTop + 58;
-        for (int yy = top; yy < bottom; ++yy) {
-            int rel = yy - top;
-            int total = bottom - top;
-            int baseW = (w / 2) - (rel * (w / 2)) / (total + 1);
-            int sway = (int)((tick * (5U + (unsigned int)layer) + (unsigned int)yy * 2U) % 50U);
-            if (sway > 25) sway = 50 - sway;
-            sway -= 12;
-            if (baseW < 10) baseW = 10;
-            for (int xx = cx - baseW / 2 + sway; xx < cx + baseW / 2 + sway; ++xx) {
-                int dx = xx - (cx + sway);
-                int dist = dx < 0 ? -dx : dx;
-                int alpha = 118 - (dist * 150) / (baseW / 2 + 1) - layer * 12;
-                if (alpha > 0) blend_pixel(c, xx, yy, flame, alpha);
-            }
-        }
-    }
-
-    for (int i = 0; i < 90; ++i) {
-        int px = x + 28 + (int)((i * 83U + tick * (3U + (unsigned int)(i % 5))) % (unsigned int)(w - 56));
-        int py = y + 118 + (int)((i * 151U + tick * (7U + (unsigned int)(i % 3))) % (unsigned int)(h - 220));
-        int a = 50 + (i * 17) % 130;
-        blend_pixel(c, px, py, rgb(255, 144, 44), a);
-        blend_pixel(c, px + 1, py, rgb(255, 214, 96), a / 2);
-    }
-
     ModernTextStyle link = text_style_make(2, COLOR_TEXT_DIM(), 1);
     draw_text_centered(c, cx, y + h - 58, "GITHUB.COM/YEAGER/FIRESTAFF", &link);
+    stroke_rounded_rect(c, x, y, w, h, 22, rgb(154, 86, 34));
 }
 
 static void draw_generated_card_art(M12_ModernCanvas* c,
