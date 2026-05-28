@@ -58,6 +58,7 @@ enum {
     M12_SETTINGS_ROW_WASD_MOVEMENT,
     M12_SETTINGS_ROW_TOUCH_CONTROLS,
     M12_SETTINGS_ROW_MOVEMENT_MODE,
+    M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
     M12_SETTINGS_ROW_DATA_STATUS,
     M12_SETTINGS_ROW_DEBUG_OVERLAY,
     M12_SETTINGS_ROW_DEVELOPER_GATES,
@@ -1087,6 +1088,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.inputModeIndex = state->settings.inputModeIndex;
     config.touchControlsIndex = state->settings.touchControlsIndex;
     config.movementModeIndex = state->settings.movementModeIndex;
+    config.dm1V2SmoothTurnPanEnabled = state->settings.dm1V2SmoothTurnPanEnabled ? 1 : 0;
     config.viewportStyleIndex = state->settings.viewportStyleIndex;
     config.debugOverlayIndex = state->settings.debugOverlayIndex;
     config.developerGatesIndex = state->settings.developerGatesIndex;
@@ -1164,6 +1166,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                          (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])));
     state->settings.movementModeIndex = m12_clamp_index(config.movementModeIndex,
                                                         (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])));
+    state->settings.dm1V2SmoothTurnPanEnabled = config.dm1V2SmoothTurnPanEnabled ? 1 : 0;
     state->settings.viewportStyleIndex = m12_clamp_index(config.viewportStyleIndex,
                                                          (int)(sizeof(g_viewportStyleLabels) / sizeof(g_viewportStyleLabels[0])));
     state->settings.debugOverlayIndex = m12_clamp_index(config.debugOverlayIndex,
@@ -1565,6 +1568,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_tr(state, "WASD MOVEMENT");
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_tr(state, "TOUCH CONTROLS");
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_tr(state, "MOVEMENT MODE");
+        case M12_SETTINGS_ROW_SMOOTH_TURN_PAN: return m12_tr(state, "SMOOTH TURN PAN");
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_tr(state, "ORIGINAL DATA");
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_tr(state, "DEBUG OVERLAY");
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_tr(state, "DEVELOPER GATES");
@@ -1610,6 +1614,8 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_settings_value_wasd_movement(state);
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_settings_value_touch_controls(state);
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_settings_value_movement_mode(state);
+        case M12_SETTINGS_ROW_SMOOTH_TURN_PAN:
+            return m12_tr(state, g_toggleModes[state && state->settings.dm1V2SmoothTurnPanEnabled ? 1 : 0]);
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_settings_value_data_status(state);
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_settings_value_debug_overlay(state);
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_settings_value_developer_gates(state);
@@ -1649,7 +1655,7 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) {
         return m12_tr(state, "RENDERER");
     }
-    if (row <= M12_SETTINGS_ROW_MOVEMENT_MODE) {
+    if (row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) {
         return m12_tr(state, "INPUT");
     }
     if (row <= M12_SETTINGS_ROW_DATA_STATUS) {
@@ -1990,6 +1996,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.movementModeIndex,
                 delta,
                 (int)(sizeof(g_movementModeLabels) / sizeof(g_movementModeLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_SMOOTH_TURN_PAN:
+            state->settings.dm1V2SmoothTurnPanEnabled = m12_cycle_index(
+                state->settings.dm1V2SmoothTurnPanEnabled ? 1 : 0,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         case M12_SETTINGS_ROW_DATA_STATUS:
             break;
@@ -4132,8 +4144,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 int groupId = row;
                 if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
                 else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
-                else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_MOVEMENT_MODE) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-                else if (row > M12_SETTINGS_ROW_MOVEMENT_MODE && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+                else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
+                else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
@@ -5403,8 +5415,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             int groupId = row;
             if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
             else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
-            else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_MOVEMENT_MODE) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-            else if (row > M12_SETTINGS_ROW_MOVEMENT_MODE && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+            else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
+            else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;

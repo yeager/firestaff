@@ -100,6 +100,7 @@ typedef struct {
     int inputModeIndex;
     int touchControlsIndex;
     int movementModeIndex;
+    int dm1V2SmoothTurnPanEnabled;
     int viewportStyleIndex;
     int debugOverlayIndex;
     int developerGatesIndex;
