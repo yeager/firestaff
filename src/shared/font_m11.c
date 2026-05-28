@@ -257,9 +257,14 @@ int M11_Font_DrawChar(
     }
 
     /* Original DM1 formula: fontX = charCode * 8 + (8 - G2082)
-     * G2082 = 5, so offset = 3 */
+     * G2082 = 5, so offset = 3.  Advance (stride) is the cell width
+     * (8), NOT the visible glyph width.  ReDMCSB DUNVIEW.C:3705:
+     *   L0098_auc_Frame[C0_X1] += 8;  // advance = cell width = 8
+     * ReDMCSB DUNVIEW.C:3695:
+     *   L2452_i_Width = G2089_C8_InscriptionCharacterWidth * count; // G2089=8
+     */
     fontX = (int)ch * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET;
-    advance = M11_FONT_CHAR_VISIBLE_W * scale;
+    advance = M11_FONT_CHAR_CELL_WIDTH * scale;
 
     for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; row++) {
         for (col = 0; col < M11_FONT_CHAR_VISIBLE_W; col++) {
@@ -326,7 +331,9 @@ int M11_Font_MeasureString(const char* text) {
     if (!text) return 0;
     while (*text) {
         if (*text != '\n') {
-            width += M11_FONT_CHAR_VISIBLE_W;
+            /* Original DM1: G2089_C8_InscriptionCharacterWidth = 8 = cell width.
+             * ReDMCSB DUNVIEW.C:3695. */
+            width += M11_FONT_CHAR_CELL_WIDTH;
         }
         text++;
     }
