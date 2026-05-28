@@ -1267,6 +1267,68 @@ static int m11_get_square_byte(const struct GameWorld_Compat* world,
     return 1;
 }
 
+static int m11_square_type_is_corridor_or_pit(unsigned char square) {
+    int squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    return squareType == DUNGEON_ELEMENT_CORRIDOR ||
+           squareType == DUNGEON_ELEMENT_PIT;
+}
+
+static int m11_get_viewport_square_byte_pc34(const struct GameWorld_Compat* world,
+                                             int mapIndex,
+                                             int mapX,
+                                             int mapY,
+                                             unsigned char* outSquare) {
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char edgeSquare = 0;
+    unsigned char wallFlags = 0;
+
+    if (m11_get_square_byte(world, mapIndex, mapX, mapY, outSquare)) {
+        return 1;
+    }
+    if (!world || !world->dungeon || !world->dungeon->tilesLoaded ||
+        !world->dungeon->maps || !outSquare ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+
+    map = &world->dungeon->maps[mapIndex];
+    if (map->width <= 0 || map->height <= 0) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNGEON.C F0151 lines 1423-1478 returns a wall square when
+     * viewport sampling walks outside the current map.  Border corridor/pit
+     * squares keep their random-ornament-facing flag; otherwise the synthetic
+     * wall has no flags.  Keep this viewport-only so gameplay collision and
+     * object mutation paths retain their strict in-bounds checks. */
+    if (mapY >= 0 && mapY < (int)map->height) {
+        if (mapX == -1 &&
+            m11_get_square_byte(world, mapIndex, 0, mapY, &edgeSquare) &&
+            m11_square_type_is_corridor_or_pit(edgeSquare)) {
+            wallFlags = 0x04; /* MASK0x0004_WALL_EAST_RANDOM_ORNAMENT_ALLOWED */
+        } else if (mapX == (int)map->width &&
+                   m11_get_square_byte(world, mapIndex, (int)map->width - 1,
+                                       mapY, &edgeSquare) &&
+                   m11_square_type_is_corridor_or_pit(edgeSquare)) {
+            wallFlags = 0x01; /* MASK0x0001_WALL_WEST_RANDOM_ORNAMENT_ALLOWED */
+        }
+    } else if (mapX >= 0 && mapX < (int)map->width) {
+        if (mapY == -1 &&
+            m11_get_square_byte(world, mapIndex, mapX, 0, &edgeSquare) &&
+            m11_square_type_is_corridor_or_pit(edgeSquare)) {
+            wallFlags = 0x02; /* MASK0x0002_WALL_SOUTH_RANDOM_ORNAMENT_ALLOWED */
+        } else if (mapY == (int)map->height &&
+                   m11_get_square_byte(world, mapIndex, mapX,
+                                       (int)map->height - 1, &edgeSquare) &&
+                   m11_square_type_is_corridor_or_pit(edgeSquare)) {
+            wallFlags = 0x08; /* MASK0x0008_WALL_NORTH_RANDOM_ORNAMENT_ALLOWED */
+        }
+    }
+
+    *outSquare = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) | wallFlags);
+    return 1;
+}
+
 static int m11_set_square_byte(struct GameWorld_Compat* world,
                                int mapIndex,
                                int mapX,
@@ -9047,11 +9109,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.mapX = mapX;
     cell.mapY = mapY;
 
-    if (!m11_get_square_byte(&state->world,
-                             state->world.party.mapIndex,
-                             mapX,
-                             mapY,
-                             &square)) {
+    if (!m11_get_viewport_square_byte_pc34(&state->world,
+                                           state->world.party.mapIndex,
+                                           mapX,
+                                           mapY,
+                                           &square)) {
         if (outCell) {
             *outCell = cell;
         }

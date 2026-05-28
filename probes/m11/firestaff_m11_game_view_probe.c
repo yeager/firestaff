@@ -3455,7 +3455,7 @@ int main(int argc, char** argv) {
 
             {
                 static const ProbeFocusedPos kFarSideWallGapPositions[] = {
-                    {3,-2}, {3,2}, {2,-2}, {2,2}
+                    {3,-2}, {3,-1}, {3,1}, {3,2}, {2,-2}, {2,2}
                 };
                 int changedFarSideWalls = 0;
                 int clippedFarSideWalls = 0;
@@ -3484,7 +3484,7 @@ int main(int argc, char** argv) {
                 probe_record(&tally, "INV_GV_38AL",
                              changedFarSideWalls == (int)(sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0])) &&
                              clippedFarSideWalls == (int)(sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0])),
-                             "focused viewport: D3L2/D3R2/D2L2/D2R2 wall slivers render and stay clipped inside C007");
+                             "focused viewport: D3 side walls and D2L2/D2R2 wall slivers render and stay clipped inside C007");
             }
 
             /* INV_GV_38AK: ReDMCSB DUNVIEW.C F0128 draws full view
