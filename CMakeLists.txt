@@ -607,6 +607,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_profile_smoke
     )
 
+    add_executable(test_dm2_v1_boot_profile_smoke
+        tests/test_dm2_v1_boot_profile_smoke.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_dm2_v1_boot_profile_smoke PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_boot_profile_smoke PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_boot_profile_smoke
+        COMMAND test_dm2_v1_boot_profile_smoke
+    )
+
     add_executable(test_csb_v1_viewport_phase3_rendering
         tests/test_csb_v1_viewport_phase3_rendering.c
         src/csb/csb_v1_viewport_pc34_compat.c
@@ -3657,6 +3676,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_dungeon_progression
         COMMAND test_theron_v1_dungeon_progression
+    )
+endif()
+
+# ── Theron V1 Phase 7 — Save/Load Tests ──────────────────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_save_load
+        tests/theron_v1_save_load_test.c
+    )
+    target_link_libraries(test_theron_v1_save_load PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_save_load PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_save_load PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_save_load
+        COMMAND test_theron_v1_save_load
     )
 endif()
 

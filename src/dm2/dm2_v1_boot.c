@@ -315,7 +315,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
 
     /* Verify against known hashes */
     profile->assets_verified = 0;
-    if (profile->graphics_md5[0]) {
+    if (profile->graphics_md5[0] && profile->dungeon_md5[0]) {
         size_t i;
         for (i = 0; g_dm2_graphics_hashes[i]; i++) {
             if (md5_matches(profile->graphics_md5, g_dm2_graphics_hashes[i])) {
@@ -475,7 +475,7 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  */
 
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
-    if (!profile) return -1;
+    if (!profile || !profile->assets_verified) return -1;
 
     /* Allocate DM2 game state */
     DM2_V1_GameState *gs = (DM2_V1_GameState *)
