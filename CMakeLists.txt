@@ -637,6 +637,47 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_boot_profile_smoke
     )
 
+    add_executable(test_dm2_v1_save_load
+        tests/test_dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_dm2_v1_save_load PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_load PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_load PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_load
+        COMMAND test_dm2_v1_save_load
+    )
+
+    add_executable(test_dm2_v1_utility_import
+        tests/test_dm2_v1_utility_import.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_dm2_v1_utility_import PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_utility_import PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_utility_import PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_utility_import
+        COMMAND test_dm2_v1_utility_import
+    )
+
     add_executable(test_dm2_v2_hud_overlay
         tests/test_dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_hud_overlay.c
@@ -3632,6 +3673,25 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_boot_profile_smoke
         COMMAND test_nexus_v1_boot_profile_smoke
+    )
+
+    # ── Nexus V2 Phase 3 HUD Overlay smoke test ─────────────────────
+    # Source-lock: src/nexus/nexus_v2_hud_overlay.c
+    # Phase 3: Enhanced UI overlays
+    add_executable(test_nexus_v2_hud_overlay
+        tests/test_nexus_v2_hud_overlay.c
+        src/nexus/nexus_v2_hud_overlay.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_nexus_v2_hud_overlay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_hud_overlay PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_hud_overlay
+        COMMAND test_nexus_v2_hud_overlay
     )
 endif()
 
