@@ -159,7 +159,11 @@ int dm1_v2_asset_pipeline_process(DM1_V2_SurfaceCategory category,
     uint32_t* rgba_out, int* out_w, int* out_h);
 
 /* Palette LUT (re)build from source G9010_auc_VgaPaletteAll_Compat */
+/* FIXED Phase 8: now properly calls dm1_v2_filter_palette_build_lut(). */
 void dm1_v2_asset_rebuild_palette_lut(int gamma100, int brightness, int contrast);
+
+/* Invalidate the corrected palette cache (e.g., when switching to original). */
+void dm1_v2_asset_invalidate_cached_palette(void);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
