@@ -33,9 +33,24 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
     /* CSBWin TAG00332a: level headers start at offset 4 */
     offset = 4;
     for (i = 0; i < levels && offset + 6 <= dat_size; i++) {
-        out->level_widths[i] = dat[offset];
-        out->level_heights[i] = dat[offset + 1];
-        out->level_offsets[i] = (int)rd32(dat + offset + 2);
+        uint32_t lvl_offset;
+        uint32_t square_bytes;
+        uint8_t width = dat[offset];
+        uint8_t height = dat[offset + 1];
+        lvl_offset = rd32(dat + offset + 2);
+        square_bytes = (uint32_t)width * (uint32_t)height * 2U;
+        /* ReDMCSB DUNGEON.C F0151 reads 16-bit square records from the
+         * per-level offset using column-major x*height+y indexing. Reject
+         * headers whose square span cannot fit in the supplied buffer. */
+        if (lvl_offset > (uint32_t)dat_size ||
+            square_bytes > (uint32_t)dat_size ||
+            lvl_offset + square_bytes > (uint32_t)dat_size) {
+            csb_v1_dungeon_free(out);
+            return -2;
+        }
+        out->level_widths[i] = width;
+        out->level_heights[i] = height;
+        out->level_offsets[i] = (int)lvl_offset;
         offset += 6;
     }
 
@@ -93,4 +108,3 @@ const char *csb_v1_dungeon_source_evidence(void) {
         "ReDMCSB DUNGEON.C F0148-F0170 shared format\n"
         "CSB-specific: DSA thing type 15, custom backgrounds\n";
 }
-

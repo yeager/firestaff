@@ -78,30 +78,35 @@ static int errors = 0;
  *         bytes 2-3 = thing_type_count (uint16 LE, always 16)
  *         per level (6 bytes): width(u8), height(u8), offset(uint32 LE)
  *
- * Two synthetic levels for minimal test:
- *   Level 0: 8x8, data at offset 1000
- *   Level 1: 6x6, data at offset 2000
+ * Two synthetic levels (offsets point within the buffer so the
+ * loader's offset < dat_size bounds check passes):
+ *   Level 0: 8x8, data at offset 16
+ *   Level 1: 6x6, data at offset 144
+ *
+ * Buffer: header(4) + 2×desc(12) + level0_sq(128) + level1_sq(72) = 216 bytes
+ * Dungeon data is zeroed (valid: all-squares floor) — content is not accessed.
  */
 static void build_synthetic_csb_dat(uint8_t *buf, int *out_size) {
-    int sz = 4 + 2 * 6;  /* header + 2 level descriptors */
+    /* header(4) + 2×level_desc(12) + level0_data(128) + level1_data(72) */
+    int sz = 4 + 12 + 128 + 72;
     *out_size = sz;
-    buf[0] = 2;          /* level_count LO */
-    buf[1] = 0;          /* level coun
-t HI */
-    buf[2] = 16;         /* thing_type_count LO */
-    buf[3] = 0;          /* thing_type_count HI */
-    /* Level 0 */
-    buf[4]  = 8;          /* width */
+    memset(buf, 0, sz);  /* zero-fill keeps level data valid (floor squares) */
+    buf[0] = 2;           /* level_count LO */
+    buf[1] = 0;           /* level_count HI */
+    buf[2] = 16;          /* thing_type_count LO */
+    buf[3] = 0;           /* thing_type_count HI */
+    /* Level 0: 8x8, data at offset 16 (= 4+12, first byte after header+descs) */
+    buf[4]  = 8;          /* width  */
     buf[5]  = 8;          /* height */
-    buf[6]  = 0xE8;       /* offset 1000 LE */
-    buf[7]  = 0x03;
+    buf[6]  = 0x10;       /* offset 16 LE */
+    buf[7]  = 0x00;
     buf[8]  = 0x00;
     buf[9]  = 0x00;
-    /* Level 1 */
-    buf[10] = 6;          /* width */
+    /* Level 1: 6x6, data at offset 144 (= 16+128) */
+    buf[10] = 6;          /* width  */
     buf[11] = 6;          /* height */
-    buf[12] = 0xD0;       /* offset 2000 LE */
-    buf[13] = 0x07;
+    buf[12] = 0x90;       /* offset 144 LE */
+    buf[13] = 0x00;
     buf[14] = 0x00;
     buf[15] = 0x00;
 }
@@ -109,7 +114,7 @@ t HI */
 /* ── Test 1: dungeon load / free cycle ── */
 static void test_loader_cycle(void) {
     fprintf(stderr, "\n=== Test 1: Loader cycle ===\n");
-    uint8_t buf[32];
+    uint8_t buf[256];
     int sz;
     build_synthetic_csb_dat(buf, &sz);
 
@@ -127,10 +132,10 @@ static void test_loader_cycle(void) {
     /* Level descriptors */
     PROBE_ASSERT(d.level_widths[0]  == 8,  "level[0] width = 8");
     PROBE_ASSERT(d.level_heights[0] == 8,  "level[0] height = 8");
-    PROBE_ASSERT(d.level_offsets[0] == 1000,"level[0] offset = 1000");
+    PROBE_ASSERT(d.level_offsets[0] == 16, "level[0] offset = 16");
     PROBE_ASSERT(d.level_widths[1]  == 6,  "level[1] width = 6");
     PROBE_ASSERT(d.level_heights[1] == 6,  "level[1] height = 6");
-    PROBE_ASSERT(d.level_offsets[1] == 2000,"level[1] offset = 2000");
+    PROBE_ASSERT(d.level_offsets[1] == 144,"level[1] offset = 144");
 
     csb_v1_dungeon_free(&d);
     PROBE_ASSERT(d.raw_data == NULL, "free zeroes raw_data");
@@ -143,12 +148,12 @@ static void test_loader_cycle(void) {
 /* ── Test 2: square accessors with synthetic data ── */
 static void test_square_accessors(void) {
     fprintf(stderr, "\n=== Test 2: Square accessors ===\n");
-    uint8_t buf[64];
+    uint8_t buf[256];
     int sz;
     build_synthetic_csb_dat(buf, &sz);
 
     /* Inject synthetic square data at known offsets */
-    /* Level 0: offset=1000 must exist in raw buffer — extend */
+    /* Dungeon now has 216 bytes; level[0] offset=16, level[1] offset=144 */
     /* For this test just verify bounds checks work */
     CSB_V1_DungeonData d;
     memset(&d, 0, sizeof(d));
