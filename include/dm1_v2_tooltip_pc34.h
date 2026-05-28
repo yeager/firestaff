@@ -25,6 +25,10 @@ void v2_tooltip_update(float dt);
 void v2_tooltip_render(uint8_t* fb, int w, int h);
 bool v2_tooltip_is_visible(void);
 
+/* Source-lock gate: tooltip is pure framebuffer overlay, no game state touches. */
+unsigned int v2_tooltip_source_lock_ok(void);
+const char* v2_tooltip_get_source_evidence(void);
+
 #ifdef __cplusplus
 }
 #endif
