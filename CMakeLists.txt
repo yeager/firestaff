@@ -1117,6 +1117,16 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_csb_v2_touch_controller_affordance
+        tests/test_csb_v2_touch_controller_affordance.c
+        src/csb/csb_v2_touch_controller_affordance.c
+        src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -1219,6 +1229,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_movement_camera_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_touch_controller_affordance_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_source_route_state_hash_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_launch_smoke_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
@@ -1277,6 +1288,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_touch_controller_affordance_pc34
         COMMAND test_dm1_v2_touch_controller_affordance_pc34
+    )
+    add_test(
+        NAME csb_v2_touch_controller_affordance
+        COMMAND test_csb_v2_touch_controller_affordance
     )
     add_test(
         NAME dm1_v2_touch_controller_affordance_source_lock
