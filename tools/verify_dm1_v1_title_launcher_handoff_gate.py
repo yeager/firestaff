@@ -5,8 +5,10 @@ This is intentionally a source-shape regression gate. The user-visible bug was
 that selecting DM1 from Firestaff's launcher reached the game/entrance without
 playing the original TITLE animation or title audio cue. ReDMCSB's startup path
 runs F0437_STARTEND_DrawTitle before F0441_STARTEND_ProcessEntrance, so the
-Firestaff launcher handoff must call the TITLE frontend before opening the game
-view / entrance transition.
+Firestaff launcher handoff must call the TITLE frontend after DM1 GRAPHICS.DAT
+is loaded and before the entrance transition. This keeps the ReDMCSB
+title-before-entrance order while allowing runtime to use C001_GRAPHIC_TITLE,
+the bitmap that TITLE.C actually animates.
 """
 from pathlib import Path
 import re
@@ -24,15 +26,15 @@ if not m:
     errors.append("m11_open_requested_launch() not found")
 else:
     body = m.group("body")
-    title_idx = body.find("m11_play_redmcsb_title_intro_if_available(menuState")
+    title_idx = body.find("m11_play_redmcsb_title_intro_if_available(menuState, gameView")
     open_idx = body.find("M11_GameView_OpenSelectedMenuEntry(gameView, menuState)")
     entrance_idx = body.find("m11_play_redmcsb_entrance_transition(gameView")
     if title_idx < 0:
         errors.append("launcher handoff does not call m11_play_redmcsb_title_intro_if_available")
     if open_idx < 0:
         errors.append("launcher handoff does not open selected game view")
-    if title_idx >= 0 and open_idx >= 0 and not title_idx < open_idx:
-        errors.append("TITLE intro must run before M11_GameView_OpenSelectedMenuEntry")
+    if title_idx >= 0 and open_idx >= 0 and not open_idx < title_idx:
+        errors.append("TITLE intro must run after M11_GameView_OpenSelectedMenuEntry so GRAPHICS.DAT C001 is available")
     if title_idx >= 0 and entrance_idx >= 0 and not title_idx < entrance_idx:
         errors.append("TITLE intro must run before entrance transition")
     if "m11_play_redmcsb_entrance_transition(gameView, 1200)" not in body:
@@ -42,13 +44,8 @@ else:
         errors.append("TITLE intro call is still guarded by presentation mode; DM1 TITLE must run before Entrance in every DM1 presentation mode")
     if title_idx >= 0 and 'strcmp(launchEntry->gameId, "dm1") == 0' not in body:
         errors.append("TITLE intro call must remain guarded to DM1 launches only")
-    fallback_idx = body.find('if (!titleIntroPlayed && strcmp(gameView->sourceId, "dm1") == 0)')
-    if fallback_idx < 0:
-        errors.append("launcher handoff needs a post-open DM1 TITLE visibility fallback")
-    if fallback_idx >= 0 and open_idx >= 0 and entrance_idx >= 0 and not open_idx < fallback_idx < entrance_idx:
-        errors.append("post-open TITLE fallback must run after launch spec resolution but before entrance transition")
-    if fallback_idx >= 0 and "F0437_STARTEND_DrawTitle before" not in body[fallback_idx:fallback_idx + 700]:
-        errors.append("post-open TITLE fallback must cite ReDMCSB title-before-entrance source order")
+    if title_idx >= 0 and "F0437_STARTEND_DrawTitle before" not in body[max(0, title_idx - 700):title_idx + 700]:
+        errors.append("TITLE handoff must cite ReDMCSB title-before-entrance source order")
 
 phase = re.search(r"int M11_PhaseA_Run\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
 if phase:
@@ -75,6 +72,28 @@ else:
     ]:
         if needle not in body:
             errors.append(f"TITLE intro missing required runtime step: {needle}")
+
+graphic_intro = re.search(r"static int m11_play_redmcsb_title_graphic_intro_if_available\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
+if not graphic_intro:
+    errors.append("m11_play_redmcsb_title_graphic_intro_if_available() not found")
+else:
+    body = graphic_intro.group("body")
+    for needle in [
+        "M11_AssetLoader_Load(&gameView->assetLoader, 1U)",
+        "V1_TitleFrontend_GetSourceAnimationStep",
+        "V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS",
+        "M11_AssetLoader_BlitRegion(titleGraphic",
+        "0, 137, 320, 16",
+        "V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT",
+        "M11_AssetLoader_BlitSubRectScaled(titleGraphic",
+        "0,\n                                              0,\n                                              320,\n                                              80",
+        "V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT",
+        "0, 80, 320, 57",
+        "VGA_PALETTE_PC34_SPECIAL_TITLE",
+        "M11_Audio_PlayTitleMusic(&titleAudio)",
+    ]:
+        if needle not in body:
+            errors.append(f"GRAPHICS.DAT C001 TITLE intro missing source runtime step: {needle}")
 
 
 for needle in [

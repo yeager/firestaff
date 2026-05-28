@@ -829,7 +829,119 @@ cleanup:
     if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (f) fclose(f);
 }
 
+static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
+                                                              int* outPlayedAnyFrame) {
+    const M11_AssetSlot* titleGraphic;
+    unsigned char* framebuffer;
+    V1_TitleFrontendSourceTiming timing;
+    M11_AudioState titleAudio;
+    int titleAudioInitialized = 0;
+    unsigned int sourceStep;
+
+    if (outPlayedAnyFrame) {
+        *outPlayedAnyFrame = 0;
+    }
+    if (!gameView || !gameView->assetsAvailable) {
+        return 0;
+    }
+    titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
+    if (!titleGraphic || titleGraphic->width < 320U || titleGraphic->height < 175U) {
+        return 0;
+    }
+    framebuffer = M11_Render_GetFramebuffer();
+    if (!framebuffer) {
+        return 0;
+    }
+    timing = V1_TitleFrontend_GetSourceTimingEvidence();
+
+    memset(&titleAudio, 0, sizeof(titleAudio));
+    if (M11_Audio_Init(&titleAudio)) {
+        titleAudioInitialized = 1;
+        (void)M11_Audio_PlayTitleMusic(&titleAudio);
+    }
+
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+
+    /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
+     * - TITLE.C:309 loads/decompresses C001_GRAPHIC_TITLE.
+     * - TITLE.C:319-324 blits PRESENTS from source y=137 to 0,90..105.
+     * - TITLE.C:340-360 builds 18 shrinked 320x80 title bitmaps.
+     * - TITLE.C:385-387 waits VBlank and blits those bitmaps in reverse
+     *   order (small 48x12 at 136,74 through full 320x80 at 0,40).
+     * - TITLE.C:395-402 waits twice, then blits MASTER from source y=80
+     *   to 0,118..174 with black transparency, before the final guard.
+     *
+     * Firestaff previously drove this handoff from the decoded TITLE.DAT
+     * animation bank.  That bank is a separate PC title-file animation; the
+     * ReDMCSB startup TITLE routine uses GRAPHICS.DAT graphic C001 instead.
+     */
+    for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
+        V1_TitleFrontendSourceAnimationStep step;
+        if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
+            break;
+        }
+        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+            memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+            M11_AssetLoader_BlitRegion(titleGraphic,
+                                       0, 137, 320, 16,
+                                       framebuffer,
+                                       M11_FB_WIDTH,
+                                       M11_FB_HEIGHT,
+                                       0, 90,
+                                       -1);
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+            memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+            M11_AssetLoader_BlitSubRectScaled(titleGraphic,
+                                              framebuffer,
+                                              M11_FB_WIDTH,
+                                              M11_FB_HEIGHT,
+                                              (int)step.x,
+                                              (int)step.y,
+                                              (int)step.width,
+                                              (int)step.height,
+                                              0,
+                                              0,
+                                              320,
+                                              80,
+                                              -1);
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT) {
+            M11_AssetLoader_BlitRegion(titleGraphic,
+                                       0, 80, 320, 57,
+                                       framebuffer,
+                                       M11_FB_WIDTH,
+                                       M11_FB_HEIGHT,
+                                       0, 118,
+                                       0);
+        } else {
+            SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
+            if (M11_Render_PumpEvents()) {
+                break;
+            }
+            continue;
+        }
+
+        if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
+                                                        M11_FB_WIDTH,
+                                                        M11_FB_HEIGHT,
+                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+            break;
+        }
+        if (outPlayedAnyFrame) {
+            *outPlayedAnyFrame = 1;
+        }
+        SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
+        if (M11_Render_PumpEvents()) {
+            break;
+        }
+    }
+    if (titleAudioInitialized) {
+        M11_Audio_Shutdown(&titleAudio);
+    }
+    return outPlayedAnyFrame ? *outPlayedAnyFrame : 1;
+}
+
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
+                                                      M11_GameViewState* gameView,
                                                       int* outPlayedAnyFrame) {
     char titlePath[FSP_PATH_MAX];
     unsigned char* packedStorage;
@@ -844,10 +956,14 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
     }
+    if (m11_play_redmcsb_title_graphic_intro_if_available(gameView, outPlayedAnyFrame)) {
+        return;
+    }
     if (!m11_find_title_dat_for_intro(menuState, titlePath, sizeof(titlePath))) {
         fprintf(stderr,
-                "Firestaff V1 original TITLE intro skipped: no DM PC 3.4 TITLE file found; "
-                "set FIRESTAFF_TITLE_DAT or install the canonical original-data anchor at "
+                "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
+                "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
+                "the canonical original-data anchor at "
                 "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
         return;
     }
@@ -873,9 +989,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
      *               waits M526_WaitVerticalBlank() before each reverse-order zoom blit.
      *   TITLE.C:395-402 waits two more VBlanks and draws STRIKES BACK.
      *   TITLE.C:409 adds the final guard before the next screen.
-     * Runtime uses the already decoded original 53-frame TITLE bank as the
-     * visible source and presents it before the game/entrance, instead of skipping
-     * straight to the menu. */
+     * Runtime normally uses GRAPHICS.DAT C001 above.  If that bitmap is not
+     * available, keep the hash-locked TITLE.DAT bank as a last-resort visible
+     * fallback rather than skipping straight to the entrance. */
     for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
         V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
         memset(packedStorage, 0, 4U + 32000U);
@@ -952,7 +1068,6 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order. */
             M11_Render_RaiseWindow();
             m11_play_ftl_swoosh_if_available(dataDir, 0);
-            m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         }
         /* Theron's Quest has no source -- no intro needed. */
     }
@@ -963,13 +1078,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (!titleIntroPlayed && strcmp(gameView->sourceId, "dm1") == 0) {
-            /* Visibility fallback for alternate launcher paths: ReDMCSB
-             * STARTEND still orders F0437_STARTEND_DrawTitle before
-             * F0441_STARTEND_ProcessEntrance.  If the pre-open DM1 guard did
-             * not produce a presented TITLE frame, retry after the launch spec
-             * has resolved, but still before entrance/gameplay is shown. */
+            /* ReDMCSB STARTEND still orders F0437_STARTEND_DrawTitle before
+             * F0441_STARTEND_ProcessEntrance.  Play it after the launch spec
+             * has resolved so GRAPHICS.DAT C001 is available, but still
+             * before entrance/gameplay is shown. */
             M11_Render_RaiseWindow();
-            m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
+            m11_play_redmcsb_title_intro_if_available(menuState, gameView, &titleIntroPlayed);
         }
         /* ReDMCSB: the entrance screen always plays for DM1 regardless
          * of presentation mode.  F0441_STARTEND_ProcessEntrance is the
