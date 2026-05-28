@@ -637,6 +637,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_boot_profile_smoke
     )
 
+    add_executable(test_dm2_v2_hud_overlay
+        tests/test_dm2_v2_hud_overlay.c
+        src/dm2/dm2_v2_hud_overlay.c
+        src/dm2/dm2_v2_interaction_feedback.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v2_hud_overlay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v2_hud_overlay PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v2_hud_overlay PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v2_hud_overlay
+        COMMAND test_dm2_v2_hud_overlay
+    )
+
     add_executable(test_csb_v1_viewport_phase3_rendering
         tests/test_csb_v1_viewport_phase3_rendering.c
         src/csb/csb_v1_viewport_pc34_compat.c
