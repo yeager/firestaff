@@ -15,6 +15,13 @@
         "-j2"
       ],
       "outputTail": [
+        "-- GLOB mismatch!",
+        "The following files were added:",
+        "  +/Users/bosse/.openclaw/workspace-main/src/dm2/dm2_v1_viewport_renderer.c",
+        "-- Found SDL3",
+        "-- Configuring done (0.3s)",
+        "-- Generating done (0.4s)",
+        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
         "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[ 96%] Built target firestaff_m10",
@@ -409,5 +416,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-27T20:52:07.603899+00:00"
+  "timestampUtc": "2026-05-27T23:14:44.979579+00:00"
 }

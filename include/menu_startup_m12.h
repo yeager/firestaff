@@ -241,6 +241,7 @@ typedef enum {
 /* ── Extras sub-menu ──────────────────────────────────────────────── */
 typedef enum {
     M12_EXTRAS_MUSEUM = 0,
+    M12_EXTRAS_MANUAL,
     M12_EXTRAS_BESTIARY,
     M12_EXTRAS_SPELLS,
     M12_EXTRAS_MAP_VIEWER,

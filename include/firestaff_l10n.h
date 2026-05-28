@@ -50,6 +50,7 @@ typedef enum {
     FS_STR_ITEMS,
     FS_STR_CHANGELOG,
     FS_STR_SCREENSHOTS,
+    FS_STR_MANUAL,
     FS_STR_LANGUAGE,
     FS_STR_ON,
     FS_STR_OFF,
