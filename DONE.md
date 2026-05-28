@@ -37,6 +37,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, profile-specific asset discovery, boot state, diagnostics, and hash-matched launch boundary.
+- ✅ Phase 2 dungeon-data probe slice: synthetic CSB dungeon loading, square/thing accessors, door table, sensor helpers, endgame helpers, world-model behavior, and CSB-vs-DM1 difference checks are covered by `firestaff_csb_v1_dungeon_model_probe`.
 - ✅ Launch/profile fixture: the Atari ST asset-pair manifest and CSB launch-intent gate now recognize hash-matched CSB assets as valid for the M12 profile boundary while keeping gameplay, save, and pixel parity as non-claims.
 - ✅ Source-lock audit coverage for CSB startup, utility, dungeon loading, wall rendering, champion import, weapons, magic, creatures, combat, and save behavior.
 - ✅ Phase 4 - Mechanics parity slices for CSB-specific movement/interaction/runtime behavior.
@@ -54,6 +55,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 7 - Save/import compatibility verification.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
+
+### DM2 V2.0 / V2.1 / V2.2
+
+- ✅ Phase 5 smooth-movement scaffold: DM2 V2 has visual walk, turn, and stair interpolation state, viewport query hooks, and source-evidence strings while preserving V1 tick ownership of game-state movement.
 
 ## Dungeon Master Nexus
 
