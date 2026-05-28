@@ -1,7 +1,8 @@
 # Nexus V1 Phase 2 — Data Formats: Source-Lock Document
 
 **Cron task:** `Nexus_V1_Phase2_DataFormats_0424`
-**Status:** ✅ COMPLETE — all known formats documented
+**Status:** ⚠️ SUPERSEDED for DGN/SMAP/ITEM.IBS/MNS details by
+`docs/source-lock/nexus_v1_dmweb_format_crawl_20260528.md`
 **Author:** Firestaff agent (cron)
 **Last revised:** 2026-05-27T03:45 UTC
 
@@ -18,6 +19,11 @@ byte layout, Provenance Gate reference, and known gaps per data category.
 > `(src|docs|include)/nexus/` or `docs/NEXUS_FILE_CLASSIFICATION.md`. Where
 > the original Saturn format is unknown, the Firestaff stub or working
 > hypothesis is explicitly marked STUB / UNKNOWN / INFERRED.
+
+> **2026-05-28 correction:** DMWeb's Dungeon Master Nexus documentation
+> contradicts the early Firestaff DGN hypothesis below. Real DGN files are
+> 2048-byte block containers with a 64x64 Structure1B grid. Treat raw 32x32
+> offset-0 claims in this document as historical notes only.
 
 ---
 
@@ -203,15 +209,15 @@ compile-time dispatched via `F0267/F0268`). Source: `docs/nexus_squares.md`,
 
 `include/nexus_v1_dungeon.h`:
 ```c
-#define NEXUS_MAX_MAP_SIZE 32
+#define NEXUS_MAX_MAP_SIZE 64
 
 typedef struct {
     int width, height;
-    uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE]; /* 5-bit tile types */
+    uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE]; /* decoded Structure1B passability */
     int thing_count;
     int creature_count;
     int has_3d_geometry;
-    int geometry_offset;   /* byte offset of post-grid blob */
+    int geometry_offset;   /* byte offset after Structure1B */
     int geometry_size;    /* bytes remaining after grid section */
 } Nexus_V1_Level;
 
@@ -898,8 +904,8 @@ Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
 
 | Format / File | Variant(s) | Endianness | Size/Record | Parser Status |
 |--------------|------------|-----------|-------------|--------------|
-| LEV\*.DGN grid | All 16 levels | BE uint16 LE storage | 2048 bytes (32×32×2) | ✅ Parsed (`nexus_v1_dungeon.c`) |
-| LEV\*.DGN 3D geometry | All 16 levels | BE (mixed polygons) | variable (147–322 KB minus grid) | ❌ NOT PARSED |
+| LEV\*.DGN grid | All 16 levels | BE block container | Structure1B: 0x8000 bytes (64×64×8) | ✅ Parsed (`nexus_v1_dungeon.c`) |
+| LEV\*.DGN 3D geometry | All 16 levels | BE (mixed polygons) | variable after Structure1B | ❌ NOT PARSED |
 | \*.MNS DMDF | All creature models | BE uint32/16 | 46–89 KB each | ✅ Parsed (header+verts+faces) |
 | SNDLEV\*.SAL | Per level | Unknown (compressed?) | 290–460 KB | ❌ NOT PARSED |
 | SNDLEV\*.MAP | Per level | Unknown | 66–90 B | ❌ NOT PARSED |

@@ -52,7 +52,8 @@ int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, 
 }
 
 void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,
-                              const uint8_t squares[32][32], int map_index) {
+                              const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
+                              int map_index) {
     int i;
     if (!mgr) return;
     for (i = 0; i < mgr->active_count; i++) {
@@ -152,4 +153,3 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
     /* Hit chance: 70% base + attack bonus */
     return (roll < 70 + dmg / 4) ? 1 : 0;
 }
-

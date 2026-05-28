@@ -334,7 +334,7 @@ int nexus_cursor_place(Nexus_CursorItem *cursor) {
 
 /* ═══════════════════════════════════════════════════════════════════
  * Floor items (items dropped on dungeon floor)
- * Simple zone-based storage — 32x32 grid with per-cell lists.
+ * Simple legacy storage, separate from the DMWeb 64x64 DGN Structure1B map.
  * Source: nexus_squares.md (floor item management), DM1 floor items
  * ═══════════════════════════════════════════════════════════════════ */
 

@@ -193,35 +193,76 @@ static const int g_manifest_count = (int)(sizeof(g_manifest) / sizeof(g_manifest
 
 /* ── Synthetic fixture test ────────────────────────────────────────────── */
 
+static void write_be16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v >> 8);
+    p[1] = (uint8_t)(v & 0xFFU);
+}
+
+static void write_be32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v >> 24);
+    p[1] = (uint8_t)((v >> 16) & 0xFFU);
+    p[2] = (uint8_t)((v >> 8) & 0xFFU);
+    p[3] = (uint8_t)(v & 0xFFU);
+}
+
 static int test_dgn_synthetic(void) {
     printf("\n  [DGN Synthetic Fixture]\n");
 
-    /* Build 32x32 DGN blob, Layout B */
-    uint8_t buf[2048 + 64];
+    /* Build a DMWeb-style DGN block container:
+     * header block -> Structure1 -> Structure1B 64x64 cells x 8 bytes.
+     * Source-lock: DMWeb DGN files page, Structure1B = 0x8000 bytes. */
+    uint8_t buf[NEXUS_DGN_BLOCK_SIZE * 20];
+    uint8_t *structure1;
+    uint8_t *grid;
+    const int structure1_block = 1;
+    const int structure1_blocks = 18;
+    const int structure1_offset = structure1_block * NEXUS_DGN_BLOCK_SIZE;
+    const int structure1b_rel = 0x40;
     memset(buf, 0, sizeof(buf));
-    buf[0] = 33; /* force Layout B: w=33 > 32 */
 
-    int gy, gx;
-    for (gy = 0; gy < 32; gy++) {
-        for (gx = 0; gx < 32; gx++) {
-            int off = (gy * 32 + gx) * 2;
-            uint16_t val = 1; /* floor */
-            if (gx == 5 && gy == 5) val = 0; /* wall */
-            else if (gx == 10 && gy == 7) val = 0; /* wall */
-            else if (gx == 15 && gy == 3) val = 2; /* pit */
-            buf[off]   = (uint8_t)(val >> 8);
-            buf[off+1] = (uint8_t)(val & 0xFF);
+    write_be16(buf + 0x0C, (uint16_t)structure1_block);
+    write_be16(buf + 0x0E, (uint16_t)structure1_blocks);
+    write_be32(buf + 0x10, (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES));
+    structure1 = buf + structure1_offset;
+    structure1[0] = 0x00;
+    structure1[1] = 0x50;
+    structure1[2] = 0x40;
+    structure1[3] = 0x40;
+    write_be32(structure1 + 0x14, (uint32_t)structure1b_rel);
+    write_be32(structure1 + 0x18, (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES));
+    grid = structure1 + structure1b_rel;
+
+    {
+        int wall_off = (5 * NEXUS_MAX_MAP_SIZE + 5) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+        int door_off = (7 * NEXUS_MAX_MAP_SIZE + 10) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+        grid[wall_off + 6] = 0x0F;
+        grid[wall_off + 7] = 0xFF;
+        grid[door_off + 1] = 0x01;
+    }
+
+    {
+        int gy, gx;
+        for (gy = 0; gy < NEXUS_MAX_MAP_SIZE; gy++) {
+            for (gx = 0; gx < NEXUS_MAX_MAP_SIZE; gx++) {
+                int off = (gy * NEXUS_MAX_MAP_SIZE + gx) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+                if (gy == 0 || gx == 0 ||
+                    gy == NEXUS_MAX_MAP_SIZE - 1 ||
+                    gx == NEXUS_MAX_MAP_SIZE - 1) {
+                    grid[off + 6] = 0x0F;
+                    grid[off + 7] = 0xFF;
+                }
+            }
         }
     }
 
     Nexus_V1_Level level;
     int r = nexus_v1_level_load(&level, buf, (int)sizeof(buf), 0);
     if (r != 0) { printf("    FAIL: nexus_v1_level_load returned %d\n", r); return 0; }
-    if (level.width != 32) { printf("    FAIL: width=%d (expected 32)\n", level.width); return 0; }
-    if (level.height != 32) { printf("    FAIL: height=%d (expected 32)\n", level.height); return 0; }
+    if (level.width != 64) { printf("    FAIL: width=%d (expected 64)\n", level.width); return 0; }
+    if (level.height != 64) { printf("    FAIL: height=%d (expected 64)\n", level.height); return 0; }
     if (level.squares[5][5] != 0) { printf("    FAIL: wall at (5,5)\n"); return 0; }
-    if (level.squares[0][0] != 1) { printf("    FAIL: floor at (0,0)\n"); return 0; }
-    if (level.squares[15][3] != 2) { printf("    FAIL: pit at (15,3)\n"); return 0; }
+    if (level.squares[1][1] != 1) { printf("    FAIL: floor at (1,1)\n"); return 0; }
+    if (level.squares[7][10] != 8) { printf("    FAIL: door at (10,7)\n"); return 0; }
     if (!level.has_3d_geometry) { printf("    FAIL: has_3d_geometry not set\n"); return 0; }
     if (level.geometry_offset <= 0) { printf("    FAIL: geometry_offset not set\n"); return 0; }
 
@@ -424,17 +465,28 @@ int main(int argc, char **argv) {
         if (g_manifest[i].check_dgn) {
             FILE *f = fopen(path, "rb");
             if (f) {
-                uint8_t h[4];
-                if (fread(h, 4, 1, f) == 1) {
-                    uint16_t w = ((uint16_t)h[0] << 8) | h[1];
-                    uint16_t h2 = ((uint16_t)h[2] << 8) | h[3];
-                    if (!(w > 0 && w <= 32 && h2 > 0 && h2 <= 32)) {
-                        /* May be Layout B — check file is large enough */
-                        if (actual < 2048) {
-                            printf("  HEADER: %s — invalid (too small for DGN)\n", g_manifest[i].name);
-                            header_fail++;
-                        }
+                uint8_t h[0x24];
+                if (fread(h, sizeof(h), 1, f) == 1) {
+                    uint16_t structure1_block = ((uint16_t)h[0x0C] << 8) | h[0x0D];
+                    uint16_t structure1_blocks = ((uint16_t)h[0x0E] << 8) | h[0x0F];
+                    uint32_t structure1_useful = ((uint32_t)h[0x10] << 24) |
+                                                 ((uint32_t)h[0x11] << 16) |
+                                                 ((uint32_t)h[0x12] << 8) |
+                                                 (uint32_t)h[0x13];
+                    size_t structure1_offset = (size_t)structure1_block * NEXUS_DGN_BLOCK_SIZE;
+                    size_t structure1_size = (size_t)structure1_blocks * NEXUS_DGN_BLOCK_SIZE;
+                    if (structure1_block == 0 ||
+                        structure1_blocks == 0 ||
+                        actual < NEXUS_DGN_BLOCK_SIZE ||
+                        structure1_offset >= actual ||
+                        structure1_offset + structure1_size > actual ||
+                        structure1_useful > structure1_size) {
+                        printf("  HEADER: %s — invalid DMWeb DGN block header\n", g_manifest[i].name);
+                        header_fail++;
                     }
+                } else {
+                    printf("  HEADER: %s — invalid (too small for DGN header)\n", g_manifest[i].name);
+                    header_fail++;
                 }
                 fclose(f);
             }

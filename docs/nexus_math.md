@@ -50,16 +50,17 @@ Not cryptographically strong; not required for game simulation.
 
 ## 4. Geometry Subsystem
 
-Dungeon grid: 32x32 squares, 5-bit square types (0=solid wall).
-Grid parsing: nexus_v1_level_get_square() -- y*width+x index, & 0x1F mask.
-Matches DM1 column-major square type extraction.
+Dungeon grid: DMWeb DGN Structure1B, 64x64 cells, 8 bytes per cell.
+Grid parsing: nexus_v1_level_get_square() reads the decoded Structure1B
+passability grid produced by nexus_v1_level_load().
 
-3D Geometry: DGN files contain post-grid 3D geometry blob:
-- Pre-computed wall polygon data per grid position
-- Floor/ceiling mesh vertices per open square
-- Per-square mesh identifiers (wall type, door state, stairs variant)
-- No procedural geometry -- all baked into file
-Status: NOT PARSED. Geometry blob parser is TODO in nexus_v1_dungeon.c.
+3D Geometry: DGN files contain additional Structure1C through Structure1F data
+and later render payloads after Structure1B:
+- Collision descriptors
+- Doors
+- Floor objects, sensors and decorations
+- Wall sensors and decorations
+Status: PARTIAL. Structure1B is parsed; the rest is still being split out.
 
 Wall projection: 4 directions (N/E/S/W z-face or x-face).
 Each wall = 2 triangles (one quad). Screen-space via perspective matrix.
@@ -81,7 +82,7 @@ Firestaff uses float for simplicity on modern PCs.
 | Vec3 operations   | DONE   | All basic ops implemented    |
 | Mat4 operations   | DONE   | Transform/prj/look-at done   |
 | RNG               | DONE   | rand()-based, simple          |
-| Grid parsing      | DONE   | 5-bit types, 32x32           |
+| Grid parsing      | DONE   | DMWeb Structure1B, 64x64     |
 | 3D geometry parse | TODO   | DGN blob unparsed            |
 | Wall projection   | PARTIAL| Basic projection exists       |
 | Floor/ceiling proj| PARTIAL| May be incomplete             |

@@ -320,6 +320,12 @@ unknown. No decompression implementation exists in Firestaff.
 
 ## 4. Saturn DGN Level Format — Detailed Specification
 
+> 2026-05-28 correction: this section is superseded for DGN layout by
+> `docs/source-lock/nexus_v1_dmweb_format_crawl_20260528.md`. DMWeb describes
+> DGN as a 2048-byte block container with a 64x64 Structure1B grid, not a raw
+> 32x32 grid at offset 0. The text below is retained as historical evidence of
+> the old Firestaff assumption.
+
 ### 4.1 File Anatomy
 
 Each LEV*.DGN file has two distinct sections:

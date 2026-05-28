@@ -2,6 +2,7 @@
 #ifndef NEXUS_V1_CREATURES_H
 #define NEXUS_V1_CREATURES_H
 #include <stdint.h>
+#include "nexus_v1_dungeon.h"
 
 /* Nexus creature types — loaded from MNS files.
  * Each creature has a DMDF 3D model + stats. */
@@ -37,7 +38,8 @@ typedef struct {
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr);
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir);
 void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,
-                              const uint8_t squares[32][32], int map_index);
+                              const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
+                              int map_index);
 
 /* Alert all creatures on a level (e.g. on alarm square trigger).
  * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
@@ -53,4 +55,3 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
                                int champion_defense, int *out_damage);
 
 #endif
-

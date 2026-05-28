@@ -88,9 +88,9 @@ No Quaternion Support:
 - Firestaff software rasterizer targets 320x200
 - Mild aspect-ratio quirk compared to original
 
-Fixed 32x32 Grid:
-- All 16 levels use a fixed 32x32 square dungeon grid
-- DM1 varied grid sizes per level; Nexus uses same size for all
+Fixed 64x64 grid:
+- DMWeb describes Nexus DGN Structure1B as a fixed 64x64 cell grid
+- Each cell is 8 bytes; collision and door presence are packed into the cell data
 
 ## 5. Bug Comparison: Nexus vs DM1
 

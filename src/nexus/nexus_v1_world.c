@@ -114,8 +114,8 @@ void nexus_v1_world_init(Nexus_V1_World *world) {
     world->party_dir = 0;  /* North */
     world->world_tick = 0;
     world->state_hash = FNV64_OFFSET;
-    printf("Nexus V1 world initialized (32x32 grid, %d levels)\n",
-           NEXUS_MAX_LEVELS);
+    printf("Nexus V1 world initialized (%dx%d DMWeb grid, %d levels)\n",
+           NEXUS_MAX_MAP_SIZE, NEXUS_MAX_MAP_SIZE, NEXUS_MAX_LEVELS);
 }
 
 void nexus_v1_world_reset(Nexus_V1_World *world) {

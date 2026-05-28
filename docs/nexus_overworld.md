@@ -31,7 +31,7 @@ Key evidence from firestaff source:
 
 Nexus splits the game world into two disjoint data spaces:
 
-DUNGEON: 16 levels stored in LEV00-LEV15.DGN (32x32 grid, 3D geometry)
+DUNGEON: 16 levels stored in LEV00-LEV15.DGN (DMWeb 2048-byte block container; Structure1B is 64x64 cells)
 OVERWORLD: Separate map data, not loaded as a DGN file
 
 The party transitions from overworld to dungeon via a special entrance square

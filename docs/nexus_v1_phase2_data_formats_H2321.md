@@ -45,46 +45,39 @@ ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists 
 
 ### 1.1 File Inventory
 
-| Level | File | Size (bytes) | Grid | Notes |
+| Level | File | Size (bytes) | DMWeb grid | Notes |
 |-------|------|-------------|------|-------|
-| 0 | `LEV00.DGN` | 147,456 | 32×32 | Entry/temple — smallest |
-| 1 | `LEV01.DGN` | 280,576 | 32×32 | |
-| 2 | `LEV02.DGN` | 272,384 | 32×32 | |
-| 3 | `LEV03.DGN` | 290,816 | 32×32 | |
-| 4 | `LEV04.DGN` | 245,760 | 32×32 | |
-| 5 | `LEV05.DGN` | 266,240 | 32×32 | |
-| 6 | `LEV06.DGN` | 239,616 | 32×32 | |
-| 7 | `LEV07.DGN` | 258,048 | 32×32 | |
-| 8 | `LEV08.DGN` | 303,104 | 32×32 | |
-| 9 | `LEV09.DGN` | 288,768 | 32×32 | |
-| 10 | `LEV10.DGN` | 290,816 | 32×32 | |
-| 11 | `LEV11.DGN` | 278,528 | 32×32 | |
-| 12 | `LEV12.DGN` | 321,536 | 32×32 | Boss level — largest |
-| 13 | `LEV13.DGN` | 256,000 | 32×32 | |
-| 14 | `LEV14.DGN` | 253,952 | 32×32 | |
-| 15 | `LEV15.DGN` | 270,336 | 32×32 | Final level |
+| 0 | `LEV00.DGN` | 147,456 | 64×64 Structure1B | Entry/title sequence — not playable |
+| 1 | `LEV01.DGN` | 280,576 | 64×64 Structure1B | Hall of Champions |
+| 2 | `LEV02.DGN` | 272,384 | 64×64 Structure1B | |
+| 3 | `LEV03.DGN` | 290,816 | 64×64 Structure1B | |
+| 4 | `LEV04.DGN` | 245,760 | 64×64 Structure1B | |
+| 5 | `LEV05.DGN` | 266,240 | 64×64 Structure1B | |
+| 6 | `LEV06.DGN` | 239,616 | 64×64 Structure1B | |
+| 7 | `LEV07.DGN` | 258,048 | 64×64 Structure1B | |
+| 8 | `LEV08.DGN` | 303,104 | 64×64 Structure1B | |
+| 9 | `LEV09.DGN` | 288,768 | 64×64 Structure1B | |
+| 10 | `LEV10.DGN` | 290,816 | 64×64 Structure1B | |
+| 11 | `LEV11.DGN` | 278,528 | 64×64 Structure1B | |
+| 12 | `LEV12.DGN` | 321,536 | 64×64 Structure1B | Boss level — largest |
+| 13 | `LEV13.DGN` | 256,000 | 64×64 Structure1B | |
+| 14 | `LEV14.DGN` | 253,952 | 64×64 Structure1B | |
+| 15 | `LEV15.DGN` | 270,336 | 64×64 Structure1B | Final level |
 
 **Total: 4,393,984 bytes (~4.2 MB).** DM1: ~33 KB for all 8 levels. Ratio: ~130×.
 
 **Provenance:** Extracted from DM Nexus Saturn ISO (disc hash not yet SHA256-locked — disc image absent).
 
-### 1.2 File Structure — Two Logical Sections
+### 1.2 File Structure — DMWeb correction
 
-#### Section A — Dungeon Grid (2048 bytes)
+DMWeb describes LEV\*.DGN as a 2048-byte block container. The first block is a
+header; Structure1 is addressed by block offset/count fields at `0x0C`,
+`0x0E` and useful byte size at `0x10`.
 
-Location: **offset 0** in all LEV\*.DGN files.
-
-```
-Offset  Size  Field
-0x0000  2     Square[0][0]  (big-endian uint16, lower 5 bits = type)
-0x0002  2     Square[0][1]
-...
-0x0800  2     Square[31][0]
-...
-0x0FFE  2     Square[31][31]
-```
-
-**Grid layout:** Column-major order. Square[y][x] meaning x varies fastest within row. Matches DM1 DUNGEON.DAT convention.
+Structure1 offset `0x14` points to Structure1B. Structure1B is always `0x8000`
+bytes: a 64x64 grid with 8 bytes per cell. Collision and door presence are
+decoded from those 8-byte cells. The old "2048 bytes at offset 0" model is no
+longer valid for real Nexus DGN files.
 
 **Square type semantics** (matches DM1 — see `include/nexus_v1_world.h`):
 ```

@@ -4,11 +4,16 @@
 #include <stdint.h>
 
 /* DM Nexus dungeon level format (.DGN files).
- * 16 levels (LEV00-LEV15), 147-321 KB each.
- * Much larger than DM1 (33 KB total) due to 3D geometry data.
- * Likely contains: square grid + 3D wall/floor geometry + thing list. */
+ * Source-lock: DMWeb "Dungeon Master Nexus DGN files", fetched 2026-05-28.
+ * Real LEV*.DGN files are 2048-byte block containers. Structure1 contains
+ * Structure1B: a 64x64 grid with 8 bytes per cell (0x8000 bytes total).
+ * The old Firestaff "raw 32x32 at offset 0" layout is retained only as a
+ * synthetic-fixture fallback while older probes are retired. */
 
-#define NEXUS_MAX_MAP_SIZE 32
+#define NEXUS_MAX_MAP_SIZE 64
+#define NEXUS_DGN_BLOCK_SIZE 2048
+#define NEXUS_DGN_STRUCTURE1B_BYTES 0x8000
+#define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 
 typedef struct {
     int width, height;
@@ -24,4 +29,3 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 
 #endif
-
