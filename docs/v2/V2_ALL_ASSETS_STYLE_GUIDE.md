@@ -29,10 +29,17 @@ It does not change active V1 parity work.
 5. **Respect original geometry contracts**
    - If a family is a preserve-scale repaint, keep its DM1 proportion and silhouette intact.
    - If a family is a redraw-native family, preserve role, size hierarchy, and encounter readability.
+   - Every graphical asset for every game must start from a source-shape lock: the approved V1/source reference defines the pose, silhouette, footprint, crop role, and depth read. V2.2 may redraw the art, but it must not invent a different creature, object, wall, portrait, icon, or UI shape unless a family brief explicitly marks the asset as redesign-native.
 
 6. **4K-first production**
    - Canonical masters are 4K-scale production assets.
    - 1080p outputs are exact 50% derivatives unless a family brief explicitly documents an exception.
+
+7. **V2.1 and V2.2 share the same visual contract**
+   - V2.1 is a high-resolution source-preserving upscale. It should look clean and materially less pixelated than V1/V2.0, while keeping the original asset shape.
+   - V2.2 is a new high-resolution modern redraw. It must still match the same source-shape lock before detail, lighting, material polish, or style is accepted.
+   - Do not reuse old V2.2 assets that drift away from the source form. Treat them as rejected references, not production inputs.
+   - Review V1, V2.0, V2.1, and V2.2 side by side at the same perceived scale before approving an asset.
 
 ## Cross-class material language
 
@@ -42,6 +49,8 @@ It does not change active V1 parity work.
 - Shadows should stay grouped and readable after downscale.
 
 ## Asset-class guidance
+
+These rules apply to all games: DM1, Chaos Strikes Back, DM2, Dungeon Master Nexus, and Theron's Quest. Each game can have its own source files, palette behavior, and render path, but V2 assets still need the same source-shape comparison before they are wired into runtime.
 
 ### 1. UI / HUD / frame families
 - Preserve the DM screen skeleton and panel silhouettes.
