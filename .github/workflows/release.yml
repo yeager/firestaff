@@ -7,73 +7,196 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, e.g. 0.4.0'
+        description: 'Release version, with or without v-prefix, e.g. 2.5.3'
         required: true
-        default: '0.4.0'
+        default: '2.5.3'
+      draft:
+        description: 'Create or update the release as a draft'
+        required: true
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark the GitHub Release as a prerelease'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name || inputs.version }}
+  cancel-in-progress: false
 
 env:
   SDL3_TAG: release-3.2.14
 
 jobs:
-  resolve-version:
+  preflight:
+    name: Resolve and validate version
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
-      version: ${{ steps.v.outputs.version }}
-    steps:
-      - id: v
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          fi
-
-  macos-dmg:
-    name: macOS Universal (arm64+x86_64)
-    needs: resolve-version
-    runs-on: macos-14
-    env:
-      FIRESTAFF_VERSION: ${{ needs.resolve-version.outputs.version }}
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      draft: ${{ steps.release.outputs.draft }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      release_notes: ${{ steps.release.outputs.release_notes }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install SDL3
-        run: brew install sdl3 || true
-      - name: Configure & Build
+        with:
+          fetch-depth: 0
+
+      - id: release
+        name: Validate release inputs
+        shell: bash
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
-      - name: Smoke test
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            raw_version="${{ github.event.inputs.version }}"
+            draft="${{ github.event.inputs.draft }}"
+            prerelease="${{ github.event.inputs.prerelease }}"
+          else
+            raw_version="${GITHUB_REF_NAME}"
+            draft="false"
+            prerelease="false"
+          fi
+
+          version="${raw_version#v}"
+          tag="v${version}"
+
+          if [[ ! "$version" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Invalid release version: $raw_version"
+            exit 1
+          fi
+
+          cmake_version="$(sed -nE 's/^project[(]Firestaff VERSION ([^ ]+) LANGUAGES C[)]$/\1/p' CMakeLists.txt)"
+          if [[ -z "$cmake_version" ]]; then
+            echo "::error::Could not read Firestaff version from CMakeLists.txt"
+            exit 1
+          fi
+          if [[ "$cmake_version" != "$version" ]]; then
+            echo "::error::Release version $version does not match CMakeLists.txt version $cmake_version"
+            exit 1
+          fi
+
+          release_notes="RELEASE_NOTES.md"
+          if [[ -f "RELEASE_${version}.md" ]]; then
+            release_notes="RELEASE_${version}.md"
+          elif [[ ! -f "$release_notes" ]]; then
+            echo "::error::Missing RELEASE_NOTES.md"
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "draft=$draft" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "release_notes=$release_notes" >> "$GITHUB_OUTPUT"
+
+          echo "Release tag: $tag"
+          echo "Release notes: $release_notes"
+
+  macos:
+    name: macOS ${{ matrix.arch }}
+    needs: preflight
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-13
+          - arch: arm64
+            runner: macos-14
+    env:
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+      FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
+      FIRESTAFF_ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install cmake pkg-config sdl3 || true
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Smoke probes
+        shell: bash
         run: |
-          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe || true
-          ./build/firestaff_m11_audio_probe || true
+          set -euo pipefail
+          run_probe() {
+            local name="$1"
+            local cmd="$2"
+            local log="$3"
+            echo "== $name =="
+            eval "$cmd" 2>&1 | tee "$log"
+            local summary
+            summary="$(grep '^# summary: ' "$log" || true)"
+            if [[ -z "$summary" ]]; then
+              echo "::error::$name did not emit a summary line"
+              exit 1
+            fi
+            local counts passed total
+            counts="$(awk '/^# summary: / {print $3}' "$log" | tail -1)"
+            passed="${counts%/*}"
+            total="${counts#*/}"
+            if [[ "$passed" != "$total" ]]; then
+              echo "::error::$name failed: $passed/$total"
+              exit 1
+            fi
+          }
+          run_probe "Phase A" "SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe" phase_a.log
+          run_probe "Audio" "./build/firestaff_m11_audio_probe" audio.log
+
       - name: Package
+        shell: bash
         run: |
+          set -euo pipefail
           VERSION="$FIRESTAFF_VERSION" \
-          RELEASE_NOTES_SRC="$PWD/RELEASE_NOTES.md" \
+          SHORT_VERSION="$FIRESTAFF_VERSION" \
+          PACKAGE_SUFFIX="-macos-$FIRESTAFF_ARCH" \
+          RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_macos_preview.sh
-          shasum -a 256 release/Firestaff-*.dmg release/Firestaff-*.zip > "release/Firestaff-${FIRESTAFF_VERSION}-macos.sha256"
+
+          cd release
+          shasum -a 256 \
+            "Firestaff-${FIRESTAFF_VERSION}-macos-${FIRESTAFF_ARCH}.dmg" \
+            "Firestaff-${FIRESTAFF_VERSION}-macos-${FIRESTAFF_ARCH}.zip" \
+            > "Firestaff-${FIRESTAFF_VERSION}-macos-${FIRESTAFF_ARCH}.sha256"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: firestaff-${{ env.FIRESTAFF_VERSION }}-macos
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-macos-${{ matrix.arch }}
           path: |
-            release/*.dmg
-            release/*.zip
-            release/*.sha256
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-macos-${{ matrix.arch }}.dmg
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-macos-${{ matrix.arch }}.zip
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-macos-${{ matrix.arch }}.sha256
+          if-no-files-found: error
 
-  windows-installer:
+  windows:
     name: Windows x86_64
-    needs: resolve-version
+    needs: preflight
     runs-on: windows-2022
+    permissions:
+      contents: read
     defaults:
       run:
         shell: msys2 {0}
     env:
-      FIRESTAFF_VERSION: ${{ needs.resolve-version.outputs.version }}
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+      FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -84,147 +207,244 @@ jobs:
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-sdl3
             mingw-w64-ucrt-x86_64-nsis
-      - name: Configure & Build
+            p7zip
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Smoke probes
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
-      - name: Smoke test
-        run: |
-          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe || true
-          ./build/firestaff_m11_audio_probe || true
+          set -euo pipefail
+          run_probe() {
+            local name="$1"
+            local cmd="$2"
+            local log="$3"
+            echo "== $name =="
+            eval "$cmd" 2>&1 | tee "$log"
+            local summary
+            summary="$(grep '^# summary: ' "$log" || true)"
+            if [[ -z "$summary" ]]; then
+              echo "::error::$name did not emit a summary line"
+              exit 1
+            fi
+            local counts passed total
+            counts="$(awk '/^# summary: / {print $3}' "$log" | tail -1)"
+            passed="${counts%/*}"
+            total="${counts#*/}"
+            if [[ "$passed" != "$total" ]]; then
+              echo "::error::$name failed: $passed/$total"
+              exit 1
+            fi
+          }
+          run_probe "Phase A" "SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe.exe" phase_a.log
+          run_probe "Audio" "./build/firestaff_m11_audio_probe.exe" audio.log
+
       - name: Package
         run: |
-          VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_NOTES.md" ./scripts/package_windows_preview.sh
+          set -euo pipefail
+          VERSION="$FIRESTAFF_VERSION" \
+          RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
+          ./scripts/package_windows_preview.sh
           VERSION="$FIRESTAFF_VERSION" ./scripts/package_windows_installer_preview.sh
-          sha256sum release/Firestaff-*-windows* > "release/Firestaff-${FIRESTAFF_VERSION}-windows.sha256"
+          cd release
+          sha256sum \
+            "Firestaff-${FIRESTAFF_VERSION}-windows.zip" \
+            "Firestaff-${FIRESTAFF_VERSION}-windows-installer.exe" \
+            > "Firestaff-${FIRESTAFF_VERSION}-windows-x86_64.sha256"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: firestaff-${{ env.FIRESTAFF_VERSION }}-windows
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-windows-x86_64
           path: |
-            release/*.zip
-            release/*.exe
-            release/*.sha256
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows.zip
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows-installer.exe
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows-x86_64.sha256
+          if-no-files-found: error
 
-  linux-x86_64:
-    name: Linux x86_64
-    needs: resolve-version
-    runs-on: ubuntu-24.04
+  linux:
+    name: Linux ${{ matrix.arch }}
+    needs: preflight
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            deb_arch: amd64
+            rpm_arch: x86_64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            deb_arch: arm64
+            rpm_arch: aarch64
     env:
-      FIRESTAFF_VERSION: ${{ needs.resolve-version.outputs.version }}
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+      FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
+      FIRESTAFF_ARCH: ${{ matrix.arch }}
+      DEB_ARCH: ${{ matrix.deb_arch }}
+      RPM_ARCH: ${{ matrix.rpm_arch }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
-          git clone --depth 1 --branch $SDL3_TAG https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
+          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSDL_SHARED=ON \
+            -DSDL_STATIC=OFF \
+            -DSDL_TESTS=OFF
           cmake --build /tmp/SDL3-build --parallel
           sudo cmake --install /tmp/SDL3-build
           sudo ldconfig
-      - name: Configure & Build
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Smoke probes
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
-      - name: Smoke test
-        run: |
-          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe || true
-          ./build/firestaff_m11_audio_probe || true
+          set -euo pipefail
+          run_probe() {
+            local name="$1"
+            local cmd="$2"
+            local log="$3"
+            echo "== $name =="
+            eval "$cmd" 2>&1 | tee "$log"
+            local summary
+            summary="$(grep '^# summary: ' "$log" || true)"
+            if [[ -z "$summary" ]]; then
+              echo "::error::$name did not emit a summary line"
+              exit 1
+            fi
+            local counts passed total
+            counts="$(awk '/^# summary: / {print $3}' "$log" | tail -1)"
+            passed="${counts%/*}"
+            total="${counts#*/}"
+            if [[ "$passed" != "$total" ]]; then
+              echo "::error::$name failed: $passed/$total"
+              exit 1
+            fi
+          }
+          run_probe "Phase A" "SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe" phase_a.log
+          run_probe "Audio" "./build/firestaff_m11_audio_probe" audio.log
+
       - name: Package
         run: |
-          VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_NOTES.md" ./scripts/package_linux_preview.sh
-          sha256sum release/*.deb release/*.rpm > "release/Firestaff-${FIRESTAFF_VERSION}-linux-x86_64.sha256"
+          set -euo pipefail
+          VERSION="$FIRESTAFF_VERSION" \
+          ARCH_DEB="$DEB_ARCH" \
+          ARCH_RPM="$RPM_ARCH" \
+          RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
+          ./scripts/package_linux_preview.sh
+
+          cd release
+          sha256sum \
+            "firestaff_${FIRESTAFF_VERSION}_${DEB_ARCH}.deb" \
+            "firestaff-${FIRESTAFF_VERSION}.${RPM_ARCH}.rpm" \
+            > "Firestaff-${FIRESTAFF_VERSION}-linux-${FIRESTAFF_ARCH}.sha256"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux-x86_64
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux-${{ matrix.arch }}
           path: |
-            release/*.deb
-            release/*.rpm
-            release/*.sha256
+            release/firestaff_${{ env.FIRESTAFF_VERSION }}_${{ matrix.deb_arch }}.deb
+            release/firestaff-${{ env.FIRESTAFF_VERSION }}.${{ matrix.rpm_arch }}.rpm
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-linux-${{ matrix.arch }}.sha256
+          if-no-files-found: error
 
-  linux-arm64:
-    name: Linux ARM64 (Steam Deck)
-    needs: resolve-version
-    runs-on: ubuntu-24.04-arm
-    env:
-      FIRESTAFF_VERSION: ${{ needs.resolve-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
-            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
-            libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
-          git clone --depth 1 --branch $SDL3_TAG https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
-          cmake --build /tmp/SDL3-build --parallel
-          sudo cmake --install /tmp/SDL3-build
-          sudo ldconfig
-      - name: Configure & Build
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
-      - name: Smoke test
-        run: |
-          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe || true
-          ./build/firestaff_m11_audio_probe || true
-      - name: Package
-        run: |
-          VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_NOTES.md" ./scripts/package_linux_preview.sh
-          sha256sum release/*.deb release/*.rpm > "release/Firestaff-${FIRESTAFF_VERSION}-linux-arm64.sha256"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux-arm64
-          path: |
-            release/*.deb
-            release/*.rpm
-            release/*.sha256
-
-  publish-release:
+  publish:
     name: Publish GitHub Release
-    needs: [resolve-version, macos-dmg, windows-installer, linux-x86_64, linux-arm64]
+    needs: [preflight, macos, windows, linux]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     env:
-      FIRESTAFF_VERSION: ${{ needs.resolve-version.outputs.version }}
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+      FIRESTAFF_TAG: ${{ needs.preflight.outputs.tag }}
+      FIRESTAFF_DRAFT: ${{ needs.preflight.outputs.draft }}
+      FIRESTAFF_PRERELEASE: ${{ needs.preflight.outputs.prerelease }}
+      FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/download-artifact@v4
         with:
-          path: artifacts
-      - name: Collect release files
-        run: |
-          mkdir -p release-files
-          find artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.deb" -o -name "*.rpm" -o -name "*.exe" -o -name "*.sha256" -o -name "*-windows.zip" \) -exec cp {} release-files/ \;
-          ls -lh release-files/
-      - name: Generate release notes
-        run: |
-          PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${FIRESTAFF_VERSION}" | head -1)
-          echo "Previous tag: $PREV_TAG"
-          if [ -f "RELEASE_${FIRESTAFF_VERSION}.md" ]; then
-            cp "RELEASE_${FIRESTAFF_VERSION}.md" generated_notes.md
-          else
-            echo "## Changes since ${PREV_TAG:-initial}" > generated_notes.md
-            echo "" >> generated_notes.md
-            if [ -n "$PREV_TAG" ]; then
-              git log --pretty=format:'- %s' "${PREV_TAG}..v${FIRESTAFF_VERSION}" >> generated_notes.md
-            else
-              git log --pretty=format:'- %s' -20 >> generated_notes.md
-            fi
-            echo "" >> generated_notes.md
-            echo "" >> generated_notes.md
-            echo "Full changelog: https://github.com/${{ github.repository }}/compare/${PREV_TAG:-main}...v${FIRESTAFF_VERSION}" >> generated_notes.md
-          fi
-          cat generated_notes.md
+          path: release-files
+          merge-multiple: true
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build release notes
+        shell: bash
         run: |
-          gh release create "v${FIRESTAFF_VERSION}" \
-            --title "Firestaff v${FIRESTAFF_VERSION}" \
-            --notes-file generated_notes.md \
-            --draft=false \
-            release-files/*
+          set -euo pipefail
+          cp "$FIRESTAFF_RELEASE_NOTES" generated_notes.md
+
+          previous_tag="$(git tag --sort=-v:refname | grep -E '^v[0-9]' | grep -vx "$FIRESTAFF_TAG" | head -1 || true)"
+          {
+            echo ""
+            echo "## Release assets"
+            echo ""
+            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, and Linux arm64 packages. Original Dungeon Master game data is not included."
+            echo ""
+            if [[ -n "$previous_tag" ]]; then
+              echo "Full changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${FIRESTAFF_TAG}"
+            fi
+          } >> generated_notes.md
+
+      - name: Build checksum manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release-files -type f | sort
+          find release-files -type f ! -name '*.sha256' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > "release-files/Firestaff-${FIRESTAFF_VERSION}-all-assets.sha256"
+
+      - name: Create or update GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_flags=()
+          if [[ "$FIRESTAFF_DRAFT" == "true" ]]; then
+            release_flags+=(--draft)
+          fi
+          if [[ "$FIRESTAFF_PRERELEASE" == "true" ]]; then
+            release_flags+=(--prerelease)
+          fi
+
+          if gh release view "$FIRESTAFF_TAG" >/dev/null 2>&1; then
+            gh release edit "$FIRESTAFF_TAG" \
+              --title "Firestaff ${FIRESTAFF_TAG}" \
+              --notes-file generated_notes.md \
+              "${release_flags[@]}"
+
+            gh release view "$FIRESTAFF_TAG" --json assets --jq '.assets[].name' \
+              | while IFS= read -r asset; do
+                  [[ -n "$asset" ]] || continue
+                  gh release delete-asset "$FIRESTAFF_TAG" "$asset" --yes
+                done
+
+            gh release upload "$FIRESTAFF_TAG" release-files/* --clobber
+          else
+            gh release create "$FIRESTAFF_TAG" release-files/* \
+              --target "$GITHUB_SHA" \
+              --title "Firestaff ${FIRESTAFF_TAG}" \
+              --notes-file generated_notes.md \
+              "${release_flags[@]}"
+          fi
