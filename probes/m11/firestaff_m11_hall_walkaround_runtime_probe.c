@@ -396,7 +396,7 @@ int main(int argc, char** argv) {
         ok &= expect_int("reincarnate result", rows[14].result, 1);
         ok &= expect_int("reincarnate keeps champion", rows[14].championCount, 1);
         ok &= expect_int("reincarnate max hp halved", game2.world.party.champions[0].hp.maximum, hpBeforeReincarnate / 2);
-        ok &= expect_int("reincarnate current hp half of new max", game2.world.party.champions[0].hp.current, game2.world.party.champions[0].hp.maximum / 2);
+        ok &= expect_int("reincarnate current hp halved", game2.world.party.champions[0].hp.current, hpBeforeReincarnate / 2);
         ok &= expect_int("reincarnate fighter skill cleared", game2.world.party.champions[0].skillLevels[0], 0);
     }
 

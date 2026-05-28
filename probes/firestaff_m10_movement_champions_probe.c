@@ -425,6 +425,12 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser carries encoded source skill field");
         CHECK(memcmp(champ.mirrorInventoryText, "AAAAAA          ", 16) == 0,
               "Champion mirror parser carries encoded source inventory field");
+        CHECK(champ.hp.current == 53 && champ.hp.maximum == 53 &&
+                  champ.stamina.current == 720 && champ.mana.current == 15,
+              "Champion mirror parser materializes ReDMCSB F0280 encoded vitals");
+        CHECK(champ.attributes[CHAMPION_ATTR_STRENGTH] == 38 &&
+                  champ.attributes[CHAMPION_ATTR_ANTIFIRE] == 40,
+              "Champion mirror parser materializes ReDMCSB F0280 encoded attributes");
         CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                   "STAMM|BLADECASTER||X|AADFACNAAAAP|DHCGCDCLCNCKCI|AAAAAA", &champ) == 0,
               "Champion mirror parser rejects non-source sex byte");
@@ -481,6 +487,9 @@ int main(int argc, char* argv[]) {
         CHECK(recruited.champions[0].sex == 'M' &&
               memcmp(recruited.champions[0].mirrorStatsText, "AAELADCAAAAA    ", 16) == 0,
               "Mirror recruitment copies source sex and encoded stat field");
+        CHECK(recruited.champions[0].hp.current > 0 &&
+                  recruited.champions[0].hp.current == recruited.champions[0].hp.maximum,
+              "Mirror recruitment creates an alive candidate champion from source vitals");
         CHECK(F0611_PARTY_AddChampionFromMirrorName_Compat(&things, halkName, &recruited) == 1 &&
               recruited.championCount == 2 &&
               memcmp(recruited.champions[1].name, "HALK    ", 8) == 0,
