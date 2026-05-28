@@ -13,6 +13,7 @@ It exists to let creature-family experiments move forward without touching the a
    - V2.1 should be a high-resolution, less-pixelated upscale of that source shape.
    - V2.2 should be a modern high-resolution redraw of that same source shape, not a replacement design.
    - Do not reuse old V2.2 creature assets when they drift from the source shape. Generate or paint a new candidate instead.
+   - Lock the in-game palette/read at the same time as the shape. If a preview renders a red creature yellow because of palette mismatch, the preview is not acceptable source evidence.
 3. Isolate the subject with either:
    - a supplied manual mask, or
    - the generator's heuristic background-removal pass.
@@ -86,9 +87,9 @@ That means creature polish can increase resolution and paint fidelity, but it mu
 - restrained painted surfaces
 - limited color separation
 - some hard-edge chunkiness instead of glossy fantasy-poster rendering
-- side-by-side shape parity across V1, V2.0, V2.1, and V2.2 before approval
+- side-by-side shape and palette/read parity across V1, V2.0, V2.1, and V2.2 before approval
 
-The red-dragon shape-lock candidate under `red-dragon-family/candidates/20260528-shape-lock/` is the current example pattern: the V2.2 pass was regenerated from the original crouched red-dragon silhouette, while V2.1 stays a smoother high-resolution source-preserving upscale.
+The red-dragon shape-lock candidate under `red-dragon-family/candidates/20260528-shape-lock/` is the current example pattern: the V2.2 pass was regenerated from the original crouched red-dragon silhouette, while V2.1 stays a smoother high-resolution source-preserving upscale. The comparison sheet also documents the palette correction: the red dragon must read red in-game, so the earlier yellow-looking preview was rejected as palette-wrong evidence.
 
 ## Boundaries
 

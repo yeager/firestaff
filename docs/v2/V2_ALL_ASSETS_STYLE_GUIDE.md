@@ -41,6 +41,11 @@ It does not change active V1 parity work.
    - Do not reuse old V2.2 assets that drift away from the source form. Treat them as rejected references, not production inputs.
    - Review V1, V2.0, V2.1, and V2.2 side by side at the same perceived scale before approving an asset.
 
+8. **Palette/read lock**
+   - The source comparison must use the correct in-game palette/read for the selected game and asset. A shape-correct preview with wrong colors is still not approval evidence.
+   - If an extraction, viewer, or mock comparison displays the palette incorrectly, label it as invalid or regenerate the comparison before using it as an art brief.
+   - V2.1 and V2.2 may increase color fidelity, but they must preserve the gameplay color identity: a red creature must still read red, a poison/acid effect must still read poison/acid, and UI state colors must keep their original role.
+
 ## Cross-class material language
 
 - Stone, bronze, wood, iron, bone, parchment, cloth, slime, and rune-light should read as tactile but not glossy.
