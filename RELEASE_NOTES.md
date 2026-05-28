@@ -1,19 +1,21 @@
-# Firestaff v2.5.3
+# Firestaff v2.5.4
 
-Maintenance release for the GitHub Actions release pipeline.
+Gameplay and launcher polish release on top of the v2.5.x release pipeline.
 
 ## What's New
 
-- Fixed Windows/MSYS2 builds by using a portable Nexus save-directory `mkdir` wrapper.
-- Fixed Nexus V1 tick dispatch to pass the mechanics state pointer with the correct type.
-- Kept DM1 V1 title intro visibility, mouse-arrow routing, and pass504 capture-route preflight fixes in the release line.
+- Fixed DM1 V1 Hall of Champions mirror routing, candidate vitals decoding, and reincarnate handling so mirror recruits no longer trigger an all-dead Game Over path.
+- Added M12 touch gestures, refreshed launcher locales, and added Japanese and Simplified Chinese startup-menu resources.
+- Added DM2 V2 HUD overlay and interaction feedback scaffolding with smoke coverage.
+- Added DM1 V2 champion-select source-lock gates and HUD health-pulse support.
 
 ## Verification
 
+- GitHub Actions verify workflow passed on `main` before release.
 - Local CMake build completed.
 - Phase A probe passed 21/21 invariants.
-- Nexus boot-profile smoke test passed.
-- Nexus V1 save/load round-trip probe passed 17/17 checks.
+- DM2 V2 HUD overlay smoke test passed 76/76 checks.
+- DM1 V1 resurrection and Hall mirror probes passed in the release line.
 
 ## Platforms
 

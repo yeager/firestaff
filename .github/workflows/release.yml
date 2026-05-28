@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, with or without v-prefix, e.g. 2.5.3'
+        description: 'Release version, with or without v-prefix, e.g. 2.5.4'
         required: true
-        default: '2.5.3'
+        default: '2.5.4'
       draft:
         description: 'Create or update the release as a draft'
         required: true
