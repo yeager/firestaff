@@ -78,6 +78,12 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
 
 void csb_v1_dungeon_free(CSB_V1_DungeonData *d) {
     if (d && d->raw_data) { free(d->raw_data); d->raw_data = NULL; }
+    if (d) {
+        d->raw_size = 0;
+        d->level_count = 0;
+        d->dsa_count = 0;
+        if (d->dsa_offsets) { free(d->dsa_offsets); d->dsa_offsets = NULL; }
+    }
 }
 
 const char *csb_v1_dungeon_source_evidence(void) {
