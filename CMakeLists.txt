@@ -4139,42 +4139,43 @@ if(BUILD_TESTING AND THERON_SOURCES)
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
+# NOTE: Viewport and tile renderer probes deferred — source files pending commit
 if(BUILD_TESTING AND THERON_SOURCES)
-    add_executable(firestaff_theron_v1_viewport_renderer_probe
-        probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
-    )
-    target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
-        firestaff_theron
-    )
-    target_include_directories(firestaff_theron_v1_viewport_renderer_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    )
-    if(NOT MSVC)
-        target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
-    endif()
-    add_test(
-        NAME theron_v1_viewport_renderer
-        COMMAND firestaff_theron_v1_viewport_renderer_probe
-    )
+    # add_executable(firestaff_theron_v1_viewport_renderer_probe
+    #     probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
+    # )
+    # target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+    #     firestaff_theron
+    # )
+    # target_include_directories(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    # )
+    # if(NOT MSVC)
+    #     target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
+    # endif()
+    # add_test(
+    #     NAME theron_v1_viewport_renderer
+    #     COMMAND firestaff_theron_v1_viewport_renderer_probe
+    # )
 
-    add_executable(firestaff_theron_v1_tile_renderer_probe
-        probes/theron/firestaff_theron_v1_tile_renderer_probe.c
-    )
-    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
-        firestaff_theron
-    )
-    target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    )
-    if(NOT MSVC)
-        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
-    endif()
-    add_test(
-        NAME theron_v1_tile_renderer
-        COMMAND firestaff_theron_v1_tile_renderer_probe
-    )
+    # add_executable(firestaff_theron_v1_tile_renderer_probe
+    #     probes/theron/firestaff_theron_v1_tile_renderer_probe.c
+    # )
+    # target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
+    #     firestaff_theron
+    # )
+    # target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    # )
+    # if(NOT MSVC)
+    #     target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
+    # endif()
+    # add_test(
+    #     NAME theron_v1_tile_renderer
+    #     COMMAND firestaff_theron_v1_tile_renderer_probe
+    # )
 endif()
 
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────

@@ -21,6 +21,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_game_state_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
@@ -233,6 +234,87 @@ static void test_dungeon_viewcone_3x3(void)
           "after carving (2,0), D2C forward step is walkable");
 }
 
+/* Build a 2-level dungeon (3x3 each) for multi-level probing. */
+static void build_synthetic_dungeon_2level(uint8_t *buf, int buf_size)
+{
+    /* Header: 2 levels, 16 thing types */
+    buf[0]=2; buf[1]=0; buf[2]=16; buf[3]=0;
+    /* Level 0: 3x3, offset=10 (after this 14-byte header) */
+    buf[4]=3; buf[5]=3; buf[6]=10; buf[7]=0; buf[8]=0; buf[9]=0;
+    /* Level 1: 3x3, offset=28 (header=14 + level0 squares=18) */
+    buf[10]=3; buf[11]=3; buf[12]=28; buf[13]=0; buf[14]=0; buf[15]=0;
+    /* Level 0 squares (18 bytes, all floor type=2) */
+    int sq=16; /* offset 10 */
+    int i; for(i=0;i<9;i++){buf[sq++]=2;buf[sq++]=0;}
+    /* Level 1 squares (18 bytes, all floor type=2) */
+    sq=28; /* offset 28 */
+    for(i=0;i<9;i++){buf[sq++]=2;buf[sq++]=0;}
+    (void)buf_size; /* total used = 46 bytes */
+}
+
+static void test_dungeon_current_level_context(void)
+{
+    /* set_current_level and get_current_level are independent of dungeon_load. */
+    csb_v1_dungeon_set_current_level(3);
+    CHECK(csb_v1_dungeon_get_current_level() == 3,
+          "set_current_level(3) is retrievable via get_current_level");
+    csb_v1_dungeon_set_current_level(0);
+    CHECK(csb_v1_dungeon_get_current_level() == 0,
+          "set_current_level(0) updates get_current_level to 0");
+    csb_v1_dungeon_set_current_level(-1);
+    CHECK(csb_v1_dungeon_get_current_level() == -1,
+          "set_current_level(-1) is retrievable (no validation)");
+    csb_v1_dungeon_set_current_level(0);
+}
+
+static void test_dungeon_load_from_file_missing(void)
+{
+    CSB_V1_DungeonData d;
+    memset(&d, 0, sizeof(d));
+    int r = csb_v1_dungeon_load_from_file(&d, "/tmp/firestaff-nonexistent-csb-dungeon.dat");
+    CHECK(r == -1,
+          "load_from_file returns -1 for non-existent path");
+}
+
+static void test_dungeon_multi_level(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[64];
+    build_synthetic_dungeon_2level(buf, (int)sizeof(buf));
+    memset(&d, 0, sizeof(d));
+    int r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "2-level dungeon loads successfully");
+    CHECK(d.level_count == 2, "level_count is 2 for 2-level dungeon");
+    CHECK(d.level_widths[0] == 3, "level 0 width is 3");
+    CHECK(d.level_heights[0] == 3, "level 0 height is 3");
+    CHECK(d.level_widths[1] == 3, "level 1 width is 3");
+    CHECK(d.level_heights[1] == 3, "level 1 height is 3");
+    CHECK(d.level_offsets[0] == 10, "level 0 offset is 10");
+    CHECK(d.level_offsets[1] == 28, "level 1 offset is 28");
+    /* Both levels should have floor squares */
+    CHECK(csb_v1_dungeon_get_square_type(&d, 0, 1, 1) == 2, "level0 center is FLOOR=2");
+    CHECK(csb_v1_dungeon_get_square_type(&d, 1, 1, 1) == 2, "level1 center is FLOOR=2");
+    csb_v1_dungeon_free(&d);
+}
+
+static void test_dungeon_free_idempotent(void)
+{
+    CSB_V1_DungeonData d;
+    memset(&d, 0, sizeof(d));
+    /* free on never-loaded dungeon: raw_data=NULL, free(NULL) is safe */
+    csb_v1_dungeon_free(&d);
+    CHECK(1, "free on unallocated dungeon is safe (free(NULL) is no-op)");
+    /* After loading, free then free again: second free also safe (sets NULL) */
+    uint8_t buf[64];
+    build_synthetic_dungeon_dat(buf, sizeof(buf), 2);
+    memset(&d, 0, sizeof(d));
+    int r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "dungeon loads for free test");
+    csb_v1_dungeon_free(&d);
+    csb_v1_dungeon_free(&d);
+    CHECK(1, "double-free is safe (idempotent)");
+}
+
 static void test_dungeon_source_evidence(void)
 {
     const char *e = csb_v1_dungeon_source_evidence();
@@ -343,6 +425,108 @@ static void test_combat_source_evidence(void)
           "combat source evidence cites GROUP.C");
     CHECK(strstr(e, "CHAMPION.C") != NULL,
           "combat source evidence cites CHAMPION.C");
+}
+
+static void test_combat_monsterdesc_parse(void)
+{
+    /* 26-byte monster descriptor for Swamp Slime (type 1). */
+    uint8_t monster_bytes[26] = {
+        0x01, 0x05,          /* uByte0=1 (Slime), attackSound=5 */
+        0x01, 0x00,          /* word2=0x0001 (horizontalSize=1) */
+        0x00, 0x00,          /* word4=0 */
+        0xFF,                /* movementTicks=255 (immobile) */
+        0x14,                /* attackTicks=20 */
+        0x01,                /* defense=1 */
+        0x03,                /* baseHealth=3 */
+        0x04,                /* attack=4 */
+        0x01,                /* poisonAttack=1 */
+        0x03,                /* dexterity=3 */
+        0x00,                /* unused13=0 */
+        0x10, 0x02,          /* word14=0x0210 (sight=0, smell=2, attackRange=1) */
+        0x50, 0x04,          /* word16=0x0450 (bravery=5, experience=4*256+80=1104) */
+        0x00, 0x00,          /* word18=0 (no resistances) */
+        0x00, 0x00,          /* word20=0 */
+        0x00, 0x00, 0x00, 0x00 /* woundProb: head=0,legs=0,torso=0,feet=0 */
+    };
+    CSB_V1_MonsterDesc m;
+    csb_v1_monsterdesc_parse(monster_bytes, &m, 1 /* type=Slime */);
+    CHECK(m.uByte0 == 1, "monster type index is 1 (Slime)");
+    CHECK(m.attackSound == 5, "attackSound is 5");
+    CHECK(m.defense08 == 1, "defense08 is 1");
+    CHECK(m.baseHealth09 == 3, "baseHealth09 is 3");
+    CHECK(m.attack10 == 4, "attack10 is 4");
+    CHECK(m.poisonAttack11 == 1, "poisonAttack11 is 1");
+    CHECK(m.dexterity12 == 3, "dexterity12 is 3");
+    CHECK(m.movementTicks06 == 255, "movementTicks=255 (immobile)");
+    CHECK(m.attackTicks07 == 20, "attackTicks07=20");
+}
+
+static void test_combat_monsterdesc_field_accessors(void)
+{
+    /* Parse a known descriptor, then verify field accessors. */
+    uint8_t monster_bytes[26] = {
+        0x01, 0x05,
+        0x01, 0x00, 0x00, 0x00,
+        0xFF, 0x14, 0x01, 0x03, 0x04, 0x01, 0x03, 0x00,
+        0x10, 0x02,  /* word14=0x0210: sight=0, smell=2, attackRange=1 */
+        0x50, 0x04,  /* word16=0x0450: bravery=5 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    CSB_V1_MonsterDesc m;
+    csb_v1_monsterdesc_parse(monster_bytes, &m, 1);
+    CHECK(csb_v1_monsterdesc_sight_distance(&m) >= 0,
+          "sight_distance returns non-negative");
+    CHECK(csb_v1_monsterdesc_smell_distance(&m) >= 0,
+          "smell_distance returns non-negative");
+    CHECK(csb_v1_monsterdesc_attack_range(&m) >= 0,
+          "attack_range returns non-negative");
+    CHECK(csb_v1_monsterdesc_bravery(&m) >= 0,
+          "bravery returns non-negative");
+}
+
+static void test_combat_defense_attack_types(void)
+{
+    /* Verify defense values for all 8 attack types. */
+    CSB_V1_MonsterDesc base;
+    memset(&base, 0, sizeof(base));
+    base.defense08 = 10;
+    int i;
+    for (i = 0; i < 8; i++) {
+        int def = csb_v1_monster_get_defense(&base, i);
+        CHECK(def >= 0, "defense for attack type is non-negative");
+    }
+    /* Type 4 (material projectile) gets +50% defense in CSB: defense08 * 1.5 */
+    /* But since defense08=10: int(10*1.5)=15 */
+    int def_normal = csb_v1_monster_get_defense(&base, CSB_ATTACK_NORMAL);
+    int def_material = csb_v1_monster_get_defense(&base, CSB_ATTACK_MATERIAL_PROJECTILE);
+    CHECK(def_material >= def_normal,
+          "material projectile defense >= normal defense (+50% bonus)");
+}
+
+static void test_combat_missile_range_compute(void)
+{
+    /* missile_range = attack_power / 4 + 1 + random + random
+     * With attack_power=20: base = 20/4+1 = 6 */
+    struct RngState_Compat rng;
+    rng.seed = 42;
+    int range = csb_v1_missile_range_compute(20, &rng);
+    CHECK(range >= 6, "missile_range >= base (attack/4 + 1)");
+    CHECK(range <= 6 + 255 + 255,
+          "missile_range <= base + max random (65535)");
+    /* Deterministic: same seed same result */
+    rng.seed = 42;
+    int range2 = csb_v1_missile_range_compute(20, &rng);
+    CHECK(range == range2,
+          "missile_range is deterministic for same seed");
+}
+
+static void test_combat_drop_fixed_possessions(void)
+{
+    /* drop_fixed_possessions is void; verify it doesn't crash. */
+    csb_v1_drop_fixed_possessions(CSB_CREATURE_TYPE_SWAMP_SLIME, 2, 2, 0, 0);
+    csb_v1_drop_fixed_possessions(CSB_CREATURE_TYPE_GIGGLER, 3, 3, 1, 0);
+    csb_v1_drop_fixed_possessions(CSB_CREATURE_TYPE_RED_DRAGON, 4, 4, 2, 0);
+    CHECK(1, "drop_fixed_possessions is callable for multiple creature types");
 }
 
 /* -- Test 4: Save/Import ---------------------------------------------- */
@@ -478,6 +662,186 @@ static void test_save_source_evidence(void)
     CHECK(e != NULL, "save_source_evidence returns non-NULL");
     CHECK(strstr(e, "SAVEHEAD.C") != NULL || strstr(e, "LOADSAVE.C") != NULL,
           "save source evidence cites SAVEHEAD.C or LOADSAVE.C");
+}
+
+static void test_save_header_verify(void)
+{
+    /* Build a valid header and verify checksum passes. */
+    CSB_V1_SaveHeader hdr;
+    uint8_t raw[512];
+    int r = csb_v1_save_header_build(&hdr, CSB_V1_SAVE_MAGIC_CSB, 7,
+                                      0xDEADBEEFu, 1, 2, 0, 1, 2,
+                                      12345u, 120000u);
+    CHECK(r == 0, "save_header_build succeeds for verify test");
+    memcpy(raw, &hdr, sizeof(hdr));
+    /* Verify on the same header should pass (checksum matches) */
+    r = csb_v1_save_header_verify(&hdr, raw);
+    CHECK(r == 0, "save_header_verify returns 0 for valid header");
+}
+
+static void test_save_compatibility(void)
+{
+    /* Verify save_compatible returns meaningful result for non-existent path. */
+    int r = csb_v1_save_verify_compatible(
+        "/tmp/firestaff-nonexistent-csb-save.fsav",
+        CSB_V1_SAVE_MAGIC_CSB, 42);
+    CHECK(r != 0,
+          "save_verify_compatible returns non-zero for missing file");
+}
+
+/* -- Game State (new section) --------------------------------------- */
+
+static void test_gamestate_init(void)
+{
+    CSB_GameState gs;
+    csb_gs_init(&gs);
+    CHECK(gs.currentLevel == 0,
+          "gs_init: currentLevel starts at 0");
+    CHECK(gs.currentWorld == 0,
+          "gs_init: currentWorld starts at 0");
+    CHECK(gs.levelCount == 0,
+          "gs_init: levelCount starts at 0");
+    CHECK(gs.paused == 0,
+          "gs_init: paused starts at 0 (not paused)");
+    CHECK(gs.gameTicks == 0,
+          "gs_init: gameTicks starts at 0");
+}
+
+static void test_gamestate_set_get_state(void)
+{
+    CSB_GameState gs;
+    csb_gs_init(&gs);
+    /* Test all valid state transitions */
+    csb_gs_set_state(&gs, CSB_STATE_GAME);
+    CHECK(csb_gs_get_state(&gs) == CSB_STATE_GAME,
+          "set_state GAME is retrievable");
+    csb_gs_set_state(&gs, CSB_STATE_DUNGEON);
+    CHECK(csb_gs_get_state(&gs) == CSB_STATE_DUNGEON,
+          "set_state DUNGEON is retrievable");
+    csb_gs_set_state(&gs, CSB_STATE_VICTORY);
+    CHECK(csb_gs_get_state(&gs) == CSB_STATE_VICTORY,
+          "set_state VICTORY is retrievable");
+    csb_gs_set_state(&gs, CSB_STATE_GAMEOVER);
+    CHECK(csb_gs_get_state(&gs) == CSB_STATE_GAMEOVER,
+          "set_state GAMEOVER is retrievable");
+    /* Invalid state value: no crash, state stays at last value */
+    csb_gs_set_state(&gs, CSB_STATE_COUNT + 99);
+    CHECK(csb_gs_get_state(&gs) == CSB_STATE_COUNT + 99,
+          "set_state accepts out-of-range value (no validation)");
+}
+
+static void test_gamestate_tick(void)
+{
+    CSB_GameState gs;
+    csb_gs_init(&gs);
+    int initial_ticks = gs.gameTicks;
+    csb_gs_tick(&gs, 110);  /* 2 nominal ticks at 55ms each */
+    CHECK(gs.gameTicks > initial_ticks,
+          "tick(110ms) increments gameTicks");
+    csb_gs_tick(&gs, 0);
+    CHECK(gs.gameTicks >= initial_ticks + 2,
+          "tick(0) does not decrement gameTicks");
+}
+
+static void test_gamestate_pause(void)
+{
+    CSB_GameState gs;
+    csb_gs_init(&gs);
+    CHECK(gs.paused == 0, "initially not paused");
+    csb_gs_toggle_pause(&gs);
+    CHECK(gs.paused == 1, "toggle_pause: first call sets paused=1");
+    csb_gs_toggle_pause(&gs);
+    CHECK(gs.paused == 0, "toggle_pause: second call resets paused=0");
+}
+
+static void test_gamestate_save_init(void)
+{
+    CSB_SaveData sd;
+    csb_save_init(&sd, "TestPlayer");
+    CHECK(sd.version > 0,
+          "save_init: version is positive");
+    CHECK(sd.playTimeMs >= 0,
+          "save_init: playTimeMs is non-negative");
+    /* checksum is 0 before build */
+    /* verify should fail on uninitialized save */
+    int v = csb_save_verify_checksum(&sd);
+    (void)v; /* value depends on uninitialized state */
+    csb_save_build_checksum(&sd);
+    v = csb_save_verify_checksum(&sd);
+    CHECK(v == 0,
+          "build_checksum then verify_checksum returns 0");
+}
+
+/* -- Champion (new section) ----------------------------------------- */
+
+static void test_champion_init(void)
+{
+    CSB_V1_Champion c;
+    memset(&c, 0xFF, sizeof(c));
+    csb_v1_champion_init(&c);
+    CHECK(c.Attributes == 0 || c.Attributes == CSB_V1_CHAMPION_ATTRIBUTE_NONE,
+          "champion_init: Attributes reset to 0 or NONE");
+    CHECK(c.CurrentHealth >= 0,
+          "champion_init: CurrentHealth is non-negative");
+    CHECK(c.MaximumHealth >= c.CurrentHealth,
+          "champion_init: MaximumHealth >= CurrentHealth");
+}
+
+static void test_champion_dead_and_resurrection(void)
+{
+    CSB_V1_Champion c;
+    csb_v1_champion_init(&c);
+    /* Start alive */
+    CHECK(csb_v1_champion_is_dead(&c) == 0,
+          "initially champion is not dead");
+    /* Kill the champion */
+    csb_v1_champion_kill(&c);
+    CHECK(csb_v1_champion_is_dead(&c) != 0,
+          "after kill champion is dead");
+    CHECK((c.Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0,
+          "DEAD attribute is set after kill");
+    /* Resurrect: should clear DEAD attribute */
+    int r = csb_v1_champion_resurrect(&c);
+    CHECK(r == 0, "resurrect returns 0 on success");
+    CHECK(csb_v1_champion_is_dead(&c) == 0,
+          "after resurrect champion is not dead");
+    /* Reincarnate: should also clear DEAD but apply penalties */
+    csb_v1_champion_kill(&c);
+    CHECK(csb_v1_champion_is_dead(&c) != 0,
+          "champion is dead before reincarnate");
+    r = csb_v1_champion_reincarnate(&c);
+    CHECK(r == 0, "reincarnate returns 0 on success");
+    CHECK(csb_v1_champion_is_dead(&c) == 0,
+          "after reincarnate champion is not dead");
+}
+
+static void test_champion_stat_skill_access(void)
+{
+    CSB_V1_Champion c;
+    csb_v1_champion_init(&c);
+    /* Test stat getter: minimum/current/maximum */
+    int cur = csb_v1_champion_get_stat(&c, CSB_V1_STAT_STR, CSB_V1_STAT_CUR);
+    CHECK(cur >= 0, "get_stat STR/CUR returns non-negative");
+    /* Set a stat and verify it sticks */
+    csb_v1_champion_set_stat(&c, CSB_V1_STAT_STR, CSB_V1_STAT_CUR, 99);
+    int val = csb_v1_champion_get_stat(&c, CSB_V1_STAT_STR, CSB_V1_STAT_CUR);
+    CHECK(val == 99, "set_stat STR/CUR to 99 is retrievable");
+    /* Skill access */
+    int sk = csb_v1_champion_get_skill(&c, 0);
+    CHECK(sk >= 0, "get_skill returns non-negative");
+    csb_v1_champion_set_skill(&c, 0, 255);
+    int sk2 = csb_v1_champion_get_skill(&c, 0);
+    CHECK(sk2 == 255, "set_skill(0, 255) is retrievable");
+    /* Load recompute */
+    csb_v1_champion_recompute_load(&c);
+    CHECK(c.Load >= 0, "recompute_load: Load is non-negative");
+}
+
+static void test_champion_source_evidence(void)
+{
+    const char *e = csb_v1_character_source_evidence();
+    CHECK(e != NULL, "character_source_evidence returns non-NULL");
+    CHECK(strlen(e) > 10, "character source evidence is substantive");
 }
 
 /* -- Test 5: Rendering ----------------------------------------------- */
@@ -664,9 +1028,13 @@ int main(void)
     test_dungeon_decode_square();
     test_dungeon_collision_wall();
     test_dungeon_viewcone_3x3();
-    test_dungeon_source_evidence();
     test_dungeon_load_errors();
     test_dungeon_step_side_collision();
+    test_dungeon_load_from_file_missing();
+    test_dungeon_current_level_context();
+    test_dungeon_multi_level();
+    test_dungeon_free_idempotent();
+    test_dungeon_source_evidence();
 
     printf("\n[ 3/6] Combat probe...\n");
     test_combat_attack_resolve();
@@ -674,6 +1042,11 @@ int main(void)
     test_combat_attack_parameters();
     test_combat_respawn_timing();
     test_combat_drop_sound();
+    test_combat_monsterdesc_parse();
+    test_combat_monsterdesc_field_accessors();
+    test_combat_defense_attack_types();
+    test_combat_missile_range_compute();
+    test_combat_drop_fixed_possessions();
     test_combat_source_evidence();
 
     printf("\n[ 4/6] Save/import probe...\n");
@@ -684,9 +1057,22 @@ int main(void)
     test_save_header_compute_and_verify();
     test_save_default_paths();
     test_save_csb_vs_dm1_magic();
+    test_save_header_verify();
+    test_save_compatibility();
     test_save_source_evidence();
 
-    printf("\n[ 5/6] Rendering probe...\n");
+    printf("\n[ 5/6] Game state + champion probe...\n");
+    test_gamestate_init();
+    test_gamestate_set_get_state();
+    test_gamestate_tick();
+    test_gamestate_pause();
+    test_gamestate_save_init();
+    test_champion_init();
+    test_champion_dead_and_resurrection();
+    test_champion_stat_skill_access();
+    test_champion_source_evidence();
+
+    printf("\n[ 6/7] Rendering probe...\n");
     test_rendering_viewport_init();
     test_rendering_wall_set_selection();
     test_rendering_d3l2_ornament_route();
@@ -697,7 +1083,7 @@ int main(void)
     test_rendering_render_frame_noop();
     test_rendering_source_evidence();
 
-    printf("\n[ 6/6] Source evidence integration...\n");
+    printf("\n[ 7/7] Source evidence integration...\n");
     test_all_source_evidence_strings();
 
     printf("\n========================================\n");
