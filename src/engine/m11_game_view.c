@@ -1,13 +1,12 @@
 #include "m11_game_view.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
-#include "dm1_v1_viewport_fakewall_pc34_compat.h"
-#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
-#include "dm1_v2_phase5_runtime_bridge_pc34.h"
-#include "firestaff_accessibility.h"
-#include "firestaff_po_loader.h"
+#include "nexus_v1_launcher.h"
+#include "nexus_v1_engine.h"
+#include "nexus_v1_viewport.h"
 
 #include "asset_status_m12.h"
 #include "config_m12.h"
+#include "firestaff_accessibility.h"
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
 #include "render_sdl_m11.h"
@@ -17,22 +16,30 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
+#include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
+#include "firestaff_po_loader.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v2_phase5_runtime_bridge_pc34.h"
 
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* Forward declarations for functions defined later in this file. */
+int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
 
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
@@ -5987,6 +5994,34 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    /* ── Nexus V1: bypass DM1 dungeon loader entirely ───────────────
+     * When gameId == "nexus" the M11 game-loop passes through
+     * M11_GameView_Start() on its way to the game loop.  Rather than
+     * teaching F0882_WORLD_InitFromDungeonDat_Compat() about DM.BIN
+     * (a Saturn ISO image format it cannot parse), detect the Nexus
+     * path here and hand off to M11_GameView_StartNexus().
+     * Source: nexus_v1_launcher.c, nexus_v1_engine.c. */
+    if (spec->gameId && strcmp(spec->gameId, "nexus") == 0) {
+        /* dataDir may come in via spec or via the dataDir arg */
+        const char *dd = spec->dataDir;
+        if ((!dd || !dd[0]) && spec->dungeonPath && spec->dungeonPath[0]) {
+            /* Extract data dir from the dungeon path */
+            size_t len = strlen(spec->dungeonPath);
+            size_t slash = len;
+            while (slash > 0 && spec->dungeonPath[slash - 1] != '/'
+                   && spec->dungeonPath[slash - 1] != '\\') {
+                --slash;
+            }
+            static char ddir[256];
+            if (slash > 0 && slash < sizeof(ddir)) {
+                memcpy(ddir, spec->dungeonPath, slash);
+                ddir[slash] = '\0';
+                dd = ddir;
+            }
+        }
+        if (!dd || !dd[0]) return 0;
+        return M11_GameView_StartNexus(state, dd);
+    }
     if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
         if (!spec->dungeonPath || spec->dungeonPath[0] == '\0') {
             return 0;
@@ -6114,6 +6149,45 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.rendererBackend = M12_RENDERER_BACKEND_AUTO;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     return M11_GameView_Start(state, &spec);
+}
+
+int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
+    if (!state || !dataDir) return 0;
+    /* Preserve debug HUD flag across shutdown/reinit */
+    {
+        int savedDebugHUD = state->showDebugHUD;
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        state->showDebugHUD = savedDebugHUD;
+    }
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+    snprintf(state->title, sizeof(state->title), "DUNGEON MASTER NEXUS");
+    snprintf(state->sourceId, sizeof(state->sourceId), "nexus");
+    /* Init the Nexus engine — owns the singleton Nexus_V1_Engine.
+     * Source: nexus_v1_launcher.c. */
+    if (nexus_v1_launcher_init(dataDir) < 0) {
+        m11_set_status(state, "BOOT", "NEXUS INIT FAILED");
+        state->active = 0;
+        return 0;
+    }
+    /* Load level 0 as the default entrance level */
+    if (nexus_v1_launcher_load_level(0) < 0) {
+        m11_set_status(state, "BOOT", "NEXUS LEVEL 0 LOAD FAILED");
+        /* Non-fatal: viewport still renders empty dungeon */
+    }
+    state->nexusEngine = nexus_v1_launcher_get_engine();
+    if (state->nexusEngine) {
+        state->nexusState.level_loaded = state->nexusEngine->level_loaded;
+        state->nexusState.party_x = state->nexusEngine->game.party_x;
+        state->nexusState.party_y = state->nexusEngine->game.party_y;
+        state->nexusState.party_dir = state->nexusEngine->game.party_dir;
+        state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+    }
+    m11_set_status(state, "BOOT", "NEXUS READY");
+    m11_log_event(state, M11_COLOR_YELLOW, "T0: NEXUS LOADED");
+    return 1;
 }
 
 int M11_GameView_QuickSave(M11_GameViewState* state) {
