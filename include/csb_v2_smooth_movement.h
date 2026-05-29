@@ -2,15 +2,15 @@
 #ifndef FIRESTAFF_CSB_V2_SMOOTH_MOVEMENT_H
 #define FIRESTAFF_CSB_V2_SMOOTH_MOVEMENT_H
 #include "dm1_v2_anim_timing.h"
+#include "csb_v2_phase_gate_pc34.h"
 
-/* CSB V2.2 Smooth Movement — same system as DM1 V2.2.
- * CSB shares the DM1 movement engine; V2.2 interpolation
- * works identically. Separate header for CSB-specific
- * animation parameters (CSB has different movement cooldowns).
- *
- * Presentation-only: V1 cooldowns, collision, and sensor timing are
- * unaffected. The renderer interpolates visually between V1 states.
- *
+/* Phase gate: all functions in this header belong to
+ * CSB_V2_PHASE_DOMAIN_SMOOTH_MOVEMENT_PRESENTATION.
+ * V1 cooldowns, collision, and sensor timing are unaffected.
+ * See csb_v2_phase_gate_pc34.h Phase 0 rules.
+
+/* CSB V2.2 Smooth Movement
+ * The renderer interpolates visually between V1 states.
  * ReDMCSB source: COMMAND.C F0380, CLIKMENU.C F0365/F0366,
  * GAMELOOP.C (tick cadence, VBLANK-locked 55ms). */
 

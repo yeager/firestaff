@@ -4,8 +4,15 @@
 #include <stdint.h>
 #include "dm1_v2_anim_timing.h"
 #include "csb_v2_lighting_dynamic.h"
+#include "csb_v2_phase_gate_pc34.h"
 
-/* CSB V2 Viewport — upscaled CSB rendering with V2.1/V2.2 features.
+/* Phase gate: all functions in this header belong to
+ * CSB_V2_PHASE_DOMAIN_RENDER_PRESENTATION and require
+ * csb_v2_phase_gate_v2_active() to return true before use.
+ * V1 game logic (dungeon loading, combat, movement) is unaffected.
+ * See csb_v2_phase_gate_pc34.h Phase 0 rules.
+ *
+ * CSB V2 Viewport — upscaled CSB rendering with V2.1/V2.2 features.
  * Shares DM1 V2 upscale pipeline (EPX) but adds:
  *   - Custom background upscaling per DSA room
  *   - Prison door intro animation (smooth)

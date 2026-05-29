@@ -2,8 +2,14 @@
 #ifndef FIRESTAFF_CSB_V2_CHAOS_ENHANCED_H
 #define FIRESTAFF_CSB_V2_CHAOS_ENHANCED_H
 #include <stdint.h>
+#include "csb_v2_phase_gate_pc34.h"
 
-/* CSB V2.2 Enhanced Chaos — visual DSA script feedback
+/* Phase gate: all functions in this header belong to
+ * CSB_V2_PHASE_DOMAIN_RENDER_PRESENTATION.
+ * V1 DSA script dispatch (CSBWin/DSA.cpp) is unaffected.
+ * See csb_v2_phase_gate_pc34.h Phase 0 rules.
+ *
+ * CSB V2.2 Enhanced Chaos — visual DSA script feedback
  * V1: DSA scripts run silently.
  * V2.2: visual cues when scripts trigger (glow, sound, particles). */
 

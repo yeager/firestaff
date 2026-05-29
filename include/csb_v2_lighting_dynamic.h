@@ -3,10 +3,17 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "csb_v2_phase_gate_pc34.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Phase gate: all functions in this header belong to
+ * CSB_V2_PHASE_DOMAIN_DYNAMIC_LIGHTING_PRESENTATION.
+ * The V1 canonical palette (PANEL.C:418-428) is unaffected.
+ * See csb_v2_phase_gate_pc34.h Phase 0 rules.
+ */
 
 #define CSB_V2_LIGHT_MAX_SOURCES 32
 #define CSB_V2_LIGHT_MAP_SIZE 32
