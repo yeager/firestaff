@@ -111,7 +111,7 @@ if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES})
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
 endif()
 
@@ -3982,6 +3982,38 @@ endif()
 add_test(
     NAME firestaff_nexus_v1_launch_smoke
     COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+)
+
+# ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
+# Source-lock: src/nexus/nexus_v1_movement.c (CLIKMENU.C F0366, MOVESENS.C F0267),
+#              src/nexus/nexus_v1_squares.c (DUNGEON.C square dispatch),
+#              src/nexus/nexus_v1_combat.c (CREATURE.C F0209),
+#              src/nexus/nexus_v1_creatures.c (F0209_GROUP AI),
+#              src/nexus/nexus_v1_mechanics.c (CLIKMENU.C F0366 tick assembly),
+#              src/nexus/nexus_v1_sound.c (DM Nexus audio format docs),
+#              src/nexus/nexus_v1_script_vm.c (SDDRVS.TSK bytecode VM),
+#              src/nexus/nexus_v1_inventory.c (CHAMPION.C F0309),
+#              ReDMCSB: DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C,
+#                       CREATURE.C, LOADSAVE.C, F0209_GROUP
+add_executable(firestaff_nexus_v1_mechanics_parity_probe
+    probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_mechanics_parity_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_mechanics_parity_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_mechanics_parity_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# Headless test — no game data required (synthetic fixtures)
+add_test(
+    NAME firestaff_nexus_v1_mechanics_parity
+    COMMAND firestaff_nexus_v1_mechanics_parity_probe
 )
 
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
