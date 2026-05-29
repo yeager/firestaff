@@ -196,7 +196,7 @@ set(M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -249,7 +249,7 @@ set(M12_SOURCES
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m12 PUBLIC firestaff_m11)
+target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
 if(NOT MSVC)
     target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
         -Wno-format-truncation -Wno-array-bounds -Wno-restrict -Wno-unused-variable)
@@ -621,6 +621,7 @@ if(BUILD_TESTING)
     target_include_directories(test_csb_v1_boot_profile_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_boot_profile_smoke PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
     endif()
@@ -3749,6 +3750,7 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
     )
+    target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     target_include_directories(test_theron_v1_availability PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -3791,6 +3793,23 @@ target_include_directories(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
 )
 if(NOT MSVC)
     target_compile_options(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# ── Nexus V1 launch smoke probe ─────────────────────────────────────
+# Verifies: launcher init → Structure1B DGN load → render → tick
+add_executable(firestaff_nexus_v1_launch_smoke_probe
+    probes/nexus_v1_launch_smoke_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
         -Wall -Wextra -O2
     )
 endif()
