@@ -19,6 +19,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_runtime.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -37,6 +38,10 @@ typedef struct {
     /* Dungeon state */
     int dungeon_level;
     int view_dir;
+    /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
+    DM2_V2_MoveCallback  move_callback;
+    DM2_V2_TurnCallback  turn_callback;
+    DM2_V2_StairsCallback stairs_callback;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -54,6 +59,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
+    g_dm2_runtime.move_callback  = NULL;
+    g_dm2_runtime.turn_callback  = NULL;
+    g_dm2_runtime.stairs_callback = NULL;
 }
 
 /* ── V1 Game Tick ──────────────────────────────────────────────────── */
@@ -255,6 +263,14 @@ int dm2_v1_runtime_move(int dir) {
 
     if (!dm2_v1_runtime_can_move()) return -1;
 
+    /* Save pre-move position for smooth animation trigger */
+    int old_x = gs->party_x;
+    int old_y = gs->party_y;
+    int old_dir = gs->party_dir;
+
+    /* Detect turn-only (facing change, no movement) */
+    int is_turn_only = (dir != old_dir);
+
     nx = gs->party_x + dx[dir & 3];
     ny = gs->party_y + dy[dir & 3];
 
@@ -268,10 +284,25 @@ int dm2_v1_runtime_move(int dir) {
     }
 
     if (!blocked) {
+        /* Fire smooth movement callback before updating state.
+         * This gives the V2 layer the from/to positions for interpolation.
+         * Source: Phase 5 runtime binding */
+        if (rt->move_callback) {
+            rt->move_callback(old_x, old_y, nx, ny);
+        }
         gs->party_x = nx;
         gs->party_y = ny;
-        gs->party_dir = dir;
     }
+
+    /* Fire smooth turn callback when facing changes.
+     * Turn triggers even on blocked moves (party still turns).
+     * Source: Phase 5 runtime binding */
+    if (dir != old_dir && rt->turn_callback) {
+        rt->turn_callback(old_dir, dir);
+    }
+
+    gs->party_dir = dir;
+    rt->view_dir = dir;
 
     /* Set movement cooldown: dungeon=1 tick, outdoor=0.5 tick */
     rt->move_cooldown_ticks = rt->outdoor ? 0 : 1;
@@ -289,6 +320,48 @@ int dm2_v1_runtime_move(int dir) {
  */
 void dm2_v1_runtime_set_outdoor(int is_outdoor) {
     g_dm2_runtime.outdoor = is_outdoor ? 1 : 0;
+}
+
+/* ── Party position accessors ─────────────────────────────────────── */
+
+/* dm2_v1_runtime_get_party_x / _y / _dir — read V1-snapped party state.
+ * Returns the instant (non-interpolated) V1 game state.
+ *
+ * Source: SKULL.ASM T520 — party position fields
+ */
+int dm2_v1_runtime_get_party_x(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->boot || !rt->boot->dm2_state) return 0;
+    DM2_V1_GameState *gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    return gs->party_x;
+}
+
+int dm2_v1_runtime_get_party_y(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->boot || !rt->boot->dm2_state) return 0;
+    DM2_V1_GameState *gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    return gs->party_y;
+}
+
+int dm2_v1_runtime_get_party_dir(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->boot || !rt->boot->dm2_state) return 0;
+    DM2_V1_GameState *gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    return gs->party_dir;
+}
+
+/* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
+
+void dm2_v1_runtime_set_move_callback(DM2_V2_MoveCallback cb) {
+    g_dm2_runtime.move_callback = cb;
+}
+
+void dm2_v1_runtime_set_turn_callback(DM2_V2_TurnCallback cb) {
+    g_dm2_runtime.turn_callback = cb;
+}
+
+void dm2_v1_runtime_set_stairs_callback(DM2_V2_StairsCallback cb) {
+    g_dm2_runtime.stairs_callback = cb;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

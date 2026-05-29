@@ -75,7 +75,7 @@ typedef struct {
 
 int fs_game_init(FS_GameState *state, const FS_GameConfig *config);
 int fs_game_load_assets(FS_GameState *state);
-void fs_game_tick_v1(FS_GameState *state);
+void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms);
 void fs_game_render_v2(FS_GameState *state);
 void fs_game_handle_sdl_event(FS_GameState *state, const void *sdl_event);
 void fs_game_run(FS_GameState *state);

@@ -17,6 +17,8 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_boot.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v2_runtime.h"
+#include "dm2_v1_runtime.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -154,11 +156,17 @@ static void fs_game_render_viewport(FS_GameState *state) {
         csb_v1_viewport_render_frame(cv, dir, px, py);
 
     } else if (state->config.game == FS_GAME_DM2) {
-        /* ── DM2 path: DM2 V1 viewport renderer ── */
+        /* ── DM2 V2 path: smooth movement + viewport renderer ── */
         DM2_V1_BootProfile *boot = (DM2_V1_BootProfile *)state->dm2_boot;
         if (boot && boot->dm2_state) {
-            (void)dm2_v1_runtime_render_frame(state->party_direction,
-                                               state->party_x, state->party_y);
+            /* Phase 5: V2 smooth movement viewport rendering.
+             * dm2_v2_runtime_render_frame updates smooth animation state
+             * and renders with smooth-interpolated camera offset.
+             * Source: Phase 5 runtime binding, dm2_v2_runtime.c */
+            (void)dm2_v2_runtime_render_frame(state->party_direction,
+                                               state->party_x, state->party_y,
+                                               g_framebuffer, FS_FB_W,
+                                               FS_VP_W, FS_VP_H);
         } else {
             /* DM2 boot not complete — render placeholder ceiling/floor */
             for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
@@ -413,6 +421,9 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         dm2_v1_boot_print_summary(&s_dm2_boot);
         /* Enter game: allocate dungeon data and DM2 game state */
         (void)dm2_v1_boot_enter_game(&s_dm2_boot);
+        /* Phase 5: init DM2 V2 runtime (smooth movement + V2 viewport).
+         * Scale 2 = V2.0 EPX mode.  Source: dm2_v2_runtime.c */
+        dm2_v2_runtime_init(2);
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */
@@ -502,7 +513,7 @@ int fs_game_load_assets(FS_GameState *state) {
     return 0;
 }
 
-void fs_game_tick_v1(FS_GameState *state) {
+void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms) {
     if (!state || state->paused) return;
 
     /* V1 game tick — process one game logic frame */
@@ -540,6 +551,9 @@ void fs_game_tick_v1(FS_GameState *state) {
     /* DM2 V1: delegate to DM2 runtime tick if DM2 boot profile is active */
     if (state->config.game == FS_GAME_DM2 && state->dm2_boot) {
         dm2_v1_runtime_tick();
+        /* Phase 5: advance V2 smooth animation clock on V1 boundary.
+         * Source: dm2_v2_runtime.c */
+        dm2_v2_runtime_v1_tick(now_ms);
     }
 
     state->frame_count++;
@@ -604,7 +618,7 @@ void fs_game_run(FS_GameState *state) {
 
         /* Process V1 ticks at original rate (ReDMCSB VBlank timing) */
         while (state->v1_tick_accumulator_ms >= V1_TICK_MS) {
-            fs_game_tick_v1(state);
+            fs_game_tick_v1(state, now_ms);
             v2_anim_clock_v1_tick(&g_clock, now_ms);
             state->v1_tick_accumulator_ms -= V1_TICK_MS;
         }
