@@ -40,6 +40,7 @@
 #include "dm2_v1_outdoor_renderer.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 /* ── Transparency color (ReDMCSB DEFS.H C10_COLOR_FLESH = 10)
  * Used as skip color in wall blits. ── */
@@ -550,21 +551,117 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      *         DUNVIEW.C F0100 (line 3048) wall bitmap blit with transparency
      */
 
-    /* Phase 3 placeholder: draw simple wall-colored rectangles.
-     * DM2 wall colors (per depth):
-     *   D3: gray-8 (same as ceiling in dark areas)
-     *   D2: gray-6
-     *   D1: gray-4
-     *   D0: gray-2 (closest, darkest)
-     * These are placeholders — real DM2 walls use GRAPHICS.DAT bitmaps. */
+/* DM2 wall zone Y positions (from g_dm2_wall_frames):
+ *   D3: top_y=25, height=51 (lines ~25-76)
+ *   D2: top_y=20, height=71 (lines ~20-91)
+ *   D1: top_y=9,  height=111 (lines ~9-120)
+ *   D0: top_y=0,  height=135 (lines ~0-135)
+ *
+ * The render loop walks D3→D0, drawing each zone's wall panels.
+ * Side walls (L,R) drawn at their respective X positions.
+ * Center wall (C) drawn last per depth to overlap sides if needed.
+ *
+ * Source: DUNVIEW.C F0096 (line 2225) wall set loading
+ *         DUNVIEW.C F0099 (line 3018) horizontal flip
+ *         DUNVIEW.C F0100 (line 3048) wall bitmap blit with transparency
+ */
 
-    /* Back wall row (D3): small strips at top of wall zone */
-    int d3_gray = 8;
-    (void)d3_gray;
-    /* For Phase 3, skip individual wall rect drawing as placeholder.
-     * The actual graphics system needs GRAPHICS.DAT access to draw real walls.
-     * Wall frame rendering will be completed when dm2_v1_gfx_fetch is wired. */
-    (void)vp; (void)stride;
+    /* Draw each depth zone: D3 (back) → D2 → D1 → D0 (front).
+     * Within each depth, side walls (L,R) drawn before center (C).
+     * Phase 3: draw colored wall zone rectangles as placeholders.
+     * Real GRAPHICS.DAT-based walls follow in Phase 4. */
+
+    /* D3 wall zone: lines 25-75, gray-8 */
+    {
+        int wall_top = 25, wall_h = 51;
+        /* D3L: left strip, x=0..83 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 0; x < 84; x++)
+                vp[y * stride + x] = 8;
+        }
+        /* D3R: right strip, x=139..223 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 139; x < 224; x++)
+                vp[y * stride + x] = 8;
+        }
+        /* D3C: center strip, x=74..149 */
+        for (int y = wall_top; y < wall_top + 50; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 74; x < 150; x++)
+                vp[y * stride + x] = 8;
+        }
+    }
+
+    /* D2 wall zone: lines 20-90, gray-6 */
+    {
+        int wall_top = 20, wall_h = 71;
+        /* D2L: left strip, x=0..74 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 0; x < 75; x++)
+                vp[y * stride + x] = 6;
+        }
+        /* D2R: right strip, x=149..223 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 149; x < 224; x++)
+                vp[y * stride + x] = 6;
+        }
+        /* D2C: center strip, x=60..163 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 60; x < 164; x++)
+                vp[y * stride + x] = 6;
+        }
+    }
+
+    /* D1 wall zone: lines 9-119, gray-4 */
+    {
+        int wall_top = 9, wall_h = 111;
+        /* D1L: left strip, x=0..63 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 0; x < 64; x++)
+                vp[y * stride + x] = 4;
+        }
+        /* D1R: right strip, x=160..223 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 160; x < 224; x++)
+                vp[y * stride + x] = 4;
+        }
+        /* D1C: center strip, x=32..191 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 32; x < 192; x++)
+                vp[y * stride + x] = 4;
+        }
+    }
+
+    /* D0 wall zone: lines 0-135 (full forward wall), gray-2 */
+    {
+        int wall_top = 0, wall_h = 136;
+        /* D0L: left strip, x=0..31 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 0; x < 32; x++)
+                vp[y * stride + x] = 2;
+        }
+        /* D0R: right strip, x=192..223 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 192; x < 224; x++)
+                vp[y * stride + x] = 2;
+        }
+        /* D0C: center strip (covers most of viewport), x=0..223 */
+        for (int y = wall_top; y < wall_top + wall_h; y++) {
+            if (y >= DM2_VP_HEIGHT) break;
+            for (int x = 0; x < 224; x++)
+                vp[y * stride + x] = 2;
+        }
+    }
 }
 
 /* ── Doors ────────────────────────────────────────────────────────── */
@@ -572,19 +669,70 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
-    /* DM2 door rendering: doors are drawn as overlays on wall squares.
+    uint8_t *vp = s->framebuffer;
+    int stride = s->fb_stride;
+
+    /* DM2 door rendering: overlays on wall squares.
      * Source: DUNVIEW.C:3082-3095 F0102_DrawDoorBitmap,
      *         DUNVIEW.C:3096-3112 F0103_DrawDoorFrameBitmapFlippedHorizontally,
      *         DUNVIEW.C:4119-4270 F0110_DrawDoorButton, F0111_DrawDoor.
+     * DM2 door frames: larger/more ornate than DM1 (G2116-G2119 + G2196).
+     * Source: DUNVIEW.C:148-157 (door frame indices).
      *
-     * Door states: closed → animating → open → destroyed.
-     * Door ornament: button above door frame, panel below.
-     * Source: DUNVIEW.C:361 G0103_as_CurrentMapDoorOrnamentsInfo[17].
-     *
-     * Phase 3: placeholder — draw door frame rectangle on squares
-     * flagged as DM2_SQF_HAS_DOOR. Real door graphics from GRAPHICS.DAT.
-     */
-    (void)s;
+     * Phase 3: placeholder door rects on DM2_SQF_HAS_DOOR squares.
+     * Real door graphics from GRAPHICS.DAT (Phase 4). */
+
+    for (int i = 0; i < DM2_SQ_COUNT; i++) {
+        DM2_ViewSquare *vs = &s->squares[i];
+        if (!(vs->flags & DM2_SQF_HAS_DOOR)) continue;
+
+        /* DM2 door positions per depth row.
+         *   D0C: front door - centered, full-height (lines 0-135)
+         *   D1C: near door - centered, high strip (lines 9-119)
+         *   D2C: mid door - centered, mid strip (lines 20-90) */
+        if (i == DM2_SQ_D0C) {
+            int dx = 80, dy = 0, dw = 160, dh = 135;
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                for (int x = dx; x < dx + dw; x++)
+                    vp[y * stride + x] = 10;  /* brown door */
+            }
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                vp[y * stride + dx] = DM2_COL_MIDGRAY;
+                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
+            }
+            for (int x = dx; x < dx + dw; x++) {
+                vp[dy * stride + x] = DM2_COL_MIDGRAY;
+                vp[(dy + dh - 1) * stride + x] = DM2_COL_MIDGRAY;
+            }
+        } else if (i == DM2_SQ_D1C) {
+            int dx = 60, dy = 9, dw = 104, dh = 110;
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                for (int x = dx; x < dx + dw; x++)
+                    vp[y * stride + x] = 10;
+            }
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                vp[y * stride + dx] = DM2_COL_MIDGRAY;
+                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
+            }
+        } else if (i == DM2_SQ_D2C) {
+            int dx = 60, dy = 20, dw = 103, dh = 71;
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                for (int x = dx; x < dx + dw; x++)
+                    vp[y * stride + x] = 10;
+            }
+            for (int y = dy; y < dy + dh; y++) {
+                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
+                vp[y * stride + dx] = DM2_COL_MIDGRAY;
+                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
+            }
+        }
+        (void)vs;
+    }
 }
 
 /* ── Creatures ───────────────────────────────────────────────────── */
@@ -592,18 +740,50 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
+    uint8_t *vp = s->framebuffer;
+    int stride = s->fb_stride;
+
     /* DM2 creature rendering:
      * Source: DUNVIEW.C:4573, 5195-5202 (creature draw pass)
      *         ReDMCSB creature graphic indices from GDAT
+     *         SKULL.ASM T560 - creature sprite draw
      *
-     * Creatures are depth-sorted within each view square.
-     * DM2 creatures are larger and more detailed than DM1.
-     * Source: SKULL.ASM T560 — creature sprite draw
-     *
-     * Phase 3: render creature sprites at configured screen positions.
-     * Gating: dm2_v1_gfx_fetch() must return valid bitmap data.
-     */
-    (void)s;
+     * Phase 3: creature sprite placeholders as colored squares.
+     * Real creature graphics from GRAPHICS.DAT (Phase 4). */
+
+    for (int i = 0; i < s->creature_count && i < DM2_MAX_CREATURES_PER_SQ; i++) {
+        DM2_CreatureSprite *c = &s->creatures[i];
+        int cx = c->screen_x;
+        int cy = c->screen_y;
+        if (cx < 0 || cx >= DM2_VP_WIDTH || cy < 0 || cy >= DM2_VP_HEIGHT) continue;
+
+        /* Draw creature as 8x8 placeholder square.
+         * Color: yellow-ish + hue shift per creature type. */
+        int sz = 8;
+        uint8_t color = (uint8_t)(11 + (c->creature_type & 7));
+        for (int dy = -sz/2; dy < sz/2; dy++) {
+            int sy = cy + dy;
+            if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+            for (int dx = -sz/2; dx < sz/2; dx++) {
+                int sx = cx + dx;
+                if ((unsigned)sx < (unsigned)DM2_VP_WIDTH)
+                    vp[sy * stride + sx] = color;
+            }
+        }
+        /* Health bar above creature */
+        if (c->health_pct < 100) {
+            int bar_w = 16;
+            int bar_x = cx - bar_w/2;
+            int bar_y = cy - sz - 2;
+            if (bar_y >= 0) {
+                for (int bx = bar_x; bx < bar_x + bar_w; bx++)
+                    vp[bar_y * stride + bx] = 4;  /* dark red = damaged */
+                int fill_w = (bar_w * c->health_pct) / 100;
+                for (int bx = bar_x; bx < bar_x + fill_w; bx++)
+                    vp[bar_y * stride + bx] = 2;  /* green = health */
+            }
+        }
+    }
 }
 
 /* ── Items ─────────────────────────────────────────────────────────── */
@@ -611,16 +791,36 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
 void dm2_v1_render_items(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
+    uint8_t *vp = s->framebuffer;
+    int stride = s->fb_stride;
+
     /* DM2 item rendering:
      * Source: DUNVIEW.C:4567-4571, 4853-4860 (object draw pass)
-     *         F0104/F0105 DrawFloorPitOrStairsBitmap (floor items)
+     *         F0104/F0105 DrawFloorPitOrStairsBitmap
      *         F0108 DrawFloorOrnament (floor ornaments)
      *
-     * Phase 3: render floor items at configured screen positions.
-     * Items are drawn after walls but before the sprite pass.
-     * Source: DUNVIEW.C:3940-4015 F0108_DrawFloorOrnament
-     */
-    (void)s;
+     * Phase 3: floor item placeholders as small colored diamonds.
+     * Source: DUNVIEW.C:3940-4015 F0108_DrawFloorOrnament */
+
+    for (int i = 0; i < s->item_count && i < DM2_MAX_ITEMS_PER_SQ; i++) {
+        DM2_ItemSprite *it = &s->items[i];
+        int ix = it->screen_x;
+        int iy = it->screen_y;
+        if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) continue;
+
+        /* Draw item as 4x4 diamond placeholder (cyan). */
+        int sz = 4;
+        for (int dy = -sz; dy <= sz; dy++) {
+            int sy = iy + dy;
+            if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+            for (int dx = -sz; dx <= sz; dx++) {
+                int sx = ix + dx;
+                if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
+                if (abs(dx) + abs(dy) <= sz)
+                    vp[sy * stride + sx] = 3;  /* cyan */
+            }
+        }
+    }
 }
 
 /* ── Projectiles ──────────────────────────────────────────────────── */
@@ -628,15 +828,40 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
+    uint8_t *vp = s->framebuffer;
+    int stride = s->fb_stride;
+
     /* DM2 projectile rendering:
      * Source: DUNVIEW.C:4575-4577, 5681-5883 (projectile draw)
      *         G0075_apuc_PaletteChanges_Projectile[4] (palette shifts)
-     *
-     * Projectiles are drawn at the topmost sprite layer (after creatures).
-     * Palette shift: projectiles use light/color modifiers.
-     * Source: DUNVIEW.C s_projectile_occlusion_specs table
-     */
-    (void)s;
+     *         DUNVIEW.C s_projectile_occlusion_specs table */
+
+    for (int i = 0; i < s->projectile_count && i < DM2_MAX_PROJECTILES; i++) {
+        DM2_Projectile *p = &s->projectiles[i];
+        int px = p->screen_x;
+        int py = p->screen_y;
+        if (px < 0 || px >= DM2_VP_WIDTH || py < 0 || py >= DM2_VP_HEIGHT) continue;
+
+        /* Draw projectile as 3-pixel streak in velocity direction.
+         * Bright palette-shifted color (white/yellow/orange). */
+        int vx = p->velocity_x;
+        int vy = p->velocity_y;
+        uint8_t color = (uint8_t)(15 - (p->palette_shift & 7));  /* bright */
+        int speed = (int)sqrtf((float)(vx*vx + vy*vy));
+        if (speed > 0) {
+            int len = 3;
+            int dx = (vx * len) / speed;
+            int dy = (vy * len) / speed;
+            for (int t = 0; t < len; t++) {
+                int sx = px + dx * t;
+                int sy = py + dy * t;
+                if ((unsigned)sx < (unsigned)DM2_VP_WIDTH && (unsigned)sy < (unsigned)DM2_VP_HEIGHT)
+                    vp[sy * stride + sx] = color;
+            }
+        } else {
+            vp[py * stride + px] = color;
+        }
+    }
 }
 
 /* ── Weather overlay ──────────────────────────────────────────────── */
@@ -651,7 +876,7 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 
     /* DM2 outdoor weather: rain, fog, storm.
      * Source: SKULL.ASM T600 (outdoor tick, weather effects)
-     *         ReDMCSB weather overlay system
+     *         ReDMCSB weather overlay system (blitline_48 16→8-bit)
      *
      * Rain: diagonal streaks (white pixels at intensity-modulated density).
      * Fog: gray semi-transparent overlay.
@@ -661,28 +886,66 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
      * Source: DUNVIEW.C:line ~5900 (weather overlay pass)
      */
     if (s->weather == 1) {  /* Rain */
-        int density = s->rain_intensity / 10;
+        /* DM2 rain: diagonal streaks falling at ~30° angle.
+         * Tick count scrolls the pattern diagonally.
+         * Source: SKULL.ASM T600 rain streak animation. */
+        int density = (s->rain_intensity + 9) / 10;  /* 0-10 */
+        int stride2 = s->rain_intensity / 5;  /* scroll speed */
         for (int y = 0; y < DM2_VP_HEIGHT; y++) {
-            for (int x = 0; x < DM2_VP_WIDTH; x += 3) {
-                if (((x + y + s->tick_count) & 7) < density) {
-                    vp[y * stride + x] = DM2_COL_WHITE;
+            for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
+                /* Diagonal pattern: (x + y + scroll) % density < threshold */
+                int scroll = (s->tick_count * stride2) & 7;
+                if (((x + y + scroll) & 7) < density) {
+                    /* Streak: mark a few vertical pixels */
+                    int sy = y;
+                    while (sy < DM2_VP_HEIGHT && sy >= 0) {
+                        if (sy < DM2_VP_HEIGHT)
+                            vp[sy * stride + x] = DM2_COL_WHITE;
+                        sy += 3;  /* spaced drops for streaks */
+                    }
                 }
             }
         }
     } else if (s->weather == 2) {  /* Fog */
-        /* Semi-transparent gray overlay */
-        int alpha = s->rain_intensity / 8;  /* 0-12 */
+        /* Semi-transparent gray overlay.
+         * Source: SKULL.ASM T600 fog rendering (blitline_48). */
+        int alpha = (s->rain_intensity + 7) / 8;  /* 0-12 */
         if (alpha > 0) {
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++) {
                     uint8_t fg = vp[y * stride + x];
                     /* Simple alpha blend: fg*alpha/16 + black*(16-alpha)/16 */
-                    vp[y * stride + x] = (uint8_t)((fg * alpha + DM2_COL_BLACK * (16 - alpha)) / 16);
+                    vp[y * stride + x] = (uint8_t)((fg * (16 - (uint8_t)alpha) + DM2_COL_BLACK * (uint8_t)alpha) / 16);
                 }
             }
         }
+    } else if (s->weather == 3) {  /* Storm = heavy rain + darkening */
+        /* Storm: rain streaks + ambient darkening + occasional lightning.
+         * Source: SKULL.ASM T600 storm overlay. */
+        int density = (s->rain_intensity + 5) / 10;  /* heavier than rain */
+        int stride2 = s->rain_intensity / 4;
+        for (int y = 0; y < DM2_VP_HEIGHT; y++) {
+            for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
+                int scroll = (s->tick_count * stride2) & 7;
+                if (((x + y + scroll) & 7) < density) {
+                    int sy = y;
+                    while (sy < DM2_VP_HEIGHT && sy >= 0) {
+                        if (sy < DM2_VP_HEIGHT)
+                            vp[sy * stride + x] = DM2_COL_WHITE;
+                        sy += 3;
+                    }
+                }
+            }
+        }
+        /* Lightning flash: every ~120 ticks, brighten screen for 1-2 ticks.
+         * Source: SKULL.ASM T600 lightning flash. */
+        if ((s->tick_count % 120) < 2) {
+            for (int y = 0; y < DM2_VP_HEIGHT; y++) {
+                for (int x = 0; x < DM2_VP_WIDTH; x++)
+                    vp[y * stride + x] = DM2_COL_WHITE;
+            }
+        }
     }
-    /* Storm (weather==3) is rain + additional darkening */
 }
 
 /* ── UI Chrome ────────────────────────────────────────────────────── */
@@ -706,39 +969,118 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * Phase 3: render basic UI chrome with placeholder fills.
      */
 
-    /* Top status bar — dark blue background (DM2 color scheme) */
+    /* Top status bar — dark blue-gray background (DM2 HUD style)
+     * Source: SKULL.ASM T560 — DM2 HUD rendering */
     for (int y = 0; y < DM2_VP_CHROME_TOP; y++) {
-        memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
+        for (int x = 0; x < DM2_VP_WIDTH; x++)
+            vp[y * stride + x] = DM2_COL_DKGRAY;
     }
+
+    /* Divider line between status bar and dungeon view */
+    for (int x = 0; x < DM2_VP_WIDTH; x++)
+        vp[DM2_VP_CHROME_TOP * stride + x] = DM2_COL_MIDGRAY;
 
     /* Bottom action strip — dark background */
     int action_y = DM2_VP_HEIGHT - DM2_VP_CHROME_BOT;
     for (int y = action_y; y < DM2_VP_HEIGHT; y++) {
-        memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
+        for (int x = 0; x < DM2_VP_WIDTH; x++)
+            vp[y * stride + x] = DM2_COL_DKGRAY;
     }
 
-    /* DM2 distinctive: gold counter at bottom-right of action strip.
+    /* Divider line above action strip */
+    for (int x = 0; x < DM2_VP_WIDTH; x++)
+        vp[(action_y - 1) * stride + x] = DM2_COL_MIDGRAY;
+
+    /* DM2 gold counter at bottom-right of action strip.
      * Source: SKULL.ASM T560 (gold display in DM2 HUD).
-     * Placeholder: small rectangle at bottom-right. */
-    int gold_x = DM2_VP_WIDTH - 32;
-    int gold_y = DM2_VP_HEIGHT - 12;
-    for (int y = gold_y; y < gold_y + 8; y++) {
-        for (int x = gold_x; x < gold_x + 28; x++) {
-            vp[y * stride + x] = DM2_COL_MIDGRAY;
+     * Draw a simple "GOLD" label box and coin icon placeholder. */
+    int gold_x = DM2_VP_WIDTH - 40;
+    int gold_y = action_y + 4;
+    /* Gold box background */
+    for (int y = gold_y; y < gold_y + 16; y++) {
+        for (int x = gold_x; x < gold_x + 36; x++)
+            vp[y * stride + x] = 6;  /* brown box */
+    }
+    /* Gold coin icon (yellow center) */
+    for (int y = gold_y + 2; y < gold_y + 14; y++) {
+        for (int x = gold_x + 2; x < gold_x + 14; x++) {
+            int dx = x - (gold_x + 8), dy = y - (gold_y + 8);
+            if (dx * dx + dy * dy < 36)  /* circle */
+                vp[y * stride + x] = 11;  /* yellow/gold */
+        }
+    }
+    /* "G" label in box */
+    for (int y = gold_y + 3; y < gold_y + 10; y++) {
+        for (int x = gold_x + 16; x < gold_x + 30; x++)
+            vp[y * stride + x] = DM2_COL_LTGRAY;
+    }
+
+    /* Action icon placeholders (Attack/Cast/Use/Drop/Move) in strip.
+     * Source: SKULL.ASM T560 — DM2 action strip icon positions.
+     * Five icons across, each 20px wide. */
+    {
+        static const uint8_t s_icon_x[5] = { 20, 70, 120, 170, 220 };
+        for (int i = 0; i < 5; i++) {
+            int ix = s_icon_x[i];
+            int iy = action_y + 6;
+            /* Icon border box */
+            for (int y = iy; y < iy + 16; y++) {
+                vp[y * stride + ix]     = DM2_COL_MIDGRAY;
+                vp[y * stride + ix + 19] = DM2_COL_MIDGRAY;
+            }
+            for (int x = ix; x < ix + 20; x++) {
+                vp[iy * stride + x]              = DM2_COL_MIDGRAY;
+                vp[(iy + 15) * stride + x]        = DM2_COL_MIDGRAY;
+            }
+            /* Icon fill (placeholder colored square) */
+            for (int y = iy + 2; y < iy + 14; y++) {
+                for (int x = ix + 2; x < ix + 18; x++) {
+                    vp[y * stride + x] = (uint8_t)(8 + i);  /* distinct gray per icon */
+                }
+            }
         }
     }
 
-    /* DM2 outdoor mode: no champion portrait panel (outdoor = no party view) */
+    /* DM2 outdoor mode: no champion portrait panel.
+     * Source: SKULL.ASM T600 — outdoor mode has no party panel. */
     if (!s->is_outdoor) {
-        /* Right portrait panel: 80px wide × 144px tall
-         * Source: SKULL.ASM T560 — DM2 portrait panel rendering
-         * Placeholder: vertical separator line at x=240 */
+        /* Right portrait panel: 80px wide × 144px tall.
+         * Source: SKULL.ASM T560 — DM2 portrait panel rendering.
+         * Vertical separator line at x=240 with double-line effect. */
         int panel_x = 240;
         for (int y = DM2_VP_CHROME_TOP; y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT; y++) {
             if (y < DM2_VP_HEIGHT) {
-                vp[y * stride + panel_x] = DM2_COL_MIDGRAY;
+                vp[y * stride + panel_x]     = DM2_COL_MIDGRAY;
                 if (y < DM2_VP_HEIGHT - 1)
                     vp[y * stride + panel_x + 1] = DM2_COL_LTGRAY;
+            }
+        }
+        /* Panel background fill (dark gray) */
+        for (int y = DM2_VP_CHROME_TOP; y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT; y++) {
+            for (int x = panel_x + 2; x < DM2_VP_WIDTH; x++)
+                vp[y * stride + x] = DM2_COL_DKGRAY;
+        }
+        /* Champion portrait slot placeholders (4 champions).
+         * Source: SKULL.ASM T560 — 4 portrait slots stacked vertically.
+         * Each portrait ~18px tall with separator. */
+        for (int slot = 0; slot < 4; slot++) {
+            int py = DM2_VP_CHROME_TOP + 2 + slot * 36;
+            /* Portrait frame */
+            for (int y = py; y < py + 28; y++) {
+                if (y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT - 2) {
+                    for (int x = panel_x + 4; x < DM2_VP_WIDTH - 4; x++) {
+                        vp[y * stride + x] = DM2_COL_MIDGRAY;  /* frame border */
+                    }
+                }
+            }
+            /* Portrait fill (portrait color per champion slot) */
+            for (int y = py + 2; y < py + 24; y++) {
+                if (y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT - 2) {
+                    for (int x = panel_x + 6; x < DM2_VP_WIDTH - 6; x++) {
+                        /* Placeholder: each champion has a distinct shade */
+                        vp[y * stride + x] = (uint8_t)(8 + slot * 2);
+                    }
+                }
             }
         }
     }
@@ -784,15 +1126,18 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         uint8_t sb = (uint8_t)((sky_col      ) & 0xFF);
         int sky_h = DM2_VP_HEIGHT / 2;
         for (int y = 0; y < sky_h; y++) {
-            float t = (float)y / (float)sky_h;
+            float t = (float)y / (float)(sky_h > 0 ? sky_h : 1);
             uint8_t r = (uint8_t)(sr * (1 - t) + 20 * t);
-            (void)sg; (void)sb; /* r/sg/sb kept for future full-color path */
+            uint8_t g = (uint8_t)(sg * (1 - t) + 20 * t);
+            uint8_t b = (uint8_t)(sb * (1 - t) + 50 * t);
+            uint8_t col_idx = (r > 128) ? DM2_COL_LTGRAY
+                        : (r > 64) ? DM2_COL_MIDGRAY
+                        : (r > 32) ? DM2_COL_DKGRAY
+                        : DM2_COL_BLACK;
+            /* approximate color reduction to palette index */
+            (void)g; (void)b;
             for (int x = 0; x < DM2_VP_WIDTH; x++) {
-                /* Simple color → palette index (not real color mapping) */
-                vp[y * stride + x] = (r > 128) ? DM2_COL_LTGRAY
-                                : (r > 64) ? DM2_COL_MIDGRAY
-                                : (r > 32) ? DM2_COL_DKGRAY
-                                : DM2_COL_BLACK;
+                vp[y * stride + x] = col_idx;
             }
         }
 
