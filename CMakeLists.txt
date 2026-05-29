@@ -702,6 +702,89 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_utility_import
     )
 
+    # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
+
+    add_executable(probe_dm2_v1_dungeon_loader
+        probes/firestaff_dm2_v1_dungeon_parser_probe.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(probe_dm2_v1_dungeon_loader PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(probe_dm2_v1_dungeon_loader PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(probe_dm2_v1_dungeon_loader PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon
+        COMMAND probe_dm2_v1_dungeon_loader "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(probe_dm2_v1_object_model
+        probes/dm2/firestaff_dm2_v1_object_model_probe.c
+        src/dm2/dm2_v1_object_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(probe_dm2_v1_object_model PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm2
+    )
+    target_link_libraries(probe_dm2_v1_object_model PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(probe_dm2_v1_object_model PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_object
+        COMMAND probe_dm2_v1_object_model "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(probe_dm2_v1_world_state
+        probes/dm2/firestaff_dm2_v1_world_state_probe.c
+        src/dm2/dm2_v1_world_state.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(probe_dm2_v1_world_state PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(probe_dm2_v1_world_state PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(probe_dm2_v1_world_state PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_world
+        COMMAND probe_dm2_v1_world_state "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(probe_dm2_v1_asset_loader
+        probes/dm2/firestaff_dm2_v1_asset_loader_probe.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(probe_dm2_v1_asset_loader PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(probe_dm2_v1_asset_loader PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(probe_dm2_v1_asset_loader PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_asset
+        COMMAND probe_dm2_v1_asset_loader "$ENV{HOME}/.firestaff/data/dm2/GRAPHICS.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     add_executable(test_dm2_v2_hud_overlay
         tests/test_dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_hud_overlay.c
@@ -4027,10 +4110,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_executable(firestaff_theron_v1_tile_renderer_probe
         probes/theron/firestaff_theron_v1_tile_renderer_probe.c
+        src/theron/theron_v1_tile_renderer.c
+        src/theron/theron_v1_ui_chrome.c
+        src/theron/theron_v1_asset_loader.c
+        src/theron/theron_v1_palette.c
+        src/theron/theron_v1_champions.c
+        src/theron/theron_v1_world.c
     )
-    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
-        firestaff_theron
-    )
+    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE m)
     target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron

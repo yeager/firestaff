@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 
 /* ── Internal helpers ──────────────────────────────────────────────── */
 
@@ -270,7 +271,7 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
         /* Each tile is 2 bytes (LE uint16), column-major: (x*height+y)*2.
          * Source: dm2_v1_dungeon_loader.c column-major tile access formula. */
         size_t tile_bytes = (size_t)w * (size_t)h * 2;
-        if (decoded_size < (ssize_t)tile_bytes) break;
+        if ((size_t)decoded_size < tile_bytes) break;
         world->levels[i].tiles = malloc((size_t)w * h * sizeof(dm2_tile_t));
         if (!world->levels[i].tiles) break;
         for (int x = 0; x < w; x++) {
