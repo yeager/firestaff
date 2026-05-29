@@ -3814,22 +3814,22 @@ if(NOT MSVC)
     )
 endif()
 
-# ── Nexus V1 launch smoke probe ─────────────────────────────────────
-# Verifies: launcher init → Structure1B DGN load → render → tick
-add_executable(firestaff_nexus_v1_launch_smoke_probe
-    probes/nexus_v1_launch_smoke_probe.c
-)
-target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    firestaff_nexus firestaff_m10
-)
-target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-if(NOT MSVC)
-    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-        -Wall -Wextra -O2
-    )
-endif()
+# ── Nexus V1 launch smoke probe (DISABLED — source file never committed) ──
+# probes/nexus_v1_launch_smoke_probe.c is untracked locally; target orphaned.
+# add_executable(firestaff_nexus_v1_launch_smoke_probe
+#     probes/nexus_v1_launch_smoke_probe.c
+# )
+# target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     firestaff_nexus firestaff_m10
+# )
+# target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include
+# )
+# if(NOT MSVC)
+#     target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#         -Wall -Wextra -O2
+#     )
+# endif()
 
 
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
