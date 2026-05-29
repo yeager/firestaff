@@ -188,6 +188,8 @@ void dm1_v2_vp_mark_dirty(DM1_V2_ViewportState* vp);
 int dm1_v2_vp_is_dirty(const DM1_V2_ViewportState* vp);
 int dm1_v2_vp_use_flipped_wall_bitmaps(int mapX, int mapY, int direction);
 int dm1_v2_vp_square_occludes_beyond(DM1_V2_ViewSquare square, int element);
+
+DM1_V2_ViewSquare dm1_v2_vp_square_id(int depth, int lateral);
 void dm1_v2_vp_present(DM1_V2_ViewportState* vp, int32_t nowMs);
 void dm1_v2_vp_composition_init(DM1_V2_ViewportCompositionInput* input);
 int dm1_v2_vp_relative_coords(int direction, int mapX, int mapY, int forward, int right, int* outX, int* outY);

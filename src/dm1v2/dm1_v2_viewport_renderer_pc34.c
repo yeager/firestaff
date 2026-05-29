@@ -273,7 +273,7 @@ static int dm1_v2_vp_lateral_index(int lateral) {
     return 1;
 }
 
-static DM1_V2_ViewSquare dm1_v2_vp_square_id(int depth, int lateral) {
+DM1_V2_ViewSquare dm1_v2_vp_square_id(int depth, int lateral) {
     if (depth == 3 && lateral < 0) return DM1_V2_VIEW_SQUARE_D3L;
     if (depth == 3 && lateral > 0) return DM1_V2_VIEW_SQUARE_D3R;
     if (depth == 3) return DM1_V2_VIEW_SQUARE_D3C;

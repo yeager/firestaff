@@ -186,6 +186,18 @@ typedef enum {
     M11_V22_FLOOR_TILE_COUNT
 } M11_V22_FloorTilePattern;
 
+/* Floor shape geometry variants — indices into g_floor_shapes[].
+ * These map to dungeon cell types and carry pit/stairs/door geometry. */
+typedef enum {
+    FLOOR_SHAPE_PLAIN       = 0,
+    FLOOR_SHAPE_CRACKED    = 1,
+    FLOOR_SHAPE_MOSSY      = 2,
+    FLOOR_SHAPE_PIT        = 3,
+    FLOOR_SHAPE_STAIRS_UP  = 4,
+    FLOOR_SHAPE_STAIRS_DOWN = 5,
+    FLOOR_SHAPE_COUNT      /* sentinel for array sizing */
+} FloorShapeType;
+
 typedef struct {
     int                 base_texture_id;
     int                 normal_map_id;
