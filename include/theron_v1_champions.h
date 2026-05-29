@@ -214,6 +214,10 @@ Theron_V1_Champion *theron_v1_party_getChampion(Theron_V1_Party *party, int slot
 /* Get the active leader (Theron by default, or player-selected). */
 Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party);
 
+/* Const-correct versions — use when world/state is const. */
+const Theron_V1_Champion *theron_v1_party_getChampion_c(const Theron_V1_Party *party, int slot);
+const Theron_V1_Champion *theron_v1_party_leader_c(const Theron_V1_Party *party);
+
 /* Pack party state into a flat byte buffer for save/load.
  * Size must be >= theron_v1_party_pack_size(). */
 size_t theron_v1_party_pack(const Theron_V1_Party *party, void *buf, size_t bufsize);
