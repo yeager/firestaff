@@ -284,6 +284,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Phase 6 — Utility/Import Flow Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: champion block size (256), DM1→CSB import, import state machine,
+# utility flow state machine, disk verification, source evidence.
+add_executable(firestaff_csb_v1_utility_import_probe
+    probes/csb/firestaff_csb_v1_utility_import_probe.c
+    src/csb/csb_v1_utility_import_pc34.c
+    src/csb/csb_v1_utility_flow_pc34.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_utility_import_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_utility_import_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_utility_import_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2.1 asset pipeline probe (pass648)
 add_executable(firestaff_pass648_dm1_v2_asset_pipeline_probe probes/verify_pass648_dm1_v2_asset_pipeline.c)
 target_link_libraries(firestaff_pass648_dm1_v2_asset_pipeline_probe PRIVATE firestaff_v2 firestaff_m10)
@@ -4142,14 +4160,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_executable(firestaff_theron_v1_tile_renderer_probe
         probes/theron/firestaff_theron_v1_tile_renderer_probe.c
-        src/theron/theron_v1_tile_renderer.c
-        src/theron/theron_v1_ui_chrome.c
-        src/theron/theron_v1_asset_loader.c
-        src/theron/theron_v1_palette.c
-        src/theron/theron_v1_champions.c
-        src/theron/theron_v1_world.c
     )
-    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE m)
+    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
+        firestaff_theron
+    )
     target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
