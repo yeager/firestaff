@@ -308,7 +308,6 @@ static M11_V22_ShapeParams params_from_wall(const M11_V22_WallShape* ws,
     p.material_id = (ws->roughness > 0.7f) ? M11_V22_MAT_STONE_WALL
                                            : M11_V22_MAT_METAL;
     p.lighting_mode = mode;
-    p.roughness = ws->roughness;
     p.ao_strength = ws->ao_strength;
     p.depth_offset = ws->depth_offset;
     p.vertical_flip = ws->flipped;
