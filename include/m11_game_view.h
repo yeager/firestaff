@@ -30,7 +30,8 @@ typedef enum {
 typedef enum {
     M11_GAME_SOURCE_BUILTIN_CATALOG = 0,
     M11_GAME_SOURCE_CUSTOM_DUNGEON,
-    M11_GAME_SOURCE_DIRECT_DUNGEON
+    M11_GAME_SOURCE_DIRECT_DUNGEON,
+    M11_GAME_SOURCE_NEXUS_DGN
 } M11_GameSourceKind;
 
 typedef struct {
@@ -341,6 +342,15 @@ typedef struct {
         int active, turning;
         int turnPanEnabled;
     } p5_camera;
+
+    /* Nexus V1 engine — active when sourceKind == M11_GAME_SOURCE_NEXUS_DGN.
+     * Owned by nexus_v1_launcher.c (singleton). */
+    struct Nexus_V1_Engine *nexusEngine;
+    struct {
+        int level_loaded;
+        int party_x, party_y, party_dir;
+        int tick_count;
+    } nexusState;
 } M11_GameViewState;
 
 /* Spell casting API */

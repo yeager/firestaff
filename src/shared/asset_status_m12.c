@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* dm1_v2_modern_assets_pc34.h provides the V2.2 modern-assets pipeline
+ * (manifest validation, shape-source fallback chain, missing-asset guard).
+ * It is compiled into firestaff_v2 and linked via firestaff_m11 → firestaff_m12,
+ * so the symbols are available at M12 link time. */
+#include "dm1_v2_asset_pipeline_pc34.h"
+
 #define M12_SEARCH_ROOT_COUNT 3
 
 typedef struct {
@@ -509,6 +515,19 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot);
     }
+
+    /* V2.2 Modern Graphics asset pack detection.
+     * Set up the manifest path relative to the resolved data dir and query
+     * whether the modern asset pack is installed. The result is stored in
+     * both g_v22_modern_assets_installed (module state, used by the
+     * fallback chain) and status->v22_modern_assets_installed (caller-visible
+     * struct field, used by the launcher UI to show "(not installed)"). */
+    m11_v22_set_manifest_path(status->dataDir);
+    {
+        int installed = m11_v22_modern_assets_available();
+        status->v22_modern_assets_installed = installed;
+        m11_v22_set_installed(installed);
+    }
 }
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
@@ -610,4 +629,11 @@ int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) 
         }
     }
     return -1;
+}
+
+/* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
+ * valid (critical shape categories present), 0 otherwise.
+ * Set during M12_AssetStatus_Scan(). */
+int M12_AssetStatus_V22ModernAssetsInstalled(const M12_AssetStatus* status) {
+    return status ? status->v22_modern_assets_installed : 0;
 }

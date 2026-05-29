@@ -30,6 +30,8 @@
 #include "render_sdl_m11.h"
 #include "dm1v2/dm1_v2_filters.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ── Module config ────────────────────────────────────────────────── */
@@ -52,6 +54,10 @@ static const uint8_t k_source_palette_light_amount_floor[DM1_V2_PALETTE_LEVELS] 
 
 /* Module state */
 static int g_pipeline_initialized = 0;
+
+/* V2.2 modern asset mode state */
+static DM1_V2_AssetMode g_asset_mode = DM1_V2_ASSET_MODE_UPSCALED;
+static char g_modern_asset_root[512] = {0};
 
 /* Per-category source anchor table */
 static const char* k_category_evidence[DM1_V2_SURFACE_COUNT] = {
@@ -413,4 +419,77 @@ const char* dm1_v2_asset_pipeline_source_evidence(void) {
 const char* dm1_v2_asset_surface_category_name(DM1_V2_SurfaceCategory cat) {
     if (cat <= DM1_V2_SURFACE_UNKNOWN || cat >= DM1_V2_SURFACE_COUNT) return "unknown";
     return k_category_names[cat];
+}
+/* ── V2.2 Modern Asset Mode API ────────────────────────────────────── */
+
+/* Platform-specific home directory expansion for modern assets.
+ * On failure returns "". Caller must copy if persistence is needed. */
+static void dm1_v2_get_home_dir(char* out, size_t outSize) {
+    if (!out || outSize == 0) return;
+    out[0] = '\0';
+#if defined(_WIN32) || defined(_WIN64)
+    {
+        const char* home = getenv("USERPROFILE");
+        if (home && home[0]) {
+            snprintf(out, outSize, "%s", home);
+        }
+    }
+#else
+    {
+        const char* home = getenv("HOME");
+        if (home && home[0]) {
+            snprintf(out, outSize, "%s", home);
+        }
+    }
+#endif
+}
+
+DM1_V2_AssetMode DM1_V2_GetAssetMode(void) {
+    return g_asset_mode;
+}
+
+void DM1_V2_SetAssetMode(DM1_V2_AssetMode mode) {
+    if (mode < DM1_V2_ASSET_MODE_ORIGINAL || mode > DM1_V2_ASSET_MODE_MODERN) return;
+    g_asset_mode = mode;
+}
+
+int DM1_V2_IsModernAssetMode(void) {
+    return g_asset_mode == DM1_V2_ASSET_MODE_MODERN ? 1 : 0;
+}
+
+/* Scan for modern asset manifest at:
+ *   ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json
+ *
+ * If present, record the root so the renderer can build paths for
+ * individual surface files. If missing, silently fall back to V2.1
+ * (no error; the renderer uses the EPX-upscales pipeline path instead). */
+int DM1_V2_LoadModernAssetManifest(void) {
+    char home[512] = {0};
+    char manifest_path[768] = {0};
+    FILE* fp = NULL;
+
+    dm1_v2_get_home_dir(home, sizeof(home));
+    if (!home[0]) return 0;
+
+    snprintf(manifest_path, sizeof(manifest_path),
+             "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json",
+             home);
+
+    fp = fopen(manifest_path, "r");
+    if (!fp) {
+        /* No modern assets — silent fallback to V2.1 */
+        g_modern_asset_root[0] = '\0';
+        return 0;
+    }
+    fclose(fp);
+
+    /* Record the root so renderer can build paths for individual surfaces */
+    snprintf(g_modern_asset_root, sizeof(g_modern_asset_root),
+             "%s/.firestaff/assets/dm1/modern", home);
+
+    return 1;
+}
+
+const char* DM1_V2_GetModernAssetRoot(void) {
+    return g_modern_asset_root[0] ? g_modern_asset_root : "";
 }

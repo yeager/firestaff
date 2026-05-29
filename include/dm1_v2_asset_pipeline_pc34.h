@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V2_ASSET_PIPELINE_PC34_H
 #define FIRESTAFF_DM1_V2_ASSET_PIPELINE_PC34_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,6 +67,20 @@ typedef enum {
     DM1_V2_SURFACE_ENTRANCE,          /* Entrance animation surface */
     DM1_V2_SURFACE_COUNT
 } DM1_V2_SurfaceCategory;
+
+/* ── V2 asset mode — which graphics set is active ─────────────────── */
+
+/* V2.2 (Modern): assets live in ~/.firestaff/assets/dm1/modern/.
+ * V2.2 renders at 1920×1080 using generated/modern 3D-rendered 2D art
+ * as a drop-in replacement for the EPX-upscales V2.1 surfaces.
+ * When MODERN mode is active the renderer bypasses V1 indexed surfaces
+ * and reads pre-rendered RGBA PNG/TGA files keyed by surface category. */
+typedef enum {
+    DM1_V2_ASSET_MODE_ORIGINAL = 0,  /* V1: raw GRAPHICS.DAT indexed surfaces */
+    DM1_V2_ASSET_MODE_FILTERED  = 1, /* V2.0: scanlines + palette correction */
+    DM1_V2_ASSET_MODE_UPSCALED  = 2, /* V2.1: EPX 2x from V1 indexed */
+    DM1_V2_ASSET_MODE_MODERN    = 3  /* V2.2: modern 3D-rendered 1920×1080 */
+} DM1_V2_AssetMode;
 
 /* ── Palette / light-level constants ──────────────────────────────── */
 
@@ -131,6 +147,19 @@ void dm1_v2_asset_pipeline_init(void);
 void dm1_v2_asset_pipeline_configure(const DM1_V2_AssetPipelineConfig* config);
 const DM1_V2_AssetPipelineConfig* dm1_v2_asset_pipeline_get_config(void);
 
+/* V2.2 modern asset mode API */
+DM1_V2_AssetMode DM1_V2_GetAssetMode(void);
+void DM1_V2_SetAssetMode(DM1_V2_AssetMode mode);
+int DM1_V2_IsModernAssetMode(void);
+
+/* Modern asset loading: scan ~/.firestaff/assets/dm1/modern/ for the
+ * modern_asset_manifest.json. Returns 1 if present and loaded, 0 if
+ * not found (caller falls back to V2.1 path silently). */
+int DM1_V2_LoadModernAssetManifest(void);
+
+/* Returns the modern asset root path, or "" if not available. */
+const char* DM1_V2_GetModernAssetRoot(void);
+
 /* Per-category surface upscale.
  * V2.1: all surfaces go through the same EPX 2x → palette → RGBA pipeline.
  * The category argument selects the source surface and provides metadata
@@ -169,6 +198,88 @@ void dm1_v2_asset_invalidate_cached_palette(void);
 
 const char* dm1_v2_asset_pipeline_source_evidence(void);
 const char* dm1_v2_asset_surface_category_name(DM1_V2_SurfaceCategory cat);
+
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.2 Modern Graphics — Fallback Pipeline
+ *
+ * V2.2 is the third presentation mode alongside V2.0 (Filtered) and
+ * V2.1 (Upscaled). Modern assets are shipped as a separate optional
+ * asset pack. When unavailable, the system falls back in order:
+ *   MODERN (V2.2) → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1)
+ *
+ * Asset-not-found guard: if a specific modern asset cannot be opened,
+ * the shape system returns DM1_V22_SHAPE_MISSING_PLACEHOLDER (16×16
+ * magenta checkerboard) rather than crashing.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* Shape source enum — determines which art pipeline feeds the renderer.
+ * Used by m11_v22_best_available_shape_source() to select the best
+ * available pipeline given the current config and asset state. */
+typedef enum {
+    DM1_V22_SHAPE_SOURCE_V1_ORIGINAL = 0,  /* 320×200 native V1 */
+    DM1_V22_SHAPE_SOURCE_V2_FILTERED,       /* V1 + scanline/palette post-process */
+    DM1_V22_SHAPE_SOURCE_V2_UPSCALED,       /* EPX 2x + palette → RGBA (V2.1) */
+    DM1_V22_SHAPE_SOURCE_V2_MODERN,          /* Modern hand-crafted 1920×1080 assets */
+} DM1_V22_ShapeSource;
+
+/* ── V2.2 Modern Asset Detection ─────────────────────────────────── */
+
+/* Set the modern asset manifest path. Called by M12_AssetStatus_Scan()
+ * after resolving the Firestaff data directory.
+ * Path: <dataDir>/../assets/dm1/modern/modern_asset_manifest.json */
+void m11_v22_set_manifest_path(const char* data_dir);
+
+/* Validate the modern asset manifest JSON.
+ * Returns: -1 on error (missing/invalid), 0 if partial, 1 if complete.
+ * Checks: all required categories present + first entry of each has
+ * id, source_file, width, height fields. */
+int m11_v22_validate_manifest(const char* manifest_path);
+
+/* Check if the modern asset pack is installed and has critical categories.
+ * Returns 1 if available (wall_shapes, floor_shapes, creature_shapes
+ * all have at least one entry), 0 otherwise. */
+int m11_v22_modern_assets_available(void);
+
+/* ── V2.2 Runtime State ─────────────────────────────────────────── */
+
+/* Called at startup by M12_AssetStatus_Scan() after detecting whether
+ * the modern asset pack is present. */
+void m11_v22_set_installed(int installed);
+int m11_v22_get_installed(void);
+
+/* EPX cache warm/cold state for V2.1 upscale.
+ * When UPSCALED mode is selected but EPX cache is cold,
+ * the system falls back to FILTERED (V2.0). */
+void m11_v22_set_epx_cache_warm(int warm);
+int m11_v22_get_epx_cache_warm(void);
+
+/* Returns the best available shape source given the presentation mode
+ * index (0=V1, 1=V2.0, 2=V2.1, 3=V2.2) and current asset state.
+ * Applies the fallback chain automatically.
+ * Logs warnings when falling back (V2.2→V2.1, V2.1 cache cold→V2.0). */
+DM1_V22_ShapeSource m11_v22_best_available_shape_source(int presentation_mode_index);
+
+/* Human-readable name for a shape source enum value. */
+const char* m11_v22_shape_source_name(DM1_V22_ShapeSource src);
+
+/* ── Missing Asset Guard ─────────────────────────────────────────── */
+
+/* Returns the 16×16 RGBA missing-asset placeholder surface
+ * (magenta checkerboard). Never returns NULL; out_w/out_h are
+ * always set to 16 on success. */
+const uint32_t* m11_v22_get_missing_placeholder(int* out_w, int* out_h);
+
+/* Look up a modern asset file path from the manifest.
+ * category: e.g. "wall_shapes", "creature_shapes"
+ * asset_id: the "id" field from the manifest entry
+ * out_path: filled with the full filesystem path on success
+ * Returns 1 if found and file exists, 0 otherwise.
+ * If manifest is unavailable or asset not found, returns 0 and
+ * the caller should use m11_v22_get_missing_placeholder(). */
+int m11_v22_get_shape_path(const char* category, const char* asset_id,
+                            char* out_path, size_t out_path_size);
+
+/* ── Source evidence ──────────────────────────────────────────────── */
 
 #ifdef __cplusplus
 }

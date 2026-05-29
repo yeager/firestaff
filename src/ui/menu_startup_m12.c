@@ -1252,6 +1252,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     M11_Ambient_SetEnabled(config.ambientEnabled);
     M11_Ambient_SetVolume(config.ambientVolume);
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
+    /* Mirror V2.2 modern-assets installation state into the config struct
+     * so the value is persisted on save (even though it's set by
+     * M12_AssetStatus_Scan at runtime, not by the user). */
+    config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);
     }
@@ -2267,8 +2271,18 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACCEPT:
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
-                    /* Launch row — V3 blocks launch with coming-soon message */
-                    if (pmode == M12_PRESENTATION_V22_MODERN) {
+                    /* Launch row — when V2.2 mode is selected but modern assets
+                     * are not installed, the fallback chain kicks in at runtime
+                     * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
+                     * and the best available shape source is used. */
+                    if (pmode == M12_PRESENTATION_V22_MODERN &&
+                        !M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus)) {
+                        /* Assets not installed — proceed with launch; fallback
+                         * happens at runtime via m11_v22_best_available_shape_source(). */
+                    } else if (pmode == M12_PRESENTATION_V22_MODERN) {
+                        /* V2.2 selected and installed — currently blocked as
+                         * "COMING SOON" since the V2.2 renderer is not yet
+                         * implemented. Remove this block once rendering is wired. */
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
@@ -5860,13 +5874,23 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   m12_tr(state, "GAME OPTIONS"),
                   &g_textSmallAccent);
     /* Mode badge */
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  panelX + 10,
-                  contentY + 20,
-                  m12_tr(state, g_presentationModes[pmode]),
-                  pmode == M12_PRESENTATION_V22_MODERN ? &g_textSmallMuted : &g_textSmallShadow);
+    {
+        const char* modeLabel = g_presentationModes[pmode];
+        char modeBadge[64];
+        if (pmode == M12_PRESENTATION_V22_MODERN &&
+            !M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus)) {
+            snprintf(modeBadge, sizeof(modeBadge), "%s (not installed)",
+                     m12_tr(state, modeLabel));
+            modeLabel = modeBadge;
+        }
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 10,
+                      contentY + 20,
+                      m12_tr(state, modeLabel),
+                      pmode == M12_PRESENTATION_V22_MODERN ? &g_textSmallMuted : &g_textSmallShadow);
+    }
     {
         char rendererLine[96];
         snprintf(rendererLine, sizeof(rendererLine), "%s: %s (%s)",

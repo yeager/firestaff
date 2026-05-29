@@ -45,6 +45,7 @@
 
 #include <stdint.h>
 #include "csb_v1_game_state_pc34_compat.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -239,6 +240,13 @@ typedef struct {
     const char             *save_dir;  /* resolved at init via _save_dir_x() */
     const char             *dungeon_path;
     const char             *graphics_path;
+
+    /* ── Dungeon data (owned) ─────────────────────── */
+    /* Heap-allocated dungeon loaded by csb_v1_runtime_boot().
+     * Freed by csb_v1_runtime_cleanup() or during a subsequent boot.
+     * Also accessible via csb_v1_dungeon_get_current() for dungeon-layer
+     * accessor stubs in csb_v1_dungeon_world_pc34_compat.c. */
+    CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
 
 /* ── Runtime profile API ─────────────────────────────────────────────── */
@@ -248,10 +256,25 @@ typedef struct {
  * Does NOT boot the dungeon or initialize Chaos Magic. */
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
 
+/* Clean up runtime resources.
+ * Unloads the dungeon data loaded by csb_v1_runtime_boot().
+ * Idempotent: safe to call when no dungeon is loaded.
+ * After this call, dungeon-layer accessors return ENDOF until
+ * csb_v1_runtime_boot() is called again with a valid dungeon. */
+void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile);
+
 /* Boot the CSB dungeon and initialize Chaos Magic.
- * Finds DUNGEON.DAT by hash, sets dungeon_seed/game_id.
- * Initializes the spell grid (F0211_CASTER_ClearSpellEffects).
- * Returns 0 on success, -1 if dungeon not found.
+ * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the
+ * dungeon data into the current dungeon context
+ * (csb_v1_dungeon_load_from_file + csb_v1_dungeon_set_current), sets
+ * dungeon_seed/game_id from the dungeon header, and initializes the spell
+ * grid (F0211_CASTER_ClearSpellEffects).
+ *
+ * On success, the dungeon is accessible via csb_v1_dungeon_get_current()
+ * and dungeon-layer accessors in csb_v1_dungeon_world_pc34_compat.h are
+ * live.  Call csb_v1_runtime_cleanup() to unload before shutdown.
+ *
+ * Returns 0 on success, -1 if dungeon not found or load fails.
  * On success, profile->dungeon_path and ->graphics_path are set. */
 int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
                           const char *data_dir,
