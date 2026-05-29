@@ -432,6 +432,30 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->save_dir = csb_v1_runtime_save_dir();
 }
 
+void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
+    if (!profile) return;
+    /*
+     * Unload the dungeon loaded by csb_v1_runtime_boot().
+     * csb_v1_dungeon_unload() frees the dungeon data (raw_data,
+     * dsa_offsets) via csb_v1_dungeon_free() and clears s_current_dungeon,
+     * resetting dungeon-layer accessors to ENDOF.
+     *
+     * FIX (pass608): dungeon is now heap-allocated in csb_v1_runtime_boot()
+     * and profile->dungeon_handle owns the allocation.  After calling
+     * csb_v1_dungeon_unload() we also free(profile->dungeon_handle) to
+     * release the heap struct and NULL the pointer.
+     *
+     * csb_v1_dungeon_free() does NOT free the struct itself (only inner
+     * pointers), so free(dungeon_handle) is safe after csb_v1_dungeon_unload().
+     */
+    csb_v1_dungeon_unload();
+    if (profile->dungeon_handle) {
+        free(profile->dungeon_handle);
+        profile->dungeon_handle = NULL;
+    }
+}
+
+
 int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
                           const char *data_dir,
                           const char *version_hint)
@@ -451,6 +475,40 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
     if (!dun_path) return -1;
     profile->dungeon_path = dun_path;
     profile->dungeon_asset = dun_result;
+
+    /* Step 1b: Load the dungeon data (CSB V1 Phase 2 — real asset ingestion)
+     * Uses csb_v1_dungeon_load_from_file() to read the actual DUNGEON.DAT
+     * into the current dungeon context.  Dungeon-layer accessors in
+     * csb_v1_dungeon_world_pc34_compat.h become live after this.
+     *
+     * FIX (pass608): dungeon MUST be heap-allocated.  The previous
+     * implementation created a stack-local CSB_V1_DungeonData and passed
+     * &dungeon to csb_v1_dungeon_set_current().  After boot() returns,
+     * the stack variable goes out of scope and s_current_dungeon becomes
+     * a dangling pointer.  This is a critical memory safety bug.
+     *
+     * The dungeon_handle field in CSB_V1_RuntimeProfile owns the heap
+     * allocation.  csb_v1_dungeon_set_current() transfers inner-data
+     * ownership (raw_data/dsa_offsets) but the struct itself is freed
+     * by the profile in csb_v1_runtime_cleanup().
+     *
+     * Source: CSBWin/CSBCode.cpp LoadDungeon lines 6800-6950 */
+    {
+        /* Heap-allocate to avoid dangling pointer in s_current_dungeon */
+        CSB_V1_DungeonData *dungeon = calloc(1, sizeof(CSB_V1_DungeonData));
+        if (!dungeon) {
+            /* Fall through — dungeon-layer accessors return ENDOF */
+        } else if (csb_v1_dungeon_load_from_file(dungeon, dun_path) == 0) {
+            profile->dungeon_handle = dungeon;
+            csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
+            csb_v1_dungeon_set_current_level(0);   /* start at level 0 */
+        } else {
+            free(dungeon);
+            profile->dungeon_handle = NULL;
+        }
+        /* If load fails (corrupt/missing file), boot continues without dungeon.
+         * Dungeon-layer accessors will return ENDOF until a dungeon is loaded. */
+    }
 
     /* Step 2: Find graphics (ReDMCSB DISK.C / CSBWin AssetCache) */
     gfx_path = csb_v1_runtime_find_graphics(search_dir, version_hint, &gfx_result);

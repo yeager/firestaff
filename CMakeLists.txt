@@ -1304,6 +1304,15 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_movement_engine_pc34.c
     )
     target_link_libraries(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE firestaff_m10)
+    add_executable(test_dm1_v22_verification
+        tests/test_dm1_v22_verification.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_phase_gate_pc34.c
+        src/dm1v2/dm1_v2_presentation_profile_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_dm1_v22_verification PRIVATE firestaff_m10)
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -1495,6 +1504,10 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_display_aspect_present_rect
         COMMAND test_m11_display_aspect_present_rect
+    )
+    add_test(
+        NAME dm1_v22_verification
+        COMMAND test_dm1_v22_verification
     )
     add_test(
         NAME dm1_v2_settings_source_lock
