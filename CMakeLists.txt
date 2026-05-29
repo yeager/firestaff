@@ -272,6 +272,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 Phase 1 — Launch/Profile Separation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies CSB_V2_PHASE_DOMAIN_LAUNCH and CSB_V2_PHASE_DOMAIN_PROFILE compile gates,
+# CSB vs DM1 asset hash separation, and launch independence from DM1 catalog.
+add_executable(firestaff_csb_v2_phase1_launch_profile_separation_probe
+    probes/firestaff_csb_v2_phase1_launch_profile_separation_probe.c)
+target_link_libraries(firestaff_csb_v2_phase1_launch_profile_separation_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2.1 asset pipeline probe (pass648)
 add_executable(firestaff_pass648_dm1_v2_asset_pipeline_probe probes/verify_pass648_dm1_v2_asset_pipeline.c)
 target_link_libraries(firestaff_pass648_dm1_v2_asset_pipeline_probe PRIVATE firestaff_v2 firestaff_m10)
@@ -1827,6 +1839,17 @@ if(BUILD_TESTING)
     set_tests_properties(m11_phase_a PROPERTIES
         ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
+
+    # CSB V2 Phase 1 — Launch/Profile Separation Probe (headless, no game data)
+    if(TARGET firestaff_csb_v2_phase1_launch_profile_separation_probe)
+        add_test(
+            NAME csb_v2_phase1_launch_profile_separation
+            COMMAND firestaff_csb_v2_phase1_launch_profile_separation_probe
+        )
+        set_tests_properties(csb_v2_phase1_launch_profile_separation PROPERTIES
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy"
+        )
+    endif()
 
     if(TARGET firestaff_m12_startup_menu_probe)
         add_test(
