@@ -57,7 +57,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### DM2 V1
 
 - ❌ Phase 2 - Dungeon/world data model: complete DM2 map, object, tile, and world-state ingestion.
-- ❌ Phase 3 - Rendering pipeline: implement DM2 viewport, UI chrome, items, outdoor/indoor presentation, and palette behavior.
+- ✅ Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (pass).
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
 - ✅ Phase 6 - Utility/import flow: implement DM2-specific load/start flow and compatibility behavior.
