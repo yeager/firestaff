@@ -43,6 +43,7 @@ void v2_light_update_flicker(float dt);
 M11_V2_SourcePaletteLighting v2_light_build_source_palette_lighting(
     int source_palette_index,
     bool enhanced_effects_enabled);
+void v2_light_set_deterministic_seed(uint32_t seed);
 
 #ifdef __cplusplus
 }

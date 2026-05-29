@@ -37,6 +37,7 @@ void v2_particle_emit(int emitter_idx, float x, float y);
 void v2_particle_update(float dt);
 void v2_particle_draw_all(void);
 void v2_particle_clear(void);
+void v2_particle_set_seed(uint32_t seed);
 
 /* Create an emitter and return its index, or -1 on failure.
  * Use v2_emitter_preset_get() + this function for preset-based creation.

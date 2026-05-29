@@ -9,7 +9,21 @@
  * then selects G0304_i_DungeonViewPaletteIndex.  DM1 V2 keeps that gameplay
  * lighting semantic in the V1-compatible core; this module is a presentation-only
  * additive light map/fog overlay for the modern viewport.
+ *
+ * Determinism: v2_light_add_source initialises flicker_phase with a
+ * compile-time fixed seed (LCG) so that the same sequence of light-source
+ * additions always produces the same flicker start phase across runs.
+ * All other lighting computations are purely mathematical.
  */
+
+/* Deterministic LCG for flicker-phase initialisation.
+ * Seed is fixed so that v2_light_add_source always produces the same
+ * sequence of flicker phases across runs and platforms. */
+static uint32_t g_deterministic_seed = 1;
+static uint32_t g_deterministic_rand(void) {
+    g_deterministic_seed = g_deterministic_seed * 1103515245 + 12345;
+    return (g_deterministic_seed >> 16) & 0x7FFF;
+}
 
 /* ReDMCSB DATA.C:359-360, consumed by PANEL.C:418-428.  Palette index 0 is
  * brightest, 5 is darkest; V2 mirrors the source-selected index instead of
@@ -64,8 +78,12 @@ int v2_light_add_source(float x, float y, float radius, uint8_t intensity,
     g_sources[idx].color_r = r;
     g_sources[idx].color_g = g;
     g_sources[idx].color_b = b;
-    g_sources[idx].flicker_phase = (float)(rand() % 1000) / 1000.0f;
+    g_sources[idx].flicker_phase = (float)g_deterministic_rand() / 1000.0f;
     return idx;
+}
+
+void v2_light_set_deterministic_seed(uint32_t seed) {
+    g_deterministic_seed = seed;
 }
 
 void v2_light_remove_source(int idx) {
@@ -83,7 +101,9 @@ void v2_light_compute_map(void) {
                 float dx = (float)x - g_sources[i].x;
                 float dy = (float)y - g_sources[i].y;
                 float dist = sqrtf(dx * dx + dy * dy);
-                if (dist < g_sources[i].radius) {
+                /* Guard against NaN radius producing NaN dist */
+                if (!(dist == dist)) dist = 0.0f;
+                if (dist < g_sources[i].radius && g_sources[i].radius == g_sources[i].radius) {
                     float falloff = 1.0f - (dist / g_sources[i].radius);
                     float intensity_f;
                     falloff = falloff * falloff;
@@ -153,12 +173,18 @@ int v22_light_add(int x, int y, float intensity, float radius,
     uint32_t color, int flicker)
 {
     if (g_light_count >= V22_MAX_LIGHT_SOURCES) return -1;
+    /* Deterministic fallback for NaN / out-of-range inputs */
+    if (!(intensity == intensity)) intensity = 0.0f; /* NaN guard */
+    if (intensity < 0.0f) intensity = 0.0f;
+    if (intensity > 1.0f) intensity = 1.0f;
+    if (!(radius == radius)) radius = 0.0f; /* NaN guard */
+    if (radius < 0.0f) radius = 0.0f;
     g_lights[g_light_count].x = x;
     g_lights[g_light_count].y = y;
     g_lights[g_light_count].intensity = intensity;
     g_lights[g_light_count].radius = radius;
     g_lights[g_light_count].color = color;
-    g_lights[g_light_count].flicker = flicker;
+    g_lights[g_light_count].flicker = flicker ? 1 : 0;
     return g_light_count++;
 }
 
