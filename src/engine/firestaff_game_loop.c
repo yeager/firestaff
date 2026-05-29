@@ -38,6 +38,15 @@
 
 static V2_AnimClock g_clock;
 
+/* Global FS_GameState instance — initialized by fs_game_init() and used
+ * by firestaff_touch.c to bridge swipe gestures to the V1 input queue.
+ * NULL until fs_game_init() is called. */
+static FS_GameState *g_fs_state = NULL;
+
+FS_InputQueue *fs_g_input_queue_get(void) {
+    return g_fs_state ? &g_fs_state->input_queue : NULL;
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════
  * #1: V1 viewport rendering — dungeon data → indexed framebuffer
@@ -336,6 +345,7 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
     state->in_menu = 0;
     state->party_direction = 0; /* North */
     v2_anim_clock_init(&g_clock);
+    g_fs_state = state;
 
     /* Set default window size based on version */
     if (state->config.window_width <= 0) {

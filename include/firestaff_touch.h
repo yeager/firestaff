@@ -106,4 +106,16 @@ void firestaff_touch_emit_swipe(int startX, int startY,
 int fs_touch_tap_tolerance_px(void);
 int fs_touch_long_press_ms(void);
 
+/* Edge-zone detection — returns 1 when x is in the left or right edge
+ * strafe zone at the given framebuffer width.  Used to route
+ * V2-only affordances (DM1_V2_AFFORDANCE_TOUCH_EDGE_STRAFE_LEFT/RIGHT)
+ * that have no V1 equivalent. */
+int fs_touch_in_left_edge(int x, int fbW);
+int fs_touch_in_right_edge(int x, int fbW);
+
+/* Emit a strafe command when the touch starts in an edge zone.
+ * Calls fs_input_queue_push() with FS_CMD_STRAFE_LEFT or FS_CMD_STRAFE_RIGHT.
+ * Safe to call even when V2 is not enabled — it becomes a no-op. */
+void fs_touch_emit_edge_strafe(int startX, int fbW);
+
 #endif /* FIRESTAFF_TOUCH_H */
