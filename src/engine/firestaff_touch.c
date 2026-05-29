@@ -14,7 +14,12 @@
  *   Swipe down          -> move backward
  *   Swipe left          -> turn left
  *   Swipe right         -> turn right
+ *   Edge-strafe zones   -> strafe (V2 only, left/right 20% of screen)
  *   Drag (movement >24px) -> no click fired
+ *
+ * V2 presentation edge-strafe: DM1_V2_AFFORDANCE_TOUCH_EDGE_STRAFE_LEFT/RIGHT
+ * (ReDMCSB DEFS.H:238-243 C005/C006 strafe commands) are emitted when the
+ * touch begins in the left/right edge zone. V1 path ignores edge-zones.
  *
  * Enabled via FIRESTAFF_TOUCH_ENABLED=1.
  *
@@ -54,6 +59,24 @@ static FS_Command fs_swipe_dir_to_command(FS_SwipeDir dir) {
     case FS_SWIPE_RIGHT:    return FS_CMD_TURN_RIGHT;
     default:               return FS_CMD_NONE;
     }
+}
+
+/* Edge-zone threshold as fraction of framebuffer width.
+ * A touch that begins within this fraction of the left or right edge
+ * is classified as an edge-strafe attempt (V2-only affordance).
+ * ReDMCSB DEFS.H:238-243 maps C005/C006 to left/right strafe. */
+#ifndef FIRESTAFF_TOUCH_EDGE_ZONE_FRAC
+#define FIRESTAFF_TOUCH_EDGE_ZONE_FRAC  0.20f   /* 20% from each edge */
+#endif
+
+/* Returns 1 if x is in the left edge zone at framebuffer width fbW. */
+int fs_touch_in_left_edge(int x, int fbW) {
+    return x < (int)(fbW * FIRESTAFF_TOUCH_EDGE_ZONE_FRAC);
+}
+
+/* Returns 1 if x is in the right edge zone at framebuffer width fbW. */
+int fs_touch_in_right_edge(int x, int fbW) {
+    return x >= (int)(fbW * (1.0f - FIRESTAFF_TOUCH_EDGE_ZONE_FRAC));
 }
 
 /* Bridge a recognised swipe command to the FS_InputQueue so it travels the
@@ -149,4 +172,23 @@ int fs_touch_tap_tolerance_px(void) {
 /* Re-export long-press threshold so callers can use it in timeout checks. */
 int fs_touch_long_press_ms(void) {
     return FIRESTAFF_TOUCH_LONG_PRESS_MS;
+}
+
+/* ── Edge-strafe helpers ───────────────────────────────────────────── */
+
+/* Emit a strafe command when the touch starts in an edge zone.
+ * V2-only: DM1_V2_AFFORDANCE_TOUCH_EDGE_STRAFE_LEFT/RIGHT are forwarded
+ * to fs_input_queue as FS_CMD_STRAFE_LEFT/RIGHT (source-locked C005/C006).
+ * No-op when the global queue is unavailable. */
+void fs_touch_emit_edge_strafe(int startX, int fbW) {
+    FS_Command cmd = FS_CMD_NONE;
+    if (fs_touch_in_left_edge(startX, fbW)) {
+        cmd = FS_CMD_STRAFE_LEFT;
+    } else if (fs_touch_in_right_edge(startX, fbW)) {
+        cmd = FS_CMD_STRAFE_RIGHT;
+    }
+    if (cmd == FS_CMD_NONE) return;
+    extern FS_InputQueue *fs_g_input_queue_get(void);
+    FS_InputQueue *q = fs_g_input_queue_get();
+    if (q) fs_input_queue_push(q, cmd, 0, 0);
 }
