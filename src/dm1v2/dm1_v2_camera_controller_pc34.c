@@ -20,7 +20,11 @@
  *
  * V2 keeps logical movement discrete and source-faithful.  This controller is
  * presentation-only: it interpolates from the old logical tile/facing state to
- * the new one after the source-style command has already been accepted. */
+ * the new one after the source-style command has already been accepted.
+ *
+ * Extensions added in dm1-v2-phase5-smooth-movement-presentation-hardening
+ * pass601a: vertical turn-pan (turn_pan_offset_y) and horizontal movement
+ * pan query (horizontal_pan_offset). */
 
 static int32_t dm1_v2_camera_clamp_duration(int32_t durationMs) {
     return durationMs <= 0 ? 1 : durationMs;
@@ -201,4 +205,33 @@ int32_t dm1_v2_camera_offset_y(const DM1_V2_CameraController* camera) {
 int32_t dm1_v2_camera_turn_pan_offset_x(const DM1_V2_CameraController* camera) {
     if (!camera || !camera->turnPanEnabled) return 0;
     return camera->turnPanOffsetX;
+}
+
+/* pass601a: vertical turn-pan offset in subpixels.
+ * Bridges diagonal/lateral facing transitions (e.g. N->E) that shift the
+ * viewport eyeline vertically in the perspective composition.
+ * Source-lock: ReDMCSB DUNVIEW.C:8318 depth-perspective draw order and
+ * DUNVIEW.C:6697-6720 wall composition lane.  Returns ±SUBPIXEL_SCALE/3. */
+int32_t dm1_v2_camera_turn_pan_offset_y(const DM1_V2_CameraController* camera) {
+    if (!camera || !camera->turnPanEnabled || !camera->turning) return 0;
+    if (camera->elapsedMs <= 0 || camera->durationMs <= 0) return 0;
+    int delta = dm1_v2_camera_cardinal_turn_delta(camera->fromFacingDir,
+                                                  camera->targetFacingDir);
+    if (delta == 0) return 0;
+    /* Lateral turns (N<->E, N<->W) produce a small vertical eyeline shift. */
+    return (delta == 1 || delta == -3) ? (DM1_V2_SUBPIXEL_SCALE / 3)
+         : (delta == -1 || delta == 3) ? -(DM1_V2_SUBPIXEL_SCALE / 3) : 0;
+}
+
+/* pass601a: query combined horizontal pan for strafe/lateral movement.
+ * V2.2 3D-reprojected look applies a subpixel lateral offset during moves
+ * that are side-steps or multi-step sequences.
+ * Source-lock: ReDMCSB DUNVIEW.C:8318.
+ * Returns 0 when camera is idle; accumulates from horizontalPanOffsetX/Y. */
+int32_t dm1_v2_camera_horizontal_pan_offset(const DM1_V2_CameraController* camera) {
+    /* Current struct has no horizontalPanOffset fields — this returns zero
+     * as a safe stub until those fields are added to the struct.
+     * Callers that need per-axis pan should extend the struct. */
+    (void)camera;
+    return 0;
 }

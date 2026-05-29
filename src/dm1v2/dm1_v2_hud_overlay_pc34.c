@@ -211,6 +211,38 @@ void v22_hud_pulse_v1_tick(void) {
     }
 }
 
+/* pass601a: movement complete signal.
+ * Raised by the V2 camera bridge when a move interpolation ends;
+ * consumers (e.g. inscription renderer, minimap update) can use this to
+ * sync to the discrete V1 game state without polling camera->active.
+ * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+void v22_hud_notify_move_complete(void) {
+    g_v2_hud_state.moveCompletePending = 1;
+}
+
+void v22_hud_clear_move_complete(void) {
+    g_v2_hud_state.moveCompletePending = 0;
+}
+
+int v22_hud_is_move_complete_pending(void) {
+    return g_v2_hud_state.moveCompletePending;
+}
+
+/* pass601a: turn complete signal — mirrors moveCompletePending for turns.
+ * Source-lock: ReDMCSB COMMAND.C:2150-2152 F0365 turn dispatch and
+ * GAMELOOP.C:90 viewport redraw cadence. */
+void v22_hud_notify_turn_complete(void) {
+    g_v2_hud_state.turnCompletePending = 1;
+}
+
+void v22_hud_clear_turn_complete(void) {
+    g_v2_hud_state.turnCompletePending = 0;
+}
+
+int v22_hud_is_turn_complete_pending(void) {
+    return g_v2_hud_state.turnCompletePending;
+}
+
 void v22_hud_start_health_pulse(void) {
     v2_anim_start(&g_health_pulse, 0.6f, 1.0f,
         V22_HUD_PULSE_TICKS * V1_TICK_MS, V2_EASE_IN_OUT_QUAD);

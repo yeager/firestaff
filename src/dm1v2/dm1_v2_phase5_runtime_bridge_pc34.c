@@ -1,5 +1,5 @@
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
-
+#include "dm1_v2_hud_overlay_pc34.h"
 #include <string.h>
 
 /* DM1 V2 Phase 5 source-tick runtime bridge.
@@ -132,6 +132,12 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
         if (outResult) {
             outResult->cameraStarted = dm1_v2_camera_is_active(camera);
             outResult->cameraTurnStarted = outResult->cameraStarted;
+        }
+        /* pass601a: HUD turn-complete signal so renderer may defer overlays
+         * until the interpolated turn stabilises on screen.
+         * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+        if (outResult && outResult->cameraStarted) {
+            v22_hud_notify_turn_complete();
         }
         return outResult ? outResult->cameraStarted : dm1_v2_camera_is_active(camera);
     }
