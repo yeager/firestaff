@@ -555,8 +555,15 @@ typedef struct {
     bool     parity_flip;
 
     /* Stairs bitmap indices (18 entries).
-     * From DUNVIEW.C G0079_ai_StairsNativeBitmapIndices. */
+     * From DUNGEON.C G0079_ai_StairsNativeBitmapIndices. */
     int16_t  stairs_indices[18];
+
+    /* Floor ornament bitmap indices (18 entries, parallel to stairs).
+     * From DUNGEON.C G0079_ai_StairsNativeBitmapIndices (same array,
+     * ornament index = stairs index + 12).
+     * Used by F0108_DUNGEONVIEW_DrawFloorOrnament at D3L2/D3R2/D2L2/D2R2.
+     * When floor_ornament_indices[i] == 0, no floor ornament is drawn. */
+    int16_t  floor_ornament_indices[18];
 
     /* Current party position + direction for coordinate transforms */
     int16_t  party_map_x;
