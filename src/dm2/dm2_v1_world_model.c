@@ -21,6 +21,7 @@
  */
 
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_dungeon_loader.h"
 #include "dungeon_decompressor_ftl.h"
 #include <stdlib.h>
 #include <string.h>
@@ -219,38 +220,62 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
         decoded_size -= DM2_MAP_DESC_SIZE;
     }
 
-    /* ── DM2 level type extension ─────────────────────────── */
-    /* DM2 adds a per-level type byte after map descriptors.
-     * Each level's type is stored as a uint8:
-     *   0 = OUTDOOR, 1 = INDOOR, 2 = BUILDING
-     * Source: SKULL.ASM T600 outdoor, include/dm2_v1_dungeon_loader.h:type */
-    for (int i = 0; i < mc; i++) {
-        if (decoded_size < 1) break;
-        uint8_t lt = *decoded++;
-        decoded_size--;
-        world->levels[i].level_type = (lt <= 2)
-                                        ? (int)lt
-                                        : 1;
-        world->levels[i].level_index = i;
-    }
-
     /* ── Parse tile data for each level ────────────────────── */
+    /*
+     * DM2 uses override width/height at MAP descriptor bytes[12-15]
+     * (same as dm2_v1_dungeon_loader.c override path).
+     * Fall back to DM1 bitfield_a only when overrides are both 0.
+     * Source: SKULL.ASM T560 — override vs bitfield_a fallback.
+     *
+     * Level type: stored in offset_map_x (MAP descriptor byte 6, lower 2 bits).
+     * Source: docs/dm2_v1_phase2_data_formats_H2254.md §2, SKULL.ASM T600 outdoor.
+     *
+     * Tile data: column-major uint16[level_width * level_height].
+     * Source: ReDMCSB DEFS.H, SKULL.ASM T520 tile access.
+     */
     for (int i = 0; i < mc; i++) {
-        dm2_map_descriptor_t *md = &world->map_descs[i];
-        int w = dm2_md_width(md);
-        int h = dm2_md_height(md);
+        const dm2_map_descriptor_t *md = &world->map_descs[i];
+
+        /* DM2 override width/height at bytes[12-13] and [14-15] (LE uint16). */
+        uint16_t w_override = dm2_rd16le((const uint8_t *)md + 12);
+        uint16_t h_override = dm2_rd16le((const uint8_t *)md + 14);
+
+        int w, h;
+        if (w_override != 0 || h_override != 0) {
+            w = (w_override > 0 && w_override <= 256) ? (int)w_override : 64;
+            h = (h_override > 0 && h_override <= 256) ? (int)h_override : 64;
+        } else {
+            w = dm2_md_width(md);
+            h = dm2_md_height(md);
+        }
+
         world->levels[i].width  = w;
         world->levels[i].height = h;
+        world->levels[i].level_index = i;
+
+        /* Level type from MAP descriptor offset_map_x (byte 6, lower 2 bits).
+         * 0=OUTDOOR, 1=INDOOR, 2=BUILDING. Level 0 is always OUTDOOR.
+         * Source: docs/dm2_v1_phase2_data_formats_H2254.md §2 */
+        if (i == 0) {
+            world->levels[i].level_type = DM2_LEVEL_OUTDOOR;
+        } else {
+            world->levels[i].level_type = ((int)(md->offset_map_x & 0x03) <= 2)
+                                            ? (int)(md->offset_map_x & 0x03)
+                                            : DM2_LEVEL_INDOOR;
+        }
+
+        /* byte_offset: raw_map_data_byte_offset from MAP descriptor bytes[0-1]. */
         world->levels[i].byte_offset = (int)dm2_rd16le((const uint8_t *)md);
 
-        /* Each tile is 2 bytes (uint16, LE) */
+        /* Each tile is 2 bytes (LE uint16), column-major: (x*height+y)*2.
+         * Source: dm2_v1_dungeon_loader.c column-major tile access formula. */
         size_t tile_bytes = (size_t)w * (size_t)h * 2;
-        if (decoded_size < tile_bytes) break;
+        if (decoded_size < (ssize_t)tile_bytes) break;
         world->levels[i].tiles = malloc((size_t)w * h * sizeof(dm2_tile_t));
         if (!world->levels[i].tiles) break;
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                uint16_t raw = dm2_rd16le(decoded + ((y * w) + x) * 2);
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                uint16_t raw = dm2_rd16le(decoded + ((x * h) + y) * 2);
                 world->levels[i].tiles[y * w + x] = dm2_parse_tile(raw);
             }
         }
