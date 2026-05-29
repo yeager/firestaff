@@ -771,6 +771,30 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_character_import
     )
 
+    add_executable(test_csb_v1_phase7_verification
+        tests/test_csb_v1_phase7_verification.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_dungeon_world_pc34_compat.c
+        src/csb/csb_v1_monster_pc34_compat.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_phase7_verification PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_phase7_verification PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_phase7_verification PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_phase7_verification
+        COMMAND test_csb_v1_phase7_verification
+    )
+
     add_executable(test_asset_find_by_hash
         tests/test_asset_find_by_hash.c
     )
@@ -3978,6 +4002,45 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_teleporter_chain
         COMMAND firestaff_theron_v1_teleporter_chain_probe
+    )
+endif()
+
+# ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_viewport_renderer_probe
+        probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_viewport_renderer
+        COMMAND firestaff_theron_v1_viewport_renderer_probe
+    )
+
+    add_executable(firestaff_theron_v1_tile_renderer_probe
+        probes/theron/firestaff_theron_v1_tile_renderer_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_tile_renderer
+        COMMAND firestaff_theron_v1_tile_renderer_probe
     )
 endif()
 
