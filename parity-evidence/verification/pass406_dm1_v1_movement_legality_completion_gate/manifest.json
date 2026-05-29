@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1-v2-phase8-asset-revisit",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:709-835",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "2d20969c00ffc23af771c30a49866ebbf7973d15",
+  "head": "f7f3291f514c367ae008c465107c63a2102431b2",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-05-27T23:14:56.399643+00:00"
+  "timestampUtc": "2026-05-29T19:20:13.744976+00:00"
 }

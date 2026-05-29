@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1-v2-phase8-asset-revisit",
   "currentMovementBlocker": {
     "blockerResolvedHere": "Required runtime executable was built in this worktree and pass406 re-ran clean.",
     "id": "pass406_dm1_v1_movement_legality_completion_gate",

@@ -153,11 +153,13 @@ typedef struct {
 static inline int dm2_md_level(const dm2_map_descriptor_t *md) {
     return (int)(md->bitfield_a & 0x003Fu);
 }
+/* DM2 PC (MEDIA016): Level=bits0-5, Width=bits6-10, Height=bits11-15.
+ * Source: ReDMCSB DEFS.H:1048-1116 MEDIA016 layout. */
 static inline int dm2_md_width(const dm2_map_descriptor_t *md) {
-    return (int)(((md->bitfield_a >> 2) & 0x001Fu) + 1);
+    return (int)(((md->bitfield_a >> 6) & 0x001Fu) + 1);
 }
 static inline int dm2_md_height(const dm2_map_descriptor_t *md) {
-    return (int)((((md->bitfield_a >> 7) & 0x001Fu) | ((md->bitfield_a >> 8) & 0x0030u)) + 1);
+    return (int)(((md->bitfield_a >> 11) & 0x001Fu) + 1);
 }
 
 /* DM2 Tile (one dungeon square).
