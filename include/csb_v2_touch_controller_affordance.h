@@ -2,12 +2,18 @@
 #define FIRESTAFF_CSB_V2_TOUCH_CONTROLLER_AFFORDANCE_H
 
 #include "dm1_v2_movement_command_adapter_pc34.h"
+#include "csb_v2_phase_gate_pc34.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* CSB V2 Touch/Controller Affordance - gesture and gamepad mappings for
+/* Phase gate: all functions in this header belong to
+ * CSB_V2_PHASE_DOMAIN_INPUT_PRESENTATION.
+ * V1 mouse/touch/click route matrix is the sole input path when V2 is disabled.
+ * See csb_v2_phase_gate_pc34.h Phase 0 rules.
+ *
+ * CSB V2 Touch/Controller Affordance - gesture and gamepad mappings for
  * Chaos Strikes Back V2 presentation mode.
  *
  * Source-lock anchors (shared DM1/CSB engine via ReDMCSB Common Toolchains):
