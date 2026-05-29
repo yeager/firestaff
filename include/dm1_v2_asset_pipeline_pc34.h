@@ -66,6 +66,20 @@ typedef enum {
     DM1_V2_SURFACE_COUNT
 } DM1_V2_SurfaceCategory;
 
+/* ── V2 asset mode — which graphics set is active ─────────────────── */
+
+/* V2.2 (Modern): assets live in ~/.firestaff/assets/dm1/modern/.
+ * V2.2 renders at 1920×1080 using generated/modern 3D-rendered 2D art
+ * as a drop-in replacement for the EPX-upscales V2.1 surfaces.
+ * When MODERN mode is active the renderer bypasses V1 indexed surfaces
+ * and reads pre-rendered RGBA PNG/TGA files keyed by surface category. */
+typedef enum {
+    DM1_V2_ASSET_MODE_ORIGINAL = 0,  /* V1: raw GRAPHICS.DAT indexed surfaces */
+    DM1_V2_ASSET_MODE_FILTERED  = 1, /* V2.0: scanlines + palette correction */
+    DM1_V2_ASSET_MODE_UPSCALED  = 2, /* V2.1: EPX 2x from V1 indexed */
+    DM1_V2_ASSET_MODE_MODERN    = 3  /* V2.2: modern 3D-rendered 1920×1080 */
+} DM1_V2_AssetMode;
+
 /* ── Palette / light-level constants ──────────────────────────────── */
 
 /* Source: ReDMCSB DATA.C:359-360, consumed by PANEL.C:418-428.
@@ -130,6 +144,19 @@ typedef struct {
 void dm1_v2_asset_pipeline_init(void);
 void dm1_v2_asset_pipeline_configure(const DM1_V2_AssetPipelineConfig* config);
 const DM1_V2_AssetPipelineConfig* dm1_v2_asset_pipeline_get_config(void);
+
+/* V2.2 modern asset mode API */
+DM1_V2_AssetMode DM1_V2_GetAssetMode(void);
+void DM1_V2_SetAssetMode(DM1_V2_AssetMode mode);
+int DM1_V2_IsModernAssetMode(void);
+
+/* Modern asset loading: scan ~/.firestaff/assets/dm1/modern/ for the
+ * modern_asset_manifest.json. Returns 1 if present and loaded, 0 if
+ * not found (caller falls back to V2.1 path silently). */
+int DM1_V2_LoadModernAssetManifest(void);
+
+/* Returns the modern asset root path, or "" if not available. */
+const char* DM1_V2_GetModernAssetRoot(void);
 
 /* Per-category surface upscale.
  * V2.1: all surfaces go through the same EPX 2x → palette → RGBA pipeline.
