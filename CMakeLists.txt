@@ -1302,6 +1302,8 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_phase5_runtime_bridge_pc34.c
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_hud_overlay_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE firestaff_m10)
     # DISABLED — test_dm1_v22_verification has API mismatches with committed V2.2
@@ -3814,23 +3816,28 @@ if(NOT MSVC)
     )
 endif()
 
-# ── Nexus V1 launch smoke probe (DISABLED — source file never committed) ──
-# probes/nexus_v1_launch_smoke_probe.c is untracked locally; target orphaned.
-# add_executable(firestaff_nexus_v1_launch_smoke_probe
-#     probes/nexus_v1_launch_smoke_probe.c
-# )
-# target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#     firestaff_nexus firestaff_m10
-# )
-# target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/include
-# )
-# if(NOT MSVC)
-#     target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#         -Wall -Wextra -O2
-#     )
-# endif()
+# ── Nexus V1 launch smoke probe ─────────────────────────────────────
+# Verifies: launcher init → Structure1B DGN load → render → tick
+# Source-lock: src/nexus/nexus_v1_launcher.c, nexus_v1_dungeon.c, nexus_v1_viewport.c
+add_executable(firestaff_nexus_v1_launch_smoke_probe
+    probes/nexus_v1_launch_smoke_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
 
+add_test(
+    NAME firestaff_nexus_v1_launch_smoke
+    COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+)
 
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
 add_executable(firestaff_gfx_extract_proof

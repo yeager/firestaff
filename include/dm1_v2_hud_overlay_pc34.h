@@ -25,6 +25,10 @@ typedef struct {
     bool visible;
     uint8_t opacity;
     bool stats_bar_visible;
+    /* pass601a: movement/turn complete signals for V2 interpolation consumers.
+     * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+    int moveCompletePending;
+    int turnCompletePending;
 } M11_V2_HudOverlay;
 
 void v2_hud_init(void);
@@ -39,6 +43,17 @@ void v2_hud_set_opacity(uint8_t val);
 void v22_hud_pulse_v1_tick(void);
 void v22_hud_start_health_pulse(void);
 float v22_hud_health_pulse_alpha(void);
+
+/* pass601a: move/turn complete signals for the V2 interpolation layer.
+ * Raised when a camera move/turn interpolation finishes — consumers can
+ * poll without directly poking the camera struct.
+ * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+void v22_hud_notify_move_complete(void);
+void v22_hud_clear_move_complete(void);
+int v22_hud_is_move_complete_pending(void);
+void v22_hud_notify_turn_complete(void);
+void v22_hud_clear_turn_complete(void);
+int v22_hud_is_turn_complete_pending(void);
 
 #ifdef __cplusplus
 }
