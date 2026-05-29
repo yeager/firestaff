@@ -1684,6 +1684,83 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_floor_ornament_simple
+ *
+ * Renders a floor ornament at the appropriate viewport position for
+ * CSB back-wall squares (D3L2/D3R2) and near-wall squares (D2L2/D2R2).
+ *
+ * This is a simplified implementation of ReDMCSB F0108_DUNGEONVIEW_DrawFloorOrnament.
+ * It draws a colored placeholder diamond at the floor ornament zone position.
+ * The full implementation would look up the floor ornament info from
+ * G0102_as_CurrentMapFloorOrnamentsInfo and the coordinate set from
+ * G0206_aaauc_Graphic558_FloorOrnamentCoordinateSets.
+ *
+ * View floor index mapping (ReDMCSB DEFS.H C00_VIEW_FLOOR_D3L2/C01_VIEW_FLOOR_D3R2):
+ *   D3L2 (square=-101): floor_index=0 (C00_VIEW_FLOOR_D3L2)
+ *   D3R2 (square=-102): floor_index=1 (C01_VIEW_FLOOR_D3R2)
+ *
+ * Source: ReDMCSB DUNVIEW.C:3940-4015 F0108_DrawFloorOrnament;
+ *   6270-6271 (D3L2 corridor/teleporter) · 6337-6351 (D3R2 corridor/teleporter);
+ *   6849-6865 F0678 (D2L2) · 6877-6896 F0679 (D2R2)
+ * ──────────────────────────────────────────────────────────────────────── */
+static void dm1_viewport_3d_draw_floor_ornament_simple(DM1_Viewport3DState *state,
+                                                       DM1_ViewSquareIndex square,
+                                                       int floor_ornament_index)
+{
+    if (!state || !state->viewport_pixels) return;
+
+    /* Floor ornament zone positions for back/near wall squares.
+     * These are derived from the D3L2/D3R2/D2L2/D2R2 frame coordinates
+     * in s_csb_back_wall_frames and s_csb_near_wall_frames.
+     * The floor ornament is rendered in the lower portion of the wall frame. */
+    int dst_x = 0, dst_y = 0;
+    switch (square) {
+    case DM1_VIEW_SQUARE_D3L2:
+        /* D3L2 floor ornament: centered in lower wall, x=2, y=50, 12×12 */
+        dst_x = 2; dst_y = 50;
+        break;
+    case DM1_VIEW_SQUARE_D3R2:
+        /* D3R2 floor ornament: centered in lower wall, x=210, y=50, 12×12 */
+        dst_x = 210; dst_y = 50;
+        break;
+    case DM1_VIEW_SQUARE_D2L2:
+        /* D2L2 floor ornament: lower portion, x=5, y=65, 16×16 */
+        dst_x = 5; dst_y = 65;
+        break;
+    case DM1_VIEW_SQUARE_D2R2:
+        /* D2R2 floor ornament: lower portion, x=200, y=65, 16×16 */
+        dst_x = 200; dst_y = 65;
+        break;
+    default:
+        return;
+    }
+
+    /* Guard: no ornament index means nothing to draw */
+    if (floor_ornament_index <= 0) return;
+
+    /* Draw a colored diamond placeholder (green) at the floor ornament zone.
+     * The color varies with the ornament index for visual differentiation.
+     * A full implementation would blit the actual floor ornament bitmap. */
+    uint8_t *vp = state->viewport_pixels;
+    int stride = state->viewport_stride;
+    int size = 6;  /* half-size of diamond */
+    int color_base = (floor_ornament_index & 3) + 2; /* 2-5 green range */
+
+    for (int dy = -size; dy <= size; dy++) {
+        int sy = dst_y + dy;
+        if ((unsigned)sy >= (unsigned)DM1_VIEWPORT_HEIGHT) continue;
+        for (int dx = -size; dx <= size; dx++) {
+            int sx = dst_x + dx;
+            if ((unsigned)sx >= (unsigned)DM1_VIEWPORT_WIDTH) continue;
+            if (abs(dx) + abs(dy) <= size) {
+                vp[sy * stride + sx] = (uint8_t)color_base;
+            }
+        }
+    }
+    (void)floor_ornament_index; /* used for color variation; full blit is TODO */
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_csb_back_wall
  *
  * Draw a CSB back-wall square (D3L2 or D3R2) with full element routing.
@@ -1760,10 +1837,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         /* Wall ornament rendering via F0107 placeholder.
          * F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF renders
          * the wall ornament bitmap at the appropriate ornament slot.
-         * TODO (pass603): wire F0107 once ornament module is integrated.
          * Source: DUNVIEW.C:6263-6264 (D3L2) · DUNVIEW.C:6330-6331 (D3R2) */
-        /* F0107 wall ornament rendering — TODO when ornament module is ready */
-        (void)wall_zone; /* unused in current stub */
+        (void)wall_zone; /* zone used once ornament module is wired */
         return;
     }
 
@@ -1854,11 +1929,17 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * Source: DUNVIEW.C:6282-6289 (F0676 corridor/teleporter) ·
      *         DUNVIEW.C:6349-6356 (F0677 corridor/teleporter) */
     {
-        /* Floor ornament drawing via F0108 — TODO (pass603).
+        /* Floor ornament drawing via F0108 — placeholder diamond.
          * F0108_DUNGEONVIEW_DrawFloorOrnament composites the floor
          * ornament bitmap at the D3L2/D3R2 position.
          * Source: DUNVIEW.C:6282-6284 (F0676) · DUNVIEW.C:6349-6351 (F0677) */
-        /* F0108 floor ornament — TODO (pass603) */
+        int fo_idx = 0;
+        switch (square) {
+        case DM1_VIEW_SQUARE_D3L2: fo_idx = state->floor_ornament_indices[0]; break;
+        case DM1_VIEW_SQUARE_D3R2: fo_idx = state->floor_ornament_indices[1]; break;
+        default: break;
+        }
+        dm1_viewport_3d_draw_floor_ornament_simple(state, square, fo_idx);
 
         /* F0115 creature/item/projectile/explosion pass — TODO (pass603+).
          * This is the core things-rendering pipeline from F0115.
