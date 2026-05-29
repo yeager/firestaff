@@ -1093,6 +1093,21 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_playable_route_probe
     )
 
+    # DM1 V1 Phase 8: door and special-square interaction probe.
+    # Tests door state machine (0..5), C05 clickable front-cell zones,
+    # teleporter activation, stairs transitions, and pit fall semantics.
+    add_executable(firestaff_dm1_v1_special_square_interaction_probe
+        probes/dm1/firestaff_dm1_v1_special_square_interaction_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_special_square_interaction_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_special_square_interaction_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_special_square
+        COMMAND firestaff_dm1_v1_special_square_interaction_probe
+    )
+
     add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
         probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c
     )
