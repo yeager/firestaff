@@ -36,6 +36,7 @@ void v2_hud_set_opacity(uint8_t val);
 
 /* V2.2 health-pulse alpha — V1 tick-synchronous ping-pong, 2 Hz.
  * Source: v22_hud_pulse_v1_sync marker; ReDMCSB TIMELINE.C F0260. */
+void v22_hud_pulse_v1_tick(void);
 void v22_hud_start_health_pulse(void);
 float v22_hud_health_pulse_alpha(void);
 

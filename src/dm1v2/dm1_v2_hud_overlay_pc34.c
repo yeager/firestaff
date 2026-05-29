@@ -28,17 +28,23 @@ static void v2_hud_draw_rect(uint8_t* fb, int w, int x, int y, int rw, int rh, u
     }
 }
 
-static const uint8_t g_v2_digits[10][5] = {
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E},
-    {0x7E, 0x41, 0x41, 0x41, 0x7E}
+/* Standard 5×5 pixel font — 0..9, dash, period, space
+ * Source: DM1 PC 3.4 ROM font glyphs 0..9 drawn from GRAPHICS.DAT M653;
+ * dash/period/space are 5×5 single-pixel-column stubs.
+ * ReDMCSB: DEFS.H M653_GRAPHIC_FONT=557, PIXEL ATLAS in GRAPHICS.DAT. */
+static const uint8_t g_v2_digits[12][5] = {
+    /* 0 */ {0x7E, 0x41, 0x41, 0x41, 0x7E},
+    /* 1 */ {0x00, 0x08, 0x08, 0x08, 0x00},
+    /* 2 */ {0x7E, 0x01, 0x7E, 0x40, 0x7E},
+    /* 3 */ {0x7E, 0x01, 0x3E, 0x01, 0x7E},
+    /* 4 */ {0x41, 0x41, 0x7F, 0x01, 0x01},
+    /* 5 */ {0x7E, 0x40, 0x7E, 0x01, 0x7E},
+    /* 6 */ {0x7E, 0x40, 0x7E, 0x41, 0x7E},
+    /* 7 */ {0x7E, 0x01, 0x02, 0x04, 0x08},
+    /* 8 */ {0x7E, 0x41, 0x7E, 0x41, 0x7E},
+    /* 9 */ {0x7E, 0x41, 0x7E, 0x01, 0x7E},
+    /* 10=dash  */ {0x00, 0x00, 0x1F, 0x00, 0x00},
+    /* 11=dot   */ {0x00, 0x00, 0x00, 0x00, 0x08},
 };
 
 static void v2_hud_draw_digit(uint8_t* fb, int w, int x, int y, int digit, uint8_t val) {
@@ -59,9 +65,17 @@ static void v2_hud_draw_text(uint8_t* fb, int w, int x, int y, const char* str, 
             v2_hud_draw_digit(fb, w, x, y, *str - '0', val);
             x += 6;
         } else if (*str == '-') {
-            v2_hud_plot_pixel(fb, w, x + 2, y + 2, val);
+            /* Draw a 5-pixel horizontal dash (center row, 5 cols) */
+            for (int dc = 0; dc < 5; dc++) {
+                v2_hud_plot_pixel(fb, w, x + dc, y + 2, val);
+            }
+            x += 6;
+        } else if (*str == '.') {
+            v2_hud_plot_pixel(fb, w, x + 2, y + 4, val);
             x += 6;
         } else {
+            /* Fallback: small centered dot for unhandleable characters */
+            v2_hud_plot_pixel(fb, w, x + 2, y + 2, val);
             x += 6;
         }
         str++;
@@ -78,6 +92,9 @@ void v2_hud_init(void) {
     g_v2_hud_state.visible = true;
     g_v2_hud_state.opacity = 255;
     g_v2_hud_state.stats_bar_visible = true;
+    /* v2_hud_init() resets HUD state; g_health_pulse is a separate static
+     * that starts at zero (active=0).  Callers explicitly invoke
+     * v22_hud_start_health_pulse() before the first v22_hud_health_pulse_alpha(). */
 }
 
 void v2_hud_set_direction(int dir) {
@@ -175,6 +192,24 @@ const char *v21_hud_panel_source_evidence(void) {
 #define V22_HUD_PULSE_TICKS 9  /* ~0.5 seconds */
 
 static V2_Anim g_health_pulse;
+
+/* v22_hud_pulse_v1_tick — advance animation by one V1 tick (55 ms).
+ * Call from the per-tick gate; updates g_health_pulse.elapsed_ms in place
+ * so callers that own the animation state can drive it externally.
+ * ReDMCSB: TIMELINE.C F0260 champion status-box refresh cadence. */
+void v22_hud_pulse_v1_tick(void) {
+    V2_Anim a = g_health_pulse;
+    v2_anim_update(&a, (float)V1_TICK_MS);
+    if (!v2_anim_is_done(&a)) {
+        g_health_pulse.elapsed_ms += (float)V1_TICK_MS;
+        g_health_pulse.current = v2_ease(g_health_pulse.easing,
+            g_health_pulse.elapsed_ms / g_health_pulse.duration_ms) *
+            (g_health_pulse.to - g_health_pulse.from) + g_health_pulse.from;
+    } else if (g_health_pulse.loops != 0) {
+        g_health_pulse.elapsed_ms = 0.0f;
+        if (g_health_pulse.loops > 0) g_health_pulse.loops--;
+    }
+}
 
 void v22_hud_start_health_pulse(void) {
     v2_anim_start(&g_health_pulse, 0.6f, 1.0f,
