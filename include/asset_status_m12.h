@@ -35,6 +35,12 @@ typedef struct {
     int theronAvailable;
 
     int originalFileCandidateFound;
+
+    /* V2.2 Modern Graphics asset pack — set to 1 if
+     * ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json
+     * exists and validates (critical categories present). */
+    int v22_modern_assets_installed;
+
     M12_AssetVersionStatus versions[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
 } M12_AssetStatus;
 
@@ -53,6 +59,11 @@ const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* 
                                                          const char* gameId,
                                                          size_t index);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
+
+/* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
+ * valid (critical shape categories present), 0 otherwise.
+ * Set during M12_AssetStatus_Scan(). */
+int M12_AssetStatus_V22ModernAssetsInstalled(const M12_AssetStatus* status);
 
 /* MD5 hex of a file — used for asset hash verification (Theron Phase 0). */
 int m12_file_md5_hex(const char* path, char outHex[33]);

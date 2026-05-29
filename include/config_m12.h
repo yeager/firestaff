@@ -132,6 +132,11 @@ typedef struct {
 
     /* Privacy option for captures/streams: hide local filesystem paths. */
     int streamerMode;
+
+    /* V2.2 Modern Graphics — set to 1 if the modern asset pack was
+     * detected at startup, 0 otherwise. Read-only from config I/O
+     * perspective (set by M12_AssetStatus_Scan at launch). */
+    int v22_modern_assets_installed;
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);
