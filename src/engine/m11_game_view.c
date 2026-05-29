@@ -1,6 +1,5 @@
 #include "m11_game_view.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
-#include "nexus_v1_launcher.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_viewport.h"
 
@@ -6165,19 +6164,12 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
     snprintf(state->title, sizeof(state->title), "DUNGEON MASTER NEXUS");
     snprintf(state->sourceId, sizeof(state->sourceId), "nexus");
-    /* Init the Nexus engine — owns the singleton Nexus_V1_Engine.
-     * Source: nexus_v1_launcher.c. */
-    if (nexus_v1_launcher_init(dataDir) < 0) {
-        m11_set_status(state, "BOOT", "NEXUS INIT FAILED");
-        state->active = 0;
-        return 0;
-    }
-    /* Load level 0 as the default entrance level */
-    if (nexus_v1_launcher_load_level(0) < 0) {
-        m11_set_status(state, "BOOT", "NEXUS LEVEL 0 LOAD FAILED");
-        /* Non-fatal: viewport still renders empty dungeon */
-    }
-    state->nexusEngine = nexus_v1_launcher_get_engine();
+    /* nexus_v1_launcher_init/load/get_engine stubs — launcher not yet
+     * integrated into cmake build (nexus_v1_launcher.c untracked).
+     * M11_GameView_StartNexus is never called; safe to stub. */
+    (void)dataDir;  /* unused — launcher owns init path */
+    /* Nexus engine init is deferred until cmake integration is complete. */
+    state->nexusEngine = NULL;
     if (state->nexusEngine) {
         state->nexusState.level_loaded = state->nexusEngine->level_loaded;
         state->nexusState.party_x = state->nexusEngine->game.party_x;
