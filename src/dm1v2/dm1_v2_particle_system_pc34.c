@@ -2,6 +2,19 @@
 #include <math.h>
 #include <stdlib.h>
 
+/*
+ * Determinism: particle emission direction/speed uses a fixed LCG seed
+ * so that the same sequence of emitter-create + emit calls always produces
+ * identical particle bursts across runs and platforms.
+ * Source: Firestaff DM1 V2 Phase 4 followup.
+ */
+static uint32_t g_particle_rand_state = 1;
+static uint32_t g_particle_rand(void) {
+    g_particle_rand_state = g_particle_rand_state * 1103515245 + 12345;
+    return (g_particle_rand_state >> 16) & 0x7FFF;
+}
+void v2_particle_set_seed(uint32_t seed) { g_particle_rand_state = seed; }
+
 static M11_V2_Particle g_particles[M11_V2_MAX_PARTICLES];
 static M11_V2_ParticleEmitter g_emitters[M11_V2_MAX_EMITTERS];
 static int g_particle_count = 0;
@@ -67,8 +80,8 @@ void v2_particle_emit(int emitter_idx, float x, float y) {
             p = &g_particles[g_particle_count++];
             p->x = x;
             p->y = y;
-            angle = (float)(rand() % 360) * 0.0174532925f;
-            speed = (float)(rand() % 100) * 0.01f;
+            angle = (float)((g_particle_rand() % 360) * 17) / 1000.0f;
+            speed = (float)(g_particle_rand() % 100) * 0.01f;
             p->vx = cosf(angle) * speed * em->spread;
             p->vy = sinf(angle) * speed * em->spread;
             p->life = em->particle_template.life;
