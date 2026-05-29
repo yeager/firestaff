@@ -123,6 +123,18 @@ Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party) {
     return &party->champions[party->active_slot];
 }
 
+/* Const-correct versions */
+const Theron_V1_Champion *theron_v1_party_getChampion_c(const Theron_V1_Party *party, int slot) {
+    if (!party) return NULL;
+    if (slot < 0 || slot >= THERON_MAX_CHAMPIONS) return NULL;
+    return &party->champions[slot];
+}
+
+const Theron_V1_Champion *theron_v1_party_leader_c(const Theron_V1_Party *party) {
+    if (!party) return NULL;
+    return &party->champions[party->active_slot];
+}
+
 /* ── Pack / unpack ──────────────────────────────────────────────────── */
 
 size_t theron_v1_party_pack_size(void) {

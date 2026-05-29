@@ -84,146 +84,35 @@ static const Theron_V1_Champion g_blank_companion = {
 
 /* ══════════════════════════════════════════════════════════════════════
  * Party management
- * ══════════════════════════════════════════════════════════════════════ */
+ * ============================================================================
+ *
+ * NOTE: These function bodies are defined in theron_v1_champions.c and linked
+ * once by the firestaff_theron static library.
+ *
+ * To keep champions.c as the single canonical definition point, world.c does
+ * NOT export duplicate party symbols.  World serialization uses static
+ * _tqw_ wrappers for gold-inclusive pack calculations.
+ *
+ * Source: THQUEST.ASM T800
+ */
 
-size_t theron_v1_party_pack_size(void) {
+static size_t _tqw_party_pack_size(void) {
     return (size_t)THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)
-           + sizeof(uint32_t);   /* gold */
+           + sizeof(uint32_t);   /* gold field follows champions in save layout */
 }
 
-size_t theron_v1_champion_block_size(void) {
+static size_t _tqw_champion_block_size(void) {
     return sizeof(Theron_V1_Champion);
 }
 
-void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index) {
-    if (!party) return;
-    memset(party, 0, sizeof(*party));
-    party->champion_count = THERON_MAX_CHAMPIONS;
-    party->active_slot    = THERON_CHAMPION_SLOT_THERON;
-    party->gold          = 0;
+/* All non-static party functions above are defined in theron_v1_champions.c */
 
-    /* Theron — default starting stats (fighter, 3rd level) */
-    Theron_V1_Champion *t = &party->champions[THERON_CHAMPION_SLOT_THERON];
-    snprintf(t->name, sizeof(t->name), "Theron");
-    t->portrait_index = 0;
-    t->primary_class  = THERON_CLASS_FIGHTER;
-    t->alive          = 1;
-    t->health         = 50;   t->max_health  = 50;
-    t->stamina        = 50;   t->max_stamina = 50;
-    t->mana           =  0;   t->max_mana    =  0;
-    t->strength       = 18;
-    t->dexterity      = 12;
-    t->wisdom         = 10;
-    t->vitality       = 14;
-    t->anti_magic     =  8;
-    t->anti_fire      =  8;
-    t->fighter_level  =  3;
-    t->ninja_level    =  0;
-    t->priest_level   =  0;
-    t->wizard_level   =  0;
-    t->wounds         =  0;
-    t->attributes     =  0;
-    memset(t->inventory, 0, sizeof(t->inventory));
-    for (int i = 0; i < THERON_EQUIP_SLOT_COUNT; i++) t->slots[i] = -1;
-    t->load           =  0;
-    t->max_load       = (18 << 3) + 100;
-    t->food           = 20;
-    t->water          = 20;
-
-    /* Companions 1-3 — blank slots (stats assigned at party creation) */
-    for (int i = 1; i < THERON_MAX_CHAMPIONS; i++) {
-        party->champions[i] = g_blank_companion;
-        snprintf(party->champions[i].name, sizeof(party->champions[i].name),
-                 "Companion%d", i);
-    }
-    (void)dungeon_index; /* future: companion roster selection per dungeon */
-}
-
-void theron_v1_party_dungeon_entry_reset(Theron_V1_Party *party) {
-    if (!party) return;
-    for (int i = THERON_CHAMPION_SLOT_COMPANION_1; i < THERON_MAX_CHAMPIONS; i++) {
-        Theron_V1_Champion *c = &party->champions[i];
-        memset(c->inventory, 0, sizeof(c->inventory));
-        for (int s = 0; s < THERON_EQUIP_SLOT_COUNT; s++) {
-            c->slots[s] = -1;
-        }
-        int str = c->strength > 0 ? c->strength : 10;
-        c->max_load = (str << 3) + 100;
-        c->load     = 0;
-        /* Stats, skills, wounds, food, water intentionally preserved */
-    }
-    /* Theron (slot 0): inventory, equipment, stats, skills — all persist */
-}
-
-void theron_v1_party_dungeon_exit(Theron_V1_Party *party) {
-    (void)party;
-    /* No state mutation on exit — saved as-is by between-dungeon save */
-}
-
-Theron_V1_Champion *theron_v1_party_getChampion(Theron_V1_Party *p, int slot) {
-    if (!p || slot < 0 || slot >= THERON_MAX_CHAMPIONS) return NULL;
-    return &p->champions[slot];
-}
-
-Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *p) {
-    if (!p) return NULL;
-    return &p->champions[p->active_slot];
-}
-
-int theron_v1_party_theron_alive(const Theron_V1_Party *p) {
-    if (!p) return 0;
-    return p->champions[THERON_CHAMPION_SLOT_THERON].alive;
-}
-
-int16_t theron_v1_party_total_health(const Theron_V1_Party *p) {
-    if (!p) return 0;
-    int16_t total = 0;
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
-        total += p->champions[i].health;
-    }
-    return total;
-}
-
-int theron_v1_champion_is_alive(const Theron_V1_Champion *c) {
-    return c && c->alive;
-}
-
-int theron_v1_champion_skill_level(const Theron_V1_Champion *c) {
-    if (!c) return 0;
-    switch (c->primary_class) {
-        case THERON_CLASS_FIGHTER: return c->fighter_level;
-        case THERON_CLASS_NINJA:   return c->ninja_level;
-        case THERON_CLASS_PRIEST:  return c->priest_level;
-        case THERON_CLASS_WIZARD:  return c->wizard_level;
-        default: return 0;
-    }
-}
-
-void theron_v1_champion_reset_inventory(Theron_V1_Champion *c) {
-    if (!c) return;
-    memset(c->inventory, 0, sizeof(c->inventory));
-    for (int i = 0; i < THERON_EQUIP_SLOT_COUNT; i++) c->slots[i] = -1;
-    c->load = 0;
-}
-
-void theron_v1_party_recalculate_loads(Theron_V1_Party *p) {
-    if (!p) return;
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
-        Theron_V1_Champion *c = &p->champions[i];
-        int base = (c->strength > 0 ? c->strength : 10) << 3;
-        c->max_load = base + 100;
-        /* Wound penalties */
-        if (c->wounds & THERON_WOUND_LEGS)  c->max_load -= 20;
-        if (c->wounds & THERON_WOUND_ARMS)  c->max_load -= 10;
-        if (c->wounds & THERON_WOUND_HEAD)  c->max_load -=  5;
-    }
-}
 
 /* ── Party pack / unpack ───────────────────────────────────────────── */
 
-size_t theron_v1_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize) {
+size_t _tqw_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize) {
     if (!p || !buf) return 0;
-    size_t need = theron_v1_party_pack_size();
+    size_t need = _tqw_party_pack_size();
     if (bufsize < need) return 0;
     uint8_t *out = (uint8_t *)buf;
     memcpy(out, &p->gold, sizeof(p->gold));
@@ -235,8 +124,8 @@ size_t theron_v1_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize)
     return need;
 }
 
-int theron_v1_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
-    if (!p || !buf || bufsize < theron_v1_party_pack_size()) return -1;
+int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
+    if (!p || !buf || bufsize < _tqw_party_pack_size()) return -1;
     const uint8_t *in = (const uint8_t *)buf;
     memcpy(&p->gold, in, sizeof(p->gold));
     in += sizeof(p->gold);
@@ -711,7 +600,7 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += sizeof(uint8_t);  /* quest_items_in_dungeon */
     n += sizeof(uint8_t);  /* dungeon_complete */
     n += sizeof(Theron_DungeonProgression);
-    n += theron_v1_party_pack_size();
+    n += _tqw_party_pack_size();
     n += sizeof(uint32_t); /* object_count */
     n += (size_t)world->object_count * sizeof(Theron_V1_Object);
     n += sizeof(uint32_t); /* timer_count */
@@ -745,8 +634,8 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     memcpy(out, &world->progression, sizeof(world->progression));
     out += sizeof(world->progression);
 
-    theron_v1_party_pack(&world->party, out, bufsize - (out - (uint8_t *)buf));
-    out += theron_v1_party_pack_size();
+    _tqw_party_pack(&world->party, out, bufsize - (out - (uint8_t *)buf));
+    out += _tqw_party_pack_size();
 
     *(uint32_t *)out = (uint32_t)world->object_count;
     out += sizeof(uint32_t);
@@ -800,11 +689,11 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     memcpy(&world->progression, in, sizeof(world->progression));
     in += sizeof(world->progression);
 
-    if (theron_v1_party_unpack(&world->party, in,
+    if (_tqw_party_unpack(&world->party, in,
                                bufsize - (in - (const uint8_t *)buf)) != 0) {
         return -4;
     }
-    in += theron_v1_party_pack_size();
+    in += _tqw_party_pack_size();
 
     uint32_t oc = *(const uint32_t *)in;
     in += sizeof(uint32_t);

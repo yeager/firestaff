@@ -4151,7 +4151,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
     if(NOT MSVC)
-        target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
     add_test(
         NAME theron_v1_viewport_renderer
@@ -4169,7 +4169,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
     if(NOT MSVC)
-        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
     add_test(
         NAME theron_v1_tile_renderer
