@@ -36,13 +36,13 @@ SOURCE_CHECKS = [
     {"id":"redmcsb_d0_wall_zone_ids_are_side_specific","path":RED/"DEFS.H","lines":"4050-4060","claim":"PC34/I34E D0 side-wall zones are distinct from D0C.","ordered":["#define C716_ZONE_WALL_D0L                                      716","#define C717_ZONE_WALL_D0R                                      717"]},
 ]
 FIRESTAFF_CHECKS = [
-    {"id":"firestaff_existing_d0_side_wall_specs_cite_return_lines","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"289-310","claim":"Existing runtime metadata records direct D0 side-wall return evidence.","ordered":[
+    {"id":"firestaff_existing_d0_side_wall_specs_cite_return_lines","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"424-430","claim":"Existing runtime metadata records direct D0 side-wall return evidence.","ordered":[
         '{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8033", "DUNVIEW.C:8036-8038 wall case returns" },',
         '{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8139", "DUNVIEW.C:8142-8144 wall case returns" },']},
-    {"id":"firestaff_existing_d0_side_occlusion_orders_are_single_back_cells","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"146-167","claim":"Open D0 side lanes use one back cell each; wall is a separate return path.","ordered":[
+    {"id":"firestaff_existing_d0_side_occlusion_orders_are_single_back_cells","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"251-256","claim":"Open D0 side lanes use one back cell each; wall is a separate return path.","ordered":[
         '{ DM1_VIEW_SQUARE_D0L, 0x0002, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8000-8005 door-side/teleporter branch", "DUNVIEW.C:8005 F0115 with C0x0002" },',
         '{ DM1_VIEW_SQUARE_D0R, 0x0001, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8110-8115 door-side/teleporter branch", "DUNVIEW.C:8115 F0115 with C0x0001" },']},
-    {"id":"firestaff_viewport_test_covers_d0_side_wall_specs","path":ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","lines":"237-258","claim":"Focused runtime test asserts D0 side return lines and zone/wall pairing.","ordered":[
+    {"id":"firestaff_viewport_test_covers_d0_side_wall_specs","path":ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","lines":"294-305","claim":"Focused runtime test asserts D0 side return lines and zone/wall pairing.","ordered":[
         '{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, "8038" },',
         '{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, "8144" },']},
 ]
