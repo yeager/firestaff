@@ -1326,6 +1326,18 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_wall_composition_contract_probe
     )
 
+    add_executable(firestaff_dm1_v1_wall_rendering_integrity_probe
+        probes/dm1/firestaff_dm1_v1_wall_rendering_integrity_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_wall_rendering_integrity_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_wall_rendering_integrity_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_wall_rendering_integrity_probe
+        COMMAND firestaff_dm1_v1_wall_rendering_integrity_probe
+    )
+
     add_executable(test_dm1_v2_movement_viewport_pc34
         tests/test_dm1_v2_movement_viewport_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
