@@ -199,8 +199,15 @@ void csb_v1_champion_recompute_load(CSB_V1_Champion *c)
 int csb_v1_champion_is_dead(const CSB_V1_Champion *c)
 {
     if (!c) return 0;
-    return (c->CurrentHealth <= 0) ||
-           (c->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD);
+    /* Only DEAD attribute flag determines life/death state.
+     * CurrentHealth=0 is acceptable (uninitialized slot, or champion just
+     * killed whose health was set to 0 by csb_v1_champion_kill).
+     * The DEAD flag is set by kill() and cleared by resurrect/reincarnate.
+     *
+     * ReDMCSB: CHAMPION.C — life state is the DEAD attribute bit.
+     * Health=0 without DEAD flag means "uninitialized slot" (alive but empty).
+     * Health=0 with DEAD flag means "killed champion awaiting revival". */
+    return ((c->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) ? 1 : 0;
 }
 
 int csb_v1_champion_kill(CSB_V1_Champion *c)
