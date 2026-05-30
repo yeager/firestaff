@@ -129,7 +129,7 @@ def main() -> int:
         ("explicit maxVisibleForwardLimit replay bound", "maxVisibleForwardLimit > 0 && maxVisibleForwardLimit < maxVisibleForward"),
         ("do not draw beyond current visible band", "kWallOrnaments[i].relForward > maxVisibleForward"),
         ("side lane blocker guard", "m11_dm1_side_lane_clear_for_rel(cells,"),
-        ("only wall-like square ornaments", "!m11_viewport_cell_is_wall_like(&cell) && frontMirrorOrdinal < 0"),
+        ("wall-like cell guard before ornament draw", "!m11_viewport_cell_is_wall_like(&cell)"),
         ("wall panel before alcove item handoff", "m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)"),
     ], "Firestaff wall ornament occlusion envelope")
 
