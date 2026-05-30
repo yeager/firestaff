@@ -38,6 +38,9 @@
  *   v22_smooth_update_from_clock / v22_smooth_get_x/y/angle
  */
 
+#ifndef FIRESTAFF_DM2_V2_RUNTIME_H
+#define FIRESTAFF_DM2_V2_RUNTIME_H
+
 #include <stdint.h>
 #include "dm2_v2_viewport_renderer.h"
 #include "dm2_v2_lighting.h"
