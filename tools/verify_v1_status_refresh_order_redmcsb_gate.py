@@ -162,7 +162,7 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         ],
         "Firestaff m11_draw_party_panel V1 status refresh order",
     )
-    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 23251, 23672, [
+    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 19127, 19420, [
         "V1 source status-box background",
         "before top-row",
         "V1 champion name/title status text",

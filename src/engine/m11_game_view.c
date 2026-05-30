@@ -9742,29 +9742,7 @@ static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    /* ReDMCSB DUNGEON.C:F0172: closed fakewall (0x04 bit set) displays as
-     * corridor; open fakewall displays as wall.  Inline the effective element
-     * computation so the verify script sees DUNGEON_ELEMENT_WALL and
-     * DUNGEON_ELEMENT_FAKEWALL directly in this function body. */
-    int elementType = (cell->square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-    if (elementType == DUNGEON_ELEMENT_FAKEWALL) {
-        elementType = (cell->square & 0x04) ? DUNGEON_ELEMENT_CORRIDOR : DUNGEON_ELEMENT_WALL;
-    }
-    return elementType == DUNGEON_ELEMENT_WALL;
-}
-
-static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell) {
-    if (!cell || !cell->valid) {
-        return 0;
-    }
-    /* Floor ornaments only appear on corridor, pit, and teleporter squares.
-     * ReDMCSB DUNGEON.C F0172 routes stairs through T0172046_Stairs
-     * without assigning M558_FLOOR_ORNAMENT_ORDINAL; the stairs 0x08
-     * bit is orientation, not random-ornament permission. */
-    int elementType = (cell->square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-    return elementType == DUNGEON_ELEMENT_CORRIDOR ||
-           elementType == DUNGEON_ELEMENT_PIT ||
-           elementType == DUNGEON_ELEMENT_TELEPORTER;
+    return M11_DM1_ViewportSquareIsWallLikePc34(cell->square);
 }
 
 static int m11_build_front_text_readout(const M11_GameViewState* state,
@@ -22837,17 +22815,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
                                frames, cells);
 
-    /* ReDMCSB F0128 draw order: portrait/ornament before center cell contents.
-     * m11_draw_dm1_front_mirror_route draws D1C champion portrait (y=68..96)
-     * and wall ornament at viewWallIndex==12 BEFORE m11_draw_wall_contents
-     * renders open-center floor/creature layers (y=67..160).  Without this
-     * ordering the portrait would float over the open floor on Hall mirror
-     * squares where the front cell is door/teleporter but still carries C127.
-     * Single invocation (depth 0 only) mirrors DUNVIEW.C F0128: portrait is
-     * always D1C front cell regardless of D0/D1/D2 visible walls. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
-
     /* Until the full C2500/C3200 object+creature zone pass lands, keep
      * visible center-lane objects and creatures alive in normal V1 by
      * drawing the existing source-asset-backed contents layer over open
@@ -22864,6 +22831,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
 
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
