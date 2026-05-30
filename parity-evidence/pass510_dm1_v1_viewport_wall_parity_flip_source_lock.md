@@ -13,7 +13,7 @@ Status: FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK
 - m11_game_view.c:missing firestaff_party_tuple_flip_predicate status=FAIL
 - m11_game_view.c:missing firestaff_wallset_variant_binding_before_draw status=FAIL
 - m11_game_view.c:missing firestaff_center_wall_flip_path status=FAIL
-- m11_game_view.c:10282 firestaff_side_wall_lr_swap_path status=FAIL
+- m11_game_view.c:missing firestaff_side_wall_lr_swap_path status=FAIL
 
 ## Local references
 - dm1_pc34_graphics /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e

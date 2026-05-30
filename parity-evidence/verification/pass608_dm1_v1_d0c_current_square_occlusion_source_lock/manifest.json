@@ -69,11 +69,11 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 2015,
+          "line": 2110,
           "needle": "DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order"
         },
         {
-          "line": 2030,
+          "line": 2125,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],

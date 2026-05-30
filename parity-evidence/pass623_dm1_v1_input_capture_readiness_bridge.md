@@ -19,10 +19,10 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - PASS probes/m11/firestaff_m11_wall_collision_capture_probe.c:20-174,210-236 wall_collision_probe_emits_input_script_and_viewport_crops - the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper
 
 ## Canonical input/crop rows
-- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=66be58673b791da682bfcad7930cf325b6289ee19d6314cb8ca8113f363d2271
+- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=dbddd83083612ec7bcaaf3796a93b0b9681b8db2b99f18e83d0aead0335d688e
 - PASS 02_turn_right_west_1_3 inputs=['M12_MENU_INPUT_RIGHT'] commands=[2] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
 - PASS 03_blocked_west_wall_1_3 inputs=['M12_MENU_INPUT_UP'] commands=[3] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- PASS 04_forward_south_1_4 inputs=['M12_MENU_INPUT_LEFT', 'M12_MENU_INPUT_UP'] commands=[1, 3] tuple={'map': 0, 'x': 1, 'y': 4, 'direction': 2} crop=04_forward_south_1_4_viewport_224x136.ppm sha256=5e9fb1e3b97cdc6a6b9b2d9c01580c16364f3f6041c7d028427586c125c50349
+- PASS 04_forward_south_1_4 inputs=['M12_MENU_INPUT_LEFT', 'M12_MENU_INPUT_UP'] commands=[1, 3] tuple={'map': 0, 'x': 1, 'y': 4, 'direction': 2} crop=04_forward_south_1_4_viewport_224x136.ppm sha256=3a72a9707bc48ac407e307f3a061593f362faedf036242093d7caade8a2187e9
 
 ## Required original transcript columns
 - routeLabel

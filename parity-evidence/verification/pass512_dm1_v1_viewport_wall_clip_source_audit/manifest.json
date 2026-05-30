@@ -53,7 +53,7 @@
       ],
       "id": "local_clip_gate_contract",
       "lines": "1159-1205",
-      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416"
+      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
@@ -81,7 +81,7 @@
       ],
       "id": "local_transparent_wall_rows_use_clip_gate",
       "lines": "594-618",
-      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416"
+      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
@@ -105,7 +105,7 @@
       ],
       "id": "local_opaque_wall_rows_use_clip_gate",
       "lines": "628-645",
-      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416"
+      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e"
     },
     {
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",

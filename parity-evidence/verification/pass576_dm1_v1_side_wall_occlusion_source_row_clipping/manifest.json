@@ -103,7 +103,7 @@
       "lines": "412-428",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416",
+      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -152,7 +152,7 @@
       "lines": "1159-1198",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "c4eb95010bed822fcb7849301d7973831f1f2cffe4832badec8aa79eef90e416",
+      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },

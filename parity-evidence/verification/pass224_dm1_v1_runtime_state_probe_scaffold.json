@@ -40,7 +40,7 @@
         "-version"
       ],
       "output_head": [
-        "2026-05-28 01:14:44.219 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
+        "2026-05-30 06:54:11.024 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
         "dosbox-staging, version 0.82.2 ()",
         "",
         "Copyright (C) 2020-2024  The DOSBox Staging Team",
