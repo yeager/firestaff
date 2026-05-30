@@ -61,6 +61,7 @@ typedef struct {
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out, const uint8_t *dat, int size);
 int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
