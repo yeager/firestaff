@@ -284,6 +284,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 1 — Launch/Profile Separation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies DM2_V2_PHASE_DOMAIN_LAUNCH and DM2_V2_PHASE_DOMAIN_PROFILE compile gates,
+# DM2 vs DM1/CSB asset hash separation, and launch independence from other games.
+add_executable(firestaff_dm2_v2_phase1_launch_profile_separation_probe
+    probes/firestaff_dm2_v2_phase1_launch_profile_separation_probe.c)
+target_link_libraries(firestaff_dm2_v2_phase1_launch_profile_separation_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 0 — V1 Compatibility Lock Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: defaults(), v2_active(), domain classification, V1-locked domains,
@@ -1471,18 +1483,16 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE firestaff_m10)
-    # DISABLED — test_dm1_v22_verification has API mismatches with committed V2.2
-    # source (wrong include, wrong function signatures, undefined types).
-    # V2.2 core verified through shapes/fallback/modern_assets commits.
-    # add_executable(test_dm1_v22_verification
-    #     tests/test_dm1_v22_verification.c
-    #     src/dm1v2/dm1_v2_modern_assets_pc34.c
-    #     src/dm1v2/dm1_v2_phase_gate_pc34.c
-    #     src/dm1v2/dm1_v2_presentation_profile_pc34.c
-    #     src/dm1v2/dm1_v2_settings_pc34.c
-    #     src/dm1v2/dm1_v2_anim_timing_pc34.c
-    # )
-    # target_link_libraries(test_dm1_v22_verification PRIVATE firestaff_m10)
+    add_executable(test_dm1_v22_verification
+        tests/test_dm1_v22_verification.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_phase_gate_pc34.c
+        src/dm1v2/dm1_v2_presentation_profile_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+    )
+    target_link_libraries(test_dm1_v22_verification PRIVATE firestaff_m12 firestaff_v2)
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -2000,6 +2010,17 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v2_phase1_launch_profile_separation_probe
         )
         set_tests_properties(csb_v2_phase1_launch_profile_separation PROPERTIES
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy"
+        )
+    endif()
+
+    # DM2 V2 Phase 1 — Launch/Profile Separation Probe (headless, no game data)
+    if(TARGET firestaff_dm2_v2_phase1_launch_profile_separation_probe)
+        add_test(
+            NAME dm2_v2_phase1_launch_profile_separation
+            COMMAND firestaff_dm2_v2_phase1_launch_profile_separation_probe
+        )
+        set_tests_properties(dm2_v2_phase1_launch_profile_separation PROPERTIES
             ENVIRONMENT "SDL_VIDEODRIVER=dummy"
         )
     endif()
