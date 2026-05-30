@@ -272,6 +272,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# ── DM1 V1 Blurry Inscription Probe ─────────────────────────────────────────
+# Headless probe: reproduces blurry inscription artifact when original font
+# is not loaded (g_activeOriginalFont==NULL uses g_font[] fallback with
+# shadow double-draw → thick/blurry glyphs + centering drift).
+# No game data needed; verifies inscription font path behavior in isolation.
+add_executable(firestaff_m11_blurry_inscription_probe
+    probes/m11/firestaff_m11_blurry_inscription_probe.c)
+target_link_libraries(firestaff_m11_blurry_inscription_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_blurry_inscription_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies CSB_V2_PHASE_DOMAIN_LAUNCH and CSB_V2_PHASE_DOMAIN_PROFILE compile gates,
@@ -2001,6 +2013,15 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_resurrection
         COMMAND test_dm1_v1_resurrection_pc34_compat
+    )
+
+    # DM1 V1 Blurry Inscription Probe (headless, no game data needed)
+    add_test(
+        NAME m11_blurry_inscription
+        COMMAND firestaff_m11_blurry_inscription_probe
+    )
+    set_tests_properties(m11_blurry_inscription PROPERTIES
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
 
     # Phase A probe (headless, no game data needed)
