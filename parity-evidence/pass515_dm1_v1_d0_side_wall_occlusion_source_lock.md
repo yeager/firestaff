@@ -1,6 +1,6 @@
 # Pass515 DM1 V1 D0 side wall occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -46,13 +46,13 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Firestaff Evidence
 
-- FAIL firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:289-310)
+- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:424-430)
   - Existing runtime metadata records direct D0 side-wall return evidence.
 
-- FAIL firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:146-167)
+- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:251-256)
   - Open D0 side lanes use one back cell each; wall is a separate return path.
 
-- FAIL firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:237-258)
+- PASS firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:294-305)
   - Focused runtime test asserts D0 side return lines and zone/wall pairing.
 
 ## Verification
@@ -76,10 +76,10 @@ PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
 - command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
-  - returncode: 1
+  - returncode: 0
   - output tail:
 ~~~
-FAIL check-only
+PASS check-only
 ~~~
 
 ## Local References

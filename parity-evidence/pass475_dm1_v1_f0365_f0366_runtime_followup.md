@@ -27,8 +27,8 @@ Closed blocker: Firestaff live M11 movement input now has a source-locked and re
 
 ## Gates
 
-- `cmake --build /Users/bosse/.openclaw/workspace-main/build-csb-v2-phase4 --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
-- `ctest --test-dir /Users/bosse/.openclaw/workspace-main/build-csb-v2-phase4 --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
+- `cmake --build /Users/bosse/.openclaw/workspace-main/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_movement_pipeline_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2` — rc 0
+- `ctest --test-dir /Users/bosse/.openclaw/workspace-main/build --output-on-failure -R dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat` — rc 0
 - `git diff --check` — rc 0
 
 ## Still not claimed

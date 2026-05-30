@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1-v1-p1-champion-zorder",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -104,7 +104,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
+  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -223,5 +223,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-30T04:54:11.037072+00:00"
+  "timestampUtc": "2026-05-30T07:31:08.709054+00:00"
 }

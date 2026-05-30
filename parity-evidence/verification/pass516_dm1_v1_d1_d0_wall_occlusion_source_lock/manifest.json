@@ -2,41 +2,83 @@
   "firestaffChecks": [
     {
       "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
-      "hits": [],
-      "id": "local-d1-d0-wall-specs-present",
-      "lines": "281-312",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
-        "DUNVIEW.C:7459-7460 side ornament then return",
-        "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
-        "DUNVIEW.C:7627-7628 side ornament then return",
-        "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C",
-        "DUNVIEW.C:7842-7843 front alcove draws F0115",
-        "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R",
-        "DUNVIEW.C:8036-8038 wall case returns",
-        "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
-        "DUNVIEW.C:8142-8144 wall case returns"
+      "hits": [
+        {
+          "line": 423,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 423,
+          "needle": "DUNVIEW.C:7459-7460 side ornament then return"
+        },
+        {
+          "line": 424,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 424,
+          "needle": "DUNVIEW.C:7627-7628 side ornament then return"
+        },
+        {
+          "line": 425,
+          "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
+        },
+        {
+          "line": 425,
+          "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
+        },
+        {
+          "line": 426,
+          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
+        },
+        {
+          "line": 426,
+          "needle": "DUNVIEW.C:8036-8038 wall case returns"
+        },
+        {
+          "line": 427,
+          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
+          "line": 427,
+          "needle": "DUNVIEW.C:8142-8144 wall case returns"
+        }
       ],
+      "id": "local-d1-d0-wall-specs-present",
+      "lines": "419-430",
+      "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.",
-      "hits": [],
-      "id": "local-side-occlusion-d1-d0-cell-orders-present",
-      "lines": "139-171",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L, 0x0032",
-        "DM1_VIEW_SQUARE_D1R, 0x0041",
-        "DM1_VIEW_SQUARE_D0L, 0x0002",
-        "DM1_VIEW_SQUARE_D0R, 0x0001"
+      "hits": [
+        {
+          "line": 162,
+          "needle": "DM1_VIEW_SQUARE_D1L, 1, -1"
+        },
+        {
+          "line": 163,
+          "needle": "DM1_VIEW_SQUARE_D1R, 1,  1"
+        },
+        {
+          "line": 165,
+          "needle": "DM1_VIEW_SQUARE_D0L, 0, -1"
+        },
+        {
+          "line": 166,
+          "needle": "DM1_VIEW_SQUARE_D0R, 0,  1"
+        }
       ],
+      "id": "local-side-occlusion-d1-d0-cell-orders-present",
+      "lines": "136-168",
+      "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
@@ -60,17 +102,19 @@
         {
           "line": 298,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
+          "line": 344,
+          "needle": "test_wall_item_occlusion_alcove_exception"
         }
       ],
       "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
-      "lines": "234-310",
-      "missing": [
-        "test_wall_item_occlusion_alcove_exception"
-      ],
+      "lines": "230-390",
+      "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "f1478c6d5f6d82672af69be26df259f7ca3a1d196e8dff6418c8aba6e188209b",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "localReferences": [
@@ -287,8 +331,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -304,9 +348,9 @@
         "/Users/bosse/.openclaw/workspace-main/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present,local-runtime-test-covers-d1-d0-wall-occlusion",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass516 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

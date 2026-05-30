@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-05-30T04:54:11.820477+00:00",
+  "timestampUtc": "2026-05-30T07:31:09.262928+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
   "repo": "/Users/bosse/.openclaw/workspace-main",
-  "branch": "main",
-  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
+  "branch": "dm1-v1-p1-champion-zorder",
+  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
