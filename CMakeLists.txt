@@ -457,6 +457,15 @@ if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
     endif()
 endif()
 
+# DM1 V1 wall inscription rendering probe
+if(EXISTS "probes/dm1/probe_dm1_v1_wall_inscription.c")
+    add_executable(probe_dm1_v1_wall_inscription probes/dm1/probe_dm1_v1_wall_inscription.c)
+    target_link_libraries(probe_dm1_v1_wall_inscription PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(probe_dm1_v1_wall_inscription PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # DM1 V1 viewport draw-order evidence probe
 if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
     add_executable(firestaff_dm1_v1_viewport_draw_order_probe probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c)

@@ -253,3 +253,236 @@ float v22_hud_health_pulse_alpha(void) {
     return v2_anim_value(&g_health_pulse);
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * V2.1 Champion Panel Renderer — pure presentation overlay
+ *
+ * Draws 4 champion status slots into the bottom ~54px of the framebuffer.
+ * Each slot: portrait box (left), name/stats (center), HP/Stamina/Mana bars,
+ * hand icon (right).  Layout matches V1 PANEL.C F0395-F0404.
+ *
+ * V2.1: uses 5×5 pixel font and per-bar color tinting instead of V1 palette.
+ * Does NOT mutate game state or command queues.
+ * Source: ReDMCSB PANEL.C F0395-F0404; CHAMDRAW.C ~180; STATS.C F0090-F0092.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+#define V22_PANEL_SLOT_W   80
+#define V22_PANEL_SLOT_H   54
+#define V22_PANEL_Y        138  /* top of champion panel in V1 320×200 space */
+
+/* ReDMCSB M653 pixel font — 5×5 glyphs for champion name/stats text. */
+static const uint8_t k_v22_font[64][5] = {
+    {0x7E,0x41,0x41,0x41,0x7E},  /* 0 */
+    {0x00,0x08,0x08,0x08,0x00},  /* 1 */
+    {0x7E,0x01,0x7E,0x40,0x7E},  /* 2 */
+    {0x7E,0x01,0x3E,0x01,0x7E},  /* 3 */
+    {0x41,0x41,0x7F,0x01,0x01},  /* 4 */
+    {0x7E,0x40,0x7E,0x01,0x7E},  /* 5 */
+    {0x7E,0x40,0x7E,0x41,0x7E},  /* 6 */
+    {0x7E,0x01,0x02,0x04,0x08},  /* 7 */
+    {0x7E,0x41,0x7E,0x41,0x7E},  /* 8 */
+    {0x7E,0x41,0x7E,0x01,0x7E},  /* 9 */
+    {0x00,0x00,0x1F,0x00,0x00},  /* 10 dash */
+    {0x00,0x00,0x00,0x00,0x08},  /* 11 period */
+    {0x00,0x00,0x00,0x00,0x00},  /* 12 space */
+    {0x00,0x02,0x00,0x02,0x00},  /* 13 comma */
+    {0x00,0x14,0x00,0x00,0x00},  /* 14 colon */
+    {0x3E,0x41,0x41,0x41,0x3E},  /* 15 A */
+    {0x7F,0x49,0x49,0x49,0x36},  /* 16 B */
+    {0x3E,0x41,0x41,0x41,0x22},  /* 17 C */
+    {0x7F,0x41,0x41,0x41,0x3E},  /* 18 D */
+    {0x7F,0x49,0x49,0x49,0x41},  /* 19 E */
+    {0x7F,0x09,0x09,0x09,0x01},  /* 20 F */
+    {0x3E,0x41,0x49,0x49,0x7A},  /* 21 G */
+    {0x7F,0x08,0x08,0x08,0x7F},  /* 22 H */
+    {0x00,0x41,0x7F,0x41,0x00},  /* 23 I */
+    {0x20,0x40,0x41,0x3F,0x01},  /* 24 J */
+    {0x7F,0x08,0x14,0x22,0x41},  /* 25 K */
+    {0x7F,0x40,0x40,0x40,0x40},  /* 26 L */
+    {0x7F,0x02,0x0C,0x02,0x7F},  /* 27 M */
+    {0x7F,0x04,0x08,0x10,0x7F},  /* 28 N */
+    {0x3E,0x41,0x41,0x41,0x3E},  /* 29 O */
+    {0x7F,0x09,0x09,0x09,0x06},  /* 30 P */
+    {0x3E,0x41,0x51,0x21,0x5E},  /* 31 Q */
+    {0x7F,0x09,0x19,0x29,0x46},  /* 32 R */
+    {0x46,0x49,0x49,0x49,0x31},  /* 33 S */
+    {0x01,0x01,0x7F,0x01,0x01},  /* 34 T */
+    {0x3F,0x40,0x40,0x40,0x3F},  /* 35 U */
+    {0x1F,0x20,0x40,0x20,0x1F},  /* 36 V */
+    {0x3F,0x40,0x38,0x40,0x3F},  /* 37 W */
+    {0x63,0x14,0x08,0x14,0x63},  /* 38 X */
+    {0x07,0x08,0x70,0x08,0x07},  /* 39 Y */
+    {0x61,0x51,0x49,0x45,0x43},  /* 40 Z */
+    {0x00,0x00,0x7F,0x41,0x00},  /* 41 [ */
+    {0x02,0x04,0x08,0x10,0x20},  /* 42 backslash */
+    {0x00,0x41,0x7F,0x00,0x00},  /* 43 ] */
+    {0x06,0x08,0x08,0x08,0x06},  /* 44 ^ */
+    {0x00,0x00,0x00,0x00,0x3F},  /* 45 underscore */
+    {0x08,0x08,0x08,0x08,0x08},  /* 46 backtick */
+    {0x3E,0x41,0x41,0x41,0x3E},  /* 47 a */
+    {0x7F,0x49,0x49,0x49,0x36},  /* 48 b */
+    {0x3E,0x41,0x41,0x41,0x22},  /* 49 c */
+    {0x7F,0x41,0x41,0x41,0x3E},  /* 50 d */
+    {0x7F,0x49,0x49,0x49,0x41},  /* 51 e */
+    {0x7F,0x09,0x09,0x09,0x01},  /* 52 f */
+    {0x3E,0x41,0x49,0x49,0x7A},  /* 53 g */
+    {0x7F,0x08,0x08,0x08,0x7F},  /* 54 h */
+    {0x00,0x41,0x7F,0x41,0x00},  /* 55 i */
+    {0x20,0x40,0x41,0x3F,0x01},  /* 56 j */
+    {0x7F,0x08,0x14,0x22,0x41},  /* 57 k */
+    {0x7F,0x40,0x40,0x40,0x40},  /* 58 l */
+    {0x7F,0x02,0x0C,0x02,0x7F},  /* 59 m */
+    {0x7F,0x04,0x08,0x10,0x7F},  /* 60 n */
+    {0x3E,0x41,0x41,0x41,0x3E},  /* 61 o */
+    {0x7F,0x09,0x09,0x09,0x06},  /* 62 p */
+    {0x3E,0x41,0x51,0x21,0x5E},  /* 63 q */
+};
+
+static int v22_font_glyph(int c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'Z') return 15 + (c - 'A');
+    if (c >= 'a' && c <= 'z') return 47 + (c - 'a');
+    if (c == '-') return 10;
+    if (c == '.') return 11;
+    if (c == ' ') return 12;
+    if (c == ',') return 13;
+    if (c == ':') return 14;
+    return -1;
+}
+
+static void v22_draw_glyph(uint8_t* fb, int w, int h,
+                            int px, int py, int glyph, uint8_t val) {
+    if (glyph < 0 || glyph >= 64) return;
+    for (int row = 0; row < 5; row++) {
+        uint8_t bits = k_v22_font[glyph][row];
+        for (int col = 0; col < 5; col++) {
+            if (!(bits & (0x10 >> col))) continue;
+            int x = px + col;
+            int y = py + row;
+            if (x >= 0 && x < w && y >= 0 && y < h) {
+                fb[y * w + x] = val;
+            }
+        }
+    }
+}
+
+static void v22_draw_text(uint8_t* fb, int w, int h,
+                           int px, int py, const char* str, uint8_t val) {
+    int x = px;
+    while (*str) {
+        int g = v22_font_glyph((unsigned char)*str);
+        if (g >= 0) v22_draw_glyph(fb, w, h, x, py, g, val);
+        x += 6;
+        str++;
+    }
+}
+
+static void v22_draw_bar(uint8_t* fb, int w, int h,
+                          int bx, int by, int bw, int bh,
+                          float fill_ratio, uint8_t low_val, uint8_t high_val) {
+    if (bw <= 0 || bh <= 0) return;
+    int fill = (int)((float)bw * fill_ratio);
+    if (fill < 0) fill = 0;
+    if (fill > bw) fill = bw;
+    for (int row = 0; row < bh; row++) {
+        for (int col = 0; col < bw; col++) {
+            int x = bx + col;
+            int y = by + row;
+            if (x >= 0 && x < w && y >= 0 && y < h) {
+                fb[y * w + x] = (col < fill) ? high_val : low_val;
+            }
+        }
+    }
+}
+
+/* Draw one champion slot at panel-relative offset (sx, sy). */
+static void v22_render_slot(uint8_t* fb, int w, int h,
+                             int sx, int sy,
+                             const char* name,
+                             int hp_pct, int stam_pct, int mana_pct,
+                             uint8_t base_val, uint8_t high_val) {
+    /* Slot background */
+    for (int dy = 0; dy < V22_PANEL_SLOT_H; dy++) {
+        for (int dx = 0; dx < V22_PANEL_SLOT_W; dx++) {
+            int px = sx + dx;
+            int py = sy + dy;
+            if (px >= 0 && px < w && py >= 0 && py < h) {
+                fb[py * w + px] = base_val;
+            }
+        }
+    }
+
+    /* Portrait box — 28×46 px, left side of slot.
+     * ReDMCSB: CHAMDRAW.C ~180 portrait dimensions; PANEL.C F0395 slot layout. */
+    int port_x = sx + 2;
+    int port_y = sy + 4;
+    int port_w = 28;
+    int port_h = 46;
+    for (int dy = 0; dy < port_h; dy++) {
+        for (int dx = 0; dx < port_w; dx++) {
+            int px = port_x + dx;
+            int py = port_y + dy;
+            if (px >= 0 && px < w && py >= 0 && py < h) {
+                int is_border = (dx == 0 || dx == port_w-1 || dy == 0 || dy == port_h-1);
+                fb[py * w + px] = is_border ? high_val : (uint8_t)(base_val + 20);
+            }
+        }
+    }
+
+    /* Champion name at x+34, y+4 */
+    int name_x = sx + 34;
+    int name_y = sy + 4;
+    v22_draw_text(fb, w, h, name_x, name_y, name, high_val);
+
+    /* HP bar — ReDMCSB: STATS.C F0090-F0092; PANEL.C F0395 bar positions */
+    int bar_x = name_x;
+    int bar_y = sy + 20;
+    v22_draw_bar(fb, w, h, bar_x, bar_y, 36, 4,
+                  hp_pct / 100.0f, base_val, high_val);
+
+    /* Stamina bar — 8px below HP */
+    v22_draw_bar(fb, w, h, bar_x, bar_y + 8, 36, 4,
+                  stam_pct / 100.0f, base_val, (uint8_t)(high_val * 3 / 4));
+
+    /* Mana bar — 8px below stamina */
+    v22_draw_bar(fb, w, h, bar_x, bar_y + 16, 36, 4,
+                  mana_pct / 100.0f, base_val, (uint8_t)(high_val * 2 / 3));
+
+    /* Hand icon box — rightmost 14px of slot.
+     * ReDMCSB: COMMAND.C:484-497 action hand subroutes. */
+    int hand_x = sx + V22_PANEL_SLOT_W - 14;
+    int hand_y = sy + 4;
+    for (int dy = 0; dy < 14; dy++) {
+        for (int dx = 0; dx < 14; dx++) {
+            int px = hand_x + dx;
+            int py = hand_y + dy;
+            if (px >= 0 && px < w && py >= 0 && py < h) {
+                int is_border = (dx == 0 || dx == 13 || dy == 0 || dy == 13);
+                fb[py * w + px] = is_border ? high_val : base_val;
+            }
+        }
+    }
+}
+
+void v22_hud_render_champion_panel(uint8_t* fb, int w, int h,
+                                    int champion_hp_pct[4],
+                                    int champion_stam_pct[4],
+                                    int champion_mana_pct[4]) {
+    if (!fb || w <= 0 || h <= 0) return;
+    if (!g_v2_hud_state.visible) return;
+
+    uint8_t alpha = g_v2_hud_state.opacity;
+    uint8_t base_val = (alpha > 0) ? (alpha / 2) : 0;
+    uint8_t high_val = (alpha > 0) ? alpha : 0;
+
+    const char* names[4] = {"Warrior", "Mage", "Merlin", "Ranger"};
+
+    for (int i = 0; i < 4; i++) {
+        int sx = i * V22_PANEL_SLOT_W;
+        int sy = V22_PANEL_Y;
+        int hp = champion_hp_pct ? champion_hp_pct[i] : 75;
+        int stam = champion_stam_pct ? champion_stam_pct[i] : 80;
+        int mana = champion_mana_pct ? champion_mana_pct[i] : 60;
+        v22_render_slot(fb, w, h, sx, sy, names[i], hp, stam, mana, base_val, high_val);
+    }
+}
+

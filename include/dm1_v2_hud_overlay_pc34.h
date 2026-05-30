@@ -55,6 +55,21 @@ void v22_hud_notify_turn_complete(void);
 void v22_hud_clear_turn_complete(void);
 int v22_hud_is_turn_complete_pending(void);
 
+/* V2.1 champion panel renderer — pure presentation overlay.
+ * Draws the 4-champion status panel (portrait/name/HP/Stamina/Mana/hand)
+ * into the bottom region of the framebuffer using V1 coordinates.
+ * ReDMCSB: PANEL.C F0395-F0404; CHAMDRAW.C ~180; STATS.C F0090-F0092.
+ * Does not mutate game state or command queues. */
+void v22_hud_render_champion_panel(uint8_t* fb, int w, int h,
+                                    int champion_hp_pct[4],
+                                    int champion_stam_pct[4],
+                                    int champion_mana_pct[4]);
+
+/* V2 champion select — renders focused champion slot into framebuffer.
+ * Pure presentation; does not mutate game state or command queues.
+ * Source: CLIKCHAM.C:24-35; COMMAND.C:484-497; CHAMDRAW.C ~180. */
+void v2_champion_select_render_fb(uint8_t* fb, int w, int h);
+
 #ifdef __cplusplus
 }
 #endif
