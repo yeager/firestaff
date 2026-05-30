@@ -4023,27 +4023,25 @@ if(NOT MSVC)
 endif()
 
 # ── Nexus V1 launch smoke probe ─────────────────────────────────────
-# Verifies: launcher init → Structure1B DGN load → render → tick
-# Source-lock: src/nexus/nexus_v1_launcher.c, nexus_v1_dungeon.c, nexus_v1_viewport.c
-add_executable(firestaff_nexus_v1_launch_smoke_probe
-    probes/nexus_v1_launch_smoke_probe.c
-)
-target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    firestaff_nexus firestaff_m10
-)
-target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-if(NOT MSVC)
-    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-        -Wall -Wextra -O2
-    )
-endif()
-
-add_test(
-    NAME firestaff_nexus_v1_launch_smoke
-    COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
-)
+# VERIFY-BROKEN: probes/nexus_v1_launch_smoke_probe.c missing from this branch
+# add_executable(firestaff_nexus_v1_launch_smoke_probe
+#     probes/nexus_v1_launch_smoke_probe.c
+# )
+# target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     firestaff_nexus firestaff_m10
+# )
+# target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include
+# )
+# if(NOT MSVC)
+#     target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#         -Wall -Wextra -O2
+#     )
+# endif()
+# add_test(
+#     NAME firestaff_nexus_v1_launch_smoke
+#     COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+# )
 
 # ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
 # Source-lock: src/nexus/nexus_v1_movement.c (CLIKMENU.C F0366, MOVESENS.C F0267),
