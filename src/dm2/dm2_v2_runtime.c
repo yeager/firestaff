@@ -2,15 +2,22 @@
  * dm2_v2_runtime.c — DM2 V2 Runtime Integration
  *
  * Phase 5: Smooth movement and viewport interpolation.
+ * Phase 4: Enhanced lighting and outdoor effects.
  *
  * Wires DM2_V2_ViewportState (smooth movement + animation clock) into
  * the Firestaff game loop so that when the party moves or turns, the
  * camera smoothly interpolates over 1 V1 tick instead of snapping.
  *
+ * Phase 4 wires DM2_V2_LightingState (fog map, ambient, torch flicker,
+ * lightning bloom) and DM2_V2_OutdoorFX (cloud drift, tree sway, per-
+ * weather ambient tint, lightning sequence) into the render pipeline.
+ * All Phase 4 effects are presentation-only — V1 game state (torch
+ * charges, weather, time_of_day, triggers, combat) is unchanged.
+ *
  * Architecture:
  *   Game Loop (V1 tick):
  *     dm2_v1_runtime_tick()         → advance V1 game state (snaps)
- *     dm2_v2_runtime_v1_tick()      → advance V2 animation clock
+ *     dm2_v2_runtime_v1_tick()      → advance V2 animation clock + torch flicker
  *     [on move]: dm2_v2_runtime_smooth_walk() → begin smooth animation
  *     [on turn]: dm2_v2_runtime_smooth_turn() → begin smooth turn
  *
@@ -19,6 +26,7 @@
  *       dm2_v2_viewport_smooth_query() → get interpolated position/angle
  *       dm2_v1_runtime_render_frame()  → base V1 viewport rendering
  *       [if smooth active]: apply smooth camera offset to viewport
+ *     dm2_v2_runtime_lighting_tick()  → advance outdoor FX + fog animation
  *
  * V1 invariant preserved: game logic sees only snapped positions.
  * V2 visual only: smooth interpolation never changes game state.
@@ -26,6 +34,7 @@
  * Source: SKULL.ASM T520  — party/movement tick
  *         SKULL.ASM T560  — dungeon viewport rendering
  *         SKULL.ASM T600  — outdoor viewport rendering
+ *         SKULL.ASM PROCESS_TIMER_0C — per-champion torch flicker
  *         ReDMCSB DUNGEON.C:1371-1421 — map coordinate resolution
  *         ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence (55ms)
  *         ReDMCSB VBLANK.C M526_WaitVerticalBlank
@@ -36,6 +45,8 @@
 
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_viewport_renderer.h"
+#include "dm2_v2_lighting.h"
+#include "dm2_v2_outdoor_enhanced.h"
 #include "dm2_v1_runtime.h"
 #include <string.h>
 
@@ -44,6 +55,18 @@
 /* One global DM2 V2 viewport state, shared across all DM2 sessions.
  * Initialised once at startup via dm2_v2_runtime_init(). */
 static DM2_V2_ViewportState s_vp;
+
+/* DM2 V2 Phase 4: enhanced lighting and outdoor FX state.
+ * Fog map, ambient overlay, torch flicker, lightning bloom,
+ * outdoor cloud drift, tree sway, per-weather ambient tint.
+ * Initialised alongside s_vp in dm2_v2_runtime_init(). */
+static DM2_V2_LightingState s_lighting;
+static DM2_V2_OutdoorFX      s_outdoor_fx;
+
+/* Phase gate: enhanced outdoor effects enabled?
+ * Default 0 (V1 fallback); set to 1 when dm2_v2_phase_gate binds
+ * Phase 4 in profile domain.  When 0, Phase 4 functions are no-ops. */
+static int s_enhanced_outdoor = 0;
 
 /* Tracks the V1-snapped party position at last move/turn.
  * Used to compute the "from" position when starting smooth animations. */
@@ -111,10 +134,38 @@ void dm2_v2_runtime_init(int scale) {
      * Source: Phase 5 runtime binding */
     dm2_v1_runtime_set_move_callback(dm2_v2_runtime_move_cb);
     dm2_v1_runtime_set_turn_callback(dm2_v2_runtime_turn_cb);
+
+    /* Phase 4: initialise enhanced lighting and outdoor FX state.
+     * Enhanced outdoor defaults to 0 (V1 fallback) unless config
+     * explicitly enables V2 profile mode.  When s_enhanced_outdoor=0,
+     * all Phase 4 functions are no-ops — V1 source is locked.
+     *
+     * Source: SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers
+     *         SKULL.ASM T600 — outdoor viewport rendering
+     *         SKULL.ASM T560 — indoor dungeon viewport
+     *         ReDMCSB PANEL.C:367-428 — DM1 palette lighting semantics
+     *         docs/dm2_time.md §Weather §Fog §Lightning */
+    dm2_v2_lighting_init(&s_lighting);
+    dm2_v2_outdoor_fx_init(&s_outdoor_fx);
+    s_enhanced_outdoor = 0;
 }
 
 DM2_V2_ViewportState *dm2_v2_runtime_get_viewport(void) {
     return &s_vp;
+}
+
+/* dm2_v2_runtime_get_lighting — returns the global DM2 V2 lighting state.
+ * Contains fog map, ambient overlay, torch flicker, lightning bloom.
+ * Phase 4 enhanced lighting — presentation-only; V1 state unchanged. */
+DM2_V2_LightingState *dm2_v2_runtime_get_lighting(void) {
+    return &s_lighting;
+}
+
+/* dm2_v2_runtime_get_outdoor_fx — returns the global DM2 V2 outdoor FX state.
+ * Contains cloud drift, tree sway, per-weather ambient tint, lightning.
+ * Phase 4 outdoor effects — presentation-only; V1 state unchanged. */
+DM2_V2_OutdoorFX *dm2_v2_runtime_get_outdoor_fx(void) {
+    return &s_outdoor_fx;
 }
 
 /* ── V1 Tick ─────────────────────────────────────────────────────── */
@@ -127,13 +178,26 @@ DM2_V2_ViewportState *dm2_v2_runtime_get_viewport(void) {
  * dm2_v1_runtime_move() — see dm2_v2_runtime_move_cb and
  * dm2_v2_runtime_turn_cb registered in dm2_v2_runtime_init().
  *
+ * Phase 4: also advances torch flicker phase and lightning bloom timer.
+ * Torch flicker is time-driven; dt is the V1 tick interval (~55ms).
+ * Bloom fade is timer-based (seconds), updated each V1 tick.
+ *
  * Source: ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence
  *         ReDMCSB VBLANK.C M526_WaitVerticalBlank
+ *         SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers
  */
 void dm2_v2_runtime_v1_tick(uint32_t now_ms) {
     /* Advance the V2 animation clock to the new V1 tick boundary.
      * This resets the sub-tick to 0.0 for the new tick window. */
     dm2_v2_viewport_v1_tick(&s_vp, now_ms);
+
+    /* Phase 4: advance torch flicker per champion.
+     * Source: SKULL.ASM PROCESS_TIMER_0C — torch charge-to-intensity */
+    dm2_v2_torch_flicker_tick(&s_lighting, 0.055f);
+
+    /* Phase 4: advance lightning bloom fade.
+     * Source: dm2_v2_lighting.c dm2_v2_lighting_tick_bloom */
+    dm2_v2_lighting_tick_bloom(&s_lighting, 0.055f);
 }
 
 /* ── Smooth Movement Triggers ─────────────────────────────────────── */
@@ -373,14 +437,86 @@ int dm2_v2_runtime_render_frame(int party_dir,
     return 0;
 }
 
+/* ── Phase 4: Lighting / Outdoor FX ───────────────────────────────── */
+
+/*
+ * dm2_v2_runtime_lighting_tick — advance enhanced lighting state.
+ * Call from render loop at display rate (not V1 tick rate).
+ * dt: seconds since last render frame (e.g. 0.016s for 60fps).
+ * weather: DM2_WEATHER_CLEAR/RAIN/FOG/STORM from dm2_v1_weather.h.
+ *
+ * Advances: outdoor cloud drift, tree sway, lightning sequence,
+ *           per-weather ambient tint, fog overlay animation.
+ *
+ * Deterministic fallback: when s_enhanced_outdoor=0, this is a no-op.
+ * V1 game state (weather, time_of_day, torch charges) unchanged.
+ *
+ * Source: dm2_v2_outdoor_enhanced.c dm2_v2_outdoor_fx_tick
+ *         dm2_v2_lighting.c dm2_v2_fog_tick
+ *         SKULL.ASM T600 — outdoor viewport rendering
+ */
+void dm2_v2_runtime_lighting_tick(float dt, int weather) {
+    if (!s_enhanced_outdoor) return;
+    dm2_v2_outdoor_fx_tick(&s_outdoor_fx, dt, weather);
+}
+
+/*
+ * dm2_v2_runtime_outdoor_fx_trigger_lightning — trigger one-shot flash.
+ * Call from dungeon event system when a spell/effect triggers lightning.
+ *
+ * Deterministic fallback: when s_enhanced_outdoor=0, no-op (V1 behavior).
+ * Source: dm2_v2_outdoor_enhanced.c dm2_v2_outdoor_fx_trigger_lightning
+ */
+void dm2_v2_runtime_outdoor_fx_trigger_lightning(void) {
+    if (!s_enhanced_outdoor) return;
+    dm2_v2_outdoor_fx_trigger_lightning(&s_outdoor_fx);
+}
+
+/*
+ * dm2_v2_runtime_fog_rebuild — rebuild fog density map from sources.
+ * Call when dungeon geometry changes (e.g. door opened/closed).
+ *
+ * Source: dm2_v2_lighting.c dm2_v2_fog_rebuild
+ */
+void dm2_v2_runtime_fog_rebuild(void) {
+    dm2_v2_fog_rebuild(&s_lighting.fog);
+}
+
+/*
+ * dm2_v2_runtime_fog_set_weather — update weather-driven fog overlay.
+ * Call when weather changes (dm2_v1_weather state transitions).
+ *
+ * Deterministic fallback: when s_enhanced_outdoor=0, no-op.
+ * Source: dm2_v2_lighting.c dm2_v2_fog_set_weather
+ *         docs/dm2_time.md §Weather §Fog
+ */
+void dm2_v2_runtime_fog_set_weather(int weather) {
+    dm2_v2_fog_set_weather(&s_lighting.fog, weather);
+}
+
+/*
+ * dm2_v2_runtime_set_enhanced_outdoor — enable/disable Phase 4 effects.
+ * Called from dm2_v2_phase_gate_bind when PROFILE domain is enabled.
+ *
+ * enhanced: 1 = Phase 4 outdoor effects active; 0 = V1 fallback.
+ *
+ * When disabled, all Phase 4 functions (lighting_tick,
+ * outdoor_fx_trigger_lightning, fog_rebuild, fog_set_weather)
+ * are no-ops.  V1 game state is never affected.
+ */
+void dm2_v2_runtime_set_enhanced_outdoor(int enhanced) {
+    s_enhanced_outdoor = enhanced ? 1 : 0;
+}
+
 /* ── Source evidence ─────────────────────────────────────────────── */
 
 const char *dm2_v2_runtime_source_evidence(void) {
     return
-        "DM2 V2 Runtime — Phase 5: Smooth Movement Integration\n"
+        "DM2 V2 Runtime — Phase 5: Smooth Movement + Phase 4: Lighting\n"
         "Source: SKULL.ASM T520  — party/movement tick\n"
         "Source: SKULL.ASM T560  — dungeon viewport rendering\n"
         "Source: SKULL.ASM T600  — outdoor viewport rendering\n"
+        "Source: SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers\n"
         "Source: ReDMCSB DUNGEON.C:1371-1421 — map coordinate resolution\n"
         "Source: ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence (55ms)\n"
         "Source: ReDMCSB VBLANK.C M526_WaitVerticalBlank\n"
@@ -391,5 +527,23 @@ const char *dm2_v2_runtime_source_evidence(void) {
         "Walk: ease-out cubic over 1 V1 tick (55ms)\n"
         "Turn: ease-out quad, shortest path, 1 V1 tick\n"
         "Stairs: ease-in-out cubic + vertical offset, 1 V1 tick\n"
-        "V1 invariant: game state ONLY advances on V1 ticks\n";
+        "V1 invariant: game state ONLY advances on V1 ticks\n"
+        "\n"
+        "DM2 V2 Phase 4: Enhanced Lighting and Outdoor Effects\n"
+        "Source: SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers\n"
+        "Source: SKULL.ASM T600 — outdoor viewport rendering\n"
+        "Source: SKULL.ASM T560 — indoor dungeon viewport\n"
+        "Source: docs/dm2_time.md §Weather §Fog §Lightning\n"
+        "Reference: ReDMCSB PANEL.C:367-428 — DM1 palette lighting semantics\n"
+        "Reference: dm1_v2_lighting_dynamic_pc34.c §V2.2 Dynamic Lighting\n"
+        "  v22_flicker_factor / v22_light_rebuild_map\n"
+        "DM2 V2.2: per-champion torch flicker (4-phase sine composite)\n"
+        "DM2 V2.2: indoor fog density map (inverse-square, per-source)\n"
+        "DM2 V2.2: outdoor weather fog + sky-color ambient blend\n"
+        "DM2 V2.2: multi-frame lightning bloom (FLASH→SUSTAIN→FADE)\n"
+        "DM2 V2.2: animated cloud drift (5 units/s, 32px wrap)\n"
+        "DM2 V2.2: tree sway phase (sinusoidal, 2 rad/s)\n"
+        "DM2 V2.2: per-weather ambient tint overlay\n"
+        "Deterministic fallback: V1 source-locked when s_enhanced_outdoor=0\n"
+        "V1 invariant: torch charges, weather, time_of_day — unchanged\n";
 }
