@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1_quickplay_load_route_source_lock.v1",
-  "pass": false,
+  "pass": true,
   "scope": "CSB V1 launch-surface source-lock evidence only; no Firestaff runtime launch claim.",
   "source_anchors": [
     {
@@ -159,8 +159,5 @@
     "The remaining launch blocker is true CSB runtime/capture handling after the guarded M12 front door."
   ],
   "remaining_blocker": "Production CSB runtime/capture handling remains blocked after the guarded M12 front door.",
-  "failures": [
-    "CSB V1 parity matrix missing '`launch_smoke` | 2/10'",
-    "CSB V1 parity matrix missing 'No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.'"
-  ]
+  "failures": []
 }
