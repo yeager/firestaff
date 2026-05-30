@@ -1703,7 +1703,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "dm1-v1-p1-champion-zorder",
+      "branch": "main",
       "crop_artifacts": {
         "files": [
           {
@@ -1836,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+      "head": "c508573de893e0baca21570a5faa75a02468d58d",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1844,7 +1844,7 @@
         "HUD/overlay parity"
       ],
       "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-      "repo": "/Users/bosse/.openclaw/workspace-main",
+      "repo": "/home/trv2/work/firestaff",
       "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
       "source_audit": [
         {
@@ -1864,7 +1864,7 @@
             "G0310_i_DisabledMovementTicks"
           ],
           "ok": true,
-          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
         },
         {
           "claim": "the 224x136 crop is meaningful only after F0128 draws G0296 for direction/X/Y",
@@ -1885,7 +1885,7 @@
             "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
           ],
           "ok": true,
-          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
         },
         {
           "claim": "capture readiness is locked to the PC34 viewport-present seam, not setup echo/menu text",
@@ -1902,12 +1902,12 @@
             "VIDRV_09_BlitViewPort"
           ],
           "ok": true,
-          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
         }
       ],
-      "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-05-30T07:31:06.356087+00:00",
+      "timestamp_utc": "2026-05-30T14:47:35.030719+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -1961,7 +1961,7 @@
             "path": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.json"
           }
         ],
-        "xvfb_run_available": false
+        "xvfb_run_available": true
       }
     }
   },
@@ -2081,7 +2081,7 @@
       "05"
     ]
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/home/trv2/work/firestaff",
   "route_labels": {
     "exists": true,
     "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
@@ -2199,7 +2199,7 @@
     }
   ],
   "schema": "pass435_dm1_v1_semantic_original_route_readiness_gate.v2",
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_audit": [
     {
       "claim": "queued input must be observed through F0380 pop/load before turn commands branch to F0365 or movement commands branch to F0366",
@@ -2217,7 +2217,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "turn commands must be observed reaching F0365, where stop-wait is set and party direction mutates",
@@ -2234,7 +2234,7 @@
         "F0276_SENSOR_ProcessThingAdditionOrRemoval"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed",
@@ -2252,7 +2252,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "the original PC34 entrance route starts from source-defined mouse coordinates, so host click coordinates must be treated as route evidence until runtime state confirms gameplay",
@@ -2268,7 +2268,7 @@
         "F0073_MOUSE_BuildPointerScreenArea(G1038_i_MouseX >> 1, G1039_i_MouseY >> 1);"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/INPUT.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/INPUT.C"
     },
     {
       "claim": "post-load capture shots are meaningful only after the original installs interface and movement input tables for both mouse and keyboard routes",
@@ -2285,7 +2285,7 @@
         "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
     },
     {
       "claim": "the reusable capture route must pass entrance/load/start and discard stale setup input before semantic shots are promotable",
@@ -2303,7 +2303,7 @@
         "F0357_COMMAND_DiscardAllInput();"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
     },
     {
       "claim": "dungeon-view mouse captures are semantic only when clicks resolve through source clickable boxes and resulting door/sensor actions, not by filename labels",
@@ -2320,7 +2320,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C"
     },
     {
       "claim": "viewport click hitboxes used by original capture are materialized while drawing G0296, so crop labels must be tied to the same draw/update boundary",
@@ -2337,7 +2337,7 @@
         "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple",
@@ -2358,7 +2358,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "the capture seam must be the PC34 viewport present path, not setup/menu echo",
@@ -2375,9 +2375,9 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-05-30T07:31:06.430244+00:00"
+  "timestampUtc": "2026-05-30T14:47:35.116818+00:00"
 }

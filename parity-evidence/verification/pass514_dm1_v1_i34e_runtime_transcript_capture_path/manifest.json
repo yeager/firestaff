@@ -16,10 +16,10 @@
     "G0434_i_CommandQueueLastIndex": "2C23:1F08",
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
-  "blocker": "missing prerequisite: dosbox-debug, Xvfb, xdotool",
-  "branch": "dm1-v1-p1-champion-zorder",
+  "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+  "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -28,12 +28,8 @@
   "prerequisites": {
     "dmExeExists": true,
     "missingHelpers": [],
-    "missingTools": [
-      "dosbox-debug",
-      "Xvfb",
-      "xdotool"
-    ],
-    "originalStage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "missingTools": [],
+    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "originalStageExists": true,
     "runtimeHelpers": {
       "tools/verify_pass385_dm1_v1_corrected_loader_delta_semantic_route.py": true,
@@ -41,9 +37,9 @@
       "tools/verify_pass388_dm1_v1_queue_producer_runtime.py": true
     },
     "tools": {
-      "Xvfb": null,
-      "dosbox-debug": null,
-      "xdotool": null
+      "Xvfb": "/usr/bin/Xvfb",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "xdotool": "/usr/bin/xdotool"
     }
   },
   "priorRuntimeEvidence": {
@@ -90,13 +86,13 @@
     "f0380QueuePositiveBeforePop": false,
     "f0380ReachedInN2DebuggerPath": true,
     "keyboardProducerEntryHit": false,
-    "prerequisitesOk": false,
+    "prerequisitesOk": true,
     "queueCountWriteObserved": false,
     "routeControlReachedAfterArmingWithBreakpointsRetained": true,
     "routeInputAfterArmingSucceeded": true,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/home/trv2/work/firestaff",
   "requiredUnifiedFields": [
     "F0361 queue slot/count",
     "F0380 pop/count",
@@ -121,7 +117,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "section": "f0361_keyboard_queue_write"
     },
     {
@@ -140,7 +136,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "section": "f0380_pop_count_dispatch"
     },
     {
@@ -156,7 +152,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
       "section": "keyboard_then_f0380_loop_order"
     },
     {
@@ -173,7 +169,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
       "section": "turn_step_party_tuple_handlers"
     },
     {
@@ -189,7 +185,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "section": "successful_step_party_tuple_commit"
     },
     {
@@ -204,7 +200,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "section": "f0128_to_f0097_present_boundary"
     },
     {
@@ -219,11 +215,11 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "section": "pc34_f0097_viewport_present"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-05-30T07:31:09.086949+00:00"
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+  "timestampUtc": "2026-05-30T14:49:33.135031+00:00"
 }

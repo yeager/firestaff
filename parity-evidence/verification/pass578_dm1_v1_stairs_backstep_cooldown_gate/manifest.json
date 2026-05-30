@@ -1,5 +1,5 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "firestaffAudit": {
     "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
       "claim": "gated movement returns before queue pop",
@@ -17,10 +17,10 @@
         376
       ]
     },
-    "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testExecutable": "/home/trv2/work/firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "351 passed, 0 failed"
   },
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-30T07:31:09.602978+00:00",
-  "worktree": "/Users/bosse/.openclaw/workspace-main"
+  "timestampUtc": "2026-05-30T14:49:45.882267+00:00",
+  "worktree": "/home/trv2/work/firestaff"
 }

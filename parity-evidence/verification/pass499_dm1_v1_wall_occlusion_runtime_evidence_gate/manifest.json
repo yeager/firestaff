@@ -8,63 +8,63 @@
   },
   "firestaffLocks": [
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
-      "line": 412,
+      "line": 352,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 1309,
+      "line": 1193,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 981,
+      "line": 921,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
-      "line": 232,
+      "line": 172,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_expected_matrix",
       "line": 30,
       "needle": "struct ExpectedWallContract",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_source_output",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/trv2/work/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "door_contract_probe_output",
       "line": 128,
       "needle": "doorFrontComposition source=",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/trv2/work/firestaff/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
       "line": 426,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
-      "file": "/Users/bosse/.openclaw/workspace-main/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/trv2/work/firestaff/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
       "line": 303,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
@@ -86,14 +86,14 @@
     "cmd": [
       "ctest",
       "--test-dir",
-      "/Users/bosse/.openclaw/workspace-main/build",
+      "/home/trv2/work/firestaff/build",
       "-R",
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  72: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #72: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 322: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #322: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.06 sec\n    Start 328: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #328: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.07 sec\n    Start 341: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #341: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.18 sec\n"
+    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  58: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #58: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 298: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #298: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.10 sec\n    Start 304: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #304: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.14 sec\n    Start 317: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #317: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.32 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -102,7 +102,7 @@
   "sourceLocks": [
     {
       "claim": "F0128 composes floor/ceiling and wall squares in far-to-near order, then hands the composed viewport to F0097.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "dunview_f0128_far_to_near_then_present",
       "lines": [
         8318,
@@ -146,7 +146,7 @@
     },
     {
       "claim": "F0097 marks the redraw request and reaches the PC34 viewport blit boundary for G0296.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "drawview_f0097_present_boundary",
       "lines": [
         709,
@@ -167,7 +167,7 @@
       ]
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-05-30T07:31:08.737207+00:00"
+  "timestampUtc": "2026-05-30T14:49:34.622920+00:00"
 }

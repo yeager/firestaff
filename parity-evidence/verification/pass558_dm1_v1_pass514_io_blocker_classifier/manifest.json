@@ -1,21 +1,21 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
-      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
       "present": false
     },
     "pass556": {
-      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
       "present": false
     },
     "pass557": {
-      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+      "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
       "present": false
     }
   },
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -24,10 +24,10 @@
     "no push"
   ],
   "pass514Manifest": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-  "pass514Status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
+  "pass514Status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
   "proofPredicates": {
     "pass514F0380Reached": true,
-    "pass514InputDeliveredButEmptyF0380": false,
+    "pass514InputDeliveredButEmptyF0380": true,
     "pass514ManifestPresent": true,
     "pass514QueueCountWriteMissing": true,
     "pass514RouteInputAfterArmingSucceeded": true,
@@ -40,7 +40,7 @@
     "pass557RulesOutHostRouteGeneration": false,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass558_dm1_v1_pass514_io_blocker_classifier.v1",
   "sourceAudit": [
     {
@@ -57,7 +57,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DEFS.H",
@@ -75,7 +75,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H"
     },
     {
       "file": "IO2.C",
@@ -92,7 +92,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "file": "IBMIO.C",
@@ -110,7 +110,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IBMIO.C"
     },
     {
       "file": "COMMAND.C",
@@ -127,7 +127,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -146,10 +146,10 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-05-30T07:31:08.751541+00:00"
+  "timestampUtc": "2026-05-30T14:49:33.266103+00:00"
 }
