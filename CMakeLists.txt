@@ -327,6 +327,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_utility_import_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Phase 2 — DSA Script Section Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: DSA section presence and scan feasibility after dungeon load;
+# dsa_offsets NULL and dsa_count==0 post-load (pre-condition: loader gap);
+# DSA offsets in-bounds and monotonically increasing.
+# Source: ReDMCSB DUNGEON.C F0148-F0170, DEFS.H M012_TYPE(DSA=15),
+#         CSBWin/CSBCode.cpp TAG00332a lines ~440-460, pass H2327.
+add_executable(firestaff_csb_v1_dsa_section_probe
+    probes/firestaff_csb_v1_dsa_section_probe.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_dsa_section_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_dsa_section_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_dsa_section_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2.1 asset pipeline probe (pass648)
 add_executable(firestaff_pass648_dm1_v2_asset_pipeline_probe probes/verify_pass648_dm1_v2_asset_pipeline.c)
 target_link_libraries(firestaff_pass648_dm1_v2_asset_pipeline_probe PRIVATE firestaff_v2 firestaff_m10)
