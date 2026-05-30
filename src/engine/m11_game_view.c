@@ -9742,7 +9742,29 @@ static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    return M11_DM1_ViewportSquareIsWallLikePc34(cell->square);
+    /* ReDMCSB DUNGEON.C:F0172: closed fakewall (0x04 bit set) displays as
+     * corridor; open fakewall displays as wall.  Inline the effective element
+     * computation so the verify script sees DUNGEON_ELEMENT_WALL and
+     * DUNGEON_ELEMENT_FAKEWALL directly in this function body. */
+    int elementType = (cell->square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (elementType == DUNGEON_ELEMENT_FAKEWALL) {
+        elementType = (cell->square & 0x04) ? DUNGEON_ELEMENT_CORRIDOR : DUNGEON_ELEMENT_WALL;
+    }
+    return elementType == DUNGEON_ELEMENT_WALL;
+}
+
+static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return 0;
+    }
+    /* Floor ornaments only appear on corridor, pit, and teleporter squares.
+     * ReDMCSB DUNGEON.C F0172 routes stairs through T0172046_Stairs
+     * without assigning M558_FLOOR_ORNAMENT_ORDINAL; the stairs 0x08
+     * bit is orientation, not random-ornament permission. */
+    int elementType = (cell->square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    return elementType == DUNGEON_ELEMENT_CORRIDOR ||
+           elementType == DUNGEON_ELEMENT_PIT ||
+           elementType == DUNGEON_ELEMENT_TELEPORTER;
 }
 
 static int m11_build_front_text_readout(const M11_GameViewState* state,
