@@ -88,7 +88,7 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_party_tuple_flip_predicate",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9072-9078",
+        "lines": "11507-11513",
         "needles": [
             "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
             "return (state->world.party.mapX +",
@@ -99,7 +99,7 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_wallset_variant_binding_before_draw",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9127-9144",
+        "lines": "11505-11582",
         "needles": [
             "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,",
             "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;",
@@ -110,7 +110,7 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_center_wall_flip_path",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9688-9706",
+        "lines": "12131-12149",
         "needles": [
             "flipWalls = m11_dm1_use_flipped_walls(state);",
             "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))",
@@ -123,7 +123,7 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_side_wall_lr_swap_path",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "10254-10296",
+        "lines": "12971-13013",
         "needles": [
             "flipWalls = m11_dm1_use_flipped_walls(state);",
             "size_t partner = i ^ 1;",

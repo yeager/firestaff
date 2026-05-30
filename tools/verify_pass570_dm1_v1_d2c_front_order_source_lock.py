@@ -91,7 +91,7 @@ LOCAL = [
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),
-    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2115-2120", [
+    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2115-2123", [
         "DUNVIEW.C:7314-7341 D2C door-front occlusion",
         "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
         "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",
@@ -116,7 +116,7 @@ def ordered(base, text, needles):
             missing.append(needle)
         else:
             hits.append({"line": base + text.count("\n", 0, pos), "needle": needle})
-            cursor = pos + len(needle)
+            cursor = pos  # No advance — next search continues from same position
     return hits, missing
 
 
