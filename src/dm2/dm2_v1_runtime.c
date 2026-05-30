@@ -274,12 +274,35 @@ int dm2_v1_runtime_move(int dir) {
     nx = gs->party_x + dx[dir & 3];
     ny = gs->party_y + dy[dir & 3];
 
-    /* Check dungeon collision if in dungeon mode */
+    /* Check dungeon collision if in dungeon mode.
+     * Tile type is in lower 5 bits (0x1F) of raw tile.
+     * For door tiles (type 4), door state is in lower 3 bits (0x07):
+     *   state 0 = open (passable), state 4 = closed (impassable).
+     * Other non-walkable: type 0 (wall), type 5 (pit), 11 (lava), 13 (inaccessible).
+     * Source: SKULL.ASM T520 — movement collision and door state check.
+     *         dm2_special_squares.md — door tile type and state encoding. */
     if (!rt->outdoor && rt->boot->dungeon_data) {
         DM2_V1_DungeonData *dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-        int sq = dm2_v1_dungeon_get_square_type(dd, rt->dungeon_level, nx, ny);
-        if (sq < 0 || sq == 0) {  /* wall or out-of-bounds */
+        int raw = dm2_v1_dungeon_get_tile_raw(dd, rt->dungeon_level, nx, ny);
+        if (raw < 0) {
             blocked = 1;
+        } else {
+            int tile_type = raw & 0x001F;
+            /* Impassable tile types: wall (0), pit (5), lava (11), inaccessible (13) */
+            if (tile_type == 0 || tile_type == 5 || tile_type == 11 || tile_type == 13) {
+                blocked = 1;
+            } else if (tile_type == 4) {
+                /* Door tile: door state in lower 3 bits.
+                 * DM2_DOOR_STATE_OPEN=0 (passable), DM2_DOOR_STATE_CLOSED=4 (impassable).
+                 * Source: dm2_v1_object_model.h DM2_DoorState enum.
+                 *         SKULL.ASM T520 movement tile access. */
+                int door_state = raw & 0x0007;
+                if (door_state != 0) {  /* not open */
+                    blocked = 1;
+                }
+            }
+            /* All other tile types (1=floor, 3=floor_ornate, 4=door when open,
+             * 8=teleporter, 10=water, etc.) are passable. */
         }
     }
 

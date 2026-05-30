@@ -15,7 +15,7 @@
     "review_pair_metadata_materialized": true,
     "semantic_clean_original_required": true
   },
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -270,7 +270,7 @@
   "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
   "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
   "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=yes\n02 ingame_turn_right: firestaff=yes original=yes\n03 ingame_move_forward: firestaff=yes original=yes\n04 ingame_spell_panel: firestaff=yes original=yes\n05 ingame_after_cast: firestaff=yes original=yes\n06 ingame_inventory_panel: firestaff=yes original=yes\n",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
   "source_audit": [
     {
@@ -286,7 +286,7 @@
         "G2070_ViewportBitmapByteCount = 15232"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
       "why": "paired diff inputs must be 224x136 viewport crops from the PC34 viewport at x=0,y=33"
     },
     {
@@ -301,7 +301,7 @@
         "C136_HEIGHT_VIEWPORT"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "why": "Firestaff/original crops must compare the composed G0296 viewport buffer, not arbitrary full-frame pixels"
     },
     {
@@ -315,7 +315,7 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "why": "original-side captures are promotable only after the source presentation seam"
     },
     {
@@ -330,11 +330,11 @@
         "224, 320"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C",
       "why": "PC34 slot 9 presents the viewport with the expected 224-wide source and 320-wide screen stride"
     }
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-05-30T07:31:08.889547+00:00"
+  "timestamp_utc": "2026-05-30T14:49:26.350310+00:00"
 }

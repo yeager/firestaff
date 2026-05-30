@@ -1,5 +1,5 @@
 {
-  "branchAtVerification": "dm1-v1-p1-champion-zorder",
+  "branchAtVerification": "main",
   "canonicalAssetsSha256": {
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
@@ -12,7 +12,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "gitHeadAtVerification": "c508573de893e0baca21570a5faa75a02468d58d",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +103,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-30T07:31:09.186848+00:00",
-  "worktree": "/Users/bosse/.openclaw/workspace-main"
+  "timestampUtc": "2026-05-30T14:49:29.114023+00:00",
+  "worktree": "/home/trv2/work/firestaff"
 }
