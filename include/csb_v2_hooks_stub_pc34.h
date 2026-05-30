@@ -213,11 +213,69 @@ static inline uint32_t csb_v2_hook_minimap_square_color(int sq_type,
  * whether V2 presentation is active. Returns 0 (V1-only boot).
  * ================================================================ */
 
-struct CSB_V2_PhaseGateConfig;
+/* ================================================================
+ * V2 Asset Pipeline hooks
+ * ================================================================ */
 
-static inline int csb_v2_hook_is_active(const struct CSB_V2_PhaseGateConfig *config) {
+/** V2 asset pipeline init. Stub: no-op. */
+static inline void csb_v2_hook_asset_pipeline_init(void) {
+}
+
+/** V2 asset pipeline configure. Stub: no-op. */
+static inline void csb_v2_hook_asset_pipeline_configure(const void *config) {
     (void)config;
-    return 0; /* V1 boot: V2 presentation disabled by default */
+}
+
+/** V2 asset get gfx mode. Stub: returns V1 ORIGINAL (0). */
+static inline int csb_v2_hook_asset_get_gfx_mode(void) {
+    return 0;
+}
+
+/** V2 asset set gfx mode. Stub: no-op. */
+static inline void csb_v2_hook_asset_set_gfx_mode(int mode) {
+    (void)mode;
+}
+
+/** V2 asset is V2 mode active. Stub: returns 0. */
+static inline int csb_v2_hook_asset_is_v2_mode(void) {
+    return 0;
+}
+
+/** V2 asset check surface upgrade path.
+ *  Stub: returns original surface unchanged.
+ *  category: surface category enum (opaque to V1)
+ *  src_indexed: input V1 indexed pixels
+ *  src_w/src_h: source dimensions
+ *  source_palette_level: 0..5
+ *  rgba_out: output RGBA buffer (caller-allocated)
+ *  out_w/out_h: filled with source dims (pass-through in V1)
+ *  Returns: 0=AOK, -1=unsupported category */
+static inline int csb_v2_hook_asset_upscale_surface(int category,
+                                                     const uint8_t *src_indexed,
+                                                     int src_w, int src_h,
+                                                     int source_palette_level,
+                                                     uint32_t *rgba_out,
+                                                     int *out_w, int *out_h) {
+    (void)category;
+    (void)src_indexed;
+    (void)source_palette_level;
+    if (out_w) *out_w = src_w;
+    if (out_h) *out_h = src_h;
+    return -1; /* V1: no V2 upscale available */
+}
+
+/** V2 asset set pipeline config from presentation mode index.
+ *  Stub: no-op.
+ *  mode_index: 0=V1, 1=V2.0, 2=V2.1, 3=V2.2 */
+static inline void csb_v2_hook_asset_set_mode_from_index(int mode_index) {
+    (void)mode_index;
+}
+
+/** V2 asset get best available shape source.
+ *  Stub: returns V1_ORIGINAL (0). */
+static inline int csb_v2_hook_asset_best_shape_source(int presentation_mode_index) {
+    (void)presentation_mode_index;
+    return 0;
 }
 
 #ifdef __cplusplus
