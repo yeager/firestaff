@@ -1,12 +1,12 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:219-294",
     "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:25-52",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
   },
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "notClaimed": [
     "combat RNG/wound materialization parity for the pending damage request",
     "representative original DOS overlay capture parity",
@@ -20,5 +20,5 @@
     "blockedSideEffects": "CLIKMENU.C:237-322"
   },
   "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
-  "timestampUtc": "2026-05-30T07:31:09.726839+00:00"
+  "timestampUtc": "2026-05-30T14:49:44.983051+00:00"
 }

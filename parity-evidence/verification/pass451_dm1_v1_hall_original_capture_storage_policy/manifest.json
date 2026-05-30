@@ -1,27 +1,27 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-30T07:31:09.132184+00:00",
+  "timestampUtc": "2026-05-30T14:47:39.390497+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
-  "branch": "dm1-v1-p1-champion-zorder",
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "repo": "/home/trv2/work/firestaff",
+  "branch": "main",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
-  "externalParentExists": true,
+  "externalParentExists": false,
   "envOverrides": [
     "FIRESTAFF_DOSBOX",
     "FIRESTAFF_PASS173_RUN_BASE",
     "FIRESTAFF_ARTIFACT_ROOT"
   ],
   "n2HallDosboxArtifactRoot": {
-    "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "root": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509",
     "exists": true,
     "manifestCandidates": [
-      "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
-      "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+      "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+      "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
     ],
     "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-    "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
+    "manifestPath": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json",
     "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
     "entryCount": 11,
     "ok": true,
@@ -29,24 +29,10 @@
     "candidates": [
       {
         "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-        "exists": true,
+        "exists": false,
         "manifestCandidates": [
           "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
           "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
-        ],
-        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-        "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
-        "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-        "entryCount": 11,
-        "ok": true,
-        "errors": []
-      },
-      {
-        "root": "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509",
-        "exists": false,
-        "manifestCandidates": [
-          "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
-          "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
         ],
         "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
         "ok": false,
@@ -55,11 +41,25 @@
         ]
       },
       {
-        "root": "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+        "root": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509",
+        "exists": true,
+        "manifestCandidates": [
+          "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+        ],
+        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "manifestPath": "/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json",
+        "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "entryCount": 11,
+        "ok": true,
+        "errors": []
+      },
+      {
+        "root": "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
         "exists": false,
         "manifestCandidates": [
-          "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/manifest.json",
-          "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+          "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/trv2/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
         ],
         "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
         "ok": false,
@@ -75,7 +75,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/Users/bosse/.openclaw/workspace-main/tools/pass173_source_portrait_route_gate_probe.py"
+      "/home/trv2/work/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

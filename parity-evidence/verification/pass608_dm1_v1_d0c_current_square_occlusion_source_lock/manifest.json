@@ -5,27 +5,27 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 402,
+          "line": 342,
           "needle": "{ DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, true, false,"
         },
         {
-          "line": 404,
+          "line": 344,
           "needle": "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115"
         },
         {
-          "line": 405,
+          "line": 345,
           "needle": "DUNVIEW.C:8274-8292 pit floor/ceiling bitmap before F0115"
         },
         {
-          "line": 407,
+          "line": 347,
           "needle": "DUNVIEW.C:8294 F0115 object/creature/projectile/explosion handoff with C0x0021"
         },
         {
-          "line": 408,
+          "line": 348,
           "needle": "DUNVIEW.C:8295-8308 teleporter field after F0115"
         },
         {
-          "line": 409,
+          "line": 349,
           "needle": "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C"
         }
       ],
@@ -37,27 +37,27 @@
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 828,
+          "line": 808,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 884,
+          "line": 864,
           "needle": "test_floor_field_stairs_pit_teleporter_order"
         },
         {
-          "line": 914,
+          "line": 894,
           "needle": "DM1_VIEW_SQUARE_D0C"
         },
         {
-          "line": 941,
+          "line": 921,
           "needle": "d0c_foreground_before_things"
         },
         {
-          "line": 1024,
+          "line": 1004,
           "needle": "test_d0_d1_visible_square_draw_order_gate"
         },
         {
-          "line": 1100,
+          "line": 1080,
           "needle": "dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0C)"
         }
       ],
@@ -69,11 +69,11 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 2110,
+          "line": 1501,
           "needle": "DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order"
         },
         {
-          "line": 2125,
+          "line": 1516,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
@@ -94,7 +94,7 @@
   "redmcsbChecks": [
     {
       "claim": "F0128 draws D0L and D0R before the current-square D0C pass.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8537,
@@ -116,7 +116,7 @@
     },
     {
       "claim": "D0C door-side foreground frame work completes and breaks before the common F0115 current-square content pass.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8184,
@@ -158,7 +158,7 @@
     },
     {
       "claim": "D0C stairs-front foreground breaks; pit falls through to ceiling, F0115 with C0x0021, then teleporter field in C715.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8241,
@@ -212,7 +212,7 @@
     },
     {
       "claim": "F0115 draws objects, creatures, and projectiles per ordered cell, then explosions after ordered cells.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 4561,
@@ -246,7 +246,7 @@
     },
     {
       "claim": "PC34 MEDIA720 view-square and cell ordinals make D0C id 0 and define the back-left/back-right cell names used by C0x0021.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2596,
@@ -276,7 +276,7 @@
     },
     {
       "claim": "PC34/I34E zone ids bind D0C field, frame, thieves-eye, stairs, floor pit, and ceiling pit draw destinations.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 4055,
@@ -321,14 +321,14 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass608_dm1_v1_d0c_current_square_occlusion_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/home/trv2/work/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,

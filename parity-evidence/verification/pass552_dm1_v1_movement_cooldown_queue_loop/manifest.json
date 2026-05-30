@@ -1,10 +1,10 @@
 {
   "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
   "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
-  "timestampUtc": "2026-05-30T07:31:09.644409+00:00",
-  "branch": "dm1-v1-p1-champion-zorder",
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
-  "worktree": "/Users/bosse/.openclaw/workspace-main",
+  "timestampUtc": "2026-05-30T14:49:45.394627+00:00",
+  "branch": "main",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
+  "worktree": "/home/trv2/work/firestaff",
   "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
   "primarySourceAudit": {
     "GAMELOOP.C:cooldownInputQueueLoop": "GAMELOOP.C:150-219",
@@ -21,7 +21,7 @@
     "regression": "test_dm1_v1_movement_timing_pc34_compat"
   },
   "runtimeProbe": {
-    "command": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_timing_pc34_compat",
+    "command": "/home/trv2/work/firestaff/build/test_dm1_v1_movement_timing_pc34_compat",
     "statusNeedle": "dm1V1MovementTimingInvariantOk=1"
   },
   "notClaimed": [
