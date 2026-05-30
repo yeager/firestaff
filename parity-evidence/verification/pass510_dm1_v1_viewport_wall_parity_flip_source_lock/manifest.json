@@ -8,7 +8,8 @@
     "firestaff_party_tuple_flip_predicate",
     "firestaff_wallset_variant_binding_before_draw",
     "firestaff_center_wall_flip_path",
-    "firestaff_side_wall_lr_swap_path"
+    "firestaff_side_wall_lr_swap_path",
+    "gate_verify_pass508_dm1_v1_viewport_wall_runtime_readiness"
   ],
   "firestaffAudit": [
     {
@@ -22,7 +23,7 @@
         "state->world.party.direction) & 1;"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3cc6958a2870c7df30b718562cf177f5a7f61dc08756b99467d24d75c45310f5",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -37,7 +38,7 @@
         "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3cc6958a2870c7df30b718562cf177f5a7f61dc08756b99467d24d75c45310f5",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -54,7 +55,7 @@
         "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3cc6958a2870c7df30b718562cf177f5a7f61dc08756b99467d24d75c45310f5",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -72,7 +73,7 @@
         "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3cc6958a2870c7df30b718562cf177f5a7f61dc08756b99467d24d75c45310f5",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     }
@@ -92,9 +93,9 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
       ],
-      "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json\n- gate_verify_v1_viewport_alcove_wall_item_gate.py",
+      "passed": false,
+      "returncode": 1
     }
   ],
   "nonClaims": [

@@ -4,7 +4,9 @@
     "No Firestaff-vs-original pixel comparator promotion is claimed.",
     "Firestaff normal V1 renderer remains guarded batched replay, not exact ReDMCSB F0128 per-square replay."
   ],
-  "failures": [],
+  "failures": [
+    "gate_verify_v1_viewport_alcove_wall_item_gate.py"
+  ],
   "firestaffAudit": [
     {
       "file": "src/engine/m11_game_view.c",
@@ -44,11 +46,11 @@
           "marker": "m11_draw_dm1_side_contents(state"
         },
         {
-          "line": 22846,
+          "line": 22838,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 22855,
+          "line": 22847,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -93,9 +95,9 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_alcove_wall_item_gate.py"
       ],
-      "outputTail": "- ReDMCSB DUNVIEW.C:7309 L0211_i_Order = C0x0000_CELL_ORDER_ALCOVE;\n- ReDMCSB DUNVIEW.C:7367 T0121016:\n- ReDMCSB DUNVIEW.C:7368 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0212_ai_SquareAspect[M550_FIRST_THING], P0162_i_Direction, P0163_i_MapX, P0164_i_MapY, M603_VIEW_SQUARE_D2C, L0211_i_Order);\n- ReDMCSB DUNVIEW.C:7842 if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))\n- ReDMCSB DUNVIEW.C:7843 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);\n- Firestaff m11_game_view.c:7342 alcove global-index guard\n- Firestaff m11_game_view.c:10846 alcove wall-item draw pass\n- Firestaff m11_game_view.c:12613 ornament draw then alcove item pass",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL: Firestaff alcove global index guard: missing 'globalIndex == 1'",
+      "passed": false,
+      "returncode": 1
     },
     {
       "command": [
@@ -313,5 +315,5 @@
       "use": "secondary lineage reference only"
     }
   ],
-  "status": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
+  "status": "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
 }

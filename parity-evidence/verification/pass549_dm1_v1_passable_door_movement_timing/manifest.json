@@ -1,5 +1,5 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:408-493",

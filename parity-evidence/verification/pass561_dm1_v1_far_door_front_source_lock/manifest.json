@@ -1,29 +1,17 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 233,
-          "needle": "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349"
-        },
-        {
-          "line": 233,
-          "needle": "DUNVIEW.C:6270 floor ornament under far rear pass"
-        },
-        {
-          "line": 234,
-          "needle": "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439"
-        },
-        {
-          "line": 234,
-          "needle": "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-far-door-front-metadata",
-      "lines": "231-240",
-      "missing": [],
+      "lines": "126-155",
+      "missing": [
+        "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349",
+        "DUNVIEW.C:6270 floor ornament under far rear pass",
+        "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439",
+        "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
@@ -41,27 +29,23 @@
         }
       ],
       "id": "firestaff-far-door-front-runtime-test",
-      "lines": "707-770",
-      "missing": [],
+      "lines": "572-985",
+      "missing": [
+        "source_evidence.far_door_front_occlusion"
+      ],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
-      "hits": [
-        {
-          "line": 2112,
-          "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
-        },
-        {
-          "line": 2113,
-          "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
-      "lines": "2110-2118",
-      "missing": [],
+      "lines": "1102-1123",
+      "missing": [
+        "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion",
+        "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -140,8 +124,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass561_dm1_v1_far_door_front_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
@@ -157,9 +141,9 @@
         "/Users/bosse/.openclaw/workspace-main/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass561 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-far-door-front-runtime-test,firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

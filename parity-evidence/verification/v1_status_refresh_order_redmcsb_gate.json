@@ -166,56 +166,56 @@
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status-box background comment",
-      "line": 19205,
+      "line": 23333,
       "needle": "V1 source status-box background"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "alive status fill",
-      "line": 19227,
+      "line": 23355,
       "needle": "M11_GameView_GetV1StatusBoxFillColor"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "source-order shield border block",
-      "line": 19245,
+      "line": 23373,
       "needle": "before top-row\n             * text, bars, and hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "shield border blit",
-      "line": 19266,
+      "line": 23394,
       "needle": "M11_GameView_GetV1StatusShieldBorderZone"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "name clear/text block",
-      "line": 19282,
+      "line": 23410,
       "needle": "V1 champion name/title status text"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "bar graph block",
-      "line": 19323,
+      "line": 23451,
       "needle": "Pass 43: champion HP/stamina/mana bar graphs"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status hand slots block",
-      "line": 19413,
+      "line": 23541,
       "needle": "V1 status-box hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "poison/damage later overlays",
-      "line": 19432,
+      "line": 23560,
       "needle": "GRAPHICS.DAT-backed POISONED label"
     }
   ],

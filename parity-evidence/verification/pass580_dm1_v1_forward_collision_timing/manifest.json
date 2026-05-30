@@ -1,5 +1,5 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "firestaffGuards": {
     "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:202-364",
     "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
@@ -11,7 +11,7 @@
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -33,6 +33,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-05-30T07:31:09.488869+00:00",
+  "timestampUtc": "2026-05-30T04:54:10.884880+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

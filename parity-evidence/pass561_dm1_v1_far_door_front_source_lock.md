@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -24,20 +24,14 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Firestaff Evidence
 
-- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:231-240)
-  - line 233: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
-  - line 233: DUNVIEW.C:6270 floor ornament under far rear pass
-  - line 234: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
-  - line 234: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
+- FAIL firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:126-155)
 
-- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-770)
+- FAIL firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:572-985)
   - line 722: DM1_VIEW_SQUARE_D3L2, "6270"
   - line 723: DM1_VIEW_SQUARE_D3R2, "6337"
   - line 735: door_front_occlusion_spec_count(), 11
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2110-2118)
-  - line 2112: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
-  - line 2113: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1102-1123)
 
 ## Verification
 
@@ -59,7 +53,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass561 check-only
+FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-far-door-front-runtime-test,firestaff-source-evidence-string
 ~~~

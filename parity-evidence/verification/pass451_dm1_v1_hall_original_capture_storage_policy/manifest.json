@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-05-30T07:31:09.132184+00:00",
+  "timestampUtc": "2026-05-30T04:54:11.738540+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
   "repo": "/Users/bosse/.openclaw/workspace-main",
-  "branch": "dm1-v1-p1-champion-zorder",
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "branch": "main",
+  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": true,

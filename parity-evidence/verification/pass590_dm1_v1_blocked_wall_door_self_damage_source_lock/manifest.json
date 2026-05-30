@@ -1,5 +1,5 @@
 {
-  "branch": "dm1-v1-p1-champion-zorder",
+  "branch": "main",
   "closedGap": "blocked wall/door/closed-real-fakewall self-damage request fields and ordering are source-locked without touching viewport/occlusion rendering",
   "firestaffAudit": {
     "focusedCTest": "dm1_v1_movement_command_core_pc34_compat",
@@ -16,7 +16,7 @@
       ]
     }
   },
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
   "notClaimed": [
     "new original DOS runtime trace",
     "actual random wound materialization parity beyond the recorded request",
@@ -64,8 +64,8 @@
     }
   },
   "status": "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED",
-  "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_command_core_pc34_compat",
+  "testExecutable": "/Users/bosse/.openclaw/workspace-main/build-csb-v2-phase4/test_dm1_v1_movement_command_core_pc34_compat",
   "testOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1",
-  "timestampUtc": "2026-05-30T07:31:09.552245+00:00",
+  "timestampUtc": "2026-05-30T04:54:12.207831+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

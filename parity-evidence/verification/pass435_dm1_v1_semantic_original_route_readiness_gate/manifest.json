@@ -1703,7 +1703,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "dm1-v1-p1-champion-zorder",
+      "branch": "main",
       "crop_artifacts": {
         "files": [
           {
@@ -1836,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+      "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1907,7 +1907,7 @@
       ],
       "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-05-30T07:31:06.356087+00:00",
+      "timestamp_utc": "2026-05-30T04:54:06.984265+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -2379,5 +2379,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-05-30T07:31:06.430244+00:00"
+  "timestampUtc": "2026-05-30T04:54:07.029692+00:00"
 }
