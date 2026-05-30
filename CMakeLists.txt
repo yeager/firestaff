@@ -284,6 +284,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 Phase 0 — V1 Compatibility Lock Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: defaults(), v2_active(), domain classification, V1-locked domains,
+# V2-eligible toggle, CONFIG_PRESENTATION both-toggles requirement, domain names,
+# source evidence, decision strings, null-config safety, V1 locked by default.
+add_executable(firestaff_csb_v2_phase0_v1_compatibility_lock_probe
+    probes/firestaff_csb_v2_phase0_v1_compatibility_lock_probe.c)
+target_link_libraries(firestaff_csb_v2_phase0_v1_compatibility_lock_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 6 — Utility/Import Flow Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: champion block size (256), DM1→CSB import, import state machine,
