@@ -116,10 +116,8 @@
       "id": "m11_input_maps_to_dm1_v1_commands",
       "lines": "6162-6225",
       "missing": [
-        "case M12_MENU_INPUT_LEFT:",
-        "return DM1_V1_COMMAND_TURN_LEFT;",
-        "case M12_MENU_INPUT_RIGHT:",
-        "return DM1_V1_COMMAND_TURN_RIGHT;"
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
+        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
       ],
       "ok": false
     },
@@ -129,7 +127,11 @@
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "6229-6297",
       "missing": [
-        "state->world.gameTick++;"
+        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
+        "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
+        "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
+        "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
+        "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
       ],
       "ok": false
     },
@@ -264,5 +266,5 @@
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
-  "timestampUtc": "2026-05-24T23:18:21.611142+00:00"
+  "timestampUtc": "2026-05-30T14:49:42.463169+00:00"
 }

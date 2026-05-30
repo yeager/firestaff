@@ -15,7 +15,7 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
+        "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
@@ -149,7 +149,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:6175-6291; main_loop_m11.c:1866-1878; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:6221-6337; main_loop_m11.c:2109-2121; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -248,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /home/trv2/work/firestaff/src/engine/m11_game_view.c:12327",
-        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/src/engine/m11_game_view.c:22117",
+        "- Firestaff field rows/zones: /home/trv2/work/firestaff/src/engine/m11_game_view.c:12478",
+        "- Firestaff source viewport draw order: /home/trv2/work/firestaff/src/engine/m11_game_view.c:22268",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -276,8 +276,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /home/trv2/work/firestaff/src/engine/m11_game_view.c:15462",
-        "- Firestaff palette apply: /home/trv2/work/firestaff/src/engine/m11_game_view.c:10771",
+        "- Firestaff palette compute: /home/trv2/work/firestaff/src/engine/m11_game_view.c:15613",
+        "- Firestaff palette apply: /home/trv2/work/firestaff/src/engine/m11_game_view.c:10915",
         "- ReDMCSB F0337: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-24T23:18:26.227109+00:00"
+  "timestampUtc": "2026-05-30T14:47:35.146384+00:00"
 }

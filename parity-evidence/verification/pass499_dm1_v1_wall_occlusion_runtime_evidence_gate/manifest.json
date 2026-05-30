@@ -17,14 +17,14 @@
     {
       "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 1095,
+      "line": 1193,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
       "file": "/home/trv2/work/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 1106,
+      "line": 921,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
@@ -93,7 +93,7 @@
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  57: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #57: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 296: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #296: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.16 sec\n    Start 302: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #302: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.15 sec\n    Start 315: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #315: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.10 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.43 sec\n"
+    "tail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  58: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #58: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 298: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #298: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.10 sec\n    Start 304: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #304: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.14 sec\n    Start 317: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #317: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.32 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -169,5 +169,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-05-24T23:18:25.473657+00:00"
+  "timestampUtc": "2026-05-30T14:49:34.622920+00:00"
 }

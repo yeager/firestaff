@@ -8,7 +8,7 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 - LZEXE signature at relocation table: `LZ91`.
 - Compressed loader entry: `1665:000e`; interpretation: `LZEXE loader entry only; not a decompressed FIRES runtime text address`.
 - ReDMCSB `*.MAP` artifacts found: `208`.
-- Candidate FIRES runtime dumps found: `1`.
+- Candidate FIRES runtime dumps found: `0`.
 - FIRES-like original binaries inventoried: `7`.
 - Unpack/link tools found: `4`.
 - Inventory conclusion: `only packed/original FIRES-like binaries and tooling are present; no TLINK .MAP or verified decompressed runtime dump was found`.
