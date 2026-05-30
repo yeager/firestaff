@@ -296,6 +296,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: smooth walk (N/S/E/W), smooth turn (N/S/E/W), smooth stairs,
+# deterministic input coverage (tick-start, mid-tick, tick-end),
+# pixel gate (V2 smooth vs V1 discrete), presentation gates.
+add_executable(firestaff_dm2_v2_smooth_movement_probe
+    probes/firestaff_dm2_v2_smooth_movement_probe.c)
+target_link_libraries(firestaff_dm2_v2_smooth_movement_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 0 — V1 Compatibility Lock Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: defaults(), v2_active(), domain classification, V1-locked domains,
