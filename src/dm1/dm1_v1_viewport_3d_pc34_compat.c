@@ -1329,10 +1329,9 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
                                                     bool parity_flip,
                                                     bool *flip_horizontally)
 {
-    if (flip_horizontally) *flip_horizontally = false;
     if (!spec) return DM1_WALL_SET_COUNT;
+    if (flip_horizontally) *flip_horizontally = spec->parity_flips_horizontally;
     if (parity_flip) {
-        if (flip_horizontally) *flip_horizontally = spec->parity_flips_horizontally;
         return spec->parity_wall;
     }
     return spec->native_wall;
