@@ -12,9 +12,9 @@ SRC = [
     ("d3r2-mirrored-far-door-front-split", "DUNVIEW.C", "6336-6353", ["case C17_ELEMENT_DOOR_FRONT:", "C0x0128_CELL_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT", "C3710_ZONE_DOOR_D3R2", "C0x0439_CELL_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT", "goto T0677018;", "C15_VIEW_SQUARE_D3R2, L2485_i_Order"]),
 ]
 LOCAL = [
-    ("firestaff-far-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "126-155", ["DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349", "DUNVIEW.C:6270 floor ornament under far rear pass", "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439", "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"]),
-    ("firestaff-far-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "572-985", ["DM1_VIEW_SQUARE_D3L2, \"6270\"", "DM1_VIEW_SQUARE_D3R2, \"6337\"", "door_front_occlusion_spec_count(), 11", "source_evidence.far_door_front_occlusion"]),
-    ("firestaff-source-evidence-string", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1102-1123", ["DUNVIEW.C:6270-6286 D3L2 far door-front occlusion", "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"]),
+    ("firestaff-far-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "231-240", ["DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349", "DUNVIEW.C:6270 floor ornament under far rear pass", "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439", "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"]),
+    ("firestaff-far-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "707-770", ["DM1_VIEW_SQUARE_D3L2, \"6270\"", "DM1_VIEW_SQUARE_D3R2, \"6337\"", "door_front_occlusion_spec_count(), 11"]),
+    ("firestaff-source-evidence-string", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2110-2118", ["DUNVIEW.C:6270-6286 D3L2 far door-front occlusion", "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"]),
 ]
 def span(path, lines):
     a,b=[int(x) for x in lines.split("-")]
