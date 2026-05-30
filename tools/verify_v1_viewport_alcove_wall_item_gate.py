@@ -32,12 +32,11 @@ def require(text: str, needle: str, label: str) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\b" + re.escape(name) + r"\s*\(", text)
+    # Match the definition (has { after parentheses), not just a declaration
+    m = re.search(r"\b" + re.escape(name) + r"\s*\([^)]*\)\s*\{", text)
     if not m:
         raise AssertionError(f"missing function {name}")
-    brace = text.find("{", m.end())
-    if brace < 0:
-        raise AssertionError(f"missing body for {name}")
+    brace = m.end() - 1  # the { position
     depth = 0
     for pos in range(brace, len(text)):
         ch = text[pos]
