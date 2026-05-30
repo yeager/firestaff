@@ -1,6 +1,6 @@
 # Pass508 DM1 V1 viewport/wall runtime-readiness evidence
 
-Status: FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS
+Status: PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS
 
 ## ReDMCSB anchors
 - DUNVIEW.C:8466-8542 F0128_DUNGEONVIEW_Draw_CPSF status=PASS
@@ -20,7 +20,7 @@ Status: FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS
 - csbwin_cpp /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp exists=True sha256=89418e01b0a8eef330451320d19078a3510cbc699f635c8af22820365e4ceb23
 
 ## Gates
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_v1_viewport_alcove_wall_item_gate.py -> rc=1 passed=False
+- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_v1_viewport_alcove_wall_item_gate.py -> rc=0 passed=True
 - /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py -> rc=0 passed=True
 - /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py -> rc=0 passed=True
 

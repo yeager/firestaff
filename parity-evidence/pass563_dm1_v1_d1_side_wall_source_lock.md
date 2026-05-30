@@ -1,6 +1,6 @@
 # Pass563 DM1 V1 D1 side wall source lock
 
-Status: failed
+Status: passed
 
 Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1L then D1R before D1C, and each D1 side-wall case draws its side-specific wall zone and returns before open-lane content/field paths.
 
@@ -35,29 +35,27 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:286-307)
-  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - missing: DM1_PC34_ZONE_WALL_D1L
-  - missing: DUNVIEW.C:7445-7455
-  - missing: DUNVIEW.C:7459-7460 side ornament then return
-  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - missing: DM1_PC34_ZONE_WALL_D1R
-  - missing: DUNVIEW.C:7613-7623
-  - missing: DUNVIEW.C:7627-7628 side ornament then return
+- PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:416-430)
+  - line 423: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 423: DM1_PC34_ZONE_WALL_D1L
+  - line 423: DUNVIEW.C:7445-7455
+  - line 423: DUNVIEW.C:7459-7460 side ornament then return
+  - line 424: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 424: DM1_PC34_ZONE_WALL_D1R
+  - line 424: DUNVIEW.C:7613-7623
+  - line 424: DUNVIEW.C:7627-7628 side ornament then return
 
-- FAIL firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:237-258)
-  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - missing: DM1_PC34_ZONE_WALL_D1L
-  - missing: "7460"
-  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - missing: DM1_PC34_ZONE_WALL_D1R
-  - missing: "7628"
+- PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:290-310)
+  - line 294: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 294: DM1_PC34_ZONE_WALL_D1L
+  - line 294: "7460"
+  - line 295: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 295: DM1_PC34_ZONE_WALL_D1R
+  - line 295: "7628"
 
-- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1098-1145)
-  - missing: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - missing: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - missing: DUNVIEW.C:7391 F0122_DUNGEONVIEW_DrawSquareD1L
-  - missing: DUNVIEW.C:7559 F0123_DUNGEONVIEW_DrawSquareD1R
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2106-2107)
+  - line 2106: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 2107: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
 
 ## Verification
 
@@ -79,7 +77,7 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass563 check-only: firestaff-d1-side-wall-metadata,firestaff-d1-side-wall-runtime-test,firestaff-source-evidence-string
+PASS pass563 check-only
 ~~~

@@ -15,7 +15,7 @@
     "review_pair_metadata_materialized": true,
     "semantic_clean_original_required": true
   },
-  "branch": "main",
+  "branch": "dm1-v1-p1-champion-zorder",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
+  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -336,5 +336,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-05-30T04:54:11.402082+00:00"
+  "timestamp_utc": "2026-05-30T07:31:08.889547+00:00"
 }

@@ -17,9 +17,9 @@
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
   "blocker": "missing prerequisite: dosbox-debug, Xvfb, xdotool",
-  "branch": "main",
+  "branch": "dm1-v1-p1-champion-zorder",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
+  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -225,5 +225,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-05-30T04:54:11.756215+00:00"
+  "timestampUtc": "2026-05-30T07:31:09.086949+00:00"
 }

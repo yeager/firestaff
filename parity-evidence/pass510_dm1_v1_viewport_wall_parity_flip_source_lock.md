@@ -24,7 +24,7 @@ Status: FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK
 
 ## Gates
 - /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass509_dm1_v1_wallset_startup_binding.py -> rc=0 passed=True
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=1 passed=False
+- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=0 passed=True
 
 ## Scope
 - Locks the source-visible wall parity/native flip path after pass509 startup binding.
