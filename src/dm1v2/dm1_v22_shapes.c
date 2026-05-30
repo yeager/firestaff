@@ -311,12 +311,20 @@ static M11_V22_ShapeParams params_from_wall(const M11_V22_WallShape* ws,
     p.ao_strength = ws->ao_strength;
     p.depth_offset = ws->depth_offset;
     p.vertical_flip = ws->flipped;
-    if (ws->door_frame_present) {
-        p.type = M11_V22_SHAPE_WALL_DOORWAY;
-        p.material_id = M11_V22_MAT_DOOR;
-    }
     if (ws->inscription_slot) {
         p.type = M11_V22_SHAPE_WALL_INSCRIPTION;
+    }
+    /* door_frame_present: the wall shape has a door-frame visual element
+     * (used for rendering the frame itself in V2.2 modern art), but it
+     * does NOT override the cell type.  The cell type (wall vs door) is
+     * determined by the dungeon cell byte already (type == 0 → WALL_STRAIGHT,
+     * type == 4 → DOORWAY in the outer switch).  Overriding the type here
+     * would incorrectly turn a plain wall into a WALL_DOORWAY just because
+     * the wall variant (D1_CENTER, D2_CENTER, etc.) has a frame texture.
+     * Actual DOOR cells (type 4) are already handled before params_from_wall
+     * is called. */
+    if (ws->door_frame_present) {
+        p.material_id = M11_V22_MAT_DOOR;
     }
     return p;
 }

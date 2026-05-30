@@ -206,14 +206,39 @@ void m11_v22_set_manifest_path(const char* dataDir) {
         g_v22_manifest_path[0] = '\0';
         return;
     }
-    /* Build: <dataDir>/../assets/dm1/modern/modern_asset_manifest.json */
+    /* Build: <dataDir>/../assets/dm1/modern/modern_asset_manifest.json
+     * dataDir is the game data directory path (e.g. ~/.firestaff/data/dm1).
+     *
+     * CRITICAL: We must use FSP_ParentDir to strip the last path segment
+     * from dataDir, NOT FSP_JoinPath with "..". The ".." join preserves
+     * the directory name in the path string (e.g. "dm1/../" doesn't simplify
+     * to just the parent), so using it would produce a manifest path that
+     * contains the dataDir name (e.g. ".../dm1/../assets/...") which never
+     * resolves to the actual file. FSP_ParentDir strips the last segment
+     * cleanly and produces the correct parent path.
+     *
+     * Example: dataDir="/home/user/.firestaff/data/dm1"
+     *   ParentDir → "/home/user/.firestaff/data"
+     *   assets/dm1/modern → correct modern assets directory.
+     *
+     * Source: FSP_ParentDir finds the last separator and truncates there. */
     char assetsDir[FSP_PATH_MAX];
-    FSP_JoinPath(assetsDir, sizeof(assetsDir), dataDir, "..");
-    FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "assets");
+    char modernDir[FSP_PATH_MAX];
+    if (!FSP_ParentDir(assetsDir, sizeof(assetsDir), dataDir)) {
+        /* Fallback: try treating dataDir as already being the parent */
+        FSP_JoinPath(assetsDir, sizeof(assetsDir), dataDir, "assets");
+    } else {
+        FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "assets");
+        FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "dm1");
+        FSP_JoinPath(modernDir, sizeof(modernDir), assetsDir, "modern");
+        FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
+                     modernDir, "modern_asset_manifest.json");
+        return;
+    }
     FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "dm1");
-    FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "modern");
+    FSP_JoinPath(modernDir, sizeof(modernDir), assetsDir, "modern");
     FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
-                  assetsDir, "modern_asset_manifest.json");
+                 modernDir, "modern_asset_manifest.json");
 }
 
 /* m11_v22_validate_manifest — validates the JSON manifest.
@@ -256,7 +281,9 @@ int m11_v22_validate_manifest(const char* manifest_path) {
         for (size_t ci = 0U; k_required_categories[ci] != NULL; ++ci) {
             char cat_pattern[64];
             snprintf(cat_pattern, sizeof(cat_pattern), "\"%s\":", k_required_categories[ci]);
-            if (strncmp(line, cat_pattern, strlen(cat_pattern)) == 0) {
+            /* Use strstr so we find the category anywhere in the line,
+             * not just at position 0 (the entire manifest is one line). */
+            if (strstr(line, cat_pattern) != NULL) {
                 /* Finish validating previous category */
                 if (current_category >= 0 && entry_has_all_fields) {
                     categories_with_entries++;
@@ -291,9 +318,14 @@ int m11_v22_validate_manifest(const char* manifest_path) {
                 if (*c == '[') depth++;
                 if (*c == ']') { depth--; if (depth < 0) { depth = 0; break; } }
             }
-            if (depth == 0 && strchr(line, '}') == NULL && strchr(line, ']') == NULL) {
-                /* End of category */
-                break;
+            if (depth <= 0) {
+                /* At depth 0 or below, check if this line closes the array
+                 * (']') or if we're negative (mismatched brackets). Do NOT
+                 * exit on a '}' that belongs to an entry object nested in
+                 * the array — those are consumed inside the array before
+                 * the ']' line. */
+                if (strchr(line, ']') != NULL) break;
+                if (depth < 0) break;
             }
             /* This is an entry line — check required fields */
             if (strchr(line, '{') != NULL || strchr(line, '"') != NULL) {
@@ -353,29 +385,76 @@ int m11_v22_modern_assets_available(void) {
     char line[256];
     int current_cat = -1;
 
+    /* Each iteration reads one logical line (the entire manifest, since
+     * it has no newlines). On the first read, the entire JSON content is
+     * read as one line. The outer loop detects ALL three critical
+     * categories on this single line and extracts their ids.
+     *
+     * We detect all categories present on THIS line BEFORE processing any
+     * single category's id. This avoids the bug where finding one
+     * category's id caused current_cat to be set to -1, preventing
+     * detection of other categories that also have their ids on the
+     * same line. */
+    char id_val[64];
     while (m11_v22_read_line(fp, line, sizeof(line))) {
+        /* First pass: detect any categories whose pattern appears on
+         * this line. We detect ALL such categories before any id
+         * extraction, so that all three categories are found even when
+         * all ids are on the same physical line. */
+        int cats_on_this_line[3] = {0, 0, 0};
         for (int ci = 0; critical_cats[ci] != NULL; ++ci) {
             char pattern[64];
             snprintf(pattern, sizeof(pattern), "\"%s\":", critical_cats[ci]);
-            if (strncmp(line, pattern, strlen(pattern)) == 0) {
-                current_cat = ci;
-                break;
+            if (strstr(line, pattern) != NULL) {
+                cats_on_this_line[ci] = 1;
             }
         }
-        if (current_cat >= 0) {
-            /* Scan for first entry with a valid id */
-            while (m11_v22_read_line(fp, line, sizeof(line))) {
-                if (strchr(line, '}') != NULL || strchr(line, ']') != NULL) {
-                    current_cat = -1;
-                    break;
-                }
-                char id_val[64];
-                if (m11_v22_extract_string(line, "id", id_val, sizeof(id_val))) {
-                    found_critical[current_cat] = 1;
-                    current_cat = -1;
-                    break;
+
+        /* For each category detected on this line, try to extract the id.
+         * The id may appear on this same line (if the entire entry is
+         * inline) or on a subsequent line (multi-line entry format). */
+        for (int ci = 0; ci < 3; ++ci) {
+            if (!cats_on_this_line[ci]) continue;
+            if (found_critical[ci]) continue; /* already found */
+            current_cat = ci;
+
+            /* Try to extract id on this same line first. */
+            if (m11_v22_extract_string(line, "id", id_val, sizeof(id_val))) {
+                found_critical[ci] = 1;
+                current_cat = -1;
+            } else {
+                /* id not on this line — read subsequent lines for this
+                 * category's entry. */
+                int depth = 0;
+                int in_entry = 0;
+                while (m11_v22_read_line(fp, line, sizeof(line))) {
+                    for (char* c = line; *c; ++c) {
+                        if (*c == '{') { depth++; in_entry = 1; }
+                        if (*c == '}') { depth--; }
+                        if (*c == '[') depth++;
+                        if (*c == ']') depth--;
+                    }
+                    if (depth < 0) break;
+                    if (in_entry) {
+                        if (m11_v22_extract_string(line, "id", id_val, sizeof(id_val))) {
+                            found_critical[ci] = 1;
+                            current_cat = -1;
+                            in_entry = 0;
+                            break;
+                        }
+                    }
+                    if (depth == 0 && strchr(line, ']') != NULL) {
+                        current_cat = -1;
+                        break;
+                    }
                 }
             }
+        }
+
+        /* If all three categories were found on the first line, break
+         * immediately — no need to read further lines. */
+        if (found_critical[0] && found_critical[1] && found_critical[2]) {
+            break;
         }
     }
     fclose(fp);

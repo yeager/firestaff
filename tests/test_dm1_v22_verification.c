@@ -203,11 +203,20 @@ static void test_modern_assets_available(void) {
         char* d = scratch_path("valid_manifest");
         if (d) {
             make_dir(d);
-            char* mf = scratch_path("valid_manifest/manifest.json");
+            /* m11_v22_set_manifest_path(d) computes the manifest path by
+             * stripping the last segment of d ("valid_manifest") to get the
+             * parent tmpdir, then appending "assets/dm1/modern/".
+             * So the manifest must be at <tmpdir>/assets/dm1/modern/
+             * (parallel to "valid_manifest/", not inside it).
+             * Create the sibling assets directory and put the manifest there. */
+            char* sub = scratch_path("assets");
+            if (sub) { make_dir(sub); free(sub); }
+            sub = scratch_path("assets/dm1");
+            if (sub) { make_dir(sub); free(sub); }
+            sub = scratch_path("assets/dm1/modern");
+            if (sub) { make_dir(sub); free(sub); }
+            char* mf = scratch_path("assets/dm1/modern/modern_asset_manifest.json");
             if (mf) {
-                /* FIXED: m11_v22_modern_assets_available() looks for
-                 * "wall_shapes", "floor_shapes", "creature_shapes" as
-                 * top-level JSON keys (not "assets"). */
                 write_file(mf,
                     "{"
                     "\"manifestVersion\":\"1.0.0\","
@@ -323,7 +332,10 @@ static void test_validate_manifest(void) {
         }
     }
 
-    /* Case 6: partial manifest (some families, not all) → 0 */
+    /* Case 6: partial manifest (some families, not all) → -1
+     * Note: m11_v22_validate_manifest() specifically looks for the new
+     * top-level category keys ("wall_shapes", "floor_shapes", etc.).
+     * The old flat "assets"[] format without those keys returns -1. */
     {
         char* mf = scratch_path("partial_manifest/manifest.json");
         if (mf) {
@@ -340,7 +352,7 @@ static void test_validate_manifest(void) {
                 "]"
                 "}");
             int rv = m11_v22_validate_manifest(mf);
-            CHECK(rv == 0 || rv == 1, "rv is 0 or 1");
+            CHECK(rv == 0 || rv == -1, "rv is 0 or -1 (partial = -1 due to missing top-level keys)");
             (void)rv;
             free(mf);
         }
