@@ -22845,6 +22845,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
                                frames, cells);
 
+    /* ReDMCSB F0128 draw order: portrait/ornament before center cell contents.
+     * m11_draw_dm1_front_mirror_route draws D1C champion portrait (y=68..96)
+     * and wall ornament at viewWallIndex==12 BEFORE m11_draw_wall_contents
+     * renders open-center floor/creature layers (y=67..160).  Without this
+     * ordering the portrait would float over the open floor on Hall mirror
+     * squares where the front cell is door/teleporter but still carries C127.
+     * Single invocation (depth 0 only) mirrors DUNVIEW.C F0128: portrait is
+     * always D1C front cell regardless of D0/D1/D2 visible walls.
+     * ReDMCSB: DUNVIEW.C F0128, DUNGEON.C:2573/2610-2612, DUNVIEW.C:3913-3928. */
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
+
     /* Until the full C2500/C3200 object+creature zone pass lands, keep
      * visible center-lane objects and creatures alive in normal V1 by
      * drawing the existing source-asset-backed contents layer over open
@@ -22861,9 +22873,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
-
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
 
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
