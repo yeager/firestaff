@@ -148,25 +148,25 @@ typedef struct {
  * ============================================================ */
 
 /* Set defaults: all V2 presentation features OFF (V1-only boot). */
-void csb_v2_phase_gate_defaults(CSB_V2_PhaseGateConfig *config);
+void csb_v2_phase_gate_pc34_defaults(CSB_V2_PhaseGateConfig *config);
 
 /* Returns 1 if the domain is V1-source-locked (V2 may not alter). */
-int csb_v2_phase_gate_is_gameplay_domain(CSB_V2_PhaseDomain domain);
+int csb_v2_phase_gate_pc34_is_gameplay_domain(CSB_V2_PhaseDomain domain);
 
 /* Query whether V2 presentation is allowed for a domain. */
-CSB_V2_PhaseGateDecision csb_v2_phase_gate_decide(
+CSB_V2_PhaseGateDecision csb_v2_phase_gate_pc34_decide(
     const CSB_V2_PhaseGateConfig *config,
     CSB_V2_PhaseDomain domain);
 
 /* Returns 1 if v2PresentationEnabled is set. Shortcut for
  * config && config->v2PresentationEnabled. */
-int csb_v2_phase_gate_v2_active(const CSB_V2_PhaseGateConfig *config);
+int csb_v2_phase_gate_pc34_v2_active(const CSB_V2_PhaseGateConfig *config);
 
 /* Human-readable domain name for debugging/logging. */
-const char *csb_v2_phase_gate_domain_name(CSB_V2_PhaseDomain domain);
+const char *csb_v2_phase_gate_pc34_domain_name(CSB_V2_PhaseDomain domain);
 
 /* Source evidence string for verification scripts. */
-const char *csb_v2_phase_gate_source_evidence(void);
+const char *csb_v2_phase_gate_pc34_source_evidence(void);
 
 #ifdef __cplusplus
 }
