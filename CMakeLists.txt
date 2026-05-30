@@ -302,9 +302,14 @@ endif()
 # deterministic input coverage (tick-start, mid-tick, tick-end),
 # pixel gate (V2 smooth vs V1 discrete), presentation gates.
 add_executable(firestaff_dm2_v2_smooth_movement_probe
-    probes/firestaff_dm2_v2_smooth_movement_probe.c)
+    probes/firestaff_dm2_v2_smooth_movement_probe.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_dm2_v2_smooth_movement_probe
-    PRIVATE firestaff_dm2_v2 firestaff_m10)
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
