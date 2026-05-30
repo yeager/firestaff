@@ -6405,6 +6405,29 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->mapOverlayActive || state->inventoryPanelActive) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
+    /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
+     * Nexus owns its own game state in state->nexusEngine (party position,
+     * tick_count, dungeon squares, creatures, etc.). The DM1 m11_apply_tick
+     * path reads state->world which is zero for Nexus (M11_GameView_StartNexus
+     * does not initialize state->world — that struct is owned by the DM1
+     * compat layer). Without this branch, calling m11_apply_tick on a Nexus
+     * game is undefined behaviour (reads from zero-initialised memory).
+     * Source: nexus_v1_engine.h nexus_v1_tick(), nexus_v1_launcher.c. */
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        if (!state->nexusEngine) {
+            /* Engine not available — do not tick. */
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        nexus_v1_tick(state->nexusEngine);
+        /* Sync nexusState mirror so external callers (render loop,
+         * UI overlays, save/load) always read consistent data. */
+        state->nexusState.tick_count   = state->nexusEngine->game.tick_count;
+        state->nexusState.level_loaded = state->nexusEngine->level_loaded;
+        state->nexusState.party_x      = state->nexusEngine->game.party_x;
+        state->nexusState.party_y      = state->nexusEngine->game.party_y;
+        state->nexusState.party_dir    = state->nexusEngine->game.party_dir;
+        return M11_GAME_INPUT_REDRAW;
+    }
     if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
