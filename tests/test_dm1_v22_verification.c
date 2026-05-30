@@ -305,27 +305,25 @@ static void test_validate_manifest(void) {
             /* FIXED: m11_v22_validate_manifest() requires
              * "wall_shapes", "floor_shapes", "creature_shapes",
              * "ui_chrome", "champion_portraits" as top-level keys,
-             * each with entries containing id/source_file/width/height. */
+             * each with entries containing id/source_file/width/height.
+             * Write MULTI-LINE JSON so each read_line call gets one
+             * logical line and the bracket-depth tracking works correctly. */
             write_file(mf,
-                "{"
-                "\"manifestVersion\":\"1.0.0\","
-                "\"packId\":\"full-pack\","
-                "\"wall_shapes\":["
-                "  {\"id\":\"a\",\"source_file\":\"wall.png\",\"width\":128,\"height\":128}"
-                "],"
-                "\"floor_shapes\":["
-                "  {\"id\":\"b\",\"source_file\":\"floor.png\",\"width\":128,\"height\":128}"
-                "],"
-                "\"creature_shapes\":["
-                "  {\"id\":\"c\",\"source_file\":\"creature.png\",\"width\":64,\"height\":64}"
-                "],"
-                "\"ui_chrome\":["
-                "  {\"id\":\"d\",\"source_file\":\"chrome.png\",\"width\":32,\"height\":32}"
-                "],"
-                "\"champion_portraits\":["
-                "  {\"id\":\"e\",\"source_file\":\"portrait.png\",\"width\":64,\"height\":64}"
-                "]"
-                "}");
+                "{\n"
+                "  \"manifestVersion\": \"1.0.0\",\n"
+                "  \"packId\": \"full-pack\",\n"
+                "  \"wall_shapes\": [\n"
+                "    {\"id\": \"a\", \"source_file\": \"wall.png\", \"width\": 128, \"height\": 128},\n"
+                "  \"floor_shapes\": [\n"
+                "    {\"id\": \"b\", \"source_file\": \"floor.png\", \"width\": 128, \"height\": 128},\n"
+                "  \"creature_shapes\": [\n"
+                "    {\"id\": \"c\", \"source_file\": \"creature.png\", \"width\": 64, \"height\": 64},\n"
+                "  \"ui_chrome\": [\n"
+                "    {\"id\": \"d\", \"source_file\": \"chrome.png\", \"width\": 32, \"height\": 32},\n"
+                "  \"champion_portraits\": [\n"
+                "    {\"id\": \"e\", \"source_file\": \"portrait.png\", \"width\": 64, \"height\": 64}\n"
+                "  ]\n"
+                "}\n");
             CHECK_EQ(m11_v22_validate_manifest(mf), 1,
                      "valid manifest all categories → 1");
             free(mf);
