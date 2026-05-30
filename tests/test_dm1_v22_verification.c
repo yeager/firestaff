@@ -19,6 +19,8 @@
 #include "dm1_v2_phase_gate_pc34.h"
 #include "dm1_v2_settings_pc34.h"
 #include "dm1_v2_presentation_profile_pc34.h"
+#include "config_m12.h"
+#include "dm1_v1_dungeon_square_structs_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,15 +28,24 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/* ── Dungeon square type constants ──────────────────────────────── */
+
+/* Dungeon square raw bytes with type in bits 5-7 (DM1_SQUARE_TYPE macro).
+ * Source: ReDMCSB DEFS.H M034_SQUARE_TYPE; dm1_v22_shapes.c type decode. */
+#define TEST_SQUARE_WALL   ((uint8_t)(0 << 5))  /* type 0: wall */
+#define TEST_SQUARE_DOOR   ((uint8_t)(4 << 5))  /* type 4: door */
+#define TEST_SQUARE_FLOOR  ((uint8_t)(1 << 5))  /* type 1: corridor → FLOOR_PLAIN */
+#define TEST_SQUARE_PIT    ((uint8_t)(2 << 5))  /* type 2: pit */
+
 /* ── Test harness ───────────────────────────────────────────────── */
 
 static int failures = 0;
 
-#define CHECK(expr)                                                  \
+#define CHECK(expr, msg)                                              \
     do {                                                             \
         if (!(expr)) {                                               \
-            fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__,  \
-                    #expr);                                          \
+            fprintf(stderr, "FAIL %s:%d: %s — %s\n", __FILE__, __LINE__,  \
+                    #expr, (msg));                                  \
             failures++;                                              \
         }                                                            \
     } while (0)
@@ -194,26 +205,29 @@ static void test_modern_assets_available(void) {
             make_dir(d);
             char* mf = scratch_path("valid_manifest/manifest.json");
             if (mf) {
+                /* FIXED: m11_v22_modern_assets_available() looks for
+                 * "wall_shapes", "floor_shapes", "creature_shapes" as
+                 * top-level JSON keys (not "assets"). */
                 write_file(mf,
                     "{"
                     "\"manifestVersion\":\"1.0.0\","
                     "\"packId\":\"test-valid\","
-                    "\"assets\":["
-                    "  {\"id\":\"test.wall\",\"family\":\"dungeon_wall\","
-                    "   \"productionClass\":\"rebuild-native\"},"
-                    "  {\"id\":\"test.floor\",\"family\":\"dungeon_floor\","
-                    "   \"productionClass\":\"rebuild-native\"},"
-                    "  {\"id\":\"test.door\",\"family\":\"dungeon_door\","
-                    "   \"productionClass\":\"rebuild-native\"},"
-                    "  {\"id\":\"test.creature\",\"family\":\"creatures\","
-                    "   \"productionClass\":\"redraw-native\"},"
-                    "  {\"id\":\"test.object\",\"family\":\"objects\","
-                    "   \"productionClass\":\"redraw-native\"}"
+                    "\"wall_shapes\":["
+                    "  {\"id\":\"test.wall\",\"source_file\":\"wall.png\","
+                    "   \"width\":128,\"height\":128}"
+                    "],"
+                    "\"floor_shapes\":["
+                    "  {\"id\":\"test.floor\",\"source_file\":\"floor.png\","
+                    "   \"width\":128,\"height\":128}"
+                    "],"
+                    "\"creature_shapes\":["
+                    "  {\"id\":\"test.creature\",\"source_file\":\"creature.png\","
+                    "   \"width\":64,\"height\":64}"
                     "]"
                     "}");
                 m11_v22_set_manifest_path(d);
                 CHECK_EQ(m11_v22_modern_assets_available(), 1,
-                         "valid manifest with 5 families → 1");
+                         "valid manifest with critical categories → 1");
                 free(mf);
             }
             free(d);
@@ -274,26 +288,33 @@ static void test_validate_manifest(void) {
         }
     }
 
-    /* Case 5: valid manifest with all categories → 1 */
+    /* Case 5: valid manifest with all required top-level category keys → 1 */
     {
         char* mf = scratch_path("valid_manifest_test/manifest.json");
         if (mf) {
             make_dir(scratch_path("valid_manifest_test"));
+            /* FIXED: m11_v22_validate_manifest() requires
+             * "wall_shapes", "floor_shapes", "creature_shapes",
+             * "ui_chrome", "champion_portraits" as top-level keys,
+             * each with entries containing id/source_file/width/height. */
             write_file(mf,
                 "{"
                 "\"manifestVersion\":\"1.0.0\","
                 "\"packId\":\"full-pack\","
-                "\"assets\":["
-                "  {\"id\":\"a\",\"family\":\"dungeon_wall\","
-                "   \"productionClass\":\"rebuild-native\"},"
-                "  {\"id\":\"b\",\"family\":\"dungeon_floor\","
-                "   \"productionClass\":\"rebuild-native\"},"
-                "  {\"id\":\"c\",\"family\":\"dungeon_door\","
-                "   \"productionClass\":\"rebuild-native\"},"
-                "  {\"id\":\"d\",\"family\":\"creatures\","
-                "   \"productionClass\":\"redraw-native\"},"
-                "  {\"id\":\"e\",\"family\":\"objects\","
-                "   \"productionClass\":\"redraw-native\"}"
+                "\"wall_shapes\":["
+                "  {\"id\":\"a\",\"source_file\":\"wall.png\",\"width\":128,\"height\":128}"
+                "],"
+                "\"floor_shapes\":["
+                "  {\"id\":\"b\",\"source_file\":\"floor.png\",\"width\":128,\"height\":128}"
+                "],"
+                "\"creature_shapes\":["
+                "  {\"id\":\"c\",\"source_file\":\"creature.png\",\"width\":64,\"height\":64}"
+                "],"
+                "\"ui_chrome\":["
+                "  {\"id\":\"d\",\"source_file\":\"chrome.png\",\"width\":32,\"height\":32}"
+                "],"
+                "\"champion_portraits\":["
+                "  {\"id\":\"e\",\"source_file\":\"portrait.png\",\"width\":64,\"height\":64}"
                 "]"
                 "}");
             CHECK_EQ(m11_v22_validate_manifest(mf), 1,
@@ -319,7 +340,7 @@ static void test_validate_manifest(void) {
                 "]"
                 "}");
             int rv = m11_v22_validate_manifest(mf);
-            CHECK(rv == 0 || rv == 1);
+            CHECK(rv == 0 || rv == 1, "rv is 0 or 1");
             (void)rv;
             free(mf);
         }
@@ -340,11 +361,11 @@ static void test_best_available_shape_source(void) {
      * Full fallback-chain testing requires state setup via m11_v22_set_installed(). */
 
     /* Verify enum ordering: ORIGINAL(0) < FILTERED(1) < UPSCALED(2) < MODERN(3) */
-    CHECK_EQ(M11_V22_SHAPE_SOURCE_ORIGINAL < M11_V22_SHAPE_SOURCE_FILTERED, 1,
+    CHECK_EQ(DM1_V22_SHAPE_SOURCE_V1_ORIGINAL < DM1_V22_SHAPE_SOURCE_V2_FILTERED, 1,
              "ORIGINAL < FILTERED");
-    CHECK_EQ(M11_V22_SHAPE_SOURCE_FILTERED < M11_V22_SHAPE_SOURCE_UPSCALED, 1,
+    CHECK_EQ(DM1_V22_SHAPE_SOURCE_V2_FILTERED < DM1_V22_SHAPE_SOURCE_V2_UPSCALED, 1,
              "FILTERED < UPSCALED");
-    CHECK_EQ(M11_V22_SHAPE_SOURCE_UPSCALED < M11_V22_SHAPE_SOURCE_MODERN, 1,
+    CHECK_EQ(DM1_V22_SHAPE_SOURCE_V2_UPSCALED < DM1_V22_SHAPE_SOURCE_V2_MODERN, 1,
              "UPSCALED < MODERN");
 
     /* Test each mode returns a valid enum value (no crash) */
@@ -356,9 +377,9 @@ static void test_best_available_shape_source(void) {
           "mode 3 returns valid shape source");
 
     /* Verify shape_source_name returns non-NULL for each source */
-    CHECK(m11_v22_shape_source_name(M11_V22_SHAPE_SOURCE_V1_ORIGINAL) != NULL,
+    CHECK(m11_v22_shape_source_name(DM1_V22_SHAPE_SOURCE_V1_ORIGINAL) != NULL,
           "shape_source_name returns non-NULL for ORIGINAL");
-    CHECK(m11_v22_shape_source_name(M11_V22_SHAPE_SOURCE_V2_MODERN) != NULL,
+    CHECK(m11_v22_shape_source_name(DM1_V22_SHAPE_SOURCE_V2_MODERN) != NULL,
           "shape_source_name returns non-NULL for MODERN");
 }
 
@@ -371,50 +392,38 @@ static void test_shape_for_cell(void) {
 
     M11_V22_ShapeParams params;
 
-    /* DUNGEON_SQUARE_WALL → WALL_STRAIGHT */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_WALL, &params);
-    CHECK_EQ(params.shapeType, M11_V22_SHAPE_WALL_STRAIGHT,
+    /* TEST_SQUARE_WALL → WALL_STRAIGHT */
+    params = m11_v22_shape_for_cell(TEST_SQUARE_WALL, 0, 1, 0);
+    CHECK_EQ(params.type, M11_V22_SHAPE_WALL_STRAIGHT,
              "WALL square → WALL_STRAIGHT");
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
+    CHECK(params.width_cm > 0, "WALL width_cm > 0");
+    CHECK(params.height_cm > 0, "WALL height_cm > 0");
 
-    /* DUNGEON_SQUARE_DOOR → WALL_DOORWAY */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_DOOR, &params);
-    CHECK_EQ(params.shapeType, M11_V22_SHAPE_WALL_DOORWAY,
+    /* TEST_SQUARE_DOOR → WALL_DOORWAY */
+    params = m11_v22_shape_for_cell(TEST_SQUARE_DOOR, 0, 1, 0);
+    CHECK_EQ(params.type, M11_V22_SHAPE_WALL_DOORWAY,
              "DOOR square → WALL_DOORWAY");
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
+    CHECK(params.width_cm > 0, "DOOR width_cm > 0");
+    CHECK(params.height_cm > 0, "DOOR height_cm > 0");
 
-    /* DUNGEON_SQUARE_FLOOR → FLOOR_PLAIN */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_FLOOR, &params);
-    CHECK_EQ(params.shapeType, M11_V22_SHAPE_FLOOR_PLAIN,
+    /* TEST_SQUARE_FLOOR → FLOOR_PLAIN (corridor type) */
+    params = m11_v22_shape_for_cell(TEST_SQUARE_FLOOR, 0, 1, 0);
+    CHECK_EQ(params.type, M11_V22_SHAPE_FLOOR_PLAIN,
              "FLOOR square → FLOOR_PLAIN");
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
+    CHECK(params.width_cm > 0, "FLOOR width_cm > 0");
+    CHECK(params.height_cm > 0, "FLOOR height_cm > 0");
 
-    /* DUNGEON_SQUARE_PIT → FLOOR_PIT */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_PIT, &params);
-    CHECK_EQ(params.shapeType, M11_V22_SHAPE_FLOOR_PIT,
+    /* TEST_SQUARE_PIT → FLOOR_PIT */
+    params = m11_v22_shape_for_cell(TEST_SQUARE_PIT, 0, 1, 0);
+    CHECK_EQ(params.type, M11_V22_SHAPE_FLOOR_PIT,
              "PIT square → FLOOR_PIT");
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
-
-    /* NULL params → no crash */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_WALL, NULL);
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_DOOR, NULL);
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_FLOOR, NULL);
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_PIT, NULL);
-
-    /* Validate all params fields are initialised */
-    m11_v22_shape_for_cell(DUNGEON_SQUARE_WALL, &params);
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
-    CHECK(params.depth == 1);
+    CHECK(params.width_cm > 0, "PIT width_cm > 0");
+    CHECK(params.height_cm > 0, "PIT height_cm > 0");
 
     /* Unknown type → safe defaults, no crash */
-    m11_v22_shape_for_cell(0xFF, &params);
-    CHECK(params.width > 0);
-    CHECK(params.height > 0);
+    params = m11_v22_shape_for_cell(0xFF, 0, 1, 0);
+    CHECK(params.width_cm > 0, "unknown type width_cm > 0");
+    CHECK(params.height_cm > 0, "unknown type height_cm > 0");
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -424,8 +433,8 @@ static void test_shape_for_cell(void) {
 static void test_config_v22_integration(void) {
     puts("\n[6] Config integration (v22_modern_assets_installed)");
 
-    /* v22_modern_assets_installed is a settable boolean */
-    M11_V22_Config cfg;
+    /* v22_modern_assets_installed is in M12_Config (config_m12.h) */
+    M12_Config cfg;
     memset(&cfg, 0, sizeof(cfg));
     cfg.v22_modern_assets_installed = 1;
     CHECK_EQ((int)cfg.v22_modern_assets_installed, 1,
@@ -435,17 +444,10 @@ static void test_config_v22_integration(void) {
              "v22_modern_assets_installed is settable to 0");
 
     /* Config defaults */
-    M11_V22_Config cfgd;
-    m11_v22_config_defaults(&cfgd);
-    CHECK_EQ((int)cfgd.mode, (int)DM1_V2_ASSET_MODE_ORIGINAL,
-             "config default asset mode is ORIGINAL");
+    M12_Config cfgd;
+    M12_Config_SetDefaults(&cfgd);
     CHECK_EQ((int)cfgd.v22_modern_assets_installed, 0,
              "config default v22_modern_assets_installed is 0");
-
-    /* Setting mode to MODERN */
-    cfgd.mode = DM1_V2_ASSET_MODE_MODERN;
-    CHECK_EQ((int)cfgd.mode, (int)DM1_V2_ASSET_MODE_MODERN,
-             "config asset_mode can be set to MODERN");
 }
 
 /* ─────────────────────────────────────────────────────────────────

@@ -43,8 +43,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### CSB V2.0 / V2.1 / V2.2
 
-- ❌ Phase 0 - V1 compatibility lock before V2 work.
-- ❌ Phase 1 - V2 launch/profile separation.
+- ✅ Phase 0 - V1 compatibility lock before V2 work.
+- ✅ Phase 1 - V2 launch/profile separation.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and magic effects.
