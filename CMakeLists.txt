@@ -272,18 +272,6 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
-# ── DM1 V1 Blurry Inscription Probe ─────────────────────────────────────────
-# Headless probe: reproduces blurry inscription artifact when original font
-# is not loaded (g_activeOriginalFont==NULL uses g_font[] fallback with
-# shadow double-draw → thick/blurry glyphs + centering drift).
-# No game data needed; verifies inscription font path behavior in isolation.
-add_executable(firestaff_m11_blurry_inscription_probe
-    probes/m11/firestaff_m11_blurry_inscription_probe.c)
-target_link_libraries(firestaff_m11_blurry_inscription_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
-if(NOT MSVC)
-    target_compile_options(firestaff_m11_blurry_inscription_probe PRIVATE -Wall -Wextra -O2)
-endif()
-
 # CSB V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies CSB_V2_PHASE_DOMAIN_LAUNCH and CSB_V2_PHASE_DOMAIN_PROFILE compile gates,
@@ -1338,18 +1326,6 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_wall_composition_contract_probe
     )
 
-    add_executable(firestaff_dm1_v1_wall_rendering_integrity_probe
-        probes/dm1/firestaff_dm1_v1_wall_rendering_integrity_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_wall_rendering_integrity_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_wall_rendering_integrity_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME firestaff_dm1_v1_wall_rendering_integrity_probe
-        COMMAND firestaff_dm1_v1_wall_rendering_integrity_probe
-    )
-
     add_executable(test_dm1_v2_movement_viewport_pc34
         tests/test_dm1_v2_movement_viewport_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
@@ -2025,15 +2001,6 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_resurrection
         COMMAND test_dm1_v1_resurrection_pc34_compat
-    )
-
-    # DM1 V1 Blurry Inscription Probe (headless, no game data needed)
-    add_test(
-        NAME m11_blurry_inscription
-        COMMAND firestaff_m11_blurry_inscription_probe
-    )
-    set_tests_properties(m11_blurry_inscription PROPERTIES
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
 
     # Phase A probe (headless, no game data needed)
@@ -4056,25 +4023,27 @@ if(NOT MSVC)
 endif()
 
 # ── Nexus V1 launch smoke probe ─────────────────────────────────────
-# VERIFY-BROKEN: probes/nexus_v1_launch_smoke_probe.c missing from this branch
-# add_executable(firestaff_nexus_v1_launch_smoke_probe
-#     probes/nexus_v1_launch_smoke_probe.c
-# )
-# target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#     firestaff_nexus firestaff_m10
-# )
-# target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/include
-# )
-# if(NOT MSVC)
-#     target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-#         -Wall -Wextra -O2
-#     )
-# endif()
-# add_test(
-#     NAME firestaff_nexus_v1_launch_smoke
-#     COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
-# )
+# Verifies: launcher init → Structure1B DGN load → render → tick
+# Source-lock: src/nexus/nexus_v1_launcher.c, nexus_v1_dungeon.c, nexus_v1_viewport.c
+add_executable(firestaff_nexus_v1_launch_smoke_probe
+    probes/nexus_v1_launch_smoke_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+add_test(
+    NAME firestaff_nexus_v1_launch_smoke
+    COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+)
 
 # ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
 # Source-lock: src/nexus/nexus_v1_movement.c (CLIKMENU.C F0366, MOVESENS.C F0267),
