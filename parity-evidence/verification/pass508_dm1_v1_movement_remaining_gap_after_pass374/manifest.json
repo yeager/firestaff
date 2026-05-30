@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "dm1-v2-phase8-asset-revisit",
+  "branch": "main",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",

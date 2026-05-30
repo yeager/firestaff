@@ -1,5 +1,5 @@
 {
-  "buildDir": "/Users/bosse/.openclaw/workspace-main/build-dm2",
+  "buildDir": "/Users/bosse/.openclaw/workspace-main/build-csb-v2-phase4",
   "firestaffChecks": [
     {
       "file": "include/dm1_v1_viewport_3d_pc34_compat.h",
@@ -301,7 +301,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build-dm2/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build-csb-v2-phase4/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1\nPASS source_evidence.side_occlusion == 1\nPASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,

@@ -1,5 +1,5 @@
 {
-  "branch": "dm1-v2-phase8-asset-revisit",
+  "branch": "main",
   "closedGap": "successful movement dequeues one command, retains later queued input, runs destination sensor consequences, then applies cooldown; blocked movement dequeues the attempted move, discards nonreserved queued input, runs no movement sensor consequences, and does not assign successful-step cooldown.",
   "firestaffGuards": {
     "movementCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
@@ -8,7 +8,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "f7f3291f514c367ae008c465107c63a2102431b2",
+  "head": "89dd75b088c4e027ab85538cdce2a6297e349b4f",
   "notClaimed": [
     "viewport wall drawing changes",
     "new DOS runtime capture",
@@ -28,5 +28,5 @@
     "sensorRotationDeferSpan": "MOVESENS.C:1785-1793"
   },
   "status": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
-  "timestampUtc": "2026-05-29T19:20:13.786822+00:00"
+  "timestampUtc": "2026-05-30T04:54:12.011108+00:00"
 }

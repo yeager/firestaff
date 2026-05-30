@@ -23,7 +23,7 @@
         "state->world.party.direction) & 1;"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3c29bb1333839d82e064224a743da4db8a655f2511d59566bbf57a039776b2fb",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -38,7 +38,7 @@
         "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3c29bb1333839d82e064224a743da4db8a655f2511d59566bbf57a039776b2fb",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -55,17 +55,12 @@
         "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3c29bb1333839d82e064224a743da4db8a655f2511d59566bbf57a039776b2fb",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
     {
-      "hits": [
-        {
-          "line": 10282,
-          "needle": "} else {"
-        }
-      ],
+      "hits": [],
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": "10254-10296",
       "missing": [
@@ -74,10 +69,11 @@
         "M11_DM1WallFrontBlit swapped = kSideBlits[i];",
         "swapped.graphicIndex = kSideBlits[partner].graphicIndex;",
         "(void)m11_draw_dm1_wall_blit_flipped(state,",
+        "} else {",
         "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
       ],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "3c29bb1333839d82e064224a743da4db8a655f2511d59566bbf57a039776b2fb",
+      "sha256": "415a84c0ba2c77b7508c12c81fa15fd0e701c1d2f5461d1c216a617057e3479e",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     }
