@@ -158,4 +158,73 @@ int  dm2_v1_creature_attacks_party(int ai_index, int distance);
 int  dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags);
 const char *dm2_v1_creature_source_evidence(void);
 
+/* ── Creature instance lifecycle ────────────────────────────────────────────
+ * Source: SkWinCore.cpp:16815-16936 (ALLOC_NEW_CREATURE, CREATE_MINION)
+ *         SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM (CCM b_1a dispatch)
+ *         SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE (NPC planning tick)
+ *
+ * DM2 creature instances are spawned from GDAT creature definitions.
+ * Each instance carries: position, direction, HP (scaled by healthMultiplier),
+ * CCM primary state (b_1a), secondary state (b_17), and world/map association.
+ * Instance count is bounded: MAX_CREATURE_INSTANCES per dungeon map. */
+
+#define DM2_MAX_CREATURE_INSTANCES  64
+#define DM2_MAX_ACTIVE_CREATURES    32   /* creatures with CCM state != IDLE */
+
+typedef struct {
+    int instance_id;        /* unique instance ID (0–63) */
+    int ai_index;          /* AIDefinition table index (0–63) */
+    int world_x;           /* world/map X coordinate */
+    int world_y;           /* world/map Y coordinate */
+    int map_index;         /* dungeon map level (0=surface, 1+=indoor) */
+    int direction;         /* facing: 0=N, 1=E, 2=S, 3=W */
+    int hp_current;        /* current hit points */
+    int hp_max;            /* maximum hit points (BaseHP * healthMultiplier) */
+    uint8_t b_1a;          /* CCM primary state register */
+    uint8_t b_17;          /* CCM secondary context */
+    uint8_t alive;         /* 1=alive, 0=dead (pending drop removal) */
+    uint8_t is_visible;    /* 1=visible, 0=invisible */
+    int target_x;          /* last known target position (party) */
+    int target_y;
+    int attack_cooldown;   /* ticks until next attack allowed */
+    int poison_ticks;      /* poison damage countdown */
+} DM2_V1_CreatureInstance;
+
+/* ── Creature instance API ───────────────────────────────────────────────── */
+
+/* dm2_v1_creature_spawn — spawn a creature instance.
+ * healthMultiplier scales HP: hp = BaseHP * healthMultiplier / 8.
+ * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE */
+int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
+                          int map_index, int direction, int health_multiplier);
+
+/* dm2_v1_creature_tick — advance all active creature instances by one tick.
+ * Runs DM2_THINK_CREATURE (c_ai.cpp) and DM2_PROCEED_CCM (c_creature.cpp).
+ * Updates CCM b_1a state, HP, attack cooldown, poison ticks.
+ * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp */
+void dm2_v1_creature_tick(void);
+
+/* dm2_v1_creature_count — return count of active (alive) creature instances */
+int dm2_v1_creature_count(void);
+
+/* dm2_v1_creature_at — get creature instance at world position (or -1) */
+int dm2_v1_creature_at(int world_x, int world_y, int map_index);
+
+/* dm2_v1_creature_deal_damage — apply damage to a creature instance.
+ * Returns remaining HP. Triggers creature_death_check when HP <= 0.
+ * Source: SKULLWIN/c_creature.cpp: CREATURE_TAKE_DAMAGE */
+int dm2_v1_creature_deal_damage(int instance_id, int damage);
+
+/* dm2_v1_creature_death_check — check if creature died, trigger drop+sound.
+ * Called after HP drops to 0 or below. Rolls drop from 11-slot GDAT table.
+ * Plays death sound (SOUND_CREATURE_DEATH=0x11) at creature position.
+ * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp */
+void dm2_v1_creature_death_check(int instance_id);
+
+/* dm2_v1_creature_instance_hp — read HP of a creature instance */
+int dm2_v1_creature_instance_hp(int instance_id);
+
+/* dm2_v1_creature_instance_ai — read AI index of a creature instance */
+int dm2_v1_creature_instance_ai(int instance_id);
+
 #endif /* FIRESTAFF_DM2_V1_CREATURE_H */
