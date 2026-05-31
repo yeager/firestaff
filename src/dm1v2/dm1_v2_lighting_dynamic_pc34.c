@@ -86,6 +86,16 @@ void v2_light_set_deterministic_seed(uint32_t seed) {
     g_deterministic_seed = seed;
 }
 
+/* Tick function wired from v22_runtime_enhanced_tick.
+ * Updates flicker phases and rebuilds the per-tile additive light map.
+ * v22_light_rebuild_map handles its own tick counter internally.
+ * Source: Firestaff DM1 V2 Phase 4 followup.
+ */
+void v2_light_tick(float dt) {
+    v2_light_update_flicker(dt);
+    v2_light_compute_map();
+}
+
 void v2_light_remove_source(int idx) {
     if (idx < 0 || idx >= g_source_count) return;
     g_sources[idx] = g_sources[g_source_count - 1];
