@@ -38,5 +38,8 @@ void nexus_v2_apply_lighting(uint32_t *rgba, int w, int h,
     const Nexus_V2_LightingState *ls,
     float cam_x, float cam_y, float cam_z);
 
+/* Source-lock evidence string */
+const char *nexus_v2_lighting_source_evidence(void);
+
 #endif
 

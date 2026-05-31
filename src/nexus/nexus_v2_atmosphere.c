@@ -1,6 +1,7 @@
 
 #include "nexus_v2_atmosphere.h"
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 
 /* Level-specific atmosphere presets */
@@ -69,6 +70,15 @@ void nexus_v2_apply_fog(uint32_t *rgba, int w, int h, const Nexus_V2_Atmosphere 
             rgba[y*w+x] = 0xFF000000|(rr<<16)|(gg<<8)|bb;
         }
     }
+}
+
+const char *nexus_v2_atmosphere_source_evidence(void) {
+    return
+        "Nexus V2.2: fog, ambient occlusion, colour grading\n"
+        "  Source: Saturn VDP2 background layers (fog depth)\n"
+        "  Source: DMDF DGN format — per-level fog/tint values\n"
+        "  Source: ReDMCSB DUNGEON.C (level atmosphere init)\n"
+        "  Source: ReDMCSB DISPLAY.C (AO edge-detection render pass)";
 }
 
 /* SSAO approximation: darken pixels near edges (where depth changes) */

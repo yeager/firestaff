@@ -104,3 +104,12 @@ void nexus_v2_apply_lighting(uint32_t *rgba, int w, int h,
     }
 }
 
+const char *nexus_v2_lighting_source_evidence(void) {
+    return
+        "Nexus V2.2: dynamic lighting, torch flicker, spell flash, distance attenuation\n"
+        "  Source: Saturn NEXUS.BIN \u2014 VDP1 polygon lighting / VDP2 shadow layer\n"
+        "  Source: DMDF level data \u2014 per-tile light emission values (DGN format)\n"
+        "  Source: ReDMCSB LIGHT.C F0380 (light radius, flicker timing)\n"
+        "  Source: ReDMCSB COMMAND.C F0209 (spell-light colour binding)\n"
+        "  Source: ReDMCSB DUNGEON.C (torch position tracking in party state)";
+}

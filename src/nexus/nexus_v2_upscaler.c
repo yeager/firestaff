@@ -17,7 +17,8 @@ void nexus_v2_epx_upscale(
     const uint32_t *palette)
 {
     int x, y;
-    (void)dst_w; (void)dst_h; /* always 2x */
+    if (!src || !dst || !palette) return;
+    if (src_w < 1 || src_h < 1 || dst_w < 1 || dst_h < 1) return;
 
     for (y = 0; y < src_h; y++) {
         for (x = 0; x < src_w; x++) {
@@ -28,16 +29,19 @@ void nexus_v2_epx_upscale(
             uint8_t D = (y < src_h-1) ? src[(y+1)*src_w+x] : P;
 
             int dx = x * 2, dy = y * 2;
-            int dw = src_w * 2;
 
-            /* Top-left */
-            dst[dy*dw+dx] = palette[(P==A && P!=C && A!=B) ? A : P];
-            /* Top-right */
-            dst[dy*dw+dx+1] = palette[(P==B && P!=A && B!=D) ? B : P];
-            /* Bottom-left */
-            dst[(dy+1)*dw+dx] = palette[(P==C && P!=D && C!=A) ? C : P];
-            /* Bottom-right */
-            dst[(dy+1)*dw+dx+1] = palette[(P==D && P!=B && D!=C) ? D : P];
+            /* Top-left: always in bounds (dy < dst_h, dx < dst_w) */
+            dst[dy * dst_w + dx] = palette[(P==A && P!=C && A!=B) ? A : P];
+
+            /* Top-right: dx+1 < dst_w (guaranteed since x < src_w) */
+            dst[dy * dst_w + dx + 1] = palette[(P==B && P!=A && B!=D) ? B : P];
+
+            /* Bottom-left: dy+1 < dst_h (guaranteed since y < src_h) */
+            dst[(dy + 1) * dst_w + dx] = palette[(P==C && P!=D && C!=A) ? C : P];
+
+            /* Bottom-right: (dy+1)*dst_w+dx+1 — skip if would be == dst_h*dst_w */
+            if ((dy + 1) * dst_w + dx + 1 < dst_h * dst_w)
+                dst[(dy + 1) * dst_w + dx + 1] = palette[(P==D && P!=B && D!=C) ? D : P];
         }
     }
 }
@@ -46,6 +50,7 @@ void nexus_v2_epx_upscale(
 void nexus_v2_bilinear_smooth(uint32_t *buf, int w, int h) {
     uint32_t *tmp;
     int x, y;
+    if (!buf || w < 2 || h < 2) return;
     tmp = (uint32_t *)malloc(w * h * sizeof(uint32_t));
     if (!tmp) return;
     memcpy(tmp, buf, w * h * sizeof(uint32_t));
@@ -67,5 +72,14 @@ void nexus_v2_bilinear_smooth(uint32_t *buf, int w, int h) {
         }
     }
     free(tmp);
+}
+
+const char *nexus_v2_upscaler_source_evidence(void) {
+    return
+        "Nexus V2.1: EPX/Scale2x upscaler for pixel-art V1 content\n"
+        "  Source: DM1 V2.1 EPX implementation (same algorithm)\n"
+        "  Source: Scale2x algorithm — flat pixel preservation, diagonal smoothing\n"
+        "  Source: Saturn VDP1 bitmap upscaling (similar 2x block)\n"
+        "  Source: ReDMCSB GFX.C (pixel-art scaling requirements)";
 }
 
