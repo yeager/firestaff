@@ -15,5 +15,7 @@ void nexus_v2_epx_upscale(
 /* Optional bilinear pass after EPX for smoother result */
 void nexus_v2_bilinear_smooth(uint32_t *buf, int w, int h);
 
+const char *nexus_v2_upscaler_source_evidence(void);
+
 #endif
 
