@@ -27,9 +27,23 @@ typedef enum {
     DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_RIGHT,
     DM1_V2_AFFORDANCE_CONTROLLER_LEFT_BUMPER,
     DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_BUMPER,
+    /* Right stick up/down: right stick already handles turn left/right via
+     * LEFT/RIGHT_STICK_{LEFT,RIGHT}. Adding UP/DOWN for forward/backward
+     * gives full right-stick movement parity with left stick. */
+    DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP,
+    DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_DOWN,
     /* V2-only pinch-to-zoom: two-finger spread on minimap viewport */
     DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN,
-    DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT
+    DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT,
+    /* V2-only double-tap: two quick taps in the lower dungeon viewport area
+     * triggers quick forward movement. ReDMCSB GAMELOOP.C:164-219 has no
+     * double-tap state; this is a V2-only gesture synthesized from SDL3
+     * SDL_FINGERMULTIGESTURE events. */
+    DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP,
+    /* V2-only long-press: hold on an object/creature/inscription triggers
+     * examine mode. ReDMCSB GAMELOOP.C:164-219 has no held-touch state;
+     * this is a V2-only gesture using SDL3 SDL_FINGERMOTION dwell detection. */
+    DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS
 } DM1_V2_TouchControllerAffordance;
 
 typedef enum {

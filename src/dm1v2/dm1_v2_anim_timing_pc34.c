@@ -17,6 +17,11 @@ void v2_anim_clock_init(V2_AnimClock *clock) {
 void v2_anim_clock_v1_tick(V2_AnimClock *clock, uint32_t now_ms) {
     if (!clock) return;
     clock->last_v1_tick_ms = now_ms;
+    /* pass602a: sync last_render_ms so the first render frame after a
+     * V1 tick measures elapsed from the tick moment, not from init.
+     * This ensures sub_tick progresses correctly from 0→1 over the
+     * V1 tick interval (55ms at 18.2 Hz). */
+    clock->last_render_ms = now_ms;
     clock->sub_tick = 0.0f;
     clock->v1_tick_pending = 1;
 }
@@ -141,9 +146,14 @@ float v2_lerp(float a, float b, float t) {
 }
 
 float v2_lerp_angle(float a, float b, float t) {
-    /* Shortest path around 360 degrees */
+    /* Shortest path around 360 degrees.
+     * pass602a: normalize result to [0, 360) so callers can reliably
+     * compare against literal 0 (not 360). */
     float diff = b - a;
     while (diff > 180.0f) diff -= 360.0f;
     while (diff < -180.0f) diff += 360.0f;
-    return a + diff * t;
+    float result = a + diff * t;
+    while (result >= 360.0f) result -= 360.0f;
+    while (result < 0.0f) result += 360.0f;
+    return result;
 }
