@@ -100,7 +100,11 @@ static char* scratch_path(const char* sub) {
 
 /* Create a directory */
 static void make_dir(const char* path) {
+#ifdef _WIN32
+    (void)_mkdir(path);
+#else
     (void)mkdir(path, 0755);
+#endif
 }
 
 /* Write content to a file */
