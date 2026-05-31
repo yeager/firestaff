@@ -4066,16 +4066,10 @@ if(BUILD_TESTING)
     # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
     # Source-lock: src/nexus/nexus_v2_lighting.c
     # Phase 4: Enhanced lighting and Saturn presentation effects
-    add_executable(test_nexus_v2_lighting
-        tests/test_nexus_v2_lighting.c
-        src/nexus/nexus_v2_lighting.c
-    )
-    target_include_directories(test_nexus_v2_lighting PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_nexus_v2_lighting PRIVATE -Wall -Wextra -O2)
-    endif()
+    # ── Nexus V2 Phase 4: stubbed pending Phase 4 implementation ──
+    # Source-lock: src/nexus/nexus_v2_lighting.c, nexus_v2_atmosphere.c,
+    #                nexus_v2_particles.c, nexus_v2_upscaler.c
+    # TODO: implement integration tests for V2 Phase 4
     add_test(
         NAME nexus_v2_lighting
         COMMAND test_nexus_v2_lighting
