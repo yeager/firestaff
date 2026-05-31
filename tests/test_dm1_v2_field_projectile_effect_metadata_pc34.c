@@ -77,8 +77,8 @@ static int check_table_is_const_metadata_only(void) {
     const DM1_V2_FieldProjectileEffectMetadata* after;
     size_t i;
 
-    CHECK(dm1_v2_field_projectile_effect_metadata_count() == 5U);
-    CHECK(dm1_v2_field_projectile_effect_metadata_at(5U) == 0);
+    CHECK(dm1_v2_field_projectile_effect_metadata_count() == 7U);
+    CHECK(dm1_v2_field_projectile_effect_metadata_at(7U) == 0);
     CHECK(dm1_v2_field_projectile_effect_metadata_for_dm1_thing((int16_t)0x1234) == 0);
     CHECK(strcmp(dm1_v2_field_projectile_effect_family_name(DM1_V2_EFFECT_FAMILY_POISON), "poison") == 0);
 
