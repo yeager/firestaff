@@ -6525,13 +6525,13 @@ int main(int argc, char** argv) {
                      "Font DrawString 'HELLO' renders visible text");
     }
 
-    /* INV_GV_160: Font MeasureString returns correct width. */
+    /* INV_GV_160: Font MeasureString returns correct width (CELL_WIDTH=8 per ReDMCSB). */
     {
         int measured = M11_Font_MeasureString("ABC");
         probe_record(&tally,
                      "INV_GV_160",
-                     measured == 3 * M11_FONT_CHAR_VISIBLE_W,
-                     "Font MeasureString('ABC') == 18 pixels");
+                     measured == 3 * M11_FONT_CHAR_CELL_WIDTH,
+                     "Font MeasureString('ABC') == 24 pixels (3*CELL_WIDTH)");
     }
 
     /* INV_GV_161: Game view Draw uses original font when available.

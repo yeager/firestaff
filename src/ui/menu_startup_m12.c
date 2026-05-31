@@ -84,6 +84,8 @@ enum {
     M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH,
     M12_SETTINGS_ROW_SCREENSHOT_PATH,
     M12_SETTINGS_ROW_STREAMER_MODE,
+    M12_SETTINGS_ROW_EXPORT,
+    M12_SETTINGS_ROW_IMPORT,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -1613,6 +1615,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
+        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "EXPORT SETTINGS");
+        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "IMPORT SETTINGS");
         default: return "";
     }
 }
@@ -1660,6 +1664,8 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
+        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "SAVE...");
+        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "LOAD...");
         default: return "";
     }
 }
