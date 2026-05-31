@@ -26,6 +26,12 @@ typedef struct {
     int active;
     int turning;
     int turnPanEnabled;
+    /* pass601b: optional completion callback fired when camera interpolation
+     * reaches the end of its duration. Enables callers (bridge) to raise
+     * V2 HUD signals at the right moment without polling camera->active.
+     * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+    void (*on_complete)(void*);
+    void* on_complete_ctx;
 } DM1_V2_CameraController;
 
 void dm1_v2_camera_init(DM1_V2_CameraController* camera, const DM1_V2_PlayerPos* player);

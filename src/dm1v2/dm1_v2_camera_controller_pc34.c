@@ -156,6 +156,13 @@ void dm1_v2_camera_tick(DM1_V2_CameraController* camera, int32_t dtMs) {
         camera->active = 0;
         camera->turning = 0;
         camera->turnPanOffsetX = 0;
+        /* pass601b: fire completion callback before returning.
+         * Enables V2 consumers (HUD signals, inscription renderer, minimap)
+         * to sync on animation completion without polling camera->active.
+         * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+        if (camera->on_complete && camera->on_complete_ctx) {
+            camera->on_complete(camera->on_complete_ctx);
+        }
         return;
     }
     if (camera->turning) {
