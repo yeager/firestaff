@@ -1,7 +1,7 @@
 {
-  "blocker": "missing prerequisite(s): dosbox-debug, Xvfb, xdotool",
-  "branch": "dm1-v1-p1-champion-zorder",
-  "head": "144594f9985967f2f51410e023a20f9b5d4f71a3",
+  "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+  "branch": "main",
+  "head": "c508573de893e0baca21570a5faa75a02468d58d",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -16,16 +16,12 @@
     "dmExeExists": true,
     "liveVerifier": "tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py",
     "liveVerifierExists": true,
-    "missing": [
-      "dosbox-debug",
-      "Xvfb",
-      "xdotool"
-    ],
-    "originalStage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "missing": [],
+    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "tools": {
-      "Xvfb": "",
-      "dosbox-debug": "",
-      "xdotool": ""
+      "Xvfb": "/usr/bin/Xvfb",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "xdotool": "/usr/bin/xdotool"
     }
   },
   "progress": [
@@ -33,7 +29,7 @@
     "records timeout/no-manifest as a concrete blocker instead of promotable pixels",
     "keeps movement/viewport/walls source anchors tied to ReDMCSB lines"
   ],
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass548_dm1_v1_original_overlay_capture_progress.v1",
   "sourceAudit": [
     {
@@ -52,7 +48,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -69,7 +65,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -86,7 +82,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "MOVESENS.C",
@@ -102,7 +98,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -120,7 +116,7 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -137,10 +133,10 @@
       ],
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS548_MISSING_N2_PREREQUISITE",
-  "timestampUtc": "2026-05-30T07:31:08.987408+00:00"
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
+  "timestampUtc": "2026-05-30T14:49:33.954986+00:00"
 }
