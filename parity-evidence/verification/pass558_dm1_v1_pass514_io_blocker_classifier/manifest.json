@@ -15,7 +15,7 @@
       "present": false
     }
   },
-  "head": "24d1b5325b87a12cfa5f18b805260a4f33d7ae30",
+  "head": "f6cb7936d924934f158d1bd41d3e079972d5bb54",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -24,10 +24,10 @@
     "no push"
   ],
   "pass514Manifest": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-  "pass514Status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+  "pass514Status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
   "proofPredicates": {
     "pass514F0380Reached": true,
-    "pass514InputDeliveredButEmptyF0380": true,
+    "pass514InputDeliveredButEmptyF0380": false,
     "pass514ManifestPresent": true,
     "pass514QueueCountWriteMissing": true,
     "pass514RouteInputAfterArmingSucceeded": true,
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-05-31T02:49:45.732379+00:00"
+  "timestampUtc": "2026-05-31T21:45:38.747805+00:00"
 }

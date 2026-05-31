@@ -1,7 +1,7 @@
 {
   "branch": "main",
   "decision": "Original DM1 V1 movement/viewport/wall capture remains blocked until one bounded canonical PC34 run records C254 slot decode, IO2 movement key, F0361 enqueue, F0380 pop, F0365/F0366 dispatch, party tuple mutation or intentional blocked-step proof, then F0128 draw and F0097 viewport present for the same route token.",
-  "head": "24d1b5325b87a12cfa5f18b805260a4f33d7ae30",
+  "head": "f6cb7936d924934f158d1bd41d3e079972d5bb54",
   "nonClaims": [
     "no DOSBox runtime transcript is fabricated by this gate",
     "no original screenshot or pixel parity is promoted without the required transcript",
@@ -186,5 +186,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
-  "timestampUtc": "2026-05-31T02:49:46.502295+00:00"
+  "timestampUtc": "2026-05-31T21:45:39.793538+00:00"
 }

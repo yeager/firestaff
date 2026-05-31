@@ -19,8 +19,8 @@ Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is 
 - `wall_contract_probe_expected_matrix` ok=True line=30
 - `wall_contract_probe_source_output` ok=True line=66
 - `door_contract_probe_output` ok=True line=128
-- `public_wall_spec_type` ok=True line=426
-- `public_door_front_spec_type` ok=True line=303
+- `public_wall_spec_type` ok=True line=443
+- `public_door_front_spec_type` ok=True line=320
 
 ## Gates
 

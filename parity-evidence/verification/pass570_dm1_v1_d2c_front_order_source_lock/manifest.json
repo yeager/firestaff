@@ -100,29 +100,17 @@
       "status": "PASS"
     },
     {
-      "hits": [
-        {
-          "line": 446,
-          "needle": "#define DM1_PC34_ZONE_WALL_D2C"
-        },
-        {
-          "line": 457,
-          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724"
-        },
-        {
-          "line": 458,
-          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725"
-        },
-        {
-          "line": 459,
-          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d2c-zone-defines",
       "lines": "444-460",
-      "missing": [],
+      "missing": [
+        "#define DM1_PC34_ZONE_WALL_D2C",
+        "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
+        "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
+        "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.h",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
@@ -360,7 +348,7 @@
         "/Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass570 check-only: firestaff-d2c-source-evidence",
+      "outputTail": "FAIL pass570 check-only: firestaff-d2c-zone-defines,firestaff-d2c-source-evidence",
       "passed": false,
       "returncode": 1
     }
