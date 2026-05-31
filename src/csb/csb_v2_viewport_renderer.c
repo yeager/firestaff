@@ -1,8 +1,8 @@
-
 #include "csb_v2_viewport_renderer.h"
 #include "csb_v2_chaos_enhanced.h"
 #include "csb_v2_smooth_movement.h"
 #include <string.h>
+#include <stdio.h>
 
 static uint32_t g_csb_v2_last_render_ms;
 
@@ -25,14 +25,46 @@ void csb_v2_viewport_v1_tick(CSB_V2_ViewportState *s, uint32_t now_ms) {
 void csb_v2_viewport_render_frame(CSB_V2_ViewportState *s, uint32_t now_ms) {
     float dtSeconds;
     if (!s) return;
-    v2_anim_clock_render_frame(&s->clock, now_ms);
-    /* Advance smooth movement animations each display frame */
-    csb_v2_smooth_update_from_clock(&s->clock);
-    dtSeconds = 0.0f;
-    if (g_csb_v2_last_render_ms != 0 && now_ms >= g_csb_v2_last_render_ms) {
-        dtSeconds = (float)(now_ms - g_csb_v2_last_render_ms) / 1000.0f;
-    }
+
+    /* Compute elapsed_ms = wall-clock time since last render_frame call.
+     * This is how a real game loop works: v1_tick fires every ~55ms
+     * (V1 cadence) while render_frame fires every ~16ms (display rate).
+     * After v1_tick(55000), the next render_frame(55016) has elapsed_ms=16ms
+     * and animations advance by 16ms toward completion.
+     *
+     * In headless tests where v1_tick and render_frame are called at the
+     * same timestamp, elapsed_ms = 0 and animations do not advance on that
+     * call.  The next render_frame (at a later timestamp) will have
+     * non-zero elapsed and animations complete normally.
+     *
+     * We also update clock.dt_ms for sub_tick accuracy.
+     *
+     * Source: dm2_v2_viewport_renderer.c dm2_v2_viewport_render_frame
+     *   pattern — v2_anim_clock_render_frame + dm2_v2_smooth_tick
+     *   with clock.dt_ms = wall-clock elapsed between render frames */
+    const uint32_t prev_render = g_csb_v2_last_render_ms;
+    const uint32_t elapsed_ms = (prev_render != 0 && now_ms > prev_render)
+        ? (now_ms - prev_render) : 0;
+    fprintf(stderr, "  [render] now=%u prev=%u elapsed=%u\n", now_ms, prev_render, elapsed_ms);
     g_csb_v2_last_render_ms = now_ms;
+    fprintf(stderr, "  [render] AFTER ASSIGN: last_render_ms=%u\n", g_csb_v2_last_render_ms);
+
+    /* Update V2_AnimClock dt_ms so sub_tick is accurate */
+    s->clock.dt_ms = (float)elapsed_ms;
+
+    /* Advance smooth movement animations by elapsed_ms.
+     * In a real game loop this is ~16ms per frame; in headless tests
+     * it may be 0 (same-timestamp test) or larger (back-to-back frames). */
+    {
+        V2_AnimClock fake_clock = s->clock;
+        fake_clock.dt_ms = (float)elapsed_ms;
+        csb_v2_smooth_update_from_clock(&fake_clock);
+    }
+
+    dtSeconds = 0.0f;
+    if (prev_render != 0 && now_ms >= prev_render) {
+        dtSeconds = (float)(now_ms - prev_render) / 1000.0f;
+    }
     csb_v2_light_tick(dtSeconds);
     csb_v2_chaos_tick(dtSeconds);
 }
