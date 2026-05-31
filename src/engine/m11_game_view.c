@@ -373,6 +373,12 @@ static const M11_TextStyle g_text_title = {2, 1, M11_COLOR_YELLOW, 1, 1, M11_COL
  * font when assets are available without changing every call site. */
 static const M11_FontState* g_activeOriginalFont = NULL;
 
+/* Accessibility: in-game font size multiplier. Set from state->fontScale
+ * (itself propagated from M12 launcher's fontScale setting) in
+ * M11_GameView_Draw.  Used by m11_draw_glyph to scale glyph rendering.
+ * 0 = use M11_TextStyle scale directly (backward compatible). */
+static int g_m11_font_scale_override = 0;
+
 static void m11_put_pixel(unsigned char* framebuffer,
                           int framebufferWidth,
                           int framebufferHeight,
@@ -534,16 +540,20 @@ static void m11_draw_glyph(unsigned char* framebuffer,
     int yy;
     int xx;
     const M11_TextStyle* s = style ? style : &g_text_small;
+    int effective_scale = g_m11_font_scale_override > 0
+                          ? g_m11_font_scale_override : s->scale;
     for (row = 0; row < 7; ++row) {
         for (col = 0; col < 5; ++col) {
             if ((glyph->rows[row] & (1 << (4 - col))) == 0) {
                 continue;
             }
-            for (yy = 0; yy < s->scale; ++yy) {
-                for (xx = 0; xx < s->scale; ++xx) {
+            for (yy = 0; yy < effective_scale; ++yy) {
+                for (xx = 0; xx < effective_scale; ++xx) {
+                    int shadowX = drawShadow ? s->shadowDx * effective_scale : 0;
+                    int shadowY = drawShadow ? s->shadowDy * effective_scale : 0;
                     m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                                  x + col * s->scale + xx + (drawShadow ? s->shadowDx : 0),
-                                  y + row * s->scale + yy + (drawShadow ? s->shadowDy : 0),
+                                  x + col * effective_scale + xx + shadowX,
+                                  y + row * effective_scale + yy + shadowY,
                                   drawShadow ? s->shadowColor : s->color);
                 }
             }
@@ -586,7 +596,9 @@ static void m11_draw_text(unsigned char* framebuffer,
                        cursor, y, text[i], s, 1);
         m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
                        cursor, y, text[i], s, 0);
-        cursor += (5 * s->scale) + s->tracking;
+        int effective_scale = g_m11_font_scale_override > 0
+                              ? g_m11_font_scale_override : s->scale;
+        cursor += (5 * effective_scale) + s->tracking;
     }
 }
 
@@ -596,9 +608,15 @@ static int m11_measure_text_pixels(const char* text,
     size_t len = text ? strlen(text) : 0;
     if (!text || len == 0) return 0;
     if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
-        return M11_Font_MeasureString(text);
+        /* Accessibility: scale the measured width by fontScale */
+        int base = M11_Font_MeasureString(text);
+        int effective_scale = g_m11_font_scale_override > 0
+                              ? g_m11_font_scale_override : s->scale;
+        return base * effective_scale;
     }
-    return (int)(len * (size_t)((5 * s->scale) + s->tracking));
+    int effective_scale = g_m11_font_scale_override > 0
+                          ? g_m11_font_scale_override : s->scale;
+    return (int)(len * (size_t)((5 * effective_scale) + s->tracking));
 }
 
 static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
@@ -955,15 +973,18 @@ static void m11_draw_text_original(
     const M11_TextStyle* s = style ? style : &g_text_small;
     if (!text) return;
     if (font && M11_Font_IsLoaded(font)) {
+        /* Accessibility: apply fontScale override to original DM1 font */
+        int effective_scale = g_m11_font_scale_override > 0
+                              ? g_m11_font_scale_override : s->scale;
         /* Shadow pass */
         if (s->shadowDx != 0 || s->shadowDy != 0) {
             M11_Font_DrawString(font, framebuffer, framebufferWidth,
                 framebufferHeight, x + s->shadowDx, y + s->shadowDy,
-                text, s->shadowColor, -1, s->scale);
+                text, s->shadowColor, -1, effective_scale);
         }
         /* Foreground pass */
         M11_Font_DrawString(font, framebuffer, framebufferWidth,
-            framebufferHeight, x, y, text, s->color, -1, s->scale);
+            framebufferHeight, x, y, text, s->color, -1, effective_scale);
     } else {
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       x, y, text, style);
@@ -6078,6 +6099,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
+    state->fontScale = (spec->fontScale >= 1 && spec->fontScale <= 3) ? spec->fontScale : 0;
     snprintf(state->title, sizeof(state->title), "%s", spec->title);
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
              spec->sourceId ? spec->sourceId : "launcher");
@@ -6153,6 +6175,11 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
+        /* fontScale lives in M12_MenuSettingsState, not M12_GameOptions */
+        spec.fontScale = menuState->settings.fontScale;
+    } else {
+        /* Non-launched path (menu browsing): use the current settings */
+        spec.fontScale = menuState->settings.fontScale;
     }
     spec.sourceKind = (entry->sourceKind == M12_MENU_SOURCE_CUSTOM_DUNGEON)
                           ? M11_GAME_SOURCE_CUSTOM_DUNGEON
@@ -6169,6 +6196,7 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.sourceId = "dm1";
     spec.rendererBackend = M12_RENDERER_BACKEND_AUTO;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    spec.fontScale = 0; /* use built-in default scale */
     return M11_GameView_Start(state, &spec);
 }
 
@@ -25134,6 +25162,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* Activate original DM1 font for this render pass */
     g_activeOriginalFont = state->originalFontAvailable
         ? &state->originalFont : NULL;
+    /* Accessibility: propagate fontScale from game state to file-scope
+     * text renderer.  0 means "use M11_TextStyle scale directly". */
+    g_m11_font_scale_override = state->fontScale;
     /* Base background is BLACK (DM PC VGA slot 0).  The pre-correction
      * base was NAVY (slot 14, pure blue), which produced the bright-blue
      * outermost frame strip the player saw around the whole game view.
@@ -25144,6 +25175,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (!state || !state->active) {
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
@@ -26008,6 +26040,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     g_drawState = NULL;
     g_activeOriginalFont = NULL;
+    g_m11_font_scale_override = 0;
 }
 
 /* ── Creature animation implementation ── */

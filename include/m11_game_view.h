@@ -43,6 +43,7 @@ typedef struct {
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     int languageIndex;
     int rendererBackend;
+    int fontScale;        /* Accessibility: font size scale (1..3), 0 = use default */
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
 
@@ -351,6 +352,12 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } nexusState;
+
+    /* Accessibility: in-game font size scale (1..3).
+     * Set from M12 launcher's fontScale setting via M11_GameLaunchSpec.fontScale.
+     * Used by m11_draw_glyph and m11_draw_text_original to scale text rendering.
+     * 0 means "use built-in font's default scale from M11_TextStyle" (backward compat). */
+    int fontScale;
 } M11_GameViewState;
 
 /* Spell casting API */

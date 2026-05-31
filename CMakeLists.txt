@@ -529,6 +529,15 @@ if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
     endif()
 endif()
 
+# M12 JSON export/import probe
+if(EXISTS "probes/m12/firestaff_m12_json_export_import_probe.c")
+    add_executable(firestaff_m12_json_export_import_probe probes/m12/firestaff_m12_json_export_import_probe.c)
+    target_link_libraries(firestaff_m12_json_export_import_probe PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_json_export_import_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # DM1 V1 wall inscription rendering probe
 if(EXISTS "probes/dm1/probe_dm1_v1_wall_inscription.c")
     add_executable(probe_dm1_v1_wall_inscription probes/dm1/probe_dm1_v1_wall_inscription.c)
