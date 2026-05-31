@@ -16,6 +16,7 @@
 #include "dm1_v2_anim_timing.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v1_runtime.h"
@@ -137,15 +138,43 @@ static void fs_game_render_viewport(FS_GameState *state) {
         cv->viewport_stride  = FS_FB_W;  /* 320 bytes/row */
 
         /* Wire dungeon grid for wall/door decision making.
-         * Use the same test maze pattern as the legacy fallback,
-         * so the view cone has valid data even without CSB DUNGEON.DAT. */
+         * Build from the live CSB dungeon on each render call.
+         * When no dungeon is loaded, fall back to the test maze pattern
+         * so the view cone has valid data even without CSB DUNGEON.DAT.
+         * Grid layout matches DM1_Viewport3DState: grid[y*width+x] = raw
+         * square type (low 5 bits of 16-bit record).  The current level
+         * comes from csb_v1_dungeon_get_current_level().
+         *
+         * Source: ReDMCSB DUNGEON.C F0151 column-major layout;
+         *   csb_v1_dungeon_loader_pc34_compat.c level_widths/level_heights;
+         *   csb_v1_dungeon_get_square_type() for element-type routing */
         static uint8_t s_csb_dungeon[32*32];
-        static int s_csb_maze_init = 0;
-        if (!s_csb_maze_init) {
-            for (int my = 0; my < 32; my++)
-                for (int mx = 0; mx < 32; mx++)
-                    s_csb_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
-            s_csb_maze_init = 1;
+        {
+            const CSB_V1_DungeonData *dun = csb_v1_dungeon_get_current();
+            if (dun && dun->raw_data && dun->level_count > 0) {
+                int level = csb_v1_dungeon_get_current_level();
+                level = (level >= 0 && level < dun->level_count) ? level : 0;
+                int w = dun->level_widths[level];
+                int h = dun->level_heights[level];
+                int max_w = (w <= 32) ? w : 32;
+                int max_h = (h <= 32) ? h : 32;
+                for (int gy = 0; gy < max_h; gy++)
+                    for (int gx = 0; gx < max_w; gx++)
+                        s_csb_dungeon[gy*32+gx] = (uint8_t)csb_v1_dungeon_get_square_type(
+                            dun, level, gx, gy);
+                /* Mark out-of-bounds cells as WALL (0) */
+                for (int gy = max_h; gy < 32; gy++)
+                    for (int gx = 0; gx < 32; gx++)
+                        s_csb_dungeon[gy*32+gx] = 0;
+                for (int gy = 0; gy < max_h; gy++)
+                    for (int gx = max_w; gx < 32; gx++)
+                        s_csb_dungeon[gy*32+gx] = 0;
+            } else {
+                /* Fallback test maze — corridor pattern for no-dungeon case */
+                for (int my = 0; my < 32; my++)
+                    for (int mx = 0; mx < 32; mx++)
+                        s_csb_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
+            }
         }
         cv->dungeon_grid  = s_csb_dungeon;
         cv->dungeon_width  = 32;

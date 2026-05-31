@@ -17,7 +17,7 @@ Primary references stay local on N2:
 |---|---:|---|---|---|
 | `reference_inventory` | 8/10 | `SOURCE_LOCKED_PARTIAL` | CSB-specific source and original payload identities must be fixed before launch/runtime work counts. | Fill remaining platform/version inventory gaps without substituting Amiga/Atari assets. |
 | `definition_matrix` | 10/10 | `MATCHED_DEFINITION_ONLY` | This document plus `csb_v1_parity_surface_matrix` define the CSB V1 DoD surfaces and non-claims. | Keep the matrix verified whenever completion points change. |
-| `launch_smoke` | 4/10 | `PROFILE_INTENT_READY` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the old DM1-only startup gate. Current proof is a positive front-door render smoke plus source-locked CSB reference QuickPlay/load-route boundaries: matched CSB assets can now request a CSB M12 launch intent, but full playability and capture parity remain outside this row. | Next proof must add runtime/capture handling after the CSB profile handoff. |
+| `launch_smoke` | 2/10 | `POSITIVE_BLOCKER_RENDER_SMOKE` | A CSB launch/render smoke must prove CSB menu/config/load routing without falling through the old DM1-only startup gate. Current proof is a positive front-door render smoke plus source-locked CSB reference QuickPlay/load-route boundaries: matched CSB assets can now request a CSB M12 launch intent, but full playability and capture parity remain outside this row. | Next proof must add runtime/capture handling after the CSB profile handoff. |
 | `core_input_movement` | 0/15 | `BLOCKED_RUNTIME` | CSB input must prove mode-specific mouse/keyboard routing from CSB state, including Utility/reincarnate/adventuring modes. | Add CSB state-backed input/movement fixtures. |
 | `viewport_ui_render` | 0/20 | `BLOCKED_CAPTURE` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. | Build capture/overlay fixtures and compare against Firestaff output. |
 | `gameplay_systems` | 0/15 | `BLOCKED_RUNTIME` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points; it needs CSB source/runtime gates. | Land narrow CSB gameplay source/runtime gates. |
@@ -47,7 +47,7 @@ Primary references stay local on N2:
 
 ## Non-claims
 
-- No CSB render, gameplay, save compatibility, New Adventure, or pixel parity is claimed by this matrix.
+- No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.
 - No Firestaff runtime code is modified by this matrix.
 - DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence.
 
