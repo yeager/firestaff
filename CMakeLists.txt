@@ -908,6 +908,28 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v2_lighting
     )
 
+    add_executable(test_dm2_v2_touch_controller_affordance
+        tests/test_dm2_v2_touch_controller_affordance.c
+        src/dm2/dm2_v2_touch_controller_affordance.c
+        src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
+        src/dm1v2/dm1_v2_runtime_pc34.c
+        src/dm1v2/dm1_v2_camera_controller_pc34.c
+        src/dm1v2/dm1_v2_movement_engine_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v2_touch_controller_affordance PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v2_touch_controller_affordance PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v2_touch_controller_affordance
+        COMMAND test_dm2_v2_touch_controller_affordance
+    )
+
     add_executable(test_csb_v1_viewport_phase3_rendering
         tests/test_csb_v1_viewport_phase3_rendering.c
         src/csb/csb_v1_viewport_pc34_compat.c
