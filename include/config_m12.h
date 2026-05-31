@@ -137,6 +137,11 @@ typedef struct {
      * detected at startup, 0 otherwise. Read-only from config I/O
      * perspective (set by M12_AssetStatus_Scan at launch). */
     int v22_modern_assets_installed;
+
+    /* Cloud sync settings. */
+    int cloudSyncEnabled;          /* 0 = off, 1 = on */
+    int cloudSyncPolicy;           /* M12_SYNC_POLICY_NEWER_WINS, LOCAL_WINS, CLOUD_WINS */
+    char cloudSyncDir[M12_CONFIG_DATA_DIR_CAPACITY];  /* empty = default (~/.firestaff/sync/) */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

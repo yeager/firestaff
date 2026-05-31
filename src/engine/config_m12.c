@@ -290,6 +290,9 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->screenshotPath[0] = '\0';
     config->streamerMode = 0;
     config->v22_modern_assets_installed = 0;
+    config->cloudSyncEnabled = 0;
+    config->cloudSyncPolicy = 0;  /* M12_SYNC_POLICY_NEWER_WINS */
+    config->cloudSyncDir[0] = '\0';
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -695,6 +698,19 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->streamerMode = m12_parse_int(value, config->streamerMode) ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "cloud_sync_enabled")) {
+        config->cloudSyncEnabled = m12_parse_int(value, config->cloudSyncEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "cloud_sync_policy")) {
+        config->cloudSyncPolicy = m12_parse_int(value, config->cloudSyncPolicy);
+        return;
+    }
+    if (m12_string_equals(key, "cloud_sync_dir") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->cloudSyncDir, sizeof(config->cloudSyncDir), quoted);
+        return;
+    }
     if (m12_string_equals(key, "v22_modern_assets_installed")) {
         config->v22_modern_assets_installed = m12_parse_int(value, 0) ? 1 : 0;
         return;
@@ -809,6 +825,9 @@ int M12_Config_Save(const M12_Config* config) {
     fputs("custom_dungeon_path = ", fp); m12_escape_and_write(fp, config->customDungeonPath); fputc('\n', fp);
     fputs("screenshot_path = ", fp); m12_escape_and_write(fp, config->screenshotPath); fputc('\n', fp);
     fprintf(fp, "streamer_mode = %d\n", config->streamerMode ? 1 : 0);
+    fprintf(fp, "cloud_sync_enabled = %d\n", config->cloudSyncEnabled ? 1 : 0);
+    fprintf(fp, "cloud_sync_policy = %d\n", config->cloudSyncPolicy);
+    fprintf(fp, "cloud_sync_dir = "); m12_escape_and_write(fp, config->cloudSyncDir); fputc('\n', fp);
     fprintf(fp, "v22_modern_assets_installed = %d\n", config->v22_modern_assets_installed ? 1 : 0);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
@@ -1020,6 +1039,9 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"ui_scale\": %d,\n", config->uiScale);
     fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
     fprintf(fp, "  \"streamer_mode\": %d,\n", config->streamerMode ? 1 : 0);
+    fprintf(fp, "  \"cloud_sync_enabled\": %d,\n", config->cloudSyncEnabled ? 1 : 0);
+    fprintf(fp, "  \"cloud_sync_policy\": %d,\n", config->cloudSyncPolicy);
+    fprintf(fp, "  \"cloud_sync_dir\": "); m12_json_write_string(fp, config->cloudSyncDir); fprintf(fp, ","); fputc('\n', fp);
     fprintf(fp, "  \"custom_music_path\": ");
     m12_json_write_string(fp, config->customMusicPath);
     fprintf(fp, ",\n  \"custom_dungeon_path\": ");
@@ -1301,6 +1323,8 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_INT("ui_scale", uiScale)
         SET_BOOL("quick_resume_enabled", quickResumeEnabled)
         SET_BOOL("streamer_mode", streamerMode)
+        SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)
+        SET_INT("cloud_sync_policy", cloudSyncPolicy)
         SET_STRING("custom_music_path", customMusicPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("custom_dungeon_path", customDungeonPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("screenshot_path", screenshotPath, M12_CONFIG_DATA_DIR_CAPACITY)

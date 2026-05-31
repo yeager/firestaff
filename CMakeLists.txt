@@ -242,6 +242,7 @@ set(M12_SOURCES
     src/shared/map_viewer_m12.c
     src/shared/music_jukebox_m12.c
     src/shared/gamepad_config_m12.c
+    src/engine/cloud_sync_m12.c
     src/ui/touch_layout_m12.c
     src/shared/presentation_preview_m12.c
     src/shared/screenshot_gallery_m12.c
@@ -575,6 +576,15 @@ if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
     target_link_libraries(firestaff_m12_config_persist_probe PRIVATE firestaff_m12 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(firestaff_m12_config_persist_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
+# M12 cloud sync probe
+if(EXISTS "probes/m12/firestaff_m12_cloud_sync_probe.c")
+    add_executable(firestaff_m12_cloud_sync_probe probes/m12/firestaff_m12_cloud_sync_probe.c)
+    target_link_libraries(firestaff_m12_cloud_sync_probe PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_cloud_sync_probe PRIVATE -Wall -Wextra -O2)
     endif()
 endif()
 
