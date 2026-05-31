@@ -194,21 +194,23 @@ const char *v21_hud_panel_source_evidence(void) {
 static V2_Anim g_health_pulse;
 
 /* v22_hud_pulse_v1_tick — advance animation by one V1 tick (55 ms).
- * Call from the per-tick gate; updates g_health_pulse.elapsed_ms in place
- * so callers that own the animation state can drive it externally.
+ * Call from the per-tick gate; advances g_health_pulse.elapsed_ms and
+ * recalculates current so callers can read v22_hud_health_pulse_alpha().
+ * Does NOT call v2_anim_update twice — v2_anim_update already advanced
+ * elapsed_ms inside v22_hud_pulse_v1_tick's stack copy; only re-read the
+ * result after the update to keep the static state consistent.
  * ReDMCSB: TIMELINE.C F0260 champion status-box refresh cadence. */
 void v22_hud_pulse_v1_tick(void) {
+    /* Copy state to stack so v2_anim_update writes to local a, not g_health_pulse */
     V2_Anim a = g_health_pulse;
     v2_anim_update(&a, (float)V1_TICK_MS);
-    if (!v2_anim_is_done(&a)) {
-        g_health_pulse.elapsed_ms += (float)V1_TICK_MS;
-        g_health_pulse.current = v2_ease(g_health_pulse.easing,
-            g_health_pulse.elapsed_ms / g_health_pulse.duration_ms) *
-            (g_health_pulse.to - g_health_pulse.from) + g_health_pulse.from;
-    } else if (g_health_pulse.loops != 0) {
-        g_health_pulse.elapsed_ms = 0.0f;
-        if (g_health_pulse.loops > 0) g_health_pulse.loops--;
-    }
+    /* Write the updated state back to the static */
+    g_health_pulse = a;
+    /* Manual loop reset for ping-pong: when v2_anim_update detects the
+     * duration is exceeded and loops != 0, it swaps from/to but the static's
+     * elapsed already has dt_ms added (inside v2_anim_update).  For ping-pong
+     * the loop restart is handled entirely inside v2_anim_update; the static
+     * is already in the correct swapped-state after the write-back above. */
 }
 
 /* pass601a: movement complete signal.
