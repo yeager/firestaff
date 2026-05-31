@@ -75,6 +75,7 @@ int csb_v2_phase_gate_pc34_is_gameplay_domain(CSB_V2_PhaseDomain domain)
         case CSB_V2_PHASE_DOMAIN_MINIMAP_PRESENTATION:
         case CSB_V2_PHASE_DOMAIN_INPUT_PRESENTATION:
         case CSB_V2_PHASE_DOMAIN_CONFIG_PRESENTATION:
+        case CSB_V2_PHASE_DOMAIN_HUD:
             return 0;
 
         default:
@@ -191,6 +192,30 @@ CSB_V2_PhaseGateDecision csb_v2_phase_gate_pc34_decide(
                 "v2PresentationEnabled and v2ConfigPersistenceEnabled to be set; "
                 "V1 save/load payload semantics are unaffected");
 
+        case CSB_V2_PHASE_DOMAIN_HUD:
+            /* HUD is a PROFILE-domain feature: it activates only when both
+             * v2PresentationEnabled is set AND the caller has set up the
+             * HUD overlay state (csb_v2_hud_runtime). Unlike LAUNCH/PROFILE
+             * which are hard gates, HUD presentation is gated on v2Active
+             * but the caller manages the overlay lifetime.
+             * Source: CSBWin/Viewport.cpp (CSB HUD layout, 7290 lines)
+             *         CSBWin/Graphics.cpp (CSB graphics, 3186 lines)
+             *         ReDMCSB PANEL.C F0354 (champion status-box drawing)
+             *         ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing)
+             *         ReDMCSB COMMAND.C action feedback gates
+             *         ReDMCSB DISPLAY.C pulse animation timing (2 Hz)
+             *         DM2 DM2_V2_PHASE_DOMAIN_HUD pattern (Phase 3 HUD gate) */
+            return make_decision(
+                0, v2Active,
+                "CSBWin/Viewport.cpp (CSB HUD layout, 7290 lines); "
+                "CSBWin/Graphics.cpp (CSB graphics, 3186 lines); "
+                "ReDMCSB PANEL.C F0354; ReDMCSB DUNGEON.C F0260; "
+                "ReDMCSB COMMAND.C; ReDMCSB DISPLAY.C (2 Hz pulse)",
+                "Phase 3: V2 HUD overlay (compass/depth/gold/champion bars/"
+                "action strip/chaos indicator) is presentation-only and "
+                "activates when v2PresentationEnabled is true; "
+                "V1 command routes and inventory transactions are unaffected");
+
         default:
             return make_decision(
                 1, 0,
@@ -220,6 +245,7 @@ const char *csb_v2_phase_gate_pc34_domain_name(CSB_V2_PhaseDomain domain)
         case CSB_V2_PHASE_DOMAIN_MINIMAP_PRESENTATION:        return "MINIMAP_PRESENTATION";
         case CSB_V2_PHASE_DOMAIN_INPUT_PRESENTATION:          return "INPUT_PRESENTATION";
         case CSB_V2_PHASE_DOMAIN_CONFIG_PRESENTATION:         return "CONFIG_PRESENTATION";
+        case CSB_V2_PHASE_DOMAIN_HUD:                            return "HUD";
         default:                                              return "UNKNOWN";
     }
 }
