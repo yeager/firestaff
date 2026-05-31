@@ -45,6 +45,8 @@ void v2_particle_set_seed(uint32_t seed);
 int v2_particle_emitter_create(float x, float y, float rate,
     float spread, float life, float size, float gravity,
     uint32_t color, int max_count);
+void v2_particle_emitter_remove(int emitter_idx);
+void v2_particle_tick(float dt);
 
 #ifdef __cplusplus
 }

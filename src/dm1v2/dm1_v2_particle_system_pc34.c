@@ -1,13 +1,6 @@
 #include "dm1_v2_particle_system_pc34.h"
 #include <math.h>
 #include <stdlib.h>
-
-/*
- * Determinism: particle emission direction/speed uses a fixed LCG seed
- * so that the same sequence of emitter-create + emit calls always produces
- * identical particle bursts across runs and platforms.
- * Source: Firestaff DM1 V2 Phase 4 followup.
- */
 static uint32_t g_particle_rand_state = 1;
 static uint32_t g_particle_rand(void) {
     g_particle_rand_state = g_particle_rand_state * 1103515245 + 12345;
@@ -116,6 +109,29 @@ void v2_particle_draw_all(void) {
         (void)g_particles[i].x;
         (void)g_particles[i].y;
     }
+}
+
+/*
+ * Determinism: particle emission direction/speed uses a fixed LCG seed
+ * so that the same sequence of emitter-create + emit calls always produces
+ * identical particle bursts across runs and platforms.
+ * Source: Firestaff DM1 V2 Phase 4 followup.
+ */
+
+void v2_particle_tick(float dt) {
+    v2_particle_update(dt);
+    v2_particle_draw_all();
+}
+
+/* Mark an emitter inactive and reclaim its slot.
+ * Does not compact g_emitters[]; dead slots are skipped by emitter-create.
+ * Source: Firestaff DM1 V2 Phase 4 followup.
+ */
+void v2_particle_emitter_remove(int emitter_idx) {
+    if (emitter_idx < 0 || emitter_idx >= M11_V2_MAX_EMITTERS) return;
+    g_emitters[emitter_idx].particle_template.life = 0.0f;
+    g_emitters[emitter_idx].active_count = 0;
+    g_emitters[emitter_idx].accumulator = 0.0f;
 }
 
 void v2_particle_clear(void) {
