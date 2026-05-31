@@ -1108,13 +1108,39 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.bgAnimationPreset = state->settings.bgAnimationPreset;
     config.quickResumeEnabled = state->settings.quickResumeEnabled;
     config.minimapEnabled = state->settings.minimapEnabled;
+    config.minimapSize = state->settings.minimapSize;
+    config.minimapCorner = state->settings.minimapCorner;
     config.autoMapEnabled = state->settings.autoMapEnabled;
     config.combatLogEnabled = state->settings.combatLogEnabled;
+    config.combatLogMaxLines = state->settings.combatLogMaxLines;
     config.soundtrackMode = state->settings.soundtrackMode;
     config.ambientEnabled = state->settings.ambientEnabled;
     config.ambientVolume = state->settings.ambientVolume;
     config.uiScale = state->settings.uiScale;
     config.streamerMode = state->settings.streamerMode;
+    config.gameSpeedMultiplier = state->settings.gameSpeedMultiplier;
+    config.controlSchemeIndex = state->settings.controlSchemeIndex;
+    config.dm1V2ScalePercent = state->settings.dm1V2ScalePercent;
+    config.dm1V2SmoothingEnabled = state->settings.dm1V2SmoothingEnabled;
+    config.dm1V2DynamicLightingEnabled = state->settings.dm1V2DynamicLightingEnabled;
+    config.dm1V2AccessibilityTouchEnabled = state->settings.dm1V2AccessibilityTouchEnabled;
+    config.dm1V2AspectMode = state->settings.dm1V2AspectMode;
+    config.dm1V2CrtScanlinesEnabled = state->settings.dm1V2CrtScanlinesEnabled;
+    config.dm1V2CrtScanlineStrength = state->settings.dm1V2CrtScanlineStrength;
+    config.dm1V2PaletteCorrectionEnabled = state->settings.dm1V2PaletteCorrectionEnabled;
+    config.dm1V2PaletteGamma = state->settings.dm1V2PaletteGamma;
+    config.dm1V2PaletteBrightness = state->settings.dm1V2PaletteBrightness;
+    config.dm1V2PaletteContrast = state->settings.dm1V2PaletteContrast;
+    config.dm1V2DitherCleanupEnabled = state->settings.dm1V2DitherCleanupEnabled;
+    config.dm1V2SharpeningEnabled = state->settings.dm1V2SharpeningEnabled;
+    config.dm1V2SharpeningStrength = state->settings.dm1V2SharpeningStrength;
+    config.dm1V2PhosphorPersistenceEnabled = state->settings.dm1V2PhosphorPersistenceEnabled;
+    config.dm1V2PhosphorDecay = state->settings.dm1V2PhosphorDecay;
+    config.dm1V2ColorPreset = state->settings.dm1V2ColorPreset;
+    config.dm1V2PixelGridEnabled = state->settings.dm1V2PixelGridEnabled;
+    config.dm1V2PixelGridIntensity = state->settings.dm1V2PixelGridIntensity;
+    config.dm1V2MotionBlurEnabled = state->settings.dm1V2MotionBlurEnabled;
+    config.dm1V2MotionBlurStrength = state->settings.dm1V2MotionBlurStrength;
     snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
     snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
     snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
@@ -1192,16 +1218,78 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = config.quickResumeEnabled ? 1 : 0;
     state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
+    state->settings.minimapSize = config.minimapSize;
+    if (state->settings.minimapSize < 64) state->settings.minimapSize = 64;
+    if (state->settings.minimapSize > 256) state->settings.minimapSize = 256;
+    state->settings.minimapCorner = config.minimapCorner;
+    if (state->settings.minimapCorner < 0 || state->settings.minimapCorner > 3) state->settings.minimapCorner = 0;
     state->settings.autoMapEnabled = config.autoMapEnabled ? 1 : 0;
     state->settings.combatLogEnabled = config.combatLogEnabled ? 1 : 0;
+    state->settings.combatLogMaxLines = config.combatLogMaxLines;
+    if (state->settings.combatLogMaxLines < 50) state->settings.combatLogMaxLines = 50;
+    if (state->settings.combatLogMaxLines > 500) state->settings.combatLogMaxLines = 500;
     state->settings.soundtrackMode = m12_clamp_index(config.soundtrackMode,
                                                      (int)(sizeof(g_soundtrackLabels) / sizeof(g_soundtrackLabels[0])));
     state->settings.ambientEnabled = config.ambientEnabled ? 1 : 0;
     state->settings.ambientVolume = m12_clamp_index(config.ambientVolume, 101);
+    state->settings.gameSpeedMultiplier = config.gameSpeedMultiplier;
+    if (state->settings.gameSpeedMultiplier != 50 &&
+        state->settings.gameSpeedMultiplier != 100 &&
+        state->settings.gameSpeedMultiplier != 150 &&
+        state->settings.gameSpeedMultiplier != 200) {
+        state->settings.gameSpeedMultiplier = 100;
+    }
     if (config.uiScale <= 100) state->settings.uiScale = 100;
     else if (config.uiScale <= 150) state->settings.uiScale = 150;
     else state->settings.uiScale = 200;
     state->settings.streamerMode = config.streamerMode ? 1 : 0;
+    state->settings.controlSchemeIndex = config.controlSchemeIndex;
+    if (state->settings.controlSchemeIndex < 0 || state->settings.controlSchemeIndex > 1) {
+        state->settings.controlSchemeIndex = 0;
+    }
+    /* DM1 V2.0 filter chain — also mirror into state->settings so the
+     * launcher UI can display and edit them. */
+    state->settings.dm1V2ScalePercent = config.dm1V2ScalePercent;
+    if (state->settings.dm1V2ScalePercent < 100) state->settings.dm1V2ScalePercent = 100;
+    if (state->settings.dm1V2ScalePercent > 400) state->settings.dm1V2ScalePercent = 400;
+    state->settings.dm1V2SmoothingEnabled = config.dm1V2SmoothingEnabled ? 1 : 0;
+    state->settings.dm1V2DynamicLightingEnabled = config.dm1V2DynamicLightingEnabled ? 1 : 0;
+    state->settings.dm1V2AccessibilityTouchEnabled = config.dm1V2AccessibilityTouchEnabled ? 1 : 0;
+    state->settings.dm1V2AspectMode = config.dm1V2AspectMode ? 1 : 0;
+    state->settings.dm1V2CrtScanlinesEnabled = config.dm1V2CrtScanlinesEnabled ? 1 : 0;
+    state->settings.dm1V2CrtScanlineStrength = config.dm1V2CrtScanlineStrength;
+    if (state->settings.dm1V2CrtScanlineStrength < 0) state->settings.dm1V2CrtScanlineStrength = 0;
+    if (state->settings.dm1V2CrtScanlineStrength > 100) state->settings.dm1V2CrtScanlineStrength = 100;
+    state->settings.dm1V2PaletteCorrectionEnabled = config.dm1V2PaletteCorrectionEnabled ? 1 : 0;
+    state->settings.dm1V2PaletteGamma = config.dm1V2PaletteGamma;
+    if (state->settings.dm1V2PaletteGamma < 80) state->settings.dm1V2PaletteGamma = 80;
+    if (state->settings.dm1V2PaletteGamma > 260) state->settings.dm1V2PaletteGamma = 260;
+    state->settings.dm1V2PaletteBrightness = config.dm1V2PaletteBrightness;
+    if (state->settings.dm1V2PaletteBrightness < -50) state->settings.dm1V2PaletteBrightness = -50;
+    if (state->settings.dm1V2PaletteBrightness > 50) state->settings.dm1V2PaletteBrightness = 50;
+    state->settings.dm1V2PaletteContrast = config.dm1V2PaletteContrast;
+    if (state->settings.dm1V2PaletteContrast < -50) state->settings.dm1V2PaletteContrast = -50;
+    if (state->settings.dm1V2PaletteContrast > 50) state->settings.dm1V2PaletteContrast = 50;
+    state->settings.dm1V2DitherCleanupEnabled = config.dm1V2DitherCleanupEnabled ? 1 : 0;
+    state->settings.dm1V2SharpeningEnabled = config.dm1V2SharpeningEnabled ? 1 : 0;
+    state->settings.dm1V2SharpeningStrength = config.dm1V2SharpeningStrength;
+    if (state->settings.dm1V2SharpeningStrength < 0) state->settings.dm1V2SharpeningStrength = 0;
+    if (state->settings.dm1V2SharpeningStrength > 100) state->settings.dm1V2SharpeningStrength = 100;
+    state->settings.dm1V2PhosphorPersistenceEnabled = config.dm1V2PhosphorPersistenceEnabled ? 1 : 0;
+    state->settings.dm1V2PhosphorDecay = config.dm1V2PhosphorDecay;
+    if (state->settings.dm1V2PhosphorDecay < 0) state->settings.dm1V2PhosphorDecay = 0;
+    if (state->settings.dm1V2PhosphorDecay > 100) state->settings.dm1V2PhosphorDecay = 100;
+    state->settings.dm1V2ColorPreset = config.dm1V2ColorPreset;
+    if (state->settings.dm1V2ColorPreset < 0) state->settings.dm1V2ColorPreset = 0;
+    if (state->settings.dm1V2ColorPreset > 6) state->settings.dm1V2ColorPreset = 0;
+    state->settings.dm1V2PixelGridEnabled = config.dm1V2PixelGridEnabled ? 1 : 0;
+    state->settings.dm1V2PixelGridIntensity = config.dm1V2PixelGridIntensity;
+    if (state->settings.dm1V2PixelGridIntensity < 0) state->settings.dm1V2PixelGridIntensity = 0;
+    if (state->settings.dm1V2PixelGridIntensity > 100) state->settings.dm1V2PixelGridIntensity = 20;
+    state->settings.dm1V2MotionBlurEnabled = config.dm1V2MotionBlurEnabled ? 1 : 0;
+    state->settings.dm1V2MotionBlurStrength = config.dm1V2MotionBlurStrength;
+    if (state->settings.dm1V2MotionBlurStrength < 0) state->settings.dm1V2MotionBlurStrength = 0;
+    if (state->settings.dm1V2MotionBlurStrength > 100) state->settings.dm1V2MotionBlurStrength = 30;
     snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
     snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
     snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);

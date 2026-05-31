@@ -125,6 +125,34 @@ typedef struct {
     int streamerMode;
     int windowWidth;
     int windowHeight;
+    /* ── Previously missing persisted fields ── */
+    int controlSchemeIndex;        /* 0 = original (A/D turn), 1 = hybrid (A/D strafe) */
+    int minimapSize;              /* 64-256, default 128 */
+    int minimapCorner;            /* 0=TR,1=TL,2=BR,3=BL; default 0 */
+    int combatLogMaxLines;        /* 50-500, default 200 */
+    int gameSpeedMultiplier;      /* 50/100/150/200, default 100 */
+    /* ── DM1 V2.0 filter chain ── */
+    int dm1V2ScalePercent;                /* 100-400, default 100 */
+    int dm1V2SmoothingEnabled;            /* 0/1, default 1 */
+    int dm1V2DynamicLightingEnabled;     /* 0/1, default 1 */
+    int dm1V2AccessibilityTouchEnabled;   /* 0/1, default 0 */
+    int dm1V2AspectMode;                  /* 0=4:3, 1=16:9, default 0 */
+    int dm1V2CrtScanlinesEnabled;        /* 0/1, default 0 */
+    int dm1V2CrtScanlineStrength;         /* 0-100, default 35 */
+    int dm1V2PaletteCorrectionEnabled;    /* 0/1, default 0 */
+    int dm1V2PaletteGamma;                /* 80-260, default 220 */
+    int dm1V2PaletteBrightness;           /* -50..+50, default 0 */
+    int dm1V2PaletteContrast;             /* -50..+50, default 0 */
+    int dm1V2DitherCleanupEnabled;       /* 0/1, default 0 */
+    int dm1V2SharpeningEnabled;          /* 0/1, default 0 */
+    int dm1V2SharpeningStrength;         /* 0-100, default 30 */
+    int dm1V2PhosphorPersistenceEnabled; /* 0/1, default 0 */
+    int dm1V2PhosphorDecay;              /* 0-100, default 60 */
+    int dm1V2ColorPreset;                /* 0..6, default 0 */
+    int dm1V2PixelGridEnabled;           /* 0/1, default 0 */
+    int dm1V2PixelGridIntensity;         /* 0-100, default 20 */
+    int dm1V2MotionBlurEnabled;         /* 0/1, default 0 */
+    int dm1V2MotionBlurStrength;         /* 0-100, default 30 */
     char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];

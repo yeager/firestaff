@@ -507,9 +507,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "auto_pause")) {
         config->autoPause = m12_parse_int(value, config->autoPause) ? 1 : 0;
-        } else if (strcmp(key, "control_scheme") == 0) {
-            config->controlSchemeIndex = m12_parse_int(value, config->controlSchemeIndex);
-            if (config->controlSchemeIndex < 0 || config->controlSchemeIndex > 1) config->controlSchemeIndex = 0;
+        return;
+    }
+    if (strcmp(key, "control_scheme") == 0) {
+        config->controlSchemeIndex = m12_parse_int(value, config->controlSchemeIndex);
+        if (config->controlSchemeIndex < 0 || config->controlSchemeIndex > 1) config->controlSchemeIndex = 0;
         return;
     }
     if (m12_string_equals(key, "theme_index")) {
@@ -1220,6 +1222,9 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                 if (token[src] == '\\' && src + 1 < strlen(token) - 1) {
                     ++src;
                 }
+                if (token[src] == '"') {
+                    break;
+                }
                 key[i++] = token[src++];
             }
             key[i] = '\0';
@@ -1362,6 +1367,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                         size_t ki = 0, si = 1;
                         while (si < strlen(t2) - 1 && ki < sizeof(key) - 1) {
                             if (t2[si] == '\\' && si + 1 < strlen(t2) - 1) ++si;
+                            if (t2[si] == '"') break;
                             key[ki++] = t2[si++];
                         }
                         key[ki] = '\0';
