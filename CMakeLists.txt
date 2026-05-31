@@ -1550,6 +1550,10 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_dm1_v2_anim_timing_pc34
+        tests/test_dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
     add_executable(test_dm1_v2_movement_camera_pc34
         tests/test_dm1_v2_movement_camera_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
