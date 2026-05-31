@@ -77,6 +77,34 @@ static const DM1_V2_FieldProjectileEffectMetadata kEffectMetadata[] = {
         1,
         0,
         "DEFS.H:421-430; PROJEXPL.C:987-994; DUNVIEW.C:6816-6831"
+    },
+    {
+        /* ReDMCSB DEFS.H:421 — Slime (acid) burst effect.
+         * V1 slime explosions produce a thing-type 15 event 25 explosion.
+         * Presentation: SPELL_FIREBALL emitter (slime splatter) + FREEZE_FLASH overlay.
+         * Source: ReDMCSB DEFS.H:421, PROJEXPL.C:155-166 (slime sound). */
+        ((int16_t)0xFF81),
+        DM1_THING_TYPE_EXPLOSION,
+        DM1_EVENT_EXPLOSION,
+        DM1_V2_EFFECT_ROUTE_EXPLOSION_EVENT,
+        DM1_V2_EFFECT_FAMILY_SLIME,
+        1,
+        0,
+        "DEFS.H:421; PROJEXPL.C:155-166"
+    },
+    {
+        /* ReDMCSB DEFS.H:421 — Smoke puff from smoke-producing explosions.
+         * V1 smoke is thing-type 15 event 25, but non-damaging.
+         * Presentation: TORCH_SMOKE emitter (drifting grey particles).
+         * Source: ReDMCSB DEFS.H:421, PROJEXPL.C:161-164 (smoke sound). */
+        ((int16_t)0xFFA8),
+        DM1_THING_TYPE_EXPLOSION,
+        DM1_EVENT_EXPLOSION,
+        DM1_V2_EFFECT_ROUTE_EXPLOSION_EVENT,
+        DM1_V2_EFFECT_FAMILY_SMOKE,
+        1,
+        0,
+        "DEFS.H:421; PROJEXPL.C:161-164"
     }
 };
 
@@ -108,6 +136,8 @@ const char* dm1_v2_field_projectile_effect_family_name(
         case DM1_V2_EFFECT_FAMILY_LIGHTNING: return "lightning";
         case DM1_V2_EFFECT_FAMILY_POISON: return "poison";
         case DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD: return "fluxcage-field";
+        case DM1_V2_EFFECT_FAMILY_SLIME: return "slime";
+        case DM1_V2_EFFECT_FAMILY_SMOKE: return "smoke";
         default: return "unknown";
     }
 }
