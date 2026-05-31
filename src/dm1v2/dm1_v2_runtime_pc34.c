@@ -159,6 +159,7 @@ const char *v21_runtime_source_evidence(void) {
  * (linked in game binary, absent in shell tests) */
 __attribute__((weak)) void v2_light_tick(float dt) { (void)dt; }
 __attribute__((weak)) void v22_light_rebuild_map(void) {}
+__attribute__((weak)) void v22_light_tick(float dt) { (void)dt; }
 __attribute__((weak)) int v22_smooth_tick(float*,float*,float*) { return 0; }
 __attribute__((weak)) void v22_shake_tick(float dt,float*dx,float*dy) { (void)dt;if(dx)*dx=0;if(dy)*dy=0; }
 __attribute__((weak)) void v2_particle_tick(float dt) { (void)dt; }
