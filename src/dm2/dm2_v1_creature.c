@@ -1,5 +1,5 @@
-/* dm2_v1_creature.c — DM2 V1 Creature AI
- * Phase 6 source-lock (2026-05-26)
+/* dm2_v1_creature.c — DM2 V1 Creature AI + Instance Lifecycle
+ * Phase 6 source-lock (2026-05-26), Phase 5 followup (2026-05-31)
  * ReDMCSB: SKULL.ASM, skproject/SKWIN/SkWinCore.cpp, DME.h, defines.h
  * SKULLWIN/c_ai.cpp, c_creature.cpp, c_creature.h
  *
@@ -8,9 +8,12 @@
  *   - CCM command-dispatch via b_1a state register
  *   - AI_ATTACK_FLAGS for spell/attack type routing
  *   - 13 new creature types vs DM1 (companions, Dragoth, Vexirk, etc.)
+ *   - Instance lifecycle: spawn / tick / death → drop + sound
  */
 
 #include "dm2_v1_creature.h"
+#include "dm2_v1_drops.h"
+#include "dm2_v1_sound.h"
 #include <string.h>
 
 /* ── dAITableGenuine — 64-entry AI definition table (hardcoded) ───────────
@@ -117,7 +120,7 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
     int idx = creature_type;
     if (idx < 0) idx = 0;
     if (idx >= DM2_AI_TABLE_SIZE) idx = DM2_AI_TABLE_SIZE - 1;
-    (void)creature_type; /* suppress unused */
+    (void)creature_type;
     return &g_ai_table[idx];
 }
 
@@ -129,7 +132,6 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
  * Stub: non-mobile AIs (pillars, trees, objects, merchants) do not attack. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
-    /* Stub: static/object AI indices do not attack (0,1,4,5,6,7,8,9,10,11,12,20,45,59,60) */
     if (ai_index == 0  || ai_index == 1  || ai_index == 4
      || ai_index == 5  || ai_index == 6  || ai_index == 7
      || ai_index == 8  || ai_index == 9  || ai_index == 10
@@ -148,7 +150,6 @@ int dm2_v1_creature_attacks_party(int ai_index, int distance) {
 int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
     (void)ai_index;
-    /* Stub: return 1 for spell-type flags if attack_flags has spell bits */
     if (attack_flags & (AI_ATTACK_FLAGS__FIREBALL |
                        AI_ATTACK_FLAGS__DISPELL  |
                        AI_ATTACK_FLAGS__LIGHTNING |
@@ -160,6 +161,178 @@ int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
         return 1;
     }
     return 0;
+}
+
+/* ── Creature instance pool ──────────────────────────────────────────────
+ * Source: SkWinCore.cpp:16815-16936 (ALLOC_NEW_CREATURE)
+ *         SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM
+ *         SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE
+ *
+ * Instance pool: DM2_MAX_CREATURE_INSTANCES=64 per dungeon map.
+ * HP scaling: BaseHP * healthMultiplier / 8 (healthMultiplier from GDAT). */
+
+static DM2_V1_CreatureInstance g_creature_pool[DM2_MAX_CREATURE_INSTANCES];
+static int g_next_instance_id = 0;
+
+/* dm2_v1_creature_spawn — spawn a creature instance.
+ * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE(type, mult, dir, x, y)
+ * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
+int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
+                          int map_index, int direction, int health_multiplier) {
+    int slot = -1;
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
+        if (!g_creature_pool[i].alive) { slot = i; break; }
+    }
+    if (slot < 0) return -1;
+
+    DM2_V1_CreatureInstance *c = &g_creature_pool[slot];
+    memset(c, 0, sizeof(*c));
+    c->instance_id = g_next_instance_id++;
+    c->ai_index    = (ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE) ? ai_index : 0;
+    c->world_x     = world_x;
+    c->world_y     = world_y;
+    c->map_index   = map_index;
+    c->direction   = direction & 3;
+    c->alive       = 1;
+    c->is_visible  = 1;
+    c->b_1a        = DM2_CCM_WALK_NOW;
+    c->b_17        = 0;
+    c->attack_cooldown = 0;
+    c->poison_ticks    = 0;
+
+    int mult = (health_multiplier > 0) ? health_multiplier : 8;
+    const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
+    int hp = spec ? (int)spec->BaseHP * mult / 8 : 10;
+    if (hp <= 0) hp = 1;  /* minimum 1 HP so zero-init stub creatures can die */
+    c->hp_max     = hp;
+    c->hp_current = c->hp_max;
+
+    return slot;
+}
+
+int dm2_v1_creature_count(void) {
+    int n = 0;
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
+        if (g_creature_pool[i].alive) n++;
+    }
+    return n;
+}
+
+int dm2_v1_creature_at(int world_x, int world_y, int map_index) {
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
+        DM2_V1_CreatureInstance *c = &g_creature_pool[i];
+        if (c->alive && c->world_x == world_x && c->world_y == world_y
+            && c->map_index == map_index) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int dm2_v1_creature_deal_damage(int instance_id, int damage) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return -1;
+    DM2_V1_CreatureInstance *c = &g_creature_pool[instance_id];
+    if (!c->alive) return -1;
+    c->hp_current -= damage;
+    if (c->hp_current < 0) c->hp_current = 0;
+    return c->hp_current;
+}
+
+int dm2_v1_creature_instance_hp(int instance_id) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return -1;
+    return g_creature_pool[instance_id].hp_current;
+}
+
+int dm2_v1_creature_instance_ai(int instance_id) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return -1;
+    return g_creature_pool[instance_id].ai_index;
+}
+
+/* dm2_v1_creature_death_check — death → drop + spatial sound.
+ * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp, SKWin.GDAT2.InternalCodes.txt */
+void dm2_v1_creature_death_check(int instance_id) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return;
+    DM2_V1_CreatureInstance *c = &g_creature_pool[instance_id];
+    if (!c->alive || c->hp_current > 0) return;
+
+    c->alive = 0;
+
+    /* SOUND_CREATURE_DEATH = 0x11, positional at creature position */
+    (void)dm2_v1_sound_play_positional(0x11, c->world_x, c->world_y,
+                                        c->world_x, c->world_y);
+
+    /* Stub: Thorn Demon always drops sellable worm food.
+     * Real: GDAT creature category 0x0A, sub-entries 0x0A-0x14, 11 slots.
+     * Source: SKWin.GDAT2.InternalCodes.txt, dm2_v1_drops.c */
+    DM2_V1_DropTable dt = {0};
+    if (c->ai_index == DM2_AI_THORN_DEMON) {
+        dt.slots[0].item_id = DM2_DROP_THORN_DEMON_WORM_FOOD;
+        dt.slots[0].count   = 1;
+    }
+    DM2_DropEntry drop = {0};
+    dm2_v1_drops_generate(&dt, (uint32_t)instance_id, &drop);
+    (void)drop;
+}
+
+/* dm2_v1_creature_tick — advance all creature instances by one tick.
+ * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM
+ *
+ * Per creature per tick:
+ *   1. Tick attack_cooldown countdown
+ *   2. Tick poison_ticks (apply PoisonDamage per tick, source: SkWinCore.cpp)
+ *   3. DM2_THINK_CREATURE: decide next CCM action from b_1a state
+ *   4. DM2_PROCEED_CCM: execute CCM dispatch
+ *   5. If HP <= 0: creature_death_check → drop + spatial sound
+ *
+ * CCM dispatch (b_1a primary state register):
+ *   0x00 WALK_NOW / 0x02 WALK_CONT → movement
+ *   0x01 ATTACK_HANDLER → attack resolution
+ *   0x05 SPECIAL_ACTION → CCM06/CCM0B/CCM0C (switch/trap/trigger)
+ *   0x09 STEAL_ITEM → thief-type item theft
+ *   0x0a MERCHANT_BEHAVIOR → shop/NPC behavior
+ *   0x0d SHOOT_ITEM → ranged throw/pickup
+ *   0x0f KILL_ON_TIMER_POS → delayed-position kill
+ *   0x13 ROTATES_TARGET → reorient another creature
+ *   0x15 CAST_SPELL → monster spellcasting
+ *   0x17 CREATURE_ATTACKS_PARTY → fallback melee
+ *   0x26 EXPLODE_OR_SUMMON → self-destruct or minion spawn
+ *
+ * Stub: advance cooldowns, poison, proximity check for attack state.
+ * Real CCM requires GDAT creature definitions + party world-position. */
+void dm2_v1_creature_tick(void) {
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
+        DM2_V1_CreatureInstance *c = &g_creature_pool[i];
+        if (!c->alive) continue;
+
+        if (c->attack_cooldown > 0) c->attack_cooldown--;
+
+        if (c->poison_ticks > 0) {
+            c->poison_ticks--;
+            const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
+            int pd = spec ? (int)spec->PoisonDamage : 0;
+            if (pd > 0 && c->hp_current > 0) {
+                c->hp_current -= pd;
+            }
+        }
+
+        /* Stub CCM dispatch */
+        if (c->b_1a == DM2_CCM_WALK_NOW) {
+            if (c->attack_cooldown == 0
+                && dm2_v1_creature_attacks_party(c->ai_index, 1)) {
+                c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
+            }
+        } else if (c->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) {
+            c->b_1a = DM2_CCM_WALK_NOW;
+            c->attack_cooldown = 18;  /* ~1 second at 18.2 Hz tick */
+        }
+
+        /* Only trigger death check for alive creatures whose HP just hit 0.
+         * alive=1 && hp_current<=0 means HP reached 0 this tick — death not yet processed.
+         * After death_check sets alive=0, subsequent ticks skip this block. */
+        if (c->alive && c->hp_current <= 0) {
+            dm2_v1_creature_death_check(i);
+        }
+    }
 }
 
 const char *dm2_v1_creature_source_evidence(void) {
