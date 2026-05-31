@@ -56,7 +56,8 @@ static int16_t read_le16(const uint8_t *p)
     return (int16_t)(p[0] | (p[1] << 8));
 }
 
-static void write_le16(uint8_t *p, int16_t v)
+/* write_le16: reserved for future CSB→DM1 export path (Phase 6 covers import only). */
+static void __attribute__((unused)) write_le16(uint8_t *p, int16_t v)
 {
     p[0] = (uint8_t)(v & 0xFF);
     p[1] = (uint8_t)((v >> 8) & 0xFF);
