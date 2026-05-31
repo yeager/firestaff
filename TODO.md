@@ -37,7 +37,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists and loader/free-cycle safety is covered; remaining work is real CSB asset ingestion and runtime structure parity without DM1-only assumptions.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, F0107 back-wall ornament routing, and initial viewport gates exist; remaining work includes actual ornament blits, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
-- ❌ Phase 6 - Utility/import flow: implement utility-disk style champion import and CSB-specific setup flow.
+- ✅ Phase 6 - Utility/import flow: champion import from DM1 saves (256-byte CSB block format, DM1→CSB record conversion), import state machine (ReDMCSB SAVEGAME.C F0100-F0120), utility disk flow state machine (INIT→INSERT_DISK→VERIFY_DISK→DISK_OK→SELECT_ACTION→IMPORT/LOAD/NEW→DONE), headless probe passes 33/33 tests.
 - ✅ Phase 7 - Verification suite: add deterministic boot, dungeon, combat, save/import, and rendering probes.
 - 🐛 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets; remaining work is title/intro/import path, CSB-specific viewport integration, and end-to-end playability verification.
 

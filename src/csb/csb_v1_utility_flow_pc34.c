@@ -29,21 +29,21 @@
 /* Maximum disk check attempts (prevents infinite loops) */
 #define CSB_V1_UTIL_MAX_ATTEMPTS   5
 
-/* Utility disk prompt strings (from ReDMCSB CEDTDATA.C) */
-static const char *G3921_PLEASE_INSERT_UTILITY_DISK =
-    "PLEASE PUT THE CHAOS STRIKES BACK UTILITY DISK IN ~";
-static const char *G3755_THAT_S_THE_CSB_UTILITY_DISK =
-    "THAT'S THE CHAOS STRIKES BACK UTILITY DISK!";
-static const char *G3764_THAT_S_NOT_THE_UTILITY_DISK =
-    "THAT'S NOT THE UTILITY DISK!";
-static const char *G3922_IMPORT_FROM_DM1 =
-    "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE";
-static const char *G3923_LOAD_SAVED_GAME =
-    "LOAD SAVED GAME";
-static const char *G3924_START_NEW_GAME =
-    "START NEW GAME";
-static const char *G3925_VIEW_CHAMPIONS =
-    "VIEW CHAMPION DETAILS";
+/* Utility disk prompt strings (from ReDMCSB CEDTDATA.C).
+ * These are reserved for the UI layer: the UI calls csb_v1_util_flow_get_prompt(ctx)
+ * to retrieve the current prompt string for the flow state.
+ * Marked as intentionally unused until the UI layer is wired up. */
+/*
+ * Utility disk prompt strings (from ReDMCSB CEDTDATA.C):
+ *   G3921: PLEASE PUT THE CHAOS STRIKES BACK UTILITY DISK IN ~
+ *   G3755: THAT'S THE CHAOS STRIKES BACK UTILITY DISK!
+ *   G3764: THAT'S NOT THE UTILITY DISK!
+ *   G3922: IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE
+ *   G3923: LOAD SAVED GAME
+ *   G3924: START NEW GAME
+ *   G3925: VIEW CHAMPION DETAILS
+ * These strings are reserved for the UI layer (not yet wired).
+ */
 
 /* ── Source evidence ──────────────────────────────────────────────────── */
 const char *csb_v1_utility_flow_source_evidence(void)
@@ -464,6 +464,13 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
          *
          * In Firestaff: this signals that the game is ready to start.
          * The UI transitions to the game view. */
+        /* Store party metadata in ctx->reserved for get_party().
+         * reserved[0] = ChampionCount, reserved[1] = LeaderIndex,
+         * reserved[2] = ImportedFromDM1.
+         * Full party data requires a future get_party_v2() API. */
+        ctx->reserved[0] = party.ChampionCount;
+        ctx->reserved[1] = party.LeaderIndex;
+        ctx->reserved[2] = party.ImportedFromDM1;
         ctx->state = CSB_V1_UTIL_FLOW_DONE;
         return 1;  /* done */
 
@@ -489,27 +496,33 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
  *   Returns the imported/loaded party state.
  *   Call this after flow is done (returns 1) to get the party for the game.
  *
- *   Note: In this implementation, the party is stored in the flow context
- *   (ctx->reserved[] is used as a party data blob in a full implementation).
- *   For simplicity, this function returns a sentinel value.
- *   A full implementation would deserialize the party from ctx->reserved. */
+ *   Implementation: step() stores party metadata in ctx->reserved[]
+ *   before transitioning to DONE:
+ *     reserved[0] = ChampionCount
+ *     reserved[1] = LeaderIndex
+ *     reserved[2] = ImportedFromDM1
+ *
+ *   Returns: champion count (>= 0) on success, -1 on error.
+ *   On success, out_party->ChampionCount / LeaderIndex / ImportedFromDM1
+ *   are populated. Full champion data requires a future v2 API.
+ */
 int csb_v1_util_flow_get_party(CSB_V1_UtilFlowContext *ctx,
                                 CSB_V1_PartyState *out_party)
 {
     if (!ctx) return -1;
-    if (out_party) {
-        /* In a full implementation, the party would be stored in ctx
-         * and copied here. For now, zero-initialize. */
-        memset(out_party, 0, sizeof(*out_party));
-        /* Check if any champions were imported */
-        if (ctx->state == CSB_V1_UTIL_FLOW_DONE ||
-            ctx->state == CSB_V1_UTIL_FLOW_NEW_GAME) {
-            /* Return partyChampionCount from ctx if available
-             * via the flow result — a full implementation would
-             * deserialize from ctx's private data. */
-            return 0;
-        }
-        return 0;
+    if (!out_party) return -1;
+
+    memset(out_party, 0, sizeof(*out_party));
+
+    if (ctx->state != CSB_V1_UTIL_FLOW_DONE &&
+        ctx->state != CSB_V1_UTIL_FLOW_NEW_GAME) {
+        return -1;  /* flow not complete */
     }
-    return 0;
+
+    /* Read metadata stored by step() in the NEW_GAME case. */
+    out_party->ChampionCount = ctx->reserved[0];
+    out_party->LeaderIndex   = ctx->reserved[1];
+    out_party->ImportedFromDM1 = ctx->reserved[2];
+
+    return out_party->ChampionCount;
 }

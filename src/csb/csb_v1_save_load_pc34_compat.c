@@ -71,13 +71,11 @@ static const char *default_save_dir(void)
     return g_default_save_dir_cache;
 }
 
-static void ensure_save_dir(void)
+/* ensure_save_dir: stub for save directory creation.
+ * TODO: implement mkdir on all platforms. Called before save writes. */
+static void __attribute__((unused)) ensure_save_dir(void)
 {
-    /* Create save directory if it doesn't exist. */
-    /* In a real implementation, use mkdir() with appropriate flags. */
     (void)default_save_dir();
-    /* TODO: implement mkdir on all platforms. Called before save writes. */
-    /* Until then, suppress unused warning: */
 }
 
 /* ── Source evidence ──────────────────────────────────────────────────── */
