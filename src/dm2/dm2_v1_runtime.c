@@ -373,6 +373,14 @@ int dm2_v1_runtime_get_party_dir(void) {
     return gs->party_dir;
 }
 
+/* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
+ * Used by dm2_v2_runtime_render_frame to detect headless (no dungeon) mode.
+ * Source: Phase 5 runtime binding */
+int dm2_v1_runtime_has_dungeon_data(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    return (rt->boot && rt->boot->dm2_state) ? 1 : 0;
+}
+
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
 
 void dm2_v1_runtime_set_move_callback(DM2_V2_MoveCallback cb) {

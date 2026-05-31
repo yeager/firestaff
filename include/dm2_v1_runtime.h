@@ -66,6 +66,11 @@ int dm2_v1_runtime_get_party_x(void);
 int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 
+/* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
+ * Used by dm2_v2_runtime_render_frame to detect headless mode.
+ * Source: Phase 5 runtime binding */
+int dm2_v1_runtime_has_dungeon_data(void);
+
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
 
 /* DM2_V2_MoveCallback — called when party successfully moves.

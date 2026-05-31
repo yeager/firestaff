@@ -96,6 +96,11 @@ static float s_smooth_y = 0.0f;
 static float s_smooth_vert = 0.0f;
 static float s_smooth_angle = 0.0f;
 
+/* Tracks wall-clock now_ms from the game loop for V2 animation clock.
+ * Updated in dm2_v2_runtime_v1_tick; used in dm2_v2_runtime_render_frame
+ * to advance the animation clock with real elapsed time. */
+static uint32_t s_now_ms = 0;
+
 /* ── Lifecycle ─────────────────────────────────────────────────────── */
 
 /* ── Private callback wrappers (int → float conversion) ────────────── */
@@ -211,6 +216,10 @@ DM2_V2_OutdoorFX *dm2_v2_runtime_get_outdoor_fx(void) {
  *         SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers
  */
 void dm2_v2_runtime_v1_tick(uint32_t now_ms) {
+    /* Track now_ms for use in render frames.
+     * This ensures the animation clock advances with real elapsed time. */
+    s_now_ms = now_ms;
+
     /* Advance the V2 animation clock to the new V1 tick boundary.
      * This resets the sub-tick to 0.0 for the new tick window. */
     dm2_v2_viewport_v1_tick(&s_vp, now_ms);
@@ -298,10 +307,17 @@ int dm2_v2_runtime_render_frame(int party_dir,
                                 int view_w, int view_h) {
     if (!framebuffer) return -1;
 
+    /* Headless: if no dungeon data, return -1 to signal stub renderer.
+     * dm2_v1_runtime_render_frame succeeds with placeholder rendering
+     * even without valid dungeon data, so we check explicitly here. */
+    if (!dm2_v1_runtime_has_dungeon_data())
+        return -1;
+
     /* Step 1: Advance V2 animation clock and smooth movement state.
      * This updates the clock sub-tick (0.0-1.0 within the current V1
-     * tick) and advances any active smooth animations by dt_ms. */
-    dm2_v2_viewport_render_frame(&s_vp, 0 /* now_ms unused — clock already updated */);
+     * tick) and advances any active smooth animations by dt_ms.
+     * Uses s_now_ms tracked from the game loop via dm2_v2_runtime_v1_tick. */
+    dm2_v2_viewport_render_frame(&s_vp, s_now_ms);
 
     /* Step 2: Query the current smooth interpolated position/angle.
      * When a smooth animation is active these values are between the
