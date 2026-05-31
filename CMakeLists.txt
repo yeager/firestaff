@@ -296,6 +296,25 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 3 — Enhanced UI Overlay Probe (HUD: compass, depth, gold,
+# champion bars, action strip).
+# Headless: no game assets, no SDL rendering required.
+# Verifies: HUD domain enum, domain check API, gate rules (LAUNCH+PROFILE
+# required), HUD init/set/render cycle, dm2_v2_runtime integration,
+# source evidence, null-config safety, V1-locked by default.
+add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
+    probes/firestaff_dm2_v2_phase3_hud_overlay_probe.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_interaction_feedback.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: smooth walk (N/S/E/W), smooth turn (N/S/E/W), smooth stairs,

@@ -72,6 +72,11 @@ int dm2_v2_phase_gate_is_profile_domain(DM2_V2_PhaseDomain domain)
     return domain == DM2_V2_PHASE_DOMAIN_PROFILE;
 }
 
+int dm2_v2_phase_gate_is_hud_domain(DM2_V2_PhaseDomain domain)
+{
+    return domain == DM2_V2_PHASE_DOMAIN_HUD;
+}
+
 DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
     const DM2_V2_PhaseGateConfig *config,
     DM2_V2_PhaseDomain domain)
@@ -110,11 +115,6 @@ DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
              * PROFILE requires LAUNCH to first establish the asset paths.
              * If launch is disabled, profile is also disabled (source-locked).
              *
-             * Source-lock: SKULL.ASM T560 renders dungeon viewport using
-             * V1 pipeline (F0160 DrawViewport) before any V2 rendering.
-             * V2 profile may bind enhanced assets from dm2_v2_asset_pipeline
-             * and smooth movement from dm2_v2_runtime after V1 tick.
-             *
              * Phase 2 (asset pipeline), Phase 3 (HUD), Phase 4 (lighting/outdoor),
              * Phase 5 (smooth movement) are all PROFILE-domain features.
              * They must not activate unless LAUNCH is also enabled.
@@ -137,6 +137,36 @@ DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
                             profileEnabled
                                 ? "DM2 V2 PROFILE: DM2 V2 pipeline bound to hash-verified assets"
                                 : "DM2 V2 PROFILE: V1 source-locked (v2ProfileEnabled=0)");
+
+        case DM2_V2_PHASE_DOMAIN_HUD:
+            /* V2 HUD: Phase 3 enhanced UI overlay rendering (compass, depth,
+             * gold counter, champion mini-bars, action strip).
+             * HUD is a PROFILE-domain feature: it activates only when both
+             * LAUNCH and PROFILE are enabled (full V2 presentation pipeline).
+             *
+             * Source: SKULL.ASM T560 HUD rendering (compass/depth/gold);
+             *   SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout);
+             *   ReDMCSB PANEL.C F0354 (champion status-box drawing);
+             *   ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing).
+             *
+             * This module is presentation-only: it draws optional overlay
+             * elements into the supplied framebuffer and does NOT mutate
+             * dungeon, champion, or command runtime state.
+             */
+            if (!launchEnabled || !profileEnabled) {
+                return decision(1, 0,
+                               "SKULL.ASM T560 (HUD V1 source-locked); "
+                               "HUD gated on LAUNCH+PROFILE (domain not enabled)",
+                               "DM2 V2 HUD: V1 source-locked (LAUNCH or PROFILE not enabled)");
+            }
+            return decision(0, 1,
+                            "SKULL.ASM T560 (HUD rendering); "
+                            "SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout); "
+                            "ReDMCSB PANEL.C F0354; "
+                            "ReDMCSB DUNGEON.C F0260",
+                            profileEnabled
+                                ? "DM2 V2 HUD: Phase 3 overlay active (LAUNCH+PROFILE enabled)"
+                                : "DM2 V2 HUD: V1 source-locked (v2ProfileEnabled=0)");
 
         default:
             return decision(1, 0, "unknown phase domain", "invalid domain");

@@ -45,6 +45,7 @@
 #include "dm2_v2_viewport_renderer.h"
 #include "dm2_v2_lighting.h"
 #include "dm2_v2_outdoor_enhanced.h"
+#include "dm2_v2_hud_overlay.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -177,6 +178,40 @@ void dm2_v2_runtime_fog_set_weather(int weather);
  * outdoor_fx_trigger_lightning, fog_rebuild, fog_set_weather)
  * are no-ops.  V1 game state is never affected. */
 void dm2_v2_runtime_set_enhanced_outdoor(int enhanced);
+
+/* ── Phase 3: Enhanced HUD Overlay ──────────────────────────────── */
+
+/* dm2_v2_runtime_set_hud_enabled — enable/disable Phase 3 HUD overlay.
+ * Called from dm2_v2_phase_gate_bind when HUD domain is enabled
+ * (LAUNCH + PROFILE both active).  When disabled, dm2_v2_runtime_hud_render
+ * is a no-op and the V1 source-locked HUD chrome is used instead.
+ *
+ * This function does NOT mutate V1 game state.  It only controls
+ * whether the V2 presentation overlay is rendered on top of the V1 HUD.
+ *
+ * Source: SKULL.ASM T560 (HUD rendering)
+ *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout)
+ *         ReDMCSB PANEL.C F0354 (champion status-box drawing)
+ *         ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing) */
+void dm2_v2_runtime_set_hud_enabled(int enhanced);
+
+/* dm2_v2_runtime_get_hud — returns the global DM2 V2 HUD overlay state.
+ * Allows callers to set compass direction, level depth, party gold,
+ * champion bar stats, and action strip state from game runtime.
+ * Phase 3 HUD — presentation-only; V1 game state unchanged. */
+DM2_V2_HudOverlay *dm2_v2_runtime_get_hud(void);
+
+/* dm2_v2_runtime_hud_render — render Phase 3 HUD overlay into framebuffer.
+ * Called from the render pipeline after V1 viewport has been drawn.
+ * When s_enhanced_hud=0, this is a no-op (V1 source-locked HUD intact).
+ *
+ * fb:       320×200 VGA framebuffer (indexed colour, 1 byte/pixel)
+ * stride:   bytes per row (typically 320 for VGA mode 13h)
+ * h_res:   horizontal resolution (typically 320)
+ *
+ * Source: SKULL.ASM T560 (HUD rendering)
+ *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout) */
+void dm2_v2_runtime_hud_render(uint8_t *fb, int stride, int h_res);
 
 /* ── Source evidence ─────────────────────────────────────────────── */
 const char *dm2_v2_runtime_source_evidence(void);
