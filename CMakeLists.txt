@@ -896,6 +896,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_utility_import
     )
 
+    # ── DM2 V1 Phase 4: Door Mechanics ──
+
+    add_executable(test_dm2_door_mechanics
+        tests/test_dm2_door_mechanics.c
+        src/dm2/dm2_v1_door_mechanics.c
+    )
+    target_include_directories(test_dm2_door_mechanics PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_door_mechanics PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_door_mechanics PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_door_mechanics
+        COMMAND test_dm2_door_mechanics
+    )
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader
@@ -1572,6 +1590,15 @@ if(BUILD_TESTING)
         src/csb/csb_v2_chaos_enhanced.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_csb_p4_lighting
+        tests/test_csb_p4_lighting.c
+        src/csb/csb_p4_lighting_metadata.c
+        src/csb/csb_p4_vfx_binding.c
+        src/csb/csb_v2_lighting_dynamic.c
+        src/csb/csb_v2_vfx_particles.c
+        src/csb/csb_v2_phase_gate_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -1671,8 +1698,14 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_settings_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v22_asset_pipeline.c
     )
     target_link_libraries(test_dm1_v22_verification PRIVATE firestaff_m12 firestaff_v2)
+    add_executable(test_dm1_v22_asset_pipeline
+        tests/test_dm1_v22_asset_pipeline.c
+        src/dm1v2/dm1_v22_asset_pipeline.c
+    )
+    target_link_libraries(test_dm1_v22_asset_pipeline PRIVATE firestaff_m12 firestaff_v2)
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -1684,6 +1717,7 @@ if(BUILD_TESTING)
     if(UNIX AND NOT APPLE)
         target_link_libraries(test_csb_v2_lighting_dynamic PRIVATE m)
         target_link_libraries(test_csb_v2_phase7_verification PRIVATE m)
+        target_link_libraries(test_csb_p4_lighting PRIVATE m)
         target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
         target_link_libraries(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE m)
         target_link_libraries(test_dm1_v2_extended_field_vfx_pc34 PRIVATE m)
@@ -1699,6 +1733,7 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_lighting_dynamic PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_phase7_verification PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_p4_lighting PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_source_route_state_hash_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_launch_smoke_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
@@ -1876,6 +1911,10 @@ if(BUILD_TESTING)
     #     NAME dm1_v22_verification
     #     COMMAND test_dm1_v22_verification
     # )
+    add_test(
+        NAME dm1_v22_asset_pipeline
+        COMMAND test_dm1_v22_asset_pipeline
+    )
     add_test(
         NAME dm1_v2_settings_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_settings_source_lock.py
@@ -4097,11 +4136,30 @@ if(BUILD_TESTING)
 endif()
 
 
-# ── Nexus V1 Phase 1 boot profile smoke test ────────────────────────
-# Note: compiles nexus_v1_boot_profile.c standalone to avoid pulling in
-# the rest of firestaff_nexus which has pre-existing cross-file errors
-# tracked in the nexus V1 Phase 2+ work backlog.
+# ── Nexus V1 Phase 0 V1/V2 compat gate test ────────────────────────
+# Phase 0: V1 compatibility lock — tests compile-time flag and runtime
+# gate for all 15 phase domains (8 V1-locked, 7 V2-presentation).
+# Source: src/nexus/nexus_v1_compat_gate.c; include/nexus/nexus_v1_compat_gate.h
 if(BUILD_TESTING)
+    add_executable(test_nexus_v1_compat_gate
+        tests/test_nexus_v1_compat_gate.c
+        src/nexus/nexus_v1_compat_gate.c
+    )
+    target_include_directories(test_nexus_v1_compat_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_compat_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_compat_gate
+        COMMAND test_nexus_v1_compat_gate
+    )
+
+    # ── Nexus V1 Phase 1 boot profile smoke test ────────────────────────
+    # Note: compiles nexus_v1_boot_profile.c standalone to avoid pulling in
+    # the rest of firestaff_nexus which has pre-existing cross-file errors
+    # tracked in the nexus V1 Phase 2+ work backlog.
     add_executable(test_nexus_v1_boot_profile_smoke
         tests/nexus_v1_boot_profile_smoke.c
         src/nexus/nexus_v1_boot_profile.c
@@ -4417,6 +4475,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_save_load
         COMMAND test_theron_v1_save_load
+    )
+endif()
+
+# ── Theron V1 Phase 4 — Rendering Pipeline Tests ──────────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_rendering
+        tests/test_theron_rendering.c
+    )
+    target_link_libraries(test_theron_rendering PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_rendering PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_rendering PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_rendering
+        COMMAND test_theron_rendering
     )
 endif()
 
