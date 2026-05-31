@@ -327,6 +327,42 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: lifecycle, walk N/S/E/W, turn 8 directions, stairs with
+# vertical offset, deterministic tick-start/mid-tick/tick-end coverage,
+# sub-tick interpolation, source evidence strings.
+add_executable(firestaff_csb_v2_smooth_movement_probe
+    probes/firestaff_csb_v2_smooth_movement_probe.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_smooth_movement_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_smooth_movement_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB V2 Phase 7 — V2 Verification Suite Hardening Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: presentation-disabled state-hash gate, deterministic input scripts,
+# side-by-side V1/V2 state equality, phase gate domain coverage, source evidence.
+add_executable(firestaff_csb_v2_phase7_verification_probe
+    probes/firestaff_csb_v2_phase7_verification_probe.c
+    src/csb/csb_v2_smooth_movement.c
+    src/csb/csb_v2_viewport_renderer.c
+    src/csb/csb_v2_chaos_enhanced.c
+    src/csb/csb_v2_phase_gate_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+)
+target_include_directories(firestaff_csb_v2_phase7_verification_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_phase7_verification_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 6 — Utility/Import Flow Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: champion block size (256), DM1→CSB import, import state machine,
