@@ -103,14 +103,14 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
         "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
@@ -119,14 +119,14 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
         ],
         "outputTail": "PASS drawview-presents-after-dungeonview-buffer DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport\n  Presentation is a final blit of G0296 after DUNVIEW has replayed walls/objects into the viewport buffer.\nPASS floor-ceiling-base-before-wall-replay DUNVIEW.C:2962-3003 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n  The renderer starts from a clean floor/ceiling buffer before replaying visible wall zones and contents.\nPASS f0128-far-to-near-square-replay DUNVIEW.C:8318-8618 F0128_DUNGEONVIEW_Draw_CPSF\n  DUNVIEW replays cells from far D4 through D0 before presentation; PC34/I34E D3L2/R2 and D2L2/R2 lanes are explicitly kept in the audited order.\nPASS d3-side-wall-occludes-by-early-return DUNVIEW.C:6400-6835 F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n  A wall square draws its wall zone and normally returns before open-cell content; only alcove wall ornaments intentionally replay contained items.\nPASS f0115-ordered-cell-pass-not-depth-sort DUNVIEW.C:4547-4910 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n  Within each visible square, F0115 consumes encoded cell order nibbles and rescans the thing list per cell; primitive batching would lose this source order.\nPASS door-front-two-pass-near-side-replay DUNVIEW.C:6428-6816 F0116/F0117/F0118 door-front branches\n  Door-front squares draw rear-side contents, then the door/frame, then replay front-side contents; this is explicit near-side replay, not a flat depth batch.\n",
@@ -135,33 +135,33 @@
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:11694\n- pits gate before sampling: m11_game_view.c:11792\n- floor ornaments gate before sampling: m11_game_view.c:11860\n- stairs gate before sampling: m11_game_view.c:12408\n- teleporter fields gate before sampling: m11_game_view.c:12478\n- side walls gate before sampling: m11_game_view.c:12549\n- side doors gate before sampling: m11_game_view.c:12985\n- side door ornaments gate before sampling: m11_game_view.c:13085\n- side destroyed-door masks gate before sampling: m11_game_view.c:13163\n- viewport call-site wiring: m11_game_view.c:22268\n",
+        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:12111\n- pits gate before sampling: m11_game_view.c:12209\n- floor ornaments gate before sampling: m11_game_view.c:12277\n- stairs gate before sampling: m11_game_view.c:12844\n- teleporter fields gate before sampling: m11_game_view.c:12914\n- side walls gate before sampling: m11_game_view.c:12985\n- side doors gate before sampling: m11_game_view.c:13421\n- side door ornaments gate before sampling: m11_game_view.c:13521\n- side destroyed-door masks gate before sampling: m11_game_view.c:13599\n- viewport call-site wiring: m11_game_view.c:22756\n",
         "returncode": 0
       }
     },
     {
       "cmd": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:11972, 11997\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:14794\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:12549\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:12235\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:12985\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:13085\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:13163\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:22268\n",
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:12389, 12414\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:15230\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:12985\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:12664\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:13421\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:13521\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:13599\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:22756\n",
         "returncode": 0
       }
     },
@@ -172,13 +172,13 @@
         "cmd": [
           "cmake",
           "-S",
-          "/home/trv2/work/firestaff",
+          "/Users/bosse/.openclaw/workspace-main",
           "-B",
-          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify",
+          "/Users/bosse/.openclaw/data/firestaff-builds/pass373-verify",
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"1.8.1\") \n-- Found SDL3\n-- Configuring done (0.6s)\n-- Generating done (0.2s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.7s)\n-- Generating done (0.3s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -189,13 +189,13 @@
         "cmd": [
           "cmake",
           "--build",
-          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify",
+          "/Users/bosse/.openclaw/data/firestaff-builds/pass373-verify",
           "--target",
           "firestaff",
           "--parallel",
           "1"
         ],
-        "outputTail": "                ~~~^~~~~~~~~~~~~~~~~~~~~~~\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c: In function \u2018m12_apply_loaded_config\u2019:\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c:1162:54: warning: iteration 4 invokes undefined behavior [-Waggressive-loop-optimizations]\n 1162 |         state->gameOptions[gi].presentationModeIndex = state->settings.graphicsIndex;\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c:1161:21: note: within this loop\n 1161 |     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {\n      |                  ~~~^~~~~~~~~~~~~~~~~~~~~~~\nIn function \u2018m12_init_game_options\u2019,\n    inlined from \u2018M12_StartupMenu_InitWithDataDir.part.0\u2019 at /home/trv2/work/firestaff/src/ui/menu_startup_m12.c:1223:13:\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c:267:21: warning: iteration 4 invokes undefined behavior [-Waggressive-loop-optimizations]\n  267 |     opts->gameSpeed = 1; /* index into g_speedLabels: NORMAL */\n      |     ~~~~~~~~~~~~~~~~^~~\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c: In function \u2018M12_StartupMenu_InitWithDataDir.part.0\u2019:\n/home/trv2/work/firestaff/src/ui/menu_startup_m12.c:1222:25: note: within this loop\n 1222 |         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {\n      |                      ~~~^~~~~~~~~~~~~~~~~~~~~~~\n[314/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_render_modern_m12.c.o\n[315/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/firestaff_l10n.c.o\n[316/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_bestiary.c.o\n[317/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_spell_ref.c.o\n[318/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_item_encyclopedia.c.o\n[319/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_map_viewer.c.o\n[320/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_screenshot_gallery.c.o\n[321/351] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_dungeon_text.c.o\n[322/351] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_graphics_dat_reader.c.o\n/home/trv2/work/firestaff/src/engine/firestaff_graphics_dat_reader.c:15:17: warning: \u2018r32\u2019 defined but not used [-Wunused-function]\n   15 | static uint32_t r32(const uint8_t *p) { return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24); }\n      |                 ^~~\n[323/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_hit_m12.c.o\n[324/351] Building C object CMakeFiles/firestaff_m12.dir/src/engine/config_m12.c.o\n[325/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_status_m12.c.o\n[326/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_find_by_hash.c.o\n[327/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o\n[328/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_generated_m12.c.o\n[329/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_m12.c.o\n[330/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_readme_m12.c.o\n[331/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/bestiary_m12.c.o\n[332/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/creature_art_m12.c.o\n[333/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/data_validator_m12.c.o\n[334/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/changelog_m12.c.o\n[335/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/theme_m12.c.o\n[336/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/animated_bg_m12.c.o\n[337/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/input_remap_m12.c.o\n[338/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/save_browser_m12.c.o\n[339/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/custom_dungeon_m12.c.o\n[340/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/item_encyclopedia_m12.c.o\n[341/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/campaign_m12.c.o\n[342/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/spell_reference_m12.c.o\n[343/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/map_viewer_m12.c.o\n[344/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/music_jukebox_m12.c.o\n[345/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/gamepad_config_m12.c.o\n[346/351] Building C object CMakeFiles/firestaff_m12.dir/src/ui/touch_layout_m12.c.o\n[347/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/presentation_preview_m12.c.o\n[348/351] Building C object CMakeFiles/firestaff_m12.dir/src/shared/screenshot_gallery_m12.c.o\n[349/351] Linking C static library libfirestaff_m12.a\n[350/351] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[351/351] Linking C executable firestaff\n",
+        "outputTail": "ict' [-Wunknown-warning-option]\n1 warning generated.\n[365/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_status_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[366/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_find_by_hash.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[367/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[368/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_generated_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[369/393] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_firestaff_rail_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[370/393] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[371/393] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_readme_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[372/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/bestiary_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[373/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/creature_art_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[374/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/data_validator_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[375/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/changelog_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[376/393] Building C object CMakeFiles/firestaff_m12.dir/src/ui/theme_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[377/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/animated_bg_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[378/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/input_remap_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[379/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/save_browser_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[380/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/custom_dungeon_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[381/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/item_encyclopedia_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[382/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/campaign_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[383/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/spell_reference_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[384/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/map_viewer_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[385/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/music_jukebox_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[386/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/gamepad_config_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[387/393] Building C object CMakeFiles/firestaff_m12.dir/src/ui/touch_layout_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[388/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/presentation_preview_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[389/393] Building C object CMakeFiles/firestaff_m12.dir/src/shared/screenshot_gallery_m12.c.o\nwarning: unknown warning option '-Wno-restrict' [-Wunknown-warning-option]\n1 warning generated.\n[390/393] Linking C static library libfirestaff_m12.a\n[391/393] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[392/393] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m10.a', 'libfirestaff_m11.a', 'libfirestaff_m12.a', 'libfirestaff_v2.a'\n",
         "returncode": 0
       }
     },
@@ -206,7 +206,7 @@
         "cmd": [
           "timeout",
           "45s",
-          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify/firestaff",
+          "/Users/bosse/.openclaw/data/firestaff-builds/pass373-verify/firestaff",
           "--duration",
           "9000",
           "--width",
@@ -214,11 +214,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1] gameId=[dm1]\n  TRY: [/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,right"
@@ -228,7 +228,7 @@
       "kind": "live_runtime_redraw_state",
       "observed": {
         "active": 1,
-        "gameTick": 17,
+        "gameTick": 25,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -261,8 +261,8 @@
       "ok": true
     }
   ],
-  "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "c508573de893e0baca21570a5faa75a02468d58d",
+  "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "head": "24d1b5325b87a12cfa5f18b805260a4f33d7ae30",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -281,7 +281,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
     },
     {
       "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
@@ -293,7 +293,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
     },
     {
       "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
@@ -307,7 +307,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
     },
     {
       "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
@@ -324,10 +324,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
     }
   ],
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
   "script": "enter,down,down,down,down,down,down,enter,right",
@@ -345,7 +345,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "wall, opaque wall, and door bitmaps target the viewport bitmap",
@@ -360,7 +360,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "ordered cell contents use source cell-order nibbles and normalized view cells",
@@ -375,7 +375,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "D3 wall/doorpass branches draw wall panels and return to enforce occlusion",
@@ -391,7 +391,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "center wall/door branches draw opaque/door layers before ordered contents",
@@ -407,7 +407,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "main viewport pass samples view squares, draws far-to-near D3/D2/D1/D0, then requests viewport blit",
@@ -425,7 +425,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "source draw pass flips the viewport redraw request and waits for vblank",
@@ -439,10 +439,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-05-30T14:49:25.141540+00:00"
+  "timestampUtc": "2026-05-31T02:50:16.077413+00:00"
 }

@@ -10,7 +10,7 @@
         "direction": 2,
         "label": "01_start_south_1_3",
         "map": 0,
-        "sha": "66be58673b791da682bfcad7930cf325b6289ee19d6314cb8ca8113f363d2271",
+        "sha": "210fa5eedd9c37172c59dd451bffa7f942c5402358ae535d841d3a8614711371",
         "x": 1,
         "y": 3
       },
@@ -94,7 +94,7 @@
         "direction": 2,
         "label": "04_forward_south_1_4",
         "map": 0,
-        "sha": "5e9fb1e3b97cdc6a6b9b2d9c01580c16364f3f6041c7d028427586c125c50349",
+        "sha": "25bcc97ae93881a39e4bdeffadf07f6fc7b1ac695adbfcc07b585113a8ad4b2e",
         "x": 1,
         "y": 4
       },
@@ -116,6 +116,12 @@
       "id": "m11_input_maps_to_dm1_v1_commands",
       "lines": "6162-6225",
       "missing": [
+        "case M12_MENU_INPUT_LEFT:",
+        "return DM1_V1_COMMAND_TURN_LEFT;",
+        "case M12_MENU_INPUT_RIGHT:",
+        "return DM1_V1_COMMAND_TURN_RIGHT;",
+        "case M12_MENU_INPUT_UP:",
+        "return DM1_V1_COMMAND_MOVE_FORWARD;",
         "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
         "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
       ],
@@ -127,6 +133,7 @@
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "6229-6297",
       "missing": [
+        "state->world.gameTick++;",
         "state->lastDm1V1MovementPipelineResult.core.turnApplied",
         "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
         "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
@@ -264,7 +271,7 @@
     "viewportCropSha256"
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
-  "timestampUtc": "2026-05-30T14:49:42.463169+00:00"
+  "timestampUtc": "2026-05-31T02:49:47.118349+00:00"
 }

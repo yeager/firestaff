@@ -8,8 +8,7 @@
     "firestaff_party_tuple_flip_predicate",
     "firestaff_wallset_variant_binding_before_draw",
     "firestaff_center_wall_flip_path",
-    "firestaff_side_wall_lr_swap_path",
-    "gate_verify_pass508_dm1_v1_viewport_wall_runtime_readiness"
+    "firestaff_side_wall_lr_swap_path"
   ],
   "firestaffAudit": [
     {
@@ -22,8 +21,8 @@
         "state->world.party.mapY +",
         "state->world.party.direction) & 1;"
       ],
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "82567f2f79a3d13a2a9db9982e7756d8b9061c14daaa36fd6645ddaaba5e51cb",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
+      "sha256": "a0e0c9d90f1709b65b36fc7495a9cc9e86b195adab3338e201e1b9e238871d1b",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -37,8 +36,8 @@
         "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +",
         "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
       ],
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "82567f2f79a3d13a2a9db9982e7756d8b9061c14daaa36fd6645ddaaba5e51cb",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
+      "sha256": "a0e0c9d90f1709b65b36fc7495a9cc9e86b195adab3338e201e1b9e238871d1b",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
@@ -54,13 +53,18 @@
         "} else {",
         "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
       ],
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "82567f2f79a3d13a2a9db9982e7756d8b9061c14daaa36fd6645ddaaba5e51cb",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
+      "sha256": "a0e0c9d90f1709b65b36fc7495a9cc9e86b195adab3338e201e1b9e238871d1b",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
     {
-      "hits": [],
+      "hits": [
+        {
+          "line": 10284,
+          "needle": "} else {"
+        }
+      ],
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": "10254-10296",
       "missing": [
@@ -69,11 +73,10 @@
         "M11_DM1WallFrontBlit swapped = kSideBlits[i];",
         "swapped.graphicIndex = kSideBlits[partner].graphicIndex;",
         "(void)m11_draw_dm1_wall_blit_flipped(state,",
-        "} else {",
         "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
       ],
-      "path": "/home/trv2/work/firestaff/src/engine/m11_game_view.c",
-      "sha256": "82567f2f79a3d13a2a9db9982e7756d8b9061c14daaa36fd6645ddaaba5e51cb",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
+      "sha256": "a0e0c9d90f1709b65b36fc7495a9cc9e86b195adab3338e201e1b9e238871d1b",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     }
@@ -81,7 +84,7 @@
   "gates": [
     {
       "command": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"
       ],
       "outputTail": "- C07_WALL_D2R -> C100_GRAPHIC_WALLSET_0_D2R index=100 neg=-12 STARTUP2.C:632/989\n- C08_WALL_D2L -> C101_GRAPHIC_WALLSET_0_D2L index=101 neg=-11 STARTUP2.C:633/990\n- C09_WALL_D2C -> C102_GRAPHIC_WALLSET_0_D2C index=102 neg=-10 STARTUP2.C:634/991\n- C10_WALL_D3R2 -> C103_GRAPHIC_WALLSET_0_D3R2 index=103 neg=-4 STARTUP2.C:625/982\n- C11_WALL_D3L2 -> M663_GRAPHIC_WALLSET_0_D3L2 index=104 neg=-3 STARTUP2.C:626/983\n- C12_WALL_D3R -> C105_GRAPHIC_WALLSET_0_D3R index=105 neg=-7 STARTUP2.C:627/984\n- C13_WALL_D3L -> C106_GRAPHIC_WALLSET_0_D3L index=106 neg=-6 STARTUP2.C:628/985\n- C14_WALL_D3C -> C107_GRAPHIC_WALLSET_0_D3C index=107 neg=-5 STARTUP2.C:629/986",
@@ -90,12 +93,12 @@
     },
     {
       "command": [
-        "/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
       ],
-      "outputTail": "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json\n- gate_verify_v1_viewport_alcove_wall_item_gate.py",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",
+      "passed": true,
+      "returncode": 0
     }
   ],
   "nonClaims": [
@@ -143,7 +146,7 @@
       "id": "redmcsb_wallset_native_slots",
       "lines": "183-200",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -182,7 +185,7 @@
       "id": "redmcsb_flipped_wallset_pair_table",
       "lines": "2427-2443",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -209,7 +212,7 @@
       "id": "redmcsb_f0128_flip_select_and_swap",
       "lines": "8354-8414",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -240,7 +243,7 @@
       "id": "redmcsb_f0128_restore_native_wallset",
       "lines": "8543-8579",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -263,47 +266,47 @@
       "id": "redmcsb_center_walls_use_flip_flag",
       "lines": "6697-6714",
       "missing": [],
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
     }
   ],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass510_dm1_v1_viewport_wall_parity_flip_source_lock.v1",
   "secondaryReferences": [
     {
       "exists": true,
       "id": "dm1_pc34_graphics",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "use": "canonical PC34 wall bitmap source"
     },
     {
       "exists": true,
       "id": "dm1_pc34_dungeon",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "use": "canonical DM1 V1 dungeon/map wallset source"
     },
     {
       "exists": true,
       "id": "greatstone_index",
-      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md",
+      "path": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md",
       "sha256": "b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d",
       "use": "local Greatstone atlas index"
     },
     {
       "exists": true,
       "id": "csbwin_source",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
       "sha256": "89418e01b0a8eef330451320d19078a3510cbc699f635c8af22820365e4ceb23",
       "use": "local CSBWin lineage reference"
     },
     {
       "exists": true,
       "id": "csb_lineage_source",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp",
       "sha256": "8842aa9caa32cfab0873576bc19ddf9aaced2decc2493d8a58f0d67a4a871cdb",
       "use": "local CSB lineage reference"
     }

@@ -84,12 +84,12 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 754: rear.cells[0] == expected[i].rear_cells[0]
   - line 758: front.cells[0] == expected[i].front_cells[0]
 
-- FAIL firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:2115-2123)
+- FAIL firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:2115-2120)
   - line 2118: DUNVIEW.C:7314-7341 D2C door-front occlusion
-  - line 2121: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
-  - line 2122: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
-  - line 2123: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
   - missing: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
+  - missing: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
+  - missing: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
+  - missing: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
 
 ## Verification
 

@@ -154,24 +154,15 @@
         {
           "line": 2118,
           "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion"
-        },
-        {
-          "line": 2121,
-          "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
-        },
-        {
-          "line": 2122,
-          "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
-        },
-        {
-          "line": 2123,
-          "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
         }
       ],
       "id": "firestaff-d2c-source-evidence",
-      "lines": "2115-2123",
+      "lines": "2115-2120",
       "missing": [
-        "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
+        "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
+        "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",
+        "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw",
+        "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
       ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
