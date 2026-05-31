@@ -1441,6 +1441,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v2_touch_controller_affordance
         tests/test_csb_v2_touch_controller_affordance.c
         src/csb/csb_v2_touch_controller_affordance.c
+        src/csb/csb_v2_phase_gate_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
         src/dm1v2/dm1_v2_runtime_pc34.c
         src/dm1v2/dm1_v2_camera_controller_pc34.c
