@@ -254,3 +254,10 @@ float v22_light_get(int x, int y) {
 void v22_light_set_ambient(float a) { g_ambient = a < 0 ? 0 : (a > 1 ? 1 : a); }
 void v22_light_clear(void) { g_light_count = 0; }
 
+/* V22 per-frame tick — updates light map with current flicker state.
+ * Called from v22_runtime_enhanced_tick each frame when V2.2 is active.
+ * Source: Firestaff DM1 V2 Phase 4 followup. */
+void v22_light_tick(float dt) {
+    (void)dt; /* flicker is driven by g_light_tick in v22_light_rebuild_map */
+    v22_light_rebuild_map();
+}

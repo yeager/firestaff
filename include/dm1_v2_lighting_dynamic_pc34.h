@@ -46,6 +46,19 @@ M11_V2_SourcePaletteLighting v2_light_build_source_palette_lighting(
 void v2_light_set_deterministic_seed(uint32_t seed);
 void v2_light_tick(float dt);
 
+/* V2.2 dynamic lighting — per-tile light propagation + torch flicker.
+ * Declared here so dm1_v2_runtime_pc34.c and other V2.2 callers
+ * can call these functions once the header is included.
+ * Source: Firestaff DM1 V2 Phase 4 followup. */
+int  v22_light_add(int x, int y, float intensity, float radius,
+                   uint32_t color, int flicker);
+void v22_light_remove(int id);
+void v22_light_rebuild_map(void);
+float v22_light_get(int x, int y);
+void v22_light_set_ambient(float a);
+void v22_light_clear(void);
+void v22_light_tick(float dt);
+
 #ifdef __cplusplus
 }
 #endif
