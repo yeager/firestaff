@@ -64,8 +64,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### DM2 V2.0 / V2.1 / V2.2
 
-- ❌ Phase 0 - V1 compatibility lock before V2 work.
-- ❌ Phase 1 - V2 launch/profile separation.
+- ✅ Phase 0 - V1 compatibility lock before V2 work.
+- ✅ Phase 1 - V2 launch/profile separation: DM2_V2_PHASE_DOMAIN_LAUNCH and _PROFILE gates implemented; 42/42 probe pass; commit 22838e8f.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and outdoor effects.
