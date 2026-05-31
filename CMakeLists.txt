@@ -4128,6 +4128,26 @@ if(BUILD_TESTING)
 endif()
 
 
+
+    # ── Nexus V2 Phase 6 Touch/Controller Affordance smoke test ────
+    # Source-lock: src/nexus/nexus_v2_touch_controller_affordance.c
+    # Phase 6: Touch/controller ergonomics — V2-only gesture/controller
+    # affordances with V1 touch/click parity preserved
+    add_executable(test_nexus_v2_touch_controller_affordance
+        tests/test_nexus_v2_touch_controller_affordance.c
+        src/nexus/nexus_v2_touch_controller_affordance.c
+        src/nexus/nexus_v1_movement.c
+    )
+    target_include_directories(test_nexus_v2_touch_controller_affordance PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_touch_controller_affordance
+        COMMAND test_nexus_v2_touch_controller_affordance
+    )
 # ── Theron V1 Phase 1 boot profile smoke test ────────────────────────
 # Note: compiles tqr_v1_boot_profile.c standalone to avoid pulling in
 # the rest of firestaff_theron which has pre-existing cross-file errors
