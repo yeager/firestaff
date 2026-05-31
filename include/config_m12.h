@@ -146,6 +146,22 @@ const char* M12_Config_GetPath(const M12_Config* config);
 int M12_Config_GetAutoLanguageIndex(void);
 void M12_Config_SetLastSavePath(const char* path);
 
+/* Export/import settings as JSON.
+ * M12_Config_ExportJSON: serializes config to a JSON file.
+ *   - config: the settings to export.
+ *   - exportPath: destination path. If NULL, uses ~/.firestaff/firestaff-settings-export.json.
+ *   Returns 1 on success, 0 on failure.
+ * M12_Config_ImportJSON: deserializes settings from a JSON file into config.
+ *   - config: output buffer to fill.
+ *   - importPath: source path. If NULL, uses the default export path.
+ *   Returns 1 on success, 0 on failure (file not found or parse error).
+ * M12_Config_GetExportPath: returns the default export/import file path
+ *   (caller-owned static buffer, do not free).
+ */
+int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath);
+int M12_Config_ImportJSON(M12_Config* config, const char* importPath);
+const char* M12_Config_GetExportPath(void);
+
 #ifdef __cplusplus
 }
 #endif

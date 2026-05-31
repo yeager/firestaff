@@ -884,3 +884,516 @@ void M12_Config_SetLastSavePath(const char* path) {
                     path ? path : "");
     M12_Config_Save(&config);
 }
+
+/* ── JSON export path helper ─────────────────────────────────────────── */
+static void m12_default_export_path(char* out, size_t outSize) {
+    char configDir[FSP_PATH_MAX];
+    if (FSP_GetUserConfigDir(configDir, sizeof(configDir))) {
+        if (FSP_JoinPath(out, outSize, configDir, "firestaff-settings-export.json")) {
+            return;
+        }
+    }
+    m12_copy_string(out, outSize, "firestaff-settings-export.json");
+}
+
+/* ── JSON string serialization helpers ───────────────────────────────── */
+static void m12_json_write_string(FILE* fp, const char* value) {
+    const char* p;
+    fputc('"', fp);
+    for (p = value ? value : ""; *p != '\0'; ++p) {
+        switch (*p) {
+            case '\\': fputs("\\\\", fp); break;
+            case '"':  fputs("\\\"", fp); break;
+            case '\n': fputs("\\n", fp);  break;
+            case '\r': fputs("\\r", fp);  break;
+            case '\t': fputs("\\t", fp);  break;
+            default:   fputc(*p, fp);       break;
+        }
+    }
+    fputc('"', fp);
+}
+
+/* ── M12_Config_ExportJSON ─────────────────────────────────────────────
+ * Serializes the full M12_Config to a JSON file at exportPath.
+ * Returns 1 on success, 0 on failure.
+ * If exportPath is NULL, uses the default path in the user config dir.
+ * ───────────────────────────────────────────────────────────────────── */
+int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
+    char pathBuf[FSP_PATH_MAX];
+    char tmpPathBuf[FSP_PATH_MAX + 16];
+    const char* path;
+    FILE* fp;
+    int gi;
+
+    if (!config) {
+        return 0;
+    }
+
+    if (!exportPath || exportPath[0] == '\0') {
+        m12_default_export_path(pathBuf, sizeof(pathBuf));
+        path = pathBuf;
+    } else {
+        path = exportPath;
+    }
+
+    /* Ensure parent directory exists */
+    {
+        char parentDir[FSP_PATH_MAX];
+        if (FSP_ParentDir(parentDir, sizeof(parentDir), path)) {
+            FSP_CreateDirectoryRecursive(parentDir);
+        }
+    }
+
+    snprintf(tmpPathBuf, sizeof(tmpPathBuf), "%s.tmp", path);
+    fp = fopen(tmpPathBuf, "wb");
+    if (!fp) {
+        return 0;
+    }
+
+    fprintf(fp, "{\n");
+    fprintf(fp, "  \"version\": \"1.0\",\n");
+    fprintf(fp, "  \"type\": \"firestaff-launcher-settings\",\n");
+
+    /* ── Global settings ── */
+    fprintf(fp, "  \"language_index\": %d,\n", config->languageIndex);
+    fprintf(fp, "  \"language_explicit\": %d,\n", config->languageExplicit ? 1 : 0);
+    fprintf(fp, "  \"graphics_index\": %d,\n", config->graphicsIndex);
+    fprintf(fp, "  \"renderer_backend_index\": %d,\n", config->rendererBackendIndex);
+    fprintf(fp, "  \"window_mode_index\": %d,\n", config->windowModeIndex);
+    fprintf(fp, "  \"scale_mode_index\": %d,\n", config->scaleModeIndex);
+    fprintf(fp, "  \"display_aspect_mode\": %d,\n", config->displayAspectMode);
+    fprintf(fp, "  \"integer_scaling\": %d,\n", config->integerScaling ? 1 : 0);
+    fprintf(fp, "  \"scaling_filter_index\": %d,\n", config->scalingFilterIndex);
+    fprintf(fp, "  \"vsync_index\": %d,\n", config->vsyncIndex);
+    fprintf(fp, "  \"wasd_movement_enabled\": %d,\n", config->wasdMovementEnabled ? 1 : 0);
+    fprintf(fp, "  \"input_mode_index\": %d,\n", config->inputModeIndex);
+    fprintf(fp, "  \"touch_controls_index\": %d,\n", config->touchControlsIndex);
+    fprintf(fp, "  \"movement_mode_index\": %d,\n", config->movementModeIndex);
+    fprintf(fp, "  \"viewport_style_index\": %d,\n", config->viewportStyleIndex);
+    fprintf(fp, "  \"debug_overlay_index\": %d,\n", config->debugOverlayIndex);
+    fprintf(fp, "  \"developer_gates_index\": %d,\n", config->developerGatesIndex);
+    fprintf(fp, "  \"window_width\": %d,\n", config->windowWidth);
+    fprintf(fp, "  \"window_height\": %d,\n", config->windowHeight);
+    fprintf(fp, "  \"audio_master_volume\": %d,\n", config->audioMasterVolume);
+    fprintf(fp, "  \"audio_music_volume\": %d,\n", config->audioMusicVolume);
+    fprintf(fp, "  \"audio_sfx_volume\": %d,\n", config->audioSfxVolume);
+    fprintf(fp, "  \"audio_muted\": %d,\n", config->audioMuted ? 1 : 0);
+    fprintf(fp, "  \"font_scale\": %d,\n", config->fontScale);
+    fprintf(fp, "  \"high_contrast\": %d,\n", config->highContrast ? 1 : 0);
+    fprintf(fp, "  \"colorblind_mode\": %d,\n", config->colorblindMode);
+    fprintf(fp, "  \"auto_pause\": %d,\n", config->autoPause ? 1 : 0);
+    fprintf(fp, "  \"control_scheme\": %d,\n", config->controlSchemeIndex);
+    fprintf(fp, "  \"theme_index\": %d,\n", config->themeIndex);
+    fprintf(fp, "  \"bg_animation_preset\": %d,\n", config->bgAnimationPreset);
+    fprintf(fp, "  \"dm1_v2_scale_percent\": %d,\n", config->dm1V2ScalePercent);
+    fprintf(fp, "  \"dm1_v2_smoothing_enabled\": %d,\n", config->dm1V2SmoothingEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_dynamic_lighting_enabled\": %d,\n", config->dm1V2DynamicLightingEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_accessibility_touch_enabled\": %d,\n", config->dm1V2AccessibilityTouchEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_aspect_mode\": %d,\n", config->dm1V2AspectMode ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_smooth_turn_pan_enabled\": %d,\n", config->dm1V2SmoothTurnPanEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_crt_scanlines_enabled\": %d,\n", config->dm1V2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_crt_scanline_strength\": %d,\n", config->dm1V2CrtScanlineStrength);
+    fprintf(fp, "  \"dm1_v2_palette_correction_enabled\": %d,\n", config->dm1V2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_palette_gamma\": %d,\n", config->dm1V2PaletteGamma);
+    fprintf(fp, "  \"dm1_v2_palette_brightness\": %d,\n", config->dm1V2PaletteBrightness);
+    fprintf(fp, "  \"dm1_v2_palette_contrast\": %d,\n", config->dm1V2PaletteContrast);
+    fprintf(fp, "  \"dm1_v2_dither_cleanup_enabled\": %d,\n", config->dm1V2DitherCleanupEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_sharpening_enabled\": %d,\n", config->dm1V2SharpeningEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_sharpening_strength\": %d,\n", config->dm1V2SharpeningStrength);
+    fprintf(fp, "  \"dm1_v2_phosphor_persistence_enabled\": %d,\n", config->dm1V2PhosphorPersistenceEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_phosphor_decay\": %d,\n", config->dm1V2PhosphorDecay);
+    fprintf(fp, "  \"dm1_v2_color_preset\": %d,\n", config->dm1V2ColorPreset);
+    fprintf(fp, "  \"dm1_v2_pixel_grid_enabled\": %d,\n", config->dm1V2PixelGridEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_pixel_grid_intensity\": %d,\n", config->dm1V2PixelGridIntensity);
+    fprintf(fp, "  \"dm1_v2_motion_blur_enabled\": %d,\n", config->dm1V2MotionBlurEnabled ? 1 : 0);
+    fprintf(fp, "  \"dm1_v2_motion_blur_strength\": %d,\n", config->dm1V2MotionBlurStrength);
+    fprintf(fp, "  \"game_speed_multiplier\": %d,\n", config->gameSpeedMultiplier);
+    fprintf(fp, "  \"minimap_enabled\": %d,\n", config->minimapEnabled ? 1 : 0);
+    fprintf(fp, "  \"minimap_size\": %d,\n", config->minimapSize);
+    fprintf(fp, "  \"minimap_corner\": %d,\n", config->minimapCorner);
+    fprintf(fp, "  \"auto_map_enabled\": %d,\n", config->autoMapEnabled ? 1 : 0);
+    fprintf(fp, "  \"combat_log_enabled\": %d,\n", config->combatLogEnabled ? 1 : 0);
+    fprintf(fp, "  \"combat_log_max_lines\": %d,\n", config->combatLogMaxLines);
+    fprintf(fp, "  \"soundtrack_mode\": %d,\n", config->soundtrackMode);
+    fprintf(fp, "  \"ambient_enabled\": %d,\n", config->ambientEnabled ? 1 : 0);
+    fprintf(fp, "  \"ambient_volume\": %d,\n", config->ambientVolume);
+    fprintf(fp, "  \"ui_scale\": %d,\n", config->uiScale);
+    fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "  \"streamer_mode\": %d,\n", config->streamerMode ? 1 : 0);
+    fprintf(fp, "  \"custom_music_path\": ");
+    m12_json_write_string(fp, config->customMusicPath);
+    fprintf(fp, ",\n  \"custom_dungeon_path\": ");
+    m12_json_write_string(fp, config->customDungeonPath);
+    fprintf(fp, ",\n  \"screenshot_path\": ");
+    m12_json_write_string(fp, config->screenshotPath);
+    fprintf(fp, ",\n  \"data_dir\": ");
+    m12_json_write_string(fp, config->dataDir);
+    fprintf(fp, ",\n  \"last_save_path\": ");
+    m12_json_write_string(fp, config->lastSavePath);
+    fprintf(fp, "\n,\n");
+
+    /* ── Per-game settings ── */
+    fprintf(fp, "  \"game_options\": [\n");
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        fprintf(fp, "    {\n");
+        fprintf(fp, "      \"use_patch\": %d,\n", config->gameUsePatch[gi]);
+        fprintf(fp, "      \"version_index\": %d,\n", config->gameVersionIndex[gi]);
+        fprintf(fp, "      \"language_index\": %d,\n", config->gameLanguageIndex[gi]);
+        fprintf(fp, "      \"cheats_enabled\": %d,\n", config->gameCheatsEnabled[gi]);
+        fprintf(fp, "      \"speed\": %d,\n", config->gameSpeed[gi]);
+        fprintf(fp, "      \"aspect_ratio\": %d,\n", config->gameAspectRatio[gi]);
+        fprintf(fp, "      \"resolution\": %d\n", config->gameResolution[gi]);
+        fprintf(fp, "    }%s\n", (gi < M12_CONFIG_GAME_COUNT - 1) ? "," : "");
+    }
+    fprintf(fp, "  ]\n");
+
+    fprintf(fp, "}\n");
+
+    if (fclose(fp) != 0) {
+        remove(tmpPathBuf);
+        return 0;
+    }
+    if (rename(tmpPathBuf, path) != 0) {
+        remove(tmpPathBuf);
+        return 0;
+    }
+    return 1;
+}
+
+/* ── JSON import helpers ─────────────────────────────────────────────── */
+
+static int m12_json_next_token(FILE* fp, char* tokenBuf, size_t tokenBufSize) {
+    int c;
+    size_t pos = 0;
+    /* Skip whitespace */
+    do {
+        c = fgetc(fp);
+        if (c == EOF) return 0;
+    } while (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+
+    if (c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',') {
+        tokenBuf[0] = (char)c;
+        tokenBuf[1] = '\0';
+        return 1;
+    }
+
+    if (c == '"') {
+        /* Read a string token */
+        tokenBuf[0] = (char)c;
+        pos = 1;
+        while (pos < tokenBufSize - 1) {
+            c = fgetc(fp);
+            if (c == EOF) break;
+            if (c == '\\' && pos < tokenBufSize - 2) {
+                tokenBuf[pos++] = (char)c;
+                c = fgetc(fp);
+                if (c == EOF) break;
+                tokenBuf[pos++] = (char)c;
+            } else {
+                tokenBuf[pos++] = (char)c;
+                if (c == '"') break;
+            }
+        }
+        tokenBuf[pos] = '\0';
+        return 1;
+    }
+
+    /* Number or true/false/null */
+    tokenBuf[0] = (char)c;
+    pos = 1;
+    while (pos < tokenBufSize - 1) {
+        c = fgetc(fp);
+        if (c == EOF || c == ' ' || c == '\t' || c == '\n' || c == '\r' ||
+            c == ',' || c == '}' || c == ']') {
+            if (c != EOF) ungetc(c, fp);
+            break;
+        }
+        tokenBuf[pos++] = (char)c;
+    }
+    tokenBuf[pos] = '\0';
+    return 1;
+}
+
+static void m12_json_read_string_content(const char* quoted, char* out, size_t outSize) {
+    size_t src = 0, dst = 0;
+    if (!quoted || quoted[0] != '"') {
+        m12_copy_string(out, outSize, "");
+        return;
+    }
+    src = 1;
+    while (src < strlen(quoted) && dst < outSize - 1) {
+        if (quoted[src] == '\\' && src + 1 < strlen(quoted)) {
+            ++src;
+            switch (quoted[src]) {
+                case 'n': out[dst++] = '\n'; break;
+                case 'r': out[dst++] = '\r'; break;
+                case 't': out[dst++] = '\t'; break;
+                case '\\': out[dst++] = '\\'; break;
+                case '"': out[dst++] = '"'; break;
+                default: out[dst++] = quoted[src]; break;
+            }
+        } else if (quoted[src] == '"') {
+            break;
+        } else {
+            out[dst++] = quoted[src];
+        }
+        ++src;
+    }
+    out[dst] = '\0';
+}
+
+/* ── M12_Config_ImportJSON ─────────────────────────────────────────────
+ * Deserializes settings from a JSON file at importPath into config.
+ * Returns 1 on success, 0 on failure (file not found, parse error).
+ * ───────────────────────────────────────────────────────────────────── */
+int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
+    char pathBuf[FSP_PATH_MAX];
+    const char* path;
+    FILE* fp;
+    char token[256];
+    char key[128];
+    int gi;
+
+    if (!config) {
+        return 0;
+    }
+
+    if (!importPath || importPath[0] == '\0') {
+        m12_default_export_path(pathBuf, sizeof(pathBuf));
+        path = pathBuf;
+    } else {
+        path = importPath;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+
+    /* Read opening brace */
+    if (!m12_json_next_token(fp, token, sizeof(token)) || strcmp(token, "{") != 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    /* Parse JSON object — read key-value pairs */
+    while (m12_json_next_token(fp, token, sizeof(token))) {
+        if (strcmp(token, "}") == 0) {
+            break;  /* End of object */
+        }
+        if (strcmp(token, ",") == 0) {
+            continue;  /* Skip comma, read next key */
+        }
+        if (token[0] != '"') {
+            /* Unexpected token */
+            fclose(fp);
+            return 0;
+        }
+
+        /* Extract key name from quoted string */
+        {
+            size_t i = 0;
+            size_t src = 1;
+            while (src < strlen(token) - 1 && i < sizeof(key) - 1) {
+                if (token[src] == '\\' && src + 1 < strlen(token) - 1) {
+                    ++src;
+                }
+                key[i++] = token[src++];
+            }
+            key[i] = '\0';
+        }
+
+        /* Expect colon */
+        if (!m12_json_next_token(fp, token, sizeof(token)) || strcmp(token, ":") != 0) {
+            fclose(fp);
+            return 0;
+        }
+
+        /* Read value token */
+        if (!m12_json_next_token(fp, token, sizeof(token))) {
+            fclose(fp);
+            return 0;
+        }
+
+        /* ── Match key and assign value ── */
+        #define SET_INT(K, field) \
+            if (strcmp(key, K) == 0) { \
+                config->field = m12_parse_int(token, config->field); \
+                continue; \
+            }
+        #define SET_BOOL(K, field) \
+            if (strcmp(key, K) == 0) { \
+                if (strcmp(token, "true") == 0) config->field = 1; \
+                else if (strcmp(token, "false") == 0) config->field = 0; \
+                else config->field = m12_parse_int(token, config->field) ? 1 : 0; \
+                continue; \
+            }
+        #define SET_STRING(K, field, size) \
+            if (strcmp(key, K) == 0) { \
+                char tmp_[size]; \
+                m12_json_read_string_content(token, tmp_, sizeof(tmp_)); \
+                m12_copy_string(config->field, sizeof(config->field), tmp_); \
+                continue; \
+            }
+
+        SET_INT("language_index", languageIndex)
+        SET_INT("language_explicit", languageExplicit)
+        SET_INT("graphics_index", graphicsIndex)
+        SET_INT("renderer_backend_index", rendererBackendIndex)
+        SET_INT("window_mode_index", windowModeIndex)
+        SET_INT("scale_mode_index", scaleModeIndex)
+        SET_INT("display_aspect_mode", displayAspectMode)
+        SET_INT("integer_scaling", integerScaling)
+        SET_INT("scaling_filter_index", scalingFilterIndex)
+        SET_INT("vsync_index", vsyncIndex)
+        SET_INT("wasd_movement_enabled", wasdMovementEnabled)
+        SET_INT("input_mode_index", inputModeIndex)
+        SET_INT("touch_controls_index", touchControlsIndex)
+        SET_INT("movement_mode_index", movementModeIndex)
+        SET_INT("viewport_style_index", viewportStyleIndex)
+        SET_INT("debug_overlay_index", debugOverlayIndex)
+        SET_INT("developer_gates_index", developerGatesIndex)
+        SET_INT("window_width", windowWidth)
+        SET_INT("window_height", windowHeight)
+        SET_INT("audio_master_volume", audioMasterVolume)
+        SET_INT("audio_music_volume", audioMusicVolume)
+        SET_INT("audio_sfx_volume", audioSfxVolume)
+        SET_BOOL("audio_muted", audioMuted)
+        SET_INT("font_scale", fontScale)
+        SET_BOOL("high_contrast", highContrast)
+        SET_INT("colorblind_mode", colorblindMode)
+        SET_BOOL("auto_pause", autoPause)
+        SET_INT("control_scheme", controlSchemeIndex)
+        SET_INT("theme_index", themeIndex)
+        SET_INT("bg_animation_preset", bgAnimationPreset)
+        SET_INT("dm1_v2_scale_percent", dm1V2ScalePercent)
+        SET_BOOL("dm1_v2_smoothing_enabled", dm1V2SmoothingEnabled)
+        SET_BOOL("dm1_v2_dynamic_lighting_enabled", dm1V2DynamicLightingEnabled)
+        SET_BOOL("dm1_v2_accessibility_touch_enabled", dm1V2AccessibilityTouchEnabled)
+        SET_BOOL("dm1_v2_aspect_mode", dm1V2AspectMode)
+        SET_BOOL("dm1_v2_smooth_turn_pan_enabled", dm1V2SmoothTurnPanEnabled)
+        SET_BOOL("dm1_v2_crt_scanlines_enabled", dm1V2CrtScanlinesEnabled)
+        SET_INT("dm1_v2_crt_scanline_strength", dm1V2CrtScanlineStrength)
+        SET_BOOL("dm1_v2_palette_correction_enabled", dm1V2PaletteCorrectionEnabled)
+        SET_INT("dm1_v2_palette_gamma", dm1V2PaletteGamma)
+        SET_INT("dm1_v2_palette_brightness", dm1V2PaletteBrightness)
+        SET_INT("dm1_v2_palette_contrast", dm1V2PaletteContrast)
+        SET_BOOL("dm1_v2_dither_cleanup_enabled", dm1V2DitherCleanupEnabled)
+        SET_BOOL("dm1_v2_sharpening_enabled", dm1V2SharpeningEnabled)
+        SET_INT("dm1_v2_sharpening_strength", dm1V2SharpeningStrength)
+        SET_BOOL("dm1_v2_phosphor_persistence_enabled", dm1V2PhosphorPersistenceEnabled)
+        SET_INT("dm1_v2_phosphor_decay", dm1V2PhosphorDecay)
+        SET_INT("dm1_v2_color_preset", dm1V2ColorPreset)
+        SET_BOOL("dm1_v2_pixel_grid_enabled", dm1V2PixelGridEnabled)
+        SET_INT("dm1_v2_pixel_grid_intensity", dm1V2PixelGridIntensity)
+        SET_BOOL("dm1_v2_motion_blur_enabled", dm1V2MotionBlurEnabled)
+        SET_INT("dm1_v2_motion_blur_strength", dm1V2MotionBlurStrength)
+        SET_INT("game_speed_multiplier", gameSpeedMultiplier)
+        SET_BOOL("minimap_enabled", minimapEnabled)
+        SET_INT("minimap_size", minimapSize)
+        SET_INT("minimap_corner", minimapCorner)
+        SET_BOOL("auto_map_enabled", autoMapEnabled)
+        SET_BOOL("combat_log_enabled", combatLogEnabled)
+        SET_INT("combat_log_max_lines", combatLogMaxLines)
+        SET_INT("soundtrack_mode", soundtrackMode)
+        SET_BOOL("ambient_enabled", ambientEnabled)
+        SET_INT("ambient_volume", ambientVolume)
+        SET_INT("ui_scale", uiScale)
+        SET_BOOL("quick_resume_enabled", quickResumeEnabled)
+        SET_BOOL("streamer_mode", streamerMode)
+        SET_STRING("custom_music_path", customMusicPath, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("custom_dungeon_path", customDungeonPath, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("screenshot_path", screenshotPath, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("data_dir", dataDir, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("last_save_path", lastSavePath, M12_CONFIG_LAST_SAVE_PATH_CAPACITY)
+
+        /* Handle game_options array */
+        if (strcmp(key, "game_options") == 0) {
+            if (strcmp(token, "[") != 0) {
+                /* Skip to matching ] */
+                int depth = 1;
+                while (depth > 0 && m12_json_next_token(fp, token, sizeof(token))) {
+                    if (strcmp(token, "[") == 0) depth++;
+                    else if (strcmp(token, "]") == 0) depth--;
+                }
+                continue;
+            }
+            for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+                char t2[256];
+                /* Expect { */
+                if (!m12_json_next_token(fp, t2, sizeof(t2)) || strcmp(t2, "{") != 0) break;
+
+                /* Parse game object */
+                while (m12_json_next_token(fp, t2, sizeof(t2))) {
+                    if (strcmp(t2, "}") == 0) break;
+                    if (strcmp(t2, ",") == 0) continue;
+                    if (t2[0] != '"') {
+                        /* Skip */
+                        if (!m12_json_next_token(fp, token, sizeof(token))) break;
+                        if (!m12_json_next_token(fp, token, sizeof(token))) break; /* colon + value */
+                        continue;
+                    }
+                    /* Extract field name */
+                    {
+                        size_t ki = 0, si = 1;
+                        while (si < strlen(t2) - 1 && ki < sizeof(key) - 1) {
+                            if (t2[si] == '\\' && si + 1 < strlen(t2) - 1) ++si;
+                            key[ki++] = t2[si++];
+                        }
+                        key[ki] = '\0';
+                    }
+                    /* Expect : */
+                    if (!m12_json_next_token(fp, t2, sizeof(t2)) || strcmp(t2, ":") != 0) break;
+                    /* Read value */
+                    if (!m12_json_next_token(fp, t2, sizeof(t2))) break;
+
+                    if (gi < M12_CONFIG_GAME_COUNT) {
+                        SET_INT("use_patch", gameUsePatch[gi])
+                        SET_INT("version_index", gameVersionIndex[gi])
+                        SET_INT("language_index", gameLanguageIndex[gi])
+                        SET_INT("cheats_enabled", gameCheatsEnabled[gi])
+                        SET_INT("speed", gameSpeed[gi])
+                        SET_INT("aspect_ratio", gameAspectRatio[gi])
+                        SET_INT("resolution", gameResolution[gi])
+                    }
+                }
+                /* Check for end of array */
+                {
+                    char t3[256];
+                    int peek;
+                    peek = fgetc(fp);
+                    if (peek != EOF) ungetc(peek, fp);
+                    if (peek == ',') {
+                        m12_json_next_token(fp, t3, sizeof(t3)); /* consume , */
+                        (void)t3;
+                    }
+                }
+            }
+            /* Skip to matching ] */
+            {
+                int depth = 1;
+                while (depth > 0 && m12_json_next_token(fp, token, sizeof(token))) {
+                    if (strcmp(token, "[") == 0) depth++;
+                    else if (strcmp(token, "]") == 0) depth--;
+                }
+            }
+            continue;
+        }
+
+        #undef SET_INT
+        #undef SET_BOOL
+        #undef SET_STRING
+
+        (void)0; /* placeholder to absorb the defines */
+    }
+
+    fclose(fp);
+    return 1;
+}
+
+/* Get the default export/import path */
+const char* M12_Config_GetExportPath(void) {
+    static char pathBuf[FSP_PATH_MAX];
+    m12_default_export_path(pathBuf, sizeof(pathBuf));
+    return pathBuf;
+}

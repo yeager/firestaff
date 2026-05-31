@@ -916,6 +916,10 @@ int main(void) {
                      "V3 launch intent is invalid (coming soon)");
 
         /* V3 launch button shows coming-soon message */
+        /* V22 assets are NOT installed (v22_modern_assets_installed=0) so the
+         * first branch of the launch handler takes effect (launch proceeds).
+         * For the COMING SOON block, we need V22 assets installed. */
+        modeState.assetStatus.v22_modern_assets_installed = 1; /* installed → COMING SOON path */
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT; /* launch row */
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         probe_record(&tally,
@@ -924,6 +928,8 @@ int main(void) {
                          modeState.launchRequested == 0 &&
                          strcmp(modeState.messageLine2, "COMING SOON") == 0,
                      "V3 launch attempt shows COMING SOON message without requesting launch");
+        /* Reset for next test */
+        modeState.assetStatus.v22_modern_assets_installed = 0;
 
         /* Launch button requests runtime handoff for a matched V1/V2 game. */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
