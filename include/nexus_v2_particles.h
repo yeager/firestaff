@@ -39,6 +39,7 @@ void nexus_v2_particles_emit(Nexus_V2_ParticleSystem *ps,
 void nexus_v2_particles_render(Nexus_V2_ParticleSystem *ps,
     uint32_t *rgba, int w, int h, const uint32_t *palette,
     float cam_x, float cam_z, int cam_dir);
+const char *nexus_v2_particles_source_evidence(void);
 
 #endif
 

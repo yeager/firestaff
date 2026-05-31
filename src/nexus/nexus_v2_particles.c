@@ -121,3 +121,11 @@ void nexus_v2_particles_render(Nexus_V2_ParticleSystem *ps,
     }
 }
 
+const char *nexus_v2_particles_source_evidence(void) {
+    return
+        "Nexus V2.2: particle system — dust, sparks, magic, ember, water, blood, smoke\n"
+        "  Source: Saturn VDP1 point sprites / blitter particle blits\n"
+        "  Source: ReDMCSB DUNGEON.C (spell/torch particle emit gates)\n"
+        "  Source: ReDMCSB COMMAND.C F0209 (particle-type binding per action)";
+}
+

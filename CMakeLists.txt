@@ -4016,6 +4016,75 @@ if(BUILD_TESTING)
         NAME nexus_v2_hud_overlay
         COMMAND test_nexus_v2_hud_overlay
     )
+
+    # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
+    # Source-lock: src/nexus/nexus_v2_lighting.c
+    # Phase 4: Enhanced lighting and Saturn presentation effects
+    add_executable(test_nexus_v2_lighting
+        tests/test_nexus_v2_lighting.c
+        src/nexus/nexus_v2_lighting.c
+    )
+    target_include_directories(test_nexus_v2_lighting PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_lighting PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_lighting
+        COMMAND test_nexus_v2_lighting
+    )
+
+    # ── Nexus V2 Phase 4 Atmosphere smoke test ────────────────────
+    # Source-lock: src/nexus/nexus_v2_atmosphere.c
+    add_executable(test_nexus_v2_atmosphere
+        tests/test_nexus_v2_atmosphere.c
+        src/nexus/nexus_v2_atmosphere.c
+    )
+    target_include_directories(test_nexus_v2_atmosphere PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_atmosphere PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_atmosphere
+        COMMAND test_nexus_v2_atmosphere
+    )
+
+    # ── Nexus V2 Phase 4 Particle system smoke test ────────────────
+    # Source-lock: src/nexus/nexus_v2_particles.c
+    add_executable(test_nexus_v2_particles
+        tests/test_nexus_v2_particles.c
+        src/nexus/nexus_v2_particles.c
+    )
+    target_include_directories(test_nexus_v2_particles PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_particles PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_particles
+        COMMAND test_nexus_v2_particles
+    )
+
+    # ── Nexus V2 Phase 4 Upscaler smoke test ─────────────────────
+    # Source-lock: src/nexus/nexus_v2_upscaler.c
+    add_executable(test_nexus_v2_upscaler
+        tests/test_nexus_v2_upscaler.c
+        src/nexus/nexus_v2_upscaler.c
+    )
+    target_include_directories(test_nexus_v2_upscaler PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_upscaler PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_upscaler
+        COMMAND test_nexus_v2_upscaler
+    )
 endif()
 
 

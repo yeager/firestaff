@@ -19,6 +19,7 @@ typedef struct {
 void nexus_v2_atmosphere_init(Nexus_V2_Atmosphere *atm, int level_index);
 void nexus_v2_apply_fog(uint32_t *rgba, int w, int h, const Nexus_V2_Atmosphere *atm);
 void nexus_v2_apply_ao(uint32_t *rgba, int w, int h, float strength);
+const char *nexus_v2_atmosphere_source_evidence(void);
 
 #endif
 
