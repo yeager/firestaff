@@ -363,6 +363,23 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 Phase 3 — Enhanced HUD Overlay Probe
+# Headless: no game data, no SDL rendering required.
+# Verifies: HUD domain enum, is_gameplay_domain, phase gate decision
+# (v2=0 → HUD gated, v2=1 → HUD active), HUD init/set/render cycle,
+# csb_v2_hud_runtime integration, V1 COMMAND_SEMANTICS stays V1-locked,
+# null-config safety, source evidence strings.
+add_executable(firestaff_csb_v2_hud_overlay_probe
+    probes/firestaff_csb_v2_hud_overlay_probe.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_hud_overlay_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_hud_overlay_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 7 — V2 Verification Suite Hardening Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: presentation-disabled state-hash gate, deterministic input scripts,
