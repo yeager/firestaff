@@ -307,17 +307,22 @@ int dm2_v2_runtime_render_frame(int party_dir,
                                 int view_w, int view_h) {
     if (!framebuffer) return -1;
 
+    /* Step 0: Always advance V2 animation clock and smooth movement
+     * state, even in headless mode.  Without dungeon data we cannot
+     * render the viewport, but the smooth animation clock still needs
+     * to tick so that animations complete correctly in the probe.
+     * This matches the V1 invariant: game state only advances on
+     * V1 ticks, but smooth animation advances on every render frame.
+     * Source: Phase 5 runtime binding — headless smooth animation fix */
+    dm2_v2_viewport_render_frame(&s_vp, s_now_ms);
+
     /* Headless: if no dungeon data, return -1 to signal stub renderer.
-     * dm2_v1_runtime_render_frame succeeds with placeholder rendering
-     * even without valid dungeon data, so we check explicitly here. */
+     * The V2 smooth state has still advanced (Step 0 above).  The -1
+     * return matches dm2_v1_runtime_render_frame which also returns -1
+     * without dungeon data, so V2 idle status equals V1 idle status.
+     * Source: Phase 5 pixel gate — V2 idle status matches V1 */
     if (!dm2_v1_runtime_has_dungeon_data())
         return -1;
-
-    /* Step 1: Advance V2 animation clock and smooth movement state.
-     * This updates the clock sub-tick (0.0-1.0 within the current V1
-     * tick) and advances any active smooth animations by dt_ms.
-     * Uses s_now_ms tracked from the game loop via dm2_v2_runtime_v1_tick. */
-    dm2_v2_viewport_render_frame(&s_vp, s_now_ms);
 
     /* Step 2: Query the current smooth interpolated position/angle.
      * When a smooth animation is active these values are between the
