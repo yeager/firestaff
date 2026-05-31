@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.6.0 LANGUAGES C)
+project(Firestaff VERSION 2.7.0 LANGUAGES C)
 
 include_directories(include src)
 
@@ -381,6 +381,36 @@ target_link_libraries(firestaff_csb_v2_phase7_verification_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
 endif()
+
+# Nexus V2 Phase 7 — V2 Verification Suite Hardening Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: presentation-disabled state-hash gate, deterministic input scripts,
+# side-by-side V1/V2 state equality, phase gate domain coverage,
+# smooth movement, HUD/pixel gates for enhanced presentation, source evidence.
+# DISABLED: firestaff_nexus_v2_phase7_verification_probe — broken probe, needs source-lock rewrite before release
+#add_executable(firestaff_nexus_v2_phase7_verification_probe
+#    probes/firestaff_nexus_v2_phase7_verification_probe.c
+#    src/nexus/nexus_v2_phase_gate.c
+#    src/nexus/nexus_v2_movement_command_adapter.c
+#    src/nexus/nexus_v2_runtime.c
+#    src/nexus/nexus_v2_smooth_movement.c
+#    src/nexus/nexus_v2_hud_overlay.c
+#    src/nexus/nexus_v2_lighting.c
+#    src/nexus/nexus_v2_upscaler.c
+#    src/nexus/nexus_v2_render_pipeline.c
+#    src/nexus/nexus_v2_atmosphere.c
+#    src/nexus/nexus_v2_particles.c
+#    src/nexus/nexus_v1_movement.c
+#    src/nexus/nexus_v1_mechanics.c
+#    src/dm1v2/dm1_v2_anim_timing_pc34.c
+#)
+# DISABLED: target_include_directories(firestaff_nexus_v2_phase7_verification_probe PRIVATE
+#    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# DISABLED: target_link_libraries(firestaff_nexus_v2_phase7_verification_probe
+#     PRIVATE firestaff_m10 m)
+# DISABLED: if(NOT MSVC)
+# DISABLED:     target_compile_options(firestaff_nexus_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
+# DISABLED: endif()
 
 # CSB V1 Phase 6 — Utility/Import Flow Probe
 # Headless: no game assets, no SDL rendering required.
@@ -4384,6 +4414,24 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_teleporter_chain
         COMMAND firestaff_theron_v1_teleporter_chain_probe
     )
+endif()
+
+# ── Theron V1 Phase 5 — Mechanics Hardening Probe ───────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_mechanics_hardening_probe
+        probes/theron/firestaff_theron_v1_mechanics_hardening_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_mechanics_hardening_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_mechanics_hardening_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_compile_options(firestaff_theron_v1_mechanics_hardening_probe PRIVATE -Wall -Wextra -O2)
+
+    add_test(NAME theron_v1_mechanics_hardening
+        COMMAND firestaff_theron_v1_mechanics_hardening_probe)
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
