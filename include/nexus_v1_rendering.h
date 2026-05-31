@@ -82,17 +82,13 @@ void nexus_render_item(Nexus_Framebuffer *fb,
 
 /* ── Projectile rendering ────────────────────────────────────── */
 
-/* Projectile types */
-typedef enum {
-    NEXUS_PROJ_FIREBALL,
-    NEXUS_PROJ_ICEBOLT,
-    NEXUS_PROJ_LIGHTNING,
-    NEXUS_PROJ_ARROW,
-    NEXUS_PROJ_POISON,
-    NEXUS_PROJ_DEATHRAY,
-    NEXUS_PROJ_ACID,
-    NEXUS_PROJ_COUNT
-} Nexus_ProjectileType;
+/* Projectile types — canonical enum lives in nexus_v1_rasterizer.h.
+ * Include that header to get the full definition.  This typedef
+ * provides a forward reference so rendering-only TUs can use the
+ * type without pulling in rasterizer dependencies. */
+#ifndef Nexus_ProjectileType
+typedef enum Nexus_ProjectileType Nexus_ProjectileType;
+#endif
 
 typedef struct {
     float x, y, z;        /* world position */

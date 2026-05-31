@@ -1,3 +1,4 @@
+#include <stddef.h>
 
 #ifndef NEXUS_V1_CHAMPIONS_H
 #define NEXUS_V1_CHAMPIONS_H
@@ -45,5 +46,9 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index);
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot);
 
+
+size_t nexus_v1_champion_pool_serialize_size(const Nexus_V1_ChampionPool *pool);
+int nexus_v1_champion_pool_serialize(const Nexus_V1_ChampionPool *pool, uint8_t *buf, size_t buf_size);
+int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool, const uint8_t *buf, size_t buf_size);
 #endif
 

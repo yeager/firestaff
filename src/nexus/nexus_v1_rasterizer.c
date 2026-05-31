@@ -25,8 +25,8 @@ static inline int mini(int a, int b)  { return a < b ? a : b; }
 static inline int maxi(int a, int b)  { return a > b ? a : b; }
 static inline int clampi(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
-static inline float fminf(float a, float b) { return a < b ? a : b; }
-static inline float fmaxf(float a, float b) { return a > b ? a : b; }
+static inline float nexus_fminf(float a, float b) { return a < b ? a : b; }
+static inline float nexus_fmaxf(float a, float b) { return a > b ? a : b; }
 
 static inline float fclamp(float v, float lo, float hi) {
     return v < lo ? lo : (v > hi ? hi : v);
@@ -84,6 +84,9 @@ static const Vec3 g_cam_right[4] = {
     {-1, 0,  0},  /* South: screen right = -X */
     { 0, 0,  1}    /* West:  screen right = +Z */
 };
+
+/* Forward declarations */
+static void nexus_cam_update(Nexus_Camera *cam);
 
 void nexus_cam_init(Nexus_Camera *cam, Vec3 pos, int facing_dir) {
     if (!cam) return;

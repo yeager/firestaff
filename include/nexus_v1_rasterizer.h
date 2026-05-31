@@ -138,12 +138,20 @@ void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
 
 /* ── Projectile rendering ─────────────────────────────────────────── */
 /* DM1 F0823 projectile types: FIREBALL, LIGHTNING, POISON_CLOUD,
- * GRABBER_BOLT (F0402).  n_points for multi-point arcs.            */
+ * GRABBER_BOLT (F0402).  n_points for multi-point arcs.  Extended
+ * values (ICEBOLT through ACID) are used by nexus_render_projectile
+ * in nexus_v1_rendering.c; both layers share this enum.            */
 enum Nexus_ProjectileType {
     NEXUS_PROJ_FIREBALL = 0,
     NEXUS_PROJ_LIGHTNING = 1,
     NEXUS_PROJ_POISON_CLOUD = 2,
     NEXUS_PROJ_GRABBER_BOLT = 3,
+    NEXUS_PROJ_ICEBOLT = 4,
+    NEXUS_PROJ_ARROW    = 5,
+    NEXUS_PROJ_POISON   = 6,
+    NEXUS_PROJ_DEATHRAY = 7,
+    NEXUS_PROJ_ACID     = 8,
+    NEXUS_PROJ_COUNT    = 9,
 };
 void nexus_raster_projectile(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam,

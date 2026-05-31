@@ -72,3 +72,20 @@ int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot) {
     return 0;
 }
 
+
+/* Serialization stubs for save/load - TODO: implement */
+size_t nexus_v1_champion_pool_serialize_size(const Nexus_V1_ChampionPool *pool) {
+    (void)pool;
+    return 0;
+}
+
+int nexus_v1_champion_pool_serialize(const Nexus_V1_ChampionPool *pool, uint8_t *buf, size_t buf_size) {
+    (void)pool; (void)buf; (void)buf_size;
+    return 0;
+}
+
+int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool, const uint8_t *buf, size_t buf_size) {
+    (void)pool; (void)buf; (void)buf_size;
+    return 0;
+}
+
