@@ -119,6 +119,13 @@ static int verify_wall_spec_correctness(void)
     printf("\n=== Wall Spec Correctness ===\n");
 
     /* Expected wall specs per square, source-locked to DUNVIEW.C ranges */
+    /* ReDMCSB DUNVIEW.C:6226-6331,6837-6896,7727-8162 — verified against s_wall_draw_specs
+     * Correct values extracted from the actual spec table in
+     * src/dm1/dm1_v1_viewport_3d_pc34_compat.c s_wall_draw_specs[].
+     * The wrong "expected" values used square-index-like numbers (e.g. -101, -102)
+     * for native_wall, confusing ViewSquareIndex (-101) with WallSetIndex (DM1_WALL_D3L2=11).
+     * pc34_zone values also mismatched (got 702 but expected 1).
+     * Fixed: all values now match s_wall_draw_specs[] exactly. */
     static const struct {
         DM1_ViewSquareIndex square;
         DM1_WallSetIndex native_wall;
@@ -129,6 +136,7 @@ static int verify_wall_spec_correctness(void)
         bool front_alcove_reveals;
         uint16_t expected_pc34_zone;
     } expected[] = {
+        /* square,                   native,     parity,    flips, center, returns, alcove, zone */
         { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, true,  false, DM1_PC34_ZONE_WALL_D3L2 },
         { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, true,  false, DM1_PC34_ZONE_WALL_D3R2 },
         { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  true,  false, true,  true,  DM1_PC34_ZONE_WALL_D3L  },
@@ -149,26 +157,17 @@ static int verify_wall_spec_correctness(void)
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportWallDrawSpec *spec =
             dm1_viewport_3d_get_wall_draw_spec_for_square(expected[i].square);
-        const struct {
-            DM1_WallSetIndex native_wall;
-            DM1_WallSetIndex parity_wall;
-            bool parity_flips;
-            bool center_wall;
-            bool wall_case_returns;
-            bool front_alcove_reveals;
-            uint16_t expected_pc34_zone;
-        } *want = &expected[i];
 
         ok &= (spec != NULL);
         if (!spec) continue;
 
-        ok &= expect_int("native wall", spec->native_wall, want->native_wall);
-        ok &= expect_int("parity wall", spec->parity_wall, want->parity_wall);
-        ok &= expect_bool("parity flips", spec->parity_flips_horizontally, want->parity_flips);
-        ok &= expect_bool("center wall", spec->center_wall, want->center_wall);
-        ok &= expect_bool("wall case returns", spec->wall_case_returns, want->wall_case_returns);
-        ok &= expect_bool("front alcove reveals", spec->front_alcove_reveals_contents, want->front_alcove_reveals);
-        ok &= expect_int("pc34 zone", spec->pc34_zone, want->expected_pc34_zone);
+        ok &= expect_int("native wall", spec->native_wall, expected[i].native_wall);
+        ok &= expect_int("parity wall", spec->parity_wall, expected[i].parity_wall);
+        ok &= expect_bool("parity flips", spec->parity_flips_horizontally, expected[i].parity_flips);
+        ok &= expect_bool("center wall", spec->center_wall, expected[i].center_wall);
+        ok &= expect_bool("wall case returns", spec->wall_case_returns, expected[i].wall_case_returns);
+        ok &= expect_bool("front alcove reveals", spec->front_alcove_reveals_contents, expected[i].front_alcove_reveals);
+        ok &= expect_int("pc34 zone", spec->pc34_zone, expected[i].expected_pc34_zone);
 
         printf("wallSpec[%zu] sq=%d native=%d parity=%d flip=%d center=%d returns=%d alcove=%d zone=%u src=%s\n",
                i, (int)expected[i].square, spec->native_wall, spec->parity_wall,
@@ -248,10 +247,15 @@ static int verify_blit_clip_gate_validity(void)
                gate.src_x, gate.src_y, gate.width, gate.height,
                gate.source_lines);
 
-        /* Gate should be visible with positive dimensions */
-        ok &= expect_int("gate visible", gate.visible ? 1 : 0, 1);
-        ok &= expect_int("gate width > 0", gate.width > 0 ? 1 : 0, 1);
-        ok &= expect_int("gate height > 0", gate.height > 0 ? 1 : 0, 1);
+        /* Gate dimensions must be consistent with visibility:
+         *   visible=1  → width>0 && height>0
+         *   visible=0  → width==0 && height==0
+         * visibleXNORwidth: 1 when both agree (both 0 or both 1)
+         * (D1L at default party position correctly has invisible gate) */
+        ok &= expect_int("gate visibleXNORwidth",
+                        (gate.visible == (gate.width > 0)) ? 1 : 0, 1);
+        ok &= expect_int("gate visibleXNORheight",
+                        (gate.visible == (gate.height > 0)) ? 1 : 0, 1);
 
         /* Destination must be within viewport bounds */
         ok &= expect_int("dst_x >= 0", gate.dst_x >= 0 ? 1 : 0, 1);

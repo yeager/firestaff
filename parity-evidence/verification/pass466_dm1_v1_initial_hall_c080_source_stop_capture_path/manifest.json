@@ -1,12 +1,12 @@
 {
   "schema": "pass466_dm1_v1_initial_hall_c080_source_stop_capture_path.v1",
-  "timestampUtc": "2026-05-30T07:31:10.150391+00:00",
+  "timestampUtc": "2026-05-30T14:47:39.740194+00:00",
   "status": "PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE",
-  "redmcsb": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "lockedData": [
     {
       "label": "dm1_pc34_english_graphics",
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "bytes": 363417,
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "md5": "fa6b1aa29e191418713bf2cda93d962e",
@@ -20,7 +20,7 @@
     },
     {
       "label": "dm1_pc34_english_dungeon",
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "bytes": 33357,
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
@@ -59,7 +59,7 @@
       "file": "DEFS.H",
       "lines": "989-1013",
       "claim": "DUNGEON_HEADER stores the initial party tuple bits consumed at new game start.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "ok": true,
       "missing": []
     },
@@ -68,7 +68,7 @@
       "file": "LOADSAVE.C",
       "lines": "1940-1944",
       "claim": "Fresh PC34 new-game state is decoded from DUNGEON_HEADER.InitialPartyLocation into map/x/y/direction globals.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
       "ok": true,
       "missing": []
     },
@@ -77,7 +77,7 @@
       "file": "COMMAND.C",
       "lines": "397-403,2322-2323",
       "claim": "A left click in the viewport dispatches C080 to F0377; panel commands cannot substitute for the candidate click.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -86,7 +86,7 @@
       "file": "CLIKVIEW.C",
       "lines": "311-431",
       "claim": "C080 subtracts the PC viewport origin, classifies the front-wall portrait zone, and then invokes F0372 for the front-wall sensor.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "ok": true,
       "missing": []
     },
@@ -95,7 +95,7 @@
       "file": "DUNVIEW.C",
       "lines": "525,3912-3920",
       "claim": "The visible D1C front portrait box is viewport x=96..127 y=35..63; center is the source portrait click point.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "ok": true,
       "missing": []
     },
@@ -104,7 +104,7 @@
       "file": "COORD.C",
       "lines": "1693-1698",
       "claim": "For PC34/I34E, viewport origin maps the portrait center to screen x=111 y=82.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
       "ok": true,
       "missing": []
     },
@@ -113,7 +113,7 @@
       "file": "MOVESENS.C",
       "lines": "1392,1501-1502",
       "claim": "The source Hall transition is C127 wall champion portrait sensor dispatch into F0280 candidate append.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "ok": true,
       "missing": []
     },
@@ -122,7 +122,7 @@
       "file": "REVIVE.C",
       "lines": "63-67,272-294",
       "claim": "F0280 marks candidate mode, appends the temporary champion, and updates the leader/action HUD state before panel choice.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -131,7 +131,7 @@
       "file": "COMMAND.C",
       "lines": "228-240,1985-1991",
       "claim": "Only after C080/C127/F0280 may the decision panel dispatch C160/C161/C162 into F0282.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -140,7 +140,7 @@
       "file": "REVIVE.C",
       "lines": "744-783",
       "claim": "Cancel terminal HUD/status capture must stop after candidate is cleared, the status slot is blacked/cleared, and enabled menus are redrawn.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -149,7 +149,7 @@
       "file": "REVIVE.C",
       "lines": "785-899",
       "claim": "Resurrect terminal HUD/status capture must stop after candidate mode is cleared, resurrection message/update is emitted, inventory closes, and menus redraw.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -158,7 +158,7 @@
       "file": "REVIVE.C",
       "lines": "785-899",
       "claim": "Reincarnate terminal HUD/status capture must stop after rename/reincarnation branch returns, inventory closes, and menus redraw.",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     }
