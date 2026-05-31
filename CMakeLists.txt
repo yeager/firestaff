@@ -296,6 +296,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: smooth walk (N/S/E/W), smooth turn (N/S/E/W), smooth stairs,
+# deterministic input coverage (tick-start, mid-tick, tick-end),
+# pixel gate (V2 smooth vs V1 discrete), presentation gates.
+add_executable(firestaff_dm2_v2_smooth_movement_probe
+    probes/firestaff_dm2_v2_smooth_movement_probe.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_dm2_v2_smooth_movement_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 0 — V1 Compatibility Lock Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: defaults(), v2_active(), domain classification, V1-locked domains,
@@ -4040,28 +4058,27 @@ if(NOT MSVC)
     )
 endif()
 
-# ── Nexus V1 launch smoke probe ─────────────────────────────────────
-# Verifies: launcher init → Structure1B DGN load → render → tick
-# Source-lock: src/nexus/nexus_v1_launcher.c, nexus_v1_dungeon.c, nexus_v1_viewport.c
-add_executable(firestaff_nexus_v1_launch_smoke_probe
-    probes/nexus_v1_launch_smoke_probe.c
-)
-target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    firestaff_nexus firestaff_m10
-)
-target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-if(NOT MSVC)
-    target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
-        -Wall -Wextra -O2
-    )
-endif()
-
-add_test(
-    NAME firestaff_nexus_v1_launch_smoke
-    COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
-)
+# ── Nexus V1 launch smoke probe (DISABLED — source file never committed) ──
+# probes/nexus_v1_launch_smoke_probe.c is untracked; target orphaned.
+# add_executable(firestaff_nexus_v1_launch_smoke_probe
+#     probes/nexus_v1_launch_smoke_probe.c
+# )
+# target_link_libraries(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     firestaff_nexus firestaff_m10
+# )
+# target_include_directories(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include
+# )
+# if(NOT MSVC)
+#     target_compile_options(firestaff_nexus_v1_launch_smoke_probe PRIVATE
+#         -Wall -Wextra -O2
+#     )
+# endif()
+#
+# add_test(
+#     NAME firestaff_nexus_v1_launch_smoke
+#     COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+# )
 
 # ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
 # Source-lock: src/nexus/nexus_v1_movement.c (CLIKMENU.C F0366, MOVESENS.C F0267),
