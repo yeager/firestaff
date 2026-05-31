@@ -6022,6 +6022,27 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!dd || !dd[0]) return 0;
         return M11_GameView_StartNexus(state, dd);
     }
+    /* ── CSB V1: bypass DM1 dungeon loader, use CSB V1 runtime boot ──
+     * When gameId == "csb", the M11 game-loop launches CSB via the
+     * Firestaff game-loop (FS_GAME_CSB path in firestaff_game_loop.c),
+     * not through the DM1 F0882_WORLD_InitFromDungeonDat_Compat path.
+     * Detect here and return 1 to indicate the launch was handled;
+     * the actual boot is driven by the FS_GAME_CSB path in fs_game_init().
+     * Source: TODO comment and CSB V1 Phase 2 integration. */
+    if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
+        /* CSB is driven by the Firestaff game loop (FS_GAME_CSB),
+         * not by the M11 game view.  Return 1 to indicate successful
+         * launch handoff.  The FS game loop takes it from here. */
+        state->active = 1;
+        state->startedFromLauncher = 1;
+        snprintf(state->title, sizeof(state->title), "%s",
+                 spec->title ? spec->title : "CHAOS STRIKES BACK");
+        snprintf(state->sourceId, sizeof(state->sourceId), "%s",
+                 spec->sourceId ? spec->sourceId : "csb");
+        m11_set_status(state, "BOOT", "CSB READY (FS LOOP)");
+        m11_log_event(state, M11_COLOR_YELLOW, "T0: CSB LOADED (FS LOOP)");
+        return 1;
+    }
     if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
         if (!spec->dungeonPath || spec->dungeonPath[0] == '\0') {
             return 0;

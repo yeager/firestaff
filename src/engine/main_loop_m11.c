@@ -1069,6 +1069,16 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             M11_Render_RaiseWindow();
             m11_play_ftl_swoosh_if_available(dataDir, 0);
         }
+        /* CSB has its own title/entrance sequence.  ReDMCSB ENTRANCE.C
+         * F0806 builds the CSB entrance micro-dungeon with C28_ENTRANCE_CSB
+         * palette and switches to C001_MODE_LOAD_DUNGEON when the player
+         * dismisses the entrance.  CSB does not use the DM1 FTL swoosh.
+         * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441, 857-883. */
+        else if (launchEntry && launchEntry->gameId &&
+                 strcmp(launchEntry->gameId, "csb") == 0) {
+            /* CSB title/entrance plays after M11_GameView_OpenSelectedMenuEntry
+             * below, using the CSB runtime boot state.  No FTL swoosh needed. */
+        }
         /* Theron's Quest has no source -- no intro needed. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
