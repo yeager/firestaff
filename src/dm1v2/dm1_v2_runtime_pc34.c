@@ -1,4 +1,6 @@
 #include "dm1_v2_runtime_pc34.h"
+#include "dm1_v2_lighting_dynamic_pc34.h"
+#include "dm1_v2_particle_system_pc34.h"
 
 #include <string.h>
 
@@ -153,6 +155,9 @@ const char *v21_runtime_source_evidence(void) {
 
 
 /* Forward declarations for V2.2 subsystems (linked when available) */
+/* v2_light_tick: weak fallback here; real impl in dm1_v2_lighting_dynamic_pc34.c
+ * (linked in game binary, absent in shell tests) */
+__attribute__((weak)) void v2_light_tick(float dt) { (void)dt; }
 __attribute__((weak)) void v22_light_rebuild_map(void) {}
 __attribute__((weak)) int v22_smooth_tick(float*,float*,float*) { return 0; }
 __attribute__((weak)) void v22_shake_tick(float dt,float*dx,float*dy) { (void)dt;if(dx)*dx=0;if(dy)*dy=0; }
@@ -163,7 +168,9 @@ __attribute__((weak)) void v22_stats_tick_playtime(void) {}
 __attribute__((weak)) int v2_level_transition_tick(float dt) { (void)dt; return 0; }
 
 void v22_runtime_enhanced_tick(float dt) {
-    /* 1. Dynamic lighting — rebuild light map */
+    /* 1. V2 dynamic lighting — update flicker + rebuild additive light map */
+    v2_light_tick(dt);
+    /* 1b. V22 dynamic lighting — rebuild per-tile propagation light map */
     v22_light_rebuild_map();
 
     /* 2. Smooth movement interpolation */

@@ -2,6 +2,14 @@
 #include "dm1_v2_hud_overlay_pc34.h"
 #include <string.h>
 
+/* pass601b: static thunk so the HUD turn-complete signal fires from the
+ * camera completion callback without the camera needing to know about HUD.
+ * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+static void v22_hud_notify_turn_complete_cb(void* ctx) {
+    (void)ctx;
+    v22_hud_notify_turn_complete();
+}
+
 /* DM1 V2 Phase 5 source-tick runtime bridge.
  *
  * Source-lock anchors:
@@ -114,6 +122,14 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
             outResult->cameraStarted = dm1_v2_camera_is_active(camera);
             outResult->cameraMoveStarted = outResult->cameraStarted;
         }
+        /* pass601b: signal move-complete when interpolation finishes.
+         * The bridge cannot mutate source cooldown/sensor state — it only
+         * raises a V2 presentation signal for consumers (inscription renderer,
+         * minimap, HUD pulse) to sync on.
+         * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
+        if (outResult && outResult->cameraStarted) {
+            v22_hud_notify_move_complete();
+        }
         return outResult ? outResult->cameraStarted : dm1_v2_camera_is_active(camera);
     }
 
@@ -133,11 +149,16 @@ int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
             outResult->cameraStarted = dm1_v2_camera_is_active(camera);
             outResult->cameraTurnStarted = outResult->cameraStarted;
         }
-        /* pass601a: HUD turn-complete signal so renderer may defer overlays
-         * until the interpolated turn stabilises on screen.
+        /* pass601b: register turn-complete callback on camera so the HUD
+         * signal fires when the turn animation finishes, not when it starts.
+         * ctx must be non-NULL for the camera completion handler to fire.
+         * The bridge cannot mutate source cooldown/sensor state — it only
+         * raises a V2 presentation signal for consumers (inscription renderer,
+         * minimap, HUD pulse) to sync on animation completion.
          * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
         if (outResult && outResult->cameraStarted) {
-            v22_hud_notify_turn_complete();
+            camera->on_complete = v22_hud_notify_turn_complete_cb;
+            camera->on_complete_ctx = (void*)0x1;  /* non-NULL sentinel */
         }
         return outResult ? outResult->cameraStarted : dm1_v2_camera_is_active(camera);
     }
