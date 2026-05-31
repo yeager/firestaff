@@ -49,6 +49,7 @@ typedef struct {
 /* Global sub-tick interpolation factor */
 typedef struct {
     uint32_t last_v1_tick_ms;   /* timestamp of last V1 tick */
+    uint32_t last_render_ms;    /* timestamp of last render frame */
     float sub_tick;             /* 0.0 to 1.0 within current V1 tick */
     float dt_ms;                /* ms since last render frame */
     int v1_tick_pending;        /* V1 state just advanced */
