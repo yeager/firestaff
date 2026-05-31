@@ -24,9 +24,9 @@ void v2_anim_clock_v1_tick(V2_AnimClock *clock, uint32_t now_ms) {
 void v2_anim_clock_render_frame(V2_AnimClock *clock, uint32_t now_ms) {
     if (!clock) return;
     /* dt = wall-clock delta since last render frame.
-     * Uses last_render_ms (not last_v1_tick_ms) so that multiple
-     * render frames within one V1 tick window each advance the
-     * animation by their real frame delta (~16ms at 60fps). */
+     * Uses last_render_ms so that multiple render frames within
+     * one V1 tick window each advance the animation by their real
+     * frame delta (~16ms at 60fps). */
     float elapsed = (float)(now_ms - clock->last_render_ms);
     clock->sub_tick = elapsed / (float)V1_TICK_MS;
     if (clock->sub_tick > 1.0f) clock->sub_tick = 1.0f;
