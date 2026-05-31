@@ -207,17 +207,34 @@ typedef enum {
     DM1_DOOR_FRAME_COUNT
 } DM1_DoorFrameIndex;
 
-/* Square element types — from DUNVIEW.C switch cases.
- * Guarded: dm1_v1_dungeon_square_structs defines these as macros. */
+/* Square element types — from ReDMCSB DEFS.H M034_SQUARE_TYPE.
+ *
+ * Raw element types (M034_SQUARE_TYPE, 5 bits):
+ *   0=WALL, 1=CORRIDOR, 2=PIT, 3=STAIRS, 4=DOOR, 5=TELEPORTER, 6=FAKEWALL
+ *
+ * Extended element types (F0172_SetSquareAspect derivation, 5+3 bits):
+ *   16=DOOR_SIDE, 17=DOOR_FRONT (front wall of a door cell, has panel + frame)
+ *   18=STAIRS_SIDE, 19=STAIRS_FRONT (front wall of a stairs cell, has up/down bitmap)
+ *
+ * The raw element is used in F0676/F0677/F0678/F0679 switch statements.
+ * The extended type is used in the common path (DOOR_FRONT → F0111 door panel).
+ *
+ * Source: ReDMCSB DEFS.H M034_SQUARE_TYPE (line ~2482);
+ *   DUNVIEW.C:6226-6353 F0676/F0677 switch on raw element;
+ *   DUNGEON.C: F0172_SetSquareAspect derives extended types.
+ */
 typedef enum {
-    DM1_VP_ELEMENT_WALL        = 0,
-    DM1_VP_ELEMENT_CORRIDOR    = 1,
-    DM1_VP_ELEMENT_PIT         = 2,
-    DM1_VP_ELEMENT_TELEPORTER  = 5,
-    DM1_VP_ELEMENT_DOOR_SIDE   = 16,
-    DM1_VP_ELEMENT_DOOR_FRONT  = 17,
-    DM1_VP_ELEMENT_STAIRS_SIDE = 18,
-    DM1_VP_ELEMENT_STAIRS_FRONT = 19
+    DM1_VP_ELEMENT_WALL         = 0,  /* C00_ELEMENT_WALL */
+    DM1_VP_ELEMENT_CORRIDOR     = 1,  /* C01_ELEMENT_CORRIDOR */
+    DM1_VP_ELEMENT_PIT          = 2,  /* C02_ELEMENT_PIT */
+    DM1_VP_ELEMENT_STAIRS       = 3,  /* C03_ELEMENT_STAIRS (raw, not front/side) */
+    DM1_VP_ELEMENT_DOOR         = 4,  /* C04_ELEMENT_DOOR (raw) */
+    DM1_VP_ELEMENT_TELEPORTER  = 5,  /* C05_ELEMENT_TELEPORTER */
+    DM1_VP_ELEMENT_FAKEWALL    = 6,  /* C06_ELEMENT_FAKEWALL */
+    DM1_VP_ELEMENT_DOOR_SIDE   = 16, /* C16_ELEMENT_DOOR_SIDE (extended, F0172) */
+    DM1_VP_ELEMENT_DOOR_FRONT  = 17, /* C17_ELEMENT_DOOR_FRONT (extended, F0172) */
+    DM1_VP_ELEMENT_STAIRS_SIDE = 18, /* C18_ELEMENT_STAIRS_SIDE (extended, F0172) */
+    DM1_VP_ELEMENT_STAIRS_FRONT = 19 /* C19_ELEMENT_STAIRS_FRONT (extended, F0172) */
 } DM1_SquareElement;
 
 /* ────────────────────────────────────────────────────────────────────────────
