@@ -372,6 +372,8 @@ add_executable(firestaff_csb_v2_phase7_verification_probe
     src/csb/csb_v2_smooth_movement.c
     src/csb/csb_v2_viewport_renderer.c
     src/csb/csb_v2_chaos_enhanced.c
+    src/csb/csb_v2_lighting_dynamic.c
+    src/csb/csb_v2_vfx_particles.c
     src/csb/csb_v2_phase_gate_pc34.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
 )
@@ -1684,6 +1686,7 @@ if(BUILD_TESTING)
         target_link_libraries(test_csb_v2_phase7_verification PRIVATE m)
         target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
         target_link_libraries(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE m)
+        target_link_libraries(test_dm1_v2_extended_field_vfx_pc34 PRIVATE m)
     endif()
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
