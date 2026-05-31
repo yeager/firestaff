@@ -83,7 +83,7 @@
     {
       "id": "firestaff_m12_launch_guard_still_blocks_csb",
       "role": "firestaff_guard",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/ui/menu_startup_m12.c",
+      "path": "/private/tmp/firestaff-csb-v1-phase7-followup/src/ui/menu_startup_m12.c",
       "lines": "1408-1414",
       "needles": [
         "Only DM1 is launch-supported",
@@ -98,7 +98,7 @@
     {
       "id": "firestaff_m11_original_handoff_is_dm1_title_first",
       "role": "firestaff_blocker",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c",
+      "path": "/private/tmp/firestaff-csb-v1-phase7-followup/src/engine/main_loop_m11.c",
       "lines": "196-270",
       "needles": [
         "m11_find_title_dat_for_intro",
@@ -111,7 +111,7 @@
     {
       "id": "firestaff_m11_runtime_open_runs_original_dm1_handoff",
       "role": "firestaff_blocker",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c",
+      "path": "/private/tmp/firestaff-csb-v1-phase7-followup/src/engine/main_loop_m11.c",
       "lines": "698-728",
       "needles": [
         "m11_open_requested_launch",
@@ -130,7 +130,7 @@
     {
       "id": "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest",
       "role": "firestaff_blocker",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
+      "path": "/private/tmp/firestaff-csb-v1-phase7-followup/src/engine/m11_game_view.c",
       "lines": "1003-1015",
       "needles": [
         "m11_resolve_builtin_dungeon_path",
@@ -147,7 +147,7 @@
     {
       "id": "firestaff_current_ingame_capture_fixture_is_dm1",
       "role": "firestaff_blocker",
-      "path": "/Users/bosse/.openclaw/workspace-main/verification-screens/capture_firestaff_ingame_series.c",
+      "path": "/private/tmp/firestaff-csb-v1-phase7-followup/verification-screens/capture_firestaff_ingame_series.c",
       "lines": "213-218",
       "needles": [
         "M12_StartupMenu_InitWithDataDir",
