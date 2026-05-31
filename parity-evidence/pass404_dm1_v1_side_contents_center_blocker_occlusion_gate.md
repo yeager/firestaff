@@ -7,8 +7,8 @@ Status: `PASS404_DM1_V1_SIDE_CONTENTS_CENTER_BLOCKER_OCCLUSION_PROVEN`
 - CSBWin corroboration: `Viewport.cpp:331-342 and DrawViewport loop at 6762`
 
 ## Firestaff guards
-- `side contents gate before item/creature/projectile draws: m11_game_view.c:15230`
-- `side explosion gate before deferred side explosion draw: m11_game_view.c:15491`
+- `side contents gate before item/creature/projectile draws: m11_game_view.c:15258`
+- `side explosion gate before deferred side explosion draw: m11_game_view.c:15519`
 
 ## Verdict
 - Closed blocker: side contents and deferred side explosions are bounded by the nearest non-open center wall/door before drawing item/creature/projectile/explosion primitives.

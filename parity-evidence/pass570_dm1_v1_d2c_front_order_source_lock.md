@@ -72,11 +72,11 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 422: DUNVIEW.C:7299-7306
   - line 422: DUNVIEW.C:7308-7312 front alcove branches to F0115, else return
 
-- PASS firestaff-d2c-zone-defines (dm1_v1_viewport_3d_pc34_compat.h:444-460)
-  - line 446: #define DM1_PC34_ZONE_WALL_D2C
-  - line 457: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
-  - line 458: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
-  - line 459: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
+- FAIL firestaff-d2c-zone-defines (dm1_v1_viewport_3d_pc34_compat.h:444-460)
+  - missing: #define DM1_PC34_ZONE_WALL_D2C
+  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
+  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
+  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
 
 - PASS firestaff-d2c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-770)
   - line 729: { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341", 0x0218, 0x0349, {1, 2}, {4, 3} },
@@ -113,7 +113,7 @@ PASS dm1_v1_viewport_3d_source_lock
 
 - /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=1
 ~~~
-FAIL pass570 check-only: firestaff-d2c-source-evidence
+FAIL pass570 check-only: firestaff-d2c-zone-defines,firestaff-d2c-source-evidence
 ~~~
 
 ## Non-Claims
