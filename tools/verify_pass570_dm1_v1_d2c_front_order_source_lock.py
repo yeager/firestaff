@@ -79,7 +79,7 @@ LOCAL = [
         "DUNVIEW.C:7299-7306",
         "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return",
     ]),
-    ("firestaff-d2c-zone-defines", ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h", "444-460", [
+    ("firestaff-d2c-zone-defines", ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h", "460-477", [
         "#define DM1_PC34_ZONE_WALL_D2C",
         "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
         "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
@@ -91,8 +91,7 @@ LOCAL = [
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),
-    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2115-2120", [
-        "DUNVIEW.C:7314-7341 D2C door-front occlusion",
+    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2114-2126", [
         "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
         "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",
         "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw",
