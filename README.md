@@ -5,7 +5,7 @@
 Play all five Dungeon Master games — DM1, Chaos Strikes Back, Dungeon Master II, DM Nexus, and Theron's Quest — with original fidelity, enhanced filters, AI-upscaled graphics, or fully modern visuals.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-361%2F392-brightgreen)](https://github.com/yeager/firestaff/actions)
+[![Tests](https://img.shields.io/badge/tests-418%2F435-brightgreen)](https://github.com/yeager/firestaff/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Steam%20Deck-orange)]()
 
@@ -34,7 +34,7 @@ Switch between modes at runtime — no restart needed.
 
 - **Source-locked**: Every system cross-referenced against [ReDMCSB](http://dmweb.free.fr/) source code
 - **307 source files**, **365 headers**, **245K+ lines of C** — all code-reviewed
-- **361/392 tests passing** — 31 integration gates actively in development
+- **418/435 tests passing** — 17 integration gates actively in development
 - **Cross-platform**: macOS (Apple Silicon + Intel), Windows, Linux x86_64, Linux ARM64 (Steam Deck)
 - **Touchscreen & gamepad**: Full touch/click zones, controller support
 - **20 languages**: EN, SV, DE, FR, ES, IT, PT, NL, PL, CS, RU, JA, KO, ZH, DA, NO, FI, HU, TR + auto-detection
