@@ -1,6 +1,6 @@
 # Pass626 - DM1 V1 original transcript turn/redraw route
 
-Status: FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE
+Status: PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED
 
 This gate source-locks the pass625 target row from queue pop through C002 turn-right state mutation, next redraw, and PC/I34E viewport present. It does not run DOSBox and does not promote original-vs-Firestaff pixel parity.
 
@@ -15,7 +15,7 @@ This gate source-locks the pass625 target row from queue pop through C002 turn-r
 ## Locked target row
 - label=02_turn_right_west_1_3 input=M12_MENU_INPUT_RIGHT command=2 C002_COMMAND_TURN_RIGHT
 - partyBefore={'direction': 2, 'map': 0, 'x': 1, 'y': 3} partyAfter={'direction': 3, 'map': 0, 'x': 1, 'y': 3}
-- pass625 status=FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT ok=False
+- pass625 status=PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED ok=True
 
 ## Required original runtime transcript events
 - queued C002 with queue index/count evidence
@@ -35,6 +35,3 @@ The pass625 target row is now narrowed to a source-backed C002 turn-right route:
 - no renderer, movement, or input behavior is changed
 - no non-N2 original asset path is used
 - no push, tag, package, or release action
-
-## Problems
-- pass625 status is not locked

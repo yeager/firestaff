@@ -1,6 +1,6 @@
 # Pass570 DM1 V1 D2C front-order source lock
 
-Status: failed
+Status: passed
 
 Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns unless the front ornament is an alcove, its front door uses rear-cell pass, frame/button/door, then front-cell pass, and its open/pit/teleporter tail draws floor/ceiling/F0115 before the teleporter field overlay.
 
@@ -72,11 +72,11 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 422: DUNVIEW.C:7299-7306
   - line 422: DUNVIEW.C:7308-7312 front alcove branches to F0115, else return
 
-- FAIL firestaff-d2c-zone-defines (dm1_v1_viewport_3d_pc34_compat.h:444-460)
-  - missing: #define DM1_PC34_ZONE_WALL_D2C
-  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
-  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
-  - missing: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
+- PASS firestaff-d2c-zone-defines (dm1_v1_viewport_3d_pc34_compat.h:460-477)
+  - line 463: #define DM1_PC34_ZONE_WALL_D2C
+  - line 474: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
+  - line 475: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
+  - line 476: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
 
 - PASS firestaff-d2c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-770)
   - line 729: { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341", 0x0218, 0x0349, {1, 2}, {4, 3} },
@@ -84,12 +84,11 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 754: rear.cells[0] == expected[i].rear_cells[0]
   - line 758: front.cells[0] == expected[i].front_cells[0]
 
-- FAIL firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:2115-2120)
-  - line 2118: DUNVIEW.C:7314-7341 D2C door-front occlusion
-  - missing: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
-  - missing: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
-  - missing: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
-  - missing: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
+- PASS firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:2114-2126)
+  - line 2118: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
+  - line 2121: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
+  - line 2122: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
+  - line 2123: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
 
 ## Verification
 
@@ -111,9 +110,9 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass570 check-only: firestaff-d2c-zone-defines,firestaff-d2c-source-evidence
+PASS pass570 check-only
 ~~~
 
 ## Non-Claims

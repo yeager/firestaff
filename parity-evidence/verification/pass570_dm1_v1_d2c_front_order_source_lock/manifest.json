@@ -100,17 +100,29 @@
       "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-d2c-zone-defines",
-      "lines": "444-460",
-      "missing": [
-        "#define DM1_PC34_ZONE_WALL_D2C",
-        "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
-        "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
-        "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
+      "hits": [
+        {
+          "line": 463,
+          "needle": "#define DM1_PC34_ZONE_WALL_D2C"
+        },
+        {
+          "line": 474,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724"
+        },
+        {
+          "line": 475,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725"
+        },
+        {
+          "line": 476,
+          "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
+        }
       ],
+      "id": "firestaff-d2c-zone-defines",
+      "lines": "460-477",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.h",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "hits": [
@@ -141,19 +153,26 @@
       "hits": [
         {
           "line": 2118,
-          "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion"
+          "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
+        },
+        {
+          "line": 2121,
+          "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
+        },
+        {
+          "line": 2122,
+          "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
+        },
+        {
+          "line": 2123,
+          "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
         }
       ],
       "id": "firestaff-d2c-source-evidence",
-      "lines": "2115-2120",
-      "missing": [
-        "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
-        "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",
-        "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw",
-        "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
-      ],
+      "lines": "2114-2126",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -331,8 +350,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass570_dm1_v1_d2c_front_order_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS570_DM1_V1_D2C_FRONT_ORDER_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS570_DM1_V1_D2C_FRONT_ORDER_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -348,9 +367,9 @@
         "/Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass570 check-only: firestaff-d2c-zone-defines,firestaff-d2c-source-evidence",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass570 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

@@ -1,15 +1,21 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-d1-side-door-front-metadata",
-      "lines": "166-176",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039",
-        "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"
+      "hits": [
+        {
+          "line": 241,
+          "needle": "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039"
+        },
+        {
+          "line": 242,
+          "needle": "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"
+        }
       ],
+      "id": "firestaff-d1-side-door-front-metadata",
+      "lines": "232-244",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "hits": [
@@ -24,26 +30,34 @@
         {
           "line": 735,
           "needle": "door_front_occlusion.count"
+        },
+        {
+          "line": 773,
+          "needle": "door_front_occlusion.d1l_side_door_front_spec"
         }
       ],
       "id": "firestaff-d1-side-door-front-runtime-test",
-      "lines": "687-755",
-      "missing": [
-        "door_front_occlusion.d1l_side_door_front_spec"
-      ],
+      "lines": "707-774",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-d1-side-door-front-source-evidence",
-      "lines": "1248-1265",
-      "missing": [
-        "DUNVIEW.C:7493-7536",
-        "DUNVIEW.C:7661-7704"
+      "hits": [
+        {
+          "line": 2119,
+          "needle": "DUNVIEW.C:7493-7536"
+        },
+        {
+          "line": 2120,
+          "needle": "DUNVIEW.C:7661-7704"
+        }
       ],
+      "id": "firestaff-d1-side-door-front-source-evidence",
+      "lines": "2114-2126",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -130,8 +144,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d1_side_door_front_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -147,9 +161,9 @@
         "/Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass565 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

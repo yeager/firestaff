@@ -114,33 +114,17 @@
       "claim": "Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
-      "lines": "6162-6225",
-      "missing": [
-        "case M12_MENU_INPUT_LEFT:",
-        "return DM1_V1_COMMAND_TURN_LEFT;",
-        "case M12_MENU_INPUT_RIGHT:",
-        "return DM1_V1_COMMAND_TURN_RIGHT;",
-        "case M12_MENU_INPUT_UP:",
-        "return DM1_V1_COMMAND_MOVE_FORWARD;",
-        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
-        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
-      ],
-      "ok": false
+      "lines": "6486-6543",
+      "missing": [],
+      "ok": true
     },
     {
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
-      "lines": "6229-6297",
-      "missing": [
-        "state->world.gameTick++;",
-        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
-        "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
-        "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
-        "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
-        "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
-      ],
-      "ok": false
+      "lines": "6505-6678",
+      "missing": [],
+      "ok": true
     },
     {
       "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
@@ -194,11 +178,8 @@
     "no non-N2 source path is used",
     "no push or release action"
   ],
-  "ok": false,
-  "problems": [
-    "firestaff route audit failed: m11_input_maps_to_dm1_v1_commands",
-    "firestaff route audit failed: m11_records_movement_pipeline_capture_state"
-  ],
+  "ok": true,
+  "problems": [],
   "redmcsbSourceAudit": [
     {
       "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
@@ -272,6 +253,6 @@
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
-  "timestampUtc": "2026-06-01T17:11:39.828822+00:00"
+  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
+  "timestampUtc": "2026-06-02T02:24:33.166591+00:00"
 }
