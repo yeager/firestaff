@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D1 side door-front source lock
 
-Status: failed
+Status: passed
 
 Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front order: one rear side cell is drawn before the top frame and door, then one front side cell is drawn after the door.
 
@@ -26,19 +26,19 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:166-176)
-  - missing: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
-  - missing: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
+- PASS firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:232-244)
+  - line 241: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
+  - line 242: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
-- FAIL firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:687-755)
+- PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-774)
   - line 730: DM1_VIEW_SQUARE_D1L
   - line 731: DM1_VIEW_SQUARE_D1R
   - line 735: door_front_occlusion.count
-  - missing: door_front_occlusion.d1l_side_door_front_spec
+  - line 773: door_front_occlusion.d1l_side_door_front_spec
 
-- FAIL firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1248-1265)
-  - missing: DUNVIEW.C:7493-7536
-  - missing: DUNVIEW.C:7661-7704
+- PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:2114-2126)
+  - line 2119: DUNVIEW.C:7493-7536
+  - line 2120: DUNVIEW.C:7661-7704
 
 ## Verification
 
@@ -60,9 +60,9 @@ PASS source_evidence.same_viewport_assets == 1
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence
+PASS pass565 check-only
 ~~~
 
 ## Non-Claims

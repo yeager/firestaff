@@ -1,6 +1,6 @@
 # Pass623 - DM1 V1 input capture readiness bridge
 
-Status: FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE
+Status: PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED
 
 This gate binds the Firestaff input script to movement queue dispatch and viewport crop rows, while keeping the original-side blocker explicit.
 
@@ -14,8 +14,8 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - PASS DRAWVIEW.C:709-858 f0097_presents_the_composed_viewport - promotable original crops must be sampled at or after the viewport-present boundary
 
 ## Firestaff route audit
-- FAIL src/engine/m11_game_view.c:6162-6225 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
-- FAIL src/engine/m11_game_view.c:6229-6297 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
+- PASS src/engine/m11_game_view.c:6486-6543 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
+- PASS src/engine/m11_game_view.c:6505-6678 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
 - PASS probes/m11/firestaff_m11_wall_collision_capture_probe.c:20-174,210-236 wall_collision_probe_emits_input_script_and_viewport_crops - the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper
 
 ## Canonical input/crop rows
@@ -53,7 +53,3 @@ Firestaff now has an audited bridge from M12 input tokens to DM1 V1 command ids,
 - no movement, renderer, or input behavior is changed
 - no non-N2 source path is used
 - no push or release action
-
-## Problems
-- firestaff route audit failed: m11_input_maps_to_dm1_v1_commands
-- firestaff route audit failed: m11_records_movement_pipeline_capture_state
