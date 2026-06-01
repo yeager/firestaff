@@ -59,8 +59,6 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
 
-<!-- dm2_v1_dungeon (0/4 pass) och dm2_v1_asset (0/4 pass): tracked i TODO som 🔧 regressioner -->
-
 ### DM2 V2.0 / V2.1 / V2.2
 
 - ✅ Phase 0 - V1 compatibility lock before V2 work.
