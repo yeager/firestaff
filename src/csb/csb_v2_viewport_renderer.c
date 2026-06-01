@@ -26,6 +26,10 @@ void csb_v2_viewport_render_frame(CSB_V2_ViewportState *s, uint32_t now_ms) {
     float dtSeconds;
     if (!s) return;
 
+    /* Update V2_AnimClock first (uses clock->last_render_ms from v1_tick or
+     * prior render_frame to compute sub_tick). ReDMCSB: PANEL.C:367-428. */
+    v2_anim_clock_render_frame(&s->clock, now_ms);
+
     /* Compute elapsed_ms = wall-clock time since last render_frame call.
      * This is how a real game loop works: v1_tick fires every ~55ms
      * (V1 cadence) while render_frame fires every ~16ms (display rate).
@@ -37,8 +41,6 @@ void csb_v2_viewport_render_frame(CSB_V2_ViewportState *s, uint32_t now_ms) {
      * call.  The next render_frame (at a later timestamp) will have
      * non-zero elapsed and animations complete normally.
      *
-     * We also update clock.dt_ms for sub_tick accuracy.
-     *
      * Source: dm2_v2_viewport_renderer.c dm2_v2_viewport_render_frame
      *   pattern — v2_anim_clock_render_frame + dm2_v2_smooth_tick
      *   with clock.dt_ms = wall-clock elapsed between render frames */
@@ -48,9 +50,6 @@ void csb_v2_viewport_render_frame(CSB_V2_ViewportState *s, uint32_t now_ms) {
     fprintf(stderr, "  [render] now=%u prev=%u elapsed=%u\n", now_ms, prev_render, elapsed_ms);
     g_csb_v2_last_render_ms = now_ms;
     fprintf(stderr, "  [render] AFTER ASSIGN: last_render_ms=%u\n", g_csb_v2_last_render_ms);
-
-    /* Update V2_AnimClock dt_ms so sub_tick is accurate */
-    s->clock.dt_ms = (float)elapsed_ms;
 
     /* Advance smooth movement animations by elapsed_ms.
      * In a real game loop this is ~16ms per frame; in headless tests
