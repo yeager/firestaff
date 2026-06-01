@@ -50,14 +50,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 4 - Enhanced lighting and magic effects.
 - 🔧 Phase 5 - Smooth movement and viewport interpolation: runtime bridge/gates and input coverage exist; remaining work is broader interpolation coverage and V2 presentation gates (probe failing — regressed).
 - ❌ Phase 6 - Touch/controller ergonomics.
-- 🔧 Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (probe failing — regressed).
+- ❌ Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (probe failing — regressed from 🔧).
 
 ## Dungeon Master II: Skullkeep (DM2)
 
 ### DM2 V1
 
-- ✅ Phase 2 - Dungeon/world data model: complete DM2 map, object, tile, and world-state ingestion.
-- ✅ Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (pass).
+- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion (267/268 pass, outdoor level gate failing).
+- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
 - ✅ Phase 6 - Utility/import flow: implement DM2-specific load/start flow and compatibility behavior.
@@ -66,12 +66,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - ✅ Phase 0 - V1 compatibility lock before V2 work.
 - ✅ Phase 1 - V2 launch/profile separation: DM2_V2_PHASE_DOMAIN_LAUNCH and _PROFILE gates implemented; 42/42 probe pass; commit 22838e8f.
-- ❌ Phase 2 - Enhanced asset pipeline.
-- ❌ Phase 3 - Enhanced UI overlays.
-- ❌ Phase 4 - Enhanced lighting and outdoor effects.
-- 🔧 Phase 5 - Smooth movement and viewport interpolation: smooth-state scaffold and viewport query hooks exist; remaining work is runtime binding, deterministic input coverage, and pixel/presentation gates.
-- ❌ Phase 6 - Touch/controller ergonomics.
-- ❌ Phase 7 - V2 verification suite.
+- ✅ Phase 2 - Enhanced asset pipeline.
+- ✅ Phase 3 - Enhanced UI overlays: HUD compass/depth/gold/champion bars/action strip, launcher/menu integration, and probe coverage.
+- ✅ Phase 4 - Enhanced lighting and outdoor effects: palette mapping, shadow rendering, outdoor atmosphere VFX, and probe coverage.
+- ✅ Phase 5 - Smooth movement and viewport interpolation: visual walk/turn/stair interpolation state, viewport query hooks, and source-evidence strings while preserving V1 tick ownership of game-state movement.
+- ✅ Phase 6 - Touch/controller ergonomics: touch/controller affordance probe passes 4/4.
+- ✅ Phase 7 - V2 verification suite.
 
 ## Dungeon Master Nexus
 

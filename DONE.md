@@ -54,13 +54,23 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
+- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion (267/268 pass, outdoor level gate failing).
+- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
+- ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
 - ✅ Phase 7 - Save/import compatibility verification.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
 
 ### DM2 V2.0 / V2.1 / V2.2
 
-- ✅ Phase 5 smooth-movement scaffold: DM2 V2 has visual walk, turn, and stair interpolation state, viewport query hooks, and source-evidence strings while preserving V1 tick ownership of game-state movement.
+- ✅ Phase 0 - V1 compatibility lock before V2 work.
+- ✅ Phase 1 - V2 launch/profile separation: DM2_V2_PHASE_DOMAIN_LAUNCH and _PROFILE gates implemented; 42/42 probe pass; commit 22838e8f.
+- ✅ Phase 2 - Enhanced asset pipeline.
+- ✅ Phase 3 - Enhanced UI overlays: HUD compass/depth/gold/champion bars/action strip, launcher/menu integration, and probe coverage.
+- ✅ Phase 4 - Enhanced lighting and outdoor effects: palette mapping, shadow rendering, outdoor atmosphere VFX, and probe coverage.
+- ✅ Phase 5 - Smooth movement and viewport interpolation: visual walk/turn/stair interpolation state, viewport query hooks, and source-evidence strings while preserving V1 tick ownership of game-state movement; runtime binding and deterministic input coverage complete.
+- ✅ Phase 6 - Touch/controller ergonomics: touch/controller affordance probe passes 4/4.
+- ✅ Phase 7 - V2 verification suite.
 
 ## Dungeon Master Nexus
 
