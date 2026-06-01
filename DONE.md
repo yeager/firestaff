@@ -54,11 +54,12 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
-<!-- Phase 2-3 regressed: dm2_v1_dungeon (32), dm2_v1_asset (35), dm2_v1_save_load (29) all failing → moved to TODO -->
 - ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
 - ✅ Phase 7 - Save/import compatibility verification.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
+
+<!-- Phase 2-3: dm2_v1_dungeon (32), dm2_v1_asset (35), dm2_v1_save_load (29) alle misslyckades → flyttade till TODO -->
 
 ### DM2 V2.0 / V2.1 / V2.2
 
@@ -80,7 +81,6 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 2 - Data format ingestion for Nexus dungeon and supporting Saturn data structures.
 - ✅ Phase 3 - Core world model and runtime state mapping.
 - ✅ Phase 4 - Rendering pipeline slices and viewport/source-lock scaffolding.
-<!-- Phase 5 regressed: firestaff_nexus_v1_mechanics_parity (427) failing → moved to TODO -->
 - ✅ Phase 6 - Save/import compatibility, including Nexus V1 save/load round-trip probe coverage.
 - ✅ Phase 7 - Verification-suite coverage for compile, save/load, and runtime-state paths.
 - 🔒 Source-lock audit coverage for Nexus DMDF/DGN loading, sensors, movement, input, inventory, doors, triggers, combat, AI, sound, save/load, and launch/runtime boundaries.
@@ -94,7 +94,6 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 2 - Dungeon/data model ingestion.
 - ✅ Phase 3 - Core world/progression state mapping.
 - ✅ Launch/data availability now uses Track 02 hash/provenance discovery through validator, startup, and menu availability state.
-<!-- Phase 5 regressed: theron_v1_mechanics_hardening (433) failing → moved to TODO -->
 - ✅ Phase 6 - Dungeon progression probe coverage.
 - 🔒 Source-lock audit coverage for Theron profile, dungeon progression, mechanics, and launch/runtime boundaries.
 

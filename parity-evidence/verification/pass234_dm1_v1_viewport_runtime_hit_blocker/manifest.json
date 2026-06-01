@@ -20,8 +20,9 @@
           "-lc",
           "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
-        "error": "TimeoutExpired",
-        "message": "Command '['bash', '-lc', 'find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f']' timed out after 6 seconds"
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
       }
     },
     "symbol_map_exists": true,
