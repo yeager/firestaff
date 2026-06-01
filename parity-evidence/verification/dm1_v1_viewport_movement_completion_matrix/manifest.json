@@ -15,11 +15,11 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
+        "[ 95%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
+        "[ 95%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-05-31T21:43:33.685909+00:00"
+  "timestampUtc": "2026-06-01T06:10:11.565505+00:00"
 }

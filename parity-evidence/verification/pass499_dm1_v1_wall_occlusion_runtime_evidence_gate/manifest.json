@@ -93,7 +93,7 @@
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  74: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #74: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.01 sec\n    Start 326: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #326: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.17 sec\n    Start 332: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #332: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.21 sec\n    Start 345: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #345: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.13 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.54 sec\n"
+    "tail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  74: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test  #74: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.01 sec\n    Start 326: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #326: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.22 sec\n    Start 332: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #332: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.29 sec\n    Start 345: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #345: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.26 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.80 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -169,5 +169,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-05-31T21:45:41.575481+00:00"
+  "timestampUtc": "2026-06-01T06:04:44.186001+00:00"
 }
