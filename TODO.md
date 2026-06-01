@@ -60,6 +60,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
+- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
+- ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
+- ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
 - ✅ Phase 6 - Utility/import flow: implement DM2-specific load/start flow and compatibility behavior.
 
 ### DM2 V2.0 / V2.1 / V2.2
@@ -79,6 +82,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
+- 🔧 Phase 5 - Mechanics parity hardening: runtime bridge and probe coverage for movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
@@ -97,7 +101,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Runtime handoff/playability proof: hash-verified Track 02 availability is wired through validator/startup/menu state; remaining work is positive real-asset launch through the Theron parser/rendering path.
 - ❌ Phase 4 - Rendering pipeline: implement Theron viewport/UI presentation and asset selection.
-- 🔧 Phase 5 - Mechanics parity hardening: initial movement, click route, door, pit, teleporter, altar, combat, drop, and sound behavior is implemented; remaining work is focused runtime/probe coverage.
+- 🔧 Phase 5 - Initial mechanics implementation: movement, click routes, doors, pits, teleporters, altar behavior, combat, drops, and sounds; remaining work is focused runtime/probe coverage.
 - ❌ Phase 7 - Save/import compatibility: implement and verify Theron save/load behavior and any transfer/import constraints.
 - ❌ Phase 8 - Verification suite: add deterministic launch, dungeon progression, mechanics, rendering, and save/load probes.
 
