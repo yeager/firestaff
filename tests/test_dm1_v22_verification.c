@@ -29,6 +29,7 @@
 #include <unistd.h>
 #ifdef _WIN32
 #include <io.h>
+#include <direct.h>
 #endif
 
 /* ── Dungeon square type constants ──────────────────────────────── */
