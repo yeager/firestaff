@@ -1,6 +1,6 @@
 {
   "schema": "pass455_dm1_v1_hall_corrected_click_primitive_capture.v1",
-  "timestampUtc": "2026-06-01T09:04:34.637783+00:00",
+  "timestampUtc": "2026-06-01T11:47:41.544640+00:00",
   "status": "PASS_PASS455_CORRECTED_CLICK_PRIMITIVE_AND_CANDIDATE_TRANSITION_PROVEN",
   "artifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
   "pc34Provenance": {
