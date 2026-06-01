@@ -48,9 +48,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass).
 - ❌ Phase 4 - Enhanced lighting and magic effects.
-- ❌ Phase 5 - Smooth movement and viewport interpolation.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: runtime bridge/gates and input coverage exist; remaining work is broader interpolation coverage and V2 presentation gates (probe failing — regressed).
 - ❌ Phase 6 - Touch/controller ergonomics.
-- ❌ Phase 7 - V2 verification suite.
+- 🔧 Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (probe failing — regressed).
 
 ## Dungeon Master II: Skullkeep (DM2)
 

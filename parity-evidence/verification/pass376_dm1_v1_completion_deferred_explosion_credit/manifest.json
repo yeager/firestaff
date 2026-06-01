@@ -73,7 +73,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "f6cb7936d924934f158d1bd41d3e079972d5bb54",
+  "head": "31396f22f01219f2dac612c8361e28804d453597",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -83,5 +83,5 @@
   "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-31T21:45:31.493916+00:00"
+  "timestampUtc": "2026-06-01T06:04:43.659532+00:00"
 }
