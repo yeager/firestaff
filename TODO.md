@@ -48,19 +48,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass).
 - ❌ Phase 4 - Enhanced lighting and magic effects.
-- 🔧 Phase 5 - Smooth movement and viewport interpolation: runtime bridge/gates and input coverage exist; remaining work is broader interpolation coverage and V2 presentation gates (probe failing — regressed).
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: `firestaff_csb_v2_smooth_movement_probe` passes 58/58. `firestaff_dm2_v2_smooth_movement_probe` 36/54 pass — CSB V2 ✅, DM2 V2 ✅, CSB V1 🔧.
 - ❌ Phase 6 - Touch/controller ergonomics.
-- ❌ Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (probe failing — regressed from 🔧).
+- 🔧 Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (`test_csb_v2_phase7_verification` failing, regressed from 🔧).
 
 ## Dungeon Master II: Skullkeep (DM2)
 
 ### DM2 V1
 
-- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion (267/268 pass, outdoor level gate failing).
-- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
-- ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
-- ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
-- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass).
+- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion (267/268 pass, outdoor level gate failing, `test_dm2_v1_dungeon` 0/4 pass — regressed from ✅).
+- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass, `test_dm2_v1_asset` 0/4 pass — regressed from ✅).
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
 - ✅ Phase 6 - Utility/import flow: implement DM2-specific load/start flow and compatibility behavior.
