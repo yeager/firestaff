@@ -75,10 +75,16 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
     case THERON_CMD_EXAMINE:
         /* Phase 4: description lookup; for now just return the tile type */
         return (int)tile;
-    case THERON_CMD_USE:
-        if (tile == THERON_SQUARE_DOOR)
+    case THERON_CMD_USE: {
+        /* Check for any object at (x,y) that can be used */
+        Theron_V1_Object *o = theron_v1_object_at(world,
+                                world->current_level, x, y);
+        if (o && o->type == THERON_OBJTYPE_DOOR) {
+            /* Door found — open it (handles locked auto-unlock) */
             return theron_v1_door_open(world, x, y);
+        }
         return -1;
+    }
     case THERON_CMD_TAKE: {
         Theron_V1_Object *o = theron_v1_object_at(world,
                                 world->current_level, x, y);
@@ -142,7 +148,7 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
     }
     if (tile == THERON_SQUARE_FLOOR || tile == THERON_SQUARE_ALARM ||
         tile == THERON_SQUARE_TRIGGER || tile == THERON_SQUARE_POOL) {
-        return THERON_MOVE_SPECIAL;
+        return THERON_MOVE_OK;
     }
     return THERON_MOVE_OK;
 }
@@ -285,9 +291,6 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     if (d->flags & THERON_DOOR_F_LOCKED) {
         /* Need a key in inventory — Phase 5 inventory check */
         d->flags &= ~THERON_DOOR_F_LOCKED;
-        d->state = THERON_DOOR_STATE_OPEN;
-        theron_v1_play_sound(THERON_SOUND_KEY_USE);
-        return 0;
     }
     d->state = THERON_DOOR_STATE_OPEN;
     theron_v1_play_sound(THERON_SOUND_DOOR_OPEN);
@@ -474,6 +477,8 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
 
     world->party.gold -= (uint32_t)total_cost;
 
+    int revived_slot = -1;
+
     /* Revive all dead champions */
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
         Theron_V1_Champion *c = &world->party.champions[i];
@@ -483,6 +488,7 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
             c->alive = 1;
             c->wounds &= ~(THERON_WOUND_HEAD | THERON_WOUND_BODY |
                            THERON_WOUND_ARMS | THERON_WOUND_LEGS);
+            if (revived_slot < 0) revived_slot = i;
             revived_count++;
         }
     }
@@ -491,7 +497,7 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
         altar->state = THERON_OBJ_F_USED;
         theron_v1_play_sound(THERON_SOUND_ALTAR_USE);
     }
-    return world->party.active_slot; /* return revived slot (leader) */
+    return revived_slot; /* return first revived slot, or -1 if none */
 }
 
 /* ══════════════════════════════════════════════════════════════════════
