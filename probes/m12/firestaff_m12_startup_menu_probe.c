@@ -283,10 +283,10 @@ int main(void) {
                  "INV_M12_00_ORIGINALS_POPUP",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      state.launchRequested == 0 &&
-                     state.messageLine1 && strcmp(state.messageLine1, "ORIGINAL FILES NOT FOUND") == 0 &&
-                     state.messageLine2 && strcmp(state.messageLine2, "COPY YOUR RETAIL GAME FILES INTO:") == 0 &&
-                     state.messageLine3 && strcmp(state.messageLine3, dataDir) == 0,
-                 "empty originals directory opens a startup popup that tells the user where to copy retail files");
+                     state.messageLine1 && strcmp(state.messageLine1, "NO GAME DATA FOUND") == 0 &&
+                     state.messageLine2 && strcmp(state.messageLine2, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY") == 0 &&
+                     state.messageLine3 && strstr(state.messageLine3, dataDir) != NULL,
+                 "empty originals directory opens an OK startup popup that shows the scanned data directory");
 
     make_file_with_text(graphicsPath, "ok");
     make_file_with_text(dungeonPath, "ok");
@@ -452,9 +452,10 @@ int main(void) {
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      state.launchRequested == 0 &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                 "enter on unmatched CSB shows data-missing messaging without requesting launch");
+                     strcmp(state.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                     strstr(state.messageLine2, "GRAPHICS.DAT") != NULL &&
+                     strstr(state.messageLine2, "DUNGEON.DAT") != NULL,
+                 "enter on unmatched CSB shows which required game data files are missing");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -675,9 +676,10 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                 "missing runtime catalog falls back safely while hash-verified games stay non-launching without matched data");
+                     strcmp(state.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                     strstr(state.messageLine2, "GRAPHICS.DAT") != NULL &&
+                     strstr(state.messageLine2, "DUNGEON.DAT") != NULL,
+                 "missing runtime catalog falls back safely while missing game-data details stay visible");
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
@@ -988,9 +990,10 @@ int main(void) {
                      "INV_M12_28",
                      modeState.launchRequested == 0 &&
                          modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         strcmp(modeState.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                         strcmp(modeState.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                     "CSB stays non-launching without matched data and reports the data-dir gate");
+                         strcmp(modeState.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                         strstr(modeState.messageLine2, "GRAPHICS.DAT") != NULL &&
+                         strstr(modeState.messageLine2, "DUNGEON.DAT") != NULL,
+                     "CSB stays non-launching without matched data and reports the missing required files");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_csb_version_ready(&modeState, 0U);

@@ -16,7 +16,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Current Priority Queue
 
-- 🔧 Push and watch CI for commit `08330fee Add recursive game data scan` when ready to land.
 - 🔧 Data-directory picker polish: start menu can switch between configured/default roots; add a proper browse/manual path flow for arbitrary user-selected game-data folders.
 - 🔧 Extend the game-data scan report with machine-readable output if release/installer tooling needs it.
 - 🔧 Add focused regression coverage for DM1/CSB/DM2 missing-DUNGEON launch blocking in addition to the existing CSB launcher gate.

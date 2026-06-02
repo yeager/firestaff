@@ -123,6 +123,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Recursive game-data scanner: `--scan-data` / `--scan-game-data` reports found and missing required files by MD5 hash, ignores filename and folder layout, and treats TITLE/FTL/intro extras as non-blocking.
 - ✅ Game-data launch gating: DM1/CSB/DM2 now require both GRAPHICS and DUNGEON hashes before launch, Nexus/Theron require their primary hash marker, and direct `--game` launches are blocked when required data is missing.
 - ✅ Start-menu data status wiring: game cards reflect required hash availability, a data-directory settings row exists, and missing required data prevents launch.
+- ✅ Start-menu game-data popup: startup automatically scans the configured data directory, shows an OK popup when no game data is found, and unavailable games now report the specific required files missing from the hash-verified scan.
 
 ### Touch and Input
 
