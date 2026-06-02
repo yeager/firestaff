@@ -77,6 +77,11 @@ int dm2_v2_phase_gate_is_hud_domain(DM2_V2_PhaseDomain domain)
     return domain == DM2_V2_PHASE_DOMAIN_HUD;
 }
 
+int dm2_v2_phase_gate_is_asset_pipeline_domain(DM2_V2_PhaseDomain domain)
+{
+    return domain == DM2_V2_PHASE_DOMAIN_ASSET_PIPELINE;
+}
+
 DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
     const DM2_V2_PhaseGateConfig *config,
     DM2_V2_PhaseDomain domain)
@@ -167,6 +172,39 @@ DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
                             profileEnabled
                                 ? "DM2 V2 HUD: Phase 3 overlay active (LAUNCH+PROFILE enabled)"
                                 : "DM2 V2 HUD: V1 source-locked (v2ProfileEnabled=0)");
+
+        case DM2_V2_PHASE_DOMAIN_ASSET_PIPELINE:
+            /* V2 Asset Pipeline: Phase 2 enhanced graphics pipeline.
+             *
+             * Phase 2 activates the V2.1 EPX upscale pipeline and palette
+             * expand path.  It is a PROFILE-domain feature — it binds the
+             * dm2_v2_asset_pipeline module to hash-verified DM2 GRAPHICS.DAT
+             * and renders at V2.0/V2.1 resolutions (640x400, 3200x2000).
+             *
+             * The pipeline contract is strict: V1 framebuffer output must
+             * be bit-identical; only presentation resolution changes.
+             *
+             * Source: SKULL.ASM T560/T580 (dungeon viewport / asset load);
+             *   ReDMCSB DUNVIEW.C:2962-3070 (floor/ceiling/wall set drawing);
+             *   ReDMCSB DUNVIEW.C:3048-3070 F0100 DrawWallSetBitmap;
+             *   ReDMCSB PANEL.C:418-428 G0304_i_DungeonViewPaletteIndex (6 levels);
+             *   ReDMCSB DATA.C:359-360 k_source_palette_light_amount_floor[];
+             *   dm2_v2_asset_pipeline.c (Phase 2 implementation).
+             *
+             * Activation requires LAUNCH+PROFILE (same as HUD).
+             */
+            if (!launchEnabled || !profileEnabled) {
+                return decision(1, 0,
+                               "SKULL.ASM T560 (asset pipeline V1 source-locked); "
+                               "ASSET_PIPELINE gated on LAUNCH+PROFILE (domain not enabled)",
+                               "DM2 V2 ASSET_PIPELINE: V1 source-locked (LAUNCH or PROFILE not enabled)");
+            }
+            return decision(0, 1,
+                            "SKULL.ASM T560/T580 (dungeon viewport / asset); "
+                            "ReDMCSB DUNVIEW.C:2962-3070 (floor/ceiling/wall set); "
+                            "ReDMCSB PANEL.C:418-428; "
+                            "dm2_v2_asset_pipeline.c (Phase 2 implementation)",
+                            "DM2 V2 ASSET_PIPELINE: Phase 2 EPX upscale active (LAUNCH+PROFILE enabled)");
 
         default:
             return decision(1, 0, "unknown phase domain", "invalid domain");

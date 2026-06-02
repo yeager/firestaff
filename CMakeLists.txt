@@ -297,6 +297,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 2 — Asset Pipeline Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: DM2_V2_PHASE_DOMAIN_ASSET_PIPELINE enum, gate rules
+# (LAUNCH+PROFILE required), dm2_v2_asset_pipeline EPX/palette
+# upscale, gfx mode API, surface category names, source evidence.
+add_executable(firestaff_dm2_v2_phase2_asset_pipeline_probe
+    probes/dm2/firestaff_dm2_v2_phase2_asset_pipeline_probe.c)
+target_link_libraries(firestaff_dm2_v2_phase2_asset_pipeline_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_phase2_asset_pipeline_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM2 V2 Phase 3 — Enhanced UI Overlay Probe (HUD: compass, depth, gold,
 # champion bars, action strip).
 # Headless: no game assets, no SDL rendering required.
