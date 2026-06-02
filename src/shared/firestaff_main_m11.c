@@ -11,6 +11,7 @@
 
 #include "main_loop_m11.h"
 
+#include "asset_status_m12.h"
 #include "firestaff_version.h"
 #include "render_sdl_m11.h"
 
@@ -32,6 +33,8 @@ static void usage(const char* prog) {
             "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --scan-data         Recursively scan asset directory by hash and exit\n"
+            "  --scan-game-data    Alias for --scan-data\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -40,6 +43,46 @@ static void usage(const char* prog) {
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);
+}
+
+static void print_scan_game(const M12_AssetStatus* status,
+                            const char* gameId,
+                            const char* title) {
+    size_t count;
+    size_t i;
+    int ready;
+    if (!status || !gameId || !title) {
+        return;
+    }
+    ready = M12_AssetStatus_GameAvailable(status, gameId);
+    count = M12_AssetStatus_GetRequiredFileCount(status, gameId);
+    printf("%-22s %s\n", title, ready ? "READY" : "MISSING");
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus* file =
+            M12_AssetStatus_GetRequiredFile(status, gameId, i);
+        if (!file) {
+            continue;
+        }
+        printf("  %-28s %s", file->label, file->matched ? "FOUND" : "MISSING");
+        if (file->matched) {
+            printf("  %s", file->matchedPath);
+        }
+        printf("\n");
+    }
+}
+
+static int run_data_scan(const char* dataDir) {
+    M12_AssetStatus status;
+    M12_AssetStatus_Scan(&status, dataDir);
+    printf("Firestaff game-data scan\n");
+    printf("Data dir: %s\n\n", M12_AssetStatus_GetDataDir(&status));
+    print_scan_game(&status, "dm1", "Dungeon Master");
+    print_scan_game(&status, "csb", "Chaos Strikes Back");
+    print_scan_game(&status, "dm2", "Dungeon Master II");
+    print_scan_game(&status, "nexus", "DM Nexus");
+    print_scan_game(&status, "theron", "Theron's Quest");
+    printf("\nNon-essential intro/title files are optional and do not block launch.\n");
+    return 0;
 }
 
 static int is_game_id(const char* value) {
@@ -53,6 +96,7 @@ static int is_game_id(const char* value) {
 
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
+    int scanData = 0;
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -79,6 +123,11 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--scan-data") == 0 ||
+            strcmp(a, "--scan-game-data") == 0) {
+            scanData = 1;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
@@ -118,6 +167,10 @@ int main(int argc, char** argv) {
         fprintf(stderr, "firestaff: unknown argument '%s'\n", a);
         usage(argv[0]);
         return 2;
+    }
+
+    if (scanData) {
+        return run_data_scan(opts.dataDir);
     }
 
     int rc = M11_PhaseA_Run(&opts);
