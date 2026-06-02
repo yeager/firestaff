@@ -17,6 +17,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ## Current Priority Queue
 
 - 🔧 Data-directory picker polish: start menu can switch between configured/default roots; add a proper browse/manual path flow for arbitrary user-selected game-data folders.
+- 🔧 Archive scanner performance: full default scan over the local real-asset collection with multiple Nexus ISO/ZIP images still needs indexing/prefilter work; isolated `--scan-data` smoke and archive regression tests pass.
+- 🔧 Extend archive runtime handoff beyond DM1/CSB/DM2 if Theron Track 02 or future Nexus flows need cache materialization instead of their current direct image paths.
 - 🔧 Extend the game-data scan report with machine-readable output if release/installer tooling needs it.
 - 🔧 Add focused regression coverage for DM1/CSB/DM2 missing-DUNGEON launch blocking in addition to the existing CSB launcher gate.
 

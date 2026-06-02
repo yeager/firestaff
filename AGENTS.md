@@ -90,6 +90,8 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 
 Firestaff finds game files by **hash**, not filename or path. The configured data root is searched recursively, so users may keep their own folder layout.
 
+ZIP archives and ISO/BIN disc images are valid game-data containers. The scanner should hash entries/files inside those containers and report matches as virtual paths such as `archive.zip::GRAPHICS.DAT` or `disc.iso::DUNGEON.DAT`. ZIP support covers stored entries everywhere and deflated entries when zlib is available at build time. ISO/BIN support is intended for ISO 9660 data images, especially DM2 disc images and the existing Saturn/Nexus path. For DM1/CSB/DM2, archive-backed required files should be materialized into the local Firestaff asset cache before launch so runtime code can keep opening ordinary `GRAPHICS.DAT` / `DUNGEON.DAT` paths.
+
 Default data directory: `~/.firestaff/data/`
 Suggested subdirectories: `dm1/`, `csb/`, `dm2/`, `nexus/`, `theron/`, `dm1-multilingual/`
 

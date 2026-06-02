@@ -55,6 +55,7 @@ typedef struct {
     M12_AssetVersionStatus versions[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
     M12_AssetRequiredFileStatus requiredFiles[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_REQUIRED_FILES_PER_GAME];
     size_t requiredFileCounts[M12_ASSET_GAME_COUNT];
+    char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
@@ -66,6 +67,8 @@ size_t M12_AssetStatus_GameKnownHashCount(const char* gameId);
 size_t M12_AssetStatus_GameVerifiedFileCount(const char* gameId);
 size_t M12_AssetStatus_GameRequiredFileCount(const char* gameId);
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status);
+const char* M12_AssetStatus_GetRuntimeDataDir(const M12_AssetStatus* status,
+                                              const char* gameId);
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status);
 size_t M12_AssetStatus_GetVersionCount(const char* gameId);
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,

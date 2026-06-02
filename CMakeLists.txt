@@ -251,6 +251,11 @@ set(M12_SOURCES
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
+find_package(ZLIB QUIET)
+if(ZLIB_FOUND)
+    target_compile_definitions(firestaff_m12 PUBLIC FIRESTAFF_HAS_ZLIB=1)
+    target_link_libraries(firestaff_m12 PUBLIC ZLIB::ZLIB)
+endif()
 if(NOT MSVC)
     target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
         -Wno-format-truncation -Wno-array-bounds -Wno-restrict -Wno-unused-variable)
