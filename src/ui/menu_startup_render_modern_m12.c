@@ -1715,6 +1715,16 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
     ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
     int w3 = text_width_px(line3, &sm);
     draw_text(c, panelX + (panelW - w3) / 2, panelY + 220, line3, &sm);
+    {
+        int okW = 108;
+        int okH = 36;
+        int okX = panelX + (panelW - okW) / 2;
+        int okY = panelY + panelH - 64;
+        stroke_rounded_rect(c, okX, okY, okW, okH, 6, COLOR_ACCENT());
+        ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
+        int okTextW = text_width_px("OK", &ok);
+        draw_text(c, okX + (okW - okTextW) / 2, okY + 10, "OK", &ok);
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1760,6 +1770,14 @@ static void draw_sparse_center_box_modern(M12_ModernCanvas* c,
     if (line1 && line1[0]) draw_text_centered(c, c->w / 2, y + 18, line1, &l1);
     if (line2 && line2[0]) draw_text_centered(c, c->w / 2, y + 42, line2, &l2);
     if (line3 && line3[0]) draw_text_centered(c, c->w / 2, y + 66, line3, &l3);
+    if (line1 && line1[0]) {
+        int okW = 64;
+        int okH = 22;
+        int okX = c->w / 2 - okW / 2;
+        int okY = y + boxH - 34;
+        stroke_rounded_rect(c, okX, okY, okW, okH, 3, rgb(230, 210, 120));
+        draw_text_centered(c, c->w / 2, okY + 5, "OK", &l1);
+    }
 }
 
 static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupMenuState* state) {

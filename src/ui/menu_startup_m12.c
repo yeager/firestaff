@@ -979,6 +979,142 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+static void m12_set_buffered_message(M12_StartupMenuState* state,
+                                     const char* line1,
+                                     const char* line2,
+                                     const char* line3) {
+    if (!state) {
+        return;
+    }
+    snprintf(state->messageLine1Storage, sizeof(state->messageLine1Storage), "%s", line1 ? line1 : "");
+    snprintf(state->messageLine2Storage, sizeof(state->messageLine2Storage), "%s", line2 ? line2 : "");
+    snprintf(state->messageLine3Storage, sizeof(state->messageLine3Storage), "%s", line3 ? line3 : "");
+    state->messageLine1 = state->messageLine1Storage;
+    state->messageLine2 = state->messageLine2Storage;
+    state->messageLine3 = state->messageLine3Storage;
+}
+
+static const char* m12_game_popup_label(const char* gameId) {
+    if (!gameId) {
+        return "GAME";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "DM1";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "CSB";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "DM2";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "NEXUS";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "THERON";
+    }
+    return gameId;
+}
+
+static void m12_append_text(char* out, size_t outSize, const char* text) {
+    size_t len;
+    if (!out || outSize == 0U || !text || text[0] == '\0') {
+        return;
+    }
+    len = strlen(out);
+    if (len >= outSize - 1U) {
+        return;
+    }
+    snprintf(out + len, outSize - len, "%s", text);
+}
+
+static void m12_format_data_dir_line(const M12_StartupMenuState* state,
+                                     char* out,
+                                     size_t outSize) {
+    const char* dir = state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
+    size_t prefixLen = strlen("DATA DIR: ");
+    size_t len;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!dir || dir[0] == '\0') {
+        dir = ".";
+    }
+    len = strlen(dir);
+    if (len + prefixLen < outSize) {
+        snprintf(out, outSize, "DATA DIR: %s", dir);
+    } else if (outSize > prefixLen + 8U) {
+        size_t keep = outSize - prefixLen - 5U;
+        snprintf(out, outSize, "DATA DIR: ...%s", dir + len - keep);
+    } else {
+        snprintf(out, outSize, "DATA DIR");
+    }
+}
+
+static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
+                                              const char* gameId,
+                                              char* out,
+                                              size_t outSize) {
+    size_t count;
+    size_t i;
+    int added = 0;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!state || !gameId) {
+        snprintf(out, outSize, "MISSING: GAME DATA");
+        return;
+    }
+    snprintf(out, outSize, "MISSING: ");
+    count = M12_AssetStatus_GetRequiredFileCount(&state->assetStatus, gameId);
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus* file =
+            M12_AssetStatus_GetRequiredFile(&state->assetStatus, gameId, i);
+        if (!file || !file->required || file->matched) {
+            continue;
+        }
+        if (added) {
+            m12_append_text(out, outSize, ", ");
+        }
+        m12_append_text(out, outSize, file->label ? file->label : "GAME DATA");
+        added = 1;
+    }
+    if (!added) {
+        snprintf(out, outSize, "MISSING: VERIFIED GAME DATA");
+    }
+}
+
+static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
+                                             const char* gameId) {
+    char line1[128];
+    char line2[256];
+    char line3[160];
+    if (!state) {
+        return;
+    }
+    snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
+    m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    m12_set_buffered_message(state, line1, line2, line3);
+}
+
+static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
+    char line3[160];
+    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return;
+    }
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_set_buffered_message(state,
+                             m12_tr(state, "NO GAME DATA FOUND"),
+                             m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"),
+                             line3);
+}
+
 
 static int m12_is_valid_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
@@ -1357,16 +1493,6 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
 }
 
 
-static void m12_show_missing_original_files_popup(M12_StartupMenuState* state) {
-    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
-        return;
-    }
-    state->view = M12_MENU_VIEW_MESSAGE;
-    state->messageLine1 = m12_text(state, M12_TEXT_ORIGINAL_FILES_NOT_FOUND);
-    state->messageLine2 = m12_text(state, M12_TEXT_COPY_RETAIL_FILES_INTO);
-    state->messageLine3 = M12_AssetStatus_GetDataDir(&state->assetStatus);
-}
-
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL, NULL);
 }
@@ -1421,7 +1547,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
-    m12_show_missing_original_files_popup(state);
+    m12_show_no_game_data_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;
@@ -2047,9 +2173,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         state->messageLine2 = m12_text(state, M12_TEXT_ADD_VERIFIED_RETAIL_HASHES);
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
     } else {
-        state->messageLine1 = m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND);
-        state->messageLine2 = m12_text(state, M12_TEXT_CHECK_FIRESTAFF_DATA_DIR);
-        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+        m12_show_missing_game_data_popup(state, entry->gameId);
     }
 }
 
@@ -2470,12 +2594,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (launchEntry && launchEntry->gameId &&
                                !M12_AssetStatus_GameAvailable(&state->assetStatus, launchEntry->gameId)) {
-                        state->launchRequested = 0;
-                        state->quickResumeLaunchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
-                        state->messageLine1 = m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND);
-                        state->messageLine2 = m12_text(state, M12_TEXT_CHECK_FIRESTAFF_DATA_DIR);
-                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                        m12_show_missing_game_data_popup(state, launchEntry->gameId);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
                         /* Auto-select first matched version if available */
@@ -2696,10 +2815,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = "ESC RETURNS TO MENU";
                     }
                 } else {
-                    state->view = M12_MENU_VIEW_MESSAGE;
-                    state->messageLine1 = "SAVE FILE FOUND";
-                    state->messageLine2 = "BUT GAME NOT AVAILABLE";
-                    state->messageLine3 = "ESC RETURNS TO MENU";
+                    m12_show_missing_game_data_popup(state, state->quickResumeGameId);
                 }
             } else {
                 state->quickResumeLaunchRequested = 0;
@@ -4457,6 +4573,21 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
                            134,
                            state->messageLine3,
                            &g_textSmallMuted);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   180,
+                   146,
+                   64,
+                   16,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           150,
+                           "OK",
+                           &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -4717,6 +4848,21 @@ static void m12_draw_sparse_message_view(const M12_StartupMenuState* state,
                                state->messageLine2,
                                state->messageLine3,
                                messageColor);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   framebufferWidth / 2 - 28,
+                   framebufferHeight / 2 + 44,
+                   56,
+                   14,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           framebufferHeight / 2 + 48,
+                           "OK",
+                           &g_textSmallAccent);
 }
 
 static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
@@ -6321,6 +6467,22 @@ static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
                   contentY + 74,
                   state->messageLine3,
                   &g_textSmallMuted);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   boxX + 160,
+                   contentY + 104,
+                   86,
+                   24,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  boxX + 190,
+                  contentY + 111,
+                  "OK",
+                  &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,

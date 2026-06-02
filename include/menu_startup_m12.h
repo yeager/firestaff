@@ -309,6 +309,9 @@ typedef struct M12_StartupMenuState {
     const char* messageLine1;
     const char* messageLine2;
     const char* messageLine3;
+    char messageLine1Storage[128];
+    char messageLine2Storage[256];
+    char messageLine3Storage[160];
     M12_MenuSettingsState settings;
     int languageExplicit;
     M12_AssetStatus assetStatus;
