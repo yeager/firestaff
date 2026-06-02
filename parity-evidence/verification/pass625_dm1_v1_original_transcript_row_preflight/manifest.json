@@ -31,8 +31,8 @@
     {
       "expected": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
       "id": "pass623_input_capture_bridge",
-      "observed": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-      "ok": true,
+      "observed": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+      "ok": false,
       "path": "parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json"
     }
   ],
@@ -43,7 +43,7 @@
     "no non-N2 original asset path is used",
     "no push, tag, package, or release action"
   ],
-  "ok": true,
+  "ok": false,
   "originalAssetLocks": [
     {
       "bytes": 12002,
@@ -90,40 +90,45 @@
       "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"
     },
     {
-      "bytes": 4503,
-      "exists": true,
+      "bytes": null,
+      "exists": false,
       "expectedBytes": 4503,
       "expectedSha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b",
-      "ok": true,
+      "ok": false,
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/VGA",
-      "realpath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA",
+      "realpath": null,
       "relative": "DungeonMasterPC34/VGA",
-      "sha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b"
+      "sha256": null
     },
     {
-      "bytes": 15474,
-      "exists": true,
+      "bytes": null,
+      "exists": false,
       "expectedBytes": 15474,
       "expectedSha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4",
-      "ok": true,
+      "ok": false,
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/SELECTOR",
-      "realpath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SELECTOR",
+      "realpath": null,
       "relative": "DungeonMasterPC34/SELECTOR",
-      "sha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4"
+      "sha256": null
     },
     {
-      "bytes": 896553,
-      "exists": true,
+      "bytes": null,
+      "exists": false,
       "expectedBytes": 896553,
       "expectedSha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275",
-      "ok": true,
+      "ok": false,
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/Dungeon-Master_DOS_EN.zip",
-      "realpath": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/Dungeon-Master_DOS_EN.zip",
+      "realpath": null,
       "relative": "Dungeon-Master_DOS_EN.zip",
-      "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
+      "sha256": null
     }
   ],
-  "problems": [],
+  "problems": [
+    "asset lock failed: DungeonMasterPC34/VGA",
+    "asset lock failed: DungeonMasterPC34/SELECTOR",
+    "asset lock failed: Dungeon-Master_DOS_EN.zip",
+    "gate status drifted: pass623_input_capture_bridge"
+  ],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
     {
@@ -200,7 +205,7 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+  "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
   "targetRowAudit": {
     "ok": true,
     "pass623Row": {
@@ -257,7 +262,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-06-02T02:24:33.086514+00:00",
+  "timestampUtc": "2026-05-30T04:54:02.275719+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,
