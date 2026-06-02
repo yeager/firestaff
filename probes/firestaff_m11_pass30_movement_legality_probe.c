@@ -66,8 +66,10 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     dungeon->header.mapCount = 2;
     dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));
     dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(struct DungeonMapTiles_Compat));
+    dungeon->maps[0].level = 0;
     dungeon->maps[0].width = MAP_W;
     dungeon->maps[0].height = MAP_H;
+    dungeon->maps[1].level = 1;
     dungeon->maps[1].width = MAP_W;
     dungeon->maps[1].height = MAP_H;
     dungeon->tiles[0].squareData = squareData;
