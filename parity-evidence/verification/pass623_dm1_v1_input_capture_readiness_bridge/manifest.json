@@ -10,7 +10,7 @@
         "direction": 2,
         "label": "01_start_south_1_3",
         "map": 0,
-        "sha": "210fa5eedd9c37172c59dd451bffa7f942c5402358ae535d841d3a8614711371",
+        "sha": "dbddd83083612ec7bcaaf3796a93b0b9681b8db2b99f18e83d0aead0335d688e",
         "x": 1,
         "y": 3
       },
@@ -94,7 +94,7 @@
         "direction": 2,
         "label": "04_forward_south_1_4",
         "map": 0,
-        "sha": "25bcc97ae93881a39e4bdeffadf07f6fc7b1ac695adbfcc07b585113a8ad4b2e",
+        "sha": "3a72a9707bc48ac407e307f3a061593f362faedf036242093d7caade8a2187e9",
         "x": 1,
         "y": 4
       },
@@ -114,17 +114,33 @@
       "claim": "Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
-      "lines": "6486-6543",
-      "missing": [],
-      "ok": true
+      "lines": "6162-6225",
+      "missing": [
+        "case M12_MENU_INPUT_LEFT:",
+        "return DM1_V1_COMMAND_TURN_LEFT;",
+        "case M12_MENU_INPUT_RIGHT:",
+        "return DM1_V1_COMMAND_TURN_RIGHT;",
+        "case M12_MENU_INPUT_UP:",
+        "return DM1_V1_COMMAND_MOVE_FORWARD;",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
+        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
+      ],
+      "ok": false
     },
     {
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
-      "lines": "6505-6678",
-      "missing": [],
-      "ok": true
+      "lines": "6229-6297",
+      "missing": [
+        "state->world.gameTick++;",
+        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
+        "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
+        "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
+        "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
+        "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
+      ],
+      "ok": false
     },
     {
       "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
@@ -178,8 +194,11 @@
     "no non-N2 source path is used",
     "no push or release action"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "firestaff route audit failed: m11_input_maps_to_dm1_v1_commands",
+    "firestaff route audit failed: m11_records_movement_pipeline_capture_state"
+  ],
   "redmcsbSourceAudit": [
     {
       "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
@@ -253,6 +272,6 @@
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-06-02T02:24:33.166591+00:00"
+  "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+  "timestampUtc": "2026-05-30T04:54:02.266913+00:00"
 }
