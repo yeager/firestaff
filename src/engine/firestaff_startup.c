@@ -1,6 +1,6 @@
 
-#include "firestaff_data_validator.h"
-#include "firestaff_known_hashes.h"
+#include "asset_status_m12.h"
+#include "firestaff_startup.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -78,18 +78,8 @@ void fs_startup_ensure_data_dirs(const char *base_dir) {
     }
 }
 
-/* Validate and return which games are available (local typedef mirrors firestaff_startup.h) */
-typedef struct {
-    int dm1_available;
-    int csb_available;
-    int dm2_available;
-    int nexus_available;
-    int theron_available;  /* PC Engine/TurboGrafx-CD Track 02 hash-verified */
-    const char *data_dir;
-} FS_GameAvailability;
-
 void fs_startup_check_games(const char *data_dir, FS_GameAvailability *avail) {
-    FS_ValidationReport report;
+    M12_AssetStatus status;
     if (!avail) return;
     memset(avail, 0, sizeof(*avail));
 
@@ -98,13 +88,13 @@ void fs_startup_check_games(const char *data_dir, FS_GameAvailability *avail) {
 
     fs_startup_ensure_data_dirs(data_dir);
 
-    if (fs_validate_data_dir(data_dir, &report) >= 0) {
-        avail->dm1_available = report.dm1_ready;
-        avail->csb_available = report.csb_ready;
-        avail->dm2_available = report.dm2_ready;
-        avail->nexus_available = report.nexus_ready;
-        avail->theron_available = report.theron_ready;
-    }
+    M12_AssetStatus_Scan(&status, data_dir);
+    avail->dm1_available = M12_AssetStatus_GameAvailable(&status, "dm1");
+    avail->csb_available = M12_AssetStatus_GameAvailable(&status, "csb");
+    avail->dm2_available = M12_AssetStatus_GameAvailable(&status, "dm2");
+    avail->nexus_available = M12_AssetStatus_GameAvailable(&status, "nexus");
+    avail->theron_available = M12_AssetStatus_GameAvailable(&status, "theron");
+    avail->data_dir = M12_AssetStatus_GetDataDir(&status);
 
     printf("Game data: DM1=%s CSB=%s DM2=%s Nexus=%s Theron=%s\n",
         avail->dm1_available ? "YES" : "no",

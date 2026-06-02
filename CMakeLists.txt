@@ -4339,6 +4339,7 @@ if(BUILD_TESTING)
         src/engine/firestaff_data_validator.c
         src/engine/firestaff_startup.c
         src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c

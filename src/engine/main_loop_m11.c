@@ -1203,6 +1203,10 @@ static int m11_prepare_direct_launch(M12_StartupMenuState* menuState,
             entry->kind == M12_MENU_ENTRY_GAME &&
             entry->gameId &&
             strcmp(entry->gameId, gameId) == 0) {
+            if (!entry->available ||
+                !M12_AssetStatus_GameAvailable(&menuState->assetStatus, gameId)) {
+                return 0;
+            }
             menuState->selectedIndex = i;
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
@@ -2223,7 +2227,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     /* Always present at least once so the window actually has content. */
     if (o->directLaunch) {
         if (!m11_prepare_direct_launch(&menuState, o->gameId)) {
-            fprintf(stderr, "firestaff: unknown game id for --game: %s\n",
+            fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
                     o->gameId ? o->gameId : "(null)");
             runRc = 2;
             goto cleanup;

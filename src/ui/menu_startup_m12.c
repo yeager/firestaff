@@ -25,6 +25,8 @@
 #include <string.h>
 #include <time.h>
 
+void m12_update_game_availability(const FS_GameAvailability *avail);
+
 enum {
     M12_COLOR_BLACK = 0,
     M12_COLOR_NAVY = 1,
@@ -59,6 +61,7 @@ enum {
     M12_SETTINGS_ROW_TOUCH_CONTROLS,
     M12_SETTINGS_ROW_MOVEMENT_MODE,
     M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
+    M12_SETTINGS_ROW_DATA_DIR,
     M12_SETTINGS_ROW_DATA_STATUS,
     M12_SETTINGS_ROW_DEBUG_OVERLAY,
     M12_SETTINGS_ROW_DEVELOPER_GATES,
@@ -1383,6 +1386,16 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     }
     m12_apply_loaded_config(state, dataDir);
     m12_sync_entries_from_assets(state);
+    {
+        FS_GameAvailability avail;
+        avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
+        avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
+        avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
+        avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
+        avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
+        avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        m12_update_game_availability(&avail);
+    }
     m12_sync_card_art(state);
     M12_CreatureArt_Init(&state->creatureArt,
                          M12_AssetStatus_GetDataDir(&state->assetStatus),
@@ -1520,6 +1533,24 @@ static const char* m12_settings_value_data_status(const M12_StartupMenuState* st
         return "HASHED BLOCKED";
     }
     return "MISSING DATA";
+}
+
+static const char* m12_settings_value_data_dir(const M12_StartupMenuState* state) {
+    static char text[96];
+    const char* dir = (state && state->settings.streamerMode)
+                          ? "(hidden)"
+                          : (state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "");
+    size_t len;
+    if (!dir || dir[0] == '\0') {
+        return "DEFAULT";
+    }
+    len = strlen(dir);
+    if (len < sizeof(text)) {
+        snprintf(text, sizeof(text), "%s", dir);
+    } else {
+        snprintf(text, sizeof(text), "...%s", dir + len - (sizeof(text) - 4U));
+    }
+    return text;
 }
 
 static const char* m12_settings_value_debug_overlay(const M12_StartupMenuState* state) {
@@ -1680,6 +1711,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_tr(state, "TOUCH CONTROLS");
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_tr(state, "MOVEMENT MODE");
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN: return m12_tr(state, "SMOOTH TURN PAN");
+        case M12_SETTINGS_ROW_DATA_DIR: return m12_tr(state, "DATA DIRECTORY");
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_tr(state, "ORIGINAL DATA");
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_tr(state, "DEBUG OVERLAY");
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_tr(state, "DEVELOPER GATES");
@@ -1729,6 +1761,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_settings_value_movement_mode(state);
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN:
             return m12_tr(state, g_toggleModes[state && state->settings.dm1V2SmoothTurnPanEnabled ? 1 : 0]);
+        case M12_SETTINGS_ROW_DATA_DIR: return m12_settings_value_data_dir(state);
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_settings_value_data_status(state);
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_settings_value_debug_overlay(state);
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_settings_value_developer_gates(state);
@@ -1793,7 +1826,7 @@ static int m12_settings_group_starts(int row) {
            row == M12_SETTINGS_ROW_GRAPHICS ||
            row == M12_SETTINGS_ROW_RENDERER_BACKEND ||
            row == M12_SETTINGS_ROW_INPUT_MODE ||
-           row == M12_SETTINGS_ROW_DATA_STATUS ||
+           row == M12_SETTINGS_ROW_DATA_DIR ||
            row == M12_SETTINGS_ROW_DEBUG_OVERLAY ||
            row == M12_SETTINGS_ROW_AUDIO_MASTER ||
            row == M12_SETTINGS_ROW_FONT_SCALE ||
@@ -2118,6 +2151,49 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
+        case M12_SETTINGS_ROW_DATA_DIR: {
+            char roots[3][M12_ASSET_DATA_DIR_CAPACITY];
+            char defaultOriginals[M12_ASSET_DATA_DIR_CAPACITY];
+            char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+            const char* current = M12_AssetStatus_GetDataDir(&state->assetStatus);
+            int count = 0;
+            int currentIndex = -1;
+            int i;
+            if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+                snprintf(roots[count++], sizeof(roots[0]), "%s", defaultOriginals);
+            }
+            if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL) &&
+                (count == 0 || strcmp(roots[count - 1], legacyData) != 0)) {
+                snprintf(roots[count++], sizeof(roots[0]), "%s", legacyData);
+            }
+            if (count <= 0) {
+                break;
+            }
+            for (i = 0; i < count; ++i) {
+                if (current && strcmp(current, roots[i]) == 0) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+            if (currentIndex < 0) {
+                currentIndex = delta < 0 ? count : -1;
+            }
+            M12_AssetStatus_Scan(&state->assetStatus,
+                                 roots[m12_cycle_index(currentIndex, delta, count)]);
+            m12_sync_entries_from_assets(state);
+            {
+                FS_GameAvailability avail;
+                avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
+                avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
+                avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
+                avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
+                avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
+                avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+                m12_update_game_availability(&avail);
+            }
+            m12_sync_card_art(state);
+            break;
+        }
         case M12_SETTINGS_ROW_DATA_STATUS:
             break;
         case M12_SETTINGS_ROW_DEBUG_OVERLAY:
@@ -2367,6 +2443,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACCEPT:
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
+                    const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
                     /* Launch row — when V2.2 mode is selected but modern assets
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
@@ -2390,6 +2467,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
                         state->messageLine2 = M12_StartupMenu_GetRendererBackendLabel(state);
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    } else if (launchEntry && launchEntry->gameId &&
+                               !M12_AssetStatus_GameAvailable(&state->assetStatus, launchEntry->gameId)) {
+                        state->launchRequested = 0;
+                        state->quickResumeLaunchRequested = 0;
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND);
+                        state->messageLine2 = m12_text(state, M12_TEXT_CHECK_FIRESTAFF_DATA_DIR);
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
@@ -4270,7 +4355,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
                 else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
                 else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-                else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+                else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_DIR;
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
@@ -5541,7 +5626,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
             else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
             else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-            else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+            else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_DIR;
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
@@ -6138,8 +6223,11 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        launchBorder,
                        launchFill);
         {
-            const char* launchLabel = (pmode == M12_PRESENTATION_V22_MODERN ||
-                                       !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
+            const char* launchLabel = (entry && entry->gameId &&
+                                       !M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId))
+                                          ? m12_tr(state, "> DATA FILES NOT FOUND")
+                                          : (pmode == M12_PRESENTATION_V22_MODERN ||
+                                             !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
                                           ? m12_tr(state, "> DATA FILES NOT FOUND")
                                           : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
