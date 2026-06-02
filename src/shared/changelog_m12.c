@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.1  (2026-06-02)",
+    "  - DM1 PC-34 boot: restore ReDMCSB SWSH/FTL logo playback before TITLE",
+    "  - DM1 PC-34 TITLE: keep GRAPHICS.DAT C001 title zoom on source-locked final guard timing",
+    "  - DM1 PC-34 entrance: source-locked vblank cadence for pre-open delay and door animation",
+    "  - SWSH palette: drive FTL logo from ReDMCSB Setcolor commands instead of TITLE palette",
+    "",
     "V2.7.0  (2026-05-31)",
     "  - CSB V2: Phase 0-6 complete — V1 compat lock, launch/profile separation, enhanced asset pipeline, stairs animation, touch controller affordances",
     "  - DM2 V2: Phase 1-6 complete — launch/profile gates, smooth movement runtime, enhanced lighting, outdoor FX, torch flicker, fog animation, HUD overlay hardening",
@@ -86,5 +92,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.6.0";
+    return "2.7.1";
 }

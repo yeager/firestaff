@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.0 LANGUAGES C)
+project(Firestaff VERSION 2.7.1 LANGUAGES C)
 
 include_directories(include src)
 
@@ -4089,6 +4089,22 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass510_dm1_v1_movement_sensor_rotation_defer_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass510_dm1_v1_movement_sensor_rotation_defer_source_lock.py
+    )
+endif()
+
+
+# -- DM1 V1 ENTRANCE runtime cadence source-lock gate
+if(BUILD_TESTING)
+    add_executable(test_entrance_frontend_pc34_compat_integration
+        tests/test_entrance_frontend_pc34_compat_integration.c
+        src/frontend/entrance_frontend_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_entrance_frontend_pc34_compat_integration PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME entrance_frontend_source_animation_schedule
+        COMMAND test_entrance_frontend_pc34_compat_integration
     )
 endif()
 

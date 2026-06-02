@@ -99,6 +99,25 @@ int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
     return 1;
 }
 
+unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimationStep* step) {
+    if (!step) return 0u;
+    /* ReDMCSB ENTRANCE.C PC/F20 timing source-lock:
+     * - ENTRANCE.C:850-883 waits on M526_WaitVerticalBlank() while the
+     *   entrance waits for input.
+     * - ENTRANCE.C:935 calls F0022_MAIN_Delay(20) before door opening.
+     * - ENTRANCE.C:239 guards each F0438 door animation step with one
+     *   M526_WaitVerticalBlank().
+     * Runtime expresses those source ticks as 20 ms vblank slots, matching
+     * the TITLE frontend cadence helper used for TITLE.C. */
+    if (step->delayTicks > 0u) {
+        return step->delayTicks * 20u;
+    }
+    if (step->vblankLoopCount > 0u) {
+        return step->vblankLoopCount * 20u;
+    }
+    return 0u;
+}
+
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void) {
     return "ReDMCSB ENTRANCE.C PC/F20 path: draw entrance micro-dungeon, fade/curtain to entrance palette, draw C004 entrance screen, wait on VBlank/input loop, play switch sound, F0022_MAIN_Delay(20), hide pointer, then F0438 opens doors in source animation steps 1..31 with a BUG0_71 one-VBlank guard per step; rattle sound fires when step%3==1; door boxes move 4px per step from DATA.C left {0,100,0,160} and right {109,231,0,160}.";
 }
@@ -126,4 +145,3 @@ const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void) {
  *   ENTRANCE.C:1074 F2158_G
  *   ENTRANCE.C:424 F2163_S
  * ══════════════════════════════════════════════════════════════════════ */
-
