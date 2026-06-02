@@ -6170,8 +6170,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.rendererBackend = rendererBackend;
     spec.title = entry->title;
     spec.gameId = entry->gameId;
-    spec.dataDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
     spec.sourceId = entry->gameId;
+    spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
+                                                     entry->gameId);
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;

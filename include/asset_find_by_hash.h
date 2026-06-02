@@ -35,4 +35,13 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                            char *outPath, int outPathLen,
                            int *outMatchIndex, int maxDepth);
 
+/*
+ * Materialize a virtual container path returned by asset_find_by_md5(), for
+ * example "game-data.zip::dm2/GRAPHICS.DAT" or "disc.iso::DUNGEON.DAT".
+ * Writes the uncompressed/extracted entry to outFilePath and returns 1 on
+ * success. Returns 0 for non-virtual paths, unsupported compression methods,
+ * missing entries, or write failures.
+ */
+int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath);
+
 #endif /* ASSET_FIND_BY_HASH_H */

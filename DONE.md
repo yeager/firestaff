@@ -120,7 +120,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### Launcher and Settings
 
 - ✅ M12 settings persistence bridge: quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, streamer mode, custom music, custom dungeon, screenshot path, and all five per-game option slots round-trip through the startup menu probe.
-- ✅ Recursive game-data scanner: `--scan-data` / `--scan-game-data` reports found and missing required files by MD5 hash, ignores filename and folder layout, and treats TITLE/FTL/intro extras as non-blocking.
+- ✅ Recursive game-data scanner: `--scan-data` / `--scan-game-data` reports found and missing required files by MD5 hash, ignores filename and folder layout, scans stored ZIP entries plus ISO/BIN ISO 9660 contents, and treats TITLE/FTL/intro extras as non-blocking.
+- ✅ Archive game-data handoff: DM1/CSB/DM2 required files found inside ZIP/ISO containers are materialized into the Firestaff asset cache and launched through normal runtime file paths.
 - ✅ Game-data launch gating: DM1/CSB/DM2 now require both GRAPHICS and DUNGEON hashes before launch, Nexus/Theron require their primary hash marker, and direct `--game` launches are blocked when required data is missing.
 - ✅ Start-menu data status wiring: game cards reflect required hash availability, a data-directory settings row exists, and missing required data prevents launch.
 - ✅ Start-menu game-data popup: startup automatically scans the configured data directory, shows an OK popup when no game data is found, and unavailable games now report the specific required files missing from the hash-verified scan.

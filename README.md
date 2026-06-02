@@ -118,7 +118,8 @@ Suggested subdirectories:
 
 Filenames are less important than file hashes. Firestaff searches
 recursively, so a custom folder layout works as long as the original files are
-present.
+present. Game data may also live inside ZIP archives or ISO/BIN disc images;
+the scanner hashes archive contents and reports matches as virtual paths.
 
 ## Game Data Scanner
 
@@ -137,6 +138,14 @@ firestaff --scan-game-data
 The scanner reports required data per game. Required files block launch when
 missing. Non-essential extras such as title or intro animation files are
 reported as optional and can be skipped.
+
+ZIP files are supported for hash discovery across the game-data root. Stored
+entries are supported everywhere; deflated entries are supported when Firestaff
+is built with zlib, which is enabled automatically when CMake finds it. ISO/BIN
+disc images are scanned as ISO 9660 containers, covering DM2 disc images and
+the existing Saturn/Nexus data-image path. For DM1, CSB, and DM2, required
+files found inside archives are materialized into Firestaff's local asset cache
+before launch so the runtime still receives ordinary game-data paths.
 
 You can point Firestaff at a custom root:
 
