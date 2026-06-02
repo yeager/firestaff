@@ -184,6 +184,7 @@ Before pushing from the main session, run the smallest relevant local verificati
 - Comments cite ReDMCSB functions: `/* ReDMCSB: COMMAND.C F0359 line ~120 */`
 - Commits reference pass numbers when applicable: `pass602b`, `BUG-007`, etc.
 - Subagents commit but NEVER push. Main verifies before push.
+- Always push verified main-session changes to GitHub `main`; do not leave verified Firestaff changes only in the local worktree.
 - No API keys, tokens, passwords, or secrets in any file. Game data files stay user-supplied.
 - Keep `TODO.md` and `DONE.md` current at least twice per day while active Firestaff work is running.
 - Public README/release copy should be user-facing and polished. Keep worker logs, debug manifests, queue status, and internal failure counters out of public sales text.
