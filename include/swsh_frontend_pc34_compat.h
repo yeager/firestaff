@@ -33,6 +33,10 @@ typedef struct SWSH_CompatSourceTiming {
 } SWSH_CompatSourceTiming;
 
 void SWSH_Compat_ExpandLogoToBitmap(const unsigned char* graphic, unsigned char* bitmap);
+const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
+                                                       unsigned int dataBytes);
+void SWSH_Compat_ConvertAtariRgbWordToRgb8(unsigned int colorValue,
+                                            unsigned char outRgb[3]);
 unsigned int SWSH_Compat_GetSourceAnimationStepCount(void);
 int SWSH_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                        SWSH_CompatSourceAnimationStep* outStep);

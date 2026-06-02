@@ -617,10 +617,11 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
                 continue;
             }
         }
-        if (step.delayTicks >= 20U) {
-            SDL_Delay(330);
-        } else {
-            SDL_Delay(step.vblankLoopCount ? 16 : 33);
+        {
+            unsigned int delayMs = ENTRANCE_Compat_GetRuntimeDelayMs(&step);
+            if (delayMs > 0U) {
+                SDL_Delay(delayMs);
+            }
         }
         if (M11_Render_PumpEvents()) break;
     }
@@ -798,35 +799,62 @@ static int m11_find_ftl_swoosh_logo_path(const char* dataDir, char* outPath, siz
 /* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
  * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
  * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
+static void m11_swsh_indexed_to_rgba(const unsigned char* indexed,
+                                     unsigned char* rgba,
+                                     const unsigned char palette[16][3]) {
+    unsigned int i;
+    if (!indexed || !rgba || !palette) return;
+    for (i = 0U; i < (unsigned int)M11_FB_BYTES; ++i) {
+        unsigned char idx = indexed[i] & 0x0Fu;
+        rgba[i * 4U + 0U] = palette[idx][0];
+        rgba[i * 4U + 1U] = palette[idx][1];
+        rgba[i * 4U + 2U] = palette[idx][2];
+        rgba[i * 4U + 3U] = 0xFFu;
+    }
+}
+
 static void m11_play_ftl_swoosh_if_available(const char* dataDir, int skipSwoosh) {
     char logoPath[FSP_PATH_MAX];
-    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; FILE* f = NULL; long fsize = 0;
+    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; unsigned char* screenRgba = NULL; FILE* f = NULL; long fsize = 0;
+    const unsigned char* logoPayload = NULL;
+    unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
     if (!m11_find_ftl_swoosh_logo_path(dataDir, logoPath, sizeof(logoPath))) return;
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
     logoImg = (unsigned char*)malloc((size_t)fsize);
     screenFb = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
-    if (!logoImg || !screenFb) goto cleanup;
+    screenRgba = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
+    if (!logoImg || !screenFb || !screenRgba) goto cleanup;
     if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
-    SWSH_Compat_ExpandLogoToBitmap(logoImg, screenFb);
+    logoPayload = SWSH_Compat_FindLogoImagePayload(logoImg, (unsigned int)fsize);
+    if (!logoPayload) goto cleanup;
+    SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFb);
 
     /* V0901006_PaletteCommands from ReDMCSB SWSH.C: word < 0x0008 = wait-count, else color-set. */
+    memset(swshPalette, 0, sizeof(swshPalette));
     { static const uint16_t cmds[] = {
         0x1777u,0x0001u,0x2777u,0x0001u,0x3777u,0x0002u,0x4777u,0x0002u,
         0x5777u,0x0003u,0x6777u,0x0003u,0x7777u,0x0003u,0x8777u,0x9777u,
         0xA555u,0xF777u,0x0003u,0x8000u,0xB777u,0xC555u,0xD222u,0x0003u,0xF770u,0xE770u
     }; size_t n = sizeof(cmds)/sizeof(cmds[0]);
       SDL_Delay(20);
-      M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
+      m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+      M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       for (size_t i = 0; i < n; ++i) {
           if (M11_Render_PumpEvents()) break;
           uint16_t w = cmds[i];
-          if (w < 0x0008u) { for (uint16_t v=0;v<w;++v) SDL_Delay(16); }
-          else { M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE); SDL_Delay(16); } }
+          if (w < 0x0008u) { for (uint16_t v=0;v<w;++v) SDL_Delay(20); }
+          else {
+              unsigned int colorIndex = ((unsigned int)w >> 12) & 0x0Fu;
+              SWSH_Compat_ConvertAtariRgbWordToRgb8((unsigned int)w & 0x0777u, swshPalette[colorIndex]);
+              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+              SDL_Delay(20);
+          } }
       SDL_Delay(120); }
 cleanup:
-    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (f) fclose(f);
+    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (screenRgba) free(screenRgba); if (f) fclose(f);
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
@@ -934,6 +962,11 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
             break;
         }
     }
+    /* ReDMCSB TITLE.C:395-409 leaves two post-zoom VBlanks plus the final
+     * BUG0_71 guard before STARTUP1.C advances into the entrance.  The
+     * TITLE.DAT fallback below already observes this; keep the GRAPHICS.DAT
+     * C001 runtime path on the same source cadence. */
+    SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }

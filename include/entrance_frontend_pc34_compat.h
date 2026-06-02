@@ -47,6 +47,7 @@ int ENTRANCE_Compat_GetDoorAnimationStep(unsigned int animationStep,
 unsigned int ENTRANCE_Compat_GetSourceAnimationStepCount(void);
 int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                            EntranceCompatSourceAnimationStep* outStep);
+unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimationStep* step);
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void);
 
 #endif

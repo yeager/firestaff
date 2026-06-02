@@ -1,3 +1,22 @@
+# Firestaff v2.7.1
+
+DM1 PC-34 boot-sequence fidelity release.
+
+## Fixes
+
+- Restored ReDMCSB SWSH/FTL logo playback before the DM1 TITLE sequence.
+- Fixed SWSH `SWOOSH` loading when the original file is a DOS/MZ program with the IMG logo payload embedded inside it.
+- Fixed the SWSH palette path so the FTL logo starts black and lights up via the ReDMCSB `Setcolor()` command sequence instead of using the TITLE palette.
+- Kept the GRAPHICS.DAT `C001_GRAPHIC_TITLE` path on the same final guard timing as the TITLE.DAT fallback.
+- Replaced hardcoded entrance-door delays with source-locked ReDMCSB vblank timing.
+
+## Verification
+
+- SWSH, TITLE, and entrance source-lock gates passed locally.
+- Phase A probe: 21/21 invariants passed locally.
+
+---
+
 # Firestaff v2.7.0
 
 Major V2 pipeline completion across all game systems, Theron V1 rendering pipeline, DM1 V1/V2 Phase 8 completion, and accessibility improvements building on the v2.6.0 release.

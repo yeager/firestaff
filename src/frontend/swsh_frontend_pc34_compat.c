@@ -12,6 +12,46 @@ unsigned char*       bitmap FINAL_SEPARATOR
         IMG_Compat_ExpandToBitmapRequired(graphic, bitmap);
 }
 
+const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
+                                                       unsigned int dataBytes) {
+        unsigned int i;
+        if (!data || dataBytes < 4u) return 0;
+        if ((unsigned int)(data[0] | (data[1] << 8)) == 320u &&
+            (unsigned int)(data[2] | (data[3] << 8)) == 200u) {
+                return data;
+        }
+        /* ReDMCSB SWSH.C source-lock: the PC SWOOSH program expands the
+         * SWSHGDAT.C FTL logo bitmap before running START.PRG.  Canonical
+         * extracted DM1 PC files carry that bitmap inside an MZ executable,
+         * so locate the IMG header for the 320x200 logo before decoding. */
+        if (dataBytes >= 2u && data[0] == 'M' && data[1] == 'Z') {
+                for (i = 2u; i + 4u <= dataBytes; ++i) {
+                        if ((unsigned int)(data[i] | (data[i + 1u] << 8)) == 320u &&
+                            (unsigned int)(data[i + 2u] | (data[i + 3u] << 8)) == 200u) {
+                                return data + i;
+                        }
+                }
+        }
+        return 0;
+}
+
+static unsigned char SWSH_Compat_AtariRgb3ToRgb8(unsigned int component) {
+        component &= 0x07u;
+        return (unsigned char)((component * 255u + 3u) / 7u);
+}
+
+void SWSH_Compat_ConvertAtariRgbWordToRgb8(unsigned int colorValue,
+                                            unsigned char outRgb[3]) {
+        if (!outRgb) return;
+        /* ReDMCSB SWSH.C:21-28 masks palette commands with 0x0777 and
+         * passes the value directly to XBIOS Setcolor().  The word is Atari
+         * 3-bit RGB (0xRGB), so 0x777 is white, 0x555 light grey,
+         * 0x222 dark grey, and 0x770 yellow. */
+        outRgb[0] = SWSH_Compat_AtariRgb3ToRgb8((colorValue >> 8) & 0x07u);
+        outRgb[1] = SWSH_Compat_AtariRgb3ToRgb8((colorValue >> 4) & 0x07u);
+        outRgb[2] = SWSH_Compat_AtariRgb3ToRgb8(colorValue & 0x07u);
+}
+
 
 typedef struct SWSH_CompatPaletteCommand {
         unsigned short word;
