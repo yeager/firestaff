@@ -200,6 +200,8 @@ static int file_matches_fixture_payload(const char* path) {
 
 int main(void) {
     char outPath[ASSET_PATH_MAX];
+    char outPaths[2][ASSET_PATH_MAX];
+    int matched[2];
     const char* md5Upper = "08C53652F85ABFE8A075D5DE4D3C8287";
     const char* md5List[] = {
         "00000000000000000000000000000000",
@@ -245,6 +247,19 @@ int main(void) {
         return 1;
     }
 
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_fixture_name(outPaths[1])) {
+        cleanup_fixture();
+        fprintf(stderr, "MD5 all-list file lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
@@ -257,6 +272,18 @@ int main(void) {
         !path_has_virtual_name(outPath, "archive.zip", "dm2/RENAMED.BIN")) {
         cleanup_fixture();
         fprintf(stderr, "stored ZIP entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_name(outPaths[1], "archive.zip", "dm2/RENAMED.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "MD5 all-list ZIP lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
         return 1;
     }
     if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
@@ -279,6 +306,18 @@ int main(void) {
         !path_has_virtual_name(outPath, "disc.iso", "DUNGEON.DAT")) {
         cleanup_fixture();
         fprintf(stderr, "ISO entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_name(outPaths[1], "disc.iso", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "MD5 all-list ISO lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
         return 1;
     }
     if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||

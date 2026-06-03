@@ -47,6 +47,9 @@ typedef struct {
 
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
 static M12_AssetStatusScanMetrics g_m12ScanMetrics;
+static char g_m12TestDm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
+static char g_m12TestDm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
+static char g_m12TestNexusDataMd5[M12_ASSET_MD5_CAPACITY];
 
 void M12_AssetStatus_TestResetScanMetrics(void) {
     memset(&g_m12ScanMetrics, 0, sizeof(g_m12ScanMetrics));
@@ -54,6 +57,25 @@ void M12_AssetStatus_TestResetScanMetrics(void) {
 
 M12_AssetStatusScanMetrics M12_AssetStatus_TestGetScanMetrics(void) {
     return g_m12ScanMetrics;
+}
+
+void M12_AssetStatus_TestSetDm2SyntheticHashes(const char* graphicsMd5,
+                                               const char* dungeonMd5) {
+    snprintf(g_m12TestDm2GraphicsMd5,
+             sizeof(g_m12TestDm2GraphicsMd5),
+             "%s",
+             graphicsMd5 ? graphicsMd5 : "");
+    snprintf(g_m12TestDm2DungeonMd5,
+             sizeof(g_m12TestDm2DungeonMd5),
+             "%s",
+             dungeonMd5 ? dungeonMd5 : "");
+}
+
+void M12_AssetStatus_TestSetNexusSyntheticHash(const char* dataMd5) {
+    snprintf(g_m12TestNexusDataMd5,
+             sizeof(g_m12TestNexusDataMd5),
+             "%s",
+             dataMd5 ? dataMd5 : "");
 }
 #endif
 
@@ -586,22 +608,55 @@ static void m12_scan_original_candidates(M12_AssetStatus* status,
     }
 }
 
+static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (spec && strcmp(spec->gameId, "dm2") == 0 &&
+        strcmp(spec->versionId, "pc-en") == 0 &&
+        g_m12TestDm2GraphicsMd5[0] != '\0') {
+        return g_m12TestDm2GraphicsMd5;
+    }
+    if (spec && strcmp(spec->gameId, "nexus") == 0 &&
+        strcmp(spec->versionId, "nexus-saturn-jp") == 0 &&
+        g_m12TestNexusDataMd5[0] != '\0') {
+        return g_m12TestNexusDataMd5;
+    }
+#endif
+    return spec ? spec->md5 : NULL;
+}
+
+static const char* m12_effective_required_md5(const M12_RequiredFileSpec* spec) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (spec && strcmp(spec->gameId, "dm2") == 0 &&
+        strcmp(spec->roleId, "dungeon") == 0 &&
+        g_m12TestDm2DungeonMd5[0] != '\0') {
+        return g_m12TestDm2DungeonMd5;
+    }
+    if (spec && strcmp(spec->gameId, "nexus") == 0 &&
+        strcmp(spec->roleId, "data") == 0 &&
+        g_m12TestNexusDataMd5[0] != '\0') {
+        return g_m12TestNexusDataMd5;
+    }
+#endif
+    return spec ? spec->md5 : NULL;
+}
+
 static int m12_try_match_version(const char* root,
                                  const M12_VersionSpec* spec,
                                  char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
                                  char matchedMd5[M12_ASSET_MD5_CAPACITY]) {
     char path[ASSET_PATH_MAX];
-    if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
+    const char* md5 = m12_effective_version_md5(spec);
+    if (!root || !spec || !spec->names || !md5 || md5[0] == 0) {
         return 0;
     }
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
     g_m12ScanMetrics.versionHashLookups++;
 #endif
-    if (!asset_find_by_md5(root, spec->md5, path, (int)sizeof(path), 32)) {
+    if (!asset_find_by_md5(root, md5, path, (int)sizeof(path), 32)) {
         return 0;
     }
     m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
-    m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, spec->md5);
+    m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
     return 1;
 }
 
@@ -774,6 +829,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
     size_t rootIndex;
     int matchedAny = 0;
     const M12_GameVersionSpec* gameSpec;
+    char rootMatchedPaths[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME][ASSET_PATH_MAX];
+    int rootMatched[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return;
     }
@@ -786,13 +843,48 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         version->versionId = spec->versionId;
         version->label = spec->label;
         version->shortLabel = spec->shortLabel;
+    }
+    memset(rootMatchedPaths, 0, sizeof(rootMatchedPaths));
+    memset(rootMatched, 0, sizeof(rootMatched));
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        const char* md5List[M12_ASSET_MAX_VERSIONS_PER_GAME + 1U];
+        size_t md5Index;
+        size_t md5Count;
+        for (md5Index = 0U;
+             md5Index < gameSpec->versionCount &&
+             md5Index < M12_ASSET_MAX_VERSIONS_PER_GAME;
+             ++md5Index) {
+            md5List[md5Index] = m12_effective_version_md5(&gameSpec->versions[md5Index]);
+        }
+        md5Count = md5Index;
+        md5List[md5Index] = NULL;
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.versionHashLookups++;
+#endif
+        (void)asset_find_all_by_md5_list(roots[rootIndex],
+                                         md5List,
+                                         rootMatchedPaths[rootIndex],
+                                         rootMatched[rootIndex],
+                                         (int)md5Count,
+                                         32);
+    }
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        const M12_VersionSpec* spec = &gameSpec->versions[i];
+        const char* md5 = m12_effective_version_md5(spec);
+        if (!md5 || md5[0] == '\0') {
+            continue;
+        }
         for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-            if (m12_try_match_version(roots[rootIndex],
-                                      spec,
-                                      version->matchedPath,
-                                      version->matchedMd5)) {
+            if (rootMatched[rootIndex][i]) {
                 version->matched = 1;
                 matchedAny = 1;
+                m12_copy_string(version->matchedPath,
+                                sizeof(version->matchedPath),
+                                rootMatchedPaths[rootIndex][i]);
+                m12_copy_string(version->matchedMd5,
+                                sizeof(version->matchedMd5),
+                                md5);
                 m12_copy_string(status->runtimeDataDirs[gameIndex],
                                 sizeof(status->runtimeDataDirs[gameIndex]),
                                 roots[rootIndex]);
@@ -914,7 +1006,7 @@ static int m12_fill_required_files(M12_AssetStatus* status,
             }
         } else if (m12_required_hash_matches_any_root(roots,
                                                       rootCount,
-                                                      spec->md5,
+                                                      m12_effective_required_md5(spec),
                                                       fileStatus->matchedPath,
                                                       fileStatus->matchedHash)) {
             fileStatus->matched = 1;
