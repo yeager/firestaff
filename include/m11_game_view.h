@@ -31,7 +31,8 @@ typedef enum {
     M11_GAME_SOURCE_BUILTIN_CATALOG = 0,
     M11_GAME_SOURCE_CUSTOM_DUNGEON,
     M11_GAME_SOURCE_DIRECT_DUNGEON,
-    M11_GAME_SOURCE_NEXUS_DGN
+    M11_GAME_SOURCE_NEXUS_DGN,
+    M11_GAME_SOURCE_THERON_TRACK02
 } M11_GameSourceKind;
 
 typedef struct {
@@ -352,6 +353,19 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } nexusState;
+
+    /* Theron's Quest V1 runtime — active when sourceKind ==
+     * M11_GAME_SOURCE_THERON_TRACK02. Opaque here so the public M11 state
+     * does not expose Theron-private implementation headers. */
+    void *theronBootProfile;  /* Theron_V1_BootProfile* */
+    void *theronWorld;        /* Theron_V1_World* */
+    void *theronViewport;     /* Theron_V1_Viewport* */
+    void *theronAssets;       /* TrAssetBundle* */
+    struct {
+        int level_loaded;
+        int party_x, party_y, party_dir;
+        int tick_count;
+    } theronState;
 
     /* Accessibility: in-game font size scale (1..3).
      * Set from M12 launcher's fontScale setting via M11_GameLaunchSpec.fontScale.

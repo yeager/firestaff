@@ -3,6 +3,10 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_viewport.h"
+#include "theron_v1_boot.h"
+#include "theron_v1_viewport.h"
+#include "theron_v1_world.h"
+#include "src/theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
 #include "config_m12.h"
@@ -40,6 +44,7 @@
 
 /* Forward declarations for functions defined later in this file. */
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
+static int M11_GameView_StartTheron(M11_GameViewState* state, const char* dataDir);
 
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
@@ -1007,6 +1012,10 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
             return "CUSTOM";
         case M11_GAME_SOURCE_DIRECT_DUNGEON:
             return "DIRECT";
+        case M11_GAME_SOURCE_NEXUS_DGN:
+            return "NEXUS";
+        case M11_GAME_SOURCE_THERON_TRACK02:
+            return "THERON";
         default:
             return "BUILTIN";
     }
@@ -5999,6 +6008,25 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->theronViewport) {
+        theron_vp_free((Theron_V1_Viewport*)state->theronViewport);
+        free(state->theronViewport);
+        state->theronViewport = NULL;
+    }
+    if (state->theronAssets) {
+        tr_asset_free((TrAssetBundle*)state->theronAssets);
+        free(state->theronAssets);
+        state->theronAssets = NULL;
+    }
+    if (state->theronWorld) {
+        free(state->theronWorld);
+        state->theronWorld = NULL;
+    }
+    if (state->theronBootProfile) {
+        theron_v1_boot_cleanup((Theron_V1_BootProfile*)state->theronBootProfile);
+        free(state->theronBootProfile);
+        state->theronBootProfile = NULL;
+    }
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -6014,6 +6042,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     if (!state || !spec || !spec->title) {
         return 0;
+    }
+    /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
+    if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
+        const char *dd = spec->dataDir;
+        if (!dd || !dd[0]) {
+            return 0;
+        }
+        return M11_GameView_StartTheron(state, dd);
     }
     /* ── Nexus V1: bypass DM1 dungeon loader entirely ───────────────
      * When gameId == "nexus" the M11 game-loop passes through
@@ -6246,6 +6282,147 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
+static int m11_theron_load_initial_level(Theron_V1_World* world,
+                                         const TrAssetBundle* assets) {
+    uint8_t level_data[12 + 8 * 8];
+    int x;
+    int y;
+    Theron_MapLoadResult r;
+    (void)assets;
+    if (!world) {
+        return 0;
+    }
+
+    /* Small deterministic launch room used until the real Track 02 dungeon
+     * bank offsets are promoted into the parser. It still enters through
+     * theron_v1_level_load(), so runtime movement/rendering consume the same
+     * Theron world model as parsed maps. Source: THQUEST.ASM T400/T520/T560. */
+    memset(level_data, 0, sizeof(level_data));
+    level_data[1] = 8;  /* width, big-endian */
+    level_data[3] = 8;  /* height, big-endian */
+    level_data[6] = 0x01;
+    level_data[7] = 0x39; /* seed 313 */
+    for (y = 0; y < 8; ++y) {
+        for (x = 0; x < 8; ++x) {
+            level_data[12 + y * 8 + x] =
+                (x == 0 || y == 0 || x == 7 || y == 7)
+                    ? THERON_SQUARE_WALL
+                    : THERON_SQUARE_FLOOR;
+        }
+    }
+    level_data[12 + 1 * 8 + 3] = THERON_SQUARE_EXIT;
+
+    world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_level = 0;
+    r = theron_v1_level_load(&world->levels[0][0],
+                             level_data,
+                             (int)sizeof(level_data),
+                             (int)world->current_dungeon,
+                             world->current_level);
+    if (r != THERON_MAP_OK) {
+        return 0;
+    }
+    world->levels[0][0].start_x = 3;
+    world->levels[0][0].start_y = 5;
+    world->levels[0][0].start_dir = 0; /* THQUEST.ASM T520: north */
+    world->level_loaded[0][0] = 1;
+    theron_v1_party_place(world,
+                          world->levels[0][0].start_x,
+                          world->levels[0][0].start_y,
+                          world->levels[0][0].start_dir);
+    return 1;
+}
+
+static int M11_GameView_StartTheron(M11_GameViewState* state, const char* dataDir) {
+    Theron_V1_BootProfile* profile = NULL;
+    Theron_V1_World* world = NULL;
+    Theron_V1_Viewport* viewport = NULL;
+    TrAssetBundle* assets = NULL;
+    int savedDebugHUD;
+    TrAssetResult assetResult;
+
+    if (!state || !dataDir || !dataDir[0]) {
+        return 0;
+    }
+
+    savedDebugHUD = state->showDebugHUD;
+    M11_GameView_Shutdown(state);
+    M11_GameView_Init(state);
+    state->showDebugHUD = savedDebugHUD;
+
+    profile = (Theron_V1_BootProfile*)calloc(1, sizeof(*profile));
+    world = (Theron_V1_World*)calloc(1, sizeof(*world));
+    viewport = (Theron_V1_Viewport*)calloc(1, sizeof(*viewport));
+    assets = (TrAssetBundle*)calloc(1, sizeof(*assets));
+    if (!profile || !world || !viewport || !assets) {
+        goto fail;
+    }
+
+    theron_v1_boot_profile_init(profile);
+    if (theron_v1_boot_scan_assets(profile, dataDir) != 0 ||
+        !profile->assets_verified) {
+        m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
+        goto fail;
+    }
+    theron_v1_boot_set_save_root(profile, NULL);
+
+    assetResult = tr_asset_load(profile->graphics_path, assets);
+    if (assetResult != TR_ASSET_OK) {
+        m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
+        goto fail;
+    }
+
+    theron_v1_world_init(world);
+    if (!m11_theron_load_initial_level(world, assets)) {
+        m11_set_status(state, "BOOT", "THERON LEVEL LOAD FAILED");
+        goto fail;
+    }
+    if (!theron_vp_init(viewport)) {
+        m11_set_status(state, "BOOT", "THERON VIEWPORT FAILED");
+        goto fail;
+    }
+
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
+    snprintf(state->sourceId, sizeof(state->sourceId), "theron");
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+             profile->graphics_path);
+    state->theronBootProfile = profile;
+    state->theronWorld = world;
+    state->theronViewport = viewport;
+    state->theronAssets = assets;
+    state->theronState.level_loaded = 1;
+    state->theronState.party_x = world->party.leader_x;
+    state->theronState.party_y = world->party.leader_y;
+    state->theronState.party_dir = world->party.leader_dir;
+    state->theronState.tick_count = (int)world->world_tick;
+    m11_set_status(state, "BOOT", "THERON READY");
+    m11_set_inspect_readout(state, "READY",
+                            "THERON TRACK 02 VERIFIED; V1 RUNTIME READY");
+    m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
+    return 1;
+
+fail:
+    if (viewport) {
+        theron_vp_free(viewport);
+        free(viewport);
+    }
+    if (assets) {
+        tr_asset_free(assets);
+        free(assets);
+    }
+    if (world) {
+        free(world);
+    }
+    if (profile) {
+        theron_v1_boot_cleanup(profile);
+        free(profile);
+    }
+    return 0;
+}
+
 int M11_GameView_QuickSave(M11_GameViewState* state) {
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
@@ -6454,6 +6631,18 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (state->gameWon || state->dialogOverlayActive ||
         state->mapOverlayActive || state->inventoryPanelActive) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        if (!world) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        theron_v1_world_tick(world);
+        state->theronState.party_x = world->party.leader_x;
+        state->theronState.party_y = world->party.leader_y;
+        state->theronState.party_dir = world->party.leader_dir;
+        state->theronState.tick_count = (int)world->world_tick;
+        return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
      * Nexus owns its own game state in state->nexusEngine (party position,
@@ -7123,6 +7312,66 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        int moved = 0;
+        if (!world) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input == M12_MENU_INPUT_LEFT) {
+            world->party.leader_dir = (world->party.leader_dir + 3) & 3;
+            moved = 1;
+            m11_set_status(state, "TURN", "LEFT");
+        } else if (input == M12_MENU_INPUT_RIGHT) {
+            world->party.leader_dir = (world->party.leader_dir + 1) & 3;
+            moved = 1;
+            m11_set_status(state, "TURN", "RIGHT");
+        } else if (input == M12_MENU_INPUT_UP) {
+            static const int dx[4] = {0, 1, 0, -1};
+            static const int dy[4] = {-1, 0, 1, 0};
+            int dir = world->party.leader_dir & 3;
+            int nx = world->party.leader_x + dx[dir];
+            int ny = world->party.leader_y + dy[dir];
+            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
+            moved = THERON_SQUARE_IS_PASSABLE(sq);
+            if (moved) {
+                theron_v1_party_place(world, nx, ny, dir);
+            }
+            m11_set_status(state, "MOVE",
+                           moved ? "THERON ADVANCED" : "BLOCKED");
+        } else if (input == M12_MENU_INPUT_DOWN) {
+            static const int dx[4] = {0, 1, 0, -1};
+            static const int dy[4] = {-1, 0, 1, 0};
+            int dir = (world->party.leader_dir + 2) & 3;
+            int nx = world->party.leader_x + dx[dir];
+            int ny = world->party.leader_y + dy[dir];
+            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
+            moved = THERON_SQUARE_IS_PASSABLE(sq);
+            if (moved) {
+                theron_v1_party_place(world, nx, ny, world->party.leader_dir);
+            }
+            m11_set_status(state, "MOVE",
+                           moved ? "THERON STEPPED BACK" : "BLOCKED");
+        } else if (input == M12_MENU_INPUT_ACCEPT ||
+                   input == M12_MENU_INPUT_ACTION) {
+            theron_v1_world_tick(world);
+            moved = 1;
+            m11_set_status(state, "WAIT", "THERON TICK");
+        }
+        if (!moved) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        state->theronState.party_x = world->party.leader_x;
+        state->theronState.party_y = world->party.leader_y;
+        state->theronState.party_dir = world->party.leader_dir;
+        state->theronState.tick_count = (int)world->world_tick;
+        return M11_GAME_INPUT_REDRAW;
     }
 
     /* Source-backed champion mirror panel: CLIKCHAM routes
@@ -25179,6 +25428,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_m11_font_scale_override = 0;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
+        return;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        Theron_V1_Viewport* viewport =
+            (Theron_V1_Viewport*)state->theronViewport;
+        TrAssetBundle* assets = (TrAssetBundle*)state->theronAssets;
+        if (world && viewport) {
+            theron_vp_render_dungeon(viewport, world);
+            theron_vp_render_ui(viewport, world, TQR_UI_ALL);
+            theron_vp_present(viewport,
+                              assets ? &assets->palette : NULL,
+                              framebuffer,
+                              framebufferWidth,
+                              framebufferHeight);
+        }
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
         return;
     }
     {

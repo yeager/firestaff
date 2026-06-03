@@ -110,6 +110,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 4 - Rendering pipeline: Theron viewport/UI presentation and asset-selection probes pass.
 - ✅ Phase 5 - Initial mechanics implementation: movement, click routes, doors, pits, teleporters, altar behavior, combat, drops, and sounds have focused probe coverage.
 - ✅ Launch/data availability now uses Track 02 hash/provenance discovery through validator, startup, and menu availability state.
+- ✅ M11 runtime handoff now branches Theron's Quest away from the DM1 DUNGEON.DAT loader into a Track 02 boot profile, Theron world state, native viewport/UI renderer, idle tick, and basic movement input path.
 - ✅ Phase 6 - Dungeon progression probe coverage.
 - ✅ Phase 7 - Save/import compatibility.
 - ✅ Phase 8 - Verification-suite coverage for deterministic launch, dungeon progression, mechanics, rendering, and save/load paths.

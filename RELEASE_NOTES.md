@@ -45,6 +45,7 @@ Major V2 pipeline completion across all game systems, Theron V1 rendering pipeli
 
 ### Theron V1 — Phase 1–4 Complete
 - **Phase 1–4**: Rendering pipeline — tile renderer, asset loader, UI chrome, creature instance lifecycle (death/drop/sound integration).
+- **Runtime handoff**: M11 now routes hash-verified Track 02 launches into the Theron boot/world/viewport path instead of the DM1 DUNGEON.DAT loader, with deterministic fallback rendering while exact Track 02 dungeon-bank offsets are hardened.
 
 ### DM1 V1 — Phase 8 Complete
 - Door and special-square interaction probe.

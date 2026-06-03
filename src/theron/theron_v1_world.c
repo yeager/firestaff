@@ -264,8 +264,13 @@ uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y) {
 /* THQUEST.ASM T520: party placed at start_x/start_y facing start_dir
  * (default: facing north = 0).  start_x/y are set during level_load. */
 void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir) {
-    (void)world; (void)x; (void)y; (void)dir;
-    /* Phase 4: world->levels[did-1][lvl].start_x/y/dir stores party pos */
+    if (!world) return;
+    world->party.leader_x = (int16_t)x;
+    world->party.leader_y = (int16_t)y;
+    world->party.leader_dir = (int8_t)(dir & 3);
+    /* THQUEST.ASM T520 places the party front separately from the map
+     * header start marker; runtime movement and viewport sampling must read
+     * this mutable party pose after launch. */
 }
 
 /* ══════════════════════════════════════════════════════════════════════

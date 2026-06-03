@@ -26,6 +26,7 @@
 #include "theron_v1_palette.h"
 #include "theron_v1_world.h"
 #include "theron_v1_champions.h"
+#include "theron_v1_asset_loader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -604,6 +605,36 @@ static int test_asset_selection_wiring(void) {
     return 1;
 }
 
+static int test_asset_load_raw_track02_fallback(void) {
+    TEST("Runtime: raw Track 02 without supplemental markers stays loadable");
+
+    const char *path = "/tmp/firestaff_theron_raw_track02_test.bin";
+    static const uint8_t raw_track02[32] = {
+        0x20, 0x48, 0x55, 0x43, 0x36, 0x32, 0x38, 0x30,
+        0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
+        0x80, 0x81, 0x82, 0x83, 0x90, 0x91, 0x92, 0x93,
+        0xA0, 0xA1, 0xA2, 0xA3, 0xB0, 0xB1, 0xB2, 0xB3
+    };
+    FILE *fp = fopen(path, "wb");
+    ASSERT(fp != NULL, "could not create raw Track 02 fixture");
+    ASSERT(fwrite(raw_track02, 1, sizeof(raw_track02), fp) == sizeof(raw_track02),
+           "could not write raw Track 02 fixture");
+    ASSERT(fclose(fp) == 0, "could not close raw Track 02 fixture");
+
+    TrAssetBundle bundle;
+    TrAssetResult r = tr_asset_load(path, &bundle);
+    remove(path);
+    ASSERT(r == TR_ASSET_OK, "raw Track 02 fallback should return OK");
+    ASSERT(bundle.hucard_rom != NULL, "raw Track 02 bytes not retained");
+    ASSERT(bundle.hucard_rom_size == sizeof(raw_track02), "raw Track 02 size mismatch");
+    ASSERT(bundle.track03_data == NULL, "raw fallback should not invent Track 03");
+    ASSERT(bundle.track04_data == NULL, "raw fallback should not invent Track 04");
+    tr_asset_free(&bundle);
+
+    PASS();
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Runtime tests — Champion slot rendering
  * ══════════════════════════════════════════════════════════════════════ */
@@ -727,6 +758,7 @@ int main(void) {
     test_vp_tile_for_square();
     test_palette_state_init();
     test_asset_selection_wiring();
+    test_asset_load_raw_track02_fallback();
     test_vp_render_dungeon();
     test_vp_render_ui_zones();
     test_vp_draw_bar();
