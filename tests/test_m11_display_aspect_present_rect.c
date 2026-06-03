@@ -50,6 +50,8 @@ int main(void) {
                0, 0, 1920, 1080);
     check_rect(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_4_3,
                240, 0, 1440, 1080);
+    check_rect(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
+               126, 0, 3347, 2092);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
