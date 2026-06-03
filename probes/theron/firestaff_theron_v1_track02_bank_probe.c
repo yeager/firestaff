@@ -89,6 +89,17 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     return 1;
 }
 
+static void check_no_reported_offset(const char *label,
+                                     const Theron_Track02BankSignal *signal) {
+    check_size(label, signal->descriptor_offset, 0u);
+    check_size(label, signal->descriptor_size, 0u);
+    check_size(label, signal->post_descriptor_zero_offset, 0u);
+    check_size(label, signal->post_descriptor_zero_bytes, 0u);
+    check_size(label, signal->next_nonzero_offset, 0u);
+    check_size(label, signal->boundary_prefix_size, 0u);
+    check_size(label, signal->post_boundary_span_size, 0u);
+}
+
 static void default_path(const char *file_name, char out_path[512]) {
     const char *home = getenv("HOME");
     if (!home || !home[0]) home = ".";
@@ -180,6 +191,9 @@ static void probe_track(const char *label,
         check_u16("post-boundary span last word",
                   signal.post_boundary_span_last_word,
                   0x3f00u);
+    } else if (expected_status == THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE) {
+        check_int("zero-image variant", signal.variant, THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        check_no_reported_offset("zero-image leaves no offset", &signal);
     }
 
     free(data);
@@ -196,6 +210,23 @@ static void probe_negative_fixture(void) {
     check_int("unsupported fixture stays unsupported",
               status,
               THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+}
+
+static void probe_jp_zero_image_fixture(void) {
+    uint8_t zeros[4096] = {0};
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus status =
+        theron_v1_track02_find_bank_signal(zeros,
+                                           sizeof(zeros),
+                                           THERON_TRACK02_MD5_JP_REV1_ISO,
+                                           &signal);
+    check_int("JP Rev 1 zero fixture is insufficient evidence",
+              status,
+              THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE);
+    check_int("JP Rev 1 zero fixture is hash-gated",
+              signal.variant,
+              THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    check_no_reported_offset("JP Rev 1 zero fixture leaves no offset", &signal);
 }
 
 static void probe_descriptor_only_negative_fixture(void) {
@@ -260,6 +291,7 @@ int main(void) {
     printf("%s\n", theron_v1_track02_source_evidence());
 
     probe_negative_fixture();
+    probe_jp_zero_image_fixture();
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();
     probe_track("US ISO bank descriptor",
