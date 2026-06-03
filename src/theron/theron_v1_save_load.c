@@ -154,8 +154,6 @@ static size_t build_save_image(
     memset(out_image, 0, total_size);
 
     /* ── Header ───────────────────────────────────────────── */
-    uint16_t *hdr = (uint16_t *)(out_image);
-
     /* magic: 'TQR ' */
     out_image[THERON_SAVE_OFF_MAGIC + 0] = 'T';
     out_image[THERON_SAVE_OFF_MAGIC + 1] = 'Q';
@@ -262,7 +260,6 @@ static int parse_save_image(
     }
 
     /* De-obfuscate first */
-    size_t data_size = image_size - THERON_SAVE_FOOTER_SIZE;
     uint8_t *deobuf = (uint8_t *)malloc(image_size);
     if (!deobuf) return -1;
     memcpy(deobuf, image, image_size);
@@ -349,37 +346,28 @@ int theron_v1_save_enum_slots(const char *save_root,
         tmp.valid = 0;
 
         if (file_exists(slot_path)) {
-            /* Quick read to get metadata */
+            struct stat st;
             FILE *fp = fopen(slot_path, "rb");
-            if (fp) {
-                uint8_t header[THERON_SAVE_HEADER_SIZE];
-                size_t n = fread(header, 1, sizeof(header), fp);
-                fclose(fp);
-
-                if (n == sizeof(header)) {
-                    /* De-obfuscate header */
-                    uint8_t seed = (uint8_t)THERON_SAVE_OBFUSCATE_SEED;
-                    for (size_t j = 0; j < sizeof(header); j++) {
-                        header[j] ^= (seed + (uint8_t)j);
+            if (fp && stat(slot_path, &st) == 0 && st.st_size > 0) {
+                size_t file_size = (size_t)st.st_size;
+                uint8_t *image = (uint8_t *)malloc(file_size);
+                if (image) {
+                    size_t n = fread(image, 1, file_size, fp);
+                    if (n == file_size &&
+                        parse_save_image(image, file_size,
+                                         NULL, 0,
+                                         NULL, 0,
+                                         &tmp) == 0) {
+                        tmp.slot_index = i;
+                        tmp.size_bytes = file_size;
+                    } else {
+                        memset(&tmp, 0, sizeof(tmp));
+                        tmp.slot_index = i;
                     }
-                    if (memcmp(header + THERON_SAVE_OFF_MAGIC, "TQR ", 4) == 0) {
-                        tmp.valid = 1;
-                        tmp.quest_items = header[THERON_SAVE_OFF_QUEST_ITEMS];
-                        tmp.current_dungeon = header[THERON_SAVE_OFF_CURRENT_DUNGEON];
-                        tmp.dungeon_state = header[THERON_SAVE_OFF_DUNGEON_STATE];
-                        tmp.playtime_secs = *(uint32_t *)(header + THERON_SAVE_OFF_PLAYTIME);
-                        tmp.timestamp = *(uint32_t *)(header + THERON_SAVE_OFF_TIMESTAMP);
-                        memcpy(tmp.label, header + THERON_SAVE_OFF_LABEL, 31);
-                        tmp.label[31] = '\0';
-
-                        /* Get file size */
-                        struct stat st;
-                        if (stat(slot_path, &st) == 0) {
-                            tmp.size_bytes = (size_t)st.st_size;
-                        }
-                    }
+                    free(image);
                 }
             }
+            if (fp) fclose(fp);
         }
 
         slots[count++] = tmp;
