@@ -1228,6 +1228,21 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_irrelevant_data_root
     )
 
+    add_executable(test_firestaff_accessibility_manifest
+        tests/test_firestaff_accessibility_manifest.c
+    )
+    target_link_libraries(test_firestaff_accessibility_manifest PRIVATE firestaff_m11)
+    target_include_directories(test_firestaff_accessibility_manifest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_accessibility_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_accessibility_manifest
+        COMMAND test_firestaff_accessibility_manifest
+    )
+
     add_executable(test_csb_archive_required_split
         tests/test_csb_archive_required_split.c
         src/shared/asset_status_m12.c
