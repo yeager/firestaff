@@ -16,6 +16,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Current Priority Queue
 
+- 🔧 Theron V1 Track 02 dungeon-bank promotion: replace the deterministic launch-room fallback with parsed real Track 02 dungeon/map banks for JP Rev 1 and US ISO variants.
+- 🔧 Theron V1 runtime playability slice: prove movement, door/pit/teleporter interactions, altar/progression routing, combat, and save/load through at least one real Track 02 dungeon path.
+- 🔧 Theron V1 real screenshot proof: capture tracked README-eligible in-game screenshots from actual Firestaff runtime, using only real Track 02 data and no generated/mock imagery.
+- 🔧 Theron V1 scanner/runloop ergonomics: avoid expensive full default-root rescans on direct launch when a hash-verified Theron runtime path is already known.
 - 🔧 Data-directory picker polish: start menu can switch between configured/default roots; add a proper browse/manual path flow for arbitrary user-selected game-data folders.
 - 🔧 Archive scanner performance: full default scan over the local real-asset collection with multiple Nexus ISO/ZIP images still needs indexing/prefilter work; isolated `--scan-data` smoke and archive regression tests pass.
 - 🔧 Extend archive runtime handoff beyond DM1/CSB/DM2 if Theron Track 02 or future Nexus flows need cache materialization instead of their current direct image paths.
@@ -93,6 +97,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Theron V1
 
 - 🔧 Runtime handoff/playability hardening: hash-verified JP Rev 1 and US Track 02 ISO images now route into the M11 Theron boot/world/viewport path; remaining work is promotion of exact Track 02 dungeon-bank offsets beyond the deterministic launch room.
+- 🔧 Track 02 bank map: identify and document JP Rev 1 and US ISO offsets for dungeon descriptors, map grids, object tables, champion/party seed data, text strings, palette/tile banks, and audio markers. Keep each offset behind a regression probe before claiming parity.
+- 🔧 Real dungeon loader: replace synthetic/fallback launch-room construction with parsed Track 02 room grids, square flags, stairs/pits/doors/teleporters, and object/creature placements for dungeon 1 first, then all seven Theron dungeons.
+- 🔧 Runtime input/playability proof: run a deterministic script from direct launch through movement, turning, wall blocking, door interaction, pit/stair routing, altar/progression state, combat contact, and save/load resume using hash-verified Track 02 data.
+- 🔧 Rendering proof with real assets: bind real Track 02 tile/palette data into the Theron viewport where available, keep deterministic fallback only for unknown banks, and add pixel/screenshot gates for wall/floor/UI/champion panel output.
+- 🔧 README-eligible screenshots: capture real Firestaff Theron V1 runtime screenshots from verified Track 02 data and store only genuine in-game captures in `verification-screens/` or `docs/compare/`.
+- 🔧 Availability/direct-launch coverage: add focused tests for JP Rev 1 ISO and US ISO version fallback selection, runtime data-dir selection, isolated `--data-dir` scans, and `FIRESTAFF_EXIT_AFTER_LAUNCH=1` direct launch.
+- 🔧 Scanner performance around Theron: avoid rehashing the full default data root on every direct launch when the selected Theron hash/path is already known from startup/menu state.
+- 🔧 Source/provenance documentation: keep Theron docs honest about current state: Track 02 images are hash-verified and launchable, but exact dungeon-bank parity remains active work until real-offset probes pass.
 
 ### Theron V2.0 / V2.1 / V2.2
 
