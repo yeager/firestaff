@@ -4495,6 +4495,23 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_boot_profile_smoke
     )
 
+    add_executable(test_nexus_v1_save_missing_root
+        tests/test_nexus_v1_save_missing_root.c
+    )
+    target_link_libraries(test_nexus_v1_save_missing_root PRIVATE
+        firestaff_nexus
+    )
+    target_include_directories(test_nexus_v1_save_missing_root PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_save_missing_root PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_save_missing_root
+        COMMAND test_nexus_v1_save_missing_root
+    )
+
     add_executable(test_nexus_v1_availability_profile_gate
         tests/nexus_v1_availability_profile_gate_test.c
         src/shared/asset_status_m12.c
