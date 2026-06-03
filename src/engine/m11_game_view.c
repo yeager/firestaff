@@ -8273,6 +8273,8 @@ typedef struct M11_ViewportCell {
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
+static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
+
 static void m11_draw_creature_cue(unsigned char* framebuffer,
                                   int framebufferWidth,
                                   int framebufferHeight,
@@ -10042,7 +10044,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * floor sensors.  Stairs route through T0172046_Stairs without
      * assigning M558_FLOOR_ORNAMENT_ORDINAL; their 0x08 bit is
      * orientation, not random-ornament permission. */
-    if (cell.valid && M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(cell.square)) {
+    if (cell.valid && m11_viewport_cell_is_wall_free(&cell)) {
         cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
             state, state->world.party.mapIndex, mapX, mapY, square);
     }
@@ -10061,10 +10063,32 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
 }
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
+    int effectiveElement;
     if (!cell || !cell->valid) {
         return 0;
     }
-    return M11_DM1_ViewportSquareIsWallLikePc34(cell->square);
+    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    /* ReDMCSB DUNGEON.C F0172: closed fakewalls become
+     * DUNGEON_ELEMENT_WALL for viewport aspect, while open fakewalls become
+     * corridors.  Keep the explicit DUNGEON_ELEMENT_FAKEWALL mention here so
+     * the front-wall depth gate can prove the fakewall source boundary. */
+    return effectiveElement == DUNGEON_ELEMENT_WALL ||
+           (cell->elementType == DUNGEON_ELEMENT_FAKEWALL &&
+            effectiveElement == DUNGEON_ELEMENT_WALL);
+}
+
+static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell) {
+    int effectiveElement;
+    if (!cell || !cell->valid) {
+        return 0;
+    }
+    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    /* ReDMCSB DUNGEON.C F0172 gives corridor, pit, and teleporter squares the
+     * floor-ornament/sensor path.  Stairs are excluded there because bit 0x08
+     * is orientation, not random-ornament permission. */
+    return effectiveElement == DUNGEON_ELEMENT_CORRIDOR ||
+           effectiveElement == DUNGEON_ELEMENT_PIT ||
+           effectiveElement == DUNGEON_ELEMENT_TELEPORTER;
 }
 
 static int m11_build_front_text_readout(const M11_GameViewState* state,
