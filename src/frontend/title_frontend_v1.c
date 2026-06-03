@@ -11,6 +11,7 @@
  */
 
 #include "title_frontend_v1.h"
+#include "dm1_v2_anim_timing.h"
 #include "firestaff_graphics_dat_reader.h"
 
 #include <string.h>
@@ -199,13 +200,16 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
-    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition.";
+    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits so TITLE does not replay at display-refresh speed.";
     return timing;
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing) {
     if (timing && timing->vblankBeforeEachZoomStep) {
-        return 20u;
+        /* ReDMCSB: TITLE.C F0437 lines 385-409 wait on M526_WaitVerticalBlank();
+         * GAMELOOP.C lines 47-50 locks input cadence to VBlank counts. Firestaff
+         * uses the same canonical V1 tick as the rest of the runtime. */
+        return (unsigned int)V1_TICK_MS;
     }
     return 50u;
 }
@@ -214,7 +218,7 @@ unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontend
     if (!timing) {
         return 0u;
     }
-    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * 20u;
+    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * (unsigned int)V1_TICK_MS;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
@@ -261,4 +265,3 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
  *   TITLE.C:123 F0509_AMIGA_F (platform-specific, not implemented for PC-34)
  *   TITLE.C:116 F2163_S
  * ══════════════════════════════════════════════════════════════════════ */
-

@@ -84,8 +84,10 @@ typedef struct V1_TitleFrontendSourceTiming {
  * ReDMCSB TITLE.C source-lock: the PC/ST path waits one vertical blank before
  * each of 18 zoom blits, waits two more vertical blanks after the zoom loop,
  * and waits one final vertical blank after the Master/Strikes Back fade
- * (BUG0_71). This helper still maps over the decoded 53-frame TITLE.DAT bank;
- * use V1_TitleFrontend_GetSourceTimingEvidence() when callers need the locked
+ * (BUG0_71). Runtime wait helpers map those waits onto Firestaff's canonical
+ * V1 55 ms tick so TITLE does not replay at display-refresh speed. This helper
+ * still maps over the decoded 53-frame TITLE.DAT bank; use
+ * V1_TitleFrontend_GetSourceTimingEvidence() when callers need the locked
  * original control-flow cadence evidence.
  */
 V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal);
