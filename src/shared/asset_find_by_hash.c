@@ -278,6 +278,8 @@ static int is_known_large_whole_file_hash(const char *expectedMd5) {
         "96e511c8d36ccbe30a48ba36c59df194", /* Nexus Saturn data image */
         "b7afb338ad31be1025b53f9aff12d73a", /* Theron's Quest JP Track 02 */
         "f23601102138f87c33025877767ebf76", /* Theron's Quest US Track 02 */
+        "397039af02d50d15c70b74088eb8a1cb", /* Theron's Quest JP Rev 1 Track 02 ISO */
+        "3d8b78571dcd0e6eb8eb4b01eeb7fbba", /* Theron's Quest US Track 02 ISO */
         NULL
     };
     int i;
