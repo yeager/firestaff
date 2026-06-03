@@ -765,6 +765,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->originalSongLoopTargetPart = 0;
     state->titleMusicQueuedCount = 0;
     state->titleMusicEnabled = 0;
+    state->playedMarkerCount = 0;
+    state->queuedSampleCount = 0;
+    state->lastMarker = M11_AUDIO_MARKER_NONE;
+    state->lastSoundIndex = -1;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
