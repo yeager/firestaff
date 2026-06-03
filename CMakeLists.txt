@@ -1207,6 +1207,27 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_scan_metrics
     )
 
+    add_executable(test_asset_status_irrelevant_data_root
+        tests/test_asset_status_irrelevant_data_root.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_asset_status_irrelevant_data_root PRIVATE firestaff_v2)
+    target_include_directories(test_asset_status_irrelevant_data_root PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_irrelevant_data_root PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_irrelevant_data_root PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_irrelevant_data_root
+        COMMAND test_asset_status_irrelevant_data_root
+    )
+
     add_executable(test_csb_archive_required_split
         tests/test_csb_archive_required_split.c
         src/shared/asset_status_m12.c
