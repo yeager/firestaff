@@ -855,6 +855,19 @@ if(BUILD_TESTING)
         COMMAND test_menu_hit_launch_direct_click_m12
     )
 
+    add_executable(test_save_browser_no_data
+        tests/test_save_browser_no_data.c
+        src/shared/save_browser_m12.c
+    )
+    target_link_libraries(test_save_browser_no_data PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_save_browser_no_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME save_browser_no_data
+        COMMAND test_save_browser_no_data
+    )
+
     add_executable(test_csb_v1_launch_blocker_m12
         tests/test_csb_v1_launch_blocker_m12.c
     )
