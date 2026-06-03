@@ -361,7 +361,7 @@ int main(void) {
                      M12_AssetStatus_GameKnownHashCount("csb") == 4U &&
                      M12_AssetStatus_GameKnownHashCount("dm2") == 3U &&
                      M12_AssetStatus_GameKnownHashCount("nexus") == 2U &&
-                     M12_AssetStatus_GameKnownHashCount("theron") == 2U,
+                     M12_AssetStatus_GameKnownHashCount("theron") == 4U,
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
 
     force_dm1_version_ready(&state, 0U);
