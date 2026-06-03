@@ -1358,6 +1358,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_partial_data_profile_gate
     )
 
+    add_executable(test_dm2_v1_missing_graphics_profile_gate
+        tests/test_dm2_v1_missing_graphics_profile_gate.c
+        src/shared/asset_status_m12.c
+    )
+    target_link_libraries(test_dm2_v1_missing_graphics_profile_gate PRIVATE firestaff_m12)
+    target_include_directories(test_dm2_v1_missing_graphics_profile_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_dm2_v1_missing_graphics_profile_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_missing_graphics_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_missing_graphics_profile_gate
+        COMMAND test_dm2_v1_missing_graphics_profile_gate
+    )
+
     add_executable(test_m11_input_remap_roundtrip
         tests/test_m11_input_remap_roundtrip.c
         src/engine/input_remap_m11.c
