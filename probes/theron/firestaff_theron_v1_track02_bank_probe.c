@@ -147,13 +147,14 @@ static void probe_track(const char *label,
 
     check_int("track status", status, expected_status);
     if (expected_status == THERON_TRACK02_SIGNAL_OK) {
-        printf("%s: descriptor=0x%zx bytes=%zu boundary=0x%zx zero_bytes=%zu prefix_occurrences=%zu\n",
+        printf("%s: descriptor=0x%zx bytes=%zu boundary=0x%zx zero_bytes=%zu span_bytes=%zu span_occurrences=%zu\n",
                label,
                signal.descriptor_offset,
                signal.descriptor_size,
                signal.next_nonzero_offset,
                signal.post_descriptor_zero_bytes,
-               signal.boundary_prefix_occurrence_count);
+               signal.post_boundary_span_size,
+               signal.post_boundary_span_occurrence_count);
         check_int("variant", signal.variant, THERON_TRACK02_VARIANT_US_ISO);
         check_size("descriptor offset", signal.descriptor_offset, 0x1584u);
         check_size("descriptor size", signal.descriptor_size, 18u);
@@ -169,6 +170,16 @@ static void probe_track(const char *label,
         check_size("boundary prefix occurrence count",
                    signal.boundary_prefix_occurrence_count,
                    1u);
+        check_size("post-boundary span size", signal.post_boundary_span_size, 44u);
+        check_size("post-boundary span occurrence count",
+                   signal.post_boundary_span_occurrence_count,
+                   1u);
+        check_u16("post-boundary span first word",
+                  signal.post_boundary_span_first_word,
+                  0x80beu);
+        check_u16("post-boundary span last word",
+                  signal.post_boundary_span_last_word,
+                  0x3f00u);
     }
 
     free(data);
@@ -213,12 +224,44 @@ static void probe_descriptor_only_negative_fixture(void) {
     free(fixture);
 }
 
+static void probe_boundary_prefix_only_negative_fixture(void) {
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const uint8_t prefix[16] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80
+    };
+    uint8_t *fixture = (uint8_t *)calloc(1u, 0x302cu);
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus status;
+
+    if (!fixture) {
+        printf("FAIL boundary-prefix-only fixture: allocation failed\n");
+        ++g_fail;
+        return;
+    }
+
+    memcpy(fixture + 0x1584u, descriptor, sizeof(descriptor));
+    memcpy(fixture + 0x3000u, prefix, sizeof(prefix));
+    status = theron_v1_track02_find_bank_signal(fixture,
+                                                0x302cu,
+                                                THERON_TRACK02_MD5_US_ISO,
+                                                &signal);
+    check_int("boundary prefix alone is not a post-boundary span",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    free(fixture);
+}
+
 int main(void) {
     printf("=== Theron V1 Track 02 Bank Evidence Probe ===\n");
     printf("%s\n", theron_v1_track02_source_evidence());
 
     probe_negative_fixture();
     probe_descriptor_only_negative_fixture();
+    probe_boundary_prefix_only_negative_fixture();
     probe_track("US ISO bank descriptor",
                 "FIRESTAFF_THERON_TRACK02_US",
                 "TQUS02End.iso",

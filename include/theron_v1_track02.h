@@ -35,6 +35,10 @@ typedef struct {
     size_t next_nonzero_offset;
     size_t boundary_prefix_size;
     size_t boundary_prefix_occurrence_count;
+    size_t post_boundary_span_size;
+    size_t post_boundary_span_occurrence_count;
+    uint16_t post_boundary_span_first_word;
+    uint16_t post_boundary_span_last_word;
 } Theron_Track02BankSignal;
 
 Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex);

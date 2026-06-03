@@ -1248,8 +1248,8 @@ static void m12_import_settings_json(M12_StartupMenuState* state) {
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     } else {
         m12_set_buffered_message(state,
-                                 m12_tr(state, "IMPORT FILE NOT FOUND"),
-                                 m12_tr(state, "EXPORT SETTINGS FIRST OR ADD A FILE"),
+                                 m12_tr(state, "IMPORT FAILED"),
+                                 m12_tr(state, "EXPORT SETTINGS FIRST OR RESTORE THE FILE"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     }
 }
