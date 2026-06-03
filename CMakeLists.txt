@@ -855,6 +855,24 @@ if(BUILD_TESTING)
         COMMAND test_menu_hit_launch_direct_click_m12
     )
 
+    add_executable(test_m12_version_changelog_consistency
+        tests/test_m12_version_changelog_consistency.c
+        src/shared/changelog_m12.c
+    )
+    target_include_directories(test_m12_version_changelog_consistency PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_m12_version_changelog_consistency PRIVATE
+        FIRESTAFF_PROJECT_VERSION="${PROJECT_VERSION}"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m12_version_changelog_consistency PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_version_changelog_consistency
+        COMMAND test_m12_version_changelog_consistency
+    )
+
     add_executable(test_save_browser_no_data
         tests/test_save_browser_no_data.c
         src/shared/save_browser_m12.c
