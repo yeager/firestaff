@@ -173,7 +173,20 @@ int main(void) {
     M12_Config_Load(&config, NULL);
     if (!expect(strcmp(config.dataDir, manualDir) == 0,
                 "manual data directory setter should persist the chosen folder")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    remove(M12_Config_GetExportPath());
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Import Settings missing-file click should show a public result message")) return 1;
+    if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,
+                "Import Settings missing-file click should report import failure")) return 1;
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+                "failed settings import should preserve the active data directory")) return 1;
+    M12_Config_Load(&config, NULL);
+    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+                "failed settings import should preserve the persisted data directory")) return 1;
 
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; settings rows export/import JSON and data directory accepts an arbitrary selected folder");
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
     return 0;
 }
