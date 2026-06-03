@@ -83,15 +83,25 @@ static const M12_VersionSpec g_nexusVersions[] = {
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
  * Phase 0 gate PASSED (2026-05-27): CD-ROM Track 02 hashes confirmed from cdromance.org.
- * Data track is Track 02 .bin from CUE/BIN disc images.
+ * Data track is Track 02 from CUE/BIN or CUE/ISO disc images.
  * JP: MD5 b7afb338ad31be1025b53f9aff12d73a (Track 02 .bin)
  * US: MD5 f23601102138f87c33025877767ebf76 (Track 02 .bin)
+ * MyAbandonware TG-CD English/Japanese Rev 1 downloads (page checked 2026-06-03):
+ * JP Rev 1 Track 02 ISO: 397039af02d50d15c70b74088eb8a1cb
+ * US Track 02 ISO:       3d8b78571dcd0e6eb8eb4b01eeb7fbba
  * OneDrive: 1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8 (DMFiles/Games folder)
  * Subdir candidates: theron/jp/, theron/us/, theron/ */
 static const char* const g_theronTrack02Names[] = {
     "track02.bin",
+    "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
     "Theron's Quest (US) (Track 02).bin",
+    "Theron's Quest (Japan) (Track 02).iso",
+    "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.iso",
+    "TQJP02End.iso",
+    "TQUS02.iso",
+    "TQUS02End.iso",
     "THQUEST.BIN",
     NULL
 };
@@ -100,7 +110,11 @@ static const M12_VersionSpec g_theronVersions[] = {
     {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
      g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a"},
     {"theron", "pce-en", "TurboGrafx-16 US (Track 02)", "TG16 US",
-     g_theronTrack02Names, "f23601102138f87c33025877767ebf76"}
+     g_theronTrack02Names, "f23601102138f87c33025877767ebf76"},
+    {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
+     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb"},
+    {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",
+     g_theronTrack02Names, "3d8b78571dcd0e6eb8eb4b01eeb7fbba"}
 };
 
 static const M12_GameVersionSpec g_games[] = {
@@ -119,7 +133,7 @@ static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm2", "graphics", "GRAPHICS.DAT", NULL, 1},
     {"dm2", "dungeon", "DUNGEON.DAT", "6caccd7875009e82fe2e28e7f6d6adc0", 0},
     {"nexus", "data", "DM.BIN / Saturn data marker", NULL, 1},
-    {"theron", "track02", "Track 02 BIN", NULL, 1},
+    {"theron", "track02", "Track 02 data image", NULL, 1},
     {NULL, NULL, NULL, NULL, 0}
 };
 
@@ -525,6 +539,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                       version->matchedMd5)) {
                 version->matched = 1;
                 matchedAny = 1;
+                m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                sizeof(status->runtimeDataDirs[gameIndex]),
+                                roots[rootIndex]);
                 if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot) {
                     /* Runtime source path: when the saved/default data_dir is the
                      * preferred ~/.firestaff/originals but the verified PC34 files

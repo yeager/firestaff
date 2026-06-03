@@ -92,7 +92,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
-- 🔧 Runtime handoff/playability proof: hash-verified Track 02 availability now routes into the M11 Theron boot/world/viewport path; remaining work is positive local proof with a canonical Track 02 image matching the locked JP/US MD5 and promotion of exact Track 02 dungeon-bank offsets beyond the deterministic launch room.
+- 🔧 Runtime handoff/playability hardening: hash-verified JP Rev 1 and US Track 02 ISO images now route into the M11 Theron boot/world/viewport path; remaining work is promotion of exact Track 02 dungeon-bank offsets beyond the deterministic launch room.
 
 ### Theron V2.0 / V2.1 / V2.2
 

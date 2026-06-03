@@ -51,7 +51,7 @@
 
 /* Theron's Quest data files — Phase 0 locked (2026-05-27).
  *
- * CD-ROM disc structure: CUE/BIN, 18 tracks, Track 02 = data track.
+ * CD-ROM disc structure: CUE/BIN or CUE/ISO, 18 tracks, Track 02 = data track.
  * The data track contains the HuC6280 executable, graphics tiles
  * (tile/sprite format), and dungeon data — embedded in one binary blob
  * per region.  Unlike DM1's dual-file structure (GRAPHICS.DAT +
@@ -59,21 +59,35 @@
  *
  * JP Track 02 MD5: b7afb338ad31be1025b53f9aff12d73a
  * US Track 02 MD5: f23601102138f87c33025877767ebf76
+ * JP Rev 1 Track 02 ISO MD5: 397039af02d50d15c70b74088eb8a1cb
+ * US Track 02 ISO MD5:       3d8b78571dcd0e6eb8eb4b01eeb7fbba
  * Source: cdromance.org (2026-05-27)
+ * Additional ISO names: MyAbandonware TG-CD English/Japanese Rev 1 page
+ * checked 2026-06-03.
  *
  * Subdir candidates: theron/jp/, theron/us/, theron/
  *
  * File candidates (in order of precedence):
  *   track02.bin                    — canonical CD-ROM data track name
+ *   track02.iso                    — ISO 2048-byte sector Track 02
  *   "Theron's Quest (Japan) (Track 02).bin"
  *   "Theron's Quest (US) (Track 02).bin"
+ *   TQJP02.iso / TQJP02End.iso     — MyAbandonware JP Rev 1 Track 02
+ *   TQUS02.iso / TQUS02End.iso     — MyAbandonware US Track 02
  *   THQUEST.BIN
  *   GRAPHICS.DAT / DUNGEON.DAT   — legacy fallback (extracted from Track 02)
  */
 static const char *const g_theron_track02_candidates[] = {
     "track02.bin",
+    "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
     "Theron's Quest (US) (Track 02).bin",
+    "Theron's Quest (Japan) (Track 02).iso",
+    "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.iso",
+    "TQJP02End.iso",
+    "TQUS02.iso",
+    "TQUS02End.iso",
     "THQUEST.BIN",
     NULL
 };
@@ -235,12 +249,16 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
 
     /* Phase 0 gate: verify Track 02 MD5 against known hashes.
      * JP: b7afb338ad31be1025b53f9aff12d73a
-     * US: f23601102138f87c33025877767ebf76 */
+     * US: f23601102138f87c33025877767ebf76
+     * JP Rev 1 ISO: 397039af02d50d15c70b74088eb8a1cb
+     * US ISO:       3d8b78571dcd0e6eb8eb4b01eeb7fbba */
     if (profile->graphics_path[0]) {
         char md5hex[33] = {0};
         if (m12_file_md5_hex(profile->graphics_path, md5hex)) {
             if (strcmp(md5hex, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
-                strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0) {
+                strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0 ||
+                strcmp(md5hex, "397039af02d50d15c70b74088eb8a1cb") == 0 ||
+                strcmp(md5hex, "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
                 profile->assets_verified = 1;
                 strncpy(profile->graphics_md5, md5hex, 32);
                 profile->graphics_md5[32] = '\0';
@@ -258,6 +276,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
 
     /* Platform detection from filename heuristics */
     if (strstr(profile->graphics_path, "Japan") ||
+        strstr(profile->graphics_path, "TQJP") ||
         strstr(profile->graphics_path, "pce-jp")) {
         profile->platform = THERON_PLATFORM_PCE_JP;
         strncpy(profile->platform_label,
@@ -265,6 +284,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
                 sizeof(profile->platform_label) - 1);
         strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
     } else if (strstr(profile->graphics_path, "US") ||
+               strstr(profile->graphics_path, "TQUS") ||
                strstr(profile->graphics_path, "pce-en")) {
         profile->platform = THERON_PLATFORM_PCE_US;
         strncpy(profile->platform_label,

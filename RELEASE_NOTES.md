@@ -4,6 +4,9 @@ DM1 PC-34 boot-sequence fidelity release.
 
 ## Fixes
 
+- Added hash recognition and direct runtime launch support for the JP Rev 1 and US Track 02 ISO variants of Theron's Quest.
+- Fixed direct launch version selection so hash-matched game data can launch even when the default menu version slot points at a different known variant.
+- Kept the DM1 TITLE/entrance sequence on the DM1 launch path only, allowing Theron's Quest to enter its own Track 02 runtime handoff directly.
 - Restored ReDMCSB SWSH/FTL logo playback before the DM1 TITLE sequence.
 - Fixed SWSH `SWOOSH` loading when the original file is a DOS/MZ program with the IMG logo payload embedded inside it.
 - Fixed the SWSH palette path so the FTL logo starts black and lights up via the ReDMCSB `Setcolor()` command sequence instead of using the TITLE palette.
