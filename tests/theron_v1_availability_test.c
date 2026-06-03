@@ -26,6 +26,24 @@ static void expect_true(int condition, const char *message) {
     }
 }
 
+static void expect_str_eq(const char *actual,
+                          const char *expected,
+                          const char *message) {
+    if (!actual) {
+        actual = "";
+    }
+    if (!expected) {
+        expected = "";
+    }
+    if (strcmp(actual, expected) != 0) {
+        fprintf(stderr, "FAIL: %s (expected '%s', got '%s')\n",
+                message,
+                expected,
+                actual);
+        ++g_failures;
+    }
+}
+
 static int write_file(const char *path, const char *text) {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -34,6 +52,10 @@ static int write_file(const char *path, const char *text) {
     }
     fclose(fp);
     return 1;
+}
+
+static int make_dir_checked(const char *path) {
+    return mkdir(path, 0700) == 0;
 }
 
 static int make_temp_dir(char out[512]) {
@@ -49,6 +71,63 @@ static int make_temp_dir(char out[512]) {
     snprintf(out, 512, "/tmp/firestaff_theron_avail_XXXXXX");
     return mkdtemp(out) != NULL;
 #endif
+}
+
+static void check_fake_iso_fallback(const char *region_dir,
+                                    const char *iso_name,
+                                    Theron_Platform expected_platform,
+                                    const char *expected_version_id,
+                                    const char *label) {
+    char temp_dir[512];
+    char theron_dir[512];
+    char variant_dir[512];
+    char iso_path[512];
+    Theron_V1_BootProfile profile;
+    M12_AssetStatus status;
+    const M12_AssetRequiredFileStatus *required;
+
+    expect_true(make_temp_dir(temp_dir), "temporary Theron ISO data dir created");
+    snprintf(theron_dir, sizeof(theron_dir), "%s%s%s", temp_dir, PATH_SEP, "theron");
+    expect_true(make_dir_checked(theron_dir), "theron ISO subdir created");
+    snprintf(variant_dir, sizeof(variant_dir), "%s%s%s", theron_dir, PATH_SEP, region_dir);
+    expect_true(make_dir_checked(variant_dir), "theron ISO region subdir created");
+    snprintf(iso_path, sizeof(iso_path), "%s%s%s", variant_dir, PATH_SEP, iso_name);
+    expect_true(write_file(iso_path, "not a known Theron's Quest Track 02 ISO"),
+                "fake Theron ISO candidate written");
+
+    theron_v1_boot_profile_init(&profile);
+    expect_true(theron_v1_boot_scan_assets(&profile, temp_dir) == 0,
+                label);
+    expect_true(profile.assets_verified == 0,
+                "fake Theron ISO fallback remains unverified");
+    expect_true(profile.platform == expected_platform,
+                "fake Theron ISO fallback selects expected platform");
+    expect_str_eq(profile.version_id,
+                  expected_version_id,
+                  "fake Theron ISO fallback selects expected version");
+    expect_str_eq(profile.graphics_path,
+                  iso_path,
+                  "fake Theron ISO fallback keeps selected Track 02 path");
+    expect_str_eq(profile.dungeon_path,
+                  iso_path,
+                  "fake Theron ISO fallback maps dungeon to Track 02 path");
+    expect_true(theron_v1_boot_probe_available(temp_dir) == 0,
+                "fake Theron ISO fallback does not pass availability probe");
+
+    M12_AssetStatus_Scan(&status, iso_path);
+    expect_true(status.originalFileCandidateFound == 1,
+                "explicit Theron ISO candidate counts as original-file evidence");
+    expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
+                "explicit fake Theron ISO scan remains unavailable without known MD5");
+    expect_str_eq(M12_AssetStatus_GetDataDir(&status),
+                  variant_dir,
+                  "explicit fake Theron ISO scan resolves to containing data dir");
+    expect_str_eq(M12_AssetStatus_GetRuntimeDataDir(&status, "theron"),
+                  variant_dir,
+                  "explicit fake Theron ISO scan keeps runtime dir isolated");
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0);
+    expect_true(required && required->required && !required->matched,
+                "explicit fake Theron ISO scan leaves required Track 02 unmatched");
 }
 
 int main(void) {
@@ -103,6 +182,17 @@ int main(void) {
     expect_true(theron_v1_boot_probe_available(fake_track) == 0,
                 "Theron quick boot probe rejects explicit unverified Track 02 data");
 
+    check_fake_iso_fallback("jp",
+                            "TQJP02End.iso",
+                            THERON_PLATFORM_PCE_JP,
+                            "pce-jp",
+                            "Theron JP Rev 1 ISO filename fallback is detected");
+    check_fake_iso_fallback("us",
+                            "TQUS02End.iso",
+                            THERON_PLATFORM_PCE_US,
+                            "pce-en",
+                            "Theron US ISO filename fallback is detected");
+
     real_data = getenv("FIRESTAFF_THERON_TEST_DATA");
     if (real_data && real_data[0]) {
         M12_AssetStatus_Scan(&status, real_data);
@@ -144,6 +234,17 @@ int main(void) {
                                                                      "theron"),
                                    matched_version->matchedPath) != 0,
                             "explicit Theron Track 02 path resolves to a runtime root");
+                if (strcmp(matched_version->matchedMd5,
+                           "397039af02d50d15c70b74088eb8a1cb") == 0) {
+                    expect_str_eq(matched_version->versionId,
+                                  "pce-jp-rev1-iso",
+                                  "real JP Rev 1 ISO selects ISO version id");
+                } else if (strcmp(matched_version->matchedMd5,
+                                  "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+                    expect_str_eq(matched_version->versionId,
+                                  "pce-en-iso",
+                                  "real US ISO selects ISO version id");
+                }
             }
         }
     }

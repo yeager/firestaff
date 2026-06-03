@@ -156,8 +156,15 @@ static const char* const g_originalCandidateNames[] = {
     "SEGADATA.BIN",       /* Nexus Sega Saturn data track */
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
     "track02.bin",
+    "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
     "Theron's Quest (US) (Track 02).bin",
+    "Theron's Quest (Japan) (Track 02).iso",
+    "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.iso",
+    "TQJP02End.iso",
+    "TQUS02.iso",
+    "TQUS02End.iso",
     "THQUEST.BIN",
     NULL
 };
