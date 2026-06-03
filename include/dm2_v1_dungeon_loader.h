@@ -24,18 +24,15 @@
  *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
  *   Byte offset 16: uint16_le: 0x0240 (576) — ???
  *   ...
- *   Level descriptors follow header, 8 bytes each:
- *     byte[0]: level_type (0=OUTDOOR, 1=INDOOR, 2=BUILDING)
- *     byte[1]: level_width (1-64)
- *     byte[2]: level_height (1-64)
- *     bytes[4-5]: offset low word (LE uint16)
- *     bytes[6-7]: offset high word (LE uint16)
+ *   MAP descriptors follow the 44-byte header, 16 bytes each:
+ *     bytes[0-1]: raw map data byte offset
+ *     bytes[4-5]: DM1 bitfield A
+ *     bytes[12-15]: DM2 width/height overrides when present
  *   Tile data: column-major uint16[level_width * level_height]
  *   Square type stored in lower 5 bits (0x1F mask).
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
- *   NOTE: Current loader reads level_count from byte offset 0 (returns 0).
- *   Correct reading: byte offset 6. Stub needs SKULL.ASM confirmation update. */
+ *   Confirmed loader contract: level_count/map_count is byte offset 6. */
 
 #define DM2_V1_MAX_LEVELS 30
 #define DM2_V1_MAX_MAP_SIZE 64
@@ -66,4 +63,3 @@ int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif
-

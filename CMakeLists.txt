@@ -527,6 +527,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_viewport_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Pass 30 bounded movement legality probe.
+add_executable(firestaff_m11_pass30_movement_legality_probe probes/firestaff_m11_pass30_movement_legality_probe.c)
+target_link_libraries(firestaff_m11_pass30_movement_legality_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass30_movement_legality_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Deterministic Firestaff capture-route state anchor (same route as screenshot fixture)
 add_executable(firestaff_m11_capture_route_state_probe probes/m11/firestaff_m11_capture_route_state_probe.c)
 target_link_libraries(firestaff_m11_capture_route_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)

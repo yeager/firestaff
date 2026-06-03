@@ -44,6 +44,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, profile-specific asset discovery, boot state, diagnostics, and hash-matched launch boundary.
 - ✅ Phase 2 dungeon-data probe slice: synthetic CSB dungeon loading, square/thing accessors, door table, sensor helpers, endgame helpers, world-model behavior, and CSB-vs-DM1 difference checks are covered by `firestaff_csb_v1_dungeon_model_probe`.
+- ✅ Real CSB PC 3.4 DUNGEON.DAT ingestion: the V1 dungeon loader now accepts the hash-verified FTL-compressed CSB dungeon, decompresses/swaps it through the ReDMCSB FTL path, parses the 44-byte header and MAP descriptors, and keeps synthetic fixture coverage intact.
 - ✅ Launch/profile fixture: the Atari ST asset-pair manifest and CSB launch-intent gate now recognize hash-matched CSB assets as valid for the M12 profile boundary while keeping gameplay, save, and pixel parity as non-claims.
 - ✅ Source-lock audit coverage for CSB startup, utility, dungeon loading, wall rendering, champion import, weapons, magic, creatures, combat, and save behavior.
 - ✅ Phase 4 - Mechanics parity slices for CSB-specific movement/interaction/runtime behavior.
@@ -65,6 +66,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
+- ✅ Real-asset probe regression sweep: `probe_dm2_v1_asset_loader`, `probe_dm2_v1_dungeon_loader`, `probe_dm2_v1_object_model`, `probe_dm2_v1_world_state`, and `test_dm2_v1_save_load` pass against the local hash-verified PC English data.
 - ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
