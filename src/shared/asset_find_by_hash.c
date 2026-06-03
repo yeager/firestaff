@@ -290,6 +290,28 @@ static int is_known_large_whole_file_hash(const char *expectedMd5) {
     return 0;
 }
 
+static int md5_list_contains_large_whole_file_hash(const char *const *md5List,
+                                                   int md5Count) {
+    int i;
+    if (!md5List || md5Count <= 0) return 0;
+    for (i = 0; i < md5Count; ++i) {
+        if (is_known_large_whole_file_hash(md5List[i])) return 1;
+    }
+    return 0;
+}
+
+static int md5_list_match_index(const char *hex, const char *const *md5List,
+                                const int *matched, int md5Count) {
+    int i;
+    if (!hex || !md5List || md5Count <= 0) return -1;
+    for (i = 0; i < md5Count; ++i) {
+        if ((!matched || !matched[i]) && strcmp(hex, md5List[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static int zip_stored_entry_md5(FILE *fp, uint32_t dataOffset, uint32_t size,
                                 char outHex[33]) {
     return file_range_md5(fp, (long)dataOffset, size, outHex);
@@ -667,6 +689,126 @@ static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
     return 0;
 }
 
+static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    FILE *fp;
+    long fileSize;
+    long searchStart;
+    long eocdOffset = -1;
+    unsigned char *tail;
+    size_t tailSize;
+    uint32_t cdOffset, cdSize;
+    uint16_t entryCount;
+    uint32_t pos;
+    uint16_t i;
+    int foundCount = 0;
+
+    fp = fopen(zipPath, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    fileSize = ftell(fp);
+    if (fileSize < 22) {
+        fclose(fp);
+        return 0;
+    }
+    tailSize = (size_t)(fileSize < (long)(65557U) ? fileSize : (long)65557U);
+    searchStart = fileSize - (long)tailSize;
+    tail = (unsigned char*)malloc(tailSize);
+    if (!tail) {
+        fclose(fp);
+        return 0;
+    }
+    if (fseek(fp, searchStart, SEEK_SET) != 0 ||
+        fread(tail, 1U, tailSize, fp) != tailSize) {
+        free(tail);
+        fclose(fp);
+        return 0;
+    }
+    for (long j = (long)tailSize - 22; j >= 0; --j) {
+        if (tail[j] == 0x50 && tail[j + 1] == 0x4b &&
+            tail[j + 2] == 0x05 && tail[j + 3] == 0x06) {
+            eocdOffset = searchStart + j;
+            entryCount = read_u16le(tail + j + 10);
+            cdSize = read_u32le(tail + j + 12);
+            cdOffset = read_u32le(tail + j + 16);
+            break;
+        }
+    }
+    free(tail);
+    if (eocdOffset < 0 || cdOffset + cdSize > (uint32_t)fileSize) {
+        fclose(fp);
+        return 0;
+    }
+
+    pos = cdOffset;
+    for (i = 0; i < entryCount && pos + 46U <= cdOffset + cdSize; ++i) {
+        unsigned char hdr[46];
+        uint16_t method, nameLen, extraLen, commentLen;
+        uint32_t compressedSize, uncompressedSize, localOffset;
+        char name[256];
+        unsigned char local[30];
+        uint16_t localNameLen, localExtraLen;
+        uint32_t dataOffset;
+        char hex[33];
+        int matchIndex;
+
+        if (fseek(fp, (long)pos, SEEK_SET) != 0 ||
+            fread(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr)) break;
+        if (read_u32le(hdr) != 0x02014b50U) break;
+        method = read_u16le(hdr + 10);
+        compressedSize = read_u32le(hdr + 20);
+        uncompressedSize = read_u32le(hdr + 24);
+        nameLen = read_u16le(hdr + 28);
+        extraLen = read_u16le(hdr + 30);
+        commentLen = read_u16le(hdr + 32);
+        localOffset = read_u32le(hdr + 42);
+
+        if (nameLen == 0U || nameLen >= sizeof(name)) {
+            pos += 46U + nameLen + extraLen + commentLen;
+            continue;
+        }
+        if (fread(name, 1U, nameLen, fp) != nameLen) break;
+        name[nameLen] = '\0';
+        pos += 46U + nameLen + extraLen + commentLen;
+        if (name[nameLen - 1U] == '/' || uncompressedSize < 16U ||
+            uncompressedSize > ASSET_ZIP_MAX_ENTRY_BYTES) {
+            continue;
+        }
+        if (fseek(fp, (long)localOffset, SEEK_SET) != 0 ||
+            fread(local, 1U, sizeof(local), fp) != sizeof(local) ||
+            read_u32le(local) != 0x04034b50U) {
+            continue;
+        }
+        localNameLen = read_u16le(local + 26);
+        localExtraLen = read_u16le(local + 28);
+        dataOffset = localOffset + 30U + localNameLen + localExtraLen;
+        if (method == 0U) {
+            if (!zip_stored_entry_md5(fp, dataOffset, uncompressedSize, hex)) continue;
+        } else if (method == 8U) {
+            if (!zip_deflated_entry_md5(fp, dataOffset, compressedSize,
+                                        uncompressedSize, hex)) {
+                continue;
+            }
+        } else {
+            continue;
+        }
+        matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
+        if (matchIndex >= 0 &&
+            copy_virtual_match_path(zipPath, name, outPaths[matchIndex], ASSET_PATH_MAX)) {
+            matched[matchIndex] = 1;
+            ++foundCount;
+            if (foundCount == md5Count) break;
+        }
+    }
+    fclose(fp);
+    return foundCount;
+}
+
 static int iso_read_sector(FILE *fp, int raw2352, uint32_t sector,
                            unsigned char out[ASSET_ISO_SECTOR_SIZE]) {
     long offset = raw2352
@@ -776,6 +918,56 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
     return 0;
 }
 
+static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
+                                    uint32_t dirSize, int depth,
+                                    const char *const *md5List,
+                                    int md5Count,
+                                    const char *isoPath,
+                                    char outPaths[][ASSET_PATH_MAX],
+                                    int matched[]) {
+    unsigned char sector[ASSET_ISO_SECTOR_SIZE];
+    uint32_t sectors = (dirSize + ASSET_ISO_SECTOR_SIZE - 1U) / ASSET_ISO_SECTOR_SIZE;
+    uint32_t s;
+    int foundCount = 0;
+    if (depth > ASSET_ISO_MAX_DIR_DEPTH) return 0;
+    for (s = 0U; s < sectors; ++s) {
+        int offset = 0;
+        if (!iso_read_sector(fp, raw2352, dirLba + s, sector)) return foundCount;
+        while (offset < (int)ASSET_ISO_SECTOR_SIZE) {
+            uint32_t lba, size;
+            int isDir;
+            int recLen;
+            char name[128];
+            recLen = iso_parse_dir_record(sector, offset, &lba, &size, &isDir, name);
+            if (recLen == 0) break;
+            if (name[0] != '\0' && name[0] != 1) {
+                if (isDir) {
+                    foundCount += scan_iso_dir_by_md5_list(fp, raw2352, lba, size,
+                                                           depth + 1, md5List,
+                                                           md5Count, isoPath,
+                                                           outPaths, matched);
+                    if (foundCount >= md5Count) return foundCount;
+                } else if (size >= 16U && size <= ASSET_ZIP_MAX_ENTRY_BYTES) {
+                    char hex[33];
+                    int matchIndex;
+                    if (iso_file_md5(fp, raw2352, lba, size, hex)) {
+                        matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
+                        if (matchIndex >= 0 &&
+                            copy_virtual_match_path(isoPath, name, outPaths[matchIndex],
+                                                    ASSET_PATH_MAX)) {
+                            matched[matchIndex] = 1;
+                            ++foundCount;
+                            if (foundCount >= md5Count) return foundCount;
+                        }
+                    }
+                }
+            }
+            offset += recLen;
+        }
+    }
+    return foundCount;
+}
+
 static int iso_extract_entry_in_dir(FILE *fp, int raw2352, uint32_t dirLba,
                                     uint32_t dirSize, int depth,
                                     const char *entryName,
@@ -854,6 +1046,33 @@ static int scan_iso_by_md5(const char *isoPath, const char *expectedMd5,
     return 0;
 }
 
+static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    FILE *fp = fopen(isoPath, "rb");
+    unsigned char pvd[ASSET_ISO_SECTOR_SIZE];
+    int raw;
+    int foundCount = 0;
+    if (!fp) return 0;
+    for (raw = 0; raw <= 1; ++raw) {
+        uint32_t rootLba, rootSize;
+        if (!iso_read_sector(fp, raw, 16U, pvd)) continue;
+        if (pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) continue;
+        rootLba = read_u32le(pvd + 158);
+        rootSize = read_u32le(pvd + 166);
+        foundCount += scan_iso_dir_by_md5_list(fp, raw, rootLba, rootSize, 0,
+                                               md5List, md5Count, isoPath,
+                                               outPaths, matched);
+        if (foundCount >= md5Count) {
+            fclose(fp);
+            return foundCount;
+        }
+    }
+    fclose(fp);
+    return foundCount;
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     if (is_zip_path(path)) {
@@ -865,9 +1084,85 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     return 0;
 }
 
+static int scan_container_by_md5_list(const char *path, const char *const *md5List,
+                                      int md5Count,
+                                      char outPaths[][ASSET_PATH_MAX],
+                                      int matched[]) {
+    if (is_zip_path(path)) {
+        return scan_zip_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_iso_path(path)) {
+        return scan_iso_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    return 0;
+}
+
 /* ── Recursive directory scanner ──────────────────────────────── */
 
 #ifndef _WIN32
+static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[], int depth, int maxDepth) {
+    DIR *d;
+    struct dirent *ent;
+    struct stat st;
+    char path[ASSET_PATH_MAX];
+    char hex[33];
+    int foundCount = 0;
+    int allowLargeWholeFile;
+
+    if (depth > maxDepth) return 0;
+    d = opendir(dir);
+    if (!d) return 0;
+    allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
+
+    while ((ent = readdir(d)) != NULL) {
+        if (ent->d_name[0] == '.') continue;
+        if (snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name) >= (int)sizeof(path)) {
+            continue;
+        }
+        if (stat(path, &st) != 0) continue;
+
+        if (S_ISREG(st.st_mode)) {
+            int matchIndex;
+            if (is_zip_path(path) || is_iso_path(path)) {
+                foundCount += scan_container_by_md5_list(path, md5List, md5Count,
+                                                         outPaths, matched);
+                if (foundCount >= md5Count) {
+                    closedir(d);
+                    return foundCount;
+                }
+            }
+            if (st.st_size > ASSET_SCAN_MAX_FILE_BYTES && !allowLargeWholeFile) {
+                continue;
+            }
+            if (st.st_size < 16) continue;
+            if (!file_md5(path, hex)) continue;
+            matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
+            if (matchIndex >= 0 &&
+                copy_match_path(path, outPaths[matchIndex], ASSET_PATH_MAX)) {
+                matched[matchIndex] = 1;
+                ++foundCount;
+                if (foundCount >= md5Count) {
+                    closedir(d);
+                    return foundCount;
+                }
+            }
+        } else if (S_ISDIR(st.st_mode)) {
+            foundCount += scan_dir_by_md5_list(path, md5List, md5Count,
+                                               outPaths, matched,
+                                               depth + 1, maxDepth);
+            if (foundCount >= md5Count) {
+                closedir(d);
+                return foundCount;
+            }
+        }
+    }
+    closedir(d);
+    return foundCount;
+}
+
 static int scan_dir(const char *dir, const char *expectedMd5,
                     char *outPath, int outPathLen, int depth, int maxDepth) {
     DIR *d;
@@ -919,6 +1214,66 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     return 0;
 }
 #else
+static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[], int depth, int maxDepth) {
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    char pattern[ASSET_PATH_MAX], path[ASSET_PATH_MAX];
+    char hex[33];
+    int foundCount = 0;
+    int allowLargeWholeFile;
+    if (depth > maxDepth) return 0;
+    if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) return 0;
+    h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return 0;
+    allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
+    do {
+        if (fd.cFileName[0] == '.') continue;
+        if (snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName) >= (int)sizeof(path)) continue;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            foundCount += scan_dir_by_md5_list(path, md5List, md5Count,
+                                               outPaths, matched,
+                                               depth + 1, maxDepth);
+            if (foundCount >= md5Count) {
+                FindClose(h);
+                return foundCount;
+            }
+        } else {
+            LARGE_INTEGER sz;
+            int matchIndex;
+            sz.LowPart = fd.nFileSizeLow;
+            sz.HighPart = fd.nFileSizeHigh;
+            if (is_zip_path(path) || is_iso_path(path)) {
+                foundCount += scan_container_by_md5_list(path, md5List, md5Count,
+                                                         outPaths, matched);
+                if (foundCount >= md5Count) {
+                    FindClose(h);
+                    return foundCount;
+                }
+            }
+            if ((sz.QuadPart > ASSET_SCAN_MAX_FILE_BYTES && !allowLargeWholeFile) ||
+                sz.QuadPart < 16) {
+                continue;
+            }
+            if (!file_md5(path, hex)) continue;
+            matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
+            if (matchIndex >= 0 &&
+                copy_match_path(path, outPaths[matchIndex], ASSET_PATH_MAX)) {
+                matched[matchIndex] = 1;
+                ++foundCount;
+                if (foundCount >= md5Count) {
+                    FindClose(h);
+                    return foundCount;
+                }
+            }
+        }
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+    return foundCount;
+}
+
 static int scan_dir(const char *dir, const char *expectedMd5,
                     char *outPath, int outPathLen, int depth, int maxDepth) {
     WIN32_FIND_DATAA fd;
@@ -987,6 +1342,74 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
         }
     }
     return 0;
+}
+
+int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List,
+                               char outPaths[][ASSET_PATH_MAX],
+                               int *outMatched, int maxMatches,
+                               int maxDepth) {
+    char (*normalized)[33];
+    const char **normalizedPtrs;
+    char (*normalizedPaths)[ASSET_PATH_MAX];
+    int *normalizedMatched;
+    int *originalIndices;
+    int inputCount = 0;
+    int normalizedCount = 0;
+    int foundCount = 0;
+    int i;
+
+    if (!searchDir || !md5List || !outPaths || maxMatches <= 0) return 0;
+    if (maxDepth < 0) maxDepth = 3;
+    while (inputCount < maxMatches && md5List[inputCount] != NULL) {
+        outPaths[inputCount][0] = '\0';
+        if (outMatched) outMatched[inputCount] = 0;
+        ++inputCount;
+    }
+    if (inputCount == 0) return 0;
+
+    normalized = (char (*)[33])calloc((size_t)inputCount, sizeof(*normalized));
+    normalizedPtrs = (const char**)calloc((size_t)inputCount + 1U, sizeof(*normalizedPtrs));
+    normalizedPaths = (char (*)[ASSET_PATH_MAX])calloc((size_t)inputCount,
+                                                       sizeof(*normalizedPaths));
+    normalizedMatched = (int*)calloc((size_t)inputCount, sizeof(*normalizedMatched));
+    originalIndices = (int*)calloc((size_t)inputCount, sizeof(*originalIndices));
+    if (!normalized || !normalizedPtrs || !normalizedPaths ||
+        !normalizedMatched || !originalIndices) {
+        free(normalized);
+        free(normalizedPtrs);
+        free(normalizedPaths);
+        free(normalizedMatched);
+        free(originalIndices);
+        return 0;
+    }
+
+    for (i = 0; i < inputCount; ++i) {
+        if (normalize_md5(md5List[i], normalized[normalizedCount])) {
+            normalizedPtrs[normalizedCount] = normalized[normalizedCount];
+            originalIndices[normalizedCount] = i;
+            ++normalizedCount;
+        }
+    }
+    if (normalizedCount > 0) {
+        foundCount = scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
+                                          normalizedPaths, normalizedMatched,
+                                          0, maxDepth);
+        for (i = 0; i < normalizedCount; ++i) {
+            if (normalizedMatched[i]) {
+                int original = originalIndices[i];
+                if (copy_match_path(normalizedPaths[i], outPaths[original], ASSET_PATH_MAX)) {
+                    if (outMatched) outMatched[original] = 1;
+                }
+            }
+        }
+    }
+
+    free(normalized);
+    free(normalizedPtrs);
+    free(normalizedPaths);
+    free(normalizedMatched);
+    free(originalIndices);
+    return foundCount;
 }
 
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath) {
