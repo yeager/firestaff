@@ -447,6 +447,76 @@ static void test_csb_thing_pass_order_contracts(void)
                csb_v1_viewport_get_thing_pass_order_spec_for_square(999) == NULL);
 }
 
+static void test_csb_object_visibility_filter_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int redmcsb_index;
+        int object_row;
+        const char *function_name;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 14, 3, "F0676_DrawD3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 4, "F0677_DrawD3R2" },
+    };
+
+    check_int("csb.object_visibility.count",
+              (int)csb_v1_viewport_object_visibility_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportObjectVisibilitySpec *spec =
+            csb_v1_viewport_get_object_visibility_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.present", i);
+        check_true(id, spec != NULL);
+        if (!spec) continue;
+
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.redmcsb_index", i);
+        check_int(id, spec->redmcsb_view_square_index, expected[i].redmcsb_index);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.depth", i);
+        check_int(id, spec->view_depth, 3);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.row", i);
+        check_int(id, spec->object_visibility_row, expected[i].object_row);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.type_gate", i);
+        check_int(id, spec->requires_item_type_range, 1);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.cell_match", i);
+        check_int(id, spec->requires_thing_cell_match, 1);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.depth3_gate", i);
+        check_int(id, spec->suppresses_depth3_front_cells, 1);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.depth0_gate", i);
+        check_int(id, spec->suppresses_depth0_back_cells, 0);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.first_cell", i);
+        check_int(id, spec->first_visible_cell_ordinal, 3);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.last_cell", i);
+        check_int(id, spec->last_visible_cell_ordinal, 4);
+
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.cell1_hidden", i);
+        check_int(id, csb_v1_viewport_object_visibility_allows_cell(spec, 1), 0);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.cell2_hidden", i);
+        check_int(id, csb_v1_viewport_object_visibility_allows_cell(spec, 2), 0);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.cell3_visible", i);
+        check_int(id, csb_v1_viewport_object_visibility_allows_cell(spec, 3), 1);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.cell4_visible", i);
+        check_int(id, csb_v1_viewport_object_visibility_allows_cell(spec, 4), 1);
+
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.source_row", i);
+        check_true(id, strstr(spec->source_lines, "G2028") != NULL);
+        snprintf(id, sizeof(id), "csb.object_visibility.%zu.source_predicate", i);
+        check_true(id, strstr(spec->source_lines, "4923 F0115") != NULL);
+    }
+
+    check_true("csb.object_visibility.null_helper",
+               csb_v1_viewport_object_visibility_allows_cell(NULL, 3) == 0);
+    check_true("csb.object_visibility.out_of_range",
+               csb_v1_viewport_get_object_visibility_spec(2) == NULL);
+    check_true("csb.object_visibility.unknown_square",
+               csb_v1_viewport_get_object_visibility_spec_for_square(999) == NULL);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -460,6 +530,7 @@ static void test_source_evidence(void)
     check_true("evidence.f0108", e && strstr(e, "F0108") != NULL);
     check_true("evidence.f0111", e && strstr(e, "F0111") != NULL);
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
+    check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
@@ -475,6 +546,7 @@ int main(void)
     test_csb_wall_ornament_route_contracts();
     test_csb_floor_ornament_route_contracts();
     test_csb_thing_pass_order_contracts();
+    test_csb_object_visibility_filter_contracts();
     test_source_evidence();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
