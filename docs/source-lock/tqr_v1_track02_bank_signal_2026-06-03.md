@@ -9,7 +9,7 @@ claim a dungeon map-grid parser, a dungeon descriptor table, or JP/US parity.
 
 | Variant | File checked | MD5 | Result |
 |---------|--------------|-----|--------|
-| US Track 02 ISO | `TQUS02End.iso` | `3d8b78571dcd0e6eb8eb4b01eeb7fbba` | One unique bank-stride descriptor candidate found. |
+| US Track 02 ISO | `TQUS02End.iso` | `3d8b78571dcd0e6eb8eb4b01eeb7fbba` | One unique bank-stride descriptor candidate found, with a zero-fill boundary to the next nonzero prefix. |
 | JP Rev 1 Track 02 ISO | `TQJP02End.iso` | `397039af02d50d15c70b74088eb8a1cb` | Image is zero-filled in the available asset, so no dungeon-bank offset is claimed. |
 
 ## US ISO Signal
@@ -30,6 +30,17 @@ Interpreted as little-endian words, this is:
 The stride is `0x0400`, the descriptor is 18 bytes long, and the exact byte
 sequence occurs once in the verified US Track 02 ISO.
 
+Immediately after the descriptor, bytes `0x1596..0x2fff` are zero. The next
+nonzero run starts at byte offset `0x3000` with this 16-byte prefix:
+
+```text
+be 80 fe 80 34 81 76 81 d0 81 2a 80 2b 80 38 80
+```
+
+The probe treats that as a boundary signal only: it narrows false positives for
+the `0x1584` descriptor, but it does not identify the later table's semantic
+type.
+
 ## Regression Gate
 
 `firestaff_theron_v1_track02_bank_probe` verifies:
@@ -37,6 +48,10 @@ sequence occurs once in the verified US Track 02 ISO.
 - the US file MD5 before asserting offset `0x1584`
 - the 9-word `0x0400` stride sequence
 - uniqueness of the descriptor bytes within the US ISO
+- zero-fill after the descriptor through the next nonzero prefix at `0x3000`
+- uniqueness of the 16-byte `0x3000` prefix within the US ISO
+- a negative fixture where the descriptor bytes exist without the boundary
+  prefix, which must not pass
 - the JP Rev 1 zero-filled image outcome as insufficient evidence
 
 The probe skips real-data assertions when the Track 02 images are absent.

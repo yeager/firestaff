@@ -20,10 +20,17 @@
 #define TQR_US_ISO_BANK_STRIDE_COUNT  9u
 #define TQR_US_ISO_BANK_STRIDE_BYTES  (TQR_US_ISO_BANK_STRIDE_COUNT * 2u)
 #define TQR_US_ISO_BANK_STRIDE_STEP   0x0400u
+#define TQR_US_ISO_BANK_BOUNDARY_OFFSET 0x3000u
+#define TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES 16u
 
 static const uint8_t g_us_iso_bank_stride_descriptor[TQR_US_ISO_BANK_STRIDE_BYTES] = {
     0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
     0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+};
+
+static const uint8_t g_us_iso_bank_boundary_prefix[TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES] = {
+    0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+    0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80
 };
 
 static uint16_t rd16le(const uint8_t *p) {
@@ -42,6 +49,14 @@ Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex) {
 }
 
 static int track_is_all_zero(const uint8_t *data, size_t size) {
+    size_t i;
+    for (i = 0; i < size; ++i) {
+        if (data[i] != 0) return 0;
+    }
+    return 1;
+}
+
+static int range_is_all_zero(const uint8_t *data, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
         if (data[i] != 0) return 0;
@@ -73,6 +88,9 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
 
     Theron_Track02Variant variant;
     size_t occurrence_count;
+    size_t boundary_prefix_occurrence_count;
+    const size_t zero_offset = TQR_US_ISO_BANK_STRIDE_OFFSET + TQR_US_ISO_BANK_STRIDE_BYTES;
+    const size_t zero_bytes = TQR_US_ISO_BANK_BOUNDARY_OFFSET - zero_offset;
 
     if (out_signal) {
         memset(out_signal, 0, sizeof(*out_signal));
@@ -93,7 +111,7 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
-    if (track02_size < TQR_US_ISO_BANK_STRIDE_OFFSET + TQR_US_ISO_BANK_STRIDE_BYTES) {
+    if (track02_size < TQR_US_ISO_BANK_BOUNDARY_OFFSET + TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     if (memcmp(track02_data + TQR_US_ISO_BANK_STRIDE_OFFSET,
@@ -101,11 +119,24 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
                TQR_US_ISO_BANK_STRIDE_BYTES) != 0) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
+    if (!range_is_all_zero(track02_data + zero_offset, zero_bytes)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    if (memcmp(track02_data + TQR_US_ISO_BANK_BOUNDARY_OFFSET,
+               g_us_iso_bank_boundary_prefix,
+               TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES) != 0) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
 
     occurrence_count = count_pattern_occurrences(track02_data,
                                                  track02_size,
                                                  g_us_iso_bank_stride_descriptor,
                                                  TQR_US_ISO_BANK_STRIDE_BYTES);
+    boundary_prefix_occurrence_count =
+        count_pattern_occurrences(track02_data,
+                                  track02_size,
+                                  g_us_iso_bank_boundary_prefix,
+                                  TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES);
     out_signal->descriptor_offset = TQR_US_ISO_BANK_STRIDE_OFFSET;
     out_signal->descriptor_size = TQR_US_ISO_BANK_STRIDE_BYTES;
     out_signal->occurrence_count = occurrence_count;
@@ -114,8 +145,13 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
         rd16le(g_us_iso_bank_stride_descriptor + TQR_US_ISO_BANK_STRIDE_BYTES - 2u);
     out_signal->stride = TQR_US_ISO_BANK_STRIDE_STEP;
     out_signal->value_count = TQR_US_ISO_BANK_STRIDE_COUNT;
+    out_signal->post_descriptor_zero_offset = zero_offset;
+    out_signal->post_descriptor_zero_bytes = zero_bytes;
+    out_signal->next_nonzero_offset = TQR_US_ISO_BANK_BOUNDARY_OFFSET;
+    out_signal->boundary_prefix_size = TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES;
+    out_signal->boundary_prefix_occurrence_count = boundary_prefix_occurrence_count;
 
-    return occurrence_count == 1u
+    return occurrence_count == 1u && boundary_prefix_occurrence_count == 1u
         ? THERON_TRACK02_SIGNAL_OK
         : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
@@ -153,7 +189,8 @@ const char *theron_v1_track02_source_evidence(void) {
     return "theron_v1_track02.c: US Track 02 ISO MD5 "
            THERON_TRACK02_MD5_US_ISO
            " has a unique little-endian bank-stride descriptor at offset "
-           "0x1584 (9 words, 0x0020..0x2020, stride 0x0400); JP Rev 1 ISO "
+           "0x1584 (9 words, 0x0020..0x2020, stride 0x0400), followed by "
+           "zero-fill through the next nonzero prefix at offset 0x3000; JP Rev 1 ISO "
            THERON_TRACK02_MD5_JP_REV1_ISO
            " is hash-verified but zero-filled in the available image, so no "
            "JP dungeon-bank offset is claimed.";
