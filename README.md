@@ -42,7 +42,7 @@ playability still being hardened game by game.
 | Chaos Strikes Back | Launch/profile boundary, dungeon model, mechanics, utility/import and verification slices implemented; full runtime proof still in progress | PC/ST/Amiga variants are catalogued by hash | V1 parity slices plus V2 scaffolding and active hardening |
 | Dungeon Master II: Skullkeep | Boot/profile and utility flow implemented; dungeon, rendering and mechanics are still being hardened | PC English, French and German/English JewelCase data are catalogued by hash | V2 presentation pipeline is implemented; V1 runtime completion remains active work |
 | DM Nexus (Saturn) | Saturn data, world, render, save/load and runtime-state paths implemented; real-asset handoff proof still in progress | Saturn DMDF/DGN data is catalogued by hash | V2 asset, lighting, UI and controller slices implemented; more verification remains |
-| Theron's Quest | V1 parser, rendering, mechanics, progression, save/load and verification suite implemented; positive real-asset launch proof remains | JP and US Track 02 provenance is hash-verified | V1 presentation implemented; V2 modes not started |
+| Theron's Quest | V1 parser, rendering, mechanics, progression, save/load, direct Track 02 launch handoff and a narrow US bank-boundary signal are verified; full dungeon data parity is still being hardened | JP and US Track 02 provenance is hash-verified | V1 presentation implemented; V2 modes not started |
 
 ## What Firestaff Gives You
 
@@ -64,16 +64,19 @@ playability still being hardened game by game.
 
 ## Latest Release
 
-**Current version:** `2.7.1`
+**Current version:** `2.7.2`
 
-The latest release focuses on the DM1 PC-34 boot sequence:
+The latest release focuses on game-data discovery, launch gating and real-asset
+runtime handoff:
 
-- Restored the ReDMCSB SWSH/FTL logo playback before the DM1 TITLE sequence.
-- Kept the DM1 TITLE animation on the original GRAPHICS.DAT title path when
-  that asset is present.
-- Fixed the FTL/SWSH palette path so the logo starts black and lights up from
-  the source command sequence instead of inheriting the title palette.
-- Replaced hardcoded entrance-door delays with source-locked vblank timing.
+- Recursive hash-based scanning now covers nested folders, ZIP entries and
+  ISO/BIN ISO 9660 data images.
+- Archive-backed DM1, CSB and DM2 required files can be staged into the local
+  asset cache before launch.
+- The start menu wires data-directory availability into game cards and blocks
+  launches when required data is missing.
+- Theron's Quest recognizes JP Rev 1 and US Track 02 ISO variants and routes
+  direct launches into the native M11 Theron viewport path.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
 
