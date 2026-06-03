@@ -1344,6 +1344,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_missing_dungeon_launch_blocker
     )
 
+    add_executable(test_m12_dm1_v1_required_complete_launches
+        tests/test_m12_dm1_v1_required_complete_launches.c
+    )
+    target_link_libraries(test_m12_dm1_v1_required_complete_launches PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_dm1_v1_required_complete_launches PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_dm1_v1_required_complete_launches
+        COMMAND test_m12_dm1_v1_required_complete_launches
+    )
+
     add_executable(test_m12_data_dir_cancel
         tests/test_m12_data_dir_cancel.c
     )
