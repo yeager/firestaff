@@ -23,6 +23,7 @@ typedef struct {
     int scaleModeIndex;
     int displayAspectMode;   /* 0 = 4:3, 1 = 16:9 */
     int integerScaling;
+    int layoutMigrationVersion;
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;

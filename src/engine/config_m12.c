@@ -12,6 +12,14 @@
 #include <unistd.h>
 #endif
 
+enum {
+    M12_LAYOUT_MIGRATION_VERSION_CURRENT = 1,
+    M12_CONFIG_SCALE_1X = 0,
+    M12_CONFIG_SCALE_4X = 3,
+    M12_CONFIG_SCALE_FIT = 4,
+    M12_CONFIG_DISPLAY_ASPECT_CONTENT = 2
+};
+
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
         return;
@@ -229,6 +237,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->scaleModeIndex = 4;
     config->displayAspectMode = 2; /* content-native aspect */
     config->integerScaling = 0; /* smooth FIT for full-window content */
+    config->layoutMigrationVersion = M12_LAYOUT_MIGRATION_VERSION_CURRENT;
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
     config->wasdMovementEnabled = 1;
@@ -354,6 +363,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "integer_scaling")) {
         config->integerScaling = m12_parse_int(value, config->integerScaling) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "layout_migration_version")) {
+        config->layoutMigrationVersion = m12_parse_int(value, config->layoutMigrationVersion);
         return;
     }
     if (m12_string_equals(key, "scaling_filter_index")) {
@@ -753,6 +766,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "scale_mode_index = %d\n", config->scaleModeIndex);
     fprintf(fp, "display_aspect_mode = %d\n", config->displayAspectMode);
     fprintf(fp, "integer_scaling = %d\n", config->integerScaling ? 1 : 0);
+    fprintf(fp, "layout_migration_version = %d\n", config->layoutMigrationVersion);
     fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
     fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);
     fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
@@ -848,6 +862,29 @@ int M12_Config_Save(const M12_Config* config) {
     return 1;
 }
 
+static int m12_apply_layout_migrations(M12_Config* config) {
+    int changed = 0;
+    if (!config) {
+        return 0;
+    }
+    if (config->layoutMigrationVersion < 1) {
+        if (config->scaleModeIndex >= M12_CONFIG_SCALE_1X &&
+            config->scaleModeIndex <= M12_CONFIG_SCALE_4X) {
+            config->scaleModeIndex = M12_CONFIG_SCALE_FIT;
+            config->displayAspectMode = M12_CONFIG_DISPLAY_ASPECT_CONTENT;
+            config->integerScaling = 0;
+            changed = 1;
+        }
+        config->layoutMigrationVersion = 1;
+        changed = 1;
+    }
+    if (config->layoutMigrationVersion < M12_LAYOUT_MIGRATION_VERSION_CURRENT) {
+        config->layoutMigrationVersion = M12_LAYOUT_MIGRATION_VERSION_CURRENT;
+        changed = 1;
+    }
+    return changed;
+}
+
 int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     FILE* fp;
     char line[1024];
@@ -866,10 +903,14 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
         return 0;
     }
     hadExistingFile = 1;
+    config->layoutMigrationVersion = 0;
     while (fgets(line, sizeof(line), fp) != NULL) {
         m12_parse_line(config, line);
     }
     fclose(fp);
+    if (m12_apply_layout_migrations(config)) {
+        shouldSave = 1;
+    }
     if (!config->languageExplicit) {
         int autoLanguage = M12_Config_GetAutoLanguageIndex();
         if (config->languageIndex != autoLanguage) {
