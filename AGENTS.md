@@ -216,7 +216,7 @@ Before pushing from the main session, run the smallest relevant local verificati
 
 ### Updating public project docs
 1. Keep README honest and sales-friendly.
-2. Use tracked screenshots only, preferably from `assets/branding/`, `verification-screens/`, or `docs/compare/`.
+2. README screenshots must be real in-game screenshots captured from Firestaff or the original games. Do not use generated, illustrated, mocked, branding, or otherwise invented images as README screenshots. Prefer tracked runtime captures from `verification-screens/` or real comparison captures in `docs/compare/`.
 3. Include status per game, data-scanner behavior, platforms, graphics modes, build steps, and legal note.
 4. Do not include debug data, queue output, pass logs, local-only paths, or private worker status.
 
