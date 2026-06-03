@@ -82,6 +82,90 @@ static int file_contains(const char *path, const char *contents) {
     return n == strlen(contents) && memcmp(buf, contents, n) == 0;
 }
 
+static int write_bytes(const char *path, const void *data, size_t size) {
+    FILE *fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (size > 0 && fwrite(data, 1, size, fp) != size) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int expect_no_launchable_slots(const Nexus_V1_SaveManager *mgr,
+                                      const char *msg) {
+    int i;
+
+    for (i = 0; i < NEXUS_SAVE_MAX_SLOTS; ++i) {
+        if (!expect(nexus_v1_save_get_slot(mgr, (uint8_t)i) == NULL, msg)) return 0;
+        if (!expect(mgr->slots[i].occupied == 0, msg)) return 0;
+        if (!expect(mgr->slots[i].label[0] == '\0', msg)) return 0;
+    }
+    return 1;
+}
+
+static int test_scan_missing_empty_and_invalid_roots_do_not_launch(const char *root) {
+    char save_root[512];
+    char path[512];
+    Nexus_V1_SaveManager mgr;
+    Nexus_V1_SaveHeader hdr;
+    static const unsigned char tiny_invalid[] = { 'n', 'o' };
+
+    snprintf(save_root, sizeof(save_root), "%s/scan-missing-root", root);
+    nexus_v1_save_init(&mgr, save_root);
+    if (!expect(FS_RMDIR(save_root) == 0,
+                "test removes scan root after manager init")) return 0;
+    if (!expect(nexus_v1_save_scan(&mgr) == 0,
+                "scan of missing Nexus save root does not crash")) return 0;
+    if (!expect_no_launchable_slots(&mgr,
+                                    "missing Nexus save root has no launchable slots")) return 0;
+
+    snprintf(save_root, sizeof(save_root), "%s/scan-empty-root", root);
+    nexus_v1_save_init(&mgr, save_root);
+    if (!expect(nexus_v1_save_scan(&mgr) == 0,
+                "scan of empty Nexus save root does not crash")) return 0;
+    if (!expect_no_launchable_slots(&mgr,
+                                    "empty Nexus save root has no launchable slots")) return 0;
+
+    snprintf(save_root, sizeof(save_root), "%s/scan-invalid-root", root);
+    nexus_v1_save_init(&mgr, save_root);
+
+    snprintf(path, sizeof(path), "%s/nexus_save_00.dat", save_root);
+    if (!expect(write_bytes(path, tiny_invalid, sizeof(tiny_invalid)),
+                "test writes too-small Nexus slot fixture")) return 0;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.magic = 0x21444142U; /* "BAD!" */
+    hdr.version = NEXUS_SAVE_VERSION;
+    hdr.header_size = (uint16_t)sizeof(hdr);
+    snprintf(path, sizeof(path), "%s/nexus_save_01.dat", save_root);
+    if (!expect(write_bytes(path, &hdr, sizeof(hdr)),
+                "test writes wrong-magic Nexus slot fixture")) return 0;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.magic = NEXUS_SAVE_MAGIC;
+    hdr.version = (uint16_t)(NEXUS_SAVE_VERSION + 1);
+    hdr.header_size = (uint16_t)sizeof(hdr);
+    snprintf(path, sizeof(path), "%s/nexus_save_02.dat", save_root);
+    if (!expect(write_bytes(path, &hdr, sizeof(hdr)),
+                "test writes unsupported-version Nexus slot fixture")) return 0;
+
+    if (!expect(nexus_v1_save_scan(&mgr) == 0,
+                "scan of invalid Nexus save entries does not crash")) return 0;
+    if (!expect_no_launchable_slots(&mgr,
+                                    "invalid Nexus save entries have no launchable slots")) return 0;
+
+    snprintf(path, sizeof(path), "%s/nexus_save_00.dat", save_root);
+    FS_UNLINK(path);
+    snprintf(path, sizeof(path), "%s/nexus_save_01.dat", save_root);
+    FS_UNLINK(path);
+    snprintf(path, sizeof(path), "%s/nexus_save_02.dat", save_root);
+    FS_UNLINK(path);
+    FS_RMDIR(save_root);
+
+    return 1;
+}
+
 static int test_load_from_missing_root_does_not_mutate_outputs(const char *root) {
     char save_root[512];
     Nexus_V1_SaveManager mgr;
@@ -201,11 +285,12 @@ int main(void) {
 
     ok = test_load_from_missing_root_does_not_mutate_outputs(root) && ok;
     ok = test_save_to_unavailable_root_does_not_mark_slot_successful(root) && ok;
+    ok = test_scan_missing_empty_and_invalid_roots_do_not_launch(root) && ok;
 
     FS_RMDIR(root);
 
     if (ok) {
-        puts("ok: Nexus V1 save/load missing-root failures stay explicit and non-mutating");
+        puts("ok: Nexus V1 save/load missing-root and invalid-entry failures stay non-launchable");
         return 0;
     }
     return 1;

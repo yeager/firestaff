@@ -429,10 +429,10 @@ int nexus_v1_save_scan(Nexus_V1_SaveManager *mgr) {
 
     for (i = 0; i < NEXUS_SAVE_MAX_SLOTS; i++) {
         char path[512];
+        Nexus_V1_SaveHeader hdr;
         slot_path(mgr->save_dir, (uint8_t)i, path, sizeof(path));
 
-        FILE *f = fopen(path, "rb");
-        if (!f) {
+        if (nexus_v1_save_probe(path, &hdr, NULL)[0] != '\0') {
             mgr->slots[i].occupied = 0;
             memset(&mgr->slots[i].header, 0, sizeof(mgr->slots[i].header));
             mgr->slots[i].label[0] = '\0';
@@ -440,31 +440,22 @@ int nexus_v1_save_scan(Nexus_V1_SaveManager *mgr) {
             continue;
         }
 
-        Nexus_V1_SaveHeader hdr;
-        if (fread(&hdr, sizeof(hdr), 1, f) == 1 && hdr.magic == NEXUS_SAVE_MAGIC) {
-            mgr->slots[i].occupied = 1;
-            mgr->slots[i].header = hdr;
-            mgr->slots[i].slot_index = (uint8_t)i;
+        mgr->slots[i].occupied = 1;
+        mgr->slots[i].header = hdr;
+        mgr->slots[i].slot_index = (uint8_t)i;
 
-            struct stat st;
-            if (fstat(fileno(f), &st) == 0)
-                mgr->slots[i].timestamp = (uint32_t)st.st_mtime;
-            else
-                mgr->slots[i].timestamp = 0;
-
-            snprintf(mgr->slots[i].label, sizeof(mgr->slots[i].label),
-                     "Level %d (%d,%d) — %s",
-                     (int)hdr.current_level,
-                     (int)hdr.party_x,
-                     (int)hdr.party_y,
-                     hdr.description[0] ? hdr.description : "Nexus V1 save");
-        } else {
-            mgr->slots[i].occupied = 0;
-            memset(&mgr->slots[i].header, 0, sizeof(mgr->slots[i].header));
-            mgr->slots[i].label[0] = '\0';
+        struct stat st;
+        if (stat(path, &st) == 0)
+            mgr->slots[i].timestamp = (uint32_t)st.st_mtime;
+        else
             mgr->slots[i].timestamp = 0;
-        }
-        fclose(f);
+
+        snprintf(mgr->slots[i].label, sizeof(mgr->slots[i].label),
+                 "Level %d (%d,%d) — %s",
+                 (int)hdr.current_level,
+                 (int)hdr.party_x,
+                 (int)hdr.party_y,
+                 hdr.description[0] ? hdr.description : "Nexus V1 save");
     }
     return 0;
 }
