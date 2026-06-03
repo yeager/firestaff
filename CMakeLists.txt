@@ -1327,6 +1327,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_missing_dungeon_launch_blocker
     )
 
+    add_executable(test_m12_data_dir_cancel
+        tests/test_m12_data_dir_cancel.c
+    )
+    target_link_libraries(test_m12_data_dir_cancel PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_data_dir_cancel PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_data_dir_cancel
+        COMMAND test_m12_data_dir_cancel
+    )
+
     add_executable(test_csb_v1_partial_data_profile_gate
         tests/test_csb_v1_partial_data_profile_gate.c
         src/shared/asset_status_m12.c
