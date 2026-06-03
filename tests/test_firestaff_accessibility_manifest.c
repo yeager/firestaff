@@ -36,6 +36,7 @@
 #define FS_AX_MKDIR(p)    _mkdir(p)
 #define FS_AX_RMDIR(p)    _rmdir(p)
 #define FS_AX_STAT_FN     _stat
+#define FS_AX_STAT_TYPE   struct _stat
 #define FS_AX_REMOVE(p)   remove(p)
 static int fs_ax_setenv(const char* name, const char* value) {
     return _putenv_s(name, value ? value : "") == 0;
@@ -48,6 +49,7 @@ static int fs_ax_unsetenv(const char* name) {
 #define FS_AX_MKDIR(p)    mkdir((p), 0700)
 #define FS_AX_RMDIR(p)    rmdir(p)
 #define FS_AX_STAT_FN     stat
+#define FS_AX_STAT_TYPE   struct stat
 #define FS_AX_REMOVE(p)   remove(p)
 static int fs_ax_setenv(const char* name, const char* value) {
     return setenv(name, value, 1) == 0;
@@ -74,7 +76,7 @@ static void fs_ax_check(int cond, const char* msg) {
 }
 
 static int fs_ax_file_exists(const char* path) {
-    struct stat st;
+    FS_AX_STAT_TYPE st;
     return FS_AX_STAT_FN(path, &st) == 0;
 }
 
