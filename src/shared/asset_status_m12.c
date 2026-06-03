@@ -47,6 +47,8 @@ typedef struct {
 
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
 static M12_AssetStatusScanMetrics g_m12ScanMetrics;
+static char g_m12TestDm1MultiGraphicsMd5[M12_ASSET_MD5_CAPACITY];
+static char g_m12TestDm1DungeonMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestCsbGraphicsMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestCsbDungeonMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestDm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
@@ -59,6 +61,18 @@ void M12_AssetStatus_TestResetScanMetrics(void) {
 
 M12_AssetStatusScanMetrics M12_AssetStatus_TestGetScanMetrics(void) {
     return g_m12ScanMetrics;
+}
+
+void M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(const char* graphicsMd5,
+                                                            const char* dungeonMd5) {
+    snprintf(g_m12TestDm1MultiGraphicsMd5,
+             sizeof(g_m12TestDm1MultiGraphicsMd5),
+             "%s",
+             graphicsMd5 ? graphicsMd5 : "");
+    snprintf(g_m12TestDm1DungeonMd5,
+             sizeof(g_m12TestDm1DungeonMd5),
+             "%s",
+             dungeonMd5 ? dungeonMd5 : "");
 }
 
 void M12_AssetStatus_TestSetDm2SyntheticHashes(const char* graphicsMd5,
@@ -624,6 +638,11 @@ static void m12_scan_original_candidates(M12_AssetStatus* status,
 
 static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (spec && strcmp(spec->gameId, "dm1") == 0 &&
+        strcmp(spec->versionId, "pc34-multi") == 0 &&
+        g_m12TestDm1MultiGraphicsMd5[0] != '\0') {
+        return g_m12TestDm1MultiGraphicsMd5;
+    }
     if (spec && strcmp(spec->gameId, "csb") == 0 &&
         strcmp(spec->versionId, "pc34-en") == 0 &&
         g_m12TestCsbGraphicsMd5[0] != '\0') {
@@ -645,6 +664,11 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
 
 static const char* m12_effective_required_md5(const M12_RequiredFileSpec* spec) {
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (spec && strcmp(spec->gameId, "dm1") == 0 &&
+        strcmp(spec->roleId, "dungeon") == 0 &&
+        g_m12TestDm1DungeonMd5[0] != '\0') {
+        return g_m12TestDm1DungeonMd5;
+    }
     if (spec && strcmp(spec->gameId, "csb") == 0 &&
         strcmp(spec->roleId, "dungeon") == 0 &&
         g_m12TestCsbDungeonMd5[0] != '\0') {

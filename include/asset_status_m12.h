@@ -99,6 +99,8 @@ typedef struct {
 
 void M12_AssetStatus_TestResetScanMetrics(void);
 M12_AssetStatusScanMetrics M12_AssetStatus_TestGetScanMetrics(void);
+void M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(const char* graphicsMd5,
+                                                            const char* dungeonMd5);
 void M12_AssetStatus_TestSetDm2SyntheticHashes(const char* graphicsMd5,
                                                const char* dungeonMd5);
 void M12_AssetStatus_TestSetCsbSyntheticHashes(const char* graphicsMd5,
