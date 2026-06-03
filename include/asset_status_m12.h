@@ -89,6 +89,18 @@ int M12_AssetStatus_V22ModernAssetsInstalled(const M12_AssetStatus* status);
 /* MD5 hex of a file — used for asset hash verification (Theron Phase 0). */
 int m12_file_md5_hex(const char* path, char outHex[33]);
 
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+typedef struct {
+    size_t rootCount;
+    size_t duplicateRootSkips;
+    size_t versionHashLookups;
+    size_t requiredHashLookups;
+} M12_AssetStatusScanMetrics;
+
+void M12_AssetStatus_TestResetScanMetrics(void);
+M12_AssetStatusScanMetrics M12_AssetStatus_TestGetScanMetrics(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

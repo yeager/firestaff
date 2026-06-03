@@ -45,6 +45,18 @@ typedef struct {
     int matchAnyVersion;
 } M12_RequiredFileSpec;
 
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+static M12_AssetStatusScanMetrics g_m12ScanMetrics;
+
+void M12_AssetStatus_TestResetScanMetrics(void) {
+    memset(&g_m12ScanMetrics, 0, sizeof(g_m12ScanMetrics));
+}
+
+M12_AssetStatusScanMetrics M12_AssetStatus_TestGetScanMetrics(void) {
+    return g_m12ScanMetrics;
+}
+#endif
+
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
@@ -463,6 +475,42 @@ static int m12_materialize_required_file(const M12_AssetRequiredFileStatus* file
     return m12_copy_file_to_path(fileStatus->matchedPath, outPath);
 }
 
+static int m12_search_root_already_added(
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t count,
+    const char* candidate) {
+    size_t i;
+    if (!candidate || candidate[0] == '\0') {
+        return 1;
+    }
+    for (i = 0U; i < count; ++i) {
+        if (m12_same_path(roots[i], candidate)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_add_unique_search_root(
+    char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t* count,
+    const char* candidate) {
+    if (!roots || !count || !candidate || candidate[0] == '\0') {
+        return;
+    }
+    if (m12_search_root_already_added(roots, *count, candidate)) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.duplicateRootSkips++;
+#endif
+        return;
+    }
+    if (*count >= M12_SEARCH_ROOT_COUNT) {
+        return;
+    }
+    m12_copy_string(roots[*count], M12_ASSET_DATA_DIR_CAPACITY, candidate);
+    ++(*count);
+}
+
 static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                      const char* requestedDataDir,
                                      char legacyFallbackDir[M12_ASSET_DATA_DIR_CAPACITY]) {
@@ -475,22 +523,21 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
     legacyData[0] = '\0';
 
     if (requestedDataDir && requestedDataDir[0] != '\0') {
-        m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
+        m12_add_unique_search_root(roots, &count, requestedDataDir);
     }
     if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
-        if (count == 0U || !m12_same_path(roots[count - 1U], defaultOriginals)) {
-            m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, defaultOriginals);
-        }
+        m12_add_unique_search_root(roots, &count, defaultOriginals);
     }
     if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
         m12_copy_string(legacyFallbackDir, M12_ASSET_DATA_DIR_CAPACITY, legacyData);
-        if ((count == 0U || !m12_same_path(roots[count - 1U], legacyData)) && count < M12_SEARCH_ROOT_COUNT) {
-            m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, legacyData);
-        }
+        m12_add_unique_search_root(roots, &count, legacyData);
     }
     if (count == 0U) {
-        m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, ".");
+        m12_add_unique_search_root(roots, &count, ".");
     }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    g_m12ScanMetrics.rootCount = count;
+#endif
     return count;
 }
 
@@ -547,6 +594,9 @@ static int m12_try_match_version(const char* root,
     if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
         return 0;
     }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    g_m12ScanMetrics.versionHashLookups++;
+#endif
     if (!asset_find_by_md5(root, spec->md5, path, (int)sizeof(path), 32)) {
         return 0;
     }
@@ -816,6 +866,9 @@ static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_C
         return 0;
     }
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.requiredHashLookups++;
+#endif
         if (asset_find_by_md5(roots[rootIndex], md5, path, (int)sizeof(path), 32)) {
             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
             m12_copy_string(matchedHash, M12_ASSET_MD5_CAPACITY, md5);
