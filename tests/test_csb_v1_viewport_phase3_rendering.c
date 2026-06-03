@@ -297,6 +297,156 @@ static void test_csb_floor_ornament_route_contracts(void)
                csb_v1_viewport_get_floor_ornament_route_spec_for_square(999) == NULL);
 }
 
+static void test_csb_thing_pass_order_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int floor_view_index;
+        uint16_t rear_order;
+        uint16_t front_order;
+        uint16_t corridor_order;
+        uint16_t side_order;
+        unsigned char rear_cell0;
+        unsigned char rear_cell1;
+        unsigned char front_cell0;
+        unsigned char front_cell1;
+        unsigned char corridor_cell0;
+        unsigned char corridor_cell3;
+        unsigned char side_cell0;
+        unsigned char side_cell2;
+        const char *function_name;
+        const char *source_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 0, 0x0218, 0x0349, 0x3421, 0x0321,
+          1, 2, 4, 3, 1, 3, 1, 3, "F0676_DrawD3L2", "6271 F0115" },
+        { DM1_VIEW_SQUARE_D3R2, 1, 0x0128, 0x0439, 0x4312, 0x0412,
+          2, 1, 3, 4, 2, 4, 2, 4, "F0677_DrawD3R2", "6338 F0115" },
+    };
+    const DM1_ViewportThingLayerSpec *objects =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_OBJECTS);
+    const DM1_ViewportThingLayerSpec *creatures =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_CREATURES);
+    const DM1_ViewportThingLayerSpec *projectiles =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_PROJECTILES);
+    const DM1_ViewportThingLayerSpec *explosions =
+        dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_EXPLOSIONS);
+
+    check_int("csb.thing_pass_order.count",
+              (int)csb_v1_viewport_thing_pass_order_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    check_true("csb.thing_pass_order.layer_objects", objects != NULL);
+    check_true("csb.thing_pass_order.layer_creatures", creatures != NULL);
+    check_true("csb.thing_pass_order.layer_projectiles", projectiles != NULL);
+    check_true("csb.thing_pass_order.layer_explosions", explosions != NULL);
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportThingPassOrderSpec *spec =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        DM1_ViewportCellOrder rear;
+        DM1_ViewportCellOrder front;
+        DM1_ViewportCellOrder corridor;
+        DM1_ViewportCellOrder side;
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.present", i);
+        check_true(id, spec != NULL);
+        if (!spec) continue;
+
+        rear = dm1_viewport_3d_decode_cell_order(spec->door_front_rear_cell_order);
+        front = dm1_viewport_3d_decode_cell_order(spec->door_front_front_cell_order);
+        corridor = dm1_viewport_3d_decode_cell_order(spec->corridor_cell_order);
+        side = dm1_viewport_3d_decode_cell_order(spec->side_cell_order);
+
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.floor_view", i);
+        check_int(id, spec->floor_view_index, expected[i].floor_view_index);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.seq_f0108", i);
+        check_int(id, spec->door_front_floor_ornament_order, 0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.seq_rear_f0115", i);
+        check_int(id, spec->door_front_rear_f0115_order, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.seq_f0111", i);
+        check_int(id, spec->door_front_f0111_order, 2);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.seq_front_f0115", i);
+        check_int(id, spec->door_front_front_f0115_order, 3);
+
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.rear_order", i);
+        check_int(id, spec->door_front_rear_cell_order, expected[i].rear_order);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.front_order", i);
+        check_int(id, spec->door_front_front_cell_order, expected[i].front_order);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.corridor_order", i);
+        check_int(id, spec->corridor_cell_order, expected[i].corridor_order);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.side_order", i);
+        check_int(id, spec->side_cell_order, expected[i].side_order);
+
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.rear_pass", i);
+        check_int(id, rear.door_pass, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.front_pass", i);
+        check_int(id, front.door_pass, 2);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.rear_cell0", i);
+        check_int(id, rear.cells[0], expected[i].rear_cell0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.rear_cell1", i);
+        check_int(id, rear.cells[1], expected[i].rear_cell1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.front_cell0", i);
+        check_int(id, front.cells[0], expected[i].front_cell0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.front_cell1", i);
+        check_int(id, front.cells[1], expected[i].front_cell1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.corridor_count", i);
+        check_int(id, corridor.cell_count, 4);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.corridor_cell0", i);
+        check_int(id, corridor.cells[0], expected[i].corridor_cell0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.corridor_cell3", i);
+        check_int(id, corridor.cells[3], expected[i].corridor_cell3);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.side_count", i);
+        check_int(id, side.cell_count, 3);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.side_cell0", i);
+        check_int(id, side.cells[0], expected[i].side_cell0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.side_cell2", i);
+        check_int(id, side.cells[2], expected[i].side_cell2);
+
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_objects", i);
+        check_int(id, spec->f0115_objects_layer_order, 0);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_creatures", i);
+        check_int(id, spec->f0115_creatures_layer_order, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_projectiles", i);
+        check_int(id, spec->f0115_projectiles_layer_order, 2);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_explosions", i);
+        check_int(id, spec->f0115_explosions_layer_order, 3);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.explosions_after_cells", i);
+        check_int(id, spec->f0115_explosions_after_all_cells, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].source_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.f0115_source", i);
+        check_true(id, strstr(spec->source_lines, "F0115:4567-4581") != NULL);
+    }
+
+    if (objects && creatures && projectiles && explosions) {
+        check_int("csb.thing_pass_order.dm1_layer.objects", (int)objects->layer,
+                  DM1_VIEWPORT_THING_LAYER_OBJECTS);
+        check_int("csb.thing_pass_order.dm1_layer.creatures", (int)creatures->layer,
+                  DM1_VIEWPORT_THING_LAYER_CREATURES);
+        check_int("csb.thing_pass_order.dm1_layer.projectiles", (int)projectiles->layer,
+                  DM1_VIEWPORT_THING_LAYER_PROJECTILES);
+        check_int("csb.thing_pass_order.dm1_layer.explosions", (int)explosions->layer,
+                  DM1_VIEWPORT_THING_LAYER_EXPLOSIONS);
+        check_int("csb.thing_pass_order.dm1_layer.objects_per_cell",
+                  objects->repeats_per_cell ? 1 : 0, 1);
+        check_int("csb.thing_pass_order.dm1_layer.creatures_per_cell",
+                  creatures->repeats_per_cell ? 1 : 0, 1);
+        check_int("csb.thing_pass_order.dm1_layer.projectiles_per_cell",
+                  projectiles->repeats_per_cell ? 1 : 0, 1);
+        check_int("csb.thing_pass_order.dm1_layer.explosions_after_cells",
+                  explosions->after_all_cells ? 1 : 0, 1);
+    }
+
+    check_true("csb.thing_pass_order.out_of_range",
+               csb_v1_viewport_get_thing_pass_order_spec(2) == NULL);
+    check_true("csb.thing_pass_order.unknown_square",
+               csb_v1_viewport_get_thing_pass_order_spec_for_square(999) == NULL);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -309,6 +459,8 @@ static void test_source_evidence(void)
     check_true("evidence.f0107", e && strstr(e, "F0107") != NULL);
     check_true("evidence.f0108", e && strstr(e, "F0108") != NULL);
     check_true("evidence.f0111", e && strstr(e, "F0111") != NULL);
+    check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
+    check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
     check_true("evidence.custom_backgrounds", e && strstr(e, "CustomBackgrounds") != NULL);
@@ -322,6 +474,7 @@ int main(void)
     test_csb_frame_and_zone_contracts();
     test_csb_wall_ornament_route_contracts();
     test_csb_floor_ornament_route_contracts();
+    test_csb_thing_pass_order_contracts();
     test_source_evidence();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);

@@ -37,6 +37,10 @@ enum {
     CSB_V1_CELL_ORDER_D3L2_DOORPASS2 = 0x0349,
     CSB_V1_CELL_ORDER_D3R2_DOORPASS1 = 0x0128,
     CSB_V1_CELL_ORDER_D3R2_DOORPASS2 = 0x0439,
+    CSB_V1_CELL_ORDER_D3L2_CORRIDOR = 0x3421,
+    CSB_V1_CELL_ORDER_D3R2_CORRIDOR = 0x4312,
+    CSB_V1_CELL_ORDER_D3L2_SIDE = 0x0321,
+    CSB_V1_CELL_ORDER_D3R2_SIDE = 0x0412,
     CSB_V1_ZONE_DOOR_D3L2 = 3700,
     CSB_V1_ZONE_DOOR_D3R2 = 3710
 };
@@ -108,6 +112,52 @@ static const CSB_V1_ViewportFloorOrnamentRouteSpec s_floor_ornament_routes[] = {
         CSB_V1_ZONE_DOOR_D3R2,
         "F0677_DrawD3R2",
         "DUNVIEW.C:6337 F0108 door-front floor ornament; 6338 F0115 pass1; 6339 F0111 C3710_ZONE_DOOR_D3R2; 6349-6353 pit/corridor F0108 then F0115"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0676 lines 6270-6286 and F0677 lines 6337-6353.
+ * CSB's extra D3L2/D3R2 squares route the same F0115 stack as DM1: objects
+ * first, a creature after object cells, projectiles after creatures, and
+ * explosions after all cells. Door-front squares split F0115 around F0111:
+ * rear cells before the door panel/frame, front cells after it. */
+static const CSB_V1_ViewportThingPassOrderSpec s_thing_pass_order_routes[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_FLOOR_D3L2,
+        0,
+        1,
+        2,
+        3,
+        CSB_V1_CELL_ORDER_D3L2_DOORPASS1,
+        CSB_V1_CELL_ORDER_D3L2_DOORPASS2,
+        CSB_V1_CELL_ORDER_D3L2_CORRIDOR,
+        CSB_V1_CELL_ORDER_D3L2_SIDE,
+        0,
+        1,
+        2,
+        3,
+        1,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6270 F0108; 6271 F0115 door rear cells 0x0218; 6272 F0111 door; 6284 F0108 pit/corridor BUG0_64; 6286 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5915-5933 explosions"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_FLOOR_D3R2,
+        0,
+        1,
+        2,
+        3,
+        CSB_V1_CELL_ORDER_D3R2_DOORPASS1,
+        CSB_V1_CELL_ORDER_D3R2_DOORPASS2,
+        CSB_V1_CELL_ORDER_D3R2_CORRIDOR,
+        CSB_V1_CELL_ORDER_D3R2_SIDE,
+        0,
+        1,
+        2,
+        3,
+        1,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6337 F0108; 6338 F0115 door rear cells 0x0128; 6339 F0111 door; 6351 F0108 pit/corridor BUG0_64; 6353 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5915-5933 explosions"
     },
 };
 
@@ -257,6 +307,27 @@ const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_
     return NULL;
 }
 
+size_t csb_v1_viewport_thing_pass_order_spec_count(void)
+{
+    return sizeof(s_thing_pass_order_routes) / sizeof(s_thing_pass_order_routes[0]);
+}
+
+const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_thing_pass_order_spec_count()) return NULL;
+    return &s_thing_pass_order_routes[index];
+}
+
+const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_thing_pass_order_spec_count(); ++i) {
+        if (s_thing_pass_order_routes[i].view_square == view_square) {
+            return &s_thing_pass_order_routes[i];
+        }
+    }
+    return NULL;
+}
+
 const char *csb_v1_viewport_source_evidence(void) {
     return
         "ReDMCSB WIP20210206 Toolchains/Common/Source/DUNVIEW.C:\n"
@@ -265,6 +336,8 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  6270-6286 F0676 D3L2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
         "  6321-6330 F0677 D3R2 wall panel then F0107 left-wall ornament route\n"
         "  6337-6353 F0677 D3R2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
+        "  4567-4581 F0115 draws objects, then creatures, then projectiles per processed view cell\n"
+        "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  3940-4008 F0108 floor ornament bitmap/index/flip dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, and zone blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
