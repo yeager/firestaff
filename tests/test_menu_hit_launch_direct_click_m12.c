@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #if defined(_WIN32)
 #include <direct.h>
@@ -28,7 +29,6 @@ static char* test_mkdtemp(char* templ) {
     return NULL;
 }
 #else
-#include <sys/stat.h>
 #include <unistd.h>
 static int test_mkdir(const char* path) { return mkdir(path, 0777) == 0; }
 static int test_setenv(const char* name, const char* value) { return setenv(name, value, 1) == 0; }
