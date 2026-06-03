@@ -54,6 +54,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Completed rendering slices: D3/D2 wall-table mapping, parity bitmap selection, grid routing, and initial CSB viewport source-lock gates.
 - ✅ CSB V1 viewport Phase 3 gate: D3L2/D3R2 and D2L2/D2R2 draw-order, coordinate, frame, and PC34 zone contracts are source-locked against F0676-F0679/F0128.
 - ✅ CSB V1 back-wall ornament routing gate: D3L2/D3R2 wall cases source-lock their F0107 ordinal slots and view-wall indices, while D2L2/D2R2 prove the no-F0107 return path.
+- ✅ CSB V1 F0108/F0111 route gate: D3L2/D3R2 source-lock the floor-view indices, pit/corridor/door-front F0108 calls, door-front F0115 pass orders, and F0111 door panel zones.
 - ✅ Phase 7 - Verification suite: deterministic boot, dungeon, combat, save/import, and rendering probes pass.
 
 ### CSB V2.0 / V2.1 / V2.2
