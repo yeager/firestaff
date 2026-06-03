@@ -56,7 +56,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### CSB V1
 
-- 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists and loader/free-cycle safety is covered; remaining work is real CSB asset ingestion and runtime structure parity without DM1-only assumptions.
+- 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists and the loader now ingests the hash-verified FTL-compressed CSB PC 3.4 DUNGEON.DAT; remaining work is DSA/runtime structure parity beyond the current real-asset load gate.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, F0107 back-wall ornament routing, and initial viewport gates exist; remaining work includes actual ornament blits, F0108 floor ornaments, F0115 creature/item/projectile pass, F0111 door panel, and `CustomBackgrounds`.
 - 🐛 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets; remaining work is title/intro/import path, CSB-specific viewport integration, and end-to-end playability verification.
 
@@ -65,7 +65,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass).
 - ❌ Phase 4 - Enhanced lighting and magic effects.
-- 🔧 Phase 5 - Smooth movement and viewport interpolation: `firestaff_csb_v2_smooth_movement_probe` passes 58/58. `firestaff_dm2_v2_smooth_movement_probe` 36/54 pass — CSB V2 ✅, DM2 V2 ✅, CSB V1 🔧.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: `firestaff_csb_v2_smooth_movement_probe` passes 58/58 and `firestaff_dm2_v2_smooth_movement_probe` passes 54/54; remaining work is broader CSB V1 runtime binding and side-by-side presentation evidence.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - 🔧 Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (`test_csb_v2_phase7_verification` failing, regressed from 🔧).
 
@@ -73,11 +73,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### DM2 V1
 
-- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion (267/268 pass, outdoor level gate failing, `test_dm2_v1_dungeon` 0/4 pass — regressed from ✅).
-- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, palette behavior (13/17 pass, `test_dm2_v1_asset` 0/4 pass — regressed from ✅).
+- 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion probes pass against the local hash-verified PC English DUNGEON.DAT; remaining work is broader runtime parity and any still-stale CTest-era dungeon fixtures.
+- 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, and palette behavior remain active; the real PC English GRAPHICS.DAT asset-loader probe is green again.
 - ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
-- 🔧 Phase 7 - Save/import compatibility verification: `test_dm2_v1_save_load` is failing in the current CTest run.
+- 🔧 Phase 7 - Save/import compatibility verification: focused `test_dm2_v1_save_load` is green again; remaining work is broader save/runtime compatibility coverage.
 
 ## Dungeon Master Nexus
 
