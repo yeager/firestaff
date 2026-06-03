@@ -1207,6 +1207,27 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_scan_metrics
     )
 
+    add_executable(test_csb_archive_required_split
+        tests/test_csb_archive_required_split.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_csb_archive_required_split PRIVATE firestaff_v2)
+    target_include_directories(test_csb_archive_required_split PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_csb_archive_required_split PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_archive_required_split PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_archive_required_split
+        COMMAND test_csb_archive_required_split
+    )
+
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
     )
