@@ -4270,6 +4270,28 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_boot_profile_smoke
     )
 
+    add_executable(test_nexus_v1_availability_profile_gate
+        tests/nexus_v1_availability_profile_gate_test.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_boot_profile.c
+    )
+    target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE firestaff_v2)
+    target_include_directories(test_nexus_v1_availability_profile_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_nexus_v1_availability_profile_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_availability_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_availability_profile_gate
+        COMMAND test_nexus_v1_availability_profile_gate
+    )
+
     # ── Nexus V2 Phase 3 HUD Overlay smoke test ─────────────────────
     # Source-lock: src/nexus/nexus_v2_hud_overlay.c
     # Phase 3: Enhanced UI overlays
