@@ -1273,6 +1273,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_missing_dungeon_launch_blocker
     )
 
+    add_executable(test_csb_v1_partial_data_profile_gate
+        tests/test_csb_v1_partial_data_profile_gate.c
+    )
+    target_link_libraries(test_csb_v1_partial_data_profile_gate PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_partial_data_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_partial_data_profile_gate
+        COMMAND test_csb_v1_partial_data_profile_gate
+    )
+
     add_executable(test_m11_input_remap_roundtrip
         tests/test_m11_input_remap_roundtrip.c
         src/engine/input_remap_m11.c
