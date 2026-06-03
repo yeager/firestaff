@@ -20,6 +20,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Theron V1 runtime playability slice: prove movement, door/pit/teleporter interactions, altar/progression routing, combat, and save/load through at least one real Track 02 dungeon path.
 - 🔧 Theron V1 real screenshot proof: capture tracked README-eligible in-game screenshots from actual Firestaff runtime, using only real Track 02 data and no generated/mock imagery.
 - 🔧 Theron V1 scanner/runloop ergonomics: avoid expensive full default-root rescans on direct launch when a hash-verified Theron runtime path is already known.
+- 🔧 Post-Theron handoff: when Theron V1 has real Track 02 dungeon-bank/runtime proof, shift active V1 work to CSB V1 runtime handoff, viewport integration, and end-to-end playability verification.
 - 🔧 Data-directory picker polish: start menu can switch between configured/default roots; add a proper browse/manual path flow for arbitrary user-selected game-data folders.
 - 🔧 Archive scanner performance: full default scan over the local real-asset collection with multiple Nexus ISO/ZIP images still needs indexing/prefilter work; isolated `--scan-data` smoke and archive regression tests pass.
 - 🔧 Extend archive runtime handoff beyond DM1/CSB/DM2 if Theron Track 02 or future Nexus flows need cache materialization instead of their current direct image paths.
