@@ -576,6 +576,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_audio_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M11 fallback audio event-order regression probe (no game data)
+add_executable(firestaff_m11_pass125_audio_event_order_probe probes/m11/firestaff_m11_pass125_audio_event_order_probe.c)
+target_link_libraries(firestaff_m11_pass125_audio_event_order_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass125_audio_event_order_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 creature attack/movement runtime source-index audio probe
 add_executable(firestaff_m11_creature_runtime_audio_probe probes/m11/firestaff_m11_creature_runtime_audio_probe.c)
 target_link_libraries(firestaff_m11_creature_runtime_audio_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
@@ -2348,6 +2355,14 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
+    )
+
+    add_test(
+        NAME m11_audio_event_order_fallback
+        COMMAND firestaff_m11_pass125_audio_event_order_probe
+    )
+    set_tests_properties(m11_audio_event_order_fallback PROPERTIES
+        ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0;FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG=1;FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3=1"
     )
 
     add_test(
