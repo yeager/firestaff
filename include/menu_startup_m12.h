@@ -336,6 +336,7 @@ typedef struct M12_StartupMenuState {
     int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
+    int dataDirPickerActive;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
@@ -360,6 +361,8 @@ const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* 
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
+int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
+                                     const char* dataDir);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 

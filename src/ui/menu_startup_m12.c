@@ -18,6 +18,7 @@
 #include "fs_portable_compat.h"
 
 #include <SDL3/SDL_misc.h>
+#include <SDL3/SDL_dialog.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -236,6 +237,9 @@ static const char* m12_selected_version_label(const M12_StartupMenuState* state,
 static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
+static void m12_probe_quick_resume(M12_StartupMenuState* state);
+static void m12_save_config(const M12_StartupMenuState* state);
+static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
 const char *m12_localized_main_label(int index);
 const char *m12_localized_extras_label(int index);
 
@@ -1113,6 +1117,128 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
                              m12_tr(state, "NO GAME DATA FOUND"),
                              m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"),
                              line3);
+}
+
+static int m12_ready_game_count(const M12_StartupMenuState* state) {
+    int ready = 0;
+    int gi;
+    if (!state) {
+        return 0;
+    }
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, gi);
+        if (entry && entry->gameId && entry->available) {
+            ready += 1;
+        }
+    }
+    return ready;
+}
+
+static void m12_publish_game_availability(M12_StartupMenuState* state) {
+    FS_GameAvailability avail;
+    if (!state) {
+        return;
+    }
+    avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
+    avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
+    avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
+    avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
+    avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
+    avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    m12_update_game_availability(&avail);
+}
+
+static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
+                                           int changed) {
+    char line2[160];
+    char line3[160];
+    int ready;
+    if (!state) {
+        return;
+    }
+    ready = m12_ready_game_count(state);
+    if (ready > 0) {
+        snprintf(line2, sizeof(line2), "%d GAME%s READY", ready, ready == 1 ? "" : "S");
+    } else if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "ORIGINAL FILES FOUND, VERIFIED SET MISSING"));
+    } else {
+        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "NO VERIFIED GAME DATA FOUND"));
+    }
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_set_buffered_message(state,
+                             changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
+                                     : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
+                             line2,
+                             line3);
+}
+
+int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
+                                     const char* dataDir) {
+    if (!state || !dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    if (!FSP_DirExists(dataDir)) {
+        char line3[160];
+        m12_format_data_dir_line(state, line3, sizeof(line3));
+        state->view = M12_MENU_VIEW_MESSAGE;
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "DATA DIRECTORY NOT FOUND"),
+                                 m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
+                                 line3);
+        return 0;
+    }
+    M12_AssetStatus_Scan(&state->assetStatus, dataDir);
+    m12_sync_entries_from_assets(state);
+    m12_publish_game_availability(state);
+    m12_sync_card_art(state);
+    M12_CreatureArt_Init(&state->creatureArt,
+                         M12_AssetStatus_GetDataDir(&state->assetStatus),
+                         (unsigned int)time(NULL));
+    m12_probe_quick_resume(state);
+    m12_save_config(state);
+    m12_show_data_dir_result_popup(state, 1);
+    return 1;
+}
+
+static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
+                                                 const char* const* filelist,
+                                                 int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    state->dataDirPickerActive = 0;
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        (void)M12_StartupMenu_SetDataDirectory(state, filelist[0]);
+        return;
+    }
+    m12_show_data_dir_result_popup(state, 0);
+}
+
+static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
+    const char* current;
+    char line3[160];
+    if (!state || state->dataDirPickerActive) {
+        return;
+    }
+    current = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (!current || current[0] == '\0') {
+        current = NULL;
+    }
+    state->dataDirPickerActive = 1;
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE GAME DATA FOLDER"),
+                             m12_tr(state, "THE LAUNCHER WILL RESCAN AFTER SELECTION"),
+                             line3);
+    SDL_ShowOpenFolderDialog(m12_data_dir_dialog_callback,
+                             state,
+                             NULL,
+                             current,
+                             false);
 }
 
 
@@ -2276,46 +2402,17 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         case M12_SETTINGS_ROW_DATA_DIR: {
-            char roots[3][M12_ASSET_DATA_DIR_CAPACITY];
             char defaultOriginals[M12_ASSET_DATA_DIR_CAPACITY];
-            char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
-            const char* current = M12_AssetStatus_GetDataDir(&state->assetStatus);
-            int count = 0;
-            int currentIndex = -1;
-            int i;
-            if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
-                snprintf(roots[count++], sizeof(roots[0]), "%s", defaultOriginals);
-            }
-            if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL) &&
-                (count == 0 || strcmp(roots[count - 1], legacyData) != 0)) {
-                snprintf(roots[count++], sizeof(roots[0]), "%s", legacyData);
-            }
-            if (count <= 0) {
-                break;
-            }
-            for (i = 0; i < count; ++i) {
-                if (current && strcmp(current, roots[i]) == 0) {
-                    currentIndex = i;
-                    break;
+            if (delta < 0) {
+                if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+                    if (!FSP_DirExists(defaultOriginals)) {
+                        (void)FSP_CreateDirectoryRecursive(defaultOriginals);
+                    }
+                    (void)M12_StartupMenu_SetDataDirectory(state, defaultOriginals);
                 }
+            } else {
+                m12_begin_data_dir_browse(state);
             }
-            if (currentIndex < 0) {
-                currentIndex = delta < 0 ? count : -1;
-            }
-            M12_AssetStatus_Scan(&state->assetStatus,
-                                 roots[m12_cycle_index(currentIndex, delta, count)]);
-            m12_sync_entries_from_assets(state);
-            {
-                FS_GameAvailability avail;
-                avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
-                avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
-                avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
-                avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
-                avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
-                avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-                m12_update_game_availability(&avail);
-            }
-            m12_sync_card_art(state);
             break;
         }
         case M12_SETTINGS_ROW_DATA_STATUS:

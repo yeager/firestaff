@@ -34,9 +34,9 @@
 #define M12_HIT_ROW_INDENT     36
 #define M12_HIT_ROW_HEIGHT     50
 
-/* Settings rows (3 rows, 70px step, starting panelY+36) */
+/* Settings rows visible in the modern settings panel. */
 #define M12_HIT_SETTINGS_ROW_Y0     (M12_HIT_PANEL_Y + 36)
-#define M12_HIT_SETTINGS_ROW_STEP   32
+#define M12_HIT_SETTINGS_ROW_STEP   70
 
 /* Game options rows (8 rows: version, patch, language, cheats, speed,
  * aspect, resolution, launch). Renderer draws rows 0..6 at step 52,
@@ -44,8 +44,12 @@
 #define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
-/* Settings view row count. Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
-#define M12_HIT_SETTINGS_ROW_COUNT  27
+/* Modern renderer shows a small curated settings subset. Values are the
+ * private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
+static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 15, 16};
+#define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
+    ((int)(sizeof(m12_hit_visible_settings_rows) / sizeof(m12_hit_visible_settings_rows[0])))
+#define M12_HIT_SETTINGS_ROW_DATA_DIR 15
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */
@@ -108,10 +112,10 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
     return 1;
 }
 
-static int m12_hit_settings_row_rect(int row, int* rx, int* ry, int* rw, int* rh) {
-    if (row < 0 || row >= M12_HIT_SETTINGS_ROW_COUNT) return 0;
+static int m12_hit_settings_row_rect(int visibleRow, int* rx, int* ry, int* rw, int* rh) {
+    if (visibleRow < 0 || visibleRow >= M12_HIT_SETTINGS_VISIBLE_ROW_COUNT) return 0;
     *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_SETTINGS_ROW_Y0 + row * M12_HIT_SETTINGS_ROW_STEP;
+    *ry = M12_HIT_SETTINGS_ROW_Y0 + visibleRow * M12_HIT_SETTINGS_ROW_STEP;
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
     *rh = M12_HIT_ROW_HEIGHT;
     return 1;
@@ -188,17 +192,22 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             break;
         }
         case M12_MENU_VIEW_SETTINGS:
-            for (i = 0; i < M12_HIT_SETTINGS_ROW_COUNT; ++i) {
+            for (i = 0; i < M12_HIT_SETTINGS_VISIBLE_ROW_COUNT; ++i) {
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
-                    if (m12_hit_is_cycle_plus(rx, rw, x)) {
+                    int rowIndex = m12_hit_visible_settings_rows[i];
+                    if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
-                        hit.index = i;
+                        hit.index = rowIndex;
+                        hit.delta = 1;
+                    } else if (m12_hit_is_cycle_plus(rx, rw, x)) {
+                        hit.kind = M12_HIT_SETTINGS_CYCLE;
+                        hit.index = rowIndex;
                         hit.delta = 1;
                     } else {
                         /* Left half just selects the row */
                         hit.kind = M12_HIT_SETTINGS_ROW;
-                        hit.index = i;
+                        hit.index = rowIndex;
                     }
                     return hit;
                 }
