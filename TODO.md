@@ -16,6 +16,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Current Priority Queue
 
+- 🔧 Queue/refill priority order: DM1 V1 → Theron V1 → CSB V1 → DM1 V2 → CSB V2 → DM2 V1 → Theron V2 → Nexus V1 → Nexus V2. Worker refill focus should stay on `priority` unless intentionally pausing higher-priority lanes.
 - 🔧 Theron V1 Track 02 dungeon-bank promotion: replace the deterministic launch-room fallback with parsed real Track 02 dungeon/map banks for JP Rev 1 and US ISO variants.
 - 🔧 Theron V1 runtime playability slice: prove movement, door/pit/teleporter interactions, altar/progression routing, combat, and save/load through at least one real Track 02 dungeon path.
 - 🔧 Theron V1 real screenshot proof: capture tracked README-eligible in-game screenshots from actual Firestaff runtime, using only real Track 02 data and no generated/mock imagery.
