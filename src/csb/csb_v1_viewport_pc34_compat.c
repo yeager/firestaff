@@ -42,7 +42,14 @@ enum {
     CSB_V1_CELL_ORDER_D3L2_SIDE = 0x0321,
     CSB_V1_CELL_ORDER_D3R2_SIDE = 0x0412,
     CSB_V1_ZONE_DOOR_D3L2 = 3700,
-    CSB_V1_ZONE_DOOR_D3R2 = 3710
+    CSB_V1_ZONE_DOOR_D3R2 = 3710,
+    CSB_V1_REDMCSB_VIEW_SQUARE_D3L2 = 14, /* C14_VIEW_SQUARE_D3L2 */
+    CSB_V1_REDMCSB_VIEW_SQUARE_D3R2 = 15, /* C15_VIEW_SQUARE_D3R2 */
+    CSB_V1_VIEW_DEPTH_D3 = 3,
+    CSB_V1_OBJECT_ROW_D3L2 = 3, /* G2028_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
+    CSB_V1_OBJECT_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL = 3,
+    CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4
 };
 
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
@@ -158,6 +165,42 @@ static const CSB_V1_ViewportThingPassOrderSpec s_thing_pass_order_routes[] = {
         1,
         "F0677_DrawD3R2",
         "DUNVIEW.C:6337 F0108; 6338 F0115 door rear cells 0x0128; 6339 F0111 door; 6351 F0108 pit/corridor BUG0_64; 6353 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5915-5933 explosions"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0115 lines 4806-4811 and 4923.
+ * For the PC34/I34E path, D3L2/D3R2 map through G2027/G2028 to depth 3
+ * rows 3/4.  The object predicate accepts only weapon..junk things on the
+ * processed cell; depth 3 squares suppress front-left/front-right cells by
+ * requiring AL0126_i_ViewCell > C01_VIEW_CELL_FRONT_RIGHT. */
+static const CSB_V1_ViewportObjectVisibilitySpec s_object_visibility_routes[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_OBJECT_ROW_D3L2,
+        1,
+        1,
+        1,
+        0,
+        CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL,
+        CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:371-373 G2026/G2027/G2028; 4806-4811 loads lane/depth/object row; 4923 F0115 weapon..junk, L2476>=0, cell match, depth3 front-cell suppression"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_OBJECT_ROW_D3R2,
+        1,
+        1,
+        1,
+        0,
+        CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL,
+        CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:371-373 G2026/G2027/G2028; 4806-4811 loads lane/depth/object row; 4923 F0115 weapon..junk, L2476>=0, cell match, depth3 front-cell suppression"
     },
 };
 
@@ -328,6 +371,36 @@ const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_sp
     return NULL;
 }
 
+size_t csb_v1_viewport_object_visibility_spec_count(void)
+{
+    return sizeof(s_object_visibility_routes) / sizeof(s_object_visibility_routes[0]);
+}
+
+const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_object_visibility_spec_count()) return NULL;
+    return &s_object_visibility_routes[index];
+}
+
+const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_object_visibility_spec_count(); ++i) {
+        if (s_object_visibility_routes[i].view_square == view_square) {
+            return &s_object_visibility_routes[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVisibilitySpec *spec,
+                                                  unsigned char cell_ordinal)
+{
+    if (!spec) return 0;
+    if (cell_ordinal < spec->first_visible_cell_ordinal) return 0;
+    if (cell_ordinal > spec->last_visible_cell_ordinal) return 0;
+    return 1;
+}
+
 const char *csb_v1_viewport_source_evidence(void) {
     return
         "ReDMCSB WIP20210206 Toolchains/Common/Source/DUNVIEW.C:\n"
@@ -337,6 +410,8 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  6321-6330 F0677 D3R2 wall panel then F0107 left-wall ornament route\n"
         "  6337-6353 F0677 D3R2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
         "  4567-4581 F0115 draws objects, then creatures, then projectiles per processed view cell\n"
+        "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
+        "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  3940-4008 F0108 floor ornament bitmap/index/flip dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, and zone blit dispatch\n"

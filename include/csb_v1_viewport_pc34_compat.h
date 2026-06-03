@@ -80,6 +80,21 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportThingPassOrderSpec;
 
+typedef struct {
+    int view_square;
+    int redmcsb_view_square_index;
+    int view_depth;
+    int object_visibility_row;
+    int requires_item_type_range;
+    int requires_thing_cell_match;
+    int suppresses_depth3_front_cells;
+    int suppresses_depth0_back_cells;
+    unsigned char first_visible_cell_ordinal;
+    unsigned char last_visible_cell_ordinal;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportObjectVisibilitySpec;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -116,6 +131,12 @@ const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_
 size_t csb_v1_viewport_thing_pass_order_spec_count(void);
 const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_spec(size_t index);
 const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_spec_for_square(int view_square);
+
+size_t csb_v1_viewport_object_visibility_spec_count(void);
+const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec(size_t index);
+const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec_for_square(int view_square);
+int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVisibilitySpec *spec,
+                                                  unsigned char cell_ordinal);
 
 const char *csb_v1_viewport_source_evidence(void);
 
