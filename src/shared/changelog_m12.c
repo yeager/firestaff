@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.3  (2026-06-03)",
+    "  - Regression coverage: added launch/profile gates for DM1, CSB, DM2, Nexus, Theron, M11 overlay input, accessibility manifest, save browser, and M12 data-directory cancel paths",
+    "  - Asset scanner: added no-data, irrelevant-root, partial-data, archive-backed, and required-file accounting guards",
+    "  - Cross-platform build: fixed Windows stat/tempdir portability and static-library link order for the expanded test harnesses",
+    "  - Verification: restored green GitHub Actions across Ubuntu, macOS, Windows, strict warnings, Phase A, audio smoke, and cross-platform determinism",
+    "",
     "V2.7.2  (2026-06-03)",
     "  - Game-data scanner: recursive hash discovery, ZIP/ISO entry scanning, and archive-backed DM1/CSB/DM2 cache handoff",
     "  - Start menu: data-directory status wiring, missing-data popups, and safer launch gating for required hashes",
@@ -100,5 +106,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.2";
+    return "2.7.3";
 }

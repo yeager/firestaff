@@ -1,3 +1,27 @@
+# Firestaff v2.7.3
+
+Patch release focused on regression coverage, cross-platform test harness fixes, and verified release packaging after v2.7.2.
+
+## What's New
+
+- Added narrow no-game-data regression coverage for DM1, CSB, DM2, Nexus, Theron, M11 overlay input, accessibility manifest output, save-browser behavior, and M12 data-directory cancel handling.
+- Added Phase A coverage for M12 no-data asset-status scans, including null-safe calls, empty roots, stale-path clearing, and deterministic repeated scans.
+- Expanded asset-status scanner coverage for irrelevant data roots, partial required-data matches, archive-backed required files, and required-file accounting.
+
+## Fixes
+
+- Fixed Windows test harness portability for `stat` and temporary-directory helpers.
+- Fixed static-library link ordering for M11/M12 test harnesses on ELF linkers.
+- Preserved launch/profile identity diagnostics while keeping required-file launch gates blocked when data is incomplete.
+
+## Verification
+
+- GitHub Actions verify workflow passed on Ubuntu, macOS, and Windows.
+- CMake build, strict warnings, Phase A, audio smoke, web/WASM probe, and cross-platform determinism passed on `main`.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.2
 
 Patch release focused on game-data discovery, launch gating, real-asset runtime handoff, and regression cleanup after v2.7.1.

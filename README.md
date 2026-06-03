@@ -64,19 +64,18 @@ playability still being hardened game by game.
 
 ## Latest Release
 
-**Current version:** `2.7.2`
+**Current version:** `2.7.3`
 
-The latest release focuses on game-data discovery, launch gating and real-asset
-runtime handoff:
+The latest release focuses on regression coverage, cross-platform test harness
+fixes and verified release packaging:
 
-- Recursive hash-based scanning now covers nested folders, ZIP entries and
-  ISO/BIN ISO 9660 data images.
-- Archive-backed DM1, CSB and DM2 required files can be staged into the local
-  asset cache before launch.
-- The start menu wires data-directory availability into game cards and blocks
-  launches when required data is missing.
-- Theron's Quest recognizes JP Rev 1 and US Track 02 ISO variants and routes
-  direct launches into the native M11 Theron viewport path.
+- New no-game-data regressions cover DM1, CSB, DM2, Nexus, Theron, M11 overlay
+  input, accessibility manifest output, save-browser behavior and M12
+  data-directory cancel handling.
+- Phase A now covers M12 no-data asset-status scans across empty roots,
+  null-safe calls, stale-path clearing and repeated-scan determinism.
+- Windows portability and static-library link ordering fixes keep the expanded
+  test harnesses green across CI platforms.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
 
