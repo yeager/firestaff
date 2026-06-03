@@ -35,6 +35,11 @@ static int test_setenv(const char* name, const char* value) { return setenv(name
 static char* test_mkdtemp(char* templ) { return mkdtemp(templ); }
 #endif
 
+static int test_file_exists(const char* path) {
+    struct stat st;
+    return path && stat(path, &st) == 0;
+}
+
 static void force_dm1_available(M12_StartupMenuState* state) {
     state->entries[0].title = "DUNGEON MASTER";
     state->entries[0].gameId = "dm1";
@@ -80,6 +85,8 @@ int main(void) {
     const int modeChoiceCenterY = 190 + 34 + 78;
     const int settingsDataDirCenterX = 960;
     const int settingsDataDirCenterY = 260 + 36 + 3 * 70 + 25;
+    const int settingsExportCenterY = 260 + 36 + 5 * 70 + 25;
+    const int settingsImportCenterY = 260 + 36 + 6 * 70 + 25;
 
     if (!homeDir || !test_setenv("HOME", homeDir) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
@@ -139,6 +146,26 @@ int main(void) {
     hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsDataDirCenterY);
     if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 15,
                 "visible Data Directory settings row should hit the browse action")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsExportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 41,
+                "visible Export Settings row should hit the save action")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsExportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Export Settings click should show a public result message")) return 1;
+    if (!expect(test_file_exists(M12_Config_GetExportPath()) == 1,
+                "Export Settings click should create the default settings JSON file")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsImportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 42,
+                "visible Import Settings row should hit the load action")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Import Settings click should show a public result message")) return 1;
+    if (!expect(strcmp(state.messageLine1, "SETTINGS IMPORTED") == 0,
+                "Import Settings click should load the default settings JSON file")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
     if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
                 "manual data directory setter should accept an existing arbitrary folder")) return 1;
     if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
@@ -147,6 +174,6 @@ int main(void) {
     if (!expect(strcmp(config.dataDir, manualDir) == 0,
                 "manual data directory setter should persist the chosen folder")) return 1;
 
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; data directory row accepts an arbitrary selected folder");
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; settings rows export/import JSON and data directory accepts an arbitrary selected folder");
     return 0;
 }
