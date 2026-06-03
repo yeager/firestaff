@@ -52,6 +52,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 
@@ -283,6 +286,11 @@ int main(int argc, char *argv[]) {
 
     const char *filepath = argv[1];
     const char *outdir   = argv[2];
+
+    if (mkdir(outdir, 0775) != 0 && errno != EEXIST) {
+        fprintf(stderr, "FAIL: cannot create output dir %s\n", outdir);
+        return 1;
+    }
 
     /* Load file */
     FILE *fp = fopen(filepath, "rb");

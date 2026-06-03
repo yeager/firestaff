@@ -484,11 +484,11 @@ static const uint8_t *rd64(const uint8_t *p, uint64_t *v) {
 
 size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world) {
     /* Fixed header: magic(4)+ver(2)+pad(2)+all scalars */
-    size_t n = 4 + 2 + 2 + 4*8;
+    size_t n = 4 + 2 + 2 + 4*6;
     /* Objects */
     n += 4 + world->object_count * (1+1+4+4+4+4+4+4);
     /* Events */
-    n += 4 + world->event_count * (4+4+4+4+4+4+4);
+    n += 4 + world->event_count * (4+4+4+4+4+4+4+4);
     /* Active timers */
     {
         int tc = 0, i;
@@ -496,8 +496,8 @@ size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world) {
             if (world->timers[i].flags & NEXUS_TIMER_F_ACTIVE) tc++;
         n += 4 + tc * (4+4+4+4+4+4);
     }
-    /* Transition + hash */
-    n += 4 + 4 + 4 + 8;
+    /* world_tick + transition + hash */
+    n += 8 + 4 + 4 + 4 + 4 + 8;
     return n;
 }
 

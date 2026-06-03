@@ -150,6 +150,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ macOS Debug CMake build path.
 - ✅ CI Phase A headless probe path.
+- ✅ Firestaff queue failed-job cleanup: fixed the recurring Nexus V1 mechanics, CSB V2 phase-gate, CSB V1 DSA output-dir, and stale DM2 probe-argument failures; requeued the failed pool entries and verified the worker pool returned to 0 failed jobs.
 - ✅ Phase A / headless M12 no-data asset-status scan probe: `firestaff_m12_no_data_scan_probe` exercises M12_AssetStatus_Scan across non-existent dir, NULL/empty requestedDataDir, NULL status pointer, fresh struct poisoning, and re-scan determinism. The probe isolates itself from the host user data tree by pointing HOME / FIRESTAFF_DATA / XDG_DATA_HOME / XDG_CONFIG_HOME at a fresh empty tempdir. 15 top-level invariants (INV_N01..INV_N15) expand to 208 sub-assertions, all pass in ctest `m12_no_data_scan` (~50ms, no game data, no SDL window).
 - ✅ Release packaging scripts for macOS, Windows, and Linux preview builds.
 - ✅ macOS app bundle icon resource wiring.
