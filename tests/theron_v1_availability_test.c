@@ -84,29 +84,32 @@ int main(void) {
     expect_true(write_file(fake_track, "not a known Theron's Quest data track"),
                 "fake Track 02 candidate written");
 
-    M12_AssetStatus_Scan(&status, temp_dir);
+    M12_AssetStatus_Scan(&status, fake_track);
     expect_true(status.originalFileCandidateFound == 1,
-                "Theron Track 02 candidate counts as original-file evidence");
+                "explicit Theron Track 02 candidate counts as original-file evidence");
     expect_true(status.theronAvailable == 0,
-                "fake Track 02 is not marked available without a known MD5");
+                "explicit fake Track 02 is not marked available without a known MD5");
     expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
-                "game availability helper rejects fake Theron data");
+                "game availability helper rejects explicit fake Theron data");
 
-    expect_true(fs_validate_data_dir(temp_dir, &report) >= 0,
-                "validator runs on temp data dir");
+    expect_true(fs_validate_data_dir(fake_track, &report) >= 0,
+                "validator runs on explicit fake Theron file");
     expect_true(report.theron_ready == 0,
-                "validator rejects fake Theron data");
+                "validator rejects explicit fake Theron data");
 
-    fs_startup_check_games(temp_dir, &availability);
+    fs_startup_check_games(fake_track, &availability);
     expect_true(availability.theron_available == 0,
-                "startup availability rejects fake Theron data");
-    expect_true(theron_v1_boot_probe_available(temp_dir) == 0,
-                "Theron quick boot probe rejects unverified Track 02 data");
+                "startup availability rejects explicit fake Theron data");
+    expect_true(theron_v1_boot_probe_available(fake_track) == 0,
+                "Theron quick boot probe rejects explicit unverified Track 02 data");
 
     real_data = getenv("FIRESTAFF_THERON_TEST_DATA");
     if (real_data && real_data[0]) {
         M12_AssetStatus_Scan(&status, real_data);
         if (status.theronAvailable) {
+            M12_AssetStatus direct_status;
+            const M12_AssetVersionStatus *matched_version = NULL;
+            size_t vi;
             expect_true(fs_validate_data_dir(real_data, &report) >= 0 &&
                         report.theron_ready == 1,
                         "validator accepts hash-verified Theron data");
@@ -115,6 +118,33 @@ int main(void) {
                         "startup accepts hash-verified Theron data");
             expect_true(theron_v1_boot_probe_available(real_data) == 1,
                         "Theron quick boot probe accepts hash-verified data");
+            for (vi = 0; vi < M12_AssetStatus_GetVersionCount("theron"); ++vi) {
+                const M12_AssetVersionStatus *v =
+                    M12_AssetStatus_GetVersion(&status, "theron", vi);
+                if (v && v->matched) {
+                    matched_version = v;
+                    break;
+                }
+            }
+            if (matched_version &&
+                matched_version->matchedPath[0] &&
+                strstr(matched_version->matchedPath, "::") == NULL) {
+                const M12_AssetRequiredFileStatus *required;
+                M12_AssetStatus_Scan(&direct_status, matched_version->matchedPath);
+                expect_true(direct_status.theronAvailable == 1,
+                            "explicit Theron Track 02 path is accepted");
+                required = M12_AssetStatus_GetRequiredFile(&direct_status,
+                                                           "theron",
+                                                           0);
+                expect_true(required && required->matched &&
+                            strcmp(required->matchedPath,
+                                   matched_version->matchedPath) == 0,
+                            "explicit Theron Track 02 path stays the verified match");
+                expect_true(strcmp(M12_AssetStatus_GetRuntimeDataDir(&direct_status,
+                                                                     "theron"),
+                                   matched_version->matchedPath) != 0,
+                            "explicit Theron Track 02 path resolves to a runtime root");
+            }
         }
     }
 
