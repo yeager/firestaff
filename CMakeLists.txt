@@ -1376,6 +1376,18 @@ if(BUILD_TESTING)
         COMMAND test_m11_quit_guard
     )
 
+    add_executable(test_m11_overlay_command_queue_block
+        tests/test_m11_overlay_command_queue_block.c
+    )
+    target_link_libraries(test_m11_overlay_command_queue_block PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_overlay_command_queue_block PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_overlay_command_queue_block
+        COMMAND test_m11_overlay_command_queue_block
+    )
+
     add_executable(firestaff_m11_touch_pointer_dispatch_probe
         probes/m11/firestaff_m11_touch_pointer_dispatch_probe.c
     )
