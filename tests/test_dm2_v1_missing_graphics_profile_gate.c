@@ -47,6 +47,8 @@ static const char kDm2GraphicsPayload[] =
     "Firestaff synthetic DM2 missing-GRAPHICS profile gate GRAPHICS fixture\n";
 static const char kDm2DungeonPayload[] =
     "Firestaff synthetic DM2 missing-GRAPHICS profile gate DUNGEON fixture\n";
+static const char kDm2WrongGraphicsPayload[] =
+    "Firestaff synthetic DM2 missing-GRAPHICS profile gate wrong GRAPHICS fixture\n";
 
 static int make_dir_if_needed(const char* path) {
     return MKDIR(path) == 0;
@@ -124,6 +126,15 @@ static void write_dungeon_only_fixture(const char* root) {
     CHECK(write_plain_file(dungeonPath, kDm2DungeonPayload));
 }
 
+static void write_wrong_graphics_fixture(const char* root) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    CHECK(join_path(graphicsPath, sizeof(graphicsPath), root, "GRAPHICS.DAT"));
+    CHECK(join_path(dungeonPath, sizeof(dungeonPath), root, "renamed-dungeon.asset"));
+    CHECK(write_plain_file(graphicsPath, kDm2WrongGraphicsPayload));
+    CHECK(write_plain_file(dungeonPath, kDm2DungeonPayload));
+}
+
 static void select_dm2_launch_row(M12_StartupMenuState* state) {
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
@@ -135,7 +146,7 @@ static void select_dm2_launch_row(M12_StartupMenuState* state) {
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
 }
 
-static void check_dm2_dungeon_only_scan_blocks_availability(
+static void check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
     const char* partialRoot,
     const char* graphicsMd5,
     const char* dungeonMd5) {
@@ -173,7 +184,7 @@ static void check_dm2_dungeon_only_scan_blocks_availability(
     CHECK(dungeon && strstr(dungeon->matchedPath, "renamed-dungeon.asset") != NULL);
 }
 
-static void check_dm2_dungeon_only_launch_is_blocked(
+static void check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
     const char* partialRoot,
     const char* graphicsMd5,
     const char* dungeonMd5) {
@@ -217,15 +228,18 @@ static void check_dm2_dungeon_only_launch_is_blocked(
 int main(void) {
     char home[512];
     char hashRoot[512];
-    char partialRoot[512];
+    char dungeonOnlyRoot[512];
+    char wrongGraphicsRoot[512];
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !join_path(hashRoot, sizeof(hashRoot), home, "hash-source") ||
-        !join_path(partialRoot, sizeof(partialRoot), home, "dungeon-only") ||
+        !join_path(dungeonOnlyRoot, sizeof(dungeonOnlyRoot), home, "dungeon-only") ||
+        !join_path(wrongGraphicsRoot, sizeof(wrongGraphicsRoot), home, "wrong-graphics") ||
         !make_dir_if_needed(hashRoot) ||
-        !make_dir_if_needed(partialRoot) ||
+        !make_dir_if_needed(dungeonOnlyRoot) ||
+        !make_dir_if_needed(wrongGraphicsRoot) ||
         !test_setenv("HOME", home) ||
         !test_setenv("FIRESTAFF_DATA", "")) {
         fprintf(stderr, "fixture environment setup failed\n");
@@ -233,14 +247,25 @@ int main(void) {
     }
 
     CHECK(scan_fixture_hashes(hashRoot, graphicsMd5, dungeonMd5));
-    write_dungeon_only_fixture(partialRoot);
+    write_dungeon_only_fixture(dungeonOnlyRoot);
+    write_wrong_graphics_fixture(wrongGraphicsRoot);
 
-    check_dm2_dungeon_only_scan_blocks_availability(partialRoot,
-                                                    graphicsMd5,
-                                                    dungeonMd5);
-    check_dm2_dungeon_only_launch_is_blocked(partialRoot,
-                                             graphicsMd5,
-                                             dungeonMd5);
+    check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
+        dungeonOnlyRoot,
+        graphicsMd5,
+        dungeonMd5);
+    check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
+        dungeonOnlyRoot,
+        graphicsMd5,
+        dungeonMd5);
+    check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
+        wrongGraphicsRoot,
+        graphicsMd5,
+        dungeonMd5);
+    check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
+        wrongGraphicsRoot,
+        graphicsMd5,
+        dungeonMd5);
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
@@ -249,6 +274,6 @@ int main(void) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: DM2 V1 launch/profile gate stays blocked with matched DUNGEON but missing GRAPHICS");
+    puts("ok: DM2 V1 launch/profile gate stays blocked with matched DUNGEON but missing or wrong GRAPHICS");
     return 0;
 }
