@@ -130,6 +130,63 @@ static void check_fake_iso_fallback(const char *region_dir,
                 "explicit fake Theron ISO scan leaves required Track 02 unmatched");
 }
 
+static void check_explicit_track02_does_not_use_sibling_fallback(void) {
+    char temp_dir[512];
+    char direct_dir[512];
+    char explicit_track[512];
+    char theron_dir[512];
+    char us_dir[512];
+    char fallback_track[512];
+    M12_AssetStatus status;
+    FS_GameAvailability availability;
+    const M12_AssetRequiredFileStatus *required;
+    size_t vi;
+
+    expect_true(make_temp_dir(temp_dir), "temporary explicit Theron data dir created");
+    snprintf(direct_dir, sizeof(direct_dir), "%s%s%s", temp_dir, PATH_SEP, "direct");
+    expect_true(make_dir_checked(direct_dir), "explicit Theron direct dir created");
+    snprintf(explicit_track, sizeof(explicit_track), "%s%s%s",
+             direct_dir, PATH_SEP, "track02.bin");
+    expect_true(write_file(explicit_track,
+                           "not the requested Theron's Quest Track 02 data"),
+                "explicit fake Track 02 candidate written");
+
+    snprintf(theron_dir, sizeof(theron_dir), "%s%s%s", temp_dir, PATH_SEP, "theron");
+    expect_true(make_dir_checked(theron_dir), "sibling Theron fallback dir created");
+    snprintf(us_dir, sizeof(us_dir), "%s%s%s", theron_dir, PATH_SEP, "us");
+    expect_true(make_dir_checked(us_dir), "sibling Theron US fallback dir created");
+    snprintf(fallback_track, sizeof(fallback_track), "%s%s%s",
+             us_dir, PATH_SEP, "TQUS02End.iso");
+    expect_true(write_file(fallback_track,
+                           "fallback-looking but unverified Theron's Quest Track 02 ISO"),
+                "sibling fake Theron ISO fallback written");
+
+    M12_AssetStatus_Scan(&status, explicit_track);
+    expect_true(status.originalFileCandidateFound == 1,
+                "explicit Theron direct path is original-file evidence");
+    expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
+                "explicit non-matching Theron direct path remains unavailable");
+    expect_str_eq(M12_AssetStatus_GetDataDir(&status),
+                  direct_dir,
+                  "explicit Theron direct path resolves to its containing dir");
+    expect_str_eq(M12_AssetStatus_GetRuntimeDataDir(&status, "theron"),
+                  direct_dir,
+                  "explicit Theron direct path does not inherit sibling fallback runtime dir");
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0);
+    expect_true(required && required->required && !required->matched,
+                "explicit Theron direct path does not borrow sibling fallback required file");
+    for (vi = 0; vi < M12_AssetStatus_GetVersionCount("theron"); ++vi) {
+        const M12_AssetVersionStatus *version =
+            M12_AssetStatus_GetVersion(&status, "theron", vi);
+        expect_true(version && !version->matched,
+                    "explicit Theron direct path leaves fallback versions unmatched");
+    }
+
+    fs_startup_check_games(explicit_track, &availability);
+    expect_true(availability.theron_available == 0,
+                "startup gating rejects explicit Theron direct path despite sibling fallback");
+}
+
 int main(void) {
     char temp_dir[512];
     char theron_dir[512];
@@ -181,6 +238,8 @@ int main(void) {
                 "startup availability rejects explicit fake Theron data");
     expect_true(theron_v1_boot_probe_available(fake_track) == 0,
                 "Theron quick boot probe rejects explicit unverified Track 02 data");
+
+    check_explicit_track02_does_not_use_sibling_fallback();
 
     check_fake_iso_fallback("jp",
                             "TQJP02End.iso",
