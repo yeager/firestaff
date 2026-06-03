@@ -19,6 +19,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Movement and collision: cardinal movement, turning, wall/door/fake-wall blocking, cooldowns, stairs, pits, teleporters, blocked self-damage, empty-party group cleanup, and deterministic capture gates.
 - ✅ Viewport wall evidence hardening: `g_dm1_wall_frame_bitmaps` is source-locked to the PC34 `G2107`/door-frame offset model and guarded by an asset-free null-write regression.
+- ✅ Viewport regression sweep: `v1_viewport_floor_ornament_stair_gate`, `v1_viewport_front_wall_depth_gate`, and `v1_viewport_pit_floor_ornament_bug64_gate` are green again after restoring the explicit wall-free/wall-like source-bound helpers.
 - ✅ Door-front occlusion pixel-zone gate: all 11 source-locked front-door branches prove rear cells are masked by door pixels and front cells draw after the door pass.
 - ✅ Creature and combat systems: creature groups, AI, attacks, deaths, drops, XP, projectile attacks, sounds, fleeing, special positioning, possession drops, Black Flame behavior, generator/teleporter/fall/drop cases, and Lord Chaos constants.
 - ✅ Spells and magic: rune UI, spell casting, mana/skill checks, projectiles, shields, light/dark, open-door magic, poison cloud behavior, and spell failure paths.
@@ -59,6 +60,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Phase 0 - V1 compatibility lock before V2 work.
 - ✅ Phase 1 - V2 launch/profile separation.
+- ✅ Phase 7 deterministic verification gate: `test_csb_v2_phase7_verification` is green again after restoring CSB's accumulated V1-tick phase reporting while keeping render-frame deltas for smooth movement.
 
 ## Dungeon Master II: Skullkeep (DM2)
 
@@ -125,6 +127,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### Launcher and Settings
 
 - ✅ M12 settings persistence bridge: quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, streamer mode, custom music, custom dungeon, screenshot path, and all five per-game option slots round-trip through the startup menu probe.
+- ✅ M11 inventory source-lock regression sweep: `m11_inventory_scroll_panel_render_source_lock` and `m11_inventory_mouth_visual_blit_source_lock` are green on local macOS data roots as well as the legacy CI path.
 - ✅ Recursive game-data scanner: `--scan-data` / `--scan-game-data` reports found and missing required files by MD5 hash, ignores filename and folder layout, scans stored ZIP entries plus ISO/BIN ISO 9660 contents, and treats TITLE/FTL/intro extras as non-blocking.
 - ✅ Archive game-data handoff: DM1/CSB/DM2 required files found inside ZIP/ISO containers are materialized into the Firestaff asset cache and launched through normal runtime file paths.
 - ✅ Game-data launch gating: DM1/CSB/DM2 now require both GRAPHICS and DUNGEON hashes before launch, Nexus/Theron require their primary hash marker, and direct `--game` launches are blocked when required data is missing.

@@ -39,9 +39,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - Creature-chain: no paired original creature screenshot exists. Creature render is source-locked only.
   - Champion-panel: Firestaff V1 captures exist (party_hud_four_champions_vga.ppm, party_hud_statusbox_gfx_vga.ppm) but no paired original DM1 PC 3.4 champion panel screenshot exists.
   Canonical game data verified: DUNGEON.DAT SHA256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`, GRAPHICS.DAT SHA256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`. Firestaff-side gates, source locks, and runtime routing are complete.
-- 🔧 Viewport rendering regression gates: broad wall/floor/ceiling/door/ornament/pit/stair/source routes were previously source-locked; current CTest run is failing `v1_viewport_floor_ornament_stair_gate`, `v1_viewport_front_wall_depth_gate`, and `v1_viewport_pit_floor_ornament_bug64_gate`.
+- 🔧 Viewport rendering hardening: broad wall/floor/ceiling/door/ornament/pit/stair/source routes are source-locked; remaining work is broader pixel-polish evidence and capture-backed bug closure.
 - 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
-- 🔧 Inventory panel regression gates: core item/inventory routes were previously source-locked; current CTest run is failing `m11_inventory_scroll_panel_render_source_lock` and `m11_inventory_mouth_visual_blit_source_lock`.
+- 🔧 Inventory panel hardening: core item/inventory routes are source-locked; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
 - 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls, champion Z-order/floating, champion mirrors not visible, and blurry wall inscriptions. Treat each as unconfirmed until it has a reproducible capture or focused probe.
 
 ### DM1 V2.0 / V2.1 / V2.2
@@ -67,7 +67,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 4 - Enhanced lighting and magic effects.
 - 🔧 Phase 5 - Smooth movement and viewport interpolation: `firestaff_csb_v2_smooth_movement_probe` passes 58/58 and `firestaff_dm2_v2_smooth_movement_probe` passes 54/54; remaining work is broader CSB V1 runtime binding and side-by-side presentation evidence.
 - ❌ Phase 6 - Touch/controller ergonomics.
-- 🔧 Phase 7 - V2 verification suite: scaffolded; deterministic boot/dungeon/combat/save/probe gates exist; remaining work is full side-by-side V1/V2 screenshot/pixel gates (`test_csb_v2_phase7_verification` failing, regressed from 🔧).
+- 🔧 Phase 7 - V2 verification suite: scaffolded and current deterministic gate is green; remaining work is full side-by-side V1/V2 screenshot/pixel gates.
 
 ## Dungeon Master II: Skullkeep (DM2)
 
