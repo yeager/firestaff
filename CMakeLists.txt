@@ -1178,6 +1178,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_quick_resume_gate
     )
 
+    add_executable(test_m12_missing_dungeon_launch_blocker
+        tests/test_m12_missing_dungeon_launch_blocker.c
+    )
+    target_link_libraries(test_m12_missing_dungeon_launch_blocker PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_missing_dungeon_launch_blocker PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_missing_dungeon_launch_blocker
+        COMMAND test_m12_missing_dungeon_launch_blocker
+    )
+
     add_executable(test_m11_quick_resume_roundtrip
         tests/test_m11_quick_resume_roundtrip.c
     )
