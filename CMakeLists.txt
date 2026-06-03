@@ -4594,6 +4594,31 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 Track 02 bank evidence probe ───────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_track02_bank_probe
+        probes/theron/firestaff_theron_v1_track02_bank_probe.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_iso_reader.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_bank_probe PRIVATE
+        firestaff_theron
+        firestaff_v2
+    )
+    target_include_directories(firestaff_theron_v1_track02_bank_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_bank_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_bank
+        COMMAND firestaff_theron_v1_track02_bank_probe
+    )
+endif()
+
 # ── Theron V1 Phase 5 — Mechanics Hardening Probe ───────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_mechanics_hardening_probe

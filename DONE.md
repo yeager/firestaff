@@ -109,6 +109,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### Theron V1
 
+- ✅ Track 02 bank evidence slice: the US ISO now has a regression probe for the unique 9-word bank-stride descriptor candidate at `0x1584`, while the JP Rev 1 zero-filled ISO is explicitly classified as insufficient evidence instead of claiming an offset.
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Runtime profile and launch/profile scaffolding.
 - ✅ Phase 2 - Dungeon/data model ingestion.
