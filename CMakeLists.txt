@@ -278,6 +278,23 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M12 Phase A no-data asset-status scan probe (headless, no game data needed).
+# Verifies M12_AssetStatus_Scan is well-behaved across every no-data
+# configuration the launcher can hit at boot: non-existent dir, NULL/empty
+# requestedDataDir, NULL status pointer, fresh struct poisoning, and
+# re-scan determinism. Does not require SDL, a display server, or any
+# real game files.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/phase_a/firestaff_m12_no_data_scan_probe.c")
+    add_executable(firestaff_m12_no_data_scan_probe
+        probes/phase_a/firestaff_m12_no_data_scan_probe.c)
+    target_link_libraries(firestaff_m12_no_data_scan_probe
+        PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_no_data_scan_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # CSB V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies CSB_V2_PHASE_DOMAIN_LAUNCH and CSB_V2_PHASE_DOMAIN_PROFILE compile gates,
@@ -2497,6 +2514,15 @@ if(BUILD_TESTING)
     set_tests_properties(m11_phase_a PROPERTIES
         ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
+
+    # M12 Phase A no-data asset-status scan probe (headless, no game data,
+    # no SDL window, no display server).
+    if(TARGET firestaff_m12_no_data_scan_probe)
+        add_test(
+            NAME m12_no_data_scan
+            COMMAND firestaff_m12_no_data_scan_probe
+        )
+    endif()
 
     # CSB V2 Phase 1 — Launch/Profile Separation Probe (headless, no game data)
     if(TARGET firestaff_csb_v2_phase1_launch_profile_separation_probe)
