@@ -196,7 +196,7 @@ set(M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_theron firestaff_v2 firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -4544,6 +4544,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     target_include_directories(test_theron_rendering PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
     if(NOT MSVC)
         target_compile_options(test_theron_rendering PRIVATE -Wall -Wextra -O2)
