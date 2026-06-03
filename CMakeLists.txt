@@ -4755,6 +4755,23 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_save_load
         COMMAND test_theron_v1_save_load
     )
+
+    add_executable(test_theron_v1_save_header_rejection
+        tests/test_theron_v1_save_header_rejection.c
+    )
+    target_link_libraries(test_theron_v1_save_header_rejection PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_save_header_rejection PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_save_header_rejection PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_save_header_rejection
+        COMMAND test_theron_v1_save_header_rejection
+    )
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Tests ──────────────────────────────
