@@ -60,6 +60,14 @@
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 
+static int make_output_dir(const char *path) {
+#if defined(_WIN32)
+    return mkdir(path);
+#else
+    return mkdir(path, 0775);
+#endif
+}
+
 static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
@@ -287,7 +295,7 @@ int main(int argc, char *argv[]) {
     const char *filepath = argv[1];
     const char *outdir   = argv[2];
 
-    if (mkdir(outdir, 0775) != 0 && errno != EEXIST) {
+    if (make_output_dir(outdir) != 0 && errno != EEXIST) {
         fprintf(stderr, "FAIL: cannot create output dir %s\n", outdir);
         return 1;
     }
