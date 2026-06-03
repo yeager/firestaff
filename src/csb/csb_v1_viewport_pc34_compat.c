@@ -30,7 +30,15 @@ enum {
     CSB_V1_VIEW_WALL_D3L2_RIGHT = 0,
     CSB_V1_VIEW_WALL_D3R2_LEFT = 1,
     CSB_V1_NO_ORNAMENT_SLOT = -1,
-    CSB_V1_NO_VIEW_WALL = -1
+    CSB_V1_NO_VIEW_WALL = -1,
+    CSB_V1_VIEW_FLOOR_D3L2 = 0, /* C00_VIEW_FLOOR_D3L2 */
+    CSB_V1_VIEW_FLOOR_D3R2 = 1, /* C01_VIEW_FLOOR_D3R2 */
+    CSB_V1_CELL_ORDER_D3L2_DOORPASS1 = 0x0218,
+    CSB_V1_CELL_ORDER_D3L2_DOORPASS2 = 0x0349,
+    CSB_V1_CELL_ORDER_D3R2_DOORPASS1 = 0x0128,
+    CSB_V1_CELL_ORDER_D3R2_DOORPASS2 = 0x0439,
+    CSB_V1_ZONE_DOOR_D3L2 = 3700,
+    CSB_V1_ZONE_DOOR_D3R2 = 3710
 };
 
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
@@ -69,6 +77,37 @@ static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
         CSB_V1_NO_VIEW_WALL,
         "F0679_DrawD2R2",
         "DUNVIEW.C:6877-6896 wall case returns without F0107; teleporter field is the only non-wall draw"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0676/F0677 lines 6270-6286 and 6337-6353.
+ * The CSB-only D3L2/D3R2 routes call F0108 before the rear F0115 pass,
+ * call F0111 for door-front panels, then finish with the front F0115 pass.
+ * Pit cases fall through to the same F0108 call, preserving BUG0_64. */
+static const CSB_V1_ViewportFloorOrnamentRouteSpec s_floor_ornament_routes[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_FLOOR_D3L2,
+        1,
+        1,
+        1,
+        CSB_V1_CELL_ORDER_D3L2_DOORPASS1,
+        CSB_V1_CELL_ORDER_D3L2_DOORPASS2,
+        CSB_V1_ZONE_DOOR_D3L2,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6270 F0108 door-front floor ornament; 6271 F0115 pass1; 6272 F0111 C3700_ZONE_DOOR_D3L2; 6282-6286 pit/corridor F0108 then F0115"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_FLOOR_D3R2,
+        1,
+        1,
+        1,
+        CSB_V1_CELL_ORDER_D3R2_DOORPASS1,
+        CSB_V1_CELL_ORDER_D3R2_DOORPASS2,
+        CSB_V1_ZONE_DOOR_D3R2,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6337 F0108 door-front floor ornament; 6338 F0115 pass1; 6339 F0111 C3710_ZONE_DOOR_D3R2; 6349-6353 pit/corridor F0108 then F0115"
     },
 };
 
@@ -197,12 +236,37 @@ const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_ro
     return NULL;
 }
 
+size_t csb_v1_viewport_floor_ornament_route_spec_count(void)
+{
+    return sizeof(s_floor_ornament_routes) / sizeof(s_floor_ornament_routes[0]);
+}
+
+const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_floor_ornament_route_spec_count()) return NULL;
+    return &s_floor_ornament_routes[index];
+}
+
+const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_floor_ornament_route_spec_count(); ++i) {
+        if (s_floor_ornament_routes[i].view_square == view_square) {
+            return &s_floor_ornament_routes[i];
+        }
+    }
+    return NULL;
+}
+
 const char *csb_v1_viewport_source_evidence(void) {
     return
         "ReDMCSB WIP20210206 Toolchains/Common/Source/DUNVIEW.C:\n"
         "  6226-6353 F0676/F0677 back-wall D3L2/D3R2 element routing\n"
         "  6254-6263 F0676 D3L2 wall panel then F0107 right-wall ornament route\n"
+        "  6270-6286 F0676 D3L2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
         "  6321-6330 F0677 D3R2 wall panel then F0107 left-wall ornament route\n"
+        "  6337-6353 F0677 D3R2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
+        "  3940-4008 F0108 floor ornament bitmap/index/flip dispatch\n"
+        "  4218-4337 F0111 door bitmap, ornament, state, and zone blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
         "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"

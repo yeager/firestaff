@@ -47,6 +47,19 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportWallOrnamentRouteSpec;
 
+typedef struct {
+    int view_square;
+    int floor_view_index;
+    int draws_corridor_floor_ornament;
+    int draws_pit_floor_ornament;
+    int draws_door_front_floor_ornament;
+    int door_front_pass1_order;
+    int door_front_pass2_order;
+    int door_zone;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportFloorOrnamentRouteSpec;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -75,6 +88,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
 size_t csb_v1_viewport_wall_ornament_route_spec_count(void);
 const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec(size_t index);
 const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec_for_square(int view_square);
+
+size_t csb_v1_viewport_floor_ornament_route_spec_count(void);
+const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index);
+const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec_for_square(int view_square);
 
 const char *csb_v1_viewport_source_evidence(void);
 
