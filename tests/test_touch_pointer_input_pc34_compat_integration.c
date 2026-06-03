@@ -33,6 +33,8 @@ int main(void) {
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1QueuedCommandPc34Compat queued;
     struct Dm1V1InputQueueProcessResultPc34Compat processResult;
+    int normX = -1;
+    int normY = -1;
     static const MovementTouchCasePc34Compat movementCases[] = {
         { "movement.turn_left",    234, 125, DM1_V1_COMMAND_TURN_LEFT,     68u, "movement.turn_left" },
         { "movement.forward",      263, 125, DM1_V1_COMMAND_MOVE_FORWARD,  70u, "movement.forward" },
@@ -104,6 +106,32 @@ int main(void) {
         !expect_dispatch(&dispatch, 275, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
                          3u, 70u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
                          "movement.forward")) ok = 0;
+
+    if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(1215, 719, 1280, 720,
+                                                      &normX, &normY) ||
+        normX != 319 || normY != 199) ok = 0;
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_SCREEN_PC34_COMPAT;
+    event.x = 1215;
+    event.y = 719;
+    event.surfaceW = 1280;
+    event.surfaceH = 720;
+    event.buttonMask = TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
+        !expect_dispatch(&dispatch, 319, 199, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT,
+                         83u, 2u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
+                         "inventory.toggle_leader")) ok = 0;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
+        queued.command != DM1_V1_COMMAND_TOGGLE_INVENTORY_LEADER ||
+        queued.x != 319 || queued.y != 199) ok = 0;
+
+    event.x = 1216;
+    dispatch.shouldDispatchClick = 1;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    if (TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch) ||
+        dispatch.shouldDispatchClick || queue.count != 0u || queue.pendingClickPresent) ok = 0;
 
     event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
     event.space = TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT;
