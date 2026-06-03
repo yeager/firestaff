@@ -9,6 +9,14 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.2  (2026-06-03)",
+    "  - Game-data scanner: recursive hash discovery, ZIP/ISO entry scanning, and archive-backed DM1/CSB/DM2 cache handoff",
+    "  - Start menu: data-directory status wiring, missing-data popups, and safer launch gating for required hashes",
+    "  - Theron V1: JP Rev 1 and US Track 02 ISO recognition plus direct runtime handoff into the native viewport path",
+    "  - DM2 and CSB: real-asset loader/save/dungeon probe regressions fixed and reverified",
+    "  - DM1 V1: viewport, inventory, movement-legality, and source-lock regression gates restored",
+    "  - CSB V2/DM2 V2: smooth-movement verification gates restored",
+    "",
     "V2.7.1  (2026-06-02)",
     "  - DM1 PC-34 boot: restore ReDMCSB SWSH/FTL logo playback before TITLE",
     "  - DM1 PC-34 TITLE: keep GRAPHICS.DAT C001 title zoom on source-locked final guard timing",
@@ -92,5 +100,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.1";
+    return "2.7.2";
 }

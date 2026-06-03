@@ -1,3 +1,32 @@
+# Firestaff v2.7.2
+
+Patch release focused on game-data discovery, launch gating, real-asset runtime handoff, and queue regression cleanup after v2.7.1.
+
+## What's New
+
+- Recursive hash-based game-data discovery now covers nested folders, stored ZIP entries, deflated ZIP entries when zlib is available, and ISO/BIN ISO 9660 data images.
+- Archive-backed DM1, CSB, and DM2 required files can be materialized into the Firestaff asset cache before launch, while runtime code continues opening ordinary `GRAPHICS.DAT` and `DUNGEON.DAT` paths.
+- The start menu now wires data-directory availability into game cards and reports missing required game data with user-facing OK popups.
+- Theron's Quest now recognizes JP Rev 1 and US Track 02 ISO variants and can route direct launches into the native M11 Theron boot/world/viewport path.
+
+## Fixes
+
+- Fixed DM2 save/load SUPPRESS masks and version detection.
+- Fixed DM2 PC English GRAPHICS.DAT container loading and real DUNGEON.DAT parser probes.
+- Fixed CSB PC 3.4 FTL-compressed DUNGEON.DAT ingestion in the V1 loader.
+- Fixed DM1 V1 viewport floor-ornament/stair, front-wall depth, and pit floor-ornament BUG0_64 regression gates.
+- Fixed M11 inventory scroll-panel and mouth-visual source-lock gates on local macOS data roots.
+- Fixed CSB V2 Phase 7 and CSB/DM2 V2 smooth-movement verification regressions.
+- Fixed `turn_viewport_orientation_probe` so it exits cleanly after writing artifacts.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` before release.
+- Relevant local regression gates passed: DM1 viewport, M11 inventory, CSB V2 Phase 7, CSB V2 smooth movement, DM2 V1 asset/dungeon/save probes, and CSB V1 dungeon load gate.
+- Phase A probe remains green.
+
+---
+
 # Firestaff v2.7.1
 
 DM1 PC-34 boot-sequence fidelity release.
