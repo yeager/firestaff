@@ -24,21 +24,6 @@
 #define TR_MAGIC_THS4  0x34535448UL  /* "THS4" little-endian */
 #define TR_MAGIC_THQ   0x31515448UL  /* "THQ1" — HuCard ROM marker */
 
-/* ── Known good hashes (MD5, for Track 02 / HuCard ROM) ──────────── */
-/*
- * These are Phase 0 hashes.  Full SHA256 verification of THERO.DAT
- * comes in Phase 2 when the canonical asset catalog is locked.
- * Source: cdromance.org (2026-05-27)
- */
-static const struct {
-    const char *hash;
-    int         region;  /* 0=JP, 1=US */
-} g_track02_hashes[] = {
-    { "b7afb338ad31be1025b53f9aff12d73a", 0 },  /* JP Track 02 */
-    { "f23601102138f87c33025877767ebf76", 1 },  /* US Track 02 */
-    { NULL, 0 }
-};
-
 /* ── Hash verification (Phase 2) ───────────────────────────────── */
 /* Full SHA256/MD5 verification comes in Phase 2 when THERO.DAT
  * canonical hashes are locked in the asset catalog.

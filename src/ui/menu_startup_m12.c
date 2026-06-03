@@ -6610,6 +6610,7 @@ const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuS
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
     const M12_AssetVersionStatus* version;
+    int selectedVersionIndex;
     int gi;
     int pmode;
     memset(&intent, 0, sizeof(intent));
@@ -6624,12 +6625,29 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     version = m12_selected_version_status(state, gi);
+    selectedVersionIndex = state->gameOptions[gi].versionIndex;
     intent.gameId = state->entries[state->activatedIndex].gameId;
+    if ((!version || !version->matched) &&
+        intent.gameId &&
+        M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)) {
+        size_t vc = M12_AssetStatus_GetVersionCount(intent.gameId);
+        size_t vi;
+        for (vi = 0; vi < vc; ++vi) {
+            const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
+                &state->assetStatus, intent.gameId, vi);
+            if (vs && vs->matched) {
+                version = vs;
+                selectedVersionIndex = (int)vi;
+                break;
+            }
+        }
+    }
     intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
     intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
+    intent.options.versionIndex = selectedVersionIndex;
     if (state->quickResumeAvailable &&
         state->quickResumeLaunchRequested &&
         state->quickResumeSavePath[0] != '\0' &&

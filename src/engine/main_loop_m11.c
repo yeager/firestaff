@@ -1129,12 +1129,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             m11_play_redmcsb_title_intro_if_available(menuState, gameView, &titleIntroPlayed);
         }
         /* ReDMCSB: the entrance screen always plays for DM1 regardless
-         * of presentation mode.  F0441_STARTEND_ProcessEntrance is the
-         * mandatory gate between title and gameplay.  Previously this
-         * was gated on V1_ORIGINAL mode only, causing the entrance to
-         * be skipped when the user selected V2 Enhanced 2D or other
-         * modes — dropping them straight into the dungeon. */
-        {
+         * of presentation mode. F0441_STARTEND_ProcessEntrance is the
+         * mandatory gate between title and gameplay. Other games keep
+         * their own handoff paths; Theron's Quest starts directly from
+         * its Track 02 runtime image. */
+        if (strcmp(gameView->sourceId, "dm1") == 0) {
             int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
             if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
                 gameView->active = 0;

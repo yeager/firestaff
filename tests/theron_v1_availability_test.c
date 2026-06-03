@@ -62,8 +62,8 @@ int main(void) {
 
     expect_true(M12_AssetStatus_GameHasCompleteHashSet("theron") == 1,
                 "Theron exposes a complete hash set");
-    expect_true(M12_AssetStatus_GameKnownHashCount("theron") == 2U,
-                "Theron exposes JP and US Track 02 hashes");
+    expect_true(M12_AssetStatus_GameKnownHashCount("theron") == 4U,
+                "Theron exposes JP/US Track 02 BIN and ISO hashes");
     expect_true(M12_AssetStatus_GameRequiredFileCount("theron") == 1U,
                 "Theron requires one Track 02 data file");
     expect_true(M12_AssetStatus_GameVerifiedFileCount("theron") == 1U,
@@ -72,6 +72,10 @@ int main(void) {
                 "Theron JP version id is indexed");
     expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 1,
                 "Theron US version id is indexed");
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 2,
+                "Theron JP Rev 1 ISO version id is indexed");
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 3,
+                "Theron US ISO version id is indexed");
 
     expect_true(make_temp_dir(temp_dir), "temporary data dir created");
     snprintf(theron_dir, sizeof(theron_dir), "%s%s%s", temp_dir, PATH_SEP, "theron");
