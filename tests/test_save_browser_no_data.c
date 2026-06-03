@@ -3,7 +3,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#include <process.h>
+#define unlink(path) _unlink(path)
+#define rmdir(path) _rmdir(path)
+#else
 #include <unistd.h>
+#endif
+
+static char* portable_mkdtemp(char* templ) {
+#ifdef _WIN32
+    char* marker = strstr(templ, "XXXXXX");
+    int i;
+    if (!marker) return NULL;
+    for (i = 0; i < 1000; ++i) {
+        snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
+        if (_mkdir(templ) == 0) return templ;
+    }
+    return NULL;
+#else
+    return mkdtemp(templ);
+#endif
+}
 
 static int expect(int cond, const char* msg) {
     if (!cond) {
@@ -32,7 +55,11 @@ static void remove_fixture_file(const char* dir, const char* name) {
 }
 
 int main(void) {
+#ifdef _WIN32
+    char tmpTemplate[] = ".\\firestaff-save-browser-XXXXXX";
+#else
     char tmpTemplate[] = "/tmp/firestaff-save-browser-XXXXXX";
+#endif
     char missingPath[512];
     M12_SaveBrowserState state;
     const M12_SaveBrowserEntry* selected;
@@ -45,8 +72,8 @@ int main(void) {
     if (!expect(M12_SaveBrowser_GetSelected(&state) == NULL,
                 "missing root should leave no selected entry")) return 1;
 
-    if (!mkdtemp(tmpTemplate)) {
-        perror("mkdtemp");
+    if (!portable_mkdtemp(tmpTemplate)) {
+        perror("portable_mkdtemp");
         return 1;
     }
 
