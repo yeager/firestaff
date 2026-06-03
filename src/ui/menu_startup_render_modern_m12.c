@@ -1348,7 +1348,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 400;
+    int panelH = 540;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1380,6 +1380,10 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 15);
     draw_setting_row(c, rowX, rowY + 280, rowW, "ORIGINAL DATA", settings_data_status_label(state),
                      state->settingsSelectedIndex == 16);
+    draw_setting_row(c, rowX, rowY + 350, rowW, "EXPORT SETTINGS", "SAVE...",
+                     state->settingsSelectedIndex == 41);
+    draw_setting_row(c, rowX, rowY + 420, rowW, "IMPORT SETTINGS", "LOAD...",
+                     state->settingsSelectedIndex == 42);
 }
 
 typedef struct {

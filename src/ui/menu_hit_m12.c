@@ -28,7 +28,7 @@
 #define M12_HIT_PANEL_Y        260
 #define M12_HIT_GAMEOPT_PANEL_Y 190
 #define M12_HIT_PANEL_W        (M12_HIT_CANVAS_W - 2 * M12_HIT_PANEL_X)
-#define M12_HIT_PANEL_H        400
+#define M12_HIT_PANEL_H        540
 #define M12_HIT_GAMEOPT_PANEL_H_V1  780
 #define M12_HIT_GAMEOPT_PANEL_H_V2  780
 #define M12_HIT_ROW_INDENT     36
@@ -46,10 +46,12 @@
 
 /* Modern renderer shows a small curated settings subset. Values are the
  * private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
-static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 15, 16};
+static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 15, 16, 41, 42};
 #define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
     ((int)(sizeof(m12_hit_visible_settings_rows) / sizeof(m12_hit_visible_settings_rows[0])))
 #define M12_HIT_SETTINGS_ROW_DATA_DIR 15
+#define M12_HIT_SETTINGS_ROW_EXPORT 41
+#define M12_HIT_SETTINGS_ROW_IMPORT 42
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */
@@ -196,7 +198,9 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     int rowIndex = m12_hit_visible_settings_rows[i];
-                    if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR) {
+                    if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR ||
+                        rowIndex == M12_HIT_SETTINGS_ROW_EXPORT ||
+                        rowIndex == M12_HIT_SETTINGS_ROW_IMPORT) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
                         hit.index = rowIndex;
                         hit.delta = 1;
