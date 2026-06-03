@@ -130,6 +130,7 @@ static const CSB_V2_PhaseDomain g_v2_eligible_domains[] = {
     CSB_V2_PHASE_DOMAIN_MINIMAP_PRESENTATION,
     CSB_V2_PHASE_DOMAIN_INPUT_PRESENTATION,
     CSB_V2_PHASE_DOMAIN_CONFIG_PRESENTATION,
+    CSB_V2_PHASE_DOMAIN_HUD,
 };
 
 static const char *g_v2_eligible_names[] = {
@@ -139,6 +140,7 @@ static const char *g_v2_eligible_names[] = {
     "MINIMAP_PRESENTATION",
     "INPUT_PRESENTATION",
     "CONFIG_PRESENTATION",
+    "HUD",
 };
 
 #define N_V1_LOCKED   (int)(sizeof(g_v1_locked_domains)/sizeof(g_v1_locked_domains[0]))

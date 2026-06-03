@@ -110,32 +110,40 @@ static void build_synthetic_dgn(uint8_t *buf, size_t bufsz)
 
     memset(buf, 0, bufsz);
 
+    /* Root header: point to Structure1 at block 1. */
+    write_be16(buf + 0x0C, 1);
+    write_be16(buf + 0x0E, 18);
+    write_be32(buf + 0x10, (uint32_t)(GRID_rel + GRID_bytes));
+
     /* Block 1 header (Structure1) */
     uint8_t *s1 = buf + BLOCK;                  /* block 1 in container */
     write_be16(s1 + 0x00, 1);                   /* grid at block 1 */
-    write_be16(s1 + 0x02, 18);                  /* 18 blocks total */
-    write_be32(s1 + 0x08, (uint32_t)GRID_rel); /* offset to grid data */
+    s1[2] = 0x40;
+    s1[3] = 0x40;
+    write_be32(s1 + 0x14, (uint32_t)GRID_rel); /* offset to grid data */
     write_be32(s1 + 0x0C, (uint32_t)(GRID_rel + GRID_bytes)); /* end */
 
     /* Grid data: default floor, walls on all four edges */
     uint8_t *grid = s1 + GRID_rel;
-    memset(grid, 0x01, GRID_bytes);             /* default: floor */
+    memset(grid, 0, GRID_bytes);
     int xy;
+    for (xy = 0; xy < 64 * 64; xy++) {
+        grid[xy * 8 + 6] = NEXUS_SQUARE_FLOOR;
+    }
     for (xy = 0; xy < 64; xy++) {
-        grid[(0  * 64 + xy) * 8] = 0;            /* north edge: wall */
-        grid[(63 * 64 + xy) * 8] = 0;            /* south edge: wall */
-        grid[(xy * 64 + 0)  * 8] = 0;            /* west edge:  wall */
-        grid[(xy * 64 + 63) * 8] = 0;            /* east edge:  wall */
+        grid[(0  * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* north edge */
+        grid[(63 * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* south edge */
+        grid[(xy * 64 + 0)  * 8 + 6] = NEXUS_SQUARE_WALL; /* west edge */
+        grid[(xy * 64 + 63) * 8 + 6] = NEXUS_SQUARE_WALL; /* east edge */
     }
     /* Special squares */
-    grid[(20 * 64 + 10) * 8] = NEXUS_SQUARE_STAIRS_DN;
-    grid[(21 * 64 + 11) * 8] = NEXUS_SQUARE_TELEPORT;
-    grid[(22 * 64 + 12) * 8] = NEXUS_SQUARE_PIT;
-    grid[(23 * 64 + 13) * 8] = NEXUS_SQUARE_EXIT;
+    grid[(20 * 64 + 10) * 8 + 6] = NEXUS_SQUARE_STAIRS_DN;
+    grid[(21 * 64 + 11) * 8 + 6] = NEXUS_SQUARE_TELEPORT;
+    grid[(22 * 64 + 12) * 8 + 6] = NEXUS_SQUARE_PIT;
+    grid[(23 * 64 + 13) * 8 + 6] = NEXUS_SQUARE_EXIT;
     /* Boss chamber — 3D geometry flag in byte[7] */
-    grid[(30 * 64 + 30) * 8] = NEXUS_SQUARE_FLOOR;
+    grid[(30 * 64 + 30) * 8 + 6] = NEXUS_SQUARE_FLOOR;
     grid[(30 * 64 + 30) * 8 + 7] = NEXUS_SQF_3D_ONLY;
-    grid[(30 * 64 + 30) * 8 + 6] = 0x0F;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -178,7 +186,7 @@ static void probe_dungeon(void)
           "get_square(1,1):    floor");
     CHECK(nexus_v1_level_get_square(&level, 99, 99) == 0,
           "get_square(99,99): OOB returns wall");
-    CHECK(nexus_v1_level_get_square(&level, 20, 10) == NEXUS_SQUARE_STAIRS_DN,
+    CHECK(nexus_v1_level_get_square(&level, 10, 20) == NEXUS_SQUARE_STAIRS_DN,
           "get_square(10,20): stairs-down");
 }
 
@@ -273,9 +281,9 @@ static void probe_movement(void)
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 0, 0, 0, &tx, &ty);
     CHECK(tx == 10 && ty == 11, "target_square: backward N -> (10,11)");
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 1, 1, 1, &tx, &ty);
-    CHECK(tx == 9  && ty == 9,   "target_square: strafe left  N -> (9,9)");
+    CHECK(tx == 9  && ty == 10,  "target_square: strafe left  N -> (9,10)");
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 1, 1, 0, &tx, &ty);
-    CHECK(tx == 11 && ty == 9,   "target_square: strafe right N -> (11,9)");
+    CHECK(tx == 11 && ty == 10,  "target_square: strafe right N -> (11,10)");
 
     /* Square helpers */
     CHECK(nexus_square_is_stairs(NEXUS_SQUARE_STAIRS_DN) == 1,
@@ -334,7 +342,7 @@ static void probe_movement(void)
     mx = 0; my = 0;
     ok2 = nexus_try_move(NEXUS_DIR_NORTH, 1, squares64,
                           &mx, &my, &move_result, &nmx, &nmy);
-    CHECK(ok2 == 1,                  "nexus_try_move: blocked returns 1");
+    CHECK(ok2 == 0,                  "nexus_try_move: blocked returns 0");
     CHECK(move_result == NEXUS_MOVE_BLOCKED_WALL,
           "nexus_try_move: result = BLOCKED_WALL");
 

@@ -16,16 +16,6 @@
 static const int g_dir_dx[4] = {0, 1, 0, -1};
 static const int g_dir_dy[4] = {-1, 0, 1, 0};
 
-/* Arrow deltas relative to party direction
- * Arrow 0=forward: move in facing dir
- * Arrow 1=backward: move in opposite dir
- * Arrow 2=turn left: no step
- * Arrow 3=turn right: no step
- * Arrow 4=strafe left: perpendicular
- * Arrow 5=strafe right: perpendicular */
-static const int g_arrow_forward_delta[4] = {0, -1, 0, 1};  /* dx by facing */
-static const int g_arrow_right_delta[4]  = {1, 0, -1, 0};  /* dx by facing */
-
 /* ═══════════════════════════════════════════════════════════════════
  * Input queue
  * ═══════════════════════════════════════════════════════════════════ */
@@ -42,7 +32,7 @@ int nexus_input_queue_push(Nexus_InputQueue *q, int command) {
     q->commands[q->tail].dequeued = 0;
     q->tail = (q->tail + 1) % NEXUS_INPUT_QUEUE_SIZE;
     q->count++;
-    return 0;
+    return 1;
 }
 
 int nexus_input_queue_pop(Nexus_InputQueue *q, int *out_cmd) {
@@ -80,8 +70,9 @@ int nexus_normalize_dir(int d) {
 }
 
 int nexus_dir_diff(int from, int to) {
-    int diff = to - from;
-    diff = ((diff % 4) + 4) % 4;
+    int diff = nexus_normalize_dir(to) - nexus_normalize_dir(from);
+    if (diff > 2) diff -= 4;
+    if (diff < -2) diff += 4;
     return diff;
 }
 

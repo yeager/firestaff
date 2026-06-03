@@ -2,6 +2,7 @@
 #define NEXUS_V1_WORLD_H
 
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_squares.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -53,15 +54,15 @@ typedef enum {
 /* Square semantics — mirrors DM1 + Nexus extensions                   */
 /* ------------------------------------------------------------------ */
 
-#define NEXUS_SQUARE_WALL          0
-#define NEXUS_SQUARE_FLOOR         1
-#define NEXUS_SQUARE_DOOR          4   /* open/close on step/command   */
-#define NEXUS_SQUARE_PIT           2   /* trap — removes champion       */
-#define NEXUS_SQUARE_STAIRS_UP     3   /* transition: level - 1         */
-#define NEXUS_SQUARE_STAIRS_DOWN   13  /* transition: level + 1         */
-#define NEXUS_SQUARE_TELEPORTER    5   /* warp to linked target         */
-#define NEXUS_SQUARE_ALARM         6   /* set all creatures alert=255   */
-#define NEXUS_SQUARE_EXIT          8   /* end-game trigger              */
+#ifndef NEXUS_SQUARE_PIT
+#define NEXUS_SQUARE_PIT           NEXUS_SQUARE_CHUTE
+#endif
+#ifndef NEXUS_SQUARE_STAIRS_DOWN
+#define NEXUS_SQUARE_STAIRS_DOWN   NEXUS_SQUARE_STAIRS_DN
+#endif
+#ifndef NEXUS_SQUARE_TELEPORTER
+#define NEXUS_SQUARE_TELEPORTER    NEXUS_SQUARE_TELEPORT
+#endif
 
 #define NEXUS_SQUARE_IS_PASSABLE(t)  ((t) != NEXUS_SQUARE_WALL)
 #define NEXUS_SQUARE_IS_SPECIAL(t)   ((t) >= 2)
