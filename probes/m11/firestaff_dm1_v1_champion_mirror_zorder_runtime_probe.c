@@ -2,9 +2,9 @@
  * DM1 V1 champion mirror Z-order runtime probe.
  *
  * This extends the original north-facing Hall visibility gate with an
- * east-facing Hall mirror route and west-facing no-floating poses.  The
- * negative poses verify that turning toward ordinary side walls does not leave
- * the D1C champion-portrait rectangle painted over the viewport.
+ * east/south-facing Hall mirror routes and west-facing no-floating poses.
+ * The negative poses verify that turning toward ordinary side walls does not
+ * leave the D1C champion-portrait rectangle painted over the viewport.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289;
@@ -173,6 +173,7 @@ int main(int argc, char** argv) {
 
     ok &= check_pose(&game, portraits, 1, 3, DIR_NORTH, 1, "hall_d1c_mirror_front_1");
     ok &= check_pose(&game, portraits, 1, 4, DIR_NORTH, 2, "hall_d1c_mirror_front_2");
+    ok &= check_pose(&game, portraits, 1, 4, DIR_SOUTH, 3, "hall_d1c_mirror_front_south_3");
     ok &= check_pose(&game, portraits, 1, 3, DIR_WEST, -1, "hall_side_no_floating_west_1");
     ok &= check_pose(&game, portraits, 1, 4, DIR_EAST, 10, "hall_d1c_mirror_front_east_10");
     ok &= check_pose(&game, portraits, 1, 4, DIR_WEST, -1, "hall_side_no_floating_west_2");
