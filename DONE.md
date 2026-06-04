@@ -79,6 +79,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
 - ✅ Real-asset probe regression sweep: `probe_dm2_v1_asset_loader`, `probe_dm2_v1_dungeon_loader`, `probe_dm2_v1_object_model`, `probe_dm2_v1_world_state`, and `test_dm2_v1_save_load` pass against the local hash-verified PC English data.
+- ✅ DM2 V1 save/load header hardening: direct slot loads now enforce the 0xBEEF/0xDEAD DM2 slot magic used by scans, reject stale/cross-game slot files, and recover from `SKSave.bak` when the primary slot is corrupt.
 - ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
