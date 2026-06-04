@@ -520,6 +520,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_chest_slot_zones_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 readable wall inscription font regression — headless, no game data needed.
+# Source-locks DUNVIEW.C:3619-3638 dedicated inscription font index/stride/centering.
+add_executable(firestaff_m11_inscription_font_probe
+    probes/firestaff_m11_inscription_font_probe.c)
+target_include_directories(firestaff_m11_inscription_font_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_inscription_font_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 Game View probe (needs full M10 + M11 + M12)
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
 target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
@@ -720,6 +730,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_viewport_palette_as_before_probe
         COMMAND firestaff_dm1_v1_viewport_palette_as_before_probe
+    )
+    add_test(
+        NAME dm1_v1_inscription_font_probe
+        COMMAND firestaff_m11_inscription_font_probe
     )
 
     if(Python3_Interpreter_FOUND)
