@@ -27,6 +27,10 @@
  *   CHEST.C F0333 lines 58-75 and F0334 lines 112-133: only the first
  *     eight linked chest objects populate the visible chest-slot array,
  *     and close-time rewrite compacts that visible array back to the chest
+ *   CHEST.C F0333 lines 58-75 and m11_process_v1_chest_slot_box_click:
+ *     the open path is read-only on the source linked list, so the 9th
+ *     and later tail items stay reachable through the 8th visible item's
+ *     next pointer until either close or a last-slot pickup rewrites it
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
  *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
  *     C031/C032 into C101/C500/C501/C502 before drawing source bars
@@ -776,6 +780,141 @@ static void test_open_chest_close_trims_to_eight_visible_slots(void) {
               "ninth linked object is detached because it never entered G0425");
 }
 
+static void test_open_chest_keeps_ninth_visible_chain_intact(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[12];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short weaponThings[12];
+    int i;
+
+    /* ReDMCSB CHEST.C F0333 lines 58-75 only walks the first 8 things
+     * into G0425_aT_ChestSlots and leaves the 9th-and-later tail
+     * untouched in the source list.  This regression proves the open
+     * path does NOT call F0163_DUNGEON_LinkThingToList or otherwise
+     * re-link the chain, so the hidden tail stays reachable through
+     * the 8th visible item's next pointer until close rewrites it. */
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 12;
+    things.containers = containers;
+    things.containerCount = 1;
+
+    for (i = 0; i < 12; ++i) {
+        unsigned short nextThing = (i < 11)
+            ? (unsigned short)((THING_TYPE_WEAPON << 10) | (i + 1))
+            : THING_ENDOFLIST;
+        weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+        weapons[i].type = 2;
+        weapons[i].next = nextThing;
+    }
+    containers[0].slot = weaponThings[0];
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before chain-intact probe");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "open panel state records the source container thing");
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "open does not rewrite the source container head pointer");
+    for (i = 0; i < 11; ++i) {
+        ASSERT_EQ(weapons[i].next, weaponThings[i + 1],
+                  "open leaves the original 1..11 -> 2..12 chain intact");
+    }
+    ASSERT_EQ(weapons[7].next, weaponThings[8],
+              "open keeps the 8th visible item linked to the 9th tail item");
+    ASSERT_EQ(weapons[10].next, weaponThings[11],
+              "open keeps the 11th item linked to the 12th tail item");
+    ASSERT_EQ(weapons[11].next, THING_ENDOFLIST,
+              "open leaves the 12th tail item terminating the chain");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    {
+        unsigned short probe = containers[0].slot;
+        int reached8 = 0, reached9 = 0, reached10 = 0, reached11 = 0, reached12 = 0;
+        int steps = 0;
+        while (probe != THING_ENDOFLIST && probe != THING_NONE && steps < 16) {
+            if (probe == weaponThings[7]) reached8 = 1;
+            if (probe == weaponThings[8]) reached9 = 1;
+            if (probe == weaponThings[9]) reached10 = 1;
+            if (probe == weaponThings[10]) reached11 = 1;
+            if (probe == weaponThings[11]) reached12 = 1;
+            if (THING_GET_TYPE(probe) != THING_TYPE_WEAPON) break;
+            probe = weapons[THING_GET_INDEX(probe)].next;
+            ++steps;
+        }
+        ASSERT_EQ(reached8, 1, "close rewrite keeps 8th visible object reachable");
+        ASSERT_EQ(reached9, 0, "close rewrite detaches 9th tail object from head");
+        ASSERT_EQ(reached10, 0, "close rewrite detaches 10th tail object from head");
+        ASSERT_EQ(reached11, 0, "close rewrite detaches 11th tail object from head");
+        ASSERT_EQ(reached12, 0, "close rewrite detaches 12th tail object from head");
+    }
+}
+
+static void test_open_chest_pickup_last_visible_slot_detaches_tail(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[9];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short weaponThings[9];
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int i;
+
+    /* ReDMCSB CHEST.C F0334 lines 112-133 only re-links G0425_aT_ChestSlots
+     * on close, so picking up the last visible C544 slot from a chest
+     * that holds more than eight items detaches the 9th tail item the
+     * same way that close does.  m11_process_v1_chest_slot_box_click
+     * nulls slotThing->next before promoting it to the leader hand,
+     * so the tail becomes unreachable. */
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 9;
+    things.containers = containers;
+    things.containerCount = 1;
+
+    for (i = 0; i < 9; ++i) {
+        weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+        weapons[i].type = 2;
+        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+    }
+    containers[0].slot = weaponThings[0];
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before last-slot pickup probe");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(7, &sx, &sy, &sw, &sh),
+                "C544 last chest slot zone exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C544 picks the last visible chest object");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), weaponThings[7],
+              "last-slot pickup moves the 8th visible object to leader hand");
+    ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
+              "last-slot pickup detaches the picked 8th item from the chain");
+    ASSERT_EQ(weapons[8].next, THING_ENDOFLIST,
+              "last-slot pickup detaches the 9th tail item from the chain");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "close after last-slot pickup keeps first object as head");
+    for (i = 0; i < 6; ++i) {
+        ASSERT_EQ(weapons[i].next, weaponThings[i + 1],
+                  "close after last-slot pickup preserves visible C537..C542 order");
+    }
+    ASSERT_EQ(weapons[6].next, THING_ENDOFLIST,
+              "close after last-slot pickup terminates chain at C543");
+    ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
+              "close after last-slot pickup keeps 8th item detached");
+    ASSERT_EQ(weapons[8].next, THING_ENDOFLIST,
+              "close after last-slot pickup keeps 9th tail item detached");
+}
+
 static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -1236,6 +1375,8 @@ int main(void) {
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_close_trims_to_eight_visible_slots();
+    test_open_chest_keeps_ninth_visible_chain_intact();
+    test_open_chest_pickup_last_visible_slot_detaches_tail();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();
