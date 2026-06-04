@@ -137,6 +137,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### Launcher and Settings
 
+- ✅ CSB V1 runtime handoff gate: `test_csb_v1_boot_profile_smoke` now verifies a verified boot profile transfers CSB variant, asset paths, archive kind, save-root override, start position, title/entrance state, difficulty, and Chaos Magic initialization into `CSB_V1_RuntimeProfile`; the focused local test is green.
 - ✅ M12 settings persistence bridge: quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, streamer mode, custom music, custom dungeon, screenshot path, and all five per-game option slots round-trip through the startup menu probe.
 - ✅ M11 inventory source-lock regression sweep: `m11_inventory_scroll_panel_render_source_lock` and `m11_inventory_mouth_visual_blit_source_lock` are green on local macOS data roots as well as the legacy CI path.
 - ✅ Recursive game-data scanner: `--scan-data` / `--scan-game-data` reports found and missing required files by MD5 hash, ignores filename and folder layout, scans stored ZIP entries plus ISO/BIN ISO 9660 contents, and treats TITLE/FTL/intro extras as non-blocking.
