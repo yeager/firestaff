@@ -24,6 +24,9 @@
  *     into C101 and C029 into C504 before icon/text overdraw
  *   CHEST.C F0333 lines 43-48 and 64-65: opened container state blits
  *     C025 open-chest panel, then C537..C544 slot boxes and object icons
+ *   CHEST.C F0333 lines 58-75 and F0334 lines 112-133: only the first
+ *     eight linked chest objects populate the visible chest-slot array,
+ *     and close-time rewrite compacts that visible array back to the chest
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
  *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
  *     C031/C032 into C101/C500/C501/C502 before drawing source bars
@@ -731,6 +734,48 @@ static void test_open_chest_middle_pickup_compacts_visible_list(void) {
               "middle chest pickup terminates the compacted visible list");
 }
 
+static void test_open_chest_close_trims_to_eight_visible_slots(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[9];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short weaponThings[9];
+    int i;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 9;
+    things.containers = containers;
+    things.containerCount = 1;
+
+    for (i = 0; i < 9; ++i) {
+        weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+        weapons[i].type = 2;
+        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+    }
+    containers[0].slot = weaponThings[0];
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before visible-slot close rewrite");
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "closing the source chest clears open panel state");
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "close rewrite keeps the first visible chest object as head");
+    for (i = 0; i < 7; ++i) {
+        ASSERT_EQ(weapons[i].next, weaponThings[i + 1],
+                  "close rewrite preserves visible C537..C543 order");
+    }
+    ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
+              "close rewrite terminates after visible C544");
+    ASSERT_EQ(weapons[8].next, THING_ENDOFLIST,
+              "ninth linked object is detached because it never entered G0425");
+}
+
 static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -1181,7 +1226,7 @@ static void test_eye_panel_champion_stats_and_skills(void) {
 
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
-    printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, CHEST.C F0334 112-133, DUNGEON.C F0163 1796-1837, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
+    printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, CHEST.C F0333 58-75, F0334 112-133, DUNGEON.C F0163 1796-1837, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
 
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
@@ -1190,6 +1235,7 @@ int main(void) {
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
+    test_open_chest_close_trims_to_eight_visible_slots();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();
