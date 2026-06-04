@@ -197,6 +197,17 @@ static int write_iso_file(const char* path, const char* entryName,
     return fclose(fp) == 0;
 }
 
+static int write_plain_file(const char* path, const char* payload) {
+    FILE* fp = fopen(path, "wb");
+    size_t payloadSize = strlen(payload);
+    if (!fp) return 0;
+    if (fwrite(payload, 1U, payloadSize, fp) != payloadSize) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int file_matches_payload(const char* path, const char* payload) {
     char buf[128];
     FILE* fp = fopen(path, "rb");
@@ -266,6 +277,59 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
               "materialized DM2 DUNGEON should match the ISO payload");
 }
 
+static void check_direct_theron_file_scan_avoids_root_rescan(const char* root) {
+    static const char trackPayload[] =
+        "Firestaff synthetic Theron Track 02 direct launch fixture v1\n";
+    char theronDir[512];
+    char jpDir[512];
+    char trackPath[512];
+    char trackMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetStatus status;
+    M12_AssetStatusScanMetrics metrics;
+    const M12_AssetRequiredFileStatus* required;
+    const M12_AssetVersionStatus* version;
+
+    snprintf(theronDir, sizeof(theronDir), "%s/theron", root);
+    snprintf(jpDir, sizeof(jpDir), "%s/jp", theronDir);
+    snprintf(trackPath, sizeof(trackPath), "%s/track02.bin", jpDir);
+    check_int(make_dir_if_needed(theronDir),
+              "synthetic Theron root fixture directory should be created");
+    check_int(make_dir_if_needed(jpDir),
+              "synthetic Theron JP fixture directory should be created");
+    check_int(write_plain_file(trackPath, trackPayload),
+              "synthetic Theron Track 02 fixture should be written");
+    check_int(m12_file_md5_hex(trackPath, trackMd5),
+              "synthetic Theron Track 02 fixture should be hashable");
+
+    M12_AssetStatus_TestSetTheronSyntheticHash(trackMd5);
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_Scan(&status, trackPath);
+    metrics = M12_AssetStatus_TestGetScanMetrics();
+
+    check_int(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
+              "direct synthetic Theron Track 02 path should be available when its hash is known");
+    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    check_int(version && version->matched &&
+                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedMd5, trackMd5) == 0,
+              "direct synthetic Theron Track 02 path should populate the matched version");
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
+    check_int(required && required->matched &&
+                  strcmp(required->matchedPath, trackPath) == 0 &&
+                  strcmp(required->matchedHash, trackMd5) == 0,
+              "direct synthetic Theron Track 02 path should populate the required file without lookup");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "theron"), root) == 0,
+              "direct synthetic Theron Track 02 path should resolve to the runtime root");
+    check_int(metrics.rootCount == 0U,
+              "direct synthetic Theron Track 02 path should skip normal search-root construction");
+    check_int(metrics.versionHashLookups == 0U,
+              "direct synthetic Theron Track 02 path should skip root-wide version hash searches");
+    check_int(metrics.requiredHashLookups == 0U,
+              "direct synthetic Theron Track 02 path should skip root-wide required hash searches");
+
+    M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
+}
+
 int main(void) {
     enum {
         VERSION_SCAN_GROUPS = 5,
@@ -306,6 +370,7 @@ int main(void) {
               "empty fixture should not report original asset candidates");
 
     check_dm2_virtual_required_files_materialize(requestRoot);
+    check_direct_theron_file_scan_avoids_root_rescan(requestRoot);
 
     (void)test_setenv("FIRESTAFF_DATA", NULL);
     if (failures) {

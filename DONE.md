@@ -128,6 +128,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Launch/data availability now uses Track 02 hash/provenance discovery through validator, startup, and menu availability state.
 - ✅ M11 runtime handoff now branches Theron's Quest away from the DM1 DUNGEON.DAT loader into a Track 02 boot profile, Theron world state, native viewport/UI renderer, idle tick, and basic movement input path.
 - ✅ MyAbandonware JP Rev 1 and US Track 02 ISO images are hash-recognized by the scanner/boot path, report Theron's Quest READY, and direct-launch into the Theron M11 viewport with deterministic fallback assets.
+- ✅ Direct hash-verified Theron Track 02 file scans now populate the matched version/required-file status without building normal search roots or running root-wide hash lookups; `test_asset_status_scan_metrics` covers the no-rescan path with a synthetic known hash.
 - ✅ Phase 6 - Dungeon progression probe coverage.
 - ✅ Phase 7 - Save/import compatibility.
 - ✅ Phase 8 - Verification-suite coverage for deterministic launch, dungeon progression, mechanics, rendering, and save/load paths.
