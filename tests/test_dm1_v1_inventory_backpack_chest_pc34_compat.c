@@ -33,6 +33,8 @@ int main(void) {
     M11_Item item;
     M11_Item linked[10];
     M11_Item closed[8];
+    M11_Item sparse[8];
+    M11_Item limited[2];
     int ok = 1;
 
     printf("probe=dm1_v1_inventory_backpack_chest_pc34_compat\n");
@@ -102,6 +104,28 @@ int main(void) {
     ok &= expect_item_type("closed list preserves later order", &closed[5], 206);
     ok &= expect_item_type("closed list includes pc34-set chest item", &closed[6], 555);
     ok &= expect_int("closed chest no longer exposes panel slots", m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item), 0);
+
+    memset(sparse, 0, sizeof(sparse));
+    memset(limited, 0, sizeof(limited));
+    sparse[0] = make_item(401, 2, DM1_PC34_ALLOWED_CONTAINER);
+    sparse[2] = make_item(402, 3, DM1_PC34_ALLOWED_CONTAINER);
+    sparse[5] = make_item(403, 4, DM1_PC34_ALLOWED_CONTAINER);
+    sparse[7] = make_item(404, 5, DM1_PC34_ALLOWED_CONTAINER);
+    ok &= expect_int("open sparse chest", m11_inventory_open_chest(&state, 0, 0x2345, sparse, 8), 1);
+    ok &= expect_int("sparse open load includes only visible non-empty things", m11_inventory_get_load(&state, 0), 14);
+    ok &= expect_int("limited close returns total compacted count",
+                     m11_inventory_close_chest(&state, 0, limited, 2), 4);
+    ok &= expect_item_type("limited close writes first compacted item", &limited[0], 401);
+    ok &= expect_item_type("limited close writes second compacted item", &limited[1], 402);
+    ok &= expect_int("limited close clears open chest", m11_inventory_get_open_chest_thing(&state, 0), 0);
+    ok &= expect_int("limited close clears chest load", m11_inventory_get_load(&state, 0), 0);
+    ok &= expect_int("limited close hides chest slots", m11_inventory_get_item_in_chest_slot(&state, 0, 5, &item), 0);
+
+    ok &= expect_int("reopen sparse chest for zero-output close",
+                     m11_inventory_open_chest(&state, 0, 0x3456, sparse, 8), 1);
+    ok &= expect_int("zero-output close counts without buffer",
+                     m11_inventory_close_chest(&state, 0, NULL, 0), 4);
+    ok &= expect_int("zero-output close clears open chest", m11_inventory_get_open_chest_thing(&state, 0), 0);
 
     printf("inventoryBackpackChestInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;
