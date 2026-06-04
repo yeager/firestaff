@@ -1950,6 +1950,7 @@ if(BUILD_TESTING)
     )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
+        src/dm1v2/dm1_v2_phase_gate_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
         src/dm1v2/dm1_v2_runtime_pc34.c
         src/dm1v2/dm1_v2_camera_controller_pc34.c
