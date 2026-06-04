@@ -20099,6 +20099,16 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
 
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
     if (!state) return;
+    if (m11_v1_open_chest_container_index(state) >= 0) {
+        unsigned short slots[8];
+        /* ReDMCSB CHEST.C F0334 lines 112-133 rebuilds the container
+         * from G0425_aT_ChestSlots only.  F0333 lines 58-75 populated
+         * that array with at most the eight visible C537..C544 slots, so
+         * close-time rewrite compacts the visible panel and drops any
+         * ninth-and-later tail from the source list. */
+        (void)m11_v1_read_open_chest_slots(state, slots);
+        (void)m11_v1_write_open_chest_slots(state, slots);
+    }
     state->v1OpenChestThing = THING_NONE;
 }
 
