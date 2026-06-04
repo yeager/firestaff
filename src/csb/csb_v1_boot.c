@@ -165,6 +165,7 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     csb_v1_runtime_init(&profile->runtime, profile->asset_root);
     profile->runtime.variant_id = profile->variant_id;
     profile->runtime.difficulty = CSB_V1_DIFFICULTY_HARD;
+    profile->runtime.save_dir = profile->save_root;
     profile->runtime.dungeon_path = profile->dungeon_path;
     profile->runtime.graphics_path = profile->graphics_path;
     profile->runtime.dungeon_asset.path = profile->dungeon_path;
