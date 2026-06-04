@@ -1020,6 +1020,52 @@ static void test_wall_draw_uses_clip_gate_source_offsets(void)
     check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
 }
 
+static void test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t assets[32 * DM1_VIEWPORT_BYTE_WIDTH];
+    DM1_Viewport3DState state;
+    const uint8_t *base;
+    uint8_t *d3l2_bitmap;
+    uint8_t *d3r2_bitmap;
+    int d3l2_offset;
+    int d3r2_offset;
+
+    memset(viewport, 0, sizeof(viewport));
+    memset(assets, 10, sizeof(assets));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.temp_bitmap = NULL;
+    state.temp_bitmap_size = 0;
+
+    base = assets + 20 * DM1_VIEWPORT_BYTE_WIDTH;
+    d3l2_offset = 20 + state.wall_set_native[DM1_WALL_D3L2];
+    d3r2_offset = 20 + state.wall_set_native[DM1_WALL_D3R2];
+    d3l2_bitmap = assets + d3l2_offset * DM1_VIEWPORT_BYTE_WIDTH;
+    d3r2_bitmap = assets + d3r2_offset * DM1_VIEWPORT_BYTE_WIDTH;
+    for (int x = 0; x < 8; ++x) {
+        d3l2_bitmap[x] = 0x11;
+        d3r2_bitmap[x] = 0x22;
+    }
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(base);
+
+    state.parity_flip = false;
+    dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 0, 0);
+    check_int("PC34.parity_wall_draw.native_d3l2_pixel",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0x11);
+
+    memset(viewport, 0, sizeof(viewport));
+    state.parity_flip = true;
+    dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 0, 0);
+    check_int("PC34.parity_wall_draw.parity_uses_d3r2_native_source",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0x22);
+    check_int("PC34.parity_wall_draw.parity_without_temp_still_draws",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 7], 0x22);
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+}
+
 
 static void test_d0_d1_visible_square_draw_order_gate(void)
 {
@@ -1177,6 +1223,7 @@ int main(void)
     test_wall_item_occlusion_alcove_exception();
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
+    test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
     test_explosion_occlusion_zone_mapping();

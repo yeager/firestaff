@@ -427,6 +427,21 @@ static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8139", "DUNVIEW.C:8142-8144 wall case returns" },
 };
 
+static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DState *state,
+                                                           const uint8_t *bm_base,
+                                                           DM1_WallSetIndex selected_wall)
+{
+    if (!state || !bm_base || selected_wall < 0 || selected_wall >= DM1_WALL_SET_COUNT) return NULL;
+
+    /* ReDMCSB PC34/I34E selects the G2107_WallSet[] entry first, then
+     * F0105 flips that selected native bitmap horizontally when parity is
+     * active.  Do not index G3048/G3071 here after selecting the opposite
+     * wall, or side lanes such as F0676 D3L2 can double-swap back to the
+     * original wall.  Source: DUNVIEW.C:6254-6260,6321-6327,6849-6889;
+     * F0128 restores G3071 only after the whole draw in lines 8577-8579. */
+    return bm_base + (int)state->wall_set_native[selected_wall] * DM1_VIEWPORT_BYTE_WIDTH;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_init
  *
@@ -677,16 +692,36 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const DM1_WallFrame *frame)
 {
     if (!frame || frame->byte_width == 0 || !frame_bitmap) return;
-    if (!state->temp_bitmap) return;
+    if (!state) return;
 
     int bw = frame->byte_width;
     int bh = frame->height;
+    size_t needed = (size_t)bw * (size_t)bh;
+    uint8_t *scratch = NULL;
+    bool scratch_owned = false;
+
+    /* ReDMCSB F0128 allocates G0074_puc_Bitmap_Temporary before the draw walk,
+     * and F0105/F0103 use that scratch bitmap for horizontal flips.  Some
+     * Firestaff probes and bridge calls exercise the helper directly, so use
+     * a short-lived fallback scratch buffer instead of silently dropping the
+     * parity-flipped wall when state->temp_bitmap has not been wired yet.
+     * Source: DUNVIEW.C:8318-8335,3096-3108,3185-3204. */
+    if (state->temp_bitmap && state->temp_bitmap_size >= (int)needed) {
+        scratch = state->temp_bitmap;
+    } else {
+        scratch = (uint8_t *)malloc(needed);
+        scratch_owned = true;
+    }
+    if (!scratch) return;
 
     /* Copy and flip into temp buffer */
-    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, state->temp_bitmap, bw, bh);
+    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, scratch, bw, bh);
 
     /* Draw with transparency */
-    dm1_viewport_3d_draw_wall(state, state->temp_bitmap, frame);
+    dm1_viewport_3d_draw_wall(state, scratch, frame);
+    if (scratch_owned) {
+        free(scratch);
+    }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -1066,21 +1101,16 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
          */
         const uint8_t *wall_bmp = NULL;
         if (step->square == DM1_VIEW_SQUARE_D0L || step->square == DM1_VIEW_SQUARE_D0R) {
-            /* D0L/D0R: use wall_set_flipped (parity) or wall_set_native (native).
-             * ReDMCSB DUNVIEW.C:8016-8033 (D0L), 8126-8139 (D0R).
-             * wall_idx from select_wall_bitmap() already encodes D0L/D0R indices. */
-            int16_t ws_idx = state->parity_flip
-                ? state->wall_set_flipped[wall_idx]
-                : state->wall_set_native[wall_idx];
-            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
+            /* D0L/D0R: wall_idx from select_wall_bitmap() already encodes
+             * the native or opposite G2107 entry.  F0105 handles the
+             * horizontal flip, so the selected native bitmap is used here.
+             * ReDMCSB DUNVIEW.C:8016-8033 (D0L), 8126-8139 (D0R). */
+            wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
         } else {
-            /* D3L2/D3R2/D2L2/D2R2: use G2107-derived bitmap offset.
-             * The G2107 wall set indices (-3, -4, -8, -9 etc.) directly
-             * index into the bm_base bitmap array. */
-            int16_t ws_idx = state->parity_flip
-                ? state->wall_set_flipped[wall_idx]
-                : state->wall_set_native[wall_idx];
-            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
+            /* D3L2/D3R2/D2L2/D2R2: use the selected G2107-derived bitmap
+             * offset.  Parity has already swapped the selected WallSetIndex;
+             * F0105 handles any horizontal flip. */
+            wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
         }
 
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(step->square);
@@ -1823,10 +1853,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     if (raw_element == 0) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
-        int16_t ws_idx = flip_h
-            ? state->wall_set_flipped[wall_idx]
-            : state->wall_set_native[wall_idx];
-        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+        const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
             dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
@@ -2031,10 +2058,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     if (raw_element == 0) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
-        int16_t ws_idx = flip_h
-            ? state->wall_set_flipped[wall_idx]
-            : state->wall_set_native[wall_idx];
-        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+        const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
             dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
@@ -2180,4 +2204,3 @@ const char *dm1_viewport_3d_source_evidence(void)
  *   DRAWVIEW.C:641 F8157_VIDRV_
  *   DRAWVIEW.C:684 F8232_VIDRV_
  * ══════════════════════════════════════════════════════════════════════ */
-
