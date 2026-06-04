@@ -105,7 +105,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Rendering proof with real assets: bind real Track 02 tile/palette data into the Theron viewport where available, keep deterministic fallback only for unknown banks, and add pixel/screenshot gates for wall/floor/UI/champion panel output.
 - 🔧 README-eligible screenshots: capture real Firestaff Theron V1 runtime screenshots from verified Track 02 data and store only genuine in-game captures in `verification-screens/` or `docs/compare/`.
 - 🔧 Availability/direct-launch coverage: add focused tests for JP Rev 1 ISO and US ISO version fallback selection, runtime data-dir selection, isolated `--data-dir` scans, and `FIRESTAFF_EXIT_AFTER_LAUNCH=1` direct launch.
-- 🔧 Scanner performance around Theron: avoid rehashing the full default data root on every direct launch when the selected Theron hash/path is already known from startup/menu state.
+- 🔧 Scanner performance around Theron: direct hash-verified Track 02 file scans now skip root-wide rescans; remaining work is profiling and reusing startup/menu scan state across repeated launcher availability refreshes.
 - 🔧 Source/provenance documentation: keep Theron docs honest about current state: Track 02 images are hash-verified and launchable, but exact dungeon-bank parity remains active work until real-offset probes pass.
 
 ### Theron V2.0 / V2.1 / V2.2

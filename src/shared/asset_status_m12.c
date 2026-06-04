@@ -54,6 +54,7 @@ static char g_m12TestCsbDungeonMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestDm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestDm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestNexusDataMd5[M12_ASSET_MD5_CAPACITY];
+static char g_m12TestTheronTrack02Md5[M12_ASSET_MD5_CAPACITY];
 
 void M12_AssetStatus_TestResetScanMetrics(void) {
     memset(&g_m12ScanMetrics, 0, sizeof(g_m12ScanMetrics));
@@ -104,6 +105,13 @@ void M12_AssetStatus_TestSetNexusSyntheticHash(const char* dataMd5) {
              sizeof(g_m12TestNexusDataMd5),
              "%s",
              dataMd5 ? dataMd5 : "");
+}
+
+void M12_AssetStatus_TestSetTheronSyntheticHash(const char* track02Md5) {
+    snprintf(g_m12TestTheronTrack02Md5,
+             sizeof(g_m12TestTheronTrack02Md5),
+             "%s",
+             track02Md5 ? track02Md5 : "");
 }
 #endif
 
@@ -658,6 +666,11 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
         g_m12TestNexusDataMd5[0] != '\0') {
         return g_m12TestNexusDataMd5;
     }
+    if (spec && strcmp(spec->gameId, "theron") == 0 &&
+        strcmp(spec->versionId, "pce-jp") == 0 &&
+        g_m12TestTheronTrack02Md5[0] != '\0') {
+        return g_m12TestTheronTrack02Md5;
+    }
 #endif
     return spec ? spec->md5 : NULL;
 }
@@ -713,6 +726,12 @@ static int m12_theron_version_index_for_md5(const char* md5) {
     if (!md5) {
         return -1;
     }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (g_m12TestTheronTrack02Md5[0] != '\0' &&
+        strcmp(md5, g_m12TestTheronTrack02Md5) == 0) {
+        return 0;
+    }
+#endif
     for (i = 0U; i < sizeof(g_theronVersions) / sizeof(g_theronVersions[0]); ++i) {
         if (g_theronVersions[i].md5 &&
             strcmp(g_theronVersions[i].md5, md5) == 0) {
@@ -1163,6 +1182,8 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
     int theronIndex = m12_game_index_from_id("theron");
     int versionIndex = -1;
     int i;
+    size_t requiredIndex;
+    int requiredMatched = 0;
     if (!status || theronIndex < 0 ||
         !m12_try_match_direct_theron_request(requestedDataDir,
                                              matchedPath,
@@ -1200,12 +1221,23 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
                     sizeof(status->runtimeDataDirs[theronIndex]),
                     runtimeRoot);
     status->originalFileCandidateFound = 1;
-    m12_apply_required_game_availability(status,
-                                         theronIndex,
-                                         m12_fill_required_files(status,
-                                                                 theronIndex,
-                                                                 NULL,
-                                                                 0U));
+    for (requiredIndex = 0U;
+         requiredIndex < status->requiredFileCounts[theronIndex];
+         ++requiredIndex) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[theronIndex][requiredIndex];
+        if (required->roleId && strcmp(required->roleId, "track02") == 0) {
+            required->matched = 1;
+            requiredMatched = 1;
+            m12_copy_string(required->matchedPath,
+                            sizeof(required->matchedPath),
+                            matchedPath);
+            m12_copy_string(required->matchedHash,
+                            sizeof(required->matchedHash),
+                            matchedMd5);
+        }
+    }
+    m12_apply_required_game_availability(status, theronIndex, requiredMatched);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
