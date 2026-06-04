@@ -44,6 +44,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ V2.1 asset pipeline: Phase 2 source-preserving upscale/EPX pipeline, deterministic cache behavior, fallback handling, and probe coverage.
 - ✅ V2.2 modern asset pipeline: generated/modern art path, provenance/fallback contracts, and `dm1_v22_asset_pipeline` probe coverage.
 - ✅ V2 presentation slices: HUD/action route gate, palette/projectile metadata gates, smooth-movement runtime bridge, touch/controller route gate, and presentation-disabled state-hash gate.
+- ✅ DM1 V2 side-by-side verification seed: the presentation-disabled state-hash test now runs paired V1/V2 lanes through the phase gate and hashes deterministic pixel-buffer scaffolding while preserving V1 command truth.
 - ✅ DM1 V2 smooth turn pan backend: optional Custom/V2 turn-pan setting persists through config, the Phase 5 bridge can start pan-enabled turns, and the camera exposes a presentation-only viewport pan offset while V1 command direction changes remain source-owned.
 - ✅ DM1 V2 Phase 4 field/projectile VFX binding gate: source explosion thing IDs map to V2 overlay/emitter families, fluxcage remains field-only, unknown things are rejected, and invalid source palette lighting falls back deterministically.
 
