@@ -67,6 +67,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ CSB V1 back-wall ornament routing gate: D3L2/D3R2 wall cases source-lock their F0107 ordinal slots and view-wall indices, while D2L2/D2R2 prove the no-F0107 return path.
 - ✅ CSB V1 F0108/F0111 route gate: D3L2/D3R2 source-lock the floor-view indices, pit/corridor/door-front F0108 calls, door-front F0115 pass orders, and F0111 door panel zones.
 - ✅ Phase 7 - Verification suite: deterministic boot, dungeon, combat, save/import, and rendering probes pass.
+- ✅ Boot → runtime handoff in one step: `csb_v1_boot_enter_game()` now actually loads the verified DUNGEON.DAT into `runtime.dungeon_handle`, sets `runtime.dungeon_asset.kind`, copies `entrance_map_index` / `start_map_index` from the boot profile, and is regression-tested by `test_csb_v1_boot_runtime_handoff` (30/30 checks, source-locked against ReDMCSB ENTRANCE.C F0806 / LOADSAVE.C F0435 and CSBWin/CSBCode.cpp:6800-6950).
 
 ### CSB V2.0 / V2.1 / V2.2
 

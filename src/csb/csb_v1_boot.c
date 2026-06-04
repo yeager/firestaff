@@ -1,8 +1,10 @@
 #include "csb_v1_boot.h"
 
 #include "asset_find_by_hash.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ReDMCSB source-lock for this boot/profile boundary:
@@ -169,12 +171,51 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->runtime.dungeon_path = profile->dungeon_path;
     profile->runtime.graphics_path = profile->graphics_path;
     profile->runtime.dungeon_asset.path = profile->dungeon_path;
+    profile->runtime.dungeon_asset.kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
     profile->runtime.graphics_asset.path = profile->graphics_path;
     profile->runtime.graphics_asset.kind = profile->graphics_kind;
+    /* Copy entrance/start map indices from the boot profile so the runtime
+     * honours the source-locked new-game map selection.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 (C255_MAP_INDEX_ENTRANCE)
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 (new-game map 0) */
+    profile->runtime.entrance_map_index = profile->entrance_map_index;
+    profile->runtime.start_map_index = profile->start_map_index;
     profile->runtime.state = CSB_STATE_TITLE;
     profile->runtime.chaos_magic.magic_initialized = 1;
     profile->runtime.chaos_magic.spell_grid_version = 0U;
     profile->runtime.chaos_magic.chaos_level = 0U;
+    /* Load the verified DUNGEON.DAT into the runtime so that the
+     * dungeon-layer accessors (csb_v1_dungeon_get_current_level,
+     * csb_v1_dungeon_get_square_type, ...) become live immediately
+     * after launch — without a second hash search or a follow-up
+     * csb_v1_runtime_boot() call from the game-view.
+     *
+     * The dungeon is heap-allocated and owned by the runtime profile
+     * (dungeon_handle).  csb_v1_runtime_cleanup() / csb_v1_boot_cleanup()
+     * are responsible for releasing it.
+     *
+     * Failure is non-fatal: if the verified path cannot be opened
+     * (e.g. archive-backed path not yet materialized by M12), the
+     * runtime continues with dungeon_handle == NULL and the dungeon
+     * accessors return ENDOF — matching csb_v1_runtime_boot()'s
+     * pre-existing tolerant behaviour.
+     *
+     * Source: CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
+     * Source: ReDMCSB DUNGEON.C F0237 dungeon load entry
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon */
+    {
+        CSB_V1_DungeonData *dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
+        if (dungeon) {
+            if (csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0) {
+                profile->runtime.dungeon_handle = dungeon;
+                csb_v1_dungeon_set_current(dungeon);
+                csb_v1_dungeon_set_current_level(0);
+            } else {
+                free(dungeon);
+                profile->runtime.dungeon_handle = NULL;
+            }
+        }
+    }
     profile->state = CSB_V1_BOOT_STATE_RUNTIME_READY;
     return 0;
 }
