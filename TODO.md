@@ -42,7 +42,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Viewport rendering hardening: broad wall/floor/ceiling/door/ornament/pit/stair/source routes are source-locked; remaining work is broader pixel-polish evidence and capture-backed bug closure.
 - 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
 - 🔧 Inventory panel hardening: core item/inventory routes are source-locked; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
-- 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls, champion Z-order/floating, and blurry wall inscriptions. The known Hall champion-mirror visibility route is now covered by `dm1_v1_champion_mirror_visibility_runtime`; keep broader mirror/Z-order capture evidence open until more routes are pixel-proved.
+- 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls and champion Z-order/floating. The known Hall champion-mirror visibility route is now covered by `dm1_v1_champion_mirror_visibility_runtime`; keep broader mirror/Z-order capture evidence open until more routes are pixel-proved.
 
 ### DM1 V2.0 / V2.1 / V2.2
 

@@ -31,6 +31,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_inscription_font_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
@@ -12826,6 +12827,56 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
     return (int)kUnreadableBoxHeight[row][lineCount - 1];
 }
 
+static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int fbW,
+                                              int fbH,
+                                              int x,
+                                              int y,
+                                              const char* text) {
+    const M11_AssetSlot* fontSlot;
+    int i;
+    int len;
+    if (!state || !framebuffer || !text || !*text) {
+        return 0;
+    }
+    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
+        return 0;
+    }
+    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
+        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return 0;
+    }
+    len = (int)strlen(text);
+    for (i = 0; i < len; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        if (glyph < 0 ||
+            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
+            return 0;
+        }
+    }
+    /* ReDMCSB DUNVIEW.C:3619-3638 uses M648_GRAPHIC_INSCRIPTION_FONT
+     * and blits one 8x8 source cell per decoded glyph with C10 transparent. */
+    for (i = 0; i < len; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        M11_AssetLoader_BlitRegion(fontSlot,
+                                   glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   0,
+                                   DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
+                                   framebuffer,
+                                   fbW,
+                                   fbH,
+                                   x + i * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   y,
+                                   DM1_V1_INSCRIPTION_TRANSPARENT_COLOR);
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
                                                      const M11_ViewportCell* cell,
                                                      unsigned char* framebuffer,
@@ -12850,13 +12901,18 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             *next = '\0';
         }
         if (*cursor) {
-            int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
-            int textX = M11_VIEWPORT_X + 112 - (textW / 2);
+            int charCount = (int)strlen(cursor);
+            int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
-            m11_draw_text(framebuffer, fbW, fbH,
-                          textX, textY,
-                          cursor,
-                          &inscriptionStyle);
+            if (!m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
+                                                    textX, textY, cursor)) {
+                int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
+                textX = M11_VIEWPORT_X + 112 - (textW / 2);
+                m11_draw_text(framebuffer, fbW, fbH,
+                              textX, textY,
+                              cursor,
+                              &inscriptionStyle);
+            }
         }
         if (!next) break;
         *next = saved;
