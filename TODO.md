@@ -37,7 +37,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - Wall: no paired original wall screenshot exists. Wall composition is source-locked only.
   - Collision: no paired original collision transcript exists. Collision logic is source-locked only.
   - Creature-chain: no paired original creature screenshot exists. Creature render is source-locked only.
-  - Champion-panel: Firestaff V1 captures exist (party_hud_four_champions_vga.ppm, party_hud_statusbox_gfx_vga.ppm) but no paired original DM1 PC 3.4 champion panel screenshot exists.
+  - Champion-panel: Firestaff V1 captures exist (party_hud_four_champions_vga.ppm, party_hud_statusbox_gfx_vga.ppm), and `dm1_v1_champion_panel_pixels_runtime` now covers a deterministic Firestaff-side real-asset HUD/status-box pixel slice, but no paired original DM1 PC 3.4 champion panel screenshot exists.
   Canonical game data verified: DUNGEON.DAT SHA256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`, GRAPHICS.DAT SHA256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`. Firestaff-side gates, source locks, and runtime routing are complete.
 - 🔧 Viewport rendering hardening: broad wall/floor/ceiling/door/ornament/pit/stair/source routes are source-locked, and D2L side-wall source-offset pixels now have a concrete gate; remaining work is broader pixel-polish evidence and capture-backed bug closure.
 - 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes and compact-close edge cases are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.

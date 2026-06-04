@@ -605,6 +605,14 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel/status-box runtime pixel gate.
+add_executable(firestaff_dm1_v1_champion_panel_pixels_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_pixels_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_pixels_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_pixels_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
@@ -2712,6 +2720,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_mirror_zorder_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_mirror_zorder_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_pixels_runtime
+        COMMAND firestaff_dm1_v1_champion_panel_pixels_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_pixels_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
