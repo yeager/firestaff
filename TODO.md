@@ -40,7 +40,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - Champion-panel: Firestaff V1 captures exist (party_hud_four_champions_vga.ppm, party_hud_statusbox_gfx_vga.ppm) but no paired original DM1 PC 3.4 champion panel screenshot exists.
   Canonical game data verified: DUNGEON.DAT SHA256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`, GRAPHICS.DAT SHA256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`. Firestaff-side gates, source locks, and runtime routing are complete.
 - 🔧 Viewport rendering hardening: broad wall/floor/ceiling/door/ornament/pit/stair/source routes are source-locked; remaining work is broader pixel-polish evidence and capture-backed bug closure.
-- 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
+- 🔧 Inventory/chest polish beyond source-locked routes: core slot/body/chest/backpack/source routes and compact-close edge cases are implemented; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
 - 🔧 Inventory panel hardening: core item/inventory routes are source-locked; remaining work is broader chest runtime detail coverage and pixel-polish evidence.
 - 🐛 P1 visual bugs needing capture/repro: missing or incorrect viewport walls and champion Z-order/floating. The known Hall champion-mirror visibility route is covered by `dm1_v1_champion_mirror_visibility_runtime`, and north/south/east Hall D1C plus west-facing no-floating slices are covered by `dm1_v1_champion_mirror_zorder_runtime`; keep broader mirror/Z-order capture evidence open until more routes are pixel-proved.
 
