@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 DATA_DIR="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
 CAPTURE_BIN="$BUILD_DIR/capture_ingame_series"
