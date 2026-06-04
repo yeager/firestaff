@@ -971,6 +971,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_profile_smoke
     )
 
+    add_executable(test_csb_v1_boot_runtime_handoff
+        tests/test_csb_v1_boot_runtime_handoff.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_boot_runtime_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_boot_runtime_handoff PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_runtime_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_boot_runtime_handoff
+        COMMAND test_csb_v1_boot_runtime_handoff
+    )
+
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
         src/dm2/dm2_v1_boot.c

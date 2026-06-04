@@ -58,7 +58,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists and the loader now ingests the hash-verified FTL-compressed CSB PC 3.4 DUNGEON.DAT; remaining work is DSA/runtime structure parity beyond the current real-asset load gate.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, F0107 back-wall ornament routing, F0108/F0111 route gates, and initial viewport gates exist; remaining work includes actual ornament blits, F0108 bitmap blits, F0115 creature/item/projectile pass, F0111 door panel pixels, and `CustomBackgrounds`.
-- 🐛 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets; remaining work is title/intro/import path, CSB-specific viewport integration, and end-to-end playability verification.
+- 🐛 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets and the boot→runtime handoff now actually loads the verified DUNGEON.DAT into `runtime.dungeon_handle` (heap-allocated, owned by the profile); remaining work is title/intro/import path, CSB-specific viewport integration, and end-to-end playability verification.
 
 ### CSB V2.0 / V2.1 / V2.2
 

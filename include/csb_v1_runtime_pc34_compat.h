@@ -226,6 +226,14 @@ typedef struct {
     int                     victory;
     int                     game_over;
 
+    /* ── Map indices (boot/profile handoff) ───── */
+    /* entrance_map_index is C255_MAP_INDEX_ENTRANCE (255) for CSB.
+     * start_map_index is 0 for new-game map selection.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 */
+    uint32_t                entrance_map_index;
+    uint32_t                start_map_index;
+
     /* ── Timing ────────────────────────────────── */
     uint64_t                game_ticks;      /* ms accumulator */
     uint32_t                game_time;       /* V1 game_time */
