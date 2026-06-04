@@ -123,6 +123,41 @@ int dm2_suppress_self_verification(void)
 #define DM2_SLOT_MAGIC_1  0xBEEF
 #define DM2_SLOT_MAGIC_2  0xDEAD
 
+static bool dm2_sl_header_valid(const uint8_t hdr[42])
+{
+    uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
+    uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
+    return m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2;
+}
+
+static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        if (status) *status = -2;
+        return NULL;
+    }
+
+    uint8_t hdr[42];
+    if (fread(hdr, 42, 1, f) != 1) {
+        fclose(f);
+        if (status) *status = -4;
+        return NULL;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 lines 2665-2671 validates the save header
+     * before reading payload parts. DM2's 42-byte slot header uses the
+     * 0xBEEF/0xDEAD pair as the equivalent slot-valid gate. */
+    if (!dm2_sl_header_valid(hdr)) {
+        fclose(f);
+        if (status) *status = -5;
+        return NULL;
+    }
+
+    if (status) *status = 0;
+    return f;
+}
+
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
 {
     if (!state) return;
@@ -190,10 +225,7 @@ bool dm2_sl_scan_slots(DM2_SL_State *state)
         }
         fclose(f);
 
-        uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
-        uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
-
-        if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) {
+        if (dm2_sl_header_valid(hdr)) {
             state->slots[i].occupied = true;
             /* Copy slot name (null-terminated, max 33 chars) */
             size_t j;
@@ -263,15 +295,16 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
     snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base, (unsigned)slot);
     snprintf(bak,  sizeof(bak),  "%s/SKSave.bak",   save_base);
 
-    FILE *f = fopen(path, "rb");
+    int status = 0;
+    FILE *f = dm2_sl_open_valid_payload(path, &status);
     if (!f) {
-        /* Try backup */
-        f = fopen(bak, "rb");
-        if (!f) return -2;
+        /* Try backup when the primary slot is missing, truncated, or corrupt.
+         * ReDMCSB LOADSAVE.C F0435 lines 2560-2583 tries the backup save after
+         * primary-open failure; Firestaff extends the same safety net to
+         * invalid DM2 slot headers so runtime load never accepts stale data. */
+        f = dm2_sl_open_valid_payload(bak, &status);
+        if (!f) return status ? status : -2;
     }
-
-    uint8_t hdr[42];
-    if (fread(hdr, 42, 1, f) != 1) { fclose(f); return -4; }
 
     size_t got = fread(data, 1, max_size, f);
     fclose(f);
