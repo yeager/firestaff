@@ -226,6 +226,11 @@ int main(int argc, char** argv) {
     if (!save_game(outDir, "01_ingame_start_latest", &game, paletteLevel)) return 1;
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
     if (!save_game(outDir, "02_ingame_turn_right_latest", &game, paletteLevel)) return 1;
+    /* Keep this visual route in lockstep with
+     * probes/m11/firestaff_m11_capture_route_state_probe.c: the turn-right
+     * screenshot records WEST at (1,3), then we rotate back to SOUTH before
+     * forward so the next frame captures a real corridor step to (1,4). */
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
     if (!save_game(outDir, "03_ingame_move_forward_latest", &game, paletteLevel)) return 1;
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_1);
