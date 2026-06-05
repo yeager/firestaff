@@ -181,3 +181,5 @@ __pycache__/
 build-main-check/
 assets/
 build-arm64/
+builds/
+.openclaw/
