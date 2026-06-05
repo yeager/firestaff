@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #ifdef _WIN32
+#include <direct.h>
 #define MKDIR(path) _mkdir(path)
 #else
 #define MKDIR(path) mkdir((path), 0700)
@@ -35,6 +36,22 @@
 
 static int failures = 0;
 static int tests = 0;
+
+static int test_setenv(const char* name, const char* value) {
+#ifdef _WIN32
+    return _putenv_s(name, value ? value : "");
+#else
+    return setenv(name, value ? value : "", 1);
+#endif
+}
+
+static int test_unsetenv(const char* name) {
+#ifdef _WIN32
+    return _putenv_s(name, "");
+#else
+    return unsetenv(name);
+#endif
+}
 
 #define CHECK(expr) do { \
     tests++; \
@@ -170,7 +187,7 @@ static void finder_isolate(FinderIsolatedState* s) {
     } else {
         s->hadHome = 0;
     }
-    setenv("HOME", "/nonexistent-firestaff-test-isolation-home", 1);
+    (void)test_setenv("HOME", "/nonexistent-firestaff-test-isolation-home");
     /* Wipe FIRESTAFF_SWOOSH so the env override does not short-circuit. */
     {
         const char* e = getenv("FIRESTAFF_SWOOSH");
@@ -180,20 +197,20 @@ static void finder_isolate(FinderIsolatedState* s) {
         } else {
             s->hadDataDir = 0;
         }
-        unsetenv("FIRESTAFF_SWOOSH");
+        (void)test_unsetenv("FIRESTAFF_SWOOSH");
     }
 }
 
 static void finder_restore(const FinderIsolatedState* s) {
     if (s->hadHome) {
-        setenv("HOME", s->oldHome, 1);
+        (void)test_setenv("HOME", s->oldHome);
     } else {
-        unsetenv("HOME");
+        (void)test_unsetenv("HOME");
     }
     if (s->hadDataDir) {
-        setenv("FIRESTAFF_SWOOSH", s->oldDataDir, 1);
+        (void)test_setenv("FIRESTAFF_SWOOSH", s->oldDataDir);
     } else {
-        unsetenv("FIRESTAFF_SWOOSH");
+        (void)test_unsetenv("FIRESTAFF_SWOOSH");
     }
 }
 
