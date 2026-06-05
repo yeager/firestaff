@@ -429,13 +429,13 @@ static void test_finder_honours_env_override(void) {
         snprintf(saved, sizeof(saved), "%s", prev);
         hadSaved = 1;
     }
-    setenv("FIRESTAFF_SWOOSH", path, 1);
+    (void)test_setenv("FIRESTAFF_SWOOSH", path);
     CHECK(M11_SWSH_Intro_FindLogoPath(NULL, NULL, out, sizeof(out)) == 1);
     CHECK(strcmp(out, path) == 0);
     if (hadSaved) {
-        setenv("FIRESTAFF_SWOOSH", saved, 1);
+        (void)test_setenv("FIRESTAFF_SWOOSH", saved);
     } else {
-        unsetenv("FIRESTAFF_SWOOSH");
+        (void)test_unsetenv("FIRESTAFF_SWOOSH");
     }
     rm_rf(path);
 }
