@@ -30,6 +30,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
+#include "swsh_intro_pathfinder_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -774,28 +775,6 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     }
 }
 
-
-
-/* Find the FTL logo (SWOOSH binary) from canonical DM1 PC 3.4 original data.
- * ReDMCSB SWSH.C T0901006: logo is a raw IMG1 bitmap expanded to Physbase. */
-static int m11_find_ftl_swoosh_logo_path(const char* dataDir, char* outPath, size_t outPathBytes) {
-    static const char* homeSuffixes[] = {
-        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
-    };
-    if (!outPath || outPathBytes == 0U) return 0;
-    outPath[0] = '\0';
-    { const char* e = getenv("FIRESTAFF_SWOOSH"); if (e && e[0] != '\0') { snprintf(outPath, outPathBytes, "%s", e); return 1; } }
-    { const char* home = getenv("HOME"); if (home && home[0] != '\0') {
-        for (size_t i = 0U; i < sizeof(homeSuffixes)/sizeof(homeSuffixes[0]); ++i) {
-            char cand[FSP_PATH_MAX]; snprintf(cand, sizeof(cand), "%s/%s", home, homeSuffixes[i]); FILE* tf = fopen(cand,"rb"); if (tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } } }
-    if (dataDir && dataDir[0] != '\0') {
-        char cand[FSP_PATH_MAX]; static const char* suf[] = {"SWOOSH","SWOOSH.DAT"};
-        for (size_t i = 0U; i < sizeof(suf)/sizeof(suf[0]); ++i) { snprintf(cand,sizeof(cand),"%s/%s",dataDir,suf[i]); FILE* tf=fopen(cand,"rb"); if(tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } }
-    return 0;
-}
-
 /* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
  * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
  * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
@@ -813,13 +792,15 @@ static void m11_swsh_indexed_to_rgba(const unsigned char* indexed,
     }
 }
 
-static void m11_play_ftl_swoosh_if_available(const char* dataDir, int skipSwoosh) {
+static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
+                                              const char* dataDir,
+                                              int skipSwoosh) {
     char logoPath[FSP_PATH_MAX];
     unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; unsigned char* screenRgba = NULL; FILE* f = NULL; long fsize = 0;
     const unsigned char* logoPayload = NULL;
     unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
-    if (!m11_find_ftl_swoosh_logo_path(dataDir, logoPath, sizeof(logoPath))) return;
+    if (!M11_SWSH_Intro_FindLogoPath(menuState, dataDir, logoPath, sizeof(logoPath))) return;
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
     logoImg = (unsigned char*)malloc((size_t)fsize);
@@ -1098,9 +1079,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             menuState, menuState->activatedIndex);
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
-            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order. */
+            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order.
+             * Pass the menu state so the FTL/SWSH finder can locate SWOOSH next
+             * to the matched GRAPHICS.DAT, the user-supplied data dir, or the
+             * canonical $HOME OpenClaw original-games anchors. */
             M11_Render_RaiseWindow();
-            m11_play_ftl_swoosh_if_available(dataDir, 0);
+            m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
         }
         /* CSB has its own title/entrance sequence.  ReDMCSB ENTRANCE.C
          * F0806 builds the CSB entrance micro-dungeon with C28_ENTRANCE_CSB

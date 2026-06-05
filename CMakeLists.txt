@@ -138,6 +138,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/engine/swsh_intro_pathfinder_m11.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
     src/engine/m11_qol_runtime.c
@@ -4535,6 +4536,29 @@ if(BUILD_TESTING)
     add_test(
         NAME swsh_frontend_source_animation_schedule
         COMMAND test_swsh_frontend_pc34_compat_integration
+    )
+endif()
+
+
+# -- DM1 V1 FTL/SWSH intro path finder regression (v2.7.4 release).
+# Pins the search order that the launcher uses to locate SWOOSH on
+# disk before the ReDMCSB SWSH.C palette animation runs. No real
+# DM1 data needed: the test synthesizes MZ/IMG1/junk SWOOSH payloads
+# under /tmp and exercises every branch.
+if(BUILD_TESTING)
+    add_executable(test_swsh_intro_pathfinder_m11
+        tests/test_swsh_intro_pathfinder_m11.c
+        src/engine/swsh_intro_pathfinder_m11.c
+    )
+    target_link_libraries(test_swsh_intro_pathfinder_m11
+        PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_swsh_intro_pathfinder_m11
+            PRIVATE -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME swsh_intro_pathfinder_m11
+        COMMAND test_swsh_intro_pathfinder_m11
     )
 endif()
 
