@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.4  (2026-06-05)",
+    "  - DM1 V1 viewport: fixed small-scale window layout and side-wall drawing regressions",
+    "  - DM1 V1 runtime: added champion mirror visibility, mirror Z-order, chest compact-close, D2L side-wall, capture-route, and champion panel pixel probes",
+    "  - DM1 V1 presentation: corrected wall inscription source-font rendering and slowed title cadence to the V1 tick path",
+    "  - CI and worker hygiene: cleared stale Firestaff queue failures and made the CSB DSA probe mkdir path portable",
+    "",
     "V2.7.3  (2026-06-03)",
     "  - Regression coverage: added launch/profile gates for DM1, CSB, DM2, Nexus, Theron, M11 overlay input, accessibility manifest, save browser, and M12 data-directory cancel paths",
     "  - Asset scanner: added no-data, irrelevant-root, partial-data, archive-backed, and required-file accounting guards",
@@ -106,5 +112,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.3";
+    return "2.7.4";
 }

@@ -1,3 +1,27 @@
+# Firestaff v2.7.4
+
+Patch release focused on DM1 V1 viewport, panel, and capture-route regression hardening after v2.7.3.
+
+## What's New
+
+- Added focused DM1 V1 runtime and pixel probes for champion mirror visibility, mirror Z-order, chest compact-close edges, D2L side-wall rendering, capture-route smoke coverage, and champion panel bounds.
+- Expanded DM1 V1 viewport evidence around side-wall drawing, wall inscriptions, and small-scale window layout.
+- Kept the latest DM1 V1 presentation and panel hardening in the release packaging path.
+
+## Fixes
+
+- Fixed the legacy small-scale window layout regression.
+- Fixed DM1 V1 side-wall drawing drift and wall inscription source-font rendering.
+- Slowed title frontend cadence back to the V1 tick path.
+- Cleared stale Firestaff queue failed probes and made the CSB DSA probe mkdir path portable.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` at `3fe79467`.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.3
 
 Patch release focused on regression coverage, cross-platform test harness fixes, and verified release packaging after v2.7.2.
