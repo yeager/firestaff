@@ -155,6 +155,17 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
 int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
                                     int* outSpecialPalette);
 
+/*
+ * Map a decoded TITLE/TITLE.DAT fallback frame palette ordinal onto the
+ * same ReDMCSB TITLE.C palette phases as the GRAPHICS.DAT C001 path.
+ * The PC 3.4 TITLE bank uses paletteOrdinal=1 for the PRESENTS frame
+ * and later ordinals for the DUNGEON/MASTER zoom frames.  Keep this
+ * fallback behind the same source-backed helper as the normal path so
+ * callers do not hard-code special palette constants.
+ */
+int V1_TitleFrontend_GetFallbackFramePalette(unsigned int paletteOrdinal,
+                                             int* outSpecialPalette);
+
 #ifdef __cplusplus
 }
 #endif

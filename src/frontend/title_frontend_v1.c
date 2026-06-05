@@ -258,6 +258,24 @@ int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
     return 1;
 }
 
+int V1_TitleFrontend_GetFallbackFramePalette(unsigned int paletteOrdinal,
+                                             int* outSpecialPalette) {
+    V1_TitleFrontendSourceEventKind kind;
+
+    if (!outSpecialPalette) return 0;
+    /* ReDMCSB TITLE.C F0437 is authoritative for the palette phases even
+     * when Firestaff falls back to the decoded PC 3.4 TITLE frame bank:
+     * TITLE.C:312-324 applies C12_PRESENTS only for the PRESENTS blit,
+     * then TITLE.C:362-367 switches to C13_DUNGEON + C14_MASTER before
+     * the zoom and STRIKES BACK reveal.  The fallback TITLE bank's first
+     * PL run is the PRESENTS frame; later runs are the title zoom bank.
+     */
+    kind = (paletteOrdinal == 1u)
+               ? V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS
+               : V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT;
+    return V1_TitleFrontend_GetStepPalette(kind, outSpecialPalette);
+}
+
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing) {
     if (!timing) {
         return 0u;
