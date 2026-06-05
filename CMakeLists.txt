@@ -3746,6 +3746,28 @@ if(NOT TARGET test_m11_inventory_full_panel_runtime_pc34_compat)
     )
 endif()
 
+# ── DM1 V1 inventory panel mouse-routes runtime regression ──────────
+# Companion to the m11_inventory_full_panel_runtime source lock: it
+# exercises the actual M11_GameView_GetV1MouseCommandForPoint resolver
+# for the panel close button, all eight chest slot boxes, the
+# mouth/eye inventory icons, the source-locked status hand slotbox
+# table, and the open/close chest action-hand icon swap.  Pin these
+# panel details so future slot/chest/icon changes cannot silently
+# drift the runtime routes.
+if(NOT TARGET test_dm1_v1_inventory_panel_mouse_routes_pc34_compat)
+    add_executable(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+        tests/test_dm1_v1_inventory_panel_mouse_routes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_panel_mouse_routes_runtime
+        COMMAND test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_inventory_mouth_visual_blit_pc34_compat)
     add_executable(test_m11_inventory_mouth_visual_blit_pc34_compat
         tests/test_m11_inventory_mouth_visual_blit_pc34_compat.c
