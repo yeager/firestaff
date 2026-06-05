@@ -141,6 +141,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 6 - Dungeon progression probe coverage.
 - ✅ Phase 7 - Save/import compatibility.
 - ✅ Phase 8 - Verification-suite coverage for deterministic launch, dungeon progression, mechanics, rendering, and save/load paths.
+- ✅ Theron V1 direct-launch (hash-verified path) slice: `theron_v1_boot_load_verified_path()` builds a usable boot profile from an already-hash-verified Track 02 path with zero `stat()` probes (asserted via `theron_v1_boot_rescan_call_count()`). Regression: `test_theron_v1_direct_launch` covers all four locked-in JP/US BIN/ISO MD5s, refuses unknown hashes, and is wired into `ctest -R theron`. Composes with the M12 catalog-level `m12_try_match_direct_theron_request()` direct-path matcher.
 - 🔒 Source-lock audit coverage for Theron profile, dungeon progression, mechanics, and launch/runtime boundaries.
 
 ## Cross-Cutting
