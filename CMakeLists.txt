@@ -279,6 +279,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 v2.7.4 entrance button click runtime probe.  Exercises the full
+# window-coord -> framebuffer-coord -> ReDMCSB G0445 hit-test -> command
+# dispatch chain used by m11_wait_for_redmcsb_entrance_command() in the
+# real release path.  Headless, no game data needed.
+add_executable(firestaff_dm1_v1_entrance_button_click_runtime_probe
+    probes/m11/firestaff_dm1_v1_entrance_button_click_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_entrance_button_click_runtime_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_entrance_button_click_runtime_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M12 Phase A no-data asset-status scan probe (headless, no game data needed).
 # Verifies M12_AssetStatus_Scan is well-behaved across every no-data
 # configuration the launcher can hit at boot: non-existent dir, NULL/empty
