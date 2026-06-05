@@ -1071,6 +1071,163 @@ static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[19 * DM1_VIEWPORT_WIDTH + 1], 0xee);
 }
 
+static void test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[128 * 111];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1C);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB: DUNVIEW.C G0163 line 589 gives D1C as
+     * {32,191,9,119,128,111,48,0}; F0100 lines 3048-3058 forwards that
+     * frame to F0132 with C10 transparency, and COORD.C:2390-2409 /
+     * IMAGE3.C:866-889 clip the source row before copying pixels.
+     *
+     * D1C is the nearest visible center wall (depth 1, center column).
+     * F0124_DUNGEONVIEW_DrawSquareD1C is the only square draw with
+     * wall_case_returns=false (DUNVIEW.C:7833-7843), so the wall blit
+     * shares the row with the door-front split (DUNVIEW.C:7874-7937)
+     * and any pixel gate must keep the row's left/center allocation
+     * intact.  D1C's blit_x=48 in a 128-wide source also confirms
+     * the asymmetric source-clip contract used by F0104/F0105 for the
+     * nearest D1L/D1R left/right flipped pair (DUNVIEW.C:7438-7460).
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 10, sizeof(bitmap));
+    check_nonnull("d1c_center_wall_pixel.frame", frame);
+    if (!frame) return;
+
+    /* Pre-blit column 47 should NOT reach the viewport (off the left of
+     * the resolved src_x=48). */
+    bitmap[0 * 128 + 47] = 0x33;
+    /* First visible column 48 holds the C10 transparency sentinel. */
+    bitmap[0 * 128 + 48] = 10;
+    /* First opaque visible column 49. */
+    bitmap[0 * 128 + 49] = 0x42;
+    /* Last visible column 127 of the resolved 80-wide source span. */
+    bitmap[0 * 128 + 127] = 0x7e;
+    /* Sanity marker at the bottom of the last visible column. */
+    bitmap[110 * 128 + 127] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d1c_center_wall_pixel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d1c_center_wall_pixel.src_x", gate.src_x, 48);
+    check_int("d1c_center_wall_pixel.src_y", gate.src_y, 0);
+    check_int("d1c_center_wall_pixel.dst_x", gate.dst_x, 32);
+    check_int("d1c_center_wall_pixel.dst_y", gate.dst_y, 9);
+    check_int("d1c_center_wall_pixel.visible_width", gate.width, 80);
+    check_int("d1c_center_wall_pixel.visible_height", gate.height, 111);
+    check_int("d1c_center_wall_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    /* Row 9 (top of the resolved frame): transparency sentinel at
+     * dst_x=32 is honored, the next source pixel 0x42 is copied to
+     * dst_x=33, and the column just before dst_x stays untouched. */
+    check_int("d1c_center_wall_pixel.transparent_first_visible_skip",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 32], 0xee);
+    check_int("d1c_center_wall_pixel.next_source_pixel_copied",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 33], 0x42);
+    check_int("d1c_center_wall_pixel.column_before_dst_x_untouched",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 31], 0xee);
+    check_int("d1c_center_wall_pixel.pre_blit_source_pixel_not_copied",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 32] != 0x33, 1);
+    /* Last visible source column 127 must reach dst_x=32+80-1=111. */
+    check_int("d1c_center_wall_pixel.last_visible_pixel_copied",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 111], 0x7e);
+    /* Column 112 is past the resolved 80-wide dst span and must stay
+     * untouched, confirming the F0100 byte-width clipping contract. */
+    check_int("d1c_center_wall_pixel.clipped_viewport_column_untouched",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 112], 0xee);
+    /* The frame's right_x=191 means the wall could nominally reach
+     * dst_x=191, but the 128-wide source row shortens the visible
+     * span to 80 columns; verify the row 0..79 of the source bitmap
+     * beyond column 127 stays untouched. */
+    check_int("d1c_center_wall_pixel.last_row_visibility_marker",
+              viewport[119 * DM1_VIEWPORT_WIDTH + 111], 0x55);
+    /* Row 8 is above the resolved top_y=9 and must stay untouched. */
+    check_int("d1c_center_wall_pixel.row_before_frame_untouched",
+              viewport[8 * DM1_VIEWPORT_WIDTH + 33], 0xee);
+}
+
+static void test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[16 * 136];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D0L);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB: DUNVIEW.C G0163 line 593 gives D0L as
+     * {0,31,0,135,16,136,0,0}; F0100 lines 3048-3058 forwards that
+     * frame to F0132 with C10 transparency, and COORD.C:2390-2409 /
+     * IMAGE3.C:866-889 clip the source row before copying pixels.
+     *
+     * D0L is the nearest visible left side wall (depth 0, lateral -1)
+     * drawn LAST in F0128 (DUNVIEW.C:8534-8537), so it sits on top of
+     * the champion panel and party.  Its byte_width=16 in a 32-wide
+     * native bitmap (G0701_puc_Bitmap_WallSet_Wall_D0L,
+     * STARTUP2.C:557) means the F0100 source row clip shortens the
+     * resolved dst span from the frame's 32 columns to 16.  This test
+     * pins that 16/32 contract so a future gate loosening cannot
+     * regress the visible 16-column band and silently start repainting
+     * the champion panel with the second half of the wall row.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 10, sizeof(bitmap));
+    check_nonnull("d0l_narrow_side_wall_pixel.frame", frame);
+    if (!frame) return;
+
+    /* First visible column 0 holds the C10 transparency sentinel. */
+    bitmap[0 * 16 + 0] = 10;
+    /* First opaque visible column 1. */
+    bitmap[0 * 16 + 1] = 0x42;
+    /* Last visible column 15 of the resolved 16-wide source span. */
+    bitmap[0 * 16 + 15] = 0x7e;
+    /* Bottom row marker to confirm height=136 is rendered. */
+    bitmap[135 * 16 + 8] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d0l_narrow_side_wall_pixel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d0l_narrow_side_wall_pixel.src_x", gate.src_x, 0);
+    check_int("d0l_narrow_side_wall_pixel.src_y", gate.src_y, 0);
+    check_int("d0l_narrow_side_wall_pixel.dst_x", gate.dst_x, 0);
+    check_int("d0l_narrow_side_wall_pixel.dst_y", gate.dst_y, 0);
+    check_int("d0l_narrow_side_wall_pixel.visible_width", gate.width, 16);
+    check_int("d0l_narrow_side_wall_pixel.visible_height", gate.height, 136);
+    check_int("d0l_narrow_side_wall_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    /* Row 0: transparency sentinel at dst_x=0 is honored, the next
+     * source pixel 0x42 is copied to dst_x=1. */
+    check_int("d0l_narrow_side_wall_pixel.transparent_first_visible_skip",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d0l_narrow_side_wall_pixel.next_source_pixel_copied",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 1], 0x42);
+    /* Last visible source column 15 must reach dst_x=15. */
+    check_int("d0l_narrow_side_wall_pixel.last_visible_pixel_copied",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 15], 0x7e);
+    /* The frame's right_x=31 implies a 32-wide wall, but the resolved
+     * 16-wide source clip stops the write at column 15.  Verify the
+     * 17th column is still 0xee (untouched) so the resolved gate keeps
+     * the champion panel beneath the wall. */
+    check_int("d0l_narrow_side_wall_pixel.post_frame_column_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 16], 0xee);
+    /* The bottom row marker must reach dst_y=135. */
+    check_int("d0l_narrow_side_wall_pixel.bottom_row_marker",
+              viewport[135 * DM1_VIEWPORT_WIDTH + 8], 0x55);
+}
+
 static void test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -1275,6 +1432,8 @@ int main(void)
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
