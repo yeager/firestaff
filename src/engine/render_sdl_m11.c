@@ -1410,9 +1410,50 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
     int rectH;
     int localX;
     int localY;
+    int mapWindowW;
+    int mapWindowH;
 
     if (!g_state.initialised || !outFbX || !outFbY) {
         return 0;
+    }
+
+    /* ReDMCSB COMMAND.C:1379-1449 F0358 / ENTRANCE.C:850-883 entrance
+     * hit-test relies on mapping the SDL mouse event to a 320x200
+     * framebuffer coordinate.  Mouse events in SDL3 use logical
+     * (window) coordinates; the cached g_state.windowW/H tracks the
+     * last SDL_GetWindowSize we observed, but the actual SDL window
+     * can grow/shrink between resize-event deliveries (e.g. macOS
+     * Maximize from the OS chrome before any PumpEvents runs, or any
+     * caller that touched SDL_SetWindowSize without going through
+     * M11_Render_HandleResize).  v2.7.4 surfaced this as a
+     * "Entrance door buttons cannot be clicked" regression on MacBook
+     * Pro: the cached windowW/H lagged the real window, so the
+     * computed presentation rect excluded the user's click, the
+     * bounds check returned 0, and the entrance wait loop silently
+     * kept polling.
+     *
+     * Prefer the live SDL window size only when it shows the window
+     * has grown beyond the resize-tracked value.  That covers the
+     * macOS maximize/button-click failure without breaking headless
+     * probes that intentionally exercise M11_Render_HandleResize()
+     * while the SDL dummy window remains at its initial size.  Do
+     * NOT overwrite g_state.windowW/H here; callers of the public
+     * window-size API expect the resize-event-tracked value. */
+    mapWindowW = g_state.windowW;
+    mapWindowH = g_state.windowH;
+    if (g_state.window) {
+        int ww = 0;
+        int wh = 0;
+        SDL_GetWindowSize(g_state.window, &ww, &wh);
+#if !SDL_VERSION_ATLEAST(3, 0, 0)
+        if (ww <= 0 || wh <= 0) {
+            SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
+        }
+#endif
+        if (ww >= mapWindowW && wh >= mapWindowH && (ww > mapWindowW || wh > mapWindowH)) {
+            mapWindowW = ww;
+            mapWindowH = wh;
+        }
     }
 
     /* Mouse events in SDL3 use logical (window) coordinates, not pixel
@@ -1421,8 +1462,8 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
     {
         int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
         int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
-        (void)M11_Render_ComputePresentationRect(g_state.windowW,
-                                                 g_state.windowH,
+        (void)M11_Render_ComputePresentationRect(mapWindowW,
+                                                 mapWindowH,
                                                  contentW,
                                                  contentH,
                                                  g_state.scaleMode,
