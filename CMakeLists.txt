@@ -396,6 +396,22 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V2 — V1/V2 Side-by-Side Verification Seed Probe
+# Headless: no game assets, no SDL rendering required.
+# Seed probe: presentation-disabled parity row across every V2 phase
+# gate domain, plus V1 source command ids (C001..C006) preserved when
+# V2 presentation is toggled on, plus V1 viewport scaffold constants
+# (224x136, D1C portrait, D1C wall panel) for future side-by-side
+# screenshot diffing. Linked against firestaff_v2 (which already
+# contains dm1_v2_phase_gate_pc34 and dm1_v2_movement_command_adapter_pc34).
+add_executable(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
+    probes/firestaff_dm1_v2_v1_v2_side_by_side_seed_probe.c)
+target_link_libraries(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
+    PRIVATE firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: lifecycle, walk N/S/E/W, turn 8 directions, stairs with
