@@ -1039,19 +1039,13 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         }
         m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
         /* TITLE.DAT is the bank-of-frames fallback used when the
-         * GRAPHICS.DAT C001 graphic is not available.  The hash-locked
-         * DM PC 3.4 TITLE file is structured so the first PL record
-         * (paletteOrdinal=1) covers the EN "PRESENTS" frame, and the
-         * second PL record (paletteOrdinal=2) covers the 51 DL zoom
-         * frames.  Map that to the same ReDMCSB TITLE.C palette
-         * switch the GRAPHICS.DAT path uses: PRESENTS on the
-         * paletteOrdinal=1 frames, DUNGEON+MASTER on the
-         * paletteOrdinal=2 frames.  v2.7.4 always applied the
-         * DUNGEON+MASTER palette, which is why the PRESENTS word lit
-         * up with a red/brown palette instead of plain white. */
-        stepPalette = (renderResult.paletteOrdinal == 1U)
-                          ? VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS
-                          : VGA_PALETTE_PC34_SPECIAL_TITLE;
+         * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
+         * choice behind the same ReDMCSB TITLE.C source-lock helper as
+         * the normal GRAPHICS.DAT path; the runtime must not hard-code a
+         * different interpretation of the C12_PRESENTS -> C13_DUNGEON +
+         * C14_MASTER switch. */
+        (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
+                                                       &stepPalette);
         if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,

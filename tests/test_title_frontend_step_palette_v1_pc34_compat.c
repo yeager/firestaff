@@ -56,7 +56,49 @@ static void check_step_kind_palette(V1_TitleFrontendSourceEventKind kind,
     ASSERT_EQ_INT(actual, expectedPalette, label);
 }
 
+static void check_rgb(unsigned int palette,
+                      unsigned int color,
+                      unsigned char r,
+                      unsigned char g,
+                      unsigned char b,
+                      const char* label) {
+    const unsigned char* actual = F9011_VGA_GetSpecialColorRgb_Compat((unsigned char)color, palette);
+    if (!actual) {
+        ++g_fail;
+        fprintf(stderr, "FAIL: %s: color %u did not resolve\n", label, color);
+        return;
+    }
+    if (actual[0] == r && actual[1] == g && actual[2] == b) {
+        ++g_pass;
+    } else {
+        ++g_fail;
+        fprintf(stderr,
+                "FAIL: %s: color %u expected (%u,%u,%u), got (%u,%u,%u)\n",
+                label,
+                color,
+                (unsigned int)r,
+                (unsigned int)g,
+                (unsigned int)b,
+                (unsigned int)actual[0],
+                (unsigned int)actual[1],
+                (unsigned int)actual[2]);
+    }
+}
+
 int main(void) {
+    static const unsigned char expectedPresents[16][3] = {
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {255, 255, 255}
+    };
+    static const unsigned char expectedDungeonMaster[16][3] = {
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {188, 156, 60},
+        {156, 92, 60}, {220, 188, 60}, {188, 92, 60}, {220, 220, 92},
+        {252, 252, 60}, {0, 0, 0}, {0, 0, 0}, {124, 60, 28},
+        {252, 0, 0}, {0, 0, 0}, {0, 0, 0}, {252, 0, 0}
+    };
+
     /* The helper must always succeed and never write a negative or
      * out-of-range special palette index.  Out-of-range output here
      * would crash M11_Render_PresentIndexedWithSpecialPalette. */
@@ -84,6 +126,26 @@ int main(void) {
     check_step_kind_palette(V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE,
                             VGA_PALETTE_PC34_SPECIAL_TITLE,
                             "MENU_ELIGIBLE step defaults to DUNGEON+MASTER palette");
+    ASSERT_TRUE(V1_TitleFrontend_GetFallbackFramePalette(1u, ((int*)0)) == 0,
+                "GetFallbackFramePalette rejects null outSpecialPalette");
+    {
+        int palette = -1;
+        ASSERT_TRUE(V1_TitleFrontend_GetFallbackFramePalette(1u, &palette),
+                    "fallback TITLE paletteOrdinal=1 maps successfully");
+        ASSERT_EQ_INT(palette,
+                      VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                      "fallback TITLE paletteOrdinal=1 uses C12_PRESENTS");
+        ASSERT_TRUE(V1_TitleFrontend_GetFallbackFramePalette(2u, &palette),
+                    "fallback TITLE paletteOrdinal=2 maps successfully");
+        ASSERT_EQ_INT(palette,
+                      VGA_PALETTE_PC34_SPECIAL_TITLE,
+                      "fallback TITLE paletteOrdinal=2 uses C13_DUNGEON+C14_MASTER");
+        ASSERT_TRUE(V1_TitleFrontend_GetFallbackFramePalette(0u, &palette),
+                    "fallback TITLE unknown palette ordinals map safely");
+        ASSERT_EQ_INT(palette,
+                      VGA_PALETTE_PC34_SPECIAL_TITLE,
+                      "fallback TITLE unknown palette ordinal defaults to C13_DUNGEON+C14_MASTER");
+    }
 
     /* End-to-end: every step in the full TITLE animation schedule
      * must resolve to either PRESENTS-once or DUNGEON+MASTER-everywhere,
@@ -151,6 +213,28 @@ int main(void) {
         F9011_VGA_GetSpecialColorRgb_Compat(15, VGA_PALETTE_PC34_SPECIAL_TITLE);
     ASSERT_TRUE(titleColor15 && titleColor15[0] == 252u && titleColor15[1] == 0u && titleColor15[2] == 0u,
                 "DUNGEON+MASTER color 0x0F is bright red (C14_MASTER 0x3F,0x00,0x00 -> 0xFC,0x00,0x00)");
+
+    /* Full ReDMCSB DRAWVIEW.C F20E palette lock:
+     *   G8159_PRESENTS rows 273-290: only 0x0F is white.
+     *   G8160_DUNGEON rows 291-300: colors 0x03..0x08, 0x0B, 0x0C.
+     *   G8161_MASTER rows 301-303: color 0x0F bright red.
+     * The constants are VGA 6-bit DAC values converted with
+     * rgb8 = (vga6 << 2) | (vga6 >> 4), except C12 0x3F white keeps
+     * the existing PC34 compatibility row's 255 endpoint. */
+    for (unsigned int color = 0u; color < 16u; ++color) {
+        check_rgb(VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                  color,
+                  expectedPresents[color][0],
+                  expectedPresents[color][1],
+                  expectedPresents[color][2],
+                  "DRAWVIEW.C G8159_PRESENTS full palette");
+        check_rgb(VGA_PALETTE_PC34_SPECIAL_TITLE,
+                  color,
+                  expectedDungeonMaster[color][0],
+                  expectedDungeonMaster[color][1],
+                  expectedDungeonMaster[color][2],
+                  "DRAWVIEW.C G8160_DUNGEON + G8161_MASTER full palette");
+    }
 
     printf("# summary: %d/%d invariants passed\n", g_pass, g_pass + g_fail);
     return g_fail ? 1 : 0;
