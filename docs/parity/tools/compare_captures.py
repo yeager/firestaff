@@ -12,7 +12,9 @@ def load_normalize(path):
     """Load image, ensure 320x200 RGB, return np array."""
     img = Image.open(path).convert("RGB")
     if img.size != (320, 200):
-        img = img.resize((320, 200), Image.LONEST)
+        # LANCZOS is the standard high-quality downscale filter.  The previous
+        # "Image.LONEST" was a typo that crashed on any non-320x200 input.
+        img = img.resize((320, 200), Image.LANCZOS)
     return np.array(img)
 
 def compare(orig_path: str, fires_path: str, label: str = "compare",
