@@ -9,7 +9,7 @@ Source-faithful Dungeon Master engine for modern hardware. Plays and/or is activ
 **Language:** C (pure C11, no C++)
 **Build:** CMake + SDL3
 **Platforms:** macOS (Apple Silicon + Intel), Windows, Linux x86_64, Linux ARM64 / Steam Deck
-**Current release:** v2.7.1
+**Current release:** v2.7.4
 
 ## Current Project Status
 

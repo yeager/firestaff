@@ -64,18 +64,19 @@ playability still being hardened game by game.
 
 ## Latest Release
 
-**Current version:** `2.7.3`
+**Current version:** `2.7.4`
 
-The latest release focuses on regression coverage, cross-platform test harness
-fixes and verified release packaging:
+The latest release focuses on DM1 V1 viewport and panel regression hardening
+after v2.7.3:
 
-- New no-game-data regressions cover DM1, CSB, DM2, Nexus, Theron, M11 overlay
-  input, accessibility manifest output, save-browser behavior and M12
-  data-directory cancel handling.
-- Phase A now covers M12 no-data asset-status scans across empty roots,
-  null-safe calls, stale-path clearing and repeated-scan determinism.
-- Windows portability and static-library link ordering fixes keep the expanded
-  test harnesses green across CI platforms.
+- Fixed small-scale window layout and DM1 V1 side-wall drawing regressions.
+- Added focused DM1 V1 pixel/runtime probes for champion mirrors, mirror
+  Z-order, chest compact-close behavior, D2L side walls, capture routes and
+  champion panel bounds.
+- Corrected wall inscription source-font rendering and slowed the title cadence
+  to the V1 tick path.
+- Cleaned stale Firestaff queue failures and made the CSB DSA probe mkdir path
+  portable for CI.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
 
