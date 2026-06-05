@@ -135,6 +135,26 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
                                          char* errMsg,
                                          size_t errMsgBytes);
 
+/*
+ * Map a TITLE source animation step kind to the source-locked
+ * VGA_PALETTE_PC34_SPECIAL_* palette index that the original F20E PC 3.4
+ * TITLE.C F0437 routine applies at that step.  Returns:
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS for the PRESENTS blit
+ *     (TITLE.C:319-324, palette C12_PRESENTS — white on black).
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE for ZOOM_BLIT and
+ *     MASTER_STRIKES_BACK_BLIT steps (TITLE.C:340-402, palette
+ *     C13_DUNGEON + C14_MASTER — warm browns/golds with red on 0x0F).
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE for all other steps so that any
+ *     present blit the runtime adds later still gets the DUNGEON+MASTER
+ *     palette.  The PRESENTS phase must never borrow the DUNGEON+MASTER
+ *     palette — that is the v2.7.4 release regression this helper was
+ *     added to guard.  This helper is the single source of truth for
+ *     the title-step → palette mapping; main_loop_m11.c and any other
+ *     caller must use it instead of hard-coding a palette index.
+ */
+int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
+                                    int* outSpecialPalette);
+
 #ifdef __cplusplus
 }
 #endif
