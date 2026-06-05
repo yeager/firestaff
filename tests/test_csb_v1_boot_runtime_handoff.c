@@ -31,6 +31,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define TEST_MKDIR(path) _mkdir(path)
+#else
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#endif
 
 static int passed;
 static int failed;
@@ -101,7 +107,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
-    int mkdir_ok = (mkdir(tmp_dir, 0700) == 0) || 1; /* best-effort */
+    int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
 
     memset(&p, 0, sizeof(p));
     (void)mkdir_ok;
@@ -173,7 +179,7 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-missing-dng";
     char bogus_dungeon[ASSET_PATH_MAX];
 
-    (void)mkdir(tmp_dir, 0700); /* best-effort */
+    (void)TEST_MKDIR(tmp_dir); /* best-effort */
     snprintf(bogus_dungeon, sizeof(bogus_dungeon),
              "%s/this-file-does-not-exist.DAT", tmp_dir);
     (void)dungeon_path;
@@ -213,7 +219,7 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
     char dungeon_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-idempotent";
 
-    (void)mkdir(tmp_dir, 0700);
+    (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     CHECK(write_synthetic_dungeon(dungeon_path, 7) == 0,
           "synthetic DUNGEON.DAT written for idempotence test");
