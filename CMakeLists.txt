@@ -4886,6 +4886,30 @@ if(BUILD_TESTING)
         COMMAND test_theron_v1_availability
     )
 
+    # ── Theron V1 direct-launch (hash-verified path) regression test ──
+    # Source-lock: src/theron/theron_v1_boot.c — THQUEST.ASM T400.
+    # Asserts the new theron_v1_boot_load_verified_path() builds a usable
+    # boot profile for all four known TQ Track 02 MD5s without re-walking
+    # the data root.
+    add_executable(test_theron_v1_direct_launch
+        tests/theron_v1_direct_launch_test.c
+        src/theron/theron_v1_boot.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_theron_v1_direct_launch PRIVATE firestaff_v2)
+    target_include_directories(test_theron_v1_direct_launch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_direct_launch PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_direct_launch
+        COMMAND test_theron_v1_direct_launch
+    )
+
     add_executable(test_tqr_v1_boot_profile_smoke
         tests/tqr_v1_boot_profile_smoke.c
         src/tqr/tqr_v1_boot_profile.c
