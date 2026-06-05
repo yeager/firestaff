@@ -13,6 +13,7 @@
 #include "title_frontend_v1.h"
 #include "dm1_v2_anim_timing.h"
 #include "firestaff_graphics_dat_reader.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <string.h>
 
@@ -212,6 +213,49 @@ unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourc
         return (unsigned int)V1_TICK_MS;
     }
     return 50u;
+}
+
+int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
+                                    int* outSpecialPalette) {
+    int palette;
+
+    if (!outSpecialPalette) return 0;
+    /* ReDMCSB TITLE.C F0437 PC/F20 source-lock (DRAWVIEW.C F20E):
+     *   - PRESENTS uses C12_PRESENTS (only 0x0F = white; rest black).
+     *     TITLE.C:319-324 blits "PRESENTS" and F1012_PALETTE_SetCurtain
+     *     fades C0_BLACK_PALETTE → C1_NORMAL_PALETTE in between, with
+     *     F0694_SetMultipleColorsInPalette(C12_PRESENTS) setting 0x0F
+     *     to white first.
+     *   - ZOOM_BLIT and MASTER_STRIKES_BACK_BLIT use the merged
+     *     C13_DUNGEON + C14_MASTER table (DRAWVIEW.C G8160 + G8161):
+     *     TITLE.C:340-402 fades back to black, then loads C13_DUNGEON
+     *     and C14_MASTER for the DUNGEON MASTER zoom and STRIKES BACK
+     *     reveal.  In RGB8 that is VGA_PALETTE_PC34_SPECIAL_TITLE.
+     *   - POST_ZOOM_VBLANK and FINAL_GUARD_VBLANK steps are wait-only;
+     *     the runtime does not blit on them, but if a future caller
+     *     does, the DUNGEON+MASTER palette is the safe default because
+     *     it is the palette the screen is in immediately after the
+     *     last blit.
+     *   - MENU_ELIGIBLE means the title has handed off; the caller no
+     *     longer touches the title palette.
+     */
+    switch (kind) {
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
+            break;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+            break;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
+        default:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+            break;
+    }
+    *outSpecialPalette = palette;
+    return 1;
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing) {

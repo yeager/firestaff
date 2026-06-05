@@ -121,25 +121,63 @@ const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3] = {
         { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
 };
 
+/* Special full-screen palettes.  The credits and entrance palettes mirror
+ * the VIDEODRV.C / DRAWVIEW.C G8147_CREDITS and G8148_ENTRANCE rows; the
+ * TITLE palette is the merged F20E PC 3.4 result of the C13_DUNGEON and
+ * C14_MASTER COLOR_DEF tables from DRAWVIEW.C.  The earlier v2.7.4
+ * implementation copied the colors out of the DM1 PC34 TITLE.DAT PL
+ * record; that record only carries the title-page palette and overlaps
+ * the F20E DUNGEON/MASTER colors incorrectly (red where the source
+ * asks for brown/gold, brown where the source asks for yellow), so
+ * "DUNGEON" came out red and "MASTER" came out dark.  ReDMCSB
+ * DRAWVIEW.C is the F20E PC 3.4 source of truth, and the constants
+ * below are the VGA 6-bit DAC values converted to RGB8 with
+ * rgb8 = (vga6 << 2) | (vga6 >> 4).  The TITLE_PRESENTS palette is
+ * C12_PRESENTS from the same file; the F20E TITLE.C F0437 routine
+ * calls F1012_PALETTE_SetCurtain(C0_BLACK_PALETTE) and then
+ * F0694_SetMultipleColorsInPalette(C12_PRESENTS) before the PRESENTS
+ * blit, so only color 0x0F is non-black on the PRESENTS step. */
 const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT][16][3] = {
+        /* VGA_PALETTE_PC34_SPECIAL_CREDITS — VIDEODRV.C G8147_CREDITS */
         {
                 {  0,   0, 109}, {  0, 182, 182}, {255, 255, 109}, {146,  73,   0},
                 {255, 255, 146}, {  0,   0,   0}, {  0, 146,   0}, {182,   0,   0},
                 {219, 146,  73}, {255, 255, 182}, {255, 146,  73}, {255, 219,   0},
                 {255, 182,   0}, {  0,   0,   0}, {109,  36,   0}, {255, 255, 219}
         },
+        /* VGA_PALETTE_PC34_SPECIAL_ENTRANCE — VIDEODRV.C G8148_ENTRANCE */
         {
                 {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {146,  73,   0},
                 {219, 182, 146}, {  0, 219,   0}, {  0, 146,   0}, {  0, 182,   0},
                 {146, 109,  73}, {255,   0,   0}, {182, 146, 109}, {109,  73,  36},
                 { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
         },
-        /* VGA_PALETTE_PC34_SPECIAL_TITLE — extracted from DM1 PC34 TITLE file PL record */
+        /* VGA_PALETTE_PC34_SPECIAL_TITLE — F20E PC 3.4 DUNGEON+MASTER palette.
+         * ReDMCSB DRAWVIEW.C F20E:
+         *   G8160_DUNGEON (C13_DUNGEON) sets 0x03, 0x04, 0x05, 0x06, 0x07,
+         *   0x08, 0x0B, 0x0C with the warm brown/gold/red DUNGEON text.
+         *   G8161_MASTER (C14_MASTER) sets 0x0F to bright red for the
+         *   MASTER / STRIKES BACK text.  All other indices stay black so
+         *   the curtain-to-black fade in TITLE.C:333 / TITLE.C:358-360
+         *   works the same as on the original. */
         {
-                {  0,   0,   0}, {255, 255, 153}, {255, 204,   0}, {255, 238,   0},
-                {255,   0,   0}, { 34,   0,   0}, { 68,  51,   0}, {136, 102,   0},
-                {204,   0,   0}, {204, 153,   0}, {102,  85,   0}, { 34,  34,   0},
-                {170, 153,   0}, {221, 204,   0}, {238, 170,   0}, {170, 119,   0}
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {188, 156,  60},
+                {156,  92,  60}, {220, 188,  60}, {188,  92,  60}, {220, 220,  92},
+                {252, 252,  60}, {  0,   0,   0}, {  0,   0,   0}, {124,  60,  28},
+                {252,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {252,   0,   0}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS — F20E PC 3.4 PRESENTS palette.
+         * ReDMCSB DRAWVIEW.C F20E:
+         *   G8159_PRESENTS (C12_PRESENTS) sets only 0x0F to white; the rest
+         *   of the 16-color palette stays black, so the PRESENTS blit
+         *   (TITLE.C:319-324) fades in to a black canvas with the word
+         *   "PRESENTS" lit in white.  TITLE.C:333 then fades back to black
+         *   before C13_DUNGEON + C14_MASTER take over. */
+        {
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {255, 255, 255}
         }
 };
 

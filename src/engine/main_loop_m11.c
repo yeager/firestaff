@@ -886,6 +886,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
      */
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
+        int stepPalette;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
@@ -929,10 +930,19 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
             continue;
         }
 
+        /* ReDMCSB TITLE.C F0437 PC/F20: PRESENTS uses C12_PRESENTS
+         * (VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS), ZOOM and STRIKES
+         * BACK use the merged C13_DUNGEON + C14_MASTER palette
+         * (VGA_PALETTE_PC34_SPECIAL_TITLE).  The helper
+         * V1_TitleFrontend_GetStepPalette is the single source of
+         * truth for that mapping; v2.7.4 always used
+         * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
+         * the "PRESENTS" word red instead of plain white. */
+        (void)V1_TitleFrontend_GetStepPalette(step.kind, &stepPalette);
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+                                                        stepPalette) != M11_RENDER_OK) {
             break;
         }
         if (outPlayedAnyFrame) {
@@ -1008,13 +1018,16 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
      * fallback rather than skipping straight to the entrance. */
     for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
         V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
+        V1_TitleFrontendRenderResult renderResult;
+        int stepPalette;
         memset(packedStorage, 0, 4U + 32000U);
         memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
+        memset(&renderResult, 0, sizeof(renderResult));
         err[0] = '\0';
         if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
                                                   d.renderFrameOrdinal,
                                                   packedScreen,
-                                                  NULL,
+                                                  &renderResult,
                                                   err,
                                                   sizeof(err))) {
             fprintf(stderr,
@@ -1025,10 +1038,24 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             break;
         }
         m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
+        /* TITLE.DAT is the bank-of-frames fallback used when the
+         * GRAPHICS.DAT C001 graphic is not available.  The hash-locked
+         * DM PC 3.4 TITLE file is structured so the first PL record
+         * (paletteOrdinal=1) covers the EN "PRESENTS" frame, and the
+         * second PL record (paletteOrdinal=2) covers the 51 DL zoom
+         * frames.  Map that to the same ReDMCSB TITLE.C palette
+         * switch the GRAPHICS.DAT path uses: PRESENTS on the
+         * paletteOrdinal=1 frames, DUNGEON+MASTER on the
+         * paletteOrdinal=2 frames.  v2.7.4 always applied the
+         * DUNGEON+MASTER palette, which is why the PRESENTS word lit
+         * up with a red/brown palette instead of plain white. */
+        stepPalette = (renderResult.paletteOrdinal == 1U)
+                          ? VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS
+                          : VGA_PALETTE_PC34_SPECIAL_TITLE;
         if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+                                                        stepPalette) != M11_RENDER_OK) {
             fprintf(stderr,
                     "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
                     d.renderFrameOrdinal);

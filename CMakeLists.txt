@@ -4608,6 +4608,37 @@ if(BUILD_TESTING)
 endif()
 
 
+# ── DM1 V1 TITLE step → special-palette source-lock gate ─────────────
+# Regression gate for the v2.7.4 release bug where the TITLE animation
+# always used VGA_PALETTE_PC34_SPECIAL_TITLE for every step, so the
+# "PRESENTS" word rendered red (color 4 = (255,0,0) in the wrong palette)
+# instead of plain white.  The helper V1_TitleFrontend_GetStepPalette is
+# the single source of truth for the step → palette mapping; this test
+# pins that contract for every step kind and for the full schedule.
+if(BUILD_TESTING)
+    add_executable(test_title_frontend_step_palette_v1_pc34_compat
+        tests/test_title_frontend_step_palette_v1_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_compile_definitions(test_title_frontend_step_palette_v1_pc34_compat PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_title_frontend_step_palette_v1_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME title_frontend_step_palette_v1_pc34_compat
+        COMMAND test_title_frontend_step_palette_v1_pc34_compat
+    )
+endif()
+
+
 # ── DM1 V1 ENDGAME source animation/capture schedule gate ─────────────
 if(BUILD_TESTING)
     add_executable(test_endgame_frontend_pc34_compat_integration
