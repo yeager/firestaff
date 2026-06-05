@@ -896,6 +896,19 @@ if(BUILD_TESTING)
             NAME dm1_v1_viewport_door_wall_ornament_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_door_wall_ornament_source_lock.py
         )
+        # DM1 V1 original-capture route (DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md)
+        # regression gates.  These run the calibrated state detector and
+        # the dry-run state machine against synthetic fixtures so the
+        # pass94 failure mode is caught at the classifier step instead of
+        # after a full DOSBox session.
+        add_test(
+            NAME dm1_v1_original_capture_state_detector_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_state_detector.py --self-test
+        )
+        add_test(
+            NAME dm1_v1_original_capture_session_dry_run
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_session.py --dry-run
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
