@@ -64,15 +64,13 @@ playability still being hardened game by game.
 
 ## Latest Release
 
-**Current version:** `2.7.4`
+**Current version:** `2.7.5`
 
-The latest release focuses on DM1 V1 viewport and panel regression hardening
-after v2.7.3:
+The latest release fixes DM1 launch regressions reported in v2.7.4 on macOS:
 
-- Fixed small-scale window layout and DM1 V1 side-wall drawing regressions.
-- Added focused DM1 V1 pixel/runtime probes for champion mirrors, mirror
-  Z-order, chest compact-close behavior, D2L side walls, capture routes and
-  champion panel bounds.
+- Restored the initial FTL/SWSH animation in nested data-directory layouts.
+- Restored the source-locked TITLE animation palette steps.
+- Fixed Entrance door button clicks after live macOS window-size changes.
 - Corrected wall inscription source-font rendering and slowed the title cadence
   to the V1 tick path.
 - Cleaned stale Firestaff queue failures and made the CSB DSA probe mkdir path

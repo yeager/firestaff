@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.5  (2026-06-05)",
+    "  - DM1 V1 launch: restored FTL/SWSH intro discovery for structured data directories",
+    "  - DM1 V1 TITLE: restored ReDMCSB step-specific PRESENTS/DUNGEON/MASTER palette mapping",
+    "  - DM1 V1 entrance: fixed button clicks after live macOS window-size changes",
+    "  - Regression gates: added SWSH pathfinder, TITLE palette step, and entrance button click coverage",
+    "",
     "V2.7.4  (2026-06-05)",
     "  - DM1 V1 viewport: fixed small-scale window layout and side-wall drawing regressions",
     "  - DM1 V1 runtime: added champion mirror visibility, mirror Z-order, chest compact-close, D2L side-wall, capture-route, and champion panel pixel probes",
@@ -112,5 +118,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.4";
+    return "2.7.5";
 }

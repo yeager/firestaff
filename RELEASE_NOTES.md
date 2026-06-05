@@ -1,3 +1,22 @@
+# Firestaff v2.7.5
+
+Patch release focused on DM1 launch regressions reported in v2.7.4 on macOS.
+
+## Fixes
+
+- Restored the initial FTL/SWSH animation when DM1 data is stored in the normal nested data-directory layout.
+- Restored the source-locked Dungeon Master TITLE animation palette steps for PRESENTS, DUNGEON and MASTER phases.
+- Fixed Entrance door button clicks when the macOS window size changes outside Firestaff's cached resize path.
+- Made the new SWSH pathfinder regression test portable on Windows.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` at `b330682d`.
+- Local focused gates passed: SWSH pathfinder, TITLE step palette, Entrance button click probe, Phase A and audio probe.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64 and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.4
 
 Patch release focused on DM1 V1 viewport, panel, and capture-route regression hardening after v2.7.3.
