@@ -35,10 +35,10 @@
  *     each visible chest slot advances to the next linked object and
  *     resolves that object's source icon from G0237_as_Graphic559_ObjectInfo
  *   CHEST.C F0333 lines 58-66, OBJECT.C F0033 lines 147-164, and
- *     DUNGEON.C F0141 lines 1144-1156/G0237 lines 106-133:
- *     C541/C542 prove the fifth/sixth linked visible objects advance
- *     through the source list and blit their own Slayer C052/Sling C053
- *     icons.
+ *     DUNGEON.C F0141 lines 1145-1156/G0237 lines 106-134:
+ *     C541/C542/C543 prove the fifth/sixth/seventh linked visible
+ *     objects advance through the source list and blit their own
+ *     Slayer C052/Sling C053/Rock C054 icons.
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
  *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
  *     C031/C032 into C101/C500/C501/C502 before drawing source bars
@@ -1362,6 +1362,147 @@ static void test_open_chest_sixth_visible_slot_uses_sixth_object_icon(void) {
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
+typedef struct ChestVisibleWeaponIconCase {
+    int weaponType;
+    int expectedIcon;
+    int dungeonLine;
+    const char* ordinalName;
+    const char* objectName;
+} ChestVisibleWeaponIconCase;
+
+static const ChestVisibleWeaponIconCase kChestVisibleWeaponIconCases[] = {
+    { 8,  32, 112, "first",   "dagger" },
+    { 2,   4, 106, "second",  "torch" },
+    { 22, 46, 126, "third",   "morningstar" },
+    { 27, 51, 131, "fourth",  "arrow" },
+    { 28, 52, 132, "fifth",   "Slayer" },
+    { 29, 53, 133, "sixth",   "Sling" },
+    { 30, 54, 134, "seventh", "Rock" }
+};
+
+static unsigned short chest_visible_weapon_thing(int ordinal) {
+    return (unsigned short)((THING_TYPE_WEAPON << 10) | ordinal);
+}
+
+static void assert_open_chest_visible_weapon_icon_chain(int targetOrdinal,
+                                                        const char* gateLabel) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[7];
+    struct DungeonContainer_Compat container;
+    unsigned char framebuffer[320 * 200];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    int slotX[7];
+    int slotY[7];
+    int icons[7];
+    int visibleCount;
+    int i;
+    char msg[224];
+
+    ASSERT_TRUE(targetOrdinal >= 0 &&
+                    targetOrdinal < (int)(sizeof(kChestVisibleWeaponIconCases) /
+                                          sizeof(kChestVisibleWeaponIconCases[0])),
+                "visible chest icon helper target is in range");
+    if (targetOrdinal < 0 ||
+        targetOrdinal >= (int)(sizeof(kChestVisibleWeaponIconCases) /
+                               sizeof(kChestVisibleWeaponIconCases[0]))) {
+        return;
+    }
+    visibleCount = targetOrdinal + 1;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(&container, 0, sizeof(container));
+    things.weapons = weapons;
+    things.weaponCount = visibleCount;
+    things.containers = &container;
+    things.containerCount = 1;
+    for (i = 0; i < visibleCount; ++i) {
+        weapons[i].type = kChestVisibleWeaponIconCases[i].weaponType;
+        weapons[i].next = (i + 1 < visibleCount)
+            ? chest_visible_weapon_thing(i + 1)
+            : THING_ENDOFLIST;
+    }
+    container.slot = chest_visible_weapon_thing(0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    snprintf(msg, sizeof(msg),
+             "GRAPHICS.DAT asset loader is available for %s visible chest-slot pixel gate",
+             kChestVisibleWeaponIconCases[targetOrdinal].ordinalName);
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()), msg);
+    state.assetsAvailable = 1;
+    snprintf(msg, sizeof(msg),
+             "action-hand chest opens before %s visible slot pixel gate",
+             kChestVisibleWeaponIconCases[targetOrdinal].ordinalName);
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1, msg);
+
+    for (i = 0; i < visibleCount; ++i) {
+        icons[i] = M11_GameView_GetObjectIconIndexForThing(&state,
+                                                           chest_visible_weapon_thing(i));
+        snprintf(msg, sizeof(msg),
+                 "%s linked object resolves via DUNGEON.C F0141 lines 1145-1154 "
+                 "and G0237 line %d to C%03d",
+                 kChestVisibleWeaponIconCases[i].ordinalName,
+                 kChestVisibleWeaponIconCases[i].dungeonLine,
+                 kChestVisibleWeaponIconCases[i].expectedIcon);
+        ASSERT_EQ(icons[i], kChestVisibleWeaponIconCases[i].expectedIcon, msg);
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+
+    for (i = 0; i < visibleCount; ++i) {
+        int w = 0;
+        int h = 0;
+        snprintf(msg, sizeof(msg),
+                 "C%d %s visible chest slot zone exists for %s chain",
+                 537 + i,
+                 kChestVisibleWeaponIconCases[i].ordinalName,
+                 gateLabel);
+        ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(i, &slotX[i], &slotY[i], &w, &h),
+                    msg);
+        (void)w;
+        (void)h;
+    }
+
+    /* ReDMCSB CHEST.C F0333 lines 58-66 advances the visible chest
+     * slots through F0159_DUNGEON_GetNextThing, stores each thing in
+     * G0425_aT_ChestSlots, and draws C38 + slotIndex with
+     * F0033_OBJECT_GetIconIndex(currentThing). OBJECT.C F0033 lines
+     * 147-164 obtains the icon through DUNGEON.C F0141 lines 1145-1154;
+     * G0237 lines 106/112/126/131/132/133/134 give the distinct
+     * torch/dagger/morningstar/arrow/Slayer/Sling/Rock source icons. */
+    snprintf(msg, sizeof(msg),
+             "open chest %s keeps source C033 slot-box border pixels around the %s object icon",
+             gateLabel,
+             kChestVisibleWeaponIconCases[targetOrdinal].ordinalName);
+    ASSERT_TRUE(framebuffer_matches_chest_slot_box_pixels(&state,
+                                                          framebuffer,
+                                                          targetOrdinal,
+                                                          1),
+                msg);
+    for (i = 0; i < visibleCount; ++i) {
+        snprintf(msg, sizeof(msg),
+                 "open chest C%d blits the %s linked object's DUNGEON.C G0237 line %d %s icon",
+                 537 + i,
+                 kChestVisibleWeaponIconCases[i].ordinalName,
+                 kChestVisibleWeaponIconCases[i].dungeonLine,
+                 kChestVisibleWeaponIconCases[i].objectName);
+        ASSERT_TRUE(framebuffer_matches_object_icon_at(&state,
+                                                       framebuffer,
+                                                       icons[i],
+                                                       slotX[i],
+                                                       33 + slotY[i]),
+                    msg);
+    }
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
+static void test_open_chest_seventh_visible_slot_uses_seventh_object_icon(void) {
+    assert_open_chest_visible_weapon_icon_chain(6, "C543");
+}
+
 static void test_empty_hand_mouth_blits_source_food_water_panel_pixels(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -2193,6 +2334,7 @@ int main(void) {
     test_open_chest_fourth_visible_slot_uses_fourth_object_icon();
     test_open_chest_fifth_visible_slot_uses_fifth_object_icon();
     test_open_chest_sixth_visible_slot_uses_sixth_object_icon();
+    test_open_chest_seventh_visible_slot_uses_seventh_object_icon();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_close_trims_to_eight_visible_slots();
