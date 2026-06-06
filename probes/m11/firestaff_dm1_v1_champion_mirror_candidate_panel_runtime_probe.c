@@ -76,6 +76,8 @@ enum {
     PROBE_REINCARNATE_CLICK_Y = 115,
     PROBE_CANCEL_CLICK_X = 160,
     PROBE_CANCEL_CLICK_Y = 151,
+    PROBE_FRONT_PORTRAIT_CLICK_X = 112,
+    PROBE_FRONT_PORTRAIT_CLICK_Y = 82,
     /* Resurrect/Reincarnate/Cancel panel graphic index in DM1 GRAPHICS.DAT.
      * The M11_GFX_PANEL_RESURRECT_REINCARNATE enum in m11_game_view.c is
      * file-scoped; the source-locked value 40 = C040 is the
@@ -923,6 +925,63 @@ static int check_spell_rune_input_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_portrait_reselect_ignored(M11_GameViewState* game,
+                                           const M11_AssetSlot* rrPanel,
+                                           int expectedOrdinal,
+                                           const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-portrait-reselect panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-portrait-reselect champion appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("pre-portrait-reselect ordinal",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    /* ReDMCSB DUNVIEW.C:3913-3928 exposes the front D1C portrait click
+     * target, but PANEL.C:1654-1656 switches the live panel to C040 while
+     * G0299 is set.  COMMAND.C:508-511 and 1379-1449 then scan only the
+     * C160/C161/C162 panel zones, with COMMAND.C:1985-1991 calling
+     * REVIVE.C F0282 only for a matched panel command.  A click back on
+     * the underlying portrait must not append the same candidate again. */
+    inputResult = M11_GameView_HandlePointerButton(game,
+                                                   PROBE_FRONT_PORTRAIT_CLICK_X,
+                                                   PROBE_FRONT_PORTRAIT_CLICK_Y,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+    ok &= expect_int("portrait reselect ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-portrait-reselect panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-portrait-reselect inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-portrait-reselect no duplicate candidate",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-portrait-reselect ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-portrait-reselect party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-portrait-reselect front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored portrait reselect drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s portrait-reselect ignored drawn=%d/%d championCount=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -943,6 +1002,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game8;
     M12_StartupMenuState menu9;
     M11_GameViewState game9;
+    M12_StartupMenuState menu10;
+    M11_GameViewState game10;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -1174,6 +1235,26 @@ int main(int argc, char** argv) {
                                              "corridor_north_spell_rune");
     }
     M11_GameView_Shutdown(&game9);
+
+    /* Pose N: reopen once more and click the visible front portrait while
+     * C040 owns input.  This is not a panel dead zone; it proves the live
+     * candidate panel suppresses the underlying DUNVIEW portrait route and
+     * cannot append a duplicate candidate. */
+    M12_StartupMenu_InitWithDataDir(&menu10, dataDir, NULL);
+    M11_GameView_Init(&game10);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game10, &menu10)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for portrait-reselect pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game10, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_portrait_reselect")) {
+        ok = 0;
+    } else {
+        ok &= check_portrait_reselect_ignored(&game10, rrPanel, 2,
+                                              "corridor_north_portrait_reselect");
+    }
+    M11_GameView_Shutdown(&game10);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
