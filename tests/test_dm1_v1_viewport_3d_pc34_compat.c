@@ -1074,6 +1074,77 @@ static void test_wall_draw_uses_clip_gate_source_offsets(void)
     check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
 }
 
+static void test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[64 * 51];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB: DUNVIEW.C G0163 line 583 gives D3C as
+     * {74,149,25,75,64,51,18,0}; F0118_DUNGEONVIEW_DrawSquareD3C_CPSF
+     * lines 6697-6720 draws the wall branch, while F0100 lines 3048-3058
+     * forwards the frame to F0132 with C10 transparency.  COORD.C
+     * lines 2390-2409 and IMAGE3.C lines 866-889 then clip and copy the
+     * resolved source row.
+     *
+     * D3C is the ordinary far center wall, separate from the D3L2/D3R2
+     * far-side strips.  Its source row starts at blit_x=18 in a 64-wide
+     * bitmap, so only source columns 18..63 reach viewport x=74..119.
+     * This pins that small centered far-wall slice without depending on
+     * real wall-set assets.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 10, sizeof(bitmap));
+    check_nonnull("d3c_far_center_wall_pixel.frame", frame);
+    if (!frame) return;
+
+    bitmap[0 * 64 + 17] = 0x33;
+    bitmap[0 * 64 + 18] = 10;
+    bitmap[0 * 64 + 19] = 0x42;
+    bitmap[1 * 64 + 18] = 0x44;
+    bitmap[0 * 64 + 63] = 0x7e;
+    bitmap[50 * 64 + 63] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d3c_far_center_wall_pixel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d3c_far_center_wall_pixel.src_x", gate.src_x, 18);
+    check_int("d3c_far_center_wall_pixel.src_y", gate.src_y, 0);
+    check_int("d3c_far_center_wall_pixel.dst_x", gate.dst_x, 74);
+    check_int("d3c_far_center_wall_pixel.dst_y", gate.dst_y, 25);
+    check_int("d3c_far_center_wall_pixel.visible_width", gate.width, 46);
+    check_int("d3c_far_center_wall_pixel.visible_height", gate.height, 51);
+    check_int("d3c_far_center_wall_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    check_int("d3c_far_center_wall_pixel.transparent_first_visible_skip",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 74], 0xee);
+    check_int("d3c_far_center_wall_pixel.next_source_pixel_copied",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 75], 0x42);
+    check_int("d3c_far_center_wall_pixel.left_edge_next_row_copied",
+              viewport[26 * DM1_VIEWPORT_WIDTH + 74], 0x44);
+    check_int("d3c_far_center_wall_pixel.column_before_dst_x_untouched",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 73], 0xee);
+    check_int("d3c_far_center_wall_pixel.pre_blit_source_pixel_not_copied",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 74] != 0x33, 1);
+    check_int("d3c_far_center_wall_pixel.last_visible_pixel_copied",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 119], 0x7e);
+    check_int("d3c_far_center_wall_pixel.clipped_viewport_column_untouched",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 120], 0xee);
+    check_int("d3c_far_center_wall_pixel.bottom_row_marker",
+              viewport[75 * DM1_VIEWPORT_WIDTH + 119], 0x55);
+    check_int("d3c_far_center_wall_pixel.row_before_frame_untouched",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 75], 0xee);
+    check_int("d3c_far_center_wall_pixel.row_after_frame_untouched",
+              viewport[76 * DM1_VIEWPORT_WIDTH + 74], 0xee);
+}
+
 static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -2147,6 +2218,7 @@ int main(void)
     test_wall_item_occlusion_alcove_exception();
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
+    test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate();
