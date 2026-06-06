@@ -328,7 +328,7 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
     }
 
     if (leaderHandObject.itemType != 0 &&
-        ((leaderHandObject.allowedSlots & slotMask) == 0)) {
+        !m11_inventory_can_equip(&leaderHandObject, pc34Slot)) {
         return 0;
     }
 
@@ -490,22 +490,20 @@ int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* dm1_v1_inventory_pc34_compat.c:m11_inventory_can_equip:1
- * Returns 1 if item->allowedSlots overlaps the slot mask for pc34Slot,
- * or 0 if the item has no allowed-slots restriction (allowedSlots==0).
+ * Returns 1 if item->allowedSlots overlaps the slot mask for pc34Slot.
  * dm1_v1_inventory_pc34_compat.c:m11_inventory_pc34_slot_mask:217
  * dm1_v1_inventory_pc34_compat.c:m11_inventory_click_pc34_source_slot:327 */
 int m11_inventory_can_equip(const M11_Item* item, int pc34Slot) {
     if (!item || pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
         return 0;
     }
-    /* An item with no allowed-slots restriction goes anywhere. */
-    if (item->allowedSlots == 0) {
-        return 1;
-    }
     const int slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
     if (slotMask == 0) {
         return 0;
     }
+    /* ReDMCSB CHAMPION.C F0302 lines 694-699 rejects the leader-hand object
+     * when AllowedSlots & DATA.C G0038_ai_Graphic562_SlotMasks[slot] is zero;
+     * there is no special unrestricted case for an AllowedSlots value of 0. */
     return (item->allowedSlots & slotMask) != 0 ? 1 : 0;
 }
 
