@@ -351,6 +351,36 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
     return 1;
 }
 
+const char *dm1_inventory_chest_stale_click_source_evidence_pc34(void)
+{
+    return
+        "CHEST.C:31-43 F0333 ignores same chest, closes a different open chest, then writes G0426_T_OpenChest\n"
+        "CHEST.C:113-121 F0334 rejects close when no G0426 chest is open, clears G0426_T_OpenChest, and erases G0425 slots\n"
+        "CHAMPION.C:689-690 F0302 routes C30+ slot boxes through the current G0425_aT_ChestSlots entry only\n"
+        "CHAMPION.C:694-710 F0302 rejects empty hand/empty slot, then performs the leader-hand/chest-slot swap";
+}
+
+int m11_inventory_click_open_chest_slot_for_thing(M11_InventoryState* s, int champ,
+                                                  int expectedOpenChestThing,
+                                                  int chestSlotIndex) {
+    if (!s || champ < 0 || champ >= s->championCount ||
+        expectedOpenChestThing == 0 || chestSlotIndex < 0 ||
+        chestSlotIndex >= DM1_PC34_CHEST_SLOT_COUNT) {
+        return 0;
+    }
+
+    /* ReDMCSB CHEST.C F0333 lines 31-43 and F0334 lines 113-121 make
+     * G0426_T_OpenChest the authority for the currently routed chest panel.
+     * Reject stale C537..C544 clicks from a dismissed or replaced chest before
+     * they can operate on the current G0425_aT_ChestSlots view. */
+    if (s->champions[champ].openChestThing != expectedOpenChestThing) {
+        return 0;
+    }
+
+    return m11_inventory_click_pc34_source_slot(
+        s, champ, DM1_PC34_SLOT_CHEST_1 + chestSlotIndex);
+}
+
 int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
                                                int partyChampionCount,
                                                int inventoryChampionOrdinal,
