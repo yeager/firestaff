@@ -97,6 +97,7 @@ enum {
     CSB_V1_WALL_ORNAMENT_ORDINAL_TO_INDEX_DELTA = -1,
     CSB_V1_WALL_ORNAMENT_D3L2_BITMAP_INCREMENT = 0,
     CSB_V1_WALL_ORNAMENT_D3R2_BITMAP_INCREMENT = 0,
+    CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE = -1, /* CM1_DERIVED_BITMAP_NONE */
     CSB_V1_FLOOR_ORNAMENT_ZONE_BASE = 1500, /* C1500_ZONE_FLOOR_ORNAMENT */
     CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE = 11,
     CSB_V1_FLOOR_ORNAMENT_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
@@ -231,6 +232,44 @@ static const CSB_V1_ViewportWallOrnamentBlitSpec s_wall_ornament_blits[] = {
         "M553_LEFT_WALL_ORNAMENT_ORDINAL",
         "F0677_DrawD3R2",
         "DUNVIEW.C:6330 F0107(M553, C01_VIEW_WALL_D3R2_LEFT); F0107:3571 skips ordinal 0; 3575 ordinal--; 3576 reads native bitmap; 3587 zone C1004 + CoordinateSet*15 + ViewWall; 3817-3819 flips C01_VIEW_WALL_D3R2_LEFT; 3824-3829 F0675 C30/C14 with G0198 D3 palette; 3921-3923 F0791 C10 blit. DEFS.H:2697,4222; DUNVIEW.C:805-819 G0190 MEDIA720; COORD.C:921-1025 C1000..C1107 layout records."
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0107 lines 3589, 3608-3753, 3817-3829,
+ * and 3921-3928; DUNGEON.C F0149 lines 1330-1347.  The CSB/I34
+ * D3L2/D3R2 wall-ornament views still evaluate whether the ornament is an
+ * alcove, but because view-wall indices 0/1 are below M585_VIEW_WALL_D1L
+ * and are not M587_VIEW_WALL_D1C_FRONT, they stay on the D3 scaled-bitmap
+ * path and do not update the D1-front interaction state or champion
+ * portrait overlay. */
+static const CSB_V1_ViewportWallOrnamentSideEffectSpec s_wall_ornament_side_effects[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_WALL_D3L2_RIGHT,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6263 calls F0107(C00_VIEW_WALL_D3L2_RIGHT). F0107:3589 evaluates F0149_DUNGEON_IsWallOrnamentAnAlcove; 3608 gates D1-only facing/clickbox state; 3726-3744 updates facing alcove/Vi altar/fountain only inside that D1 branch; 3817-3829 routes C00/C01 through I34 D3 scaled bitmap with CM1_DERIVED_BITMAP_NONE; 3923-3928 champion portrait overlay is only M587_VIEW_WALL_D1C_FRONT. DUNGEON.C:1330-1347 F0149 alcove predicate. DEFS.H:2696/2708-2710."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_WALL_D3R2_LEFT,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6330 calls F0107(C01_VIEW_WALL_D3R2_LEFT). F0107:3589 evaluates F0149_DUNGEON_IsWallOrnamentAnAlcove; 3608 gates D1-only facing/clickbox state; 3726-3744 updates facing alcove/Vi altar/fountain only inside that D1 branch; 3817-3829 routes C00/C01 through I34 D3 scaled bitmap with CM1_DERIVED_BITMAP_NONE; 3923-3928 champion portrait overlay is only M587_VIEW_WALL_D1C_FRONT. DUNGEON.C:1330-1347 F0149 alcove predicate. DEFS.H:2697/2708-2710."
     },
 };
 
@@ -828,6 +867,27 @@ int csb_v1_viewport_wall_ornament_blit_pixels(const CSB_V1_ViewportWallOrnamentB
     return copied;
 }
 
+size_t csb_v1_viewport_wall_ornament_side_effect_spec_count(void)
+{
+    return sizeof(s_wall_ornament_side_effects) / sizeof(s_wall_ornament_side_effects[0]);
+}
+
+const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_wall_ornament_side_effect_spec_count()) return NULL;
+    return &s_wall_ornament_side_effects[index];
+}
+
+const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_wall_ornament_side_effect_spec_count(); ++i) {
+        if (s_wall_ornament_side_effects[i].view_square == view_square) {
+            return &s_wall_ornament_side_effects[i];
+        }
+    }
+    return NULL;
+}
+
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void)
 {
     return sizeof(s_floor_ornament_routes) / sizeof(s_floor_ornament_routes[0]);
@@ -1189,6 +1249,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  5920-6219 F0115 maps PC34/I34 explosions through G2034/G2035, C3000/C3007/C3014/C3031 zones, F0791 C10 blits, and fluxcage field deferral\n"
         "  6288-6290 and 6355-6357 F0676/F0677 draw teleporter fields through G2035, F0113, and C702/C703 after the F0108/F0115 path\n"
         "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
+        "  3589, 3608-3753, 3817-3829, 3923-3928 F0107 evaluates F0149 alcove status for C00/C01 but skips D1-only facing state, clickbox copy, and champion portrait overlay while using the I34 D3 CM1_DERIVED_BITMAP_NONE scaled path\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  4301-4302 F0111 applies C15_DOOR_ORNAMENT_DESTROYED_MASK for C5_DOOR_STATE_DESTROYED\n"
@@ -1209,6 +1270,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  G2107 WallSet bitmap indices (lines ~183)\n"
         "  G3048 WallSetFlipped (lines 277-295)\n"
         "ReDMCSB DEFS.H:2696-2697 C00_VIEW_WALL_D3L2_RIGHT / C01_VIEW_WALL_D3R2_LEFT\n"
+        "ReDMCSB DUNGEON.C:1330-1347 F0149_DUNGEON_IsWallOrnamentAnAlcove scans C003_ALCOVE_ORNAMENT_COUNT\n"
         "CSBWin/Viewport.cpp: 7290 lines viewport rendering\n"
         "CSBWin/Viewport.cpp:5317-5325 relposSid/relposFwd; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6919-7140 sixteen background room slots before cell draws\n"
         "CSBWin/Graphics.cpp: 3186 lines asset cache\n"

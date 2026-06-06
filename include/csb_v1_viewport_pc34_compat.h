@@ -83,6 +83,21 @@ typedef struct {
 
 typedef struct {
     int view_square;
+    int view_wall_index;
+    int evaluates_alcove_predicate;
+    int updates_facing_alcove_state;
+    int updates_facing_vi_altar_state;
+    int updates_facing_fountain_state;
+    int updates_wall_clickbox;
+    int draws_champion_portrait_overlay;
+    int uses_d3_i34_scaled_bitmap_path;
+    int derived_bitmap_cache_slot;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportWallOrnamentSideEffectSpec;
+
+typedef struct {
+    int view_square;
     int floor_view_index;
     int draws_corridor_floor_ornament;
     int draws_pit_floor_ornament;
@@ -291,6 +306,10 @@ int csb_v1_viewport_wall_ornament_blit_pixels(const CSB_V1_ViewportWallOrnamentB
                                               int destination_stride,
                                               int width,
                                               int height);
+
+size_t csb_v1_viewport_wall_ornament_side_effect_spec_count(void);
+const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec(size_t index);
+const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square(int view_square);
 
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void);
 const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index);

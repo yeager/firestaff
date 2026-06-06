@@ -447,6 +447,88 @@ static void test_csb_f0107_wall_ornament_blit_contracts(void)
                csb_v1_viewport_get_wall_ornament_blit_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0107_wall_ornament_d3_side_effect_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int view_wall_index;
+        const char *function_name;
+        const char *route_anchor;
+        const char *defs_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 0, "F0676_DrawD3L2", "6263 calls F0107", "DEFS.H:2696" },
+        { DM1_VIEW_SQUARE_D3R2, 1, "F0677_DrawD3R2", "6330 calls F0107", "DEFS.H:2697" },
+    };
+
+    check_int("csb.wall_ornament_side_effect.count",
+              (int)csb_v1_viewport_wall_ornament_side_effect_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportWallOrnamentSideEffectSpec *spec =
+            csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportWallOrnamentBlitSpec *blit =
+            csb_v1_viewport_get_wall_ornament_blit_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.blit_present", i);
+        check_true(id, blit != NULL);
+        if (!spec || !blit) continue;
+
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.view_wall", i);
+        check_int(id, spec->view_wall_index, expected[i].view_wall_index);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.blit_view_wall_match", i);
+        check_int(id, spec->view_wall_index, blit->view_wall_index);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.alcove_predicate", i);
+        check_int(id, spec->evaluates_alcove_predicate, 1);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_facing_alcove", i);
+        check_int(id, spec->updates_facing_alcove_state, 0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_vi_altar", i);
+        check_int(id, spec->updates_facing_vi_altar_state, 0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_fountain", i);
+        check_int(id, spec->updates_facing_fountain_state, 0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_clickbox", i);
+        check_int(id, spec->updates_wall_clickbox, 0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_portrait", i);
+        check_int(id, spec->draws_champion_portrait_overlay, 0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.i34_d3_path", i);
+        check_int(id, spec->uses_d3_i34_scaled_bitmap_path, 1);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.no_cache_slot", i);
+        check_int(id, spec->derived_bitmap_cache_slot, -1);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+
+        /* ReDMCSB: DUNVIEW.C F0107 lines 3589 and 3608-3753
+         * compute alcove status but keep facing/clickbox state inside the
+         * D1 branch; 3817-3829 is the CSB/I34 D3 scaled-bitmap path, and
+         * 3923-3928 is only the M587 D1C champion portrait overlay. */
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.route_source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].route_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.alcove_source", i);
+        check_true(id, strstr(spec->source_lines, "3589 evaluates F0149") != NULL &&
+                       strstr(spec->source_lines, "DUNGEON.C:1330-1347") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.d1_state_source", i);
+        check_true(id, strstr(spec->source_lines, "3608 gates D1-only") != NULL &&
+                       strstr(spec->source_lines, "3726-3744") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.scaled_path_source", i);
+        check_true(id, strstr(spec->source_lines, "3817-3829") != NULL &&
+                       strstr(spec->source_lines, "CM1_DERIVED_BITMAP_NONE") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.portrait_source", i);
+        check_true(id, strstr(spec->source_lines, "3923-3928") != NULL &&
+                       strstr(spec->source_lines, "M587_VIEW_WALL_D1C_FRONT") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_side_effect.%zu.defs_source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].defs_anchor) != NULL);
+    }
+
+    check_true("csb.wall_ornament_side_effect.out_of_range",
+               csb_v1_viewport_get_wall_ornament_side_effect_spec(2) == NULL);
+    check_true("csb.wall_ornament_side_effect.unknown_square",
+               csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square(999) == NULL);
+}
+
 static void test_csb_floor_ornament_route_contracts(void)
 {
     static const struct {
@@ -1489,6 +1571,10 @@ static void test_source_evidence(void)
                e && strstr(e, "draw teleporter fields through G2035") != NULL);
     check_true("evidence.f0107_wall_ornament_blit", e && strstr(e, "F0107 maps CSB/I34") != NULL);
     check_true("evidence.c1004_wall_ornament", e && strstr(e, "C1004_ZONE_WALL_ORNAMENT") != NULL);
+    check_true("evidence.f0107_side_effects",
+               e && strstr(e, "skips D1-only facing state") != NULL);
+    check_true("evidence.f0149_alcove",
+               e && strstr(e, "F0149_DUNGEON_IsWallOrnamentAnAlcove") != NULL);
     check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
     check_true("evidence.f0108_c1500", e && strstr(e, "C1500_ZONE_FLOOR_ORNAMENT") != NULL);
     check_true("evidence.f0108_g0195", e && strstr(e, "G0195 CSB/I34") != NULL);
@@ -1517,6 +1603,7 @@ int main(void)
     test_csb_frame_and_zone_contracts();
     test_csb_wall_ornament_route_contracts();
     test_csb_f0107_wall_ornament_blit_contracts();
+    test_csb_f0107_wall_ornament_d3_side_effect_contracts();
     test_csb_floor_ornament_route_contracts();
     test_csb_f0108_floor_ornament_bitmap_blit_contracts();
     test_csb_thing_pass_order_contracts();
