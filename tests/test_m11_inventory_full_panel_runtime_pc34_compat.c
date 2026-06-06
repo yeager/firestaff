@@ -681,6 +681,51 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
               "closing the panel clears open chest state");
 }
 
+static void test_open_chest_empty_slot_empty_hand_noops(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    /* ReDMCSB CHEST.C F0333 lines 58-75 fills trailing visible chest slots
+     * with C0xFFFF_THING_NONE, then CHAMPION.C F0302 lines 688-695 returns
+     * before screen update when both the selected slot and leader hand are
+     * empty. */
+    seed_inventory_view(&state, &things, &weapon);
+    memset(containers, 0, sizeof(containers));
+    things.containers = containers;
+    things.containerCount = 1;
+    weapon.type = 8;
+    weapon.next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before empty-slot no-op");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &sx, &sy, &sw, &sh),
+                "C538 empty chest slot zone exists");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "leader hand starts empty for empty-slot no-op");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_IGNORED,
+              "clicking empty C538 with empty leader hand is source no-op");
+    ASSERT_EQ(state.lastWorldHash, 0xBADF00Du,
+              "empty-slot no-op does not refresh deterministic world hash");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "empty-slot no-op keeps leader hand empty");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "empty-slot no-op keeps the chest panel open");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "empty-slot no-op preserves the visible chest list head");
+    ASSERT_EQ(weapon.next, THING_ENDOFLIST,
+              "empty-slot no-op preserves the visible chest list tail");
+}
+
 static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -2410,6 +2455,7 @@ int main(void) {
     test_extended_backpack_runtime_clicks();
     test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
+    test_open_chest_empty_slot_empty_hand_noops();
     test_open_chest_occupied_slot_swap_preserves_visible_order();
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_slot_box_and_icon_source_pixels();
