@@ -24,8 +24,9 @@
  *   path through REVIVE.C:785-837; COMMAND.C:228-233, 508-511,
  *   1379-1431, and 1985-1991 define the panel mouse boxes, ignore
  *   non-matching panel clicks, and dispatch only C160/C161/C162 to
- *   REVIVE.C F0282; COMMAND.C:2336-2338 keeps C145 rest disabled while
- *   G0299 marks an open candidate panel;
+ *   REVIVE.C F0282; COMMAND.C:2159-2181 blocks status-box/inventory
+ *   toggles while G0299 marks an open candidate panel; COMMAND.C:2336-2338
+ *   keeps C145 rest disabled while G0299 is live;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
  *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
@@ -809,6 +810,59 @@ static int check_rest_input_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_inventory_toggle_ignored(M11_GameViewState* game,
+                                          const M11_AssetSlot* rrPanel,
+                                          int expectedOrdinal,
+                                          const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-inventory-toggle panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-inventory-toggle inventory on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("pre-inventory-toggle champion appended",
+                     game->world.party.championCount, 1);
+    /* ReDMCSB COMMAND.C:2159-2181 checks !G0299 before champion
+     * status-box clicks or C007..C011 inventory toggles can run.  A
+     * Firestaff inventory-toggle input while the C040 panel is live must
+     * therefore be consumed by the candidate-panel guard without closing
+     * inventory, changing the appended candidate, or disabling the mirror. */
+    inputResult = M11_GameView_HandleInput(game, M12_MENU_INPUT_INVENTORY_TOGGLE);
+    ok &= expect_int("inventory toggle ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-inventory-toggle panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-inventory-toggle inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-inventory-toggle champion still appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-inventory-toggle ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-inventory-toggle party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-inventory-toggle front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored inventory toggle drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s inventory-toggle ignored drawn=%d/%d championCount=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -825,6 +879,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game6;
     M12_StartupMenuState menu7;
     M11_GameViewState game7;
+    M12_StartupMenuState menu8;
+    M11_GameViewState game8;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -1017,6 +1073,25 @@ int main(int argc, char** argv) {
                                        "corridor_north_rest_input");
     }
     M11_GameView_Shutdown(&game7);
+
+    /* Pose L: reopen once more and try the inventory toggle while C040 is
+     * live.  COMMAND.C:2159-2181 gates champion status-box and inventory
+     * toggles on !G0299, so the candidate panel remains the owner. */
+    M12_StartupMenu_InitWithDataDir(&menu8, dataDir, NULL);
+    M11_GameView_Init(&game8);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game8, &menu8)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for inventory-toggle pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game8, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_inventory_toggle")) {
+        ok = 0;
+    } else {
+        ok &= check_inventory_toggle_ignored(&game8, rrPanel, 2,
+                                             "corridor_north_inventory_toggle");
+    }
+    M11_GameView_Shutdown(&game8);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
