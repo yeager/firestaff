@@ -17283,7 +17283,11 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
         case 20: return 0x0040u;
         default:
             if (sourceSlotBoxIndex >= 21 && sourceSlotBoxIndex <= 37) {
-                return 0x0400u;
+                /* ReDMCSB DATA.C lines 1063-1079: all C21..C37 backpack
+                 * slot boxes use MASK0xFFFF_ANY_SLOT, unlike C30..C37
+                 * chest slots at lines 1080-1087 which require container
+                 * compatibility. */
+                return 0xFFFFu;
             }
             if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
                 return 0x0400u;
