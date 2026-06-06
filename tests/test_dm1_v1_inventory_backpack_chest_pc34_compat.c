@@ -35,6 +35,8 @@ int main(void) {
     M11_Item closed[8];
     M11_Item sparse[8];
     M11_Item limited[2];
+    M11_Item replacement[8];
+    M11_Item replaced[8];
     M11_Item statChest[8];
     M11_Item zeroMaskItem;
     M11_InventoryState statState;
@@ -190,6 +192,29 @@ int main(void) {
     ok &= expect_int("zero-output close counts without buffer",
                      m11_inventory_close_chest(&state, 0, NULL, 0), 4);
     ok &= expect_int("zero-output close clears open chest", m11_inventory_get_open_chest_thing(&state, 0), 0);
+
+    memset(replacement, 0, sizeof(replacement));
+    memset(replaced, 0, sizeof(replaced));
+    replacement[0] = make_item(501, 6, DM1_PC34_ALLOWED_CONTAINER);
+    ok &= expect_int("open old chest before replacement",
+                     m11_inventory_open_chest(&state, 0, 0x4567, sparse, 8), 1);
+    ok &= expect_int("edit old chest before replacement",
+                     m11_inventory_set_item_in_chest_slot(&state, 0, 1, 405, 7, 0,
+                                                          DM1_PC34_ALLOWED_CONTAINER), 1);
+    /* ReDMCSB CHEST.C F0333 lines 34-39 calls F0334 when a different chest is
+     * already open; F0334 lines 112-133 compacts non-empty G0425 slots before
+     * F0333 lines 53-76 copies the requested chest's first eight links. */
+    ok &= expect_int("replacement closes previous chest first",
+                     m11_inventory_open_chest_replacing_current(&state, 0, 0x5678,
+                                                                replacement, 8,
+                                                                replaced, 8), 5);
+    ok &= expect_item_type("replacement compact preserves old slot 0", &replaced[0], 401);
+    ok &= expect_item_type("replacement compact includes edited old slot", &replaced[1], 405);
+    ok &= expect_item_type("replacement compact keeps later old order", &replaced[4], 404);
+    ok &= expect_int("replacement opens requested chest", m11_inventory_get_open_chest_thing(&state, 0), 0x5678);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item);
+    ok &= expect_item_type("replacement loads new first slot", &item, 501);
+    ok &= expect_int("replacement load is new chest only", m11_inventory_get_load(&state, 0), 6);
 
     printf("inventoryBackpackChestInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;
