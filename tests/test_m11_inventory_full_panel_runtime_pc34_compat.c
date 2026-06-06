@@ -31,7 +31,7 @@
  *     the open path is read-only on the source linked list, so the 9th
  *     and later tail items stay reachable through the 8th visible item's
  *     next pointer until either close or a last-slot pickup rewrites it
- *   CHEST.C F0333 lines 64-66 and DUNGEON.C lines 79-112:
+ *   CHEST.C F0333 lines 64-66 and DUNGEON.C lines 79-126:
  *     each visible chest slot advances to the next linked object and
  *     resolves that object's source icon from G0237_as_Graphic559_ObjectInfo
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
@@ -859,6 +859,102 @@ static void test_open_chest_second_visible_slot_uses_second_object_icon(void) {
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
+static void test_open_chest_third_visible_slot_uses_third_object_icon(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[3];
+    struct DungeonContainer_Compat container;
+    unsigned char framebuffer[320 * 200];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short torchThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    unsigned short morningstarThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    int c537x = 0, c537y = 0, c537w = 0, c537h = 0;
+    int c538x = 0, c538y = 0, c538w = 0, c538h = 0;
+    int c539x = 0, c539y = 0, c539w = 0, c539h = 0;
+    int daggerIcon;
+    int torchIcon;
+    int morningstarIcon;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(&container, 0, sizeof(container));
+    things.weapons = weapons;
+    things.weaponCount = 3;
+    things.containers = &container;
+    things.containerCount = 1;
+    weapons[0].type = 8;  /* DUNGEON.C line 112: DAGGER, source icon C032. */
+    weapons[0].next = torchThing;
+    weapons[1].type = 2;  /* DUNGEON.C line 106: TORCH, source icon C004. */
+    weapons[1].next = morningstarThing;
+    weapons[2].type = 22; /* DUNGEON.C line 126: MORNINGSTAR, source icon C046. */
+    weapons[2].next = THING_ENDOFLIST;
+    container.slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for third visible chest-slot pixel gate");
+    state.assetsAvailable = 1;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before third visible slot pixel gate");
+    daggerIcon = M11_GameView_GetObjectIconIndexForThing(&state, daggerThing);
+    torchIcon = M11_GameView_GetObjectIconIndexForThing(&state, torchThing);
+    morningstarIcon = M11_GameView_GetObjectIconIndexForThing(&state, morningstarThing);
+    ASSERT_EQ(daggerIcon, 32,
+              "first linked object resolves via DUNGEON.C F0141 lines 1153-1154 and G0237 line 112 to C032");
+    ASSERT_EQ(torchIcon, 4,
+              "second linked object resolves via DUNGEON.C F0141 lines 1153-1154 and G0237 line 106 to C004");
+    ASSERT_EQ(morningstarIcon, 46,
+              "third linked object resolves via DUNGEON.C F0141 lines 1153-1154 and G0237 line 126 to C046");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &c537x, &c537y, &c537w, &c537h),
+                "C537 first visible chest slot zone exists");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &c538x, &c538y, &c538w, &c538h),
+                "C538 second visible chest slot zone exists");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(2, &c539x, &c539y, &c539w, &c539h),
+                "C539 third visible chest slot zone exists");
+    (void)c537w;
+    (void)c537h;
+    (void)c538w;
+    (void)c538h;
+    (void)c539w;
+    (void)c539h;
+    /* ReDMCSB CHEST.C F0333 lines 58-66 walks Slot -> Next -> Next
+     * through F0159_DUNGEON_GetNextThing, stores those entries in
+     * G0425_aT_ChestSlots, and draws C38 + slotIndex with
+     * F0033_OBJECT_GetIconIndex(currentThing).  DUNGEON.C F0141
+     * lines 1153-1154 maps each weapon subtype into G0237, whose
+     * lines 106/112/126 give the three distinct source icons. */
+    ASSERT_TRUE(framebuffer_matches_chest_slot_box_pixels(&state,
+                                                          framebuffer,
+                                                          2,
+                                                          1),
+                "open chest C539 keeps source C033 slot-box border pixels around the third object icon");
+    ASSERT_TRUE(framebuffer_matches_object_icon_at(&state,
+                                                   framebuffer,
+                                                   daggerIcon,
+                                                   c537x,
+                                                   33 + c537y),
+                "open chest C537 still blits the first linked object's DUNGEON.C line 112 dagger icon");
+    ASSERT_TRUE(framebuffer_matches_object_icon_at(&state,
+                                                   framebuffer,
+                                                   torchIcon,
+                                                   c538x,
+                                                   33 + c538y),
+                "open chest C538 still blits the second linked object's DUNGEON.C line 106 torch icon");
+    ASSERT_TRUE(framebuffer_matches_object_icon_at(&state,
+                                                   framebuffer,
+                                                   morningstarIcon,
+                                                   c539x,
+                                                   33 + c539y),
+                "open chest C539 blits the third linked object's DUNGEON.C line 126 morningstar icon");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
 static void test_empty_hand_mouth_blits_source_food_water_panel_pixels(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -1587,6 +1683,7 @@ int main(void) {
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_slot_box_and_icon_source_pixels();
     test_open_chest_second_visible_slot_uses_second_object_icon();
+    test_open_chest_third_visible_slot_uses_third_object_icon();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_close_trims_to_eight_visible_slots();
