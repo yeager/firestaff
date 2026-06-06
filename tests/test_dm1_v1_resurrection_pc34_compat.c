@@ -288,6 +288,42 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
+static void test_candidate_append_clear_cycles(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat clear;
+    int cycle;
+
+    printf("[candidate_append_clear_cycles]\n");
+
+    /* ReDMCSB REVIVE.C:272-276 / F0280 sets G0299 to
+     * previousPartyChampionCount + 1 and increments G0305.  REVIVE.C:744-783
+     * / F0282 cancel clears G0299 and decrements G0305 without taking the
+     * REVIVE.C:785-799 mirror-sensor disable path.  Repeating the route
+     * must therefore reuse the same appended party slot until a non-cancel
+     * command finalizes the candidate. */
+    in = base_portrait_click_input();
+    for (cycle = 0; cycle < 3; ++cycle) {
+        in.partyChampionCount = 0;
+        add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+        CHECK(add.triggersCandidateAdd == 1, "cycle F0280 route remains armed");
+        CHECK(add.candidateChampionIndex == 0, "cycle candidate index resets to slot 0");
+        CHECK(add.candidateChampionOrdinal == 1, "cycle G0299 ordinal resets to 1");
+        CHECK(add.nextPartyChampionCount == 1, "cycle G0305 increments to 1");
+
+        st.partyChampionCount = add.nextPartyChampionCount;
+        st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+        clear = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+            st, DM1_COMMAND_CANCEL);
+        CHECK(clear.valid == 1, "cycle cancel is valid while G0299 is live");
+        CHECK(clear.cancelled == 1, "cycle cancel flag set");
+        CHECK(clear.nextPartyChampionCount == 0, "cycle cancel decrements G0305");
+        CHECK(clear.nextCandidateChampionOrdinal == 0, "cycle cancel clears G0299");
+        CHECK(clear.disablesMirrorSensor == 0, "cycle cancel does not disable mirror sensor");
+    }
+}
+
 static void test_mirror_sensor_disable_order(void) {
     MirrorThing_Compat things[3];
     MirrorSensorDisableResult_Compat d;
@@ -351,6 +387,7 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
+    test_candidate_append_clear_cycles();
     test_mirror_sensor_disable_order();
     test_command_validation();
     test_invariant();
