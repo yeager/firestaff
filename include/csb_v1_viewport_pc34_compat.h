@@ -306,6 +306,12 @@ int csb_v1_viewport_explosion_side_zone(const CSB_V1_ViewportExplosionBlitSpec *
 size_t csb_v1_viewport_door_panel_blit_spec_count(void);
 const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index);
 const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec_for_square(int view_square);
+int csb_v1_viewport_door_panel_blit_pixels(const CSB_V1_ViewportDoorPanelBlitSpec *spec,
+                                           int door_state,
+                                           const uint8_t *source,
+                                           int source_stride,
+                                           uint8_t *destination,
+                                           int destination_stride);
 
 const char *csb_v1_viewport_source_evidence(void);
 

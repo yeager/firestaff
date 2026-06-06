@@ -512,7 +512,7 @@ static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
         3,
         CSB_V1_DOOR_TRANSPARENT_COLOR,
         "F0676_DrawD3L2",
-        "DUNVIEW.C:6271 F0115 rear pass; 6272 F0111(... C3700_ZONE_DOOR_D3L2); 6273-6286 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4331 F0791 blits with C10. DEFS.H:4250; COORD.C:1548-1565 records 120/126/129 and 788-797 zone 3700..3709."
+        "DUNVIEW.C:6271 F0115 rear pass; 6272 F0111(... C3700_ZONE_DOOR_D3L2); 6273-6286 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:4250; COORD.C:1548-1565 records 120/126/129 and 788-797 zone 3700..3709."
     },
     {
         (int)DM1_VIEW_SQUARE_D3R2,
@@ -535,7 +535,7 @@ static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
         3,
         CSB_V1_DOOR_TRANSPARENT_COLOR,
         "F0677_DrawD3R2",
-        "DUNVIEW.C:6338 F0115 rear pass; 6339 F0111(... C3710_ZONE_DOOR_D3R2); 6340-6353 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4331 F0791 blits with C10. DEFS.H:4251; COORD.C:1548-1565 records 120/126/130 and 798-807 zone 3710..3719."
+        "DUNVIEW.C:6338 F0115 rear pass; 6339 F0111(... C3710_ZONE_DOOR_D3R2); 6340-6353 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:4251; COORD.C:1548-1565 records 120/126/130 and 798-807 zone 3710..3719."
     },
 };
 
@@ -973,6 +973,42 @@ const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec
         }
     }
     return NULL;
+}
+
+int csb_v1_viewport_door_panel_blit_pixels(const CSB_V1_ViewportDoorPanelBlitSpec *spec,
+                                           int door_state,
+                                           const uint8_t *source,
+                                           int source_stride,
+                                           uint8_t *destination,
+                                           int destination_stride)
+{
+    int copied = 0;
+    if (!spec || !source || !destination ||
+        source_stride < spec->native_bitmap_width ||
+        destination_stride < spec->clipped_width ||
+        spec->clipped_width <= 0 || spec->clipped_height <= 0 ||
+        spec->clipped_width > spec->native_bitmap_width ||
+        spec->clipped_height > spec->native_bitmap_height) {
+        return -1;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0111 lines 4248 and 4334 skip open doors, then
+     * blit G0074 through F0791 with C10 transparency; COORD.C 1556-1560
+     * clips the native D3 48x41 door bitmap to the 48x40 panel record. */
+    if (spec->skips_open_state && door_state == 0) {
+        return 0;
+    }
+
+    for (int y = 0; y < spec->clipped_height; ++y) {
+        for (int x = 0; x < spec->clipped_width; ++x) {
+            uint8_t pixel = source[(y * source_stride) + x];
+            if (pixel == (uint8_t)spec->transparent_color) continue;
+            destination[(y * destination_stride) + x] = pixel;
+            ++copied;
+        }
+    }
+
+    return copied;
 }
 
 const char *csb_v1_viewport_source_evidence(void) {
