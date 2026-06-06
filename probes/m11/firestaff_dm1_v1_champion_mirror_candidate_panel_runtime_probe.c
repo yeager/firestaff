@@ -24,7 +24,8 @@
  *   path through REVIVE.C:785-837; COMMAND.C:228-233, 508-511,
  *   1379-1431, and 1985-1991 define the panel mouse boxes, ignore
  *   non-matching panel clicks, and dispatch only C160/C161/C162 to
- *   REVIVE.C F0282;
+ *   REVIVE.C F0282; COMMAND.C:2336-2338 keeps C145 rest disabled while
+ *   G0299 marks an open candidate panel;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
  *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
@@ -757,6 +758,57 @@ static int check_pointer_deadzone_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_rest_input_ignored(M11_GameViewState* game,
+                                    const M11_AssetSlot* rrPanel,
+                                    int expectedOrdinal,
+                                    const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-rest-input panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-rest-input resting off", game->resting, 0);
+    ok &= expect_int("pre-rest-input champion appended",
+                     game->world.party.championCount, 1);
+    /* ReDMCSB COMMAND.C:2336-2338 / CHANGE2_15_FIX gates C145 rest with
+     * !G0299 while a candidate champion inventory is open.  Rest must not
+     * start and must not run any confirm/cancel cleanup on the live panel. */
+    inputResult = M11_GameView_HandleInput(game, M12_MENU_INPUT_REST_TOGGLE);
+    ok &= expect_int("rest input ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-rest-input panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-rest-input inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-rest-input resting still off", game->resting, 0);
+    ok &= expect_int("post-rest-input champion still appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-rest-input ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-rest-input party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-rest-input front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored rest input drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s rest-input ignored drawn=%d/%d championCount=%d resting=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount, game->resting,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -771,6 +823,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game5;
     M12_StartupMenuState menu6;
     M11_GameViewState game6;
+    M12_StartupMenuState menu7;
+    M11_GameViewState game7;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -944,6 +998,25 @@ int main(int argc, char** argv) {
                                              "corridor_north_deadzone_click");
     }
     M11_GameView_Shutdown(&game6);
+
+    /* Pose K: reopen once more and try the source-rest command while the
+     * candidate panel is live.  COMMAND.C CHANGE2_15_FIX blocks C145 while
+     * G0299 is set, preventing rest from cloning or confirming the candidate. */
+    M12_StartupMenu_InitWithDataDir(&menu7, dataDir, NULL);
+    M11_GameView_Init(&game7);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game7, &menu7)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for rest input pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game7, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_rest_input")) {
+        ok = 0;
+    } else {
+        ok &= check_rest_input_ignored(&game7, rrPanel, 2,
+                                       "corridor_north_rest_input");
+    }
+    M11_GameView_Shutdown(&game7);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
