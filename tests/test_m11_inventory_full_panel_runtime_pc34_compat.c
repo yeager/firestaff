@@ -27,6 +27,8 @@
  *   CHEST.C F0333 lines 58-75 and F0334 lines 112-133: only the first
  *     eight linked chest objects populate the visible chest-slot array,
  *     and close-time rewrite compacts that visible array back to the chest
+ *   CHAMPION.C F0302 lines 688-710: occupied open-chest slot clicks swap
+ *     the leader-hand object with the selected G0425_aT_ChestSlots entry
  *   CHEST.C F0333 lines 58-75 and m11_process_v1_chest_slot_box_click:
  *     the open path is read-only on the source linked list, so the 9th
  *     and later tail items stay reachable through the 8th visible item's
@@ -677,6 +679,82 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
     M11_GameView_CloseV1OpenChest(&state);
     ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
               "closing the panel clears open chest state");
+}
+
+static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[4];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short axeThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    unsigned short maceThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    unsigned short swordThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    /* ReDMCSB CHAMPION.C F0302 lines 688-710 reads C30+ slots from
+     * G0425_aT_ChestSlots, gates leader-hand placement against DATA.C
+     * lines 1080-1087 MASK0x0400_CONTAINER, removes the occupied slot
+     * into the leader hand, then adds the previous leader-hand object
+     * back to the same chest slot.  CHEST.C F0334 lines 112-133 then
+     * rewrites the compact visible slot order on close. */
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 4;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapons[0].type = 2;
+    weapons[0].next = axeThing;
+    weapons[1].type = 2;
+    weapons[1].next = maceThing;
+    weapons[2].type = 2;
+    weapons[2].next = THING_ENDOFLIST;
+    weapons[3].type = 2;
+    weapons[3].next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before occupied-slot swap");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, swordThing), 1,
+              "leader hand accepts a container-compatible object before chest swap");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &sx, &sy, &sw, &sh),
+                "C538 occupied chest slot zone exists");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking occupied C538 swaps with the leader-hand object");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), axeThing,
+              "occupied chest-slot swap moves the old C538 item to leader hand");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "occupied chest-slot swap keeps C537 as list head");
+    ASSERT_EQ(weapons[0].next, swordThing,
+              "occupied chest-slot swap places leader-hand object at C538");
+    ASSERT_EQ(weapons[3].next, maceThing,
+              "occupied chest-slot swap preserves the following visible item");
+    ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
+              "occupied chest-slot swap keeps the last visible item terminating");
+    ASSERT_EQ(weapons[1].next, THING_ENDOFLIST,
+              "occupied chest-slot swap detaches the picked C538 item");
+    assert_world_hash_matches(&state, "occupied chest-slot swap refreshes deterministic world hash");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "close after occupied chest-slot swap clears panel state");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "close after occupied chest-slot swap keeps C537 as head");
+    ASSERT_EQ(weapons[0].next, swordThing,
+              "close after occupied chest-slot swap preserves replacement C538");
+    ASSERT_EQ(weapons[3].next, maceThing,
+              "close after occupied chest-slot swap preserves C539 after replacement");
+    ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
+              "close after occupied chest-slot swap terminates the visible list");
+    ASSERT_EQ(weapons[1].next, THING_ENDOFLIST,
+              "close after occupied chest-slot swap keeps picked C538 detached");
 }
 
 static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
@@ -2332,6 +2410,7 @@ int main(void) {
     test_extended_backpack_runtime_clicks();
     test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
+    test_open_chest_occupied_slot_swap_preserves_visible_order();
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_slot_box_and_icon_source_pixels();
     test_open_chest_second_visible_slot_uses_second_object_icon();
