@@ -35,10 +35,10 @@
  *     each visible chest slot advances to the next linked object and
  *     resolves that object's source icon from G0237_as_Graphic559_ObjectInfo
  *   CHEST.C F0333 lines 58-66, OBJECT.C F0033 lines 147-164, and
- *     DUNGEON.C F0141 lines 1145-1156/G0237 lines 106-134:
- *     C541/C542/C543 prove the fifth/sixth/seventh linked visible
+ *     DUNGEON.C F0141 lines 1145-1156/G0237 lines 106-135:
+ *     C541/C542/C543/C544 prove the fifth/sixth/seventh/eighth linked visible
  *     objects advance through the source list and blit their own
- *     Slayer C052/Sling C053/Rock C054 icons.
+ *     Slayer C052/Sling C053/Rock C054/Poison Dart C055 icons.
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
  *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
  *     C031/C032 into C101/C500/C501/C502 before drawing source bars
@@ -1377,7 +1377,8 @@ static const ChestVisibleWeaponIconCase kChestVisibleWeaponIconCases[] = {
     { 27, 51, 131, "fourth",  "arrow" },
     { 28, 52, 132, "fifth",   "Slayer" },
     { 29, 53, 133, "sixth",   "Sling" },
-    { 30, 54, 134, "seventh", "Rock" }
+    { 30, 54, 134, "seventh", "Rock" },
+    { 31, 55, 135, "eighth",  "Poison Dart" }
 };
 
 static unsigned short chest_visible_weapon_thing(int ordinal) {
@@ -1388,13 +1389,13 @@ static void assert_open_chest_visible_weapon_icon_chain(int targetOrdinal,
                                                         const char* gateLabel) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapons[7];
+    struct DungeonWeapon_Compat weapons[8];
     struct DungeonContainer_Compat container;
     unsigned char framebuffer[320 * 200];
     unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
-    int slotX[7];
-    int slotY[7];
-    int icons[7];
+    int slotX[8];
+    int slotY[8];
+    int icons[8];
     int visibleCount;
     int i;
     char msg[224];
@@ -1470,8 +1471,8 @@ static void assert_open_chest_visible_weapon_icon_chain(int targetOrdinal,
      * G0425_aT_ChestSlots, and draws C38 + slotIndex with
      * F0033_OBJECT_GetIconIndex(currentThing). OBJECT.C F0033 lines
      * 147-164 obtains the icon through DUNGEON.C F0141 lines 1145-1154;
-     * G0237 lines 106/112/126/131/132/133/134 give the distinct
-     * torch/dagger/morningstar/arrow/Slayer/Sling/Rock source icons. */
+     * G0237 lines 106/112/126/131/132/133/134/135 give the distinct
+     * torch/dagger/morningstar/arrow/Slayer/Sling/Rock/Poison Dart source icons. */
     snprintf(msg, sizeof(msg),
              "open chest %s keeps source C033 slot-box border pixels around the %s object icon",
              gateLabel,
@@ -1501,6 +1502,10 @@ static void assert_open_chest_visible_weapon_icon_chain(int targetOrdinal,
 
 static void test_open_chest_seventh_visible_slot_uses_seventh_object_icon(void) {
     assert_open_chest_visible_weapon_icon_chain(6, "C543");
+}
+
+static void test_open_chest_eighth_visible_slot_uses_eighth_object_icon(void) {
+    assert_open_chest_visible_weapon_icon_chain(7, "C544");
 }
 
 static void test_empty_hand_mouth_blits_source_food_water_panel_pixels(void) {
@@ -2335,6 +2340,7 @@ int main(void) {
     test_open_chest_fifth_visible_slot_uses_fifth_object_icon();
     test_open_chest_sixth_visible_slot_uses_sixth_object_icon();
     test_open_chest_seventh_visible_slot_uses_seventh_object_icon();
+    test_open_chest_eighth_visible_slot_uses_eighth_object_icon();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_close_trims_to_eight_visible_slots();
