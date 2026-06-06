@@ -107,6 +107,9 @@ enum {
     CSB_V1_FLOOR_ORNAMENT_COORD_SET = 0,
     CSB_V1_FLIP_NONE = 0, /* MASK0x0000_NO_FLIP */
     CSB_V1_FLIP_HORIZONTAL = 1, /* MASK0x0001_FLIP_HORIZONTAL */
+    CSB_V1_FLIP_VERTICAL = 2, /* MASK0x0002_FLIP_VERTICAL */
+    CSB_V1_PROJECTILE_DERIVED_BITMAP_NONE = -1, /* CM1_DERIVED_BITMAP_NONE */
+    CSB_V1_PROJECTILE_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
     CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID = 1,
     CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES = 18,
     CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_SKIN_DEF_INDEX = 0,
@@ -553,6 +556,52 @@ static const CSB_V1_ViewportObjectBlitSpec s_object_blits[] = {
         1,
         "F0677_DrawD3R2",
         "DUNVIEW.C:4923 F0115 weapon..junk visible-cell predicate; 5030-5039 D3 object scale/shift set; 5071-5082 C2500_ZONE_ | MASK0x8000 + G2028 row*4 + ViewCell plus pile shift; 5109 F0791 C10 blit. DEFS.H:3517,4228; COORD.C:1129-1193 layout range 2500..2560."
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0115 lines 5668-5683 and 5710-5885,
+ * DEFS.H line 4230, and COORD.C lines 1194-1239.  The MEDIA709
+ * PC34/I34 path restarts from the first thing for the active cell, accepts
+ * only projectile things whose stored cell matches, maps D3L2/D3R2 through
+ * G2028 rows 3/4, rejects D3 front cells, and sends the scaled projectile
+ * bitmap through F0791 with the computed C2900 zone, dynamic flip flags,
+ * CM1_DERIVED_BITMAP_NONE for uncached scaled paths, and C10 transparency. */
+static const CSB_V1_ViewportProjectileBlitSpec s_projectile_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_PROJECTILE_ROW_D3L2,
+        CSB_V1_PROJECTILE_ZONE_BASE,
+        CSB_V1_PROJECTILE_ZONE_STRIDE,
+        1,
+        1,
+        1,
+        1,
+        0,
+        CSB_V1_PROJECTILE_DERIVED_BITMAP_NONE,
+        CSB_V1_PROJECTILE_TRANSPARENT_COLOR,
+        1,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:5668-5683 F0115 maps C14_VIEW_SQUARE_D3L2 through G2028 row 3, suppresses D3 front cells, restarts the thing list, requires C14_THING_TYPE_PROJECTILE and matching cell, then computes C2900_ZONE_ + row*4 + ViewCell. 5710-5722 scales by depth/cell/kinetic energy; 5859 CM1_DERIVED_BITMAP_NONE for uncached scaled path; 5881-5882 F0791 uses L2474 zone, dynamic flip flags, and C10 transparency. DEFS.H:4230; COORD.C:1194-1239 projectile zone records."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_PROJECTILE_ROW_D3R2,
+        CSB_V1_PROJECTILE_ZONE_BASE,
+        CSB_V1_PROJECTILE_ZONE_STRIDE,
+        1,
+        1,
+        1,
+        1,
+        0,
+        CSB_V1_PROJECTILE_DERIVED_BITMAP_NONE,
+        CSB_V1_PROJECTILE_TRANSPARENT_COLOR,
+        1,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:5668-5683 F0115 maps C15_VIEW_SQUARE_D3R2 through G2028 row 4, suppresses D3 front cells, restarts the thing list, requires C14_THING_TYPE_PROJECTILE and matching cell, then computes C2900_ZONE_ + row*4 + ViewCell. 5710-5722 scales by depth/cell/kinetic energy; 5859 CM1_DERIVED_BITMAP_NONE for uncached scaled path; 5881-5882 F0791 uses L2474 zone, dynamic flip flags, and C10 transparency. DEFS.H:4230; COORD.C:1194-1239 projectile zone records."
     },
 };
 
@@ -1162,6 +1211,74 @@ int csb_v1_viewport_object_blit_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
     return zone | spec->shifts_objects_and_creatures;
 }
 
+size_t csb_v1_viewport_projectile_blit_spec_count(void)
+{
+    return sizeof(s_projectile_blits) / sizeof(s_projectile_blits[0]);
+}
+
+const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_projectile_blit_spec_count()) return NULL;
+    return &s_projectile_blits[index];
+}
+
+const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_projectile_blit_spec_count(); ++i) {
+        if (s_projectile_blits[i].view_square == view_square) {
+            return &s_projectile_blits[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
+                                         unsigned char view_cell)
+{
+    if (!spec || view_cell > 4 || spec->projectile_visibility_row < 0) return -1;
+    if (spec->view_depth == 3 && spec->suppresses_depth3_front_cells && view_cell <= 1) {
+        return -1;
+    }
+    if (spec->view_depth == 0 && spec->suppresses_depth0_back_cells && view_cell >= 2) {
+        return -1;
+    }
+    return spec->projectile_zone_base +
+           (spec->projectile_visibility_row * spec->projectile_zone_cell_stride) +
+           view_cell;
+}
+
+int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
+                                           int flip_flags,
+                                           const uint8_t *source,
+                                           int source_stride,
+                                           uint8_t *destination,
+                                           int destination_stride,
+                                           int width,
+                                           int height)
+{
+    int copied = 0;
+    if (!spec || !source || !destination ||
+        source_stride < width || destination_stride < width ||
+        width <= 0 || height <= 0) {
+        return -1;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115 lines 5755-5762/5791-5802 build
+     * MASK0x0001/MASK0x0002 flip flags dynamically, then lines 5881-5882
+     * send the scaled bitmap through F0791 with C10 transparency. */
+    for (int y = 0; y < height; ++y) {
+        int sy = (flip_flags & CSB_V1_FLIP_VERTICAL) ? (height - 1 - y) : y;
+        for (int x = 0; x < width; ++x) {
+            int sx = (flip_flags & CSB_V1_FLIP_HORIZONTAL) ? (width - 1 - x) : x;
+            uint8_t pixel = source[(sy * source_stride) + sx];
+            if (pixel == (uint8_t)spec->transparent_color) continue;
+            destination[(y * destination_stride) + x] = pixel;
+            ++copied;
+        }
+    }
+    return copied;
+}
+
 size_t csb_v1_viewport_creature_visibility_spec_count(void)
 {
     return sizeof(s_creature_visibility_routes) / sizeof(s_creature_visibility_routes[0]);
@@ -1369,6 +1486,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  4567-4581 F0115 draws objects, then creatures, then projectiles per processed view cell\n"
         "  5668-5683 F0115 restarts for projectile things and uses C2900_ZONE_ + G2028 row * 4 + ViewCell\n"
         "  5881-5883 F0115 blits PC34/I34 projectile sprites through the computed C2900 zone\n"
+        "  5710-5722 and 5755-5802 F0115 computes PC34/I34 projectile scale and dynamic MASK0x0001/MASK0x0002 flip flags before the C10 F0791 blit\n"
         "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
         "  5030-5039 F0115 selects PC34/I34 object scale and shift set from depth/cell\n"
