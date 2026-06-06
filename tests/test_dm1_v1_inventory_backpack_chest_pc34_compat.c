@@ -35,6 +35,7 @@ int main(void) {
     M11_Item closed[8];
     M11_Item sparse[8];
     M11_Item limited[2];
+    M11_Item zeroMaskItem;
     int ok = 1;
 
     printf("probe=dm1_v1_inventory_backpack_chest_pc34_compat\n");
@@ -65,6 +66,19 @@ int main(void) {
     ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 7, &item);
     ok &= expect_item_type("open caps visible chest slots at eight", &item, 207);
     ok &= expect_int("open chest load includes eight visible things", m11_inventory_get_load(&state, 0), 8);
+
+    /* ReDMCSB CHAMPION.C F0302 lines 694-699 gates every leader-hand slot
+     * placement, including C30+ chest slots, with
+     * AllowedSlots & DATA.C G0038_ai_Graphic562_SlotMasks[slot].  A zero
+     * AllowedSlots mask is therefore rejected rather than treated as
+     * unrestricted. */
+    zeroMaskItem = make_item(777, 6, 0);
+    ok &= expect_int("zero allowed-slot mask cannot equip into chest",
+                     m11_inventory_can_equip(&zeroMaskItem, DM1_PC34_SLOT_CHEST_4), 0);
+    ok &= expect_int("zero allowed-slot chest equip rejected",
+                     m11_inventory_equip(&state, 0, DM1_PC34_SLOT_CHEST_4, &zeroMaskItem), 0);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 3, &item);
+    ok &= expect_item_type("rejected zero-mask item leaves chest slot unchanged", &item, 203);
 
     ok &= m11_inventory_set_item_in_chest_slot(&state, 0, 0, 999, 2, 0, DM1_PC34_ALLOWED_CONTAINER);
     ok &= expect_int("reopen same chest is guard no-op", m11_inventory_open_chest(&state, 0, 0x1234, linked, 10), 1);
