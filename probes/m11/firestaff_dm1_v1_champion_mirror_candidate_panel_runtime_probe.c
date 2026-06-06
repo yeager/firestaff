@@ -19,6 +19,9 @@
  *   ReDMCSB REVIVE.C:272-276 / F0280 appends the mirror candidate to
  *   the party; REVIVE.C:744-799 / F0282 cancels without disabling the
  *   route but disables the first mirror-square sensor on confirm;
+ *   REVIVE.C:806-835 applies the source reincarnate branch after the
+ *   common confirm route; COMMAND.C:228-233 and 508-511 define the
+ *   resurrect/reincarnate/cancel panel mouse routes;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
  *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
@@ -55,6 +58,12 @@ enum {
     PROBE_PORTRAIT_Y = PROBE_VIEWPORT_Y + 35,
     PROBE_PORTRAIT_W = 32,
     PROBE_PORTRAIT_H = 29,
+    /* COMMAND.C:228-233 / 508-511 routes this panel box to C161
+     * CLICK_IN_PANEL_REINCARNATE.  The midpoint avoids border pixels and
+     * proves the open candidate panel consumes the click before generic
+     * viewport routing can reinterpret it. */
+    PROBE_REINCARNATE_CLICK_X = 186,
+    PROBE_REINCARNATE_CLICK_Y = 115,
     /* Resurrect/Reincarnate/Cancel panel graphic index in DM1 GRAPHICS.DAT.
      * The M11_GFX_PANEL_RESURRECT_REINCARNATE enum in m11_game_view.c is
      * file-scoped; the source-locked value 40 = C040 is the
@@ -475,12 +484,63 @@ static int check_cancel(M11_GameViewState* game,
     return ok;
 }
 
+static int check_pointer_reincarnate(M11_GameViewState* game,
+                                     const M11_AssetSlot* rrPanel,
+                                     const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-reincarnate-click panel on",
+                     game->candidateMirrorPanelActive, 1);
+    /* ReDMCSB COMMAND.C:228-233 / 508-511 maps the panel's reincarnate
+     * box to C161, then REVIVE.C:785-806 clears G0299 and disables the
+     * mirror-square sensor before REVIVE.C:806-835 applies reincarnation. */
+    inputResult = M11_GameView_HandlePointerButton(game,
+                                                   PROBE_REINCARNATE_CLICK_X,
+                                                   PROBE_REINCARNATE_CLICK_Y,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+    ok &= expect_int("reincarnate click redraw", (int)inputResult,
+                     (int)M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("post-reincarnate-click panel off",
+                     game->candidateMirrorPanelActive, 0);
+    ok &= expect_int("post-reincarnate-click inventory off",
+                     game->inventoryPanelActive, 0);
+    ok &= expect_int("post-reincarnate-click champion kept",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-reincarnate-click ordinal cleared",
+                     game->candidateMirrorOrdinal, -1);
+    ok &= expect_int("post-reincarnate-click party index cleared",
+                     game->candidateMirrorPartyIndex, -1);
+    ok &= expect_int("post-reincarnate-click front mirror disabled",
+                     M11_GameView_GetFrontMirrorOrdinal(game), -1);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (rrPanel && rrPanel->loaded && rrPanel->pixels && match.assetOpaque > 0 &&
+        match.assetDrawn * 100 > 5 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel leaked after reincarnate click drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s reincarnate-click drawn=%d/%d championCount=%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
     M12_StartupMenuState menu2;
     M11_GameViewState game2;
+    M12_StartupMenuState menu3;
+    M11_GameViewState game3;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -570,6 +630,25 @@ int main(int argc, char** argv) {
         ok &= check_cancel(&game2, rrPanel, "corridor_north_cancel");
     }
     M11_GameView_Shutdown(&game2);
+
+    /* Pose G: reopen once more and click the reincarnate half of the real
+     * source panel box.  This covers the C161 pointer route separately
+     * from the direct resurrect confirm and cancel calls above. */
+    M12_StartupMenu_InitWithDataDir(&menu3, dataDir, NULL);
+    M11_GameView_Init(&game3);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game3, &menu3)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for reincarnate click pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game3, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_reincarnate_click")) {
+        ok = 0;
+    } else {
+        ok &= check_pointer_reincarnate(&game3, rrPanel,
+                                        "corridor_north_reincarnate_click");
+    }
+    M11_GameView_Shutdown(&game3);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
