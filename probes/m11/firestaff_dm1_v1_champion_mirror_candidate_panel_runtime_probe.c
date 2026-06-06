@@ -60,7 +60,7 @@ enum {
     PROBE_PORTRAIT_Y = PROBE_VIEWPORT_Y + 35,
     PROBE_PORTRAIT_W = 32,
     PROBE_PORTRAIT_H = 29,
-    /* COMMAND.C:228-233 / 508-511 route these panel boxes to C160/C161.
+    /* COMMAND.C:228-233 / 508-511 route these panel boxes to C160/C161/C162.
      * The midpoints avoid border pixels and prove the open candidate panel
      * consumes the clicks before generic viewport routing can reinterpret
      * them. */
@@ -68,6 +68,8 @@ enum {
     PROBE_RESURRECT_CLICK_Y = 115,
     PROBE_REINCARNATE_CLICK_X = 186,
     PROBE_REINCARNATE_CLICK_Y = 115,
+    PROBE_CANCEL_CLICK_X = 160,
+    PROBE_CANCEL_CLICK_Y = 151,
     /* Resurrect/Reincarnate/Cancel panel graphic index in DM1 GRAPHICS.DAT.
      * The M11_GFX_PANEL_RESURRECT_REINCARNATE enum in m11_game_view.c is
      * file-scoped; the source-locked value 40 = C040 is the
@@ -587,6 +589,56 @@ static int check_pointer_resurrect(M11_GameViewState* game,
     return ok;
 }
 
+static int check_pointer_cancel(M11_GameViewState* game,
+                                const M11_AssetSlot* rrPanel,
+                                const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-cancel-click panel on",
+                     game->candidateMirrorPanelActive, 1);
+    /* ReDMCSB COMMAND.C:228-233 / 508-511 maps the cancel strip to C162,
+     * COMMAND.C:1985-1991 dispatches it to REVIVE.C F0282, and
+     * REVIVE.C:744-783 clears G0299 plus removes the appended candidate
+     * without reaching the REVIVE.C:785-799 mirror-sensor disable path. */
+    inputResult = M11_GameView_HandlePointerButton(game,
+                                                   PROBE_CANCEL_CLICK_X,
+                                                   PROBE_CANCEL_CLICK_Y,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+    ok &= expect_int("cancel click redraw", (int)inputResult,
+                     (int)M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("post-cancel-click panel off",
+                     game->candidateMirrorPanelActive, 0);
+    ok &= expect_int("post-cancel-click inventory off",
+                     game->inventoryPanelActive, 0);
+    ok &= expect_int("post-cancel-click champion removed",
+                     game->world.party.championCount, 0);
+    ok &= expect_int("post-cancel-click ordinal cleared",
+                     game->candidateMirrorOrdinal, -1);
+    ok &= expect_int("post-cancel-click party index cleared",
+                     game->candidateMirrorPartyIndex, -1);
+    ok &= expect_int("post-cancel-click front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), 2);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (rrPanel && rrPanel->loaded && rrPanel->pixels && match.assetOpaque > 0 &&
+        match.assetDrawn * 100 > 5 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel leaked after cancel click drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s cancel-click drawn=%d/%d championCount=%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -597,6 +649,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game3;
     M12_StartupMenuState menu4;
     M11_GameViewState game4;
+    M12_StartupMenuState menu5;
+    M11_GameViewState game5;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -725,6 +779,26 @@ int main(int argc, char** argv) {
                                       "corridor_north_resurrect_click");
     }
     M11_GameView_Shutdown(&game4);
+
+    /* Pose I: reopen once more and click the source cancel strip.  The
+     * direct cancel helper above proves the state transition; this route
+     * proves COMMAND.C C162 pointer dispatch and preserves the mirror route
+     * exactly like REVIVE.C's early cancel return. */
+    M12_StartupMenu_InitWithDataDir(&menu5, dataDir, NULL);
+    M11_GameView_Init(&game5);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game5, &menu5)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for cancel click pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game5, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_cancel_click")) {
+        ok = 0;
+    } else {
+        ok &= check_pointer_cancel(&game5, rrPanel,
+                                   "corridor_north_cancel_click");
+    }
+    M11_GameView_Shutdown(&game5);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
