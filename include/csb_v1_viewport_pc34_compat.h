@@ -49,6 +49,25 @@ typedef struct {
 
 typedef struct {
     int view_square;
+    int view_wall_index;
+    int ordinal_zero_skips_blit;
+    int ordinal_to_index_delta;
+    int native_bitmap_index_increment;
+    int zone_base;
+    int coordinate_set_stride;
+    int scale_x;
+    int scale_y;
+    int horizontal_flip;
+    int transparent_color;
+    int uses_scaled_bitmap;
+    int uses_f0791_blit;
+    const char *ornament_ordinal_slot;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportWallOrnamentBlitSpec;
+
+typedef struct {
+    int view_square;
     int floor_view_index;
     int draws_corridor_floor_ornament;
     int draws_pit_floor_ornament;
@@ -222,6 +241,21 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
 size_t csb_v1_viewport_wall_ornament_route_spec_count(void);
 const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec(size_t index);
 const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_route_spec_for_square(int view_square);
+
+size_t csb_v1_viewport_wall_ornament_blit_spec_count(void);
+const CSB_V1_ViewportWallOrnamentBlitSpec *csb_v1_viewport_get_wall_ornament_blit_spec(size_t index);
+const CSB_V1_ViewportWallOrnamentBlitSpec *csb_v1_viewport_get_wall_ornament_blit_spec_for_square(int view_square);
+int csb_v1_viewport_wall_ornament_blit_zone(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                            int coordinate_set);
+int csb_v1_viewport_wall_ornament_native_bitmap_index(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                                      int base_native_bitmap_index);
+int csb_v1_viewport_wall_ornament_blit_pixels(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                              const uint8_t *source,
+                                              int source_stride,
+                                              uint8_t *destination,
+                                              int destination_stride,
+                                              int width,
+                                              int height);
 
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void);
 const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index);
