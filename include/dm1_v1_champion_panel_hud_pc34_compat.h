@@ -283,7 +283,29 @@ int DM1_ChampionPanel_NameColor(int champIdx, int leaderIdx);
 /* ── Dead status box predicate ── */
 int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth);
 
-/* Food/Water/Poison label rendering — PANEL.C:1598-1606 */
+/* Food/Water/Poison label blits — PANEL.C:1598-1606 F0345 */
+#define DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT 3
+
+typedef struct DM1_ChampionPanel_F0658BlitStepSpec {
+    int bitmapId;
+    int zoneId;
+    int transparentColor;
+    int sourceLine;
+    int requiresPoisoned;
+} DM1_ChampionPanel_F0658BlitStepSpec;
+
+typedef struct DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec {
+    int blitCount;
+    int sourceStartLine;
+    int sourceEndLine;
+    int conditionalLine;
+    const char *sourceEvidence;
+    DM1_ChampionPanel_F0658BlitStepSpec blits[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT];
+} DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec;
+
+const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void);
+const char *DM1_ChampionPanel_F0658PoisonedBlitSourceEvidence(void);
 void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned);
 
 /* ── Self-test: returns number of failures ── */

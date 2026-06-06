@@ -662,6 +662,115 @@ int main(void)
         }
     }
 
+    /*
+     * ReDMCSB: PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned
+     * source lock:
+     * - 1598: F0658(C030_GRAPHIC_FOOD_LABEL, C500_ZONE_FOOD, C12).
+     * - 1599: F0658(C031_GRAPHIC_WATER_LABEL, C501_ZONE_WATER, C12).
+     * - 1601-1606: only PoisonEventCount emits
+     *   F0658(C032_GRAPHIC_POISONED_LABEL, C502_ZONE_POISONED, C12).
+     * ReDMCSB: CHAMDRAW.C:1060-1063 F0292 calls F0345 from the mouth panel.
+     * ReDMCSB: BASE.C:1341-1361 F0658 does the zone-index transparent blit.
+     */
+    {
+        const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *spec =
+            DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked();
+        const char *evidence =
+            DM1_ChampionPanel_F0658PoisonedBlitSourceEvidence();
+        int emittedWithoutPoison = 0;
+        int emittedWithPoison = 0;
+        int i;
+
+        if (spec == NULL) {
+            fprintf(stderr, "FAIL: F0658 food/water/poison spec is NULL\n");
+            failures++;
+        } else {
+            static const int expectedBitmap[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT] = {
+                DM1_GFX_FOOD_LABEL,
+                DM1_GFX_WATER_LABEL,
+                DM1_GFX_POISONED_LABEL
+            };
+            static const int expectedZone[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT] = {
+                DM1_ZONE_FOOD,
+                DM1_ZONE_WATER,
+                DM1_ZONE_POISONED
+            };
+            static const int expectedLine[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT] = {
+                1598,
+                1599,
+                1606
+            };
+            static const int expectedRequiresPoisoned[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT] = {
+                0,
+                0,
+                1
+            };
+
+            if (spec->blitCount != DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT) {
+                fprintf(stderr, "FAIL: F0658 food/water/poison spec count %d\n",
+                        spec->blitCount);
+                failures++;
+            }
+            if (spec->sourceStartLine != 1598 ||
+                spec->sourceEndLine != 1606 ||
+                spec->conditionalLine != 1601) {
+                fprintf(stderr,
+                        "FAIL: F0658 line anchors start=%d end=%d conditional=%d\n",
+                        spec->sourceStartLine,
+                        spec->sourceEndLine,
+                        spec->conditionalLine);
+                failures++;
+            }
+            if (spec->sourceEvidence == NULL ||
+                strstr(spec->sourceEvidence, "PANEL.C:1598-1606") == NULL ||
+                strstr(spec->sourceEvidence, "F0345_INVENTORY_DrawPanel_FoodWaterPoisoned") == NULL ||
+                strstr(spec->sourceEvidence, "CHAMDRAW.C:1060-1063 F0292") == NULL ||
+                strstr(spec->sourceEvidence, "BASE.C:1341-1361 F0658") == NULL ||
+                strstr(spec->sourceEvidence, "DEFS.H:2090 C12") == NULL ||
+                strstr(spec->sourceEvidence, "3869-3871 C500/C501/C502") == NULL) {
+                fprintf(stderr, "FAIL: F0658 source_evidence anchors missing\n");
+                failures++;
+            }
+            if (evidence == NULL ||
+                strcmp(evidence, spec->sourceEvidence) != 0) {
+                fprintf(stderr, "FAIL: F0658 source_evidence entry mismatch\n");
+                failures++;
+            }
+
+            for (i = 0; i < spec->blitCount; ++i) {
+                const DM1_ChampionPanel_F0658BlitStepSpec *step =
+                    &spec->blits[i];
+                if (step->bitmapId != expectedBitmap[i] ||
+                    step->zoneId != expectedZone[i] ||
+                    step->transparentColor != DM1_COLOR_DARKEST_GRAY ||
+                    step->sourceLine != expectedLine[i] ||
+                    step->requiresPoisoned != expectedRequiresPoisoned[i]) {
+                    fprintf(stderr,
+                            "FAIL: F0658 blit[%d] bitmap=%d zone=%d transparent=%d line=%d requiresPoisoned=%d\n",
+                            i,
+                            step->bitmapId,
+                            step->zoneId,
+                            step->transparentColor,
+                            step->sourceLine,
+                            step->requiresPoisoned);
+                    failures++;
+                }
+                if (!step->requiresPoisoned) {
+                    emittedWithoutPoison++;
+                }
+                emittedWithPoison++;
+            }
+
+            if (emittedWithoutPoison != 2 || emittedWithPoison != 3) {
+                fprintf(stderr,
+                        "FAIL: F0658 conditional shape without=%d with=%d\n",
+                        emittedWithoutPoison,
+                        emittedWithPoison);
+                failures++;
+            }
+        }
+    }
+
     if (failures == 0) {
         printf("PASS: all champion panel HUD source-lock assertions passed.\n");
     } else {
