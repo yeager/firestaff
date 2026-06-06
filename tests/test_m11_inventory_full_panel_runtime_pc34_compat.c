@@ -253,6 +253,80 @@ static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* 
     return 1;
 }
 
+static int framebuffer_matches_object_icon_at(const M11_GameViewState* state,
+                                              const unsigned char* framebuffer,
+                                              int iconIndex,
+                                              int dstX,
+                                              int dstY) {
+    const M11_AssetSlot* iconGraphic;
+    int graphicIndex = 0;
+    int srcX = 0, srcY = 0, srcW = 0, srcH = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1ObjectIconSourceZone(iconIndex,
+                                                &graphicIndex,
+                                                &srcX,
+                                                &srcY,
+                                                &srcW,
+                                                &srcH)) {
+        return 0;
+    }
+    iconGraphic = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                       (unsigned int)graphicIndex);
+    if (!iconGraphic || !iconGraphic->pixels ||
+        srcW != 16 || srcH != 16 ||
+        srcX + srcW > (int)iconGraphic->width ||
+        srcY + srcH > (int)iconGraphic->height) {
+        return 0;
+    }
+    for (y = 0; y < srcH; ++y) {
+        for (x = 0; x < srcW; ++x) {
+            unsigned char want =
+                iconGraphic->pixels[(srcY + y) * (int)iconGraphic->width + srcX + x];
+            unsigned char got = framebuffer[(dstY + y) * 320 + (dstX + x)];
+            if (got != want) return 0;
+        }
+    }
+    return 1;
+}
+
+static int framebuffer_matches_chest_slot_box_pixels(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer,
+    int chestOrdinal,
+    int skipIconInterior) {
+    const M11_AssetSlot* slotBox;
+    int zx = 0, zy = 0, zw = 0, zh = 0;
+    int x, y;
+    int matched = 0;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal, &zx, &zy, &zw, &zh)) {
+        return 0;
+    }
+    (void)zw;
+    (void)zh;
+    slotBox = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                   (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
+    if (!slotBox || !slotBox->pixels || slotBox->width != 18 || slotBox->height != 18) {
+        return 0;
+    }
+    for (y = 0; y < 18; ++y) {
+        for (x = 0; x < 18; ++x) {
+            unsigned char want = slotBox->pixels[y * (int)slotBox->width + x];
+            unsigned char got;
+            if (skipIconInterior && x >= 1 && x < 17 && y >= 1 && y < 17) {
+                continue;
+            }
+            got = framebuffer[(33 + zy - 1 + y) * 320 + (zx - 1 + x)];
+            if (got != want) return 0;
+            matched++;
+        }
+    }
+    return matched > 0;
+}
+
 static int point_is_in_food_water_panel_overdraw(int x, int y, int poisoned) {
     int foodX = 32, foodY = 8;
     int waterX = 32, waterY = 31;
@@ -642,6 +716,66 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
                 "leader-hand container eye render blits source C025 open-chest panel into C101");
     ASSERT_TRUE(framebuffer[(33 + sy) * 320 + sx] != 0,
                 "leader-hand container eye render reaches C537 chest slot frame");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
+static void test_open_chest_slot_box_and_icon_source_pixels(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat container;
+    unsigned char framebuffer[320 * 200];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int daggerIcon;
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&container, 0, sizeof(container));
+    things.containers = &container;
+    things.containerCount = 1;
+    weapon.type = 8; /* DUNGEON.C G0237 object-info index 31: DAGGER, icon C032. */
+    weapon.next = THING_ENDOFLIST;
+    container.slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for chest slot-box/icon pixel gate");
+    state.assetsAvailable = 1;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before slot-box/icon pixel gate");
+    daggerIcon = M11_GameView_GetObjectIconIndexForThing(&state, daggerThing);
+    ASSERT_EQ(daggerIcon, 32,
+              "source dagger icon resolves through F0033_OBJECT_GetIconIndex");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+                "C537 chest slot zone exists for populated source-pixel gate");
+    (void)sw;
+    (void)sh;
+    /* ReDMCSB CHEST.C F0333 lines 58-65 draws each non-empty visible
+     * chest object through F0038_OBJECT_DrawIconInSlotBox(C38 + n,
+     * F0033_OBJECT_GetIconIndex(thing)); empty trailing slots are drawn
+     * by lines 68-75 with no object-icon overdraw. */
+    ASSERT_TRUE(framebuffer_matches_chest_slot_box_pixels(&state,
+                                                          framebuffer,
+                                                          0,
+                                                          1),
+                "open chest C537 keeps source C033 slot-box border pixels around the object icon");
+    ASSERT_TRUE(framebuffer_matches_object_icon_at(&state,
+                                                   framebuffer,
+                                                   daggerIcon,
+                                                   sx,
+                                                   33 + sy),
+                "open chest C537 blits the exact source dagger icon subrect");
+    ASSERT_TRUE(framebuffer_matches_chest_slot_box_pixels(&state,
+                                                          framebuffer,
+                                                          1,
+                                                          0),
+                "open chest empty C538 blits the full source C033 slot-box without icon overdraw");
 
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
@@ -1372,6 +1506,7 @@ int main(void) {
     test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
     test_leader_hand_container_eye_routes_to_chest_panel();
+    test_open_chest_slot_box_and_icon_source_pixels();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_close_trims_to_eight_visible_slots();
