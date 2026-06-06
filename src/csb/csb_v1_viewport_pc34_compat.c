@@ -76,6 +76,8 @@ enum {
     CSB_V1_EXPLOSION_ROW_D3R2 = 7, /* G2034_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_FIELD_ASPECT_D3L2 = 0, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C14_VIEW_SQUARE_D3L2] */
     CSB_V1_FIELD_ASPECT_D3R2 = 1, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_FIELD_ASPECT_D2L2 = 5, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C09_VIEW_SQUARE_D2L2] */
+    CSB_V1_FIELD_ASPECT_D2R2 = 6, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C10_VIEW_SQUARE_D2R2] */
     CSB_V1_EXPLOSION_REBIRTH_STEP1_ZONE_BASE = 3000, /* C3000_ZONE_ */
     CSB_V1_EXPLOSION_REBIRTH_STEP2_ZONE_BASE = 3007, /* C3007_ZONE_ */
     CSB_V1_EXPLOSION_CENTERED_ZONE_BASE = 3014, /* C3014_ZONE_ */
@@ -83,6 +85,8 @@ enum {
     CSB_V1_EXPLOSION_SIDE_ZONE_CELL_STRIDE = 2,
     CSB_V1_FIELD_ZONE_D3L2 = 702, /* C702_ZONE_WALL_D3L2 */
     CSB_V1_FIELD_ZONE_D3R2 = 703, /* C703_ZONE_WALL_D3R2 */
+    CSB_V1_FIELD_ZONE_D2L2 = 707, /* C707_ZONE_WALL_D2L2 */
+    CSB_V1_FIELD_ZONE_D2R2 = 708, /* C708_ZONE_WALL_D2R2 */
     CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED = 1,
     CSB_V1_DOOR_PANEL_PARENT_D3L2 = 129,
     CSB_V1_DOOR_PANEL_PARENT_D3R2 = 130,
@@ -804,9 +808,10 @@ static const CSB_V1_ViewportExplosionBlitSpec s_explosion_blits[] = {
 };
 
 /* ReDMCSB: DUNVIEW.C F0676/F0677 lines 6288-6290 and 6355-6357,
- * with G2035 at line 377 and DEFS.H lines 4042-4043.  CSB/I34
- * D3L2/D3R2 teleporters finish their F0108/F0115 path, then draw the
- * square's field aspect through F0113 over the wall frame zone. */
+ * F0678/F0679 lines 6863-6865 and 6894-6896, G2035 at line 377, and
+ * DEFS.H lines 4042-4048.  CSB/I34 D3L2/D3R2 teleporters finish their
+ * F0108/F0115 path before F0113; D2L2/D2R2 are near-wall teleporter-only
+ * routes with no F0108, F0115, or thing pass. */
 static const CSB_V1_ViewportTeleporterFieldSpec s_teleporter_fields[] = {
     {
         (int)DM1_VIEW_SQUARE_D3L2,
@@ -829,6 +834,28 @@ static const CSB_V1_ViewportTeleporterFieldSpec s_teleporter_fields[] = {
         1,
         "F0677_DrawD3R2",
         "DUNVIEW.C:6355-6357 teleporter draws F0113(G0188[G2035[C15_VIEW_SQUARE_D3R2]], C703_ZONE_WALL_D3R2) after 6351 F0108 and 6353 F0115. DUNVIEW.C:377 G2035 maps C15 to field aspect 1; 4382-4409 F0113 clips by zone. DEFS.H:4043 C703_ZONE_WALL_D3R2."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D2L2,
+        9,
+        1,
+        0,
+        CSB_V1_FIELD_ASPECT_D2L2,
+        CSB_V1_FIELD_ZONE_D2L2,
+        1,
+        "F0678_DrawD2L2",
+        "DUNVIEW.C:6863-6865 teleporter draws F0113(G0188[G2035[C09_VIEW_SQUARE_D2L2]], C707_ZONE_WALL_D2L2) without F0108 and without F0115. DUNVIEW.C:377 G2035 maps C09 to field aspect 5; 4382-4409 F0113 clips by zone. DEFS.H:2605 C09_VIEW_SQUARE_D2L2; DEFS.H:4047 C707_ZONE_WALL_D2L2."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D2R2,
+        10,
+        1,
+        0,
+        CSB_V1_FIELD_ASPECT_D2R2,
+        CSB_V1_FIELD_ZONE_D2R2,
+        1,
+        "F0679_DrawD2R2",
+        "DUNVIEW.C:6894-6896 teleporter draws F0113(G0188[G2035[C10_VIEW_SQUARE_D2R2]], C708_ZONE_WALL_D2R2) without F0108 and without F0115. DUNVIEW.C:377 G2035 maps C10 to field aspect 6; 4382-4409 F0113 clips by zone. DEFS.H:2606 C10_VIEW_SQUARE_D2R2; DEFS.H:4048 C708_ZONE_WALL_D2R2."
     },
 };
 
@@ -1628,6 +1655,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  5920-6219 F0115 maps PC34/I34 explosions through G2034/G2035, C3000/C3007/C3014/C3031 zones, F0791 C10 blits, and fluxcage field deferral\n"
         "  6288-6290 and 6355-6357 F0676/F0677 draw teleporter fields through G2035, F0113, and C702/C703 after the F0108/F0115 path\n"
+        "  6863-6865 and 6894-6896 F0678/F0679 draw D2L2/D2R2 teleporter fields through G2035, F0113, and C707/C708 without F0108/F0115\n"
         "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
         "  3589, 3608-3753, 3817-3829, 3923-3928 F0107 evaluates F0149 alcove status for C00/C01 but skips D1-only facing state, clickbox copy, and champion portrait overlay while using the I34 D3 CM1_DERIVED_BITMAP_NONE scaled path\n"
         "  6968-6969,7119-7120,7308,7459,7627,7842 F0119-F0124 call F0107 for D2/D1 wall ornaments; D2 uses C21/G0199 derived scaled bitmaps, D1 side uses native CM1_DERIVED_BITMAP_NONE, and only D1C front updates facing/clickbox/portrait state\n"
@@ -1646,7 +1674,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:2703-2710 M580..M587 D2/D1 view-wall indices\n"
         "  DEFS.H:4228 C2500_ZONE_; COORD.C:1129-1193 object zone records\n"
         "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
-        "  DEFS.H:4042-4043 C702/C703 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
+        "  DEFS.H:4042-4048 C702/C703/C707/C708 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
         "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
