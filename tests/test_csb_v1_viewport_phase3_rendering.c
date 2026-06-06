@@ -656,6 +656,100 @@ static void test_csb_object_visibility_filter_contracts(void)
                csb_v1_viewport_get_object_visibility_spec_for_square(999) == NULL);
 }
 
+static void test_csb_creature_visibility_zone_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int redmcsb_index;
+        int creature_row;
+        int zone_cell2;
+        int zone_cell3;
+        int coord1_cell4;
+        const char *function_name;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 14, 3, 3217, 3218, 3284, "F0676_DrawD3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 4, 3222, 3223, 3289, "F0677_DrawD3R2" },
+    };
+
+    check_int("csb.creature_visibility.count",
+              (int)csb_v1_viewport_creature_visibility_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportCreatureVisibilitySpec *spec =
+            csb_v1_viewport_get_creature_visibility_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportThingPassOrderSpec *order =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.order_present", i);
+        check_true(id, order != NULL);
+        if (!spec || !order) continue;
+
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.redmcsb_index", i);
+        check_int(id, spec->redmcsb_view_square_index, expected[i].redmcsb_index);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.depth", i);
+        check_int(id, spec->view_depth, 3);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.row", i);
+        check_int(id, spec->creature_visibility_row, expected[i].creature_row);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.group_marker", i);
+        check_int(id, spec->requires_group_marker, 1);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.reject_missing_row", i);
+        check_int(id, spec->rejects_missing_creature_row, 1);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.zone_base", i);
+        check_int(id, spec->creature_zone_base, 3200);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.coord_stride", i);
+        check_int(id, spec->creature_coordinate_set_stride, 65);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.cell_stride", i);
+        check_int(id, spec->creature_zone_cell_stride, 5);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.shift_mask", i);
+        check_int(id, spec->shifts_objects_and_creatures, 0x8000);
+
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.zone_cell2", i);
+        check_int(id, csb_v1_viewport_creature_visibility_zone(spec, 0, 2),
+                  expected[i].zone_cell2);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.zone_cell3", i);
+        check_int(id, csb_v1_viewport_creature_visibility_zone(spec, 0, 3),
+                  expected[i].zone_cell3);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.coord1_cell4", i);
+        check_int(id, csb_v1_viewport_creature_visibility_zone(spec, 1, 4),
+                  expected[i].coord1_cell4);
+
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.after_objects", i);
+        check_int(id, order->f0115_objects_layer_order < order->f0115_creatures_layer_order, 1);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.before_projectiles", i);
+        check_int(id, order->f0115_creatures_layer_order < order->f0115_projectiles_layer_order, 1);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.source_g2033", i);
+        check_true(id, strstr(spec->source_lines, "G2033") != NULL);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.source_group", i);
+        check_true(id, strstr(spec->source_lines, "4840-4842") != NULL);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.source_zone", i);
+        check_true(id, strstr(spec->source_lines, "5615-5627 C3200_ZONE_") != NULL &&
+                       strstr(spec->source_lines, "MASK0x8000") != NULL);
+        snprintf(id, sizeof(id), "csb.creature_visibility.%zu.source_coord", i);
+        check_true(id, strstr(spec->source_lines, "COORD.C:1248-1251") != NULL &&
+                       strstr(spec->source_lines, "2074-2075") != NULL);
+    }
+
+    check_int("csb.creature_visibility.null_zone",
+              csb_v1_viewport_creature_visibility_zone(NULL, 0, 2), -1);
+    check_int("csb.creature_visibility.bad_coord",
+              csb_v1_viewport_creature_visibility_zone(
+                  csb_v1_viewport_get_creature_visibility_spec(0), -1, 2), -1);
+    check_int("csb.creature_visibility.bad_cell",
+              csb_v1_viewport_creature_visibility_zone(
+                  csb_v1_viewport_get_creature_visibility_spec(0), 0, 5), -1);
+    check_true("csb.creature_visibility.out_of_range",
+               csb_v1_viewport_get_creature_visibility_spec(2) == NULL);
+    check_true("csb.creature_visibility.unknown_square",
+               csb_v1_viewport_get_creature_visibility_spec_for_square(999) == NULL);
+}
+
 static void test_csb_f0111_door_panel_blit_contracts(void)
 {
     static const struct {
@@ -763,6 +857,8 @@ static void test_source_evidence(void)
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
     check_true("evidence.f0115_projectiles", e && strstr(e, "C2900_ZONE_ + G2028") != NULL);
     check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
+    check_true("evidence.f0115_creatures", e && strstr(e, "G2033 and C3200_ZONE_") != NULL);
+    check_true("evidence.f0115_creature_shift", e && strstr(e, "MASK0x8000_SHIFT_OBJECTS_AND_CREATURES") != NULL);
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
     check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
     check_true("evidence.f0108_c1500", e && strstr(e, "C1500_ZONE_FLOOR_ORNAMENT") != NULL);
@@ -784,6 +880,7 @@ int main(void)
     test_csb_f0108_floor_ornament_bitmap_blit_contracts();
     test_csb_thing_pass_order_contracts();
     test_csb_object_visibility_filter_contracts();
+    test_csb_creature_visibility_zone_contracts();
     test_csb_f0111_door_panel_blit_contracts();
     test_source_evidence();
 
