@@ -22,6 +22,7 @@
  *   5. C211/C213/C215/C217 status
  *      hand icon                       — 16x16 inside the 18x18 box
  *   6. Name text glyph pixels          — drawn through m11_draw_text
+ *   7. Dead slot bar columns           — C008 pixels are not overdrawn
  *
  * Source evidence:
  *   ReDMCSB CHAMDRAW.C F0292 draws C008 for dead champions and
@@ -34,6 +35,8 @@
  *   championDamageTimer > 0.
  *   ReDMCSB CHAMDRAW.C F0291 draws the 16x16 hand-slot object icon
  *   at +1,+1 inside the 18x18 C033/C034/C035 hand slot box.
+ *   ReDMCSB CHAMDRAW.C F0292 lines 816-842 exits the dead champion
+ *   route before F0287 bar graphs and F0291 hand slots can overdraw C008.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -179,6 +182,70 @@ static int check_dead_status_box(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "slot%d C008 dead box perimeter match", slot);
     ok &= expect_true(label, expected > 0 && matched * 100 >= expected * 80);
     printf("slot%d dead box gfx=%d perimeter=%d/%d\n", slot, gfx, matched, expected);
+    return ok;
+}
+
+/* ReDMCSB: CHAMDRAW.C F0292 lines 816-842 blits C008 for a dead
+ * champion and then jumps out of the alive status route before
+ * F0287_CHAMPION_DrawBarGraphs (lines 72-156) can redraw the three
+ * 4x25 stat columns.  Verify the dead slot's HP/stamina/mana bar
+ * zones still contain C008 asset pixels after the full M11 draw. */
+static int check_dead_status_bar_columns_unmodified(const M11_GameViewState* game,
+                                                    const unsigned char* fb,
+                                                    int slot) {
+    int boxX, boxY, boxW, boxH;
+    int gfx = M11_GameView_GetV1DeadStatusBoxGraphicId();
+    const M11_AssetSlot* asset = M11_AssetLoader_Load(
+        (M11_AssetLoader*)&game->assetLoader, (unsigned int)gfx);
+    int ok = 1;
+    int stat;
+    char label[128];
+
+    snprintf(label, sizeof(label), "slot%d dead bar c008 status zone", slot);
+    ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(
+                                  slot, &boxX, &boxY, &boxW, &boxH) &&
+                             boxW == 67 && boxH == 29);
+    snprintf(label, sizeof(label), "slot%d dead bar c008 asset", slot);
+    ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
+                             asset->width == 67 && asset->height == 29);
+    if (!ok || !asset || !asset->pixels) {
+        return 0;
+    }
+
+    for (stat = 0; stat < 3; ++stat) {
+        int barX, barY, barW, barH;
+        int yy;
+        int matched = 0;
+        int expected = 0;
+        snprintf(label, sizeof(label), "slot%d dead stat%d bar c008 zone", slot, stat);
+        ok &= expect_true(label, M11_GameView_GetV1StatusBarZone(
+                                      slot, stat, &barX, &barY, &barW, &barH) &&
+                                 barW == 4 && barH == 25);
+        if (!ok) {
+            return 0;
+        }
+        for (yy = 0; yy < barH; ++yy) {
+            int xx;
+            for (xx = 0; xx < barW; ++xx) {
+                int srcX = (barX - boxX) + xx;
+                int srcY = (barY - boxY) + yy;
+                unsigned char src;
+                unsigned char dst;
+                if (srcX < 0 || srcX >= boxW || srcY < 0 || srcY >= boxH) {
+                    continue;
+                }
+                src = (unsigned char)(asset->pixels[srcY * (int)asset->width + srcX] & 0x0F);
+                dst = px_index(fb, PROBE_FB_W, barX + xx, barY + yy);
+                ++expected;
+                if (dst == src) ++matched;
+            }
+        }
+        snprintf(label, sizeof(label), "slot%d dead stat%d c008 column preserved",
+                 slot, stat);
+        ok &= expect_true(label, expected == barW * barH && matched == expected);
+        printf("slot%d dead stat%d C008 column=%d/%d\n",
+               slot, stat, matched, expected);
+    }
     return ok;
 }
 
@@ -479,6 +546,8 @@ int main(int argc, char** argv) {
 
     /* Slot 0: dead — must use C008 dead status box. */
     ok &= check_dead_status_box(&game, fb, 0);
+    /* Slot 0: dead — C008 bar columns must not be overdrawn by F0287. */
+    ok &= check_dead_status_bar_columns_unmodified(&game, fb, 0);
     /* Slot 1: alive poisoned — must blit C032 POISONED label. */
     ok &= check_poison_label(&game, fb, 1);
     /* Slot 2: alive with full shield stack — must show shield border(s). */
