@@ -86,6 +86,17 @@ static const DM1_WallFrame s_wall_frames[12] = {
     /* D0R */ { 192, 223,  0, 135,  16, 136,   0, 0 },
 };
 
+/* ReDMCSB DUNVIEW.C:1210-1216 G0208_aaauc_Graphic558_DoorButtonCoordinateSets
+ * stores the one DM1 C0_DOOR_BUTTON coordinate set in view-index order:
+ * C0 D3R, C1 D3C, C2 D2C, C3 D1C.  F0110 lines 4163 and 4204-4207 select
+ * one row, use source X/Y 0/0, and blit with C10 transparency. */
+static const DM1_WallFrame s_door_button_frames[DM1_VIEW_DOOR_BUTTON_COUNT] = {
+    /* D3R */ { 199, 204, 41, 44, 8, 4, 0, 0 },
+    /* D3C */ { 136, 141, 41, 44, 8, 4, 0, 0 },
+    /* D2C */ { 144, 155, 42, 47, 8, 6, 0, 0 },
+    /* D1C */ { 160, 175, 44, 52, 8, 9, 0, 0 },
+};
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -758,6 +769,73 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
     if (scratch_owned) {
         free(scratch);
     }
+}
+
+int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
+                                          int dst_width,
+                                          int dst_height,
+                                          int dst_stride,
+                                          int door_button_ordinal,
+                                          DM1_ViewDoorButtonIndex view_index,
+                                          const DM1_DoorButtonBitmapSpan *spans,
+                                          size_t span_count)
+{
+    if (!dst || dst_width <= 0 || dst_height <= 0 || dst_stride < dst_width) return 0;
+    if (door_button_ordinal <= 0) return 0;
+    if (view_index < 0 || view_index >= DM1_VIEW_DOOR_BUTTON_COUNT) return 0;
+
+    /* ReDMCSB F0110 lines 4159-4163 converts the ordinal to a zero-based
+     * door-button index, then selects G0208[coordinateSet][viewIndex]. */
+    size_t span_index = (size_t)(door_button_ordinal - 1) *
+                        (size_t)DM1_VIEW_DOOR_BUTTON_COUNT +
+                        (size_t)view_index;
+    if (!spans || span_index >= span_count) return 0;
+
+    const DM1_DoorButtonBitmapSpan *span = &spans[span_index];
+    const DM1_WallFrame *frame = &span->frame;
+    if (!span->pixels || span->source_width <= 0 || span->source_height <= 0) return 0;
+
+    int src_x = frame->blit_x;
+    int src_y = frame->blit_y;
+    int dst_x = frame->left_x;
+    int dst_y = frame->top_y;
+    int width = (int)frame->right_x - (int)frame->left_x + 1;
+    int height = (int)frame->bottom_y - (int)frame->top_y + 1;
+    if (width <= 0 || height <= 0) return 0;
+
+    if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+    if (dst_y < 0) { src_y -= dst_y; height += dst_y; dst_y = 0; }
+    if (src_x < 0) { dst_x -= src_x; width += src_x; src_x = 0; }
+    if (src_y < 0) { dst_y -= src_y; height += src_y; src_y = 0; }
+    if (dst_x + width > dst_width) width = dst_width - dst_x;
+    if (dst_y + height > dst_height) height = dst_height - dst_y;
+    if (src_x + width > span->source_width) width = span->source_width - src_x;
+    if (src_y + height > span->source_height) height = span->source_height - src_y;
+    if (width <= 0 || height <= 0) return 0;
+
+    int written = 0;
+    for (int y = 0; y < height; ++y) {
+        const uint8_t *src_row = span->pixels + (src_y + y) * span->source_width + src_x;
+        uint8_t *dst_row = dst + (dst_y + y) * dst_stride + dst_x;
+        for (int x = 0; x < width; ++x) {
+            uint8_t pixel = src_row[x];
+            /* ReDMCSB F0110 lines 4204-4207 delegates to F0132 with
+             * C10_COLOR_FLESH, so source pixel 10 is transparent. */
+            if (pixel != COLOR_TRANSPARENT) {
+                dst_row[x] = pixel;
+                ++written;
+            }
+        }
+    }
+    return written;
+}
+
+const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_ordinal,
+                                                                 DM1_ViewDoorButtonIndex view_index)
+{
+    if (door_button_ordinal != 1) return NULL;
+    if (view_index < 0 || view_index >= DM1_VIEW_DOOR_BUTTON_COUNT) return NULL;
+    return &s_door_button_frames[view_index];
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

@@ -518,6 +518,21 @@ typedef struct {
     uint8_t blit_y;     /* Source Y offset passed to F0132/F0684 */
 } DM1_WallFrame;
 
+typedef enum {
+    DM1_VIEW_DOOR_BUTTON_D3R = 0, /* C0_VIEW_DOOR_BUTTON_D3R */
+    DM1_VIEW_DOOR_BUTTON_D3C = 1, /* C1_VIEW_DOOR_BUTTON_D3C */
+    DM1_VIEW_DOOR_BUTTON_D2C = 2, /* C2_VIEW_DOOR_BUTTON_D2C */
+    DM1_VIEW_DOOR_BUTTON_D1C = 3, /* C3_VIEW_DOOR_BUTTON_D1C */
+    DM1_VIEW_DOOR_BUTTON_COUNT = 4
+} DM1_ViewDoorButtonIndex;
+
+typedef struct {
+    DM1_WallFrame frame;       /* G0208-style coordinate set plus src offset */
+    const uint8_t *pixels;     /* Native or pre-scaled derived bitmap span */
+    int16_t source_width;      /* Chunky source row stride in pixels */
+    int16_t source_height;     /* Source bitmap height in pixels */
+} DM1_DoorButtonBitmapSpan;
+
 /* Resolved source/destination rectangle for wall blits.  ReDMCSB passes the
  * frame/zone as the destination clip and frame[C6]/frame[C7] (or the bitmap
  * struct X/Y after F0635_) as the first source pixel.  This gate clips both
@@ -703,6 +718,30 @@ void dm1_viewport_3d_draw_door(DM1_Viewport3DState *state,
 void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const uint8_t *frame_bitmap,
                                              const DM1_WallFrame *frame);
+
+/*
+ * Draw a DM1 V1 door button bitmap span into a chunky destination buffer.
+ * door_button_ordinal follows ReDMCSB M000_INDEX_TO_ORDINAL semantics:
+ * 0 means no button; 1 selects C0_DOOR_BUTTON.
+ *
+ * Source: DUNVIEW.C F0110_DUNGEONVIEW_DrawDoorButton lines 4159-4207.
+ */
+int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
+                                          int dst_width,
+                                          int dst_height,
+                                          int dst_stride,
+                                          int door_button_ordinal,
+                                          DM1_ViewDoorButtonIndex view_index,
+                                          const DM1_DoorButtonBitmapSpan *spans,
+                                          size_t span_count);
+
+/*
+ * Return the source-locked C0_DOOR_BUTTON coordinate set for D3R/D3C/D2C/D1C.
+ * Source: DUNVIEW.C G0208_aaauc_Graphic558_DoorButtonCoordinateSets lines
+ * 1210-1216 and F0110 line 4163.
+ */
+const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_ordinal,
+                                                                 DM1_ViewDoorButtonIndex view_index);
 
 /*
  * Execute one full frame of 3D viewport wall rendering.
