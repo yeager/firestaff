@@ -493,6 +493,63 @@ static int check_cancel(M11_GameViewState* game,
     return ok;
 }
 
+static int check_reselect_after_cancel(M11_GameViewState* game,
+                                       const M11_AssetSlot* rrPanel,
+                                       int expectedOrdinal,
+                                       const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    int ok = 1;
+
+    /* ReDMCSB REVIVE.C:744-783 / F0282 cancel clears G0299 and removes the
+     * appended candidate, then returns before the REVIVE.C:785-799 mirror
+     * sensor-disable loop.  A second select in the same runtime view should
+     * therefore run REVIVE.C:272-276 / F0280 again at the same party slot. */
+    ok &= expect_int("pre-reselect panel off",
+                     game->candidateMirrorPanelActive, 0);
+    ok &= expect_int("pre-reselect champion count",
+                     game->world.party.championCount, 0);
+    ok &= expect_int("pre-reselect ordinal clear",
+                     game->candidateMirrorOrdinal, -1);
+    ok &= expect_int("pre-reselect party index clear",
+                     game->candidateMirrorPartyIndex, -1);
+    ok &= expect_int("pre-reselect front mirror still armed",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    if (M11_GameView_SelectFrontMirrorCandidate(game) != 1) {
+        fprintf(stderr, "FAIL %s reselect returned 0\n", label);
+        return 0;
+    }
+    ok &= expect_int("post-reselect panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-reselect inventory on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-reselect champion appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-reselect ordinal recorded",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-reselect party index reset",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-reselect front mirror still armed",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel missing after cancel reselect drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s cancel-reselect drawn=%d/%d championCount=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 static int check_pointer_reincarnate(M11_GameViewState* game,
                                      const M11_AssetSlot* rrPanel,
                                      const char* label) {
@@ -800,7 +857,12 @@ int main(int argc, char** argv) {
                          "corridor_north_select_for_cancel")) {
         ok = 0;
     } else {
-        ok &= check_cancel(&game2, rrPanel, "corridor_north_cancel");
+        if (check_cancel(&game2, rrPanel, "corridor_north_cancel")) {
+            ok &= check_reselect_after_cancel(&game2, rrPanel, 2,
+                                              "corridor_north_cancel_reselect");
+        } else {
+            ok = 0;
+        }
     }
     M11_GameView_Shutdown(&game2);
 
