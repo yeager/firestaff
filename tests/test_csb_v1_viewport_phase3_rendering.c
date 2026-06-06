@@ -147,6 +147,145 @@ static void test_csb_custom_background_slot_contracts(void)
                csb_v1_viewport_get_custom_background_slot_spec_for_room(16) == NULL);
 }
 
+static void test_csb_custom_background_bitmap_application_contracts(void)
+{
+    const size_t count = csb_v1_viewport_custom_background_slot_spec_count();
+
+    /* ReDMCSB: DUNVIEW.C F0128 lines 8337-8339 and 8443 establish the
+     * floor/ceiling baseline via F0098 lines 2962-3002. CSBWin:
+     * Viewport.cpp lines 5317-5325 translate room slots, 5402-5412 selects
+     * CSD/CSD-I34 background-library bitmaps, 6444-6470 composites through
+     * ApplyBackground, and 6567-6615 gates the runtime skin/mask layers. */
+    check_int("csb.custom_background_application.count",
+              (int)csb_v1_viewport_custom_background_bitmap_application_spec_count(),
+              (int)count);
+
+    for (size_t i = 0; i < count; ++i) {
+        char id[160];
+        const CSB_V1_ViewportCustomBackgroundSlotSpec *slot =
+            csb_v1_viewport_get_custom_background_slot_spec(i);
+        const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *app =
+            csb_v1_viewport_get_custom_background_bitmap_application_spec(i);
+        const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *by_room =
+            slot ? csb_v1_viewport_get_custom_background_bitmap_application_spec_for_room(
+                       slot->room_num) :
+                   NULL;
+
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.present", i);
+        check_true(id, app != NULL);
+        if (!app || !slot) continue;
+
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.matches_slot", i);
+        check_true(id, app->room_slot == slot);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.by_room", i);
+        check_true(id, by_room == app);
+
+        for (int facing = 0; facing < 4; ++facing) {
+            int got_x = 0;
+            int got_y = 0;
+            int want_x = 40;
+            int want_y = 50;
+
+            if (facing == 0) {
+                want_x += slot->relative_side;
+                want_y -= slot->relative_forward;
+            } else if (facing == 1) {
+                want_x += slot->relative_forward;
+                want_y += slot->relative_side;
+            } else if (facing == 2) {
+                want_x -= slot->relative_side;
+                want_y += slot->relative_forward;
+            } else {
+                want_x -= slot->relative_forward;
+                want_y -= slot->relative_side;
+            }
+
+            snprintf(id, sizeof(id),
+                     "csb.custom_background_application.%zu.facing%d.translate",
+                     i, facing);
+            check_true(id,
+                       csb_v1_viewport_custom_background_translate_cell(
+                           app, 40, 50, facing, &got_x, &got_y));
+            snprintf(id, sizeof(id),
+                     "csb.custom_background_application.%zu.facing%d.x",
+                     i, facing);
+            check_int(id, got_x, want_x);
+            snprintf(id, sizeof(id),
+                     "csb.custom_background_application.%zu.facing%d.y",
+                     i, facing);
+            check_int(id, got_y, want_y);
+        }
+
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.translation_gate", i);
+        check_int(id, app->uses_csbwin_relative_translation, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.bounds_gate", i);
+        check_int(id, app->checks_map_bounds_before_skin_lookup, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.default_skin", i);
+        check_int(id, app->uses_cell_skin_before_default_skin, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.skin_def_id", i);
+        check_int(id, app->skin_def_background_graphic_id, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.skin_min", i);
+        check_int(id, app->skin_def_min_bytes, 18);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.large_idx", i);
+        check_int(id, app->large_bitmap_skin_def_index, 0);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.large_mask_idx", i);
+        check_int(id, app->large_mask_skin_def_index, 4);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.large_mask_min", i);
+        check_int(id, app->large_mask_min_bytes, 64);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.large_bitmap_min", i);
+        check_int(id, app->large_bitmap_min_bytes, slot->large_bitmap_min_bytes);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.middle_idx", i);
+        check_int(id, app->middle_bitmap_skin_def_index, 2);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.middle_mask_idx", i);
+        check_int(id, app->middle_mask_skin_def_index, 6);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.middle_mask_min", i);
+        check_int(id, app->middle_mask_min_bytes, 64);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.middle_bitmap_min", i);
+        check_int(id, app->middle_bitmap_min_bytes, slot->middle_bitmap_min_bytes);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_idx", i);
+        check_int(id, app->near_bitmap_skin_def_index, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_mask_idx", i);
+        check_int(id, app->near_mask_skin_def_index, 5);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_mask_min", i);
+        check_int(id, app->near_mask_min_bytes, 20);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_bitmap_min", i);
+        check_int(id, app->near_bitmap_min_bytes, slot->near_bitmap_min_bytes);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_gate", i);
+        check_int(id, app->applies_near_layer, slot->room_num < 5);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.near_limit", i);
+        check_int(id, app->near_layer_room_num_limit, 5);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.csd_bitmap", i);
+        check_int(id, app->selects_csd_i34_background_bitmap, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.base_bitmap", i);
+        check_int(id, app->selects_redmcsb_base_bitmap, 0);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.baseline", i);
+        check_int(id, app->extends_redmcsb_floor_ceiling_baseline, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.composite", i);
+        check_int(id, app->applybackground_masked_composite, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.function", i);
+        check_true(id, strstr(app->csbwin_function, "CustomBackgrounds") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.redmcsb_f0128", i);
+        check_true(id, strstr(app->source_lines, "DUNVIEW.C:8337-8339,8443 F0128") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.redmcsb_f0098", i);
+        check_true(id, strstr(app->source_lines, "2962-3002 F0098") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.csbwin_getbitmap", i);
+        check_true(id, strstr(app->source_lines, "5402-5412 GetBitmap") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.csd_i34", i);
+        check_true(id, strstr(app->source_lines, "CSD/CSD-I34") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.applybackground", i);
+        check_true(id, strstr(app->source_lines, "6444-6470 ApplyBackground") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_application.%zu.runtime_apply", i);
+        check_true(id, strstr(app->source_lines, "6567-6615 CustomBackgrounds") != NULL);
+    }
+
+    check_true("csb.custom_background_application.out_of_range",
+               csb_v1_viewport_get_custom_background_bitmap_application_spec(count) == NULL);
+    check_true("csb.custom_background_application.unknown_room",
+               csb_v1_viewport_get_custom_background_bitmap_application_spec_for_room(16) == NULL);
+    check_true("csb.custom_background_application.translate_null",
+               !csb_v1_viewport_custom_background_translate_cell(NULL, 40, 50, 0, NULL, NULL));
+}
+
 static void test_csb_only_draw_order_and_coordinates(void)
 {
     static const struct {
@@ -1590,6 +1729,10 @@ static void test_source_evidence(void)
                e && strstr(e, "F0098 2962-3002") != NULL);
     check_true("evidence.custom_backgrounds_csbwin_relpos",
                e && strstr(e, "5317-5325 relposSid/relposFwd") != NULL);
+    check_true("evidence.custom_backgrounds_csbwin_getbitmap",
+               e && strstr(e, "5402-5412 GetBitmap CSD/CSD-I34") != NULL);
+    check_true("evidence.custom_backgrounds_csbwin_applybackground",
+               e && strstr(e, "6444-6470 ApplyBackground masked composite") != NULL);
     check_true("evidence.custom_backgrounds_csbwin_slots",
                e && strstr(e, "6919-7140 sixteen background room slots") != NULL);
 }
@@ -1599,6 +1742,7 @@ int main(void)
     test_config_defaults_and_setters();
     test_null_framebuffer_render_is_noop();
     test_csb_custom_background_slot_contracts();
+    test_csb_custom_background_bitmap_application_contracts();
     test_csb_only_draw_order_and_coordinates();
     test_csb_frame_and_zone_contracts();
     test_csb_wall_ornament_route_contracts();
