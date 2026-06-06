@@ -29,6 +29,9 @@
  *     and close-time rewrite compacts that visible array back to the chest
  *   CHAMPION.C F0302 lines 688-710: occupied open-chest slot clicks swap
  *     the leader-hand object with the selected G0425_aT_ChestSlots entry
+ *   CHAMPION.C F0302 lines 697-698 with DATA.C lines 1080-1087:
+ *     objects whose AllowedSlots lack MASK0x0400_CONTAINER return before
+ *     any chest-slot removal, leader-hand removal, relink, or redraw
  *   CHEST.C F0333 lines 58-75 and m11_process_v1_chest_slot_box_click:
  *     the open path is read-only on the source linked list, so the 9th
  *     and later tail items stay reachable through the 8th visible item's
@@ -800,6 +803,71 @@ static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
               "close after occupied chest-slot swap terminates the visible list");
     ASSERT_EQ(weapons[1].next, THING_ENDOFLIST,
               "close after occupied chest-slot swap keeps picked C538 detached");
+}
+
+static void test_open_chest_rejects_incompatible_leader_hand_without_mutation(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[4];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short torchThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    unsigned short axeThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    unsigned short staffThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    /* ReDMCSB CHAMPION.C F0302 lines 688-698 reads the selected
+     * G0425_aT_ChestSlots entry, then returns before F0077/F0300/F0297/
+     * F0301 when the leader-hand object's AllowedSlots do not intersect
+     * DATA.C lines 1080-1087 MASK0x0400_CONTAINER for C537..C544.
+     * DUNGEON.C G0237 line 108 gives Staff Of Claws 0x0040 (Quiver 1),
+     * so it must not swap with or disturb an occupied chest slot. */
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 4;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapons[0].type = 8; /* DUNGEON.C G0237 line 112: Dagger, Chest-allowed. */
+    weapons[0].next = torchThing;
+    weapons[1].type = 2; /* DUNGEON.C G0237 line 106: Torch, Chest-allowed. */
+    weapons[1].next = axeThing;
+    weapons[2].type = 8;
+    weapons[2].next = THING_ENDOFLIST;
+    weapons[3].type = 4; /* DUNGEON.C G0237 line 108: Staff Of Claws, Quiver 1 only. */
+    weapons[3].next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before incompatible leader-hand rejection");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, staffThing), 1,
+              "leader hand accepts Staff Of Claws before chest rejection");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &sx, &sy, &sw, &sh),
+                "C538 occupied chest slot zone exists for rejection");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_IGNORED,
+              "clicking C538 with quiver-only leader-hand object is source no-op");
+    ASSERT_EQ(state.lastWorldHash, 0xBADF00Du,
+              "incompatible chest-slot rejection does not refresh deterministic world hash");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), staffThing,
+              "incompatible chest-slot rejection keeps leader-hand object");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "incompatible chest-slot rejection keeps the chest panel open");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "incompatible chest-slot rejection preserves C537 list head");
+    ASSERT_EQ(weapons[0].next, torchThing,
+              "incompatible chest-slot rejection preserves link before C538");
+    ASSERT_EQ(weapons[1].next, axeThing,
+              "incompatible chest-slot rejection preserves occupied C538 link");
+    ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
+              "incompatible chest-slot rejection preserves list terminator");
+    ASSERT_EQ(weapons[3].next, THING_ENDOFLIST,
+              "incompatible chest-slot rejection leaves rejected object detached");
 }
 
 static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
@@ -2457,6 +2525,7 @@ int main(void) {
     test_open_chest_runtime_routes_and_clicks();
     test_open_chest_empty_slot_empty_hand_noops();
     test_open_chest_occupied_slot_swap_preserves_visible_order();
+    test_open_chest_rejects_incompatible_leader_hand_without_mutation();
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_slot_box_and_icon_source_pixels();
     test_open_chest_second_visible_slot_uses_second_object_icon();
