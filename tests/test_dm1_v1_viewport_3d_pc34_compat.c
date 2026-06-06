@@ -1145,6 +1145,130 @@ static void test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[76 * DM1_VIEWPORT_WIDTH + 74], 0xee);
 }
 
+static void test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        const char *id;
+        const char *function_name;
+        const char *function_source;
+        const char *return_source;
+        int zone;
+        int src_x;
+        int dst_x;
+        int visible_width;
+        int before_x;
+        int after_x;
+        uint8_t next_pixel;
+        uint8_t row_pixel;
+        uint8_t edge_pixel;
+        uint8_t bottom_pixel;
+    } cases[] = {
+        { DM1_VIEW_SQUARE_D3L, "d3l", "F0116_DUNGEONVIEW_DrawSquareD3L",
+          "DUNVIEW.C:6421-6427", "DUNVIEW.C:6432-6437",
+          DM1_PC34_ZONE_WALL_D3L, 32,   0, 32, -1,  32, 0x42, 0x44, 0x7e, 0x55 },
+        { DM1_VIEW_SQUARE_D3R, "d3r", "F0117_DUNGEONVIEW_DrawSquareD3R",
+          "DUNVIEW.C:6554-6564", "DUNVIEW.C:6568-6573",
+          DM1_PC34_ZONE_WALL_D3R,  0, 139, 64, 138, 203, 0x52, 0x54, 0x5e, 0x56 },
+    };
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[64 * 51];
+    DM1_Viewport3DState state;
+
+    /*
+     * ReDMCSB source-lock for the ordinary D3 far side wall routes:
+     *   - DUNVIEW.C:584-585 G0163 defines D3L as {0,83,25,75,64,51,32,0}
+     *     and D3R as {139,223,25,75,64,51,0,0}.
+     *   - DUNVIEW.C:6406-6408 F0116 and 6545-6547 F0117 route WALL
+     *     through F0100_DUNGEONVIEW_DrawWallSetBitmap, then return at
+     *     6432-6437 / 6568-6573 unless a front alcove reveals contents.
+     *   - DUNVIEW.C:3053-3058 F0100 forwards the frame to F0132 with
+     *     C10_COLOR_FLESH transparency; COORD.C:2390-2409 and
+     *     IMAGE3.C:866-889 clip the source row before copying pixels.
+     *
+     * This deliberately covers D3L/D3R only.  D3C, D3L2/D3R2, D2*, D1*,
+     * and D0* have separate gates in this file.
+     */
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(cases[i].square);
+        const DM1_ViewportWallDrawSpec *spec =
+            dm1_viewport_3d_get_wall_draw_spec_for_square(cases[i].square);
+        DM1_ViewportBlitClipGate gate;
+        char check[128];
+
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.frame", cases[i].id);
+        check_nonnull(check, frame);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.spec", cases[i].id);
+        check_nonnull(check, spec);
+        if (!frame || !spec) continue;
+
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.function", cases[i].id);
+        check_int(check, strcmp(spec->redmcsb_function, cases[i].function_name) == 0, 1);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.pc34_source", cases[i].id);
+        check_int(check, strstr(spec->source_lines, cases[i].function_source) != NULL, 1);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.return_source", cases[i].id);
+        check_int(check, strstr(spec->occlusion_source_lines, cases[i].return_source) != NULL, 1);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.zone", cases[i].id);
+        check_int(check, spec->pc34_zone, cases[i].zone);
+
+        gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.visible", cases[i].id);
+        check_int(check, gate.visible ? 1 : 0, 1);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.src_x", cases[i].id);
+        check_int(check, gate.src_x, cases[i].src_x);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.dst_x", cases[i].id);
+        check_int(check, gate.dst_x, cases[i].dst_x);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.dst_y", cases[i].id);
+        check_int(check, gate.dst_y, 25);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.width", cases[i].id);
+        check_int(check, gate.width, cases[i].visible_width);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.height", cases[i].id);
+        check_int(check, gate.height, 51);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.source_evidence", cases[i].id);
+        check_int(check,
+                  strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+                  strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+                  strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+        memset(viewport, 0xee, sizeof(viewport));
+        memset(bitmap, 10, sizeof(bitmap));
+        bitmap[0 * 64 + cases[i].src_x] = 10;
+        bitmap[0 * 64 + cases[i].src_x + 1] = cases[i].next_pixel;
+        bitmap[1 * 64 + cases[i].src_x] = cases[i].row_pixel;
+        bitmap[0 * 64 + cases[i].src_x + cases[i].visible_width - 1] = cases[i].edge_pixel;
+        bitmap[50 * 64 + cases[i].src_x + cases[i].visible_width - 1] = cases[i].bottom_pixel;
+        if (cases[i].src_x > 0) {
+            bitmap[0 * 64 + cases[i].src_x - 1] = 0x33;
+        }
+
+        dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+        dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.transparent_first_visible_skip", cases[i].id);
+        check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].dst_x], 0xee);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.next_source_pixel_copied", cases[i].id);
+        check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].dst_x + 1], cases[i].next_pixel);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.next_row_left_edge_copied", cases[i].id);
+        check_int(check, viewport[26 * DM1_VIEWPORT_WIDTH + cases[i].dst_x], cases[i].row_pixel);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.last_visible_pixel_copied", cases[i].id);
+        check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].dst_x + cases[i].visible_width - 1], cases[i].edge_pixel);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.bottom_row_marker", cases[i].id);
+        check_int(check, viewport[75 * DM1_VIEWPORT_WIDTH + cases[i].dst_x + cases[i].visible_width - 1], cases[i].bottom_pixel);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.row_before_frame_untouched", cases[i].id);
+        check_int(check, viewport[24 * DM1_VIEWPORT_WIDTH + cases[i].dst_x], 0xee);
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.row_after_frame_untouched", cases[i].id);
+        check_int(check, viewport[76 * DM1_VIEWPORT_WIDTH + cases[i].dst_x], 0xee);
+        if (cases[i].before_x >= 0) {
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.left_neighbor_untouched", cases[i].id);
+            check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].before_x], 0xee);
+        } else {
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.pre_blit_source_pixel_not_copied", cases[i].id);
+            check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].dst_x] != 0x33, 1);
+        }
+        snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.after_source_clip_untouched", cases[i].id);
+        check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].after_x], 0xee);
+    }
+}
+
 static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -2219,6 +2343,7 @@ int main(void)
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
     test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate();
