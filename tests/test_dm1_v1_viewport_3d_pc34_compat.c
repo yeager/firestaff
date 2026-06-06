@@ -1582,6 +1582,75 @@ static void test_d2c_center_wall_opaque_pixel_slice_uses_pc34_no_transparency_ro
               viewport[90 * DM1_VIEWPORT_WIDTH + 115], 0x55);
 }
 
+static void test_d2c_closed_door_panel_uses_temp_bitmap_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t door_bitmap[32 * 61];
+    DM1_Viewport3DState state;
+    DM1_WallFrame frame = { 80, 143, 24, 82, 32, 61, 0, 0 };
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB source-lock for the D2C closed-door panel:
+     *   - DUNVIEW.C:658-668 G0183_s_Graphic558_Frames_Door_D2C gives
+     *     ClosedOrDestroyed as {80,143,24,82,32,61,0,0}.
+     *   - DUNVIEW.C:7336 F0121_DUNGEONVIEW_DrawSquareD2C routes a
+     *     front door through F0111 with &G0183_s_Graphic558_Frames_Door_D2C.
+     *   - DUNVIEW.C:4229-4297 F0111 copies the native door bitmap into
+     *     G0074_puc_Bitmap_Temporary, applies ornaments, and for a closed
+     *     door calls F0102 with ClosedOrDestroyed.
+     *   - DUNVIEW.C:3082-3093 F0102 blits G0074_puc_Bitmap_Temporary to
+     *     G0296_puc_Bitmap_Viewport with C10 transparency; COORD.C:2390-2409
+     *     and IMAGE3.C:866-889 own the resolved viewport/source clip.
+     *
+     * This is a door-panel gate, not another wall-set lane.  It pins the
+     * temporary-bitmap source, C10 skip, and D2C closed-door frame clip.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(door_bitmap, 10, sizeof(door_bitmap));
+    door_bitmap[0 * 32 + 0] = 10;
+    door_bitmap[0 * 32 + 1] = 0x42;
+    door_bitmap[1 * 32 + 0] = 0x44;
+    door_bitmap[0 * 32 + 31] = 0x7e;
+    door_bitmap[58 * 32 + 31] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    state.temp_bitmap = door_bitmap;
+    state.temp_bitmap_size = (int)sizeof(door_bitmap);
+
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(&frame, frame.byte_width, frame.height);
+    check_int("d2c_closed_door_panel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d2c_closed_door_panel.src_x", gate.src_x, 0);
+    check_int("d2c_closed_door_panel.src_y", gate.src_y, 0);
+    check_int("d2c_closed_door_panel.dst_x", gate.dst_x, 80);
+    check_int("d2c_closed_door_panel.dst_y", gate.dst_y, 24);
+    check_int("d2c_closed_door_panel.visible_width", gate.width, 32);
+    check_int("d2c_closed_door_panel.visible_height", gate.height, 59);
+    check_int("d2c_closed_door_panel.source_evidence",
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_door(&state, &frame);
+    check_int("d2c_closed_door_panel.transparent_first_visible_skip",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 80], 0xee);
+    check_int("d2c_closed_door_panel.next_source_pixel_copied",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 81], 0x42);
+    check_int("d2c_closed_door_panel.left_edge_next_row_copied",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 80], 0x44);
+    check_int("d2c_closed_door_panel.column_before_dst_x_untouched",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 79], 0xee);
+    check_int("d2c_closed_door_panel.last_visible_pixel_copied",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 111], 0x7e);
+    check_int("d2c_closed_door_panel.frame_tail_after_source_clip_untouched",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 112], 0xee);
+    check_int("d2c_closed_door_panel.bottom_row_marker",
+              viewport[82 * DM1_VIEWPORT_WIDTH + 111], 0x55);
+    check_int("d2c_closed_door_panel.row_before_frame_untouched",
+              viewport[23 * DM1_VIEWPORT_WIDTH + 81], 0xee);
+    check_int("d2c_closed_door_panel.row_after_frame_untouched",
+              viewport[83 * DM1_VIEWPORT_WIDTH + 80], 0xee);
+}
+
 static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
 {
     /*
@@ -2694,6 +2763,7 @@ int main(void)
     test_d2r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_opaque_pixel_slice_uses_pc34_no_transparency_route();
+    test_d2c_closed_door_panel_uses_temp_bitmap_frame_clip();
     test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate();
     test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate();
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
