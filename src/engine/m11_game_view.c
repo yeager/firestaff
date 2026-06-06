@@ -9498,15 +9498,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
          * For each relForward step, shift by camX/camY scaled by relForward
          * so the view cone glides toward the target position. */
         if (camX != 0 || camY != 0) {
-            /* camFx/camFy = fractional step nudge per relForward unit.
-             * Use the larger of |camX| or |camY| to approximate the
-             * direction-magnitude of the camera offset as a step fraction. */
-            int camMag = (camX >= 0 ? camX : -camX) > (camY >= 0 ? camY : -camY)
-                             ? camX : camY;
+            /* camFx/camFy = fractional step nudge per relForward unit. */
             float camFx = (float)camX / (float)256.0f;
             float camFy = (float)camY / (float)256.0f;
-            /* Clamp to avoid reading outside the dungeon map */
-            (void)camFx; (void)camFy;
             /* Apply offset to the forward step (the dominant scroll axis).
              * relForward=-1 (D1, front cell): view cone shifts most.
              * relForward=-2 (D2): shifts less.
