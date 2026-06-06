@@ -178,6 +178,42 @@ static const DM1_ViewportFarObjectPassSpec s_far_object_pass_specs[] = {
     { DM1_VIEW_SQUARE_D4C, 4,  0, 0x0001, 16, true, "DUNVIEW.C:8474-8477; DEFS.H:2612 M597_VIEW_SQUARE_D4C" },
 };
 
+/* ReDMCSB DUNVIEW.C F0128 lines 8488-8499 dispatch D3L, D3R, then D3C
+ * after resolving their map cells through DUNGEON.C F0150 lines 1371-1421.
+ * F0116 lines 6406-6437 prove D3L wall/alcove handling returns before the
+ * ordinary F0115 object handoff unless the front ornament is an alcove, so a
+ * read-only D3L1 target excludes D3L itself while preserving the rest of the
+ * F0128 draw list. */
+static const DM1_ViewSquareIndex s_d3l1_no_write_allowed_squares[] = {
+    DM1_VIEW_SQUARE_D4L,
+    DM1_VIEW_SQUARE_D4R,
+    DM1_VIEW_SQUARE_D4C,
+    DM1_VIEW_SQUARE_D3L2,
+    DM1_VIEW_SQUARE_D3R2,
+    DM1_VIEW_SQUARE_D3R,
+    DM1_VIEW_SQUARE_D3C,
+    DM1_VIEW_SQUARE_D2L2,
+    DM1_VIEW_SQUARE_D2R2,
+    DM1_VIEW_SQUARE_D2L,
+    DM1_VIEW_SQUARE_D2R,
+    DM1_VIEW_SQUARE_D2C,
+    DM1_VIEW_SQUARE_D1L,
+    DM1_VIEW_SQUARE_D1R,
+    DM1_VIEW_SQUARE_D1C,
+    DM1_VIEW_SQUARE_D0L,
+    DM1_VIEW_SQUARE_D0R,
+    DM1_VIEW_SQUARE_D0C,
+};
+
+static const DM1_ViewportNoWriteSpec s_d3l1_no_write_spec = {
+    DM1_VIEW_SQUARE_D3L,
+    s_d3l1_no_write_allowed_squares,
+    sizeof(s_d3l1_no_write_allowed_squares) / sizeof(s_d3l1_no_write_allowed_squares[0]),
+    "F0116_DUNGEONVIEW_DrawSquareD3L",
+    "DUNVIEW.C:6361-6495 F0116; DUNVIEW.C:8488-8499 F0128 D3 dispatch; DUNGEON.C:1371-1421 F0150",
+    "DUNVIEW.C:6406-6437 wall case returns before F0115 unless front alcove; DUNVIEW.C:6475-6480 open-cell F0108/F0115 path"
+};
+
 
 /* PC34/I34E wall bitmap selection table, source-locked to the MEDIA709/720
  * draw calls in ReDMCSB DUNVIEW.C.  These entries encode the native draw
@@ -1335,6 +1371,11 @@ int dm1_viewport_3d_resolve_draw_order_step(size_t index,
         &out_step->map_x, &out_step->map_y);
 }
 
+const DM1_ViewportNoWriteSpec *dm1_viewport_3d_get_d3l1_no_write_spec(void)
+{
+    return &s_d3l1_no_write_spec;
+}
+
 
 size_t dm1_viewport_3d_wall_draw_spec_count(void)
 {
@@ -2150,6 +2191,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns\n"
+        "  DUNVIEW.C:6361-6495 F0116_DUNGEONVIEW_DrawSquareD3L D3L1 no-write target evidence; DUNVIEW.C:8488-8499 F0128 keeps adjacent D3 draw paths active\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"
         "  DUNVIEW.C:6500 F0117_DUNGEONVIEW_DrawSquareD3R\n"
         "  DUNVIEW.C:6642 F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n"

@@ -421,6 +421,20 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportResolvedDrawStep;
 
+/* Source-locked no-write coverage for a read-only view square.  The allowed
+ * list records the other F0128 view-square callbacks that remain eligible to
+ * draw while the target cell's own F0115/object handoff is locked out.
+ * Source: DUNVIEW.C:6361-6495 F0116_DUNGEONVIEW_DrawSquareD3L;
+ * DUNVIEW.C:8488-8499 F0128 D3 dispatch; DUNGEON.C:1371-1421 F0150. */
+typedef struct {
+    DM1_ViewSquareIndex target_square;
+    const DM1_ViewSquareIndex *allowed_touch_squares;
+    size_t allowed_touch_square_count;
+    const char *redmcsb_function;
+    const char *source_lines;
+    const char *source_evidence;
+} DM1_ViewportNoWriteSpec;
+
 /* Source-locked PC34/I34E wall bitmap selection for a wall square.
  *
  * ReDMCSB PC34 selects the opposite left/right bitmap and requests
@@ -759,6 +773,7 @@ int dm1_viewport_3d_resolve_draw_order_step(size_t index,
                                             int origin_x,
                                             int origin_y,
                                             DM1_ViewportResolvedDrawStep *out_step);
+const DM1_ViewportNoWriteSpec *dm1_viewport_3d_get_d3l1_no_write_spec(void);
 size_t dm1_viewport_3d_wall_draw_spec_count(void);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
