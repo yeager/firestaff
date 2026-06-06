@@ -191,6 +191,18 @@ typedef struct {
 
 typedef struct {
     int view_square;
+    int redmcsb_view_square_index;
+    int draws_only_for_teleporter;
+    int after_thing_pass;
+    int field_aspect_index;
+    int field_zone;
+    int uses_f0113_draw_field;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportTeleporterFieldSpec;
+
+typedef struct {
+    int view_square;
     int door_zone_base;
     int closed_record_type;
     int closed_parent_record;
@@ -305,6 +317,10 @@ int csb_v1_viewport_explosion_rebirth_step2_zone(const CSB_V1_ViewportExplosionB
 int csb_v1_viewport_explosion_centered_zone(const CSB_V1_ViewportExplosionBlitSpec *spec);
 int csb_v1_viewport_explosion_side_zone(const CSB_V1_ViewportExplosionBlitSpec *spec,
                                         unsigned char view_cell);
+
+size_t csb_v1_viewport_teleporter_field_spec_count(void);
+const CSB_V1_ViewportTeleporterFieldSpec *csb_v1_viewport_get_teleporter_field_spec(size_t index);
+const CSB_V1_ViewportTeleporterFieldSpec *csb_v1_viewport_get_teleporter_field_spec_for_square(int view_square);
 
 size_t csb_v1_viewport_door_panel_blit_spec_count(void);
 const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index);

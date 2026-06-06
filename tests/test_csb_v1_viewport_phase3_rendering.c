@@ -1103,6 +1103,89 @@ static void test_csb_f0115_explosion_blit_contracts(void)
                csb_v1_viewport_get_explosion_blit_spec_for_square(999) == NULL);
 }
 
+static void test_csb_teleporter_field_route_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int redmcsb_index;
+        int field_aspect;
+        int field_zone;
+        const char *function_name;
+        const char *route_anchor;
+        const char *f0108_anchor;
+        const char *f0115_anchor;
+        const char *zone_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 14, 0, 702, "F0676_DrawD3L2",
+          "6288-6290", "6284 F0108", "6286 F0115", "C702_ZONE_WALL_D3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 1, 703, "F0677_DrawD3R2",
+          "6355-6357", "6351 F0108", "6353 F0115", "C703_ZONE_WALL_D3R2" },
+    };
+
+    check_int("csb.teleporter_field.count",
+              (int)csb_v1_viewport_teleporter_field_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportTeleporterFieldSpec *spec =
+            csb_v1_viewport_get_teleporter_field_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportFloorOrnamentRouteSpec *floor_route =
+            csb_v1_viewport_get_floor_ornament_route_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportThingPassOrderSpec *thing_order =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.floor_route_present", i);
+        check_true(id, floor_route != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.thing_order_present", i);
+        check_true(id, thing_order != NULL);
+        if (!spec || !floor_route || !thing_order) continue;
+
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.redmcsb_index", i);
+        check_int(id, spec->redmcsb_view_square_index, expected[i].redmcsb_index);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.teleporter_only", i);
+        check_int(id, spec->draws_only_for_teleporter, 1);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.after_thing_pass", i);
+        check_int(id, spec->after_thing_pass, 1);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.field_aspect", i);
+        check_int(id, spec->field_aspect_index, expected[i].field_aspect);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.field_zone", i);
+        check_int(id, spec->field_zone, expected[i].field_zone);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.uses_f0113", i);
+        check_int(id, spec->uses_f0113_draw_field, 1);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.floor_branch", i);
+        check_int(id, floor_route->draws_corridor_floor_ornament, 1);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.thing_branch", i);
+        check_int(id, thing_order->corridor_cell_order > 0, 1);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+
+        /* ReDMCSB: DUNVIEW.C F0676/F0677 lines 6288-6290 and 6355-6357
+         * draw F0113 only after the teleporter path's F0108/F0115 work;
+         * line 377 supplies G2035, and DEFS.H 4042-4043 supplies C702/C703. */
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_route", i);
+        check_true(id, strstr(spec->source_lines, expected[i].route_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_f0108", i);
+        check_true(id, strstr(spec->source_lines, expected[i].f0108_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_f0115", i);
+        check_true(id, strstr(spec->source_lines, expected[i].f0115_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_g2035", i);
+        check_true(id, strstr(spec->source_lines, "DUNVIEW.C:377 G2035") != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_f0113", i);
+        check_true(id, strstr(spec->source_lines, "4382-4409 F0113") != NULL);
+        snprintf(id, sizeof(id), "csb.teleporter_field.%zu.source_zone", i);
+        check_true(id, strstr(spec->source_lines, expected[i].zone_anchor) != NULL);
+    }
+
+    check_true("csb.teleporter_field.out_of_range",
+               csb_v1_viewport_get_teleporter_field_spec(2) == NULL);
+    check_true("csb.teleporter_field.unknown_square",
+               csb_v1_viewport_get_teleporter_field_spec_for_square(999) == NULL);
+}
+
 static void test_csb_f0111_door_panel_blit_contracts(void)
 {
     static const struct {
@@ -1319,6 +1402,8 @@ static void test_source_evidence(void)
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
     check_true("evidence.f0115_explosion_zones", e && strstr(e, "C3000/C3007/C3014/C3031") != NULL);
     check_true("evidence.f0115_fluxcage", e && strstr(e, "fluxcage field deferral") != NULL);
+    check_true("evidence.teleporter_fields",
+               e && strstr(e, "draw teleporter fields through G2035") != NULL);
     check_true("evidence.f0107_wall_ornament_blit", e && strstr(e, "F0107 maps CSB/I34") != NULL);
     check_true("evidence.c1004_wall_ornament", e && strstr(e, "C1004_ZONE_WALL_ORNAMENT") != NULL);
     check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
@@ -1347,6 +1432,7 @@ int main(void)
     test_csb_f0115_object_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
     test_csb_f0115_explosion_blit_contracts();
+    test_csb_teleporter_field_route_contracts();
     test_csb_f0111_door_panel_blit_contracts();
     test_source_evidence();
 
