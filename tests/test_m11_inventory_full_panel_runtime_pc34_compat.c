@@ -55,6 +55,9 @@
  *     open-chest C537..C544 zone routes map to source commands C058..C065
  *     with the original (Left,Right,Top,Bottom) hit boxes that produce
  *     the non-uniform layout-696 child zones in kV1ChestSlotBoxZones
+ *   DUNGEON.C F0163 lines 1796-1837: chest close/rewrite relinks each
+ *     THING through the generic Next field, so mixed weapon/potion/junk
+ *     chains preserve visible slot order across type-specific storage.
  */
 
 #include "m11_game_view.h"
@@ -1845,6 +1848,74 @@ static void test_open_chest_middle_pickup_compacts_visible_list(void) {
               "middle chest pickup terminates the compacted visible list");
 }
 
+static void test_open_chest_pickup_preserves_mixed_type_tail_order(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonPotion_Compat potion;
+    struct DungeonJunk_Compat junk;
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short potionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
+    unsigned short junkThing = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    /* ReDMCSB CHAMPION.C F0302 lines 688-705 removes the selected
+     * C30+ G0425_aT_ChestSlots entry, and CHEST.C F0334 lines 117-129
+     * rebuilds the non-empty visible slots in order.  DUNGEON.C F0163
+     * lines 1796-1837 writes through GENERIC->Next, so the following
+     * potion/junk tail must keep its order after a weapon head pickup. */
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&potion, 0, sizeof(potion));
+    memset(&junk, 0, sizeof(junk));
+    memset(containers, 0, sizeof(containers));
+    things.potions = &potion;
+    things.potionCount = 1;
+    things.junks = &junk;
+    things.junkCount = 1;
+    things.containers = containers;
+    things.containerCount = 1;
+    weapon.type = 8;
+    weapon.next = potionThing;
+    potion.type = 1;
+    potion.next = junkThing;
+    junk.type = 0;
+    junk.next = THING_ENDOFLIST;
+    containers[0].slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before mixed-type tail pickup");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+                "C537 mixed-type head slot zone exists");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C537 picks the weapon head from a mixed-type chest chain");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "mixed-type pickup moves the weapon head to leader hand");
+    ASSERT_EQ(weapon.next, THING_ENDOFLIST,
+              "mixed-type pickup detaches the picked weapon head");
+    ASSERT_EQ(containers[0].slot, potionThing,
+              "mixed-type pickup promotes the potion tail to container head");
+    ASSERT_EQ(potion.next, junkThing,
+              "mixed-type pickup preserves potion-to-junk tail order");
+    ASSERT_EQ(junk.next, THING_ENDOFLIST,
+              "mixed-type pickup leaves junk tail terminating");
+    assert_world_hash_matches(&state,
+                              "mixed-type pickup refreshes deterministic world hash");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(containers[0].slot, potionThing,
+              "close after mixed-type pickup keeps potion as head");
+    ASSERT_EQ(potion.next, junkThing,
+              "close after mixed-type pickup preserves generic potion next link");
+    ASSERT_EQ(junk.next, THING_ENDOFLIST,
+              "close after mixed-type pickup preserves generic junk terminator");
+}
+
 static void test_open_chest_close_trims_to_eight_visible_slots(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -2592,6 +2663,7 @@ int main(void) {
     test_open_chest_eighth_visible_slot_uses_eighth_object_icon();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
     test_open_chest_middle_pickup_compacts_visible_list();
+    test_open_chest_pickup_preserves_mixed_type_tail_order();
     test_open_chest_close_trims_to_eight_visible_slots();
     test_open_chest_keeps_ninth_visible_chain_intact();
     test_open_chest_pickup_last_visible_slot_detaches_tail();
