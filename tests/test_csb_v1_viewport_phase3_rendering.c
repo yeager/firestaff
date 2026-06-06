@@ -1110,12 +1110,15 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         int zone;
         int parent_record;
         int dst_x;
+        int vertical_state2_zone;
+        int horizontal_state2_first_zone;
+        int horizontal_state2_final_zone;
         const char *function_name;
         const char *zone_anchor;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L2, 3700, 129, 24,
+        { DM1_VIEW_SQUARE_D3L2, 3700, 129, 24, 3702, 3708, 20089,
           "F0676_DrawD3L2", "C3700_ZONE_DOOR_D3L2" },
-        { DM1_VIEW_SQUARE_D3R2, 3710, 130, 88,
+        { DM1_VIEW_SQUARE_D3R2, 3710, 130, 88, 3712, 3718, 20099,
           "F0677_DrawD3R2", "C3710_ZONE_DOOR_D3R2" },
     };
 
@@ -1180,6 +1183,27 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.transparent", i);
         check_int(id, spec->transparent_color, 10);
 
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.open_first_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_first_half_zone(spec, 0, 1), -1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.open_final_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_final_zone(spec, 0, 1), -1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.closed_final_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_final_zone(spec, 4, 0), expected[i].zone);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_final_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_final_zone(spec, spec->destroyed_state, 1),
+                  expected[i].zone);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.vertical_partial_first_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_first_half_zone(spec, 2, 0), -1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.vertical_partial_final_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_final_zone(spec, 2, 0),
+                  expected[i].vertical_state2_zone);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.horizontal_partial_first_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_first_half_zone(spec, 2, 1),
+                  expected[i].horizontal_state2_first_zone);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.horizontal_partial_final_zone", i);
+        check_int(id, csb_v1_viewport_door_panel_final_zone(spec, 2, 1),
+                  expected[i].horizontal_state2_final_zone);
+
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.order_before", i);
         check_int(id, order->door_front_rear_f0115_order < order->door_front_f0111_order, 1);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.order_after", i);
@@ -1190,6 +1214,7 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         check_true(id, strstr(spec->source_lines, expected[i].zone_anchor) != NULL);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.f0111_source", i);
         check_true(id, strstr(spec->source_lines, "F0111:4248") != NULL &&
+                       strstr(spec->source_lines, "4298-4321") != NULL &&
                        strstr(spec->source_lines, "4334 F0791") != NULL);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_source", i);
         check_true(id, strstr(spec->source_lines, "4301-4302") != NULL &&
@@ -1256,6 +1281,16 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
               csb_v1_viewport_door_panel_blit_pixels(
                   csb_v1_viewport_get_door_panel_blit_spec(0), 4, (const uint8_t *)"x", 47,
                   (uint8_t *)"x", 48), -1);
+    check_int("csb.door_panel_blit.null_first_zone",
+              csb_v1_viewport_door_panel_first_half_zone(NULL, 2, 1), -1);
+    check_int("csb.door_panel_blit.bad_first_zone_state",
+              csb_v1_viewport_door_panel_first_half_zone(
+                  csb_v1_viewport_get_door_panel_blit_spec(0), -1, 1), -1);
+    check_int("csb.door_panel_blit.null_final_zone",
+              csb_v1_viewport_door_panel_final_zone(NULL, 2, 1), -1);
+    check_int("csb.door_panel_blit.bad_final_zone_state",
+              csb_v1_viewport_door_panel_final_zone(
+                  csb_v1_viewport_get_door_panel_blit_spec(0), -1, 1), -1);
     check_true("csb.door_panel_blit.out_of_range",
                csb_v1_viewport_get_door_panel_blit_spec(2) == NULL);
     check_true("csb.door_panel_blit.unknown_square",
