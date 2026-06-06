@@ -164,6 +164,13 @@ int csb_v1_boot_probe_available(const char *data_dir)
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 {
     if (!profile || !profile->assets_verified) return -1;
+    /* Re-entering the CSB profile replaces the live dungeon context just as
+     * ReDMCSB's global dungeon/map state is replaced when a new game is
+     * loaded.  Clear the previous heap-owned runtime before csb_v1_runtime_init
+     * overwrites its handle fields.
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
+    csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_runtime_init(&profile->runtime, profile->asset_root);
     profile->runtime.variant_id = profile->variant_id;
     profile->runtime.difficulty = CSB_V1_DIFFICULTY_HARD;
@@ -223,6 +230,12 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
 {
     if (!profile) return;
+    /* The boot profile owns the runtime handoff dungeon.  Release it through
+     * the same runtime cleanup path used by csb_v1_runtime_boot() so the
+     * singleton dungeon/map accessors do not retain a stale CSB context after
+     * leaving the profile.
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
+    csb_v1_runtime_cleanup(&profile->runtime);
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     memset(&profile->runtime, 0, sizeof(profile->runtime));
 }
