@@ -127,6 +127,26 @@ typedef struct {
 
 typedef struct {
     int view_square;
+    int view_wall_index;
+    int ornament_ordinal_slot;
+    int returns_alcove_to_square_draw;
+    int uses_d2_scaled_bitmap_path;
+    int uses_d1_native_bitmap_path;
+    int native_bitmap_index_increment;
+    int derived_bitmap_index_increment;
+    int scale;
+    int horizontal_flip;
+    int updates_d1_front_state;
+    int updates_wall_clickbox;
+    int draws_champion_portrait_overlay;
+    int zone_base;
+    int coordinate_set_stride;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportWallOrnamentD1D2PathSpec;
+
+typedef struct {
+    int view_square;
     int floor_view_index;
     int draws_corridor_floor_ornament;
     int draws_pit_floor_ornament;
@@ -370,6 +390,12 @@ int csb_v1_viewport_wall_ornament_blit_pixels(const CSB_V1_ViewportWallOrnamentB
 size_t csb_v1_viewport_wall_ornament_side_effect_spec_count(void);
 const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec(size_t index);
 const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square(int view_square);
+
+size_t csb_v1_viewport_wall_ornament_d1d2_path_spec_count(void);
+const CSB_V1_ViewportWallOrnamentD1D2PathSpec *csb_v1_viewport_get_wall_ornament_d1d2_path_spec(size_t index);
+int csb_v1_viewport_wall_ornament_d1d2_path_zone(
+    const CSB_V1_ViewportWallOrnamentD1D2PathSpec *spec,
+    int coordinate_set);
 
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void);
 const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index);

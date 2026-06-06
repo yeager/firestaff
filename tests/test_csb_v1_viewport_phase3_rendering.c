@@ -668,6 +668,117 @@ static void test_csb_f0107_wall_ornament_d3_side_effect_contracts(void)
                csb_v1_viewport_get_wall_ornament_side_effect_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0107_wall_ornament_d1d2_path_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int view_wall_index;
+        int slot;
+        int returns_alcove;
+        int uses_d2_scaled;
+        int uses_d1_native;
+        int native_increment;
+        int derived_increment;
+        int scale;
+        int flip;
+        int state;
+        int clickbox;
+        int portrait;
+        int zone0;
+        int zone2;
+        const char *function_name;
+        const char *route_anchor;
+        const char *defs_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D2L, 7, 1, 0, 1, 0, 0, 2, 21, 0, 0, 0, 0,
+          1011, 1041, "F0119_DrawSquareD2L", "6968 side F0107", "DEFS.H:2703" },
+        { DM1_VIEW_SQUARE_D2L, 9, 2, 1, 1, 0, 1, 3, 21, 0, 0, 0, 0,
+          1013, 1043, "F0119_DrawSquareD2L", "6969 front F0107", "DEFS.H:2705" },
+        { DM1_VIEW_SQUARE_D2R, 8, 3, 0, 1, 0, 0, 2, 21, 1, 0, 0, 0,
+          1012, 1042, "F0120_DrawSquareD2R", "7119 side F0107", "DEFS.H:2704" },
+        { DM1_VIEW_SQUARE_D2R, 11, 2, 1, 1, 0, 1, 3, 21, 0, 0, 0, 0,
+          1015, 1045, "F0120_DrawSquareD2R", "7120 front F0107", "DEFS.H:2707" },
+        { DM1_VIEW_SQUARE_D2C, 10, 2, 1, 1, 0, 1, 3, 21, 0, 0, 0, 0,
+          1014, 1044, "F0121_DrawSquareD2C", "7308 front F0107", "DEFS.H:2706" },
+        { DM1_VIEW_SQUARE_D1L, 12, 1, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0,
+          1016, 1046, "F0122_DrawSquareD1L", "7459 side F0107", "DEFS.H:2708" },
+        { DM1_VIEW_SQUARE_D1R, 13, 3, 0, 0, 1, 0, -1, 0, 1, 0, 0, 0,
+          1017, 1047, "F0123_DrawSquareD1R", "7627 side F0107", "DEFS.H:2709" },
+        { DM1_VIEW_SQUARE_D1C, 14, 2, 1, 0, 1, 1, -1, 0, 0, 1, 1, 1,
+          1018, 1048, "F0124_DrawSquareD1C", "7842 front F0107", "DEFS.H:2710" },
+    };
+
+    check_int("csb.wall_ornament_d1d2.count",
+              (int)csb_v1_viewport_wall_ornament_d1d2_path_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportWallOrnamentD1D2PathSpec *spec =
+            csb_v1_viewport_get_wall_ornament_d1d2_path_spec(i);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.present", i);
+        check_true(id, spec != NULL);
+        if (!spec) continue;
+
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.view_wall", i);
+        check_int(id, spec->view_wall_index, expected[i].view_wall_index);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.slot", i);
+        check_int(id, spec->ornament_ordinal_slot, expected[i].slot);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.return", i);
+        check_int(id, spec->returns_alcove_to_square_draw, expected[i].returns_alcove);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.d2_scaled", i);
+        check_int(id, spec->uses_d2_scaled_bitmap_path, expected[i].uses_d2_scaled);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.d1_native", i);
+        check_int(id, spec->uses_d1_native_bitmap_path, expected[i].uses_d1_native);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.native_inc", i);
+        check_int(id, spec->native_bitmap_index_increment, expected[i].native_increment);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.derived_inc", i);
+        check_int(id, spec->derived_bitmap_index_increment, expected[i].derived_increment);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.scale", i);
+        check_int(id, spec->scale, expected[i].scale);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.flip", i);
+        check_int(id, spec->horizontal_flip, expected[i].flip);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.d1_state", i);
+        check_int(id, spec->updates_d1_front_state, expected[i].state);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.clickbox", i);
+        check_int(id, spec->updates_wall_clickbox, expected[i].clickbox);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.portrait", i);
+        check_int(id, spec->draws_champion_portrait_overlay, expected[i].portrait);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.zone0", i);
+        check_int(id, csb_v1_viewport_wall_ornament_d1d2_path_zone(spec, 0),
+                  expected[i].zone0);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.zone2", i);
+        check_int(id, csb_v1_viewport_wall_ornament_d1d2_path_zone(spec, 2),
+                  expected[i].zone2);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+
+        /* ReDMCSB: DUNVIEW.C F0107 lines 3571-3589 build the
+         * ordinal->map-index and C1004 zone; lines 3817-3860 are the
+         * D2 scaled path, lines 3608-3760 are the D1 native path, and
+         * lines 3923-3928 are D1C-front-only clickbox/portrait work. */
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.route_source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].route_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.ordinal_source", i);
+        check_true(id, strstr(spec->source_lines, "3571-3589") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.zone_source", i);
+        check_true(id, strstr(spec->source_lines, "COORD.C:921-1025") != NULL);
+        snprintf(id, sizeof(id), "csb.wall_ornament_d1d2.%zu.defs_source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].defs_anchor) != NULL);
+    }
+
+    check_true("csb.wall_ornament_d1d2.out_of_range",
+               csb_v1_viewport_get_wall_ornament_d1d2_path_spec(8) == NULL);
+    check_int("csb.wall_ornament_d1d2.null_zone",
+              csb_v1_viewport_wall_ornament_d1d2_path_zone(NULL, 0), -1);
+    check_int("csb.wall_ornament_d1d2.bad_coord",
+              csb_v1_viewport_wall_ornament_d1d2_path_zone(
+                  csb_v1_viewport_get_wall_ornament_d1d2_path_spec(0), -1), -1);
+}
+
 static void test_csb_floor_ornament_route_contracts(void)
 {
     static const struct {
@@ -1842,6 +1953,14 @@ static void test_source_evidence(void)
     check_true("evidence.c1004_wall_ornament", e && strstr(e, "C1004_ZONE_WALL_ORNAMENT") != NULL);
     check_true("evidence.f0107_side_effects",
                e && strstr(e, "skips D1-only facing state") != NULL);
+    check_true("evidence.f0107_d1d2_paths",
+               e && strstr(e, "F0119-F0124 call F0107 for D2/D1") != NULL);
+    check_true("evidence.f0107_d2_scaled",
+               e && strstr(e, "D2 uses C21/G0199 derived scaled bitmaps") != NULL);
+    check_true("evidence.f0107_d1_native",
+               e && strstr(e, "D1 side uses native CM1_DERIVED_BITMAP_NONE") != NULL);
+    check_true("evidence.d1d2_view_walls",
+               e && strstr(e, "DEFS.H:2703-2710 M580..M587") != NULL);
     check_true("evidence.f0149_alcove",
                e && strstr(e, "F0149_DUNGEON_IsWallOrnamentAnAlcove") != NULL);
     check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
@@ -1878,6 +1997,7 @@ int main(void)
     test_csb_wall_ornament_route_contracts();
     test_csb_f0107_wall_ornament_blit_contracts();
     test_csb_f0107_wall_ornament_d3_side_effect_contracts();
+    test_csb_f0107_wall_ornament_d1d2_path_contracts();
     test_csb_floor_ornament_route_contracts();
     test_csb_f0108_floor_ornament_bitmap_blit_contracts();
     test_csb_thing_pass_order_contracts();

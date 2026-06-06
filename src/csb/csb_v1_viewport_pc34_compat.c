@@ -26,9 +26,18 @@
 
 enum {
     CSB_V1_ORNAMENT_SLOT_RIGHT = 1, /* M551_RIGHT_WALL_ORNAMENT_ORDINAL */
+    CSB_V1_ORNAMENT_SLOT_FRONT = 2, /* M552_FRONT_WALL_ORNAMENT_ORDINAL */
     CSB_V1_ORNAMENT_SLOT_LEFT = 3,  /* M553_LEFT_WALL_ORNAMENT_ORDINAL */
     CSB_V1_VIEW_WALL_D3L2_RIGHT = 0,
     CSB_V1_VIEW_WALL_D3R2_LEFT = 1,
+    CSB_V1_VIEW_WALL_D2L_RIGHT = 7,
+    CSB_V1_VIEW_WALL_D2R_LEFT = 8,
+    CSB_V1_VIEW_WALL_D2L_FRONT = 9,
+    CSB_V1_VIEW_WALL_D2C_FRONT = 10,
+    CSB_V1_VIEW_WALL_D2R_FRONT = 11,
+    CSB_V1_VIEW_WALL_D1L_RIGHT = 12,
+    CSB_V1_VIEW_WALL_D1R_LEFT = 13,
+    CSB_V1_VIEW_WALL_D1C_FRONT = 14,
     CSB_V1_NO_ORNAMENT_SLOT = -1,
     CSB_V1_NO_VIEW_WALL = -1,
     CSB_V1_VIEW_FLOOR_D3L2 = 0, /* C00_VIEW_FLOOR_D3L2 */
@@ -93,10 +102,14 @@ enum {
     CSB_V1_WALL_ORNAMENT_COORD_STRIDE = 15, /* MEDIA720 C15_UNKNOWN */
     CSB_V1_WALL_ORNAMENT_SCALE_X_D3 = 30, /* C30_SCALE_ */
     CSB_V1_WALL_ORNAMENT_SCALE_Y_D3 = 14, /* C14_SCALE_ */
+    CSB_V1_WALL_ORNAMENT_SCALE_D2 = 21, /* C21_SCALE_ */
     CSB_V1_WALL_ORNAMENT_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
     CSB_V1_WALL_ORNAMENT_ORDINAL_TO_INDEX_DELTA = -1,
     CSB_V1_WALL_ORNAMENT_D3L2_BITMAP_INCREMENT = 0,
     CSB_V1_WALL_ORNAMENT_D3R2_BITMAP_INCREMENT = 0,
+    CSB_V1_WALL_ORNAMENT_D2_SIDE_DERIVED_INCREMENT = 2,
+    CSB_V1_WALL_ORNAMENT_D2_FRONT_DERIVED_INCREMENT = 3,
+    CSB_V1_WALL_ORNAMENT_D1_SIDE_DERIVED_INCREMENT = 4,
     CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE = -1, /* CM1_DERIVED_BITMAP_NONE */
     CSB_V1_FLOOR_ORNAMENT_ZONE_BASE = 1500, /* C1500_ZONE_FLOOR_ORNAMENT */
     CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE = 11,
@@ -350,6 +363,105 @@ static const CSB_V1_ViewportWallOrnamentSideEffectSpec s_wall_ornament_side_effe
         "DUNVIEW.C:6330 calls F0107(C01_VIEW_WALL_D3R2_LEFT). F0107:3589 evaluates F0149_DUNGEON_IsWallOrnamentAnAlcove; 3608 gates D1-only facing/clickbox state; 3726-3744 updates facing alcove/Vi altar/fountain only inside that D1 branch; 3817-3829 routes C00/C01 through I34 D3 scaled bitmap with CM1_DERIVED_BITMAP_NONE; 3923-3928 champion portrait overlay is only M587_VIEW_WALL_D1C_FRONT. DUNGEON.C:1330-1347 F0149 alcove predicate. DEFS.H:2697/2708-2710."
     },
 };
+
+/* ReDMCSB: DUNVIEW.C F0107 lines 3571-3589, 3608-3753,
+ * 3817-3860, and 3921-3928; F0119/F0120/F0121/F0122/F0123/F0124
+ * wall branches at lines 6968-6969, 7119-7120, 7308, 7459, 7627,
+ * and 7842.  These D1/D2 calls are distinct from the CSB-only
+ * D3L2/D3R2 path: D2 uses the derived scaled-bitmap route and only
+ * front D2 ornaments can return an alcove cell order, while D1 side
+ * ornaments use the native bitmap path without updating the D1-front
+ * interaction state.  D1C front alone owns the facing/clickbox/portrait
+ * side effects. */
+#define CSB_D1D2_WALL_ORNAMENT_PATH(square_, view_wall_, slot_, returns_, d2_, d1_, native_inc_, derived_inc_, scale_, flip_, state_, clickbox_, portrait_, fn_, source_) \
+    { \
+        (int)(square_), \
+        (view_wall_), \
+        (slot_), \
+        (returns_), \
+        (d2_), \
+        (d1_), \
+        (native_inc_), \
+        (derived_inc_), \
+        (scale_), \
+        (flip_), \
+        (state_), \
+        (clickbox_), \
+        (portrait_), \
+        CSB_V1_WALL_ORNAMENT_ZONE_BASE, \
+        CSB_V1_WALL_ORNAMENT_COORD_STRIDE, \
+        (fn_), \
+        (source_) \
+    }
+
+static const CSB_V1_ViewportWallOrnamentD1D2PathSpec s_wall_ornament_d1d2_paths[] = {
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D2L,
+        CSB_V1_VIEW_WALL_D2L_RIGHT,
+        CSB_V1_ORNAMENT_SLOT_RIGHT,
+        0, 1, 0, 0, CSB_V1_WALL_ORNAMENT_D2_SIDE_DERIVED_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_SCALE_D2, CSB_V1_FLIP_NONE, 0, 0, 0,
+        "F0119_DrawSquareD2L",
+        "DUNVIEW.C:6968 side F0107(M551, M580_VIEW_WALL_D2L_RIGHT) ignores return; F0107:3571-3589 ordinal/index/zone/alcove; 3817-3860 D2 C21 scaled derived-bitmap path with G0190 increment 2 and G0199 D2 palette; 3921-3923 F0791 C10. DEFS.H:2703,4222; DUNVIEW.C:805-819 G0190; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D2L,
+        CSB_V1_VIEW_WALL_D2L_FRONT,
+        CSB_V1_ORNAMENT_SLOT_FRONT,
+        1, 1, 0, 1, CSB_V1_WALL_ORNAMENT_D2_FRONT_DERIVED_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_SCALE_D2, CSB_V1_FLIP_NONE, 0, 0, 0,
+        "F0119_DrawSquareD2L",
+        "DUNVIEW.C:6969 front F0107(M552, M582_VIEW_WALL_D2L_FRONT) controls C0x0000 alcove order; F0107:3571-3589 ordinal/index/zone/alcove; 3800-3804 D2L front X adjustment; 3817-3860 D2 C21 scaled derived-bitmap path with G0190 increment 3 and native bitmap +1; 3921-3923 F0791 C10. DEFS.H:2705,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D2R,
+        CSB_V1_VIEW_WALL_D2R_LEFT,
+        CSB_V1_ORNAMENT_SLOT_LEFT,
+        0, 1, 0, 0, CSB_V1_WALL_ORNAMENT_D2_SIDE_DERIVED_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_SCALE_D2, CSB_V1_FLIP_HORIZONTAL, 0, 0, 0,
+        "F0120_DrawSquareD2R",
+        "DUNVIEW.C:7119 side F0107(M553, M581_VIEW_WALL_D2R_LEFT) ignores return; F0107:3571-3589 ordinal/index/zone/alcove; 3817-3819 sets horizontal flip; 3817-3860 D2 C21 scaled derived-bitmap path with G0190 increment 2 and G0199 D2 palette; 3921-3923 F0791 C10. DEFS.H:2704,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D2R,
+        CSB_V1_VIEW_WALL_D2R_FRONT,
+        CSB_V1_ORNAMENT_SLOT_FRONT,
+        1, 1, 0, 1, CSB_V1_WALL_ORNAMENT_D2_FRONT_DERIVED_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_SCALE_D2, CSB_V1_FLIP_NONE, 0, 0, 0,
+        "F0120_DrawSquareD2R",
+        "DUNVIEW.C:7120 front F0107(M552, M584_VIEW_WALL_D2R_FRONT) controls C0x0000 alcove order; F0107:3571-3589 ordinal/index/zone/alcove; 3782-3784 D2R front offset; 3817-3860 D2 C21 scaled derived-bitmap path with G0190 increment 3 and native bitmap +1; 3921-3923 F0791 C10. DEFS.H:2707,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D2C,
+        CSB_V1_VIEW_WALL_D2C_FRONT,
+        CSB_V1_ORNAMENT_SLOT_FRONT,
+        1, 1, 0, 1, CSB_V1_WALL_ORNAMENT_D2_FRONT_DERIVED_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_SCALE_D2, CSB_V1_FLIP_NONE, 0, 0, 0,
+        "F0121_DrawSquareD2C",
+        "DUNVIEW.C:7308 front F0107(M552, M583_VIEW_WALL_D2C_FRONT) controls C0x0000 alcove order; F0107:3571-3589 ordinal/index/zone/alcove; 3817-3860 D2 C21 scaled derived-bitmap path with G0190 increment 3 and native bitmap +1; 3921-3923 F0791 C10. DEFS.H:2706,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D1L,
+        CSB_V1_VIEW_WALL_D1L_RIGHT,
+        CSB_V1_ORNAMENT_SLOT_RIGHT,
+        0, 0, 1, 0, CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE,
+        0, CSB_V1_FLIP_NONE, 0, 0, 0,
+        "F0122_DrawSquareD1L",
+        "DUNVIEW.C:7459 side F0107(M551, M585_VIEW_WALL_D1L_RIGHT) ignores return; F0107:3571-3589 ordinal/index/zone/alcove; 3608 enters D1 branch, 3755-3760 uses native/CM1_DERIVED_BITMAP_NONE path, 3921-3923 F0791 C10; no 3726-3744 facing state because it is not M587. DEFS.H:2708,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D1R,
+        CSB_V1_VIEW_WALL_D1R_LEFT,
+        CSB_V1_ORNAMENT_SLOT_LEFT,
+        0, 0, 1, 0, CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE,
+        0, CSB_V1_FLIP_HORIZONTAL, 0, 0, 0,
+        "F0123_DrawSquareD1R",
+        "DUNVIEW.C:7627 side F0107(M553, M586_VIEW_WALL_D1R_LEFT) ignores return; F0107:3571-3589 ordinal/index/zone/alcove; 3608 enters D1 branch, 3751-3752 sets horizontal flip, 3755-3760 uses native/CM1_DERIVED_BITMAP_NONE path, 3921-3923 F0791 C10; no 3726-3744 facing state because it is not M587. DEFS.H:2709,4222; COORD.C:921-1025."),
+    CSB_D1D2_WALL_ORNAMENT_PATH(
+        DM1_VIEW_SQUARE_D1C,
+        CSB_V1_VIEW_WALL_D1C_FRONT,
+        CSB_V1_ORNAMENT_SLOT_FRONT,
+        1, 0, 1, 1, CSB_V1_WALL_ORNAMENT_DERIVED_BITMAP_NONE,
+        0, CSB_V1_FLIP_NONE, 1, 1, 1,
+        "F0124_DrawSquareD1C",
+        "DUNVIEW.C:7842 front F0107(M552, M587_VIEW_WALL_D1C_FRONT) controls C0x0000 alcove F0115; F0107:3571-3589 ordinal/index/zone/alcove; 3608-3744 D1-front branch updates facing alcove/Vi altar/fountain, 3722 native bitmap +1, 3923-3928 copies clickbox and draws champion portrait overlay when present. DEFS.H:2710,4222; COORD.C:921-1025.")
+};
+
+#undef CSB_D1D2_WALL_ORNAMENT_PATH
 
 /* ReDMCSB: DUNVIEW.C F0676/F0677 lines 6270-6286 and 6337-6353.
  * The CSB-only D3L2/D3R2 routes call F0108 before the rear F0115 pass,
@@ -1066,6 +1178,27 @@ const CSB_V1_ViewportWallOrnamentSideEffectSpec *csb_v1_viewport_get_wall_orname
     return NULL;
 }
 
+size_t csb_v1_viewport_wall_ornament_d1d2_path_spec_count(void)
+{
+    return sizeof(s_wall_ornament_d1d2_paths) / sizeof(s_wall_ornament_d1d2_paths[0]);
+}
+
+const CSB_V1_ViewportWallOrnamentD1D2PathSpec *
+csb_v1_viewport_get_wall_ornament_d1d2_path_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_wall_ornament_d1d2_path_spec_count()) return NULL;
+    return &s_wall_ornament_d1d2_paths[index];
+}
+
+int csb_v1_viewport_wall_ornament_d1d2_path_zone(
+    const CSB_V1_ViewportWallOrnamentD1D2PathSpec *spec,
+    int coordinate_set)
+{
+    if (!spec || coordinate_set < 0) return -1;
+    return spec->zone_base + (coordinate_set * spec->coordinate_set_stride) +
+           spec->view_wall_index;
+}
+
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void)
 {
     return sizeof(s_floor_ornament_routes) / sizeof(s_floor_ornament_routes[0]);
@@ -1497,6 +1630,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  6288-6290 and 6355-6357 F0676/F0677 draw teleporter fields through G2035, F0113, and C702/C703 after the F0108/F0115 path\n"
         "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
         "  3589, 3608-3753, 3817-3829, 3923-3928 F0107 evaluates F0149 alcove status for C00/C01 but skips D1-only facing state, clickbox copy, and champion portrait overlay while using the I34 D3 CM1_DERIVED_BITMAP_NONE scaled path\n"
+        "  6968-6969,7119-7120,7308,7459,7627,7842 F0119-F0124 call F0107 for D2/D1 wall ornaments; D2 uses C21/G0199 derived scaled bitmaps, D1 side uses native CM1_DERIVED_BITMAP_NONE, and only D1C front updates facing/clickbox/portrait state\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  4301-4302 F0111 applies C15_DOOR_ORNAMENT_DESTROYED_MASK for C5_DOOR_STATE_DESTROYED\n"
@@ -1509,6 +1643,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
         "  DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT; COORD.C:903-913 floor ornament zone records\n"
         "  DEFS.H:4222 C1004_ZONE_WALL_ORNAMENT; COORD.C:921-1025 wall ornament zone records\n"
+        "  DEFS.H:2703-2710 M580..M587 D2/D1 view-wall indices\n"
         "  DEFS.H:4228 C2500_ZONE_; COORD.C:1129-1193 object zone records\n"
         "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
         "  DEFS.H:4042-4043 C702/C703 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
