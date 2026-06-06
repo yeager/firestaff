@@ -113,6 +113,32 @@ int main(void)
         }
     }
 
+    /*
+     * CHAMDRAW.C:F0292 source lock:
+     * - 750: status box origin is championIndex * C69.
+     * - 1080-1088: ACTION_HAND redraw calls F0291 with
+     *   C01_SLOT_ACTION_HAND before drawing the action icon.
+     * CHAMDRAW.C:F0291 source lock:
+     * - 536-548: non-inventory champion hand slot box index is
+     *   (championIndex << 1) + slotIndex.
+     */
+    {
+        int readyX, readyY;
+        int actionX, actionY;
+        DM1_ChampionPanel_StatusHandSlotXY(3, DM1_SLOT_READY_HAND,
+                                           &readyX, &readyY);
+        DM1_ChampionPanel_StatusHandSlotXY(3, DM1_SLOT_ACTION_HAND,
+                                           &actionX, &actionY);
+        if (readyX != 211 || readyY != 10 ||
+            actionX != 231 || actionY != 10 ||
+            actionX - readyX != 20) {
+            fprintf(stderr,
+                    "FAIL: F0292/F0291 status hand route ready=(%d,%d) action=(%d,%d)\n",
+                    readyX, readyY, actionX, actionY);
+            failures++;
+        }
+    }
+
     /* CHAMDRAW.C F0289/F0290 inventory champion numeric values */
     if (DM1_ZONE_HEALTH_VALUE != 550 ||
         DM1_ZONE_MANA_VALUE != 551 ||
