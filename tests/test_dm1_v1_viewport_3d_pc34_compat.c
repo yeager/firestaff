@@ -1147,6 +1147,174 @@ static void test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[91 * DM1_VIEWPORT_WIDTH + 60], 0xee);
 }
 
+static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
+{
+    /*
+     * ReDMCSB source-lock for the MEDIA720 near-side lane:
+     *   - DUNVIEW.C:581-594 G0163 covers the ordinary D2L/D2R/D2C wall
+     *     frames; D2L2/D2R2 are not G0163 wall-frame entries.
+     *   - DUNVIEW.C:6837-6865 F0678 and 6868-6896 F0679 route only WALL
+     *     and TELEPORTER for D2L2/D2R2.  WALL uses C707/C708 through
+     *     F0104/F0105 and returns before any F0115 thing pass.
+     *   - DUNVIEW.C:3048-3058 F0100, 3113-3129 F0104, and 3185-3204 F0105
+     *     all land in the same transparent blit clipping path, with
+     *     COORD.C:2390-2409 / IMAGE3.C:866-889 rejecting empty source or
+     *     viewport intersections before pixels are copied.
+     */
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t assets[32 * DM1_VIEWPORT_BYTE_WIDTH];
+    uint8_t grid[4 * 4];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *d2l2_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L2);
+    const DM1_WallFrame *d2r2_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R2);
+    const DM1_ViewportWallDrawSpec *d2l2_spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2L2);
+    const DM1_ViewportWallDrawSpec *d2r2_spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2R2);
+    const DM1_ViewportFloorFieldOrderSpec *d2l2_order =
+        dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D2L2);
+    const DM1_ViewportFloorFieldOrderSpec *d2r2_order =
+        dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D2R2);
+    uint8_t *d2l2_bitmap;
+    uint8_t *d2r2_bitmap;
+
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(assets, 10, sizeof(assets));
+    memset(grid, DM1_VP_ELEMENT_WALL, sizeof(grid));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    state.dungeon_grid = grid;
+    state.dungeon_width = 4;
+    state.dungeon_height = 4;
+    state.wall_set_native[DM1_WALL_D2L2] = 0;
+    state.wall_set_native[DM1_WALL_D2R2] = 14;
+    d2l2_bitmap = assets + state.wall_set_native[DM1_WALL_D2L2] * DM1_VIEWPORT_BYTE_WIDTH;
+    d2r2_bitmap = assets + state.wall_set_native[DM1_WALL_D2R2] * DM1_VIEWPORT_BYTE_WIDTH;
+
+    check_nonnull("d2l2_d2r2_gate.frame.d2l2", d2l2_frame);
+    check_nonnull("d2l2_d2r2_gate.frame.d2r2", d2r2_frame);
+    check_nonnull("d2l2_d2r2_gate.spec.d2l2", d2l2_spec);
+    check_nonnull("d2l2_d2r2_gate.spec.d2r2", d2r2_spec);
+    check_nonnull("d2l2_d2r2_gate.order.d2l2", d2l2_order);
+    check_nonnull("d2l2_d2r2_gate.order.d2r2", d2r2_order);
+    if (!d2l2_frame || !d2r2_frame || !d2l2_spec || !d2r2_spec ||
+        !d2l2_order || !d2r2_order) {
+        return;
+    }
+
+    check_int("d2l2_d2r2_gate.d2l2_src_x", d2l2_frame->blit_x, 30);
+    check_int("d2l2_d2r2_gate.d2l2_visible_width",
+              dm1_viewport_3d_resolve_wall_blit_clip_gate(
+                  d2l2_frame, d2l2_frame->byte_width, d2l2_frame->height).width,
+              6);
+    check_int("d2l2_d2r2_gate.d2r2_visible_width",
+              dm1_viewport_3d_resolve_wall_blit_clip_gate(
+                  d2r2_frame, d2r2_frame->byte_width, d2r2_frame->height).width,
+              36);
+    check_int("d2l2_d2r2_gate.d2l2_zone", d2l2_spec->pc34_zone, DM1_PC34_ZONE_WALL_D2L2);
+    check_int("d2l2_d2r2_gate.d2r2_zone", d2r2_spec->pc34_zone, DM1_PC34_ZONE_WALL_D2R2);
+    check_int("d2l2_d2r2_gate.d2l2_wall_source",
+              strstr(d2l2_spec->source_lines, "DUNVIEW.C:6849-6858") != NULL &&
+              strstr(d2l2_spec->occlusion_source_lines, "DUNVIEW.C:6848-6862") != NULL,
+              1);
+    check_int("d2l2_d2r2_gate.d2r2_wall_source",
+              strstr(d2r2_spec->source_lines, "DUNVIEW.C:6880-6889") != NULL &&
+              strstr(d2r2_spec->occlusion_source_lines, "DUNVIEW.C:6882-6893") != NULL,
+              1);
+    check_int("d2l2_d2r2_gate.no_f0115_d2l2",
+              !d2l2_order->objects_creatures_projectiles_before_explosions &&
+              strstr(d2l2_order->things_source_lines, "no F0115 thing pass") != NULL,
+              1);
+    check_int("d2l2_d2r2_gate.no_f0115_d2r2",
+              !d2r2_order->objects_creatures_projectiles_before_explosions &&
+              strstr(d2r2_order->things_source_lines, "no F0115 thing pass") != NULL,
+              1);
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(assets);
+
+    /* D2L2 native: F0678 chooses C06_WALL_D2L2 and C707_ZONE_WALL_D2L2.
+     * The D2L2 source starts at x=30, so only source columns 30..35 can
+     * reach viewport x=0..5; the rest of the frame's 38 columns are clipped. */
+    d2l2_bitmap[0 * 36 + 29] = 0x31;
+    d2l2_bitmap[0 * 36 + 30] = 10;
+    d2l2_bitmap[0 * 36 + 31] = 0x42;
+    d2l2_bitmap[0 * 36 + 35] = 0x7e;
+    d2l2_bitmap[70 * 36 + 35] = 0x55;
+    state.parity_flip = false;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.d2l2_native_transparent_skip",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d2l2_d2r2_gate.d2l2_native_next_pixel",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 1], 0x42);
+    check_int("d2l2_d2r2_gate.d2l2_native_pre_src_not_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0] != 0x31, 1);
+    check_int("d2l2_d2r2_gate.d2l2_native_right_edge",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 5], 0x7e);
+    check_int("d2l2_d2r2_gate.d2l2_native_column_after_clip",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 6], 0xee);
+    check_int("d2l2_d2r2_gate.d2l2_native_bottom_edge",
+              viewport[90 * DM1_VIEWPORT_WIDTH + 5], 0x55);
+
+    /* D2R2 native: F0679 chooses C05_WALL_D2R2 and C708_ZONE_WALL_D2R2. */
+    memset(viewport, 0xee, sizeof(viewport));
+    d2r2_bitmap[0 * 36 + 0] = 10;
+    d2r2_bitmap[0 * 36 + 1] = 0x52;
+    d2r2_bitmap[0 * 36 + 35] = 0x5e;
+    d2r2_bitmap[70 * 36 + 35] = 0x56;
+    state.parity_flip = false;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2R2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.d2r2_native_transparent_skip",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0xee);
+    check_int("d2l2_d2r2_gate.d2r2_native_next_pixel",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 187], 0x52);
+    check_int("d2l2_d2r2_gate.d2r2_native_right_edge",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 221], 0x5e);
+    check_int("d2l2_d2r2_gate.d2r2_native_column_after_clip",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 222], 0xee);
+    check_int("d2l2_d2r2_gate.d2r2_native_bottom_edge",
+              viewport[90 * DM1_VIEWPORT_WIDTH + 221], 0x56);
+
+    /* D2L2 parity: F0678 chooses C05_WALL_D2R2, flips it, and still writes
+     * only the C707 clipped D2L2 strip. */
+    memset(viewport, 0xee, sizeof(viewport));
+    d2r2_bitmap[0 * 36 + 5] = 10;
+    d2r2_bitmap[0 * 36 + 4] = 0x63;
+    d2r2_bitmap[0 * 36 + 0] = 0x6e;
+    state.parity_flip = true;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.d2l2_parity_uses_d2r2_transparent",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d2l2_d2r2_gate.d2l2_parity_flipped_next",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 1], 0x63);
+    check_int("d2l2_d2r2_gate.d2l2_parity_flipped_right_edge",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 5], 0x6e);
+    check_int("d2l2_d2r2_gate.d2l2_parity_d2r2_zone_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0xee);
+
+    /* Non-wall/non-teleporter elements are explicit no-ops for F0678/F0679:
+     * no pit, stairs, floor ornament, object, creature, projectile, or
+     * explosion pass is reachable before the helper returns. */
+    memset(viewport, 0xee, sizeof(viewport));
+    grid[1 * 4 + 1] = DM1_VP_ELEMENT_PIT;
+    state.parity_flip = false;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2R2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.pit_no_write_left",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0xee);
+    check_int("d2l2_d2r2_gate.pit_no_write_right",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 221], 0xee);
+
+    /* Teleporter is the only non-wall write route and goes directly through
+     * F0113 with C707/C708; this proves the no-thing contract is not a blanket
+     * no-op for all non-wall squares. */
+    grid[1 * 4 + 1] = DM1_VP_ELEMENT_TELEPORTER;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2R2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.teleporter_writes_d2r2_zone",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0x1c);
+    check_int("d2l2_d2r2_gate.teleporter_left_zone_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+}
+
 static void test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -1725,6 +1893,7 @@ int main(void)
     test_wall_draw_uses_clip_gate_source_offsets();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate();
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d1r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
