@@ -37,6 +37,10 @@
  *   PANEL.C F0349 lines 1788-1817: empty-hand mouth click redraws the
  *     food/water/poisoned panel; F0345 lines 1597-1615 blits C020/C030/
  *     C031/C032 into C101/C500/C501/C502 before drawing source bars
+ *   COMMAND.C lines 498-507 G0456_as_Graphic561_MouseInput_PanelChest:
+ *     open-chest C537..C544 zone routes map to source commands C058..C065
+ *     with the original (Left,Right,Top,Bottom) hit boxes that produce
+ *     the non-uniform layout-696 child zones in kV1ChestSlotBoxZones
  */
 
 #include "m11_game_view.h"
@@ -1533,6 +1537,105 @@ static void test_champion_statistic_maximum_row_runtime_state(void) {
     ASSERT_EQ(maximum, 50, "champion statistic round-trip maximum value");
 }
 
+static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {
+    /* ReDMCSB COMMAND.C:498-507 G0456_as_Graphic561_MouseInput_PanelChest
+     * defines the eight C058..C065 commands whose viewport-relative slot
+     * boxes C537..C544 zigzag across the open chest panel C106 child
+     * zones from layout-696.  Slots 0..2 sit at y=59, 76, 93 and the
+     * last five are tightly stacked at y=98, 101, 103, 104, 105.  This
+     * regression exercises all eight so future tweaks to kV1ChestSlotBoxZones
+     * or the M11_DM1_MOUSE_LIST_INVENTORY routing table cannot silently
+     * remap a chest slot to a wrong command/zone pair.
+     *
+     * Ref: ReDMCSB COMMAND.C:498-507, CHEST.C F0333:58-75,
+     *      CHEST.C F0334:112-133, PANEL.C F0347:1651-1691. */
+    static const int kSourceCommand[8] = { 58, 59, 60, 61, 62, 63, 64, 65 };
+    static const int kSourceZoneId[8]  = { 537, 538, 539, 540, 541, 542, 543, 544 };
+    static const int kExpectedX[8]      = { 117, 106, 111, 128, 145, 162, 179, 196 };
+    static const int kExpectedY[8]      = {  59,  76,  93,  98, 101, 103, 104, 105 };
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short weaponThings[8];
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int space = 0, zone = 0;
+    int i;
+
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 8;
+    things.containers = containers;
+    things.containerCount = 1;
+    for (i = 0; i < 8; ++i) {
+        weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+        weapons[i].type = 2; /* object-info index 25: container-compatible. */
+        weapons[i].next = (i < 7) ? weaponThings[i + 1] : THING_ENDOFLIST;
+    }
+    containers[0].slot = weaponThings[0];
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before all-eight-slot mouse route probe");
+
+    for (i = 0; i < 8; ++i) {
+        int clickX = 0, clickY = 0;
+        ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(i, &sx, &sy, &sw, &sh),
+                    "C537..C544 chest slot zone exists for every ordinal");
+        /* The runtime stores zone coordinates in viewport-relative form
+         * (parent zone C101) but M11_GameView_GetV1MouseCommandForPoint
+         * takes screen-relative coordinates, so the y origin must add
+         * M11_VIEWPORT_Y=33 (DM1 viewport y offset). */
+        ASSERT_EQ(sx, kExpectedX[i],
+                  "C537..C544 zone x matches the source layout-696 chest panel C106 child");
+        ASSERT_EQ(sy, kExpectedY[i],
+                  "C537..C544 zone y matches the source layout-696 chest panel C106 child");
+        clickX = sx + sw / 2;
+        clickY = 33 + sy + sh / 2;
+        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+                                                         clickX,
+                                                         clickY,
+                                                         M11_DM1_MOUSE_MASK_LEFT,
+                                                         &space,
+                                                         &zone),
+                  kSourceCommand[i],
+                  "C537..C544 click resolves to the source C058..C065 mouse command");
+        ASSERT_EQ(zone, kSourceZoneId[i],
+                  "C537..C544 click returns the source C537..C544 zone id");
+    }
+
+    /* Pick the seventh visible slot (C544) — chest slots 3..7 are 1-2
+     * pixels apart vertically, so a wrong remap could mis-pick the
+     * sixth item while still claiming C544 routed correctly. */
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(6, &sx, &sy, &sw, &sh),
+                "C543 chest slot zone exists for late-slot pickup probe");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         sx + sw / 2,
+                                         33 + sy + sh / 2,
+                                         1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C543 picks the seventh visible chest object");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), weaponThings[6],
+              "C543 pickup moves the seventh visible chest object to leader hand");
+    ASSERT_EQ(weapons[5].next, weaponThings[7],
+              "C543 pickup links slot 6 around the empty seventh slot");
+    ASSERT_EQ(weapons[6].next, THING_ENDOFLIST,
+              "C543 pickup detaches the picked object from the chest chain");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "closing the panel after all-eight-slot probe clears chest state");
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "close rewrite keeps the first visible chest object as the head");
+    /* CHEST.C F0334:112-133 only re-emits the first 8 visible slots, so
+     * after the C543 pickup the close writeback must yield a 7-item list. */
+    ASSERT_EQ(weapons[6].next, THING_ENDOFLIST,
+              "close writeback terminates after the seventh surviving visible item");
+}
+
 static void test_eye_panel_champion_stats_and_skills(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -1697,6 +1800,7 @@ int main(void) {
     test_leader_hand_weapon_eye_blits_source_object_description_pixels();
     test_champion_statistic_maximum_row_runtime_state();
     test_eye_panel_champion_stats_and_skills();
+    test_open_chest_all_eight_slot_mouse_routes_and_pickup();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
