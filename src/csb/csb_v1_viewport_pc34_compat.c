@@ -87,6 +87,8 @@ enum {
     CSB_V1_FIELD_ZONE_D3R2 = 703, /* C703_ZONE_WALL_D3R2 */
     CSB_V1_FIELD_ZONE_D2L2 = 707, /* C707_ZONE_WALL_D2L2 */
     CSB_V1_FIELD_ZONE_D2R2 = 708, /* C708_ZONE_WALL_D2R2 */
+    CSB_V1_WALL_BITMAP_D2R2 = 5, /* DEFS.H:3428 C05_WALL_D2R2 */
+    CSB_V1_WALL_BITMAP_D2L2 = 6, /* DEFS.H:3429 C06_WALL_D2L2 */
     CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED = 1,
     CSB_V1_DOOR_PANEL_PARENT_D3L2 = 129,
     CSB_V1_DOOR_PANEL_PARENT_D3R2 = 130,
@@ -1100,6 +1102,45 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
 }
 
+/* ReDMCSB: DUNVIEW.C F0678 lines 6848-6862 and F0679 lines
+ * 6879-6893.  The CSB/I34 D2L2/D2R2 wall case draws only the wall panel:
+ * normal rendering uses its own G2107 wall-set bitmap (C06 for D2L2,
+ * C05 for D2R2), while G0076_B_UseFlippedWallAndFootprintsBitmaps swaps
+ * to the opposite bitmap and calls the flipped blitter.  The wall branch
+ * returns before the teleporter-only F0113 path at lines 6863-6865 and
+ * 6894-6896. */
+int csb_v1_viewport_near_wall_d2_wall_bitmap_index(int view_square,
+                                                   int use_flipped_wall_bitmaps)
+{
+    if (view_square == (int)DM1_VIEW_SQUARE_D2L2) {
+        return use_flipped_wall_bitmaps ? CSB_V1_WALL_BITMAP_D2R2 :
+                                          CSB_V1_WALL_BITMAP_D2L2;
+    }
+    if (view_square == (int)DM1_VIEW_SQUARE_D2R2) {
+        return use_flipped_wall_bitmaps ? CSB_V1_WALL_BITMAP_D2L2 :
+                                          CSB_V1_WALL_BITMAP_D2R2;
+    }
+    return -1;
+}
+
+int csb_v1_viewport_near_wall_d2_wall_zone(int view_square)
+{
+    if (view_square == (int)DM1_VIEW_SQUARE_D2L2) return CSB_V1_FIELD_ZONE_D2L2;
+    if (view_square == (int)DM1_VIEW_SQUARE_D2R2) return CSB_V1_FIELD_ZONE_D2R2;
+    return -1;
+}
+
+int csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit(
+    int view_square,
+    int use_flipped_wall_bitmaps)
+{
+    if (view_square != (int)DM1_VIEW_SQUARE_D2L2 &&
+        view_square != (int)DM1_VIEW_SQUARE_D2R2) {
+        return -1;
+    }
+    return use_flipped_wall_bitmaps ? 1 : 0;
+}
+
 size_t csb_v1_viewport_wall_ornament_route_spec_count(void)
 {
     return sizeof(s_wall_ornament_routes) / sizeof(s_wall_ornament_routes[0]);
@@ -1656,6 +1697,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  5920-6219 F0115 maps PC34/I34 explosions through G2034/G2035, C3000/C3007/C3014/C3031 zones, F0791 C10 blits, and fluxcage field deferral\n"
         "  6288-6290 and 6355-6357 F0676/F0677 draw teleporter fields through G2035, F0113, and C702/C703 after the F0108/F0115 path\n"
         "  6863-6865 and 6894-6896 F0678/F0679 draw D2L2/D2R2 teleporter fields through G2035, F0113, and C707/C708 without F0108/F0115\n"
+        "  6848-6862 and 6879-6893 F0678/F0679 D2L2/D2R2 wall branches swap C06/C05 wall bitmaps under G0076 and return before the teleporter field path\n"
         "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
         "  3589, 3608-3753, 3817-3829, 3923-3928 F0107 evaluates F0149 alcove status for C00/C01 but skips D1-only facing state, clickbox copy, and champion portrait overlay while using the I34 D3 CM1_DERIVED_BITMAP_NONE scaled path\n"
         "  6968-6969,7119-7120,7308,7459,7627,7842 F0119-F0124 call F0107 for D2/D1 wall ornaments; D2 uses C21/G0199 derived scaled bitmaps, D1 side uses native CM1_DERIVED_BITMAP_NONE, and only D1C front updates facing/clickbox/portrait state\n"
@@ -1675,6 +1717,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:4228 C2500_ZONE_; COORD.C:1129-1193 object zone records\n"
         "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
         "  DEFS.H:4042-4048 C702/C703/C707/C708 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
+        "  DEFS.H:3428-3429 C05_WALL_D2R2 / C06_WALL_D2L2\n"
         "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
