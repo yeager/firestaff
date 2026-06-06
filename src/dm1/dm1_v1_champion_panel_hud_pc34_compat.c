@@ -93,6 +93,41 @@ int DM1_ChampionPanel_BuildStatusBoxModel(
     return 1;
 }
 
+int DM1_ChampionPanel_BuildIconBitmapModel(
+    int championIndex, int championDirection, int partyDirection,
+    int invisibilityCount, DM1_ChampionPanel_IconBitmapModel *outModel)
+{
+    int iconIndex;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        championDirection < 0 || championDirection > 3 ||
+        partyDirection < 0 || partyDirection > 3) {
+        return 0;
+    }
+
+    memset(outModel, 0, sizeof(*outModel));
+    iconIndex = (championDirection + 4 - partyDirection) & 0x0003;
+
+    /*
+     * ReDMCSB: CHAMDRAW.C F0622 line ~41 stores the 19x14 champion icon
+     * bitmap dimensions. Lines ~59-65 fill with C01 while party invisibility
+     * is active, blit C028 from M026(Direction,PartyDirection) * 19 using C12
+     * as transparent color, and then apply the invisibility palette changes.
+     */
+    outModel->width = DM1_CHAMPION_ICON_WIDTH;
+    outModel->height = DM1_CHAMPION_ICON_HEIGHT;
+    outModel->fillColor = invisibilityCount > 0
+        ? DM1_COLOR_DARK_GRAY
+        : DM1_ChampionColor[championIndex];
+    outModel->graphicId = DM1_GFX_CHAMPION_ICONS;
+    outModel->sourceX = iconIndex * DM1_CHAMPION_ICON_WIDTH;
+    outModel->sourceY = 0;
+    outModel->transparentColor = DM1_COLOR_DARKEST_GRAY;
+    outModel->applyInvisibilityPalette = invisibilityCount > 0;
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Slot box graphic — CHAMDRAW.C F0291_CHAMPION_DrawSlot
  *
@@ -685,4 +720,3 @@ int DM1_ChampionPanel_SelfTest(void)
  *   PANEL.C:802 F0805_C
  *   PANEL.C:841 F0817_S
  * ══════════════════════════════════════════════════════════════════════ */
-

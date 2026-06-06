@@ -74,6 +74,57 @@ int main(void)
     }
 
     /*
+     * ReDMCSB: CHAMDRAW.C F0622 line ~41:
+     *   M100/M101 set champion icon dimensions to G2080_C19/G2081_C14.
+     * ReDMCSB: CHAMDRAW.C F0622 lines ~59-65:
+     *   PC34 fills the bitmap with C01 while Event71Count_Invisibility is
+     *   nonzero, otherwise the champion color; blits C028 from
+     *   M026_CHAMPION_ICON_INDEX(Direction,PartyDirection) * 19 with C12
+     *   transparency; then applies G2362 invisibility palette changes.
+     */
+    {
+        DM1_ChampionPanel_IconBitmapModel icon;
+        if (!DM1_ChampionPanel_BuildIconBitmapModel(2, 1, 3, 0, &icon) ||
+            icon.width != DM1_CHAMPION_ICON_WIDTH ||
+            icon.height != DM1_CHAMPION_ICON_HEIGHT ||
+            icon.fillColor != DM1_COLOR_RED ||
+            icon.graphicId != DM1_GFX_CHAMPION_ICONS ||
+            icon.sourceX != 38 ||
+            icon.sourceY != 0 ||
+            icon.transparentColor != DM1_COLOR_DARKEST_GRAY ||
+            icon.applyInvisibilityPalette != 0) {
+            fprintf(stderr,
+                    "FAIL: F0622 visible champion icon model fill=%d gfx=%d src=(%d,%d) transparent=%d palette=%d size=%dx%d\n",
+                    icon.fillColor,
+                    icon.graphicId,
+                    icon.sourceX,
+                    icon.sourceY,
+                    icon.transparentColor,
+                    icon.applyInvisibilityPalette,
+                    icon.width,
+                    icon.height);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_BuildIconBitmapModel(0, 0, 1, 7, &icon) ||
+            icon.fillColor != DM1_COLOR_DARK_GRAY ||
+            icon.sourceX != 57 ||
+            icon.applyInvisibilityPalette != 1) {
+            fprintf(stderr,
+                    "FAIL: F0622 invisible champion icon model fill=%d srcX=%d palette=%d\n",
+                    icon.fillColor,
+                    icon.sourceX,
+                    icon.applyInvisibilityPalette);
+            failures++;
+        }
+        if (DM1_ChampionPanel_BuildIconBitmapModel(4, 0, 0, 0, &icon) ||
+            DM1_ChampionPanel_BuildIconBitmapModel(0, 4, 0, 0, &icon) ||
+            DM1_ChampionPanel_BuildIconBitmapModel(0, 0, -1, 0, &icon)) {
+            fprintf(stderr, "FAIL: F0622 champion icon model accepts invalid input\n");
+            failures++;
+        }
+    }
+
+    /*
      * CHAMDRAW.C:F0292 champion-icon redraw source lock:
      * - 1019: icon box index is M026_CHAMPION_ICON_INDEX(Cell, partyDir).
      * - 1020: redraw is suppressed when the mouse pointer uses ordinal
