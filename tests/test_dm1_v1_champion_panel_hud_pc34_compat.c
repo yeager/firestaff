@@ -512,6 +512,105 @@ int main(void)
         }
     }
 
+    /*
+     * ReDMCSB: CHAMDRAW.C F0292 line ~791:
+     * - 791-801 clears a three-entry border list, then appends
+     *   C038 fire shield, C039 spell shield, and C037 party/champion
+     *   shield in that order for a live STATUS_BOX redraw.
+     * - 802-808 blits by decrementing the count, so the visible draw
+     *   order is the reverse of the append order.
+     * ReDMCSB: DEFS.H line ~2197 anchors C037/C038/C039 graphic IDs.
+     * ReDMCSB: DATA.C line ~207 keeps all three shield-border graphics
+     * mandatory, matching the HUD route's assumption that they are loaded.
+     */
+    {
+        enum {
+            DM1_GFX_BORDER_PARTY_SHIELD = 37,
+            DM1_GFX_BORDER_PARTY_FIRESHIELD = 38,
+            DM1_GFX_BORDER_PARTY_SPELLSHIELD = 39
+        };
+        static const struct {
+            int fireShieldDefense;
+            int spellShieldDefense;
+            int partyShieldDefense;
+            int championShieldDefense;
+            int expectedCount;
+            int expectedAppend[3];
+            int expectedDraw[3];
+            const char *label;
+        } borderCases[] = {
+            { 0, 0, 0, 0, 0, { 0, 0, 0 }, { 0, 0, 0 }, "none" },
+            { 0, 0, 1, 0, 1,
+              { DM1_GFX_BORDER_PARTY_SHIELD, 0, 0 },
+              { DM1_GFX_BORDER_PARTY_SHIELD, 0, 0 },
+              "party_shield" },
+            { 0, 0, 0, 1, 1,
+              { DM1_GFX_BORDER_PARTY_SHIELD, 0, 0 },
+              { DM1_GFX_BORDER_PARTY_SHIELD, 0, 0 },
+              "champion_shield" },
+            { 1, 1, 1, 0, 3,
+              { DM1_GFX_BORDER_PARTY_FIRESHIELD,
+                DM1_GFX_BORDER_PARTY_SPELLSHIELD,
+                DM1_GFX_BORDER_PARTY_SHIELD },
+              { DM1_GFX_BORDER_PARTY_SHIELD,
+                DM1_GFX_BORDER_PARTY_SPELLSHIELD,
+                DM1_GFX_BORDER_PARTY_FIRESHIELD },
+              "all_party" },
+            { 1, 0, 0, 1, 2,
+              { DM1_GFX_BORDER_PARTY_FIRESHIELD,
+                DM1_GFX_BORDER_PARTY_SHIELD, 0 },
+              { DM1_GFX_BORDER_PARTY_SHIELD,
+                DM1_GFX_BORDER_PARTY_FIRESHIELD, 0 },
+              "fire_champion" },
+        };
+        size_t i;
+
+        if (DM1_GFX_BORDER_PARTY_SHIELD != 37 ||
+            DM1_GFX_BORDER_PARTY_FIRESHIELD != 38 ||
+            DM1_GFX_BORDER_PARTY_SPELLSHIELD != 39) {
+            fprintf(stderr, "FAIL: F0292 shield-border graphic IDs\n");
+            failures++;
+        }
+
+        for (i = 0; i < sizeof(borderCases) / sizeof(borderCases[0]); ++i) {
+            int appended[3] = { 0, 0, 0 };
+            int drawn[3] = { 0, 0, 0 };
+            int appendCount = 0;
+            int drawCount = 0;
+            int cursor;
+
+            if (borderCases[i].fireShieldDefense > 0) {
+                appended[appendCount++] = DM1_GFX_BORDER_PARTY_FIRESHIELD;
+            }
+            if (borderCases[i].spellShieldDefense > 0) {
+                appended[appendCount++] = DM1_GFX_BORDER_PARTY_SPELLSHIELD;
+            }
+            if (borderCases[i].partyShieldDefense > 0 ||
+                borderCases[i].championShieldDefense > 0) {
+                appended[appendCount++] = DM1_GFX_BORDER_PARTY_SHIELD;
+            }
+
+            cursor = appendCount;
+            while (cursor > 0) {
+                drawn[drawCount++] = appended[--cursor];
+            }
+
+            if (appendCount != borderCases[i].expectedCount ||
+                drawCount != borderCases[i].expectedCount ||
+                memcmp(appended, borderCases[i].expectedAppend, sizeof(appended)) != 0 ||
+                memcmp(drawn, borderCases[i].expectedDraw, sizeof(drawn)) != 0) {
+                fprintf(stderr,
+                        "FAIL: F0292 shield-border stack %s count=%d drawCount=%d append={%d,%d,%d} draw={%d,%d,%d}\n",
+                        borderCases[i].label,
+                        appendCount,
+                        drawCount,
+                        appended[0], appended[1], appended[2],
+                        drawn[0], drawn[1], drawn[2]);
+                failures++;
+            }
+        }
+    }
+
     if (failures == 0) {
         printf("PASS: all champion panel HUD source-lock assertions passed.\n");
     } else {
