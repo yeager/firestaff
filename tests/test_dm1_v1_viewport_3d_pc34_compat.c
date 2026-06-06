@@ -2266,6 +2266,81 @@ static void test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[135 * DM1_VIEWPORT_WIDTH + 8], 0x55);
 }
 
+static void test_d0r_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[16 * 136];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D0R);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB: DUNVIEW.C G0163 line 594 gives D0R as
+     * {192,223,0,135,16,136,0,0}; F0126 lines 8117-8144 routes WALL
+     * through the PC34 D0R wall zone and returns, while F0100 lines
+     * 3048-3058 forwards the frame to F0132 with C10 transparency.
+     * COORD.C:2390-2409 / IMAGE3.C:866-889 clip the row to the source
+     * byte width before copying pixels.
+     *
+     * D0R is the nearest visible right side wall (depth 0, lateral +1)
+     * drawn just before D0C in F0128 (DUNVIEW.C:8538-8541).  Its
+     * byte_width=16 in a 32-wide native bitmap (G0702_puc_Bitmap_
+     * WallSet_Wall_D0R, STARTUP2.C:557) means the source clip only
+     * writes viewport columns 192..207 even though the frame spans
+     * 192..223.  This pins the party-side right band so the extra
+     * frame columns cannot start repainting the champion panel area.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 10, sizeof(bitmap));
+    check_nonnull("d0r_narrow_side_wall_pixel.frame", frame);
+    if (!frame) return;
+
+    /* First visible column 0 holds the C10 transparency sentinel. */
+    bitmap[0 * 16 + 0] = 10;
+    /* First opaque visible column 1. */
+    bitmap[0 * 16 + 1] = 0x42;
+    /* Last visible column 15 of the resolved 16-wide source span. */
+    bitmap[0 * 16 + 15] = 0x7e;
+    /* Bottom row marker to confirm height=136 is rendered. */
+    bitmap[135 * 16 + 8] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d0r_narrow_side_wall_pixel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d0r_narrow_side_wall_pixel.src_x", gate.src_x, 0);
+    check_int("d0r_narrow_side_wall_pixel.src_y", gate.src_y, 0);
+    check_int("d0r_narrow_side_wall_pixel.dst_x", gate.dst_x, 192);
+    check_int("d0r_narrow_side_wall_pixel.dst_y", gate.dst_y, 0);
+    check_int("d0r_narrow_side_wall_pixel.visible_width", gate.width, 16);
+    check_int("d0r_narrow_side_wall_pixel.visible_height", gate.height, 136);
+    check_int("d0r_narrow_side_wall_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    /* Row 0: transparency sentinel at dst_x=192 is honored, the next
+     * source pixel 0x42 is copied to dst_x=193. */
+    check_int("d0r_narrow_side_wall_pixel.transparent_first_visible_skip",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 192], 0xee);
+    check_int("d0r_narrow_side_wall_pixel.next_source_pixel_copied",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 193], 0x42);
+    check_int("d0r_narrow_side_wall_pixel.column_before_dst_x_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 191], 0xee);
+    /* Last visible source column 15 must reach dst_x=207. */
+    check_int("d0r_narrow_side_wall_pixel.last_visible_pixel_copied",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 207], 0x7e);
+    /* The frame's right_x=223 implies a 32-wide wall, but the resolved
+     * 16-wide source clip stops the write at column 207. */
+    check_int("d0r_narrow_side_wall_pixel.post_frame_column_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 208], 0xee);
+    check_int("d0r_narrow_side_wall_pixel.frame_right_edge_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 223], 0xee);
+    /* The bottom row marker must reach dst_y=135. */
+    check_int("d0r_narrow_side_wall_pixel.bottom_row_marker",
+              viewport[135 * DM1_VIEWPORT_WIDTH + 200], 0x55);
+}
+
 static void test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -2625,6 +2700,7 @@ int main(void)
     test_d1r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d1l_left_wall_source_clipped_no_pixel_write();
     test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d0r_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp();
     test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip();
     test_f0115_cell_order_and_layer_z_order();
