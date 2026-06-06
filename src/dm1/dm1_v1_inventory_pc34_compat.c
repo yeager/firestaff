@@ -332,6 +332,11 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
         return 0;
     }
 
+    /* ReDMCSB CHAMPION.C F0302 lines 688-710: remember leader hand and
+     * selected slot, remove the occupied slot into leader hand, then add the
+     * previous leader-hand object back to the same slot.  For C30+ chest slots
+     * F0300 lines 511-515 and F0301 lines 606-610 route through
+     * G0425_aT_ChestSlots rather than champion Slots[]. */
     if (slotObject.itemType != 0) {
         inv->mouseItem = slotObject;
     } else {
