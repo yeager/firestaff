@@ -7,6 +7,13 @@
 static int passed;
 static int failed;
 
+int csb_v1_viewport_near_wall_d2_wall_bitmap_index(int view_square,
+                                                   int use_flipped_wall_bitmaps);
+int csb_v1_viewport_near_wall_d2_wall_zone(int view_square);
+int csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit(
+    int view_square,
+    int use_flipped_wall_bitmaps);
+
 static void check_int(const char *label, int got, int want)
 {
     if (got == want) {
@@ -402,6 +409,100 @@ static void test_csb_frame_and_zone_contracts(void)
         snprintf(id, sizeof(id), "csb.wall_spec.%zu.source", i);
         check_true(id, strstr(spec->source_lines, expected[i].source_anchor) != NULL);
     }
+}
+
+static void test_csb_f0678_f0679_d2_wall_bitmap_flip_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int normal_bitmap;
+        int flipped_bitmap;
+        int zone;
+        const char *function_name;
+        const char *wall_branch_anchor;
+        const char *return_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D2L2, 6, 5, 707, "F0678_DrawD2L2",
+          "6848-6865", "returns without F0107" },
+        { DM1_VIEW_SQUARE_D2R2, 5, 6, 708, "F0679_DrawD2R2",
+          "6877-6896", "returns without F0107" },
+    };
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportWallOrnamentRouteSpec *ornament_route =
+            csb_v1_viewport_get_wall_ornament_route_spec_for_square(
+                (int)expected[i].square);
+        const CSB_V1_ViewportFloorOrnamentRouteSpec *floor_route =
+            csb_v1_viewport_get_floor_ornament_route_spec_for_square(
+                (int)expected[i].square);
+        const CSB_V1_ViewportThingPassOrderSpec *thing_order =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square(
+                (int)expected[i].square);
+        const CSB_V1_ViewportTeleporterFieldSpec *teleporter =
+            csb_v1_viewport_get_teleporter_field_spec_for_square(
+                (int)expected[i].square);
+        char id[128];
+
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.ornament_route", i);
+        check_true(id, ornament_route != NULL);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.teleporter_route", i);
+        check_true(id, teleporter != NULL);
+        if (!ornament_route || !teleporter) continue;
+
+        /* ReDMCSB: DUNVIEW.C F0678 lines 6848-6862 and F0679 lines
+         * 6879-6893 draw only the D2L2/D2R2 wall bitmap, swapping
+         * G2107[C06_WALL_D2L2] and G2107[C05_WALL_D2R2] when G0076 is
+         * set, then returning before the teleporter F0113 cases at
+         * lines 6863-6865 and 6894-6896. DEFS.H lines 3428-3429 define
+         * C05/C06; DEFS.H lines 4047-4048 define C707/C708. */
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.normal_bitmap", i);
+        check_int(id,
+                  csb_v1_viewport_near_wall_d2_wall_bitmap_index(
+                      (int)expected[i].square, 0),
+                  expected[i].normal_bitmap);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.flipped_bitmap", i);
+        check_int(id,
+                  csb_v1_viewport_near_wall_d2_wall_bitmap_index(
+                      (int)expected[i].square, 1),
+                  expected[i].flipped_bitmap);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.zone", i);
+        check_int(id, csb_v1_viewport_near_wall_d2_wall_zone((int)expected[i].square),
+                  expected[i].zone);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.normal_blitter", i);
+        check_int(id,
+                  csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit(
+                      (int)expected[i].square, 0),
+                  0);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.flipped_blitter", i);
+        check_int(id,
+                  csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit(
+                      (int)expected[i].square, 1),
+                  1);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.no_ornament", i);
+        check_int(id, ornament_route->draws_wall_ornament, 0);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.no_floor_route", i);
+        check_true(id, floor_route == NULL);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.no_thing_order", i);
+        check_true(id, thing_order == NULL);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.teleporter_separate", i);
+        check_int(id, teleporter->after_thing_pass, 0);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.function", i);
+        check_true(id, strstr(ornament_route->redmcsb_function,
+                              expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.source_wall_branch", i);
+        check_true(id, strstr(ornament_route->source_lines,
+                              expected[i].wall_branch_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.f0678_f0679_d2_wall_flip.%zu.source_return", i);
+        check_true(id, strstr(ornament_route->source_lines,
+                              expected[i].return_anchor) != NULL);
+    }
+
+    check_int("csb.f0678_f0679_d2_wall_flip.unknown_bitmap",
+              csb_v1_viewport_near_wall_d2_wall_bitmap_index(999, 0), -1);
+    check_int("csb.f0678_f0679_d2_wall_flip.unknown_zone",
+              csb_v1_viewport_near_wall_d2_wall_zone(999), -1);
+    check_int("csb.f0678_f0679_d2_wall_flip.unknown_blitter",
+              csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit(999, 1), -1);
 }
 
 static void test_csb_wall_ornament_route_contracts(void)
@@ -1962,6 +2063,10 @@ static void test_source_evidence(void)
     check_true("evidence.f0115_fluxcage", e && strstr(e, "fluxcage field deferral") != NULL);
     check_true("evidence.teleporter_fields",
                e && strstr(e, "draw teleporter fields through G2035") != NULL);
+    check_true("evidence.f0678_f0679_d2_wall_bitmap_flip",
+               e && strstr(e, "D2L2/D2R2 wall branches swap C06/C05") != NULL);
+    check_true("evidence.d2_wall_bitmap_defs",
+               e && strstr(e, "DEFS.H:3428-3429 C05_WALL_D2R2 / C06_WALL_D2L2") != NULL);
     check_true("evidence.f0107_wall_ornament_blit", e && strstr(e, "F0107 maps CSB/I34") != NULL);
     check_true("evidence.c1004_wall_ornament", e && strstr(e, "C1004_ZONE_WALL_ORNAMENT") != NULL);
     check_true("evidence.f0107_side_effects",
@@ -2007,6 +2112,7 @@ int main(void)
     test_csb_custom_background_bitmap_application_contracts();
     test_csb_only_draw_order_and_coordinates();
     test_csb_frame_and_zone_contracts();
+    test_csb_f0678_f0679_d2_wall_bitmap_flip_contracts();
     test_csb_wall_ornament_route_contracts();
     test_csb_f0107_wall_ornament_blit_contracts();
     test_csb_f0107_wall_ornament_d3_side_effect_contracts();
