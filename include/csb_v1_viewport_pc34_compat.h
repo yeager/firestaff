@@ -53,6 +53,35 @@ typedef struct {
 } CSB_V1_ViewportCustomBackgroundSlotSpec;
 
 typedef struct {
+    const CSB_V1_ViewportCustomBackgroundSlotSpec *room_slot;
+    int uses_csbwin_relative_translation;
+    int checks_map_bounds_before_skin_lookup;
+    int uses_cell_skin_before_default_skin;
+    int skin_def_background_graphic_id;
+    int skin_def_min_bytes;
+    int large_bitmap_skin_def_index;
+    int large_mask_skin_def_index;
+    int large_mask_min_bytes;
+    int large_bitmap_min_bytes;
+    int middle_bitmap_skin_def_index;
+    int middle_mask_skin_def_index;
+    int middle_mask_min_bytes;
+    int middle_bitmap_min_bytes;
+    int near_bitmap_skin_def_index;
+    int near_mask_skin_def_index;
+    int near_mask_min_bytes;
+    int near_bitmap_min_bytes;
+    int applies_near_layer;
+    int near_layer_room_num_limit;
+    int selects_csd_i34_background_bitmap;
+    int selects_redmcsb_base_bitmap;
+    int extends_redmcsb_floor_ceiling_baseline;
+    int applybackground_masked_composite;
+    const char *csbwin_function;
+    const char *source_lines;
+} CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec;
+
+typedef struct {
     int view_square;
     int wall_zone;
     int draws_wall_ornament;
@@ -266,6 +295,18 @@ const CSB_V1_ViewportCustomBackgroundSlotSpec *
 csb_v1_viewport_get_custom_background_slot_spec(size_t index);
 const CSB_V1_ViewportCustomBackgroundSlotSpec *
 csb_v1_viewport_get_custom_background_slot_spec_for_room(int room_num);
+size_t csb_v1_viewport_custom_background_bitmap_application_spec_count(void);
+const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *
+csb_v1_viewport_get_custom_background_bitmap_application_spec(size_t index);
+const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *
+csb_v1_viewport_get_custom_background_bitmap_application_spec_for_room(int room_num);
+int csb_v1_viewport_custom_background_translate_cell(
+    const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *spec,
+    int party_x,
+    int party_y,
+    int facing,
+    int *out_x,
+    int *out_y);
 
 /* Wire dungeon grid for element routing in back-wall rendering.
  * Must be called before render if using CSB back-wall squares (D3L2/D3R2).

@@ -106,7 +106,22 @@ enum {
     CSB_V1_FLOOR_ORNAMENT_D3R2_BITMAP_INCREMENT = 0,
     CSB_V1_FLOOR_ORNAMENT_COORD_SET = 0,
     CSB_V1_FLIP_NONE = 0, /* MASK0x0000_NO_FLIP */
-    CSB_V1_FLIP_HORIZONTAL = 1 /* MASK0x0001_FLIP_HORIZONTAL */
+    CSB_V1_FLIP_HORIZONTAL = 1, /* MASK0x0001_FLIP_HORIZONTAL */
+    CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID = 1,
+    CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES = 18,
+    CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_SKIN_DEF_INDEX = 0,
+    CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_SKIN_DEF_INDEX = 1,
+    CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_SKIN_DEF_INDEX = 2,
+    CSB_V1_CUSTOM_BACKGROUND_LARGE_MASK_SKIN_DEF_INDEX = 4,
+    CSB_V1_CUSTOM_BACKGROUND_NEAR_MASK_SKIN_DEF_INDEX = 5,
+    CSB_V1_CUSTOM_BACKGROUND_MIDDLE_MASK_SKIN_DEF_INDEX = 6,
+    CSB_V1_CUSTOM_BACKGROUND_LARGE_MASK_MIN_BYTES = 64,
+    CSB_V1_CUSTOM_BACKGROUND_MIDDLE_MASK_MIN_BYTES = 64,
+    CSB_V1_CUSTOM_BACKGROUND_NEAR_MASK_MIN_BYTES = 20,
+    CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_MIN_BYTES = 7840,
+    CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_MIN_BYTES = 3248,
+    CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_MIN_BYTES = 4144,
+    CSB_V1_CUSTOM_BACKGROUND_NEAR_ROOM_LIMIT = 5
 };
 
 /* ReDMCSB: DUNVIEW.C F0128 lines 8337-8339 draws the ordinary
@@ -149,6 +164,66 @@ static const CSB_V1_ViewportCustomBackgroundSlotSpec s_custom_background_slots[]
     { 15, 0, 0, 15, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
       "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7140 room 15 before F0 draw path." }
 };
+
+/* ReDMCSB: DUNVIEW.C F0128 lines 8337-8339 and 8443 draw the base
+ * floor/ceiling pass through F0098 lines 2962-3002 before cell drawing.
+ * CSBWin extends that baseline with CSD/CSD-I34 background-library bitmaps:
+ * Viewport.cpp lines 5402-5412 load the skin-selected bitmap, 6444-6470
+ * applies the mask composite, and 6567-6615 gates each runtime layer. */
+static const char s_custom_background_application_source[] =
+    "ReDMCSB DUNVIEW.C:8337-8339,8443 F0128 floor/ceiling baseline; "
+    "2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 "
+    "relposSid/relposFwd; 5402-5412 GetBitmap selects CSD/CSD-I34 "
+    "background-library bitmaps instead of ReDMCSB base bitmaps; 6444-6470 "
+    "ApplyBackground masked composite; 6567-6615 CustomBackgrounds runtime "
+    "skin/default/mask/bitmap application.";
+
+#define CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(slot_index) \
+    { \
+        &s_custom_background_slots[(slot_index)], \
+        1, 1, 1, \
+        CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID, \
+        CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_LARGE_MASK_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_LARGE_MASK_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_MIDDLE_MASK_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_MIDDLE_MASK_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_NEAR_MASK_SKIN_DEF_INDEX, \
+        CSB_V1_CUSTOM_BACKGROUND_NEAR_MASK_MIN_BYTES, \
+        CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_MIN_BYTES, \
+        s_custom_background_slots[(slot_index)].room_num < CSB_V1_CUSTOM_BACKGROUND_NEAR_ROOM_LIMIT, \
+        CSB_V1_CUSTOM_BACKGROUND_NEAR_ROOM_LIMIT, \
+        1, 0, 1, 1, \
+        "CustomBackgrounds", \
+        s_custom_background_application_source \
+    }
+
+static const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec
+    s_custom_background_application_specs[] = {
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(0),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(1),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(2),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(3),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(4),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(5),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(6),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(7),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(8),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(9),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(10),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(11),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(12),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(13),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(14),
+        CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC(15)
+    };
+
+#undef CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC
 
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
     {
@@ -698,6 +773,60 @@ csb_v1_viewport_get_custom_background_slot_spec_for_room(int room_num)
         }
     }
     return NULL;
+}
+
+size_t csb_v1_viewport_custom_background_bitmap_application_spec_count(void)
+{
+    return sizeof(s_custom_background_application_specs) /
+           sizeof(s_custom_background_application_specs[0]);
+}
+
+const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *
+csb_v1_viewport_get_custom_background_bitmap_application_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_custom_background_bitmap_application_spec_count()) return NULL;
+    return &s_custom_background_application_specs[index];
+}
+
+const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *
+csb_v1_viewport_get_custom_background_bitmap_application_spec_for_room(int room_num)
+{
+    for (size_t i = 0;
+         i < csb_v1_viewport_custom_background_bitmap_application_spec_count();
+         ++i) {
+        const CSB_V1_ViewportCustomBackgroundSlotSpec *slot =
+            s_custom_background_application_specs[i].room_slot;
+        if (slot && slot->room_num == room_num) {
+            return &s_custom_background_application_specs[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_custom_background_translate_cell(
+    const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec *spec,
+    int party_x,
+    int party_y,
+    int facing,
+    int *out_x,
+    int *out_y)
+{
+    static const int dx_forward[4] = { 0, 1, 0, -1 };
+    static const int dy_forward[4] = { -1, 0, 1, 0 };
+    static const int dx_side[4] = { 1, 0, -1, 0 };
+    static const int dy_side[4] = { 0, 1, 0, -1 };
+    const CSB_V1_ViewportCustomBackgroundSlotSpec *slot;
+
+    if (!spec || !spec->room_slot || facing < 0 || facing >= 4 || !out_x || !out_y) {
+        return 0;
+    }
+
+    slot = spec->room_slot;
+    *out_x = party_x + dx_side[facing] * slot->relative_side +
+             dx_forward[facing] * slot->relative_forward;
+    *out_y = party_y + dy_side[facing] * slot->relative_side +
+             dy_forward[facing] * slot->relative_forward;
+    return 1;
 }
 
 void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
@@ -1272,7 +1401,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "ReDMCSB DEFS.H:2696-2697 C00_VIEW_WALL_D3L2_RIGHT / C01_VIEW_WALL_D3R2_LEFT\n"
         "ReDMCSB DUNGEON.C:1330-1347 F0149_DUNGEON_IsWallOrnamentAnAlcove scans C003_ALCOVE_ORNAMENT_COUNT\n"
         "CSBWin/Viewport.cpp: 7290 lines viewport rendering\n"
-        "CSBWin/Viewport.cpp:5317-5325 relposSid/relposFwd; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6919-7140 sixteen background room slots before cell draws\n"
+        "CSBWin/Viewport.cpp:5317-5325 relposSid/relposFwd; 5402-5412 GetBitmap CSD/CSD-I34 bitmap selection; 6444-6470 ApplyBackground masked composite; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6919-7140 sixteen background room slots before cell draws\n"
         "CSBWin/Graphics.cpp: 3186 lines asset cache\n"
         "CSBWin/CSBCode.cpp:26 CustomBackgrounds\n"
         "CSBWin/CSBCode.cpp:9196 _DisplayChaosStrikesBack (prison door)\n";
