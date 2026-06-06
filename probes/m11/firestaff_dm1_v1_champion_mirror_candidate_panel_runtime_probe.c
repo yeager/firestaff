@@ -14,8 +14,11 @@
  *   resurrect/reincarnate panel once the candidate is appended; the panel
  *   asset is the C040 source graphic drawn at the source C101 zone
  *   (layout-696 centered at 80,52 inside the viewport).
- *   ReDMCSB CHAMPION.C F0280 appends the mirror candidate to the party;
- *   F0282 disable loop unlinks the mirror route's text entry on confirm;
+ *   ReDMCSB PANEL.C:1619-1635 / F0346 blits C040 to C101, and
+ *   PANEL.C:1654-1656 / F0347 routes to that panel while G0299 is set.
+ *   ReDMCSB REVIVE.C:272-276 / F0280 appends the mirror candidate to
+ *   the party; REVIVE.C:744-799 / F0282 cancels without disabling the
+ *   route but disables the first mirror-square sensor on confirm;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
  */
 #include "m11_game_view.h"
@@ -42,6 +45,14 @@ enum {
     PROBE_PANEL_Y = PROBE_VIEWPORT_Y + 52,
     PROBE_PANEL_W = 144,
     PROBE_PANEL_H = 73,
+    /* DUNVIEW.C:3913-3928 blits the D1C C026 champion portrait at this
+     * source wall box before PANEL.C:1619-1635 draws C040 over the open
+     * candidate panel.  The bottom of the mirror portrait overlaps the top
+     * of C101, so this probe can assert the source draw order directly. */
+    PROBE_PORTRAIT_X = PROBE_VIEWPORT_X + 96,
+    PROBE_PORTRAIT_Y = PROBE_VIEWPORT_Y + 35,
+    PROBE_PORTRAIT_W = 32,
+    PROBE_PORTRAIT_H = 29,
     /* Resurrect/Reincarnate/Cancel panel graphic index in DM1 GRAPHICS.DAT.
      * The M11_GFX_PANEL_RESURRECT_REINCARNATE enum in m11_game_view.c is
      * file-scoped; the source-locked value 40 = C040 is the
@@ -57,6 +68,13 @@ typedef struct PanelMatch {
     int assetWidth;
     int assetHeight;
 } PanelMatch;
+
+typedef struct PanelOverPortraitMatch {
+    int compared;
+    int panelWins;
+    int portraitWins;
+    int other;
+} PanelOverPortraitMatch;
 
 static PanelMatch match_panel(const M11_AssetSlot* panel,
                               const unsigned char* fb,
@@ -92,6 +110,93 @@ static PanelMatch match_panel(const M11_AssetSlot* panel,
                 } else {
                     ++out.leakedOpaque;
                 }
+            }
+        }
+    }
+    return out;
+}
+
+static PanelOverPortraitMatch match_panel_over_portrait(
+    const M11_AssetSlot* panel,
+    const M11_AssetSlot* portraits,
+    const unsigned char* fb,
+    int fbW,
+    int fbH,
+    int panelX,
+    int panelY,
+    int portraitX,
+    int portraitY,
+    int portraitOrdinal,
+    int panelTransparentColor,
+    int portraitTransparentColor) {
+    PanelOverPortraitMatch out;
+    int overlapX1;
+    int overlapY1;
+    int overlapX2;
+    int overlapY2;
+    int x;
+    int y;
+
+    memset(&out, 0, sizeof(out));
+    if (!panel || !panel->loaded || !panel->pixels ||
+        !portraits || !portraits->loaded || !portraits->pixels || !fb ||
+        portraitOrdinal < 0) {
+        return out;
+    }
+
+    overlapX1 = panelX > portraitX ? panelX : portraitX;
+    overlapY1 = panelY > portraitY ? panelY : portraitY;
+    overlapX2 = (panelX + (int)panel->width) <
+                (portraitX + PROBE_PORTRAIT_W)
+                    ? (panelX + (int)panel->width)
+                    : (portraitX + PROBE_PORTRAIT_W);
+    overlapY2 = (panelY + (int)panel->height) <
+                (portraitY + PROBE_PORTRAIT_H)
+                    ? (panelY + (int)panel->height)
+                    : (portraitY + PROBE_PORTRAIT_H);
+
+    for (y = overlapY1; y < overlapY2; ++y) {
+        if (y < 0 || y >= fbH) continue;
+        for (x = overlapX1; x < overlapX2; ++x) {
+            int panelLocalX = x - panelX;
+            int panelLocalY = y - panelY;
+            int portraitLocalX = x - portraitX;
+            int portraitLocalY = y - portraitY;
+            int portraitSrcX = (portraitOrdinal & 7) * PROBE_PORTRAIT_W +
+                               portraitLocalX;
+            int portraitSrcY = (portraitOrdinal >> 3) * PROBE_PORTRAIT_H +
+                               portraitLocalY;
+            unsigned char panelSrc;
+            unsigned char portraitSrc;
+            unsigned char dst;
+
+            if (x < 0 || x >= fbW ||
+                panelLocalX < 0 || panelLocalX >= (int)panel->width ||
+                panelLocalY < 0 || panelLocalY >= (int)panel->height ||
+                portraitSrcX < 0 || portraitSrcX >= (int)portraits->width ||
+                portraitSrcY < 0 || portraitSrcY >= (int)portraits->height) {
+                continue;
+            }
+
+            panelSrc = (unsigned char)
+                (panel->pixels[panelLocalY * (int)panel->width + panelLocalX] & 0x0F);
+            portraitSrc = (unsigned char)
+                (portraits->pixels[portraitSrcY * (int)portraits->width +
+                                  portraitSrcX] & 0x0F);
+            if (panelSrc == panelTransparentColor ||
+                portraitSrc == portraitTransparentColor ||
+                panelSrc == portraitSrc) {
+                continue;
+            }
+
+            dst = M11_FB_DECODE_INDEX(fb[y * fbW + x]);
+            ++out.compared;
+            if (dst == panelSrc) {
+                ++out.panelWins;
+            } else if (dst == portraitSrc) {
+                ++out.portraitWins;
+            } else {
+                ++out.other;
             }
         }
     }
@@ -164,6 +269,7 @@ static int pose_panel_closed(M11_GameViewState* game,
 
 static int pose_panel_open(M11_GameViewState* game,
                            const M11_AssetSlot* rrPanel,
+                           const M11_AssetSlot* portraits,
                            int mapX,
                            int mapY,
                            int dir,
@@ -171,6 +277,7 @@ static int pose_panel_open(M11_GameViewState* game,
                            const char* label) {
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     PanelMatch match;
+    PanelOverPortraitMatch overlap;
     int ok = 1;
 
     set_pose(game, mapX, mapY, dir);
@@ -188,6 +295,11 @@ static int pose_panel_open(M11_GameViewState* game,
     ok &= expect_int("candidate party index 0", game->candidateMirrorPartyIndex, 0);
     ok &= expect_int("candidate champion appended", game->world.party.championCount, 1);
     ok &= expect_int("inventory panel on", game->inventoryPanelActive, 1);
+    /* REVIVE.C:272-276 only records/appends the pending candidate; the
+     * REVIVE.C:794-799 mirror-sensor disable loop is reached later by
+     * F0282 on non-cancel confirm. */
+    ok &= expect_int("pending candidate keeps front mirror route",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
@@ -209,10 +321,36 @@ static int pose_panel_open(M11_GameViewState* game,
                 label, match.assetDrawn, match.assetOpaque, match.leakedOpaque);
         ok = 0;
     }
-    printf("%s panel-open drawn=%d/%d asset=%dx%d championCount=%d\n",
+    ok &= expect_true("portrait strip available for panel overlap",
+                      portraits && portraits->loaded && portraits->pixels &&
+                      portraits->width >= 256 && portraits->height >= 87);
+    if (!ok) return 0;
+
+    overlap = match_panel_over_portrait(rrPanel, portraits, fb,
+                                        PROBE_FB_W, PROBE_FB_H,
+                                        PROBE_PANEL_X, PROBE_PANEL_Y,
+                                        PROBE_PORTRAIT_X, PROBE_PORTRAIT_Y,
+                                        expectedOrdinal,
+                                        6, 1);
+    /* Source order evidence: DUNVIEW.C:3913-3928 draws the D1C C026
+     * champion portrait, then PANEL.C:1619-1635 / 1654-1656 draws C040
+     * while G0299 is nonzero.  In the overlapping pixels where both assets
+     * are opaque and differ, C040 must be the visible source color. */
+    if (overlap.compared <= 0 ||
+        overlap.panelWins * 100 < 90 * overlap.compared ||
+        overlap.portraitWins * 100 > 5 * overlap.compared) {
+        fprintf(stderr,
+                "FAIL %s RR panel did not cover mirror portrait overlap panel=%d portrait=%d other=%d compared=%d\n",
+                label, overlap.panelWins, overlap.portraitWins,
+                overlap.other, overlap.compared);
+        ok = 0;
+    }
+
+    printf("%s panel-open drawn=%d/%d asset=%dx%d championCount=%d overlapPanel=%d/%d\n",
            label, match.assetDrawn, match.assetOpaque,
            match.assetWidth, match.assetHeight,
-           game->world.party.championCount);
+           game->world.party.championCount,
+           overlap.panelWins, overlap.compared);
     return ok;
 }
 
@@ -304,6 +442,7 @@ int main(int argc, char** argv) {
     M12_StartupMenuState menu2;
     M11_GameViewState game2;
     const M11_AssetSlot* rrPanel;
+    const M11_AssetSlot* portraits;
     int ok = 1;
 
     if (argc < 2) {
@@ -337,6 +476,14 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
+    portraits = M11_AssetLoader_Load(&game.assetLoader,
+                                     (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < 256 || portraits->height < 87) {
+        fprintf(stderr, "FAIL GRAPHICS.DAT champion portrait strip unavailable\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
 
     /* Pose A: corridor (1,4) facing north has mirror ordinal 2 on the
      * front cell.  No candidate is pending, so the panel must NOT be
@@ -356,7 +503,7 @@ int main(int argc, char** argv) {
     /* Pose D: corridor (1,4) facing north, select front mirror candidate
      * (ordinal 2).  The RR panel must be drawn on top of the viewport
      * and a new champion must be appended to the party. */
-    ok &= pose_panel_open(&game, rrPanel, 1, 4, DIR_NORTH, 2,
+    ok &= pose_panel_open(&game, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
                           "corridor_north_select_candidate");
     /* Pose E: resurrect confirm keeps the champion, closes the panel, and
      * disables the mirror route. */
@@ -372,7 +519,7 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
-    if (!pose_panel_open(&game2, rrPanel, 1, 4, DIR_NORTH, 2,
+    if (!pose_panel_open(&game2, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
                          "corridor_north_select_for_cancel")) {
         ok = 0;
     } else {
