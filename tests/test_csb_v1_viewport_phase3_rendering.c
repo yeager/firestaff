@@ -1184,11 +1184,56 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         check_true(id, strstr(spec->source_lines, expected[i].zone_anchor) != NULL);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.f0111_source", i);
         check_true(id, strstr(spec->source_lines, "F0111:4248") != NULL &&
-                       strstr(spec->source_lines, "4331 F0791") != NULL);
+                       strstr(spec->source_lines, "4334 F0791") != NULL);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.coord_source", i);
         check_true(id, strstr(spec->source_lines, "COORD.C") != NULL);
+
+        {
+            uint8_t source[48 * 41];
+            uint8_t destination[48 * 41];
+            for (size_t j = 0; j < sizeof(source); ++j) source[j] = 10;
+            for (size_t j = 0; j < sizeof(destination); ++j) destination[j] = 77;
+            source[0] = 1;
+            source[47] = 2;
+            source[(39 * 48) + 0] = 3;
+            source[(39 * 48) + 47] = 4;
+            source[40 * 48] = 5;
+
+            /* ReDMCSB: DUNVIEW.C F0111 lines 4248 and 4334, with
+             * COORD.C lines 1556-1560. State 0 draws nothing; non-open
+             * states blit the D3 48x41 source through the 48x40 panel clip
+             * and preserve C10 transparent pixels in the destination. */
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.closed_pixels", i);
+            check_int(id, csb_v1_viewport_door_panel_blit_pixels(
+                          spec, 4, source, 48, destination, 48), 4);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.pixel_0_0", i);
+            check_int(id, destination[0], 1);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.transparent_0_1", i);
+            check_int(id, destination[1], 77);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.pixel_47_0", i);
+            check_int(id, destination[47], 2);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.pixel_0_39", i);
+            check_int(id, destination[39 * 48], 3);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.pixel_47_39", i);
+            check_int(id, destination[(39 * 48) + 47], 4);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.clips_row40", i);
+            check_int(id, destination[40 * 48], 77);
+
+            for (size_t j = 0; j < sizeof(destination); ++j) destination[j] = 88;
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.open_skips", i);
+            check_int(id, csb_v1_viewport_door_panel_blit_pixels(
+                          spec, 0, source, 48, destination, 48), 0);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.open_preserves", i);
+            check_int(id, destination[0], 88);
+        }
     }
 
+    check_int("csb.door_panel_blit.null_pixels",
+              csb_v1_viewport_door_panel_blit_pixels(NULL, 4, NULL, 0, NULL, 0), -1);
+    check_int("csb.door_panel_blit.bad_source_stride",
+              csb_v1_viewport_door_panel_blit_pixels(
+                  csb_v1_viewport_get_door_panel_blit_spec(0), 4, (const uint8_t *)"x", 47,
+                  (uint8_t *)"x", 48), -1);
     check_true("csb.door_panel_blit.out_of_range",
                csb_v1_viewport_get_door_panel_blit_spec(2) == NULL);
     check_true("csb.door_panel_blit.unknown_square",
