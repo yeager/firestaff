@@ -247,6 +247,66 @@ static const CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec
 
 #undef CSB_CUSTOM_BACKGROUND_APPLICATION_SPEC
 
+typedef struct {
+    int bitmap_skin_def_index;
+    int mask_skin_def_index;
+    int bitmap_min_bytes;
+    int byte_width;
+    int height;
+} CSB_V1_CustomBackgroundLayerSelection;
+
+static uint16_t csb_v1_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static int csb_v1_viewport_custom_background_layer_for_view(
+    CSB_V1_ViewportCustomBackgroundViewIndex view_index,
+    CSB_V1_CustomBackgroundLayerSelection *out)
+{
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    switch (view_index) {
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D3L2:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D3L:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D3C:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D3R:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D3R2:
+            out->bitmap_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_SKIN_DEF_INDEX;
+            out->mask_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_LARGE_MASK_SKIN_DEF_INDEX;
+            out->bitmap_min_bytes = CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_MIN_BYTES;
+            out->byte_width = 112;
+            out->height = 70;
+            return 1;
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D2L2:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D2L:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D2C:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D2R:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D2R2:
+            out->bitmap_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_SKIN_DEF_INDEX;
+            out->mask_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_MIDDLE_MASK_SKIN_DEF_INDEX;
+            out->bitmap_min_bytes = CSB_V1_CUSTOM_BACKGROUND_MIDDLE_BITMAP_MIN_BYTES;
+            out->byte_width = 56;
+            out->height = 58;
+            return 1;
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D1L:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D1C:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D1R:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D0L:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D0C:
+        case CSB_V1_CUSTOM_BACKGROUND_VIEW_D0R:
+            out->bitmap_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_SKIN_DEF_INDEX;
+            out->mask_skin_def_index = CSB_V1_CUSTOM_BACKGROUND_NEAR_MASK_SKIN_DEF_INDEX;
+            out->bitmap_min_bytes = CSB_V1_CUSTOM_BACKGROUND_NEAR_BITMAP_MIN_BYTES;
+            out->byte_width = 56;
+            out->height = 74;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
     {
         (int)DM1_VIEW_SQUARE_D3L2,
@@ -1017,6 +1077,54 @@ int csb_v1_viewport_custom_background_translate_cell(
     *out_y = party_y + dy_side[facing] * slot->relative_side +
              dy_forward[facing] * slot->relative_forward;
     return 1;
+}
+
+CSB_V1_ViewportCustomBackgroundSelection
+csb_v1_viewport_custom_background_load_and_select_pc34(
+    const uint8_t *skin_def,
+    size_t skin_def_size,
+    CSB_V1_ViewportCustomBackgroundViewIndex view_index)
+{
+    CSB_V1_ViewportCustomBackgroundSelection result;
+    CSB_V1_CustomBackgroundLayerSelection layer;
+    size_t bitmap_offset;
+    size_t mask_offset;
+
+    memset(&result, 0, sizeof(result));
+
+    /* ReDMCSB DRAWVIEW.C has no custom/background/skin-def references; it is
+     * only the shared viewport transfer anchor.  The CSB-only path is the
+     * CSBWin extension: CSBCode.cpp:26 declares CustomBackgrounds for the
+     * CSB display lane rooted at CSBCode.cpp:9196, while Viewport.cpp
+     * 6567-6615 loads a skin definition, selects pSkinDef[0/2/1] bitmaps
+     * and pSkinDef[4/6/5] masks, then calls ApplyBackground (6444-6470). */
+    if (!skin_def ||
+        skin_def_size < CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES ||
+        !csb_v1_viewport_custom_background_layer_for_view(view_index, &layer)) {
+        return result;
+    }
+
+    bitmap_offset = (size_t)layer.bitmap_skin_def_index * 2u;
+    mask_offset = (size_t)layer.mask_skin_def_index * 2u;
+    if (bitmap_offset + 2u > skin_def_size || mask_offset + 2u > skin_def_size) {
+        return result;
+    }
+
+    if (csb_v1_read_le16(skin_def) !=
+        (uint16_t)CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID) {
+        return result;
+    }
+    if (csb_v1_read_le16(skin_def + bitmap_offset) == 0 ||
+        csb_v1_read_le16(skin_def + mask_offset) == 0) {
+        return result;
+    }
+
+    result.bitmap = skin_def + bitmap_offset;
+    result.mask = skin_def + mask_offset;
+    result.byte_width = layer.byte_width;
+    result.height = layer.height;
+    result.is_valid = 1;
+    return result;
 }
 
 void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,

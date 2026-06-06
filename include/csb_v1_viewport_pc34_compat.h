@@ -81,6 +81,33 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportCustomBackgroundBitmapApplicationSpec;
 
+typedef enum {
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D3L2 = 0,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D3L,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D3C,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D3R,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D3R2,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D2L2,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D2L,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D2C,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D2R,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D2R2,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D1L,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D1C,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D1R,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D0L,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D0C,
+    CSB_V1_CUSTOM_BACKGROUND_VIEW_D0R
+} CSB_V1_ViewportCustomBackgroundViewIndex;
+
+typedef struct {
+    const uint8_t *bitmap;
+    const uint8_t *mask;
+    int byte_width;
+    int height;
+    int is_valid;
+} CSB_V1_ViewportCustomBackgroundSelection;
+
 typedef struct {
     int view_square;
     int wall_zone;
@@ -346,6 +373,11 @@ int csb_v1_viewport_custom_background_translate_cell(
     int facing,
     int *out_x,
     int *out_y);
+CSB_V1_ViewportCustomBackgroundSelection
+csb_v1_viewport_custom_background_load_and_select_pc34(
+    const uint8_t *skin_def,
+    size_t skin_def_size,
+    CSB_V1_ViewportCustomBackgroundViewIndex view_index);
 
 /* Wire dungeon grid for element routing in back-wall rendering.
  * Must be called before render if using CSB back-wall squares (D3L2/D3R2).
