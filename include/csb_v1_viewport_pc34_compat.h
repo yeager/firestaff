@@ -63,6 +63,23 @@ typedef struct {
 typedef struct {
     int view_square;
     int floor_view_index;
+    int ordinal_zero_skips_blit;
+    int ordinal_to_index_delta;
+    int native_bitmap_index_increment;
+    int coordinate_set_index;
+    int zone_base;
+    int coordinate_set_stride;
+    int horizontal_flip;
+    int transparent_color;
+    const char *door_front_ordinal_slot;
+    const char *corridor_pit_ordinal_slot;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportFloorOrnamentBlitSpec;
+
+typedef struct {
+    int view_square;
+    int floor_view_index;
     int door_front_floor_ornament_order;
     int door_front_rear_f0115_order;
     int door_front_f0111_order;
@@ -151,6 +168,14 @@ const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_ro
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void);
 const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec(size_t index);
 const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_route_spec_for_square(int view_square);
+
+size_t csb_v1_viewport_floor_ornament_blit_spec_count(void);
+const CSB_V1_ViewportFloorOrnamentBlitSpec *csb_v1_viewport_get_floor_ornament_blit_spec(size_t index);
+const CSB_V1_ViewportFloorOrnamentBlitSpec *csb_v1_viewport_get_floor_ornament_blit_spec_for_square(int view_square);
+int csb_v1_viewport_floor_ornament_blit_zone(const CSB_V1_ViewportFloorOrnamentBlitSpec *spec,
+                                             int coordinate_set);
+int csb_v1_viewport_floor_ornament_native_bitmap_index(const CSB_V1_ViewportFloorOrnamentBlitSpec *spec,
+                                                       int base_native_bitmap_index);
 
 size_t csb_v1_viewport_thing_pass_order_spec_count(void);
 const CSB_V1_ViewportThingPassOrderSpec *csb_v1_viewport_get_thing_pass_order_spec(size_t index);

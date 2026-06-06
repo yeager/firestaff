@@ -61,7 +61,16 @@ enum {
     CSB_V1_DOOR_PANEL_D3R2_X = 88,
     CSB_V1_DOOR_PANEL_D3_Y = 28,
     CSB_V1_DOOR_ORNAMENT_D3LCR = 0, /* C0_VIEW_DOOR_ORNAMENT_D3LCR */
-    CSB_V1_DOOR_TRANSPARENT_COLOR = 10 /* C10_COLOR_FLESH */
+    CSB_V1_DOOR_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
+    CSB_V1_FLOOR_ORNAMENT_ZONE_BASE = 1500, /* C1500_ZONE_FLOOR_ORNAMENT */
+    CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE = 11,
+    CSB_V1_FLOOR_ORNAMENT_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
+    CSB_V1_FLOOR_ORNAMENT_ORDINAL_TO_INDEX_DELTA = -1,
+    CSB_V1_FLOOR_ORNAMENT_D3L2_BITMAP_INCREMENT = 0,
+    CSB_V1_FLOOR_ORNAMENT_D3R2_BITMAP_INCREMENT = 0,
+    CSB_V1_FLOOR_ORNAMENT_COORD_SET = 0,
+    CSB_V1_FLIP_NONE = 0, /* MASK0x0000_NO_FLIP */
+    CSB_V1_FLIP_HORIZONTAL = 1 /* MASK0x0001_FLIP_HORIZONTAL */
 };
 
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
@@ -131,6 +140,48 @@ static const CSB_V1_ViewportFloorOrnamentRouteSpec s_floor_ornament_routes[] = {
         CSB_V1_ZONE_DOOR_D3R2,
         "F0677_DrawD3R2",
         "DUNVIEW.C:6337 F0108 door-front floor ornament; 6338 F0115 pass1; 6339 F0111 C3710_ZONE_DOOR_D3R2; 6349-6353 pit/corridor F0108 then F0115"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0108 lines 3940-4008 and F0676/F0677 lines
+ * 6270/6284 and 6337/6351.  F0108 draws nothing for ordinal 0, converts
+ * ordinal to map floor-ornament index by pre-decrement, adds the per-view
+ * G0191 native bitmap increment, and blits to
+ * C1500_ZONE_FLOOR_ORNAMENT + CoordinateSet * 11 + ViewFloorIndex using
+ * F0791 with C10 transparency.  The CSB/I34 coordinate-set table is all 0,
+ * and the CSB/I34 path flips D3R2 horizontally. */
+static const CSB_V1_ViewportFloorOrnamentBlitSpec s_floor_ornament_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_FLOOR_D3L2,
+        1,
+        CSB_V1_FLOOR_ORNAMENT_ORDINAL_TO_INDEX_DELTA,
+        CSB_V1_FLOOR_ORNAMENT_D3L2_BITMAP_INCREMENT,
+        CSB_V1_FLOOR_ORNAMENT_COORD_SET,
+        CSB_V1_FLOOR_ORNAMENT_ZONE_BASE,
+        CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE,
+        CSB_V1_FLIP_NONE,
+        CSB_V1_FLOOR_ORNAMENT_TRANSPARENT_COLOR,
+        "M552_FRONT_WALL_ORNAMENT_ORDINAL",
+        "M558_FLOOR_ORNAMENT_ORDINAL",
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6270 F0108 uses M552 for door-front D3L2; 6284 uses M558 for pit/corridor. F0108:3959 skips ordinal 0; 3965 ordinal-- plus G0191[0]=0; 3998 F0791 zone C1500 + CoordinateSet*11 + C00_VIEW_FLOOR_D3L2; G0195:1008-1017 gives CSB/I34 CoordinateSet 0; flip 0; C10. DEFS.H:2750, 3522-3523, 4223; COORD.C:903-913."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_FLOOR_D3R2,
+        1,
+        CSB_V1_FLOOR_ORNAMENT_ORDINAL_TO_INDEX_DELTA,
+        CSB_V1_FLOOR_ORNAMENT_D3R2_BITMAP_INCREMENT,
+        CSB_V1_FLOOR_ORNAMENT_COORD_SET,
+        CSB_V1_FLOOR_ORNAMENT_ZONE_BASE,
+        CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE,
+        CSB_V1_FLIP_HORIZONTAL,
+        CSB_V1_FLOOR_ORNAMENT_TRANSPARENT_COLOR,
+        "M558_FLOOR_ORNAMENT_ORDINAL",
+        "M558_FLOOR_ORNAMENT_ORDINAL",
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6337 F0108 uses M558 for door-front D3R2; 6351 uses M558 for pit/corridor. F0108:3959 skips ordinal 0; 3965 ordinal-- plus G0191[1]=0; G0195:1008-1017 gives CSB/I34 CoordinateSet 0; 3980-3983 sets MASK0x0001_FLIP_HORIZONTAL for C01_VIEW_FLOOR_D3R2; 3998 F0791 zone C1500 + CoordinateSet*11 + C01_VIEW_FLOOR_D3R2; C10. DEFS.H:2751, 3522-3523, 4223; COORD.C:903-913."
     },
 };
 
@@ -417,6 +468,41 @@ const CSB_V1_ViewportFloorOrnamentRouteSpec *csb_v1_viewport_get_floor_ornament_
     return NULL;
 }
 
+size_t csb_v1_viewport_floor_ornament_blit_spec_count(void)
+{
+    return sizeof(s_floor_ornament_blits) / sizeof(s_floor_ornament_blits[0]);
+}
+
+const CSB_V1_ViewportFloorOrnamentBlitSpec *csb_v1_viewport_get_floor_ornament_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_floor_ornament_blit_spec_count()) return NULL;
+    return &s_floor_ornament_blits[index];
+}
+
+const CSB_V1_ViewportFloorOrnamentBlitSpec *csb_v1_viewport_get_floor_ornament_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_floor_ornament_blit_spec_count(); ++i) {
+        if (s_floor_ornament_blits[i].view_square == view_square) {
+            return &s_floor_ornament_blits[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_floor_ornament_blit_zone(const CSB_V1_ViewportFloorOrnamentBlitSpec *spec,
+                                             int coordinate_set)
+{
+    if (!spec || coordinate_set < 0) return -1;
+    return spec->zone_base + (coordinate_set * spec->coordinate_set_stride) + spec->floor_view_index;
+}
+
+int csb_v1_viewport_floor_ornament_native_bitmap_index(const CSB_V1_ViewportFloorOrnamentBlitSpec *spec,
+                                                       int base_native_bitmap_index)
+{
+    if (!spec || base_native_bitmap_index < 0) return -1;
+    return base_native_bitmap_index + spec->native_bitmap_index_increment;
+}
+
 size_t csb_v1_viewport_thing_pass_order_spec_count(void)
 {
     return sizeof(s_thing_pass_order_routes) / sizeof(s_thing_pass_order_routes[0]);
@@ -501,12 +587,15 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
-        "  3940-4008 F0108 floor ornament bitmap/index/flip dispatch\n"
+        "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
         "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"
+        "  1008-1017 G0195 CSB/I34 floor ornament coordinate-set indices are all 0\n"
+        "  DEFS.H:2750-2751 C00_VIEW_FLOOR_D3L2 / C01_VIEW_FLOOR_D3R2\n"
         "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
+        "  DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT; COORD.C:903-913 floor ornament zone records\n"
         "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"

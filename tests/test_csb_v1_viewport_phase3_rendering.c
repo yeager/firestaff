@@ -297,6 +297,105 @@ static void test_csb_floor_ornament_route_contracts(void)
                csb_v1_viewport_get_floor_ornament_route_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0108_floor_ornament_bitmap_blit_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int floor_view_index;
+        int zone_coordinate_set0;
+        int flip;
+        const char *function_name;
+        const char *door_slot;
+        const char *route_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 0, 1500, 0,
+          "F0676_DrawD3L2", "M552_FRONT_WALL_ORNAMENT_ORDINAL", "6270 F0108" },
+        { DM1_VIEW_SQUARE_D3R2, 1, 1501, 1,
+          "F0677_DrawD3R2", "M558_FLOOR_ORNAMENT_ORDINAL", "6337 F0108" },
+    };
+
+    check_int("csb.floor_ornament_blit.count",
+              (int)csb_v1_viewport_floor_ornament_blit_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportFloorOrnamentBlitSpec *spec =
+            csb_v1_viewport_get_floor_ornament_blit_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportFloorOrnamentRouteSpec *route =
+            csb_v1_viewport_get_floor_ornament_route_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.route_present", i);
+        check_true(id, route != NULL);
+        if (!spec || !route) continue;
+
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.floor_view", i);
+        check_int(id, spec->floor_view_index, expected[i].floor_view_index);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.ordinal_zero", i);
+        check_int(id, spec->ordinal_zero_skips_blit, 1);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.ordinal_delta", i);
+        check_int(id, spec->ordinal_to_index_delta, -1);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.bitmap_increment", i);
+        check_int(id, spec->native_bitmap_index_increment, 0);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.bitmap_index", i);
+        check_int(id, csb_v1_viewport_floor_ornament_native_bitmap_index(spec, 42), 42);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.coord_set", i);
+        check_int(id, spec->coordinate_set_index, 0);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.zone_base", i);
+        check_int(id, spec->zone_base, 1500);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.coord_stride", i);
+        check_int(id, spec->coordinate_set_stride, 11);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.zone_set0", i);
+        check_int(id, csb_v1_viewport_floor_ornament_blit_zone(spec, 0),
+                  expected[i].zone_coordinate_set0);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.flip", i);
+        check_int(id, spec->horizontal_flip, expected[i].flip);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.transparent", i);
+        check_int(id, spec->transparent_color, 10);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.door_slot", i);
+        check_true(id, strstr(spec->door_front_ordinal_slot, expected[i].door_slot) != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.corridor_slot", i);
+        check_true(id, strstr(spec->corridor_pit_ordinal_slot, "M558_FLOOR_ORNAMENT_ORDINAL") != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.route_corridor", i);
+        check_int(id, route->draws_corridor_floor_ornament, 1);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.route_pit_bug64", i);
+        check_int(id, route->draws_pit_floor_ornament, 1);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.route_door_front", i);
+        check_int(id, route->draws_door_front_floor_ornament, 1);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.route_anchor", i);
+        check_true(id, strstr(spec->source_lines, expected[i].route_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.f0108_source", i);
+        check_true(id, strstr(spec->source_lines, "3965") != NULL &&
+                       strstr(spec->source_lines, "3998 F0791") != NULL &&
+                       strstr(spec->source_lines, "G0191") != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.coord_set_source", i);
+        check_true(id, strstr(spec->source_lines, "G0195:1008-1017") != NULL);
+        snprintf(id, sizeof(id), "csb.floor_ornament_blit.%zu.zone_source", i);
+        check_true(id, strstr(spec->source_lines, "C1500") != NULL &&
+                       strstr(spec->source_lines, "COORD.C:903-913") != NULL);
+    }
+
+    check_int("csb.floor_ornament_blit.null_zone",
+              csb_v1_viewport_floor_ornament_blit_zone(NULL, 0), -1);
+    check_int("csb.floor_ornament_blit.bad_zone",
+              csb_v1_viewport_floor_ornament_blit_zone(
+                  csb_v1_viewport_get_floor_ornament_blit_spec(0), -1), -1);
+    check_int("csb.floor_ornament_blit.null_bitmap",
+              csb_v1_viewport_floor_ornament_native_bitmap_index(NULL, 42), -1);
+    check_int("csb.floor_ornament_blit.bad_bitmap",
+              csb_v1_viewport_floor_ornament_native_bitmap_index(
+                  csb_v1_viewport_get_floor_ornament_blit_spec(0), -1), -1);
+    check_true("csb.floor_ornament_blit.out_of_range",
+               csb_v1_viewport_get_floor_ornament_blit_spec(2) == NULL);
+    check_true("csb.floor_ornament_blit.unknown_square",
+               csb_v1_viewport_get_floor_ornament_blit_spec_for_square(999) == NULL);
+}
+
 static void test_csb_thing_pass_order_contracts(void)
 {
     static const struct {
@@ -624,6 +723,9 @@ static void test_source_evidence(void)
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
     check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
+    check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
+    check_true("evidence.f0108_c1500", e && strstr(e, "C1500_ZONE_FLOOR_ORNAMENT") != NULL);
+    check_true("evidence.f0108_g0195", e && strstr(e, "G0195 CSB/I34") != NULL);
     check_true("evidence.f0111_door_zone_records", e && strstr(e, "COORD.C:1548-1565") != NULL);
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
@@ -638,6 +740,7 @@ int main(void)
     test_csb_frame_and_zone_contracts();
     test_csb_wall_ornament_route_contracts();
     test_csb_floor_ornament_route_contracts();
+    test_csb_f0108_floor_ornament_bitmap_blit_contracts();
     test_csb_thing_pass_order_contracts();
     test_csb_object_visibility_filter_contracts();
     test_csb_f0111_door_panel_blit_contracts();
