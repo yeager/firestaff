@@ -38,21 +38,6 @@ typedef struct {
 } CSB_V1_ViewportConfig;
 
 typedef struct {
-    int room_num;
-    int relative_forward;
-    int relative_side;
-    int call_order;
-    int applies_before_cell_draw;
-    int source_mask_slots;
-    int source_bitmap_slots;
-    int large_bitmap_min_bytes;
-    int middle_bitmap_min_bytes;
-    int near_bitmap_min_bytes;
-    const char *csbwin_function;
-    const char *source_lines;
-} CSB_V1_ViewportCustomBackgroundSlotSpec;
-
-typedef struct {
     int view_square;
     int wall_zone;
     int draws_wall_ornament;
@@ -246,11 +231,6 @@ typedef struct {
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
-size_t csb_v1_viewport_custom_background_slot_spec_count(void);
-const CSB_V1_ViewportCustomBackgroundSlotSpec *
-csb_v1_viewport_get_custom_background_slot_spec(size_t index);
-const CSB_V1_ViewportCustomBackgroundSlotSpec *
-csb_v1_viewport_get_custom_background_slot_spec_for_room(int room_num);
 
 /* Wire dungeon grid for element routing in back-wall rendering.
  * Must be called before render if using CSB back-wall squares (D3L2/D3R2).
