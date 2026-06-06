@@ -182,9 +182,24 @@ typedef struct DM1_ChampionPanel_StatusBoxModel {
     int stopAfterDead;
 } DM1_ChampionPanel_StatusBoxModel;
 
+typedef struct DM1_ChampionPanel_IconBitmapModel {
+    int width;
+    int height;
+    int fillColor;
+    int graphicId;
+    int sourceX;
+    int sourceY;
+    int transparentColor;
+    int applyInvisibilityPalette;
+} DM1_ChampionPanel_IconBitmapModel;
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel);
+
+int DM1_ChampionPanel_BuildIconBitmapModel(
+    int championIndex, int championDirection, int partyDirection,
+    int invisibilityCount, DM1_ChampionPanel_IconBitmapModel *outModel);
 
 /* ── Source-locked bar height — CHAMDRAW.C F0287 ── */
 int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
