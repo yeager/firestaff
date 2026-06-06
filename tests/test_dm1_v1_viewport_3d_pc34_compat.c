@@ -1840,6 +1840,25 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     check_int("d3l2_d3r2_gate.teleporter_d3r2_zone_untouched",
               viewport[25 * DM1_VIEWPORT_WIDTH + 208], 0xee);
 
+    /* ReDMCSB DUNVIEW.C:F0677 lines 6355-6356 draws the D3R2 teleporter
+     * field through F0113 at C703_ZONE_WALL_D3R2 (DEFS.H:4043).  F0113
+     * resolves the PC34 zone before blitting (DUNVIEW.C:4382-4397), so this
+     * parity-on pixel gate is deliberately about the field zone, not the
+     * wall-set flip route covered above. */
+    memset(viewport, 0xee, sizeof(viewport));
+    state.parity_flip = true;
+    dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3R2, 0, 1, 1);
+    check_int("d3l2_d3r2_gate.d3r2_teleporter_field_parity_ignored_left_edge",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 208], 0x1c);
+    check_int("d3l2_d3r2_gate.d3r2_teleporter_field_right_edge",
+              viewport[73 * DM1_VIEWPORT_WIDTH + 223], 0x1c);
+    check_int("d3l2_d3r2_gate.d3r2_teleporter_field_left_neighbor_untouched",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 207], 0xee);
+    check_int("d3l2_d3r2_gate.d3r2_teleporter_field_d3l2_zone_untouched",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d3l2_d3r2_gate.d3r2_teleporter_field_row_after_untouched",
+              viewport[74 * DM1_VIEWPORT_WIDTH + 223], 0xee);
+
     dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
 }
 
