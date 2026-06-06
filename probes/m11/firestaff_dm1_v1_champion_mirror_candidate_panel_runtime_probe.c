@@ -1103,6 +1103,125 @@ static int check_save_input_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_append_clear_cycle_pixels(M11_GameViewState* game,
+                                           const M11_AssetSlot* rrPanel,
+                                           int expectedOrdinal,
+                                           const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    int baselineOpenDrawn = -1;
+    int baselineClosedDrawn = -1;
+    int cycle;
+    int ok = 1;
+
+    set_pose(game, 1, 4, DIR_NORTH);
+    ok &= expect_int("cycle front mirror armed",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    /* ReDMCSB REVIVE.C:272-276 / F0280 sets G0299 to the appended
+     * champion ordinal and increments G0305.  REVIVE.C:744-783 / F0282
+     * cancel clears G0299 and decrements G0305 without disabling the mirror,
+     * so a later select in the same runtime must reuse the same party slot
+     * and redraw the same C040 panel pixels. */
+    for (cycle = 0; cycle < 3; ++cycle) {
+        PanelMatch openMatch;
+        PanelMatch closedMatch;
+        char cycleLabel[128];
+
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d pre panel off", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorPanelActive, 0);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d pre champion count", cycle + 1);
+        ok &= expect_int(cycleLabel, game->world.party.championCount, 0);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d pre candidate clear", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorOrdinal, -1);
+
+        if (M11_GameView_SelectFrontMirrorCandidate(game) != 1) {
+            fprintf(stderr, "FAIL %s cycle%d select returned 0\n",
+                    label, cycle + 1);
+            return 0;
+        }
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d panel on", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorPanelActive, 1);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d inventory on", cycle + 1);
+        ok &= expect_int(cycleLabel, game->inventoryPanelActive, 1);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d champion appended", cycle + 1);
+        ok &= expect_int(cycleLabel, game->world.party.championCount, 1);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d ordinal recorded", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorOrdinal, expectedOrdinal);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d party index reset", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorPartyIndex, 0);
+
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+        openMatch = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                                PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+        if (openMatch.assetOpaque <= 0 ||
+            openMatch.assetDrawn * 100 < 90 * openMatch.assetOpaque) {
+            fprintf(stderr,
+                    "FAIL %s cycle%d RR panel missing drawn=%d/%d\n",
+                    label, cycle + 1, openMatch.assetDrawn,
+                    openMatch.assetOpaque);
+            ok = 0;
+        }
+        if (baselineOpenDrawn < 0) {
+            baselineOpenDrawn = openMatch.assetDrawn;
+        } else if (openMatch.assetDrawn != baselineOpenDrawn) {
+            fprintf(stderr,
+                    "FAIL %s cycle%d open pixel count drift got=%d want=%d\n",
+                    label, cycle + 1, openMatch.assetDrawn,
+                    baselineOpenDrawn);
+            ok = 0;
+        }
+
+        if (M11_GameView_CancelMirrorCandidate(game) != 1) {
+            fprintf(stderr, "FAIL %s cycle%d cancel returned 0\n",
+                    label, cycle + 1);
+            return 0;
+        }
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d panel off", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorPanelActive, 0);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d inventory off", cycle + 1);
+        ok &= expect_int(cycleLabel, game->inventoryPanelActive, 0);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d champion removed", cycle + 1);
+        ok &= expect_int(cycleLabel, game->world.party.championCount, 0);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d ordinal clear", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorOrdinal, -1);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d party index clear", cycle + 1);
+        ok &= expect_int(cycleLabel, game->candidateMirrorPartyIndex, -1);
+        snprintf(cycleLabel, sizeof(cycleLabel), "cycle%d front mirror rearmed", cycle + 1);
+        ok &= expect_int(cycleLabel,
+                         M11_GameView_GetFrontMirrorOrdinal(game),
+                         expectedOrdinal);
+
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+        closedMatch = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                                  PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+        if (closedMatch.assetOpaque > 0 &&
+            closedMatch.assetDrawn * 100 > 5 * closedMatch.assetOpaque) {
+            fprintf(stderr,
+                    "FAIL %s cycle%d RR panel leaked after cancel drawn=%d/%d\n",
+                    label, cycle + 1, closedMatch.assetDrawn,
+                    closedMatch.assetOpaque);
+            ok = 0;
+        }
+        if (baselineClosedDrawn < 0) {
+            baselineClosedDrawn = closedMatch.assetDrawn;
+        } else if (closedMatch.assetDrawn != baselineClosedDrawn) {
+            fprintf(stderr,
+                    "FAIL %s cycle%d closed pixel count drift got=%d want=%d\n",
+                    label, cycle + 1, closedMatch.assetDrawn,
+                    baselineClosedDrawn);
+            ok = 0;
+        }
+    }
+
+    printf("%s append-clear-cycles openDrawn=%d closedDrawn=%d championCount=%d candidate=%d/%d\n",
+           label, baselineOpenDrawn, baselineClosedDrawn,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -1129,6 +1248,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game11;
     M12_StartupMenuState menu12;
     M11_GameViewState game12;
+    M12_StartupMenuState menu13;
+    M11_GameViewState game13;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -1419,6 +1540,21 @@ int main(int argc, char** argv) {
                                        "corridor_north_save_input");
     }
     M11_GameView_Shutdown(&game12);
+
+    /* Pose Q: repeatedly append and cancel the same mirror candidate in
+     * one runtime.  REVIVE.C keeps cancel as a pure G0299/G0305 clear path,
+     * so the C040 panel must reappear and disappear with stable pixels
+     * across multiple append/clear cycles. */
+    M12_StartupMenu_InitWithDataDir(&menu13, dataDir, NULL);
+    M11_GameView_Init(&game13);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game13, &menu13)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for append-clear cycle pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    ok &= check_append_clear_cycle_pixels(&game13, rrPanel, 2,
+                                          "corridor_north_append_clear_cycles");
+    M11_GameView_Shutdown(&game13);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
