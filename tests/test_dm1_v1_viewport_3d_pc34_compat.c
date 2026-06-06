@@ -432,6 +432,18 @@ static void test_wall_frame_bitmap_global_null_guard(void)
 
 static void test_floor_ceiling_bands_and_zones(void)
 {
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    DM1_Viewport3DState state;
+
+    /*
+     * ReDMCSB: DUNVIEW.C F0098 lines 2962-3004 clears
+     * G0086_puc_Bitmap_ViewportBlackArea, copies the ceiling/floor bitmaps
+     * through F0674_F0128_sub on PC34/I34E, then resets
+     * G0297_B_DrawFloorAndCeilingRequested.  Firestaff's current asset-free
+     * fallback must still keep the same row ownership: top black-area rows and
+     * the floor area are refreshed, while the intervening wall band is not
+     * over-cleared before the square draw walk.
+     */
     check_int("F0098.viewport.width", DM1_VIEWPORT_WIDTH, 224);
     check_int("F0098.viewport.height", DM1_VIEWPORT_HEIGHT, 136);
     check_int("F0098.black_area_h", DM1_VIEWPORT_BLACK_AREA_H, 37);
@@ -444,6 +456,25 @@ static void test_floor_ceiling_bands_and_zones(void)
     check_int("PC34.zone.door_frame_left_d2c", DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C, 724);
     check_int("PC34.zone.door_frame_right_d2c", DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C, 725);
     check_int("PC34.zone.door_frame_top_d2c", DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C, 730);
+
+    memset(viewport, 0x5a, sizeof(viewport));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    state.floor_ceiling_dirty = true;
+
+    dm1_viewport_3d_draw_floor_ceiling(&state);
+    check_int("F0098.pixel.black_area_first_row_clear",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 17], 0);
+    check_int("F0098.pixel.black_area_last_row_clear",
+              viewport[(DM1_VIEWPORT_BLACK_AREA_H - 1) * DM1_VIEWPORT_WIDTH + 223], 0);
+    check_int("F0098.pixel.wall_band_after_black_preserved",
+              viewport[DM1_VIEWPORT_BLACK_AREA_H * DM1_VIEWPORT_WIDTH + 17], 0x5a);
+    check_int("F0098.pixel.wall_band_before_floor_preserved",
+              viewport[(DM1_VIEWPORT_FLOOR_Y - 1) * DM1_VIEWPORT_WIDTH + 111], 0x5a);
+    check_int("F0098.pixel.floor_first_row_clear",
+              viewport[DM1_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 0], 0);
+    check_int("F0098.pixel.floor_last_row_clear",
+              viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 223], 0);
+    check_int("F0098.pixel.dirty_flag_reset", state.floor_ceiling_dirty ? 1 : 0, 0);
 }
 
 
