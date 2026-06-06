@@ -22,18 +22,21 @@
  *      || 8-pixel column gap (V2 label color) || V2 framebuffer, then
  *      FNV-1a hashed into a stable 64-bit seed that is reproducible across
  *      machines and builds.
- *   4. The two routes go through the same DM1_V2_MovementCommandRoute
- *      boundary check: with v2PresentationEnabled=0 both resolve to
- *      DM1_V2_MOVEMENT_ROUTE_V1_SOURCE, so neither route can mutate the
- *      source V1 command truth (DEFS.H:197-205 / COMMAND.C:2045-2155).
+ *   4. The route is checked across every C001..C006 V1 source command
+ *      (DEFS.H:238-243). With v2PresentationEnabled=0 every row resolves
+ *      to DM1_V2_MOVEMENT_ROUTE_V1_SOURCE, sourceCommand == runtimeCommand
+ *      == C-id, and route.v2PresentationEnabled echoes the requested flag,
+ *      so no row can be silently re-routed by a future V2 presentation
+ *      change.
  *
  * Source locks
  *   ReDMCSB DUNVIEW.C:2999-3000  viewport bitmap 224x136 dimensions.
  *   ReDMCSB DUNVIEW.C:8337-8338  draw floor/ceiling before walking squares.
  *   ReDMCSB DUNVIEW.C:8490-8542  D3 -> D0 left/center/right draw order.
- *   ReDMCSB DEFS.H:197-205       queued command / route kinds.
- *   ReDMCSB COMMAND.C:2045-2155  F0380_COMMAND_ProcessQueue_CPSC keeps V1
- *                                gameplay dispatch outside V2 presentation.
+ *   ReDMCSB DEFS.H:235           "Commands" section header.
+ *   ReDMCSB DEFS.H:238-243       C001..C006 movement command ids.
+ *   ReDMCSB COMMAND.C:2045-2155  F0359 command queue dispatch keeps V1
+ *                                gameplay outside V2 presentation.
  *   ReDMCSB GAMELOOP.C:90        F0128_DUNGEONVIEW_Draw_CPSF snapshot draw.
  *   dm1_v2_presentation_profile_pc34.c  Phase 1 V1/off defaults.
  *   dm1_v2_movement_command_adapter_pc34.c  presentation-disabled route.
@@ -229,27 +232,62 @@ static void check_presentation_profile_defaults(void) {
                  "defaults: v2PresentationEnabled=0 (Phase 1 boot path)");
 }
 
-static void check_movement_command_route_disabled_v1(void) {
-    DM1_V2_MovementCommandRoute route;
-    /* V1 source lane: even the runtime command must resolve to a V1 source
-     * route. The movement command adapter must never silently promote a V2
-     * runtime command into a different source command when presentation is
-     * disabled. */
-    route = dm1_v2_movement_command_route_for_presentation(
-        0, DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD);
-    PROBE_ASSERT(route.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE,
-                 "v2PresentationEnabled=0 -> V1_SOURCE route (DEFS.H:197-205 / COMMAND.C:2045-2155)");
-    PROBE_ASSERT(route.v2PresentationEnabled == 0,
-                 "route.v2PresentationEnabled echoes the requested flag");
-    PROBE_ASSERT(route.sourceCommand == DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD,
-                 "V1 route preserves the source command (no re-mapping)");
+/* V1 source command truth table (ReDMCSB DEFS.H:238-243).
+ *
+ * The adapter must report routeKind=V1_SOURCE, sourceCommand == runtimeCommand
+ * == C-id, and v2PresentationEnabled echoes the requested flag for every
+ * C001..C006 row when v2PresentationEnabled=0. Spreading the assertion
+ * across all six commands makes any future V2 presentation change that
+ * silently re-routes a V1 source command break at least one row.
+ *
+ * The DM1_V2_MovementCommand enum shares its integer value with the
+ * ReDMCSB C-id (TURN_LEFT=1, TURN_RIGHT=2, MOVE_FORWARD=3, MOVE_RIGHT=4,
+ * MOVE_BACKWARD=5, MOVE_LEFT=6), so the same integer compares true to
+ * both names. This is the V1 source truth and must never change. */
+typedef struct {
+    DM1_V2_MovementCommand v2Command;
+    int v1SourceCommand;
+    const char* label;
+} V1SourceCommandRow;
 
-    route = dm1_v2_movement_command_route_for_presentation(
-        0, DM1_V2_MOVEMENT_COMMAND_TURN_RIGHT);
-    PROBE_ASSERT(route.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE,
-                 "v2PresentationEnabled=0 -> V1_SOURCE route (turn right)");
-    PROBE_ASSERT(route.sourceCommand == DM1_V2_MOVEMENT_COMMAND_TURN_RIGHT,
-                 "V1 route preserves the source command for turns");
+static const V1SourceCommandRow g_v1_command_table[6] = {
+    { DM1_V2_MOVEMENT_COMMAND_TURN_LEFT,    1, "C001 TURN_LEFT"    },
+    { DM1_V2_MOVEMENT_COMMAND_TURN_RIGHT,   2, "C002 TURN_RIGHT"   },
+    { DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD, 3, "C003 MOVE_FORWARD" },
+    { DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT,   4, "C004 MOVE_RIGHT"   },
+    { DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD,5, "C005 MOVE_BACKWARD"},
+    { DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT,    6, "C006 MOVE_LEFT"    },
+};
+#define N_V1_COMMAND_ROWS \
+    ((int)(sizeof(g_v1_command_table) / sizeof(g_v1_command_table[0])))
+
+static void check_movement_command_route_disabled_v1(void) {
+    int i;
+    /* V1 source lane: every C001..C006 source command must resolve to a
+     * V1_SOURCE route, preserve its source command, and echo the
+     * v2PresentationEnabled=0 flag. The movement command adapter must
+     * never silently promote a V2 runtime command into a different
+     * source command when presentation is disabled. */
+    for (i = 0; i < N_V1_COMMAND_ROWS; ++i) {
+        DM1_V2_MovementCommandRoute route;
+        char id[64];
+        snprintf(id, sizeof(id), "v1_command_table[%s]",
+                 g_v1_command_table[i].label);
+        route = dm1_v2_movement_command_route_for_presentation(
+            0, g_v1_command_table[i].v2Command);
+        PROBE_ASSERT(route.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE,
+                     "%s -> V1_SOURCE route (DEFS.H:238-243 / COMMAND.C:2045-2155)",
+                     id);
+        PROBE_ASSERT(route.v2PresentationEnabled == 0,
+                     "%s -> route.v2PresentationEnabled echoes requested flag",
+                     id);
+        PROBE_ASSERT(route.sourceCommand == g_v1_command_table[i].v1SourceCommand,
+                     "%s -> sourceCommand matches ReDMCSB C-id",
+                     id);
+        PROBE_ASSERT(route.runtimeCommand == route.sourceCommand,
+                     "%s -> runtimeCommand == sourceCommand (V1 truth preserved)",
+                     id);
+    }
 }
 
 int main(void) {
