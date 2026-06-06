@@ -38,6 +38,7 @@
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -565,13 +566,36 @@ static int check_pointer_reincarnate(M11_GameViewState* game,
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     PanelMatch match;
     M11_GameInputResult inputResult;
+    struct ChampionState_Compat before;
+    ReincarnationResult_Compat expected;
+    uint8_t rngValues[12];
+    int i;
     int ok = 1;
 
     ok &= expect_int("pre-reincarnate-click panel on",
                      game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-reincarnate-click party index",
+                     game->candidateMirrorPartyIndex, 0);
+    if (!ok ||
+        game->candidateMirrorPartyIndex < 0 ||
+        game->candidateMirrorPartyIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    before = game->world.party.champions[game->candidateMirrorPartyIndex];
+    for (i = 0; i < 12; ++i) {
+        rngValues[i] = (uint8_t)((game->world.gameTick +
+                                  (unsigned int)game->candidateMirrorPartyIndex * 3u +
+                                  (unsigned int)i) % 7u);
+    }
+    expected = F0864_RESURRECTION_ComputeReincarnation_Compat(
+        (int16_t)before.hp.maximum, (int16_t)before.hp.current,
+        (int16_t)before.stamina.maximum, (int16_t)before.stamina.current,
+        (int16_t)before.mana.maximum, (int16_t)before.mana.current,
+        rngValues);
     /* ReDMCSB COMMAND.C:228-233 / 508-511 maps the panel's reincarnate
      * box to C161, then REVIVE.C:785-806 clears G0299 and disables the
-     * mirror-square sensor before REVIVE.C:806-835 applies reincarnation. */
+     * mirror-square sensor before REVIVE.C:806-835 clears skills, halves
+     * health/stamina/mana, and applies the 12 RANDOM(7) stat increments. */
     inputResult = M11_GameView_HandlePointerButton(game,
                                                    PROBE_REINCARNATE_CLICK_X,
                                                    PROBE_REINCARNATE_CLICK_Y,
@@ -590,6 +614,44 @@ static int check_pointer_reincarnate(M11_GameViewState* game,
                      game->candidateMirrorPartyIndex, -1);
     ok &= expect_int("post-reincarnate-click front mirror disabled",
                      M11_GameView_GetFrontMirrorOrdinal(game), -1);
+    if (game->world.party.championCount > 0) {
+        const struct ChampionState_Compat* after = &game->world.party.champions[0];
+        ok &= expect_int("post-reincarnate max health",
+                         (int)after->hp.maximum, expected.newMaxHealth);
+        ok &= expect_int("post-reincarnate current health",
+                         (int)after->hp.current, expected.newCurrentHealth);
+        ok &= expect_int("post-reincarnate max stamina",
+                         (int)after->stamina.maximum, expected.newMaxStamina);
+        ok &= expect_int("post-reincarnate current stamina",
+                         (int)after->stamina.current, expected.newCurrentStamina);
+        ok &= expect_int("post-reincarnate max mana",
+                         (int)after->mana.maximum, expected.newMaxMana);
+        ok &= expect_int("post-reincarnate current mana",
+                         (int)after->mana.current, expected.newCurrentMana);
+        ok &= expect_int("post-reincarnate shifted health",
+                         (int)after->hp.shifted, (int)after->hp.maximum << 1);
+        ok &= expect_int("post-reincarnate shifted stamina",
+                         (int)after->stamina.shifted,
+                         (int)after->stamina.maximum << 1);
+        ok &= expect_int("post-reincarnate shifted mana",
+                         (int)after->mana.shifted, (int)after->mana.maximum << 1);
+        for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
+            char checkLabel[96];
+            snprintf(checkLabel, sizeof(checkLabel),
+                     "post-reincarnate skill %d level cleared", i);
+            ok &= expect_int(checkLabel, (int)after->skillLevels[i], 0);
+            snprintf(checkLabel, sizeof(checkLabel),
+                     "post-reincarnate skill %d experience cleared", i);
+            ok &= expect_int(checkLabel, (int)after->skillExperience[i], 0);
+        }
+        for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+            char checkLabel[96];
+            snprintf(checkLabel, sizeof(checkLabel),
+                     "post-reincarnate attribute %d increment", i);
+            ok &= expect_int(checkLabel, (int)after->attributes[i],
+                             (int)(before.attributes[i] + expected.statIncrements[i]));
+        }
+    }
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
