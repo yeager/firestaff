@@ -8,7 +8,8 @@
  * runtime path strings and CSB_STATE_TITLE, but did NOT:
  *   1. Set runtime.dungeon_asset.kind
  *   2. Copy entrance_map_index / start_map_index from the boot profile
- *   3. Load DUNGEON.DAT into the runtime (dungeon_handle == NULL)
+ *   3. Load DUNGEON.DAT into the runtime (dungeon_handle != NULL)
+ *   4. Release the loaded dungeon through csb_v1_boot_cleanup()
  *
  * The handoff gap left the runtime in a TITLE state with no live
  * dungeon, forcing the game-view to do a second hash search via
@@ -18,6 +19,7 @@
  * Source-locks (matches src/csb/csb_v1_boot.c citation block):
  *   ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon
  *   ReDMCSB LOADSAVE.C F0435 lines 1940-1944 new-game map 0
+ *   ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 current-map globals
  *   CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
  */
 
@@ -165,11 +167,16 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CHECK(p.runtime.chaos_magic.magic_initialized == 1,
           "chaos magic is initialized after handoff (ReDMCSB CASTER.C F0211)");
 
-    /* Cleanup: release the dungeon through the runtime cleanup path
-     * so we don't leak heap across tests. */
-    csb_v1_dungeon_set_current(NULL);
-    free(p.runtime.dungeon_handle);
-    p.runtime.dungeon_handle = NULL;
+    /* Cleanup: the boot profile owns the handoff runtime and must clear the
+     * global current-dungeon context that mirrors ReDMCSB's current map globals.
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755. */
+    csb_v1_boot_cleanup(&p);
+    CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY,
+          "boot cleanup returns the profile to PROFILE_READY");
+    CHECK(p.runtime.dungeon_handle == NULL,
+          "boot cleanup clears the owned dungeon handle");
+    CHECK(csb_v1_dungeon_get_current() == NULL,
+          "boot cleanup clears the current dungeon singleton");
 }
 
 static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
@@ -242,21 +249,24 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
     const CSB_V1_DungeonData *first_global = csb_v1_dungeon_get_current();
     CHECK(first_handle != NULL, "first handoff produced a heap dungeon handle");
     CHECK(first_global == first_handle, "singleton matches the heap handle");
+    csb_v1_dungeon_set_current_level(2);
+    CHECK(csb_v1_dungeon_get_current_level() == 2,
+          "test fixture moved the current level before re-entering");
 
     /* A second enter_game() on the same profile must re-load and
-     * replace the previous handle (no double-free, no stale pointer). */
+     * replace the previous live context (no double-free, no stale level). */
     CHECK(csb_v1_boot_enter_game(&p) == 0, "second enter_game succeeds");
-    CHECK(p.runtime.dungeon_handle != NULL, "second handoff produced a fresh handle");
-    CHECK(p.runtime.dungeon_handle != first_handle,
-          "second handoff allocated a new handle (replaces, not aliases)");
+    CHECK(p.runtime.dungeon_handle != NULL, "second handoff produced a live handle");
     CHECK(csb_v1_dungeon_get_current() == p.runtime.dungeon_handle,
           "singleton now points at the second handle");
+    CHECK(csb_v1_dungeon_get_current_level() == 0,
+          "second handoff resets current level to the source-locked new-game map");
 
-    /* Free the latest handle; the previous first_handle was already
-     * released by csb_v1_dungeon_set_current() during the second boot. */
-    csb_v1_dungeon_set_current(NULL);
-    free(p.runtime.dungeon_handle);
-    p.runtime.dungeon_handle = NULL;
+    csb_v1_boot_cleanup(&p);
+    CHECK(p.runtime.dungeon_handle == NULL,
+          "cleanup after repeated handoff clears the latest handle");
+    CHECK(csb_v1_dungeon_get_current() == NULL,
+          "cleanup after repeated handoff clears the singleton");
 }
 
 int main(void)
