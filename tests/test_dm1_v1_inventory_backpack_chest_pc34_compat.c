@@ -35,7 +35,9 @@ int main(void) {
     M11_Item closed[8];
     M11_Item sparse[8];
     M11_Item limited[2];
+    M11_Item statChest[8];
     M11_Item zeroMaskItem;
+    M11_InventoryState statState;
     int ok = 1;
 
     printf("probe=dm1_v1_inventory_backpack_chest_pc34_compat\n");
@@ -52,6 +54,31 @@ int main(void) {
     ok &= expect_int("backpack line1_9 storage", m11_inventory_pc34_source_slot_to_storage_slot(DM1_PC34_SLOT_BACKPACK_LINE1_9), DM1_SLOT_BACKPACK17);
     ok &= expect_int("chest source slot is not champion storage", m11_inventory_pc34_source_slot_to_storage_slot(DM1_PC34_SLOT_CHEST_1), -1);
     ok &= expect_int("chest slot mask", m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_8), DM1_PC34_ALLOWED_CONTAINER);
+
+    /* ReDMCSB CHAMPION.C F0299 lines 343-346 applies C137 Rabbit's Foot
+     * luck only when P0624_ui_SlotIndex < C30_SLOT_CHEST_1.  DEFS.H lines
+     * 806-810 make C30 the first chest slot, so open G0425 chest contents
+     * must not contribute the +10 luck modifier or set the old BUG0_37
+     * panel-refresh path described at CHAMPION.C lines 335-341. */
+    memset(statChest, 0, sizeof(statChest));
+    m11_inventory_init(&statState, 1);
+    statChest[0] = make_item(DM1_PC34_ICON_JUNK_RABBITS_FOOT, 1, DM1_PC34_ALLOWED_CONTAINER);
+    ok &= expect_int("open rabbit foot chest for stat isolation",
+                     m11_inventory_open_chest(&statState, 0, 0x4567, statChest, 8), 1);
+    ok &= expect_int("rabbit foot helper rejects C30 chest slot",
+                     m11_inventory_pc34_applies_rabbits_foot_luck_modifier(&statChest[0],
+                                                                           DM1_PC34_SLOT_CHEST_1), 0);
+    ok &= expect_int("rabbit foot in open chest does not add luck",
+                     m11_inventory_pc34_get_rabbits_foot_luck_bonus(&statState, 0), 0);
+    ok &= expect_int("ordinary inventory rabbit foot accepted for luck",
+                     m11_inventory_set_item_in_pc34_source_slot(&statState, 0,
+                                                                DM1_PC34_SLOT_BACKPACK_LINE1_1,
+                                                                DM1_PC34_ICON_JUNK_RABBITS_FOOT,
+                                                                1, 0,
+                                                                DM1_PC34_ALLOWED_ANY_SLOT), 1);
+    ok &= expect_int("ordinary inventory rabbit foot adds +10 luck",
+                     m11_inventory_pc34_get_rabbits_foot_luck_bonus(&statState, 0),
+                     DM1_PC34_RABBITS_FOOT_LUCK_BONUS);
 
     m11_inventory_init(&state, 1);
     for (int i = 0; i < 10; i++) {

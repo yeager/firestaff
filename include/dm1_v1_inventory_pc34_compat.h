@@ -101,6 +101,11 @@ enum {
     DM1_PC34_ALLOWED_ANY_SLOT = 0xFFFF
 };
 
+enum {
+    DM1_PC34_ICON_JUNK_RABBITS_FOOT = 137,
+    DM1_PC34_RABBITS_FOOT_LUCK_BONUS = 10
+};
+
 typedef struct {
     int itemType;
     int weight;
@@ -170,6 +175,10 @@ int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int c
 int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
                                          int chestSlotIndex, M11_Item* out);
 int m11_inventory_can_equip(const M11_Item* item, int pc34Slot);
+int m11_inventory_pc34_applies_rabbits_foot_luck_modifier(const M11_Item* item,
+                                                          int pc34Slot);
+int m11_inventory_pc34_get_rabbits_foot_luck_bonus(const M11_InventoryState* s,
+                                                   int champ);
 int m11_inventory_equip(M11_InventoryState* s, int champ, int pc34Slot, const M11_Item* item);
 int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot);
 
