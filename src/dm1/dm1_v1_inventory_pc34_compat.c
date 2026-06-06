@@ -507,6 +507,33 @@ int m11_inventory_can_equip(const M11_Item* item, int pc34Slot) {
     return (item->allowedSlots & slotMask) != 0 ? 1 : 0;
 }
 
+int m11_inventory_pc34_applies_rabbits_foot_luck_modifier(const M11_Item* item,
+                                                          int pc34Slot) {
+    if (!item || item->itemType != DM1_PC34_ICON_JUNK_RABBITS_FOOT ||
+        pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    /* ReDMCSB CHAMPION.C F0299 lines 343-346 gates C137 Rabbit's Foot luck
+     * through P0624_ui_SlotIndex < C30_SLOT_CHEST_1; DEFS.H line 810 makes
+     * C30 the first chest slot, so C30..C37 never apply the luck modifier. */
+    return pc34Slot < DM1_PC34_SLOT_CHEST_1 ? 1 : 0;
+}
+
+int m11_inventory_pc34_get_rabbits_foot_luck_bonus(const M11_InventoryState* s,
+                                                   int champ) {
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    int bonus = 0;
+    for (int pc34Slot = 0; pc34Slot < DM1_PC34_INVENTORY_SLOT_COUNT; pc34Slot++) {
+        const M11_Item* item = m11_inventory_pc34_const_slot(s, champ, pc34Slot);
+        if (m11_inventory_pc34_applies_rabbits_foot_luck_modifier(item, pc34Slot)) {
+            bonus += DM1_PC34_RABBITS_FOOT_LUCK_BONUS;
+        }
+    }
+    return bonus;
+}
+
 /* dm1_v1_inventory_pc34_compat.c:m11_inventory_equip:1
  * Moves item from the leader hand (mouseItem) into body slot pc34Slot.
  * Checks that the mouse item is non-empty and can_equip the target slot.
@@ -599,6 +626,7 @@ int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot) {
  * CHEST.C:53-76       F0333 copies first 8 linked container things into G0425
  * CHEST.C:112-133     F0334 closes by compacting non-empty G0425 slots back to links
  * DEFS.H:778-817      C00..C37 inventory/backpack/chest slot namespace
+ * DEFS.H:1937         C137_ICON_JUNK_RABBITS_FOOT
  * DATA.C:1049-1087    30 inventory slot masks + 8 chest container masks
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -610,11 +638,13 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "CHAMPION.C:301-487 F0299_ApplyObjectModifiersToStatistics\n"
         "CHAMPION.C:489-560 F0300_GetObjectRemovedFromSlot\n"
         "CHAMPION.C:587-660 F0301_AddObjectInSlot\n"
+        "CHAMPION.C:343-346 F0299 Rabbit's Foot luck ignores C30+ chest slots\n"
         "CHAMPION.C:694-699 F0302 empty-slot no-op and AllowedSlots/SlotMasks rejection\n"
         "CHAMPION.C:701-710 F0302 leader-hand/slot swap order\n"
         "CHAMPION.C:677-687 F0302 status hand slot routing gates\n"
         "DATA.C:1049-1087 G0038_ai_Graphic562_SlotMasks\n"
         "DEFS.H:778-817 C00..C37 inventory/backpack/chest slot index namespace\n"
+        "DEFS.H:1937 C137_ICON_JUNK_RABBITS_FOOT\n"
         "DEFS.H:1874-1878 C08 slot-box split and M070_HAND_SLOT_INDEX\n"
         "DEFS.H:1698-1710 object allowed-slot masks\n"
         "CHEST.C:30-46 F0333 open chest guard/open icon\n"
