@@ -422,6 +422,42 @@ int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThin
     return 1;
 }
 
+int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
+                                               int openChestThing,
+                                               const M11_Item* linkedItems,
+                                               int linkedItemCount,
+                                               M11_Item* previousItemsOut,
+                                               int maxPreviousItemsOut) {
+    if (!s || champ < 0 || champ >= s->championCount || openChestThing == 0 ||
+        linkedItemCount < 0 || (linkedItemCount > 0 && !linkedItems) ||
+        maxPreviousItemsOut < 0 || (maxPreviousItemsOut > 0 && !previousItemsOut)) {
+        return -1;
+    }
+
+    M11_ChampionInventory* inv = &s->champions[champ];
+    if (inv->openChestThing == openChestThing) {
+        return 0;
+    }
+
+    int previousCount = 0;
+    /* ReDMCSB CHEST.C F0333 lines 34-39 closes a different G0426_T_OpenChest
+     * through F0334 before F0333 lines 53-76 copies the requested container's
+     * first eight links into G0425_aT_ChestSlots. */
+    if (inv->openChestThing != 0) {
+        previousCount = m11_inventory_close_chest(s, champ, previousItemsOut,
+                                                  maxPreviousItemsOut);
+        if (previousCount < 0) {
+            return -1;
+        }
+    }
+
+    if (!m11_inventory_open_chest(s, champ, openChestThing, linkedItems,
+                                  linkedItemCount)) {
+        return -1;
+    }
+    return previousCount;
+}
+
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
                               M11_Item* linkedItemsOut, int maxItemsOut) {
     if (!s || champ < 0 || champ >= s->championCount || maxItemsOut < 0 ||
@@ -648,6 +684,7 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "DEFS.H:1874-1878 C08 slot-box split and M070_HAND_SLOT_INDEX\n"
         "DEFS.H:1698-1710 object allowed-slot masks\n"
         "CHEST.C:30-46 F0333 open chest guard/open icon\n"
+        "CHEST.C:34-39 F0333 closes different open chest before replacement\n"
         "CHEST.C:53-76 F0333 first-8 chest slot copy\n"
         "CHEST.C:112-133 F0334 non-empty slot compact close\n"
         "CLIKCHAM.C:31-32 status box hand click dispatch\n"

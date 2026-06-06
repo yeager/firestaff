@@ -167,6 +167,12 @@ int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot);
 int m11_inventory_pc34_is_chest_source_slot(int pc34Slot);
 int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
                              const M11_Item* linkedItems, int linkedItemCount);
+int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
+                                               int openChestThing,
+                                               const M11_Item* linkedItems,
+                                               int linkedItemCount,
+                                               M11_Item* previousItemsOut,
+                                               int maxPreviousItemsOut);
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
                               M11_Item* linkedItemsOut, int maxItemsOut);
 int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);
