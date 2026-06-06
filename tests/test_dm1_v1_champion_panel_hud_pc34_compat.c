@@ -353,6 +353,71 @@ int main(void)
     }
 
     /*
+     * CHAMDRAW.C:F0291 non-inventory hand-box source lock:
+     * - 536-549: status-box hands use slotBoxIndex =
+     *   (championIndex << 1) + slotIndex, while the inventory champion uses
+     *   C08_SLOT_BOX_INVENTORY_FIRST_SLOT + slotIndex.
+     * - 542-545: non-inventory slots return early when slotIndex > C01 or
+     *   when G0299_ui_CandidateChampionOrdinal owns that champion ordinal.
+     * DEFS.H anchors:
+     * - 780-781: C00/C01 ready/action hand slot IDs.
+     * - 1874: C08_SLOT_BOX_INVENTORY_FIRST_SLOT.
+     * - 3800-3807: C211..C218 status-box hand zones.
+     *
+     * This keeps the C040 candidate panel from repainting its champion's
+     * status hands while still allowing other champions' hand boxes through.
+     */
+    {
+        enum {
+            DM1_ZONE_STATUS_HAND_FIRST = 211
+        };
+        int championIndex = 2;
+        int championOrdinal = championIndex + 1;
+        int matchingCandidateOrdinal = championOrdinal;
+        int otherCandidateOrdinal = 1;
+        int noCandidateOrdinal = 0;
+        int readySlot = DM1_SLOT_READY_HAND;
+        int actionSlot = DM1_SLOT_ACTION_HAND;
+        int headSlot = DM1_SLOT_HEAD;
+        int readySlotBox = (championIndex << 1) + DM1_SLOT_READY_HAND;
+        int actionSlotBox = (championIndex << 1) + DM1_SLOT_ACTION_HAND;
+        int readyZone = DM1_ZONE_STATUS_HAND_FIRST + readySlotBox;
+        int actionZone = DM1_ZONE_STATUS_HAND_FIRST + actionSlotBox;
+        int inventoryReadySlotBox =
+            DM1_SLOTBOX_FIRST_INVENTORY + DM1_SLOT_READY_HAND;
+        int drawReadyWhenCandidateMatches =
+            !((readySlot > DM1_SLOT_ACTION_HAND) ||
+              (matchingCandidateOrdinal == championOrdinal));
+        int drawActionWhenOtherCandidate =
+            !((actionSlot > DM1_SLOT_ACTION_HAND) ||
+              (otherCandidateOrdinal == championOrdinal));
+        int drawHeadWhenNoCandidate =
+            !((headSlot > DM1_SLOT_ACTION_HAND) ||
+              (noCandidateOrdinal == championOrdinal));
+
+        if (readySlotBox != 4 ||
+            actionSlotBox != 5 ||
+            readyZone != 215 ||
+            actionZone != 216 ||
+            inventoryReadySlotBox != 8 ||
+            drawReadyWhenCandidateMatches != 0 ||
+            drawActionWhenOtherCandidate != 1 ||
+            drawHeadWhenNoCandidate != 0) {
+            fprintf(stderr,
+                    "FAIL: F0291 candidate/status hand route readyBox=%d actionBox=%d readyZone=%d actionZone=%d invReady=%d drawMatch=%d drawOther=%d drawHead=%d\n",
+                    readySlotBox,
+                    actionSlotBox,
+                    readyZone,
+                    actionZone,
+                    inventoryReadySlotBox,
+                    drawReadyWhenCandidateMatches,
+                    drawActionWhenOtherCandidate,
+                    drawHeadWhenNoCandidate);
+            failures++;
+        }
+    }
+
+    /*
      * CHAMDRAW.C:F0292 source lock:
      * - 750: L0868_i_ChampionStatusBoxX = championIndex * C69.
      * - 880-884: non-inventory NAME_TITLE clears only the name strip,
