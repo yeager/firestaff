@@ -64,6 +64,89 @@ static void test_null_framebuffer_render_is_noop(void)
     check_true("noop.viewport_pixels_still_null", cfg.viewport_pixels == NULL);
 }
 
+static void test_csb_custom_background_slot_contracts(void)
+{
+    static const struct {
+        int room_num;
+        int relative_forward;
+        int relative_side;
+        const char *call_anchor;
+    } expected[] = {
+        { 0, 3, -2, "6919 room 0" },
+        { 2, 3, -1, "6920 room 2" },
+        { 1, 3, 2, "6940 room 1" },
+        { 3, 3, 1, "6941 room 3" },
+        { 4, 3, 0, "6961 room 4" },
+        { 5, 2, -2, "6981 room 5" },
+        { 7, 2, -1, "6982 room 7" },
+        { 6, 2, 2, "7002 room 6" },
+        { 8, 2, 1, "7003 room 8" },
+        { 9, 2, 0, "7023 room 9" },
+        { 10, 1, -1, "7043 room 10" },
+        { 11, 1, 1, "7063 room 11" },
+        { 12, 1, 0, "7081 room 12" },
+        { 13, 0, -1, "7102 room 13" },
+        { 14, 0, 1, "7122 room 14" },
+        { 15, 0, 0, "7140 room 15" },
+    };
+
+    check_int("csb.custom_background_slots.count",
+              (int)csb_v1_viewport_custom_background_slot_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        char id[128];
+        const CSB_V1_ViewportCustomBackgroundSlotSpec *spec =
+            csb_v1_viewport_get_custom_background_slot_spec(i);
+        const CSB_V1_ViewportCustomBackgroundSlotSpec *by_room =
+            csb_v1_viewport_get_custom_background_slot_spec_for_room(expected[i].room_num);
+
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.present", i);
+        check_true(id, spec != NULL);
+        if (!spec) continue;
+
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.room", i);
+        check_int(id, spec->room_num, expected[i].room_num);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.by_room", i);
+        check_true(id, by_room == spec);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.call_order", i);
+        check_int(id, spec->call_order, (int)i);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.forward", i);
+        check_int(id, spec->relative_forward, expected[i].relative_forward);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.side", i);
+        check_int(id, spec->relative_side, expected[i].relative_side);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.before_cell", i);
+        check_int(id, spec->applies_before_cell_draw, 1);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.mask_slots", i);
+        check_int(id, spec->source_mask_slots, 3);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.bitmap_slots", i);
+        check_int(id, spec->source_bitmap_slots, 3);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.large_min", i);
+        check_int(id, spec->large_bitmap_min_bytes, 7840);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.middle_min", i);
+        check_int(id, spec->middle_bitmap_min_bytes, 3248);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.near_min", i);
+        check_int(id, spec->near_bitmap_min_bytes, 4144);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.function", i);
+        check_true(id, strstr(spec->csbwin_function, "CustomBackgrounds") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.redmcsb_floor", i);
+        check_true(id, strstr(spec->source_lines, "DUNVIEW.C:8337-8339") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.redmcsb_f0098", i);
+        check_true(id, strstr(spec->source_lines, "2962-3002 F0098") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.csbwin_relpos", i);
+        check_true(id, strstr(spec->source_lines, "5317-5325 relpos") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.csbwin_apply", i);
+        check_true(id, strstr(spec->source_lines, "6567-6615 CustomBackgrounds") != NULL);
+        snprintf(id, sizeof(id), "csb.custom_background_slots.%zu.call_anchor", i);
+        check_true(id, strstr(spec->source_lines, expected[i].call_anchor) != NULL);
+    }
+
+    check_true("csb.custom_background_slots.out_of_range",
+               csb_v1_viewport_get_custom_background_slot_spec(16) == NULL);
+    check_true("csb.custom_background_slots.unknown_room",
+               csb_v1_viewport_get_custom_background_slot_spec_for_room(16) == NULL);
+}
+
 static void test_csb_only_draw_order_and_coordinates(void)
 {
     static const struct {
@@ -1415,12 +1498,21 @@ static void test_source_evidence(void)
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
     check_true("evidence.custom_backgrounds", e && strstr(e, "CustomBackgrounds") != NULL);
+    check_true("evidence.custom_backgrounds_redmcsb_floor",
+               e && strstr(e, "8337-8339 F0128") != NULL);
+    check_true("evidence.custom_backgrounds_redmcsb_f0098",
+               e && strstr(e, "F0098 2962-3002") != NULL);
+    check_true("evidence.custom_backgrounds_csbwin_relpos",
+               e && strstr(e, "5317-5325 relposSid/relposFwd") != NULL);
+    check_true("evidence.custom_backgrounds_csbwin_slots",
+               e && strstr(e, "6919-7140 sixteen background room slots") != NULL);
 }
 
 int main(void)
 {
     test_config_defaults_and_setters();
     test_null_framebuffer_render_is_noop();
+    test_csb_custom_background_slot_contracts();
     test_csb_only_draw_order_and_coordinates();
     test_csb_frame_and_zone_contracts();
     test_csb_wall_ornament_route_contracts();

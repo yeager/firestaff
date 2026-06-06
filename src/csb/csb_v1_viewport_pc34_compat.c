@@ -108,6 +108,47 @@ enum {
     CSB_V1_FLIP_HORIZONTAL = 1 /* MASK0x0001_FLIP_HORIZONTAL */
 };
 
+/* ReDMCSB: DUNVIEW.C F0128 lines 8337-8339 draws the ordinary
+ * floor/ceiling backdrop before the square pass sequence, with F0098 lines
+ * 2995-3002 consuming G2109/G2108 and clearing the redraw request.  CSBWin
+ * adds the CSB-only CustomBackgrounds pass between that baseline backdrop and
+ * cell drawing: Viewport.cpp lines 5317-5325 supply room relative positions,
+ * 6567-6615 resolves/apply skin bitmaps, and 6919-7140 inserts room slots. */
+static const CSB_V1_ViewportCustomBackgroundSlotSpec s_custom_background_slots[] = {
+    { 0, 3, -2, 0, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6919 room 0 before F3L1 draw path." },
+    { 2, 3, -1, 1, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6920 room 2 before F3L1 draw path." },
+    { 1, 3, 2, 2, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6940 room 1 before F3R1 draw path." },
+    { 3, 3, 1, 3, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6941 room 3 before F3R1 draw path." },
+    { 4, 3, 0, 4, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6961 room 4 before F3 draw path." },
+    { 5, 2, -2, 5, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6981 room 5 before F2L1 draw path." },
+    { 7, 2, -1, 6, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6982 room 7 before F2L1 draw path." },
+    { 6, 2, 2, 7, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7002 room 6 before F2R1 draw path." },
+    { 8, 2, 1, 8, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7003 room 8 before F2R1 draw path." },
+    { 9, 2, 0, 9, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7023 room 9 before F2 draw path." },
+    { 10, 1, -1, 10, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7043 room 10 before F1L1 draw path." },
+    { 11, 1, 1, 11, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7063 room 11 before F1R1 draw path." },
+    { 12, 1, 0, 12, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7081 room 12 before F1 draw path." },
+    { 13, 0, -1, 13, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7102 room 13 before F0L1 draw path." },
+    { 14, 0, 1, 14, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7122 room 14 before F0R1 draw path." },
+    { 15, 0, 0, 15, 1, 3, 3, 7840, 3248, 4144, "CustomBackgrounds",
+      "ReDMCSB DUNVIEW.C:8337-8339 F0128 floor/ceiling baseline; 2962-3002 F0098 G2109/G2108 draw/reset. CSBWin Viewport.cpp:5317-5325 relpos; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 7140 room 15 before F0 draw path." }
+};
+
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
     {
         (int)DM1_VIEW_SQUARE_D3L2,
@@ -597,6 +638,29 @@ void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id
     if (cfg) cfg->custom_background = bg_id;
 }
 
+size_t csb_v1_viewport_custom_background_slot_spec_count(void)
+{
+    return sizeof(s_custom_background_slots) / sizeof(s_custom_background_slots[0]);
+}
+
+const CSB_V1_ViewportCustomBackgroundSlotSpec *
+csb_v1_viewport_get_custom_background_slot_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_custom_background_slot_spec_count()) return NULL;
+    return &s_custom_background_slots[index];
+}
+
+const CSB_V1_ViewportCustomBackgroundSlotSpec *
+csb_v1_viewport_get_custom_background_slot_spec_for_room(int room_num)
+{
+    for (size_t i = 0; i < csb_v1_viewport_custom_background_slot_spec_count(); ++i) {
+        if (s_custom_background_slots[i].room_num == room_num) {
+            return &s_custom_background_slots[i];
+        }
+    }
+    return NULL;
+}
+
 void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
                                        const uint8_t *grid,
                                        int width, int height) {
@@ -670,14 +734,12 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * dm1_viewport_3d_draw_frame wall loop for D3L2/D3R2/D2L2/D2R2 positions.
      *
      * Custom background rendering — TODO (pass604).
-     * CSBWin/CSBCode.cpp:26 CustomBackgrounds is a CSB-specific feature
-     * that replaces the standard floor/ceiling rendering with a
-     * per-map custom backdrop.  The background ID (cfg->custom_background)
-     * indexes into the CSB custom background table.  This is distinct from
-     * the DM1 floor/ceiling rendering which uses G2108/G2109 bitmap indices.
-     * ReDMCSB does not have a clear reference for this in DUNVIEW.C;
-     * it is specific to the CSBWin implementation.
-     * Source: CSBWin/CSBCode.cpp:26 CustomBackgrounds (CSB custom feature) */
+     * ReDMCSB DUNVIEW.C F0128 lines 8337-8339 draws the standard
+     * floor/ceiling backdrop through F0098 before square rendering begins;
+     * CSBWin Viewport.cpp lines 6567-6615 and 6919-7140 add the CSB-only
+     * CustomBackgrounds room-slot overlays before individual cell draws.
+     * The source-locked slot metadata is exposed by
+     * csb_v1_viewport_get_custom_background_slot_spec*(). */
 
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
 }
@@ -1132,6 +1194,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  4301-4302 F0111 applies C15_DOOR_ORNAMENT_DESTROYED_MASK for C5_DOOR_STATE_DESTROYED\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
         "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
+        "  8337-8339 F0128 draws the standard floor/ceiling baseline before square draws; F0098 2962-3002 draws G2109/G2108 and clears the request\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"
         "  1008-1017 G0195 CSB/I34 floor ornament coordinate-set indices are all 0\n"
         "  DEFS.H:2750-2751 C00_VIEW_FLOOR_D3L2 / C01_VIEW_FLOOR_D3R2\n"
@@ -1147,6 +1210,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  G3048 WallSetFlipped (lines 277-295)\n"
         "ReDMCSB DEFS.H:2696-2697 C00_VIEW_WALL_D3L2_RIGHT / C01_VIEW_WALL_D3R2_LEFT\n"
         "CSBWin/Viewport.cpp: 7290 lines viewport rendering\n"
+        "CSBWin/Viewport.cpp:5317-5325 relposSid/relposFwd; 6567-6615 CustomBackgrounds skin/mask/bitmap apply; 6919-7140 sixteen background room slots before cell draws\n"
         "CSBWin/Graphics.cpp: 3186 lines asset cache\n"
         "CSBWin/CSBCode.cpp:26 CustomBackgrounds\n"
         "CSBWin/CSBCode.cpp:9196 _DisplayChaosStrikesBack (prison door)\n";
