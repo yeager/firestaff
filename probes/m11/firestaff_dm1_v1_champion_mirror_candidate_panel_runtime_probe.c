@@ -24,8 +24,8 @@
  *   path through REVIVE.C:785-837; COMMAND.C:228-233, 508-511,
  *   1379-1431, and 1985-1991 define the panel mouse boxes, ignore
  *   non-matching panel clicks, and dispatch only C160/C161/C162 to
- *   REVIVE.C F0282; COMMAND.C:2159-2181 blocks status-box/inventory
- *   toggles while G0299 marks an open candidate panel; COMMAND.C:2302-2311
+ *   REVIVE.C F0282; COMMAND.C:2159-2181 blocks status-box clicks and
+ *   inventory toggles while G0299 marks an open candidate panel; COMMAND.C:2302-2311
  *   blocks spell-area and action-area processing while G0299 is live;
  *   COMMAND.C:2336-2338 keeps C145 rest disabled while G0299 is live;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
@@ -76,6 +76,8 @@ enum {
     PROBE_REINCARNATE_CLICK_Y = 115,
     PROBE_CANCEL_CLICK_X = 160,
     PROBE_CANCEL_CLICK_Y = 151,
+    PROBE_CHAMPION0_STATUS_CLICK_X = 20,
+    PROBE_CHAMPION0_STATUS_CLICK_Y = 14,
     PROBE_FRONT_PORTRAIT_CLICK_X = 112,
     PROBE_FRONT_PORTRAIT_CLICK_Y = 82,
     /* Resurrect/Reincarnate/Cancel panel graphic index in DM1 GRAPHICS.DAT.
@@ -866,6 +868,66 @@ static int check_inventory_toggle_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_status_box_click_ignored(M11_GameViewState* game,
+                                          const M11_AssetSlot* rrPanel,
+                                          int expectedOrdinal,
+                                          const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-status-box-click panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-status-box-click inventory on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("pre-status-box-click champion appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("pre-status-box-click active champion",
+                     game->world.party.activeChampionIndex, 0);
+    /* ReDMCSB COMMAND.C:375-387 maps the champion-0 status box to
+     * C012/C007, but COMMAND.C:2159-2181 calls F0367/F0355 only when
+     * !G0299.  While the C040 resurrect/reincarnate panel is live, a
+     * status-box click must not close candidate inventory, duplicate or
+     * confirm the candidate, or reroute the open panel. */
+    inputResult = M11_GameView_HandlePointerButton(game,
+                                                   PROBE_CHAMPION0_STATUS_CLICK_X,
+                                                   PROBE_CHAMPION0_STATUS_CLICK_Y,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+    ok &= expect_int("status box click ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-status-box-click panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-status-box-click inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-status-box-click champion still appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-status-box-click active champion preserved",
+                     game->world.party.activeChampionIndex, 0);
+    ok &= expect_int("post-status-box-click ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-status-box-click party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-status-box-click front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored status-box click drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s status-box-click ignored drawn=%d/%d championCount=%d active=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount, game->world.party.activeChampionIndex,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 static int check_spell_rune_input_ignored(M11_GameViewState* game,
                                           const M11_AssetSlot* rrPanel,
                                           int expectedOrdinal,
@@ -1004,6 +1066,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game9;
     M12_StartupMenuState menu10;
     M11_GameViewState game10;
+    M12_StartupMenuState menu11;
+    M11_GameViewState game11;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -1255,6 +1319,26 @@ int main(int argc, char** argv) {
                                               "corridor_north_portrait_reselect");
     }
     M11_GameView_Shutdown(&game10);
+
+    /* Pose O: reopen once more and click the source champion-0 status box
+     * while C040 owns input.  COMMAND.C gates C012/C007 status-box and
+     * inventory-toggle dispatch on !G0299, so the candidate panel remains
+     * the active owner and the pending champion is unchanged. */
+    M12_StartupMenu_InitWithDataDir(&menu11, dataDir, NULL);
+    M11_GameView_Init(&game11);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game11, &menu11)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for status-box click pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game11, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_status_box_click")) {
+        ok = 0;
+    } else {
+        ok &= check_status_box_click_ignored(&game11, rrPanel, 2,
+                                             "corridor_north_status_box_click");
+    }
+    M11_GameView_Shutdown(&game11);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
