@@ -29,6 +29,10 @@
  *     and close-time rewrite compacts that visible array back to the chest
  *   CHAMPION.C F0302 lines 688-710: occupied open-chest slot clicks swap
  *     the leader-hand object with the selected G0425_aT_ChestSlots entry
+ *   CHAMPION.C F0301 lines 606-610 and CHEST.C F0334 lines 117-129:
+ *     placing a leader-hand object into any empty C30+ chest slot writes
+ *     that visible slot, then close promotes the first non-empty visible
+ *     slot to the source container head
  *   CHAMPION.C F0302 lines 697-698 with DATA.C lines 1080-1087:
  *     objects whose AllowedSlots lack MASK0x0400_CONTAINER return before
  *     any chest-slot removal, leader-hand removal, relink, or redraw
@@ -727,6 +731,56 @@ static void test_open_chest_empty_slot_empty_hand_noops(void) {
               "empty-slot no-op preserves the visible chest list head");
     ASSERT_EQ(weapon.next, THING_ENDOFLIST,
               "empty-slot no-op preserves the visible chest list tail");
+}
+
+static void test_open_chest_late_empty_slot_placement_promotes_on_close(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    /* ReDMCSB CHAMPION.C F0302 lines 688-710 routes C540 to slot index
+     * C33 (C30 + 3), F0301 lines 606-610 accepts a non-empty
+     * leader-hand object by writing only G0425_aT_ChestSlots[3], and
+     * CHEST.C F0334 lines 117-129 later rebuilds the source container
+     * by promoting the first non-empty visible slot to Container->Slot. */
+    seed_inventory_view(&state, &things, &weapon);
+    memset(containers, 0, sizeof(containers));
+    things.containers = containers;
+    things.containerCount = 1;
+    weapon.type = 8; /* DUNGEON.C G0237 line 112: Dagger, Chest-allowed. */
+    weapon.next = THING_ENDOFLIST;
+    containers[0].slot = THING_ENDOFLIST;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before late empty-slot placement");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, daggerThing), 1,
+              "leader hand accepts a chest-compatible object for late empty-slot placement");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(3, &sx, &sy, &sw, &sh),
+                "C540 late empty chest slot zone exists");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C540 places the leader-hand object into a late empty chest slot");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "late empty-slot placement clears the leader hand");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "late empty-slot placement keeps the chest panel open");
+    assert_world_hash_matches(&state,
+                              "late empty-slot placement refreshes deterministic world hash");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "close after late empty-slot placement clears panel state");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "close promotes the late non-empty visible slot to the container head");
+    ASSERT_EQ(weapon.next, THING_ENDOFLIST,
+              "close terminates the single promoted chest object");
 }
 
 static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
@@ -2524,6 +2578,7 @@ int main(void) {
     test_all_backpack_source_slots_round_trip_runtime();
     test_open_chest_runtime_routes_and_clicks();
     test_open_chest_empty_slot_empty_hand_noops();
+    test_open_chest_late_empty_slot_placement_promotes_on_close();
     test_open_chest_occupied_slot_swap_preserves_visible_order();
     test_open_chest_rejects_incompatible_leader_hand_without_mutation();
     test_leader_hand_container_eye_routes_to_chest_panel();
