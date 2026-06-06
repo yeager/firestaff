@@ -91,6 +91,12 @@ typedef struct {
     int f0115_objects_layer_order;
     int f0115_creatures_layer_order;
     int f0115_projectiles_layer_order;
+    int f0115_projectile_g2028_row;
+    int f0115_projectile_zone_base;
+    int f0115_projectile_zone_stride;
+    int f0115_projectile_restarts_thing_list;
+    int f0115_projectile_requires_cell_match;
+    int f0115_projectile_suppresses_depth3_front_cells;
     int f0115_explosions_layer_order;
     int f0115_explosions_after_all_cells;
     const char *redmcsb_function;

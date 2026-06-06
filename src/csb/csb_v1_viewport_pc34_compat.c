@@ -50,6 +50,10 @@ enum {
     CSB_V1_OBJECT_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL = 3,
     CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4,
+    CSB_V1_PROJECTILE_ROW_D3L2 = 3, /* G2028_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
+    CSB_V1_PROJECTILE_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_PROJECTILE_ZONE_BASE = 2900, /* C2900_ZONE_ */
+    CSB_V1_PROJECTILE_ZONE_STRIDE = 4,
     CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED = 1,
     CSB_V1_DOOR_PANEL_PARENT_D3L2 = 129,
     CSB_V1_DOOR_PANEL_PARENT_D3R2 = 130,
@@ -188,8 +192,10 @@ static const CSB_V1_ViewportFloorOrnamentBlitSpec s_floor_ornament_blits[] = {
 /* ReDMCSB: DUNVIEW.C F0676 lines 6270-6286 and F0677 lines 6337-6353.
  * CSB's extra D3L2/D3R2 squares route the same F0115 stack as DM1: objects
  * first, a creature after object cells, projectiles after creatures, and
- * explosions after all cells. Door-front squares split F0115 around F0111:
- * rear cells before the door panel/frame, front cells after it. */
+ * explosions after all cells.  Projectiles restart from the first thing for
+ * the current cell and use C2900_ZONE_ + G2028[ViewSquare] * 4 + ViewCell.
+ * Door-front squares split F0115 around F0111: rear cells before the door
+ * panel/frame, front cells after it. */
 static const CSB_V1_ViewportThingPassOrderSpec s_thing_pass_order_routes[] = {
     {
         (int)DM1_VIEW_SQUARE_D3L2,
@@ -205,10 +211,16 @@ static const CSB_V1_ViewportThingPassOrderSpec s_thing_pass_order_routes[] = {
         0,
         1,
         2,
+        CSB_V1_PROJECTILE_ROW_D3L2,
+        CSB_V1_PROJECTILE_ZONE_BASE,
+        CSB_V1_PROJECTILE_ZONE_STRIDE,
+        1,
+        1,
+        1,
         3,
         1,
         "F0676_DrawD3L2",
-        "DUNVIEW.C:6270 F0108; 6271 F0115 door rear cells 0x0218; 6272 F0111 door; 6284 F0108 pit/corridor BUG0_64; 6286 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5915-5933 explosions"
+        "DUNVIEW.C:6270 F0108; 6271 F0115 door rear cells 0x0218; 6272 F0111 door; 6284 F0108 pit/corridor BUG0_64; 6286 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5668 G2028 row, 5672 D3 front-cell skip, 5679 restart projectile list, 5681 cell match, 5683 C2900 zone, 5881-5883 blit, 5915-5933 explosions"
     },
     {
         (int)DM1_VIEW_SQUARE_D3R2,
@@ -224,10 +236,16 @@ static const CSB_V1_ViewportThingPassOrderSpec s_thing_pass_order_routes[] = {
         0,
         1,
         2,
+        CSB_V1_PROJECTILE_ROW_D3R2,
+        CSB_V1_PROJECTILE_ZONE_BASE,
+        CSB_V1_PROJECTILE_ZONE_STRIDE,
+        1,
+        1,
+        1,
         3,
         1,
         "F0677_DrawD3R2",
-        "DUNVIEW.C:6337 F0108; 6338 F0115 door rear cells 0x0128; 6339 F0111 door; 6351 F0108 pit/corridor BUG0_64; 6353 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5915-5933 explosions"
+        "DUNVIEW.C:6337 F0108; 6338 F0115 door rear cells 0x0128; 6339 F0111 door; 6351 F0108 pit/corridor BUG0_64; 6353 F0115 final/corridor/side; F0115:4567-4581 objects/creatures/projectiles, 5668 G2028 row, 5672 D3 front-cell skip, 5679 restart projectile list, 5681 cell match, 5683 C2900 zone, 5881-5883 blit, 5915-5933 explosions"
     },
 };
 
@@ -584,6 +602,8 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  6321-6330 F0677 D3R2 wall panel then F0107 left-wall ornament route\n"
         "  6337-6353 F0677 D3R2 F0108 floor ornament, F0115 pass1/pass2, F0111 door panel route\n"
         "  4567-4581 F0115 draws objects, then creatures, then projectiles per processed view cell\n"
+        "  5668-5683 F0115 restarts for projectile things and uses C2900_ZONE_ + G2028 row * 4 + ViewCell\n"
+        "  5881-5883 F0115 blits PC34/I34 projectile sprites through the computed C2900 zone\n"
         "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
