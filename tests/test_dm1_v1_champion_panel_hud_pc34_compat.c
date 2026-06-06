@@ -74,6 +74,60 @@ int main(void)
     }
 
     /*
+     * CHAMDRAW.C:F0292 champion-icon redraw source lock:
+     * - 1019: icon box index is M026_CHAMPION_ICON_INDEX(Cell, partyDir).
+     * - 1020: redraw is suppressed when the mouse pointer uses ordinal
+     *   M000_INDEX_TO_ORDINAL(iconBoxIndex).
+     * - 1022/1046-1051: redraw fills/blits box zone
+     *   iconBoxIndex + C113_ZONE_CHAMPION_ICON_TOP_LEFT.
+     * - 1025: sprite X is M026_CHAMPION_ICON_INDEX(Direction, partyDir) * 19.
+     * DEFS.H anchors:
+     * - 718: M026_CHAMPION_ICON_INDEX(value, direction).
+     * - 2188: C028_GRAPHIC_CHAMPION_ICONS.
+     * - 3779: C113_ZONE_CHAMPION_ICON_TOP_LEFT.
+     * COMPILE.H:1038 anchors M000_INDEX_TO_ORDINAL(value) as value + 1.
+     */
+    {
+        enum {
+            DM1_ZONE_CHAMPION_ICON_TOP_LEFT = 113
+        };
+        int championIndex = 2;
+        int championCell = 2;
+        int championDirection = 1;
+        int partyDirection = 3;
+        int iconBoxIndex = (championCell + 4 - partyDirection) & 0x0003;
+        int iconSpriteIndex = (championDirection + 4 - partyDirection) & 0x0003;
+        int iconBoxOrdinal = iconBoxIndex + 1;
+        int iconZone = iconBoxIndex + DM1_ZONE_CHAMPION_ICON_TOP_LEFT;
+        int iconSpriteX = iconSpriteIndex * DM1_CHAMPION_ICON_WIDTH;
+        int arrowPointerOrdinal = 0;
+        int sameIconPointerOrdinal = iconBoxOrdinal;
+        int redrawWhenPointerIsArrow = (arrowPointerOrdinal != iconBoxOrdinal);
+        int redrawWhenPointerIsSameIcon = (sameIconPointerOrdinal != iconBoxOrdinal);
+
+        if (iconBoxIndex != 3 ||
+            iconBoxOrdinal != 4 ||
+            iconZone != 116 ||
+            iconSpriteIndex != 2 ||
+            iconSpriteX != 38 ||
+            DM1_ChampionColor[championIndex] != DM1_COLOR_RED ||
+            redrawWhenPointerIsArrow != 1 ||
+            redrawWhenPointerIsSameIcon != 0) {
+            fprintf(stderr,
+                    "FAIL: F0292 champion icon route box=%d ordinal=%d zone=%d sprite=%d spriteX=%d color=%d arrowRedraw=%d sameRedraw=%d\n",
+                    iconBoxIndex,
+                    iconBoxOrdinal,
+                    iconZone,
+                    iconSpriteIndex,
+                    iconSpriteX,
+                    DM1_ChampionColor[championIndex],
+                    redrawWhenPointerIsArrow,
+                    redrawWhenPointerIsSameIcon);
+            failures++;
+        }
+    }
+
+    /*
      * CHAMDRAW.C:F0291 source lock:
      * - 632-646: occupied body slots 0..5 choose wounded/normal borders.
      * - 648-651: the acting champion override is gated by
