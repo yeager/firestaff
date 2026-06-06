@@ -139,6 +139,30 @@ int main(void)
         }
     }
 
+    /*
+     * CHAMDRAW.C:F0292 source lock:
+     * - 750: L0868_i_ChampionStatusBoxX = championIndex * C69.
+     * - 880-884: non-inventory NAME_TITLE clears only the name strip,
+     *   left = statusBoxX, right = statusBoxX + 42, top = 0, bottom = 6,
+     *   then prints at x = statusBoxX + 1, y = 5.
+     * This fourth-slot edge gate keeps the live name strip from drifting
+     * into the slot-3 bars/hands or past the 320-wide screen edge.
+     */
+    {
+        int slot3NameLeft = DM1_ChampionPanel_NameZoneX(3);
+        int slot3NameRight = slot3NameLeft + 42;
+        int slot3NamePrintX = slot3NameLeft + 1;
+        if (slot3NameLeft != 207 ||
+            slot3NameRight != 249 ||
+            slot3NamePrintX != 208 ||
+            slot3NameRight - slot3NameLeft + 1 != 43) {
+            fprintf(stderr,
+                    "FAIL: F0292 slot3 NAME_TITLE strip left=%d right=%d printX=%d\n",
+                    slot3NameLeft, slot3NameRight, slot3NamePrintX);
+            failures++;
+        }
+    }
+
     /* CHAMDRAW.C F0289/F0290 inventory champion numeric values */
     if (DM1_ZONE_HEALTH_VALUE != 550 ||
         DM1_ZONE_MANA_VALUE != 551 ||
