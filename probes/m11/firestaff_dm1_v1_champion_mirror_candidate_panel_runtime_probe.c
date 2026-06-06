@@ -28,6 +28,8 @@
  *   inventory toggles while G0299 marks an open candidate panel; COMMAND.C:2302-2311
  *   blocks spell-area and action-area processing while G0299 is live;
  *   COMMAND.C:2336-2338 keeps C145 rest disabled while G0299 is live;
+ *   COMMAND.C:2366-2370 accepts C140 save only when the party has
+ *   champions and !G0299;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
  *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
@@ -1044,6 +1046,63 @@ static int check_portrait_reselect_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_save_input_ignored(M11_GameViewState* game,
+                                    const M11_AssetSlot* rrPanel,
+                                    int expectedOrdinal,
+                                    const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    uint32_t lastSaveTick;
+    int ok = 1;
+
+    ok &= expect_int("pre-save-input panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-save-input inventory on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("pre-save-input champion appended",
+                     game->world.party.championCount, 1);
+    lastSaveTick = game->lastSaveTick;
+    /* ReDMCSB COMMAND.C:2366-2370 routes C140 save only when
+     * G0305_ui_PartyChampionCount > 0 and !G0299.  While the C040
+     * resurrect/reincarnate panel owns G0299, save input must be a no-op
+     * and must not confirm/cancel or persist the temporary candidate. */
+    inputResult = M11_GameView_HandleInput(game, M12_MENU_INPUT_SAVE_GAME);
+    ok &= expect_int("save input ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-save-input panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-save-input inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-save-input champion still appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-save-input ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-save-input party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-save-input front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+    ok &= expect_int("post-save-input last save tick unchanged",
+                     (int)game->lastSaveTick, (int)lastSaveTick);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored save input drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s save-input ignored drawn=%d/%d championCount=%d lastSave=%u candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           (unsigned int)game->lastSaveTick,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -1068,6 +1127,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game10;
     M12_StartupMenuState menu11;
     M11_GameViewState game11;
+    M12_StartupMenuState menu12;
+    M11_GameViewState game12;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -1339,6 +1400,25 @@ int main(int argc, char** argv) {
                                              "corridor_north_status_box_click");
     }
     M11_GameView_Shutdown(&game11);
+
+    /* Pose P: reopen once more and try source save while C040 owns input.
+     * COMMAND.C:2366-2370 gates C140 save on !G0299, so the transient
+     * candidate champion must not be persisted or otherwise mutated. */
+    M12_StartupMenu_InitWithDataDir(&menu12, dataDir, NULL);
+    M11_GameView_Init(&game12);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game12, &menu12)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for save-input pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game12, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_save_input")) {
+        ok = 0;
+    } else {
+        ok &= check_save_input_ignored(&game12, rrPanel, 2,
+                                       "corridor_north_save_input");
+    }
+    M11_GameView_Shutdown(&game12);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
