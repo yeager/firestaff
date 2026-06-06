@@ -74,6 +74,24 @@ int main(void)
     }
 
     /*
+     * CHAMDRAW.C:F0291 source lock:
+     * - 632-646: occupied body slots 0..5 choose wounded/normal borders.
+     * - 648-651: the acting champion override is gated by
+     *   P0614_ui_SlotIndex == C01_SLOT_ACTION_HAND, so it must not recolor
+     *   the ready hand or other body slots.
+     */
+    if (DM1_ChampionPanel_SlotBoxGraphic(DM1_SLOT_READY_HAND, 0x0000, 1) !=
+        DM1_GFX_SLOT_NORMAL) {
+        fprintf(stderr, "FAIL: F0291 acting champion recolored ready hand\n");
+        failures++;
+    }
+    if (DM1_ChampionPanel_SlotBoxGraphic(DM1_SLOT_HEAD,
+            (uint16_t)(1u << DM1_SLOT_HEAD), 1) != DM1_GFX_SLOT_WOUNDED) {
+        fprintf(stderr, "FAIL: F0291 acting champion overrode head wound\n");
+        failures++;
+    }
+
+    /*
      * CHAMDRAW.C:F0292 inventory mouth/eye warning-border source lock:
      * - 908-918: food < 0, water < 0, or PoisonEventCount selects
      *   C034_GRAPHIC_SLOT_BOX_WOUNDED for C545_ZONE_MOUTH; otherwise C033.
