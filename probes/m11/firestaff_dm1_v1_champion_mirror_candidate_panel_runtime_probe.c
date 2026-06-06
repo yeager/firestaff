@@ -1108,6 +1108,61 @@ static int check_portrait_reselect_ignored(M11_GameViewState* game,
     return ok;
 }
 
+static int check_direct_reselect_ignored(M11_GameViewState* game,
+                                         const M11_AssetSlot* rrPanel,
+                                         int expectedOrdinal,
+                                         const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    int result;
+    int ok = 1;
+
+    ok &= expect_int("pre-direct-reselect panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-direct-reselect champion appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("pre-direct-reselect ordinal",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("pre-direct-reselect party index",
+                     game->candidateMirrorPartyIndex, 0);
+    /* ReDMCSB REVIVE.C:272-276 / F0280 appends exactly one pending
+     * candidate and records G0299.  While G0299 is live, PANEL.C:1654-1656
+     * selects the C040 panel and COMMAND.C:508-511, 1379-1449, and
+     * 1985-1991 allow only C160/C161/C162 to reach REVIVE.C F0282.  A
+     * second direct selection attempt before those panel choices must
+     * therefore leave the temporary party slot unchanged. */
+    result = M11_GameView_SelectFrontMirrorCandidate(game);
+    ok &= expect_int("direct reselect rejected", result, 0);
+    ok &= expect_int("post-direct-reselect panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-direct-reselect inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-direct-reselect no duplicate candidate",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-direct-reselect ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-direct-reselect party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-direct-reselect front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored direct reselect drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s direct-reselect ignored result=%d drawn=%d/%d championCount=%d candidate=%d/%d\n",
+           label, result, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 static int check_save_input_ignored(M11_GameViewState* game,
                                     const M11_AssetSlot* rrPanel,
                                     int expectedOrdinal,
@@ -1315,6 +1370,9 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
+
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
 
     if (argc < 2) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
@@ -1603,17 +1661,33 @@ int main(int argc, char** argv) {
     }
     M11_GameView_Shutdown(&game12);
 
-    /* Pose Q: repeatedly append and cancel the same mirror candidate in
-     * one runtime.  REVIVE.C keeps cancel as a pure G0299/G0305 clear path,
-     * so the C040 panel must reappear and disappear with stable pixels
-     * across multiple append/clear cycles. */
+    /* Pose Q: reopen once more and call the mirror selection path again
+     * while C040 owns the pending candidate.  This is a narrow API-level
+     * guard for the same source runtime invariant as the pointer route:
+     * G0299 permits only panel choices until cancel or confirm cleanup. */
     M12_StartupMenu_InitWithDataDir(&menu13, dataDir, NULL);
     M11_GameView_Init(&game13);
     if (!M11_GameView_OpenSelectedMenuEntry(&game13, &menu13)) {
-        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for append-clear cycle pose\n");
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for final mirror poses\n");
         M11_GameView_Shutdown(&game);
         return 1;
     }
+    if (!pose_panel_open(&game13, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_direct_reselect")) {
+        ok = 0;
+    } else {
+        ok &= check_direct_reselect_ignored(&game13, rrPanel, 2,
+                                            "corridor_north_direct_reselect");
+        if (game13.candidateMirrorPanelActive) {
+            ok &= expect_int("direct-reselect cleanup cancel",
+                             M11_GameView_CancelMirrorCandidate(&game13), 1);
+        }
+    }
+
+    /* Pose R: repeatedly append and cancel the same mirror candidate in
+     * one runtime.  REVIVE.C keeps cancel as a pure G0299/G0305 clear path,
+     * so the C040 panel must reappear and disappear with stable pixels
+     * across multiple append/clear cycles. */
     ok &= check_append_clear_cycle_pixels(&game13, rrPanel, 2,
                                           "corridor_north_append_clear_cycles");
     M11_GameView_Shutdown(&game13);
