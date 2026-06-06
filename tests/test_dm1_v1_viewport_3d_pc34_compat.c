@@ -1071,6 +1071,82 @@ static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[19 * DM1_VIEWPORT_WIDTH + 1], 0xee);
 }
 
+static void test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[72 * 71];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB: DUNVIEW.C G0163 line 586 gives D2C as
+     * {60,163,20,90,72,71,16,0}; F0121 lines 7289-7312 draws the
+     * center wall and F0100 lines 3048-3058 forwards that frame to
+     * F0132 with C10 transparency.  COORD.C:2390-2409 /
+     * IMAGE3.C:866-889 then clip the source row before copying pixels.
+     *
+     * D2C is the middle wall one tile beyond the nearest center wall.
+     * Its frame is wider than the visible span from blit_x=16 in a
+     * 72-wide source row, so this gate pins the left source clip,
+     * transparent first visible pixel, right visible edge, and rows
+     * immediately outside the frame.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 10, sizeof(bitmap));
+    check_nonnull("d2c_center_wall_pixel.frame", frame);
+    if (!frame) return;
+
+    /* Source column 15 is left of the resolved src_x=16 and must not copy. */
+    bitmap[0 * 72 + 15] = 0x33;
+    /* First visible column 16 holds the C10 transparency sentinel. */
+    bitmap[0 * 72 + 16] = 10;
+    /* First opaque visible column 17. */
+    bitmap[0 * 72 + 17] = 0x42;
+    /* Left edge on the next source row proves src_x=16 remains visible. */
+    bitmap[1 * 72 + 16] = 0x44;
+    /* Last visible column 71 of the resolved 56-wide source span. */
+    bitmap[0 * 72 + 71] = 0x7e;
+    /* Bottom row marker on the right visible edge. */
+    bitmap[70 * 72 + 71] = 0x55;
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d2c_center_wall_pixel.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d2c_center_wall_pixel.src_x", gate.src_x, 16);
+    check_int("d2c_center_wall_pixel.src_y", gate.src_y, 0);
+    check_int("d2c_center_wall_pixel.dst_x", gate.dst_x, 60);
+    check_int("d2c_center_wall_pixel.dst_y", gate.dst_y, 20);
+    check_int("d2c_center_wall_pixel.visible_width", gate.width, 56);
+    check_int("d2c_center_wall_pixel.visible_height", gate.height, 71);
+    check_int("d2c_center_wall_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    check_int("d2c_center_wall_pixel.transparent_first_visible_skip",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 60], 0xee);
+    check_int("d2c_center_wall_pixel.next_source_pixel_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 61], 0x42);
+    check_int("d2c_center_wall_pixel.left_edge_next_row_copied",
+              viewport[21 * DM1_VIEWPORT_WIDTH + 60], 0x44);
+    check_int("d2c_center_wall_pixel.column_before_dst_x_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 59], 0xee);
+    check_int("d2c_center_wall_pixel.pre_blit_source_pixel_not_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 60] != 0x33, 1);
+    check_int("d2c_center_wall_pixel.last_visible_pixel_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 115], 0x7e);
+    check_int("d2c_center_wall_pixel.clipped_viewport_column_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 116], 0xee);
+    check_int("d2c_center_wall_pixel.bottom_row_marker",
+              viewport[90 * DM1_VIEWPORT_WIDTH + 115], 0x55);
+    check_int("d2c_center_wall_pixel.row_before_frame_untouched",
+              viewport[19 * DM1_VIEWPORT_WIDTH + 61], 0xee);
+    check_int("d2c_center_wall_pixel.row_after_frame_untouched",
+              viewport[91 * DM1_VIEWPORT_WIDTH + 60], 0xee);
+}
+
 static void test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -1648,6 +1724,7 @@ int main(void)
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d1r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
