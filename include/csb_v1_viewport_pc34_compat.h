@@ -122,6 +122,22 @@ typedef struct {
     int view_square;
     int redmcsb_view_square_index;
     int view_depth;
+    int object_visibility_row;
+    int object_zone_base;
+    int object_zone_cell_stride;
+    int shifts_objects_and_creatures;
+    int shift_set_index;
+    int pile_shift_advances_per_object;
+    int transparent_color;
+    int uses_f0791_blit;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportObjectBlitSpec;
+
+typedef struct {
+    int view_square;
+    int redmcsb_view_square_index;
+    int view_depth;
     int creature_visibility_row;
     int requires_group_marker;
     int rejects_missing_creature_row;
@@ -132,6 +148,27 @@ typedef struct {
     const char *redmcsb_function;
     const char *source_lines;
 } CSB_V1_ViewportCreatureVisibilitySpec;
+
+typedef struct {
+    int view_square;
+    int redmcsb_view_square_index;
+    int view_depth;
+    int explosion_row;
+    int field_aspect_index;
+    int restarts_thing_list_after_cells;
+    int rebirth_requires_visible_row_and_cell_match;
+    int fluxcage_defers_to_field;
+    int fluxcage_field_zone;
+    int rebirth_step1_zone_base;
+    int rebirth_step2_zone_base;
+    int centered_zone_base;
+    int side_zone_base;
+    int side_zone_cell_stride;
+    int transparent_color;
+    int uses_f0791_blit;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportExplosionBlitSpec;
 
 typedef struct {
     int view_square;
@@ -208,12 +245,29 @@ const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility
 int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVisibilitySpec *spec,
                                                   unsigned char cell_ordinal);
 
+size_t csb_v1_viewport_object_blit_spec_count(void);
+const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec(size_t index);
+const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec_for_square(int view_square);
+int csb_v1_viewport_object_blit_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
+                                     unsigned char view_cell);
+int csb_v1_viewport_object_blit_layout_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
+                                            unsigned char view_cell);
+
 size_t csb_v1_viewport_creature_visibility_spec_count(void);
 const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec(size_t index);
 const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec_for_square(int view_square);
 int csb_v1_viewport_creature_visibility_zone(const CSB_V1_ViewportCreatureVisibilitySpec *spec,
                                              int coordinate_set,
                                              unsigned char view_cell);
+
+size_t csb_v1_viewport_explosion_blit_spec_count(void);
+const CSB_V1_ViewportExplosionBlitSpec *csb_v1_viewport_get_explosion_blit_spec(size_t index);
+const CSB_V1_ViewportExplosionBlitSpec *csb_v1_viewport_get_explosion_blit_spec_for_square(int view_square);
+int csb_v1_viewport_explosion_rebirth_step1_zone(const CSB_V1_ViewportExplosionBlitSpec *spec);
+int csb_v1_viewport_explosion_rebirth_step2_zone(const CSB_V1_ViewportExplosionBlitSpec *spec);
+int csb_v1_viewport_explosion_centered_zone(const CSB_V1_ViewportExplosionBlitSpec *spec);
+int csb_v1_viewport_explosion_side_zone(const CSB_V1_ViewportExplosionBlitSpec *spec,
+                                        unsigned char view_cell);
 
 size_t csb_v1_viewport_door_panel_blit_spec_count(void);
 const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index);
