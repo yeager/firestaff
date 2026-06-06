@@ -86,6 +86,14 @@ enum {
     CSB_V1_DOOR_PANEL_D3_Y = 28,
     CSB_V1_DOOR_ORNAMENT_D3LCR = 0, /* C0_VIEW_DOOR_ORNAMENT_D3LCR */
     CSB_V1_DOOR_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
+    CSB_V1_WALL_ORNAMENT_ZONE_BASE = 1004, /* C1004_ZONE_WALL_ORNAMENT */
+    CSB_V1_WALL_ORNAMENT_COORD_STRIDE = 15, /* MEDIA720 C15_UNKNOWN */
+    CSB_V1_WALL_ORNAMENT_SCALE_X_D3 = 30, /* C30_SCALE_ */
+    CSB_V1_WALL_ORNAMENT_SCALE_Y_D3 = 14, /* C14_SCALE_ */
+    CSB_V1_WALL_ORNAMENT_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
+    CSB_V1_WALL_ORNAMENT_ORDINAL_TO_INDEX_DELTA = -1,
+    CSB_V1_WALL_ORNAMENT_D3L2_BITMAP_INCREMENT = 0,
+    CSB_V1_WALL_ORNAMENT_D3R2_BITMAP_INCREMENT = 0,
     CSB_V1_FLOOR_ORNAMENT_ZONE_BASE = 1500, /* C1500_ZONE_FLOOR_ORNAMENT */
     CSB_V1_FLOOR_ORNAMENT_COORD_STRIDE = 11,
     CSB_V1_FLOOR_ORNAMENT_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
@@ -133,6 +141,52 @@ static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
         CSB_V1_NO_VIEW_WALL,
         "F0679_DrawD2R2",
         "DUNVIEW.C:6877-6896 wall case returns without F0107; teleporter field is the only non-wall draw"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0107 lines 3502-3590, 3817-3829, and
+ * 3921-3923; F0676/F0677 lines 6263 and 6330.  The CSB/I34 far-side
+ * wall-ornament views return early for ordinal 0, pre-decrement to the
+ * current-map wall ornament index, build C1004 + CoordinateSet * 15 +
+ * ViewWallIndex, scale through F0675 at C30/C14 with the D3 palette table,
+ * flip only C01_VIEW_WALL_D3R2_LEFT, and dispatch the pixels through F0791
+ * using C10 transparency. */
+static const CSB_V1_ViewportWallOrnamentBlitSpec s_wall_ornament_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_WALL_D3L2_RIGHT,
+        1,
+        CSB_V1_WALL_ORNAMENT_ORDINAL_TO_INDEX_DELTA,
+        CSB_V1_WALL_ORNAMENT_D3L2_BITMAP_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_ZONE_BASE,
+        CSB_V1_WALL_ORNAMENT_COORD_STRIDE,
+        CSB_V1_WALL_ORNAMENT_SCALE_X_D3,
+        CSB_V1_WALL_ORNAMENT_SCALE_Y_D3,
+        CSB_V1_FLIP_NONE,
+        CSB_V1_WALL_ORNAMENT_TRANSPARENT_COLOR,
+        1,
+        1,
+        "M551_RIGHT_WALL_ORNAMENT_ORDINAL",
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6263 F0107(M551, C00_VIEW_WALL_D3L2_RIGHT); F0107:3571 skips ordinal 0; 3575 ordinal--; 3576 reads native bitmap; 3587 zone C1004 + CoordinateSet*15 + ViewWall; 3817-3819 leaves D3L2 unflipped; 3824-3829 F0675 C30/C14 with G0198 D3 palette; 3921-3923 F0791 C10 blit. DEFS.H:2696,4222; DUNVIEW.C:805-819 G0190 MEDIA720; COORD.C:921-1025 C1000..C1107 layout records."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_WALL_D3R2_LEFT,
+        1,
+        CSB_V1_WALL_ORNAMENT_ORDINAL_TO_INDEX_DELTA,
+        CSB_V1_WALL_ORNAMENT_D3R2_BITMAP_INCREMENT,
+        CSB_V1_WALL_ORNAMENT_ZONE_BASE,
+        CSB_V1_WALL_ORNAMENT_COORD_STRIDE,
+        CSB_V1_WALL_ORNAMENT_SCALE_X_D3,
+        CSB_V1_WALL_ORNAMENT_SCALE_Y_D3,
+        CSB_V1_FLIP_HORIZONTAL,
+        CSB_V1_WALL_ORNAMENT_TRANSPARENT_COLOR,
+        1,
+        1,
+        "M553_LEFT_WALL_ORNAMENT_ORDINAL",
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6330 F0107(M553, C01_VIEW_WALL_D3R2_LEFT); F0107:3571 skips ordinal 0; 3575 ordinal--; 3576 reads native bitmap; 3587 zone C1004 + CoordinateSet*15 + ViewWall; 3817-3819 flips C01_VIEW_WALL_D3R2_LEFT; 3824-3829 F0675 C30/C14 with G0198 D3 palette; 3921-3923 F0791 C10 blit. DEFS.H:2697,4222; DUNVIEW.C:805-819 G0190 MEDIA720; COORD.C:921-1025 C1000..C1107 layout records."
     },
 };
 
@@ -610,6 +664,69 @@ const CSB_V1_ViewportWallOrnamentRouteSpec *csb_v1_viewport_get_wall_ornament_ro
     return NULL;
 }
 
+size_t csb_v1_viewport_wall_ornament_blit_spec_count(void)
+{
+    return sizeof(s_wall_ornament_blits) / sizeof(s_wall_ornament_blits[0]);
+}
+
+const CSB_V1_ViewportWallOrnamentBlitSpec *csb_v1_viewport_get_wall_ornament_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_wall_ornament_blit_spec_count()) return NULL;
+    return &s_wall_ornament_blits[index];
+}
+
+const CSB_V1_ViewportWallOrnamentBlitSpec *csb_v1_viewport_get_wall_ornament_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_wall_ornament_blit_spec_count(); ++i) {
+        if (s_wall_ornament_blits[i].view_square == view_square) {
+            return &s_wall_ornament_blits[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_wall_ornament_blit_zone(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                            int coordinate_set)
+{
+    if (!spec || coordinate_set < 0) return -1;
+    return spec->zone_base + (coordinate_set * spec->coordinate_set_stride) +
+           spec->view_wall_index;
+}
+
+int csb_v1_viewport_wall_ornament_native_bitmap_index(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                                      int base_native_bitmap_index)
+{
+    if (!spec || base_native_bitmap_index < 0) return -1;
+    return base_native_bitmap_index + spec->native_bitmap_index_increment;
+}
+
+int csb_v1_viewport_wall_ornament_blit_pixels(const CSB_V1_ViewportWallOrnamentBlitSpec *spec,
+                                              const uint8_t *source,
+                                              int source_stride,
+                                              uint8_t *destination,
+                                              int destination_stride,
+                                              int width,
+                                              int height)
+{
+    int copied = 0;
+    if (!spec || !source || !destination ||
+        source_stride <= 0 || destination_stride <= 0 ||
+        width <= 0 || height <= 0) {
+        return -1;
+    }
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int sx = spec->horizontal_flip ? (width - 1 - x) : x;
+            uint8_t pixel = source[(y * source_stride) + sx];
+            if (pixel == (uint8_t)spec->transparent_color) continue;
+            destination[(y * destination_stride) + x] = pixel;
+            ++copied;
+        }
+    }
+    return copied;
+}
+
 size_t csb_v1_viewport_floor_ornament_route_spec_count(void)
 {
     return sizeof(s_floor_ornament_routes) / sizeof(s_floor_ornament_routes[0]);
@@ -876,6 +993,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  375, 5201-5214, 5615-5627 F0115 maps creatures through G2033 and C3200_ZONE_ with MASK0x8000 shifts\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  5920-6219 F0115 maps PC34/I34 explosions through G2034/G2035, C3000/C3007/C3014/C3031 zones, F0791 C10 blits, and fluxcage field deferral\n"
+        "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
@@ -885,6 +1003,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:2750-2751 C00_VIEW_FLOOR_D3L2 / C01_VIEW_FLOOR_D3R2\n"
         "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
         "  DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT; COORD.C:903-913 floor ornament zone records\n"
+        "  DEFS.H:4222 C1004_ZONE_WALL_ORNAMENT; COORD.C:921-1025 wall ornament zone records\n"
         "  DEFS.H:4228 C2500_ZONE_; COORD.C:1129-1193 object zone records\n"
         "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
         "  DEFS.H:4042-4043 C702/C703 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
