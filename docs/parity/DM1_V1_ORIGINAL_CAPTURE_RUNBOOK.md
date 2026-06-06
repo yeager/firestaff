@@ -10,7 +10,8 @@
 
 - **DOSBox Staging** required (`machine=svga_s3`), not vanilla DOSBox
 - **State-based automation** replaces all hardcoded `sleep()` timers (the root cause of pass94 failure)
-- Python tools included: `dosbox_state_detector.py`, `dosbox_capture_session.py`, `compare_captures.py`
+- Python tools included: `dosbox_state_detector.py`, `dosbox_capture_session.py`, `compare_captures.py`, `dosbox_capture_preflight.py`
+- Preflight gate (`dosbox_capture_preflight.py`) verifies canonical SHA256s and writes the hardened `dosbox_capture.conf` with the runbook's required settings (machine=svga_s3, memsize=16, cpu core=dynamic, cpu_cycles=max).  Run it before any live attempt so the next session cannot reproduce the pass94 conf shape.
 - Selector sequence corrected for DM1 PC 3.4 (GRAPHICS=0 → SOUND=0 → ENTER four times)
 
 ---
@@ -43,13 +44,24 @@ sha256sum ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.D
 ```
 **Do NOT proceed unless both SHA256 match exactly.**
 
+> **Recommended:** run `docs/parity/tools/dosbox_capture_preflight.py` instead.  It performs both SHA checks, then writes a hardened `dosbox_capture.conf` whose settings are pinned to the runbook values below.  The preflight refuses to write a conf that contains the historical pass94 failure-mode settings (`machine=svga_paradise`, `memsize=4`, `core=normal`, `cycles=3000`), and records a JSON receipt that the next capture-session manifest can cite.  See `docs/parity/tools/dosbox_capture_preflight.py` for the full pin contract.
+
+```bash
+python3 docs/parity/tools/dosbox_capture_preflight.py \
+    --data-dir ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 \
+    --captures-dir ~/firestaff-captures
+# Expected: preflight: 16/16 checks matched  PASS
+# Writes: ~/firestaff-captures/dosbox_capture.conf
+# Writes: ~/firestaff-captures/preflight.receipt.json
+```
+
 ---
 
 ## Step 2: DOSBox Staging Configuration
 
 **Machine type `svga_s3` is non-negotiable.** DM1 PC 3.4 requires VGA for stable 320×200 framebuffer reads. CGA and Hercules are incompatible with screenshot capture.
 
-Create `~/.config/dosbox/staging/dosbox.conf`:
+The preflight tool writes the hardened conf for you; if you need to write one by hand, mirror the runbook's required settings exactly:
 
 ```ini
 [sdl]
@@ -58,6 +70,7 @@ windowresolution   = 1024x768
 viewport_resolution = 1024x768
 
 [dosbox]
+machine  = svga_s3
 memsize  = 16
 
 [render]
@@ -66,9 +79,6 @@ frameskip = 0
 [cpu]
 core    = dynamic
 cycles  = max
-
-[machine]
-machine = svga_s3
 ```
 
 Create the capture tools directory:

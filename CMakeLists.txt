@@ -958,6 +958,16 @@ if(BUILD_TESTING)
             NAME dm1_v1_original_capture_session_dry_run
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_session.py --dry-run
         )
+        # Preflight gate: verifies the canonical DUNGEON.DAT/GRAPHICS.DAT
+        # SHA256s and pin-checks the rendered dosbox_capture.conf against
+        # the runbook's required settings and against the historical
+        # pass94 failure-mode values.  This is the upstream gate that
+        # catches the "wrong machine type" and "wrong memsize"
+        # failure modes the runbook §2 calls non-negotiable.
+        add_test(
+            NAME dm1_v1_original_capture_preflight_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_preflight.py --self-test
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
