@@ -58,6 +58,9 @@
  *   DUNGEON.C F0163 lines 1796-1837: chest close/rewrite relinks each
  *     THING through the generic Next field, so mixed weapon/potion/junk
  *     chains preserve visible slot order across type-specific storage.
+ *   CHEST.C F0333 lines 58-75, F0334 lines 117-129, and DUNGEON.C
+ *     F0163 lines 1796-1837: replacing visible C544 in an overfull chest
+ *     rewrites only the eight visible slots and drops the hidden tail.
  */
 
 #include "m11_game_view.h"
@@ -2093,6 +2096,85 @@ static void test_open_chest_pickup_last_visible_slot_detaches_tail(void) {
               "close after last-slot pickup keeps 9th tail item detached");
 }
 
+static void test_open_chest_last_visible_swap_rewrites_hidden_tail(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[10];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short weaponThings[10];
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int i;
+
+    /* ReDMCSB CHEST.C F0333 lines 58-75 loads only the first eight linked
+     * things into G0425_aT_ChestSlots.  CHAMPION.C F0302 lines 688-710
+     * swaps the leader-hand thing with the selected C30+ chest slot, then
+     * F0334 lines 117-129 / DUNGEON.C F0163 lines 1796-1837 rewrite only
+     * those visible slots, so replacing C544 in an overfull chest must drop
+     * the hidden ninth tail from the rewritten source list. */
+    seed_inventory_view(&state, &things, &weapons[0]);
+    memset(weapons, 0, sizeof(weapons));
+    memset(containers, 0, sizeof(containers));
+    things.weapons = weapons;
+    things.weaponCount = 10;
+    things.containers = containers;
+    things.containerCount = 1;
+
+    for (i = 0; i < 10; ++i) {
+        weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+        weapons[i].type = 2;
+        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+    }
+    containers[0].slot = weaponThings[0];
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before C544 replacement rewrite");
+    ASSERT_EQ(weapons[7].next, weaponThings[8],
+              "open chest still links visible C544 to hidden ninth tail before mutation");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, weaponThings[9]), 1,
+              "leader hand accepts a container-compatible C544 replacement object");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(7, &sx, &sy, &sw, &sh),
+                "C544 last visible chest slot zone exists for replacement rewrite");
+
+    state.lastWorldHash = 0xBADF00Du;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "clicking C544 swaps the visible item with the leader-hand replacement");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), weaponThings[7],
+              "C544 replacement moves the old eighth visible item to leader hand");
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "C544 replacement keeps the first visible object as chest head");
+    for (i = 0; i < 6; ++i) {
+        ASSERT_EQ(weapons[i].next, weaponThings[i + 1],
+                  "C544 replacement preserves visible C537..C542 order");
+    }
+    ASSERT_EQ(weapons[6].next, weaponThings[9],
+              "C544 replacement links C543 directly to the leader-hand replacement");
+    ASSERT_EQ(weapons[9].next, THING_ENDOFLIST,
+              "C544 replacement terminates the rewritten visible list");
+    ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
+              "C544 replacement detaches the picked eighth visible object");
+    ASSERT_EQ(weapons[8].next, THING_ENDOFLIST,
+              "C544 replacement leaves the hidden ninth tail detached");
+    assert_world_hash_matches(&state,
+                              "C544 replacement refreshes deterministic world hash");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
+              "close after C544 replacement clears panel state");
+    ASSERT_EQ(containers[0].slot, weaponThings[0],
+              "close after C544 replacement keeps first visible object as head");
+    ASSERT_EQ(weapons[6].next, weaponThings[9],
+              "close after C544 replacement keeps replacement as eighth object");
+    ASSERT_EQ(weapons[9].next, THING_ENDOFLIST,
+              "close after C544 replacement terminates at the replacement object");
+    ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
+              "close after C544 replacement keeps old C544 item detached");
+    ASSERT_EQ(weapons[8].next, THING_ENDOFLIST,
+              "close after C544 replacement keeps hidden ninth tail detached");
+}
+
 static void test_action_hand_chest_panel_state_follows_slot_clicks(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -2667,6 +2749,7 @@ int main(void) {
     test_open_chest_close_trims_to_eight_visible_slots();
     test_open_chest_keeps_ninth_visible_chain_intact();
     test_open_chest_pickup_last_visible_slot_detaches_tail();
+    test_open_chest_last_visible_swap_rewrites_hidden_tail();
     test_action_hand_chest_panel_state_follows_slot_clicks();
     test_action_hand_open_chest_icon_runtime();
     test_eye_panel_potion_power_prefix_runtime();
