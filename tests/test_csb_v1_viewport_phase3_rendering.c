@@ -517,6 +517,98 @@ static void test_csb_object_visibility_filter_contracts(void)
                csb_v1_viewport_get_object_visibility_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0111_door_panel_blit_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int zone;
+        int parent_record;
+        int dst_x;
+        const char *function_name;
+        const char *zone_anchor;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 3700, 129, 24,
+          "F0676_DrawD3L2", "C3700_ZONE_DOOR_D3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 3710, 130, 88,
+          "F0677_DrawD3R2", "C3710_ZONE_DOOR_D3R2" },
+    };
+
+    check_int("csb.door_panel_blit.count",
+              (int)csb_v1_viewport_door_panel_blit_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportDoorPanelBlitSpec *spec =
+            csb_v1_viewport_get_door_panel_blit_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportThingPassOrderSpec *order =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.order_present", i);
+        check_true(id, order != NULL);
+        if (!spec || !order) continue;
+
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.zone", i);
+        check_int(id, spec->door_zone_base, expected[i].zone);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.closed_record_type", i);
+        check_int(id, spec->closed_record_type, 1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.parent", i);
+        check_int(id, spec->closed_parent_record, expected[i].parent_record);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.parent_x", i);
+        check_int(id, spec->closed_parent_x, expected[i].dst_x);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.parent_y", i);
+        check_int(id, spec->closed_parent_y, 28);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.clip_record", i);
+        check_int(id, spec->clip_record, 126);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.native_width", i);
+        check_int(id, spec->native_bitmap_width, 48);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.native_height", i);
+        check_int(id, spec->native_bitmap_height, 41);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.clipped_width", i);
+        check_int(id, spec->clipped_width, 48);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.clipped_height", i);
+        check_int(id, spec->clipped_height, 40);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.dst_x", i);
+        check_int(id, spec->closed_dst_x, expected[i].dst_x);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.dst_y", i);
+        check_int(id, spec->closed_dst_y, 28);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.ornament_index", i);
+        check_int(id, spec->door_ornament_index, 0);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.skip_open", i);
+        check_int(id, spec->skips_open_state, 1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.state_shift", i);
+        check_int(id, spec->shifts_zone_by_state, 1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.half1_offset", i);
+        check_int(id, spec->horizontal_first_half_zone_offset, 6);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.half2_offset", i);
+        check_int(id, spec->horizontal_second_half_zone_offset, 3);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.transparent", i);
+        check_int(id, spec->transparent_color, 10);
+
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.order_before", i);
+        check_int(id, order->door_front_rear_f0115_order < order->door_front_f0111_order, 1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.order_after", i);
+        check_int(id, order->door_front_f0111_order < order->door_front_front_f0115_order, 1);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.zone_source", i);
+        check_true(id, strstr(spec->source_lines, expected[i].zone_anchor) != NULL);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.f0111_source", i);
+        check_true(id, strstr(spec->source_lines, "F0111:4248") != NULL &&
+                       strstr(spec->source_lines, "4331 F0791") != NULL);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.coord_source", i);
+        check_true(id, strstr(spec->source_lines, "COORD.C") != NULL);
+    }
+
+    check_true("csb.door_panel_blit.out_of_range",
+               csb_v1_viewport_get_door_panel_blit_spec(2) == NULL);
+    check_true("csb.door_panel_blit.unknown_square",
+               csb_v1_viewport_get_door_panel_blit_spec_for_square(999) == NULL);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -532,6 +624,7 @@ static void test_source_evidence(void)
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
     check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
+    check_true("evidence.f0111_door_zone_records", e && strstr(e, "COORD.C:1548-1565") != NULL);
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
     check_true("evidence.custom_backgrounds", e && strstr(e, "CustomBackgrounds") != NULL);
@@ -547,6 +640,7 @@ int main(void)
     test_csb_floor_ornament_route_contracts();
     test_csb_thing_pass_order_contracts();
     test_csb_object_visibility_filter_contracts();
+    test_csb_f0111_door_panel_blit_contracts();
     test_source_evidence();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);

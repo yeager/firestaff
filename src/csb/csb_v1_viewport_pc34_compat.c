@@ -49,7 +49,19 @@ enum {
     CSB_V1_OBJECT_ROW_D3L2 = 3, /* G2028_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
     CSB_V1_OBJECT_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL = 3,
-    CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4
+    CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4,
+    CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED = 1,
+    CSB_V1_DOOR_PANEL_PARENT_D3L2 = 129,
+    CSB_V1_DOOR_PANEL_PARENT_D3R2 = 130,
+    CSB_V1_DOOR_PANEL_CLIP_D3 = 126,
+    CSB_V1_DOOR_PANEL_NATIVE_W_D3 = 48,
+    CSB_V1_DOOR_PANEL_NATIVE_H_D3 = 41,
+    CSB_V1_DOOR_PANEL_CLIPPED_H_D3 = 40,
+    CSB_V1_DOOR_PANEL_D3L2_X = 24,
+    CSB_V1_DOOR_PANEL_D3R2_X = 88,
+    CSB_V1_DOOR_PANEL_D3_Y = 28,
+    CSB_V1_DOOR_ORNAMENT_D3LCR = 0, /* C0_VIEW_DOOR_ORNAMENT_D3LCR */
+    CSB_V1_DOOR_TRANSPARENT_COLOR = 10 /* C10_COLOR_FLESH */
 };
 
 static const CSB_V1_ViewportWallOrnamentRouteSpec s_wall_ornament_routes[] = {
@@ -201,6 +213,61 @@ static const CSB_V1_ViewportObjectVisibilitySpec s_object_visibility_routes[] = 
         CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL,
         "F0677_DrawD3R2",
         "DUNVIEW.C:371-373 G2026/G2027/G2028; 4806-4811 loads lane/depth/object row; 4923 F0115 weapon..junk, L2476>=0, cell match, depth3 front-cell suppression"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0111 lines 4218-4337, F0676/F0677 lines
+ * 6271-6273 and 6338-6340, DEFS.H lines 4250-4251, COORD.C lines
+ * 1545-1565 and 781-807.  The CSB-only far door panels reuse the
+ * D3 native 48x41 door bitmap but clip it through COORD.C record 126's
+ * 48x40 viewport sub-zone.  F0111 skips state 0, shifts zone ids by
+ * door state for partially-open doors, and blits with C10 transparency. */
+static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_ZONE_DOOR_D3L2,
+        CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED,
+        CSB_V1_DOOR_PANEL_PARENT_D3L2,
+        CSB_V1_DOOR_PANEL_D3L2_X,
+        CSB_V1_DOOR_PANEL_D3_Y,
+        CSB_V1_DOOR_PANEL_CLIP_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_W_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_H_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_W_D3,
+        CSB_V1_DOOR_PANEL_CLIPPED_H_D3,
+        CSB_V1_DOOR_PANEL_D3L2_X,
+        CSB_V1_DOOR_PANEL_D3_Y,
+        CSB_V1_DOOR_ORNAMENT_D3LCR,
+        1,
+        1,
+        6,
+        3,
+        CSB_V1_DOOR_TRANSPARENT_COLOR,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:6271 F0115 rear pass; 6272 F0111(... C3700_ZONE_DOOR_D3L2); 6273-6286 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4331 F0791 blits with C10. DEFS.H:4250; COORD.C:1548-1565 records 120/126/129 and 788-797 zone 3700..3709."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_ZONE_DOOR_D3R2,
+        CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED,
+        CSB_V1_DOOR_PANEL_PARENT_D3R2,
+        CSB_V1_DOOR_PANEL_D3R2_X,
+        CSB_V1_DOOR_PANEL_D3_Y,
+        CSB_V1_DOOR_PANEL_CLIP_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_W_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_H_D3,
+        CSB_V1_DOOR_PANEL_NATIVE_W_D3,
+        CSB_V1_DOOR_PANEL_CLIPPED_H_D3,
+        CSB_V1_DOOR_PANEL_D3R2_X,
+        CSB_V1_DOOR_PANEL_D3_Y,
+        CSB_V1_DOOR_ORNAMENT_D3LCR,
+        1,
+        1,
+        6,
+        3,
+        CSB_V1_DOOR_TRANSPARENT_COLOR,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:6338 F0115 rear pass; 6339 F0111(... C3710_ZONE_DOOR_D3R2); 6340-6353 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4331 F0791 blits with C10. DEFS.H:4251; COORD.C:1548-1565 records 120/126/130 and 798-807 zone 3710..3719."
     },
 };
 
@@ -401,6 +468,27 @@ int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVis
     return 1;
 }
 
+size_t csb_v1_viewport_door_panel_blit_spec_count(void)
+{
+    return sizeof(s_door_panel_blits) / sizeof(s_door_panel_blits[0]);
+}
+
+const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_door_panel_blit_spec_count()) return NULL;
+    return &s_door_panel_blits[index];
+}
+
+const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_door_panel_blit_spec_count(); ++i) {
+        if (s_door_panel_blits[i].view_square == view_square) {
+            return &s_door_panel_blits[i];
+        }
+    }
+    return NULL;
+}
+
 const char *csb_v1_viewport_source_evidence(void) {
     return
         "ReDMCSB WIP20210206 Toolchains/Common/Source/DUNVIEW.C:\n"
@@ -414,10 +502,12 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  3940-4008 F0108 floor ornament bitmap/index/flip dispatch\n"
-        "  4218-4337 F0111 door bitmap, ornament, state, and zone blit dispatch\n"
+        "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
         "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"
+        "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
+        "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
         "  G3048 WallSetFlipped (lines 277-295)\n"

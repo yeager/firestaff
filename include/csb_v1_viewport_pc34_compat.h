@@ -95,6 +95,30 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportObjectVisibilitySpec;
 
+typedef struct {
+    int view_square;
+    int door_zone_base;
+    int closed_record_type;
+    int closed_parent_record;
+    int closed_parent_x;
+    int closed_parent_y;
+    int clip_record;
+    int native_bitmap_width;
+    int native_bitmap_height;
+    int clipped_width;
+    int clipped_height;
+    int closed_dst_x;
+    int closed_dst_y;
+    int door_ornament_index;
+    int skips_open_state;
+    int shifts_zone_by_state;
+    int horizontal_first_half_zone_offset;
+    int horizontal_second_half_zone_offset;
+    int transparent_color;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportDoorPanelBlitSpec;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -137,6 +161,10 @@ const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility
 const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec_for_square(int view_square);
 int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVisibilitySpec *spec,
                                                   unsigned char cell_ordinal);
+
+size_t csb_v1_viewport_door_panel_blit_spec_count(void);
+const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index);
+const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec_for_square(int view_square);
 
 const char *csb_v1_viewport_source_evidence(void);
 
