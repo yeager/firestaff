@@ -120,6 +120,21 @@ typedef struct {
 
 typedef struct {
     int view_square;
+    int redmcsb_view_square_index;
+    int view_depth;
+    int creature_visibility_row;
+    int requires_group_marker;
+    int rejects_missing_creature_row;
+    int creature_zone_base;
+    int creature_coordinate_set_stride;
+    int creature_zone_cell_stride;
+    int shifts_objects_and_creatures;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportCreatureVisibilitySpec;
+
+typedef struct {
+    int view_square;
     int door_zone_base;
     int closed_record_type;
     int closed_parent_record;
@@ -192,6 +207,13 @@ const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility
 const CSB_V1_ViewportObjectVisibilitySpec *csb_v1_viewport_get_object_visibility_spec_for_square(int view_square);
 int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVisibilitySpec *spec,
                                                   unsigned char cell_ordinal);
+
+size_t csb_v1_viewport_creature_visibility_spec_count(void);
+const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec(size_t index);
+const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec_for_square(int view_square);
+int csb_v1_viewport_creature_visibility_zone(const CSB_V1_ViewportCreatureVisibilitySpec *spec,
+                                             int coordinate_set,
+                                             unsigned char view_cell);
 
 size_t csb_v1_viewport_door_panel_blit_spec_count(void);
 const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec(size_t index);

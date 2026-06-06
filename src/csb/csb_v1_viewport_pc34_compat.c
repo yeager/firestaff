@@ -50,6 +50,12 @@ enum {
     CSB_V1_OBJECT_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL = 3,
     CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4,
+    CSB_V1_CREATURE_ROW_D3L2 = 3, /* G2033_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
+    CSB_V1_CREATURE_ROW_D3R2 = 4, /* G2033_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_CREATURE_ZONE_BASE = 3200, /* C3200_ZONE_ */
+    CSB_V1_CREATURE_COORDINATE_SET_STRIDE = 65,
+    CSB_V1_CREATURE_ZONE_CELL_STRIDE = 5,
+    CSB_V1_CREATURE_SHIFT_MASK = 0x8000, /* MASK0x8000_SHIFT_OBJECTS_AND_CREATURES */
     CSB_V1_PROJECTILE_ROW_D3L2 = 3, /* G2028_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
     CSB_V1_PROJECTILE_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_PROJECTILE_ZONE_BASE = 2900, /* C2900_ZONE_ */
@@ -282,6 +288,43 @@ static const CSB_V1_ViewportObjectVisibilitySpec s_object_visibility_routes[] = 
         CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL,
         "F0677_DrawD3R2",
         "DUNVIEW.C:371-373 G2026/G2027/G2028; 4806-4811 loads lane/depth/object row; 4923 F0115 weapon..junk, L2476>=0, cell match, depth3 front-cell suppression"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0115 lines 4840-4842, 5201-5214, and 5615-5627.
+ * The MEDIA720 PC34/I34E path records one group thing while scanning each
+ * cell, rejects view squares where G2033 maps to -1, then draws creatures
+ * through C3200_ZONE_ + CreatureAspectCoordinateSet * 65 + G2033 row * 5
+ * + ViewCell with MASK0x8000_SHIFT_OBJECTS_AND_CREATURES applied so COORD.C
+ * adds the object/creature shifts before the F0791 blit. */
+static const CSB_V1_ViewportCreatureVisibilitySpec s_creature_visibility_routes[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_CREATURE_ROW_D3L2,
+        1,
+        1,
+        CSB_V1_CREATURE_ZONE_BASE,
+        CSB_V1_CREATURE_COORDINATE_SET_STRIDE,
+        CSB_V1_CREATURE_ZONE_CELL_STRIDE,
+        CSB_V1_CREATURE_SHIFT_MASK,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:375 G2033 row; 4840-4842 records C04_THING_TYPE_GROUP; 5201-5214 F0115 creature gate rejects G2033<0; 5615-5627 C3200_ZONE_ | MASK0x8000 + CoordinateSet*65 + G2033*5 + ViewCell then F0791; COORD.C:1248-1251 C3200 layout range 3200..3364; 2074-2075 clears shift mask"
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_CREATURE_ROW_D3R2,
+        1,
+        1,
+        CSB_V1_CREATURE_ZONE_BASE,
+        CSB_V1_CREATURE_COORDINATE_SET_STRIDE,
+        CSB_V1_CREATURE_ZONE_CELL_STRIDE,
+        CSB_V1_CREATURE_SHIFT_MASK,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:375 G2033 row; 4840-4842 records C04_THING_TYPE_GROUP; 5201-5214 F0115 creature gate rejects G2033<0; 5615-5627 C3200_ZONE_ | MASK0x8000 + CoordinateSet*65 + G2033*5 + ViewCell then F0791; COORD.C:1248-1251 C3200 layout range 3200..3364; 2074-2075 clears shift mask"
     },
 };
 
@@ -572,6 +615,40 @@ int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVis
     return 1;
 }
 
+size_t csb_v1_viewport_creature_visibility_spec_count(void)
+{
+    return sizeof(s_creature_visibility_routes) / sizeof(s_creature_visibility_routes[0]);
+}
+
+const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_creature_visibility_spec_count()) return NULL;
+    return &s_creature_visibility_routes[index];
+}
+
+const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_creature_visibility_spec_count(); ++i) {
+        if (s_creature_visibility_routes[i].view_square == view_square) {
+            return &s_creature_visibility_routes[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_creature_visibility_zone(const CSB_V1_ViewportCreatureVisibilitySpec *spec,
+                                             int coordinate_set,
+                                             unsigned char view_cell)
+{
+    if (!spec || coordinate_set < 0 || view_cell > 4 || spec->creature_visibility_row < 0) {
+        return -1;
+    }
+    return spec->creature_zone_base +
+           (coordinate_set * spec->creature_coordinate_set_stride) +
+           (spec->creature_visibility_row * spec->creature_zone_cell_stride) +
+           view_cell;
+}
+
 size_t csb_v1_viewport_door_panel_blit_spec_count(void)
 {
     return sizeof(s_door_panel_blits) / sizeof(s_door_panel_blits[0]);
@@ -606,6 +683,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  5881-5883 F0115 blits PC34/I34 projectile sprites through the computed C2900 zone\n"
         "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
+        "  375, 5201-5214, 5615-5627 F0115 maps creatures through G2033 and C3200_ZONE_ with MASK0x8000 shifts\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
@@ -616,6 +694,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:2750-2751 C00_VIEW_FLOOR_D3L2 / C01_VIEW_FLOOR_D3R2\n"
         "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
         "  DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT; COORD.C:903-913 floor ornament zone records\n"
+        "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
         "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
