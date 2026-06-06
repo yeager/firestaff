@@ -156,6 +156,10 @@ int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int 
                                                int pc34Slot, M11_Item* out);
 int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot);
 const char *dm1_inventory_pass601_inventory_source_evidence(void);
+const char *dm1_inventory_chest_stale_click_source_evidence_pc34(void);
+int m11_inventory_click_open_chest_slot_for_thing(M11_InventoryState* s, int champ,
+                                                  int expectedOpenChestThing,
+                                                  int chestSlotIndex);
 int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
                                                int partyChampionCount,
                                                int inventoryChampionOrdinal,
