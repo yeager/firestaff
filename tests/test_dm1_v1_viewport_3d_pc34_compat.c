@@ -1275,6 +1275,149 @@ static void test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp(
 }
 
 
+static void test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip(void)
+{
+    /*
+     * Source lock for the DM1 V1 party-side wall parity pixel slice:
+     *   - DUNVIEW.C:8016-8033 (F0125_DUNGEONVIEW_DrawSquareD0L) - PC34 MEDIA720
+     *       native: F0104(G2107_WallSet[C01_WALL_D0L], C716_ZONE_WALL_D0L)
+     *       parity: F0105(G2107_WallSet[C00_WALL_D0R], C716_ZONE_WALL_D0L)
+     *   - DUNVIEW.C:8126-8139 (F0126_DUNGEONVIEW_DrawSquareD0R) - PC34 MEDIA720
+     *       native: F0104(G2107_WallSet[C00_WALL_D0R], C717_ZONE_WALL_D0R)
+     *       parity: F0105(G2107_WallSet[C01_WALL_D0L], C717_ZONE_WALL_D0R)
+     *   - DUNVIEW.C:3185-3204 (F0105) copy/flip/blit with C10 transparency
+     *   - COORD.C:2390-2409 / IMAGE3.C:866-889 source row clipping
+     */
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t assets[32 * DM1_VIEWPORT_BYTE_WIDTH];
+    DM1_Viewport3DState state;
+    const uint8_t *base;
+    uint8_t *d0l_bitmap;
+    uint8_t *d0r_bitmap;
+    const DM1_WallFrame *d0l_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D0L);
+    const DM1_WallFrame *d0r_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D0R);
+    const DM1_ViewportWallDrawSpec *d0l_spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D0L);
+    const DM1_ViewportWallDrawSpec *d0r_spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D0R);
+
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(assets, 10, sizeof(assets));
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.temp_bitmap = NULL;
+    state.temp_bitmap_size = 0;
+
+    /* D0 side-wall strips are 16x136, larger than one synthetic 224-byte
+     * wall-set slot, so park the two controlled strips far apart. */
+    base = assets;
+    state.wall_set_native[DM1_WALL_D0R] = 0;
+    state.wall_set_native[DM1_WALL_D0L] = 12;
+    d0r_bitmap = assets + state.wall_set_native[DM1_WALL_D0R] * DM1_VIEWPORT_BYTE_WIDTH;
+    d0l_bitmap = assets + state.wall_set_native[DM1_WALL_D0L] * DM1_VIEWPORT_BYTE_WIDTH;
+
+    check_nonnull("d0l_d0r_parity.frame.d0l", d0l_frame);
+    check_nonnull("d0l_d0r_parity.frame.d0r", d0r_frame);
+    check_nonnull("d0l_d0r_parity.spec.d0l", d0l_spec);
+    check_nonnull("d0l_d0r_parity.spec.d0r", d0r_spec);
+    if (!d0l_frame || !d0r_frame || !d0l_spec || !d0r_spec) return;
+
+    for (int row = 0; row < 136; ++row) {
+        for (int x = 0; x < 16; ++x) {
+            d0l_bitmap[row * 16 + x] = 0x99;
+            d0r_bitmap[row * 16 + x] = 0x88;
+        }
+    }
+    for (int x = 0; x < 16; ++x) {
+        d0l_bitmap[x] = (uint8_t)(0x11 + x);
+        d0r_bitmap[x] = (uint8_t)(0x21 + x);
+    }
+    d0l_bitmap[5 * 16 + 5] = 10;
+    d0r_bitmap[7 * 16 + 3] = 10;
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(base);
+
+    /* D0L parity: choose native D0R, then F0105 flips it into D0L's zone. */
+    state.parity_flip = true;
+    {
+        bool flip_h = false;
+        DM1_WallSetIndex wall_idx =
+            dm1_viewport_3d_select_wall_bitmap(d0l_spec, state.parity_flip, &flip_h);
+        const uint8_t *wall_bmp =
+            base + (int)state.wall_set_native[wall_idx] * DM1_VIEWPORT_BYTE_WIDTH;
+        check_int("d0l_d0r_parity.d0l_parity_selects_d0r",
+                  (int)wall_idx, (int)DM1_WALL_D0R);
+        check_int("d0l_d0r_parity.d0l_parity_flip_h", flip_h ? 1 : 0, 1);
+        dm1_viewport_3d_draw_door_frame_flipped(&state, wall_bmp, d0l_frame);
+    }
+    check_int("d0l_d0r_parity.d0l_parity_leftmost_is_d0r_15",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 0], 0x30);
+    check_int("d0l_d0r_parity.d0l_parity_rightmost_is_d0r_0",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 15], 0x21);
+    check_int("d0l_d0r_parity.d0l_parity_c10_skip",
+              viewport[7 * DM1_VIEWPORT_WIDTH + 12], 0xee);
+    check_int("d0l_d0r_parity.d0l_parity_d0r_zone_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 192], 0xee);
+
+    /* D0R native: choose native D0R and blit it directly into D0R's zone. */
+    memset(viewport, 0xee, sizeof(viewport));
+    state.parity_flip = false;
+    {
+        bool flip_h = false;
+        DM1_WallSetIndex wall_idx =
+            dm1_viewport_3d_select_wall_bitmap(d0r_spec, state.parity_flip, &flip_h);
+        const uint8_t *wall_bmp =
+            base + (int)state.wall_set_native[wall_idx] * DM1_VIEWPORT_BYTE_WIDTH;
+        check_int("d0l_d0r_parity.d0r_native_selects_d0r",
+                  (int)wall_idx, (int)DM1_WALL_D0R);
+        check_int("d0l_d0r_parity.d0r_native_flip_h", flip_h ? 1 : 0, 0);
+        dm1_viewport_3d_draw_wall(&state, wall_bmp, d0r_frame);
+    }
+    check_int("d0l_d0r_parity.d0r_native_leftmost",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 192], 0x21);
+    check_int("d0l_d0r_parity.d0r_native_rightmost",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 207], 0x30);
+    check_int("d0l_d0r_parity.d0r_native_c10_skip",
+              viewport[7 * DM1_VIEWPORT_WIDTH + 195], 0xee);
+    check_int("d0l_d0r_parity.d0r_native_outside_frame_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 191], 0xee);
+
+    /* D0R parity: choose native D0L, then F0105 flips it into D0R's zone. */
+    memset(viewport, 0xee, sizeof(viewport));
+    state.parity_flip = true;
+    {
+        bool flip_h = false;
+        DM1_WallSetIndex wall_idx =
+            dm1_viewport_3d_select_wall_bitmap(d0r_spec, state.parity_flip, &flip_h);
+        const uint8_t *wall_bmp =
+            base + (int)state.wall_set_native[wall_idx] * DM1_VIEWPORT_BYTE_WIDTH;
+        check_int("d0l_d0r_parity.d0r_parity_selects_d0l",
+                  (int)wall_idx, (int)DM1_WALL_D0L);
+        check_int("d0l_d0r_parity.d0r_parity_flip_h", flip_h ? 1 : 0, 1);
+        dm1_viewport_3d_draw_door_frame_flipped(&state, wall_bmp, d0r_frame);
+    }
+    check_int("d0l_d0r_parity.d0r_parity_leftmost_is_d0l_15",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 192], 0x20);
+    check_int("d0l_d0r_parity.d0r_parity_rightmost_is_d0l_0",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 207], 0x11);
+    check_int("d0l_d0r_parity.d0r_parity_c10_skip",
+              viewport[5 * DM1_VIEWPORT_WIDTH + 202], 0xee);
+    check_int("d0l_d0r_parity.d0r_parity_d0l_zone_untouched",
+              viewport[0 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+
+    check_int("d0l_d0r_parity.d0l_source_anchor",
+              strstr(d0l_spec->source_lines, "DUNVIEW.C:8016-8033") != NULL, 1);
+    check_int("d0l_d0r_parity.d0r_source_anchor",
+              strstr(d0r_spec->source_lines, "DUNVIEW.C:8126-8139") != NULL, 1);
+    check_int("d0l_d0r_parity.d0l_occlusion_anchor",
+              strstr(d0l_spec->occlusion_source_lines, "DUNVIEW.C:8036-8038") != NULL, 1);
+    check_int("d0l_d0r_parity.d0r_occlusion_anchor",
+              strstr(d0r_spec->occlusion_source_lines, "DUNVIEW.C:8142-8144") != NULL, 1);
+
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+}
+
+
 static void test_d0_d1_visible_square_draw_order_gate(void)
 {
     static const struct {
@@ -1435,6 +1578,7 @@ int main(void)
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp();
+    test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip();
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
     test_explosion_occlusion_zone_mapping();
