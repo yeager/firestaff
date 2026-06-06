@@ -19,6 +19,8 @@
  *   ReDMCSB REVIVE.C:272-276 / F0280 appends the mirror candidate to
  *   the party; REVIVE.C:744-799 / F0282 cancels without disabling the
  *   route but disables the first mirror-square sensor on confirm;
+ *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
+ *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
  */
 #include "m11_game_view.h"
@@ -229,6 +231,44 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
     game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPartyIndex = -1;
     game->inventoryPanelActive = 0;
+}
+
+static int pose_select_miss(M11_GameViewState* game,
+                            int mapX,
+                            int mapY,
+                            int dir,
+                            const char* label) {
+    int result;
+    int ok = 1;
+    char checkLabel[128];
+
+    set_pose(game, mapX, mapY, dir);
+    snprintf(checkLabel, sizeof(checkLabel), "%s no front mirror route", label);
+    ok &= expect_int(checkLabel, M11_GameView_GetFrontMirrorOrdinal(game), -1);
+
+    /* ReDMCSB REVIVE.C F0280 is reached only through the source champion
+     * portrait route: after the D1C front-wall portrait is selected, it
+     * sets G0299 and increments G0305 (REVIVE.C:272-276).  A side/no-front
+     * pose must therefore leave the candidate and party state untouched. */
+    result = M11_GameView_SelectFrontMirrorCandidate(game);
+    snprintf(checkLabel, sizeof(checkLabel), "%s select rejected", label);
+    ok &= expect_int(checkLabel, result, 0);
+    snprintf(checkLabel, sizeof(checkLabel), "%s panel still off", label);
+    ok &= expect_int(checkLabel, game->candidateMirrorPanelActive, 0);
+    snprintf(checkLabel, sizeof(checkLabel), "%s ordinal still clear", label);
+    ok &= expect_int(checkLabel, game->candidateMirrorOrdinal, -1);
+    snprintf(checkLabel, sizeof(checkLabel), "%s party index still clear", label);
+    ok &= expect_int(checkLabel, game->candidateMirrorPartyIndex, -1);
+    snprintf(checkLabel, sizeof(checkLabel), "%s no candidate appended", label);
+    ok &= expect_int(checkLabel, game->world.party.championCount, 0);
+    snprintf(checkLabel, sizeof(checkLabel), "%s inventory still off", label);
+    ok &= expect_int(checkLabel, game->inventoryPanelActive, 0);
+
+    printf("%s select-miss result=%d championCount=%d candidate=%d/%d panel=%d\n",
+           label, result, game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex,
+           game->candidateMirrorPanelActive);
+    return ok;
 }
 
 static int pose_panel_closed(M11_GameViewState* game,
@@ -499,6 +539,10 @@ int main(int argc, char** argv) {
                             "corridor_east_no_candidate");
     ok &= pose_panel_closed(&game, rrPanel, 1, 4, DIR_WEST,
                             "corridor_west_no_candidate");
+    /* Pose C2: actively selecting from a side/no-front route must not run
+     * the F0280 candidate append path or open the panel. */
+    ok &= pose_select_miss(&game, 1, 4, DIR_WEST,
+                           "corridor_west_select_miss");
 
     /* Pose D: corridor (1,4) facing north, select front mirror candidate
      * (ordinal 2).  The RR panel must be drawn on top of the viewport
