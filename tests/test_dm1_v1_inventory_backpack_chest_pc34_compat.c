@@ -85,6 +85,29 @@ int main(void) {
     ok &= expect_item_type("old chest item moves to leader hand", &item, 202);
     ok &= expect_int("chest swap updates load", m11_inventory_get_load(&state, 0), 12);
 
+    /* ReDMCSB CHAMPION.C F0302 lines 688-710 performs the occupied C30+
+     * chest-slot swap through the leader hand.  F0300 lines 511-515 removes
+     * the old G0425_aT_ChestSlots occupant; F0301 lines 606-613 allows the
+     * next slot click to add that same thing back into ordinary champion
+     * Slots[] storage.  CHEST.C F0334 lines 112-133 later compacts only the
+     * visible chest slots, so this backpack reinsertion must not rewrite the
+     * replacement object left in the chest. */
+    ok &= expect_int("old chest occupant reinserts into party backpack",
+                     m11_inventory_click_pc34_source_slot(&state, 0,
+                                                          DM1_PC34_SLOT_BACKPACK_LINE1_1), 1);
+    ok &= m11_inventory_get_item_in_pc34_source_slot(&state, 0,
+                                                     DM1_PC34_SLOT_BACKPACK_LINE1_1, &item);
+    ok &= expect_item_type("reinserted old chest occupant is in backpack", &item, 202);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 2, &item);
+    ok &= expect_item_type("chest replacement survives old-occupant reinsertion", &item, 300);
+    ok &= m11_inventory_get_mouse_item(&state, 0, &item);
+    ok &= expect_item_type("leader hand clears after backpack reinsertion", &item, 0);
+    ok &= expect_int("backpack reinsertion updates load", m11_inventory_get_load(&state, 0), 13);
+    ok &= expect_int("test isolation removes reinserted backpack object",
+                     m11_inventory_remove_item(&state, 0, DM1_SLOT_BACKPACK1), 1);
+    ok &= expect_int("load returns to chest-only after isolation remove",
+                     m11_inventory_get_load(&state, 0), 12);
+
     ok &= m11_inventory_set_mouse_item(&state, 0, 301, 5, 0, DM1_PC34_ALLOWED_HEAD);
     ok &= expect_int("head-only item rejected from chest", m11_inventory_click_pc34_source_slot(&state, 0, DM1_PC34_SLOT_CHEST_4), 0);
     ok &= m11_inventory_get_mouse_item(&state, 0, &item);
