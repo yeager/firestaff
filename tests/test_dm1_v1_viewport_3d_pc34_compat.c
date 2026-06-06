@@ -1513,6 +1513,75 @@ static void test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[91 * DM1_VIEWPORT_WIDTH + 60], 0xee);
 }
 
+static void test_d2c_center_wall_opaque_pixel_slice_uses_pc34_no_transparency_route(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[72 * 71];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
+    const DM1_ViewportWallDrawSpec *spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2C);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB PC34/I34E source-lock for the D2C center-wall opaque route:
+     *   - DUNVIEW.C:581-594 G0163 gives D2C as
+     *     {60,163,20,90,72,71,16,0}.
+     *   - DUNVIEW.C:7299-7306 F0121_DUNGEONVIEW_DrawSquareD2C routes
+     *     the center wall through F0792/F0765 with G2107[C09_WALL_D2C].
+     *   - DUNVIEW.C:3065-3078 F0101 documents the center-wall optimization:
+     *     CM1_COLOR_NO_TRANSPARENCY means C10 source pixels are copied.
+     *   - COORD.C:2390-2409 and IMAGE3.C:866-889 still own the clipped
+     *     source/destination span before the no-transparency copy runs.
+     *
+     * The existing D2C transparent slice pins the shared C10-skip helper.
+     * This separate gate pins the PC34 center-wall no-transparency behavior:
+     * the first visible source pixel is C10 and must overwrite the viewport.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memset(bitmap, 0x44, sizeof(bitmap));
+    check_nonnull("d2c_center_wall_opaque.frame", frame);
+    check_nonnull("d2c_center_wall_opaque.spec", spec);
+    if (!frame || !spec) return;
+
+    bitmap[0 * 72 + 15] = 0x33;
+    bitmap[0 * 72 + 16] = 10;
+    bitmap[0 * 72 + 17] = 0x42;
+    bitmap[70 * 72 + 71] = 0x55;
+
+    check_int("d2c_center_wall_opaque.center_wall", spec->center_wall ? 1 : 0, 1);
+    check_int("d2c_center_wall_opaque.pc34_source",
+              strstr(spec->source_lines, "DUNVIEW.C:7299-7306") != NULL, 1);
+    check_int("d2c_center_wall_opaque.wall_return",
+              strstr(spec->occlusion_source_lines, "DUNVIEW.C:7308-7312") != NULL, 1);
+    check_int("d2c_center_wall_opaque.zone", spec->pc34_zone, DM1_PC34_ZONE_WALL_D2C);
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d2c_center_wall_opaque.gate_visible", gate.visible ? 1 : 0, 1);
+    check_int("d2c_center_wall_opaque.src_x", gate.src_x, 16);
+    check_int("d2c_center_wall_opaque.dst_x", gate.dst_x, 60);
+    check_int("d2c_center_wall_opaque.visible_width", gate.width, 56);
+    check_int("d2c_center_wall_opaque.visible_height", gate.height, 71);
+    check_int("d2c_center_wall_opaque.source_evidence",
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall_opaque(&state, bitmap, frame);
+    check_int("d2c_center_wall_opaque.c10_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 60], 10);
+    check_int("d2c_center_wall_opaque.next_source_pixel_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 61], 0x42);
+    check_int("d2c_center_wall_opaque.pre_blit_source_not_copied",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 60] != 0x33, 1);
+    check_int("d2c_center_wall_opaque.column_before_dst_x_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 59], 0xee);
+    check_int("d2c_center_wall_opaque.column_after_source_clip_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 116], 0xee);
+    check_int("d2c_center_wall_opaque.bottom_row_marker",
+              viewport[90 * DM1_VIEWPORT_WIDTH + 115], 0x55);
+}
+
 static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
 {
     /*
@@ -2549,6 +2618,7 @@ int main(void)
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d2c_center_wall_opaque_pixel_slice_uses_pc34_no_transparency_route();
     test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate();
     test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate();
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
