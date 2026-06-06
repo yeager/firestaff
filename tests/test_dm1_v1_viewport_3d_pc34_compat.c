@@ -2059,6 +2059,71 @@ static void test_d1r_right_wall_pixel_slice_uses_redmcsb_frame_clip(void)
               viewport[8 * DM1_VIEWPORT_WIDTH + 161], 0xee);
 }
 
+static void test_d1l_left_wall_source_clipped_no_pixel_write(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t before[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t bitmap[128 * 111];
+    DM1_Viewport3DState state;
+    const DM1_WallFrame *frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+    const DM1_ViewportWallDrawSpec *spec =
+        dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D1L);
+    DM1_ViewportBlitClipGate gate;
+
+    /*
+     * ReDMCSB source-lock for the fully clipped D1L wall edge:
+     *   - DUNVIEW.C:590 G0163 gives D1L as
+     *     {0,63,9,119,128,111,192,0}: its blit_x starts past the
+     *     128-wide D1 wall bitmap.
+     *   - DUNVIEW.C:7436-7460 F0122_DUNGEONVIEW_DrawSquareD1L still
+     *     routes WALL through F0100/F0104/F0105, draws the side ornament,
+     *     then returns before F0115.
+     *   - DUNVIEW.C:3053-3058 F0100 forwards the frame to F0132 with
+     *     C10 transparency; COORD.C:2390-2409 / IMAGE3.C:866-889 reject
+     *     the empty source intersection before pixels can be copied.
+     *
+     * D1R has a visible 64-column right-edge slice.  D1L is the paired
+     * near-left wall, but source x=192 >= byte_width=128 means it is a
+     * no-write wall path; this pins that asymmetric clip edge.
+     */
+    memset(viewport, 0xee, sizeof(viewport));
+    memcpy(before, viewport, sizeof(before));
+    memset(bitmap, 0x42, sizeof(bitmap));
+    check_nonnull("d1l_left_wall_no_pixel.frame", frame);
+    check_nonnull("d1l_left_wall_no_pixel.spec", spec);
+    if (!frame || !spec) return;
+
+    check_int("d1l_left_wall_no_pixel.function",
+              strcmp(spec->redmcsb_function, "F0122_DUNGEONVIEW_DrawSquareD1L") == 0, 1);
+    check_int("d1l_left_wall_no_pixel.source_route",
+              strstr(spec->source_lines, "DUNVIEW.C:7445-7455") != NULL, 1);
+    check_int("d1l_left_wall_no_pixel.return_route",
+              strstr(spec->occlusion_source_lines, "DUNVIEW.C:7459-7460") != NULL, 1);
+    check_int("d1l_left_wall_no_pixel.zone", spec->pc34_zone, DM1_PC34_ZONE_WALL_D1L);
+
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    check_int("d1l_left_wall_no_pixel.gate_invisible", gate.visible ? 1 : 0, 0);
+    check_int("d1l_left_wall_no_pixel.frame_blit_x", frame->blit_x, 192);
+    check_int("d1l_left_wall_no_pixel.frame_byte_width", frame->byte_width, 128);
+    check_int("d1l_left_wall_no_pixel.source_evidence",
+              strstr(gate.source_lines, "DUNVIEW.C:3053-3058") != NULL &&
+              strstr(gate.source_lines, "COORD.C:2390-2409") != NULL &&
+              strstr(gate.source_lines, "IMAGE3.C:866-889") != NULL, 1);
+
+    dm1_viewport_3d_draw_wall(&state, bitmap, frame);
+    check_int("d1l_left_wall_no_pixel.viewport_unchanged",
+              memcmp(viewport, before, sizeof(viewport)) == 0, 1);
+    check_int("d1l_left_wall_no_pixel.nominal_left_edge_untouched",
+              viewport[9 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d1l_left_wall_no_pixel.nominal_right_edge_untouched",
+              viewport[119 * DM1_VIEWPORT_WIDTH + 63], 0xee);
+    check_int("d1l_left_wall_no_pixel.d1r_pair_remains_visible",
+              dm1_viewport_3d_resolve_wall_blit_clip_gate(
+                  dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1R), 128, 111).visible ? 1 : 0,
+              1);
+}
+
 static void test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -2488,6 +2553,7 @@ int main(void)
     test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate();
     test_d1c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d1r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
+    test_d1l_left_wall_source_clipped_no_pixel_write();
     test_d0l_narrow_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_pc34_parity_wall_draw_uses_opposite_native_bitmap_without_temp();
     test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip();
