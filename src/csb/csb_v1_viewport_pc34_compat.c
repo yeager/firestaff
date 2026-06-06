@@ -87,6 +87,7 @@ enum {
     CSB_V1_DOOR_ORNAMENT_D3LCR = 0, /* C0_VIEW_DOOR_ORNAMENT_D3LCR */
     CSB_V1_DOOR_STATE_DESTROYED = 5, /* C5_DOOR_STATE_DESTROYED */
     CSB_V1_DOOR_ORNAMENT_DESTROYED_MASK = 15, /* C15_DOOR_ORNAMENT_DESTROYED_MASK */
+    CSB_V1_DOOR_HORIZONTAL_FINAL_SHIFT_MASK = 0x4000, /* MASK0x4000_SHIFT_UNREADABLE_INSCRIPTION_AND_OPEN_VERTICAL_DOOR */
     CSB_V1_DOOR_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
     CSB_V1_WALL_ORNAMENT_ZONE_BASE = 1004, /* C1004_ZONE_WALL_ORNAMENT */
     CSB_V1_WALL_ORNAMENT_COORD_STRIDE = 15, /* MEDIA720 C15_UNKNOWN */
@@ -982,6 +983,42 @@ const CSB_V1_ViewportDoorPanelBlitSpec *csb_v1_viewport_get_door_panel_blit_spec
         }
     }
     return NULL;
+}
+
+int csb_v1_viewport_door_panel_first_half_zone(const CSB_V1_ViewportDoorPanelBlitSpec *spec,
+                                               int door_state,
+                                               int horizontal_door)
+{
+    if (!spec || door_state < 0) return -1;
+    if (spec->skips_open_state && door_state == 0) return -1;
+    if (!horizontal_door) return -1;
+    if (door_state == 4 || door_state == spec->destroyed_state) return -1;
+
+    /* ReDMCSB: DUNVIEW.C F0111 lines 4298-4311.  Partially-open
+     * horizontal PC34/I34 doors blit their first half through
+     * P2084_i_ZoneIndex + DoorState + C6_UNKNOWN before the final half. */
+    return spec->door_zone_base + door_state + spec->horizontal_first_half_zone_offset;
+}
+
+int csb_v1_viewport_door_panel_final_zone(const CSB_V1_ViewportDoorPanelBlitSpec *spec,
+                                          int door_state,
+                                          int horizontal_door)
+{
+    if (!spec || door_state < 0) return -1;
+    if (spec->skips_open_state && door_state == 0) return -1;
+    if (door_state == 4 || door_state == spec->destroyed_state) {
+        return spec->door_zone_base;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0111 lines 4298-4321 shifts the zone by
+     * DoorState for partially-open panels.  Horizontal doors add the second
+     * half offset and MASK0x4000 before the final F0791 at line 4334. */
+    int zone = spec->door_zone_base + door_state;
+    if (horizontal_door) {
+        zone += spec->horizontal_second_half_zone_offset;
+        zone |= CSB_V1_DOOR_HORIZONTAL_FINAL_SHIFT_MASK;
+    }
+    return zone;
 }
 
 int csb_v1_viewport_door_panel_blit_pixels(const CSB_V1_ViewportDoorPanelBlitSpec *spec,
