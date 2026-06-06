@@ -1193,6 +1193,134 @@ static void test_csb_f0115_object_blit_contracts(void)
                csb_v1_viewport_get_object_blit_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0115_projectile_blit_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int redmcsb_index;
+        int projectile_row;
+        int zone_cell2;
+        int zone_cell3;
+        int zone_cell4;
+        const char *function_name;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 14, 3, 2914, 2915, 2916, "F0676_DrawD3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 4, 2918, 2919, 2920, "F0677_DrawD3R2" },
+    };
+
+    check_int("csb.projectile_blit.count",
+              (int)csb_v1_viewport_projectile_blit_spec_count(),
+              (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const CSB_V1_ViewportProjectileBlitSpec *spec =
+            csb_v1_viewport_get_projectile_blit_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportThingPassOrderSpec *order =
+            csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        char id[96];
+
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.present", i);
+        check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.order_present", i);
+        check_true(id, order != NULL);
+        if (!spec || !order) continue;
+
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.square", i);
+        check_int(id, spec->view_square, (int)expected[i].square);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.redmcsb_index", i);
+        check_int(id, spec->redmcsb_view_square_index, expected[i].redmcsb_index);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.depth", i);
+        check_int(id, spec->view_depth, 3);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.row", i);
+        check_int(id, spec->projectile_visibility_row, expected[i].projectile_row);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.order_row_match", i);
+        check_int(id, spec->projectile_visibility_row, order->f0115_projectile_g2028_row);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.zone_base", i);
+        check_int(id, spec->projectile_zone_base, 2900);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.zone_stride", i);
+        check_int(id, spec->projectile_zone_cell_stride, 4);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.projectile_type", i);
+        check_int(id, spec->requires_projectile_type, 1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.cell_match", i);
+        check_int(id, spec->requires_thing_cell_match, 1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.restart", i);
+        check_int(id, spec->restarts_thing_list, 1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.front_suppression", i);
+        check_int(id, spec->suppresses_depth3_front_cells, 1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.d0_suppression", i);
+        check_int(id, spec->suppresses_depth0_back_cells, 0);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.derived_none", i);
+        check_int(id, spec->derived_bitmap_cache_slot_for_scaled_path, -1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.transparent", i);
+        check_int(id, spec->transparent_color, 10);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.uses_f0791", i);
+        check_int(id, spec->uses_f0791_blit, 1);
+
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.reject_cell0", i);
+        check_int(id, csb_v1_viewport_projectile_blit_zone(spec, 0), -1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.reject_cell1", i);
+        check_int(id, csb_v1_viewport_projectile_blit_zone(spec, 1), -1);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.zone_cell2", i);
+        check_int(id, csb_v1_viewport_projectile_blit_zone(spec, 2),
+                  expected[i].zone_cell2);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.zone_cell3", i);
+        check_int(id, csb_v1_viewport_projectile_blit_zone(spec, 3),
+                  expected[i].zone_cell3);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.zone_cell4", i);
+        check_int(id, csb_v1_viewport_projectile_blit_zone(spec, 4),
+                  expected[i].zone_cell4);
+
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.function", i);
+        check_true(id, strstr(spec->redmcsb_function, expected[i].function_name) != NULL);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.source_zone", i);
+        check_true(id, strstr(spec->source_lines, "5668-5683 F0115") != NULL &&
+                       strstr(spec->source_lines, "C2900_ZONE_ + row*4 + ViewCell") != NULL);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.source_scale", i);
+        check_true(id, strstr(spec->source_lines, "5710-5722") != NULL);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.source_blit", i);
+        check_true(id, strstr(spec->source_lines, "5881-5882 F0791") != NULL &&
+                       strstr(spec->source_lines, "C10 transparency") != NULL);
+        snprintf(id, sizeof(id), "csb.projectile_blit.%zu.source_coord", i);
+        check_true(id, strstr(spec->source_lines, "COORD.C:1194-1239") != NULL);
+    }
+
+    {
+        const uint8_t source[6] = { 1, 10, 2, 3, 4, 5 };
+        uint8_t destination[6] = { 88, 88, 88, 88, 88, 88 };
+        const CSB_V1_ViewportProjectileBlitSpec *spec =
+            csb_v1_viewport_get_projectile_blit_spec(0);
+
+        /* ReDMCSB: DUNVIEW.C F0115 lines 5755-5762 and 5791-5802 set
+         * horizontal/vertical flip bits; lines 5881-5882 forward them to
+         * F0791 with C10 transparency for the PC34/I34 projectile blit. */
+        check_int("csb.projectile_blit.synthetic_pixels",
+                  csb_v1_viewport_projectile_blit_pixels(
+                      spec, 0x0001 | 0x0002, source, 3, destination, 3, 3, 2),
+                  5);
+        check_int("csb.projectile_blit.synthetic_pixel_0", destination[0], 5);
+        check_int("csb.projectile_blit.synthetic_pixel_1", destination[1], 4);
+        check_int("csb.projectile_blit.synthetic_pixel_2", destination[2], 3);
+        check_int("csb.projectile_blit.synthetic_pixel_3", destination[3], 2);
+        check_int("csb.projectile_blit.synthetic_transparent", destination[4], 88);
+        check_int("csb.projectile_blit.synthetic_pixel_5", destination[5], 1);
+    }
+
+    check_int("csb.projectile_blit.null_zone",
+              csb_v1_viewport_projectile_blit_zone(NULL, 2), -1);
+    check_int("csb.projectile_blit.bad_cell",
+              csb_v1_viewport_projectile_blit_zone(
+                  csb_v1_viewport_get_projectile_blit_spec(0), 5), -1);
+    check_int("csb.projectile_blit.null_pixels",
+              csb_v1_viewport_projectile_blit_pixels(NULL, 0, NULL, 0, NULL, 0, 0, 0), -1);
+    check_int("csb.projectile_blit.bad_stride",
+              csb_v1_viewport_projectile_blit_pixels(
+                  csb_v1_viewport_get_projectile_blit_spec(0), 0,
+                  (const uint8_t *)"x", 2, (uint8_t *)"x", 3, 3, 1), -1);
+    check_true("csb.projectile_blit.out_of_range",
+               csb_v1_viewport_get_projectile_blit_spec(2) == NULL);
+    check_true("csb.projectile_blit.unknown_square",
+               csb_v1_viewport_get_projectile_blit_spec_for_square(999) == NULL);
+}
+
 static void test_csb_creature_visibility_zone_contracts(void)
 {
     static const struct {
@@ -1698,6 +1826,8 @@ static void test_source_evidence(void)
     check_true("evidence.f0111", e && strstr(e, "F0111") != NULL);
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
     check_true("evidence.f0115_projectiles", e && strstr(e, "C2900_ZONE_ + G2028") != NULL);
+    check_true("evidence.f0115_projectile_flip",
+               e && strstr(e, "MASK0x0001/MASK0x0002 flip flags") != NULL);
     check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
     check_true("evidence.f0115_object_blit", e && strstr(e, "C2500_ZONE_ | MASK0x8000") != NULL);
     check_true("evidence.f0115_object_coord", e && strstr(e, "COORD.C:1129-1193") != NULL);
@@ -1753,6 +1883,7 @@ int main(void)
     test_csb_thing_pass_order_contracts();
     test_csb_object_visibility_filter_contracts();
     test_csb_f0115_object_blit_contracts();
+    test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
     test_csb_f0115_explosion_blit_contracts();
     test_csb_teleporter_field_route_contracts();

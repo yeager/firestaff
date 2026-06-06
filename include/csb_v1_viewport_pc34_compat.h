@@ -216,6 +216,25 @@ typedef struct {
     int view_square;
     int redmcsb_view_square_index;
     int view_depth;
+    int projectile_visibility_row;
+    int projectile_zone_base;
+    int projectile_zone_cell_stride;
+    int requires_projectile_type;
+    int requires_thing_cell_match;
+    int restarts_thing_list;
+    int suppresses_depth3_front_cells;
+    int suppresses_depth0_back_cells;
+    int derived_bitmap_cache_slot_for_scaled_path;
+    int transparent_color;
+    int uses_f0791_blit;
+    const char *redmcsb_function;
+    const char *source_lines;
+} CSB_V1_ViewportProjectileBlitSpec;
+
+typedef struct {
+    int view_square;
+    int redmcsb_view_square_index;
+    int view_depth;
     int creature_visibility_row;
     int requires_group_marker;
     int rejects_missing_creature_row;
@@ -381,6 +400,20 @@ int csb_v1_viewport_object_blit_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
                                      unsigned char view_cell);
 int csb_v1_viewport_object_blit_layout_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
                                             unsigned char view_cell);
+
+size_t csb_v1_viewport_projectile_blit_spec_count(void);
+const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec(size_t index);
+const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec_for_square(int view_square);
+int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
+                                         unsigned char view_cell);
+int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
+                                           int flip_flags,
+                                           const uint8_t *source,
+                                           int source_stride,
+                                           uint8_t *destination,
+                                           int destination_stride,
+                                           int width,
+                                           int height);
 
 size_t csb_v1_viewport_creature_visibility_spec_count(void);
 const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec(size_t index);
