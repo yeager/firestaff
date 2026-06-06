@@ -516,27 +516,52 @@ int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Food/Water/Poison label rendering — PANEL.C:1598-1606
+ * Food/Water/Poison label F0658 blit plan.
  *
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C030_GRAPHIC_FOOD_LABEL,    C500_ZONE_FOOD,    C12_COLOR_DARKEST_GRAY);
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C031_GRAPHIC_WATER_LABEL,  C501_ZONE_WATER,   C12_COLOR_DARKEST_GRAY);
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C032_GRAPHIC_POISONED_LABEL, C502_ZONE_POISONED, C12_COLOR_DARKEST_GRAY);
- *
- * PANEL.C:1594-1606 only renders the poison label (C032) when the
- * champion has an active PoisonEventCount > 0. The food and water
- * labels are unconditional on the F0292 Food-Water-Poison panel.
+ * ReDMCSB: PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned
+ * emits unconditional C030/C500/C12 and C031/C501/C12 blits at
+ * PANEL.C:1598-1599, then gates C032/C502/C12 behind
+ * PoisonEventCount at PANEL.C:1601-1606. CHAMDRAW.C:1060-1063 F0292
+ * calls F0345 when the inventory champion presses the mouth panel.
+ * ReDMCSB: BASE.C:1341-1361 F0658 resolves bitmap/zone coordinates via
+ * F0630/F0635 before blitting to G0296 with the supplied transparency.
  * ══════════════════════════════════════════════════════════════════════ */
-/* DM1_ChampionPanel_DrawFoodWaterPoisonLabels — stubbed for m10/m11 linking
- * PANEL.C:1598-1606 F0658 blit sequence (not yet available in m10):
- *   F0658(C030, C500, C12), F0658(C031, C501, C12), if(poisoned) F0658(C032, C502, C12)
- * F0658 = F0630_InitBitmapStruct2 + F0635_GetZoneTopLeft + F0132_VIDEO_Blit on G0296
- * Requires base_frontend_pc34.c in M10_SOURCES — TBD. */
+static const char k_dm1ChampionPanelF0658PoisonedBlitEvidence[] =
+    "ReDMCSB PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned; "
+    "PANEL.C:1598-1606 F0658(C030,C500,C12), F0658(C031,C501,C12), "
+    "if(PoisonEventCount) F0658(C032,C502,C12); "
+    "CHAMDRAW.C:1060-1063 F0292 mouth-panel call; "
+    "BASE.C:1341-1361 F0658_BlitBitmapIndexToZoneIndexWithTransparency; "
+    "DEFS.H:2090 C12, 2190-2192 C030/C031/C032, 3869-3871 C500/C501/C502";
+
+static const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec
+    k_dm1ChampionPanelF0658PoisonedBlitSpec = {
+        DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT,
+        1598,
+        1606,
+        1601,
+        k_dm1ChampionPanelF0658PoisonedBlitEvidence,
+        {
+            { DM1_GFX_FOOD_LABEL, DM1_ZONE_FOOD, DM1_COLOR_DARKEST_GRAY, 1598, 0 },
+            { DM1_GFX_WATER_LABEL, DM1_ZONE_WATER, DM1_COLOR_DARKEST_GRAY, 1599, 0 },
+            { DM1_GFX_POISONED_LABEL, DM1_ZONE_POISONED, DM1_COLOR_DARKEST_GRAY, 1606, 1 },
+        }
+    };
+
+const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void)
+{
+    return &k_dm1ChampionPanelF0658PoisonedBlitSpec;
+}
+
+const char *DM1_ChampionPanel_F0658PoisonedBlitSourceEvidence(void)
+{
+    return k_dm1ChampionPanelF0658PoisonedBlitEvidence;
+}
+
 void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned)
 {
-    (void)poisoned; /* placeholder — function is a no-op until F0658 wiring is resolved */
+    (void)poisoned;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
