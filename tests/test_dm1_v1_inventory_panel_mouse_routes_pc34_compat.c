@@ -21,8 +21,11 @@
  *     and routes the action hand through F0342/F0333.
  *   CHEST.C:58-75 and F0334:112-133 compact non-empty visible slots
  *     back to the dungeon linked list on close.
+ *   DATA.C:1063-1079 keeps C520..C536 backpack slots as
+ *     MASK0xFFFF_ANY_SLOT while DATA.C:1080-1087 restricts C537..C544
+ *     chest slots to MASK0x0400_CONTAINER.
  *
- * This probe exercises five panel details that were previously only
+ * This probe exercises six panel details that were previously only
  * source-locked or covered indirectly by larger fixture loops:
  *   1. Right-button close panel route (C011) from any screen point.
  *   2. All eight chest slot routes (C058..C065) through the real
@@ -35,6 +38,9 @@
  *   5. Open/close chest action-hand icon swap (C144 <-> C145) and
  *      the close-time clear of v1OpenChestThing via
  *      M11_GameView_CloseV1OpenChest.
+ *   6. Backpack C520 occupied-slot swap accepts a non-container
+ *      leader-hand object because backpack slots are any-slot routes,
+ *      unlike chest C537..C544.
  */
 
 #include "m11_game_view.h"
@@ -396,12 +402,69 @@ static void test_inventory_open_chest_action_hand_icon_swap(void) {
               "closed action-hand chest renders as C144 after close");
 }
 
+/* Detail 6: occupied backpack-slot swap with a non-container leader-hand
+ * object.  ReDMCSB CHAMPION.C F0302 lines 697-710 validates the
+ * leader-hand object against G0038 slot masks, then removes the old slot
+ * occupant into the leader hand and writes the previous leader-hand object
+ * back to the slot.  DATA.C lines 1063-1079 make C520..C536 backpack slots
+ * MASK0xFFFF_ANY_SLOT; DATA.C lines 1080-1087 reserve the container-only
+ * mask for chest C537..C544. */
+static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    struct ChampionState_Compat* champ;
+    unsigned short quiverOnlyThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short oldBackpackThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int space = M11_DM1_MOUSE_SPACE_NONE;
+    int zoneId = 0;
+    int command = 0;
+
+    seed_panel_view(&state, &things, weapons, containers);
+    weapons[0].type = 4; /* object-info 27: MASK0x0040_QUIVER_LINE1, not container */
+    weapons[0].next = THING_ENDOFLIST;
+    weapons[1].type = 2; /* container-compatible occupant used only as swap payload */
+    weapons[1].next = THING_ENDOFLIST;
+    champ = &state.world.party.champions[0];
+    champ->inventory[CHAMPION_SLOT_BACKPACK_1] = oldBackpackThing;
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, quiverOnlyThing), 1,
+              "leader hand accepts the quiver-only test object");
+    ASSERT_TRUE(M11_GameView_GetV1InventoryBackpackSlotZone(0, &sx, &sy, &sw, &sh),
+                "C520 backpack slot zone is available");
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_INVENTORY,
+        sx + sw / 2,
+        33 + sy + sh / 2,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &space, &zoneId);
+    ASSERT_EQ(command, 41, "C520 backpack slot resolves to C041");
+    ASSERT_EQ(zoneId, 520, "C520 backpack route returns zone id 520");
+    ASSERT_EQ(space, M11_DM1_MOUSE_SPACE_VIEWPORT,
+              "C520 backpack route is viewport-relative");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state,
+                                               sx + sw / 2,
+                                               33 + sy + sh / 2,
+                                               M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C520 occupied backpack click swaps with non-container leader hand");
+    ASSERT_EQ(champ->inventory[CHAMPION_SLOT_BACKPACK_1], quiverOnlyThing,
+              "C520 receives the non-container leader-hand object");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), oldBackpackThing,
+              "old C520 occupant moves to leader hand");
+}
+
 int main(void) {
     printf("probe=firestaff_dm1_v1_inventory_panel_mouse_routes_runtime\n");
     printf("sourceEvidence=COMMAND.C:412-417 G0449 right-button close, "
            "COMMAND.C:426-427 mouth/eye C545/C546, "
            "COMMAND.C:498-507 G0456 panel-chest C058..C065/C537..C544, "
            "COMMAND.C:489-496 status hand C020..C027/C211..C218, "
+           "DATA.C:1063-1079 backpack MASK0xFFFF_ANY_SLOT vs "
+           "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
            "CHEST.C:112-133 close-time compact\n");
 
@@ -410,6 +473,7 @@ int main(void) {
     test_inventory_mouth_eye_routes_runtime();
     test_inventory_status_hand_source_locked_table();
     test_inventory_open_chest_action_hand_icon_swap();
+    test_inventory_backpack_slot_accepts_non_container_swap();
 
     /* Cross-check the source-locked route tables to the runtime
      * resolver to detect any drift in C020..C027 / C058..C065. */
