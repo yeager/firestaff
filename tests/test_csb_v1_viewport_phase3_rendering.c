@@ -1171,6 +1171,12 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         check_int(id, spec->horizontal_first_half_zone_offset, 6);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.half2_offset", i);
         check_int(id, spec->horizontal_second_half_zone_offset, 3);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_state", i);
+        check_int(id, spec->destroyed_state, 5);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_mask", i);
+        check_int(id, spec->destroyed_mask_ornament_ordinal, 15);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_view_slot", i);
+        check_int(id, spec->destroyed_mask_uses_view_ornament_index, 1);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.transparent", i);
         check_int(id, spec->transparent_color, 10);
 
@@ -1185,6 +1191,9 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.f0111_source", i);
         check_true(id, strstr(spec->source_lines, "F0111:4248") != NULL &&
                        strstr(spec->source_lines, "4334 F0791") != NULL);
+        snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_source", i);
+        check_true(id, strstr(spec->source_lines, "4301-4302") != NULL &&
+                       strstr(spec->source_lines, "C15 destroyed mask") != NULL);
         snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.coord_source", i);
         check_true(id, strstr(spec->source_lines, "COORD.C") != NULL);
 
@@ -1218,6 +1227,19 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
             check_int(id, destination[(39 * 48) + 47], 4);
             snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.clips_row40", i);
             check_int(id, destination[40 * 48], 77);
+
+            for (size_t j = 0; j < sizeof(destination); ++j) destination[j] = 66;
+            /* ReDMCSB: DUNVIEW.C F0111 lines 4301-4302 applies
+             * C15_DOOR_ORNAMENT_DESTROYED_MASK to P0128_i_ViewDoorOrnamentIndex
+             * for C5_DOOR_STATE_DESTROYED, then still reaches the final F0791
+             * transparent blit at line 4334. */
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_pixels", i);
+            check_int(id, csb_v1_viewport_door_panel_blit_pixels(
+                          spec, spec->destroyed_state, source, 48, destination, 48), 4);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_pixel_0_0", i);
+            check_int(id, destination[0], 1);
+            snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.destroyed_transparent", i);
+            check_int(id, destination[1], 66);
 
             for (size_t j = 0; j < sizeof(destination); ++j) destination[j] = 88;
             snprintf(id, sizeof(id), "csb.door_panel_blit.%zu.open_skips", i);
@@ -1268,6 +1290,8 @@ static void test_source_evidence(void)
     check_true("evidence.f0108_c1500", e && strstr(e, "C1500_ZONE_FLOOR_ORNAMENT") != NULL);
     check_true("evidence.f0108_g0195", e && strstr(e, "G0195 CSB/I34") != NULL);
     check_true("evidence.f0111_door_zone_records", e && strstr(e, "COORD.C:1548-1565") != NULL);
+    check_true("evidence.f0111_destroyed_mask",
+               e && strstr(e, "C15_DOOR_ORNAMENT_DESTROYED_MASK") != NULL);
     check_true("evidence.d3l2_view_wall", e && strstr(e, "C00_VIEW_WALL_D3L2_RIGHT") != NULL);
     check_true("evidence.d3r2_view_wall", e && strstr(e, "C01_VIEW_WALL_D3R2_LEFT") != NULL);
     check_true("evidence.custom_backgrounds", e && strstr(e, "CustomBackgrounds") != NULL);

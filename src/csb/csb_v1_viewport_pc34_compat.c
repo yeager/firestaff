@@ -85,6 +85,8 @@ enum {
     CSB_V1_DOOR_PANEL_D3R2_X = 88,
     CSB_V1_DOOR_PANEL_D3_Y = 28,
     CSB_V1_DOOR_ORNAMENT_D3LCR = 0, /* C0_VIEW_DOOR_ORNAMENT_D3LCR */
+    CSB_V1_DOOR_STATE_DESTROYED = 5, /* C5_DOOR_STATE_DESTROYED */
+    CSB_V1_DOOR_ORNAMENT_DESTROYED_MASK = 15, /* C15_DOOR_ORNAMENT_DESTROYED_MASK */
     CSB_V1_DOOR_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
     CSB_V1_WALL_ORNAMENT_ZONE_BASE = 1004, /* C1004_ZONE_WALL_ORNAMENT */
     CSB_V1_WALL_ORNAMENT_COORD_STRIDE = 15, /* MEDIA720 C15_UNKNOWN */
@@ -489,7 +491,8 @@ static const CSB_V1_ViewportExplosionBlitSpec s_explosion_blits[] = {
  * 1545-1565 and 781-807.  The CSB-only far door panels reuse the
  * D3 native 48x41 door bitmap but clip it through COORD.C record 126's
  * 48x40 viewport sub-zone.  F0111 skips state 0, shifts zone ids by
- * door state for partially-open doors, and blits with C10 transparency. */
+ * door state for partially-open doors, applies the destroyed-door mask for
+ * state 5, and blits with C10 transparency. */
 static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
     {
         (int)DM1_VIEW_SQUARE_D3L2,
@@ -510,9 +513,12 @@ static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
         1,
         6,
         3,
+        CSB_V1_DOOR_STATE_DESTROYED,
+        CSB_V1_DOOR_ORNAMENT_DESTROYED_MASK,
+        1,
         CSB_V1_DOOR_TRANSPARENT_COLOR,
         "F0676_DrawD3L2",
-        "DUNVIEW.C:6271 F0115 rear pass; 6272 F0111(... C3700_ZONE_DOOR_D3L2); 6273-6286 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:4250; COORD.C:1548-1565 records 120/126/129 and 788-797 zone 3700..3709."
+        "DUNVIEW.C:6271 F0115 rear pass; 6272 F0111(... C3700_ZONE_DOOR_D3L2); 6273-6286 F0115 front pass. F0111:4248 skips C0 open, 4301-4302 applies C15 destroyed mask to P0128 view ornament index, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:1044,2466,4250; COORD.C:1548-1565 records 120/126/129 and 788-797 zone 3700..3709."
     },
     {
         (int)DM1_VIEW_SQUARE_D3R2,
@@ -533,9 +539,12 @@ static const CSB_V1_ViewportDoorPanelBlitSpec s_door_panel_blits[] = {
         1,
         6,
         3,
+        CSB_V1_DOOR_STATE_DESTROYED,
+        CSB_V1_DOOR_ORNAMENT_DESTROYED_MASK,
+        1,
         CSB_V1_DOOR_TRANSPARENT_COLOR,
         "F0677_DrawD3R2",
-        "DUNVIEW.C:6338 F0115 rear pass; 6339 F0111(... C3710_ZONE_DOOR_D3R2); 6340-6353 F0115 front pass. F0111:4248 skips C0 open, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:4251; COORD.C:1548-1565 records 120/126/130 and 798-807 zone 3710..3719."
+        "DUNVIEW.C:6338 F0115 rear pass; 6339 F0111(... C3710_ZONE_DOOR_D3R2); 6340-6353 F0115 front pass. F0111:4248 skips C0 open, 4301-4302 applies C15 destroyed mask to P0128 view ornament index, 4298-4321 shifts zone by state/horizontal halves, 4334 F0791 blits with C10. DEFS.H:1044,2466,4251; COORD.C:1548-1565 records 120/126/130 and 798-807 zone 3710..3719."
     },
 };
 
@@ -1032,6 +1041,7 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  3502-3590, 3817-3829, 3921-3923 F0107 maps CSB/I34 far wall ornaments through C1004 + CoordinateSet*15 + ViewWall, C30/C14 scaling, D3 palette changes, optional D3R2 flip, and F0791 C10 blits\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
+        "  4301-4302 F0111 applies C15_DOOR_ORNAMENT_DESTROYED_MASK for C5_DOOR_STATE_DESTROYED\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
         "  6848-6865 F0678 and 6877-6896 F0679 return for walls without F0107\n"
         "  8318-8542 F0128 shared viewport draw sequence\n"

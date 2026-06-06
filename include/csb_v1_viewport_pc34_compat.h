@@ -208,6 +208,9 @@ typedef struct {
     int shifts_zone_by_state;
     int horizontal_first_half_zone_offset;
     int horizontal_second_half_zone_offset;
+    int destroyed_state;
+    int destroyed_mask_ornament_ordinal;
+    int destroyed_mask_uses_view_ornament_index;
     int transparent_color;
     const char *redmcsb_function;
     const char *source_lines;
