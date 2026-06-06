@@ -193,6 +193,26 @@ typedef struct DM1_ChampionPanel_IconBitmapModel {
     int applyInvisibilityPalette;
 } DM1_ChampionPanel_IconBitmapModel;
 
+typedef struct DM1_ChampionPanel_BarFillModel {
+    int zoneId;
+    int x;
+    int y;
+    int width;
+    int height;
+    int blankColor;
+    int fillColor;
+    int blankX;
+    int blankY;
+    int blankWidth;
+    int blankHeight;
+    int fillX;
+    int fillY;
+    int fillWidth;
+    int fillHeight;
+    int emitsBlank;
+    int emitsFill;
+} DM1_ChampionPanel_BarFillModel;
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel);
@@ -203,6 +223,11 @@ int DM1_ChampionPanel_BuildIconBitmapModel(
 
 /* ── Source-locked bar height — CHAMDRAW.C F0287 ── */
 int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
+
+/* ── PC34 bar fill rectangles — CHAMDRAW.C F0287 lines 307-342 ── */
+int DM1_ChampionPanel_BuildPc34BarFillModel(
+    int championIndex, int statIndex, int current, int maximum,
+    DM1_ChampionPanel_BarFillModel *outModel);
 
 /* ── Slot box graphic — CHAMDRAW.C F0291 ── */
 int DM1_ChampionPanel_SlotBoxGraphic(int slotIndex, uint16_t wounds,

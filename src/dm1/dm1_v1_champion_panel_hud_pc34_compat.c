@@ -46,6 +46,71 @@ int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana)
         return (int)(scaled >> 10);
 }
 
+int DM1_ChampionPanel_BuildPc34BarFillModel(
+    int championIndex, int statIndex, int current, int maximum,
+    DM1_ChampionPanel_BarFillModel *outModel)
+{
+    int filledHeight;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        statIndex < 0 || statIndex >= DM1_BAR_GRAPH_COUNT ||
+        maximum <= 0) {
+        return 0;
+    }
+
+    memset(outModel, 0, sizeof(*outModel));
+    DM1_ChampionPanel_BarGraphScreenXY(championIndex, statIndex,
+                                       &outModel->x, &outModel->y);
+
+    /*
+     * ReDMCSB: CHAMDRAW.C F0287 lines 307-342, PC34 branch:
+     * L2252_i_BoxIndex starts at C195_ZONE_FIRST_BAR_GRAPH + champion and
+     * advances by +4 per HP/stamina/mana bar. F0638_GetZone fetches the
+     * full 4x25 bar; partial bars shrink the C12 blank area by
+     * max(1, height * current / maximum), then move the colored area below
+     * that blank band before filling it with G0046 champion color.
+     */
+    outModel->zoneId = 195 + championIndex + (statIndex * 4);
+    outModel->width = DM1_BAR_GRAPH_WIDTH;
+    outModel->height = DM1_BAR_GRAPH_MAX_HEIGHT;
+    outModel->blankColor = DM1_COLOR_DARKEST_GRAY;
+    outModel->fillColor = DM1_ChampionColor[championIndex];
+    outModel->blankX = outModel->x;
+    outModel->blankY = outModel->y;
+    outModel->blankWidth = outModel->width;
+    outModel->fillX = outModel->x;
+    outModel->fillWidth = outModel->width;
+
+    if (current < maximum) {
+        outModel->blankHeight = outModel->height;
+        if (current != 0) {
+            filledHeight = (int)(((long)outModel->height * (long)current) /
+                                 (long)maximum);
+            if (filledHeight < 1) {
+                filledHeight = 1;
+            }
+            outModel->blankHeight -= filledHeight;
+        }
+        outModel->emitsBlank = outModel->blankHeight > 0;
+    } else {
+        outModel->blankHeight = 0;
+        outModel->emitsBlank = 0;
+    }
+
+    if (current != 0) {
+        outModel->fillY = outModel->y + outModel->blankHeight;
+        outModel->fillHeight = outModel->height - outModel->blankHeight;
+        outModel->emitsFill = outModel->fillHeight > 0;
+    } else {
+        outModel->fillY = outModel->y + outModel->height;
+        outModel->fillHeight = 0;
+        outModel->emitsFill = 0;
+    }
+
+    return 1;
+}
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel)
