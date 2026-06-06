@@ -921,6 +921,7 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         int has_floor_ornament;
         const char *stairs_line;
         const char *pit_line;
+        const char *floor_ornament_line;
         const char *things_line;
         const char *field_line;
         const char *wall_return_line;
@@ -928,21 +929,21 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         int has_things_pass;
         int field_after_things;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L2, "F0676_DrawD3L2", 0x3421, 1, "6237-6252", "6275-6278", "6286", "6288-6289", "6253-6264", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D3R2, "F0677_DrawD3R2", 0x4312, 1, "6304-6319", "6342-6345", "6353", "6355-6356", "6320-6331", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D3L,  "F0116_DUNGEONVIEW_DrawSquareD3L", 0x3421, 1, "6375-6405", "6461-6472", "6480", "6482-6495", "6406-6437", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D3R,  "F0117_DUNGEONVIEW_DrawSquareD3R", 0x4312, 1, "6514-6544", "6603-6614", "6622", "6624-6638", "6545-6573", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D3C,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", 0x3421, 1, "6666-6696", "6748-6762", "6816", "6818-6831", "6697-6720", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D2L,  "F0119_DUNGEONVIEW_DrawSquareD2L", 0x3421, 1, "6914-6944", "7005-7015", "7031", "7033-7048", "6945-6973", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D2R,  "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", 0x4312, 1, "7065-7095", "7198-7208", "7224", "7226-7240", "7097-7166", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D2C,  "F0121_DUNGEONVIEW_DrawSquareD2C", 0x3421, 1, "7260-7288", "7343-7353", "7367-7368", "7370-7388", "7289-7312", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D2L2, "F0678_DrawD2L2", 0x0000, 0, "6846-6865", "6846-6865", "no F0115 thing pass", "6863-6865", "6848-6862", 0, 0, 0 },
-        { DM1_VIEW_SQUARE_D2R2, "F0679_DrawD2R2", 0x0000, 0, "6877-6896", "6877-6896", "no F0115 thing pass", "6894-6896", "6879-6893", 0, 0, 0 },
-        { DM1_VIEW_SQUARE_D1L,  "F0122_DUNGEONVIEW_DrawSquareD1L", 0x0032, 1, "7405-7435", "7510-7520", "7535-7536", "7538-7555", "7436-7460", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D1R,  "F0123_DUNGEONVIEW_DrawSquareD1R", 0x0041, 1, "7573-7603", "7678-7688", "7703-7704", "7706-7722", "7604-7628", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D0L,  "F0125_DUNGEONVIEW_DrawSquareD0L", 0x0002, 0, "7978-7988", "7989-7998", "8005", "8050-8059", "8007-8038", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D0R,  "F0126_DUNGEONVIEW_DrawSquareD0R", 0x0001, 0, "8082-8092", "8093-8102", "8115", "8150-8159", "8117-8144", 0, 1, 1 },
-        { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8294", "8295-8308", "8185-8240", 1, 1, 1 },
+        { DM1_VIEW_SQUARE_D3L2, "F0676_DrawD3L2", 0x3421, 1, "6237-6252", "6275-6278", "6282-6284", "6286", "6288-6289", "6253-6264", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D3R2, "F0677_DrawD3R2", 0x4312, 1, "6304-6319", "6342-6345", "6349-6351", "6353", "6355-6356", "6320-6331", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D3L,  "F0116_DUNGEONVIEW_DrawSquareD3L", 0x3421, 1, "6375-6405", "6461-6472", "6475-6478", "6480", "6482-6495", "6406-6437", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D3R,  "F0117_DUNGEONVIEW_DrawSquareD3R", 0x4312, 1, "6514-6544", "6603-6614", "6617-6620", "6622", "6624-6638", "6545-6573", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D3C,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", 0x3421, 1, "6666-6696", "6748-6762", "6811-6814", "6816", "6818-6831", "6697-6720", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D2L,  "F0119_DUNGEONVIEW_DrawSquareD2L", 0x3421, 1, "6914-6944", "7005-7015", "7017-7020", "7031", "7033-7048", "6945-6973", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D2R,  "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", 0x4312, 1, "7065-7095", "7198-7208", "7210-7213", "7224", "7226-7240", "7097-7166", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D2C,  "F0121_DUNGEONVIEW_DrawSquareD2C", 0x3421, 1, "7260-7288", "7343-7353", "7355-7357", "7367-7368", "7370-7388", "7289-7312", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D2L2, "F0678_DrawD2L2", 0x0000, 0, "6846-6865", "6846-6865", "6846-6865", "no F0115 thing pass", "6863-6865", "6848-6862", 0, 0, 0 },
+        { DM1_VIEW_SQUARE_D2R2, "F0679_DrawD2R2", 0x0000, 0, "6877-6896", "6877-6896", "6877-6896", "no F0115 thing pass", "6894-6896", "6879-6893", 0, 0, 0 },
+        { DM1_VIEW_SQUARE_D1L,  "F0122_DUNGEONVIEW_DrawSquareD1L", 0x0032, 1, "7405-7435", "7510-7520", "7522-7533", "7535-7536", "7538-7555", "7436-7460", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D1R,  "F0123_DUNGEONVIEW_DrawSquareD1R", 0x0041, 1, "7573-7603", "7678-7688", "7690-7701", "7703-7704", "7706-7722", "7604-7628", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D0L,  "F0125_DUNGEONVIEW_DrawSquareD0L", 0x0002, 0, "7978-7988", "7989-7998", "7999-8005", "8005", "8050-8059", "8007-8038", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D0R,  "F0126_DUNGEONVIEW_DrawSquareD0R", 0x0001, 0, "8082-8092", "8093-8102", "8103-8115", "8115", "8150-8159", "8117-8144", 0, 1, 1 },
+        { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8284-8294", "8294", "8295-8308", "8185-8240", 1, 1, 1 },
     };
 
     check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 15);
@@ -977,6 +978,28 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
         check_int(id, strstr(spec->stairs_source_lines, expected[i].stairs_line) != NULL, 1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.pit_source", i);
         check_int(id, strstr(spec->pit_source_lines, expected[i].pit_line) != NULL, 1);
+        /*
+         * Metadata-only ornament evidence: ReDMCSB DUNVIEW.C
+         * F0108 lines 3940-4011 (PC34/I34E F0791 at line 3998)
+         * performs the actual floor-ornament bitmap blit.  The per-square
+         * call sites below source-lock the branch/order only, including the
+         * BUG0_64 open-pit-overdraw behavior; this is not full real-asset
+         * floor-ornament bitmap parity.
+         */
+        snprintf(id, sizeof(id), "floor_field_order.%zu.floor_ornament_source", i);
+        check_int(id, strstr(spec->floor_ornament_source_lines, expected[i].floor_ornament_line) != NULL, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.floor_ornament_f0108", i);
+        check_int(id, expected[i].has_floor_ornament
+            ? strstr(spec->floor_ornament_source_lines, "F0108") != NULL
+            : strstr(spec->floor_ornament_source_lines, "no floor") != NULL ||
+              strstr(spec->floor_ornament_source_lines, "no D0C floor-ornament") != NULL ||
+              strstr(spec->floor_ornament_source_lines, "no floor-ornament call") != NULL,
+            1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.floor_ornament_open_pit_order", i);
+        check_int(id, expected[i].has_floor_ornament
+            ? strstr(spec->pit_source_lines, "BUG0_64") != NULL
+            : strstr(spec->pit_source_lines, "BUG0_64") == NULL,
+            1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.things_source", i);
         check_int(id, strstr(spec->things_source_lines, expected[i].things_line) != NULL, 1);
         snprintf(id, sizeof(id), "floor_field_order.%zu.field_source", i);
