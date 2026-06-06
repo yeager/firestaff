@@ -1844,6 +1844,21 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_canonical_movement_probe
     )
 
+    # DM1 V1 empty chest open/close pointer integrity probe.
+    # Source-locks ReDMCSB CHEST.C F0333 lines 30-32,53-76; F0334 lines
+    # 112-134; and CHAMPION.C F0302 lines 688-695.
+    add_executable(firestaff_dm1_v1_chest_empty_pointer_integrity_probe
+        probes/dm1/firestaff_dm1_v1_chest_empty_pointer_integrity_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_chest_empty_pointer_integrity_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_chest_empty_pointer_integrity_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_chest_empty_pointer_integrity_probe
+        COMMAND firestaff_dm1_v1_chest_empty_pointer_integrity_probe
+    )
+
     # DM1 V1 playable-route gate: forward/blocked/turn deltas with hash and
     # state changes proving the canonical DUNGEON.DAT layout actually plays.
     add_executable(firestaff_dm1_v1_playable_route_probe
