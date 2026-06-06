@@ -108,6 +108,32 @@ typedef struct {
     int is_valid;
 } CSB_V1_ViewportCustomBackgroundSelection;
 
+typedef enum {
+    CSB_V1_CUSTOM_BACKGROUND_LAYER_LARGE = 0,
+    CSB_V1_CUSTOM_BACKGROUND_LAYER_MIDDLE = 1,
+    CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR = 2
+} CSB_V1_ViewportCustomBackgroundLayer;
+
+typedef struct {
+    CSB_V1_ViewportCustomBackgroundLayer layer;
+    int bitmap_skin_def_index;
+    int mask_skin_def_index;
+    int bitmap_min_bytes;
+    int mask_min_bytes;
+    int applies_to_room;
+} CSB_V1_ViewportCustomBackgroundLayerPlan;
+
+typedef struct {
+    int src_x;
+    int src_y;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    const uint16_t *mask_words;
+    size_t mask_word_count;
+} CSB_V1_ViewportCustomBackgroundMask;
+
 typedef struct {
     int view_square;
     int wall_zone;
@@ -378,6 +404,17 @@ csb_v1_viewport_custom_background_load_and_select_pc34(
     const uint8_t *skin_def,
     size_t skin_def_size,
     CSB_V1_ViewportCustomBackgroundViewIndex view_index);
+size_t csb_v1_viewport_custom_background_layer_plan_pc34(
+    int room_num,
+    CSB_V1_ViewportCustomBackgroundLayerPlan *out_layers,
+    size_t out_capacity);
+int csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
+    const CSB_V1_ViewportCustomBackgroundMask *mask,
+    const uint32_t *bitmap_words,
+    size_t bitmap_word_count,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
 
 /* Wire dungeon grid for element routing in back-wall rendering.
  * Must be called before render if using CSB back-wall squares (D3L2/D3R2).
