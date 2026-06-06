@@ -48,6 +48,9 @@ enum {
     CSB_V1_VIEW_DEPTH_D3 = 3,
     CSB_V1_OBJECT_ROW_D3L2 = 3, /* G2028_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
     CSB_V1_OBJECT_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_OBJECT_ZONE_BASE = 2500, /* C2500_ZONE_ */
+    CSB_V1_OBJECT_ZONE_CELL_STRIDE = 4,
+    CSB_V1_OBJECT_SHIFT_SET_D3_FRONT = 5, /* (viewDepth * 2) - 1 - (viewCell >> 1) for D3 back-row cells */
     CSB_V1_FIRST_VISIBLE_D3_OBJECT_CELL = 3,
     CSB_V1_LAST_VISIBLE_D3_OBJECT_CELL = 4,
     CSB_V1_CREATURE_ROW_D3L2 = 3, /* G2033_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
@@ -60,6 +63,17 @@ enum {
     CSB_V1_PROJECTILE_ROW_D3R2 = 4, /* G2028_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
     CSB_V1_PROJECTILE_ZONE_BASE = 2900, /* C2900_ZONE_ */
     CSB_V1_PROJECTILE_ZONE_STRIDE = 4,
+    CSB_V1_EXPLOSION_ROW_D3L2 = 6, /* G2034_ac_ViewSquareIndexTo[C14_VIEW_SQUARE_D3L2] */
+    CSB_V1_EXPLOSION_ROW_D3R2 = 7, /* G2034_ac_ViewSquareIndexTo[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_FIELD_ASPECT_D3L2 = 0, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C14_VIEW_SQUARE_D3L2] */
+    CSB_V1_FIELD_ASPECT_D3R2 = 1, /* G2035_ac_ViewSquareIndexToFieldAspectIndex[C15_VIEW_SQUARE_D3R2] */
+    CSB_V1_EXPLOSION_REBIRTH_STEP1_ZONE_BASE = 3000, /* C3000_ZONE_ */
+    CSB_V1_EXPLOSION_REBIRTH_STEP2_ZONE_BASE = 3007, /* C3007_ZONE_ */
+    CSB_V1_EXPLOSION_CENTERED_ZONE_BASE = 3014, /* C3014_ZONE_ */
+    CSB_V1_EXPLOSION_SIDE_ZONE_BASE = 3031, /* C3031_ZONE_ */
+    CSB_V1_EXPLOSION_SIDE_ZONE_CELL_STRIDE = 2,
+    CSB_V1_FIELD_ZONE_D3L2 = 702, /* C702_ZONE_WALL_D3L2 */
+    CSB_V1_FIELD_ZONE_D3R2 = 703, /* C703_ZONE_WALL_D3R2 */
     CSB_V1_DOOR_PANEL_RECORD_TYPE_CLOSED = 1,
     CSB_V1_DOOR_PANEL_PARENT_D3L2 = 129,
     CSB_V1_DOOR_PANEL_PARENT_D3R2 = 130,
@@ -291,6 +305,45 @@ static const CSB_V1_ViewportObjectVisibilitySpec s_object_visibility_routes[] = 
     },
 };
 
+/* ReDMCSB: DUNVIEW.C F0115 lines 4923-5110, DEFS.H lines 3517 and
+ * 4228, and COORD.C lines 1129-1193.  For the PC34/I34 route,
+ * visible weapon..junk objects are drawn through
+ * C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES plus the G2028
+ * visibility row and view cell.  The shift mask makes COORD.C apply the
+ * per-pile G0223/G0217 shift before F0791 blits with C10 transparency. */
+static const CSB_V1_ViewportObjectBlitSpec s_object_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_OBJECT_ROW_D3L2,
+        CSB_V1_OBJECT_ZONE_BASE,
+        CSB_V1_OBJECT_ZONE_CELL_STRIDE,
+        CSB_V1_CREATURE_SHIFT_MASK,
+        CSB_V1_OBJECT_SHIFT_SET_D3_FRONT,
+        1,
+        10,
+        1,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:4923 F0115 weapon..junk visible-cell predicate; 5030-5039 D3 object scale/shift set; 5071-5082 C2500_ZONE_ | MASK0x8000 + G2028 row*4 + ViewCell plus pile shift; 5109 F0791 C10 blit. DEFS.H:3517,4228; COORD.C:1129-1193 layout range 2500..2560."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_OBJECT_ROW_D3R2,
+        CSB_V1_OBJECT_ZONE_BASE,
+        CSB_V1_OBJECT_ZONE_CELL_STRIDE,
+        CSB_V1_CREATURE_SHIFT_MASK,
+        CSB_V1_OBJECT_SHIFT_SET_D3_FRONT,
+        1,
+        10,
+        1,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:4923 F0115 weapon..junk visible-cell predicate; 5030-5039 D3 object scale/shift set; 5071-5082 C2500_ZONE_ | MASK0x8000 + G2028 row*4 + ViewCell plus pile shift; 5109 F0791 C10 blit. DEFS.H:3517,4228; COORD.C:1129-1193 layout range 2500..2560."
+    },
+};
+
 /* ReDMCSB: DUNVIEW.C F0115 lines 4840-4842, 5201-5214, and 5615-5627.
  * The MEDIA720 PC34/I34E path records one group thing while scanning each
  * cell, rejects view squares where G2033 maps to -1, then draws creatures
@@ -325,6 +378,55 @@ static const CSB_V1_ViewportCreatureVisibilitySpec s_creature_visibility_routes[
         CSB_V1_CREATURE_SHIFT_MASK,
         "F0677_DrawD3R2",
         "DUNVIEW.C:375 G2033 row; 4840-4842 records C04_THING_TYPE_GROUP; 5201-5214 F0115 creature gate rejects G2033<0; 5615-5627 C3200_ZONE_ | MASK0x8000 + CoordinateSet*65 + G2033*5 + ViewCell then F0791; COORD.C:1248-1251 C3200 layout range 3200..3364; 2074-2075 clears shift mask"
+    },
+};
+
+/* ReDMCSB: DUNVIEW.C F0115 lines 5915-6219, DEFS.H lines 4232-4235
+ * and 4042-4043, COORD.C lines 1058-1123 and 1194-1238.  Explosions
+ * restart from the first thing after all requested cells are processed.
+ * MEDIA720 maps D3L2/D3R2 through G2034/G2035, uses C3000/C3007 for
+ * rebirth, C3014 for centered explosions, C3031 + row*2 + cell for side
+ * explosions, and defers fluxcage to F0113 as a field overlay. */
+static const CSB_V1_ViewportExplosionBlitSpec s_explosion_blits[] = {
+    {
+        (int)DM1_VIEW_SQUARE_D3L2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3L2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_EXPLOSION_ROW_D3L2,
+        CSB_V1_FIELD_ASPECT_D3L2,
+        1,
+        1,
+        1,
+        CSB_V1_FIELD_ZONE_D3L2,
+        CSB_V1_EXPLOSION_REBIRTH_STEP1_ZONE_BASE,
+        CSB_V1_EXPLOSION_REBIRTH_STEP2_ZONE_BASE,
+        CSB_V1_EXPLOSION_CENTERED_ZONE_BASE,
+        CSB_V1_EXPLOSION_SIDE_ZONE_BASE,
+        CSB_V1_EXPLOSION_SIDE_ZONE_CELL_STRIDE,
+        10,
+        1,
+        "F0676_DrawD3L2",
+        "DUNVIEW.C:5915-5933 restarts explosion pass; 5920-5924 G2034/G2035 visibility rows; 5948 rebirth requires visible row and matching cell; 5998-5999 C3000 + row; 6094-6096 C3007 + row; 6106-6107 C3014 + row; 6121-6122 C3031 + row*2 + ViewCell; 6192-6193 F0791 C10 blit; 6202-6219 fluxcage field C702 + field aspect. DEFS.H:4042,4232-4235; COORD.C:1058-1123,1194-1238."
+    },
+    {
+        (int)DM1_VIEW_SQUARE_D3R2,
+        CSB_V1_REDMCSB_VIEW_SQUARE_D3R2,
+        CSB_V1_VIEW_DEPTH_D3,
+        CSB_V1_EXPLOSION_ROW_D3R2,
+        CSB_V1_FIELD_ASPECT_D3R2,
+        1,
+        1,
+        1,
+        CSB_V1_FIELD_ZONE_D3R2,
+        CSB_V1_EXPLOSION_REBIRTH_STEP1_ZONE_BASE,
+        CSB_V1_EXPLOSION_REBIRTH_STEP2_ZONE_BASE,
+        CSB_V1_EXPLOSION_CENTERED_ZONE_BASE,
+        CSB_V1_EXPLOSION_SIDE_ZONE_BASE,
+        CSB_V1_EXPLOSION_SIDE_ZONE_CELL_STRIDE,
+        10,
+        1,
+        "F0677_DrawD3R2",
+        "DUNVIEW.C:5915-5933 restarts explosion pass; 5920-5924 G2034/G2035 visibility rows; 5948 rebirth requires visible row and matching cell; 5998-5999 C3000 + row; 6094-6096 C3007 + row; 6106-6107 C3014 + row; 6121-6122 C3031 + row*2 + ViewCell; 6192-6193 F0791 C10 blit; 6202-6219 fluxcage field C702 + field aspect. DEFS.H:4043,4232-4235; COORD.C:1058-1123,1194-1238."
     },
 };
 
@@ -615,6 +717,44 @@ int csb_v1_viewport_object_visibility_allows_cell(const CSB_V1_ViewportObjectVis
     return 1;
 }
 
+size_t csb_v1_viewport_object_blit_spec_count(void)
+{
+    return sizeof(s_object_blits) / sizeof(s_object_blits[0]);
+}
+
+const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_object_blit_spec_count()) return NULL;
+    return &s_object_blits[index];
+}
+
+const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_object_blit_spec_count(); ++i) {
+        if (s_object_blits[i].view_square == view_square) {
+            return &s_object_blits[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_object_blit_layout_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
+                                            unsigned char view_cell)
+{
+    if (!spec || view_cell > 4 || spec->object_visibility_row < 0) return -1;
+    return spec->object_zone_base +
+           (spec->object_visibility_row * spec->object_zone_cell_stride) +
+           view_cell;
+}
+
+int csb_v1_viewport_object_blit_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
+                                     unsigned char view_cell)
+{
+    int zone = csb_v1_viewport_object_blit_layout_zone(spec, view_cell);
+    if (zone < 0) return -1;
+    return zone | spec->shifts_objects_and_creatures;
+}
+
 size_t csb_v1_viewport_creature_visibility_spec_count(void)
 {
     return sizeof(s_creature_visibility_routes) / sizeof(s_creature_visibility_routes[0]);
@@ -646,6 +786,54 @@ int csb_v1_viewport_creature_visibility_zone(const CSB_V1_ViewportCreatureVisibi
     return spec->creature_zone_base +
            (coordinate_set * spec->creature_coordinate_set_stride) +
            (spec->creature_visibility_row * spec->creature_zone_cell_stride) +
+           view_cell;
+}
+
+size_t csb_v1_viewport_explosion_blit_spec_count(void)
+{
+    return sizeof(s_explosion_blits) / sizeof(s_explosion_blits[0]);
+}
+
+const CSB_V1_ViewportExplosionBlitSpec *csb_v1_viewport_get_explosion_blit_spec(size_t index)
+{
+    if (index >= csb_v1_viewport_explosion_blit_spec_count()) return NULL;
+    return &s_explosion_blits[index];
+}
+
+const CSB_V1_ViewportExplosionBlitSpec *csb_v1_viewport_get_explosion_blit_spec_for_square(int view_square)
+{
+    for (size_t i = 0; i < csb_v1_viewport_explosion_blit_spec_count(); ++i) {
+        if (s_explosion_blits[i].view_square == view_square) {
+            return &s_explosion_blits[i];
+        }
+    }
+    return NULL;
+}
+
+int csb_v1_viewport_explosion_rebirth_step1_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
+{
+    if (!spec || spec->explosion_row < 0) return -1;
+    return spec->rebirth_step1_zone_base + spec->explosion_row;
+}
+
+int csb_v1_viewport_explosion_rebirth_step2_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
+{
+    if (!spec || spec->explosion_row < 0) return -1;
+    return spec->rebirth_step2_zone_base + spec->explosion_row;
+}
+
+int csb_v1_viewport_explosion_centered_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
+{
+    if (!spec || spec->explosion_row < 0) return -1;
+    return spec->centered_zone_base + spec->explosion_row;
+}
+
+int csb_v1_viewport_explosion_side_zone(const CSB_V1_ViewportExplosionBlitSpec *spec,
+                                        unsigned char view_cell)
+{
+    if (!spec || spec->explosion_row < 0 || view_cell > 1) return -1;
+    return spec->side_zone_base +
+           (spec->explosion_row * spec->side_zone_cell_stride) +
            view_cell;
 }
 
@@ -683,8 +871,11 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  5881-5883 F0115 blits PC34/I34 projectile sprites through the computed C2900 zone\n"
         "  4806-4811 F0115 maps PC34 view square to lane/depth/object visibility rows\n"
         "  4923 F0115 filters weapon..junk objects by visible row, matching cell, and D3/D0 cell gates\n"
+        "  5030-5039 F0115 selects PC34/I34 object scale and shift set from depth/cell\n"
+        "  5071-5110 F0115 blits objects through C2500_ZONE_ | MASK0x8000 plus G2028 row/cell and pile shifts\n"
         "  375, 5201-5214, 5615-5627 F0115 maps creatures through G2033 and C3200_ZONE_ with MASK0x8000 shifts\n"
         "  5915-5933 F0115 restarts for explosions after all processed view cells\n"
+        "  5920-6219 F0115 maps PC34/I34 explosions through G2034/G2035, C3000/C3007/C3014/C3031 zones, F0791 C10 blits, and fluxcage field deferral\n"
         "  3940-4008 F0108 floor ornament ordinal/index, G0191 native bitmap increment, C1500 zone, flip, C10 blit dispatch\n"
         "  4218-4337 F0111 door bitmap, ornament, state, zone shift, and C10 transparent blit dispatch\n"
         "  6837-6896 F0678/F0679 near-wall D2L2/D2R2 element routing\n"
@@ -694,7 +885,9 @@ const char *csb_v1_viewport_source_evidence(void) {
         "  DEFS.H:2750-2751 C00_VIEW_FLOOR_D3L2 / C01_VIEW_FLOOR_D3R2\n"
         "  DEFS.H:4250-4251 C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2\n"
         "  DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT; COORD.C:903-913 floor ornament zone records\n"
+        "  DEFS.H:4228 C2500_ZONE_; COORD.C:1129-1193 object zone records\n"
         "  DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES; 4236 C3200_ZONE_; COORD.C:1248-1251,2074-2075 creature zones\n"
+        "  DEFS.H:4042-4043 C702/C703 field zones; 4232-4235 explosion zone bases; COORD.C:1058-1123,1194-1238 explosion zone records\n"
         "  COORD.C:1548-1565 D3 48x41 native door bitmap and 48x40 clip records; 788-807 far door zones\n"
         "  G0711/G0712 back-wall frame descriptors (lines 579-580)\n"
         "  G2107 WallSet bitmap indices (lines ~183)\n"
