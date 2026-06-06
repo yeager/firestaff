@@ -73,6 +73,96 @@ int main(void)
         failures++;
     }
 
+    /*
+     * CHAMDRAW.C:F0292 inventory mouth/eye warning-border source lock:
+     * - 908-918: food < 0, water < 0, or PoisonEventCount selects
+     *   C034_GRAPHIC_SLOT_BOX_WOUNDED for C545_ZONE_MOUTH; otherwise C033.
+     * - 920-932: any current statistic below maximum selects C034 for
+     *   C546_ZONE_EYE; otherwise C033.
+     * DEFS.H anchors:
+     * - 2193-2195: C033/C034/C035 slot-box graphics.
+     * - 3914-3915: C545_ZONE_MOUTH and C546_ZONE_EYE.
+     *
+     * This is a Firestaff-side structural gate for the inventory panel
+     * warning route only. It does not claim original DOS pixel parity.
+     */
+    {
+        enum {
+            DM1_ZONE_MOUTH = 545,
+            DM1_ZONE_EYE = 546
+        };
+        static const struct {
+            int food;
+            int water;
+            int poisonEventCount;
+            int expectedGraphic;
+            const char *label;
+        } mouthCases[] = {
+            {  0,  0, 0, DM1_GFX_SLOT_NORMAL,  "normal" },
+            { -1,  0, 0, DM1_GFX_SLOT_WOUNDED, "food" },
+            {  0, -1, 0, DM1_GFX_SLOT_WOUNDED, "water" },
+            {  0,  0, 1, DM1_GFX_SLOT_WOUNDED, "poison" },
+        };
+        static const struct {
+            int current[DM1_STATISTIC_ROW_COUNT];
+            int maximum[DM1_STATISTIC_ROW_COUNT];
+            int expectedGraphic;
+            const char *label;
+        } eyeCases[] = {
+            { { 50, 50, 50, 50, 50, 50 },
+              { 50, 50, 50, 50, 50, 50 },
+              DM1_GFX_SLOT_NORMAL, "all_equal" },
+            { { 50, 50, 49, 50, 50, 50 },
+              { 50, 50, 50, 50, 50, 50 },
+              DM1_GFX_SLOT_WOUNDED, "stat_below_max" },
+            { { 51, 51, 51, 51, 51, 51 },
+              { 50, 50, 50, 50, 50, 50 },
+              DM1_GFX_SLOT_NORMAL, "all_above_max" },
+        };
+        size_t i;
+
+        if (DM1_ZONE_MOUTH != 545 || DM1_ZONE_EYE != 546) {
+            fprintf(stderr, "FAIL: F0292 mouth/eye zone IDs\n");
+            failures++;
+        }
+
+        for (i = 0; i < sizeof(mouthCases) / sizeof(mouthCases[0]); ++i) {
+            int selectedGraphic =
+                (mouthCases[i].food < 0 ||
+                 mouthCases[i].water < 0 ||
+                 mouthCases[i].poisonEventCount)
+                    ? DM1_GFX_SLOT_WOUNDED
+                    : DM1_GFX_SLOT_NORMAL;
+            if (selectedGraphic != mouthCases[i].expectedGraphic) {
+                fprintf(stderr,
+                        "FAIL: F0292 mouth warning border %s got %d want %d\n",
+                        mouthCases[i].label,
+                        selectedGraphic,
+                        mouthCases[i].expectedGraphic);
+                failures++;
+            }
+        }
+
+        for (i = 0; i < sizeof(eyeCases) / sizeof(eyeCases[0]); ++i) {
+            int selectedGraphic = DM1_GFX_SLOT_NORMAL;
+            int statIndex;
+            for (statIndex = 0; statIndex < DM1_STATISTIC_ROW_COUNT; ++statIndex) {
+                if (eyeCases[i].current[statIndex] < eyeCases[i].maximum[statIndex]) {
+                    selectedGraphic = DM1_GFX_SLOT_WOUNDED;
+                    break;
+                }
+            }
+            if (selectedGraphic != eyeCases[i].expectedGraphic) {
+                fprintf(stderr,
+                        "FAIL: F0292 eye warning border %s got %d want %d\n",
+                        eyeCases[i].label,
+                        selectedGraphic,
+                        eyeCases[i].expectedGraphic);
+                failures++;
+            }
+        }
+    }
+
     if (DM1_COLOR_LIGHT_GREEN != 7 || DM1_COLOR_RED != 8 ||
         DM1_COLOR_LIGHTEST_GRAY != 13) {
         fprintf(stderr, "FAIL: statistic color constants\n");
