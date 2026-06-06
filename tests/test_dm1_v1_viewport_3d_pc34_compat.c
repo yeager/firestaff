@@ -1074,6 +1074,46 @@ static void test_wall_draw_uses_clip_gate_source_offsets(void)
     check_int("wall_clip_draw.opaque_copies_transparent_color", viewport[3 * DM1_VIEWPORT_WIDTH + 2], 10);
 }
 
+static void test_f0099_copy_and_flip_h_preserves_row_boundaries(void)
+{
+    /*
+     * ReDMCSB source-lock for the shared parity scratch path:
+     *   - DUNVIEW.C:3018-3045 F0099_DUNGEONVIEW_CopyBitmapAndFlipHorizontal
+     *     copies a bitmap and flips it horizontally.  On PC34/I34E, line 3038
+     *     delegates to F0655_CopyBitmapAndFlip(..., MASK0x0001_FLIP_HORIZONTAL).
+     *   - DUNVIEW.C:3197-3204 F0105 uses F0099 into G0074_puc_Bitmap_Temporary
+     *     before the transparent viewport blit.
+     *
+     * Existing D0/D2/D3 parity gates prove selected wall lanes.  This pins the
+     * lower-level F0099 row-local contract those lanes share: each source row
+     * is mirrored independently into the destination, with no carry across row
+     * boundaries.
+     */
+    const uint8_t src[15] = {
+        0x10, 0x11, 0x12, 0x13, 0x14,
+        0x20, 0x21, 0x22, 0x23, 0x24,
+        0x30, 0x31, 0x32, 0x33, 0x34
+    };
+    const uint8_t src_before[15] = {
+        0x10, 0x11, 0x12, 0x13, 0x14,
+        0x20, 0x21, 0x22, 0x23, 0x24,
+        0x30, 0x31, 0x32, 0x33, 0x34
+    };
+    uint8_t dst[15];
+
+    memset(dst, 0xee, sizeof(dst));
+    dm1_viewport_3d_copy_and_flip_h(src, dst, 5, 3);
+
+    check_int("F0099.copy_flip.row0.left", dst[0], 0x14);
+    check_int("F0099.copy_flip.row0.center", dst[2], 0x12);
+    check_int("F0099.copy_flip.row0.right", dst[4], 0x10);
+    check_int("F0099.copy_flip.row1.left", dst[5], 0x24);
+    check_int("F0099.copy_flip.row1.right", dst[9], 0x20);
+    check_int("F0099.copy_flip.row2.left", dst[10], 0x34);
+    check_int("F0099.copy_flip.row2.right", dst[14], 0x30);
+    check_int("F0099.copy_flip.source_preserved", memcmp(src, src_before, sizeof(src)) == 0, 1);
+}
+
 static void test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -2438,6 +2478,7 @@ int main(void)
     test_wall_item_occlusion_alcove_exception();
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
+    test_f0099_copy_and_flip_h_preserves_row_boundaries();
     test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
