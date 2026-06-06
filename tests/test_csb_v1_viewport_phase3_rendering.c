@@ -413,13 +413,18 @@ static void test_csb_thing_pass_order_contracts(void)
         unsigned char corridor_cell3;
         unsigned char side_cell0;
         unsigned char side_cell2;
+        int projectile_row;
+        int projectile_zone2;
+        int projectile_zone3;
         const char *function_name;
         const char *source_anchor;
     } expected[] = {
         { DM1_VIEW_SQUARE_D3L2, 0, 0x0218, 0x0349, 0x3421, 0x0321,
-          1, 2, 4, 3, 1, 3, 1, 3, "F0676_DrawD3L2", "6271 F0115" },
+          1, 2, 4, 3, 1, 3, 1, 3, 3, 2914, 2915,
+          "F0676_DrawD3L2", "6271 F0115" },
         { DM1_VIEW_SQUARE_D3R2, 1, 0x0128, 0x0439, 0x4312, 0x0412,
-          2, 1, 3, 4, 2, 4, 2, 4, "F0677_DrawD3R2", "6338 F0115" },
+          2, 1, 3, 4, 2, 4, 2, 4, 4, 2918, 2919,
+          "F0677_DrawD3R2", "6338 F0115" },
     };
     const DM1_ViewportThingLayerSpec *objects =
         dm1_viewport_3d_get_thing_layer_spec(DM1_VIEWPORT_THING_LAYER_OBJECTS);
@@ -441,6 +446,8 @@ static void test_csb_thing_pass_order_contracts(void)
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const CSB_V1_ViewportThingPassOrderSpec *spec =
             csb_v1_viewport_get_thing_pass_order_spec_for_square((int)expected[i].square);
+        const DM1_ViewportProjectileOcclusionSpec *projectile_spec =
+            dm1_viewport_3d_get_projectile_occlusion_spec_for_square(expected[i].square);
         DM1_ViewportCellOrder rear;
         DM1_ViewportCellOrder front;
         DM1_ViewportCellOrder corridor;
@@ -449,6 +456,8 @@ static void test_csb_thing_pass_order_contracts(void)
 
         snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.present", i);
         check_true(id, spec != NULL);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_present", i);
+        check_true(id, projectile_spec != NULL);
         if (!spec) continue;
 
         rear = dm1_viewport_3d_decode_cell_order(spec->door_front_rear_cell_order);
@@ -509,6 +518,34 @@ static void test_csb_thing_pass_order_contracts(void)
         check_int(id, spec->f0115_creatures_layer_order, 1);
         snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_projectiles", i);
         check_int(id, spec->f0115_projectiles_layer_order, 2);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_row", i);
+        check_int(id, spec->f0115_projectile_g2028_row, expected[i].projectile_row);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone_base", i);
+        check_int(id, spec->f0115_projectile_zone_base, 2900);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone_stride", i);
+        check_int(id, spec->f0115_projectile_zone_stride, 4);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_restart", i);
+        check_int(id, spec->f0115_projectile_restarts_thing_list, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_cell_match", i);
+        check_int(id, spec->f0115_projectile_requires_cell_match, 1);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_depth3_gate", i);
+        check_int(id, spec->f0115_projectile_suppresses_depth3_front_cells, 1);
+        if (projectile_spec) {
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_dm1_row", i);
+            check_int(id, projectile_spec->g2028_row, spec->f0115_projectile_g2028_row);
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone0_hidden", i);
+            check_int(id, dm1_viewport_3d_projectile_zone_for_cell(projectile_spec, 0), -1);
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone1_hidden", i);
+            check_int(id, dm1_viewport_3d_projectile_zone_for_cell(projectile_spec, 1), -1);
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone2", i);
+            check_int(id, dm1_viewport_3d_projectile_zone_for_cell(projectile_spec, 2),
+                      expected[i].projectile_zone2);
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_zone3", i);
+            check_int(id, dm1_viewport_3d_projectile_zone_for_cell(projectile_spec, 3),
+                      expected[i].projectile_zone3);
+            snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_dm1_source", i);
+            check_true(id, strstr(projectile_spec->source_lines, "5683") != NULL);
+        }
         snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.layer_explosions", i);
         check_int(id, spec->f0115_explosions_layer_order, 3);
         snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.explosions_after_cells", i);
@@ -519,6 +556,9 @@ static void test_csb_thing_pass_order_contracts(void)
         check_true(id, strstr(spec->source_lines, expected[i].source_anchor) != NULL);
         snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.f0115_source", i);
         check_true(id, strstr(spec->source_lines, "F0115:4567-4581") != NULL);
+        snprintf(id, sizeof(id), "csb.thing_pass_order.%zu.projectile_source", i);
+        check_true(id, strstr(spec->source_lines, "5683 C2900 zone") != NULL &&
+                       strstr(spec->source_lines, "5881-5883 blit") != NULL);
     }
 
     if (objects && creatures && projectiles && explosions) {
@@ -721,6 +761,7 @@ static void test_source_evidence(void)
     check_true("evidence.f0108", e && strstr(e, "F0108") != NULL);
     check_true("evidence.f0111", e && strstr(e, "F0111") != NULL);
     check_true("evidence.f0115_layers", e && strstr(e, "F0115 draws objects") != NULL);
+    check_true("evidence.f0115_projectiles", e && strstr(e, "C2900_ZONE_ + G2028") != NULL);
     check_true("evidence.f0115_object_filter", e && strstr(e, "F0115 filters weapon..junk") != NULL);
     check_true("evidence.f0115_explosions", e && strstr(e, "F0115 restarts for explosions") != NULL);
     check_true("evidence.f0108_bitmap_index", e && strstr(e, "G0191 native bitmap increment") != NULL);
