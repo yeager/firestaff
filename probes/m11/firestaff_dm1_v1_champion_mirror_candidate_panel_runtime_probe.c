@@ -21,9 +21,10 @@
  *   route but disables the first mirror-square sensor on confirm;
  *   REVIVE.C:806-835 applies the source reincarnate branch after the
  *   common confirm route while C160 resurrect stays on the common confirm
- *   path through REVIVE.C:785-837; COMMAND.C:228-233, 508-511, and
- *   1985-1991 define and dispatch the resurrect/reincarnate/cancel panel
- *   mouse routes;
+ *   path through REVIVE.C:785-837; COMMAND.C:228-233, 508-511,
+ *   1379-1431, and 1985-1991 define the panel mouse boxes, ignore
+ *   non-matching panel clicks, and dispatch only C160/C161/C162 to
+ *   REVIVE.C F0282;
  *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict champion-portrait
  *   interaction evidence to the D1C front wall route;
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 champion portraits in G0289.
@@ -66,6 +67,8 @@ enum {
      * them. */
     PROBE_RESURRECT_CLICK_X = 130,
     PROBE_RESURRECT_CLICK_Y = 115,
+    PROBE_PANEL_DEADZONE_CLICK_X = 160,
+    PROBE_PANEL_DEADZONE_CLICK_Y = 115,
     PROBE_REINCARNATE_CLICK_X = 186,
     PROBE_REINCARNATE_CLICK_Y = 115,
     PROBE_CANCEL_CLICK_X = 160,
@@ -639,6 +642,64 @@ static int check_pointer_cancel(M11_GameViewState* game,
     return ok;
 }
 
+static int check_pointer_deadzone_ignored(M11_GameViewState* game,
+                                          const M11_AssetSlot* rrPanel,
+                                          int expectedOrdinal,
+                                          const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch match;
+    M11_GameInputResult inputResult;
+    int ok = 1;
+
+    ok &= expect_int("pre-deadzone-click panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("pre-deadzone-click ordinal",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("pre-deadzone-click party index",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("pre-deadzone-click champion appended",
+                     game->world.party.championCount, 1);
+    /* ReDMCSB COMMAND.C:1379-1431 / F0358 scans the panel input table
+     * and returns C000 when no zone matches.  COMMAND.C:1985-1991 /
+     * F0378 calls REVIVE.C F0282 only for a nonzero C160/C161/C162
+     * command, so this between-button click must leave G0299/panel state
+     * live and must not run the confirm or cancel cleanup paths. */
+    inputResult = M11_GameView_HandlePointerButton(game,
+                                                   PROBE_PANEL_DEADZONE_CLICK_X,
+                                                   PROBE_PANEL_DEADZONE_CLICK_Y,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+    ok &= expect_int("deadzone click ignored", (int)inputResult,
+                     (int)M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("post-deadzone-click panel still on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("post-deadzone-click inventory still on",
+                     game->inventoryPanelActive, 1);
+    ok &= expect_int("post-deadzone-click champion still appended",
+                     game->world.party.championCount, 1);
+    ok &= expect_int("post-deadzone-click ordinal preserved",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("post-deadzone-click party index preserved",
+                     game->candidateMirrorPartyIndex, 0);
+    ok &= expect_int("post-deadzone-click front mirror still visible",
+                     M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                        PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (match.assetOpaque <= 0 || match.assetDrawn * 100 < 90 * match.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel disappeared after ignored deadzone click drawn=%d/%d\n",
+                label, match.assetDrawn, match.assetOpaque);
+        ok = 0;
+    }
+    printf("%s deadzone-click ignored drawn=%d/%d championCount=%d candidate=%d/%d\n",
+           label, match.assetDrawn, match.assetOpaque,
+           game->world.party.championCount,
+           game->candidateMirrorOrdinal, game->candidateMirrorPartyIndex);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -651,6 +712,8 @@ int main(int argc, char** argv) {
     M11_GameViewState game4;
     M12_StartupMenuState menu5;
     M11_GameViewState game5;
+    M12_StartupMenuState menu6;
+    M11_GameViewState game6;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
@@ -799,6 +862,26 @@ int main(int argc, char** argv) {
                                    "corridor_north_cancel_click");
     }
     M11_GameView_Shutdown(&game5);
+
+    /* Pose J: reopen once more and click the source panel dead zone between
+     * C160 and C161.  COMMAND.C F0358 should return C000 here, so F0378 must
+     * not call REVIVE.C F0282 and the open candidate panel should remain
+     * live with no confirm/cancel cleanup. */
+    M12_StartupMenu_InitWithDataDir(&menu6, dataDir, NULL);
+    M11_GameView_Init(&game6);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game6, &menu6)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for deadzone click pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!pose_panel_open(&game6, rrPanel, portraits, 1, 4, DIR_NORTH, 2,
+                         "corridor_north_select_for_deadzone_click")) {
+        ok = 0;
+    } else {
+        ok &= check_pointer_deadzone_ignored(&game6, rrPanel, 2,
+                                             "corridor_north_deadzone_click");
+    }
+    M11_GameView_Shutdown(&game6);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror candidate panel runtime probe\n",
