@@ -3552,6 +3552,21 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_damage_indicator_source_lock
         COMMAND firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test
     )
+    add_executable(firestaff_dm1_v1_champion_leader_pc34_compat_test
+        tests/test_dm1_v1_champion_leader_pc34_compat.c
+        src/dm1/dm1_v1_champion_leader_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_leader_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_champion_leader_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_leader_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_leader_f0368_source_lock
+        COMMAND firestaff_dm1_v1_champion_leader_pc34_compat_test
+    )
     add_executable(test_dm1_v1_champion_panel_status_recompute_pc34_compat
         tests/test_dm1_v1_champion_panel_status_recompute_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_status_recompute_pc34_compat.c
