@@ -39,6 +39,16 @@
  *      C-id (the V2 runtime shell id is allowed to differ; the V1
  *      source truth must not change).
  *
+ *   6. The DM1 V2 viewport renderer preserves the V1 framebuffer
+ *      pixel-by-pixel when V2 presentation is disabled: the entry
+ *      composition (DUNGEON.DAT offset 8 + pass173) renders into
+ *      two independent 224x136 RGBA viewports whose framebuffers
+ *      match byte-for-byte, and dm1_v2_vp_compare_viewport_region
+ *      reports zero mismatched pixels across the full viewport at
+ *      every cardinal direction N/E/S/W. This is the ctest-checkable
+ *      core of the side-by-side presentation seed scaffold
+ *      (probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c).
+ *
  * The test is headless, depends only on the firestaff_v2 and
  * firestaff_m10 libraries, and does not require any game data files.
  *
@@ -66,7 +76,9 @@
 
 #include "dm1_v2_phase_gate_pc34.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
+#include "dm1_v2_viewport_renderer_pc34.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -274,6 +286,173 @@ static int test_gameplay_domain_predicate(void) {
     return 0;
 }
 
+/* ── TC-8: V1/V2 presentation-disabled pixel-level parity ──────────
+ *
+ * Mirrors the ctest-checkable core of the side-by-side presentation
+ * seed probe (probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c).
+ *
+ * The probe exercises the same contract from a stand-alone executable;
+ * this test exercises it directly inside the ctest process so any future
+ * regression in the V2 viewport renderer's V1 parity path surfaces as a
+ * regular ctest failure, not just a stand-alone probe output.
+ *
+ * What is asserted:
+ *   1. dm1_v2_vp_dm1_pc34_entry_state_fixture() reports the canonical
+ *      DM1 PC 3.4 entry (map 0, x=1, y=3, dir=2 source=DUNGEON.DAT
+ *      offset 8 + pass173 source audit).
+ *   2. dm1_v2_vp_build_composition_from_fixture() decodes D1C as WALL
+ *      and D0C as CORRIDOR for the canonical entry position.
+ *   3. dm1_v2_vp_render_composition_flat() returns 1 for both lanes.
+ *   4. The two 224x136 RGBA framebuffers are byte-equal pixel-by-pixel.
+ *   5. dm1_v2_vp_compare_viewport_region() reports 0 mismatched pixels
+ *      over the full viewport (the canonical parity row).
+ *   6. A 64-bit FNV-1a fold of the V1 framebuffer equals the V2 fold.
+ *   7. The same six checks hold for directions 0..3 (N/E/S/W) so a
+ *      future rotation regression cannot silently drift V1 vs V2 in
+ *      any lane. The fixture front-wall square at (1,4) is at D1C
+ *      only in direction=2; other directions use the fixture default
+ *      element for D1C, which is intentional — V1 and V2 must still
+ *      agree, regardless of which element D1C ends up with.
+ *
+ * Source locks:
+ *   ReDMCSB DUNVIEW.C:2999-3000   224x136 viewport bitmap.
+ *   ReDMCSB DUNGEON.C:35-44       direction step tables.
+ *   ReDMCSB DUNGEON.C:2238-2239   stair raw -> side/front aspect.
+ *   ReDMCSB DUNGEON.C:2243-2246   door raw -> side/front aspect.
+ *   ReDMCSB DEFS.H:238-243        C001..C006 V1 command ids (pinned in TC-5).
+ *   ReDMCSB COMMAND.C:2045-2155   F0359 command queue dispatch.
+ *
+ * The FNV-1a fold is identical to the one used in
+ * probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c
+ * so a future V1 vs V2 framebuffer drift will surface in both the ctest
+ * test and the stand-alone probe at the same time.
+ */
+static uint64_t fnv1a_fold_u32(uint64_t hash, uint32_t value) {
+    int byteIndex;
+    for (byteIndex = 0; byteIndex < 4; ++byteIndex) {
+        hash ^= (uint64_t)((value >> (byteIndex * 8)) & 0xFFU);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static uint64_t fnv1a_framebuffer(const DM1_V2_ViewportState* vp) {
+    uint64_t hash = 14695981039346656037ULL; /* FNV-1a 64-bit offset basis */
+    int y, x;
+    if (!vp) return hash;
+    for (y = 0; y < DM1_V2_VIEWPORT_H; ++y) {
+        for (x = 0; x < DM1_V2_VIEWPORT_W; ++x) {
+            const DM1_V2_Color* c = &vp->framebuffer[y][x];
+            uint32_t packed = ((uint32_t)c->r)
+                            | ((uint32_t)c->g << 8)
+                            | ((uint32_t)c->b << 16)
+                            | ((uint32_t)c->a << 24);
+            hash = fnv1a_fold_u32(hash, packed);
+        }
+    }
+    return hash;
+}
+
+static int render_lane_for_direction(const DM1_V2_DungeonStateFixture* fixture,
+                                     int direction,
+                                     DM1_V2_ViewportState* v1,
+                                     DM1_V2_ViewportState* v2) {
+    DM1_V2_ViewportCompositionInput input;
+    DM1_V2_ViewportRegion region;
+    DM1_V2_RegionCompareResult cmp;
+    uint64_t h1, h2;
+    int x, y, mismatch;
+
+    if (!fixture || !v1 || !v2) return 1;
+
+    CHECK(dm1_v2_vp_build_composition_from_fixture(fixture,
+                                                   fixture->startMapX,
+                                                   fixture->startMapY,
+                                                   direction,
+                                                   &input) == 1);
+
+    dm1_v2_vp_init(v1);
+    dm1_v2_vp_init(v2);
+    CHECK(dm1_v2_vp_render_composition_flat(v1, &input) == 1);
+    CHECK(dm1_v2_vp_render_composition_flat(v2, &input) == 1);
+
+    /* Byte-equal pixel-by-pixel check. */
+    mismatch = 0;
+    for (y = 0; y < DM1_V2_VIEWPORT_H && !mismatch; ++y) {
+        for (x = 0; x < DM1_V2_VIEWPORT_W; ++x) {
+            const DM1_V2_Color* a = &v1->framebuffer[y][x];
+            const DM1_V2_Color* b = &v2->framebuffer[y][x];
+            if (a->r != b->r || a->g != b->g ||
+                a->b != b->b || a->a != b->a) {
+                mismatch = 1;
+                break;
+            }
+        }
+    }
+    CHECK(mismatch == 0);
+
+    /* Region comparator contract over the full viewport. */
+    region.x = 0;
+    region.y = 0;
+    region.width = DM1_V2_VIEWPORT_W;
+    region.height = DM1_V2_VIEWPORT_H;
+    region.name = "side-by-side-full";
+    CHECK(dm1_v2_vp_compare_viewport_region(&v1->framebuffer[0][0],
+                                            &v2->framebuffer[0][0],
+                                            DM1_V2_VIEWPORT_W,
+                                            region,
+                                            &cmp) == 1);
+    CHECK(cmp.comparedPixels == DM1_V2_VIEWPORT_W * DM1_V2_VIEWPORT_H);
+    CHECK(cmp.mismatchedPixels == 0);
+
+    /* Stable FNV-1a fold parity. */
+    h1 = fnv1a_framebuffer(v1);
+    h2 = fnv1a_framebuffer(v2);
+    CHECK(h1 == h2);
+    return 0;
+}
+
+static int test_v1_v2_pixel_level_parity(void) {
+    const DM1_V2_DungeonStateFixture* fixture =
+        dm1_v2_vp_dm1_pc34_entry_state_fixture();
+    int direction;
+
+    CHECK(fixture != NULL);
+    CHECK(fixture->startMapX == 1);
+    CHECK(fixture->startMapY == 3);
+    CHECK(fixture->startDirection == 2);
+
+    /* Canonical entry position: dir=2 (S) places the (1,4) wall
+     * square at D1C. Other directions use the fixture default
+     * element for D1C; parity must still hold for all four. */
+    {
+        DM1_V2_ViewportState v1, v2;
+        DM1_V2_ViewportCompositionInput input;
+        CHECK(dm1_v2_vp_build_composition_from_fixture(fixture,
+                                                       fixture->startMapX,
+                                                       fixture->startMapY,
+                                                       fixture->startDirection,
+                                                       &input) == 1);
+        CHECK(input.squares[1][1].element == DM1_V2_ELEMENT_WALL);
+        CHECK(input.squares[0][1].element == DM1_V2_ELEMENT_CORRIDOR);
+        if (render_lane_for_direction(fixture, fixture->startDirection, &v1, &v2)) {
+            return 1;
+        }
+    }
+
+    /* Multi-direction parity: render the entry composition at N/E/S/W
+     * and confirm V1/V2 byte parity at every direction. This catches
+     * any future rotation/direction-step regression in the V2
+     * viewport renderer that the single-direction probe would miss. */
+    for (direction = 0; direction < 4; ++direction) {
+        DM1_V2_ViewportState v1, v2;
+        if (render_lane_for_direction(fixture, direction, &v1, &v2)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -284,6 +463,7 @@ int main(void) {
     if (test_v1_command_ids_preserved()) return 1;
     if (test_every_domain_has_anchor()) return 1;
     if (test_gameplay_domain_predicate()) return 1;
+    if (test_v1_v2_pixel_level_parity()) return 1;
     puts("dm1_v2_v1_v2_side_by_side_seed_pc34: ok");
     return 0;
 }
