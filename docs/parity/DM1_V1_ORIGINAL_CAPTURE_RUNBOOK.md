@@ -628,6 +628,125 @@ and the pass622 → pass623 → pass625 chain can move.
 
 ---
 
+## Step 5d: Render the Events TSV (deterministic)
+
+The events TSV the transcript writer consumes has 41
+tab-separated columns, most of which are source-locked
+constants (``F0380_COMMAND_ProcessQueue_CPSC``,
+``F0365/F0366_COMMAND_ProcessTypes1To2/3To6``,
+``F0128_DUNGEONVIEW_Draw_CPSF``,
+``F0097_DUNGEONVIEW_DrawViewport``,
+``VIDRV_09_BlitViewPort``, the runbook §1
+``GRAPHICS.DAT``/``DUNGEON.DAT`` SHA256s) or pass623-fixture-
+pinned values (the ``inputToken`` → ``sourceCommandId``
+mapping, the ``postTuple``, the Firestaff
+``viewportSha256``).  Building the row by hand is exactly
+the gap that kept the pass608 blocker in
+``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+after the pass633 / pass625 work landed: a typo in a
+function name (``F0365`` vs ``F0380``), a stale
+ReDMCSB literal, a wrong queue count, or a wrong viewport
+hash silently re-introduces the blocker the writer is
+meant to catch.
+
+The deterministic handoff code at
+``docs/parity/tools/dosbox_capture_events_row_builder.py``
+turns a single pass623 route label (e.g.
+``02_turn_right_west_1_3``) + a 320x200 capture frame
++ a 224x136 crop into one 41-column row (or one row per
+command for multi-command routes like
+``04_forward_south_1_4``), pulling every source-locked
+value and every pass623-fixture value verbatim from the
+canonical contracts so the operator never has to type
+them.  Build the events TSV one row at a time:
+
+```bash
+# Single-command route (renders 1 row, with --with-header
+# the very first invocation also writes the EVENTS_TSV_HEADER
+# line so subsequent invocations can be concatenated).
+python3 docs/parity/tools/dosbox_capture_events_row_builder.py \
+    --label 02_turn_right_west_1_3 \
+    --raw  original/02_ingame_turn_right.png \
+    --crop original/02_ingame_turn_right_viewport.png \
+    --run-id 2026-06-07_dm1_v1_ingame \
+    --preflight-receipt ~/firestaff-captures/preflight.receipt.json \
+    --pass623-fixture parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json \
+    --classification dungeon_gameplay \
+    --with-header \
+    --queue-count-before 1 \
+    --queue-first-index-before 0 \
+    >> events.tsv
+
+# Multi-command route (renders 1 row per command; the
+# helper splits the route's commands=[1, 3] into two
+# events, both sharing the route's final postTuple and
+# the pass623 viewportSha256).
+python3 docs/parity/tools/dosbox_capture_events_row_builder.py \
+    --label 04_forward_south_1_4 \
+    --raw  original/04_forward_south_1_4.png \
+    --crop original/04_forward_south_1_4_viewport.png \
+    --run-id 2026-06-07_dm1_v1_ingame \
+    --preflight-receipt ~/firestaff-captures/preflight.receipt.json \
+    --pass623-fixture parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json \
+    --classification dungeon_gameplay \
+    --party-before-map   0 \
+    --party-before-x     1 \
+    --party-before-y     3 \
+    --party-before-direction 2 \
+    --queue-count-before 2 \
+    --queue-first-index-before 0 \
+    >> events.tsv
+```
+
+The row builder refuses to emit a row when:
+
+  * the route label is not in the pass623 fixture
+    (the operator is asking for a route that has no
+    canonical binding);
+  * the recorded 320x200 capture file is missing or
+    its on-disk SHA256 does not match the recorded
+    ``raw_sha256`` (mirroring the writer's pin contract
+    — a stale SHA cannot silently ship);
+  * the recorded 224x136 crop is missing or its
+    on-disk SHA256 does not match the recorded
+    ``crop_sha256``;
+  * the preflight receipt's pin checks are not all PASS
+    (the upstream contract is violated);
+  * the route is multi-command but the recorded
+    ``inputToken``/``sourceCommandId`` pair does not
+    match the pass623 fixture (a classifier bug or a
+    route bug that must be caught at this layer, not
+    at the writer).
+
+The helper ships a hermetic ``--self-test`` that
+exercises the matching case, the unknown-route-label
+case, the missing-receipt case, the bad-receipt case,
+the missing-raw case, the multi-command-split case, the
+end-to-end single-command promotable case, the
+end-to-end multi-command promotable case, the
+dispatch-handler-by-command case, the
+source-function-pinned case, the verbatim column-order
+case, and the baseline-row case against synthetic
+fixtures, and it is wired into the runbook-consistency
+probe at
+``tools/test_dm1_v1_capture_runbook_consistency.py`` as
+``events_row_builder_selftest``.  The probe fails loudly
+if a future operator reverts to typing the 41 columns
+by hand, and the
+``dosbox_capture_events_row_builder.py --self-test``
+CTest gate (see the CMake block below) catches
+regressions in the helper itself.  The writer's
+``_load_pass623_fixture`` was extended in the same pass
+to pair ``inputTokens`` with ``commandIds``
+positionally for multi-command routes, so a
+``commands=[1, 3]`` / ``tokens=[LEFT, UP]`` row pairs
+``LEFT → 1`` and ``UP → 3`` (and not both to ``1`` the
+way a legacy single-id mapping would); a regression
+here is caught by the writer's new multi-command
+self-test.
+
+---
+
 ## Step 6: Pass/Fail Criteria
 
 | Criterion | Threshold |

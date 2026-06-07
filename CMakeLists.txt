@@ -1292,6 +1292,22 @@ if(BUILD_TESTING)
             NAME dm1_v1_original_capture_transcript_writer_self_test
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_transcript_writer.py --self-test
         )
+        # Events-row-builder self-test: turns one pass623 route
+        # label + a single 320x200 capture + a 224x136 crop into
+        # the 41-column TSV row the transcript writer accepts.
+        # Catches the regression where a future operator types
+        # one of the 41 cells by hand and silently re-introduces
+        # the pass608 blocker; the helper renders every
+        # source-locked value (F0359/F0361, F0380, F0365/F0366,
+        # F0128, F0097/VIDRV_09_BlitViewPort, the runbook §1
+        # asset-set SHA256s) verbatim against the writer's
+        # public contract, and the e2e check pipes the helper's
+        # output through the real transcript writer and asserts
+        # the emitted transcript is promotable.
+        add_test(
+            NAME dm1_v1_original_capture_events_row_builder_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_events_row_builder.py --self-test
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
