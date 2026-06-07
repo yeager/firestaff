@@ -116,10 +116,6 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_link_corruption_recovery_pc3
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
 )
-list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_link_corruption_recovery_pc34_compat\\.c$")
-list(APPEND M10_SOURCES
-    src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
-)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat.c
@@ -2274,20 +2270,6 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_close_rewire_runtime_pc34_compat
         COMMAND test_dm1_v1_chest_close_rewire_runtime_pc34_compat
-    )
-
-    add_executable(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
-        tests/test_dm1_v1_chest_link_corruption_recovery_pc34_compat.c
-        src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
-    )
-    target_link_libraries(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE firestaff_m10)
-    target_include_directories(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
-        COMMAND firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
     )
 
     add_executable(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
