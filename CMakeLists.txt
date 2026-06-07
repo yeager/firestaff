@@ -89,6 +89,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_custom_backgrounds_first_
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat.c
+)
 
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_party_swap_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
@@ -1425,6 +1429,22 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_custom_backgrounds_second_backdrop_pc34_compat
         COMMAND test_csb_v1_viewport_custom_backgrounds_second_backdrop_pc34_compat
+    )
+
+    add_executable(firestaff_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat_test
+        tests/test_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat.c
+        src/csb/csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat.c
+    )
+    target_include_directories(firestaff_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat_test PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat
+        COMMAND firestaff_csb_v1_viewport_custom_backgrounds_both_backdrops_pc34_compat_test
     )
 
     add_executable(test_csb_v1_viewport_d3l2_door_pc34_compat
