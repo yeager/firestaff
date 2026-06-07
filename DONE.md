@@ -17,6 +17,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM1 V1 - Runtime and Source-Lock
 
+- ✅ Viewport F0099 row-local flip source-lock gate: `firestaff_dm1_v1_viewport_f0099_row_local_flip_pc34_compat_test` adds a 100-assertion, contract-only synthetic gate for ReDMCSB `DUNVIEW.C F0099` row-local byte flips across D3L2/D3R2, D2C/D3C, D0L/D0R, D1/D2/D3 LCR walls, floor, ceiling, and the D1C door-frame pair without claiming real-asset parity.
 - ✅ Movement and collision: cardinal movement, turning, wall/door/fake-wall blocking, cooldowns, stairs, pits, teleporters, blocked self-damage, empty-party group cleanup, and deterministic capture gates.
 - ✅ Viewport wall evidence hardening: `g_dm1_wall_frame_bitmaps` is source-locked to the PC34 `G2107`/door-frame offset model and guarded by an asset-free null-write regression.
 - ✅ Viewport D2L side-wall pixel slice: the DM1 V1 viewport 3D source-lock test now proves the ReDMCSB D2L wall frame clips source X 61..71 into viewport X 0..10, preserves C10 transparency, and leaves clipped/out-of-frame pixels untouched.
