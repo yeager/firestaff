@@ -164,6 +164,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_thought_project_t
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_damage_indicator_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
@@ -4019,6 +4023,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_inventory_toggle_source_lock
         COMMAND test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat
+    )
+
+    add_executable(firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test
+        tests/test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
+    )
+    target_include_directories(firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat
+        COMMAND firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test
     )
 
     add_executable(test_dm1_v1_mirror_candidate_close_button_pc34_compat
