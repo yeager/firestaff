@@ -2346,6 +2346,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_occupied_slot_swap_pc34_compat
     )
 
+    add_executable(firestaff_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat_test
+        tests/test_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat.c
+        src/dm1/dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat_test PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat
+        COMMAND firestaff_dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat_test
+    )
+
     add_executable(test_dm1_v1_chest_destination_guard_pc34_compat
         tests/test_dm1_v1_chest_destination_guard_pc34_compat.c
         src/dm1/dm1_v1_chest_destination_guard_pc34_compat.c
