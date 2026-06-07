@@ -44,7 +44,11 @@ The probe covers:
     binary path ``DM.EXE`` and never the directory name
     ``DungeonMasterPC34.EXE`` (which doesn't exist as a binary).
   * The runbook's "Output Manifest Template" must not reference a
-    stale placeholder git hash.
+    stale placeholder git hash, and must point operators at the
+    on-disk ``dosbox_capture_manifest_writer.py`` so the template
+    is filled in deterministically rather than by hand.
+  * The on-disk ``dosbox_capture_manifest_writer.py`` self-test
+    must keep passing against hermetic synthetic fixtures.
 
 Exit code 0 means the runbook is consistent with the tools.  Exit
 code 1 means the runbook needs a realignment pass before the next
@@ -66,6 +70,7 @@ TOOLS_DIR = REPO_ROOT / "docs" / "parity" / "tools"
 PREFLIGHT = TOOLS_DIR / "dosbox_capture_preflight.py"
 COMPARE = TOOLS_DIR / "compare_captures.py"
 DETECTOR = TOOLS_DIR / "dosbox_state_detector.py"
+MANIFEST_WRITER = TOOLS_DIR / "dosbox_capture_manifest_writer.py"
 
 STATUS = "PASS632_DM1_V1_CAPTURE_ROUTE_RUNBOOK_CONSISTENCY"
 
@@ -306,6 +311,32 @@ def check_manifest_template_no_stale_hash(runbook_text: str) -> list[str]:
     return failures
 
 
+def check_manifest_template_points_at_writer(runbook_text: str) -> list[str]:
+    """The Output Manifest Template used to be filled in by hand,
+    which is exactly how the stale ``f7f3291f`` placeholder
+    shipped through a previous draft of the runbook.  The
+    runbook must point operators at the on-disk
+    ``dosbox_capture_manifest_writer.py`` and reference its
+    self-test gate so the next operator copy-pastes the
+    deterministic tool rather than the prose template."""
+    failures: list[str] = []
+    rel_writer = "docs/parity/tools/dosbox_capture_manifest_writer.py"
+    if rel_writer not in runbook_text:
+        failures.append(
+            "Output Manifest Template: runbook does not reference "
+            f"the on-disk manifest writer at {rel_writer}; operators "
+            "may still fill the template by hand and re-introduce "
+            "the stale-placeholder-hash regression"
+        )
+    if "dosbox_capture_manifest_writer.py --self-test" not in runbook_text:
+        failures.append(
+            "Output Manifest Template: runbook does not mention the "
+            "manifest writer's --self-test gate; the on-disk tool's "
+            "regression coverage is not pinned to the runbook prose"
+        )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # On-disk tool probes.
 # ---------------------------------------------------------------------------
@@ -425,6 +456,40 @@ def check_detector_selftest_passes() -> list[str]:
     return failures
 
 
+def check_manifest_writer_selftest_passes() -> list[str]:
+    """The on-disk manifest writer self-test must keep passing; this
+    is the regression guard for the Output Manifest Template
+    handoff code (matching case, SHA-mismatch case, missing
+    receipt case, pin-violation case, invalid-classification
+    case, manifest-structural invariants)."""
+    failures: list[str] = []
+    if not MANIFEST_WRITER.exists():
+        return [
+            f"{MANIFEST_WRITER.relative_to(REPO_ROOT)}: tool not found; "
+            "the manifest writer must ship alongside the runbook"
+        ]
+    with tempfile.TemporaryDirectory(prefix="runbook-manifest-writer-") as tmp:
+        sandbox = Path(tmp) / "selftest"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(MANIFEST_WRITER),
+                "--self-test",
+                "--self-test-tmp",
+                str(sandbox),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if proc.returncode != 0:
+            failures.append(
+                f"{MANIFEST_WRITER.relative_to(REPO_ROOT)} --self-test "
+                f"failed: {proc.stderr.strip() or proc.stdout.strip()}"
+            )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
@@ -448,6 +513,7 @@ def main() -> int:
         ("step5_no_inlined_compare",     check_step5_no_inlined_compare_script,  [runbook_text]),
         ("step5_points_at_on_disk_tool", check_step5_points_at_on_disk_tool,     [runbook_text]),
         ("manifest_no_stale_hash",       check_manifest_template_no_stale_hash,  [runbook_text]),
+        ("manifest_points_at_writer",    check_manifest_template_points_at_writer, [runbook_text]),
     ]
     for name, fn, args in prose_checks:
         total += 1
@@ -459,9 +525,10 @@ def main() -> int:
 
     # On-disk tool checks.
     tool_checks = [
-        ("compare_uses_lanczos",     check_compare_uses_lanczos,     []),
-        ("preflight_renders_dm_exe", check_preflight_renders_dm_exe, []),
-        ("detector_selftest_passes", check_detector_selftest_passes, []),
+        ("compare_uses_lanczos",         check_compare_uses_lanczos,         []),
+        ("preflight_renders_dm_exe",     check_preflight_renders_dm_exe,     []),
+        ("detector_selftest_passes",     check_detector_selftest_passes,     []),
+        ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
     ]
     for name, fn, args in tool_checks:
         total += 1

@@ -1116,9 +1116,21 @@ if(BUILD_TESTING)
         #   * an inlined buggy `compare_captures.py` (NEAREST, no LANCZOS)
         #   * an autoexec that pointed at `DungeonMasterPC34.EXE` (a directory)
         #   * a stale placeholder hash in the Output Manifest Template
+        #   * a hand-filled manifest that bypasses the manifest writer
         add_test(
             NAME dm1_v1_original_capture_runbook_consistency
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_dm1_v1_capture_runbook_consistency.py
+        )
+        # Manifest-writer self-test: turns the preflight receipt
+        # + classifier output TSV into the runbook's Output
+        # Manifest Template with real SHA256s and a live git head.
+        # Hermetic — exercises the matching, SHA-mismatch,
+        # missing-receipt, pin-violation, and invalid-classification
+        # cases against synthetic fixtures, so the next live attempt
+        # cannot ship a manifest that the writer would reject.
+        add_test(
+            NAME dm1_v1_original_capture_manifest_writer_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_manifest_writer.py --self-test
         )
     endif()
 
