@@ -516,6 +516,118 @@ catches regressions in the writer itself.
 
 ---
 
+## Step 5c: Render the Runtime Transcript (deterministic)
+
+The pass608 / pass625 same-viewport capture blocker is reported by
+``tools/verify_pass608_dm1_v1_same_viewport_capture_blocker.py``
+and
+``tools/verify_pass625_dm1_v1_original_transcript_row_preflight.py``
+in the statuses
+``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE`` and
+``FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT``.  Both
+verifiers demand a ``transcript.json`` file that binds one original
+DOSBox capture frame to one Firestaff fixture row through the
+ReDMCSB source chain
+``F0359_COMMAND_ProcessClick_CPSC or F0361_COMMAND_ProcessKeyPress``
+→ ``F0380_COMMAND_ProcessQueue_CPSC`` →
+``F0365/F0366_COMMAND_ProcessTypes*`` →
+``F0128_DUNGEONVIEW_Draw_CPSF`` →
+``F0097_DUNGEONVIEW_DrawViewport`` at the ``VIDRV_09_BlitViewPort``
+present boundary, with the matching map/X/Y/direction tuple
+binding the original frame to a Firestaff
+``viewport_224x136`` hash from
+``verification-screens/capture_manifest_sha256.tsv``.
+
+Building that transcript by hand is exactly the gap that kept
+the pass608 blocker in
+``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``:
+the next operator would have to invent a 30-field pass608 row
+shape *and* a 40-field pass625 row shape *and* pin every
+ReDMCSB source-function name *and* cross-check the
+``inputToken`` → ``sourceCommandId`` mapping against the
+pass623 canonical input-capture fixture *and* confirm the
+Firestaff fixture hash is a known ``viewport_224x136`` row.
+The deterministic handoff code at
+`docs/parity/tools/dosbox_capture_transcript_writer.py` does
+all of that in one pass.
+
+Build the per-capture events TSV (one row per live capture;
+the writer expects exactly 41 tab-separated columns in the
+order below — the column order is part of the public
+contract, do not re-order):
+
+```tsv
+file	label	classification	raw_sha256	crop_path	crop_sha256	width	height	input_token	source_command_id	source_command_name	queue_source_function	queue_count_before	queue_count_after	queue_first_index_before	queue_first_index_after	dispatch_source_function	dispatch_handler	redraw_source_function	redraw_map_x	redraw_map_y	redraw_direction	present_source_function	present_viewport_presented	present_boundary	party_map_index	party_x	party_y	party_direction	party_before_map_index	party_before_x	party_before_y	party_before_direction	original_asset_set_sha_graphics	original_asset_set_sha_dungeon	firestaff_map_index	firestaff_x	firestaff_y	firestaff_direction	firestaff_viewport_sha256	run_id
+```
+
+The pass623 fixture pins every documented
+``inputToken`` → ``sourceCommandId`` mapping (see
+`parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json`),
+so the live operator can copy the correct
+``source_command_id`` / ``source_command_name`` from the
+fixture without re-deriving the ReDMCSB
+COMMAND.C / F0380 dispatch table.  The
+``original_asset_set_sha_*`` columns are the runbook §1
+constants (the same ones the preflight's receipt already
+records in ``dungeonSha256``/``graphicsSha256``).
+
+Then render the transcript (the writer refuses to emit a
+transcript when the preflight receipt's pin checks are not
+all PASS, when an input token has no command id mapping in
+the pass623 fixture, when a row's command id is a TURN and
+``dispatch.handler`` is the MOVE handler or vice versa, when
+``partyAfter`` does not match the F0128 redraw tuple, when
+``firestaffFrame.viewportSha256`` is not in the canonical
+Firestaff fixture viewport-hash set, when a recorded
+``originalFrame.rawSha256``/``cropSha256`` does not match
+the bytes on disk, or when the events TSV header is
+re-ordered):
+
+```bash
+python3 docs/parity/tools/dosbox_capture_transcript_writer.py \
+    --preflight-receipt ~/firestaff-captures/preflight.receipt.json \
+    --events-tsv events.tsv \
+    --transcript-out transcript.json
+
+# Expected: transcript-writer: N/N checks matched
+#           PASS - transcript: transcript.json
+# Writes: transcript.json with one row per events TSV row,
+#         every required pass608 (30) + pass625 (40) field
+#         present in every row, and a top-level
+#         ``promotable: true`` flag the pass608 verifier
+#         reads as ``runtimeTranscript.ok = true`` when at
+#         least one row is in the same run.
+```
+
+The writer ships a hermetic ``--self-test`` that exercises
+the matching case, the unknown-input-token case, the
+command/handler-mismatch case, the
+``partyAfter``/``F0128``-redraw-drift case, the
+unknown-fixture-hash case, the preflight-pin-violation
+case, the asset-set-mismatch case, the bad-run-id case,
+the transcript-structural invariants (schema, three-key
+mirror, payload.promotable), and the verbatim column-order
+contract against synthetic fixtures, and it is wired into
+the runbook-consistency probe at
+`tools/test_dm1_v1_capture_runbook_consistency.py` as
+`transcript_writer_selftest`.  The probe fails loudly if a
+future operator reverts to hand-building the transcript,
+and the
+``dosbox_capture_transcript_writer.py --self-test`` CTest
+gate (see the CMake block below) catches regressions in
+the writer itself.
+
+The runtime transcript is what the pass608 verifier's
+``runtimeTranscript`` contract reads.  Once the next live
+DOSBox attempt produces a transcript.json that satisfies
+all binding checks, the
+``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+status flips to
+``PROMOTED_STATUS = PASS608_DM1_V1_COMMAND_STATE_REDRAW_TRANSCRIPT_BOUND``
+and the pass622 → pass623 → pass625 chain can move.
+
+---
+
 ## Step 6: Pass/Fail Criteria
 
 | Criterion | Threshold |

@@ -71,6 +71,7 @@ PREFLIGHT = TOOLS_DIR / "dosbox_capture_preflight.py"
 COMPARE = TOOLS_DIR / "compare_captures.py"
 DETECTOR = TOOLS_DIR / "dosbox_state_detector.py"
 MANIFEST_WRITER = TOOLS_DIR / "dosbox_capture_manifest_writer.py"
+TRANSCRIPT_WRITER = TOOLS_DIR / "dosbox_capture_transcript_writer.py"
 
 STATUS = "PASS632_DM1_V1_CAPTURE_ROUTE_RUNBOOK_CONSISTENCY"
 
@@ -337,6 +338,46 @@ def check_manifest_template_points_at_writer(runbook_text: str) -> list[str]:
     return failures
 
 
+def check_transcript_writer_points_at_writer(runbook_text: str) -> list[str]:
+    """The pass608 / pass625 runtime transcript used to be a
+    hand-built JSON object the next live DOSBox session would
+    have to invent, which is exactly the gap that kept the
+    pass608 same-viewport capture blocker in
+    ``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``.
+    The runbook must point operators at the on-disk
+    ``dosbox_capture_transcript_writer.py`` and reference its
+    self-test gate so the next live attempt emits a transcript
+    the pass608 verifier's ``runtimeTranscript`` contract
+    actually accepts (``promotable=True`` + every required
+    field present in every row)."""
+    failures: list[str] = []
+    rel_writer = "docs/parity/tools/dosbox_capture_transcript_writer.py"
+    if rel_writer not in runbook_text:
+        failures.append(
+            "Runtime Transcript handoff: runbook does not reference "
+            f"the on-disk transcript writer at {rel_writer}; the next "
+            "operator may hand-build a transcript and re-introduce "
+            "the pass608-blocker regression"
+        )
+    if "dosbox_capture_transcript_writer.py --self-test" not in runbook_text:
+        failures.append(
+            "Runtime Transcript handoff: runbook does not mention the "
+            "transcript writer's --self-test gate; the on-disk tool's "
+            "regression coverage is not pinned to the runbook prose"
+        )
+    # The transcript writer is the pass608 / pass625 handoff; the
+    # runbook must name both pass IDs (or at least one of them)
+    # so a future reader can map the writer to the verifier.
+    if "pass608" not in runbook_text.lower() and "pass625" not in runbook_text.lower():
+        failures.append(
+            "Runtime Transcript handoff: runbook does not name the "
+            "pass608 / pass625 verifiers the transcript writer "
+            "satisfies; a future operator cannot tell which gate "
+            "this handoff code feeds into"
+        )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # On-disk tool probes.
 # ---------------------------------------------------------------------------
@@ -490,6 +531,46 @@ def check_manifest_writer_selftest_passes() -> list[str]:
     return failures
 
 
+def check_transcript_writer_selftest_passes() -> list[str]:
+    """The on-disk runtime transcript writer self-test must keep
+    passing; this is the regression guard for the pass608 /
+    pass625 handoff code (matching case, unknown-input-token
+    case, command/handler-mismatch case, partyAfter<->redraw
+    drift case, unknown-fixture-hash case, preflight-pin-
+    violation case, asset-set-mismatch case, bad-run-id case,
+    transcript-structural invariants, and the verbatim column-
+    order contract for the events TSV).  Without this gate a
+    future patch that breaks the writer would land on main
+    without CI catching it and the pass608 blocker would stay
+    blocked."""
+    failures: list[str] = []
+    if not TRANSCRIPT_WRITER.exists():
+        return [
+            f"{TRANSCRIPT_WRITER.relative_to(REPO_ROOT)}: tool not found; "
+            "the runtime transcript writer must ship alongside the runbook"
+        ]
+    with tempfile.TemporaryDirectory(prefix="runbook-transcript-writer-") as tmp:
+        sandbox = Path(tmp) / "selftest"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(TRANSCRIPT_WRITER),
+                "--self-test",
+                "--self-test-tmp",
+                str(sandbox),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if proc.returncode != 0:
+            failures.append(
+                f"{TRANSCRIPT_WRITER.relative_to(REPO_ROOT)} --self-test "
+                f"failed: {proc.stderr.strip() or proc.stdout.strip()}"
+            )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
@@ -514,6 +595,7 @@ def main() -> int:
         ("step5_points_at_on_disk_tool", check_step5_points_at_on_disk_tool,     [runbook_text]),
         ("manifest_no_stale_hash",       check_manifest_template_no_stale_hash,  [runbook_text]),
         ("manifest_points_at_writer",    check_manifest_template_points_at_writer, [runbook_text]),
+        ("transcript_points_at_writer",  check_transcript_writer_points_at_writer, [runbook_text]),
     ]
     for name, fn, args in prose_checks:
         total += 1
@@ -529,6 +611,7 @@ def main() -> int:
         ("preflight_renders_dm_exe",     check_preflight_renders_dm_exe,     []),
         ("detector_selftest_passes",     check_detector_selftest_passes,     []),
         ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
+        ("transcript_writer_selftest",   check_transcript_writer_selftest_passes, []),
     ]
     for name, fn, args in tool_checks:
         total += 1

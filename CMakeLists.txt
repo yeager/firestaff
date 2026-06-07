@@ -1236,6 +1236,23 @@ if(BUILD_TESTING)
             NAME dm1_v1_original_capture_manifest_writer_self_test
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_manifest_writer.py --self-test
         )
+        # Runtime-transcript-writer self-test: turns the preflight
+        # receipt + per-capture events TSV + pass623 input-capture
+        # fixture + Firestaff capture manifest into the
+        # pass608 / pass625 runtime transcript.json the
+        # ``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+        # blocker demands.  Hermetic — exercises the matching,
+        # unknown-input-token, command/handler-mismatch,
+        # partyAfter/F0128-drift, unknown-fixture-hash,
+        # preflight-pin-violation, asset-set-mismatch, bad-run-id,
+        # structural, and verbatim-column-order cases against
+        # synthetic fixtures, so the next live DOSBox attempt
+        # cannot ship a transcript the pass608 / pass625
+        # verifiers would reject.
+        add_test(
+            NAME dm1_v1_original_capture_transcript_writer_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_transcript_writer.py --self-test
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
