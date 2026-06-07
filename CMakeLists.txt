@@ -3567,6 +3567,20 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_v1_v2_side_by_side_seed_pc34.c)
     target_link_libraries(test_dm1_v2_v1_v2_side_by_side_seed_pc34
         PRIVATE firestaff_v2 firestaff_m10)
+    # CTest companion to src/dm1v2/dm1_v2_side_by_side_seed_pc34.c.
+    # Locks the small, deterministic V1/V2 side-by-side verification
+    # seed: canonical scaffold dimensions, V1/V2 lane byte-equality
+    # under presentation-disabled parity, stable FNV-1a side-by-side
+    # hash, and the C001..C006 V1 source command adapter contract.
+    # Headless: no game assets, no SDL rendering required.
+    # Linked against the firestaff_v2 static library (which contains
+    # dm1_v2_side_by_side_seed_pc34, dm1_v2_viewport_renderer_pc34,
+    # and dm1_v2_movement_command_adapter_pc34) so the test exercises
+    # the same compiled objects the runtime uses.
+    add_executable(test_dm1_v2_side_by_side_seed_pc34
+        tests/test_dm1_v2_side_by_side_seed_pc34.c)
+    target_link_libraries(test_dm1_v2_side_by_side_seed_pc34
+        PRIVATE firestaff_v2 firestaff_m10)
     add_executable(test_dm1_v2_phase5_runtime_bridge_pc34
         tests/test_dm1_v2_phase5_runtime_bridge_pc34.c
         src/dm1v2/dm1_v2_phase5_runtime_bridge_pc34.c
@@ -3633,6 +3647,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_v1_v2_side_by_side_seed_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_side_by_side_seed_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
@@ -3792,6 +3807,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_v1_v2_side_by_side_seed_pc34
         COMMAND test_dm1_v2_v1_v2_side_by_side_seed_pc34
+    )
+    add_test(
+        NAME dm1_v2_side_by_side_seed_pc34
+        COMMAND test_dm1_v2_side_by_side_seed_pc34
     )
     add_test(
         NAME dm1_v2_phase5_runtime_bridge_pc34
