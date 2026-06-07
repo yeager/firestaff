@@ -17,6 +17,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM1 V1 - Runtime and Source-Lock
 
+- ✅ Inventory champion-switch hand-carry source-lock gate: `dm1_v1_inventory_champion_switch_hand_carry_pc34_compat` adds a 61-assertion, contract-only synthetic regression for ReDMCSB `PANEL.C F0354` inventory champion switch/close behavior, proving old chest close, G0423 ordinal transition, redraw/input refresh cadence, dead/mouth-eye guard no-ops, and preservation of the carried `G4055_s_LeaderHandObject` without claiming real-asset parity.
 - ✅ Viewport F0099 row-local flip source-lock gate: `firestaff_dm1_v1_viewport_f0099_row_local_flip_pc34_compat_test` adds a 100-assertion, contract-only synthetic gate for ReDMCSB `DUNVIEW.C F0099` row-local byte flips across D3L2/D3R2, D2C/D3C, D0L/D0R, D1/D2/D3 LCR walls, floor, ceiling, and the D1C door-frame pair without claiming real-asset parity.
 - ✅ Viewport D2C stair-rail source-lock gate: `firestaff_dm1_v1_viewport_d2c_stair_rail_pc34_compat_test` proves the contract-only ReDMCSB `DUNVIEW.C F0121/F0104` D2C stairs-up/down bitmap-slot, zone, row blit, and C10 transparency path without claiming real-asset parity.
 - ✅ Movement and collision: cardinal movement, turning, wall/door/fake-wall blocking, cooldowns, stairs, pits, teleporters, blocked self-damage, empty-party group cleanup, and deterministic capture gates.
