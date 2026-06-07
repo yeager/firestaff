@@ -274,3 +274,4 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Release packaging scripts for macOS, Windows, and Linux preview builds.
 - ✅ macOS app bundle icon resource wiring.
 - ✅ Firestaff watchdog 4-pass push: integrated DM1 V1 chest ninth-item hidden-tail overflow, DM1 V1 mirror candidate reincarnate rearm, DM1 V1 viewport D3L2/D3R2 floor-ornament, and CSB V1 viewport D2L2/D2R2 F0111 door source-lock gates with full ReDMCSB anchor coverage, Phase A 21/21, and the new tests built + passed locally.
+- ✅ Firestaff watchdog 4-pass push: integrated DM1 V1 mirror candidate icon refresh suppression, CSB V1 viewport D1L/D1R F0111 door route, DM1 V1 chest destination guard, and DM1 V1 champion panel all-states F0293 dispatch source-lock gates with full ReDMCSB anchor coverage; CMake configure + the four new ctest entries built clean and all 52+64+68+62 assertions pass locally.
