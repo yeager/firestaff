@@ -1985,6 +1985,24 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d3c_center_field_pc34_compat
     )
 
+    # CSB-specific D3C wall source-lock gate: parity-csb-d3c-wall.
+    add_executable(test_csb_v1_viewport_d3c_wall_pc34_compat
+        tests/test_csb_v1_viewport_d3c_wall_pc34_compat.c
+        src/csb/csb_v1_viewport_d3c_wall_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d3c_wall_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
+    )
+    target_link_libraries(test_csb_v1_viewport_d3c_wall_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d3c_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d3c_wall_pc34_compat
+        COMMAND test_csb_v1_viewport_d3c_wall_pc34_compat
+    )
+
     add_executable(firestaff_csb_v1_viewport_d1c_f0111_door_pc34_compat_test
         tests/test_csb_v1_viewport_d1c_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
