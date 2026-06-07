@@ -26,6 +26,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 import time
 from dataclasses import dataclass, field, asdict
@@ -70,6 +73,20 @@ DEFAULT_PLAN: list[PlanStep] = [
     PlanStep("accept_champions", "champion_create",  keys=["Return"] * 4,        timeout_s=30.0),
     PlanStep("dungeon_gameplay", "dungeon_gameplay", timeout_s=120.0),
 ]
+
+KEY_MAP = {
+    "Return": "return",
+    "Key-Up": "arrow-up",
+    "Key-Down": "arrow-down",
+    "Key-Left": "arrow-left",
+    "Key-Right": "arrow-right",
+}
+
+
+class QuietRunTimeout:
+    returncode = 124
+    stdout = ""
+    stderr = "timeout"
 
 
 def dump_plan(plan: list[PlanStep], out: Path | None = None) -> None:
@@ -128,6 +145,233 @@ def dry_run(plan: list[PlanStep],
     return matched, total, failures
 
 
+def _run_quiet(argv: list[str], timeout: float = 10.0) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return QuietRunTimeout()  # type: ignore[return-value]
+
+
+def _activate_dosbox() -> None:
+    """Best-effort focus for macOS DOSBox Staging windows."""
+    script = r'''
+tell application "System Events"
+  repeat with appName in {"DOSBox", "DOSBox Staging", "dosbox"}
+    if exists process appName then
+      tell process appName
+        set frontmost to true
+        try
+          perform action "AXRaise" of window 1
+        end try
+      end tell
+      return
+    end if
+  end repeat
+end tell
+'''
+    _run_quiet(["osascript", "-e", script], timeout=5.0)
+
+
+def _dosbox_window_bounds() -> tuple[int, int, int, int] | None:
+    """Return the front DOSBox window bounds as x, y, w, h when available."""
+    script = r'''
+tell application "System Events"
+  repeat with appName in {"DOSBox", "DOSBox Staging", "dosbox"}
+    if exists process appName then
+      tell process appName
+        set frontmost to true
+        set p to position of window 1
+        set s to size of window 1
+        return (item 1 of p as string) & "," & (item 2 of p as string) & "," & (item 1 of s as string) & "," & (item 2 of s as string)
+      end tell
+    end if
+  end repeat
+end tell
+'''
+    proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
+    if proc.returncode != 0:
+        return None
+    try:
+        x, y, w, h = [int(float(part.strip())) for part in proc.stdout.strip().split(",")]
+    except Exception:
+        return None
+    if w <= 0 or h <= 0:
+        return None
+    return x, y, w, h
+
+
+def _crop_to_4x3(img):
+    """Crop a window screenshot down to its likely DOSBox framebuffer area."""
+    target = 4.0 / 3.0
+    w, h = img.size
+    if w <= 0 or h <= 0:
+        return img
+    ratio = w / h
+    if ratio > target:
+        new_w = int(h * target)
+        left = max(0, (w - new_w) // 2)
+        return img.crop((left, 0, left + new_w, h))
+    if ratio < target:
+        new_h = int(w / target)
+        top = max(0, (h - new_h) // 2)
+        return img.crop((0, top, w, top + new_h))
+    return img
+
+
+def _screenshot_frame(capture_root: Path, label: str):
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for --live")
+    from PIL import Image
+
+    capture_root.mkdir(parents=True, exist_ok=True)
+    raw = capture_root / "state-samples" / f"{label}.png"
+    raw.parent.mkdir(parents=True, exist_ok=True)
+    _activate_dosbox()
+    bounds = _dosbox_window_bounds()
+    if bounds is not None:
+        x, y, w, h = bounds
+        cmd = ["screencapture", "-x", "-R", f"{x},{y},{w},{h}", str(raw)]
+    else:
+        cmd = ["screencapture", "-x", str(raw)]
+    subprocess.run(cmd, check=True)
+    img = Image.open(raw).convert("RGB")
+    resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+    return _crop_to_4x3(img).resize((320, 200), resample)
+
+
+def _press_key(key: str) -> None:
+    time.sleep(0.25)
+    mapped = KEY_MAP.get(key)
+    if mapped is not None:
+        subprocess.run(["cliclick", f"kp:{mapped}"], check=True)
+    elif len(key) == 1:
+        subprocess.run(["cliclick", f"t:{key}"], check=True)
+    else:
+        raise ValueError(f"unsupported live key: {key}")
+
+
+def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
+                    screenshot_int: float, stable_frames: int) -> tuple[bool, str]:
+    deadline = time.time() + timeout_s
+    stable = 0
+    last_state = "unknown"
+    sample = 0
+    while time.time() < deadline:
+        sample += 1
+        img = _screenshot_frame(capture_root, f"{target}_{sample:04d}")
+        state = classify(img)
+        last_state = state
+        print(f"state={state} target={target} stable={stable}/{stable_frames}", file=sys.stderr)
+        if state == target:
+            stable += 1
+            if stable >= stable_frames:
+                return True, state
+        else:
+            stable = 0
+        time.sleep(screenshot_int)
+    return False, last_state
+
+
+def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
+    """Drive a real DOSBox Staging DM1 session and capture normalized frames."""
+    if not _DETECTOR_OK:
+        print("Pillow and numpy are required for --live", file=sys.stderr)
+        return 2
+    if shutil.which("cliclick") is None:
+        print("cliclick is required for --live", file=sys.stderr)
+        return 2
+
+    capture_root = args.capture_root.expanduser()
+    game_dir = (
+        args.game_dir.expanduser()
+        if args.game_dir is not None
+        else Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
+    )
+    conf = capture_root / "dosbox_capture.conf"
+    if not conf.exists():
+        conf = capture_root / "dosbox_capture.live.conf"
+        conf.parent.mkdir(parents=True, exist_ok=True)
+        conf.write_text(
+            "\n".join([
+                "[sdl]",
+                "output=opengl",
+                "windowresolution=1024x768",
+                "viewport_resolution=1024x768",
+                "",
+                "[dosbox]",
+                "machine=svga_s3",
+                "memsize=16",
+                "",
+                "[render]",
+                "frameskip=0",
+                "",
+                "[cpu]",
+                "core=dynamic",
+                "cycles=max",
+                "",
+                "[autoexec]",
+                f"MOUNT C {game_dir}",
+                "C:",
+                "cd DungeonMasterPC34",
+                "DM.EXE",
+                "EXIT",
+                "",
+            ]),
+            encoding="utf-8",
+        )
+
+    original_dir = capture_root / "original"
+    original_dir.mkdir(parents=True, exist_ok=True)
+    print(f"launching DOSBox with {conf}", file=sys.stderr)
+    proc = subprocess.Popen(
+        ["dosbox", "-conf", str(conf)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        env={**os.environ, "LANG": os.environ.get("LANG", "C")},
+    )
+    try:
+        time.sleep(2.0)
+        _activate_dosbox()
+        for step in plan:
+            for key in step.keys:
+                print(f"send={key}", file=sys.stderr)
+                _press_key(key)
+            ok, last = _wait_for_state(
+                capture_root,
+                step.expected_state,
+                min(step.timeout_s, args.state_timeout),
+                args.screenshot_int,
+                step.stable_frames,
+            )
+            if not ok:
+                print(
+                    f"FAIL live step={step.name} expected={step.expected_state} last={last}",
+                    file=sys.stderr,
+                )
+                return 1
+
+        start = _screenshot_frame(capture_root, "capture_01_ingame_start")
+        start.save(original_dir / "01_ingame_start.png")
+        _press_key("Key-Up")
+        time.sleep(1.0)
+        step = _screenshot_frame(capture_root, "capture_02_ingame_step_forward")
+        step.save(original_dir / "02_ingame_step_forward.png")
+        print(f"PASS live captures written: {original_dir}")
+        return 0
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Run a DM1 PC 3.4 DOSBox capture session "
@@ -168,13 +412,7 @@ def main(argv: list[str] | None = None) -> int:
         print("PASS")
         return 0
     if args.live:
-        # Live mode is intentionally a thin wrapper; the runbook
-        # documents the cliclick sequence and the user is expected to
-        # confirm the state detector agrees before each capture.
-        # The full implementation is documented in
-        # docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md §3.
-        print("--live is not implemented in this scaffold; see the runbook §3", file=sys.stderr)
-        return 2
+        return live_run(plan, args)
     parser.print_help()
     return 0
 
