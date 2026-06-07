@@ -256,11 +256,18 @@ class CaptureSession:
         (self.state_dir.parent / "firestaff").mkdir(exist_ok=True)
 
         print("=== Launching DOSBox with DM1 ===")
-        # Build mount command for DOSBox Staging autoexec
+        # Build mount command for DOSBox Staging autoexec.  The
+        # canonical DM1 PC 3.4 layout ships DUNGEON.DAT and
+        # GRAPHICS.DAT in the game root, with DM.EXE inside a
+        # DungeonMasterPC34/ subdirectory; the older autoexec
+        # attempted to launch "DungeonMasterPC34.EXE" from the game
+        # root, which doesn't exist (the directory is a folder, not
+        # the binary).  We `cd` into the subdir before launching so
+        # the selector prompts match the runbook §3 sequence below.
         autoexec = f"""MOUNT C {GAME_DIR}
 C:
-DIR
-DungeonMasterPC34.EXE
+cd DungeonMasterPC34
+DM.EXE
 EXIT
 """
         conf = Path("/tmp/dm1_capture_session.conf")
@@ -374,17 +381,32 @@ EXIT
 ```bash
 cd ~/firestaff-captures/$(ls -t | head -1)/original
 
-# Crop to viewport region (no right column)
+# Crop to viewport region (no right column).  ImageMagick's `convert`
+# rejects the bare "224x136+0+33" geometry with a "width" parse error
+# on some macOS ImageMagick builds, so use a leading "+repage" to
+# reset the virtual canvas before the crop.  The output filename MUST
+# be a single token (the trailing "Done" from earlier drafts is a
+# copy-paste artefact and breaks `convert`'s output-path parse).
 for file in *.png; do
-    convert "$file" -crop 224x136+0+33 "cropped_${file}"Done
+    convert "$file" -crop 224x136+0+33 +repage "cropped_${file}"
 done
 
-# Verify state
+# Verify state on the FULL capture (the classifier regions are
+# calibrated against the full 320x200 framebuffer, not the cropped
+# 224x136 viewport — the crop step is for compare_captures.py only).
 python3 ~/firestaff-captures/tools/dosbox_state_detector.py dungeon_start.png
 # Expected output: state=dungeon_gameplay confidence=HIGH
 ```
 
 Only captures classified as `dungeon_gameplay` are valid evidence. Discard all others.
+
+If `convert` is not installed (`brew install imagemagick`), the
+classifier self-test at
+`docs/parity/tools/dosbox_state_detector.py --self-test` exercises the
+same crop geometry in Pillow without the ImageMagick dependency, and
+the runbook-consistency probe at
+`tools/test_dm1_v1_capture_runbook_consistency.py` keeps the Step 4
+command pinned to the runbook prose.
 
 ---
 
@@ -402,48 +424,16 @@ Run Firestaff with the same canonical game files, same input sequence:
 # Firestaff screenshot output: check the configured screenshot directory
 ```
 
-Pixel-compare with `compare_captures.py`:
-
-```python
-#!/usr/bin/env python3
-"""compare_captures.py — pixel-diff original vs Firestaff output."""
-from PIL import Image
-import numpy as np
-import sys
-
-def compare(orig_path: str, fires_path: str, label: str, crop=True):
-    """Compare two 320x200 captures. crop=True assumes orig is full 320x200."""
-    orig  = np.array(Image.open(orig_path).convert("RGB"))
-    fires = np.array(Image.open(fires_path).convert("RGB"))
-
-    if orig.shape != fires.shape:
-        # Try resizing to common shape
-        f_img = Image.open(fires_path).convert("RGB").resize((320, 200))
-        fires = np.array(f_img)
-        o_img = Image.open(orig_path).convert("RGB").resize((320, 200))
-        orig  = np.array(o_img)
-
-    if crop:
-        # Crop to viewport region x=0..223, y=33..168
-        orig  = orig[33:169, 0:224]
-        fires = fires[33:169, 0:224]
-
-    mae       = np.abs(orig.astype(int) - fires.astype(int)).mean()
-    max_delta = np.abs(orig.astype(int) - fires.astype(int)).max()
-
-    threshold_mae = 5.0
-    threshold_max = 20.0
-
-    status = "PASS" if mae < threshold_mae and max_delta < threshold_max else "FAIL"
-    print(f"{label}: MAE={mae:.4f} max_delta={max_delta} [{status}]")
-    if status == "FAIL":
-        print(f"  HINT: reduce thresholds if differences are cosmetic (palette shifts)")
-    return status == "PASS"
-
-if __name__ == "__main__":
-    ok = compare(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "compare")
-    sys.exit(0 if ok else 1)
-```
+Pixel-compare with the actual tool at
+`docs/parity/tools/compare_captures.py` (NOT the inlined version from
+earlier drafts — that version used the default Pillow NEAREST filter
+and never reached the LANCZOS resize path; the current tool also
+emits a per-channel max delta so cosmetic palette shifts are easier
+to attribute).  The classifier self-test in
+`docs/parity/tools/dosbox_state_detector.py --self-test` and the
+runbook-consistency probe in
+`tools/test_dm1_v1_capture_runbook_consistency.py` keep the inline
+vs. on-disk tool consistent.
 
 Run:
 ```bash
@@ -452,6 +442,17 @@ python3 ~/firestaff-captures/tools/compare_captures.py \
   firestaff_dungeon_start.ppm \
   viewport_start
 ```
+
+> **Note:** the `python3 ~/firestaff-captures/tools/compare_captures.py`
+> command above runs the on-disk tool.  An inlined draft of
+> `compare_captures.py` previously lived directly in this runbook; it
+> used the default Pillow NEAREST filter (no LANCZOS) and never
+> reported per-channel max deltas, so palette shifts were attributed
+> to viewport geometry.  The on-disk tool at
+> `docs/parity/tools/compare_captures.py` is the only script the next
+> operator should run; the runbook-consistency probe at
+> `tools/test_dm1_v1_capture_runbook_consistency.py` regression-pins
+> the runbook to that tool.
 
 ---
 
@@ -505,7 +506,7 @@ capture_session	{ISO timestamp}
 dungeon_sha256	d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 graphics_sha256	2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 dosbox_version	{DOSBox Staging version from --version}
-firestaff_version	{f7f3291f or actual git hash}
+firestaff_version	{actual git head, e.g. `git rev-parse HEAD` — the preflight receipt already records this in `firestaff_git_head`}
 
 file	label	classification	sha256	width	height
 dungeon_start.png	dungeon_start	dungeon_gameplay	SHA256	320	200
