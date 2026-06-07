@@ -57,6 +57,10 @@ list(APPEND M10_SOURCES
     src/dm1/dm1_v1_inventory_chest_close_recompaction_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat.c
+)
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -1437,6 +1441,22 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_d3l2_d3r2_wall_pc34_compat
         COMMAND firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test
+    )
+
+    add_executable(firestaff_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat_test
+        tests/test_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat.c
+        src/csb/csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat.c
+    )
+    target_include_directories(firestaff_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat_test PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat
+        COMMAND firestaff_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat_test
     )
 
     add_executable(test_csb_v1_viewport_d2l2_wall_pc34_compat
