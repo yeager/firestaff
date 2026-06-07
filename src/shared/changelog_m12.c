@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.6  (2026-06-07)",
+    "  - DM1 V1 inventory panel: added a source-locked status-row hand-slot routing regression gate",
+    "  - DM1 V1 input safety: proves status hand boxes resolve to the correct champion/source slot without crossing the inventory swap path",
+    "  - Regression gates: covers dead, candidate, open-inventory, out-of-party, null-health, and per-champion mouse-item routing edges",
+    "",
     "V2.7.5  (2026-06-05)",
     "  - DM1 V1 launch: restored FTL/SWSH intro discovery for structured data directories",
     "  - DM1 V1 TITLE: restored ReDMCSB step-specific PRESENTS/DUNGEON/MASTER palette mapping",
@@ -118,5 +123,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.5";
+    return "2.7.6";
 }

@@ -1,3 +1,21 @@
+# Firestaff v2.7.6
+
+Patch release focused on DM1 V1 inventory-panel source-lock hardening after v2.7.5.
+
+## What's New
+
+- Added a 176-assertion DM1 V1 inventory-panel regression gate for status-row hand-slot routing.
+- Proved that status hand slot boxes 0..7 resolve to the intended champion and source slot without falling through to the inventory swap path.
+- Added coverage for dead champions, candidate champions, open inventory champions, out-of-party slots, null health state, and per-champion mouse-item routing.
+
+## Verification
+
+- Local focused inventory-panel route gate passed before tagging.
+- Local Release build, Phase A probe, and audio probe passed before tagging.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.5
 
 Patch release focused on DM1 launch regressions reported in v2.7.4 on macOS.
