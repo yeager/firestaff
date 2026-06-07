@@ -1,0 +1,19 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T20:11:49Z",
+  "status": "PASS_DM1_V1_MIRROR_CANDIDATE_FULL_CHAIN_RUNTIME_REGRESSION",
+  "repo": "https://github.com/yeager/firestaff",
+  "branch": "main",
+  "head": "9681aa9cb52200ea946eee3ec613030dd4af7d4f",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "dataHashLock": [],
+  "notes": [
+    "Adds test_dm1_v1_mirror_candidate_full_chain_pc34_compat as a deterministic contract-only runtime regression gate.",
+    "Locks the mirror candidate chain: open M568/C040 panel, click candidate icon, rotate to a fresh candidate via party direction, click rotated candidate, and pickup into the leader hand.",
+    "CHAMDRAW.C F0293_CHAMPION_DrawAllChampionStates:1117-1143 anchors the click-time all-state redraw, including wounded/poisoned rotated candidate coverage.",
+    "CHAMPION.C F0284_CHAMPION_SetPartyDirection:93-131 anchors the party direction delta applied to candidate Cell/Direction during rotation.",
+    "CHAMPION.C F0297_CHAMPION_PutObjectInLeaderHand:243-268 anchors the leader-hand pickup path.",
+    "COMMAND.C F0359:1985-1990 and REVIVE.C F0282:744-806 anchor the occupied-hand pickup rejection and pending panel preservation/clear behavior.",
+    "No real game data, framebuffer parity, launcher/M12, CSB, DM2, Nexus, or Theron behavior is claimed."
+  ]
+}
