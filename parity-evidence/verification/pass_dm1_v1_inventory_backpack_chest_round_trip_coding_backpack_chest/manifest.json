@@ -1,0 +1,18 @@
+{
+  "schema": "firestaff.parity.dm1_v1_inventory_backpack_chest_round_trip_runtime_regression.v1",
+  "timestampUtc": "2026-06-07T20:12:08Z",
+  "status": "PASS_DM1_V1_INVENTORY_BACKPACK_CHEST_ROUND_TRIP_RUNTIME_REGRESSION",
+  "repo": "https://github.com/yeager/firestaff",
+  "branch": "main",
+  "head": "e7b28ba15f4b6baf39e7b56881c7ef21502e7fd4",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "dataHashLock": [],
+  "notes": [
+    "Runtime gate for leader backpack slots -> chest -> backpack exchange, distinct from existing hand<->chest and belt<->chest paths.",
+    "CHEST.C F0333_INVENTORY_OpenAndDrawChest lines 53-76 copies the first eight linked container things into G0425_aT_ChestSlots.",
+    "CHEST.C F0334_INVENTORY_CloseChest lines 113-132 clears G0426_T_OpenChest and recompacts non-empty G0425 slots in visible-slot order.",
+    "CHAMPION.C F0297_CHAMPION_PutObjectInLeaderHand and F0298 lines 243-298 carry/remove the leader-hand object and update champion load.",
+    "CHAMPION.C F0300/F0301 lines 511-515 and 606-614 route C30+ slots through G0425_aT_ChestSlots while ordinary backpack slots use champion Slots[] storage.",
+    "No game data required; synthetic DM1 V1 inventory/chest runtime state only."
+  ]
+}
