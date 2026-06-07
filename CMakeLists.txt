@@ -3041,6 +3041,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
+        tests/test_dm1_v1_chest_mid_close_hand_swap_pc34_compat.c
+        src/dm1/dm1_v1_chest_mid_close_hand_swap_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat PRIVATE include)
+    target_link_libraries(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_mid_close_hand_swap_pc34_compat
+        COMMAND test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
+    )
+
     add_executable(test_dm1_v1_chest_drop_to_floor_pc34_compat
         tests/test_dm1_v1_chest_drop_to_floor_pc34_compat.c
         src/dm1/dm1_v1_chest_drop_to_floor_pc34_compat.c
