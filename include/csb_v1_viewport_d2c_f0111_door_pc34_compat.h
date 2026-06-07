@@ -7,73 +7,92 @@
 extern "C" {
 #endif
 
-#define CSB_V1_D2C_F0111_DOOR_PC34_C10_COLOR_FLESH 10
+/*
+ * Source-locked contract-only gate, not real-asset bitmap parity.
+ * ReDMCSB anchors: DUNVIEW.C F0111_DUNGEONVIEW_DrawDoor lines 4218-4337;
+ * DUNVIEW.C F0121_DUNGEONVIEW_DrawSquareD2C lines 7244-7389, especially
+ * 7313-7341 for the D2C center-door dispatch; DUNVIEW.C F0128 lines
+ * 8508-8533 for the D2C relative-movement dispatch order. CSB-lineage
+ * Viewport.cpp anchors: requested lines 1903-1915, with the local D2 center
+ * array at StdDrawF2DoorFacing lines 1865-1879. ReDMCSB DUNGEON.C F0163
+ * and F0164 lines 1769-1840 anchor thing-list link/unlink non-interference.
+ */
+
+#define CSB_V1_D2C_F0111_DOOR_PC34_TRANSPARENT_COLOR 10
 
 typedef struct {
     int source_locked_contract_only;
-    int view_square;
-    int f0128_relative_depth;
-    int f0128_relative_lateral;
-    int f0121_center_route_present;
-    int wall_ordinal_c09_d2c;
-    int media508_wall_zone_c707;
-    int media720_wall_zone_c709;
-    int wall_case_returns_before_f0111;
-    int wall_case_calls_f0100;
-    int wall_case_calls_f0105;
-    int wall_case_calls_f0107;
-    int wall_case_calls_f0111;
-    int wall_case_calls_c3700_door_panel;
-    int c01_corridor_enters_no_wall_path;
-    int c05_teleporter_enters_no_wall_path;
-    int no_wall_path_calls_f0100;
-    int no_wall_path_calls_f0105;
-    int no_wall_path_calls_f0107;
-    int no_wall_path_calls_f0111;
-    int no_wall_path_calls_f0113;
-    int no_wall_path_draws_floor_ornament;
-    int no_wall_path_draws_ceiling_pit;
-    int no_wall_path_draws_f0115_before_field;
-    int no_wall_path_cell_order;
-    int no_wall_path_field_zone;
-    int no_wall_path_preserves_c10_transparency;
+    int no_real_asset_bitmap_parity;
+    int no_game_data_load;
+    int view_square_d2c;
+    int view_depth;
+    int view_lane;
+    int element_door_front;
+    int door_native_width;
+    int door_native_height;
+    int door_native_byte_count;
+    int rejects_d1_96x88_byte_count;
+    int view_door_ornament_d2lcr;
+    int door_button_view_d2c;
+    int door_zone_d2c;
+    int door_graphic_depth_index;
+    int doorpass1_order;
+    int doorpass2_order;
+    int floor_ornament_before_rear_pass;
+    int rear_pass_before_frames;
+    int top_track_before_side_frames;
+    int side_frames_before_button;
+    int button_before_f0111;
+    int f0111_before_front_pass;
+    int terminal_front_pass_ordered;
+    int door_frame_top_zone;
+    int door_frame_left_zone;
+    int door_frame_right_zone;
+    int open_state_skips_f0111;
+    int closed_state_uses_base_zone;
+    int destroyed_state_uses_base_zone;
+    int destroyed_state_applies_c15_mask;
+    int partial_state_shifts_zone;
+    int horizontal_second_half_mask;
     int transparent_color;
-    int c3700_door_zone;
-    int c3700_is_d3l2_door_zone;
-    int d2c_uses_c3700_door_zone;
-    int d2c_c3700_panel_path_rejected;
-    int coord_clip_record;
-    int coord_parent_record;
-    int coord_clip_width;
-    int coord_clip_height;
-    int coord_frame_x;
-    int coord_frame_y;
-    int d2c_uses_coord_door_record_path;
-    int lineage_open_binding_present;
-    int lineage_teleporter_binding_present;
-    int lineage_frame_blt_binding_present;
-    int lineage_frame_rect_binding_present;
-    const char *f0121_source_lines;
-    const char *wall_case_source_lines;
-    const char *no_wall_source_lines;
-    const char *lineage_source_lines;
-} CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34;
+    int f0128_dispatch_after_d2l_d2r;
+    int f0128_dispatches_d2c;
+    int f0128_dispatch_before_d1l_d1r_d1c;
+    int uses_f0119_d2l;
+    int uses_f0120_d2r;
+    int uses_f0124_d1c;
+    int dungeon_f0163_link_noninterference;
+    int dungeon_f0164_unlink_noninterference;
+    const char *redmcsb_f0111_anchor;
+    const char *redmcsb_f0121_anchor;
+    const char *redmcsb_defs_anchor;
+    const char *redmcsb_f0128_anchor;
+    const char *redmcsb_dungeon_anchor;
+    const char *csb_lineage_viewport_anchor;
+    const char *door_bitmap_index_symbol;
+    const char *door_byte_count_macro;
+    const char *door_view_symbol;
+    const char *door_frame_symbol;
+    const char *door_zone_symbol;
+    const char *source_evidence;
+} CSB_V1_ViewportD2CF0111DoorPc34Contract;
 
-const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *
-csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34(void);
+const CSB_V1_ViewportD2CF0111DoorPc34Contract *
+csb_v1_viewport_d2c_f0111_door_pc34_contract(void);
 
-int csb_v1_viewport_d2c_f0111_door_zone_from_wall_spec_pc34(
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec);
+int csb_v1_viewport_d2c_f0111_door_byte_count_pc34(int width, int height);
 
-int csb_v1_viewport_d2c_f0111_door_reject_c3700_panel_path_pc34(
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec,
-    int zone_x,
-    int zone_y,
-    int *out_x,
-    int *out_y);
+int csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *contract,
+    int door_state);
 
-int csb_v1_viewport_d2c_f0111_door_apply_c10_field_blit_pc34(
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec,
+int csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *contract,
+    int door_state,
+    int right_half);
+
+int csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *contract,
     const uint8_t *source,
     int source_stride,
     uint8_t *destination,
