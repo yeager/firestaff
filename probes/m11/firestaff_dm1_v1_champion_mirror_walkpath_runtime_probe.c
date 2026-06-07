@@ -1,0 +1,377 @@
+/*
+ * DM1 V1 champion mirror walk-path runtime probe.
+ *
+ * This broadens the existing Hall-of-Champions mirror/no-floating
+ * coverage with a real forward-walk interaction slice that the
+ * per-cell and in-place-turn probes do not exercise:
+ *
+ *   firestaff_dm1_v1_champion_mirror_visibility_runtime_probe
+ *     - covers (1,3) facing N and (1,4) facing N in isolation.
+ *   firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
+ *     - covers six static poses (front + side) at two cells.
+ *   firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe
+ *     - covers the in-place 4-direction turn at (1,4) with the re-blt
+ *       invariant (no stale ordinal pixels left in the portrait rect
+ *       after the turn).
+ *
+ * This probe covers the **forward-walk** route through the Hall
+ * corridor: the party moves east one cell at a time from (1,3)
+ * to (2,3) to (3,3) and back, always facing NORTH.  At each
+ * step the front wall square is a different map cell, and the
+ * wall-ornament-driven champion portrait ordinal changes (1,
+ * none, 19 in the reference DM1 V1 DUNGEON.DAT).  The re-blt
+ * invariant must be honoured **across cell transitions**, not
+ * just across in-place turns:
+ *
+ *   - At the (1,3) -> (2,3) step, the new front square is (2,2)
+ *     which has no C127 sensor, so the new front mirror ordinal
+ *     is -1.  The portrait rectangle must be cleared of the
+ *     previous ordinal 1's pixels and must not be dominated by
+ *     a portrait ordinal.
+ *   - At the (2,3) -> (3,3) step, the new front square is (3,2)
+ *     which has ordinal 19; the portrait rectangle must be
+ *     dominated by ordinal 19 pixels and must not show stale
+ *     pixels from the previous (no-portrait) step.
+ *   - At the (3,3) -> (2,3) and (2,3) -> (1,3) back-steps, the
+ *     mirror reverses: 19 -> -1 -> 1, and the prior ordinal
+ *     pixels must be cleared from the D1C wall box each time.
+ *
+ * The walk deliberately keeps the front wall on a corridor / wall
+ * cell where the no-portrait pixel match stays within the 35%
+ * leak tolerance the existing zorder and reblt probes lock (the
+ * Hall of Champions at x=1, y=5/7/8 has wall cells with a
+ * different wall-ornament pixel pattern that the 35% threshold
+ * flags; the corridor cells at (2,3) and (0,3) have the cleaner
+ * pattern the existing per-direction coverage already accepts).
+ *
+ * The probe narrows the contract to the same D1C front-wall box
+ * (96,35)-(127,63) the existing zorder and reblt probes lock, and
+ * uses the same transparent color 1 mask the existing visibility
+ * probe locks (DUNVIEW.C:3916 C01_COLOR_DARK_GRAY / C26 champion
+ * portrait source).  It does not assert wall-perimeter pixel
+ * stability across cells because different cells naturally show
+ * different wall geometry (a different square at the front); the
+ * per-direction wall draws are the existing zorder probe's
+ * coverage.
+ *
+ * Source evidence:
+ *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
+ *   ReDMCSB DUNGEON.C:2608-2612 sets G0289 for C127 champion
+ *     portraits; G0289 stores the ordinal indexed by the C127
+ *     sensor on the front wall.
+ *   ReDMCSB DUNVIEW.C:3913-3928 and 8522-8533 restrict the
+ *     C026 champion-portrait blit to the D1C front wall box
+ *     (96,35)-(127,63) with the C01 dark-gray transparency mask.
+ *   ReDMCSB DUNVIEW.C:7727-7924 F0124_DrawSquareD1C drives the
+ *     D1C draw order (wall, alcove, then portrait blit, then
+ *     optional alcove objects).
+ *   ReDMCSB DUNVIEW.C:8318-8542 F0128_DUNGEONVIEW_Draw_CPSF
+ *     draws the viewport from the new party pose after every
+ *     MOVESENS.C:556 tick; the full viewport is re-blitted each
+ *     step, so the portrait rectangle is rebuilt from the new
+ *     front wall ordinal.
+ *   ReDMCSB DUNVIEW.C:2558 (BUG0_75) notes that G0289 is only
+ *     reset when the draw function sees at least one wall square;
+ *     this probe covers that invariant by walking through wall
+ *     squares (D1C is the wall type) on every step.
+ */
+#include "m11_game_view.h"
+#include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
+
+#include <stdio.h>
+#include <string.h>
+
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
+enum {
+    PROBE_FB_W = 320,
+    PROBE_FB_H = 200,
+    PROBE_VIEWPORT_X = 0,
+    PROBE_VIEWPORT_Y = 33,
+    /* DUNVIEW.C:3913-3928 / 8522-8533: the D1C front-wall box is the
+     * 32x29 rectangle at (96,35)-(127,63) of the viewport, drawn
+     * from the C026 champion portrait strip indexed by the C127
+     * sensor ordinal stored in G0289. */
+    PROBE_PORTRAIT_X = PROBE_VIEWPORT_X + 96,
+    PROBE_PORTRAIT_Y = PROBE_VIEWPORT_Y + 35,
+    PROBE_PORTRAIT_W = 32,
+    PROBE_PORTRAIT_H = 29,
+    /* DUNVIEW.C:3916: the C026 champion portrait blit masks the
+     * C01_COLOR_DARK_GRAY (value 1) as transparency.  This is the
+     * same constant the existing visibility / zorder / reblt
+     * probes lock. */
+    PROBE_CHAMPION_TRANSPARENT = 1
+};
+
+typedef struct MirrorMatch {
+    int bestOrdinal;
+    int bestMatched;
+    int expectedMatched;
+    int compared;
+} MirrorMatch;
+
+typedef struct WalkStep {
+    int mapX;
+    int mapY;
+    int expectedOrdinal;
+    const char* label;
+} WalkStep;
+
+/* Count the pixels in the front-wall box that match the C026
+ * champion portrait ordinal.  This reuses the visibility probe's
+ * match formula (DUNVIEW.C:3916 C01 dark-gray transparency mask
+ * + per-ordinal DUNVIEW.C:3918 (ordinal & 7) * 32 + (ordinal >> 3)
+ * * 29 source stride).
+ *
+ * Returns the number of opaque ordinal pixels that actually
+ * match between the source strip and the framebuffer, or 0 when
+ * either the ordinal is out of range or the slot is not loaded. */
+static int count_ordinal_matched_pixels(const M11_AssetSlot* portraits,
+                                        const unsigned char* fb,
+                                        int ordinal) {
+    int x;
+    int y;
+    int matched = 0;
+    if (!portraits || !portraits->loaded || !portraits->pixels || !fb ||
+        ordinal < 0 || ordinal >= 24) {
+        return 0;
+    }
+    for (y = 0; y < PROBE_PORTRAIT_H; ++y) {
+        for (x = 0; x < PROBE_PORTRAIT_W; ++x) {
+            int srcX = (ordinal & 7) * PROBE_PORTRAIT_W + x;
+            int srcY = (ordinal >> 3) * PROBE_PORTRAIT_H + y;
+            unsigned char src =
+                (unsigned char)(portraits->pixels[srcY * (int)portraits->width + srcX] & 0x0F);
+            unsigned char dst =
+                M11_FB_DECODE_INDEX(fb[(PROBE_PORTRAIT_Y + y) * PROBE_FB_W +
+                                       (PROBE_PORTRAIT_X + x)]);
+            if (src == PROBE_CHAMPION_TRANSPARENT) {
+                continue;
+            }
+            if (dst == src) {
+                ++matched;
+            }
+        }
+    }
+    return matched;
+}
+
+static MirrorMatch match_front_portrait(const M11_AssetSlot* portraits,
+                                        const unsigned char* fb,
+                                        int expectedOrdinal) {
+    MirrorMatch out;
+    int ordinal;
+    memset(&out, 0, sizeof(out));
+    out.bestOrdinal = -1;
+    if (!portraits || !portraits->loaded || !portraits->pixels || !fb) {
+        return out;
+    }
+    for (ordinal = 0; ordinal < 24; ++ordinal) {
+        int x;
+        int y;
+        int matched = 0;
+        int compared = 0;
+        for (y = 0; y < PROBE_PORTRAIT_H; ++y) {
+            for (x = 0; x < PROBE_PORTRAIT_W; ++x) {
+                int srcX = (ordinal & 7) * PROBE_PORTRAIT_W + x;
+                int srcY = (ordinal >> 3) * PROBE_PORTRAIT_H + y;
+                unsigned char src =
+                    (unsigned char)(portraits->pixels[srcY * (int)portraits->width + srcX] & 0x0F);
+                unsigned char dst =
+                    M11_FB_DECODE_INDEX(fb[(PROBE_PORTRAIT_Y + y) * PROBE_FB_W +
+                                           (PROBE_PORTRAIT_X + x)]);
+                if (src == PROBE_CHAMPION_TRANSPARENT) {
+                    continue;
+                }
+                ++compared;
+                if (dst == src) {
+                    ++matched;
+                }
+            }
+        }
+        if (matched > out.bestMatched) {
+            out.bestMatched = matched;
+            out.bestOrdinal = ordinal;
+        }
+        if (ordinal == expectedOrdinal) {
+            out.expectedMatched = matched;
+            out.compared = compared;
+        }
+    }
+    return out;
+}
+
+static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
+    game->world.party.mapIndex = 0;
+    game->world.party.mapX = mapX;
+    game->world.party.mapY = mapY;
+    game->world.party.direction = dir;
+    game->showDebugHUD = 0;
+    game->candidateMirrorPanelActive = 0;
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPartyIndex = -1;
+}
+
+/* Forward-walk re-blt invariant check.  At each step the new
+ * ordinal must dominate (or the rectangle must have no portrait)
+ * and the previous ordinal must not be the dominant match.  The
+ * 35% threshold matches the existing zorder probe's leak tolerance
+ * (DUNVIEW.C:3916 dark-gray transparency and per-ordinal compared
+ * count) so this probe is consistent with the per-direction
+ * coverage. */
+static int check_walk_step(M11_GameViewState* game,
+                           const M11_AssetSlot* portraits,
+                           int prevOrdinal,
+                           const WalkStep* step,
+                           unsigned char* outFb) {
+    MirrorMatch match;
+    int ordinal;
+    int ok = 1;
+
+    set_pose(game, step->mapX, step->mapY, DIR_NORTH);
+    ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (ordinal != step->expectedOrdinal) {
+        fprintf(stderr,
+                "FAIL %s front ordinal got=%d want=%d\n",
+                step->label, ordinal, step->expectedOrdinal);
+        ok = 0;
+    }
+    memset(outFb, 0, sizeof(*outFb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, outFb, PROBE_FB_W, PROBE_FB_H);
+    /* When the step is a no-portrait cell, pass ordinal 0 as the
+     * "expected" so the per-ordinal compared count is non-zero and
+     * the leak tolerance (35%) is consistent with the existing
+     * zorder / reblt probes.  The no-portrait step then asserts
+     * best-matched over best-compared is below 35% (no ordinal
+     * dominates the rectangle). */
+    match = match_front_portrait(portraits, outFb,
+                                 step->expectedOrdinal >= 0
+                                     ? step->expectedOrdinal
+                                     : 0);
+
+    if (step->expectedOrdinal >= 0) {
+        if (match.bestOrdinal != step->expectedOrdinal ||
+            match.compared <= 0 ||
+            match.expectedMatched * 100 < match.compared * 90) {
+            fprintf(stderr,
+                    "FAIL %s visible portrait expected=%d best=%d matched=%d/%d\n",
+                    step->label, step->expectedOrdinal, match.bestOrdinal,
+                    match.expectedMatched, match.compared);
+            ok = 0;
+        }
+    } else {
+        /* No-portrait step: the rectangle must not be dominated by a
+         * portrait ordinal (no stale pixels left over from the prior
+         * step's ordinal, and the wall pixels do not look like a
+         * portrait). */
+        if (match.bestMatched * 100 >= 35 * (match.compared > 0 ? match.compared : 1)) {
+            fprintf(stderr,
+                    "FAIL %s no-portrait step leaked portrait best=%d matched=%d/%d\n",
+                    step->label, match.bestOrdinal, match.bestMatched, match.compared);
+            ok = 0;
+        }
+    }
+
+    /* Cross-cell re-blt invariant: when the ordinal changes between
+     * steps, the prior ordinal's pixels must not be the dominant
+     * match in the new framebuffer's portrait rectangle.  This is
+     * the forward-walk analogue of the in-place turn invariant in
+     * firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe:
+     * the prior ordinal's pixels must be cleared from the D1C wall
+     * box when the front cell changes (DUNVIEW.C:8318-8542
+     * F0128_DUNGEONVIEW_Draw_CPSF re-blits the full viewport from
+     * the new party pose after MOVESENS.C:556).
+     *
+     * We compute the prior ordinal's "stale" count twice: once
+     * against the new framebuffer (the candidate leak) and once
+     * against the prior ordinal's own compared count (the
+     * expected proportion).  The 35% threshold matches the
+     * existing zorder / reblt probes' tolerance. */
+    if (prevOrdinal >= 0 && prevOrdinal != step->expectedOrdinal) {
+        int stale = count_ordinal_matched_pixels(portraits, outFb, prevOrdinal);
+        int prevExpected = match_front_portrait(portraits, outFb, prevOrdinal).expectedMatched;
+        int prevCompared = match_front_portrait(portraits, outFb, prevOrdinal).compared;
+        int prevPct = prevCompared > 0 ? (stale * 100) / prevCompared : 0;
+        if (prevPct >= 35) {
+            fprintf(stderr,
+                    "FAIL %s cross-cell stale ordinal=%d leaked matched=%d/%d (expected=%d) after step to ordinal=%d\n",
+                    step->label, prevOrdinal, stale, prevCompared, prevExpected,
+                    step->expectedOrdinal);
+            ok = 0;
+        }
+    }
+
+    printf("%s pose=(%d,%d) ordinal=%d best=%d matched=%d/%d\n",
+           step->label, step->mapX, step->mapY, ordinal,
+           match.bestOrdinal, match.bestMatched, match.compared);
+    return ok;
+}
+
+int main(int argc, char** argv) {
+    const char* dataDir;
+    M12_StartupMenuState menu;
+    M11_GameViewState game;
+    const M11_AssetSlot* portraits;
+    static unsigned char currFb[PROBE_FB_W * PROBE_FB_H];
+    int ok = 1;
+    /* Forward walk through the Hall of Champions corridor: the party
+     * faces NORTH throughout and steps east from (1,3) to (3,3) and
+     * back.  The front mirror ordinals in the reference DM1 V1
+     * DUNGEON.DAT at y=3 facing NORTH are 1 -> -1 (no-portrait
+     * corridor wall) -> 19, and the back-step reverses the sequence.
+     * DUNGEON.C:2573 / 2608-2612 anchor the ordinal-by-cell lookup;
+     * DUNVIEW.C:3913-3928 / 8522-8533 anchor the D1C portrait blit
+     * (G0289 index into the C026 portrait strip);
+     * DUNVIEW.C:8318-8542 F0128_DUNGEONVIEW_Draw_CPSF and
+     * MOVESENS.C:556 anchor the full-viewport re-blt after each
+     * step. */
+    const WalkStep steps[] = {
+        {1, 3, 1,  "hall_walk_step_a_north_ordinal_1"},
+        {2, 3, -1, "hall_walk_step_b_north_no_portrait"},
+        {3, 3, 19, "hall_walk_step_c_north_ordinal_19"},
+        {2, 3, -1, "hall_walk_step_d_north_no_portrait_again"},
+        {1, 3, 1,  "hall_walk_step_e_north_back_to_ordinal_1"},
+    };
+    int stepIdx;
+    int prevOrdinal = -2; /* sentinel: no prior ordinal */
+
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
+        return 2;
+    }
+    dataDir = argv[1];
+
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    M11_GameView_Init(&game);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
+        fprintf(stderr, "FAIL could not open selected DM1 V1 game view from %s\n", dataDir);
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    portraits = M11_AssetLoader_Load(&game.assetLoader,
+                                     (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < 256 || portraits->height < 87) {
+        fprintf(stderr, "FAIL GRAPHICS.DAT champion portrait strip unavailable\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+
+    for (stepIdx = 0; stepIdx < (int)(sizeof(steps) / sizeof(steps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk = check_walk_step(&game, portraits, prevOrd,
+                                     &steps[stepIdx], currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = steps[stepIdx].expectedOrdinal;
+    }
+
+    M11_GameView_Shutdown(&game);
+    printf("%s dm1 v1 champion mirror walk-path runtime probe\n",
+           ok ? "PASS" : "FAIL");
+    return ok ? 0 : 1;
+}

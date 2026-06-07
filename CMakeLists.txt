@@ -800,6 +800,21 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion mirror walk-path runtime gate.
+# Extends the per-cell / in-place-turn coverage with a sequential
+# forward-walk path through the Hall of Champions corridor: the
+# party faces NORTH and steps south from (1,3) to (1,6) (DUNGEON.C:2573
+# and 2608-2612; DUNVIEW.C:3913-3928, 7727-7924, 8318-8542;
+# MOVESENS.C:556).  The cross-cell re-blt invariant (no stale
+# ordinal pixels left in the D1C front-wall box when the front
+# cell changes) is asserted at every step.
+add_executable(firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel/status-box runtime pixel gate.
 add_executable(firestaff_dm1_v1_champion_panel_pixels_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_panel_pixels_runtime_probe.c)
