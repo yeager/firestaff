@@ -448,6 +448,18 @@ def _load_pass623_fixture(path: Path) -> dict[str, dict[str, object]]:
     that names an input token the fixture has never seen is a
     classifier bug or a route bug, and the writer must refuse
     to emit a transcript where such a row sneaks in.
+
+    For multi-command routes (rows where ``commandIds`` and
+    ``inputTokens`` have the same length greater than one, e.g.
+    ``04_forward_south_1_4`` with ``commands=[1, 3]`` and
+    ``tokens=[M12_MENU_INPUT_LEFT, M12_MENU_INPUT_UP]``) the
+    loader pairs the i-th token with the i-th commandId
+    positionally, so the F0380 dispatch contract
+    (token[i] -> command[i]) is preserved.  When the lengths
+    disagree, the loader falls back to the legacy
+    ``commandIds[0]`` mapping for every token (a real fixture
+    would never do this; the runbook §5c row builder surfaces
+    the inconsistency in its self-test).
     """
     if not path.is_file():
         raise FileNotFoundError(f"pass623 fixture not found: {path}")
@@ -455,17 +467,30 @@ def _load_pass623_fixture(path: Path) -> dict[str, dict[str, object]]:
     rows = payload.get("canonicalInputCaptureRows") or []
     by_token: dict[str, dict[str, object]] = {}
     for row in rows:
-        for token in row.get("inputTokens") or []:
+        command_ids = list(row.get("commandIds") or [])
+        input_tokens = list(row.get("inputTokens") or [])
+        if command_ids and input_tokens and len(command_ids) == len(input_tokens):
+            # Positional pairing for multi-command routes.
+            pairings: list[tuple[str, object | None]] = list(
+                zip(input_tokens, command_ids)
+            )
+        else:
+            # Legacy single-token mapping (one token, one command,
+            # or a multi-token row whose commandIds list is the
+            # first id only).  This matches the behaviour the
+            # writer shipped with for the single-command rows
+            # in the documented pass623 fixture.
+            first_id = command_ids[0] if command_ids else None
+            pairings = [(token, first_id) for token in input_tokens]
+        for token, cmd_id in pairings:
             if token in by_token:
                 by_token[token].setdefault("sharedWith", []).append(
                     row.get("label", "<unlabeled>")
                 )
                 continue
             by_token[token] = {
-                "commandId":   (row.get("commandIds") or [None])[0],
-                "commandName": _command_name_from_id(
-                    (row.get("commandIds") or [None])[0]
-                ),
+                "commandId":   cmd_id,
+                "commandName": _command_name_from_id(cmd_id),
                 "postTuple":   row.get("postTuple"),
                 "rowLabel":    row.get("label"),
             }
@@ -1059,14 +1084,27 @@ def _build_synth_pass623_fixture(
     tmp: Path,
     *,
     tokens: Iterable[tuple[str, int, str, dict[str, int]]] = (),
+    multi_command_routes: Iterable[
+        tuple[
+            str,
+            list[tuple[str, int, str]],
+            dict[str, int],
+            str,
+        ]
+    ] = (),
 ) -> Path:
     """Build a synthetic pass623 fixture for the self-test.
 
     ``tokens`` is an iterable of (inputToken, commandId,
-    commandName, postTuple) tuples.  Writes the fixture as JSON.
+    commandName, postTuple) tuples.  ``multi_command_routes``
+    is an iterable of (label, [(token, cmdId, cmdName), ...],
+    postTuple, observed_sha) tuples; the writer's
+    pass623-fixture loader pairs the i-th token with the i-th
+    commandId positionally, so a multi-command self-test row
+    exercises the F0380 dispatch contract end-to-end.
     """
-    rows = []
-    for token, cmd_id, cmd_name, post in tokens:
+    rows: list[dict[str, object]] = []
+    for token, cmd_id, _cmd_name, post in tokens:
         rows.append({
             "label": f"synth_{token}",
             "claim": "synthetic self-test row",
@@ -1081,6 +1119,25 @@ def _build_synth_pass623_fixture(
                 "y":         post.get("y", 0),
                 "direction": post.get("direction", 0),
                 "label":     f"synth_{token}",
+            },
+            "ok": True,
+            "problems": [],
+        })
+    for label, pairs, post, observed_sha in multi_command_routes:
+        rows.append({
+            "label":      label,
+            "claim":      "synthetic self-test multi-command row",
+            "commandIds": [cmd for (_t, cmd, _n) in pairs],
+            "inputTokens": [t for (t, _c, _n) in pairs],
+            "postTuple":  post,
+            "observed": {
+                "sha":       observed_sha,
+                "crop":      f"{label}.ppm",
+                "map":       post.get("map", 0),
+                "x":         post.get("x", 0),
+                "y":         post.get("y", 0),
+                "direction": post.get("direction", 0),
+                "label":     label,
             },
             "ok": True,
             "problems": [],
@@ -1777,6 +1834,111 @@ def selftest_writer(tmp_root: Path) -> tuple[int, int, list[str]]:
     if not any("events TSV header does not match" in f for f in result.failures):
         failures.append(
             "header_order: expected a header-order failure, got none"
+        )
+    else:
+        matched += 1
+
+    # --- 27. Multi-command route: the writer's pass623 loader
+    # pairs inputTokens with commandIds positionally, so a row
+    # whose route has commands=[1, 3] / tokens=[LEFT, UP] must
+    # resolve LEFT -> 1 and UP -> 3 (and not both to 1, the
+    # legacy single-id mapping).  The check below renders a
+    # two-row events TSV (one row per command) against a
+    # multi-command pass623 fixture and asserts the emitted
+    # transcript is fully promotable — if the loader
+    # regressed to the legacy single-id mapping, row 2 would
+    # fail the inputToken->commandId check.
+    sandbox = tmp_root / "multi_command"
+    sandbox.mkdir()
+    receipt_path = _build_synth_receipt(sandbox)
+    multi_observed_sha = "ab" * 32
+    pass623 = _build_synth_pass623_fixture(
+        sandbox,
+        multi_command_routes=[
+            (
+                "synth_multi_turn_then_forward",
+                [
+                    ("M12_MENU_INPUT_LEFT", 1, "C001_COMMAND_TURN_LEFT"),
+                    ("M12_MENU_INPUT_UP",   3, "C003_COMMAND_MOVE_FORWARD"),
+                ],
+                {"map": 0, "x": 1, "y": 4, "direction": 1},
+                multi_observed_sha,
+            ),
+        ],
+    )
+    capture_manifest = _build_synth_capture_manifest(
+        sandbox, viewport_sha=multi_observed_sha,
+    )
+    captures_dir = sandbox / "captures"
+    multi_events_a, _ = _build_synth_events_tsv(
+        captures_dir,
+        input_token="M12_MENU_INPUT_LEFT",
+        source_command_id=1,
+        source_command_name="C001_COMMAND_TURN_LEFT",
+        party_x=1, party_y=4, party_direction=1,
+        party_before_x=1, party_before_y=3, party_before_direction=2,
+        firestaff_x=1, firestaff_y=4, firestaff_direction=1,
+        firestaff_sha=multi_observed_sha,
+        run_id="selftest_run_multi",
+        queue_count_before=2,
+        dispatch_handler=TURN_HANDLER,
+    )
+    multi_events_b, _ = _build_synth_events_tsv(
+        captures_dir,
+        raw_filename="synth_multi_turn_then_forward_b.png",
+        crop_filename="synth_multi_turn_then_forward_b_viewport.png",
+        input_token="M12_MENU_INPUT_UP",
+        source_command_id=3,
+        source_command_name="C003_COMMAND_MOVE_FORWARD",
+        party_x=1, party_y=4, party_direction=1,
+        party_before_x=1, party_before_y=3, party_before_direction=1,
+        firestaff_x=1, firestaff_y=4, firestaff_direction=1,
+        firestaff_sha=multi_observed_sha,
+        run_id="selftest_run_multi",
+        queue_count_before=1,
+        dispatch_handler=MOVE_HANDLER,
+    )
+    # Concatenate the two single-row events TSVs into one
+    # two-row events TSV (the writer reads one row per line
+    # after the verbatim column-order header).
+    multi_tsv = sandbox / "multi_events.tsv"
+    with multi_tsv.open("w", encoding="utf-8") as fh:
+        fh.write("\t".join(EVENTS_TSV_HEADER) + "\n")
+        for one in (multi_events_a, multi_events_b):
+            with one.open("r", encoding="utf-8") as src:
+                src.readline()  # drop the header
+                fh.write(src.read())
+    multi_transcript_out = sandbox / "transcript_multi.json"
+    multi_result = build_transcript(
+        receipt_path, multi_tsv, multi_transcript_out,
+        pass623_fixture_path=pass623,
+        firestaff_capture_manifest_path=capture_manifest,
+        asset_set=asset_set, repo_root=sandbox,
+    )
+    total += 3
+    if multi_result.failures:
+        failures.append(
+            f"multi_command: transcript writer refused a multi-command "
+            f"route: {multi_result.failures}"
+        )
+    else:
+        matched += 1
+    multi_payload = (
+        json.loads(multi_transcript_out.read_text(encoding="utf-8"))
+        if multi_transcript_out.is_file() else {}
+    )
+    multi_rows = multi_payload.get("rows") or []
+    if len(multi_rows) != 2:
+        failures.append(
+            f"multi_command: expected 2 rows in transcript, got "
+            f"{len(multi_rows)}"
+        )
+    else:
+        matched += 1
+    if multi_rows and not multi_payload.get("promotable", False):
+        failures.append(
+            "multi_command: transcript.promotable is False; the F0380 "
+            "dispatch contract for multi-command routes is broken"
         )
     else:
         matched += 1

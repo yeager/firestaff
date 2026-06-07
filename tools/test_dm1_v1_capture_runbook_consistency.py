@@ -72,6 +72,7 @@ COMPARE = TOOLS_DIR / "compare_captures.py"
 DETECTOR = TOOLS_DIR / "dosbox_state_detector.py"
 MANIFEST_WRITER = TOOLS_DIR / "dosbox_capture_manifest_writer.py"
 TRANSCRIPT_WRITER = TOOLS_DIR / "dosbox_capture_transcript_writer.py"
+EVENTS_ROW_BUILDER = TOOLS_DIR / "dosbox_capture_events_row_builder.py"
 
 STATUS = "PASS632_DM1_V1_CAPTURE_ROUTE_RUNBOOK_CONSISTENCY"
 
@@ -378,6 +379,53 @@ def check_transcript_writer_points_at_writer(runbook_text: str) -> list[str]:
     return failures
 
 
+def check_events_row_builder_points_at_writer(runbook_text: str) -> list[str]:
+    """The 41-column events TSV the transcript writer consumes has
+    14 source-locked columns (``F0380_COMMAND_ProcessQueue_CPSC``,
+    ``F0365/F0366_COMMAND_ProcessTypes1To2/3To6``,
+    ``F0128_DUNGEONVIEW_Draw_CPSF``,
+    ``F0097_DUNGEONVIEW_DrawViewport``,
+    ``VIDRV_09_BlitViewPort``, the runbook §1
+    ``GRAPHICS.DAT``/``DUNGEON.DAT`` SHA256s) and
+    7 pass623-fixture-pinned columns (the
+    ``inputToken`` → ``sourceCommandId`` mapping, the
+    ``postTuple``, the Firestaff ``viewportSha256``).
+    Building the row by hand is exactly the gap that
+    kept the pass608 blocker in
+    ``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+    after the pass633 / pass625 work landed: a typo in a
+    function name (``F0365`` vs ``F0380``), a stale
+    ReDMCSB literal, a wrong queue count, or a wrong
+    viewport hash silently re-introduces the blocker
+    the writer is meant to catch.
+
+    The runbook must point operators at the on-disk
+    ``dosbox_capture_events_row_builder.py`` and
+    reference its self-test gate so the next live
+    attempt emits a row the writer's binding contract
+    actually accepts, without the operator typing
+    any of the 14 source-locked columns.
+    """
+    failures: list[str] = []
+    rel_writer = "docs/parity/tools/dosbox_capture_events_row_builder.py"
+    if rel_writer not in runbook_text:
+        failures.append(
+            "Events TSV handoff: runbook does not reference the "
+            f"on-disk events row builder at {rel_writer}; the next "
+            "operator may type the 41 columns by hand and silently "
+            "ship a stale ReDMCSB function name the way a previous "
+            "draft of the same-viewport route did"
+        )
+    if "dosbox_capture_events_row_builder.py --self-test" not in runbook_text:
+        failures.append(
+            "Events TSV handoff: runbook does not mention the "
+            "events row builder's --self-test gate; the on-disk "
+            "tool's regression coverage is not pinned to the "
+            "runbook prose"
+        )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # On-disk tool probes.
 # ---------------------------------------------------------------------------
@@ -571,6 +619,50 @@ def check_transcript_writer_selftest_passes() -> list[str]:
     return failures
 
 
+def check_events_row_builder_selftest_passes() -> list[str]:
+    """The on-disk events row builder self-test must keep
+    passing; this is the regression guard for the events TSV
+    handoff code (matching case, unknown-route-label case,
+    missing-receipt case, bad-receipt case, missing-raw case,
+    multi-command split, end-to-end single-command
+    promotable, end-to-end multi-command promotable,
+    dispatch-handler-by-command, source-function-pinned,
+    verbatim column-order, baseline-row cases).  Without this
+    gate a future patch that breaks the helper would land on
+    main without CI catching it and the next live attempt
+    would have to type the 41 columns by hand again, which is
+    exactly how a previous draft of the same-viewport route
+    re-introduced the pass608 blocker.
+    """
+    failures: list[str] = []
+    if not EVENTS_ROW_BUILDER.exists():
+        return [
+            f"{EVENTS_ROW_BUILDER.relative_to(REPO_ROOT)}: tool not "
+            "found; the events row builder must ship alongside the "
+            "runbook"
+        ]
+    with tempfile.TemporaryDirectory(prefix="runbook-events-row-builder-") as tmp:
+        sandbox = Path(tmp) / "selftest"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(EVENTS_ROW_BUILDER),
+                "--self-test",
+                "--self-test-tmp",
+                str(sandbox),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if proc.returncode != 0:
+            failures.append(
+                f"{EVENTS_ROW_BUILDER.relative_to(REPO_ROOT)} --self-test "
+                f"failed: {proc.stderr.strip() or proc.stdout.strip()}"
+            )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
@@ -596,6 +688,7 @@ def main() -> int:
         ("manifest_no_stale_hash",       check_manifest_template_no_stale_hash,  [runbook_text]),
         ("manifest_points_at_writer",    check_manifest_template_points_at_writer, [runbook_text]),
         ("transcript_points_at_writer",  check_transcript_writer_points_at_writer, [runbook_text]),
+        ("events_row_builder_points_at_writer", check_events_row_builder_points_at_writer, [runbook_text]),
     ]
     for name, fn, args in prose_checks:
         total += 1
@@ -612,6 +705,7 @@ def main() -> int:
         ("detector_selftest_passes",     check_detector_selftest_passes,     []),
         ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
         ("transcript_writer_selftest",   check_transcript_writer_selftest_passes, []),
+        ("events_row_builder_selftest",  check_events_row_builder_selftest_passes, []),
     ]
     for name, fn, args in tool_checks:
         total += 1
