@@ -82,6 +82,8 @@ KEY_MAP = {
     "Key-Right": "arrow-right",
 }
 
+DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
+
 
 class QuietRunTimeout:
     returncode = 124
@@ -159,9 +161,10 @@ def _run_quiet(argv: list[str], timeout: float = 10.0) -> subprocess.CompletedPr
 
 def _activate_dosbox() -> None:
     """Best-effort focus for macOS DOSBox Staging windows."""
+    names = ", ".join(f'"{name}"' for name in DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
-  repeat with appName in {"DOSBox", "DOSBox Staging", "dosbox"}
+  repeat with appName in {%s}
     if exists process appName then
       tell process appName
         set frontmost to true
@@ -173,15 +176,16 @@ tell application "System Events"
     end if
   end repeat
 end tell
-'''
+''' % names
     _run_quiet(["osascript", "-e", script], timeout=5.0)
 
 
 def _dosbox_window_bounds() -> tuple[int, int, int, int] | None:
     """Return the front DOSBox window bounds as x, y, w, h when available."""
+    names = ", ".join(f'"{name}"' for name in DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
-  repeat with appName in {"DOSBox", "DOSBox Staging", "dosbox"}
+  repeat with appName in {%s}
     if exists process appName then
       tell process appName
         set frontmost to true
@@ -192,7 +196,7 @@ tell application "System Events"
     end if
   end repeat
 end tell
-'''
+''' % names
     proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
     if proc.returncode != 0:
         return None
@@ -277,6 +281,47 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
     return False, last_state
 
 
+def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
+    """Write the conf used for live automation.
+
+    The preflight receipt proves the canonical hash root.  For actually
+    launching DM.EXE, DOSBox needs the original runtime layout where
+    DM.EXE and DATA/ live together.
+    """
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    (capture_root / "dosbox-capture").mkdir(parents=True, exist_ok=True)
+    conf.write_text(
+        "\n".join([
+            "[sdl]",
+            "output=opengl",
+            "windowresolution=1024x768",
+            "viewport_resolution=1024x768",
+            "",
+            "[dosbox]",
+            "machine=svga_s3",
+            "memsize=16",
+            "",
+            "[render]",
+            "frameskip=0",
+            "",
+            "[cpu]",
+            "core=dynamic",
+            "cycles=max",
+            "",
+            "[capture]",
+            f"capture_dir={capture_root / 'dosbox-capture'}",
+            "default_image_capture_formats=raw",
+            "",
+            "[autoexec]",
+            f"MOUNT C {runtime_dir}",
+            "C:",
+            "DM.EXE",
+            "",
+        ]),
+        encoding="utf-8",
+    )
+
+
 def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     """Drive a real DOSBox Staging DM1 session and capture normalized frames."""
     if not _DETECTOR_OK:
@@ -292,38 +337,30 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
         if args.game_dir is not None
         else Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
     )
-    conf = capture_root / "dosbox_capture.conf"
-    if not conf.exists():
+    default_runtime_dir = Path(
+        "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+    ).expanduser()
+    runtime_dir = (
+        args.runtime_dir.expanduser()
+        if args.runtime_dir is not None
+        else default_runtime_dir if default_runtime_dir.is_dir()
+        else None
+    )
+    if runtime_dir is not None and not (runtime_dir / "DM.EXE").is_file():
+        print(f"--runtime-dir does not contain DM.EXE: {runtime_dir}", file=sys.stderr)
+        return 2
+    if runtime_dir is not None:
         conf = capture_root / "dosbox_capture.live.conf"
-        conf.parent.mkdir(parents=True, exist_ok=True)
-        conf.write_text(
-            "\n".join([
-                "[sdl]",
-                "output=opengl",
-                "windowresolution=1024x768",
-                "viewport_resolution=1024x768",
-                "",
-                "[dosbox]",
-                "machine=svga_s3",
-                "memsize=16",
-                "",
-                "[render]",
-                "frameskip=0",
-                "",
-                "[cpu]",
-                "core=dynamic",
-                "cycles=max",
-                "",
-                "[autoexec]",
-                f"MOUNT C {game_dir}",
-                "C:",
-                "cd DungeonMasterPC34",
-                "DM.EXE",
-                "EXIT",
-                "",
-            ]),
-            encoding="utf-8",
-        )
+        _write_live_conf(conf, runtime_dir, capture_root)
+    else:
+        conf = capture_root / "dosbox_capture.conf"
+        if not conf.exists():
+            print(
+                "no runtime dir found and no preflight dosbox_capture.conf exists; "
+                f"pass --runtime-dir or run preflight for {game_dir}",
+                file=sys.stderr,
+            )
+            return 2
 
     original_dir = capture_root / "original"
     original_dir.mkdir(parents=True, exist_ok=True)
@@ -388,6 +425,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--game-dir", type=Path, default=None,
                         help="DM1 game data root (default: "
                              "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1)")
+    parser.add_argument("--runtime-dir", type=Path, default=None,
+                        help="DM1 DOS runtime dir containing DM.EXE and DATA/ "
+                             "(default: local extracted PC 3.4 runtime when present)")
     parser.add_argument("--capture-root", type=Path,
                         default=Path.home() / "firestaff-captures",
                         help="where to write captured frames")
