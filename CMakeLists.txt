@@ -57,6 +57,10 @@ list(APPEND M10_SOURCES
     src/dm1/dm1_v1_inventory_chest_close_recompaction_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat.c
@@ -2059,6 +2063,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_inventory_chest_close_recompaction_pc34_compat
         COMMAND firestaff_dm1_v1_inventory_chest_close_recompaction_pc34_compat_test
+    )
+
+    add_executable(firestaff_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat_test
+        tests/test_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat_test PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat
+        COMMAND firestaff_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat_test
     )
 
     add_executable(firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test
