@@ -447,12 +447,72 @@ python3 ~/firestaff-captures/tools/compare_captures.py \
 > command above runs the on-disk tool.  An inlined draft of
 > `compare_captures.py` previously lived directly in this runbook; it
 > used the default Pillow NEAREST filter (no LANCZOS) and never
-> reported per-channel max deltas, so palette shifts were attributed
+> reported per-channel max delta, so palette shifts were attributed
 > to viewport geometry.  The on-disk tool at
 > `docs/parity/tools/compare_captures.py` is the only script the next
 > operator should run; the runbook-consistency probe at
 > `tools/test_dm1_v1_capture_runbook_consistency.py` regression-pins
 > the runbook to that tool.
+
+---
+
+## Step 5b: Render the Output Manifest (deterministic)
+
+The Output Manifest Template at the bottom of this runbook used to
+be filled in by hand, which is exactly how a stale placeholder hash
+(``f7f3291f or actual git hash``) shipped through a previous draft —
+the operator copy-pasted a draft template and the live manifest
+carried the placeholder into the parity ledger.  The deterministic
+handoff code at
+`docs/parity/tools/dosbox_capture_manifest_writer.py` renders the
+manifest from the preflight receipt and a per-capture classifier
+output TSV so the SHA256s, the Firestaff git head, the
+``dosbox_version`` row, and the per-capture classifications are
+all live values, never placeholders.
+
+Build the classifier output TSV (one row per capture, with
+``file``, ``label``, ``classification``, ``sha256``, ``width``,
+``height`` columns; the writer expects exactly six columns in
+that order):
+
+```tsv
+file	label	classification	sha256	width	height
+original/01_ingame_start.png	viewport_start	dungeon_gameplay	SHA256	320	200
+original/01_ingame_start_viewport_224x136.png	viewport_start_crop	dungeon_gameplay	SHA256	224	136
+original/02_ingame_turn_right.png	viewport_turn	dungeon_gameplay	SHA256	320	200
+original/02_ingame_turn_right_viewport_224x136.png	viewport_turn_crop	dungeon_gameplay	SHA256	224	136
+```
+
+Then render the manifest (the writer refuses to emit a manifest
+when the preflight receipt's pin checks are not all PASS, when a
+recorded SHA does not match the file on disk, or when a
+classification is outside the runbook's documented state list):
+
+```bash
+python3 docs/parity/tools/dosbox_capture_manifest_writer.py \
+    --preflight-receipt ~/firestaff-captures/preflight.receipt.json \
+    --classifier-outputs classifier_outputs.tsv \
+    --manifest-out capture_manifest.tsv \
+    --sidecar-out capture_manifest.sidecar.json
+
+# Expected: manifest-writer: N/N checks matched
+#           PASS — manifest: capture_manifest.tsv
+# Writes: capture_manifest.tsv (the Output Manifest Template rows,
+#         with real SHA256s and live git head) and
+#         capture_manifest.sidecar.json (a JSON copy the pass608
+#         runtime-transcript gate can ingest).
+```
+
+The writer ships a hermetic `--self-test` that exercises the
+matching case, SHA-mismatch case, missing-receipt case, missing-
+classifier-outputs case, preflight-pin-violation case, and invalid-
+classification case against synthetic fixtures, and it is wired
+into the runbook-consistency probe at
+`tools/test_dm1_v1_capture_runbook_consistency.py` as
+`manifest_writer_selftest`.  The probe fails loudly if a future
+operator reverts to filling the manifest by hand, and the
+``dosbox_capture_manifest_writer.py --self-test`` CTest gate
+catches regressions in the writer itself.
 
 ---
 
@@ -499,14 +559,26 @@ The selector does NOT respond to raw `0` key presses. You must navigate with arr
 
 ## Output Manifest Template
 
-After each session:
+> **Do NOT fill this template in by hand.**  The deterministic
+> handoff code at
+> `docs/parity/tools/dosbox_capture_manifest_writer.py` renders the
+> manifest from the preflight receipt + a per-capture classifier
+> output TSV (see Step 5b above).  The on-disk writer is the only
+> way the next manifest should be produced; the prose template
+> below is kept for documentation and for the writer's column
+> order, not for hand-filling.
+
+The template the writer renders (column order is part of the
+public contract — do not re-order):
 
 ```tsv
-capture_session	{ISO timestamp}
+capture_session	{ISO timestamp, from the preflight receipt}
 dungeon_sha256	d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 graphics_sha256	2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-dosbox_version	{DOSBox Staging version from --version}
+session_id	{preflight receipt session_id}
+launch_command	{preflight receipt launch_command}
 firestaff_version	{actual git head, e.g. `git rev-parse HEAD` — the preflight receipt already records this in `firestaff_git_head`}
+dosbox_version	{DOSBox Staging version from --version, auto-detected by the writer}
 
 file	label	classification	sha256	width	height
 dungeon_start.png	dungeon_start	dungeon_gameplay	SHA256	320	200
