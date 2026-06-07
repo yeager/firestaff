@@ -1401,6 +1401,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d3l2_wall_pc34_compat
     )
 
+    add_executable(firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test
+        tests/test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_wall_pc34_compat.c
+    )
+    target_include_directories(firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d3l2_d3r2_wall_pc34_compat
+        COMMAND firestaff_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat_test
+    )
+
     add_executable(test_csb_v1_viewport_d2l2_wall_pc34_compat
         tests/test_csb_v1_viewport_d2l2_wall_pc34_compat.c
         src/csb/csb_v1_viewport_d2l2_wall_pc34_compat.c
@@ -1989,6 +2006,19 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_inventory_chest_incompatible_swap_pc34_compat
         COMMAND test_dm1_v1_inventory_chest_incompatible_swap_pc34_compat
+    )
+
+    add_executable(firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test
+        tests/test_dm1_v1_inventory_hand_swap_with_chest_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_hand_swap_with_chest_pc34_compat
+        COMMAND firestaff_dm1_v1_inventory_hand_swap_with_chest_pc34_compat_test
     )
 
     add_executable(test_dm1_v1_chest_close_rewire_runtime_pc34_compat
