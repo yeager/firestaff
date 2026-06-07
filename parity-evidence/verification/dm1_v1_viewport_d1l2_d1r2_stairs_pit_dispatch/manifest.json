@@ -1,0 +1,27 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T22:00:00Z",
+  "status": "PASS_DM1_V1_VIEWPORT_D1L2_D1R2_STAIRS_PIT_DISPATCH_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "main",
+  "head": "58ff4c890",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "DUNVIEW.C F0122:7391-7557",
+    "DUNVIEW.C F0123:7559-7725",
+    "DUNVIEW.C F0104:3113-3156",
+    "DUNVIEW.C F0105:3185-3218",
+    "DUNVIEW.C F0115:4547-4581 and 5668-5671",
+    "DUNVIEW.C F0128:8524-8542 and F0127:8294",
+    "DUNGEON.C F0163/F0164:1769-1840 and F0172:2466-2523",
+    "DEFS.H:2088/2445-2452/2596-2601/2659-2666/4147-4162/4205-4207"
+  ],
+  "assertions": 434,
+  "notes": [
+    "Gate: tests/test_dm1_v1_viewport_d1l2_d1r2_stairs_pit_dispatch_pc34_compat.c",
+    "Target: DM1 V1 D1L2/D1R2 source-lock alias over F0122/F0123 D1 side-lane stairs/pit bitmap dispatch.",
+    "D1L2 routes through F0122 and native F0104 with M607/C0x0032; D1R2 routes through F0123 and flipped F0105 with M608/C0x0041.",
+    "F0115 follow-up is included for the stairs/pit shared tail, and F0128 post-D1 side-lane follow-up records D0C M609/C0x0021.",
+    "Synthetic contract-only gate; no real-asset bitmap parity, no DOSBox coupling, no game-data load."
+  ]
+}
