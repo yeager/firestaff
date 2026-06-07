@@ -1,0 +1,28 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T21:19:48Z",
+  "status": "PASS_DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_RUNTIME_REGRESSION",
+  "repo": "https://github.com/yeager/firestaff",
+  "branch": "main",
+  "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "CHEST.C F0333:31-67",
+    "CHEST.C F0334:113-132",
+    "CHAMPION.C F0297:243-298",
+    "CHAMPION.C F0298",
+    "CHAMPION.C F0300/F0301/F0302",
+    "CHAMPION.C F0292",
+    "COMMAND.C F0359:1985-1990",
+    "REVIVE.C F0280:124-132",
+    "REVIVE.C F0282:744-806",
+    "DEFS.H:2088/C30/G0425/G0426/G0299/G0305/G0423/M516",
+    "BLITMASK.C F0133:30-33"
+  ],
+  "assertions": 151,
+  "notes": [
+    "Adds a contract-only runtime regression gate for chest-close mid-flight while the leader hand picks up from the F0425/G0425 chest-slot window with a C040 candidate pending.",
+    "Covers pending pickup close, candidate confirm before close, candidate confirm after close with reopen order preservation, last visible slot guard, occupied leader-hand swap, empty pickup no-op, and inventory owner rotation during close.",
+    "Records F0333/F0334, F0297/F0298, F0300/F0301/F0302, F0280/F0282, F0292, and F0133 ordering as synthetic trace state only; no real M11 graphics, asset data, savegame, or dungeon IO is claimed."
+  ]
+}
