@@ -1435,6 +1435,22 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d2c_f0111_door_pc34_compat
     )
 
+    add_executable(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+        tests/test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+        COMMAND test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+    )
+
     add_executable(test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat
         tests/test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat.c
         src/csb/csb_v1_viewport_d2l2_f0115_projectile_pc34_compat.c
