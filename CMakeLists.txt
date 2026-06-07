@@ -132,6 +132,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_keyboard_rotation
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_keyboard_rotation_combo_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
+)
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -3763,6 +3767,22 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_dm1_v1_mirror_candidate_keyboard_rotation_combo_pc34_compat_test
         COMMAND firestaff_dm1_v1_mirror_candidate_keyboard_rotation_combo_pc34_compat_test
+    )
+
+    add_executable(firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
+        tests/test_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
+        PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
+        COMMAND firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
     )
 
     add_executable(test_dm1_v1_mirror_candidate_party_direction_pc34_compat
