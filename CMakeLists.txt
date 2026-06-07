@@ -4133,6 +4133,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d0c_center_field_pc34_compat
+        tests/test_dm1_v1_viewport_d0c_center_field_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_center_field_pc34_compat.c
+    )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     target_link_libraries(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
@@ -4140,6 +4144,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_link_libraries(test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat PRIVATE firestaff_m10)
     target_link_libraries(test_dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat
         PRIVATE firestaff_m10
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0c_center_field_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_viewport_d0c_center_field_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -4182,6 +4190,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat
         COMMAND test_dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0c_center_field_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0c_center_field_pc34_compat
     )
     if(Python3_Interpreter_FOUND)
         add_test(
