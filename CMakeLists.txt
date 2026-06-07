@@ -96,6 +96,7 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d3c_center_field_pc34_com
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d3c_center_field_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d3c_wall_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_inventory_chest_close_recompaction_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_inventory_chest_close_recompaction_pc34_compat.c
