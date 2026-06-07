@@ -5760,6 +5760,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat
+        tests/test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d2c_wall_pc34_compat
         tests/test_dm1_v1_viewport_d2c_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d2c_wall_pc34_compat.c
@@ -5882,6 +5886,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     target_link_libraries(test_dm1_v1_viewport_d2c_wall_pc34_compat
         PRIVATE firestaff_m10
     )
@@ -5941,6 +5951,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_d1l2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2c_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d1c_center_field_pc34_compat_test PRIVATE -Wall -Wextra -O2)
@@ -6050,6 +6061,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_lock
         COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_source_lock
+        COMMAND test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d2c_wall_source_lock
