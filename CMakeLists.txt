@@ -1041,6 +1041,18 @@ if(BUILD_TESTING)
             NAME dm1_v1_original_capture_preflight_self_test
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_preflight.py --self-test
         )
+        # Runbook-consistency probe: pins the prose in
+        # docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md to the
+        # on-disk capture tools.  Catches the historic regressions
+        # that shipped through the runbook silently:
+        #   * the trailing "Done" token on the Step 4 `convert` line
+        #   * an inlined buggy `compare_captures.py` (NEAREST, no LANCZOS)
+        #   * an autoexec that pointed at `DungeonMasterPC34.EXE` (a directory)
+        #   * a stale placeholder hash in the Output Manifest Template
+        add_test(
+            NAME dm1_v1_original_capture_runbook_consistency
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_dm1_v1_capture_runbook_consistency.py
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
