@@ -196,6 +196,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_inventory_portrai
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_damage_indicator_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
@@ -4157,6 +4161,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat
         COMMAND firestaff_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat_test
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat
     )
 
     add_executable(test_dm1_v1_mirror_candidate_close_button_pc34_compat
