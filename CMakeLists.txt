@@ -4243,6 +4243,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat
+        tests/test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0l_d0r_wall_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d0c_center_field_pc34_compat
         tests/test_dm1_v1_viewport_d0c_center_field_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0c_center_field_pc34_compat.c
@@ -4256,6 +4260,9 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         PRIVATE firestaff_m10
     )
     target_link_libraries(test_dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat
         PRIVATE firestaff_m10
     )
     target_link_libraries(test_dm1_v1_viewport_d0c_center_field_pc34_compat PRIVATE firestaff_m10)
@@ -4272,6 +4279,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_floor_ornament_d2lr_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_floor_ornament_d1l2_d1r2_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v1_viewport_3d_source_lock
@@ -4308,6 +4316,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat
         COMMAND test_dm1_v1_viewport_floor_ornament_d0l2_d0r2_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0l_d0r_wall_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d0c_center_field_pc34_compat
