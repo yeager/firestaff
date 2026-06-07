@@ -3,312 +3,333 @@
 #include <stdio.h>
 #include <string.h>
 
+static const char *A_F0111 =
+    "ReDMCSB DUNVIEW.C:4218-4337 F0111_DUNGEONVIEW_DrawDoor";
 static const char *A_F0121 =
     "ReDMCSB DUNVIEW.C:7244-7389 F0121_DUNGEONVIEW_DrawSquareD2C";
-static const char *A_WALL_RETURN =
-    "ReDMCSB DUNVIEW.C:7289-7312 wall-case early-return";
-static const char *A_C09 =
-    "ReDMCSB DEFS.H:3432 C09_WALL_D2C";
-static const char *A_C707 =
-    "ReDMCSB DEFS.H:4030 C707_ZONE_WALL_D2C";
-static const char *A_C709 =
-    "ReDMCSB DEFS.H:4049 C709_ZONE_WALL_D2C";
-static const char *A_C3700 =
-    "ReDMCSB DEFS.H:4250 C3700 door zone";
-static const char *A_C10 =
-    "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH transparency";
-static const char *A_COORD =
-    "ReDMCSB COORD.C:1556-1559 door record path";
+static const char *A_D2C_DOOR =
+    "ReDMCSB DUNVIEW.C:7313-7341 D2C C17_ELEMENT_DOOR_FRONT";
+static const char *A_DEFS =
+    "ReDMCSB DEFS.H:2159,2790,2796,3508,3516,4256";
+static const char *A_F0128 =
+    "ReDMCSB DUNVIEW.C:8508-8533 F0128_DUNGEONVIEW_Draw_CPSF";
+static const char *A_DUNGEON =
+    "ReDMCSB DUNGEON.C:F0163/F0164:1769-1840";
 static const char *A_LINEAGE =
-    "CSB-lineage Viewport.cpp:1151-1156,1414-1420 frame-blt/frame-rect bindings";
+    "CSB-lineage Viewport.cpp:1903-1915 requested; local 1865-1879";
 
 static int g_assertions = 0;
+static int g_failures = 0;
 
 static int expect_int(const char *label, int got, int want, const char *anchor)
 {
     ++g_assertions;
     if (got != want) {
+        ++g_failures;
         printf("FAIL %s got=%d want=%d anchor=%s\n", label, got, want, anchor);
         return 0;
     }
-    printf("ok %s=%d anchor=%s\n", label, got, anchor);
+    printf("PASS %s=%d anchor=%s\n", label, got, anchor);
     return 1;
 }
 
 static int expect_contains(const char *label, const char *haystack,
                            const char *needle, const char *anchor)
 {
-    const int got = haystack && needle && strstr(haystack, needle) != NULL;
-    return expect_int(label, got, 1, anchor);
+    return expect_int(label, haystack && needle &&
+                         strstr(haystack, needle) != NULL, 1, anchor);
 }
 
-static int test_f0121_d2c_identity(void)
+static int test_identity_and_scope(void)
 {
     int ok = 1;
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
 
-    ok &= expect_int("spec.present", spec != NULL, 1, A_F0121);
-    ok &= expect_int("contract_only", spec ? spec->source_locked_contract_only : 0, 1,
-                     A_F0121);
-    ok &= expect_int("f0121.route_present", spec ? spec->f0121_center_route_present : 0, 1,
-                     A_F0121);
-    ok &= expect_int("view_square.d2c", spec ? spec->view_square : -1, 6, A_F0121);
-    ok &= expect_int("f0128.depth", spec ? spec->f0128_relative_depth : -1, 2,
-                     A_F0121);
-    ok &= expect_int("f0128.lateral", spec ? spec->f0128_relative_lateral : -9, 0,
-                     A_F0121);
-    ok &= expect_contains("f0121.source", spec ? spec->f0121_source_lines : NULL,
-                          "7244-7389", A_F0121);
-    ok &= expect_contains("wall.source", spec ? spec->wall_case_source_lines : NULL,
-                          "7289-7312", A_WALL_RETURN);
-    ok &= expect_contains("no_wall.source", spec ? spec->no_wall_source_lines : NULL,
-                          "7353-7388", A_F0121);
-    ok &= expect_contains("lineage.source", spec ? spec->lineage_source_lines : NULL,
-                          "1151-1156", A_LINEAGE);
-    ok &= expect_contains("lineage.source.teleporter",
-                          spec ? spec->lineage_source_lines : NULL, "1414-1420",
-                          A_LINEAGE);
-    ok &= expect_int("wall.zone.helper",
-                     csb_v1_viewport_d2c_f0111_door_zone_from_wall_spec_pc34(spec),
-                     709, A_C709);
-    ok &= expect_int("wall.zone.helper.null",
-                     csb_v1_viewport_d2c_f0111_door_zone_from_wall_spec_pc34(NULL),
-                     -1, A_F0121);
-
-    return ok;
-}
-
-static int test_d2c_wall_case_rejects_f0111_c3700_panel(void)
-{
-    int ok = 1;
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
-
-    ok &= expect_int("wall.ordinal.c09", spec ? spec->wall_ordinal_c09_d2c : -1,
-                     9, A_C09);
-    ok &= expect_int("wall.zone.media508", spec ? spec->media508_wall_zone_c707 : -1,
-                     707, A_C707);
-    ok &= expect_int("wall.zone.media720", spec ? spec->media720_wall_zone_c709 : -1,
-                     709, A_C709);
-    ok &= expect_int("wall.returns.before_f0111",
-                     spec ? spec->wall_case_returns_before_f0111 : 0, 1,
-                     A_WALL_RETURN);
-    ok &= expect_int("wall.calls.f0100", spec ? spec->wall_case_calls_f0100 : -1,
-                     1, A_WALL_RETURN);
-    ok &= expect_int("wall.calls.f0105", spec ? spec->wall_case_calls_f0105 : -1,
-                     0, A_WALL_RETURN);
-    ok &= expect_int("wall.calls.f0107", spec ? spec->wall_case_calls_f0107 : -1,
-                     1, A_WALL_RETURN);
-    ok &= expect_int("wall.calls.f0111", spec ? spec->wall_case_calls_f0111 : -1,
-                     0, A_WALL_RETURN);
-    ok &= expect_int("wall.calls.c3700_panel",
-                     spec ? spec->wall_case_calls_c3700_door_panel : -1, 0,
-                     A_C3700);
-    ok &= expect_int("wall.c3700.zone.constant", spec ? spec->c3700_door_zone : -1,
-                     3700, A_C3700);
-    ok &= expect_int("wall.c3700.is_d3l2",
-                     spec ? spec->c3700_is_d3l2_door_zone : -1, 1, A_C3700);
-    ok &= expect_int("wall.d2c.uses_c3700",
-                     spec ? spec->d2c_uses_c3700_door_zone : -1, 0, A_C3700);
-    ok &= expect_int("wall.d2c.rejects_c3700",
-                     spec ? spec->d2c_c3700_panel_path_rejected : -1, 1,
-                     A_C3700);
-
-    return ok;
-}
-
-static int test_c01_c05_no_wall_path_excludes_door_panel(void)
-{
-    int ok = 1;
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
-
-    ok &= expect_int("corridor.enters_no_wall",
-                     spec ? spec->c01_corridor_enters_no_wall_path : 0, 1,
-                     A_F0121);
-    ok &= expect_int("teleporter.enters_no_wall",
-                     spec ? spec->c05_teleporter_enters_no_wall_path : 0, 1,
-                     A_F0121);
-    ok &= expect_int("no_wall.calls.f0100", spec ? spec->no_wall_path_calls_f0100 : -1,
-                     0, A_F0121);
-    ok &= expect_int("no_wall.calls.f0105", spec ? spec->no_wall_path_calls_f0105 : -1,
-                     0, A_F0121);
-    ok &= expect_int("no_wall.calls.f0107", spec ? spec->no_wall_path_calls_f0107 : -1,
-                     0, A_F0121);
-    ok &= expect_int("no_wall.calls.f0111", spec ? spec->no_wall_path_calls_f0111 : -1,
-                     0, A_F0121);
-    ok &= expect_int("no_wall.calls.f0113", spec ? spec->no_wall_path_calls_f0113 : -1,
+    ok &= expect_int("contract.non_null", c != NULL, 1, A_F0121);
+    ok &= expect_int("contract.only", c ? c->source_locked_contract_only : 0,
                      1, A_F0121);
-    ok &= expect_int("no_wall.floor_ornament",
-                     spec ? spec->no_wall_path_draws_floor_ornament : 0, 1,
+    ok &= expect_int("no.real.asset.parity",
+                     c ? c->no_real_asset_bitmap_parity : 0, 1, A_F0121);
+    ok &= expect_int("no.game.data.load", c ? c->no_game_data_load : 0,
+                     1, A_F0121);
+    ok &= expect_int("view_square.d2c", c ? c->view_square_d2c : -1, 6,
                      A_F0121);
-    ok &= expect_int("no_wall.ceiling_pit",
-                     spec ? spec->no_wall_path_draws_ceiling_pit : 0, 1,
-                     A_F0121);
-    ok &= expect_int("no_wall.f0115.before_field",
-                     spec ? spec->no_wall_path_draws_f0115_before_field : 0, 1,
-                     A_F0121);
-    ok &= expect_int("no_wall.cell_order",
-                     spec ? spec->no_wall_path_cell_order : -1, 0x3421,
-                     A_F0121);
-    ok &= expect_int("no_wall.field_zone",
-                     spec ? spec->no_wall_path_field_zone : -1, 709, A_C709);
-    ok &= expect_int("no_wall.field_zone_matches_wall",
-                     spec ? spec->no_wall_path_field_zone == spec->media720_wall_zone_c709 : 0,
-                     1, A_C709);
-    ok &= expect_int("no_wall.preserves_c10",
-                     spec ? spec->no_wall_path_preserves_c10_transparency : 0, 1,
-                     A_C10);
-    ok &= expect_int("no_wall.not_c3700",
-                     spec ? spec->no_wall_path_field_zone != spec->c3700_door_zone : 0,
-                     1, A_C3700);
-    ok &= expect_int("door_panel.no_wall.no_c3700",
-                     spec ? spec->no_wall_path_calls_f0111 ||
-                                spec->d2c_uses_c3700_door_zone : -1,
-                     0, A_C3700);
+    ok &= expect_int("view_depth.d2", c ? c->view_depth : -1, 2,
+                     "ReDMCSB DUNVIEW.C:372 G2027[6]");
+    ok &= expect_int("view_lane.center", c ? c->view_lane : -9, 0,
+                     "ReDMCSB DUNVIEW.C:371 G2026[6]");
+    ok &= expect_int("element.door_front", c ? c->element_door_front : -1,
+                     17, A_D2C_DOOR);
+    ok &= expect_contains("f0121.anchor", c ? c->redmcsb_f0121_anchor : NULL,
+                          "7313-7341", A_F0121);
+    ok &= expect_contains("f0111.anchor", c ? c->redmcsb_f0111_anchor : NULL,
+                          "4218-4337", A_F0111);
 
     return ok;
 }
 
-static int test_c3700_coord_path_is_metadata_only_for_d2c(void)
+static int test_d2c_f0111_call_contract(void)
 {
     int ok = 1;
-    int x = 1234;
-    int y = 5678;
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
 
-    ok &= expect_int("coord.clip_record", spec ? spec->coord_clip_record : -1,
-                     126, A_COORD);
-    ok &= expect_int("coord.parent_record", spec ? spec->coord_parent_record : -1,
-                     129, A_COORD);
-    ok &= expect_int("coord.clip_width", spec ? spec->coord_clip_width : -1,
-                     48, A_COORD);
-    ok &= expect_int("coord.clip_height", spec ? spec->coord_clip_height : -1,
-                     40, A_COORD);
-    ok &= expect_int("coord.frame_x", spec ? spec->coord_frame_x : -1, 24,
-                     A_COORD);
-    ok &= expect_int("coord.frame_y", spec ? spec->coord_frame_y : -1, 28,
-                     A_COORD);
-    ok &= expect_int("d2c.uses_coord_record_path",
-                     spec ? spec->d2c_uses_coord_door_record_path : -1, 0,
-                     A_COORD);
-    ok &= expect_int("reject_c3700.panel",
-                     csb_v1_viewport_d2c_f0111_door_reject_c3700_panel_path_pc34(
-                         spec, 0, 0, &x, &y),
-                     -2, A_C3700);
-    ok &= expect_int("reject_c3700.keeps_x", x, 1234, A_COORD);
-    ok &= expect_int("reject_c3700.keeps_y", y, 5678, A_COORD);
-    ok &= expect_int("reject_c3700.null_spec",
-                     csb_v1_viewport_d2c_f0111_door_reject_c3700_panel_path_pc34(
-                         NULL, 0, 0, &x, &y),
-                     -1, A_C3700);
-    ok &= expect_int("reject_c3700.null_out_x",
-                     csb_v1_viewport_d2c_f0111_door_reject_c3700_panel_path_pc34(
-                         spec, 0, 0, NULL, &y),
-                     -1, A_COORD);
-    ok &= expect_int("reject_c3700.null_out_y",
-                     csb_v1_viewport_d2c_f0111_door_reject_c3700_panel_path_pc34(
-                         spec, 0, 0, &x, NULL),
-                     -1, A_COORD);
-    ok &= expect_int("c3700.not_d2c_wall_zone",
-                     spec ? spec->c3700_door_zone != spec->media720_wall_zone_c709 : 0,
-                     1, A_C3700);
-    ok &= expect_int("c3700.not_d2c_media508_zone",
-                     spec ? spec->c3700_door_zone != spec->media508_wall_zone_c707 : 0,
-                     1, A_C3700);
+    ok &= expect_contains("bitmap.index.symbol", c ? c->door_bitmap_index_symbol : NULL,
+                          "G0694_ai_DoorNativeBitmapIndex_Front_D2LCR",
+                          A_D2C_DOOR);
+    ok &= expect_int("native.width", c ? c->door_native_width : -1, 64,
+                     A_D2C_DOOR);
+    ok &= expect_int("native.height", c ? c->door_native_height : -1, 61,
+                     A_D2C_DOOR);
+    ok &= expect_int("byte_count.helper",
+                     csb_v1_viewport_d2c_f0111_door_byte_count_pc34(64, 61),
+                     1952, A_DEFS);
+    ok &= expect_int("native.byte_count", c ? c->door_native_byte_count : -1,
+                     1952, A_D2C_DOOR);
+    ok &= expect_contains("byte.count.macro", c ? c->door_byte_count_macro : NULL,
+                          "M075_BITMAP_BYTE_COUNT(64, 61)", A_D2C_DOOR);
+    ok &= expect_int("rejects.d1.96x88",
+                     c ? c->rejects_d1_96x88_byte_count : 0, 1, A_D2C_DOOR);
+    ok &= expect_int("d1.96x88.helper",
+                     csb_v1_viewport_d2c_f0111_door_byte_count_pc34(96, 88),
+                     4224, "ReDMCSB DUNVIEW.C:7905 D1C guard");
+    ok &= expect_int("d2c.not.d1.size",
+                     c ? c->door_native_byte_count !=
+                         csb_v1_viewport_d2c_f0111_door_byte_count_pc34(96, 88) : 0,
+                     1, A_D2C_DOOR);
+    ok &= expect_int("view.ornament.d2lcr",
+                     c ? c->view_door_ornament_d2lcr : -1, 1, A_DEFS);
+    ok &= expect_contains("view.ornament.symbol", c ? c->door_view_symbol : NULL,
+                          "C1_VIEW_DOOR_ORNAMENT_D2LCR", A_D2C_DOOR);
+    ok &= expect_contains("frame.symbol", c ? c->door_frame_symbol : NULL,
+                          "G0183_s_Graphic558_Frames_Door_D2C", A_D2C_DOOR);
+    ok &= expect_int("door.zone.d2c", c ? c->door_zone_d2c : -1, 3760,
+                     A_DEFS);
+    ok &= expect_contains("door.zone.symbol", c ? c->door_zone_symbol : NULL,
+                          "M628_ZONE_DOOR_D2C", A_DEFS);
 
     return ok;
 }
 
-static int test_c10_transparency_for_no_wall_field_path(void)
+static int test_frame_button_and_pass_order(void)
 {
     int ok = 1;
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
-    uint8_t source[12] = { 10, 1, 10, 2, 3, 10, 4, 10, 5, 6, 10, 7 };
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
+
+    ok &= expect_int("pass1.order", c ? c->doorpass1_order : -1, 0x0218,
+                     A_D2C_DOOR);
+    ok &= expect_int("pass2.order", c ? c->doorpass2_order : -1, 0x0349,
+                     A_D2C_DOOR);
+    ok &= expect_int("floor.before.pass1",
+                     c ? c->floor_ornament_before_rear_pass : 0, 1,
+                     A_D2C_DOOR);
+    ok &= expect_int("rear.before.frames", c ? c->rear_pass_before_frames : 0,
+                     1, A_D2C_DOOR);
+    ok &= expect_int("top.before.side.frames",
+                     c ? c->top_track_before_side_frames : 0, 1, A_D2C_DOOR);
+    ok &= expect_int("side.before.button",
+                     c ? c->side_frames_before_button : 0, 1, A_D2C_DOOR);
+    ok &= expect_int("button.before.f0111", c ? c->button_before_f0111 : 0,
+                     1, A_D2C_DOOR);
+    ok &= expect_int("f0111.before.front.pass",
+                     c ? c->f0111_before_front_pass : 0, 1, A_D2C_DOOR);
+    ok &= expect_int("terminal.front.pass.ordered",
+                     c ? c->terminal_front_pass_ordered : 0, 1, A_D2C_DOOR);
+    ok &= expect_int("frame.top.zone", c ? c->door_frame_top_zone : -1, 730,
+                     A_D2C_DOOR);
+    ok &= expect_int("frame.left.zone", c ? c->door_frame_left_zone : -1, 724,
+                     A_D2C_DOOR);
+    ok &= expect_int("frame.right.zone", c ? c->door_frame_right_zone : -1, 725,
+                     A_D2C_DOOR);
+    ok &= expect_int("door.button.view", c ? c->door_button_view_d2c : -1, 2,
+                     A_DEFS);
+    ok &= expect_int("lineage.door.graphics.f2",
+                     c ? c->door_graphic_depth_index : -1, 1, A_LINEAGE);
+
+    return ok;
+}
+
+static int test_f0111_state_zone_contract(void)
+{
+    int ok = 1;
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
+
+    ok &= expect_int("open.skips.flag", c ? c->open_state_skips_f0111 : 0,
+                     1, A_F0111);
+    ok &= expect_int("open.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 0),
+                     -1, A_F0111);
+    ok &= expect_int("state1.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 1),
+                     3761, A_F0111);
+    ok &= expect_int("state2.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 2),
+                     3762, A_F0111);
+    ok &= expect_int("state3.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 3),
+                     3763, A_F0111);
+    ok &= expect_int("closed.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 4),
+                     3760, A_F0111);
+    ok &= expect_int("destroyed.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 5),
+                     3760, A_F0111);
+    ok &= expect_int("null.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(NULL, 2),
+                     -1, A_F0111);
+    ok &= expect_int("bad.negative.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, -1),
+                     -1, A_F0111);
+    ok &= expect_int("bad.high.zone",
+                     csb_v1_viewport_d2c_f0111_door_zone_for_state_pc34(c, 6),
+                     -1, A_F0111);
+    ok &= expect_int("closed.uses.base",
+                     c ? c->closed_state_uses_base_zone : 0, 1, A_F0111);
+    ok &= expect_int("destroyed.uses.base",
+                     c ? c->destroyed_state_uses_base_zone : 0, 1, A_F0111);
+    ok &= expect_int("destroyed.mask",
+                     c ? c->destroyed_state_applies_c15_mask : -1, 15,
+                     A_F0111);
+
+    return ok;
+}
+
+static int test_horizontal_half_and_c10_blit(void)
+{
+    int ok = 1;
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
+    uint8_t source[12] = { 10, 1, 2, 10, 3, 4, 10, 5, 6, 7, 10, 8 };
     uint8_t destination[12] = { 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77 };
 
-    ok &= expect_int("transparent.color.macro",
-                     CSB_V1_D2C_F0111_DOOR_PC34_C10_COLOR_FLESH, 10, A_C10);
-    ok &= expect_int("transparent.color", spec ? spec->transparent_color : -1,
-                     10, A_C10);
-    ok &= expect_int("transparent.color.matches_macro",
-                     spec ? spec->transparent_color ==
-                                CSB_V1_D2C_F0111_DOOR_PC34_C10_COLOR_FLESH : 0,
-                     1, A_C10);
-    ok &= expect_int("field.blit.copied",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_field_blit_pc34(
-                         spec, source, 4, destination, 4, 4, 3),
-                     7, A_C10);
-    ok &= expect_int("field.blit.transparent0", destination[0], 77, A_C10);
-    ok &= expect_int("field.blit.pixel1", destination[1], 1, A_C10);
-    ok &= expect_int("field.blit.transparent2", destination[2], 77, A_C10);
-    ok &= expect_int("field.blit.pixel3", destination[3], 2, A_C10);
-    ok &= expect_int("field.blit.pixel4", destination[4], 3, A_C10);
-    ok &= expect_int("field.blit.transparent5", destination[5], 77, A_C10);
-    ok &= expect_int("field.blit.pixel6", destination[6], 4, A_C10);
-    ok &= expect_int("field.blit.transparent7", destination[7], 77, A_C10);
-    ok &= expect_int("field.blit.pixel8", destination[8], 5, A_C10);
-    ok &= expect_int("field.blit.pixel9", destination[9], 6, A_C10);
-    ok &= expect_int("field.blit.transparent10", destination[10], 77, A_C10);
-    ok &= expect_int("field.blit.pixel11", destination[11], 7, A_C10);
-    ok &= expect_int("field.blit.reject_null_spec",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_field_blit_pc34(
+    ok &= expect_int("partial.shifts.flag", c ? c->partial_state_shifts_zone : 0,
+                     1, A_F0111);
+    ok &= expect_int("horizontal.mask",
+                     c ? c->horizontal_second_half_mask : -1, 0x4000, A_DEFS);
+    ok &= expect_int("horizontal.left_half.state2",
+                     csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
+                         c, 2, 0),
+                     3768, A_F0111);
+    ok &= expect_int("horizontal.right_half.state2",
+                     csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
+                         c, 2, 1),
+                     20149, A_F0111);
+    ok &= expect_int("horizontal.closed.reject",
+                     csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
+                         c, 4, 1),
+                     -1, A_F0111);
+    ok &= expect_int("transparent.macro",
+                     CSB_V1_D2C_F0111_DOOR_PC34_TRANSPARENT_COLOR, 10,
+                     A_DEFS);
+    ok &= expect_int("transparent.color", c ? c->transparent_color : -1, 10,
+                     A_DEFS);
+    ok &= expect_int("blit.copied",
+                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
+                         c, source, 4, destination, 4, 4, 3),
+                     8, A_F0111);
+    ok &= expect_int("blit.transparent0", destination[0], 77, A_DEFS);
+    ok &= expect_int("blit.pixel1", destination[1], 1, A_DEFS);
+    ok &= expect_int("blit.pixel2", destination[2], 2, A_DEFS);
+    ok &= expect_int("blit.transparent3", destination[3], 77, A_DEFS);
+    ok &= expect_int("blit.pixel4", destination[4], 3, A_DEFS);
+    ok &= expect_int("blit.pixel7", destination[7], 5, A_DEFS);
+    ok &= expect_int("blit.transparent10", destination[10], 77, A_DEFS);
+    ok &= expect_int("blit.pixel11", destination[11], 8, A_DEFS);
+    ok &= expect_int("blit.reject.null.contract",
+                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
                          NULL, source, 4, destination, 4, 4, 3),
-                     -1, A_C10);
-    ok &= expect_int("field.blit.reject_bad_stride",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_field_blit_pc34(
-                         spec, source, 3, destination, 4, 4, 3),
-                     -1, A_C10);
+                     -1, A_F0111);
+    ok &= expect_int("blit.reject.bad.stride",
+                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
+                         c, source, 3, destination, 4, 4, 3),
+                     -1, A_F0111);
 
     return ok;
 }
 
-static int test_lineage_and_evidence_anchors(void)
+static int test_f0128_and_noninterference(void)
 {
     int ok = 1;
-    const char *e = csb_v1_viewport_d2c_f0111_door_source_evidence_pc34();
-    const CSB_V1_ViewportD2CF0111DoorNonRouteSpecPc34 *spec =
-        csb_v1_viewport_d2c_f0111_door_non_route_spec_pc34();
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
 
-    ok &= expect_int("lineage.open.binding",
-                     spec ? spec->lineage_open_binding_present : 0, 1,
-                     A_LINEAGE);
-    ok &= expect_int("lineage.teleporter.binding",
-                     spec ? spec->lineage_teleporter_binding_present : 0, 1,
-                     A_LINEAGE);
-    ok &= expect_int("lineage.frame_blt.binding",
-                     spec ? spec->lineage_frame_blt_binding_present : 0, 1,
-                     A_LINEAGE);
-    ok &= expect_int("lineage.frame_rect.binding",
-                     spec ? spec->lineage_frame_rect_binding_present : 0, 1,
-                     A_LINEAGE);
+    ok &= expect_int("f0128.after.d2l.d2r",
+                     c ? c->f0128_dispatch_after_d2l_d2r : 0, 1, A_F0128);
+    ok &= expect_int("f0128.dispatches.d2c",
+                     c ? c->f0128_dispatches_d2c : 0, 1, A_F0128);
+    ok &= expect_int("f0128.before.d1",
+                     c ? c->f0128_dispatch_before_d1l_d1r_d1c : 0, 1,
+                     A_F0128);
+    ok &= expect_int("not.f0119.d2l", c ? c->uses_f0119_d2l : 1, 0,
+                     A_F0128);
+    ok &= expect_int("not.f0120.d2r", c ? c->uses_f0120_d2r : 1, 0,
+                     A_F0128);
+    ok &= expect_int("not.f0124.d1c", c ? c->uses_f0124_d1c : 1, 0,
+                     A_F0128);
+    ok &= expect_int("dungeon.f0163.noninterference",
+                     c ? c->dungeon_f0163_link_noninterference : 0, 1,
+                     A_DUNGEON);
+    ok &= expect_int("dungeon.f0164.noninterference",
+                     c ? c->dungeon_f0164_unlink_noninterference : 0, 1,
+                     A_DUNGEON);
+    ok &= expect_contains("f0128.anchor", c ? c->redmcsb_f0128_anchor : NULL,
+                          "8508-8533", A_F0128);
+    ok &= expect_contains("dungeon.anchor", c ? c->redmcsb_dungeon_anchor : NULL,
+                          "F0163/F0164", A_DUNGEON);
+
+    return ok;
+}
+
+static int test_evidence_strings(void)
+{
+    int ok = 1;
+    const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
+        csb_v1_viewport_d2c_f0111_door_pc34_contract();
+    const char *e = csb_v1_viewport_d2c_f0111_door_source_evidence_pc34();
+
+    ok &= expect_contains("defs.anchor.byte_count", c ? c->redmcsb_defs_anchor : NULL,
+                          "2159", A_DEFS);
+    ok &= expect_contains("defs.anchor.ornament", c ? c->redmcsb_defs_anchor : NULL,
+                          "2790", A_DEFS);
+    ok &= expect_contains("defs.anchor.zone", c ? c->redmcsb_defs_anchor : NULL,
+                          "4256", A_DEFS);
+    ok &= expect_contains("lineage.requested",
+                          c ? c->csb_lineage_viewport_anchor : NULL,
+                          "1903-1915", A_LINEAGE);
+    ok &= expect_contains("lineage.local",
+                          c ? c->csb_lineage_viewport_anchor : NULL,
+                          "1865-1879", A_LINEAGE);
     ok &= expect_contains("evidence.contract", e, "Source-locked contract gate only",
                           A_F0121);
     ok &= expect_contains("evidence.f0121", e, "DUNVIEW.C:7244-7389",
                           A_F0121);
-    ok &= expect_contains("evidence.wall_return", e, "DUNVIEW.C:7289-7312",
-                          A_WALL_RETURN);
-    ok &= expect_contains("evidence.c01_c05", e, "C05/C01 no-wall", A_F0121);
-    ok &= expect_contains("evidence.no_f0100", e, "excludes F0100", A_F0121);
-    ok &= expect_contains("evidence.no_f0105", e, "F0105", A_F0121);
-    ok &= expect_contains("evidence.no_f0107", e, "F0107", A_F0121);
-    ok &= expect_contains("evidence.no_f0111", e, "F0111", A_WALL_RETURN);
-    ok &= expect_contains("evidence.c09", e, "C09_WALL_D2C", A_C09);
-    ok &= expect_contains("evidence.c707", e, "C707_ZONE_WALL_D2C", A_C707);
-    ok &= expect_contains("evidence.c709", e, "C709_ZONE_WALL_D2C", A_C709);
-    ok &= expect_contains("evidence.c3700", e, "C3700_ZONE_DOOR_D3L2",
-                          A_C3700);
-    ok &= expect_contains("evidence.c10", e, "C10_COLOR_FLESH", A_C10);
-    ok &= expect_contains("evidence.coord", e, "COORD.C:1556-1559", A_COORD);
-    ok &= expect_contains("evidence.lineage_open", e, "Viewport.cpp:1151-1156",
+    ok &= expect_contains("evidence.branch", e, "DUNVIEW.C:7313-7341",
+                          A_D2C_DOOR);
+    ok &= expect_contains("evidence.f0111", e, "DUNVIEW.C:4218-4337",
+                          A_F0111);
+    ok &= expect_contains("evidence.bitmap", e,
+                          "G0694_ai_DoorNativeBitmapIndex_Front_D2LCR",
+                          A_D2C_DOOR);
+    ok &= expect_contains("evidence.byte_count", e,
+                          "M075_BITMAP_BYTE_COUNT(64, 61)", A_D2C_DOOR);
+    ok &= expect_contains("evidence.ornament", e,
+                          "C1_VIEW_DOOR_ORNAMENT_D2LCR", A_DEFS);
+    ok &= expect_contains("evidence.frame", e,
+                          "G0183_s_Graphic558_Frames_Door_D2C", A_D2C_DOOR);
+    ok &= expect_contains("evidence.zone", e, "M628_ZONE_DOOR_D2C", A_DEFS);
+    ok &= expect_contains("evidence.f0128", e, "DUNVIEW.C:8508-8533",
+                          A_F0128);
+    ok &= expect_contains("evidence.no_f0119", e, "does not use F0119",
+                          A_F0128);
+    ok &= expect_contains("evidence.no_f0120", e, "F0120", A_F0128);
+    ok &= expect_contains("evidence.no_f0124", e, "F0124", A_F0128);
+    ok &= expect_contains("evidence.lineage", e, "Viewport.cpp:1903-1915",
                           A_LINEAGE);
-    ok &= expect_contains("evidence.lineage_teleporter", e,
-                          "Viewport.cpp:1414-1420", A_LINEAGE);
-    ok &= expect_contains("evidence.frame_binding", e, "frame-blt/frame-rect",
-                          A_LINEAGE);
+    ok &= expect_contains("evidence.dungeon", e, "DUNGEON.C:F0163/F0164",
+                          A_DUNGEON);
 
     return ok;
 }
@@ -321,20 +342,21 @@ int main(void)
     printf("sourceEvidence=%s\n",
            csb_v1_viewport_d2c_f0111_door_source_evidence_pc34());
 
-    ok &= test_f0121_d2c_identity();
-    ok &= test_d2c_wall_case_rejects_f0111_c3700_panel();
-    ok &= test_c01_c05_no_wall_path_excludes_door_panel();
-    ok &= test_c3700_coord_path_is_metadata_only_for_d2c();
-    ok &= test_c10_transparency_for_no_wall_field_path();
-    ok &= test_lineage_and_evidence_anchors();
+    ok &= test_identity_and_scope();
+    ok &= test_d2c_f0111_call_contract();
+    ok &= test_frame_button_and_pass_order();
+    ok &= test_f0111_state_zone_contract();
+    ok &= test_horizontal_half_and_c10_blit();
+    ok &= test_f0128_and_noninterference();
+    ok &= test_evidence_strings();
+    ok &= expect_int("assertion_count_at_least_40", g_assertions >= 40, 1,
+                     A_D2C_DOOR);
 
-    printf("assertions=%d\n", g_assertions);
-    ok &= expect_int("assertion_count_at_least_60", g_assertions >= 60, 1,
-                     A_F0121);
-
-    if (ok) {
-        printf("PASS csb_v1_viewport_d2c_f0111_door_pc34_compat assertions=%d\n",
+    printf("assertions=%d failures=%d\n", g_assertions, g_failures);
+    if (ok && g_failures == 0) {
+        printf("PASS csb_v1_viewport_d2c_f0111_door_pc34_compat assertions=%d failures=0\n",
                g_assertions);
     }
-    return ok ? 0 : 1;
+
+    return (ok && g_failures == 0) ? 0 : 1;
 }
