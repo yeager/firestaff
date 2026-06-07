@@ -718,6 +718,20 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_status_states_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel status-recompute runtime integration probe.
+# Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
+# food/water/poison panel visible-delta spec against the M11 draw stack
+# using real GRAPHICS.DAT assets, plus the party HUD top-row layout
+# invariant from layout-696 C151..C154 (stride 69, width 67, height 29).
+add_executable(firestaff_dm1_v1_champion_panel_recompute_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_recompute_runtime_probe.c
+    src/dm1/dm1_v1_champion_panel_status_recompute_pc34_compat.c
+    src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_recompute_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_recompute_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
@@ -3917,6 +3931,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_status_states_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_status_states_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_recompute_runtime
+        COMMAND firestaff_dm1_v1_champion_panel_recompute_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_recompute_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
