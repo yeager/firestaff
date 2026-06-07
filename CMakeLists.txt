@@ -92,6 +92,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d3c_center_field_pc34_com
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d3c_center_field_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat.c
@@ -5070,6 +5074,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat.c
     )
+    add_executable(firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test
+        tests/test_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     target_link_libraries(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
@@ -5158,6 +5166,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE -Wall -Wextra -O2)
@@ -5183,6 +5197,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d1c_center_field_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v1_viewport_3d_source_lock
@@ -5283,6 +5298,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d1c_stairs_pit_dispatch_source_lock
         COMMAND test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat
+    )
+    add_test(
+        NAME firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test
+        COMMAND firestaff_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat_test
     )
     if(Python3_Interpreter_FOUND)
         add_test(
