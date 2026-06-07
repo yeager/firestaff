@@ -136,6 +136,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_inventory_chest_drop_to_floor_pc34
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_inventory_chest_drop_to_floor_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_same_open_noop_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_chest_same_open_noop_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_link_corruption_recovery_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
@@ -2671,6 +2675,19 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_open_while_another_open_source_lock
         COMMAND test_dm1_v1_chest_open_while_another_open_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_chest_same_open_noop_pc34_compat
+        tests/test_dm1_v1_chest_same_open_noop_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_same_open_noop_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_chest_same_open_noop_pc34_compat PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_same_open_noop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_same_open_noop_pc34_compat
+        COMMAND test_dm1_v1_chest_same_open_noop_pc34_compat
     )
 
     add_executable(test_dm1_v1_chest_multi_champion_close_pc34_compat
