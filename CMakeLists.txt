@@ -758,6 +758,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_status_states_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion icon direction-swap runtime pixel gate.
+# Locks the M026_CHAMPION_ICON_INDEX(Direction, PartyDirection) macro
+# against the C028 4x19x14 champion-icon strip: when the party rotates
+# from N to E, the four C113..C116 icon zones must select the
+# (championDir - partyDir) & 0x03 cell of the C028 GRAPHICS.DAT asset
+# with the C12 transparent mask honored.
+add_executable(firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel status-recompute runtime integration probe.
 # Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
 # food/water/poison panel visible-delta spec against the M11 draw stack
