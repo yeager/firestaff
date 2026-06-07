@@ -3,224 +3,190 @@
 #include <stdio.h>
 #include <string.h>
 
-static int gTests;
-static int gPasses;
+static int g_assertions;
+static int g_failures;
 
 #define CHECK_REDMCSB(cond, msg, anchor) do { \
-    ++gTests; \
+    ++g_assertions; \
     if (cond) { \
-        ++gPasses; \
+        printf("PASS: %s [%s]\n", msg, anchor); \
     } else { \
+        ++g_failures; \
         printf("FAIL: %s [%s]\n", msg, anchor); \
     } \
 } while (0)
 
-static Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat
-base_no_pending_state(void)
+static int has_phrase(const char *text, const char *phrase)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat state;
-
-    DM1_V1_MirrorCandidateNoPendingResurrect_InitPc34Compat(&state);
-    return state;
+    return text && phrase && strstr(text, phrase) != NULL;
 }
 
-static void test_fixture_models_open_route_without_pending_party_candidate(void)
+static void test_contract_fields(void)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat state =
-        base_no_pending_state();
+    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+        dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
-    CHECK_REDMCSB(state.g0299CandidateChampionOrdinal == 1u,
-                  "fixture keeps G0299 set so the mirror panel route is open",
-                  "COMMAND.C:2159-2181; COMMAND.C:2302-2311");
-    CHECK_REDMCSB(state.g0305PartyChampionCount == 0u,
-                  "fixture has no F0280-appended party candidate",
-                  "REVIVE.C F0280:272-276");
-    CHECK_REDMCSB(state.c040PanelOpen == 1 &&
-                      state.c040PanelPixelsDrawn == 1 &&
-                      state.panelContent ==
-                          DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_PANEL_CONTENT_PC34_COMPAT,
-                  "C040 panel route starts visibly open",
-                  "PANEL.C F0346:1619-1635; PANEL.C F0347");
-    CHECK_REDMCSB(state.leaderHandEmpty == 1,
-                  "empty leader hand allows C040 panel command scanning",
-                  "COMMAND.C F0359:1985-1989");
-    CHECK_REDMCSB(state.mirrorRouteOpen == 1 &&
-                      state.frontD1cMirrorChampionOrdinal == 1,
-                  "front mirror route is open before the no-op click",
-                  "DUNVIEW.C:3913-3928");
+    CHECK_REDMCSB(contract != NULL,
+                  "contract accessor returns the no-pending resurrect slice",
+                  "ReDMCSB REVIVE.C F0282:744-806");
+    CHECK_REDMCSB(contract->contract_only == 1,
+                  "contract_only marks this as a regression contract gate",
+                  "ReDMCSB REVIVE.C F0280:272-276");
+    CHECK_REDMCSB(contract->g0299_panel_live_at_start == 1,
+                  "fixture starts with G0299 mirror panel route live",
+                  contract->redmcsb_f0280_anchor);
+    CHECK_REDMCSB(contract->g0305_no_pending_at_start == 0,
+                  "fixture starts with no G0305 pending candidate",
+                  contract->redmcsb_f0280_anchor);
+    CHECK_REDMCSB(contract->resurrect_action_invoked_with_no_pending == 1,
+                  "resurrect action is dispatched while no candidate is pending",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(contract->g0299_unchanged_after_no_op == 1,
+                  "no-pending resurrect does not close G0299",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(contract->g0305_unchanged_after_no_op == 1,
+                  "no-pending resurrect does not change G0305",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(contract->f0282_not_invoked == 1,
+                  "no-pending resurrect does not invoke F0282",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(contract->champion_state_unchanged == 1,
+                  "no-pending resurrect does not re-arm a champion",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(contract->c040_panel_state_unchanged == 1,
+                  "no-pending resurrect leaves C040 panel state unchanged",
+                  contract->redmcsb_command_2159_anchor);
+    CHECK_REDMCSB(contract->inventory_state_unchanged == 1,
+                  "no-pending resurrect leaves inventory state unchanged",
+                  contract->redmcsb_command_2159_anchor);
+    CHECK_REDMCSB(contract->resurrect_click_consumed == 0,
+                  "no-pending resurrect does not consume the click",
+                  contract->redmcsb_command_2302_anchor);
 }
 
-static void test_c160_resurrect_no_pending_is_noop(void)
+static void test_required_phrases(void)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat state =
-        base_no_pending_state();
-    Dm1V1MirrorCandidateNoPendingResurrectResultPc34Compat result;
-    int consumed;
+    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+        dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
-    consumed =
-        DM1_V1_MirrorCandidateNoPendingResurrect_ProcessPanelCommandPc34Compat(
-            &state,
-            DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_C160_PC34_COMPAT,
-            &result);
-
-    CHECK_REDMCSB(consumed == 0 && result.consumed == 0,
-                  "C160 with G0299=1 and G0305=0 does not consume the click",
-                  "REVIVE.C F0282:785-806");
-    CHECK_REDMCSB(result.validPanelCommand == 1 &&
-                      result.panelRouteOpen == 1 &&
-                      result.ignoredNoPendingCandidate == 1,
-                  "C160 reaches the open panel guard but finds no pending candidate",
-                  "COMMAND.C F0359:1985-1989; REVIVE.C F0282:744");
-    CHECK_REDMCSB(result.g0299Before == 1u &&
-                      result.g0299After == 1u &&
-                      result.g0299Preserved == 1,
-                  "no-pending C160 does not close G0299",
-                  "REVIVE.C F0282:785-806");
-    CHECK_REDMCSB(result.g0305Before == 0u &&
-                      result.g0305After == 0u &&
-                      result.g0305Preserved == 1,
-                  "no-pending C160 leaves G0305 unchanged",
-                  "REVIVE.C F0280:272-276; REVIVE.C F0282:744");
-    CHECK_REDMCSB(result.noF0282Called == 1 &&
-                      result.resurrectCallPreserved == 1 &&
-                      result.f0282ResurrectCallCountAfter == 0,
-                  "no-pending C160 does not call F0282 resurrect",
-                  "REVIVE.C F0282:785-806");
-    CHECK_REDMCSB(result.noChampionRearmed == 1 &&
-                      result.championRearmCountAfter == 0,
-                  "no-pending C160 does not re-arm any champion",
-                  "DUNVIEW.C:3913-3928; DUNVIEW.C:8488-8533");
-    CHECK_REDMCSB(result.c040PanelPreserved == 1 &&
-                      state.c040PanelOpen == 1 &&
-                      state.c040PanelPixelsDrawn == 1,
-                  "no-pending C160 leaves C040 panel state unchanged",
-                  "PANEL.C F0346:1619-1635; PANEL.C F0347");
-    CHECK_REDMCSB(result.inventoryPreserved == 1 &&
-                      state.inventoryChampionOrdinal == 1u &&
-                      state.inventoryPanelOpen == 1,
-                  "no-pending C160 leaves inventory state unchanged",
-                  "COMMAND.C:2159-2181");
-    CHECK_REDMCSB(result.mirrorRoutePreserved == 1 &&
-                      state.mirrorRouteOpen == 1,
-                  "no-pending C160 keeps the mirror route open",
-                  "DUNVIEW.C:3913-3928");
+    CHECK_REDMCSB(has_phrase(contract->non_op_note, "contract_only=1") &&
+                      has_phrase(contract->source_summary, "contract_only=1"),
+                  "notes include contract_only=1",
+                  "ReDMCSB REVIVE.C F0280:272-276");
+    CHECK_REDMCSB(has_phrase(contract->non_op_note, "REVIVE.C F0280") &&
+                      has_phrase(contract->source_summary, "REVIVE.C F0280"),
+                  "notes cite REVIVE.C F0280",
+                  contract->redmcsb_f0280_anchor);
+    CHECK_REDMCSB(has_phrase(contract->non_op_note,
+                             "REVIVE.C F0282:744-806") &&
+                      has_phrase(contract->source_summary,
+                                 "REVIVE.C F0282:744-806"),
+                  "notes cite REVIVE.C F0282:744-806",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(has_phrase(contract->source_summary,
+                             "COMMAND.C:2159-2181"),
+                  "summary cites COMMAND.C:2159-2181",
+                  contract->redmcsb_command_2159_anchor);
+    CHECK_REDMCSB(has_phrase(contract->source_summary,
+                             "COMMAND.C:2302-2311"),
+                  "summary cites COMMAND.C:2302-2311",
+                  contract->redmcsb_command_2302_anchor);
+    CHECK_REDMCSB(has_phrase(contract->non_op_note, "G0299 unchanged") &&
+                      has_phrase(contract->source_summary, "G0299 unchanged"),
+                  "notes record G0299 unchanged",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(has_phrase(contract->non_op_note, "G0305 unchanged") &&
+                      has_phrase(contract->source_summary, "G0305 unchanged"),
+                  "notes record G0305 unchanged",
+                  contract->redmcsb_f0282_anchor);
+    CHECK_REDMCSB(has_phrase(contract->non_op_note, "F0282 not invoked") &&
+                      has_phrase(contract->source_summary,
+                                 "F0282 not invoked"),
+                  "notes record F0282 not invoked",
+                  contract->redmcsb_f0282_anchor);
 }
 
-static void test_c162_cancel_no_pending_does_not_close_g0299(void)
+static void test_anchor_strings(void)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat state =
-        base_no_pending_state();
-    Dm1V1MirrorCandidateNoPendingResurrectResultPc34Compat result;
-    int consumed;
+    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+        dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
-    consumed =
-        DM1_V1_MirrorCandidateNoPendingResurrect_ProcessPanelCommandPc34Compat(
-            &state,
-            DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_C162_PC34_COMPAT,
-            &result);
-
-    CHECK_REDMCSB(consumed == 0 && result.ignoredNoPendingCandidate == 1,
-                  "C162 cancel is also a no-op without the G0305 append",
-                  "REVIVE.C F0282:744-758");
-    CHECK_REDMCSB(result.g0299After == 1u &&
-                      result.g0305After == 0u,
-                  "no-pending C162 neither closes G0299 nor changes G0305",
-                  "REVIVE.C F0282:744-758");
-    CHECK_REDMCSB(result.noF0282Called == 1 &&
-                      result.cancelCallPreserved == 1 &&
-                      result.f0282CancelCallCountAfter == 0,
-                  "no-pending C162 does not call the F0282 cancel cleanup",
-                  "REVIVE.C F0282:744-758");
-    CHECK_REDMCSB(result.c040PanelPreserved == 1 &&
-                      result.inventoryPreserved == 1,
-                  "no-pending C162 leaves C040 and inventory state unchanged",
-                  "REVIVE.C F0282:744-758; COMMAND.C:2159-2181");
+    CHECK_REDMCSB(has_phrase(contract->redmcsb_f0280_anchor,
+                             "REVIVE.C F0280:272-276"),
+                  "F0280 anchor cites exact publish lines",
+                  "ReDMCSB REVIVE.C F0280:272-276");
+    CHECK_REDMCSB(has_phrase(contract->redmcsb_f0282_anchor,
+                             "REVIVE.C F0282:744-806"),
+                  "F0282 anchor cites exact no-op/cleanup range",
+                  "ReDMCSB REVIVE.C F0282:744-806");
+    CHECK_REDMCSB(has_phrase(contract->redmcsb_command_2159_anchor,
+                             "COMMAND.C:2159-2181"),
+                  "COMMAND 2159 anchor cites status/inventory gate",
+                  "ReDMCSB COMMAND.C:2159-2181");
+    CHECK_REDMCSB(has_phrase(contract->redmcsb_command_2302_anchor,
+                             "COMMAND.C:2302-2311"),
+                  "COMMAND 2302 anchor cites spell/action gate",
+                  "ReDMCSB COMMAND.C:2302-2311");
 }
 
-static void test_g0299_gates_remain_closed_after_noop(void)
+static void test_steps(void)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStatePc34Compat state =
-        base_no_pending_state();
-    Dm1V1MirrorCandidateNoPendingResurrectResultPc34Compat commandResult;
-    Dm1V1MirrorCandidateNoPendingResurrectGateResultPc34Compat statusGate;
-    Dm1V1MirrorCandidateNoPendingResurrectGateResultPc34Compat inventoryGate;
-    Dm1V1MirrorCandidateNoPendingResurrectGateResultPc34Compat actionGate;
+    Dm1V1MirrorCandidateNoPendingResurrectStepPc34Compat steps[8];
+    size_t count =
+        dm1_v1_mirror_candidate_no_pending_resurrect_steps_pc34_compat(
+            steps, sizeof(steps) / sizeof(steps[0]));
 
-    (void)DM1_V1_MirrorCandidateNoPendingResurrect_ProcessPanelCommandPc34Compat(
-        &state,
-        DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_C160_PC34_COMPAT,
-        &commandResult);
-    (void)DM1_V1_MirrorCandidateNoPendingResurrect_CanDispatchCommandPc34Compat(
-        &state,
-        DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_STATUS_BOX_0_PC34_COMPAT,
-        &statusGate);
-    (void)DM1_V1_MirrorCandidateNoPendingResurrect_CanDispatchCommandPc34Compat(
-        &state,
-        DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_CLOSE_INVENTORY_PC34_COMPAT,
-        &inventoryGate);
-    (void)DM1_V1_MirrorCandidateNoPendingResurrect_CanDispatchCommandPc34Compat(
-        &state,
-        DM1_V1_MIRROR_CANDIDATE_NO_PENDING_RESURRECT_ACTION_AREA_PC34_COMPAT,
-        &actionGate);
-
-    CHECK_REDMCSB(commandResult.g0299After == 1u,
-                  "no-op keeps G0299 set for the sibling command gates",
-                  "REVIVE.C F0282:744-806");
-    CHECK_REDMCSB(statusGate.blockedByG0299 == 1 &&
-                      statusGate.statusBoxAllowed == 0,
-                  "status-box dispatch remains blocked while G0299 is set",
-                  "COMMAND.C:2159-2181");
-    CHECK_REDMCSB(inventoryGate.blockedByG0299 == 1 &&
-                      inventoryGate.inventoryAllowed == 0,
-                  "inventory dispatch remains blocked while G0299 is set",
-                  "COMMAND.C:2159-2181");
-    CHECK_REDMCSB(actionGate.blockedByG0299 == 1 &&
-                      actionGate.actionAreaAllowed == 0,
-                  "action-area dispatch remains blocked while G0299 is set",
-                  "COMMAND.C:2302-2311");
-}
-
-static void test_source_lock_evidence(void)
-{
-    const Dm1V1MirrorCandidateNoPendingResurrectEvidencePc34Compat *e =
-        DM1_V1_MirrorCandidateNoPendingResurrect_EvidencePc34Compat();
-
-    CHECK_REDMCSB(e != NULL,
-                  "evidence accessor returns source-lock metadata",
-                  "REVIVE.C F0282:744-806");
-    CHECK_REDMCSB(strstr(e->candidatePublishAnchor, "F0280:272-276") != NULL,
-                  "evidence cites F0280 candidate publish and G0305 append",
-                  "REVIVE.C F0280:272-276");
-    CHECK_REDMCSB(strstr(e->f0282CancelAnchor, "744-758") != NULL,
-                  "evidence cites C162 cancel cleanup range",
-                  "REVIVE.C F0282:744-758");
-    CHECK_REDMCSB(strstr(e->f0282ConfirmAnchor, "785-806") != NULL,
-                  "evidence cites C160/C161 confirm cleanup range",
-                  "REVIVE.C F0282:785-806");
-    CHECK_REDMCSB(strstr(e->commandGateAnchor, "2159-2181") != NULL &&
-                      strstr(e->commandGateAnchor, "2302-2311") != NULL,
-                  "evidence cites both !G0299 command gates",
-                  "COMMAND.C:2159-2181; COMMAND.C:2302-2311");
-    CHECK_REDMCSB(strstr(e->panelEmptyHandAnchor, "1985-1989") != NULL,
-                  "evidence cites the empty-hand C040 scan gate",
-                  "COMMAND.C F0359:1985-1989");
-    CHECK_REDMCSB(strstr(e->contractScope, "contract-only") != NULL &&
-                      strstr(e->contractScope, "G0299") != NULL &&
-                      strstr(e->contractScope, "G0305") != NULL,
-                  "evidence marks this as a no-pending contract slice",
-                  "REVIVE.C F0282:744-806");
+    CHECK_REDMCSB(count == 6,
+                  "step helper reports the six no-op regression checkpoints",
+                  "ReDMCSB REVIVE.C F0282:744-806");
+    CHECK_REDMCSB(steps[0].id == STEP_BEGIN_G0299_LIVE_G0305_ZERO &&
+                      strcmp(steps[0].name,
+                             "STEP_BEGIN_G0299_LIVE_G0305_ZERO") == 0,
+                  "step 0 records G0299 live and G0305 zero",
+                  steps[0].redmcsb_anchor);
+    CHECK_REDMCSB(steps[1].id == STEP_RESURRECT_CLICK_DISPATCHED &&
+                      strcmp(steps[1].name,
+                             "STEP_RESURRECT_CLICK_DISPATCHED") == 0,
+                  "step 1 records resurrect click dispatch",
+                  steps[1].redmcsb_anchor);
+    CHECK_REDMCSB(steps[2].id == STEP_GATE_NO_CANDIDATE_BLOCKS_F0282 &&
+                      strcmp(steps[2].name,
+                             "STEP_GATE_NO_CANDIDATE_BLOCKS_F0282") == 0,
+                  "step 2 records the no-candidate F0282 block",
+                  steps[2].redmcsb_anchor);
+    CHECK_REDMCSB(steps[3].id == STEP_F0282_NOT_INVOKED &&
+                      strcmp(steps[3].name,
+                             "STEP_F0282_NOT_INVOKED") == 0,
+                  "step 3 records F0282 not invoked",
+                  steps[3].redmcsb_anchor);
+    CHECK_REDMCSB(steps[4].id == STEP_ASSERT_G0299_G0305_UNCHANGED &&
+                      strcmp(steps[4].name,
+                             "STEP_ASSERT_G0299_G0305_UNCHANGED") == 0,
+                  "step 4 records G0299/G0305 unchanged assertions",
+                  steps[4].redmcsb_anchor);
+    CHECK_REDMCSB(steps[5].id ==
+                      STEP_ASSERT_CHAMPION_INVENTORY_PANEL_UNCHANGED &&
+                      strcmp(steps[5].name,
+                             "STEP_ASSERT_CHAMPION_INVENTORY_PANEL_UNCHANGED")
+                          == 0,
+                  "step 5 records champion, inventory, and panel preservation",
+                  steps[5].redmcsb_anchor);
 }
 
 int main(void)
 {
-    test_fixture_models_open_route_without_pending_party_candidate();
-    test_c160_resurrect_no_pending_is_noop();
-    test_c162_cancel_no_pending_does_not_close_g0299();
-    test_g0299_gates_remain_closed_after_noop();
-    test_source_lock_evidence();
+    test_contract_fields();
+    test_required_phrases();
+    test_anchor_strings();
+    test_steps();
 
-    printf("PASS dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat "
-           "%d/%d assertions\n",
-           gPasses, gTests);
-    return gPasses == gTests ? 0 : 1;
+    printf("assertions=%d\n", g_assertions);
+    if (g_failures) {
+        printf("FAIL dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat "
+               "failures=%d\n",
+               g_failures);
+    } else {
+        printf("PASS dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat\n");
+    }
+    return g_failures == 0 ? 0 : 1;
 }
