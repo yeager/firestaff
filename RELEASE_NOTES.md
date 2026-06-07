@@ -78,7 +78,7 @@ Patch release focused on regression coverage, cross-platform test harness fixes,
 ## Verification
 
 - GitHub Actions verify workflow passed on Ubuntu, macOS, and Windows.
-- CMake build, strict warnings, Phase A, audio smoke, web/WASM probe, and cross-platform determinism passed on `main`.
+- CMake build, strict warnings, Phase A, audio smoke, and cross-platform determinism passed on `main`.
 - Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
 
 ---
