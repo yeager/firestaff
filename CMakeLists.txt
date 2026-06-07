@@ -60,6 +60,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1c_f0111_door_pc34_compa
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1c_f0115_door_frame_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat.c
@@ -120,6 +124,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_link_corruption_recovery_pc3
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_empty_party_group_cleanup_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_chest_empty_party_group_cleanup_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat.c
@@ -139,6 +147,10 @@ list(APPEND M10_SOURCES
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
+)
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_damage_indicator_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
 )
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
@@ -1756,6 +1768,22 @@ if(BUILD_TESTING)
         COMMAND firestaff_csb_v1_viewport_d1c_f0111_door_pc34_compat_test
     )
 
+    add_executable(firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test
+        tests/test_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
+    )
+    target_link_libraries(firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test
+        COMMAND firestaff_csb_v1_viewport_d1c_f0115_door_frame_pc34_compat_test
+    )
+
     add_executable(test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat
         tests/test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat.c
         src/csb/csb_v1_viewport_d2l2_f0115_projectile_pc34_compat.c
@@ -2292,6 +2320,20 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
         COMMAND firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
+    )
+
+    add_executable(firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test
+        tests/test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat.c
+        src/dm1/dm1_v1_chest_empty_party_group_cleanup_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_empty_party_group_cleanup_pc34_compat
+        COMMAND firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test
     )
 
     add_executable(test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
@@ -3452,6 +3494,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_champion_panel_all_states_source_lock
         COMMAND test_dm1_v1_champion_panel_all_states_pc34_compat
+    )
+    add_executable(firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test
+        tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_damage_indicator_source_lock
+        COMMAND firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test
     )
     add_executable(test_dm1_v1_champion_panel_status_recompute_pc34_compat
         tests/test_dm1_v1_champion_panel_status_recompute_pc34_compat.c
