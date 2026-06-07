@@ -132,6 +132,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_empty_party_group_cleanup_pc
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_empty_party_group_cleanup_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_inventory_panel_hand_status_box_route_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_inventory_panel_hand_status_box_route_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat.c
@@ -2408,6 +2412,20 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_empty_party_group_cleanup_pc34_compat
         COMMAND firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test
+    )
+
+    add_executable(firestaff_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat_test
+        tests/test_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat.c
+        src/dm1/dm1_v1_inventory_panel_hand_status_box_route_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat_test PRIVATE firestaff_m10)
+    target_include_directories(firestaff_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat_test PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_panel_hand_status_box_route_pc34_compat
+        COMMAND firestaff_dm1_v1_inventory_panel_hand_status_box_route_pc34_compat_test
     )
 
     add_executable(test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
