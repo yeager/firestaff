@@ -739,6 +739,19 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 Hall champion mirror D1C Z-order re-blt pixel gate.
+# Extends the static-pose zorder probe with a sequential 4-direction turn at
+# the (1,4) D1C route that pixel-proves the previous ordinal's pixels are
+# cleared from the portrait rect when the party turns to a no-portrait
+# side pose or to a different front ordinal (DUNVIEW.C:3913-3928,
+# 8522-8533; MOVESENS.C:556).
+add_executable(firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel/status-box runtime pixel gate.
 add_executable(firestaff_dm1_v1_champion_panel_pixels_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_panel_pixels_runtime_probe.c)
