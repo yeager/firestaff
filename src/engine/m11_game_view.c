@@ -281,6 +281,10 @@ enum {
     M11_QUICKSAVE_HEADER_SIZE = 16
 };
 
+enum {
+    M11_QUICKSAVE_EXPLORED_BITS_COUNT = 32,
+};
+
 /* DM1 action-hand icon cell geometry (duplicated as forward decls
  * for M11_GameView_HandlePointer, which needs these before the
  * #defines that originally introduced them near the drawing code
@@ -309,6 +313,79 @@ enum {
 static const unsigned char g_m11_quicksave_magic[8] = {
     'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
 };
+
+static int m11_build_quicksave_sidecar_path(const char *path,
+                                            char *out,
+                                            size_t out_size)
+{
+    int rc;
+
+    if (!path || !path[0] || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s.explored", path);
+    return (rc > 0 && rc < (int)out_size) ? 1 : 0;
+}
+
+static int m11_write_quicksave_explored_bits(const M11_GameViewState *state,
+                                             const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    FILE *file;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_sidecar_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "wb");
+    if (!file) {
+        return 0;
+    }
+    if (fwrite(state->exploredBits, 1U, sizeof(state->exploredBits), file) !=
+        sizeof(state->exploredBits)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_load_quicksave_explored_bits(M11_GameViewState *state,
+                                            const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    FILE *file;
+    uint32_t explored[M11_QUICKSAVE_EXPLORED_BITS_COUNT];
+    size_t readCount;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_sidecar_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "rb");
+    if (!file) {
+        return 0;
+    }
+    readCount = fread(explored, 1U, sizeof(explored), file);
+    if (readCount != sizeof(explored)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+
+    memcpy(state->exploredBits, explored, sizeof(explored));
+    return 1;
+}
 
 typedef struct {
     char ch;
@@ -6447,6 +6524,11 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
 
+    /* ReDMCSB LOADSAVE.C:2721-2731 restores the party position and facing.
+     * Firestaff keeps the explored-cell presentation state in a sidecar so
+     * quick-resume can restore reveal progress alongside the source-locked
+     * world blob. */
+    m11_mark_explored(state);
     blobSize = F0899_WORLD_SerializedSize_Compat(&state->world);
     if (blobSize <= 0) {
         m11_set_status(state, "SAVE", "SERIALISE SIZE FAILED");
@@ -6484,6 +6566,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     }
     free(blob);
 
+    if (!m11_write_quicksave_explored_bits(state, path)) {
+        m11_set_status(state, "SAVE", "EXPLORED STATE FAILED");
+        return 0;
+    }
     m11_set_status(state, "SAVE", "QUICKSAVE WRITTEN");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SAVE SLOT READY");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -6575,6 +6661,7 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     state->world = loadedWorld;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
+    (void)m11_load_quicksave_explored_bits(state, path);
     m11_mark_explored(state);
     /* G0319_ul_LoadGameTime / G2018_ul_LastSaveTime mirror
      * (ReDMCSB LOADSAVE.C:2724).  After a load, both anchors point at the
