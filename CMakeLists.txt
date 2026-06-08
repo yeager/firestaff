@@ -1171,6 +1171,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_partial_party_pixel_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel zero-party repaint runtime pixel gate.
+# Renders a populated four-champion HUD/status box/action-icon frame,
+# then redraws a zero-champion party into the same framebuffer and proves
+# the C151..C154/C113..C116/C089..C092/status-hand zones are cleared.
+add_executable(firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
@@ -5790,6 +5801,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_leader_rotation_pixel_slice PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_zero_party_repaint_runtime
+        COMMAND firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_zero_party_repaint_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 

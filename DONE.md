@@ -28,6 +28,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ 2026-06-08 18:24 — broadened `firestaff_dm1_v1_champion_panel_pixels_runtime_probe` with a real-asset runtime HUD spacing slice: after drawing the deterministic four-champion DM1 V1 panel, the C151..C154 67x29 status boxes must keep their source-layout two-pixel black gutters across the 69px stride, without claiming original DOS screenshot parity.
 - ✅ 2026-06-08 18:31 — extended `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat` so the live C071 eye route proves a named Staff of Claws plus cursed/poisoned/broken/charge metadata reaches the runtime object-description panel state, beyond the previous generic weapon body check.
 - ✅ 2026-06-08 18:59 — hardened the DM1 V1 same-open chest regression so the replacing-current helper now preserves ReDMCSB `CHEST.C F0333:28-32` panel-content ordering: `M569_PANEL_CHEST` is restored before the same-open early return without closing, compacting, or re-materializing the sparse C537..C544 chest view.
+- ✅ 2026-06-09 00:21 — added `firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe`, a real-asset DM1 V1 runtime pixel gate that renders a four-champion HUD/status-box/action-icon frame, redraws a zero-champion party into the same framebuffer, and proves the C151..C154 status boxes, C113..C116 champion icons, C089..C092 action cells, stat bars, and status-hand slots are cleared without claiming original DOS parity.
 
 ## Legend
 
