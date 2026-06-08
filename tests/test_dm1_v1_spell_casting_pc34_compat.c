@@ -174,150 +174,6 @@ static void test_insufficient_mana(void) {
     assert(stats.currentHealth == 50);
     assert(stats.wisdom == 40);
 
-    stats = makeStats(12, 100, 50, 40);
-    stats.skillLevels[DM1_SKILL_FIRE] = 7;
-    stats.skillLevels[DM1_SKILL_WIZARD] = 3;
-    s.magicCasterIndex = 0;
-    s.input[1].symbolStep = 1;
-    s.input[1].symbols[0] = dm1_encodeSymbol(0, DM1_POWER_MON);
-    s.input[1].symbols[1] = '\0';
-
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
-    assert(stats.currentMana == 6);
-    assert(s.input[0].symbolStep == 2);
-    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, DM1_POWER_LO));
-    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, DM1_ELEM_FUL));
-    assert(s.input[0].symbols[2] == '\0');
-
-    {
-        DM1_ChampionSpellInput beforeInput = s.input[0];
-        DM1_ChampionSpellInput beforeOtherInput = s.input[1];
-        DM1_ChampionSpellStats beforeStats = stats;
-        int beforeCaster = s.magicCasterIndex;
-        int expectedClassCost = dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR);
-        const DM1_Spell* beforeSpell = dm1_spell_lookup(&s, 0);
-
-        assert(expectedClassCost == 7);
-        assert(beforeSpell == &dm1_spells[7]);  /* Lo Ful / Torch */
-        /* ReDMCSB SYMBOL.C F0399 lines 20-39 mutates mana, Symbols[], and
-         * SymbolStep only inside `if (ManaCost <= CurrentMana)`. */
-        assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 0);
-        assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
-        assert(memcmp(&s.input[1], &beforeOtherInput, sizeof(beforeOtherInput)) == 0);
-        assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
-        assert(s.magicCasterIndex == beforeCaster);
-        assert(dm1_spell_lookup(&s, 0) == beforeSpell);
-    }
-
-    stats = makeStats(12, 100, 50, 40);
-    stats.skillLevels[DM1_SKILL_FIRE] = 7;
-    stats.skillLevels[DM1_SKILL_WIZARD] = 3;
-    s.magicCasterIndex = 0;
-    s.input[1].symbolStep = 1;
-    s.input[1].symbols[0] = dm1_encodeSymbol(0, DM1_POWER_MON);
-    s.input[1].symbols[1] = '\0';
-
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
-    assert(stats.currentMana == 6);
-    assert(s.input[0].symbolStep == 2);
-    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, DM1_POWER_LO));
-    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, DM1_ELEM_FUL));
-    assert(s.input[0].symbols[2] == '\0');
-
-    {
-        DM1_ChampionSpellInput beforeInput = s.input[0];
-        DM1_ChampionSpellInput beforeOtherInput = s.input[1];
-        DM1_ChampionSpellStats beforeStats = stats;
-        int beforeCaster = s.magicCasterIndex;
-        int expectedClassCost = dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR);
-        const DM1_Spell* beforeSpell = dm1_spell_lookup(&s, 0);
-
-        assert(expectedClassCost == 7);
-        assert(beforeSpell == &dm1_spells[7]);  /* Lo Ful / Torch */
-        /* ReDMCSB SYMBOL.C F0399 lines 20-39 mutates mana, Symbols[], and
-         * SymbolStep only inside `if (ManaCost <= CurrentMana)`. */
-        assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 0);
-        assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
-        assert(memcmp(&s.input[1], &beforeOtherInput, sizeof(beforeOtherInput)) == 0);
-        assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
-        assert(s.magicCasterIndex == beforeCaster);
-        assert(dm1_spell_lookup(&s, 0) == beforeSpell);
-    }
-
-    stats = makeStats(12, 100, 50, 40);
-    stats.skillLevels[DM1_SKILL_FIRE] = 7;
-    stats.skillLevels[DM1_SKILL_WIZARD] = 3;
-    s.magicCasterIndex = 0;
-    s.input[1].symbolStep = 1;
-    s.input[1].symbols[0] = dm1_encodeSymbol(0, DM1_POWER_MON);
-    s.input[1].symbols[1] = '\0';
-
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
-    assert(stats.currentMana == 6);
-    assert(s.input[0].symbolStep == 2);
-    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, DM1_POWER_LO));
-    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, DM1_ELEM_FUL));
-    assert(s.input[0].symbols[2] == '\0');
-
-    {
-        DM1_ChampionSpellInput beforeInput = s.input[0];
-        DM1_ChampionSpellInput beforeOtherInput = s.input[1];
-        DM1_ChampionSpellStats beforeStats = stats;
-        int beforeCaster = s.magicCasterIndex;
-        int expectedClassCost = dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR);
-        const DM1_Spell* beforeSpell = dm1_spell_lookup(&s, 0);
-
-        assert(expectedClassCost == 7);
-        assert(beforeSpell == &dm1_spells[7]);  /* Lo Ful / Torch */
-        /* ReDMCSB SYMBOL.C F0399 lines 20-39 mutates mana, Symbols[], and
-         * SymbolStep only inside `if (ManaCost <= CurrentMana)`. */
-        assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 0);
-        assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
-        assert(memcmp(&s.input[1], &beforeOtherInput, sizeof(beforeOtherInput)) == 0);
-        assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
-        assert(s.magicCasterIndex == beforeCaster);
-        assert(dm1_spell_lookup(&s, 0) == beforeSpell);
-    }
-
-    stats = makeStats(12, 100, 50, 40);
-    stats.skillLevels[DM1_SKILL_FIRE] = 7;
-    stats.skillLevels[DM1_SKILL_WIZARD] = 3;
-    s.magicCasterIndex = 0;
-    s.input[1].symbolStep = 1;
-    s.input[1].symbols[0] = dm1_encodeSymbol(0, DM1_POWER_MON);
-    s.input[1].symbols[1] = '\0';
-
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
-    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
-    assert(stats.currentMana == 6);
-    assert(s.input[0].symbolStep == 2);
-    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, DM1_POWER_LO));
-    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, DM1_ELEM_FUL));
-    assert(s.input[0].symbols[2] == '\0');
-
-    {
-        DM1_ChampionSpellInput beforeInput = s.input[0];
-        DM1_ChampionSpellInput beforeOtherInput = s.input[1];
-        DM1_ChampionSpellStats beforeStats = stats;
-        int beforeCaster = s.magicCasterIndex;
-        int expectedClassCost = dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR);
-        const DM1_Spell* beforeSpell = dm1_spell_lookup(&s, 0);
-
-        assert(expectedClassCost == 7);
-        assert(beforeSpell == &dm1_spells[7]);  /* Lo Ful / Torch */
-        /* ReDMCSB SYMBOL.C F0399 lines 20-39 mutates mana, Symbols[], and
-         * SymbolStep only inside `if (ManaCost <= CurrentMana)`. */
-        assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 0);
-        assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
-        assert(memcmp(&s.input[1], &beforeOtherInput, sizeof(beforeOtherInput)) == 0);
-        assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
-        assert(s.magicCasterIndex == beforeCaster);
-        assert(dm1_spell_lookup(&s, 0) == beforeSpell);
-    }
-
     printf("    PASS\n");
 }
 
@@ -351,6 +207,7 @@ static void test_insufficient_mana_preserves_partial_rune_chain(void) {
     assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
     assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
 
+    dm1_spell_init(&s);
     stats = makeStats(12, 100, 50, 40);
     stats.skillLevels[DM1_SKILL_FIRE] = 7;
     stats.skillLevels[DM1_SKILL_WIZARD] = 3;
@@ -386,39 +243,6 @@ static void test_insufficient_mana_preserves_partial_rune_chain(void) {
         assert(s.magicCasterIndex == beforeCaster);
         assert(dm1_spell_lookup(&s, 0) == beforeSpell);
     }
-
-    printf("    PASS\n");
-}
-
-static void test_insufficient_mana_preserves_partial_rune_chain(void) {
-    printf("  [6] Insufficient mana preserves partial rune chain...\n");
-
-    DM1_SpellCastingState s;
-    dm1_spell_init(&s);
-    s.magicCasterIndex = 0;
-    DM1_ChampionSpellStats stats = makeStats(200, 222, 77, 44);
-    stats.skillLevels[DM1_SKILL_FIRE] = 9;
-
-    int ok __attribute__((unused)) = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
-    assert(ok == 1);
-    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL);
-    assert(ok == 1);
-
-    DM1_ChampionSpellInput beforeInput = s.input[0];
-    DM1_ChampionSpellStats beforeStats = stats;
-    int beforeCaster = s.magicCasterIndex;
-
-    /* ReDMCSB SYMBOL.C F0399 lines 18-30 computes cost, then only mutates
-     * CurrentMana/Symbols/SymbolStep inside the line 26 mana-success branch. */
-    assert(dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR) == 14);
-    stats.currentMana = 13;
-    beforeStats.currentMana = 13;
-
-    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR);
-    assert(ok == 0);
-    assert(s.magicCasterIndex == beforeCaster);
-    assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
-    assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
 
     printf("    PASS\n");
 }
