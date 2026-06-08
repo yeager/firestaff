@@ -34,6 +34,7 @@
  */
 
 #include "dm2_v1_door_mechanics.h"
+#include "memory_projectile_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,42 @@ static int tests_passed = 0;
         printf("    FAIL\n"); \
     } \
 } while (0)
+
+static void zero_projectile_digest(struct CellContentDigest_Compat *d)
+{
+    memset(d, 0, sizeof(*d));
+    d->sourceSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    d->destSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    d->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    d->destCreatureType = -1;
+    d->destTeleporterNewDirection = -1;
+}
+
+static void make_kinetic_projectile(
+    struct ProjectileInstance_Compat *p,
+    int direction,
+    int cell,
+    int map_x,
+    int map_y)
+{
+    memset(p, 0, sizeof(*p));
+    p->slotIndex = 3;
+    p->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    p->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    p->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    p->ownerIndex = 0;
+    p->mapIndex = 0;
+    p->mapX = map_x;
+    p->mapY = map_y;
+    p->cell = cell & 3;
+    p->direction = direction & 3;
+    p->kineticEnergy = 12;
+    p->attack = 50;
+    p->stepEnergy = 1;
+    p->attackTypeCode = COMBAT_ATTACK_NORMAL;
+    p->flags = PROJECTILE_FLAG_IGNORE_DOOR_PASS_THROUGH;
+    p->reserved3 = 1;
+}
 
 /* ── Test 1: Door state extraction (M036 parity) ────────────────── */
 
@@ -420,6 +457,70 @@ static int test_destroyed_door_immune(void)
     return ok;
 }
 
+/* ── Test 21: Projectile collision gate for a closing DM2 door ─── */
+
+static int test_projectile_hits_closing_wooden_door(void)
+{
+    struct ProjectileInstance_Compat projectile;
+    struct ProjectileInstance_Compat next_projectile;
+    struct ProjectileTickResult_Compat result;
+    struct CellContentDigest_Compat digest;
+    struct RngState_Compat rng;
+
+    zero_projectile_digest(&digest);
+    digest.sourceMapIndex = 0;
+    digest.sourceMapX = 4;
+    digest.sourceMapY = 4;
+    digest.destMapIndex = 0;
+    digest.destMapX = 5;
+    digest.destMapY = 4;
+    digest.destSquareType = PROJECTILE_ELEMENT_DOOR;
+    digest.destDoorState = DM2_DOOR_STATE_CLOSED_HALF;
+    digest.destDoorAllowsProjectilePassThrough =
+        (dm2_door_get_attributes(DM2_DOOR_TYPE_WOODEN) &
+         DM2_DOOR_ATTR_PROJECTILES_CAN_PASS_THROUGH) ? 1 : 0;
+
+    make_kinetic_projectile(&projectile, 1, 1, 4, 4);
+    F0730_COMBAT_RngInit_Compat(&rng, 17);
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 485-505: door states above
+     * C1_DOOR_STATE_CLOSED_ONE_FOURTH collide unless the door info has
+     * MASK0x0002_PROJECTILES_CAN_PASS_THROUGH and the projectile subtype
+     * satisfies that branch.  A DM2 wooden door has no pass-through flag. */
+    if (!F0811_PROJECTILE_Advance_Compat(&projectile, &digest, 200u, &rng,
+                                         &next_projectile, &result)) {
+        printf("  projectile advance failed\n");
+        return 0;
+    }
+
+    if (result.resultKind != PROJECTILE_RESULT_HIT_DOOR) {
+        printf("  result kind=%d\n", result.resultKind);
+        return 0;
+    }
+    if (result.despawn != 1) {
+        printf("  projectile did not despawn\n");
+        return 0;
+    }
+    if (result.emittedDoorDestructionEvent != 1 ||
+        result.outNextTick.kind != TIMELINE_EVENT_DOOR_DESTRUCTION) {
+        printf("  missing door destruction event kind=%d emitted=%d\n",
+               result.outNextTick.kind, result.emittedDoorDestructionEvent);
+        return 0;
+    }
+    if (result.outNextTick.mapX != 5 || result.outNextTick.mapY != 4) {
+        printf("  event destination=(%d,%d)\n",
+               result.outNextTick.mapX, result.outNextTick.mapY);
+        return 0;
+    }
+    if (next_projectile.mapX != 4 || next_projectile.mapY != 4) {
+        printf("  projectile advanced to (%d,%d)\n",
+               next_projectile.mapX, next_projectile.mapY);
+        return 0;
+    }
+
+    return 1;
+}
+
 /* ── Main ────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -450,6 +551,7 @@ int main(void)
     TEST(melee_immunity);
     TEST(champion_wound_on_close);
     TEST(destroyed_door_immune);
+    TEST(projectile_hits_closing_wooden_door);
 
     printf("\n============================\n");
     printf("Results: %d/%d tests passed\n", tests_passed, tests_run);
