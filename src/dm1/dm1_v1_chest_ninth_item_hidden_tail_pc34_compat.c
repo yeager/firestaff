@@ -3,7 +3,7 @@
 #include <string.h>
 
 static const char s_source_evidence[] =
-    "CHEST.C F0333:31-67 opens a chest and copies the first eight linked objects into G0425_aT_ChestSlots\n"
+    "CHEST.C F0333:58-67 opens a chest and copies at most the first eight linked objects into G0425_aT_ChestSlots\n"
     "CHEST.C F0334:113-132 closes a chest by rewriting only non-empty visible G0425_aT_ChestSlots\n"
     "CHAMPION.C F0297/F0298/F0302:250-298,688-710 owns leader-hand put/remove state and occupied-slot swap routing\n"
     "DUNGEON.C F0163:1796-1837 clears Next and appends linked visible-input returns; hidden tail input 808 is not in that visible return list\n"
@@ -151,24 +151,35 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
         DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_REOPEN_THING;
 
     m11_inventory_init(&state, 1);
-    for (i = 0; i < DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT; ++i) {
+    for (i = 0; i < DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED; ++i) {
         linked[i] =
             make_item(DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_VISIBLE_FIRST + i,
                       2 + i,
                       DM1_PC34_ALLOWED_CONTAINER);
     }
 
-    /* ReDMCSB CHEST.C F0333 lines 31-67 materializes the first eight linked
-     * objects into C537..C544/G0425 in input order; OBJECT.C F0031 lines
-     * 25-120 is represented by unique deterministic itemType sentinels. */
+    /* ReDMCSB CHEST.C F0333 lines 58-67 materializes at most the first eight
+     * linked objects into C537..C544/G0425 in input order; OBJECT.C F0031
+     * lines 25-120 is represented by unique deterministic itemType sentinels.
+     * The ninth linked input remains a hidden tail outside the visible panel. */
+    out->linkedInputCount = DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED;
     out->openResult = m11_inventory_open_chest(
         &state, 0, out->chestThing, linked,
-        DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT);
+        out->linkedInputCount);
     out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
     if (!out->openResult || !copy_open_types(&state, out->openedTypes)) {
         return 0;
     }
     out->openedVisibleCount = count_visible(out->openedTypes);
+    out->openedHiddenTailVisible =
+        contains_type(out->openedTypes,
+                      DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT,
+                      DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_INPUT);
+    out->openedHiddenTailType =
+        linked[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT].itemType;
+    out->openedHiddenTailPreserved =
+        out->openedHiddenTailType ==
+        DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_INPUT ? 1 : 0;
     out->openedOrderMatchesInput =
         order_matches_visible_input(out->openedTypes);
 
@@ -197,7 +208,8 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     if (!out->hiddenTailPutResult) {
         return 0;
     }
-    hiddenTail[hiddenTailCount++] = item;
+    hiddenTail[hiddenTailCount++] =
+        linked[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT];
     if (!copy_open_types(&state, out->afterPutTypes) ||
         !m11_inventory_get_mouse_item(&state, 0, &item)) {
         return 0;
