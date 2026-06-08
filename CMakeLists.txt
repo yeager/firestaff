@@ -1032,6 +1032,20 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_recompute_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel leader-rotation runtime pixel gate.
+# Locks the CHAMDRAW.C F0292 name-color cascade (leader C11 yellow, other
+# champions C09 orange) and the F0287/F0291/M026 source-locked invariants
+# against a leader-rotation pass: bar fill/blank counts, status-box fill,
+# champion icon source index, and 18x18 hand-slot box outer perimeter
+# pixel counts must be byte-identical before and after the rotation, and
+# the per-slot name text zone must migrate its leader-color presence.
+add_executable(firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
@@ -5348,6 +5362,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_recompute_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_recompute_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_leader_rotation_pixel_slice
+        COMMAND firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_leader_rotation_pixel_slice PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
