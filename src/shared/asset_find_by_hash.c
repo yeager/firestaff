@@ -224,6 +224,12 @@ static int copy_virtual_match_path(const char *container, const char *entry,
     return copy_match_path(virtualPath, outPath, outPathLen);
 }
 
+static int is_better_zip_entry(const char *candidate, const char *current) {
+    if (!candidate || !*candidate) return 0;
+    if (!current || !*current) return 1;
+    return strcmp(candidate, current) < 0;
+}
+
 static uint16_t read_u16le(const unsigned char *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8U);
 }
@@ -577,7 +583,7 @@ static int zip_extract_entry_to_path(const char *zipPath, const char *entryName,
 }
 
 static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
-                           char *outPath, int outPathLen) {
+                            char *outPath, int outPathLen) {
     FILE *fp;
     long fileSize;
     long searchStart;
@@ -588,6 +594,8 @@ static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
     uint16_t entryCount;
     uint32_t pos;
     uint16_t i;
+    char bestName[256];
+    int hasMatch = 0;
     int found = 0;
 
     fp = fopen(zipPath, "rb");
@@ -629,6 +637,8 @@ static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
         fclose(fp);
         return 0;
     }
+
+    bestName[0] = '\0';
 
     pos = cdOffset;
     for (i = 0; i < entryCount && pos + 46U <= cdOffset + cdSize; ++i) {
@@ -680,13 +690,18 @@ static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
             found = 0;
         }
         if (found && strcmp(hex, expectedMd5) == 0) {
-            found = copy_virtual_match_path(zipPath, name, outPath, outPathLen);
-            fclose(fp);
-            return found;
+            if (is_better_zip_entry(name, bestName)) {
+                size_t nameLen = strlen(name);
+                if (nameLen < sizeof(bestName)) {
+                    memcpy(bestName, name, nameLen + 1U);
+                    hasMatch = 1;
+                }
+            }
         }
     }
     fclose(fp);
-    return 0;
+    if (!hasMatch) return 0;
+    return copy_virtual_match_path(zipPath, bestName, outPath, outPathLen);
 }
 
 static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
@@ -756,6 +771,8 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
         uint32_t dataOffset;
         char hex[33];
         int matchIndex;
+        char existingPath[ASSET_PATH_MAX];
+        const char *slashPath;
 
         if (fseek(fp, (long)pos, SEEK_SET) != 0 ||
             fread(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr)) break;
@@ -797,12 +814,33 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
         } else {
             continue;
         }
-        matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
-        if (matchIndex >= 0 &&
-            copy_virtual_match_path(zipPath, name, outPaths[matchIndex], ASSET_PATH_MAX)) {
-            matched[matchIndex] = 1;
-            ++foundCount;
-            if (foundCount == md5Count) break;
+        matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
+        if (matchIndex >= 0) {
+            int shouldUpdate;
+            if (matched[matchIndex]) {
+                if (!copy_match_path(outPaths[matchIndex], existingPath, (int)sizeof(existingPath))) {
+                    continue;
+                }
+                slashPath = strstr(existingPath, "::");
+                if (!slashPath) {
+                    slashPath = existingPath;
+                } else {
+                    slashPath += 2;
+                }
+                shouldUpdate = is_better_zip_entry(name, slashPath);
+            } else {
+                shouldUpdate = 1;
+            }
+            if (!shouldUpdate) {
+                continue;
+            }
+            if (!copy_virtual_match_path(zipPath, name, outPaths[matchIndex], ASSET_PATH_MAX)) {
+                continue;
+            }
+            if (!matched[matchIndex]) {
+                matched[matchIndex] = 1;
+                ++foundCount;
+            }
         }
     }
     fclose(fp);

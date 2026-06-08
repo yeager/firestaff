@@ -132,4 +132,3 @@ int main(void) {
     puts("ok: malformed Nexus header with bad magic is rejected with variant error");
     return 0;
 }
-

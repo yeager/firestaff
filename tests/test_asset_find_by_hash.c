@@ -89,6 +89,67 @@ static int write_stored_zip_fixture(const char* path) {
     return fclose(fp) == 0;
 }
 
+static int write_stored_zip_duplicate_hash_fixture(const char* path) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    static const char* names[] = {"dm2/Z_DUPLICATE.BIN", "dm2/A_DUPLICATE.BIN"};
+    FILE* fp = fopen(path, "wb");
+    unsigned char local[30] = {0};
+    unsigned char central[46] = {0};
+    unsigned char eocd[22] = {0};
+    unsigned int payloadSize = (unsigned int)(sizeof(payload) - 1U);
+    unsigned int centralOffset;
+    unsigned int centralSize = 0U;
+    int i;
+    if (!fp) return 0;
+
+    for (i = 0; i < 2; ++i) {
+        unsigned int nameLen = (unsigned int)strlen(names[i]);
+        put32(local, 0x04034b50U);
+        put16(local + 4, 20U);
+        put16(local + 8, 0U);
+        put32(local + 18, payloadSize);
+        put32(local + 22, payloadSize);
+        put16(local + 26, nameLen);
+        if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
+            fwrite(names[i], 1U, nameLen, fp) != nameLen ||
+            fwrite(payload, 1U, payloadSize, fp) != payloadSize) {
+            fclose(fp);
+            return 0;
+        }
+        memset(local, 0, sizeof(local));
+    }
+
+    centralOffset = (unsigned int)ftell(fp);
+    for (i = 0; i < 2; ++i) {
+        unsigned int nameLen = (unsigned int)strlen(names[i]);
+        memset(central, 0, sizeof(central));
+        put32(central, 0x02014b50U);
+        put16(central + 4, 20U);
+        put16(central + 6, 20U);
+        put16(central + 10, 0U);
+        put32(central + 20, payloadSize);
+        put32(central + 24, payloadSize);
+        put16(central + 28, nameLen);
+        if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
+            fwrite(names[i], 1U, nameLen, fp) != nameLen) {
+            fclose(fp);
+            return 0;
+        }
+        centralSize += (unsigned int)(sizeof(central) + nameLen);
+    }
+
+    put32(eocd, 0x06054b50U);
+    put16(eocd + 8, 2U);
+    put16(eocd + 10, 2U);
+    put32(eocd + 12, centralSize);
+    put32(eocd + 16, centralOffset);
+    if (fwrite(eocd, 1U, sizeof(eocd), fp) != sizeof(eocd)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_iso_record(unsigned char* dir, int offset, unsigned int lba,
                             unsigned int size, int isDir,
                             const unsigned char* name, int nameLen) {
@@ -185,6 +246,22 @@ static int path_has_fixture_name(const char* path) {
 static int path_has_virtual_name(const char* path, const char* container, const char* entry) {
     return path && strstr(path, container) != NULL && strstr(path, "::") != NULL &&
            strstr(path, entry) != NULL;
+}
+
+static int path_has_virtual_entry(const char* path, const char* container, const char* entry) {
+    char expected[ASSET_PATH_MAX];
+    size_t pathLen;
+    size_t expectedLen;
+    const char* suffix;
+    if (!path || !container || !entry) return 0;
+    if (snprintf(expected, sizeof(expected), "%s::%s", container, entry) >= (int)sizeof(expected)) {
+        return 0;
+    }
+    pathLen = strlen(path);
+    expectedLen = strlen(expected);
+    if (pathLen < expectedLen) return 0;
+    suffix = path + (pathLen - expectedLen);
+    return strcmp(suffix, expected) == 0;
 }
 
 static int file_matches_fixture_payload(const char* path) {
@@ -293,6 +370,33 @@ int main(void) {
         return 1;
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
+
+    remove("asset_find_by_hash_test_tmp/archive.zip");
+    if (!write_stored_zip_duplicate_hash_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
+        cleanup_fixture();
+        fprintf(stderr, "duplicate ZIP fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "archive.zip", "dm2/A_DUPLICATE.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "duplicate ZIP deterministic lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_entry(outPaths[1], "archive.zip", "dm2/A_DUPLICATE.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "duplicate ZIP all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
 
     remove("asset_find_by_hash_test_tmp/archive.zip");
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
