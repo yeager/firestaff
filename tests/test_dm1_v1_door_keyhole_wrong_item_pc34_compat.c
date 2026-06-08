@@ -111,6 +111,7 @@ int main(void)
     unsigned short wrongThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     const int clickX = 168;
     const int clickY = 81;
+    int baselineMessageCount;
     int ok = 1;
 
     printf("probe=dm1_v1_door_keyhole_wrong_item_pc34_compat\n");
@@ -123,6 +124,16 @@ int main(void)
                      M11_GameView_GetV1LeaderHandThing(&state), wrongThing);
 
     state.lastWorldHash = 0xBADF00Du;
+    snprintf(state.lastAction, sizeof(state.lastAction), "SENTINEL");
+    snprintf(state.lastOutcome, sizeof(state.lastOutcome), "UNCHANGED");
+    M11_MessageLog_Push(&state.messageLog, "SENTINEL MESSAGE", 0);
+    baselineMessageCount = M11_GameView_GetMessageLogCount(&state);
+
+    /* ReDMCSB CLIKVIEW.C F0377 lines 356-401: a door-button/keyhole
+     * click only schedules EVENT_DOOR when the leader hand is empty; with
+     * an occupied leader hand it immediately tries F0375 throw handling.
+     * Firestaff's D1C keyhole guard claims this source box so the click
+     * produces no open, no consume, and no invented wrong-item message. */
     ok &= expect_int("wrong-item door-keyhole click is ignored",
                      M11_GameView_HandlePointerButton(&state, clickX, clickY,
                                                      M11_DM1_MOUSE_MASK_LEFT),
@@ -134,8 +145,17 @@ int main(void)
                      square_type(DUNGEON_ELEMENT_DOOR, 0x10 | 4));
     ok &= expect_int("wrong-item click does not refresh world hash",
                      (int)state.lastWorldHash, (int)0xBADF00Du);
+    ok &= expect_int("wrong-item click does not append a message",
+                     M11_GameView_GetMessageLogCount(&state),
+                     baselineMessageCount);
+    ok &= expect_int("wrong-item click does not report wrong-item status",
+                     strcmp(state.lastAction, "SENTINEL") == 0 &&
+                     strcmp(state.lastOutcome, "UNCHANGED") == 0, 1);
+    ok &= expect_int("wrong-item click preserves prior message text",
+                     strcmp(M11_GameView_GetMessageLogEntry(&state, 0),
+                            "SENTINEL MESSAGE") == 0, 1);
 
     if (!ok) return 1;
-    printf("ok: DM1 V1 door keyhole wrong-item click is ignored without consume or open\n");
+    printf("ok: DM1 V1 door keyhole wrong-item click is ignored without consume, open, or message\n");
     return 0;
 }
