@@ -213,6 +213,29 @@ typedef struct DM1_ChampionPanel_BarFillModel {
     int emitsFill;
 } DM1_ChampionPanel_BarFillModel;
 
+/* ── Status hand slot box pixel model — CHAMDRAW.C F0291 ──
+ *
+ * 18x18 hand-slot box anchored at the parent status box at the
+ * source-locked offsets C211..C218:
+ *   ready hand  = champIdx * 69 + 4
+ *   action hand = champIdx * 69 + 24
+ *   y = 10
+ * The model collapses the F0291 wound/acting/normal logic plus
+ * the F0292 action-hand redraw so the per-slot graphic id, hand
+ * index, and champion index are all retrievable in one model.
+ */
+typedef struct DM1_ChampionPanel_StatusHandSlotBoxModel {
+    int championIndex;
+    int handIndex;
+    int isActionHand;
+    int isActingChampion;
+    int x;
+    int y;
+    int width;
+    int height;
+    int graphicId;
+} DM1_ChampionPanel_StatusHandSlotBoxModel;
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel);
@@ -228,6 +251,11 @@ int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
 int DM1_ChampionPanel_BuildPc34BarFillModel(
     int championIndex, int statIndex, int current, int maximum,
     DM1_ChampionPanel_BarFillModel *outModel);
+
+/* ── Status hand slot box pixel model — CHAMDRAW.C F0291 ── */
+int DM1_ChampionPanel_BuildStatusHandSlotBoxModel(
+    int championIndex, int handIndex, int isActingChampion,
+    DM1_ChampionPanel_StatusHandSlotBoxModel *outModel);
 
 /* ── Slot box graphic — CHAMDRAW.C F0291 ── */
 int DM1_ChampionPanel_SlotBoxGraphic(int slotIndex, uint16_t wounds,
