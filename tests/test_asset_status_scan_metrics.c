@@ -230,6 +230,7 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
     const M12_AssetRequiredFileStatus* dungeon;
     M12_AssetStatus status;
     char foundPath[ASSET_PATH_MAX];
+    const char* runtimeDir;
 
     snprintf(zipPath, sizeof(zipPath), "%s/dm2_graphics.zip", root);
     snprintf(isoPath, sizeof(isoPath), "%s/dm2_dungeon.iso", root);
@@ -271,6 +272,13 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
     check_int(dungeon && strstr(dungeon->matchedPath, "asset-cache") != NULL &&
                   strstr(dungeon->matchedPath, "dm2") != NULL,
               "materialized DM2 DUNGEON should live in the asset cache");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "dm2");
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL &&
+                  strstr(runtimeDir, "::") == NULL,
+              "DM2 runtime data dir should be an ordinary cache directory when virtual files are materialized");
+    check_int(graphics && runtimeDir &&
+                  strncmp(graphics->matchedPath, runtimeDir, strlen(runtimeDir)) == 0,
+              "Materialized DM2 GRAPHICS should live under the runtime cache directory");
     check_int(graphics && file_matches_payload(graphics->matchedPath, graphicsPayload),
               "materialized DM2 GRAPHICS should match the ZIP payload");
     check_int(dungeon && file_matches_payload(dungeon->matchedPath, dungeonPayload),
