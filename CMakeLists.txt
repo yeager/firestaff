@@ -150,6 +150,7 @@ list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d1l_d1r_wall_pc34_compat.c
 )
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d2l_d2r_wall_pc34_compat\\.c$")
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d3l_d3r_wall_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d3l_d3r_wall_pc34_compat.c
@@ -6561,6 +6562,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d2l_d2r_wall_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
+        tests/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c
+    )
     add_executable(firestaff_dm1_v1_viewport_d3c_wall_pc34_compat_test
         tests/test_dm1_v1_viewport_d3c_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d3c_wall_pc34_compat.c
@@ -6728,6 +6733,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         PRIVATE firestaff_m10
     )
     target_include_directories(test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    target_link_libraries(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
     )
     target_link_libraries(firestaff_dm1_v1_viewport_d3c_wall_pc34_compat_test
@@ -6920,6 +6931,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d1l_d1r_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d3c_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d3c_center_field_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d3l_d3r_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
@@ -7024,6 +7036,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d2l_d2r_wall_pc34_compat
         COMMAND test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d2l_d2r_f0098_fallback
+        COMMAND test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d3c_wall_pc34_compat
@@ -7434,6 +7450,15 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass608_dm1_v1_d0c_current_square_occlusion_source_lock.py
     )
     set_tests_properties(pass608_dm1_v1_d0c_current_square_occlusion_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
+# -- DM1 V1 D2L/D2R F0098 fallback source-lock gate --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock.py --check-only
+    )
+    set_tests_properties(pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
 # -- DM1 V1 D1C door-front field source lock --
