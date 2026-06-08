@@ -34,6 +34,11 @@
  *         the same canonical V1-gap-V2 composite into a row-major
  *         RGBA8888 buffer without touching row padding.
  *
+ *   TC-7. The RGBA8888 export keeps every row's V1/gap/V2 lane
+ *         boundaries aligned: the full 8-pixel gap band is the
+ *         canonical label colour and the first/last lane pixels
+ *         match the composite accessor on every row.
+ *
  * The test is headless: it depends only on the firestaff_v2 static
  * library and does not require any game data files.
  *
@@ -283,7 +288,67 @@ static int test_rgba8888_export(void) {
     return 0;
 }
 
-/* ── TC-6: C001..C006 source command ids preserved under V1 source ─ */
+/* ── TC-6: RGBA8888 lane boundaries stay aligned on every row ───── */
+
+static int test_rgba8888_lane_boundaries(void) {
+    enum {
+        kStride = DM1_V2_SIDE_BY_SIDE_W * 4
+    };
+    static unsigned char rgba[(size_t)kStride * DM1_V2_SIDE_BY_SIDE_H];
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_Color expected;
+    int y, gapX;
+
+    memset(rgba, 0, sizeof(rgba));
+    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              &seed, rgba, sizeof(rgba), kStride) == 1);
+
+    for (y = 0; y < DM1_V2_SIDE_BY_SIDE_H; ++y) {
+        const unsigned char* row = rgba + (size_t)y * (size_t)kStride;
+
+        CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, 0, y, &expected) == 1);
+        CHECK(row[0] == expected.r);
+        CHECK(row[1] == expected.g);
+        CHECK(row[2] == expected.b);
+        CHECK(row[3] == expected.a);
+
+        CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                  &seed, DM1_V2_VIEWPORT_W - 1, y, &expected) == 1);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W - 1) * 4u + 0u] == expected.r);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W - 1) * 4u + 1u] == expected.g);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W - 1) * 4u + 2u] == expected.b);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W - 1) * 4u + 3u] == expected.a);
+
+        for (gapX = 0; gapX < DM1_V2_SIDE_BY_SIDE_GAP_W; ++gapX) {
+            const size_t x = (size_t)(DM1_V2_VIEWPORT_W + gapX);
+            CHECK(row[x * 4u + 0u] == DM1_V2_SIDE_BY_SIDE_GAP_R);
+            CHECK(row[x * 4u + 1u] == DM1_V2_SIDE_BY_SIDE_GAP_G);
+            CHECK(row[x * 4u + 2u] == DM1_V2_SIDE_BY_SIDE_GAP_B);
+            CHECK(row[x * 4u + 3u] == DM1_V2_SIDE_BY_SIDE_GAP_A);
+        }
+
+        CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                  &seed,
+                  DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W,
+                  y,
+                  &expected) == 1);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 0u] == expected.r);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 1u] == expected.g);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 2u] == expected.b);
+        CHECK(row[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 3u] == expected.a);
+
+        CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                  &seed, DM1_V2_SIDE_BY_SIDE_W - 1, y, &expected) == 1);
+        CHECK(row[(size_t)(DM1_V2_SIDE_BY_SIDE_W - 1) * 4u + 0u] == expected.r);
+        CHECK(row[(size_t)(DM1_V2_SIDE_BY_SIDE_W - 1) * 4u + 1u] == expected.g);
+        CHECK(row[(size_t)(DM1_V2_SIDE_BY_SIDE_W - 1) * 4u + 2u] == expected.b);
+        CHECK(row[(size_t)(DM1_V2_SIDE_BY_SIDE_W - 1) * 4u + 3u] == expected.a);
+    }
+    return 0;
+}
+
+/* ── TC-7: C001..C006 source command ids preserved under V1 source ─ */
 
 static int test_v1_source_commands_preserved(void) {
     int i;
@@ -303,7 +368,7 @@ static int test_v1_source_commands_preserved(void) {
     return 0;
 }
 
-/* ── TC-7: source evidence string references ReDMCSB ────────────── */
+/* ── TC-8: source evidence string references ReDMCSB ────────────── */
 
 static int test_source_evidence_anchors(void) {
     const char* ev = dm1_v2_side_by_side_seed_source_evidence();
@@ -315,7 +380,7 @@ static int test_source_evidence_anchors(void) {
     return 0;
 }
 
-/* ── TC-8: V1 viewport geometry scaffold accessor ───────────────
+/* ── TC-9: V1 viewport geometry scaffold accessor ───────────────
  *
  * Locks the source-locked V1 viewport geometry constants (portrait
  * + wall panel) used by future screenshot-diff and pixel-scaffolding
@@ -387,7 +452,7 @@ static int test_v1_geometry_scaffold(void) {
     return 0;
 }
 
-/* ── TC-9: v1_geometry(NULL) is null-safe ──────────────────────── */
+/* ── TC-10: v1_geometry(NULL) is null-safe ─────────────────────── */
 
 static int test_v1_geometry_null_safe(void) {
     CHECK(dm1_v2_side_by_side_seed_v1_geometry(NULL) == 0);
@@ -404,6 +469,7 @@ int main(void) {
     if (test_layout_hash_reproduces()) return 1;
     if (test_composite_pixel_accessor()) return 1;
     if (test_rgba8888_export()) return 1;
+    if (test_rgba8888_lane_boundaries()) return 1;
     if (test_v1_source_commands_preserved()) return 1;
     if (test_source_evidence_anchors()) return 1;
     if (test_v1_geometry_scaffold()) return 1;
