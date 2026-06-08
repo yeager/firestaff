@@ -9,6 +9,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Worker refill focus now supports the project priority order: DM1 V1, Theron V1, CSB V1, DM1 V2, CSB V2, DM2 V1, Theron V2, Nexus V1, Nexus V2.
 - ✅ 2026-06-08 10:08 — implemented `dm2_v1_viewport_object_light_level` boundary clipping in DM2 V1 and added the focused CTest `test_dm2_v1_lighting_falloff_boundary` (`distance == light_radius` extinguishes to 0), then registered it in `CMakeLists.txt`.
 - ✅ 2026-06-08 16:55 — hardened the DM1 V1 original DOSBox capture session runner with normalized-frame quality diagnostics, a non-title all-black capture abort, and dry-run regression checks so the next live attempt reports host-capture blackouts instead of waiting through route-state timeouts.
+- ✅ 2026-06-08 18:25 — hardened the DM1 V1 original DOSBox capture session runner with a no-launch `--validate-live-inputs` check and dry-run regression coverage for the extracted `DungeonMasterPC34` runtime layout (`DM.EXE` plus `DATA/`), so parent-root and incomplete runtime mounts fail before the next live attempt.
 - ✅ 2026-06-08 18:10 — tightened the DM1 V1 D1C wall pixel gate so `test_dm1_v1_viewport_d1c_wall_pc34_compat` now proves the ReDMCSB `F0792`/`F0765` PC34 zone routes use `CM1_COLOR_NO_TRANSPARENCY`, making a C10 wall pixel write instead of being treated as transparent.
 
 ## Legend
