@@ -1040,6 +1040,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_status_states_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel held-item status-hand icon pixel gate.
+# Extends the party HUD/status-box evidence beyond empty-hand icons by
+# seeding real inventory things in ready/action hands and exact-matching
+# the GRAPHICS.DAT object-icon cells blitted into the 16x16 HUD insets.
+add_executable(firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion icon direction-swap runtime pixel gate.
 # Locks the M026_CHAMPION_ICON_INDEX(Direction, PartyDirection) macro
 # against the C028 4x19x14 champion-icon strip: when the party rotates
@@ -5674,6 +5685,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_status_states_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_status_states_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_held_item_icons_runtime
+        COMMAND firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_held_item_icons_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
