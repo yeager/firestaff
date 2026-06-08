@@ -127,8 +127,10 @@ int main(void)
 {
     printf("probe=firestaff_dm1_v1_side_wall_pixel_clip_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
-    printf("sourceEvidence=DUNVIEW.C:581-594,3048-3058,6954-6964,7105-7115,7445-7455,7613-7623\n");
+    printf("sourceEvidence=DUNVIEW.C:581-594,3048-3058,6406-6437,6545-6573,6954-6964,7105-7115,7445-7455,7613-7623\n");
 
+    verify_side_wall_pixels(DM1_VIEW_SQUARE_D3L, "D3L", 0x10, "DUNVIEW.C:584,6406-6437");
+    verify_side_wall_pixels(DM1_VIEW_SQUARE_D3R, "D3R", 0x18, "DUNVIEW.C:585,6545-6573");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D2L, "D2L", 0x20, "DUNVIEW.C:587,6954-6964");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D2R, "D2R", 0x40, "DUNVIEW.C:588,7105-7115");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D1R, "D1R", 0x60, "DUNVIEW.C:591,7613-7623");
