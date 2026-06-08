@@ -14,6 +14,8 @@
  *   ReDMCSB COORD.C/layout-696 anchors C113..C116 champion icon zones.
  *   ReDMCSB COORD.C/layout-696 keeps C151..C154 on a 69px stride with
  *   67x29 status boxes, leaving two black pixels between adjacent boxes.
+ *   ReDMCSB CHAMDRAW.C F0292 lines 879-884 clears the live status-box
+ *   name strip after the full 67x29 box has already been refreshed.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -29,7 +31,8 @@ unsigned char* G2160_puc_Bitmap_Destination;
 enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
-    PROBE_CHAMPION_COUNT = 4
+    PROBE_CHAMPION_COUNT = 4,
+    PROBE_STALE_PIXEL = M11_FB_ENCODE(0, 15)
 };
 
 static unsigned char px_index(const unsigned char* fb, int width, int x, int y) {
@@ -64,6 +67,26 @@ static int count_not_color(const unsigned char* fb,
                            int h,
                            int color) {
     return w * h - count_color(fb, width, x, y, w, h, color);
+}
+
+static int count_raw_pixel(const unsigned char* fb,
+                           int width,
+                           int x,
+                           int y,
+                           int w,
+                           int h,
+                           unsigned char rawPixel) {
+    int count = 0;
+    int yy;
+    for (yy = 0; yy < h; ++yy) {
+        int xx;
+        for (xx = 0; xx < w; ++xx) {
+            if (fb[(y + yy) * width + x + xx] == rawPixel) {
+                ++count;
+            }
+        }
+    }
+    return count;
 }
 
 static int expected_fill_height(int current, int maximum, int fullHeight) {
@@ -170,6 +193,17 @@ static int check_status_box_pixels(const M11_GameViewState* game,
 
     snprintf(label, sizeof(label), "slot%d status box fill visible", slot);
     ok &= expect_true(label, count_color(fb, PROBE_FB_W, x, y, w, h, fillColor) > 300);
+
+    /* ReDMCSB: CHAMDRAW.C F0292 lines 879-905 refreshes live status
+     * boxes before drawing name text and bar graphs.  Render over a
+     * nonzero framebuffer-level sentinel and prove the full 67x29
+     * party-HUD/status-box rectangle was touched by the M11 V1 draw
+     * stack.  This is Firestaff runtime evidence, not DOS parity. */
+    snprintf(label, sizeof(label), "slot%d status box overwrites stale pixels", slot);
+    ok &= expect_int(label,
+                     count_raw_pixel(fb, PROBE_FB_W, x, y, w, h,
+                                     (unsigned char)PROBE_STALE_PIXEL),
+                     0);
 
     snprintf(label, sizeof(label), "slot%d name clear zone", slot);
     ok &= expect_true(label, M11_GameView_GetV1StatusNameZone(slot, &nx, &ny, &nw, &nh) &&
@@ -443,7 +477,7 @@ int main(int argc, char** argv) {
     }
 
     seed_party(&game);
-    memset(fb, 0, sizeof(fb));
+    memset(fb, PROBE_STALE_PIXEL, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
 
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
