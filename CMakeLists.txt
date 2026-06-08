@@ -8177,6 +8177,23 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_save_missing_root
     )
 
+    add_executable(test_nexus_v1_save_header_rejection
+        tests/test_nexus_v1_save_header_rejection.c
+    )
+    target_link_libraries(test_nexus_v1_save_header_rejection PRIVATE
+        firestaff_nexus
+    )
+    target_include_directories(test_nexus_v1_save_header_rejection PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_save_header_rejection PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_save_header_rejection
+        COMMAND test_nexus_v1_save_header_rejection
+    )
+
     add_executable(test_nexus_v1_availability_profile_gate
         tests/nexus_v1_availability_profile_gate_test.c
         src/shared/asset_status_m12.c
