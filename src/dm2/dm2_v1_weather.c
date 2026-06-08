@@ -10,6 +10,14 @@
 #include "dm2_v1_weather.h"
 #include <math.h>
 
+/* ReDMCSB/Baseline deterministic RNG for seeded transitions:
+ * BASE.C F1695 / F1765:
+ *   state = state * 0xBB40E62D + 11
+ *   next_weather_state = (state >> 8) & 0x3
+ */
+#define DM2_WEATHER_LCG_MULTIPLIER 0xBB40E62Du
+#define DM2_WEATHER_LCG_INCREMENT 11u
+
 /* ── Weather names ────────────────────────────────────────────────────────
  * Source: docs/dm2_creatures_gfx.md, existing dm2_v1_outdoor_renderer.c */
 
@@ -26,6 +34,7 @@ void dm2_v1_weather_init(DM2_V1_WeatherState *state) {
     state->time_of_day = DM2_TIME_START;  /* noon */
     state->time_fraction = 0.5f;
     state->weather_intensity = 0;
+    state->weather_seed = 0x0100u;
 }
 
 void dm2_v1_weather_set(DM2_V1_WeatherState *state, int weather) {
@@ -36,6 +45,26 @@ void dm2_v1_weather_set(DM2_V1_WeatherState *state, int weather) {
     /* Intensity mapping: clear=0, rain=40, fog=30, storm=80 */
     static const uint8_t intensity[DM2_WEATHER_COUNT] = { 0, 40, 30, 80 };
     state->weather_intensity = intensity[weather];
+}
+
+void dm2_v1_weather_set_seed(DM2_V1_WeatherState *state, uint32_t seed) {
+    if (!state) return;
+    state->weather_seed = seed;
+}
+
+uint32_t dm2_v1_weather_advance_seed(uint32_t seed) {
+    return seed * DM2_WEATHER_LCG_MULTIPLIER + DM2_WEATHER_LCG_INCREMENT;
+}
+
+int dm2_v1_weather_next_state(DM2_V1_WeatherState *state) {
+    uint32_t next_seed;
+    int next_weather;
+    if (!state) return DM2_WEATHER_CLEAR;
+    next_seed = dm2_v1_weather_advance_seed(state->weather_seed);
+    state->weather_seed = next_seed;
+    next_weather = (int)((next_seed >> 8) & 0x3u);
+    dm2_v1_weather_set(state, next_weather);
+    return state->weather;
 }
 
 void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes) {
