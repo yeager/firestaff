@@ -1064,6 +1064,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest inventory panel runtime pixel gate.
+# Verifies C025 panel and C537..C544 visible contents through the real
+# M11 draw stack with GRAPHICS.DAT-backed assets.
+add_executable(firestaff_dm1_v1_chest_panel_pixels_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_panel_pixels_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_panel_pixels_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_panel_pixels_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel status-recompute runtime integration probe.
 # Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
 # food/water/poison panel visible-delta spec against the M11 draw stack
