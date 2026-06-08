@@ -76,30 +76,73 @@ const char* panel_chest_mouse_routes_GetEvidence(void) {
  * Both interpretations are valid: COMMAND.C y1 is viewport-relative,
  * kV1 zones are panel-relative.  The x-values (117, 106, 111, 128,
  * 145, 162, 179, 196) match exactly.
+ *
+ * ReDMCSB CHAMPION.C F0302 lines 685-690 subtracts
+ * C08_SLOT_BOX_INVENTORY_FIRST_SLOT from the command-derived slot-box index,
+ * then uses C30_SLOT_CHEST_1 as the first G0425 chest slot index.
  */
-static const int kExpectedChestZoneCount = 8;
-static const int kExpectedZoneIds[8]   = { 537, 538, 539, 540, 541, 542, 543, 544 };
-static const int kExpectedX[8]         = { 117, 106, 111, 128, 145, 162, 179, 196 };
-/* y-values are viewport-relative per COMMAND.C:215-227 y1 field */
-static const int kExpectedViewportY[8] = {  92,  109,  126,  131,  134,  136,  137,  138 };
-/* y-values are panel-relative in m11_game_view.c: viewport y - 33. */
-static const int kExpectedPanelY[8]    = {  59,   76,   93,   98,  101,  103,  104,  105 };
+static const PanelChestSlotRoutePc34Compat kExpectedChestSlots[8] = {
+    { 0u, 58u, 537u, 38u, 0u, 117, 132,  92, 107, 117, 132,  59,  74, 16, 16 },
+    { 1u, 59u, 538u, 39u, 1u, 106, 121, 109, 124, 106, 121,  76,  91, 16, 16 },
+    { 2u, 60u, 539u, 40u, 2u, 111, 126, 126, 141, 111, 126,  93, 108, 16, 16 },
+    { 3u, 61u, 540u, 41u, 3u, 128, 143, 131, 146, 128, 143,  98, 113, 16, 16 },
+    { 4u, 62u, 541u, 42u, 4u, 145, 160, 134, 149, 145, 160, 101, 116, 16, 16 },
+    { 5u, 63u, 542u, 43u, 5u, 162, 177, 136, 151, 162, 177, 103, 118, 16, 16 },
+    { 6u, 64u, 543u, 44u, 6u, 179, 194, 137, 152, 179, 194, 104, 119, 16, 16 },
+    { 7u, 65u, 544u, 45u, 7u, 196, 211, 138, 153, 196, 211, 105, 120, 16, 16 }
+};
+
+unsigned int panel_chest_mouse_routes_GetSlotCount(void) {
+    return (unsigned int)(sizeof(kExpectedChestSlots) /
+                          sizeof(kExpectedChestSlots[0]));
+}
+
+int panel_chest_mouse_routes_GetSlot(unsigned int ordinal,
+                                     PanelChestSlotRoutePc34Compat* outSlot) {
+    if (!outSlot || ordinal >= panel_chest_mouse_routes_GetSlotCount()) {
+        return 0;
+    }
+    *outSlot = kExpectedChestSlots[ordinal];
+    return 1;
+}
 
 unsigned int panel_chest_mouse_routes_GetInvariant(void) {
     unsigned int ok = 1;
-    int i;
+    unsigned int i;
 
-    for (i = 0; i < kExpectedChestZoneCount; i++) {
-        if (kExpectedZoneIds[i] != 537 + i) {
+    if (panel_chest_mouse_routes_GetSlotCount() != 8u) {
+        ok = 0;
+    }
+    for (i = 0; i < panel_chest_mouse_routes_GetSlotCount(); i++) {
+        const PanelChestSlotRoutePc34Compat* slot = &kExpectedChestSlots[i];
+
+        if (slot->ordinal != i) {
             ok = 0;
         }
-        if (kExpectedX[i] <= 0) {
+        if (slot->commandId != 58u + i) {
             ok = 0;
         }
-        if (kExpectedViewportY[i] - kExpectedPanelY[i] != 33) {
+        if (slot->zoneId != 537u + i) {
             ok = 0;
         }
-        if (i > 0 && kExpectedZoneIds[i] <= kExpectedZoneIds[i - 1]) {
+        if (slot->slotBoxIndex != 38u + i) {
+            ok = 0;
+        }
+        if (slot->chestSlotIndex != i) {
+            ok = 0;
+        }
+        if (slot->viewportLeft != slot->panelLeft ||
+            slot->viewportRight != slot->panelRight ||
+            slot->viewportTop - slot->panelTop != 33 ||
+            slot->viewportBottom - slot->panelBottom != 33) {
+            ok = 0;
+        }
+        if (slot->width != slot->viewportRight - slot->viewportLeft + 1 ||
+            slot->height != slot->viewportBottom - slot->viewportTop + 1 ||
+            slot->width != 16 || slot->height != 16) {
+            ok = 0;
+        }
+        if (i > 0 && slot->zoneId <= kExpectedChestSlots[i - 1u].zoneId) {
             ok = 0;
         }
     }
