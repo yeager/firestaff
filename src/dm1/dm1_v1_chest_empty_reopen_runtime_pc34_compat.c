@@ -36,7 +36,8 @@ static const char s_f0333_transitive_close_anchor[] =
 static const char s_f0334_no_open_chest_anchor[] =
     "ReDMCSB CHEST.C F0334:113-117 (MEDIA070) returns early with no rewiring "
     "when G0426_T_OpenChest == C0xFFFF_THING_NONE, so a redundant close on "
-    "an already-closed chest cannot mutate G0425 or the caller's output list.";
+    "an already-closed chest cannot mutate G0426, G0425, panel content, or "
+    "the caller's output list.";
 
 static const char s_f0334_g0425_clear_anchor[] =
     "ReDMCSB CHEST.C F0334:117-122 (CHANGE8_09_FIX) writes "
@@ -63,8 +64,9 @@ static const char s_source_summary[] =
     "runtime=1; contract_only=1; empty-chest open fills G0425[0..7] with "
     "C0xFFFF_THING_NONE per F0333:67-76, F0333:30-32 same-chest reopen is a "
     "no-op, F0333:36-46 cross-chest open rewires the prior G0426 via F0334, "
-    "F0334:113-117 close-when-already-closed returns 0, F0334:117-122 leaves "
-    "G0425 fully NONE, and the leader hand is preserved across every cycle.";
+    "F0334:113-117 close-when-already-closed returns 0 without mutating G0426, "
+    "G0425, panel content, or output, F0334:117-122 leaves G0425 fully NONE, "
+    "and the leader hand is preserved across every cycle.";
 
 const DM1_V1_ChestEmptyReopenRuntimeSpecPc34
     dm1_v1_chest_empty_reopen_runtime_pc34_spec = {
@@ -261,6 +263,8 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
     closeWhenNothingOpenCount = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenResult = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenCount = closeWhenNothingOpenCount;
+    out->closeWhenNothingOpenThingAfter =
+        m11_inventory_get_open_chest_thing(&state, 0);
     out->closeWhenNothingPanelAfter =
         m11_inventory_get_panel_content_pc34(&state);
     out->staleC537AfterNoOpenClose =

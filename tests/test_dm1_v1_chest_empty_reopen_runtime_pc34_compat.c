@@ -266,6 +266,8 @@ static int test_phase_7_close_when_nothing(
                      probe->closeWhenNothingOpenResult, 0, f0334NoOpen);
     ok &= expect_int("close when nothing count",
                      probe->closeWhenNothingOpenCount, 0, f0334NoOpen);
+    ok &= expect_int("close when nothing G0426 stays NONE",
+                     probe->closeWhenNothingOpenThingAfter, 0, f0334NoOpen);
     ok &= expect_int("close when nothing panel before",
                      probe->closeWhenNothingPanelBefore,
                      DM1_PC34_PANEL_SCROLL, f0334NoWrite);
@@ -375,7 +377,7 @@ int main(void)
     ok &= test_phase_9_leader_hand(probe, spec);
 
     ok &= expect_int("minimum assertion count",
-                     g_assertions >= 40 ? 1 : 0, 1, f0333Visible);
+                     g_assertions >= 55 ? 1 : 0, 1, f0333Visible);
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);
     printf("chestEmptyReopenRuntimeOk=%d\n",

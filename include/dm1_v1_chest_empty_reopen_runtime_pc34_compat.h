@@ -74,6 +74,7 @@ typedef struct {
     int crossChestBCloseAfterBCount;
     int closeWhenNothingOpenResult;
     int closeWhenNothingOpenCount;
+    int closeWhenNothingOpenThingAfter;
     int closeWhenNothingPanelBefore;
     int closeWhenNothingPanelAfter;
     int staleC537BeforeNoOpenClose;
