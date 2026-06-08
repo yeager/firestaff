@@ -8245,6 +8245,29 @@ if(BUILD_TESTING)
         NAME nexus_v2_upscaler
         COMMAND test_nexus_v2_upscaler
     )
+
+    # ── Nexus V2 Phase 4 palette bridge smoke test ─────────────
+    # Source-lock: src/nexus/nexus_v2_render_pipeline.c
+    # Focus: one palette entry handoff updates between renders.
+    add_executable(test_nexus_v2_render_pipeline
+        tests/test_nexus_v2_render_pipeline.c
+        src/nexus/nexus_v2_render_pipeline.c
+        src/nexus/nexus_v2_config.c
+        src/nexus/nexus_v2_upscaler.c
+        src/nexus/nexus_v2_lighting.c
+        src/nexus/nexus_v2_particles.c
+        src/nexus/nexus_v2_atmosphere.c
+    )
+    target_include_directories(test_nexus_v2_render_pipeline PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_render_pipeline PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_render_pipeline
+        COMMAND test_nexus_v2_render_pipeline
+    )
 endif()
 
 
