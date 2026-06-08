@@ -31,6 +31,7 @@ enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
     PROBE_CHAMPION_COUNT = 1,
+    PROBE_ACTION_HAND_SLOTBOX = 9,
     PROBE_OPEN_CHEST_PANEL_GRAPHIC = 25,
     PROBE_CHEST_OPEN_ICON = 145
 };
@@ -268,6 +269,28 @@ static int check_chest_slot_icon(const M11_GameViewState* game,
     return count_icon_matches(game, fb, expectedIcon, vx + x, vy + y, label);
 }
 
+static int check_action_hand_open_chest_icon(const M11_GameViewState* game,
+                                             const unsigned char* fb)
+{
+    int x = 0, y = 0, w = 0, h = 0;
+    int vx = 0, vy = 0, vw = 0, vh = 0;
+    int ok = 1;
+
+    ok &= expect_true("open chest icon viewport origin",
+                      M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
+    ok &= expect_true("C09 action-hand slotbox zone",
+                      M11_GameView_GetV1InventorySourceSlotBoxZone(
+                          PROBE_ACTION_HAND_SLOTBOX, &x, &y, &w, &h) &&
+                      w == 16 && h == 16);
+    if (!ok) return 0;
+
+    /* ReDMCSB CHEST.C F0333 lines 43-48 draws C145 into C09 before
+     * blitting the open-chest C025 panel when the eye is not pressed. */
+    return count_icon_matches(game, fb, PROBE_CHEST_OPEN_ICON,
+                              vx + x, vy + y,
+                              "action-hand open chest");
+}
+
 int main(int argc, char** argv)
 {
     const char* dataDir;
@@ -322,6 +345,7 @@ int main(int argc, char** argv)
         &game, CHAMPION_SLOT_ACTION_HAND);
     ok &= expect_int("action-hand chest icon stays open",
                      actionIcon, PROBE_CHEST_OPEN_ICON);
+    ok &= check_action_hand_open_chest_icon(&game, fb);
     itemAIcon = M11_GameView_GetObjectIconIndexForThing(&game, itemA);
     itemBIcon = M11_GameView_GetObjectIconIndexForThing(&game, itemB);
     ok &= expect_true("first visible chest item icon resolves", itemAIcon >= 0);
