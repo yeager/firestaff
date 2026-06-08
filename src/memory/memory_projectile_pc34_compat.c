@@ -964,6 +964,19 @@ RESOLVE:
      * despawn=0 + resultKind=FLEW. */
     F0820_PROJECTILE_ResolveCollision_Compat(
         in, digest, dispatch, currentTick, rng, outResult);
+    /* ReDMCSB PROJEXPL.C:F0219 lines 717-755 resolves wall/door
+     * impacts before the destination-square move is committed. Keep
+     * the public tick result in sync with outNewState so regression
+     * probes can assert the impacted thrown item stayed on the source
+     * square instead of being materialized in the blocked side cell. */
+    outResult->newCell               = outNewState->cell;
+    outResult->newMapIndex           = outNewState->mapIndex;
+    outResult->newMapX               = outNewState->mapX;
+    outResult->newMapY               = outNewState->mapY;
+    outResult->newDirection          = outNewState->direction;
+    outResult->newKineticEnergy      = outNewState->kineticEnergy;
+    outResult->newAttack             = outNewState->attack;
+    outResult->newFirstMoveGraceFlag = outNewState->firstMoveGraceFlag;
     return 1;
 }
 
