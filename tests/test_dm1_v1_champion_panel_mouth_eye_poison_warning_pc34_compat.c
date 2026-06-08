@@ -234,6 +234,163 @@ static void test_only_poison_active(const char *overlay,
               DM1_V1_CPMEP_COLOR_RED_FLASH_DARK, defs);
 }
 
+/* Boundary value test for one champion at the exact ReDMCSB food/water
+ * warning threshold.
+ *
+ * ReDMCSB PANEL.C:F0344_INVENTORY_DrawPanel_FoodOrWaterBar:1519-1526 uses
+ *   if (P0712_i_Amount < -512) {
+ *       L1070_i_Color = C08_COLOR_RED;
+ *   } else {
+ *       if (P0712_i_Amount < 0) {
+ *           L1070_i_Color = C11_COLOR_YELLOW;
+ *       } else {
+ *           L1070_i_Color = caller_normal_color;
+ *       }
+ *   }
+ *
+ * and the panel slice mirrors that with
+ *   food_critical = champion->food < -512;
+ *   water_critical = champion->water < -512;
+ *   dm1_v1_cpmep_food_or_water_color(amount, normal_color) returning
+ *       RED for amount < -512, YELLOW for amount < 0, else normal_color.
+ *
+ * The test below pins the boundary on a SINGLE champion (champion 0) and
+ * asserts both sides:
+ *   - at food = -512 / water = -512: the strict-less-than means the bar
+ *     color is YELLOW (not RED) and the warning border does NOT flash
+ *     (no critical message emission).
+ *   - at food = -513 / water = -513: just past the threshold, the bar
+ *     color is RED and the warning border flashes the red palette pair
+ *     (critical message emission per ReDMCSB).
+ *   - at food = 0: the warning level drops back to normal
+ *     bar color, mouth warning clears for the food axis only.
+ *
+ * The test only touches champion 0, keeping the assertion surface focused
+ * on the threshold itself instead of multi-champion routing.
+ */
+static void test_food_water_warning_threshold_boundary(const char *overlay,
+                                                      const char *panel,
+                                                      const char *defs)
+{
+    DM1_V1_ChampionPanelMouthEyePoisonWarningStatePc34Compat state;
+    DM1_V1_ChampionPanelMouthEyePoisonWarningResultPc34Compat result;
+
+    /* Food = -512: strict-less-than keeps us out of the critical branch. */
+    DM1_V1_ChampionPanelMouthEyePoisonWarning_InitStatePc34Compat(&state);
+    state.inventory_open = 1;
+    state.leader_champion_index = 0;
+    state.active_inventory_champion_index = 0;
+    state.champions[0].food = -512;
+    state.champions[0].water = 1024;
+    state.champions[0].poison_event_count = 0;
+
+    result = build_or_fail(&state, overlay);
+    check_int("boundary.food_minus_512.selected",
+              result.selected_champion_index, 0, overlay);
+    check_int("boundary.food_minus_512.mouthWarning",
+              result.mouth_warning_border_drawn, 1, overlay);
+    check_int("boundary.food_minus_512.foodBarYellow",
+              result.food_bar_color, 11, panel);
+    check_int("boundary.food_minus_512.waterBarNormal",
+              result.water_bar_color, 14, panel);
+    check_int("boundary.food_minus_512.foodNoFlash",
+              result.food_warning_border_flashes, 0, panel);
+    check_int("boundary.food_minus_512.foodNoDarkPalette",
+              result.food_warning_palette_dark, -1, panel);
+    check_int("boundary.food_minus_512.foodNoLitPalette",
+              result.food_warning_palette_lit, -1, panel);
+    check_int("boundary.food_minus_512.waterNoFlash",
+              result.water_warning_border_flashes, 0, panel);
+    check_int("boundary.food_minus_512.poisonNoLabel",
+              result.poison_label_drawn, 0, panel);
+
+    /* Food = -513: one step past the boundary, critical warning message
+     * emission (red bar + red flash palette pair). */
+    DM1_V1_ChampionPanelMouthEyePoisonWarning_InitStatePc34Compat(&state);
+    state.inventory_open = 1;
+    state.leader_champion_index = 0;
+    state.active_inventory_champion_index = 0;
+    state.champions[0].food = -513;
+    state.champions[0].water = 1024;
+    state.champions[0].poison_event_count = 0;
+
+    result = build_or_fail(&state, overlay);
+    check_int("boundary.food_minus_513.selected",
+              result.selected_champion_index, 0, overlay);
+    check_int("boundary.food_minus_513.foodBarRed",
+              result.food_bar_color, 8, panel);
+    check_int("boundary.food_minus_513.foodFlash",
+              result.food_warning_border_flashes, 1, panel);
+    check_int("boundary.food_minus_513.foodFlashDark",
+              result.food_warning_palette_dark,
+              DM1_V1_CPMEP_COLOR_RED_FLASH_DARK, defs);
+    check_int("boundary.food_minus_513.foodFlashLit",
+              result.food_warning_palette_lit,
+              DM1_V1_CPMEP_COLOR_RED_FLASH_LIT, defs);
+    check_int("boundary.food_minus_513.waterNoFlash",
+              result.water_warning_border_flashes, 0, panel);
+
+    /* Water = -512: boundary is symmetric, water stays in yellow band. */
+    DM1_V1_ChampionPanelMouthEyePoisonWarning_InitStatePc34Compat(&state);
+    state.inventory_open = 1;
+    state.leader_champion_index = 0;
+    state.active_inventory_champion_index = 0;
+    state.champions[0].food = 1024;
+    state.champions[0].water = -512;
+    state.champions[0].poison_event_count = 0;
+
+    result = build_or_fail(&state, overlay);
+    check_int("boundary.water_minus_512.mouthWarning",
+              result.mouth_warning_border_drawn, 1, overlay);
+    check_int("boundary.water_minus_512.foodBarNormal",
+              result.food_bar_color, 5, panel);
+    check_int("boundary.water_minus_512.waterBarYellow",
+              result.water_bar_color, 11, panel);
+    check_int("boundary.water_minus_512.foodNoFlash",
+              result.food_warning_border_flashes, 0, panel);
+    check_int("boundary.water_minus_512.waterNoFlash",
+              result.water_warning_border_flashes, 0, panel);
+
+    /* Water = -513: one step past the boundary, water axis critical. */
+    DM1_V1_ChampionPanelMouthEyePoisonWarning_InitStatePc34Compat(&state);
+    state.inventory_open = 1;
+    state.leader_champion_index = 0;
+    state.active_inventory_champion_index = 0;
+    state.champions[0].food = 1024;
+    state.champions[0].water = -513;
+    state.champions[0].poison_event_count = 0;
+
+    result = build_or_fail(&state, overlay);
+    check_int("boundary.water_minus_513.waterBarRed",
+              result.water_bar_color, 8, panel);
+    check_int("boundary.water_minus_513.waterFlash",
+              result.water_warning_border_flashes, 1, panel);
+    check_int("boundary.water_minus_513.waterFlashDark",
+              result.water_warning_palette_dark,
+              DM1_V1_CPMEP_COLOR_RED_FLASH_DARK, defs);
+    check_int("boundary.water_minus_513.foodNoFlash",
+              result.food_warning_border_flashes, 0, panel);
+
+    /* Food = 0: lower boundary for the warning band itself. The bar
+     * returns to the caller's normal color and the food warning
+     * emission drops out, while the water axis is untouched. */
+    DM1_V1_ChampionPanelMouthEyePoisonWarning_InitStatePc34Compat(&state);
+    state.inventory_open = 1;
+    state.leader_champion_index = 0;
+    state.active_inventory_champion_index = 0;
+    state.champions[0].food = 0;
+    state.champions[0].water = 1024;
+    state.champions[0].poison_event_count = 0;
+
+    result = build_or_fail(&state, overlay);
+    check_int("boundary.food_zero.foodBarNormal",
+              result.food_bar_color, 5, panel);
+    check_int("boundary.food_zero.mouthNoWarning",
+              result.mouth_warning_border_drawn, 0, overlay);
+    check_int("boundary.food_zero.foodNoFlash",
+              result.food_warning_border_flashes, 0, panel);
+}
+
 static void test_warning_follows_inventory_champion(const char *overlay,
                                                     const char *swap,
                                                     const char *panel)
@@ -301,6 +458,9 @@ int main(void)
     test_only_poison_active(e->inventory_overlay_anchor,
                             e->panel_warning_anchor,
                             e->defs_anchor);
+    test_food_water_warning_threshold_boundary(e->inventory_overlay_anchor,
+                                               e->panel_warning_anchor,
+                                               e->defs_anchor);
     test_warning_follows_inventory_champion(e->inventory_overlay_anchor,
                                             e->inventory_swap_anchor,
                                             e->panel_warning_anchor);
