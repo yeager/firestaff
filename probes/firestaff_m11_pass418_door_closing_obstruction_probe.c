@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "memory_door_action_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 
@@ -78,6 +79,16 @@ static int has_emit(const struct TickResult_Compat* r, int kind) {
     int i;
     for (i = 0; i < r->emissionCount; ++i) if (r->emissions[i].kind == kind) return 1;
     return 0;
+}
+static int count_sound_payload(const struct TickResult_Compat* r, int kind, int payload0) {
+    int i;
+    int count = 0;
+    for (i = 0; i < r->emissionCount; ++i) {
+        if (r->emissions[i].kind == kind && r->emissions[i].payload[0] == payload0) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 int main(void) {
@@ -142,7 +153,7 @@ int main(void) {
         square_state(&dungeon, 1, 1) == 0 &&
         has_emit(&result, EMIT_DOOR_STATE) &&
         has_emit(&result, EMIT_DAMAGE_DEALT) &&
-        has_emit(&result, EMIT_SOUND_REQUEST),
+        count_sound_payload(&result, EMIT_SOUND_REQUEST, DM1_SND_PARTY_DAMAGED) == 1,
         "orchestrator CLEAR event on occupied door forces square open and emits door/damage/sound markers");
 
     rec("P418_ORCH_RESCHEDULES_PLUS_TWO",
@@ -187,7 +198,7 @@ int main(void) {
             groups[0].health[0] == 15 && groups[0].health[1] == 15 &&
             has_emit(&result, EMIT_DOOR_STATE) &&
             has_emit(&result, EMIT_DAMAGE_DEALT) &&
-            has_emit(&result, EMIT_SOUND_REQUEST),
+            count_sound_payload(&result, EMIT_SOUND_REQUEST, DM1_SND_WOODEN_THUD) == 1,
             "material creature on a horizontal closing door is damaged, door steps one state toward open, and markers emit");
 
         rec("P418_ORCH_CREATURE_RESCHEDULES_PLUS_ONE",
