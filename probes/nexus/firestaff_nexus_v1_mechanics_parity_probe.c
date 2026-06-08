@@ -146,6 +146,38 @@ static void build_synthetic_dgn(uint8_t *buf, size_t bufsz)
     grid[(30 * 64 + 30) * 8 + 7] = NEXUS_SQF_3D_ONLY;
 }
 
+/*
+ * Build a synthetic DGN fixture with bogus thing/actor reference bytes.
+ *
+ * ReDMCSB source-lock note:
+ *   DUNGEON.C keeps square-thing bookkeeping in bounded arrays and has
+ *   historical out-of-bounds failure modes when thing references are
+ *   overfilled or dereferenced without a valid square/list entry.
+ *   This regression ensures the Nexus V1 DGN loader treats malformed
+ *   reference bytes as inert data and still clamps to the decoded square
+ *   type instead of trying to resolve them eagerly.
+ */
+static void build_synthetic_dgn_with_bad_actor_refs(uint8_t *buf, size_t bufsz)
+{
+    build_synthetic_dgn(buf, bufsz);
+
+    /* Inject malformed reference bytes into one floor cell.  The loader
+     * only decodes the square type from byte[6], so these values must stay
+     * inert and must not affect parse success or square clamping. */
+    {
+        uint8_t *grid = buf + NEXUS_DGN_BLOCK_SIZE + 0x40;
+        int off = (12 * NEXUS_MAX_MAP_SIZE + 13) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+        grid[off + 0] = 0xFFU;
+        grid[off + 1] = 0x7FU;
+        grid[off + 2] = 0xEEU;
+        grid[off + 3] = 0xDDU;
+        grid[off + 4] = 0xCCU;
+        grid[off + 5] = 0xBBU;
+        grid[off + 6] = NEXUS_SQUARE_FLOOR;
+        grid[off + 7] = 0x01U;
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
  * 1. Dungeon loading — verify DGN Structure1B loads correctly
  * Source: DMWeb DGN format (2026-05-28);
@@ -188,6 +220,32 @@ static void probe_dungeon(void)
           "get_square(99,99): OOB returns wall");
     CHECK(nexus_v1_level_get_square(&level, 10, 20) == NEXUS_SQUARE_STAIRS_DN,
           "get_square(10,20): stairs-down");
+}
+
+static void probe_dungeon_bad_actor_refs(void)
+{
+    printf("\n[DGN Level Parse — malformed actor refs]\n");
+    /* Same Structure1B layout as the valid fixture, but one cell carries
+     * impossible thing-reference bytes.  The parser must ignore them and
+     * keep the decoded square type stable. */
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    build_synthetic_dgn_with_bad_actor_refs(dgn, sizeof(dgn));
+
+    Nexus_V1_Level level;
+    memset(&level, 0xAA, sizeof(level));
+
+    int r = nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 2);
+    CHECK(r == 0, "nexus_v1_level_load succeeds with malformed actor refs");
+    CHECK(level.width == 64, "malformed refs keep level width = 64");
+    CHECK(level.height == 64, "malformed refs keep level height = 64");
+    CHECK(level.thing_count == 0, "thing_count stays 0 for inert reference bytes");
+    CHECK(level.creature_count == 0, "creature_count stays 0 for inert reference bytes");
+    CHECK(level.squares[12][13] == NEXUS_SQUARE_FLOOR,
+          "malformed reference bytes do not alter decoded square type");
+
+    int sq = nexus_v1_level_get_square(&level, 12, 13);
+    CHECK(sq == NEXUS_SQUARE_FLOOR,
+          "get_square returns floor for malformed-ref cell");
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -712,6 +770,7 @@ int main(int argc, char **argv)
     probe_save_load();
     probe_world();
     probe_engine_lifecycle();
+    probe_dungeon_bad_actor_refs();
 
     printf("\n=================================================================\n");
     printf("  Results: %d PASS, %d FAIL  (%s)\n",
