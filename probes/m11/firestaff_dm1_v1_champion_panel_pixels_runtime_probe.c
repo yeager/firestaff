@@ -288,6 +288,77 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
     return ok;
 }
 
+/* ReDMCSB: CHAMDRAW.C F0291 lines 632-651 draws the C033/C034/C035
+ * status-hand slot box, then draws the selected 16x16 icon one pixel
+ * inside that box.  For empty ready/action hands the source icon
+ * ordinals are C212/C213 and C214/C215 respectively.  This check
+ * pixel-matches the on-screen inset against the GRAPHICS.DAT object
+ * icon sheet for every live party hand slot. */
+static int check_hand_slot_icon_pixels(const M11_GameViewState* game,
+                                       const unsigned char* fb,
+                                       int slot,
+                                       int hand) {
+    int iconIndex = M11_GameView_GetV1StatusHandIconIndex(game, slot, hand);
+    int graphicIndex;
+    int srcX, srcY, srcW, srcH;
+    const M11_AssetSlot* asset;
+    int x, y, w, h;
+    int matched = 0;
+    int total = 0;
+    int yy;
+    int ok = 1;
+    char label[128];
+
+    snprintf(label, sizeof(label), "slot%d hand%d empty-hand icon index", slot, hand);
+    ok &= expect_true(label,
+                      iconIndex == 212 || iconIndex == 213 ||
+                      iconIndex == 214 || iconIndex == 215);
+    snprintf(label, sizeof(label), "slot%d hand%d icon source zone", slot, hand);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1ObjectIconSourceZone(iconIndex,
+                                                             &graphicIndex,
+                                                             &srcX, &srcY,
+                                                             &srcW, &srcH) &&
+                      srcW == 16 && srcH == 16);
+    snprintf(label, sizeof(label), "slot%d hand%d icon screen zone", slot, hand);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1StatusHandIconZone(slot, hand,
+                                                           &x, &y, &w, &h) &&
+                      w == 16 && h == 16);
+    if (!ok) {
+        return 0;
+    }
+
+    asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                 (unsigned int)graphicIndex);
+    snprintf(label, sizeof(label), "slot%d hand%d icon sheet asset", slot, hand);
+    ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
+                             srcX + srcW <= (int)asset->width &&
+                             srcY + srcH <= (int)asset->height);
+    if (!ok || !asset || !asset->pixels) {
+        return 0;
+    }
+
+    for (yy = 0; yy < h; ++yy) {
+        int xx;
+        for (xx = 0; xx < w; ++xx) {
+            unsigned char src = (unsigned char)
+                (asset->pixels[(srcY + yy) * (int)asset->width + srcX + xx] & 0x0F);
+            unsigned char dst = px_index(fb, PROBE_FB_W, x + xx, y + yy);
+            ++total;
+            if (dst == src) {
+                ++matched;
+            }
+        }
+    }
+    snprintf(label, sizeof(label), "slot%d hand%d GRAPHICS.DAT icon inset match",
+             slot, hand);
+    ok &= expect_true(label, total == 256 && matched == total);
+    printf("slot%d hand%d icon=%d gfx=%d pixels=%d/%d\n",
+           slot, hand, iconIndex, graphicIndex, matched, total);
+    return ok;
+}
+
 static int check_champion_icon_pixels(const M11_GameViewState* game,
                                       const unsigned char* fb,
                                       int slot) {
@@ -341,6 +412,8 @@ int main(int argc, char** argv) {
         }
         ok &= check_hand_slot_asset_pixels(&game, fb, slot, 0);
         ok &= check_hand_slot_asset_pixels(&game, fb, slot, 1);
+        ok &= check_hand_slot_icon_pixels(&game, fb, slot, 0);
+        ok &= check_hand_slot_icon_pixels(&game, fb, slot, 1);
     }
 
     M11_GameView_Shutdown(&game);
