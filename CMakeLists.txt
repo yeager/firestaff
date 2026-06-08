@@ -1062,6 +1062,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_panel_slot_clear_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest slot-click pickup runtime pixel gate.
+# Opens a seeded action-hand chest, clicks C537 through the real pointer route,
+# verifies the leader hand pickup, and proves the reused framebuffer repaints
+# C537 to the same empty-slot pixels as a clean post-click draw.
+add_executable(firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion icon direction-swap runtime pixel gate.
 # Locks the M026_CHAMPION_ICON_INDEX(Direction, PartyDirection) macro
 # against the C028 4x19x14 champion-icon strip: when the party rotates
