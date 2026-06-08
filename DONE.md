@@ -207,6 +207,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 2 dungeon-data probe slice: synthetic CSB dungeon loading, square/thing accessors, door table, sensor helpers, endgame helpers, world-model behavior, and CSB-vs-DM1 difference checks are covered by `firestaff_csb_v1_dungeon_model_probe`.
 - ✅ Real CSB PC 3.4 DUNGEON.DAT ingestion: the V1 dungeon loader now accepts the hash-verified FTL-compressed CSB dungeon, decompresses/swaps it through the ReDMCSB FTL path, parses the 44-byte header and MAP descriptors, and keeps synthetic fixture coverage intact.
 - ✅ Launch/profile fixture: the Atari ST asset-pair manifest and CSB launch-intent gate now recognize hash-matched CSB assets as valid for the M12 profile boundary while keeping gameplay, save, and pixel parity as non-claims.
+- ✅ CSB V1 required-complete launch gate: `test_csb_v1_required_complete_launches` now proves the launcher requests a CSB V1 launch when the required GRAPHICS+DUNGEON hash set is complete even if optional title/intro/media extras are absent, keeping the gate narrow to the source-locked ENTRANCE.C / LOADSAVE.C boundary.
 - ✅ Source-lock audit coverage for CSB startup, utility, dungeon loading, wall rendering, champion import, weapons, magic, creatures, combat, and save behavior.
 - ✅ Phase 4 - Mechanics parity slices for CSB-specific movement/interaction/runtime behavior.
 - ✅ Phase 5 - Creature and combat parity slices.
