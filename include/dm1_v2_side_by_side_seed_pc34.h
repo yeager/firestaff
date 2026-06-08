@@ -49,6 +49,7 @@
 #ifndef FIRESTAFF_DM1_V2_SIDE_BY_SIDE_SEED_PC34_H
 #define FIRESTAFF_DM1_V2_SIDE_BY_SIDE_SEED_PC34_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "dm1_v2_viewport_renderer_pc34.h"
@@ -149,6 +150,19 @@ int dm1_v2_side_by_side_seed_composite_pixel(
     int x,
     int y,
     DM1_V2_Color* outColor);
+
+/* Write the canonical "V1 || gap || V2" composite into a caller-owned
+ * row-major RGBA8888 buffer. outStrideBytes is the destination row
+ * stride; it must be at least DM1_V2_SIDE_BY_SIDE_W * 4. outByteCount
+ * must cover the last written byte. Padding bytes beyond the composite
+ * width are left untouched, so screenshot probes can use aligned rows
+ * without the helper hiding padding corruption. Returns 1 on success,
+ * 0 for NULL args, invalid stride, or too-small buffers. */
+int dm1_v2_side_by_side_seed_write_rgba8888(
+    const DM1_V2_SideBySideSeed* seed,
+    unsigned char* out,
+    size_t outByteCount,
+    int outStrideBytes);
 
 /* Render the DM1 PC 3.4 entry composition into a V1 lane and a V2
  * lane (both presentation-disabled), populate *out with the seed

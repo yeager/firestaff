@@ -144,6 +144,41 @@ int dm1_v2_side_by_side_seed_composite_pixel(
     return 1;
 }
 
+int dm1_v2_side_by_side_seed_write_rgba8888(
+    const DM1_V2_SideBySideSeed* seed,
+    unsigned char* out,
+    size_t outByteCount,
+    int outStrideBytes) {
+    const size_t rowBytes = (size_t)DM1_V2_SIDE_BY_SIDE_W * 4u;
+    size_t requiredBytes;
+    int y, x;
+
+    if (!seed || !out) return 0;
+    if (outStrideBytes < (int)rowBytes) return 0;
+    requiredBytes = (size_t)(DM1_V2_SIDE_BY_SIDE_H - 1) *
+                    (size_t)outStrideBytes + rowBytes;
+    if (outByteCount < requiredBytes) return 0;
+
+    /* Screenshot scaffold export for the canonical row-major composite.
+     * DUNVIEW.C:2999-3000 fixes both source lanes at 224x136; this writer
+     * keeps the same V1/gap/V2 coordinate split as composite_pixel() so
+     * future screenshot probes do not duplicate lane math. */
+    for (y = 0; y < DM1_V2_SIDE_BY_SIDE_H; ++y) {
+        unsigned char* row = out + (size_t)y * (size_t)outStrideBytes;
+        for (x = 0; x < DM1_V2_SIDE_BY_SIDE_W; ++x) {
+            DM1_V2_Color c;
+            if (!dm1_v2_side_by_side_seed_composite_pixel(seed, x, y, &c)) {
+                return 0;
+            }
+            row[(size_t)x * 4u + 0u] = c.r;
+            row[(size_t)x * 4u + 1u] = c.g;
+            row[(size_t)x * 4u + 2u] = c.b;
+            row[(size_t)x * 4u + 3u] = c.a;
+        }
+    }
+    return 1;
+}
+
 int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
     const DM1_V2_DungeonStateFixture* fixture;
     DM1_V2_ViewportCompositionInput input;

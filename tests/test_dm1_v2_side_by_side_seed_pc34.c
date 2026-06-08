@@ -30,6 +30,10 @@
  *   TC-5. The source evidence string is non-NULL and references
  *         the ReDMCSB source anchors.
  *
+ *   TC-6. dm1_v2_side_by_side_seed_write_rgba8888() materializes
+ *         the same canonical V1-gap-V2 composite into a row-major
+ *         RGBA8888 buffer without touching row padding.
+ *
  * The test is headless: it depends only on the firestaff_v2 static
  * library and does not require any game data files.
  *
@@ -208,7 +212,78 @@ static int test_composite_pixel_accessor(void) {
     return 0;
 }
 
-/* ── TC-5: C001..C006 source command ids preserved under V1 source ─ */
+/* ── TC-5: RGBA8888 export materializes the same composite ─────── */
+
+static int test_rgba8888_export(void) {
+    enum {
+        kPadBytes = 8,
+        kTightStride = DM1_V2_SIDE_BY_SIDE_W * 4,
+        kPaddedStride = kTightStride + kPadBytes,
+        kBufferBytes = kPaddedStride * DM1_V2_SIDE_BY_SIDE_H
+    };
+    static unsigned char rgba[kBufferBytes];
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_Color c;
+    uint64_t hash = DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS;
+    const size_t requiredBytes =
+        (size_t)(DM1_V2_SIDE_BY_SIDE_H - 1) * (size_t)kPaddedStride +
+        (size_t)kTightStride;
+    int y, x, p;
+
+    memset(rgba, 0xa5, sizeof(rgba));
+    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              &seed, rgba, sizeof(rgba), kPaddedStride) == 1);
+
+    CHECK(rgba[0] == seed.v1.framebuffer[0][0].r);
+    CHECK(rgba[1] == seed.v1.framebuffer[0][0].g);
+    CHECK(rgba[2] == seed.v1.framebuffer[0][0].b);
+    CHECK(rgba[3] == seed.v1.framebuffer[0][0].a);
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, DM1_V2_VIEWPORT_W, 0, &c) == 1);
+    CHECK(rgba[(size_t)DM1_V2_VIEWPORT_W * 4u + 0u] == c.r);
+    CHECK(rgba[(size_t)DM1_V2_VIEWPORT_W * 4u + 1u] == c.g);
+    CHECK(rgba[(size_t)DM1_V2_VIEWPORT_W * 4u + 2u] == c.b);
+    CHECK(rgba[(size_t)DM1_V2_VIEWPORT_W * 4u + 3u] == c.a);
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed,
+              DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W,
+              0,
+              &c) == 1);
+    CHECK(rgba[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 0u] == c.r);
+    CHECK(rgba[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 1u] == c.g);
+    CHECK(rgba[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 2u] == c.b);
+    CHECK(rgba[(size_t)(DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) * 4u + 3u] == c.a);
+
+    for (y = 0; y < DM1_V2_SIDE_BY_SIDE_H; ++y) {
+        const unsigned char* row = rgba + (size_t)y * (size_t)kPaddedStride;
+        for (x = 0; x < DM1_V2_SIDE_BY_SIDE_W; ++x) {
+            c.r = row[(size_t)x * 4u + 0u];
+            c.g = row[(size_t)x * 4u + 1u];
+            c.b = row[(size_t)x * 4u + 2u];
+            c.a = row[(size_t)x * 4u + 3u];
+            hash = dm1_v2_side_by_side_seed_hash_color(hash, &c);
+        }
+        for (p = 0; p < kPadBytes; ++p) {
+            CHECK(row[kTightStride + p] == 0xa5);
+        }
+    }
+    CHECK(hash == seed.sideBySideHash);
+
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              NULL, rgba, sizeof(rgba), kPaddedStride) == 0);
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              &seed, NULL, sizeof(rgba), kPaddedStride) == 0);
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              &seed, rgba, sizeof(rgba), kTightStride - 1) == 0);
+    CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
+              &seed, rgba, requiredBytes - 1u, kPaddedStride) == 0);
+    return 0;
+}
+
+/* ── TC-6: C001..C006 source command ids preserved under V1 source ─ */
 
 static int test_v1_source_commands_preserved(void) {
     int i;
@@ -228,7 +303,7 @@ static int test_v1_source_commands_preserved(void) {
     return 0;
 }
 
-/* ── TC-6: source evidence string references ReDMCSB ────────────── */
+/* ── TC-7: source evidence string references ReDMCSB ────────────── */
 
 static int test_source_evidence_anchors(void) {
     const char* ev = dm1_v2_side_by_side_seed_source_evidence();
@@ -240,7 +315,7 @@ static int test_source_evidence_anchors(void) {
     return 0;
 }
 
-/* ── TC-7: V1 viewport geometry scaffold accessor ───────────────
+/* ── TC-8: V1 viewport geometry scaffold accessor ───────────────
  *
  * Locks the source-locked V1 viewport geometry constants (portrait
  * + wall panel) used by future screenshot-diff and pixel-scaffolding
@@ -312,7 +387,7 @@ static int test_v1_geometry_scaffold(void) {
     return 0;
 }
 
-/* ── TC-8: v1_geometry(NULL) is null-safe ──────────────────────── */
+/* ── TC-9: v1_geometry(NULL) is null-safe ──────────────────────── */
 
 static int test_v1_geometry_null_safe(void) {
     CHECK(dm1_v2_side_by_side_seed_v1_geometry(NULL) == 0);
@@ -328,6 +403,7 @@ int main(void) {
     if (test_build_entry_seed()) return 1;
     if (test_layout_hash_reproduces()) return 1;
     if (test_composite_pixel_accessor()) return 1;
+    if (test_rgba8888_export()) return 1;
     if (test_v1_source_commands_preserved()) return 1;
     if (test_source_evidence_anchors()) return 1;
     if (test_v1_geometry_scaffold()) return 1;
