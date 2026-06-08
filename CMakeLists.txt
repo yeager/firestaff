@@ -1712,7 +1712,7 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v1_lighting_falloff_boundary PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_lighting_falloff_boundary PRIVATE firestaff_m10)
+    target_link_libraries(test_dm2_v1_lighting_falloff_boundary PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_lighting_falloff_boundary PRIVATE -Wall -Wextra -O2)
     endif()
