@@ -431,6 +431,9 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
     world->transition_spawn_x = x;
     world->transition_spawn_y = y;
     world->transition_pending = 1;
+    /* ReDMCSB: MOVESENS.C:475-537 — unresolved teleporter chain returns
+     * via THERON_TRANSITION_TELEPORTER with clicked square as spawn. */
+    world->transition_type = THERON_TRANSITION_TELEPORTER;
     world->transition_target_level = world->current_level;
     world->party.leader_x = x;
     world->party.leader_y = y;
