@@ -1,0 +1,27 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T00:42:00Z",
+  "status": "PASS_DM1_V1_CHEST_CROSS_CHAMPION_HAND_SWAP_RUNTIME_REGRESSION",
+  "repo": "https://github.com/yeager/firestaff",
+  "branch": "main",
+  "redmcsbRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "anchors": [
+    "CHEST.C F0333:30-32",
+    "CHEST.C F0333:43",
+    "CHEST.C F0333:53-67",
+    "CHEST.C F0334:113-132",
+    "CHAMPION.C F0297:243-298",
+    "CHAMPION.C F0300:511-515",
+    "CHAMPION.C F0301:606-614",
+    "CHAMPION.C F0302:688-710",
+    "DUNGEON.C F0163:1796-1837",
+    "COMMAND.C F0359:1985-1990",
+    "PANEL.C F0354:2208-2240",
+    "DEFS.H:2088 C10_COLOR_FLESH/C30/G0425/G0426/G0423/G0305",
+    "BLITMASK.C F0133:30-33"
+  ],
+  "assertions": 678,
+  "testBinary": "test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat",
+  "ctestName": "dm1_v1_chest_cross_champion_hand_swap_pc34_compat",
+  "notes": "Runtime-style source-lock regression for opening a DM1 V1 chest, moving champion A hand identity to champion B through leader rotation while the chest stays open, then closing/reopening to prove link order, G0425 view, leader hand identity, and inventory champion hand state remain coherent."
+}
