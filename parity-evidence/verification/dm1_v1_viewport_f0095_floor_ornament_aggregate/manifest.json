@@ -1,0 +1,30 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T02:00:00Z",
+  "status": "PASS_DM1_V1_VIEWPORT_F0095_FLOOR_ORNAMENT_AGGREGATE_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "firestaff-parity/1780884003_dm1_v1_f0095_floor_ornament_aggregate",
+  "contractOnly": true,
+  "realAssetRuntimeParity": false,
+  "anchors": [
+    "DUNVIEW.C F0095:2124-2223",
+    "DUNVIEW.C F0108:3959-4008",
+    "DUNVIEW.C F0124:7874-7926",
+    "DUNVIEW.C F0128:8318-8542",
+    "DUNVIEW.C F0098:2962-3002",
+    "DUNGEON.C F0163:1769-1838",
+    "DEFS.H:2088",
+    "DEFS.H:2544/2558/2759/4042-4043",
+    "CSB-lineage Viewport.cpp:1903-1915"
+  ],
+  "ctest": "dm1_v1_viewport_f0095_floor_ornament_aggregate",
+  "target": "test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat",
+  "notes": [
+    "Single aggregate source-lock gate for the D3C, D2C, D1C, and D0C center-row family.",
+    "D3C/D2C/D1C lock F0108 floor-ornament ordering before F0115 when the source branch has a floor-ornament route.",
+    "D0C is an explicit F0108 keep-out: F0127 has no floor-ornament route and remains covered by the F0098 floor/ceiling row boundary.",
+    "F0098 is locked as the row-preceding floor/ceiling owner from F0128, not as a per-square runtime proof.",
+    "The G0095 wall-set native binding and G0109 portrait box are held outside the F0108 floor-ornament route to prevent graphics-family conflation.",
+    "No real-asset bitmap parity, DOSBox runtime hit, or per-square pixel proof is claimed by this manifest."
+  ]
+}
