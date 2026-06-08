@@ -10,7 +10,7 @@
  *   - Diagnostics (F0787/F0788/F0789)
  *   - Cross-phase integration: F0736 bit-identical pre-/post-load
  *
- * 48 invariants, >= 30 required for PASS.
+ * 49 invariants, >= 31 required for PASS.
  *
  * Authoritative plan: PHASE15_PLAN.md §5.
  */
@@ -21,6 +21,7 @@
 
 #include "memory_savegame_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
@@ -256,6 +257,85 @@ static void build_full_mutations(struct DungeonMutationList_Compat* lst) {
         m->afterValue  = ~(uint32_t)i;
         m->fieldMask   = 1 << (i & 31);
     }
+}
+
+static struct TimelineEvent_Compat make_timeline_event(
+    int kind,
+    uint32_t fireAtTick,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    int aux0,
+    int aux1,
+    int aux2,
+    int aux3,
+    int aux4)
+{
+    struct TimelineEvent_Compat ev;
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = kind;
+    ev.fireAtTick = fireAtTick;
+    ev.mapIndex = mapIndex;
+    ev.mapX = mapX;
+    ev.mapY = mapY;
+    ev.cell = cell;
+    ev.aux0 = aux0;
+    ev.aux1 = aux1;
+    ev.aux2 = aux2;
+    ev.aux3 = aux3;
+    ev.aux4 = aux4;
+    return ev;
+}
+
+static int schedule_timeline_event(
+    struct TimelineQueue_Compat* queue,
+    int kind,
+    uint32_t fireAtTick,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    int aux0,
+    int aux1,
+    int aux2,
+    int aux3,
+    int aux4)
+{
+    struct TimelineEvent_Compat ev = make_timeline_event(
+        kind, fireAtTick, mapIndex, mapX, mapY, cell, aux0, aux1, aux2, aux3, aux4);
+    return F0721_TIMELINE_Schedule_Compat(queue, &ev);
+}
+
+static int expect_timeline_sequence(
+    const struct TimelineQueue_Compat* queue,
+    const int* expectedKinds,
+    const int* expectedAux0,
+    int expectedCount,
+    const char* label)
+{
+    struct TimelineQueue_Compat copy;
+    struct TimelineEvent_Compat ev;
+    int i;
+    int ok = 1;
+
+    copy = *queue;
+    for (i = 0; i < expectedCount; i++) {
+        if (!F0723_TIMELINE_Pop_Compat(&copy, &ev)) {
+            ok = 0;
+            break;
+        }
+        if (ev.kind != expectedKinds[i] || ev.aux0 != expectedAux0[i]) {
+            ok = 0;
+            break;
+        }
+    }
+    if (ok && copy.count != 0) {
+        ok = 0;
+    }
+
+    (void)label;
+    return ok;
 }
 
 /* A defender snapshot used for integration invariant #45. */
@@ -668,6 +748,185 @@ int main(int argc, char* argv[]) {
             CHECK(ok,
                   "Dungeon-mutation list field-by-field equal after load (count + entries + zero tail)");
         }
+        free(buf);
+    }
+
+    /* ==============================================================
+     *  Block F — delayed timeline order gate (invariants 31-34)
+     *  ReDMCSB CHAMPION.C F0322/F0314 and TIMELINE.C C70..C83:
+     *  poison reschedules, wake-from-rest is a state-change side
+     *  effect, and delayed light/status events must keep insertion
+     *  order across save/load and post-load party mutations.
+     * ============================================================== */
+    {
+        struct SaveGameFixture a, b;
+        struct LifecycleState_Compat lifecycle;
+        struct TimelineEvent_Compat poisonExpired;
+        struct TimelineEvent_Compat poisonFollowup;
+        struct TimelineEvent_Compat lightEvent;
+        struct TimelineEvent_Compat wakeEvent;
+        struct SpellDefinition_Compat lightSpell;
+        struct SpellEffect_Compat lightEffect;
+        struct SpellEffect_Compat wakeEffect;
+        struct MagicState_Compat magicState;
+        struct CombatantChampionSnapshot_Compat restingChampion;
+        struct CombatResult_Compat wakeResult;
+        unsigned char* buf = malloc(62080);
+        int w = 0;
+        int errSave;
+        int errLoad;
+        int ok;
+        const int expectedKinds[4] = {
+            TIMELINE_EVENT_STATUS_TIMEOUT,
+            TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
+            TIMELINE_EVENT_STATUS_TIMEOUT,
+            TIMELINE_EVENT_STATUS_TIMEOUT
+        };
+        const int expectedAux0[4] = {
+            LIFECYCLE_STATUS_POISON,
+            -1,
+            TIMELINE_AUX_PARTY_SHIELD,
+            TIMELINE_AUX_FIRESHIELD
+        };
+
+        build_zero_fixture(&a);
+        build_zero_fixture(&b);
+        memset(&lifecycle, 0, sizeof(lifecycle));
+        memset(&lightSpell, 0, sizeof(lightSpell));
+        memset(&lightEffect, 0, sizeof(lightEffect));
+        memset(&wakeEffect, 0, sizeof(wakeEffect));
+        memset(&magicState, 0, sizeof(magicState));
+        memset(&poisonFollowup, 0, sizeof(poisonFollowup));
+        memset(&lightEvent, 0, sizeof(lightEvent));
+        memset(&wakeEvent, 0, sizeof(wakeEvent));
+        memset(&wakeResult, 0, sizeof(wakeResult));
+        build_defender_snapshot(&restingChampion);
+        restingChampion.isResting = 1;
+        lightSpell.type = C0_SPELL_TYPE_OTHER_LIGHT_COMPAT;
+
+        poisonExpired = make_timeline_event(
+            TIMELINE_EVENT_STATUS_TIMEOUT,
+            1000u,
+            2, 4, 6, 1,
+            LIFECYCLE_STATUS_POISON,
+            3,
+            0,
+            0,
+            0);
+        ok = F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+            &lifecycle, &poisonExpired, 0, &poisonFollowup);
+        if (ok == 1) {
+            poisonFollowup.fireAtTick = 1000u;
+            poisonFollowup.mapIndex = 2;
+            poisonFollowup.mapX = 4;
+            poisonFollowup.mapY = 6;
+            poisonFollowup.cell = 1;
+        }
+
+        ok = F0757_MAGIC_ProduceOtherEffect_Compat(
+            &lightSpell, 3, &magicState, &lightEffect);
+        if (ok == 1) {
+            lightEvent.kind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+            lightEvent.fireAtTick = 1000u;
+            lightEvent.mapIndex = 2;
+            lightEvent.mapX = 4;
+            lightEvent.mapY = 6;
+            lightEvent.cell = 1;
+            lightEvent.aux0 = -1;
+            lightEvent.aux1 = lightEffect.magicStateDelta[3];
+            lightEvent.aux2 = lightEffect.durationTicks;
+            lightEvent.aux3 = 0;
+            lightEvent.aux4 = 0;
+        }
+
+        wakeEffect.castResult = SPELL_CAST_SUCCESS;
+        wakeEffect.spellKind = C2_SPELL_KIND_PROJECTILE_COMPAT;
+        wakeEffect.spellType = 0;
+        wakeEffect.impactAttack = 40;
+        wakeEffect.followupEventAux0 = TIMELINE_AUX_PARTY_SHIELD;
+        ok = F0759_MAGIC_ApplySpellImpactToChampion_Compat(
+            &wakeEffect, &restingChampion, &magicState, 0, &wakeResult);
+        if (ok == 1) {
+            wakeEvent.kind = wakeResult.followupEventKind;
+            wakeEvent.fireAtTick = 1000u;
+            wakeEvent.mapIndex = 2;
+            wakeEvent.mapX = 4;
+            wakeEvent.mapY = 6;
+            wakeEvent.cell = 1;
+            wakeEvent.aux0 = wakeResult.followupEventAux0;
+            wakeEvent.aux1 = wakeResult.poisonAttackPending;
+            wakeEvent.aux2 = wakeResult.wakeFromRest;
+            wakeEvent.aux3 = wakeResult.damageApplied;
+            wakeEvent.aux4 = 0;
+        }
+
+        build_populated_fixture(&a);
+        build_zero_timeline(&a.timeline);
+        a.party.magicShieldTime = 9;
+        a.party.fireShieldTime = 5;
+        ok &= schedule_timeline_event(
+            &a.timeline,
+            poisonFollowup.kind,
+            poisonFollowup.fireAtTick,
+            poisonFollowup.mapIndex,
+            poisonFollowup.mapX,
+            poisonFollowup.mapY,
+            poisonFollowup.cell,
+            poisonFollowup.aux0,
+            poisonFollowup.aux1,
+            poisonFollowup.aux2,
+            poisonFollowup.aux3,
+            poisonFollowup.aux4);
+        ok &= schedule_timeline_event(
+            &a.timeline,
+            lightEvent.kind,
+            lightEvent.fireAtTick,
+            lightEvent.mapIndex,
+            lightEvent.mapX,
+            lightEvent.mapY,
+            lightEvent.cell,
+            lightEvent.aux0,
+            lightEvent.aux1,
+            lightEvent.aux2,
+            lightEvent.aux3,
+            lightEvent.aux4);
+        ok &= schedule_timeline_event(
+            &a.timeline,
+            wakeEvent.kind,
+            wakeEvent.fireAtTick,
+            wakeEvent.mapIndex,
+            wakeEvent.mapX,
+            wakeEvent.mapY,
+            wakeEvent.cell,
+            wakeEvent.aux0,
+            wakeEvent.aux1,
+            wakeEvent.aux2,
+            wakeEvent.aux3,
+            wakeEvent.aux4);
+        ok &= (F0773_SAVEGAME_SaveToBuffer_Compat(&a.save, buf, 62080, &w) == SAVEGAME_OK);
+        ok &= (F0774_SAVEGAME_LoadFromBuffer_Compat(buf, w, &b.save) == SAVEGAME_OK);
+        b.party.activeChampionIndex = 0;
+        b.party.magicShieldTime = 3;
+        b.party.fireShieldTime = 1;
+        wakeEvent.aux0 = TIMELINE_AUX_FIRESHIELD;
+        ok &= schedule_timeline_event(
+            &b.timeline,
+            wakeEvent.kind,
+            wakeEvent.fireAtTick,
+            wakeEvent.mapIndex,
+            wakeEvent.mapX,
+            wakeEvent.mapY,
+            wakeEvent.cell,
+            wakeEvent.aux0,
+            wakeEvent.aux1,
+            wakeEvent.aux2,
+            wakeEvent.aux3,
+            wakeEvent.aux4);
+        ok &= expect_timeline_sequence(
+            &b.timeline, expectedKinds, expectedAux0, 4,
+            "same-tick poison/light/wake order survives save/load and post-load party-state changes");
+        CHECK(ok,
+              "Same-tick delayed poison/light/wake ordering survives save/load and post-load party-state changes");
         free(buf);
     }
 
