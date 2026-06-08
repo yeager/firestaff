@@ -120,6 +120,7 @@ static void test_deterministic_capture_pixels_and_edges(void)
         30,
         32,
         false,
+        false,
         DM1_V1_D1C_WALL_C10_COLOR_FLESH_PC34
     };
 
@@ -156,6 +157,21 @@ static void test_deterministic_capture_pixels_and_edges(void)
                "DUNVIEW.C:3055 C10 transparent blit");
     expect_int("pixel.c10.preserved", out.pixel_after, 0xee,
                "DUNVIEW.C:3055 C10 transparent blit");
+
+    input.use_no_transparency = true;
+    expect_int("pixel.opaque_c10.apply",
+               dm1_v1_viewport_d1c_wall_apply_pixel_pc34(
+                   &input, source, sizeof(source), viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:3288-3301 F0792 CM1_COLOR_NO_TRANSPARENCY");
+    expect_int("pixel.opaque_c10.route", out.no_transparency_route ? 1 : 0, 1,
+               "F0792/F0765 PC34 zone routes use CM1_COLOR_NO_TRANSPARENCY");
+    expect_int("pixel.opaque_c10.no_skip", out.transparent_skip ? 1 : 0, 0,
+               "CM1_COLOR_NO_TRANSPARENCY writes C10 as an ordinary pixel");
+    expect_int("pixel.opaque_c10.writes", out.writes_pixel ? 1 : 0, 1,
+               "CM1_COLOR_NO_TRANSPARENCY writes C10 as an ordinary pixel");
+    expect_int("pixel.opaque_c10.value", out.pixel_after, 10,
+               "DUNVIEW.C:3159-3175 F0765/F0792 opaque zone blit");
+    input.use_no_transparency = false;
 
     input.viewport_x = 110;
     expect_int("pixel.neighbor.apply",
@@ -202,6 +218,7 @@ static void test_deterministic_capture_pixels_and_edges(void)
     input.row = 30;
     input.viewport_x = 32;
     input.use_flipped_wall_bitmap = true;
+    input.use_no_transparency = false;
     source[21 * DM1_V1_D1C_WALL_SOURCE_WIDTH_PC34 + 79] = 10;
     source[21 * DM1_V1_D1C_WALL_SOURCE_WIDTH_PC34 + 78] = 0x53;
     source[21 * DM1_V1_D1C_WALL_SOURCE_WIDTH_PC34 + 0] = 0x68;
@@ -237,6 +254,7 @@ static void test_invalid_inputs_and_blend(void)
     DM1_V1_D1CWallPixelInputPc34 input = {
         9,
         32,
+        false,
         false,
         DM1_V1_D1C_WALL_C10_COLOR_FLESH_PC34
     };
@@ -279,6 +297,8 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "DUNVIEW.C PC34 opaque center wall path");
     expect_contains("evidence.f0792", e, "DUNVIEW.C:7792-7801 F0792",
                     "DUNVIEW.C PC34 wall zone blit");
+    expect_contains("evidence.f0792_opaque", e, "DUNVIEW.C:3288-3301 F0792 passes",
+                    "DUNVIEW.C F0792 no-transparency route");
     expect_contains("evidence.g0076_flip", e, "G0076_B_UseFlippedWallAndFootprintsBitmaps",
                     "DUNVIEW.C flipped wall/footprints bit");
     expect_contains("evidence.g3055", e, "G3055_i_WallSetFlipped_Wall_D1C=-24",
@@ -307,6 +327,9 @@ static void test_source_evidence_mentions_required_anchors(void)
     expect_contains("evidence.f0115_alcove", e,
                     "F0115 only follows the explicit alcove path",
                     "alcove thing pass exception");
+    expect_contains("evidence.c10_opaque_zone", e,
+                    "C10 writes on these zone routes",
+                    "F0792/F0765 no-transparency pixel gate");
     expect_contains("evidence.no_f0108", e, "F0108 floor ornaments",
                     "non-overlap with floor ornament gate");
     expect_contains("evidence.no_field", e, "F0113 center-field integration",
