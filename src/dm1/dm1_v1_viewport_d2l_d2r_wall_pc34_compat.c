@@ -131,15 +131,21 @@ static const DM1_V1_D2LD2RWallSpecPc34 s_specs[2] = {
 const DM1_V1_D2LD2RWallSpecPc34 *
 dm1_v1_viewport_d2l_d2r_wall_spec_pc34(DM1_V1_D2LD2RWallSidePc34 side)
 {
-    static DM1_V1_D2LD2RWallSpecPc34 spec;
+    static DM1_V1_D2LD2RWallSpecPc34 specs[2];
+    static bool initialized = false;
 
     if (side != DM1_V1_D2L_D2R_WALL_SIDE_D2L_PC34 &&
         side != DM1_V1_D2L_D2R_WALL_SIDE_D2R_PC34) {
         return NULL;
     }
-    spec = s_specs[(int)side];
-    spec.source_lines = dm1_v1_viewport_d2l_d2r_wall_source_evidence_pc34();
-    return &spec;
+    if (!initialized) {
+        specs[0] = s_specs[0];
+        specs[1] = s_specs[1];
+        specs[0].source_lines = dm1_v1_viewport_d2l_d2r_wall_source_evidence_pc34();
+        specs[1].source_lines = dm1_v1_viewport_d2l_d2r_wall_source_evidence_pc34();
+        initialized = true;
+    }
+    return &specs[(int)side];
 }
 
 bool dm1_v1_viewport_d2l_d2r_wall_map_pixel_pc34(
@@ -164,6 +170,38 @@ bool dm1_v1_viewport_d2l_d2r_wall_map_pixel_pc34(
         return false;
     }
     return true;
+}
+
+bool dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+    const DM1_V1_D2LD2RWallSpecPc34 *spec,
+    int row,
+    int viewport_x,
+    bool party_side_flipped,
+    int *source_x,
+    int *source_y)
+{
+    int mapped_x;
+    int mapped_y;
+
+    if (!dm1_v1_viewport_d2l_d2r_wall_map_pixel_pc34(
+            spec, row, viewport_x, &mapped_x, &mapped_y)) {
+        return false;
+    }
+
+    /*
+     * ReDMCSB: DUNVIEW.C F0128 lines 8390-8555 swaps
+     * G0699_puc_Bitmap_WallSet_Wall_D2LCR to the flipped wallset before
+     * F0119/F0120. DUNVIEW.C F0105 lines 3185-3204 performs the same
+     * horizontal row flip before the C10-transparent wall blit, so the
+     * source-locked column for a flipped row is width - 1 - native_x.
+     */
+    if (party_side_flipped) {
+        mapped_x = spec->source_width - 1 - mapped_x;
+    }
+
+    if (source_x) *source_x = mapped_x;
+    if (source_y) *source_y = mapped_y;
+    return source_x != NULL && source_y != NULL;
 }
 
 bool dm1_v1_viewport_d2l_d2r_wall_apply_pixel_pc34(
