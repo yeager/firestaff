@@ -73,6 +73,92 @@ static int make_temp_dir(char out[512]) {
 #endif
 }
 
+static void check_real_theron_launch_marker_presence(const char *real_data) {
+    M12_AssetStatus status;
+    M12_AssetStatus direct_status;
+    FS_ValidationReport report;
+    FS_GameAvailability availability;
+    const M12_AssetVersionStatus *matched_version = NULL;
+    const M12_AssetRequiredFileStatus *required;
+    size_t vi;
+
+    if (!real_data || !real_data[0]) {
+        return;
+    }
+
+    M12_AssetStatus_Scan(&status, real_data);
+
+    if (status.theronAvailable == 0) {
+        expect_true(fs_validate_data_dir(real_data, &report) >= 0 &&
+                    report.theron_ready == 0,
+                    "explicit missing/invalid real-data candidate is not hash-verified");
+        fs_startup_check_games(real_data, &availability);
+        expect_true(availability.theron_available == 0,
+                    "missing/invalid real-data candidate is not launch-ready");
+        expect_true(theron_v1_boot_probe_available(real_data) == 0,
+                    "missing/invalid real-data candidate is blocked by quick probe");
+        return;
+    }
+
+    expect_true(fs_validate_data_dir(real_data, &report) >= 0 &&
+                report.theron_ready == 1,
+                "validator accepts hash-verified real Theron data");
+
+    fs_startup_check_games(real_data, &availability);
+    expect_true(availability.theron_available == 1,
+                "startup accepts hash-verified Theron data");
+    expect_true(theron_v1_boot_probe_available(real_data) == 1,
+                "Theron quick boot probe accepts hash-verified data");
+
+    for (vi = 0; vi < M12_AssetStatus_GetVersionCount("theron"); ++vi) {
+        const M12_AssetVersionStatus *v =
+            M12_AssetStatus_GetVersion(&status, "theron", vi);
+        if (v && v->matched) {
+            matched_version = v;
+            break;
+        }
+    }
+    expect_true(matched_version != NULL,
+                "real Theron Track 02 candidate resolves at least one catalog marker");
+
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0);
+    expect_true(required && required->required && required->matched,
+                "real Theron Track 02 marker satisfies launch gate required file");
+    if (matched_version && matched_version->matchedPath[0]) {
+        expect_true(strcmp(matched_version->matchedPath,
+                           required->matchedPath) == 0,
+                    "real Theron marker match is mirrored onto required file path");
+
+        if (strstr(matched_version->matchedPath, "::") == NULL) {
+            M12_AssetStatus_Scan(&direct_status, matched_version->matchedPath);
+            expect_true(direct_status.theronAvailable == 1,
+                        "explicit Theron Track 02 path is accepted");
+            required = M12_AssetStatus_GetRequiredFile(&direct_status,
+                                                       "theron",
+                                                       0);
+            expect_true(required && required->matched &&
+                        strcmp(required->matchedPath,
+                               matched_version->matchedPath) == 0,
+                        "explicit Theron Track 02 path stays the verified match");
+            expect_true(strcmp(M12_AssetStatus_GetRuntimeDataDir(&direct_status,
+                                                               "theron"),
+                               matched_version->matchedPath) != 0,
+                        "explicit Theron Track 02 path resolves to a runtime root");
+            if (strcmp(matched_version->matchedMd5,
+                       "397039af02d50d15c70b74088eb8a1cb") == 0) {
+                expect_str_eq(matched_version->versionId,
+                              "pce-jp-rev1-iso",
+                              "real JP Rev 1 ISO selects ISO version id");
+            } else if (strcmp(matched_version->matchedMd5,
+                              "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+                expect_str_eq(matched_version->versionId,
+                              "pce-en-iso",
+                              "real US ISO selects ISO version id");
+            }
+        }
+    }
+}
+
 static void check_fake_iso_fallback(const char *region_dir,
                                     const char *iso_name,
                                     Theron_Platform expected_platform,
@@ -253,60 +339,7 @@ int main(void) {
                             "Theron US ISO filename fallback is detected");
 
     real_data = getenv("FIRESTAFF_THERON_TEST_DATA");
-    if (real_data && real_data[0]) {
-        M12_AssetStatus_Scan(&status, real_data);
-        if (status.theronAvailable) {
-            M12_AssetStatus direct_status;
-            const M12_AssetVersionStatus *matched_version = NULL;
-            size_t vi;
-            expect_true(fs_validate_data_dir(real_data, &report) >= 0 &&
-                        report.theron_ready == 1,
-                        "validator accepts hash-verified Theron data");
-            fs_startup_check_games(real_data, &availability);
-            expect_true(availability.theron_available == 1,
-                        "startup accepts hash-verified Theron data");
-            expect_true(theron_v1_boot_probe_available(real_data) == 1,
-                        "Theron quick boot probe accepts hash-verified data");
-            for (vi = 0; vi < M12_AssetStatus_GetVersionCount("theron"); ++vi) {
-                const M12_AssetVersionStatus *v =
-                    M12_AssetStatus_GetVersion(&status, "theron", vi);
-                if (v && v->matched) {
-                    matched_version = v;
-                    break;
-                }
-            }
-            if (matched_version &&
-                matched_version->matchedPath[0] &&
-                strstr(matched_version->matchedPath, "::") == NULL) {
-                const M12_AssetRequiredFileStatus *required;
-                M12_AssetStatus_Scan(&direct_status, matched_version->matchedPath);
-                expect_true(direct_status.theronAvailable == 1,
-                            "explicit Theron Track 02 path is accepted");
-                required = M12_AssetStatus_GetRequiredFile(&direct_status,
-                                                           "theron",
-                                                           0);
-                expect_true(required && required->matched &&
-                            strcmp(required->matchedPath,
-                                   matched_version->matchedPath) == 0,
-                            "explicit Theron Track 02 path stays the verified match");
-                expect_true(strcmp(M12_AssetStatus_GetRuntimeDataDir(&direct_status,
-                                                                     "theron"),
-                                   matched_version->matchedPath) != 0,
-                            "explicit Theron Track 02 path resolves to a runtime root");
-                if (strcmp(matched_version->matchedMd5,
-                           "397039af02d50d15c70b74088eb8a1cb") == 0) {
-                    expect_str_eq(matched_version->versionId,
-                                  "pce-jp-rev1-iso",
-                                  "real JP Rev 1 ISO selects ISO version id");
-                } else if (strcmp(matched_version->matchedMd5,
-                                  "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
-                    expect_str_eq(matched_version->versionId,
-                                  "pce-en-iso",
-                                  "real US ISO selects ISO version id");
-                }
-            }
-        }
-    }
+    check_real_theron_launch_marker_presence(real_data);
 
     if (g_failures) {
         return 1;
