@@ -31,10 +31,14 @@ typedef struct {
     int chestThing;
     int reopenedChestThing;
 
+    int linkedInputCount;
     int openResult;
     int openThing;
     int openedVisibleCount;
     int openedTypes[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT];
+    int openedHiddenTailVisible;
+    int openedHiddenTailType;
+    int openedHiddenTailPreserved;
     int openedOrderMatchesInput;
 
     int leaderHandBeforePut;

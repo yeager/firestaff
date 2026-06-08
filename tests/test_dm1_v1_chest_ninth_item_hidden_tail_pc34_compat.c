@@ -80,17 +80,26 @@ static int test_spec(void)
 static int test_open_eight_visible_items(void)
 {
     const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
+        "ReDMCSB CHEST.C F0333 lines 58-67";
     const char* f0031 =
         "ReDMCSB OBJECT.C F0031 lines 25-120";
     int ok = 1;
     int i;
 
+    ok &= expect_int("linked input count", g_probe.linkedInputCount,
+                     DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED, f0333);
     ok &= expect_int("initial chest opens", g_probe.openResult, 1, f0333);
     ok &= expect_int("open chest thing", g_probe.openThing,
                      DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_CHEST_THING, f0333);
     ok &= expect_int("opened visible count", g_probe.openedVisibleCount,
                      DM1_PC34_CHEST_SLOT_COUNT, f0333);
+    ok &= expect_int("opened ninth tail not visible",
+                     g_probe.openedHiddenTailVisible, 0, f0333);
+    ok &= expect_int("opened hidden tail type",
+                     g_probe.openedHiddenTailType,
+                     DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_INPUT, f0031);
+    ok &= expect_int("opened hidden tail preserved",
+                     g_probe.openedHiddenTailPreserved, 1, f0333);
     ok &= expect_int("opened order matches input",
                      g_probe.openedOrderMatchesInput, 1, f0333);
     for (i = 0; i < DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT; ++i) {
