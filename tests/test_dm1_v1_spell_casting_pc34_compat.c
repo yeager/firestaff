@@ -247,6 +247,39 @@ static void test_insufficient_mana_preserves_partial_rune_chain(void) {
     printf("    PASS\n");
 }
 
+static void test_insufficient_mana_preserves_partial_rune_chain(void) {
+    printf("  [6] Insufficient mana preserves partial rune chain...\n");
+
+    DM1_SpellCastingState s;
+    dm1_spell_init(&s);
+    s.magicCasterIndex = 0;
+    DM1_ChampionSpellStats stats = makeStats(200, 222, 77, 44);
+    stats.skillLevels[DM1_SKILL_FIRE] = 9;
+
+    int ok __attribute__((unused)) = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
+    assert(ok == 1);
+    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL);
+    assert(ok == 1);
+
+    DM1_ChampionSpellInput beforeInput = s.input[0];
+    DM1_ChampionSpellStats beforeStats = stats;
+    int beforeCaster = s.magicCasterIndex;
+
+    /* ReDMCSB SYMBOL.C F0399 lines 18-30 computes cost, then only mutates
+     * CurrentMana/Symbols/SymbolStep inside the line 26 mana-success branch. */
+    assert(dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR) == 14);
+    stats.currentMana = 13;
+    beforeStats.currentMana = 13;
+
+    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR);
+    assert(ok == 0);
+    assert(s.magicCasterIndex == beforeCaster);
+    assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
+    assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
+
+    printf("    PASS\n");
+}
+
 /* ── Test 6: Delete symbol (recant) ──────────────────────────────── */
 static void test_delete_symbol(void) {
     printf("  [7] Delete symbol (recant)...\n");
