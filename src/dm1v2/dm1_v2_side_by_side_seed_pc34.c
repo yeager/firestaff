@@ -113,6 +113,37 @@ uint64_t dm1_v2_side_by_side_seed_hash_layout(const DM1_V2_ViewportState* v1,
     return hash;
 }
 
+int dm1_v2_side_by_side_seed_composite_pixel(
+    const DM1_V2_SideBySideSeed* seed,
+    int x,
+    int y,
+    DM1_V2_Color* outColor) {
+    if (!seed || !outColor) return 0;
+    if (x < 0 || y < 0 ||
+        x >= DM1_V2_SIDE_BY_SIDE_W ||
+        y >= DM1_V2_SIDE_BY_SIDE_H) {
+        return 0;
+    }
+
+    /* Pixel scaffold for the canonical row-major side-by-side
+     * composite. DUNVIEW.C:2999-3000 fixes both lanes at 224x136;
+     * the middle gap is a deterministic V2-label colour so screenshot
+     * gates can detect lane alignment drift independently of viewport
+     * content. */
+    if (x < DM1_V2_VIEWPORT_W) {
+        *outColor = seed->v1.framebuffer[y][x];
+    } else if (x < DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W) {
+        outColor->r = DM1_V2_SIDE_BY_SIDE_GAP_R;
+        outColor->g = DM1_V2_SIDE_BY_SIDE_GAP_G;
+        outColor->b = DM1_V2_SIDE_BY_SIDE_GAP_B;
+        outColor->a = DM1_V2_SIDE_BY_SIDE_GAP_A;
+    } else {
+        *outColor =
+            seed->v2.framebuffer[y][x - DM1_V2_VIEWPORT_W - DM1_V2_SIDE_BY_SIDE_GAP_W];
+    }
+    return 1;
+}
+
 int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
     const DM1_V2_DungeonStateFixture* fixture;
     DM1_V2_ViewportCompositionInput input;
