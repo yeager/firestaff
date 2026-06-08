@@ -20861,6 +20861,13 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         return M11_GameView_GetV1ChestSlotBoxZone(route->zoneId - 537,
                                                   outX, outY, outW, outH);
     }
+    if (route->zoneId == 101) {
+        /* ReDMCSB COMMAND.C G0449 lines 419-451 keeps C081_CLICK_IN_PANEL
+         * as the broad C101 panel route after the inventory slot boxes.
+         * F0378 then re-dispatches M569_PANEL_CHEST clicks through G0456,
+         * so the route must remain lower priority than C537..C544. */
+        return M11_GameView_GetV1InventoryPanelZone(outX, outY, outW, outH);
+    }
     if (route->zoneId == 545 || route->zoneId == 546) {
         /* ReDMCSB COMMAND.C G0449 routes inventory mouth/eye clicks through
          * viewport-relative C545/C546 zones; COMMAND.C absolute y=46 becomes y=13 inside the DM1 viewport at screen y=33. */
@@ -20991,7 +20998,8 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 62, M11_DM1_MOUSE_SPACE_VIEWPORT, 541, M11_DM1_MOUSE_MASK_LEFT },
         { 63, M11_DM1_MOUSE_SPACE_VIEWPORT, 542, M11_DM1_MOUSE_MASK_LEFT },
         { 64, M11_DM1_MOUSE_SPACE_VIEWPORT, 543, M11_DM1_MOUSE_MASK_LEFT },
-        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT }
+        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT },
+        { 81, M11_DM1_MOUSE_SPACE_VIEWPORT, 101, M11_DM1_MOUSE_MASK_LEFT }
     };
     const M11_V1MouseRoute* routes = NULL;
     int count = 0;
