@@ -216,6 +216,22 @@ int main(void) {
     ok &= expect_item_type("replacement loads new first slot", &item, 501);
     ok &= expect_int("replacement load is new chest only", m11_inventory_get_load(&state, 0), 6);
 
+    replacement[0] = make_item(601, 8, DM1_PC34_ALLOWED_CONTAINER);
+    /* ReDMCSB CHEST.C F0333 lines 34-39 still routes a different open chest
+     * through F0334 even when the caller does not keep the closed output list.
+     * F0334 lines 113-132 clears G0426/G0425 and returns the compacted count;
+     * F0333 lines 53-76 then materializes the newly requested chest. */
+    ok &= expect_int("zero-output replacement closes previous chest first",
+                     m11_inventory_open_chest_replacing_current(&state, 0, 0x6789,
+                                                                replacement, 8,
+                                                                NULL, 0), 1);
+    ok &= expect_int("zero-output replacement opens requested chest",
+                     m11_inventory_get_open_chest_thing(&state, 0), 0x6789);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item);
+    ok &= expect_item_type("zero-output replacement loads new first slot", &item, 601);
+    ok &= expect_int("zero-output replacement load is new chest only",
+                     m11_inventory_get_load(&state, 0), 8);
+
     printf("inventoryBackpackChestInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;
 }
