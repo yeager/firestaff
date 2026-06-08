@@ -1684,6 +1684,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_door_mechanics
     )
 
+    add_executable(test_dm2_v1_lighting_falloff_boundary
+        tests/test_dm2_v1_lighting_falloff_boundary.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_outdoor_renderer.c
+    )
+    target_include_directories(test_dm2_v1_lighting_falloff_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_lighting_falloff_boundary PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_lighting_falloff_boundary PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_lighting_falloff_boundary
+        COMMAND test_dm2_v1_lighting_falloff_boundary
+    )
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader

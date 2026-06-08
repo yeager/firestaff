@@ -42,6 +42,25 @@
 #include <stdlib.h>
 #include <math.h>
 
+/* ── Lighting helper: DM2 object illumination decay ──────────────── */
+/* ReDMCSB DUNVIEW.C F0115:4960-5037 uses a per-view depth scale table for
+ * object sprites; outside the valid depth window objects are not drawn. We
+ * model the same boundary as a hard light-radius clip, where distance values
+ * at or beyond the source radius extinguish to zero. */
+uint8_t dm2_v1_viewport_object_light_level(uint8_t base_light_level,
+                                           int distance_tiles,
+                                           const DM2_CreatureSprite *source)
+{
+    if (!source) return base_light_level;
+    if (source->light_radius == 0) return 0;
+    if (distance_tiles < 0) return base_light_level;
+    if (distance_tiles >= (int)source->light_radius) return 0;
+
+    return (uint8_t)((int)base_light_level *
+                     ((int)source->light_radius - distance_tiles) /
+                     (int)source->light_radius);
+}
+
 /* ── Transparency color (ReDMCSB DEFS.H C10_COLOR_FLESH = 10)
  * Used as skip color in wall blits. ── */
 #define DM2_COLOR_TRANSPARENT  10
