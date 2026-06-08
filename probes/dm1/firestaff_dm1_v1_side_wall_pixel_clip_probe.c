@@ -6,7 +6,8 @@
 
 enum {
     PIXEL_BACKGROUND = 0x33,
-    PIXEL_TRANSPARENT = 10
+    PIXEL_TRANSPARENT = 10,
+    PIXEL_SOURCE_ORIGIN_SENTINEL = 0xa5
 };
 
 static int failures = 0;
@@ -65,6 +66,7 @@ static void verify_side_wall_pixels(DM1_ViewSquareIndex square,
     /* ReDMCSB F0100 passes frame C6/C7 as the first source pixel and C4/C5
      * as the source size, while C10_COLOR_FLESH remains transparent.
      * Source: DUNVIEW.C:3048-3058; G0163 frame data at DUNVIEW.C:581-594. */
+    source[0] = PIXEL_SOURCE_ORIGIN_SENTINEL;
     source[gate.src_y * frame->byte_width + gate.src_x] = PIXEL_TRANSPARENT;
     source[(gate.src_y + gate.height - 1) * frame->byte_width + gate.src_x + gate.width - 1] =
         (uint8_t)(base + 0x40);
@@ -78,6 +80,15 @@ static void verify_side_wall_pixels(DM1_ViewSquareIndex square,
     check_int(id,
               viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x + 1],
               source[gate.src_y * frame->byte_width + gate.src_x + 1]);
+    snprintf(id, sizeof(id), "%s.source_origin_not_leaked", name);
+    if ((gate.src_x > 0 || gate.src_y > 0) && gate.width > 1) {
+        check_int(id,
+                  viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x + 1] !=
+                      PIXEL_SOURCE_ORIGIN_SENTINEL,
+                  1);
+    } else {
+        check_int(id, 1, 1);
+    }
     snprintf(id, sizeof(id), "%s.last_visible_pixel", name);
     check_int(id,
               viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH + gate.dst_x + gate.width - 1],
