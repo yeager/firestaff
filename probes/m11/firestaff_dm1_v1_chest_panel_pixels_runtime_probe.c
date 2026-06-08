@@ -494,6 +494,17 @@ int main(int argc, char** argv)
                          &game, CHAMPION_SLOT_ACTION_HAND),
                      144);
 
+    M11_GameView_CloseV1OpenChest(&game);
+    ok &= expect_true("leader hand accepts same chest for pressing-eye route",
+                      M11_GameView_SetV1LeaderHandObject(&game, chestThing));
+    ok &= expect_true("pressing-eye chest open redraws panel",
+                      M11_GameView_HandlePointer(&game, 12 + 8, 33 + 13 + 8, 1) ==
+                      M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("pressing-eye keeps action-hand chest icon closed",
+                     M11_GameView_GetV1InventorySlotIconIndex(
+                         &game, CHAMPION_SLOT_ACTION_HAND),
+                     144);
+
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 chest panel runtime pixel probe "
            "(Firestaff-side evidence)\n",
