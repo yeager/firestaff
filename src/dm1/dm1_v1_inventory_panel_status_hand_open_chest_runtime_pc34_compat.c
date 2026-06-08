@@ -131,7 +131,8 @@ static int fill_chest(M11_Item* linked, int chestSlotCount)
 static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
                        M11_InventoryState* state,
                        int healthyChampionCount,
-                       int slotBoxIndex)
+                       int slotBoxIndex,
+                       int expectedOpenChestThing)
 {
     int championIndex = -1;
     int pc34SourceSlot = -1;
@@ -176,8 +177,15 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
     (void)m11_inventory_set_mouse_item(
         state, championIndex, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
+    row->openChestThingBeforeClick =
+        m11_inventory_get_open_chest_thing(state, 0);
     row->clickResult = m11_inventory_click_pc34_source_slot(
         state, championIndex, pc34SourceSlot);
+    row->openChestThingAfterClick =
+        m11_inventory_get_open_chest_thing(state, 0);
+    row->openChestThingPreservedByClick =
+        row->openChestThingBeforeClick == expectedOpenChestThing &&
+        row->openChestThingAfterClick == expectedOpenChestThing;
     if (m11_inventory_get_mouse_item(state, championIndex, &mouseItem)) {
         row->mouseItemTypeAfter = mouseItem.itemType;
     }
@@ -191,14 +199,15 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
 static int capture_status_hand_table(
     DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out,
     M11_InventoryState* state,
-    int healthyChampionCount)
+    int healthyChampionCount,
+    int expectedOpenChestThing)
 {
     int slotBoxIndex;
     for (slotBoxIndex = DM1_V1_IPHSOC_STATUS_SLOT_BOX_FIRST;
          slotBoxIndex <= DM1_V1_IPHSOC_STATUS_SLOT_BOX_LAST;
          ++slotBoxIndex) {
         if (!capture_row(&out->rows[slotBoxIndex], state, healthyChampionCount,
-                         slotBoxIndex)) {
+                         slotBoxIndex, expectedOpenChestThing)) {
             return 0;
         }
     }
@@ -340,7 +349,8 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     /* Run the status hand slot box 0..7 reduction table while the chest
      * is open, then close the chest, then capture the post-close icon
      * binding. */
-    if (!capture_status_hand_table(out, &state, healthyChampionCount)) {
+    if (!capture_status_hand_table(out, &state, healthyChampionCount,
+                                   chestThing)) {
         return 0;
     }
     if (!capture_rejections_with_chest_open(out)) {

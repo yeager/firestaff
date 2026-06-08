@@ -69,6 +69,9 @@ typedef struct {
     int mouseItemTypeAfter;
     int slotItemTypeBefore;
     int slotItemTypeAfter;
+    int openChestThingBeforeClick;
+    int openChestThingAfterClick;
+    int openChestThingPreservedByClick;
     int leaderHandObjectBefore;
     int leaderHandObjectAfter;
 } DM1_V1_InventoryPanelStatusHandOpenChestRowPc34;
