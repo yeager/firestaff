@@ -115,6 +115,13 @@ int main(void) {
         "horizontal material creature obstruction uses threshold 1 and steps door one state toward open");
 
     memset(&o, 0, sizeof(o));
+    rec("P418_CREATURE_HORIZONTAL_STATE1_FORCES_OPEN",
+        F0717_DOOR_ResolveClosingObstruction_Compat(1, 0, 0, 0, 1, 4, &o) &&
+        o.kind == DOOR_OBSTRUCTION_CREATURE && o.newDoorState == 0 &&
+        o.rescheduleDelayTicks == 1 && o.damageAmount == 5,
+        "horizontal material creature on a state-1 door completes the transition back to open");
+
+    memset(&o, 0, sizeof(o));
     rec("P418_CREATURE_VERTICAL_HEIGHT_GATE",
         F0717_DOOR_ResolveClosingObstruction_Compat(2, 1, 0, 0, 1, 4, &o) &&
         o.kind == DOOR_OBSTRUCTION_NONE && o.newDoorState == 2,
