@@ -255,6 +255,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ DM2 V1 save/load header hardening: direct slot loads now enforce the 0xBEEF/0xDEAD DM2 slot magic used by scans, reject stale/cross-game slot files, and recover from `SKSave.bak` when the primary slot is corrupt.
 - ✅ DM2 V1 weather seed regression: `test_dm2_v1_weather_seed_regression` covers seeded weather-state stepping and the 182-tick outdoor boundary transition without real assets.
 - ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
+- ✅ DM2 V1 utility/import slot regression now preserves the DM2 level-transition fields (`party_level`, `outdoor_mode`, position, and facing) across save/load so map continuity stays stable.
 - ✅ Phase 8 - Verification-suite scaffold and probes.
 - ✅ Source-lock audit coverage for DM2 boot, dungeon/data loading, rendering, items, creatures, combat, spells, shops/NPCs, save behavior, and verification paths.
 

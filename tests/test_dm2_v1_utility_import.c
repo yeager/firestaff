@@ -73,7 +73,11 @@ static void cleanup_temp_dir(void)
         snprintf(path, sizeof(path), "%s/SKSave%02d.dat", g_save_dir, i);
         (void)remove(path);
     }
-    (void)remove("/tmp/firestaff-dm2-phase6-save.bak");
+    {
+        char path[256];
+        snprintf(path, sizeof(path), "%s/SKSave.bak", g_save_dir);
+        (void)remove(path);
+    }
 }
 
 /* ── Test 1: Portrait → class mapping ── */
@@ -324,6 +328,14 @@ static void test_slot_roundtrip(void)
 
     /* Modify session for this test */
     dm2_v1_session_new(&orig);
+    /* ReDMCSB LOADSAVE.C:1941-1947 and 2731-2742 restore the party map,
+     * coordinates, and direction from save state; keep the DM2 session
+     * transition fields round-tripping so map continuity does not drift. */
+    orig.party_level = 2;
+    orig.outdoor_mode = 1;
+    orig.party_x = 23;
+    orig.party_y = 11;
+    orig.party_dir = 3;
     orig.gold = 500;
     orig.time_of_day_minutes = 900; /* 3 PM */
     orig.rain_intensity = 50;
@@ -341,6 +353,13 @@ static void test_slot_roundtrip(void)
     CHECK(r == 0, "load_slot returns 0 (success)");
 
     /* Verify loaded values */
+    CHECK(loaded.party_level == 2,
+          "party_level preserved through slot round-trip");
+    CHECK(loaded.outdoor_mode == 1,
+          "outdoor_mode preserved through slot round-trip");
+    CHECK(loaded.party_x == 23, "party_x preserved through slot round-trip");
+    CHECK(loaded.party_y == 11, "party_y preserved through slot round-trip");
+    CHECK(loaded.party_dir == 3, "party_dir preserved through slot round-trip");
     CHECK(loaded.gold == 500, "gold preserved through slot round-trip");
     CHECK(loaded.time_of_day_minutes == 900,
           "time_of_day preserved through slot round-trip");
