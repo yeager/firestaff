@@ -11649,6 +11649,11 @@ enum {
      * TextString lines are rendered in the scroll font. */
     M11_GFX_PANEL_OPEN_SCROLL = 23,
 
+    /* PANEL.C F0339 blits C018/C019 into C503 after F0342 has drawn the
+     * selected object/chest panel contents. */
+    M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT = 18,
+    M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION = 19,
+
     /* Resurrect/Reincarnate/Cancel panel (graphic 40 in original DM1).
      * Drawn into C101_ZONE_PANEL when G0299 candidate is open. */
     M11_GFX_PANEL_RESURRECT_REINCARNATE = 40,
@@ -20544,6 +20549,29 @@ int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1ArrowOrEyeZoneId(void) {
+    return 503;
+}
+
+int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    /* ReDMCSB DATA.C line 315 G0033_ai_Graphic562_Box_ArrowOrEye
+     * and PANEL.C F0339 lines 505-514 draw C018/C019 at x=83..98,
+     * y=57..65 in viewport-relative coordinates. */
+    if (outX) *outX = 83;
+    if (outY) *outY = 57;
+    if (outW) *outW = 16;
+    if (outH) *outH = 9;
+    return 1;
+}
+
+int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye) {
+    return pressingEye ? M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION
+                       : M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT;
+}
+
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void) {
     return 506;
 }
@@ -25153,6 +25181,26 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
                         iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
+                }
+            }
+            if (state->assetsAvailable) {
+                int ax = 0, ay = 0, aw = 0, ah = 0;
+                const M11_AssetSlot* arrowOrEye;
+                /* ReDMCSB PANEL.C F0342 calls F0339 after the object/chest
+                 * panel body; F0339 lines 505-514 selects C018 for normal
+                 * chest content and C019 when P0707_B_PressingEye is true. */
+                arrowOrEye = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)M11_GameView_GetV1ArrowOrEyeGraphicId(
+                        state->v1OpenChestOpenedByEye));
+                if (arrowOrEye && arrowOrEye->loaded && arrowOrEye->pixels &&
+                    M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah) &&
+                    arrowOrEye->width == (unsigned short)aw &&
+                    arrowOrEye->height == (unsigned short)ah) {
+                    M11_AssetLoader_Blit(arrowOrEye, framebuffer,
+                                         framebufferWidth, framebufferHeight,
+                                         M11_VIEWPORT_X + ax,
+                                         M11_VIEWPORT_Y + ay, 8);
                 }
             }
         }
