@@ -1184,6 +1184,12 @@ int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
+int M11_GameView_GetV1ArrowOrEyeZoneId(void);
+int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH);
+int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye);
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void);
 int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
                                                         int textPixelHeight,

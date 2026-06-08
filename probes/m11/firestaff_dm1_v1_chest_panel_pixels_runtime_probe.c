@@ -18,6 +18,9 @@
  *   ReDMCSB PANEL.C F0352 lines 2123-2159 routes an eye click with a
  *   leader-hand container through F0342/F0333 with P0707_B_PressingEye true,
  *   so the C025/C537 panel appears without repainting C09 to C145.
+ *   ReDMCSB PANEL.C F0339 lines 505-514 and F0342 line 1472 draw C018
+ *   arrow chrome for normal chest content, or C019 eye chrome when
+ *   P0707_B_PressingEye is true, into C503 after panel contents.
  *   ReDMCSB PANEL.C F0347/F0354 routes the open-chest panel through the
  *   current inventory panel draw.
  */
@@ -388,6 +391,63 @@ static int check_chest_slot_icon(const M11_GameViewState* game,
     return count_icon_matches(game, fb, expectedIcon, vx + x, vy + y, label);
 }
 
+static int check_arrow_or_eye_graphic(const M11_GameViewState* game,
+                                      const unsigned char* fb,
+                                      int pressingEye,
+                                      const char* label)
+{
+    const M11_AssetSlot* graphic;
+    int graphicId;
+    int x = 0, y = 0, w = 0, h = 0;
+    int vx = 0, vy = 0, vw = 0, vh = 0;
+    int matched = 0;
+    int total = 0;
+    int yy;
+    int ok = 1;
+
+    ok &= expect_true("C503 arrow/eye viewport origin",
+                      M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
+    ok &= expect_true("C503 arrow/eye zone",
+                      M11_GameView_GetV1ArrowOrEyeZone(&x, &y, &w, &h) &&
+                      w > 0 && h > 0);
+    graphicId = M11_GameView_GetV1ArrowOrEyeGraphicId(pressingEye);
+    graphic = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                   (unsigned int)graphicId);
+    ok &= expect_true("C018/C019 arrow/eye source graphic",
+                      graphic && graphic->loaded && graphic->pixels &&
+                      graphic->width == (unsigned short)w &&
+                      graphic->height == (unsigned short)h);
+    if (!ok || !graphic || !graphic->pixels) {
+        return 0;
+    }
+
+    for (yy = 0; yy < h; ++yy) {
+        int xx;
+        for (xx = 0; xx < w; ++xx) {
+            unsigned char src = (unsigned char)
+                (graphic->pixels[yy * (int)graphic->width + xx] & 0x0F);
+            unsigned char dst = (unsigned char)
+                M11_FB_DECODE_INDEX(fb[(vy + y + yy) * PROBE_FB_W +
+                                       vx + x + xx]);
+            if (src != 8) {
+                ++total;
+                if (src == dst) {
+                    ++matched;
+                }
+            }
+        }
+    }
+    if (!(total > 0 && matched == total)) {
+        fprintf(stderr,
+                "FAIL %s C503 pixels matched=%d total=%d graphic=%d\n",
+                label, matched, total, graphicId);
+        return 0;
+    }
+    printf("PASS %s C503 pixels matched=%d total=%d graphic=%d\n",
+           label, matched, total, graphicId);
+    return 1;
+}
+
 static int check_action_hand_chest_icon(const M11_GameViewState* game,
                                         const unsigned char* fb,
                                         int expectedIcon,
@@ -494,6 +554,8 @@ int main(int argc, char** argv)
                       itemHIcon >= 0 && itemTailIcon >= 0 &&
                       itemHIcon != itemTailIcon);
     ok &= check_panel_pixels(&game, fb);
+    ok &= check_arrow_or_eye_graphic(&game, fb, 0,
+                                     "normal-open arrow for chest content");
     ok &= check_chest_slot_icon(&game, fb, 0, itemAIcon,
                                 "first visible chest item");
     ok &= check_chest_slot_icon(&game, fb, 1, itemBIcon,
@@ -533,6 +595,8 @@ int main(int argc, char** argv)
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_panel_pixels(&game, fb);
+    ok &= check_arrow_or_eye_graphic(&game, fb, 1,
+                                     "eye-open eye for object description");
     ok &= check_action_hand_chest_icon(&game, fb, PROBE_CHEST_CLOSED_ICON,
                                        "eye-open action-hand closed chest");
     ok &= check_chest_slot_icon(&game, fb, 0, itemAIcon,
@@ -556,6 +620,8 @@ int main(int argc, char** argv)
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_panel_pixels(&game, fb);
+    ok &= check_arrow_or_eye_graphic(&game, fb, 1,
+                                     "same-action-hand pressing-eye eye");
     ok &= check_action_hand_chest_icon(
         &game, fb, PROBE_CHEST_CLOSED_ICON,
         "same-action-hand pressing-eye closed chest");
