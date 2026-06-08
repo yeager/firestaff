@@ -1,0 +1,141 @@
+#include <stdio.h>
+#include <string.h>
+
+#include "m11_game_view.h"
+#include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
+
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
+static int expect_int(const char* label, int got, int want)
+{
+    if (got != want) {
+        fprintf(stderr, "FAIL %s got=%d want=%d\n", label, got, want);
+        return 0;
+    }
+    return 1;
+}
+
+static unsigned char square_type(int elementType, int attrs)
+{
+    return (unsigned char)((elementType << 5) | (attrs & DUNGEON_SQUARE_MASK_ATTRIBS));
+}
+
+static void seed_door_view(M11_GameViewState* state,
+                           struct DungeonDatState_Compat* dungeon,
+                           struct DungeonMapDesc_Compat* map,
+                           struct DungeonMapTiles_Compat* tiles,
+                           unsigned char* squares,
+                           struct DungeonThings_Compat* things,
+                           struct DungeonDoor_Compat* doors,
+                           unsigned short* squareFirstThings,
+                           struct DungeonWeapon_Compat* weapons)
+{
+    int x, y;
+
+    memset(state, 0, sizeof(*state));
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(map, 0, sizeof(*map));
+    memset(tiles, 0, sizeof(*tiles));
+    memset(squares, 0, 9u * sizeof(*squares));
+    memset(things, 0, sizeof(*things));
+    memset(doors, 0, sizeof(*doors));
+    for (x = 0; x < 9; ++x) {
+        squareFirstThings[x] = THING_ENDOFLIST;
+    }
+    memset(weapons, 0, sizeof(*weapons));
+
+    M11_GameView_Init(state);
+    state->active = 1;
+    state->world.dungeon = dungeon;
+    state->world.things = things;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 1;
+    state->world.party.mapY = 2;
+    state->world.party.direction = DIR_NORTH;
+    state->world.party.championCount = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].present = 1;
+    state->world.party.champions[0].inventory[0] = THING_NONE;
+    state->world.party.champions[0].inventory[1] = THING_NONE;
+
+    map->width = 3;
+    map->height = 3;
+    tiles->squareData = squares;
+    tiles->squareCount = 9;
+    dungeon->header.mapCount = 1;
+    dungeon->maps = map;
+    dungeon->tiles = tiles;
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+
+    for (x = 0; x < 3; ++x) {
+        for (y = 0; y < 3; ++y) {
+            squares[x * 3 + y] = square_type(DUNGEON_ELEMENT_CORRIDOR, 0);
+        }
+    }
+
+    /* Front cell (1,1) is the D1C door face.  The wrong-item click
+     * must stay on the door/keyhole box instead of spilling into the
+     * generic throw path. */
+    squares[1 * 3 + 1] = square_type(DUNGEON_ELEMENT_DOOR,
+                                     0x10 | 4);
+    squareFirstThings[1 * 3 + 1] = 0; /* type 0 / door, index 0 */
+    doors[0].next = THING_ENDOFLIST;
+    doors[0].button = 1;
+    doors[0].ornamentOrdinal = 1;
+    things->loaded = 1;
+    things->squareFirstThings = squareFirstThings;
+    things->squareFirstThingCount = 9;
+    things->doors = doors;
+    things->doorCount = 1;
+    things->weapons = weapons;
+    things->weaponCount = 1;
+    weapons[0].type = 2; /* Dagger-like object icon, but not a key. */
+    weapons[0].next = THING_ENDOFLIST;
+}
+
+int main(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[9];
+    struct DungeonThings_Compat things;
+    struct DungeonDoor_Compat doors[1];
+    unsigned short squareFirstThings[9];
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short wrongThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    const int clickX = 168;
+    const int clickY = 81;
+    int ok = 1;
+
+    printf("probe=dm1_v1_door_keyhole_wrong_item_pc34_compat\n");
+    seed_door_view(&state, &dungeon, &map, &tiles, squares, &things, doors,
+                   squareFirstThings, weapons);
+
+    ok &= expect_int("leader hand setup accepted",
+                     M11_GameView_SetV1LeaderHandObject(&state, wrongThing), 1);
+    ok &= expect_int("leader hand holds wrong item before click",
+                     M11_GameView_GetV1LeaderHandThing(&state), wrongThing);
+
+    state.lastWorldHash = 0xBADF00Du;
+    ok &= expect_int("wrong-item door-keyhole click is ignored",
+                     M11_GameView_HandlePointerButton(&state, clickX, clickY,
+                                                     M11_DM1_MOUSE_MASK_LEFT),
+                     M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("leader hand survives wrong-item click",
+                     M11_GameView_GetV1LeaderHandThing(&state), wrongThing);
+    ok &= expect_int("door remains closed after wrong-item click",
+                     squares[1 * 3 + 1],
+                     square_type(DUNGEON_ELEMENT_DOOR, 0x10 | 4));
+    ok &= expect_int("wrong-item click does not refresh world hash",
+                     (int)state.lastWorldHash, (int)0xBADF00Du);
+
+    if (!ok) return 1;
+    printf("ok: DM1 V1 door keyhole wrong-item click is ignored without consume or open\n");
+    return 0;
+}
