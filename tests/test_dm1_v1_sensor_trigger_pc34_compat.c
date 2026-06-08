@@ -610,6 +610,33 @@ static void test_wall_click_specific_object_removed(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor — door keyhole wrong object no-op
+ *  Source: MOVESENS.C F0275 cases C003/C004 and lines 1527-1531
+ * ---------------------------------------------------------------- */
+static void test_wall_keyhole_wrong_object_noop(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    /* Keyhole-style wall ornament that only accepts object type 8. */
+    sensor = make_sensor(DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED,
+                         8, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 5, 6, 0);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderHandObjectType = 9; /* Wrong object */
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderIndex = 0;
+    ctx.sensorCountInCell = 0;
+
+    memset(&result, 0xA5, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Door keyhole: wrong object does not trigger");
+    CHECK(result.leaderHandObjectRemoved == 0, "Door keyhole: wrong object is not consumed");
+    CHECK(result.leaderHandObjectReceived == 0, "Door keyhole: wrong object is not swapped");
+    CHECK(result.resolvedEffect == 0, "Door keyhole: wrong object leaves no resolved effect");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor C013 single-object storage + rotate
  *  Source: MOVESENS.C F0275 lines 1464-1477, 1478-1487, 1549
  * ---------------------------------------------------------------- */
@@ -1351,6 +1378,7 @@ int main(void) {
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
+    test_wall_keyhole_wrong_object_noop();
     test_wall_single_object_storage_rotate();
     test_wall_object_exchanger();
     test_wall_champion_portrait();
