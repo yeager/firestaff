@@ -10,9 +10,9 @@
  *     viewport zones C545/C546.
  *   COMMAND.C:498-507 G0456_as_Graphic561_MouseInput_PanelChest maps
  *     the eight chest slot commands C058..C065 to viewport-relative
- *     zones C537..C544; PANEL.C:1788-1817 and 2123-2159 drive the
- *     food/water/poisoned and object-description redraws on those
- *     presses.
+ *     zones C537..C544, with COMMAND.C:217-226 preserving the older
+ *     inclusive 16x16 staggered coordinate boxes; CHAMPION.C:685-690
+ *     turns those commands into C30..C37/G0425 chest slot indices.
  *   COMMAND.C:489-496 status-hand commands C020..C027 map to status
  *     hand zones C211..C218 via the interface mouse input list.
  *   CHEST.C:43-46 and CHAMDRAW.C:621-630 F0291 remap the inventory
@@ -241,7 +241,7 @@ static void test_inventory_close_panel_right_button_route(void) {
 }
 
 /* Detail 2: all eight chest slot routes C058..C065.  ReDMCSB
- * COMMAND.C:498-507 G0456 panel-chest input list. */
+ * COMMAND.C:217-226 and 498-507 G0456 panel-chest input list. */
 static void test_inventory_chest_slot_routes_all_eight(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -254,36 +254,74 @@ static void test_inventory_chest_slot_routes_all_eight(void) {
     int ordinal;
 
     seed_panel_view(&state, &things, weapons, containers);
+    ASSERT_EQ(M11_GameView_GetV1ChestSlotBoxZoneCount(),
+              (int)panel_chest_mouse_routes_GetSlotCount(),
+              "runtime chest zone count matches ReDMCSB G0456");
 
     /* Panel-relative zones C537..C544 sit at the bottom of the
      * inventory panel.  Viewport origin is (0, 33) per M11_VIEWPORT_Y. */
     for (ordinal = 0; ordinal < 8; ++ordinal) {
-        const int expectedZone = 537 + ordinal;
-        const int expectedCommand = 58 + ordinal;
+        PanelChestSlotRoutePc34Compat route;
+        const int screenLeftOffset = 0;
+        const int screenTopOffset = 33;
+
+        ASSERT_TRUE(panel_chest_mouse_routes_GetSlot((unsigned int)ordinal,
+                                                     &route),
+                    "ReDMCSB chest slot geometry route is available");
+        ASSERT_EQ((int)route.slotBoxIndex, 38 + ordinal,
+                  "G0456 chest command maps to C38..C45 slot-box index");
+        ASSERT_EQ((int)route.chestSlotIndex, ordinal,
+                  "CHAMPION.C F0302 maps C30..C37 to G0425 ordinal");
 
         ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(ordinal, &sx, &sy, &sw, &sh),
                     "C537..C544 chest slot zone is available");
+        ASSERT_EQ(sx, route.panelLeft,
+                  "runtime chest zone left matches COMMAND.C G0456");
+        ASSERT_EQ(sy, route.panelTop,
+                  "runtime chest zone top matches COMMAND.C G0456 minus viewport origin");
+        ASSERT_EQ(sw, route.width,
+                  "runtime chest zone width is the inclusive G0456 16 pixels");
+        ASSERT_EQ(sh, route.height,
+                  "runtime chest zone height is the inclusive G0456 16 pixels");
+
         command = M11_GameView_GetV1MouseCommandForPoint(
             M11_DM1_MOUSE_LIST_INVENTORY,
             sx + sw / 2,
-            33 + sy + sh / 2,
+            screenTopOffset + sy + sh / 2,
             M11_DM1_MOUSE_MASK_LEFT,
             &space, &zoneId);
-        ASSERT_EQ(command, expectedCommand,
+        ASSERT_EQ(command, (int)route.commandId,
                    "C537..C544 chest slot routes to its C058..C065 command");
-        ASSERT_EQ(zoneId, expectedZone,
+        ASSERT_EQ(zoneId, (int)route.zoneId,
                    "C537..C544 chest slot route returns its zone id");
         ASSERT_EQ(space, M11_DM1_MOUSE_SPACE_VIEWPORT,
                    "C537..C544 chest slot route is viewport-relative");
 
-        /* The source-locked slot-box table agrees with the runtime
-         * zone id. */
-        ASSERT_EQ((int)INVENTORY_Compat_GetChestSlotBox(expectedZone - 7 + 30 - 30, NULL) ||
-                      (INVENTORY_Compat_GetChestSlotBoxCount() == 8u),
-                  1,
-                  "INVENTORY_Compat_GetChestSlotBoxCount reports 8 chest slots");
+        command = M11_GameView_GetV1MouseCommandForPoint(
+            M11_DM1_MOUSE_LIST_INVENTORY,
+            screenLeftOffset + route.panelLeft,
+            screenTopOffset + route.panelTop,
+            M11_DM1_MOUSE_MASK_LEFT,
+            &space, &zoneId);
+        ASSERT_EQ(command, (int)route.commandId,
+                  "C537..C544 inclusive top-left corner resolves");
+        ASSERT_EQ(zoneId, (int)route.zoneId,
+                  "C537..C544 top-left corner keeps zone id");
+
+        command = M11_GameView_GetV1MouseCommandForPoint(
+            M11_DM1_MOUSE_LIST_INVENTORY,
+            screenLeftOffset + route.panelRight,
+            screenTopOffset + route.panelBottom,
+            M11_DM1_MOUSE_MASK_LEFT,
+            &space, &zoneId);
+        ASSERT_EQ(command, (int)route.commandId,
+                  "C537..C544 inclusive bottom-right corner resolves");
+        ASSERT_EQ(zoneId, (int)route.zoneId,
+                  "C537..C544 bottom-right corner keeps zone id");
     }
 
+    ASSERT_EQ((int)INVENTORY_Compat_GetChestSlotBoxCount(), 8,
+              "INVENTORY_Compat_GetChestSlotBoxCount reports 8 chest slots");
     /* Outside the chest slot rectangles, the inventory mouse list must
      * NOT match a chest command.  Sample a known-empty corner of the
      * panel (mouth icon area is C545 viewport-relative y=13). */
@@ -605,8 +643,10 @@ int main(void) {
     printf("probe=firestaff_dm1_v1_inventory_panel_mouse_routes_runtime\n");
     printf("sourceEvidence=COMMAND.C:412-417 G0449 right-button close, "
            "COMMAND.C:426-427 mouth/eye C545/C546, "
-           "COMMAND.C:498-507 G0456 panel-chest C058..C065/C537..C544, "
+           "COMMAND.C:217-226 and 498-507 G0456 panel-chest "
+           "C058..C065/C537..C544 inclusive boxes, "
            "COMMAND.C:489-496 status hand C020..C027/C211..C218, "
+           "CHAMPION.C:685-690 C30..C37/G0425 chest slot routing, "
            "DATA.C:1063-1079 backpack MASK0xFFFF_ANY_SLOT vs "
            "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
            "PANEL.C:1126-1200 eye object-description route, "
