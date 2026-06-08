@@ -20177,6 +20177,9 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
+    /* ReDMCSB CHEST.C F0333 lines 30-32 returns before the
+     * P0694_B_PressingEye branch when G0426 already names this chest. */
+    if (state->v1OpenChestThing == thing) return 1;
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 0;
     state->v1FoodWaterPanelActive = 0;
@@ -20195,6 +20198,9 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
         THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) {
         return 0;
     }
+    /* ReDMCSB CHEST.C F0333 lines 30-32 makes same-chest reopen a no-op
+     * before C09 open-icon suppression can observe P0694_B_PressingEye. */
+    if (state->v1OpenChestThing == thing) return 1;
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 1;
     state->v1FoodWaterPanelActive = 0;
