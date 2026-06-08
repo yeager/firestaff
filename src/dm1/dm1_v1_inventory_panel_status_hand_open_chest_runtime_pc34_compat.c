@@ -294,6 +294,88 @@ static void summarize_with_chest_open(
             out->rows[7].slotItemTypeBefore;
 }
 
+static int capture_action_hand_container_edges(
+    DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out,
+    int healthyChampionCount,
+    int chestThing)
+{
+    M11_InventoryState state;
+    M11_Item linked[DM1_PC34_CHEST_SLOT_COUNT];
+    M11_Item actionHand;
+    M11_Item mouseItem;
+
+    if (!seed_party(&state, healthyChampionCount)) {
+        return 0;
+    }
+    (void)m11_inventory_set_item_in_pc34_source_slot(
+        &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, chestThing, 8, 0,
+        DM1_PC34_ALLOWED_HANDS | DM1_PC34_ALLOWED_CONTAINER);
+    if (!fill_chest(linked, DM1_PC34_CHEST_SLOT_COUNT)) {
+        return 0;
+    }
+    if (!m11_inventory_open_chest(&state, /*champ=*/0, chestThing, linked,
+                                  DM1_PC34_CHEST_SLOT_COUNT)) {
+        return 0;
+    }
+
+    (void)m11_inventory_set_mouse_item(
+        &state, /*champ=*/0, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
+        DM1_PC34_ALLOWED_ANY_SLOT);
+    /* ReDMCSB CHAMPION.C F0302 lines 677-684 routes status slot box 0
+     * to champion 0 ready hand. It must not touch the open chest's
+     * action-hand container or the F0291 open icon binding. */
+    if (!m11_inventory_click_pc34_source_slot(
+            &state, /*champ=*/0, DM1_PC34_SLOT_READY_HAND)) {
+        return 0;
+    }
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, &actionHand)) {
+        return 0;
+    }
+    out->readyHandClickLeavesActionHandChestInPlace =
+        actionHand.itemType == chestThing;
+    out->readyHandClickKeepsOpenActionHandIcon =
+        (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
+            /*isInventoryChampion=*/1u, /*slotIndex=*/1u,
+            (unsigned int)actionHand.itemType, (unsigned int)chestThing,
+            /*baseIconIndex=*/(unsigned int)DM1_V1_IPHSOC_CLOSED_ICON) ==
+        DM1_V1_IPHSOC_OPEN_ICON;
+
+    if (!seed_party(&state, healthyChampionCount)) {
+        return 0;
+    }
+    (void)m11_inventory_set_item_in_pc34_source_slot(
+        &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, chestThing, 8, 0,
+        DM1_PC34_ALLOWED_HANDS | DM1_PC34_ALLOWED_CONTAINER);
+    if (!m11_inventory_open_chest(&state, /*champ=*/0, chestThing, linked,
+                                  DM1_PC34_CHEST_SLOT_COUNT)) {
+        return 0;
+    }
+    (void)m11_inventory_set_mouse_item(
+        &state, /*champ=*/0, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
+        DM1_PC34_ALLOWED_ANY_SLOT);
+    /* Slot box 1 targets the same action-hand slot that displayed the
+     * open chest. F0302 lines 688-710 swaps the leader hand and slot
+     * payloads, while CHEST.C F0333/F0334 keep G0426_T_OpenChest as the
+     * independent open-panel sentinel until close. */
+    if (!m11_inventory_click_pc34_source_slot(
+            &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND)) {
+        return 0;
+    }
+    if (!m11_inventory_get_mouse_item(&state, /*champ=*/0, &mouseItem) ||
+        !m11_inventory_get_item_in_pc34_source_slot(
+            &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, &actionHand)) {
+        return 0;
+    }
+    out->actionHandClickMovesOpenChestToLeaderHand =
+        mouseItem.itemType == chestThing;
+    out->actionHandClickReplacesActionHandWithLeaderHandObject =
+        actionHand.itemType == DM1_V1_IPHSOC_LEADER_HAND_SCROLL;
+    out->actionHandClickPreservesOpenChestThing =
+        m11_inventory_get_open_chest_thing(&state, /*champ=*/0) == chestThing;
+    return 1;
+}
+
 int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out)
 {
@@ -368,6 +450,10 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
         m11_inventory_get_open_chest_thing(&state, 0) == chestThing;
     out->openChestThingAfterAllClicks =
         m11_inventory_get_open_chest_thing(&state, 0);
+    if (!capture_action_hand_container_edges(out, healthyChampionCount,
+                                             chestThing)) {
+        return 0;
+    }
     /* Close the chest and verify the icon reverts. */
     (void)m11_inventory_close_chest(&state, 0, NULL, 0);
     out->openChestThingAfterClose =
