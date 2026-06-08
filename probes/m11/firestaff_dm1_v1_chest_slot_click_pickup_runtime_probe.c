@@ -2,10 +2,13 @@
  * DM1 V1 open-chest slot click pickup runtime pixel probe.
  *
  * Firestaff-side runtime evidence: opens a seeded action-hand chest through
- * the M11 V1 bridge, clicks the first visible C537 chest slot through the
- * real pointer/COMMAND route, then redraws into the already-used framebuffer.
- * The picked slot must repaint to the clean empty-slot state and the leader
- * hand must hold the picked item.
+ * the M11 V1 bridge, clicks a visible chest slot through the real
+ * pointer/COMMAND route, then redraws into the already-used framebuffer.
+ * The first-slot branch is already covered by the original version of this
+ * probe. This hardened path fills all eight visible slots and clicks C544, the
+ * second-row/rightmost slot. The picked slot must repaint to the clean
+ * empty-slot state, C537 must remain stable, and the leader hand must hold the
+ * picked item.
  *
  * Source evidence:
  *   ReDMCSB CHEST.C F0333_INVENTORY_OpenAndDrawChest lines 43-76 opens
@@ -31,7 +34,8 @@ enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
     PROBE_SLOT_C537 = 0,
-    PROBE_CHEST_SLOT_COUNT = 2
+    PROBE_SLOT_C544 = 7,
+    PROBE_CHEST_SLOT_COUNT = 8
 };
 
 static unsigned short thing_ref(int thingType, int thingIndex)
@@ -92,7 +96,7 @@ static int seed_records(M11_GameViewState* game,
     things = game->world.things;
     if (!things->loaded ||
         !things->containers || things->containerCount < 1 ||
-        !things->weapons || things->weaponCount < PROBE_CHEST_SLOT_COUNT) {
+        !things->junks || things->junkCount < PROBE_CHEST_SLOT_COUNT) {
         return 0;
     }
 
@@ -101,12 +105,13 @@ static int seed_records(M11_GameViewState* game,
     things->containers[0].slot = items[0];
     things->containers[0].type = 0;
 
-    memset(&things->weapons[0], 0, sizeof(things->weapons[0]));
-    memset(&things->weapons[1], 0, sizeof(things->weapons[1]));
-    things->weapons[0].type = 8;  /* DAGGER */
-    things->weapons[1].type = 2;  /* TORCH */
-    things->weapons[0].next = items[1];
-    things->weapons[1].next = THING_ENDOFLIST;
+    for (int i = 0; i < PROBE_CHEST_SLOT_COUNT; ++i) {
+        memset(&things->junks[i], 0, sizeof(things->junks[i]));
+        things->junks[i].type = (unsigned char)((i % 2) + 1);
+        things->junks[i].next =
+            (i + 1 < PROBE_CHEST_SLOT_COUNT) ?
+            items[i + 1] : THING_ENDOFLIST;
+    }
 
     seed_champion(&game->world.party.champions[0], chestThing);
     game->world.party.championCount = 1;
@@ -161,21 +166,23 @@ int main(int argc, char** argv)
     unsigned char beforeFb[PROBE_FB_W * PROBE_FB_H];
     unsigned char cleanAfterFb[PROBE_FB_W * PROBE_FB_H];
     const unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, 0);
-    const unsigned short items[PROBE_CHEST_SLOT_COUNT] = {
-        thing_ref(THING_TYPE_WEAPON, 0),
-        thing_ref(THING_TYPE_WEAPON, 1)
-    };
+    unsigned short items[PROBE_CHEST_SLOT_COUNT];
     int vx = 0, vy = 0, vw = 0, vh = 0;
-    int sx = 0, sy = 0, sw = 0, sh = 0;
+    int firstSx = 0, firstSy = 0, firstSw = 0, firstSh = 0;
+    int pickSx = 0, pickSy = 0, pickSw = 0, pickSh = 0;
     int clickX;
     int clickY;
     int ok = 1;
+    int i;
 
     if (argc < 2) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
     dataDir = argv[1];
+    for (i = 0; i < PROBE_CHEST_SLOT_COUNT; ++i) {
+        items[i] = thing_ref(THING_TYPE_JUNK, i);
+    }
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
@@ -194,13 +201,18 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ok &= expect_true("source-backed chest and weapon records available",
+    ok &= expect_true("source-backed chest and junk records available",
                       seed_records(&game, chestThing, items));
     ok &= expect_true("V1 viewport zone available",
                       M11_GameView_GetV1ViewportZone(&vx, &vy, &vw, &vh));
     ok &= expect_true("C537 chest slot zone available",
                       M11_GameView_GetV1ChestSlotBoxZone(
-                          PROBE_SLOT_C537, &sx, &sy, &sw, &sh));
+                          PROBE_SLOT_C537,
+                          &firstSx, &firstSy, &firstSw, &firstSh));
+    ok &= expect_true("C544 chest slot zone available",
+                      M11_GameView_GetV1ChestSlotBoxZone(
+                          PROBE_SLOT_C544,
+                          &pickSx, &pickSy, &pickSw, &pickSh));
     if (!ok) {
         M11_GameView_Shutdown(&game);
         return 1;
@@ -211,7 +223,7 @@ int main(int argc, char** argv)
     ok &= expect_int("G0426 bridge open chest thing",
                      (int)M11_GameView_GetV1OpenChestThing(&game),
                      (int)chestThing);
-    ok &= expect_int("leader hand empty before C537 click",
+    ok &= expect_int("leader hand empty before C544 click",
                      (int)M11_GameView_GetV1LeaderHandThing(&game),
                      (int)THING_NONE);
 
@@ -219,16 +231,16 @@ int main(int argc, char** argv)
     M11_GameView_Draw(&game, reusedFb, PROBE_FB_W, PROBE_FB_H);
     memcpy(beforeFb, reusedFb, sizeof(beforeFb));
 
-    clickX = vx + sx + (sw / 2);
-    clickY = vy + sy + (sh / 2);
-    ok &= expect_true("left click on C537 picks up visible item",
+    clickX = vx + pickSx + (pickSw / 2);
+    clickY = vy + pickSy + (pickSh / 2);
+    ok &= expect_true("left click on C544 picks up last visible item",
                       M11_GameView_HandlePointerButton(
                           &game, clickX, clickY, M11_DM1_MOUSE_MASK_LEFT) ==
                       M11_GAME_INPUT_REDRAW);
-    ok &= expect_int("leader hand holds picked C537 item",
+    ok &= expect_int("leader hand holds picked C544 item",
                      (int)M11_GameView_GetV1LeaderHandThing(&game),
-                     (int)items[0]);
-    ok &= expect_int("chest remains open after C537 pickup",
+                     (int)items[PROBE_SLOT_C544]);
+    ok &= expect_int("chest remains open after C544 pickup",
                      (int)M11_GameView_GetV1OpenChestThing(&game),
                      (int)chestThing);
 
@@ -236,15 +248,20 @@ int main(int argc, char** argv)
     M11_GameView_Draw(&game, cleanAfterFb, PROBE_FB_W, PROBE_FB_H);
     M11_GameView_Draw(&game, reusedFb, PROBE_FB_W, PROBE_FB_H);
 
-    ok &= expect_true("setup drew a visible icon in C537 before pickup",
+    ok &= expect_true("setup drew a visible icon in C544 before pickup",
                       rect_diff_count(beforeFb, cleanAfterFb,
-                                      vx + sx, vy + sy, sw, sh) > 8);
-    ok &= expect_true("reused framebuffer C537 matches clean empty-slot redraw",
+                                      vx + pickSx, vy + pickSy,
+                                      pickSw, pickSh) > 8);
+    ok &= expect_true("C537 remains stable after C544 pickup",
+                      rect_equal(beforeFb, cleanAfterFb,
+                                 vx + firstSx, vy + firstSy,
+                                 firstSw, firstSh));
+    ok &= expect_true("reused framebuffer C544 matches clean empty-slot redraw",
                       rect_equal(reusedFb, cleanAfterFb,
-                                 vx + sx, vy + sy, sw, sh));
+                                 vx + pickSx, vy + pickSy, pickSw, pickSh));
 
     printf("sourceEvidence=CHEST.C:F0333:43-76;COMMAND.C:F0359:2174-2176;CHAMPION.C:F0302:688-710;CHEST.C:F0334:117-132\n");
-    printf("%s dm1 v1 chest slot-click pickup runtime pixel probe\n",
+    printf("%s dm1 v1 chest C544 slot-click pickup runtime pixel probe\n",
            ok ? "PASS" : "FAIL");
     M11_GameView_Shutdown(&game);
     return ok ? 0 : 1;

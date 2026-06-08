@@ -1063,9 +1063,9 @@ if(NOT MSVC)
 endif()
 
 # DM1 V1 open-chest slot-click pickup runtime pixel gate.
-# Opens a seeded action-hand chest, clicks C537 through the real pointer route,
-# verifies the leader hand pickup, and proves the reused framebuffer repaints
-# C537 to the same empty-slot pixels as a clean post-click draw.
+# Opens a full seeded action-hand chest, clicks C544 through the real pointer
+# route, verifies the leader hand pickup, proves C537 remains stable, and
+# proves the reused framebuffer repaints C544 to clean empty-slot pixels.
 add_executable(firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe
     probes/m11/firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_chest_slot_click_pickup_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
