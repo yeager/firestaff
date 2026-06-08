@@ -153,6 +153,7 @@ bool dm1_v1_viewport_d1c_wall_apply_pixel_pc34(
     out->row = input->row;
     out->viewport_x = input->viewport_x;
     out->route_is_flipped = input->use_flipped_wall_bitmap;
+    out->no_transparency_route = input->use_no_transparency;
     transparent_color = input->transparent_color;
     if (transparent_color == 0) {
         transparent_color = DM1_V1_D1C_WALL_C10_COLOR_FLESH_PC34;
@@ -188,10 +189,13 @@ bool dm1_v1_viewport_d1c_wall_apply_pixel_pc34(
 
     out->pixel_before = viewport[out->viewport_offset];
     out->source_pixel = source[out->source_offset];
-    out->transparent_skip = out->source_pixel == transparent_color;
+    out->transparent_skip =
+        !input->use_no_transparency && out->source_pixel == transparent_color;
     out->writes_pixel = !out->transparent_skip;
-    viewport[out->viewport_offset] = dm1_v1_viewport_d1c_wall_blend_pixel_pc34(
-        viewport[out->viewport_offset], out->source_pixel, transparent_color);
+    viewport[out->viewport_offset] = input->use_no_transparency
+        ? out->source_pixel
+        : dm1_v1_viewport_d1c_wall_blend_pixel_pc34(
+            viewport[out->viewport_offset], out->source_pixel, transparent_color);
     out->pixel_after = viewport[out->viewport_offset];
     return true;
 }
@@ -224,8 +228,12 @@ const char *dm1_v1_viewport_d1c_wall_source_evidence_pc34(void)
         "F0124_DUNGEONVIEW_DrawSquareD1C is the C00_ELEMENT_WALL dispatch; "
         "DUNVIEW.C:7792-7801 F0792_DUNGEONVIEW_DrawBitmapYYY is the PC34 "
         "wall zone blit used by MEDIA458/MEDIA709 with G2107_WallSet[C04_WALL_D1C] "
-        "and C712_ZONE_WALL_D1C; DUNVIEW.C:7802-7807 F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency "
-        "is the PC34 opaque center-wall path used by MEDIA506/MEDIA747; "
+        "and C712_ZONE_WALL_D1C; DUNVIEW.C:3288-3301 F0792 passes "
+        "CM1_COLOR_NO_TRANSPARENCY to F0132_VIDEO_Blit. DUNVIEW.C:7802-7807 "
+        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency is the PC34 opaque "
+        "center-wall path used by MEDIA506/MEDIA747; DUNVIEW.C:3159-3175 "
+        "F0765 also passes CM1_COLOR_NO_TRANSPARENCY, so C10 writes on these "
+        "zone routes instead of preserving the destination. "
         "line 7810 calls F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF "
         "with M587_VIEW_WALL_D1C_FRONT=14 in MEDIA720, and line 7813 enters "
         "the F0115 alcove thing pass on a true probe and the function "

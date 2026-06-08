@@ -18,6 +18,7 @@ typedef struct {
     int row;
     int viewport_x;
     bool use_flipped_wall_bitmap;
+    bool use_no_transparency;
     uint8_t transparent_color;
 } DM1_V1_D1CWallPixelInputPc34;
 
@@ -72,6 +73,7 @@ typedef struct {
 typedef struct {
     DM1_V1_D1CWallSpecPc34 spec;
     bool route_is_flipped;
+    bool no_transparency_route;
     bool in_clip;
     bool writes_pixel;
     bool transparent_skip;
