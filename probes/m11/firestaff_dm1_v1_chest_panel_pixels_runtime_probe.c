@@ -629,24 +629,28 @@ int main(int argc, char** argv)
     M11_GameView_CloseV1OpenChest(&game);
     ok &= expect_true("leader hand accepts same chest for pressing-eye route",
                       M11_GameView_SetV1LeaderHandObject(&game, chestThing));
-    ok &= expect_true("pressing-eye chest open redraws panel",
+    ok &= expect_true("pressing-eye same action-hand chest redraws panel",
                       M11_GameView_HandlePointer(&game, 12 + 8, 33 + 13 + 8, 1) ==
                       M11_GAME_INPUT_REDRAW);
-    ok &= expect_int("pressing-eye keeps action-hand chest icon closed",
+    ok &= expect_int("pressing-eye keeps same action-hand chest icon closed",
                      M11_GameView_GetV1InventorySlotIconIndex(
                          &game, CHAMPION_SLOT_ACTION_HAND),
-                     144);
-
+                     PROBE_CHEST_CLOSED_ICON);
     M11_GameView_CloseV1OpenChest(&game);
-    ok &= expect_true("leader hand accepts same chest for pressing-eye route",
-                      M11_GameView_SetV1LeaderHandObject(&game, chestThing));
-    ok &= expect_true("pressing-eye chest open redraws panel",
-                      M11_GameView_HandlePointer(&game, 12 + 8, 33 + 13 + 8, 1) ==
-                      M11_GAME_INPUT_REDRAW);
-    ok &= expect_int("pressing-eye keeps action-hand chest icon closed",
+    ok &= expect_int("closing pressing-eye chest clears G0426",
+                     (int)M11_GameView_GetV1OpenChestThing(&game),
+                     (int)THING_NONE);
+    ok &= expect_true("action-hand reopen after pressing-eye close succeeds",
+                      M11_GameView_OpenV1ActionHandChest(&game));
+    ok &= expect_int("action-hand reopen after eye close remaps C09 to C145",
                      M11_GameView_GetV1InventorySlotIconIndex(
                          &game, CHAMPION_SLOT_ACTION_HAND),
-                     144);
+                     PROBE_CHEST_OPEN_ICON);
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    ok &= check_action_hand_chest_icon(
+        &game, fb, PROBE_CHEST_OPEN_ICON,
+        "post-eye-close action-hand reopened chest");
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 chest panel runtime pixel probe "
