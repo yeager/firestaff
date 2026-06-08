@@ -11,6 +11,9 @@
  *   chest icon unless the eye is pressed, then blits C025 open-chest panel.
  *   ReDMCSB CHEST.C F0333 lines 53-76 copies the first eight linked contents
  *   into G0425 and draws C537..C544 chest slot boxes.
+ *   ReDMCSB PANEL.C F0352 lines 2123-2159 routes an eye click with a
+ *   leader-hand container through F0342/F0333 with P0707_B_PressingEye true,
+ *   so the C025/C537 panel appears without repainting C09 to C145.
  *   ReDMCSB PANEL.C F0347/F0354 routes the open-chest panel through the
  *   current inventory panel draw.
  */
@@ -33,6 +36,7 @@ enum {
     PROBE_CHAMPION_COUNT = 1,
     PROBE_ACTION_HAND_SLOTBOX = 9,
     PROBE_OPEN_CHEST_PANEL_GRAPHIC = 25,
+    PROBE_CHEST_CLOSED_ICON = 144,
     PROBE_CHEST_OPEN_ICON = 145
 };
 
@@ -129,6 +133,57 @@ static int seed_runtime_chest(M11_GameViewState* game,
     game->world.magic.partyShieldDefense = 0;
     seed_champion(&game->world.party.champions[0], chestThing);
     return 1;
+}
+
+static int seed_eye_runtime_chests(M11_GameViewState* game,
+                                   unsigned short actionChestThing,
+                                   unsigned short leaderChestThing,
+                                   unsigned short itemA,
+                                   unsigned short itemB)
+{
+    struct DungeonThings_Compat* things;
+
+    if (!game) return 0;
+    things = game->world.things;
+    if (!things || !things->loaded ||
+        !things->containers || things->containerCount < 2 ||
+        !things->junks || things->junkCount < 2) {
+        fprintf(stderr, "FAIL eye-path container/junk records unavailable\n");
+        return 0;
+    }
+
+    memset(&things->containers[0], 0, sizeof(things->containers[0]));
+    things->containers[0].next = THING_ENDOFLIST;
+    things->containers[0].slot = THING_ENDOFLIST;
+    things->containers[0].type = 0;
+
+    memset(&things->containers[1], 0, sizeof(things->containers[1]));
+    things->containers[1].next = THING_ENDOFLIST;
+    things->containers[1].slot = itemA;
+    things->containers[1].type = 0;
+
+    memset(&things->junks[0], 0, sizeof(things->junks[0]));
+    things->junks[0].next = itemB;
+    things->junks[0].type = 1; /* OBJECT.C info 128 resolves to icon 8. */
+
+    memset(&things->junks[1], 0, sizeof(things->junks[1]));
+    things->junks[1].next = THING_ENDOFLIST;
+    things->junks[1].type = 2; /* OBJECT.C info 129 resolves to icon 9. */
+
+    game->world.party.championCount = PROBE_CHAMPION_COUNT;
+    game->world.party.activeChampionIndex = 0;
+    game->world.party.direction = DIR_NORTH;
+    game->showDebugHUD = 0;
+    game->inventoryPanelActive = 1;
+    game->spellPanelOpen = 0;
+    game->actingChampionOrdinal = 0;
+    game->world.magic.fireShieldDefense = 0;
+    game->world.magic.spellShieldDefense = 0;
+    game->world.magic.partyShieldDefense = 0;
+    game->v1OpenChestThing = THING_NONE;
+    game->v1FoodWaterPanelActive = 0;
+    seed_champion(&game->world.party.champions[0], actionChestThing);
+    return M11_GameView_SetV1LeaderHandObject(game, leaderChestThing);
 }
 
 static int count_panel_matches(const M11_AssetSlot* asset,
@@ -269,8 +324,10 @@ static int check_chest_slot_icon(const M11_GameViewState* game,
     return count_icon_matches(game, fb, expectedIcon, vx + x, vy + y, label);
 }
 
-static int check_action_hand_open_chest_icon(const M11_GameViewState* game,
-                                             const unsigned char* fb)
+static int check_action_hand_chest_icon(const M11_GameViewState* game,
+                                        const unsigned char* fb,
+                                        int expectedIcon,
+                                        const char* label)
 {
     int x = 0, y = 0, w = 0, h = 0;
     int vx = 0, vy = 0, vw = 0, vh = 0;
@@ -285,10 +342,11 @@ static int check_action_hand_open_chest_icon(const M11_GameViewState* game,
     if (!ok) return 0;
 
     /* ReDMCSB CHEST.C F0333 lines 43-48 draws C145 into C09 before
-     * blitting the open-chest C025 panel when the eye is not pressed. */
-    return count_icon_matches(game, fb, PROBE_CHEST_OPEN_ICON,
-                              vx + x, vy + y,
-                              "action-hand open chest");
+     * blitting the open-chest C025 panel when the eye is not pressed.
+     * PANEL.C F0352 lines 2123-2159 reaches F0333 with
+     * P0707_B_PressingEye true, so the C09 action-hand slot must retain
+     * its own icon instead of being repainted to C145. */
+    return count_icon_matches(game, fb, expectedIcon, vx + x, vy + y, label);
 }
 
 int main(int argc, char** argv)
@@ -298,6 +356,7 @@ int main(int argc, char** argv)
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, 0);
+    unsigned short eyeChestThing = thing_ref(THING_TYPE_CONTAINER, 1);
     unsigned short itemA = thing_ref(THING_TYPE_JUNK, 0);
     unsigned short itemB = thing_ref(THING_TYPE_JUNK, 1);
     int actionIcon;
@@ -345,7 +404,8 @@ int main(int argc, char** argv)
         &game, CHAMPION_SLOT_ACTION_HAND);
     ok &= expect_int("action-hand chest icon stays open",
                      actionIcon, PROBE_CHEST_OPEN_ICON);
-    ok &= check_action_hand_open_chest_icon(&game, fb);
+    ok &= check_action_hand_chest_icon(&game, fb, PROBE_CHEST_OPEN_ICON,
+                                       "action-hand open chest");
     itemAIcon = M11_GameView_GetObjectIconIndexForThing(&game, itemA);
     itemBIcon = M11_GameView_GetObjectIconIndexForThing(&game, itemB);
     ok &= expect_true("first visible chest item icon resolves", itemAIcon >= 0);
@@ -355,6 +415,29 @@ int main(int argc, char** argv)
                                 "first visible chest item");
     ok &= check_chest_slot_icon(&game, fb, 1, itemBIcon,
                                 "second visible chest item");
+
+    ok &= expect_true("seed eye-path leader-hand chest with separate action chest",
+                      seed_eye_runtime_chests(&game, chestThing, eyeChestThing,
+                                              itemA, itemB));
+    ok &= expect_true("eye click opens leader-hand chest panel",
+                      M11_GameView_HandlePointer(&game, 12 + 8, 33 + 13 + 8, 1) ==
+                      M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("G0426 bridge eye-open chest thing",
+                     (int)M11_GameView_GetV1OpenChestThing(&game),
+                     (int)eyeChestThing);
+    actionIcon = M11_GameView_GetV1InventorySlotIconIndex(
+        &game, CHAMPION_SLOT_ACTION_HAND);
+    ok &= expect_int("eye-open leaves action-hand chest icon closed",
+                     actionIcon, PROBE_CHEST_CLOSED_ICON);
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    ok &= check_panel_pixels(&game, fb);
+    ok &= check_action_hand_chest_icon(&game, fb, PROBE_CHEST_CLOSED_ICON,
+                                       "eye-open action-hand closed chest");
+    ok &= check_chest_slot_icon(&game, fb, 0, itemAIcon,
+                                "eye-open first visible chest item");
+    ok &= check_chest_slot_icon(&game, fb, 1, itemBIcon,
+                                "eye-open second visible chest item");
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 chest panel runtime pixel probe "
