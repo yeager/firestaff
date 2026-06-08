@@ -267,8 +267,11 @@ typedef struct {
      * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
      * no chest panel is currently open; otherwise the value is the
      * container thing whose action-hand icon must render as C145 while
-     * the inventory panel is open. */
+     * the inventory panel is open.  v1OpenChestOpenedByEye preserves the
+     * CHEST.C F0333 lines 43-46 P0694_B_PressingEye branch: the eye route
+     * opens the C025 chest panel without drawing C145 into C09. */
     unsigned short v1OpenChestThing;
+    int v1OpenChestOpenedByEye;
 
     /* Acting-champion ordinal.  Mirrors DM1
      * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is
