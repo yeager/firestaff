@@ -106,6 +106,46 @@ static const SideWallCase kSideWallCases[4] = {
     { 3, 3, 5, 5, 4, 5, "west"  },
 };
 
+typedef struct {
+    const char* label;
+    int destSquareType;
+    int destDoorState;
+    int destHasFluxcage;
+    int expectedBlocker;
+    int expectedResultKind;
+    int expectedDoorDestructionEvent;
+} SideCellBlockerCase;
+
+static const SideCellBlockerCase kSideCellBlockers[3] = {
+    {
+        "side_lane_wall",
+        PROJECTILE_ELEMENT_WALL,
+        PROJECTILE_DOOR_STATE_NONE,
+        0,
+        PROJECTILE_BLOCKER_WALL,
+        PROJECTILE_RESULT_HIT_WALL,
+        0
+    },
+    {
+        "side_lane_closed_door",
+        PROJECTILE_ELEMENT_DOOR,
+        PROJECTILE_DOOR_STATE_CLOSED_FULL,
+        0,
+        PROJECTILE_BLOCKER_CLOSED_DOOR,
+        PROJECTILE_RESULT_HIT_DOOR,
+        1
+    },
+    {
+        "side_lane_fluxcage",
+        PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_DOOR_STATE_NONE,
+        1,
+        PROJECTILE_BLOCKER_FLUXCAGE,
+        PROJECTILE_RESULT_HIT_FLUXCAGE,
+        0
+    }
+};
+
 /* ---- Static test-state counters ----------------------------- */
 static int g_assertions = 0;
 static int g_failures = 0;
@@ -202,6 +242,25 @@ static void make_wall_digest(
     d->destIsMapBoundary       = 0;
 }
 
+static void make_side_cell_blocker_digest(
+    struct CellContentDigest_Compat* d,
+    const SideCellBlockerCase* c)
+{
+    memset(d, 0, sizeof(*d));
+    d->sourceMapIndex          = 0;
+    d->sourceMapX              = 5;
+    d->sourceMapY              = 5;
+    d->sourceSquareType        = PROJECTILE_ELEMENT_CORRIDOR;
+    d->destMapIndex            = 0;
+    d->destMapX                = 5;
+    d->destMapY                = 4;
+    d->destSquareType          = c->destSquareType;
+    d->destDoorState           = c->destDoorState;
+    d->destHasFluxcage         = c->destHasFluxcage;
+    d->destTeleporterNewDirection = -1;
+    d->destCreatureType        = -1;
+}
+
 /* ---- Test 1: F0814 wall classification ---------------------- */
 static void test_f0814_wall_blocker_is_wall(void)
 {
@@ -279,7 +338,67 @@ static void test_f0811_side_wall_impact_kinetic_per_direction(void)
     }
 }
 
-/* ---- Test 3: F0811 magical fireball wall-impact creates explosion - */
+/* ---- Test 3: F0811 thrown item side-cell blocker impacts ---- */
+static void test_f0811_thrown_item_side_cell_blockers(void)
+{
+    int i;
+    printf("test_f0811_thrown_item_side_cell_blockers\n");
+
+    for (i = 0; i < 3; ++i) {
+        const SideCellBlockerCase* c = &kSideCellBlockers[i];
+        struct ProjectileInstance_Compat p;
+        struct ProjectileInstance_Compat pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        int blocker = -1;
+
+        memset(&pOut, 0, sizeof(pOut));
+        memset(&r, 0, sizeof(r));
+
+        /* ReDMCSB PROJEXPL.C:F0219 lines 717-725: a projectile crosses
+         * into the next square from either the forward lane or the side
+         * lane M017_NEXT(direction). This fixture uses NORTH + east-side
+         * cell 1, the side-lane arm of that predicate. */
+        make_kinetic_arrow(&p, 0 /* NORTH */, 1 /* side cell */, 5, 5);
+        make_side_cell_blocker_digest(&d, c);
+
+        expect_int("f0814.side_cell_blocker",
+                   F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker),
+                   1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label, blocker, c->expectedBlocker,
+                   "ReDMCSB PROJEXPL.C:F0219 lines 721-725 side-lane blocker dispatch");
+
+        expect_int("f0811.side_cell.rc",
+                   F0811_PROJECTILE_Advance_Compat(&p, &d, 320u + (uint32_t)i,
+                                                   NULL, &pOut, &r),
+                   1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label, r.resultKind, c->expectedResultKind,
+                   "ReDMCSB PROJEXPL.C:F0219 lines 717-725 + F0217 impact resolution");
+        expect_int(c->label, r.despawn, 1,
+                   "ReDMCSB PROJEXPL.C:F0217 lines 607-608 unlinks/deletes projectile after impact");
+        expect_int(c->label, r.emittedDoorDestructionEvent,
+                   c->expectedDoorDestructionEvent,
+                   "ReDMCSB PROJEXPL.C:F0217 lines 506-508 door impact attack event");
+        expect_int(c->label, r.emittedCombatAction, 0,
+                   "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
+        expect_int(c->label, r.emittedExplosion, 0,
+                   "Kinetic thrown item side-cell blockers do not create explosions");
+        expect_int(c->label, pOut.mapIndex, p.mapIndex,
+                   "F0811 side-cell blocker impact retains source mapIndex");
+        expect_int(c->label, pOut.mapX, p.mapX,
+                   "F0811 side-cell blocker impact retains source X");
+        expect_int(c->label, pOut.mapY, p.mapY,
+                   "F0811 side-cell blocker impact retains source Y");
+        expect_int(c->label, pOut.cell, 2,
+                   "ReDMCSB PROJEXPL.C:F0219 lines 729-734 side-lane cell parity rotation");
+        expect_int(c->label, pOut.kineticEnergy, p.kineticEnergy - p.stepEnergy,
+                   "F0811 side-cell blocker impact decrements kinetic energy by stepEnergy");
+        expect_int(c->label, pOut.attack, p.attack - p.stepEnergy,
+                   "F0811 side-cell blocker impact decrements attack by stepEnergy");
+    }
+}
+
+/* ---- Test 4: F0811 magical fireball wall-impact creates explosion - */
 static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
 {
     struct ProjectileInstance_Compat p;
@@ -321,7 +440,7 @@ static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
                "F0820 HIT_WALL: explosion attack mirrors projectile attack");
 }
 
-/* ---- Test 4: F0820 wall-impact dispatch in isolation -------- */
+/* ---- Test 5: F0820 wall-impact dispatch in isolation -------- */
 static void test_f0820_wall_impact_kinetic_dispatch(void)
 {
     struct ProjectileInstance_Compat p;
@@ -355,7 +474,7 @@ static void test_f0820_wall_impact_kinetic_dispatch(void)
                "sound path from PROJEXPL.C:587-600; pins the current v1 state.");
 }
 
-/* ---- Test 5: square-byte encoding for the wall square ------- */
+/* ---- Test 6: square-byte encoding for the wall square ------- */
 static void test_wall_square_byte_encoding(void)
 {
     unsigned char squareByte;
@@ -377,7 +496,7 @@ static void test_wall_square_byte_encoding(void)
                SIDEWALL_DEFS_ANCHOR);
 }
 
-/* ---- Test 6: source-evidence anchor mentions --------------- */
+/* ---- Test 7: source-evidence anchor mentions --------------- */
 static void test_source_evidence_mentions_required_anchors(void)
 {
     printf("test_source_evidence_mentions_required_anchors\n");
@@ -405,6 +524,7 @@ int main(void)
 
     test_f0814_wall_blocker_is_wall();
     test_f0811_side_wall_impact_kinetic_per_direction();
+    test_f0811_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_wall_impact_kinetic_dispatch();
     test_wall_square_byte_encoding();
