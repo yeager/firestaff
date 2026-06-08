@@ -118,6 +118,84 @@ static void seed_panel_view(M11_GameViewState* state,
     }
 }
 
+static void seed_keyhole_view(M11_GameViewState* state,
+                              struct DungeonDatState_Compat* dungeon,
+                              struct DungeonMapDesc_Compat* map,
+                              struct DungeonMapTiles_Compat* tiles,
+                              unsigned char* squares,
+                              struct DungeonThings_Compat* things,
+                              struct DungeonDoor_Compat* doors,
+                              unsigned short* squareFirstThings) {
+    int x;
+    int y;
+    unsigned short wrongThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0u);
+
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(map, 0, sizeof(*map));
+    memset(tiles, 0, sizeof(*tiles));
+    memset(squares, 0, 9u * sizeof(*squares));
+    memset(things, 0, sizeof(*things));
+    memset(doors, 0, sizeof(*doors));
+    memset(squareFirstThings, 0, sizeof(unsigned short));
+
+    map->width = 3;
+    map->height = 3;
+    tiles->squareData = squares;
+    tiles->squareCount = 9;
+    dungeon->header.mapCount = 1;
+    dungeon->maps = map;
+    dungeon->tiles = tiles;
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+
+    for (x = 0; x < 3; ++x) {
+        for (y = 0; y < 3; ++y) {
+            squares[x * 3 + y] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | 0u);
+        }
+    }
+
+    /* Front cell (1,1) is a closed door with a decorative ornament
+     * ordinal so the click path models the keyhole-facing door case.
+     * ReDMCSB CLIKVIEW.C F0377 routes the viewport click through the
+     * door inspection path without consuming the held object when the
+     * item is not a fountain container. */
+    squares[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                         0x10u | 4u);
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_DOOR << 10) | 0u);
+    doors[0].next = THING_ENDOFLIST;
+    doors[0].ornamentOrdinal = 1u;
+    doors[0].vertical = 0u;
+    doors[0].button = 0u;
+    things->loaded = 1;
+    things->squareFirstThings = squareFirstThings;
+    things->squareFirstThingCount = 1;
+    things->doors = doors;
+    things->doorCount = 1;
+
+    M11_GameView_Init(state);
+    state->active = 1;
+    state->showDebugHUD = 1;
+    state->world.dungeon = dungeon;
+    state->world.things = things;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 1;
+    state->world.party.mapY = 2;
+    state->world.party.direction = DIR_NORTH;
+    state->world.party.championCount = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].present = 1;
+    state->world.party.champions[0].hp.current = 100;
+    state->world.party.champions[0].hp.maximum = 100;
+    for (x = 0; x < CHAMPION_SLOT_COUNT; ++x) {
+        state->world.party.champions[0].inventory[x] = THING_NONE;
+    }
+    (void)M11_GameView_SetV1LeaderHandObject(state, wrongThing);
+    snprintf(state->lastAction, sizeof(state->lastAction), "SENTINEL");
+    snprintf(state->lastOutcome, sizeof(state->lastOutcome), "UNCHANGED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SENTINEL");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail), "UNCHANGED");
+}
+
 /* Detail 1: right-button C011 close-inventory route from the inventory
  * mouse input list.  ReDMCSB COMMAND.C:412 binds the right button
  * anywhere in screen zone C002 to C011_ZONE_SCREEN. */
@@ -483,6 +561,46 @@ static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
               "old C520 occupant moves to leader hand");
 }
 
+/* Detail 7: door-keyhole click with the wrong leader-hand object.  The
+ * ReDMCSB CLIKVIEW.C F0377/CLIKVIEW.C F0372 door-click path should
+ * inspect the door and leave the held object untouched when the item is
+ * not a valid fountain fill source.  This regression keeps the
+ * no-open/no-consume contract pinned for a keyhole-faced door. */
+static void test_inventory_keyhole_click_wrong_item_keeps_state(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[9];
+    struct DungeonThings_Compat things;
+    struct DungeonDoor_Compat doors[1];
+    unsigned short squareFirstThings[1];
+    int result;
+
+    seed_keyhole_view(&state, &dungeon, &map, &tiles, squares, &things, doors, squareFirstThings);
+
+    result = M11_GameView_HandlePointerButton(&state,
+                                              112,
+                                              133,
+                                              M11_DM1_MOUSE_MASK_LEFT);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "door keyhole click redraws through the inspect path");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state),
+              (unsigned short)((THING_TYPE_WEAPON << 10) | 0u),
+              "wrong leader-hand object is not consumed by the keyhole click");
+    ASSERT_EQ(dungeon.tiles[0].squareData[1 * 3 + 1] & 0x07,
+              4,
+              "door keyhole click does not open the door");
+    ASSERT_EQ(strcmp(state.lastAction, "INSPECT"), 0,
+              "door keyhole click records the inspect action");
+    ASSERT_EQ(strcmp(state.lastOutcome, "DOOR CHECK"), 0,
+              "door keyhole click records the door-check outcome");
+    ASSERT_EQ(strcmp(state.inspectTitle, "FRONT DOOR"), 0,
+              "door keyhole click keeps the front-door inspect title");
+    ASSERT_TRUE(strstr(state.inspectDetail, "STILL CLOSED") != NULL,
+                "door keyhole click reports the closed door state");
+}
+
 int main(void) {
     printf("probe=firestaff_dm1_v1_inventory_panel_mouse_routes_runtime\n");
     printf("sourceEvidence=COMMAND.C:412-417 G0449 right-button close, "
@@ -501,6 +619,7 @@ int main(void) {
     test_inventory_status_hand_runtime_routes();
     test_inventory_open_chest_action_hand_icon_swap();
     test_inventory_backpack_slot_accepts_non_container_swap();
+    test_inventory_keyhole_click_wrong_item_keeps_state();
 
     /* Cross-check the source-locked route tables to the runtime
      * resolver to detect any drift in C020..C027 / C058..C065. */
