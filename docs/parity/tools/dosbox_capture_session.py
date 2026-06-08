@@ -60,6 +60,19 @@ class PlanStep:
     stable_frames: int = 3
 
 
+@dataclass
+class FrameQuality:
+    label: str
+    state: str
+    width: int
+    height: int
+    full_nonblack: float
+    viewport_nonblack: float
+    rightcol_nonblack: float
+    champion_nonblack: float
+    blackout: bool
+
+
 # The capture route plan.  This mirrors the runbook §3 state machine
 # but uses the calibrated band 0.135 thresholds from the post-fix
 # classifier.  Stable-frames requirement follows the runbook default.
@@ -83,6 +96,7 @@ KEY_MAP = {
 }
 
 DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
+BLACKOUT_NONBLACK_THRESH = 0.005
 
 
 class QuietRunTimeout:
@@ -144,6 +158,21 @@ def dry_run(plan: list[PlanStep],
             failures.append(
                 f"{step.name}: classifier returned {actual!r}, expected {step.expected_state!r}"
             )
+    blackout_quality = _frame_quality(sample_factory("title_screen"), "blackout_fixture", "title_screen")
+    if not blackout_quality.blackout:
+        failures.append("blackout fixture: quality gate did not detect an all-black frame")
+    dungeon_quality = _frame_quality(
+        sample_factory("dungeon_gameplay"),
+        "dungeon_fixture",
+        "dungeon_gameplay",
+    )
+    if dungeon_quality.blackout:
+        failures.append("dungeon fixture: quality gate misdetected a visible frame as blackout")
+    blackouts = [blackout_quality] * 6
+    if not _should_abort_for_blackout(blackouts, "entrance_menu", 6):
+        failures.append("blackout guard: did not abort a non-title target after repeated black frames")
+    if _should_abort_for_blackout(blackouts, "title_screen", 6):
+        failures.append("blackout guard: aborted the legitimate mostly-black title step")
     return matched, total, failures
 
 
@@ -248,6 +277,63 @@ def _screenshot_frame(capture_root: Path, label: str):
     return _crop_to_4x3(img).resize((320, 200), resample)
 
 
+def _region_density_from_array(arr, x0: int, y0: int, x1: int, y1: int) -> float:
+    import numpy as np
+    region = arr[y0:y1, x0:x1]
+    if region.size == 0:
+        return 0.0
+    n_pixels = region.shape[0] * region.shape[1]
+    if n_pixels <= 0:
+        return 0.0
+    n_nonblack = int(np.count_nonzero(np.any(region != 0, axis=2)))
+    return float(n_nonblack / n_pixels)
+
+
+def _frame_quality(img, label: str, state: str) -> FrameQuality:
+    """Measure whether a normalized frame is useful for route verification."""
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for frame-quality diagnostics")
+    import numpy as np
+
+    normalized = img.convert("RGB").resize((320, 200))
+    arr = np.array(normalized)
+    full = _region_density_from_array(arr, 0, 0, 320, 200)
+    viewport = _region_density_from_array(arr, 0, 33, 224, 169)
+    rightcol = _region_density_from_array(arr, 224, 33, 320, 169)
+    champion = _region_density_from_array(arr, 0, 0, 320, 65)
+    return FrameQuality(
+        label=label,
+        state=state,
+        width=normalized.size[0],
+        height=normalized.size[1],
+        full_nonblack=full,
+        viewport_nonblack=viewport,
+        rightcol_nonblack=rightcol,
+        champion_nonblack=champion,
+        blackout=full < BLACKOUT_NONBLACK_THRESH,
+    )
+
+
+def _write_quality_log(capture_root: Path, quality: FrameQuality) -> None:
+    log_path = capture_root / "state-samples" / "quality.jsonl"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(asdict(quality), sort_keys=True))
+        fh.write("\n")
+
+
+def _should_abort_for_blackout(
+        recent: list[FrameQuality],
+        target: str,
+        blackout_frame_limit: int) -> bool:
+    if target == "title_screen" or blackout_frame_limit <= 0:
+        return False
+    if len(recent) < blackout_frame_limit:
+        return False
+    window = recent[-blackout_frame_limit:]
+    return all(item.blackout for item in window)
+
+
 def _press_key(key: str) -> None:
     time.sleep(0.25)
     mapped = KEY_MAP.get(key)
@@ -260,17 +346,37 @@ def _press_key(key: str) -> None:
 
 
 def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
-                    screenshot_int: float, stable_frames: int) -> tuple[bool, str]:
+                    screenshot_int: float, stable_frames: int,
+                    blackout_frame_limit: int) -> tuple[bool, str]:
     deadline = time.time() + timeout_s
     stable = 0
     last_state = "unknown"
     sample = 0
+    recent_quality: list[FrameQuality] = []
     while time.time() < deadline:
         sample += 1
-        img = _screenshot_frame(capture_root, f"{target}_{sample:04d}")
+        label = f"{target}_{sample:04d}"
+        img = _screenshot_frame(capture_root, label)
         state = classify(img)
         last_state = state
-        print(f"state={state} target={target} stable={stable}/{stable_frames}", file=sys.stderr)
+        quality = _frame_quality(img, label, state)
+        _write_quality_log(capture_root, quality)
+        recent_quality.append(quality)
+        print(
+            f"state={state} target={target} stable={stable}/{stable_frames} "
+            f"full_nonblack={quality.full_nonblack:.4f} "
+            f"viewport_nonblack={quality.viewport_nonblack:.4f} "
+            f"rightcol_nonblack={quality.rightcol_nonblack:.4f} "
+            f"blackout={int(quality.blackout)}",
+            file=sys.stderr,
+        )
+        if _should_abort_for_blackout(recent_quality, target, blackout_frame_limit):
+            print(
+                "FAIL capture blackout: repeated all-black host frames for "
+                f"target={target}; see {capture_root / 'state-samples' / 'quality.jsonl'}",
+                file=sys.stderr,
+            )
+            return False, "capture_blackout"
         if state == target:
             stable += 1
             if stable >= stable_frames:
@@ -384,6 +490,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 min(step.timeout_s, args.state_timeout),
                 args.screenshot_int,
                 step.stable_frames,
+                args.blackout_frame_limit,
             )
             if not ok:
                 print(
@@ -435,6 +542,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="seconds between classifier samples (default 0.5)")
     parser.add_argument("--state-timeout", type=float, default=300.0,
                         help="give up on a state after N seconds (default 300)")
+    parser.add_argument("--blackout-frame-limit", type=int, default=6,
+                        help="abort a non-title state after N consecutive all-black "
+                             "host captures (default 6; set 0 to disable)")
     args = parser.parse_args(argv)
 
     plan = DEFAULT_PLAN
