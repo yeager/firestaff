@@ -1051,6 +1051,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_held_item_icons_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest empty-slot repaint runtime pixel gate.
+# Renders a populated C537..C544 chest panel, shortens the visible chain,
+# redraws into the reused framebuffer, and verifies C539 is repainted to
+# the clean empty slot state rather than retaining stale icon pixels.
+add_executable(firestaff_dm1_v1_chest_panel_slot_clear_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_panel_slot_clear_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_panel_slot_clear_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_panel_slot_clear_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion icon direction-swap runtime pixel gate.
 # Locks the M026_CHAMPION_ICON_INDEX(Direction, PartyDirection) macro
 # against the C028 4x19x14 champion-icon strip: when the party rotates
