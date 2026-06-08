@@ -106,6 +106,121 @@ static int framebuffer_matches_open_scroll_panel_pixels(
     return matched > 1000;
 }
 
+static int point_is_in_chest_slot_overdraw(const M11_GameViewState* state,
+                                           int viewportLocalX,
+                                           int viewportLocalY) {
+    int i;
+    (void)state;
+    for (i = 0; i < M11_GameView_GetV1ChestSlotBoxZoneCount(); ++i) {
+        int zx = 0, zy = 0, zw = 0, zh = 0;
+        if (!M11_GameView_GetV1ChestSlotBoxZone(i, &zx, &zy, &zw, &zh)) {
+            continue;
+        }
+        if (viewportLocalX >= zx - 1 && viewportLocalX < zx + zw + 1 &&
+            viewportLocalY >= zy - 1 && viewportLocalY < zy + zh + 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int framebuffer_matches_open_chest_panel_pixels(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer) {
+    const M11_AssetSlot* panel;
+    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int matched = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        return 0;
+    }
+    (void)viewportW;
+    (void)viewportH;
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 25u);
+    if (!panel || !panel->pixels ||
+        panel->width != (unsigned short)panelW ||
+        panel->height != (unsigned short)panelH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            int viewportLocalX = panelX + x;
+            int viewportLocalY = panelY + y;
+            unsigned char want = panel->pixels[y * (int)panel->width + x];
+            unsigned char got;
+            if (want == 8 ||
+                point_is_in_chest_slot_overdraw(state, viewportLocalX, viewportLocalY)) {
+                continue;
+            }
+            got = framebuffer[(viewportY + viewportLocalY) * 320 +
+                              (viewportX + viewportLocalX)];
+            if (got != want) return 0;
+            matched++;
+        }
+    }
+    return matched > 1000;
+}
+
+static int framebuffer_matches_object_icon_in_chest_slot(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer,
+    unsigned short thing,
+    int chestSlotOrdinal) {
+    const M11_AssetSlot* iconSheet;
+    int iconIndex;
+    int graphicIndex = 0;
+    int srcX = 0, srcY = 0, srcW = 0, srcH = 0;
+    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
+    int slotX = 0, slotY = 0, slotW = 0, slotH = 0;
+    int matched = 0;
+    int total = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
+        !M11_GameView_GetV1ChestSlotBoxZone(chestSlotOrdinal, &slotX, &slotY,
+                                            &slotW, &slotH)) {
+        return 0;
+    }
+    (void)viewportW;
+    (void)viewportH;
+    if (slotW != 16 || slotH != 16) return 0;
+
+    iconIndex = M11_GameView_GetObjectIconIndexForThing(state, thing);
+    if (iconIndex < 0 ||
+        !M11_GameView_GetV1ObjectIconSourceZone(iconIndex, &graphicIndex,
+                                                &srcX, &srcY, &srcW, &srcH) ||
+        srcW != 16 || srcH != 16) {
+        return 0;
+    }
+    iconSheet = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     (unsigned int)graphicIndex);
+    if (!iconSheet || !iconSheet->pixels ||
+        srcX + srcW > (int)iconSheet->width ||
+        srcY + srcH > (int)iconSheet->height) {
+        return 0;
+    }
+
+    for (y = 0; y < srcH; ++y) {
+        for (x = 0; x < srcW; ++x) {
+            unsigned char want =
+                iconSheet->pixels[(srcY + y) * (int)iconSheet->width + srcX + x];
+            unsigned char got;
+            if (want == 12) continue;
+            got = framebuffer[(viewportY + slotY + y) * 320 +
+                              (viewportX + slotX + x)];
+            total++;
+            if (got == want) matched++;
+        }
+    }
+    return total > 0 && matched == total;
+}
+
 static int framebuffer_zone_has_nonzero_pixel(const unsigned char* framebuffer,
                                               int framebufferWidth,
                                               int x,
@@ -324,12 +439,17 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     struct DungeonContainer_Compat containers[1];
     struct DungeonJunk_Compat junks[2];
     const unsigned short chestThing = (unsigned short)(THING_TYPE_CONTAINER << 10);
+    const unsigned short firstChestItem =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 0);
     unsigned char framebuffer[320 * 200];
     int vx = 0, vy = 0, vw = 0, vh = 0;
     int zx = 0, zy = 0, zw = 0, zh = 0;
 
     M11_GameView_Init(&state);
     seed_chest_world(&state, &things, containers, junks);
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for source C025 chest panel blit");
+    state.assetsAvailable = 1;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
               "leader hand accepts source container thing");
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
@@ -362,6 +482,13 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     ASSERT_TRUE(framebuffer_zone_has_nonzero_pixel(framebuffer, 320,
                 vx + zx, vy + zy, zw, zh),
                 "chest eye click leaves C537 chest slot renderable");
+    ASSERT_TRUE(framebuffer_matches_open_chest_panel_pixels(&state, framebuffer),
+                "pressing-eye chest route blits source C025 panel outside slot overdraw");
+    ASSERT_TRUE(framebuffer_matches_object_icon_in_chest_slot(
+                    &state, framebuffer, firstChestItem, 0),
+                "pressing-eye chest route blits first source chest item into C537");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
 int main(void) {
