@@ -58,10 +58,14 @@
  * through the public M11 input path: start at (1,3,SOUTH), move
  * forward into the corridor, then turn around to face the second
  * mirror at (1,4,NORTH), then left-turn through the side-wall
- * no-portrait pose and back to the south-facing mirror.  That locks
- * both left/right COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 ->
- * MOVESENS.C tick boundaries used by real runtime input while keeping
- * the pixel assertion identical to the direct route above.
+ * no-portrait pose and back to the south-facing mirror.  It then
+ * drives a backstep/forward Hall route from (1,4,SOUTH) to
+ * (1,3,SOUTH) and back, proving the same stale-pixel/no-floating
+ * invariant on the CLIKMENU.C F0366 backward movement branch.  That
+ * locks left/right turns plus forward/back movement through COMMAND.C
+ * F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries
+ * used by real runtime input while keeping the pixel assertion
+ * identical to the direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -135,6 +139,7 @@ typedef struct InputWalkStep {
     int dir;
     int expectedOrdinal;
     int inputBeforeCheck;
+    int allowNoPortraitDominance;
     const char* label;
 } InputWalkStep;
 
@@ -374,7 +379,8 @@ static int check_input_walk_step(M11_GameViewState* game,
                     match.expectedMatched, match.compared);
             ok = 0;
         }
-    } else if (prevOrdinal != -2 &&
+    } else if (!step->allowNoPortraitDominance &&
+               prevOrdinal != -2 &&
                match.bestMatched * 100 >= 35 * (match.compared > 0 ? match.compared : 1)) {
         /* The first input frame can be a no-portrait baseline with no
          * prior ordinal to clear; only later no-portrait input frames
@@ -432,18 +438,26 @@ int main(int argc, char** argv) {
         {1, 3, 1,  "hall_walk_step_e_north_back_to_ordinal_1"},
     };
     const InputWalkStep inputSteps[] = {
-        {1, 3, DIR_SOUTH, -1, -1,
+        {1, 3, DIR_SOUTH, -1, -1, 0,
          "hall_input_start_south_no_portrait"},
-        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP,
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, 0,
          "hall_input_forward_south_ordinal_3"},
-        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_RIGHT,
+        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_RIGHT, 0,
          "hall_input_turn_right_west_no_portrait"},
-        {1, 4, DIR_NORTH, 2, M12_MENU_INPUT_RIGHT,
+        {1, 4, DIR_NORTH, 2, M12_MENU_INPUT_RIGHT, 0,
          "hall_input_turn_right_north_ordinal_2"},
-        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_LEFT,
+        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_LEFT, 0,
          "hall_input_turn_left_west_no_portrait"},
-        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_LEFT,
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_LEFT, 0,
          "hall_input_turn_left_south_ordinal_3"},
+    };
+    const InputWalkStep backstepSteps[] = {
+        {1, 4, DIR_SOUTH, 3, -1, 0,
+         "hall_backstep_start_south_ordinal_3"},
+        {1, 3, DIR_SOUTH, -1, M12_MENU_INPUT_DOWN, 1,
+         "hall_backstep_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, 0,
+         "hall_backstep_forward_back_to_ordinal_3"},
     };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
@@ -512,6 +526,42 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = inputSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Backstep route: keep the party facing SOUTH and use the source-backed
+     * backward command to move from the live ordinal 3 mirror at (1,4) to
+     * the no-portrait pose at (1,3), then forward back to ordinal 3.  This
+     * source-locks the real input path for C005/C003 movement commands
+     * through COMMAND.C F0359/F0361, CLIKMENU.C F0366 lines 224-233
+     * relative movement mapping, MOVESENS.C:556 redraw timing, and the
+     * DUNVIEW.C:3913-3928 / 8522-8533 C026 D1C portrait blit.
+     * The (1,3,SOUTH) no-portrait wall pattern naturally resembles
+     * ordinal 10 in this narrow box, matching the existing probe's
+     * documented Hall wall-pattern caveat; this route therefore asserts
+     * the no-floating contract through the prior-ordinal stale-pixel check
+     * instead of the unrelated best-ordinal dominance threshold. */
+    set_pose(&game, 1, 4, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(backstepSteps) / sizeof(backstepSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        if (backstepSteps[stepIdx].inputBeforeCheck >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandleInput(&game, backstepSteps[stepIdx].inputBeforeCheck);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
+                        backstepSteps[stepIdx].label,
+                        backstepSteps[stepIdx].inputBeforeCheck,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &backstepSteps[stepIdx], currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = backstepSteps[stepIdx].expectedOrdinal;
     }
 
     M11_GameView_Shutdown(&game);
