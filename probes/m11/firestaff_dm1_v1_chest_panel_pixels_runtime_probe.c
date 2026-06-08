@@ -9,9 +9,9 @@
  * Source evidence:
  *   ReDMCSB CHEST.C F0333 lines 43-48 sets G0426, draws the open action-hand
  *   chest icon unless the eye is pressed, then blits C025 open-chest panel.
- *   ReDMCSB CHEST.C F0333 lines 53-76 copies the first eight linked contents
- *   into G0425 and draws C537..C544 chest slot boxes, including the eighth
- *   visible object before clearing any remaining empty slots.
+ *   ReDMCSB CHEST.C F0333 lines 53-76 copies only the first eight linked
+ *   contents into G0425 and draws C537..C544 chest slot boxes, including the
+ *   eighth visible object while leaving a ninth linked tail item hidden.
  *   ReDMCSB PANEL.C F0352 lines 2123-2159 routes an eye click with a
  *   leader-hand container through F0342/F0333 with P0707_B_PressingEye true,
  *   so the C025/C537 panel appears without repainting C09 to C145.
@@ -36,6 +36,7 @@ enum {
     PROBE_FB_H = 200,
     PROBE_CHAMPION_COUNT = 1,
     PROBE_VISIBLE_CHEST_SLOTS = 8,
+    PROBE_CHAINED_CHEST_ITEMS = 9,
     PROBE_ACTION_HAND_SLOTBOX = 9,
     PROBE_OPEN_CHEST_PANEL_GRAPHIC = 25,
     PROBE_CHEST_CLOSED_ICON = 144,
@@ -93,7 +94,8 @@ static void seed_champion(struct ChampionState_Compat* champ,
 
 static int seed_runtime_chest(M11_GameViewState* game,
                               unsigned short chestThing,
-                              const unsigned short items[PROBE_VISIBLE_CHEST_SLOTS])
+                              const unsigned short items[PROBE_CHAINED_CHEST_ITEMS],
+                              int itemCount)
 {
     struct DungeonThings_Compat* things;
     int i;
@@ -105,7 +107,8 @@ static int seed_runtime_chest(M11_GameViewState* game,
         return 0;
     }
     if (!things->containers || things->containerCount < 1 ||
-        !things->junks || things->junkCount < PROBE_VISIBLE_CHEST_SLOTS) {
+        !things->junks || things->junkCount < itemCount ||
+        itemCount < 1) {
         fprintf(stderr, "FAIL container/junk records unavailable\n");
         return 0;
     }
@@ -115,10 +118,10 @@ static int seed_runtime_chest(M11_GameViewState* game,
     things->containers[0].slot = items[0];
     things->containers[0].type = 0;
 
-    for (i = 0; i < PROBE_VISIBLE_CHEST_SLOTS; ++i) {
+    for (i = 0; i < itemCount; ++i) {
         memset(&things->junks[i], 0, sizeof(things->junks[i]));
         things->junks[i].next =
-            (i + 1 < PROBE_VISIBLE_CHEST_SLOTS) ?
+            (i + 1 < itemCount) ?
             items[i + 1] : THING_ENDOFLIST;
         things->junks[i].type = (unsigned char)((i % 2) + 1);
     }
@@ -359,11 +362,12 @@ int main(int argc, char** argv)
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, 0);
     unsigned short eyeChestThing = thing_ref(THING_TYPE_CONTAINER, 1);
-    unsigned short items[PROBE_VISIBLE_CHEST_SLOTS];
+    unsigned short items[PROBE_CHAINED_CHEST_ITEMS];
     int actionIcon;
     int itemAIcon;
     int itemBIcon;
     int itemHIcon;
+    int itemTailIcon;
     int i;
     int ok = 1;
 
@@ -389,11 +393,12 @@ int main(int argc, char** argv)
         M11_GameView_Shutdown(&game);
         return 1;
     }
-    for (i = 0; i < PROBE_VISIBLE_CHEST_SLOTS; ++i) {
+    for (i = 0; i < PROBE_CHAINED_CHEST_ITEMS; ++i) {
         items[i] = thing_ref(THING_TYPE_JUNK, i);
     }
 
-    if (!seed_runtime_chest(&game, chestThing, items)) {
+    if (!seed_runtime_chest(&game, chestThing, items,
+                            PROBE_CHAINED_CHEST_ITEMS)) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
@@ -417,9 +422,15 @@ int main(int argc, char** argv)
     itemBIcon = M11_GameView_GetObjectIconIndexForThing(&game, items[1]);
     itemHIcon = M11_GameView_GetObjectIconIndexForThing(
         &game, items[PROBE_VISIBLE_CHEST_SLOTS - 1]);
+    itemTailIcon = M11_GameView_GetObjectIconIndexForThing(
+        &game, items[PROBE_VISIBLE_CHEST_SLOTS]);
     ok &= expect_true("first visible chest item icon resolves", itemAIcon >= 0);
     ok &= expect_true("second visible chest item icon resolves", itemBIcon >= 0);
     ok &= expect_true("eighth visible chest item icon resolves", itemHIcon >= 0);
+    ok &= expect_true("ninth hidden tail icon resolves", itemTailIcon >= 0);
+    ok &= expect_true("ninth hidden tail icon differs from C544 item",
+                      itemHIcon >= 0 && itemTailIcon >= 0 &&
+                      itemHIcon != itemTailIcon);
     ok &= check_panel_pixels(&game, fb);
     ok &= check_chest_slot_icon(&game, fb, 0, itemAIcon,
                                 "first visible chest item");
