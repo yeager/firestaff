@@ -77,6 +77,8 @@ static int test_source_evidence(void)
     ok &= expect_contains("evidence panel", evidence, "C025 open-chest",
                           f0333);
     ok &= expect_contains("evidence slots", evidence, "C38..C45", f0333);
+    ok &= expect_contains("evidence eight-slot limit", evidence,
+                          "first eight", f0333);
     ok &= expect_contains("evidence panel route", evidence, "PANEL.C",
                           "ReDMCSB PANEL.C F0347/F0354 inventory panel route");
     return ok;
@@ -132,8 +134,14 @@ static int test_normal_open_draws_action_panel_and_slots(void)
                      DM1_PC34_CHEST_OPEN_DRAW_SLOT_CHEST_LAST, f0333Slots);
     ok &= expect_int("normal first filled icon", c->firstFilledIcon,
                      DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST, f0333Slots);
+    ok &= expect_int("normal last filled icon", c->lastFilledIcon,
+                     DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST + 2, f0333Slots);
     ok &= expect_int("normal last cleared icon", c->lastClearedIcon,
                      DM1_PC34_CHEST_OPEN_DRAW_ICON_NONE, f0333Slots);
+    ok &= expect_int("normal materialized slots", c->materializedSlotCount,
+                     3, f0333Slots);
+    ok &= expect_int("normal overflow inputs", c->overflowInputCount, 0,
+                     f0333Slots);
 
     ok &= expect_event("normal event 0 action", &c->events[0],
                        DM1_PC34_CHEST_OPEN_DRAW_EVENT_ACTION_ICON,
@@ -153,6 +161,68 @@ static int test_normal_open_draws_action_panel_and_slots(void)
                            DM1_PC34_CHEST_OPEN_DRAW_EVENT_SLOT_ICON,
                            DM1_PC34_CHEST_OPEN_DRAW_SLOT_CHEST_FIRST + i,
                            wantIcon, f0333Slots);
+    }
+    return ok;
+}
+
+static int test_overflow_open_draws_only_first_eight_slots(void)
+{
+    const char* f0333Action = "ReDMCSB CHEST.C F0333 lines 43-48";
+    const char* f0333Slots =
+        "ReDMCSB CHEST.C F0333 lines 53-76 CHANGE8_08_FIX";
+    const DM1_V1_ChestOpenDrawCasePc34* c = &g_probe.overflowOpen;
+    int ok = 1;
+    int i;
+
+    ok &= expect_int("overflow opens", c->openResult, 1, f0333Action);
+    ok &= expect_int("overflow linked input count", c->linkedItemCount,
+                     DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX, f0333Slots);
+    ok &= expect_int("overflow event count", c->eventCount, 10,
+                     f0333Slots);
+    ok &= expect_int("overflow action icon count",
+                     c->actionHandOpenIconCount, 1, f0333Action);
+    ok &= expect_int("overflow panel blit count", c->panelBlitCount, 1,
+                     f0333Action);
+    ok &= expect_int("overflow slot icon count", c->slotIconCount,
+                     DM1_PC34_CHEST_SLOT_COUNT, f0333Slots);
+    ok &= expect_int("overflow filled slot count", c->filledSlotIconCount,
+                     DM1_PC34_CHEST_SLOT_COUNT, f0333Slots);
+    ok &= expect_int("overflow cleared slot count", c->clearedSlotIconCount,
+                     0, f0333Slots);
+    ok &= expect_int("overflow materialized slots",
+                     c->materializedSlotCount, DM1_PC34_CHEST_SLOT_COUNT,
+                     f0333Slots);
+    ok &= expect_int("overflow hidden input count",
+                     c->overflowInputCount,
+                     DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX -
+                     DM1_PC34_CHEST_SLOT_COUNT,
+                     f0333Slots);
+    ok &= expect_int("overflow tail not materialized",
+                     c->overflowTailMaterialized, 0, f0333Slots);
+    ok &= expect_int("overflow first filled icon", c->firstFilledIcon,
+                     DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST, f0333Slots);
+    ok &= expect_int("overflow last filled icon", c->lastFilledIcon,
+                     DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST +
+                     DM1_PC34_CHEST_SLOT_COUNT - 1, f0333Slots);
+    ok &= expect_int("overflow first slot box", c->firstSlotBox,
+                     DM1_PC34_CHEST_OPEN_DRAW_SLOT_CHEST_FIRST, f0333Slots);
+    ok &= expect_int("overflow last slot box", c->lastSlotBox,
+                     DM1_PC34_CHEST_OPEN_DRAW_SLOT_CHEST_LAST, f0333Slots);
+    ok &= expect_event("overflow event 0 action", &c->events[0],
+                       DM1_PC34_CHEST_OPEN_DRAW_EVENT_ACTION_ICON,
+                       DM1_PC34_CHEST_OPEN_DRAW_SLOT_ACTION_HAND,
+                       DM1_PC34_CHEST_OPEN_DRAW_ICON_OPEN_CHEST,
+                       f0333Action);
+    ok &= expect_event("overflow event 1 panel", &c->events[1],
+                       DM1_PC34_CHEST_OPEN_DRAW_EVENT_PANEL_BLIT, 0,
+                       DM1_PC34_CHEST_OPEN_DRAW_GRAPHIC_OPEN_CHEST_PANEL,
+                       f0333Action);
+    for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
+        ok &= expect_event("overflow slot event", &c->events[2 + i],
+                           DM1_PC34_CHEST_OPEN_DRAW_EVENT_SLOT_ICON,
+                           DM1_PC34_CHEST_OPEN_DRAW_SLOT_CHEST_FIRST + i,
+                           DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST + i,
+                           f0333Slots);
     }
     return ok;
 }
@@ -235,8 +305,9 @@ int main(void)
     ok &= test_normal_open_draws_action_panel_and_slots();
     ok &= test_pressing_eye_suppresses_action_icon_only();
     ok &= test_same_chest_noop_draws_nothing();
+    ok &= test_overflow_open_draws_only_first_eight_slots();
     ok &= expect_int("minimum assertion count",
-                     g_assertions >= 65 ? 1 : 0, 1, f0333);
+                     g_assertions >= 110 ? 1 : 0, 1, f0333);
 
     printf("assertionCount=%d\n", g_assertions);
     printf("chestOpenDrawEventsInvariantOk=%d\n", ok ? 1 : 0);

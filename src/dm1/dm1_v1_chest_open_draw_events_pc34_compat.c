@@ -5,7 +5,7 @@
 static const char s_source_evidence[] =
     "CHEST.C F0333:30-32 same-open early return emits no chest panel redraws\n"
     "CHEST.C F0333:43-48 writes G0426, conditionally draws C145 in C09, then blits C025 open-chest panel\n"
-    "CHEST.C F0333:53-76 draws C38..C45 chest slot icons, clearing empty slots with C0xFFFF_ICON_NONE\n"
+    "CHEST.C F0333:53-76 draws only the first eight C38..C45 chest slot icons, clearing empty slots with C0xFFFF_ICON_NONE\n"
     "PANEL.C F0347/F0354 route open chest panel content through the current inventory panel draw";
 
 static M11_Item make_item(int itemType)
@@ -78,8 +78,41 @@ static void summarize_events(DM1_V1_ChestOpenDrawCasePc34* out)
                 if (out->firstFilledIcon == 0) {
                     out->firstFilledIcon = event->graphicOrIcon;
                 }
+                out->lastFilledIcon = event->graphicOrIcon;
             }
         }
+    }
+}
+
+static void summarize_materialized_slots(const M11_InventoryState* state,
+                                         int champ,
+                                         int linkedItemCount,
+                                         DM1_V1_ChestOpenDrawCasePc34* out)
+{
+    int i;
+
+    if (!state || !out || champ < 0 || champ >= state->championCount) {
+        return;
+    }
+
+    for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
+        const M11_Item* slot = &state->champions[champ].chestSlots[i];
+
+        if (slot->itemType != 0) {
+            ++out->materializedSlotCount;
+            if (slot->itemType >=
+                    DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST +
+                    DM1_PC34_CHEST_SLOT_COUNT &&
+                slot->itemType <
+                    DM1_PC34_CHEST_OPEN_DRAW_ITEM_FIRST +
+                    linkedItemCount) {
+                out->overflowTailMaterialized = 1;
+            }
+        }
+    }
+    if (linkedItemCount > DM1_PC34_CHEST_SLOT_COUNT) {
+        out->overflowInputCount =
+            linkedItemCount - DM1_PC34_CHEST_SLOT_COUNT;
     }
 }
 
@@ -89,11 +122,11 @@ static int run_case(int linkedItemCount,
                     DM1_V1_ChestOpenDrawCasePc34* out)
 {
     M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_SLOT_COUNT];
+    M11_Item linked[DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX];
     int i;
 
     if (!out || linkedItemCount < 0 ||
-        linkedItemCount > DM1_PC34_CHEST_SLOT_COUNT) {
+        linkedItemCount > DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX) {
         return 0;
     }
     memset(out, 0, sizeof(*out));
@@ -125,6 +158,7 @@ static int run_case(int linkedItemCount,
     if (!out->openResult) {
         return 0;
     }
+    summarize_materialized_slots(&state, 0, linkedItemCount, out);
 
     /* ReDMCSB CHEST.C F0333 lines 43-48: when the eye is not being pressed,
      * C09 receives C145 before the C025 open-chest panel is blitted. */
@@ -137,7 +171,9 @@ static int run_case(int linkedItemCount,
               DM1_PC34_CHEST_OPEN_DRAW_GRAPHIC_OPEN_CHEST_PANEL);
 
     /* ReDMCSB CHEST.C F0333 lines 53-76 walks the linked list in order, draws
-     * occupied C38..C45 icons, then clears the rest with C0xFFFF_ICON_NONE. */
+     * only the first eight occupied C38..C45 icons, then clears the rest with
+     * C0xFFFF_ICON_NONE.  The PC 3.4 CHANGE8_08_FIX break after eight links is
+     * the runtime detail guarded by the overflow case below. */
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
         const int icon =
             i < linkedItemCount ?
@@ -178,6 +214,10 @@ int dm1_v1_chest_open_draw_events_run_pc34(
         return 0;
     }
     if (!run_case(3, 0, 1, &out->sameChestNoop)) {
+        return 0;
+    }
+    if (!run_case(DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX, 0, 0,
+                  &out->overflowOpen)) {
         return 0;
     }
     return 1;
