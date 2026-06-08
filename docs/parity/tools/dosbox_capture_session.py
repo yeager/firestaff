@@ -30,6 +30,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
@@ -105,6 +106,57 @@ class QuietRunTimeout:
     stderr = "timeout"
 
 
+def _runtime_dir_failures(runtime_dir: Path) -> list[str]:
+    """Return validation failures for the DOS runtime layout.
+
+    The canonical hash root proved by preflight is not always the
+    directory DOSBox can execute from.  The live route must mount the
+    extracted PC 3.4 runtime subdir where DM.EXE can see its DATA/
+    sibling; mounting the parent hash root can leave DOSBox at a menu
+    or a black host capture even though the SHA preflight passed.
+    """
+    failures: list[str] = []
+    if not runtime_dir.is_dir():
+        return [f"runtime dir is not a directory: {runtime_dir}"]
+    if not (runtime_dir / "DM.EXE").is_file():
+        nested = runtime_dir / "DungeonMasterPC34" / "DM.EXE"
+        if nested.is_file():
+            failures.append(
+                "--runtime-dir points at the parent game root; pass the "
+                f"inner runtime dir instead: {nested.parent}"
+            )
+        else:
+            failures.append(f"runtime dir missing DM.EXE: {runtime_dir}")
+    if not (runtime_dir / "DATA").is_dir():
+        failures.append(f"runtime dir missing DATA/ sibling: {runtime_dir}")
+    return failures
+
+
+def validate_live_inputs(args: argparse.Namespace) -> int:
+    """Validate the live route inputs without launching DOSBox."""
+    capture_root = args.capture_root.expanduser()
+    default_runtime_dir = Path(
+        "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+    ).expanduser()
+    runtime_dir = (
+        args.runtime_dir.expanduser()
+        if args.runtime_dir is not None
+        else default_runtime_dir
+    )
+    failures = _runtime_dir_failures(runtime_dir)
+    if shutil.which("dosbox") is None:
+        failures.append("dosbox executable not found on PATH")
+    if failures:
+        print("FAIL live input validation:")
+        for failure in failures:
+            print(f"  - {failure}")
+        return 1
+    conf = capture_root / "dosbox_capture.live.conf"
+    _write_live_conf(conf, runtime_dir, capture_root)
+    print(f"PASS live input validation: runtime={runtime_dir} conf={conf}")
+    return 0
+
+
 def dump_plan(plan: list[PlanStep], out: Path | None = None) -> None:
     """Render the plan to JSON (default) or stdout."""
     rendered = json.dumps(
@@ -173,6 +225,25 @@ def dry_run(plan: list[PlanStep],
         failures.append("blackout guard: did not abort a non-title target after repeated black frames")
     if _should_abort_for_blackout(blackouts, "title_screen", 6):
         failures.append("blackout guard: aborted the legitimate mostly-black title step")
+    with tempfile.TemporaryDirectory(prefix="dm1-live-runtime-") as tmp:
+        tmp_root = Path(tmp)
+        good = tmp_root / "DungeonMasterPC34"
+        good.mkdir()
+        (good / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
+        (good / "DATA").mkdir()
+        if _runtime_dir_failures(good):
+            failures.append("runtime layout guard: rejected valid DM.EXE + DATA/ layout")
+        parent = tmp_root / "parent"
+        nested = parent / "DungeonMasterPC34"
+        nested.mkdir(parents=True)
+        (nested / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
+        if not any("inner runtime dir" in f for f in _runtime_dir_failures(parent)):
+            failures.append("runtime layout guard: did not flag parent game-root layout")
+        missing_data = tmp_root / "missing_data"
+        missing_data.mkdir()
+        (missing_data / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
+        if not any("DATA/" in f for f in _runtime_dir_failures(missing_data)):
+            failures.append("runtime layout guard: did not require DATA/ sibling")
     return matched, total, failures
 
 
@@ -452,10 +523,12 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
         else default_runtime_dir if default_runtime_dir.is_dir()
         else None
     )
-    if runtime_dir is not None and not (runtime_dir / "DM.EXE").is_file():
-        print(f"--runtime-dir does not contain DM.EXE: {runtime_dir}", file=sys.stderr)
-        return 2
     if runtime_dir is not None:
+        failures = _runtime_dir_failures(runtime_dir)
+        if failures:
+            for failure in failures:
+                print(f"live input validation failed: {failure}", file=sys.stderr)
+            return 2
         conf = capture_root / "dosbox_capture.live.conf"
         _write_live_conf(conf, runtime_dir, capture_root)
     else:
@@ -529,6 +602,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="walk the state machine using synthetic fixtures (no DOSBox)")
     parser.add_argument("--live", action="store_true",
                         help="drive a real DOSBox session via cliclick (macOS only)")
+    parser.add_argument("--validate-live-inputs", action="store_true",
+                        help="validate the live runtime layout and write the live conf "
+                             "without launching DOSBox")
     parser.add_argument("--game-dir", type=Path, default=None,
                         help="DM1 game data root (default: "
                              "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1)")
@@ -561,6 +637,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print("PASS")
         return 0
+    if args.validate_live_inputs:
+        return validate_live_inputs(args)
     if args.live:
         return live_run(plan, args)
     parser.print_help()
