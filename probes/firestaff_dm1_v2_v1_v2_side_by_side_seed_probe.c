@@ -65,6 +65,7 @@
 
 #include "dm1_v2_phase_gate_pc34.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
+#include "dm1_v2_viewport_renderer_pc34.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -381,6 +382,11 @@ static void tc_viewport_scaffold_constants(void) {
     record(DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X == 96 &&
            DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y == 35,
            "TC-10", "D1C portrait origin (96,35) in viewport-local");
+    record(DM1_V2_SIDE_BY_SIDE_D1C_WALL_X == 32 &&
+           DM1_V2_SIDE_BY_SIDE_D1C_WALL_Y == 9 &&
+           DM1_V2_SIDE_BY_SIDE_D1C_WALL_W == 160 &&
+           DM1_V2_SIDE_BY_SIDE_D1C_WALL_H == 111,
+           "TC-10", "D1C wall-panel region matches V1 layout-696");
 }
 
 /* ── TC-11: all domains handled (no fallthrough) ────────────────── */
@@ -395,6 +401,85 @@ static void tc_all_domains_handled(void) {
         record(dec.sourceAnchor != NULL && strlen(dec.sourceAnchor) > 0,
                "TC-11", "domain covered by phase gate (no fallthrough)");
     }
+}
+
+/* ── TC-12: deterministic pixel scaffold detects V1/V2 drift ──────
+ *
+ * This does not render game art. It seeds matching V1/V2 viewport
+ * buffers with deterministic bytes, then verifies the region-compare
+ * scaffold that future real screenshot/pixel tests can reuse.
+ */
+
+static void tc_side_by_side_pixel_scaffold(void) {
+    static DM1_V2_Color v1[DM1_V2_VIEWPORT_H][DM1_V2_VIEWPORT_W];
+    static DM1_V2_Color v2[DM1_V2_VIEWPORT_H][DM1_V2_VIEWPORT_W];
+    DM1_V2_RegionCompareResult result;
+    DM1_V2_ViewportRegion full = {
+        0, 0,
+        DM1_V2_SIDE_BY_SIDE_VIEWPORT_W,
+        DM1_V2_SIDE_BY_SIDE_VIEWPORT_H,
+        "V1 full viewport"
+    };
+    DM1_V2_ViewportRegion portrait = {
+        DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X,
+        DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y,
+        DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W,
+        DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H,
+        "D1C portrait anchor"
+    };
+    DM1_V2_ViewportRegion wall = {
+        DM1_V2_SIDE_BY_SIDE_D1C_WALL_X,
+        DM1_V2_SIDE_BY_SIDE_D1C_WALL_Y,
+        DM1_V2_SIDE_BY_SIDE_D1C_WALL_W,
+        DM1_V2_SIDE_BY_SIDE_D1C_WALL_H,
+        "D1C wall panel"
+    };
+
+    int x;
+    int y;
+    for (y = 0; y < DM1_V2_SIDE_BY_SIDE_VIEWPORT_H; ++y) {
+        for (x = 0; x < DM1_V2_SIDE_BY_SIDE_VIEWPORT_W; ++x) {
+            DM1_V2_Color px;
+            px.r = (unsigned char)((x * 3 + y * 5) & 0xff);
+            px.g = (unsigned char)((x * 7 + y * 11) & 0xff);
+            px.b = (unsigned char)((x ^ (y * 13)) & 0xff);
+            px.a = 255;
+            v1[y][x] = px;
+            v2[y][x] = px;
+        }
+    }
+
+    record(dm1_v2_vp_compare_viewport_region(&v1[0][0], &v2[0][0],
+                                             DM1_V2_VIEWPORT_W, full,
+                                             &result) == 1 &&
+           result.comparedPixels == DM1_V2_SIDE_BY_SIDE_VIEWPORT_W *
+                                    DM1_V2_SIDE_BY_SIDE_VIEWPORT_H &&
+           result.mismatchedPixels == 0,
+           "TC-12", "matching V1/V2 full-viewport scaffold compares cleanly");
+    record(dm1_v2_vp_compare_viewport_region(&v1[0][0], &v2[0][0],
+                                             DM1_V2_VIEWPORT_W, portrait,
+                                             &result) == 1 &&
+           result.comparedPixels == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W *
+                                    DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H &&
+           result.mismatchedPixels == 0,
+           "TC-12", "D1C portrait anchor region compares cleanly");
+    record(dm1_v2_vp_compare_viewport_region(&v1[0][0], &v2[0][0],
+                                             DM1_V2_VIEWPORT_W, wall,
+                                             &result) == 1 &&
+           result.comparedPixels == DM1_V2_SIDE_BY_SIDE_D1C_WALL_W *
+                                    DM1_V2_SIDE_BY_SIDE_D1C_WALL_H &&
+           result.mismatchedPixels == 0,
+           "TC-12", "D1C wall-panel region compares cleanly");
+
+    v2[DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y]
+      [DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X].r ^= 0x7f;
+    record(dm1_v2_vp_compare_viewport_region(&v1[0][0], &v2[0][0],
+                                             DM1_V2_VIEWPORT_W, portrait,
+                                             &result) == 0 &&
+           result.mismatchedPixels == 1 &&
+           result.firstMismatchX == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X &&
+           result.firstMismatchY == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y,
+           "TC-12", "single-pixel V2 drift is detected at the D1C anchor");
 }
 
 /* ── Main ────────────────────────────────────────────────────────── */
@@ -436,6 +521,9 @@ int main(void) {
 
     section("TC-11: every domain handled (no fallthrough)");
     tc_all_domains_handled();
+
+    section("TC-12: side-by-side pixel compare scaffold");
+    tc_side_by_side_pixel_scaffold();
 
     printf("\n=== SUMMARY ===\n");
     printf("PASS: %d  FAIL: %d\n", g_pass, g_fail);
