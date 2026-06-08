@@ -8,6 +8,9 @@
  *     slot-box rows.
  *   COMMAND.C:426-427 C070 mouth/C071 eye inventory routes map to
  *     viewport zones C545/C546.
+ *   COMMAND.C:451 C081 click-in-panel maps to viewport zone C101 after
+ *     the slot rows; COMMAND.C:1973-1982 then lets M569_PANEL_CHEST
+ *     re-dispatch through the dedicated G0456 chest-slot table.
  *   COMMAND.C:498-507 G0456_as_Graphic561_MouseInput_PanelChest maps
  *     the eight chest slot commands C058..C065 to viewport-relative
  *     zones C537..C544, with COMMAND.C:217-226 preserving the older
@@ -35,13 +38,15 @@
  *      m11_process_v1_mouth_click / m11_process_v1_eye_click.
  *   4. Status-hand routes (C020..C027) through the runtime resolver,
  *      resolving to the C211..C218 status-box hand zones.
- *   5. Open/close chest action-hand icon swap (C144 <-> C145) and
+ *   5. Broad panel route C081/C101 exists at runtime but has lower
+ *      priority than the C537..C544 chest slot routes.
+ *   6. Open/close chest action-hand icon swap (C144 <-> C145) and
  *      the close-time clear of v1OpenChestThing via
  *      M11_GameView_CloseV1OpenChest.
- *   6. Backpack C520 occupied-slot swap accepts a non-container
+ *   7. Backpack C520 occupied-slot swap accepts a non-container
  *      leader-hand object because backpack slots are any-slot routes,
  *      unlike chest C537..C544.
- *   7. Eye-click object-description handoff clears the food/water and
+ *   8. Eye-click object-description handoff clears the food/water and
  *      champion-stats panel state while preserving the leader-hand object
  *      and carrying the named weapon metadata into the panel fields.
  */
@@ -333,6 +338,57 @@ static void test_inventory_chest_slot_routes_all_eight(void) {
         &space, &zoneId);
     ASSERT_TRUE(command < 58 || command > 65,
                 "viewport (0, 33) does not match any chest slot route");
+}
+
+/* Detail 2b: broad panel click route C081/C101 remains present after the
+ * slot rows.  ReDMCSB COMMAND.C:451 appends C081 to G0449; COMMAND.C
+ * F0378 lines 1973-1982 uses that command to dispatch M569_PANEL_CHEST
+ * clicks through G0456. */
+static void test_inventory_open_chest_panel_click_route_priority(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int slotX = 0, slotY = 0, slotW = 0, slotH = 0;
+    int space = M11_DM1_MOUSE_SPACE_NONE;
+    int zoneId = 0;
+    int command = 0;
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.v1OpenChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
+                                                     &panelW, &panelH),
+                "C101 inventory panel zone is available");
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_INVENTORY,
+        panelX + panelW / 2,
+        33 + panelY + 8,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &space,
+        &zoneId);
+    ASSERT_EQ(command, 81,
+              "open chest panel non-slot point resolves to C081 click-in-panel");
+    ASSERT_EQ(zoneId, 101,
+              "open chest panel non-slot point returns C101 panel zone id");
+    ASSERT_EQ(space, M11_DM1_MOUSE_SPACE_VIEWPORT,
+              "C081 panel route is viewport-relative");
+
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &slotX, &slotY,
+                                                   &slotW, &slotH),
+                "C537 chest slot zone is available for priority probe");
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_INVENTORY,
+        slotX + slotW / 2,
+        33 + slotY + slotH / 2,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &space,
+        &zoneId);
+    ASSERT_EQ(command, 58,
+              "C537 slot point keeps C058 priority over broad C081 panel route");
+    ASSERT_EQ(zoneId, 537,
+              "C537 slot point returns the slot zone, not C101");
 }
 
 /* Detail 3: mouth (C070) and eye (C071) routes.  ReDMCSB COMMAND.C
@@ -675,6 +731,7 @@ int main(void) {
 
     test_inventory_close_panel_right_button_route();
     test_inventory_chest_slot_routes_all_eight();
+    test_inventory_open_chest_panel_click_route_priority();
     test_inventory_mouth_eye_routes_runtime();
     test_inventory_status_hand_runtime_routes();
     test_inventory_open_chest_action_hand_icon_swap();
