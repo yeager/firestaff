@@ -9,6 +9,10 @@
  * Source evidence:
  *   ReDMCSB CHEST.C F0333 lines 43-48 sets G0426, draws the open action-hand
  *   chest icon unless the eye is pressed, then blits C025 open-chest panel.
+ *   ReDMCSB CHEST.C F0333 lines 30-32 returns before that P0694_B_PressingEye
+ *   branch when the same G0426 chest is already open, so a redundant normal
+ *   action-hand open must not convert an eye-opened chest into C145/arrow
+ *   chrome.
  *   ReDMCSB CHEST.C F0333 lines 53-76 copies only the first eight linked
  *   contents into G0425 and draws C537..C544 chest slot boxes, including the
  *   eighth visible object while leaving a ninth linked tail item hidden.
@@ -636,6 +640,24 @@ int main(int argc, char** argv)
                      M11_GameView_GetV1InventorySlotIconIndex(
                          &game, CHAMPION_SLOT_ACTION_HAND),
                      PROBE_CHEST_CLOSED_ICON);
+    /* ReDMCSB CHEST.C F0333 lines 30-32 returns before lines 43-48 can draw
+     * C145 or reinterpret P0694_B_PressingEye.  Keep the runtime bridge's
+     * eye-open provenance stable across a redundant normal open request. */
+    ok &= expect_true("same-open normal action-hand request is accepted",
+                      M11_GameView_OpenV1ActionHandChest(&game));
+    ok &= expect_int("same-open preserves eye-open provenance",
+                     game.v1OpenChestOpenedByEye, 1);
+    ok &= expect_int("same-open keeps action-hand chest icon closed",
+                     M11_GameView_GetV1InventorySlotIconIndex(
+                         &game, CHAMPION_SLOT_ACTION_HAND),
+                     PROBE_CHEST_CLOSED_ICON);
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    ok &= check_arrow_or_eye_graphic(&game, fb, 1,
+                                     "same-open redundant request keeps eye");
+    ok &= check_action_hand_chest_icon(
+        &game, fb, PROBE_CHEST_CLOSED_ICON,
+        "same-open redundant request keeps closed chest");
     M11_GameView_CloseV1OpenChest(&game);
     ok &= expect_int("closing pressing-eye chest clears G0426",
                      (int)M11_GameView_GetV1OpenChestThing(&game),
