@@ -40,6 +40,13 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir) {
     Nexus_Creature *c;
     if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
+    /* ReDMCSB: DUNGEON.C F0151 lines ~1423-1445 returns wall for
+     * out-of-map squares; GROUP.C F0183 lines ~414-424 refuses to assign an
+     * active-group slot after the active pool is exhausted. Nexus DGN actor
+     * records are external data, so malformed references must fail before
+     * consuming an active creature slot. */
+    if (x < 0 || x >= NEXUS_MAX_MAP_SIZE || y < 0 || y >= NEXUS_MAX_MAP_SIZE) return -1;
+    if (dir < 0 || dir > 3) return -1;
     if (mgr->active_count >= NEXUS_MAX_ACTIVE_CREATURES) return -1;
     c = &mgr->active[mgr->active_count];
     c->type_index = type_idx;
