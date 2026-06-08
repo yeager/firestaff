@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dm1_v1_viewport_click_pc34_compat.h"
 #include "dm1_v1_room_transition_pc34_compat.h"
 
 static int g_pass;
@@ -97,6 +98,74 @@ static void test_map_change_requests_map_metadata_and_input_discard(void)
     EXPECT_INT("mapchange_chain_limit", plan.maxChainCount, DM1_V1_ROOM_TRANSITION_CHAIN_LIMIT_PC34);
 }
 
+static void test_map_change_replaces_pickup_target_after_redraw(void)
+{
+    struct Dm1V1RoomTransitionInputPc34Compat in;
+    struct Dm1V1RoomTransitionPlanPc34Compat plan;
+    M11_ViewportGrabbableState state;
+    M11_ViewportClickResult clickBefore;
+    M11_ViewportClickResult clickAfter;
+    const uint8_t frontLeftMask = DM1_VIEWPORT_GRABBABLE_CELL_MASK(DM1_VIEW_CELL_FRONT_LEFT);
+
+    memset(&in, 0, sizeof(in));
+    in.presentationMode = DM1_V1_ROOM_TRANSITION_PRESENTATION_ORIGINAL;
+    in.trigger = DM1_V1_ROOM_TRANSITION_TRIGGER_PIT;
+    in.before = pose(0, 7, 8, 2);
+    in.after = pose(1, 7, 8, 2);
+    in.partyChampionCount = 4;
+    in.postMoveChainCount = 1;
+    in.postMovePitCount = 1;
+
+    /*
+     * ReDMCSB source lock:
+     * - COMMAND.C:2095-2156 dequeues the movement command before the step
+     *   dispatch.
+     * - MOVESENS.C:441-451 and 538-606 carry the party into the new square
+     *   or new map before the redraw.
+     * - DUNGEON.C:2724-2762 updates the current-map metadata for the new
+     *   map, which is the state the next viewport pickup click must use.
+     * This regression checks that the post-transition pickup target comes
+     * from the redraw state, not the pre-transition square.
+     */
+    EXPECT("pickup_order_rc", DM1_V1_RoomTransition_BuildPlanPc34Compat(&in, &plan) == 1);
+    EXPECT_INT("pickup_order_map_changed", plan.mapChanged, 1);
+    EXPECT_INT("pickup_order_set_current", plan.requestSetCurrentMap, 1);
+    EXPECT_INT("pickup_order_set_party", plan.requestSetCurrentMapAndPartyMap, 1);
+    EXPECT_INT("pickup_order_discard_input", plan.requestInputDiscard, 1);
+    EXPECT_INT("pickup_order_preserve_hand", plan.preserveLeaderHandObject, 1);
+
+    m11_viewport_grabbable_init(&state);
+    EXPECT_INT("pickup_order_init_mask", state.grabbableCellMask,
+               DM1_VIEWPORT_GRABBABLE_NO_CELLS);
+
+    EXPECT_INT("pickup_order_pre_set",
+               m11_viewport_grabbable_set_pile_top(&state,
+                   DM1_VIEW_CELL_FRONT_LEFT, 11),
+               1);
+    clickBefore = m11_viewport_resolve_click_with_grabbable_state(
+        16, 96, 0, 7, 8, 1, 1, &state);
+    EXPECT_INT("pickup_order_pre_grab", clickBefore.objectGrabbed, 1);
+    EXPECT_INT("pickup_order_pre_item", clickBefore.pileTopObjectId, 11);
+
+    /*
+     * The redraw after the transition must replace the pickup target with
+     * the new map's floor-item state, so the stale pre-transition object is
+     * not the thing that gets grabbed on the next click.
+     */
+    EXPECT_INT("pickup_order_post_replace",
+               m11_viewport_grabbable_set_pile_top(&state,
+                   DM1_VIEW_CELL_FRONT_LEFT, 42),
+               1);
+    clickAfter = m11_viewport_resolve_click_with_grabbable_state(
+        16, 96, 0, 7, 8, 1, 1, &state);
+    EXPECT_INT("pickup_order_post_grab", clickAfter.objectGrabbed, 1);
+    EXPECT_INT("pickup_order_post_item", clickAfter.pileTopObjectId, 42);
+    EXPECT_INT("pickup_order_post_mask", state.grabbableCellMask, frontLeftMask);
+    EXPECT_INT("pickup_order_wrong_cell",
+               m11_viewport_grabbable_pile_top(&state, DM1_VIEW_CELL_BACK_RIGHT),
+               DM1_VIEWPORT_NO_PILE_TOP_OBJECT);
+}
+
 static void test_entrance_door_special_case(void)
 {
     struct Dm1V1RoomTransitionInputPc34Compat in;
@@ -129,6 +198,7 @@ int main(void)
     test_non_v1_guard_disables_plan();
     test_ordinary_step_is_redraw_only();
     test_map_change_requests_map_metadata_and_input_discard();
+    test_map_change_replaces_pickup_target_after_redraw();
     test_entrance_door_special_case();
     test_source_evidence_mentions_required_files();
     printf("dm1_v1_room_transition_pc34_compat: pass=%d fail=%d\n", g_pass, g_fail);
