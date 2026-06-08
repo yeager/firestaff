@@ -6725,6 +6725,7 @@ if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
     add_executable(test_dm1_v1_room_transition_pc34_compat
         tests/test_dm1_v1_room_transition_pc34_compat.c
         src/dm1/dm1_v1_room_transition_pc34_compat.c
+        src/dm1/dm1_v1_viewport_click_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_room_transition_pc34_compat PRIVATE -Wall -Wextra -O2)
