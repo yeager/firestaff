@@ -41,6 +41,8 @@
  *   6. Backpack C520 occupied-slot swap accepts a non-container
  *      leader-hand object because backpack slots are any-slot routes,
  *      unlike chest C537..C544.
+ *   7. Eye-click object-description handoff clears the food/water and
+ *      champion-stats panel state while preserving the leader-hand object.
  */
 
 #include "m11_game_view.h"
@@ -72,6 +74,14 @@ static int g_fail = 0;
     int e_ = (int)(expected); \
     if (a_ == e_) { ++g_pass; } \
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
+} while (0)
+
+#define ASSERT_CONTAINS(actual, expected, msg) do { \
+    const char* a_ = (actual); \
+    const char* e_ = (expected); \
+    if (a_ && e_ && strstr(a_, e_)) { ++g_pass; } \
+    else { ++g_fail; fprintf(stderr, "FAIL: %s: missing '%s' in '%s'\n", \
+                             (msg), e_ ? e_ : "(null)", a_ ? a_ : "(null)"); } \
 } while (0)
 
 static void seed_panel_view(M11_GameViewState* state,
@@ -215,6 +225,7 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonContainer_Compat containers[1];
+    unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     int space = M11_DM1_MOUSE_SPACE_NONE;
     int zoneId = 0;
     int command = 0;
@@ -265,6 +276,39 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "eye press with empty leader hand leaves the leader hand empty");
     ASSERT_EQ(state.v1ChampionStatsPanelActive, 1,
               "eye press with empty leader hand activates champion stats panel state");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss empty-hand eye stats overlay before the next inventory click");
+
+    /* Eye-clicking an object in the leader hand switches from the
+     * food/water panel to the object-description panel.  ReDMCSB
+     * PANEL.C F0352:1126-1200 routes non-scroll, non-container objects
+     * through the object description path after reading G0352 names and
+     * G0237 object info. */
+    state.v1FoodWaterPanelActive = 1;
+    state.v1ObjectDescriptionPanelActive = 0;
+    state.v1ObjectDescriptionThing = THING_NONE;
+    state.v1ObjectDescriptionIconIndex = -1;
+    state.v1ObjectDescriptionName[0] = '\0';
+    state.v1ObjectDescriptionBody[0] = '\0';
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, weaponThing), 1,
+              "leader hand accepts the weapon inspected by the eye route");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, eyeScreenX, eyeScreenY, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye press with weapon in leader hand redraws object-description panel");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), weaponThing,
+              "eye object-description route preserves leader-hand object");
+    ASSERT_EQ(state.v1FoodWaterPanelActive, 0,
+              "eye object-description route clears food/water panel state");
+    ASSERT_EQ(state.v1ChampionStatsPanelActive, 0,
+              "eye object-description route clears champion stats panel state");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 1,
+              "eye object-description route activates object-description panel");
+    ASSERT_EQ(state.v1ObjectDescriptionThing, weaponThing,
+              "object-description state records inspected leader-hand thing");
+    ASSERT_EQ(state.v1ObjectDescriptionIconIndex >= 0, 1,
+              "object-description state records a resolved icon index");
+    ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "WEAPON",
+                    "object-description body records weapon type detail");
 }
 
 /* Detail 4: runtime status hand routes C020..C027.  ReDMCSB COMMAND.C
@@ -447,6 +491,7 @@ int main(void) {
            "COMMAND.C:489-496 status hand C020..C027/C211..C218, "
            "DATA.C:1063-1079 backpack MASK0xFFFF_ANY_SLOT vs "
            "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
+           "PANEL.C:1126-1200 eye object-description route, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
            "CHEST.C:112-133 close-time compact\n");
 
