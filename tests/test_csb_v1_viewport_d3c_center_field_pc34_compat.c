@@ -239,6 +239,27 @@ static void test_wall_and_door_routes(void)
                "ReDMCSB DEFS.H:4253 M625_ZONE_DOOR_D3C");
 }
 
+static void test_door_without_button_variant(void)
+{
+    CSB_V1_D3CCenterFieldInputPc34 in = base_input(
+        CSB_V1_D3C_CENTER_FIELD_ELEMENT_DOOR_FRONT);
+    CSB_V1_D3CCenterFieldPlanPc34 door = csb_v1_viewport_d3c_center_field_plan_pc34(in);
+
+    expect_int("d3c.door_no_button.route", (int)door.route,
+               CSB_V1_D3C_CENTER_FIELD_ROUTE_DOOR_FRONT_DOUBLE_PASS,
+               "ReDMCSB DUNVIEW.C:6721-6747");
+    expect_bool("d3c.door_no_button.f0110", door.calls_f0110_door_button, false,
+               "ReDMCSB DUNVIEW.C:6737-6738");
+    expect_bool("d3c.door_no_button.f0111", door.calls_f0111_door, true,
+               "ReDMCSB DUNVIEW.C:6741-6744");
+    expect_int("d3c.door_no_button.order1", door.first_cell_order, 0x0218,
+               "ReDMCSB DUNVIEW.C:6723");
+    expect_int("d3c.door_no_button.order2", door.second_cell_order, 0x0349,
+               "ReDMCSB DUNVIEW.C:6746");
+    expect_int("d3c.door_no_button.f0115_count", door.f0115_call_count, 2,
+               "ReDMCSB DUNVIEW.C:6723,6815-6816");
+}
+
 static void test_open_stairs_pit_and_teleporter_routes(void)
 {
     CSB_V1_D3CCenterFieldPlanPc34 corridor =
@@ -395,6 +416,7 @@ int main(void)
     test_contract_metadata();
     test_frame_and_source_anchors();
     test_wall_and_door_routes();
+    test_door_without_button_variant();
     test_open_stairs_pit_and_teleporter_routes();
     test_synthetic_c10_and_route_names();
 
