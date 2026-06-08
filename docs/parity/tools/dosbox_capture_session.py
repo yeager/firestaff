@@ -97,6 +97,7 @@ KEY_MAP = {
 }
 
 DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
+DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 BLACKOUT_NONBLACK_THRESH = 0.005
 
 
@@ -104,6 +105,40 @@ class QuietRunTimeout:
     returncode = 124
     stdout = ""
     stderr = "timeout"
+
+
+def _resolve_dosbox_bin(args: argparse.Namespace) -> str | None:
+    """Return the DOSBox executable used by validation and live launch.
+
+    The runbook requires DOSBox Staging, but local installs are split
+    between a ``dosbox-staging`` executable, a ``dosbox`` shim, and
+    explicit app-wrapper paths.  Resolving this once keeps
+    ``--validate-live-inputs`` from passing a different launch shape
+    than ``--live`` actually uses.
+    """
+    explicit = getattr(args, "dosbox_bin", None)
+    if explicit:
+        expanded = os.path.expanduser(str(explicit))
+        if os.path.sep in expanded:
+            return expanded if _is_executable_file(Path(expanded)) else None
+        return shutil.which(expanded)
+    env_bin = os.environ.get("DOSBOX_BIN")
+    if env_bin:
+        expanded = os.path.expanduser(env_bin)
+        if os.path.sep in expanded:
+            return expanded if _is_executable_file(Path(expanded)) else None
+        found = shutil.which(expanded)
+        if found:
+            return found
+    for candidate in DOSBOX_BIN_CANDIDATES:
+        found = shutil.which(candidate)
+        if found:
+            return found
+    return None
+
+
+def _is_executable_file(path: Path) -> bool:
+    return path.is_file() and os.access(path, os.X_OK)
 
 
 def _runtime_dir_failures(runtime_dir: Path) -> list[str]:
@@ -144,8 +179,12 @@ def validate_live_inputs(args: argparse.Namespace) -> int:
         else default_runtime_dir
     )
     failures = _runtime_dir_failures(runtime_dir)
-    if shutil.which("dosbox") is None:
-        failures.append("dosbox executable not found on PATH")
+    dosbox_bin = _resolve_dosbox_bin(args)
+    if dosbox_bin is None:
+        failures.append(
+            "DOSBox executable not found; pass --dosbox-bin, set DOSBOX_BIN, "
+            "or put dosbox-staging/dosbox on PATH"
+        )
     if failures:
         print("FAIL live input validation:")
         for failure in failures:
@@ -153,7 +192,10 @@ def validate_live_inputs(args: argparse.Namespace) -> int:
         return 1
     conf = capture_root / "dosbox_capture.live.conf"
     _write_live_conf(conf, runtime_dir, capture_root)
-    print(f"PASS live input validation: runtime={runtime_dir} conf={conf}")
+    print(
+        "PASS live input validation: "
+        f"dosbox_bin={dosbox_bin} runtime={runtime_dir} conf={conf}"
+    )
     return 0
 
 
@@ -244,6 +286,18 @@ def dry_run(plan: list[PlanStep],
         (missing_data / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
         if not any("DATA/" in f for f in _runtime_dir_failures(missing_data)):
             failures.append("runtime layout guard: did not require DATA/ sibling")
+        fake_bin = tmp_root / "fake-dosbox-staging"
+        fake_bin.write_bytes(b"#!/bin/sh\nexit 0\n")
+        fake_bin.chmod(0o755)
+        if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=fake_bin)) != str(fake_bin):
+            failures.append("dosbox binary resolver: rejected explicit executable path")
+        nonexec_bin = tmp_root / "nonexec-dosbox-staging"
+        nonexec_bin.write_bytes(b"#!/bin/sh\nexit 0\n")
+        if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=nonexec_bin)) is not None:
+            failures.append("dosbox binary resolver: accepted a non-executable path")
+        missing_bin = tmp_root / "missing-dosbox"
+        if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=missing_bin)) is not None:
+            failures.append("dosbox binary resolver: accepted a missing explicit path")
     return matched, total, failures
 
 
@@ -507,6 +561,14 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     if shutil.which("cliclick") is None:
         print("cliclick is required for --live", file=sys.stderr)
         return 2
+    dosbox_bin = _resolve_dosbox_bin(args)
+    if dosbox_bin is None:
+        print(
+            "DOSBox executable not found; pass --dosbox-bin, set DOSBOX_BIN, "
+            "or put dosbox-staging/dosbox on PATH",
+            file=sys.stderr,
+        )
+        return 2
 
     capture_root = args.capture_root.expanduser()
     game_dir = (
@@ -543,9 +605,9 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
 
     original_dir = capture_root / "original"
     original_dir.mkdir(parents=True, exist_ok=True)
-    print(f"launching DOSBox with {conf}", file=sys.stderr)
+    print(f"launching DOSBox with {conf} via {dosbox_bin}", file=sys.stderr)
     proc = subprocess.Popen(
-        ["dosbox", "-conf", str(conf)],
+        [dosbox_bin, "-conf", str(conf)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         env={**os.environ, "LANG": os.environ.get("LANG", "C")},
@@ -614,6 +676,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--capture-root", type=Path,
                         default=Path.home() / "firestaff-captures",
                         help="where to write captured frames")
+    parser.add_argument("--dosbox-bin", default=None,
+                        help="DOSBox executable for --live/--validate-live-inputs "
+                             "(default: DOSBOX_BIN, then dosbox-staging, then dosbox)")
     parser.add_argument("--screenshot-int", type=float, default=0.5,
                         help="seconds between classifier samples (default 0.5)")
     parser.add_argument("--state-timeout", type=float, default=300.0,
