@@ -3598,6 +3598,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_empty_reopen_runtime_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chest_open_visible_slots_pc34_compat
+        tests/test_dm1_v1_chest_open_visible_slots_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_chest_open_visible_slots_pc34_compat PRIVATE include)
+    target_link_libraries(test_dm1_v1_chest_open_visible_slots_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_open_visible_slots_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_open_visible_slots_pc34_compat
+        COMMAND test_dm1_v1_chest_open_visible_slots_pc34_compat
+    )
+
     add_executable(test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat
         tests/test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat.c
         src/dm1/dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat.c
