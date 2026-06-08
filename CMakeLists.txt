@@ -4128,6 +4128,7 @@ if(BUILD_TESTING)
     )
     add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
         probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c
+        src/dm1v2/dm1_v2_side_by_side_seed_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_presentation_profile_pc34.c
         src/dm1v2/dm1_v2_settings_pc34.c

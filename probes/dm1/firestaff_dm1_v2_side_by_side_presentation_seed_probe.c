@@ -51,6 +51,7 @@
 #include "dm1_v2_viewport_renderer_pc34.h"
 #include "dm1_v2_presentation_profile_pc34.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
+#include "dm1_v2_side_by_side_seed_pc34.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -290,6 +291,61 @@ static void check_movement_command_route_disabled_v1(void) {
     }
 }
 
+static void check_source_side_by_side_seed_helper(
+    const DM1_V2_ViewportState* v1,
+    const DM1_V2_ViewportState* v2,
+    uint64_t probeSideBySideHash) {
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_Color pixel;
+    uint64_t helperHash;
+    int scaffoldW = 0;
+    int scaffoldH = 0;
+    int gapW = 0;
+
+    dm1_v2_side_by_side_seed_scaffold_dimensions(&scaffoldW, &scaffoldH, &gapW);
+    PROBE_ASSERT(scaffoldW == SIDE_BY_SIDE_W,
+                 "source helper scaffold width matches probe (%d)", SIDE_BY_SIDE_W);
+    PROBE_ASSERT(scaffoldH == SIDE_BY_SIDE_H,
+                 "source helper scaffold height matches probe (%d)", SIDE_BY_SIDE_H);
+    PROBE_ASSERT(gapW == SIDE_BY_SIDE_GAP_W,
+                 "source helper gap width matches probe (%d)", SIDE_BY_SIDE_GAP_W);
+
+    helperHash = dm1_v2_side_by_side_seed_hash_layout(v1, v2);
+    PROBE_ASSERT(helperHash == probeSideBySideHash,
+                 "source helper hash matches probe side-by-side hash: %016llx",
+                 (unsigned long long)helperHash);
+
+    PROBE_ASSERT(dm1_v2_side_by_side_seed_build_entry(&seed) == 1,
+                 "source helper build_entry succeeds");
+    PROBE_ASSERT(seed.lanesByteEqual == 1,
+                 "source helper build_entry lanes byte-equal");
+    PROBE_ASSERT(seed.mismatchedPixels == 0,
+                 "source helper build_entry mismatchedPixels=0");
+    PROBE_ASSERT(seed.sideBySideHash == probeSideBySideHash,
+                 "source helper build_entry hash matches probe: %016llx",
+                 (unsigned long long)seed.sideBySideHash);
+
+    PROBE_ASSERT(dm1_v2_side_by_side_seed_composite_pixel(
+                     &seed, DM1_V2_VIEWPORT_W, 0, &pixel) == 1,
+                 "source helper composite gap pixel is addressable");
+    PROBE_ASSERT(pixel.r == SIDE_BY_SIDE_GAP_R &&
+                 pixel.g == SIDE_BY_SIDE_GAP_G &&
+                 pixel.b == SIDE_BY_SIDE_GAP_B &&
+                 pixel.a == 255,
+                 "source helper composite gap pixel matches V2 label colour");
+    PROBE_ASSERT(dm1_v2_side_by_side_seed_composite_pixel(
+                     &seed,
+                     DM1_V2_VIEWPORT_W + SIDE_BY_SIDE_GAP_W,
+                     0,
+                     &pixel) == 1,
+                 "source helper composite V2 lane first pixel is addressable");
+    PROBE_ASSERT(pixel.r == seed.v2.framebuffer[0][0].r &&
+                 pixel.g == seed.v2.framebuffer[0][0].g &&
+                 pixel.b == seed.v2.framebuffer[0][0].b &&
+                 pixel.a == seed.v2.framebuffer[0][0].a,
+                 "source helper composite V2 lane first pixel matches framebuffer");
+}
+
 int main(void) {
     DM1_V2_ViewportState v1;
     DM1_V2_ViewportState v2;
@@ -344,6 +400,7 @@ int main(void) {
                  (unsigned long long)v1Hash, (unsigned long long)v2Hash);
 
     sideBySideHash = hash_side_by_side(fnv1a_seed_begin(), &v1, &v2);
+    check_source_side_by_side_seed_helper(&v1, &v2, sideBySideHash);
     printf("sideBySideHash=%016llx\n", (unsigned long long)sideBySideHash);
     printf("v1Hash=%016llx v2Hash=%016llx\n",
            (unsigned long long)v1Hash, (unsigned long long)v2Hash);
