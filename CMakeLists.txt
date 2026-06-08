@@ -8662,6 +8662,23 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_save_header_rejection
         COMMAND test_theron_v1_save_header_rejection
     )
+
+    add_executable(test_theron_v1_shop_price_table
+        tests/test_theron_v1_shop_price_table.c
+    )
+    target_link_libraries(test_theron_v1_shop_price_table PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_shop_price_table PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_shop_price_table PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_shop_price_table
+        COMMAND test_theron_v1_shop_price_table
+    )
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Tests ──────────────────────────────

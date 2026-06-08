@@ -108,6 +108,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Runtime handoff/playability hardening: hash-verified JP Rev 1 and US Track 02 ISO images now route into the M11 Theron boot/world/viewport path; remaining work is promotion of exact Track 02 dungeon-bank offsets beyond the deterministic launch room.
 - 🔧 Track 02 bank map: identify and document JP Rev 1 and US ISO offsets for dungeon descriptors, map grids, object tables, champion/party seed data, text strings, palette/tile banks, and audio markers. Keep each offset behind a regression probe before claiming parity.
+- 🔧 Theron shop/table parity: fixture-level price-table parsing and purchase-state guards now exist; remaining work is locating the exact THQUEST.ASM / Track 02 shop table offsets before wiring real runtime shops.
 - 🔧 Real dungeon loader: replace synthetic/fallback launch-room construction with parsed Track 02 room grids, square flags, stairs/pits/doors/teleporters, and object/creature placements for dungeon 1 first, then all seven Theron dungeons.
 - 🔧 Runtime input/playability proof: run a deterministic script from direct launch through movement, turning, wall blocking, door interaction, pit/stair routing, altar/progression state, combat contact, and save/load resume using hash-verified Track 02 data.
 - 🔧 Rendering proof with real assets: bind real Track 02 tile/palette data into the Theron viewport where available, keep deterministic fallback only for unknown banks, and add pixel/screenshot gates for wall/floor/UI/champion panel output.
