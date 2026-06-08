@@ -341,6 +341,67 @@ static void test_pixels_c10_and_no_write_edges(void)
                "DUNVIEW.C:3055 F0100 frame-height bound");
 }
 
+static void test_party_side_flip_pixel_columns(void)
+{
+    const DM1_V1_D2LD2RWallSpecPc34 *d2l =
+        dm1_v1_viewport_d2l_d2r_wall_spec_pc34(DM1_V1_D2L_D2R_WALL_SIDE_D2L_PC34);
+    const DM1_V1_D2LD2RWallSpecPc34 *d2r =
+        dm1_v1_viewport_d2l_d2r_wall_spec_pc34(DM1_V1_D2L_D2R_WALL_SIDE_D2R_PC34);
+    int source_x = -1;
+    int source_y = -1;
+
+    expect_int("flip.d2l.left.native",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2l, 20, 0, false, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:581-591 G0163 D2L");
+    expect_int("flip.d2l.left.native_source_x", source_x, 61,
+               "G0163 D2L source X=61");
+    expect_int("flip.d2l.left.flipped",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2l, 20, 0, true, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:3185-3204 F0105 row flip");
+    expect_int("flip.d2l.left.flipped_source_x", source_x, 10,
+               "72 - 1 - 61");
+    expect_int("flip.d2l.right.flipped",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2l, 90, 10, true, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:8390-8555 F0128 flipped D2L route");
+    expect_int("flip.d2l.right.flipped_source_x", source_x, 0,
+               "72 - 1 - 71");
+    expect_int("flip.d2l.right.flipped_source_y", source_y, 70,
+               "G0163 D2L height=71");
+
+    expect_int("flip.d2r.left.native",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2r, 20, 224, false, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:581-591 G0163 D2R");
+    expect_int("flip.d2r.left.native_source_x", source_x, 0,
+               "G0163 D2R source X=0");
+    expect_int("flip.d2r.left.flipped",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2r, 20, 224, true, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:3185-3204 F0105 row flip");
+    expect_int("flip.d2r.left.flipped_source_x", source_x, 71,
+               "72 - 1 - 0");
+    expect_int("flip.d2r.right.flipped",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2r, 90, 233, true, &source_x, &source_y) ? 1 : 0,
+               1, "DUNVIEW.C:8390-8555 F0128 flipped D2R route");
+    expect_int("flip.d2r.right.flipped_source_x", source_x, 62,
+               "72 - 1 - 9");
+    expect_int("flip.d2r.right.flipped_source_y", source_y, 70,
+               "G0163 D2R height=71");
+
+    expect_int("flip.outside_clip",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2r, 20, 223, true, &source_x, &source_y) ? 1 : 0,
+               0, "D2R side slice begins at viewport X=224");
+    expect_int("flip.null_source_x",
+               dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+                   d2l, 20, 0, true, NULL, &source_y) ? 1 : 0,
+               0, "flip mapper requires output coordinates");
+}
+
 static void test_invalid_inputs_and_blend(void)
 {
     DM1_V1_D2LD2RWallPixelInputPc34 input = {
@@ -430,6 +491,7 @@ int main(void)
     test_d2l_spec_source_locked_metadata();
     test_d2r_spec_source_locked_metadata();
     test_pixels_c10_and_no_write_edges();
+    test_party_side_flip_pixel_columns();
     test_invalid_inputs_and_blend();
     test_source_evidence_mentions_required_anchors();
 

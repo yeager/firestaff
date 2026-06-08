@@ -102,6 +102,14 @@ bool dm1_v1_viewport_d2l_d2r_wall_map_pixel_pc34(
     int *source_x,
     int *source_y);
 
+bool dm1_v1_viewport_d2l_d2r_wall_map_party_side_pixel_pc34(
+    const DM1_V1_D2LD2RWallSpecPc34 *spec,
+    int row,
+    int viewport_x,
+    bool party_side_flipped,
+    int *source_x,
+    int *source_y);
+
 bool dm1_v1_viewport_d2l_d2r_wall_apply_pixel_pc34(
     const DM1_V1_D2LD2RWallPixelInputPc34 *input,
     const uint8_t *source,
