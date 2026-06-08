@@ -1081,6 +1081,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel partial-party runtime pixel gate.
+# Extends the Firestaff-side champion-panel evidence with 1-, 2-, and
+# 3-champion parties: occupied C151..C153 status boxes/icons/bars/hand
+# slots are populated, and later empty slots remain black after a full-party
+# warm frame.
+add_executable(firestaff_dm1_v1_champion_panel_partial_party_pixel_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_partial_party_pixel_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_partial_party_pixel_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_partial_party_pixel_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
