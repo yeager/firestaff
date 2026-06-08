@@ -8,6 +8,11 @@
  *     with C2_TEXT_TYPE_SCROLL | MASK0x8000_DECODE_EVEN_IF_INVISIBLE
  *   PANEL.C F0341 lines 969-1043: blits C023 open-scroll panel into C101 with red transparency
  *     and renders each decoded newline-separated line
+ *   PANEL.C F0352 lines 2124-2157: eye-click routes leader-hand objects
+ *     through F0342 instead of opening a Firestaff dialog overlay
+ *   PANEL.C F0342 lines 1126-1136 + CHEST.C F0333 lines 43-76:
+ *     leader-hand containers open the C025 chest panel while pressing-eye
+ *     suppresses the C09 action-hand open-chest icon write
  */
 
 #include "m11_game_view.h"
@@ -101,6 +106,26 @@ static int framebuffer_matches_open_scroll_panel_pixels(
     return matched > 1000;
 }
 
+static int framebuffer_zone_has_nonzero_pixel(const unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int x,
+                                              int y,
+                                              int w,
+                                              int h) {
+    int px, py;
+    if (!framebuffer || framebufferWidth <= 0 || w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (py = y; py < y + h; ++py) {
+        for (px = x; px < x + w; ++px) {
+            if (framebuffer[py * framebufferWidth + px] != 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static unsigned short pack3(int a, int b, int c) {
     return (unsigned short)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
 }
@@ -148,6 +173,44 @@ static void seed_scroll_world(M11_GameViewState* state,
     }
     state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         (unsigned short)(THING_TYPE_SCROLL << 10);
+}
+
+static void seed_chest_world(M11_GameViewState* state,
+                             struct DungeonThings_Compat* things,
+                             struct DungeonContainer_Compat* containers,
+                             struct DungeonJunk_Compat* junks) {
+    int i;
+    memset(things, 0, sizeof(*things));
+    memset(containers, 0, sizeof(containers[0]) * 1);
+    memset(junks, 0, sizeof(junks[0]) * 2);
+
+    containers[0].next = THING_ENDOFLIST;
+    containers[0].slot = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    containers[0].type = 0;
+    junks[0].next = (unsigned short)((THING_TYPE_JUNK << 10) | 1);
+    junks[0].type = 4;
+    junks[1].next = THING_ENDOFLIST;
+    junks[1].type = 5;
+
+    things->containers = containers;
+    things->containerCount = 1;
+    things->junks = junks;
+    things->junkCount = 2;
+
+    state->active = 1;
+    state->inventoryPanelActive = 1;
+    state->showDebugHUD = 0;
+    state->assetsAvailable = 0;
+    state->originalFontAvailable = 0;
+    state->world.things = things;
+    state->world.party.championCount = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].present = 1;
+    state->world.party.champions[0].hp.current = 100;
+    state->world.party.champions[0].hp.maximum = 100;
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        state->world.party.champions[0].inventory[i] = THING_NONE;
+    }
 }
 
 static void test_action_hand_scroll_decode_reaches_m11_panel_state(void) {
@@ -255,14 +318,61 @@ static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
                 "scroll eye click leaves C023 scroll panel renderable");
 }
 
+static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonContainer_Compat containers[1];
+    struct DungeonJunk_Compat junks[2];
+    const unsigned short chestThing = (unsigned short)(THING_TYPE_CONTAINER << 10);
+    unsigned char framebuffer[320 * 200];
+    int vx = 0, vy = 0, vw = 0, vh = 0;
+    int zx = 0, zy = 0, zw = 0, zh = 0;
+
+    M11_GameView_Init(&state);
+    seed_chest_world(&state, &things, containers, junks);
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand accepts source container thing");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), -1,
+              "action hand starts empty before pressing-eye chest open");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye click with leader-hand chest redraws the inventory panel");
+    ASSERT_EQ(M11_GameView_IsDialogOverlayActive(&state), 0,
+              "chest eye route does not open Firestaff dialog overlay");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "chest eye route does not mark object-description panel active");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "pressing-eye chest route opens the leader-hand container panel");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), -1,
+              "pressing-eye chest open does not draw C145 into empty action hand");
+    ASSERT_TRUE(strstr(state.inspectDetail, "CONTAINER CHEST PANEL") != NULL,
+                "chest eye route records source chest-panel detail");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_TRUE(M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh),
+                "viewport rect helper remains available after chest eye click");
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
+                "C101 panel zone remains available after chest eye click");
+    ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &zx, &zy, &zw, &zh),
+                "C537 first chest slot zone remains available after chest eye click");
+    ASSERT_TRUE(framebuffer_zone_has_nonzero_pixel(framebuffer, 320,
+                vx + zx, vy + zy, zw, zh),
+                "chest eye click leaves C537 chest slot renderable");
+}
+
 int main(void) {
-    printf("=== M11 Inventory Scroll Panel Render Source-Lock Gate ===\n");
-    printf("ReDMCSB: PANEL.C F0347 -> F0342 -> F0341, DUNGEON.C F0168\n\n");
+    printf("=== M11 Inventory Object Panel Render Source-Lock Gate ===\n");
+    printf("ReDMCSB: PANEL.C F0352/F0347 -> F0342 -> F0341/CHEST.C F0333, DUNGEON.C F0168\n\n");
 
     test_action_hand_scroll_decode_reaches_m11_panel_state();
     test_inventory_draw_overlays_scroll_panel_region();
     test_inventory_draw_blits_source_open_scroll_panel_pixels();
     test_eye_click_scroll_routes_without_dialog_overlay();
+    test_eye_click_chest_opens_panel_without_action_hand_icon_swap();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
