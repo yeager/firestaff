@@ -20123,11 +20123,13 @@ static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* s
         return -1;
     }
     iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
-    /* ReDMCSB CHEST.C:43-46 draws C145 into C09 when a chest is open;
-     * CHAMDRAW.C:621-630 performs the same closed-to-open remap when
-     * redrawing the inventory champion's action-hand slot. */
+    /* ReDMCSB CHEST.C:43-46 draws C145 into C09 for a normal chest open,
+     * but skips it when P0694_B_PressingEye is set. CHAMDRAW.C:621-630
+     * performs the same closed-to-open remap when redrawing the inventory
+     * champion's action-hand slot outside the pressing-eye branch. */
     if (championSlot == CHAMPION_SLOT_ACTION_HAND &&
         thing == M11_GameView_GetV1OpenChestThing(state) &&
+        !state->v1OpenChestOpenedByEye &&
         iconIndex == 144) {
         return 145;
     }
@@ -20171,9 +20173,11 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
     state->v1OpenChestThing = thing;
+    state->v1OpenChestOpenedByEye = 0;
     state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
+        state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
     return 1;
@@ -20187,9 +20191,11 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
         return 0;
     }
     state->v1OpenChestThing = thing;
+    state->v1OpenChestOpenedByEye = 1;
     state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
+        state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
     return 1;
@@ -20208,6 +20214,7 @@ void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
         (void)m11_v1_write_open_chest_slots(state, slots);
     }
     state->v1OpenChestThing = THING_NONE;
+    state->v1OpenChestOpenedByEye = 0;
 }
 
 static void m11_refresh_v1_action_hand_chest_panel(M11_GameViewState* state,
