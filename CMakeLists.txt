@@ -1589,6 +1589,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_boot.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_utility_flow_pc34.c
+        src/csb/csb_v1_utility_import_pc34.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_csb_v1_boot_runtime_handoff PRIVATE
