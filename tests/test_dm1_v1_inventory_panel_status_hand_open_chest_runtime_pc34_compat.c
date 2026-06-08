@@ -138,6 +138,24 @@ static int test_open_chest_state_with_status_hand_table(void)
                      "clicks and rejections",
                      g_probe.openChestThingAfterAllClicks,
                      g_probe.openChestThingAfterOpen, f0302);
+    ok &= expect_int("ready-hand status click leaves action-hand chest in "
+                     "place",
+                     g_probe.readyHandClickLeavesActionHandChestInPlace, 1,
+                     f0302);
+    ok &= expect_int("ready-hand status click keeps open action-hand icon",
+                     g_probe.readyHandClickKeepsOpenActionHandIcon, 1,
+                     f0291);
+    ok &= expect_int("action-hand status click moves open chest to leader "
+                     "hand",
+                     g_probe.actionHandClickMovesOpenChestToLeaderHand, 1,
+                     f0302);
+    ok &= expect_int("action-hand status click replaces action hand with "
+                     "leader object",
+                     g_probe.actionHandClickReplacesActionHandWithLeaderHandObject,
+                     1, f0302);
+    ok &= expect_int("action-hand status click preserves open chest thing",
+                     g_probe.actionHandClickPreservesOpenChestThing, 1,
+                     f0333);
 
     /* Status hand slot box 0..7 reduction table with chest open. */
     ok &= expect_int("slotbox 0 resolves champion 0 ready hand with "

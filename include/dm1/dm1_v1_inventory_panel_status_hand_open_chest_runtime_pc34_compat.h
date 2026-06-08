@@ -104,6 +104,11 @@ typedef struct {
     int chestStillOpenAfterCandidateChampionReject;
     int chestStillOpenAfterDeadChampionReject;
     int openChestThingAfterAllClicks;
+    int readyHandClickLeavesActionHandChestInPlace;
+    int readyHandClickKeepsOpenActionHandIcon;
+    int actionHandClickMovesOpenChestToLeaderHand;
+    int actionHandClickReplacesActionHandWithLeaderHandObject;
+    int actionHandClickPreservesOpenChestThing;
     int totalAssertions;
 } DM1_V1_InventoryPanelStatusHandOpenChestProbePc34;
 
