@@ -12,6 +12,8 @@
  *   ReDMCSB CHAMDRAW.C F0287 draws bottom-anchored HP/stamina/mana bars;
  *   ReDMCSB CHAMDRAW.C F0291 draws C033/C034/C035 hand slot boxes;
  *   ReDMCSB COORD.C/layout-696 anchors C113..C116 champion icon zones.
+ *   ReDMCSB COORD.C/layout-696 keeps C151..C154 on a 69px stride with
+ *   67x29 status boxes, leaving two black pixels between adjacent boxes.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -183,6 +185,46 @@ static int check_status_box_pixels(const M11_GameViewState* game,
                                          nameTextX, nameTextY,
                                          nameTextW, nameTextH,
                                          nameColor) > 0);
+    return ok;
+}
+
+static int check_status_box_gutter_pixels(const unsigned char* fb) {
+    int ok = 1;
+    int slot;
+    char label[128];
+
+    for (slot = 0; slot < PROBE_CHAMPION_COUNT - 1; ++slot) {
+        int x, y, w, h;
+        int nextX, nextY, nextW, nextH;
+        int gutterX;
+        int gutterW;
+        snprintf(label, sizeof(label), "slot%d status box zone for gutter", slot);
+        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot,
+                                                                 &x, &y,
+                                                                 &w, &h) &&
+                                 w == 67 && h == 29);
+        snprintf(label, sizeof(label), "slot%d next status box zone for gutter", slot);
+        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot + 1,
+                                                                 &nextX, &nextY,
+                                                                 &nextW, &nextH) &&
+                                 nextY == y && nextW == 67 && nextH == 29);
+        if (!ok) {
+            return 0;
+        }
+        gutterX = x + w;
+        gutterW = nextX - gutterX;
+        snprintf(label, sizeof(label), "slot%d status box two-pixel gutter width",
+                 slot);
+        ok &= expect_int(label, gutterW, 2);
+        snprintf(label, sizeof(label), "slot%d status box gutter remains black",
+                 slot);
+        ok &= expect_int(label,
+                         count_color(fb, PROBE_FB_W,
+                                     gutterX, y,
+                                     gutterW, h,
+                                     0),
+                         gutterW * h);
+    }
     return ok;
 }
 
@@ -415,6 +457,7 @@ int main(int argc, char** argv) {
         ok &= check_hand_slot_icon_pixels(&game, fb, slot, 0);
         ok &= check_hand_slot_icon_pixels(&game, fb, slot, 1);
     }
+    ok &= check_status_box_gutter_pixels(fb);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion panel runtime pixel probe (Firestaff-side evidence)\n",
