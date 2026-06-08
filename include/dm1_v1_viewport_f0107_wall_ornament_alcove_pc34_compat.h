@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,6 +64,38 @@ typedef struct {
     const char *claim;
 } DM1_V1_F0107WallOrnamentAlcoveCasePc34;
 
+#define DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34 8
+#define DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_HEIGHT_PC34 4
+#define DM1_V1_F0107_WALL_ORNAMENT_VIEWPORT_WIDTH_PC34 224
+#define DM1_V1_F0107_WALL_ORNAMENT_C10_COLOR_FLESH_PC34 10
+
+typedef struct {
+    size_t case_index;
+    int row;
+    int viewport_x;
+    uint8_t transparent_color;
+} DM1_V1_F0107WallOrnamentPixelInputPc34;
+
+typedef struct {
+    const DM1_V1_F0107WallOrnamentAlcoveCasePc34 *source_case;
+    bool route_valid;
+    bool returns_alcove;
+    bool draw_attempted;
+    bool in_clip;
+    bool writes_pixel;
+    bool transparent_skip;
+    bool no_write_metadata;
+    int row;
+    int viewport_x;
+    int source_x;
+    int source_y;
+    size_t source_offset;
+    size_t viewport_offset;
+    uint8_t pixel_before;
+    uint8_t source_pixel;
+    uint8_t pixel_after;
+} DM1_V1_F0107WallOrnamentPixelResultPc34;
+
 bool dm1_v1_viewport_f0107_wall_ornament_alcove_decide(
     int ordinal_slot,
     int wall_cell_code,
@@ -79,6 +112,19 @@ dm1_v1_viewport_f0107_wall_ornament_alcove_case_at_pc34(size_t index);
 
 bool dm1_v1_viewport_f0107_wall_ornament_alcove_decide_case_pc34(
     const DM1_V1_F0107WallOrnamentAlcoveCasePc34 *entry);
+
+bool dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+    const DM1_V1_F0107WallOrnamentPixelInputPc34 *input,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_F0107WallOrnamentPixelResultPc34 *out);
+
+uint8_t dm1_v1_viewport_f0107_wall_ornament_blend_pixel_pc34(
+    uint8_t destination_pixel,
+    uint8_t source_pixel,
+    uint8_t transparent_color);
 
 const char *dm1_v1_viewport_f0107_wall_ornament_alcove_source_evidence_pc34(void);
 

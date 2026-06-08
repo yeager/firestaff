@@ -1,5 +1,7 @@
 #include "dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.h"
 
+#include <string.h>
+
 /*
  * ReDMCSB source lock:
  * DUNVIEW.C:3502-3938 F0107 returns F0149's alcove BOOLEAN for a nonzero
@@ -208,6 +210,81 @@ bool dm1_v1_viewport_f0107_wall_ornament_alcove_decide_case_pc34(
         entry->wall_set);
 }
 
+bool dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+    const DM1_V1_F0107WallOrnamentPixelInputPc34 *input,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_F0107WallOrnamentPixelResultPc34 *out)
+{
+    const DM1_V1_F0107WallOrnamentAlcoveCasePc34 *entry;
+    uint8_t transparent_color;
+
+    if (!out) return false;
+    memset(out, 0, sizeof(*out));
+    if (!input) return false;
+
+    out->row = input->row;
+    out->viewport_x = input->viewport_x;
+    entry = dm1_v1_viewport_f0107_wall_ornament_alcove_case_at_pc34(
+        input->case_index);
+    out->source_case = entry;
+    if (!entry) return false;
+
+    out->route_valid = true;
+    out->returns_alcove =
+        dm1_v1_viewport_f0107_wall_ornament_alcove_decide_case_pc34(entry);
+    out->draw_attempted = entry->ordinal_slot != 0;
+    transparent_color = input->transparent_color;
+    if (transparent_color == 0) {
+        transparent_color = DM1_V1_F0107_WALL_ORNAMENT_C10_COLOR_FLESH_PC34;
+    }
+
+    if (input->row < 0 ||
+        input->row >= DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_HEIGHT_PC34 ||
+        input->viewport_x < 0 ||
+        input->viewport_x >= DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34) {
+        out->no_write_metadata = true;
+        return true;
+    }
+    if (!source || !viewport) return false;
+
+    out->in_clip = true;
+    out->source_x = input->viewport_x;
+    out->source_y = input->row;
+    out->source_offset =
+        (size_t)out->source_y *
+            (size_t)DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34 +
+        (size_t)out->source_x;
+    out->viewport_offset =
+        (size_t)input->row *
+            (size_t)DM1_V1_F0107_WALL_ORNAMENT_VIEWPORT_WIDTH_PC34 +
+        (size_t)input->viewport_x;
+    if (out->source_offset >= source_len || out->viewport_offset >= viewport_len) {
+        return false;
+    }
+
+    out->pixel_before = viewport[out->viewport_offset];
+    out->source_pixel = source[out->source_offset];
+    out->transparent_skip = out->source_pixel == transparent_color;
+    out->writes_pixel = !out->transparent_skip;
+    viewport[out->viewport_offset] =
+        dm1_v1_viewport_f0107_wall_ornament_blend_pixel_pc34(
+            viewport[out->viewport_offset], out->source_pixel, transparent_color);
+    out->pixel_after = viewport[out->viewport_offset];
+    return true;
+}
+
+uint8_t dm1_v1_viewport_f0107_wall_ornament_blend_pixel_pc34(
+    uint8_t destination_pixel,
+    uint8_t source_pixel,
+    uint8_t transparent_color)
+{
+    if (source_pixel == transparent_color) return destination_pixel;
+    return source_pixel;
+}
+
 const char *dm1_v1_viewport_f0107_wall_ornament_alcove_source_evidence_pc34(void)
 {
     return
@@ -223,5 +300,8 @@ const char *dm1_v1_viewport_f0107_wall_ornament_alcove_source_evidence_pc34(void
         "front-alcove order gates. DEFS.H:2551-2554 defines M551/M552/M553 "
         "slots and the adjacent M554 slot; DEFS.H:2696-2710 defines the "
         "PC34 wall-cell codes; DEFS.H:3423-3438 defines C00-C15 wall sets; "
-        "DEFS.H:4042-4057 defines C702-C717 wall zones.";
+        "DEFS.H:4042-4057 defines C702-C717 wall zones. F0107 draws wall "
+        "ornament pixels through C10-transparent blits at DUNVIEW.C:3907, "
+        "DUNVIEW.C:3910, and the F0791 zone path at DUNVIEW.C:3922; "
+        "DEFS.H:2088 defines C10_COLOR_FLESH=10.";
 }

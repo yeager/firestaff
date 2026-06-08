@@ -251,6 +251,94 @@ static void test_null_safety_and_repeatability(void)
               0, "unknown coordinate-set rejects before F0107 contract decision");
 }
 
+static void test_d1r_side_ornament_pixel_contract(void)
+{
+    uint8_t source[DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34 *
+                   DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_HEIGHT_PC34];
+    uint8_t viewport[DM1_V1_F0107_WALL_ORNAMENT_VIEWPORT_WIDTH_PC34 *
+                     DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_HEIGHT_PC34];
+    DM1_V1_F0107WallOrnamentPixelResultPc34 out;
+    DM1_V1_F0107WallOrnamentPixelInputPc34 input = {
+        7,
+        0,
+        0,
+        DM1_V1_F0107_WALL_ORNAMENT_C10_COLOR_FLESH_PC34
+    };
+
+    memset(source, DM1_V1_F0107_WALL_ORNAMENT_C10_COLOR_FLESH_PC34,
+           sizeof(source));
+    memset(viewport, 0xee, sizeof(viewport));
+    source[0] = 0x34;
+    source[1] = DM1_V1_F0107_WALL_ORNAMENT_C10_COLOR_FLESH_PC34;
+    source[DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34 + 7] = 0x6a;
+
+    CHECK_TRUE("pixel.d1r.apply",
+               dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+                   &input, source, sizeof(source), viewport, sizeof(viewport), &out),
+               "DUNVIEW.C:7627 -> F0107, DUNVIEW.C:3907/3910 C10 blit");
+    CHECK_TRUE("pixel.d1r.route_valid", out.route_valid,
+               "case 7 is M553/M586 D1R-left route");
+    CHECK_TRUE("pixel.d1r.alcove", out.returns_alcove,
+               "DUNVIEW.C:3933 returns F0149 alcove boolean");
+    CHECK_TRUE("pixel.d1r.draw_attempted", out.draw_attempted,
+               "DUNVIEW.C:3907/3910 draw before return");
+    CHECK_TRUE("pixel.d1r.in_clip", out.in_clip,
+               "synthetic D1R side ornament clip");
+    CHECK_INT("pixel.d1r.source_x", out.source_x, 0,
+              "synthetic coordinate-set x=0");
+    CHECK_INT("pixel.d1r.source_y", out.source_y, 0,
+              "synthetic coordinate-set y=0");
+    CHECK_TRUE("pixel.d1r.writes", out.writes_pixel,
+               "DUNVIEW.C:3907/3910 opaque ornament pixel writes");
+    CHECK_INT("pixel.d1r.value", out.pixel_after, 0x34,
+              "deterministic ornament source pixel");
+
+    input.viewport_x = 1;
+    CHECK_TRUE("pixel.d1r.c10.apply",
+               dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+                   &input, source, sizeof(source), viewport, sizeof(viewport), &out),
+               "DEFS.H:2088 C10_COLOR_FLESH");
+    CHECK_TRUE("pixel.d1r.c10.skip", out.transparent_skip,
+               "DUNVIEW.C:3907/3910 C10 transparent blit");
+    CHECK_FALSE("pixel.d1r.c10.no_write", out.writes_pixel,
+                "DUNVIEW.C:3907/3910 C10 transparent blit");
+    CHECK_INT("pixel.d1r.c10.preserved", out.pixel_after, 0xee,
+              "transparent ornament pixel preserves viewport");
+
+    input.row = 1;
+    input.viewport_x = 7;
+    CHECK_TRUE("pixel.d1r.edge.apply",
+               dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+                   &input, source, sizeof(source), viewport, sizeof(viewport), &out),
+               "synthetic coordinate-set right edge");
+    CHECK_INT("pixel.d1r.edge.source_offset", (int)out.source_offset,
+              DM1_V1_F0107_WALL_ORNAMENT_SYNTHETIC_WIDTH_PC34 + 7,
+              "row-local source offset");
+    CHECK_INT("pixel.d1r.edge.value", out.pixel_after, 0x6a,
+              "right-edge ornament pixel writes");
+
+    input.viewport_x = 8;
+    CHECK_TRUE("pixel.d1r.after_edge.apply",
+               dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+                   &input, source, sizeof(source), viewport, sizeof(viewport), &out),
+               "synthetic coordinate-set no-write after edge");
+    CHECK_TRUE("pixel.d1r.after_edge.no_write", out.no_write_metadata,
+               "clipped ornament metadata");
+    CHECK_FALSE("pixel.d1r.after_edge.in_clip", out.in_clip,
+                "clipped ornament metadata");
+
+    CHECK_INT("blend.ornament.c10",
+              dm1_v1_viewport_f0107_wall_ornament_blend_pixel_pc34(0x44, 10, 10),
+              0x44, "DUNVIEW.C:3907/3910 C10 skip");
+    CHECK_INT("blend.ornament.opaque",
+              dm1_v1_viewport_f0107_wall_ornament_blend_pixel_pc34(0x44, 0x55, 10),
+              0x55, "DUNVIEW.C:3907/3910 opaque write");
+    CHECK_FALSE("pixel.invalid.null_out",
+                dm1_v1_viewport_f0107_wall_ornament_apply_pixel_pc34(
+                    &input, source, sizeof(source), viewport, sizeof(viewport), NULL),
+                "NULL-safe pixel result");
+}
+
 static void test_source_evidence(void)
 {
     const char *e =
@@ -270,6 +358,12 @@ static void test_source_evidence(void)
                    "DEFS.H M551/M552/M553/M554 slots");
     CHECK_CONTAINS("evidence.defs_walls", e, "DEFS.H:2696-2710",
                    "DEFS.H C00/C01/M575-M587 wall cells");
+    CHECK_CONTAINS("evidence.draw_direct", e, "DUNVIEW.C:3907",
+                   "F0107 direct C10 blit");
+    CHECK_CONTAINS("evidence.draw_zone", e, "DUNVIEW.C:3922",
+                   "F0107 zone C10 blit");
+    CHECK_CONTAINS("evidence.c10", e, "DEFS.H:2088",
+                   "C10 transparent ornament pixels");
 }
 
 int main(void)
@@ -279,6 +373,7 @@ int main(void)
     test_side_alcove_contract();
     test_front_and_mirror_reject_contract();
     test_null_safety_and_repeatability();
+    test_d1r_side_ornament_pixel_contract();
     test_source_evidence();
 
     if (g_failures) {
