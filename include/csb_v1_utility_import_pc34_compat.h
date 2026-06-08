@@ -80,6 +80,7 @@ typedef enum {
 #define CSB_V1_IMPORT_ERR_CHECKSUM      -7   /* block checksum failed */
 #define CSB_V1_IMPORT_ERR_NO_DISK       -8   /* disk unreadable */
 #define CSB_V1_IMPORT_ERR_WRONG_DISK    -9   /* not the CSB Utility Disk */
+#define CSB_V1_IMPORT_ERR_SLOT_STATE   -10   /* invalid carried-object / slot sentinel state */
 
 /* ── Import result structure ─────────────────────────────────────────── */
 typedef struct {
