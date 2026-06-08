@@ -150,6 +150,40 @@ uint64_t dm1_v2_side_by_side_seed_hash_layout(const DM1_V2_ViewportState* v1,
  * surface as a framebuffer mismatch (lanesByteEqual == 0). */
 int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out);
 
+/* ── V1 viewport geometry scaffold (screenshot/pixel scaffolding) ─
+ *
+ * Centralised accessor for the V1 viewport geometry constants that
+ * the probe and ctest lock under the side-by-side seed. Both the
+ * D1C champion-portrait square (ReDMCSB DUNVIEW.C:3913-3928, 32x29
+ * blit at {96,35} viewport-local) and the D1C wall panel
+ * (ReDMCSB DUNVIEW.C:581-593 G0163_aauc_Graphic558_Frame_Walls[12][8]
+ * D1C row indexed by M606_VIEW_SQUARE_D1C, 160x111 panel at {32,9}
+ * viewport-local) are part of the V1 source truth, and any future
+ * screenshot-diff or pixel scaffolding gate needs both. The
+ * accessor returns them in a single struct so callers do not have
+ * to pick the macros up by hand and risk a typo.
+ *
+ * The sourceAnchor fields cite the ReDMCSB source line ranges so a
+ * future regression that silently changes a constant is anchored
+ * back to a specific line in the V1 source. NULL out is safe; the
+ * function returns 0 in that case. Returns 1 on success. */
+typedef struct {
+    int viewportW;
+    int viewportH;
+    int d1cPortraitW;
+    int d1cPortraitH;
+    int d1cPortraitX;
+    int d1cPortraitY;
+    int d1cWallX;
+    int d1cWallY;
+    int d1cWallW;
+    int d1cWallH;
+    const char* portraitAnchor;
+    const char* wallAnchor;
+} DM1_V2_SideBySideV1Geometry;
+
+int dm1_v2_side_by_side_seed_v1_geometry(DM1_V2_SideBySideV1Geometry* out);
+
 /* Return the ReDMCSB source evidence string for this seed module. */
 const char* dm1_v2_side_by_side_seed_source_evidence(void);
 

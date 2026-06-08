@@ -75,6 +75,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 5 - Smooth movement and viewport interpolation: `firestaff_csb_v2_smooth_movement_probe` passes 58/58 and `firestaff_dm2_v2_smooth_movement_probe` passes 54/54; remaining work is broader CSB V1 runtime binding and side-by-side presentation evidence.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - 🔧 Phase 7 - V2 verification suite: scaffolded and current deterministic gate is green; remaining work is full side-by-side V1/V2 screenshot/pixel gates.
+  - 📌 V1 viewport geometry scaffold (D1C portrait 32x29 at {96,35} + D1C wall panel 160x111 at {32,9}) is now exposed through `dm1_v2_side_by_side_seed_v1_geometry()` and locked by `test_dm1_v2_side_by_side_seed_pc34` TC-6/TC-7, source-locked to ReDMCSB DUNVIEW.C:525/581-593/3913-3928 and COORD.C:1721-1722; remaining is the full screenshot/pixel gates for enhanced presentation.
 
 ## Dungeon Master II: Skullkeep (DM2)
 
