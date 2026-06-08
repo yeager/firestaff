@@ -486,6 +486,10 @@ int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
     }
 
     M11_ChampionInventory* inv = &s->champions[champ];
+    /* ReDMCSB CHEST.C F0333 line 28 writes M569_PANEL_CHEST before the
+     * same-open guard at lines 31-32 and before the different-chest close at
+     * lines 35-38. */
+    s->panelContent = DM1_PC34_PANEL_CHEST;
     if (inv->openChestThing == openChestThing) {
         return 0;
     }

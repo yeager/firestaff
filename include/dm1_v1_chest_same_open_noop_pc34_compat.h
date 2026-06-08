@@ -40,6 +40,11 @@ typedef struct {
     int c538AfterSameOpen;
     int c539AfterSameOpen;
     int c540AfterSameOpen;
+    int panelContentBeforeReplacingSameOpen;
+    int replacingSameOpenResult;
+    int panelContentAfterReplacingSameOpen;
+    int openThingAfterReplacingSameOpen;
+    int c538AfterReplacingSameOpen;
     int bItemsLeakedAfterSameOpen;
     int visibleWeightAfterSameOpen;
     int loadAfterSameOpen;
