@@ -20,7 +20,8 @@ static const DM1_V1_InventoryChampionSwitchHandCarryEvidencePc34 s_evidence = {
     "ReDMCSB PANEL.C:2437-2447 F0354 updates mouse pointer bitmap, triggers "
     "input refresh, selects inventory secondary input, and discards input",
     "ReDMCSB CHEST.C:113-132 F0334_INVENTORY_CloseChest rewrites and clears "
-    "the open G0426/G0425 chest state when F0354 leaves an old inventory",
+    "the open G0426/G0425 chest state when F0354 leaves an old inventory, "
+    "skipping empty G0425 slots while preserving the visible order",
     "ReDMCSB PANEL.C:2153-2158 F0352 and PANEL.C:2183-2190 F0353 read "
     "G4055_s_LeaderHandObject for hand-object drawing/name; F0354 itself "
     "does not move that global hand object",
@@ -57,6 +58,14 @@ static void capture_after(
     result->chestClosed =
         result->openChestThingBefore != DM1_V1_ICSWHC_THING_NONE_PC34 &&
         result->openChestThingAfter == DM1_V1_ICSWHC_THING_NONE_PC34;
+    result->chestCloseCountAfter = state->f0334ClosedCount;
+    result->chestSlotsClearedAfterClose = 1;
+    for (int i = 0; i < DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34; ++i) {
+        result->closedChestTypes[i] = state->f0334ClosedTypes[i];
+        if (state->g0425ChestSlots[i] != DM1_V1_ICSWHC_THING_NONE_PC34) {
+            result->chestSlotsClearedAfterClose = 0;
+        }
+    }
     result->oldStatusDrawDelta =
         state->oldStatusDrawCount - before->oldStatusDrawCount;
     result->newStatusDrawDelta =
@@ -83,6 +92,23 @@ static void close_open_chest_if_any(
     DM1_V1_InventoryChampionSwitchHandCarryStatePc34* state)
 {
     if (state->g0426OpenChestThing != DM1_V1_ICSWHC_THING_NONE_PC34) {
+        int closedCount = 0;
+
+        /* ReDMCSB CHEST.C F0334 lines 117-132 rewrites the container from
+         * non-empty G0425 slots in visible order and clears each processed
+         * slot before F0354 assigns the next G0423 inventory champion. */
+        for (int i = 0; i < DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34; ++i) {
+            state->f0334ClosedTypes[i] = DM1_V1_ICSWHC_THING_NONE_PC34;
+        }
+        for (int i = 0; i < DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34; ++i) {
+            if (state->g0425ChestSlots[i] !=
+                DM1_V1_ICSWHC_THING_NONE_PC34) {
+                state->f0334ClosedTypes[closedCount++] =
+                    state->g0425ChestSlots[i];
+            }
+            state->g0425ChestSlots[i] = DM1_V1_ICSWHC_THING_NONE_PC34;
+        }
+        state->f0334ClosedCount = closedCount;
         state->g0426OpenChestThing = DM1_V1_ICSWHC_THING_NONE_PC34;
         ++state->f0334CloseChestCount;
     }
@@ -118,6 +144,18 @@ void DM1_V1_InventoryChampionSwitchHandCarry_InitPc34(
     state->leaderHandWeight = 7;
     state->g0426OpenChestThing = openChestThing != 0 ?
         openChestThing : DM1_V1_ICSWHC_THING_NONE_PC34;
+    for (i = 0; i < DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34; ++i) {
+        state->g0425ChestSlots[i] = DM1_V1_ICSWHC_THING_NONE_PC34;
+        state->f0334ClosedTypes[i] = DM1_V1_ICSWHC_THING_NONE_PC34;
+    }
+    if (state->g0426OpenChestThing != DM1_V1_ICSWHC_THING_NONE_PC34) {
+        state->g0425ChestSlots[0] =
+            DM1_V1_ICSWHC_CHEST_ITEM_FIRST_PC34;
+        state->g0425ChestSlots[2] =
+            DM1_V1_ICSWHC_CHEST_ITEM_THIRD_PC34;
+        state->g0425ChestSlots[7] =
+            DM1_V1_ICSWHC_CHEST_ITEM_EIGHTH_PC34;
+    }
 }
 
 int DM1_V1_InventoryChampionSwitchHandCarry_OpenPc34(

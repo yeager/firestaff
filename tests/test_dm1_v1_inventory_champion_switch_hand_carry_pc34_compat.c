@@ -60,6 +60,9 @@ static int test_evidence(void)
     CHECK_REDMCSB(strstr(e->f0334ChestClose, "CHEST.C:113-132") != 0,
                   "chest close cites F0334 rewrite/clear path",
                   e->f0334ChestClose);
+    CHECK_REDMCSB(strstr(e->f0334ChestClose, "skipping empty G0425 slots") != 0,
+                  "chest close cites visible-slot compaction",
+                  e->f0334ChestClose);
     CHECK_REDMCSB(strstr(e->f0352F0353LeaderHandDraw, "PANEL.C:2153-2158") != 0,
                   "leader hand draw contrast cites F0352",
                   e->f0352F0353LeaderHandDraw);
@@ -126,6 +129,24 @@ static int test_switch_to_different_champion_preserves_hand(void)
     CHECK_REDMCSB(r.chestClosed == 1,
                   "chest closed flag is set",
                   e->f0334ChestClose);
+    CHECK_REDMCSB(r.chestCloseCountAfter == 3,
+                  "switch close compacts three visible chest items",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[0] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_FIRST_PC34,
+                  "switch close keeps first visible chest item",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[1] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_THIRD_PC34,
+                  "switch close skips empty C538 before third item",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[2] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_EIGHTH_PC34,
+                  "switch close preserves late C544 item after gaps",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.chestSlotsClearedAfterClose == 1,
+                  "switch close clears the G0425 chest window",
+                  e->f0334ChestClose);
     CHECK_REDMCSB(r.oldStatusDrawDelta == 1,
                   "old champion status redraws once",
                   e->f0354OldInventoryClose);
@@ -185,6 +206,24 @@ static int test_same_champion_closes_inventory_preserves_hand(void)
                   e->f0352F0353LeaderHandDraw);
     CHECK_REDMCSB(r.chestClosed == 1,
                   "close branch closes old chest",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.chestCloseCountAfter == 3,
+                  "close branch compacts three visible chest items",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[0] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_FIRST_PC34,
+                  "close branch keeps first visible chest item",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[1] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_THIRD_PC34,
+                  "close branch skips empty C538 before third item",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.closedChestTypes[2] ==
+                      DM1_V1_ICSWHC_CHEST_ITEM_EIGHTH_PC34,
+                  "close branch preserves late C544 item after gaps",
+                  e->f0334ChestClose);
+    CHECK_REDMCSB(r.chestSlotsClearedAfterClose == 1,
+                  "close branch clears the G0425 chest window",
                   e->f0334ChestClose);
     CHECK_REDMCSB(r.oldStatusDrawDelta == 1,
                   "close branch redraws old champion state",
@@ -249,6 +288,9 @@ static int test_entry_guards_preserve_state(void)
     CHECK_REDMCSB(state.f0334CloseChestCount == 0,
                   "dead target does not close chest",
                   e->f0354EntryGuard);
+    CHECK_REDMCSB(r.chestCloseCountAfter == 0,
+                  "dead target leaves compacted close count at zero",
+                  e->f0354EntryGuard);
 
     DM1_V1_InventoryChampionSwitchHandCarry_InitPc34(
         &state, 0, DM1_V1_ICSWHC_OPEN_CHEST_THING_PC34);
@@ -273,6 +315,9 @@ static int test_entry_guards_preserve_state(void)
     CHECK_REDMCSB(r.discardInputDelta == 0,
                   "mouth/eye press returns before input discard",
                   e->f0354EntryGuard);
+    CHECK_REDMCSB(r.chestCloseCountAfter == 0,
+                  "mouth/eye press leaves compacted close count at zero",
+                  e->f0354EntryGuard);
     return 1;
 }
 
@@ -285,7 +330,7 @@ int main(void)
     ok &= test_switch_to_different_champion_preserves_hand();
     ok &= test_same_champion_closes_inventory_preserves_hand();
     ok &= test_entry_guards_preserve_state();
-    ok &= check_equal_int("assertion count", g_assertions + 1, 61,
+    ok &= check_equal_int("assertion count", g_assertions + 1, 74,
                           "ReDMCSB PANEL.C:2267-2447 F0354");
 
     printf("dm1V1InventoryChampionSwitchHandCarryOk=%d assertions=%d\n",

@@ -13,7 +13,11 @@ enum {
     DM1_V1_ICSWHC_SLOT_DRAW_COUNT_PC34 = 30,
     DM1_V1_ICSWHC_THING_NONE_PC34 = 0xFFFF,
     DM1_V1_ICSWHC_LEADER_HAND_THING_PC34 = 0x4101,
-    DM1_V1_ICSWHC_OPEN_CHEST_THING_PC34 = 0x5301
+    DM1_V1_ICSWHC_OPEN_CHEST_THING_PC34 = 0x5301,
+    DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34 = 8,
+    DM1_V1_ICSWHC_CHEST_ITEM_FIRST_PC34 = 0x6101,
+    DM1_V1_ICSWHC_CHEST_ITEM_THIRD_PC34 = 0x6103,
+    DM1_V1_ICSWHC_CHEST_ITEM_EIGHTH_PC34 = 0x6108
 };
 
 typedef struct {
@@ -34,6 +38,9 @@ typedef struct {
     int g4055LeaderHandThing;
     int leaderHandWeight;
     int g0426OpenChestThing;
+    int g0425ChestSlots[DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34];
+    int f0334ClosedTypes[DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34];
+    int f0334ClosedCount;
     int pressingMouthOrEye;
     int stopWaitingForPlayerInput;
     int oldStatusDrawCount;
@@ -61,6 +68,9 @@ typedef struct {
     int openChestThingBefore;
     int openChestThingAfter;
     int chestClosed;
+    int chestCloseCountAfter;
+    int closedChestTypes[DM1_V1_ICSWHC_CHEST_SLOT_COUNT_PC34];
+    int chestSlotsClearedAfterClose;
     int acceptedSwitch;
     int acceptedClose;
     int rejectedDeadChampion;
