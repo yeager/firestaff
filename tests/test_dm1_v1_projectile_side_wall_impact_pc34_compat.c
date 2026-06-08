@@ -146,6 +146,22 @@ static const SideCellBlockerCase kSideCellBlockers[3] = {
     }
 };
 
+typedef struct {
+    int direction;
+    int sideCell;              /* M017_NEXT(direction): crossing side lane */
+    int sourceMapX, sourceMapY;
+    int blockerMapX, blockerMapY;
+    int expectedCellAfterParity;
+    const char* label;
+} SideCellMotionCase;
+
+static const SideCellMotionCase kSideCellMotionCases[4] = {
+    { 0, 1, 5, 5, 5, 4, 2, "north_east_side_lane" },
+    { 1, 2, 5, 5, 6, 5, 3, "east_south_side_lane" },
+    { 2, 3, 5, 5, 5, 6, 0, "south_west_side_lane" },
+    { 3, 0, 5, 5, 4, 5, 1, "west_north_side_lane" },
+};
+
 /* ---- Static test-state counters ----------------------------- */
 static int g_assertions = 0;
 static int g_failures = 0;
@@ -244,16 +260,17 @@ static void make_wall_digest(
 
 static void make_side_cell_blocker_digest(
     struct CellContentDigest_Compat* d,
-    const SideCellBlockerCase* c)
+    const SideCellBlockerCase* c,
+    const SideCellMotionCase* m)
 {
     memset(d, 0, sizeof(*d));
     d->sourceMapIndex          = 0;
-    d->sourceMapX              = 5;
-    d->sourceMapY              = 5;
+    d->sourceMapX              = m->sourceMapX;
+    d->sourceMapY              = m->sourceMapY;
     d->sourceSquareType        = PROJECTILE_ELEMENT_CORRIDOR;
     d->destMapIndex            = 0;
-    d->destMapX                = 5;
-    d->destMapY                = 4;
+    d->destMapX                = m->blockerMapX;
+    d->destMapY                = m->blockerMapY;
     d->destSquareType          = c->destSquareType;
     d->destDoorState           = c->destDoorState;
     d->destHasFluxcage         = c->destHasFluxcage;
@@ -341,78 +358,83 @@ static void test_f0811_side_wall_impact_kinetic_per_direction(void)
 /* ---- Test 3: F0811 thrown item side-cell blocker impacts ---- */
 static void test_f0811_thrown_item_side_cell_blockers(void)
 {
-    int i;
+    int i, j;
     printf("test_f0811_thrown_item_side_cell_blockers\n");
 
     for (i = 0; i < 3; ++i) {
         const SideCellBlockerCase* c = &kSideCellBlockers[i];
-        struct ProjectileInstance_Compat p;
-        struct ProjectileInstance_Compat pOut;
-        struct CellContentDigest_Compat d;
-        struct ProjectileTickResult_Compat r;
-        int blocker = -1;
+        for (j = 0; j < 4; ++j) {
+            const SideCellMotionCase* m = &kSideCellMotionCases[j];
+            struct ProjectileInstance_Compat p;
+            struct ProjectileInstance_Compat pOut;
+            struct CellContentDigest_Compat d;
+            struct ProjectileTickResult_Compat r;
+            int blocker = -1;
 
-        memset(&pOut, 0, sizeof(pOut));
-        memset(&r, 0, sizeof(r));
+            memset(&pOut, 0, sizeof(pOut));
+            memset(&r, 0, sizeof(r));
 
-        /* ReDMCSB PROJEXPL.C:F0219 lines 717-725: a projectile crosses
-         * into the next square from either the forward lane or the side
-         * lane M017_NEXT(direction). This fixture uses NORTH + east-side
-         * cell 1, the side-lane arm of that predicate. */
-        make_kinetic_arrow(&p, 0 /* NORTH */, 1 /* side cell */, 5, 5);
-        make_side_cell_blocker_digest(&d, c);
+            /* ReDMCSB PROJEXPL.C:F0219 lines 717-725: a projectile
+             * crosses into the next square from either the forward lane
+             * or side lane M017_NEXT(direction). These fixtures cover
+             * the side-lane arm for all four cardinal directions. */
+            make_kinetic_arrow(&p, m->direction, m->sideCell,
+                               m->sourceMapX, m->sourceMapY);
+            make_side_cell_blocker_digest(&d, c, m);
 
-        expect_int("f0814.side_cell_blocker",
-                   F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker),
-                   1, SIDEWALL_REDMCSB_F0219_ANCHOR);
-        expect_int(c->label, blocker, c->expectedBlocker,
-                   "ReDMCSB PROJEXPL.C:F0219 lines 721-725 side-lane blocker dispatch");
+            expect_int("f0814.side_cell_blocker",
+                       F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker),
+                       1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+            expect_int(c->label, blocker, c->expectedBlocker,
+                       "ReDMCSB PROJEXPL.C:F0219 lines 721-725 side-lane blocker dispatch");
 
-        expect_int("f0811.side_cell.rc",
-                   F0811_PROJECTILE_Advance_Compat(&p, &d, 320u + (uint32_t)i,
-                                                   NULL, &pOut, &r),
-                   1, SIDEWALL_REDMCSB_F0219_ANCHOR);
-        expect_int(c->label, r.resultKind, c->expectedResultKind,
-                   "ReDMCSB PROJEXPL.C:F0219 lines 717-725 + F0217 impact resolution");
-        expect_int(c->label, r.despawn, 1,
-                   "ReDMCSB PROJEXPL.C:F0217 lines 607-608 unlinks/deletes projectile after impact");
-        expect_int(c->label, r.emittedDoorDestructionEvent,
-                   c->expectedDoorDestructionEvent,
-                   "ReDMCSB PROJEXPL.C:F0217 lines 506-508 door impact attack event");
-        expect_int(c->label, r.emittedCombatAction, 0,
-                   "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
-        expect_int(c->label, r.emittedExplosion, 0,
-                   "Kinetic thrown item side-cell blockers do not create explosions");
-        expect_int(c->label, r.crossedCell, 0,
-                   "F0217 impact return prevents a committed cross-cell move");
-        expect_int(c->label,
-                   r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
-                   0,
-                   "F0217 impact return may schedule impact side effects, but not a C49 projectile move");
-        expect_int(c->label, pOut.mapIndex, p.mapIndex,
-                   "F0811 side-cell blocker impact retains source mapIndex");
-        expect_int(c->label, pOut.mapX, p.mapX,
-                   "F0811 side-cell blocker impact retains source X");
-        expect_int(c->label, pOut.mapY, p.mapY,
-                   "F0811 side-cell blocker impact retains source Y");
-        expect_int(c->label, r.newMapIndex, p.mapIndex,
-                   "F0811 side-cell impact result reports source mapIndex");
-        expect_int(c->label, r.newMapX, p.mapX,
-                   "F0811 side-cell impact result reports source X, not blocked side-cell X");
-        expect_int(c->label, r.newMapY, p.mapY,
-                   "F0811 side-cell impact result reports source Y, not blocked side-cell Y");
-        expect_int(c->label, pOut.cell, 2,
-                   "ReDMCSB PROJEXPL.C:F0219 lines 729-734 side-lane cell parity rotation");
-        expect_int(c->label, r.newCell, pOut.cell,
-                   "F0811 side-cell impact result cell mirrors outNewState");
-        expect_int(c->label, pOut.kineticEnergy, p.kineticEnergy - p.stepEnergy,
-                   "F0811 side-cell blocker impact decrements kinetic energy by stepEnergy");
-        expect_int(c->label, pOut.attack, p.attack - p.stepEnergy,
-                   "F0811 side-cell blocker impact decrements attack by stepEnergy");
-        expect_int(c->label, r.newKineticEnergy, pOut.kineticEnergy,
-                   "F0811 side-cell impact result reports decremented kinetic energy");
-        expect_int(c->label, r.newAttack, pOut.attack,
-                   "F0811 side-cell impact result reports decremented attack");
+            expect_int("f0811.side_cell.rc",
+                       F0811_PROJECTILE_Advance_Compat(&p, &d,
+                                                       320u + (uint32_t)(i * 4 + j),
+                                                       NULL, &pOut, &r),
+                       1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+            expect_int(c->label, r.resultKind, c->expectedResultKind,
+                       "ReDMCSB PROJEXPL.C:F0219 lines 717-725 + F0217 impact resolution");
+            expect_int(c->label, r.despawn, 1,
+                       "ReDMCSB PROJEXPL.C:F0217 lines 607-608 unlinks/deletes projectile after impact");
+            expect_int(c->label, r.emittedDoorDestructionEvent,
+                       c->expectedDoorDestructionEvent,
+                       "ReDMCSB PROJEXPL.C:F0217 lines 506-508 door impact attack event");
+            expect_int(c->label, r.emittedCombatAction, 0,
+                       "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
+            expect_int(c->label, r.emittedExplosion, 0,
+                       "Kinetic thrown item side-cell blockers do not create explosions");
+            expect_int(c->label, r.crossedCell, 0,
+                       "F0217 impact return prevents a committed cross-cell move");
+            expect_int(c->label,
+                       r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
+                       0,
+                       "F0217 impact return may schedule impact side effects, but not a C49 projectile move");
+            expect_int(c->label, pOut.mapIndex, p.mapIndex,
+                       "F0811 side-cell blocker impact retains source mapIndex");
+            expect_int(c->label, pOut.mapX, p.mapX,
+                       "F0811 side-cell blocker impact retains source X");
+            expect_int(c->label, pOut.mapY, p.mapY,
+                       "F0811 side-cell blocker impact retains source Y");
+            expect_int(c->label, r.newMapIndex, p.mapIndex,
+                       "F0811 side-cell impact result reports source mapIndex");
+            expect_int(c->label, r.newMapX, p.mapX,
+                       "F0811 side-cell impact result reports source X, not blocked side-cell X");
+            expect_int(c->label, r.newMapY, p.mapY,
+                       "F0811 side-cell impact result reports source Y, not blocked side-cell Y");
+            expect_int(m->label, pOut.cell, m->expectedCellAfterParity,
+                       "ReDMCSB PROJEXPL.C:F0219 lines 729-734 side-lane cell parity rotation");
+            expect_int(m->label, r.newCell, pOut.cell,
+                       "F0811 side-cell impact result cell mirrors outNewState");
+            expect_int(c->label, pOut.kineticEnergy, p.kineticEnergy - p.stepEnergy,
+                       "F0811 side-cell blocker impact decrements kinetic energy by stepEnergy");
+            expect_int(c->label, pOut.attack, p.attack - p.stepEnergy,
+                       "F0811 side-cell blocker impact decrements attack by stepEnergy");
+            expect_int(c->label, r.newKineticEnergy, pOut.kineticEnergy,
+                       "F0811 side-cell impact result reports decremented kinetic energy");
+            expect_int(c->label, r.newAttack, pOut.attack,
+                       "F0811 side-cell impact result reports decremented attack");
+        }
     }
 }
 
