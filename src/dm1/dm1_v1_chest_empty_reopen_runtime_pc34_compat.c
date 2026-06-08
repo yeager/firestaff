@@ -36,7 +36,7 @@ static const char s_f0333_transitive_close_anchor[] =
 static const char s_f0334_no_open_chest_anchor[] =
     "ReDMCSB CHEST.C F0334:113-117 (MEDIA070) returns early with no rewiring "
     "when G0426_T_OpenChest == C0xFFFF_THING_NONE, so a redundant close on "
-    "an already-closed chest cannot mutate G0425.";
+    "an already-closed chest cannot mutate G0425 or the caller's output list.";
 
 static const char s_f0334_g0425_clear_anchor[] =
     "ReDMCSB CHEST.C F0334:117-122 (CHANGE8_09_FIX) writes "
@@ -116,6 +116,18 @@ static int all_g0425_none(const M11_InventoryState* s, int champ)
     return 1;
 }
 
+static M11_Item make_probe_item(int itemType, int weight)
+{
+    M11_Item item;
+
+    memset(&item, 0, sizeof(item));
+    item.itemType = itemType;
+    item.weight = weight;
+    item.identified = 1;
+    item.allowedSlots = DM1_PC34_ALLOWED_CONTAINER;
+    return item;
+}
+
 const char* dm1_v1_chest_empty_reopen_runtime_source_evidence_pc34(void)
 {
     return s_source_summary;
@@ -139,6 +151,7 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
     int closeOnAlreadyClosedCount = 0;
     int closeWhenNothingOpenResult = 0;
     int closeWhenNothingOpenCount = 0;
+    M11_Item noOpenCloseOutput[1];
 
     if (!out) {
         return 0;
@@ -225,11 +238,46 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
     out->crossChestBCloseAfterBCount = out->crossChestBCloseAfterBResult;
 
     /* Phase 7: close when nothing is open.  F0334:113-117 (MEDIA070) returns
-     * 0 with no G0425/G0426 mutation. */
-    closeWhenNothingOpenResult = m11_inventory_close_chest(&state, 0, NULL, 0);
+     * before reading or clearing G0425 and before writing the caller's output
+     * list.  Seed a stale closed-state window so this proves the early-return
+     * ordering, not merely the returned count. */
+    state.champions[0].openChestThing = 0;
+    state.champions[0].chestSlots[0] =
+        make_probe_item(DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C537, 31);
+    state.champions[0].chestSlots[7] =
+        make_probe_item(DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C544, 37);
+    noOpenCloseOutput[0] =
+        make_probe_item(DM1_PC34_CHEST_EMPTY_REOPEN_STALE_OUTPUT, 43);
+    (void)m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    out->closeWhenNothingPanelBefore =
+        m11_inventory_get_panel_content_pc34(&state);
+    out->staleC537BeforeNoOpenClose =
+        state.champions[0].chestSlots[0].itemType;
+    out->staleC544BeforeNoOpenClose =
+        state.champions[0].chestSlots[7].itemType;
+    out->staleOutputBeforeNoOpenClose = noOpenCloseOutput[0].itemType;
+    closeWhenNothingOpenResult =
+        m11_inventory_close_chest(&state, 0, noOpenCloseOutput, 1);
     closeWhenNothingOpenCount = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenResult = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenCount = closeWhenNothingOpenCount;
+    out->closeWhenNothingPanelAfter =
+        m11_inventory_get_panel_content_pc34(&state);
+    out->staleC537AfterNoOpenClose =
+        state.champions[0].chestSlots[0].itemType;
+    out->staleC544AfterNoOpenClose =
+        state.champions[0].chestSlots[7].itemType;
+    out->staleOutputAfterNoOpenClose = noOpenCloseOutput[0].itemType;
+    out->noOpenClosePreservedStaleWindow =
+        out->staleC537AfterNoOpenClose ==
+            DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C537 &&
+        out->staleC544AfterNoOpenClose ==
+            DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C544 ? 1 : 0;
+    out->noOpenClosePreservedOutputBuffer =
+        out->staleOutputAfterNoOpenClose ==
+            DM1_PC34_CHEST_EMPTY_REOPEN_STALE_OUTPUT ? 1 : 0;
+    out->noOpenClosePreservedPanelContent =
+        out->closeWhenNothingPanelAfter == DM1_PC34_PANEL_SCROLL ? 1 : 0;
 
     /* Phase 8: open chest C and verify the G0425 NONE fill is reproducible
      * for a third distinct chest, then close it cleanly. */

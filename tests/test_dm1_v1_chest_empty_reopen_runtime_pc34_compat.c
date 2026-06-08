@@ -258,12 +258,38 @@ static int test_phase_7_close_when_nothing(
     const DM1_V1_ChestEmptyReopenRuntimeSpecPc34* spec)
 {
     const char* f0334NoOpen = spec->f0334NoOpenChestAnchor;
+    const char* f0334NoWrite =
+        "ReDMCSB CHEST.C F0334:113-117 returns before G0425/output writes";
     int ok = 1;
 
     ok &= expect_int("close when nothing result",
                      probe->closeWhenNothingOpenResult, 0, f0334NoOpen);
     ok &= expect_int("close when nothing count",
                      probe->closeWhenNothingOpenCount, 0, f0334NoOpen);
+    ok &= expect_int("close when nothing panel before",
+                     probe->closeWhenNothingPanelBefore,
+                     DM1_PC34_PANEL_SCROLL, f0334NoWrite);
+    ok &= expect_int("close when nothing panel after",
+                     probe->closeWhenNothingPanelAfter,
+                     DM1_PC34_PANEL_SCROLL, f0334NoWrite);
+    ok &= expect_int("no-open close preserves C537 stale item",
+                     probe->staleC537AfterNoOpenClose,
+                     DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C537, f0334NoWrite);
+    ok &= expect_int("no-open close preserves C544 stale item",
+                     probe->staleC544AfterNoOpenClose,
+                     DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C544, f0334NoWrite);
+    ok &= expect_int("no-open close preserves caller output",
+                     probe->staleOutputAfterNoOpenClose,
+                     DM1_PC34_CHEST_EMPTY_REOPEN_STALE_OUTPUT, f0334NoWrite);
+    ok &= expect_int("no-open close stale window stable",
+                     probe->noOpenClosePreservedStaleWindow, 1,
+                     f0334NoWrite);
+    ok &= expect_int("no-open close output buffer stable",
+                     probe->noOpenClosePreservedOutputBuffer, 1,
+                     f0334NoWrite);
+    ok &= expect_int("no-open close panel content stable",
+                     probe->noOpenClosePreservedPanelContent, 1,
+                     f0334NoWrite);
     return ok;
 }
 

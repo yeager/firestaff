@@ -22,7 +22,10 @@ enum {
     DM1_PC34_CHEST_EMPTY_REOPEN_LEADER_WEIGHT = 17,
     DM1_PC34_CHEST_EMPTY_REOPEN_LEADER_CHARGES = 9,
     DM1_PC34_CHEST_EMPTY_REOPEN_LEADER_ALLOWED_SLOTS =
-        DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER
+        DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER,
+    DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C537 = 0x5E01,
+    DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C544 = 0x5E08,
+    DM1_PC34_CHEST_EMPTY_REOPEN_STALE_OUTPUT = 0x5E80
 };
 
 typedef struct {
@@ -71,6 +74,17 @@ typedef struct {
     int crossChestBCloseAfterBCount;
     int closeWhenNothingOpenResult;
     int closeWhenNothingOpenCount;
+    int closeWhenNothingPanelBefore;
+    int closeWhenNothingPanelAfter;
+    int staleC537BeforeNoOpenClose;
+    int staleC544BeforeNoOpenClose;
+    int staleC537AfterNoOpenClose;
+    int staleC544AfterNoOpenClose;
+    int staleOutputBeforeNoOpenClose;
+    int staleOutputAfterNoOpenClose;
+    int noOpenClosePreservedStaleWindow;
+    int noOpenClosePreservedOutputBuffer;
+    int noOpenClosePreservedPanelContent;
     int leaderHandTypeBeforeCycles;
     int leaderHandWeightBeforeCycles;
     int leaderHandChargesBeforeCycles;
