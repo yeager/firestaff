@@ -6834,10 +6834,6 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d0r2_wall_pc34_compat
         COMMAND test_dm1_v1_viewport_d0r2_wall_pc34_compat
-    add_test(
-        NAME dm1_v1_viewport_d0l2_d0r2_wall_source_lock
-        COMMAND test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat
-    )
     )
     add_test(
         NAME dm1_v1_viewport_d0l2_d0r2_wall_source_lock
