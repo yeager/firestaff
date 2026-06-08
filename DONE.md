@@ -14,6 +14,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Done / verified
 - 🔒 Source-locked against original references
 
+## Cross-Game Scanner And Runtime Handoff
+
+- ✅ Archive scanner ZIP cache regression: `asset_status_zip_cache_materialization` writes synthetic DM2 required files inside a ZIP, verifies hash lookup reports `archive.zip::entry` virtual paths, and proves required `GRAPHICS.DAT` / `DUNGEON.DAT` payloads materialize into the Firestaff `asset-cache/dm2/` runtime handoff. On zlib builds the fixture uses ZIP method 8 deflated entries; otherwise it falls back to stored entries.
+
 ## Dungeon Master (DM1)
 
 ### DM1 V1 - Runtime and Source-Lock
