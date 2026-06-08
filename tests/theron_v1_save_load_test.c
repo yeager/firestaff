@@ -257,6 +257,95 @@ static int test_slot_deletion(void) {
     return 1;
 }
 
+/* ── Test: progression marker round-trip ────────────────────────── */
+
+static int test_progression_marker_roundtrip(void) {
+    TEST("Progression marker — chapter checkpoint fields");
+
+    Theron_DungeonProgression prog;
+    theron_v1_dungeon_progression_init(&prog);
+
+    uint8_t champ_data[THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE];
+    memset(champ_data, 0, sizeof(champ_data));
+    champ_data[1] = 0xAA;
+    champ_data[33] = 0x55;
+
+    prog.current_dungeon = THERON_DUNGEON_5_VAULT_OF_SECRETS;
+    prog.current_level = 2;
+    prog.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_4_TOMB_OF_WOE - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = THERON_DUNGEON_STATE_AVAILABLE;
+    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
+                                 THERON_QUEST_ITEM_2_SHADOW_KEY |
+                                 THERON_QUEST_ITEM_4_STONE_SIGIL |
+                                 THERON_QUEST_ITEM_5_WAYWARD_RIBBON);
+    prog.quest_items_in_current_dungeon = 2;
+    prog.item_reset_mode = THERON_ITEM_RESET_MODE_PARTY;
+    prog.item_reset_applied = 1;
+    prog.dungeon_playtime_seconds = 0x12345678u;
+    for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
+        prog.dungeon_seeds[i] = (uint32_t)(0x11110000u + i);
+    }
+
+    int r = theron_v1_save_to_slot(g_test_dir, 6, champ_data,
+                                   sizeof(champ_data), &prog,
+                                   "After Chapter 4 checkpoint");
+    ASSERT(r == 0, "save to slot 6 failed");
+
+    uint8_t champ_read[sizeof(champ_data)];
+    memset(champ_read, 0, sizeof(champ_read));
+    Theron_DungeonProgression prog_read;
+    memset(&prog_read, 0, sizeof(prog_read));
+    Theron_SaveSlot slot_info;
+    memset(&slot_info, 0, sizeof(slot_info));
+
+    r = theron_v1_save_load_from_slot(g_test_dir, 6,
+                                      champ_read, sizeof(champ_read),
+                                      &prog_read, sizeof(prog_read),
+                                      &slot_info);
+    ASSERT(r == 0, "load from slot 6 failed");
+
+    ASSERT(slot_info.current_dungeon == THERON_DUNGEON_5_VAULT_OF_SECRETS,
+           "slot info current_dungeon mismatch");
+    ASSERT(slot_info.dungeon_state == THERON_DUNGEON_STATE_AVAILABLE,
+           "slot info dungeon_state mismatch");
+    ASSERT(slot_info.quest_items == prog.quest_items_collected,
+           "slot info quest marker mismatch");
+    ASSERT(strcmp(slot_info.label, "After Chapter 4 checkpoint") == 0,
+           "slot label mismatch");
+
+    ASSERT(memcmp(champ_read, champ_data, sizeof(champ_data)) == 0,
+           "champion data changed during round-trip");
+    ASSERT(prog_read.current_dungeon == prog.current_dungeon,
+           "progression current_dungeon mismatch");
+    ASSERT(prog_read.current_level == prog.current_level,
+           "progression current_level mismatch");
+    ASSERT(prog_read.quest_items_collected == prog.quest_items_collected,
+           "progression quest_items mismatch");
+    ASSERT(prog_read.quest_items_in_current_dungeon ==
+           prog.quest_items_in_current_dungeon,
+           "progression per-dungeon marker mismatch");
+    ASSERT(prog_read.item_reset_mode == prog.item_reset_mode,
+           "progression item_reset_mode mismatch");
+    ASSERT(prog_read.item_reset_applied == prog.item_reset_applied,
+           "progression item_reset_applied mismatch");
+    ASSERT(prog_read.quest_complete == prog.quest_complete,
+           "progression quest_complete mismatch");
+    ASSERT(prog_read.dungeon_playtime_seconds == prog.dungeon_playtime_seconds,
+           "progression playtime mismatch");
+    for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
+        ASSERT(prog_read.dungeon_seeds[i] == prog.dungeon_seeds[i],
+               "progression dungeon_seeds mismatch");
+        ASSERT(prog_read.dungeon_states[i] == prog.dungeon_states[i],
+               "progression dungeon_states mismatch");
+    }
+
+    PASS();
+    return 1;
+}
+
 /* ── Test: slot verification ──────────────────────────────────────── */
 
 static int test_slot_verification(void) {
@@ -356,6 +445,7 @@ int main(void) {
         test_slot_path,
         test_default_root,
         test_save_load_roundtrip,
+        test_progression_marker_roundtrip,
         test_slot_enumeration,
         test_slot_deletion,
         test_slot_verification,
