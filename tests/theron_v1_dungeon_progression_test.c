@@ -13,7 +13,9 @@
 #include <string.h>
 #include <assert.h>
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_mechanics.h"
 #include "theron_v1_save_load.h"
+#include "theron_v1_world.h"
 
 /* ── Test helpers ─────────────────────────────────────────────────── */
 
@@ -213,6 +215,62 @@ static int test_dungeon_exit(void) {
     exit_result = theron_v1_dungeon_exit(&prog);
     ASSERT(exit_result == THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
            "exit returned wrong next dungeon");
+
+    PASS();
+    return 1;
+}
+
+/* ── Test: dungeon exit transition flag gate ────────────────────── */
+
+static int test_dungeon_exit_transition_gate(void) {
+    TEST("Exit transition: COMPLETE flag gates tile transition");
+
+    Theron_V1_World world;
+    theron_v1_world_init(&world);
+
+    Theron_V1_Level *level = &world.levels[0][0];
+    memset(level, 0, sizeof(*level));
+    level->level_index = 0;
+    level->width = 3;
+    level->height = 3;
+    level->start_x = 1;
+    level->start_y = 1;
+    level->start_dir = THERON_DIR_NORTH;
+    world.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.current_level = 0;
+    world.level_loaded[0][0] = 1;
+
+    /* Build a tiny 3x3 room with an exit square on the bottom row. */
+    for (int y = 0; y < level->height; y++) {
+        for (int x = 0; x < level->width; x++) {
+            level->squares[y][x] = THERON_SQUARE_FLOOR;
+        }
+    }
+    level->squares[2][1] = THERON_SQUARE_EXIT;
+
+    /* Exit blocked while dungeon is not marked complete. */
+    Theron_TransitionType none = theron_v1_check_transition(&world, 1, 2);
+    ASSERT(none == 0, "exit transition should be locked before completion");
+    ASSERT(world.transition_pending == 0, "transition should stay unqueued");
+
+    /* Collect item for dungeon 1 and verify in-world completion flag flips. */
+    ASSERT(theron_v1_collect_quest_item(&world, THERON_QUEST_ITEM_1_SACRED_AMPLIFIER) ==
+           THERON_QUEST_ITEM_1_SACRED_AMPLIFIER,
+           "quest item collection should return collected bit");
+    ASSERT(world.dungeon_complete == 1, "dungeon_complete flag did not set");
+
+    /* Exit transition now allowed and queued for execution. */
+    Theron_TransitionType transition = theron_v1_check_transition(&world, 1, 2);
+    ASSERT(transition == THERON_TRANSITION_EXIT, "exit transition not detected after complete");
+    ASSERT(world.transition_pending == 1, "transition was not queued");
+    ASSERT(world.transition_type == THERON_TRANSITION_EXIT, "queued transition type wrong");
+    ASSERT(world.transition_spawn_x == 1, "exit spawn x wrong");
+    ASSERT(world.transition_spawn_y == 2, "exit spawn y wrong");
+    ASSERT(world.transition_target_level == world.current_level, "exit target level wrong");
+
+    int exec_result = theron_v1_transition_execute(&world);
+    ASSERT(exec_result == 0, "transition execution failed");
+    ASSERT(world.transition_pending == 0, "transition queue not cleared after execute");
 
     PASS();
     return 1;
@@ -506,6 +564,7 @@ int main(void) {
         test_print,
         test_state_names,
         test_wrong_dungeon_item_rejection,
+        test_dungeon_exit_transition_gate,
         test_full_sequence,
         test_source_evidence,
     };
