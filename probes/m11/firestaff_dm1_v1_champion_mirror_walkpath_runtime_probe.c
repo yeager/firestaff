@@ -61,11 +61,14 @@
  * no-portrait pose and back to the south-facing mirror.  It then
  * drives a backstep/forward Hall route from (1,4,SOUTH) to
  * (1,3,SOUTH) and back, proving the same stale-pixel/no-floating
- * invariant on the CLIKMENU.C F0366 backward movement branch.  That
- * locks left/right turns plus forward/back movement through COMMAND.C
- * F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries
- * used by real runtime input while keeping the pixel assertion
- * identical to the direct route above.
+ * invariant on the CLIKMENU.C F0366 backward movement branch.  It also
+ * clicks the original V1 movement-arrow rectangles for a forward/back
+ * Hall route, proving the mouse route enters the same source command
+ * path before the D1C portrait box is re-blitted.  That locks keyboard
+ * and pointer forward/back movement through COMMAND.C F0359/F0361 ->
+ * CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries used by real
+ * runtime input while keeping the pixel assertion identical to the
+ * direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -89,6 +92,7 @@
  *     squares (D1C is the wall type) on every step.
  */
 #include "m11_game_view.h"
+#include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -142,6 +146,16 @@ typedef struct InputWalkStep {
     int allowNoPortraitDominance;
     const char* label;
 } InputWalkStep;
+
+typedef struct PointerWalkStep {
+    int mapX;
+    int mapY;
+    int dir;
+    int expectedOrdinal;
+    int clickX;
+    int clickY;
+    const char* label;
+} PointerWalkStep;
 
 /* Count the pixels in the front-wall box that match the C026
  * champion portrait ordinal.  This reuses the visibility probe's
@@ -236,6 +250,18 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPartyIndex = -1;
+}
+
+static void start_independent_input_route(M11_GameViewState* game,
+                                          int mapX,
+                                          int mapY,
+                                          int dir) {
+    set_pose(game, mapX, mapY, dir);
+    /* COMMAND.C:2096-2106 gates movement commands on G0310/G0311.  Each
+     * route in this probe is an independent real-asset slice, so reset the
+     * source-locked queue/cooldown mirror before starting a new route instead
+     * of inheriting the previous slice's movement-disabled ticks. */
+    DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 }
 
 /* Forward-walk re-blt invariant check.  At each step the new
@@ -459,6 +485,16 @@ int main(int argc, char** argv) {
         {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, 0,
          "hall_backstep_forward_back_to_ordinal_3"},
     };
+    const PointerWalkStep pointerSteps[] = {
+        {1, 3, DIR_SOUTH, -1, -1, -1,
+         "hall_pointer_start_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, 276, 135,
+         "hall_pointer_forward_south_ordinal_3"},
+        {1, 3, DIR_SOUTH, -1, 276, 157,
+         "hall_pointer_back_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, 276, 135,
+         "hall_pointer_forward_back_to_ordinal_3"},
+    };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
 
@@ -504,7 +540,7 @@ int main(int argc, char** argv) {
      * relative movement conversion, MOVESENS.C:556 viewport redraw
      * after accepted movement, and DUNVIEW.C:3913-3928 / 8522-8533
      * C026 D1C portrait blit. */
-    set_pose(&game, 1, 3, DIR_SOUTH);
+    start_independent_input_route(&game, 1, 3, DIR_SOUTH);
     prevOrdinal = -2;
     for (stepIdx = 0; stepIdx < (int)(sizeof(inputSteps) / sizeof(inputSteps[0])); ++stepIdx) {
         int prevOrd = prevOrdinal;
@@ -540,7 +576,7 @@ int main(int argc, char** argv) {
      * documented Hall wall-pattern caveat; this route therefore asserts
      * the no-floating contract through the prior-ordinal stale-pixel check
      * instead of the unrelated best-ordinal dominance threshold. */
-    set_pose(&game, 1, 4, DIR_SOUTH);
+    start_independent_input_route(&game, 1, 4, DIR_SOUTH);
     prevOrdinal = -2;
     for (stepIdx = 0; stepIdx < (int)(sizeof(backstepSteps) / sizeof(backstepSteps[0])); ++stepIdx) {
         int prevOrd = prevOrdinal;
@@ -562,6 +598,53 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = backstepSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Pointer route: click the original V1 movement-arrow boxes in the
+     * right-side command panel instead of calling M11_GameView_HandleInput
+     * directly.  COMMAND.C:109-113 / 396-402 define the forward/back boxes
+     * and command ids; M11_GameView_HandlePointerButton resolves those boxes
+     * through G0448-compatible routes before feeding C003/C005 into the same
+     * CLIKMENU.C F0366 / MOVESENS.C:556 redraw path asserted above. */
+    start_independent_input_route(&game, 1, 3, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(pointerSteps) / sizeof(pointerSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        InputWalkStep checkStep;
+        if (pointerSteps[stepIdx].clickX >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandlePointer(&game,
+                                           pointerSteps[stepIdx].clickX,
+                                           pointerSteps[stepIdx].clickY,
+                                           1);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s pointer=(%d,%d) result=%d want=%d\n",
+                        pointerSteps[stepIdx].label,
+                        pointerSteps[stepIdx].clickX,
+                        pointerSteps[stepIdx].clickY,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        memset(&checkStep, 0, sizeof(checkStep));
+        checkStep.mapX = pointerSteps[stepIdx].mapX;
+        checkStep.mapY = pointerSteps[stepIdx].mapY;
+        checkStep.dir = pointerSteps[stepIdx].dir;
+        checkStep.expectedOrdinal = pointerSteps[stepIdx].expectedOrdinal;
+        checkStep.inputBeforeCheck = -1;
+        checkStep.allowNoPortraitDominance =
+            pointerSteps[stepIdx].expectedOrdinal < 0 &&
+            pointerSteps[stepIdx].mapX == 1 &&
+            pointerSteps[stepIdx].mapY == 3 &&
+            pointerSteps[stepIdx].dir == DIR_SOUTH;
+        checkStep.label = pointerSteps[stepIdx].label;
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &checkStep, currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = pointerSteps[stepIdx].expectedOrdinal;
     }
 
     M11_GameView_Shutdown(&game);
