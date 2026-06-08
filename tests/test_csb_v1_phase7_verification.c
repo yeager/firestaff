@@ -150,6 +150,8 @@ static void test_dungeon_square_access(void)
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 1, 1) == 2, "(1,1) is FLOOR type 2");
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 3, 0) == -1, "(3,0) out of width returns -1");
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 0, 3) == -1, "(0,3) out of height returns -1");
+    CHECK(csb_v1_dungeon_get_square_type(&d, 0, -1, 1) == -1,
+          "(-1,1) out of width boundary returns -1");
     CHECK(csb_v1_dungeon_get_square_type(&d, 1, 0, 0) == -1, "level 1 out of range returns -1");
     int raw = csb_v1_dungeon_get_raw_square(&d, 0, 1, 1);
     CHECK((raw & 0x1F) == 2, "raw square type is FLOOR=2");
