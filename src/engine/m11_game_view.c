@@ -10398,6 +10398,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     }
                     return M11_GAME_INPUT_REDRAW;
                 }
+            } else {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
+                 * the empty-hand door-button route; a wrong item on the
+                 * keyhole/button box must not fall through into throw/drop. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
             }
         }
     }
