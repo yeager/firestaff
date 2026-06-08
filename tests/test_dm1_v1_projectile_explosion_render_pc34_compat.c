@@ -556,6 +556,63 @@ static void test_poison_cloud_party_damage_over_time(void) {
 }
 
 
+static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
+    struct ExplosionInstance_Compat explosion;
+    struct ExplosionInstance_Compat next;
+    struct CellContentDigest_Compat digest;
+    struct ExplosionTickResult_Compat result;
+
+    printf("  poison cloud single monster overlap tick boundary...\n");
+
+    memset(&explosion, 0, sizeof(explosion));
+    explosion.slotIndex = 7;
+    explosion.explosionType = C007_EXPLOSION_POISON_CLOUD;
+    explosion.mapIndex = 0;
+    explosion.mapX = 10;
+    explosion.mapY = 11;
+    explosion.cell = EXPLOSION_CELL_CENTERED;
+    explosion.centered = 1;
+    explosion.attack = 96;
+    explosion.currentFrame = 4;
+    explosion.maxFrames = 30;
+    explosion.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    explosion.ownerIndex = 2;
+
+    memset(&digest, 0, sizeof(digest));
+    digest.destMapIndex = 0;
+    digest.destMapX = 10;
+    digest.destMapY = 11;
+    digest.destHasCreatureGroup = 1;
+    digest.destCreatureType = 10;
+    digest.destCreatureCellMask = 0x04;
+
+    /* ReDMCSB source-lock:
+     *   PROJEXPL.C F0220 lines 857-866: poison cloud damages the group
+     *     only when the explosion is not on the party square, then decays
+     *     Attack by 3 and schedules Map_Time+1.
+     *   GROUP.C F0191/F0192 lines 932-1010: the group handoff is a single
+     *     all-creatures damage call after poison-resistance adjustment. */
+    ASSERT_EQ(F0822_EXPLOSION_Advance_Compat(&explosion, &digest, 777, NULL, &next, &result),
+              1, "poison cloud single monster tick ok");
+    ASSERT_EQ(result.emittedCombatActionPartyCount, 0, "monster overlap emits no party action");
+    ASSERT_EQ(result.emittedCombatActionGroupCount, 1, "monster overlap emits one group action");
+    ASSERT_EQ(result.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP, "monster overlap group damage kind");
+    ASSERT_EQ(result.outActionGroup.targetMapX, 10, "monster overlap group target x");
+    ASSERT_EQ(result.outActionGroup.targetMapY, 11, "monster overlap group target y");
+    ASSERT_EQ(result.outActionGroup.defenderSlotOrCreatureIndex, 10, "monster overlap preserves creature type");
+    ASSERT_EQ(result.outActionGroup.rawAttackValue, 3, "poison cloud attack>>5 without rng on group");
+    ASSERT_EQ(result.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME, "monster overlap cloud continues");
+    ASSERT_EQ(result.despawn, 0, "monster overlap cloud remains live");
+    ASSERT_EQ(next.attack, 93, "monster overlap cloud decays by 3 at boundary");
+    ASSERT_EQ(result.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "monster overlap schedules next cloud tick");
+    ASSERT_EQ((int)result.outNextTick.fireAtTick, 778, "monster overlap schedules tick+1");
+    ASSERT_EQ(result.outNextTick.mapX, 10, "monster overlap next tick x");
+    ASSERT_EQ(result.outNextTick.mapY, 11, "monster overlap next tick y");
+    ASSERT_EQ(result.outNextTick.aux0, 7, "monster overlap next tick slot");
+    ASSERT_EQ(result.newCurrentFrame, 5, "monster overlap advances exactly one frame");
+}
+
+
 static void test_harm_non_material_materializer_attack_only(void) {
     int attack = -1;
     struct RngState_Compat rng;
@@ -623,6 +680,7 @@ int main(void) {
     test_spell_graphic_indices();
     test_projectile_travel_blockers();
     test_poison_cloud_party_damage_over_time();
+    test_poison_cloud_single_monster_overlap_tick_boundary();
     test_harm_non_material_materializer_attack_only();
 
     if (g_failures == 0) {
