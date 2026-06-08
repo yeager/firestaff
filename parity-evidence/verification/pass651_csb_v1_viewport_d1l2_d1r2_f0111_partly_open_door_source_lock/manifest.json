@@ -1,0 +1,445 @@
+{
+  "claim": "CSB V1 D1L2/D1R2 partly-open horizontal F0111 door dispatch is source-locked to ReDMCSB F0122/F0123 body calls, F0111 frame/zone/blit order, F0128 ordering, and F0127 follow-up.",
+  "firestaffChecks": [
+    {
+      "file": "include/csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat.h",
+      "hits": [
+        {
+          "line": 56,
+          "needle": "f0128_dispatch_order"
+        },
+        {
+          "line": 62,
+          "needle": "f0127_followup_order"
+        },
+        {
+          "line": 76,
+          "needle": "left_horizontal_frame_bitmap"
+        },
+        {
+          "line": 77,
+          "needle": "right_horizontal_frame_bitmap"
+        },
+        {
+          "line": 94,
+          "needle": "CSB_V1_D1L2D1R2F0111PartlyOpenDoorSpecPc34"
+        },
+        {
+          "line": 126,
+          "needle": "csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_frame_bitmap_pc34"
+        }
+      ],
+      "id": "header-public-include",
+      "lines": "1-210",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/csb/csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat.c",
+      "hits": [
+        {
+          "line": 9,
+          "needle": "ReDMCSB: DUNVIEW.C F0122 lines 7391-7557."
+        },
+        {
+          "line": 11,
+          "needle": "CSB_F0128_D1L_ORDER = 13"
+        },
+        {
+          "line": 12,
+          "needle": "CSB_F0128_D1R_ORDER = 14"
+        },
+        {
+          "line": 16,
+          "needle": "CSB_F0127_ORDER = 18"
+        },
+        {
+          "line": 21,
+          "needle": "CSB_ZONE_DOOR_D1L = 3780"
+        },
+        {
+          "line": 22,
+          "needle": "CSB_ZONE_DOOR_D1R = 3800"
+        },
+        {
+          "line": 41,
+          "needle": "DUNVIEW.C:4218-4337"
+        },
+        {
+          "line": 89,
+          "needle": "D1L.LeftHorizontal"
+        },
+        {
+          "line": 102,
+          "needle": "D1R.RightHorizontal"
+        },
+        {
+          "line": 195,
+          "needle": "spec->door_zone_base + door_state + spec->first_half_dest_zone_offset"
+        },
+        {
+          "line": 211,
+          "needle": "spec->door_zone_base + door_state +"
+        },
+        {
+          "line": 212,
+          "needle": "spec->second_half_zone_offset | spec->second_half_zone_mask"
+        }
+      ],
+      "id": "module-spec-and-zone-math",
+      "lines": "1-380",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat.c",
+      "hits": [
+        {
+          "line": 100,
+          "needle": "test_f0128_dispatch_and_followup"
+        },
+        {
+          "line": 170,
+          "needle": "test_f0111_state_frame_and_blit_math"
+        },
+        {
+          "line": 209,
+          "needle": "frame.left.d1l2"
+        },
+        {
+          "line": 228,
+          "needle": "d1l2.first.state2"
+        },
+        {
+          "line": 247,
+          "needle": "d1r2.second.state2"
+        },
+        {
+          "line": 317,
+          "needle": "probe.second_half"
+        },
+        {
+          "line": 356,
+          "needle": "assertion_count_at_least_70"
+        }
+      ],
+      "id": "test-asserts-pass651-surface",
+      "lines": "1-520",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "hits": [
+        {
+          "line": 97,
+          "needle": "src/csb/csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat.c"
+        },
+        {
+          "line": 2114,
+          "needle": "add_executable(test_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat"
+        },
+        {
+          "line": 2126,
+          "needle": "NAME csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat"
+        }
+      ],
+      "id": "cmake-registration",
+      "lines": "80-2140",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "lineageViewport": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+  "nonClaims": [
+    "No renderer output or real-asset pixel parity claim.",
+    "No game-data load or archive/materialization behavior change.",
+    "No changes to the main CSB viewport module.",
+    "No DM1, DM2, Nexus, or Theron behavior claim."
+  ],
+  "redmcsbChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 4218,
+          "needle": "STATICFUNCTION void F0111_DUNGEONVIEW_DrawDoor("
+        },
+        {
+          "line": 4248,
+          "needle": "if (P0125_ui_DoorState != C0_DOOR_STATE_OPEN)"
+        },
+        {
+          "line": 4308,
+          "needle": "P0125_ui_DoorState--;"
+        },
+        {
+          "line": 4312,
+          "needle": "P0129_ps_DoorFrames->LeftHorizontal[P0125_ui_DoorState]"
+        },
+        {
+          "line": 4313,
+          "needle": "P0129_ps_DoorFrames->RightHorizontal[P0125_ui_DoorState]"
+        },
+        {
+          "line": 4318,
+          "needle": "P2084_i_ZoneIndex += P0125_ui_DoorState;"
+        },
+        {
+          "line": 4322,
+          "needle": "P2084_i_ZoneIndex + C6_UNKNOWN"
+        },
+        {
+          "line": 4323,
+          "needle": "F0654_Call_F0132_VIDEO_Blit"
+        },
+        {
+          "line": 4325,
+          "needle": "P2084_i_ZoneIndex += (unsigned int16_t)(3 | MASK0x4000_SHIFT_UNREADABLE_INSCRIPTION_AND_OPEN_VERTICAL_DOOR);"
+        },
+        {
+          "line": 4334,
+          "needle": "F0791_DUNGEONVIEW_DrawBitmapXX"
+        },
+        {
+          "line": 4334,
+          "needle": "C10_COLOR_FLESH"
+        }
+      ],
+      "id": "redmcsb-f0111-partly-open-horizontal",
+      "lines": "4218-4337",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 7391,
+          "needle": "STATICFUNCTION void F0122_DUNGEONVIEW_DrawSquareD1L("
+        },
+        {
+          "line": 7492,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7494,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0214_ai_SquareAspect[M550_FIRST_THING], P0165_i_Direction, P0166_i_MapX, P0167_i_MapY, M607_VIEW_SQUARE_D1L, C0x0028_CELL_ORDER_DOORPASS1_BACKRIGHT);"
+        },
+        {
+          "line": 7503,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2111_DoorFrameTopD1L, C732_ZONE_DOOR_FRAME_TOP_D1L);"
+        },
+        {
+          "line": 7506,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0214_ai_SquareAspect[M557_DOOR_THING_INDEX], L0214_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M630_ZONE_DOOR_D1L);"
+        },
+        {
+          "line": 7508,
+          "needle": "L0213_i_Order = C0x0039_CELL_ORDER_DOORPASS2_FRONTRIGHT;"
+        },
+        {
+          "line": 7536,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0214_ai_SquareAspect[M550_FIRST_THING], P0165_i_Direction, P0166_i_MapX, P0167_i_MapY, M607_VIEW_SQUARE_D1L, L0213_i_Order);"
+        }
+      ],
+      "id": "redmcsb-f0122-d1l-body-door-front",
+      "lines": "7391-7557",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 7559,
+          "needle": "STATICFUNCTION void F0123_DUNGEONVIEW_DrawSquareD1R("
+        },
+        {
+          "line": 7660,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7662,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0216_ai_SquareAspect[M550_FIRST_THING], P0168_i_Direction, P0169_i_MapX, P0170_i_MapY, M608_VIEW_SQUARE_D1R, C0x0018_CELL_ORDER_DOORPASS1_BACKLEFT);"
+        },
+        {
+          "line": 7671,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2110_DoorFrameTopD1R, C734_ZONE_DOOR_FRAME_TOP_D1R);"
+        },
+        {
+          "line": 7674,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0216_ai_SquareAspect[M557_DOOR_THING_INDEX], L0216_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M632_ZONE_DOOR_D1R);"
+        },
+        {
+          "line": 7676,
+          "needle": "L0215_i_Order = C0x0049_CELL_ORDER_DOORPASS2_FRONTLEFT;"
+        },
+        {
+          "line": 7704,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0216_ai_SquareAspect[M550_FIRST_THING], P0168_i_Direction, P0169_i_MapX, P0170_i_MapY, M608_VIEW_SQUARE_D1R, L0215_i_Order);"
+        }
+      ],
+      "id": "redmcsb-f0123-d1r-body-door-front",
+      "lines": "7559-7725",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8524,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8525,
+          "needle": "F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8528,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8529,
+          "needle": "F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8533,
+          "needle": "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8537,
+          "needle": "F0125_DUNGEONVIEW_DrawSquareD0L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8541,
+          "needle": "F0126_DUNGEONVIEW_DrawSquareD0R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8542,
+          "needle": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+        }
+      ],
+      "id": "redmcsb-f0128-d1-dispatch-f0127-followup",
+      "lines": "8524-8542",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8292,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit(C069_GRAPHIC_CEILING_PIT_D0C, C871_ZONE_CEILING_PIT_D0C"
+        },
+        {
+          "line": 8294,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0222_ai_SquareAspect[M550_FIRST_THING], P0180_i_Direction, P0181_i_MapX, P0182_i_MapY, M609_VIEW_SQUARE_D0C, C0x0021_CELL_ORDER_BACKLEFT_BACKRIGHT);"
+        }
+      ],
+      "id": "redmcsb-f0127-object-pass-boundary",
+      "lines": "8288-8296",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 2088,
+          "needle": "#define C10_COLOR_FLESH           10"
+        },
+        {
+          "line": 2600,
+          "needle": "#define M607_VIEW_SQUARE_D1L  4"
+        },
+        {
+          "line": 2601,
+          "needle": "#define M608_VIEW_SQUARE_D1R  5"
+        },
+        {
+          "line": 2605,
+          "needle": "#define C09_VIEW_SQUARE_D2L2  9"
+        },
+        {
+          "line": 2606,
+          "needle": "#define C10_VIEW_SQUARE_D2R2 10"
+        },
+        {
+          "line": 3508,
+          "needle": "#define C6_UNKNOWN"
+        },
+        {
+          "line": 3516,
+          "needle": "#define MASK0x4000_SHIFT_UNREADABLE_INSCRIPTION_AND_OPEN_VERTICAL_DOOR 0x4000"
+        },
+        {
+          "line": 4047,
+          "needle": "#define C707_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 4048,
+          "needle": "#define C708_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 4053,
+          "needle": "#define C713_ZONE_WALL_D1L"
+        },
+        {
+          "line": 4054,
+          "needle": "#define C714_ZONE_WALL_D1R"
+        },
+        {
+          "line": 4245,
+          "needle": "#define M630_ZONE_DOOR_D1L"
+        },
+        {
+          "line": 4247,
+          "needle": "#define M632_ZONE_DOOR_D1R"
+        }
+      ],
+      "id": "redmcsb-defs-door-zone-baselines",
+      "lines": "2088-4260",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "hits": [
+        {
+          "line": 1903,
+          "needle": "ui16 StdDrawF1DoorFacing[]"
+        },
+        {
+          "line": 1908,
+          "needle": "StdDoorFacingFrameLeftBitmapF1"
+        },
+        {
+          "line": 1909,
+          "needle": "StdDoorFacingFrameRightBitmapF1"
+        },
+        {
+          "line": 1913,
+          "needle": "F1DoorRecordIndex, F1DoorState, StdDoorGraphicsF1, StdDoorRectsF1"
+        },
+        {
+          "line": 1914,
+          "needle": "StdDrawDoor"
+        },
+        {
+          "line": 1915,
+          "needle": "F1Contents,  F1xy, F1, DrawOrder349,  StdDrawRoomObjects"
+        }
+      ],
+      "id": "csb-lineage-f1-door-dispatch",
+      "lines": "1903-1915",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass651_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS651_CSB_V1_VIEWPORT_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_SOURCE_LOCKED"
+}
