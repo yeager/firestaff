@@ -43,6 +43,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM1 V1 - Runtime and Source-Lock
 
+- ✅ 2026-06-09 00:18 — hardened `test_dm1_v1_door_keyhole_wrong_item_pc34_compat` so the DM1 V1 D1C door keyhole/button wrong-leader-hand regression now explicitly proves the ReDMCSB `CLIKVIEW.C F0377:356-401` no-open/no-consume path also appends no invented wrong-item message and leaves the prior status/message-log state untouched.
+
 - ✅ 2026-06-08 19:52 — hardened `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat` and the M11 chest-panel bridge for the ReDMCSB `CHEST.C F0333:30-32` same-open early return: a normally opened action-hand chest now stays C145 when the C071 eye route asks to reopen that same G0426 chest, because the pressing-eye C09 suppression branch is skipped.
 
 - ✅ DM1 V1 viewport D1R2 full-frame wall pixel gate: `dm1_v1_viewport_d1r2_wall_pc34_compat` now proves the ReDMCSB `DUNVIEW.C:591` G0163 D1R frame maps actual viewport pixels x=160..223/y=9..119 through native and parity-flipped source selection, preserves C10 transparency, and records outside-frame no-write metadata without claiming real-asset bitmap parity.
