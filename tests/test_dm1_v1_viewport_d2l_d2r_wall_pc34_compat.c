@@ -212,6 +212,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 61] = 0x21;
     source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 62] = 10;
     source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 71] = 0x31;
+    source[70 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 61] = 0x71;
     source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 0] = 0x41;
     source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 9] = 0x49;
     source[70 * DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 + 9] = 0x69;
@@ -279,6 +280,19 @@ static void test_pixels_c10_and_no_write_edges(void)
     expect_int("pixel.d2r.bottom_right.value", out.pixel_after, 0x69,
                "deterministic synthetic pixel");
 
+    d2l.row = 90;
+    d2l.viewport_x = 0;
+    expect_int("pixel.d2l.bottom_left.apply",
+               dm1_v1_viewport_d2l_d2r_wall_apply_pixel_pc34(
+                   &d2l, source, sizeof(source), viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:587 G0163 D2L bottom-row frame");
+    expect_int("pixel.d2l.bottom_left.source_y", out.source_y, 70,
+               "DUNVIEW.C:587 G0163 D2L height=71");
+    expect_int("pixel.d2l.bottom_left.source_x", out.source_x, 61,
+               "DUNVIEW.C:587 G0163 D2L source X=61");
+    expect_int("pixel.d2l.bottom_left.value", out.pixel_after, 0x71,
+               "deterministic synthetic pixel");
+
     d2l.row = 19;
     d2l.viewport_x = 0;
     expect_int("pixel.before_top.apply",
@@ -289,6 +303,18 @@ static void test_pixels_c10_and_no_write_edges(void)
                "no-write metadata");
     expect_int("pixel.before_top.in_clip", out.in_clip ? 1 : 0, 0,
                "no-write metadata");
+
+    d2l.row = 91;
+    d2l.viewport_x = 0;
+    expect_int("pixel.after_d2l_bottom.apply",
+               dm1_v1_viewport_d2l_d2r_wall_apply_pixel_pc34(
+                   &d2l, source, sizeof(source), viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:587 G0163 D2L no-write below frame");
+    expect_int("pixel.after_d2l_bottom.no_write", out.no_write_metadata ? 1 : 0, 1,
+               "DUNVIEW.C:587 G0163 D2L Y 20..90");
+    expect_int("pixel.after_d2l_bottom.viewport_untouched",
+               viewport[91 * DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 + 0], 0xee,
+               "DUNVIEW.C:3055 F0100 frame-height bound");
 
     d2r.row = 20;
     d2r.viewport_x = 223;
@@ -301,6 +327,18 @@ static void test_pixels_c10_and_no_write_edges(void)
     expect_int("pixel.before_d2r.viewport_untouched",
                viewport[20 * DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 + 223], 0xee,
                "no-write metadata");
+
+    d2r.row = 91;
+    d2r.viewport_x = 233;
+    expect_int("pixel.after_d2r_bottom.apply",
+               dm1_v1_viewport_d2l_d2r_wall_apply_pixel_pc34(
+                   &d2r, source, sizeof(source), viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:588 G0163 D2R no-write below frame");
+    expect_int("pixel.after_d2r_bottom.no_write", out.no_write_metadata ? 1 : 0, 1,
+               "DUNVIEW.C:588 G0163 D2R Y 20..90");
+    expect_int("pixel.after_d2r_bottom.viewport_untouched",
+               viewport[91 * DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 + 233], 0xee,
+               "DUNVIEW.C:3055 F0100 frame-height bound");
 }
 
 static void test_invalid_inputs_and_blend(void)
