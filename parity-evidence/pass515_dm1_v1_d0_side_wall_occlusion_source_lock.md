@@ -46,10 +46,10 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Firestaff Evidence
 
-- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:424-430)
+- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:473-474)
   - Existing runtime metadata records direct D0 side-wall return evidence.
 
-- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:251-256)
+- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:300-301)
   - Open D0 side lanes use one back cell each; wall is a separate return path.
 
 - PASS firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:294-305)
