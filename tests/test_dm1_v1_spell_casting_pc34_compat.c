@@ -147,12 +147,32 @@ static void test_insufficient_mana(void) {
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
-    DM1_ChampionSpellStats stats = makeStats(0, 100, 50, 40);
+    DM1_ChampionSpellStats stats = makeStats(14, 100, 50, 40);
+    int ok __attribute__((unused)) = 0;
 
-    int ok __attribute__((unused)) = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO);
+    /* ReDMCSB SYMBOL.C F0399: the mana gate sits before the rune write,
+     * so an insufficient add must leave the active rune chain untouched. */
+    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
+    assert(ok == 1);
+    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_YA);
+    assert(ok == 1);
+    assert(stats.currentMana == 7);
+    assert(s.input[0].symbolStep == 2);
+    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, 2));
+    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, 0));
+    assert(s.input[0].symbols[2] == '\0');
+
+    /* Third rune costs 12 at step 2, but only 7 mana remain. */
+    ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_KATH);
     assert(ok == 0);
-    assert(s.input[0].symbols[0] == '\0');
-    assert(stats.currentMana == 0);
+    assert(s.input[0].symbolStep == 2);
+    assert(s.input[0].symbols[0] == dm1_encodeSymbol(0, 2));
+    assert(s.input[0].symbols[1] == dm1_encodeSymbol(1, 0));
+    assert(s.input[0].symbols[2] == '\0');
+    assert(stats.currentMana == 7);
+    assert(stats.maximumMana == 100);
+    assert(stats.currentHealth == 50);
+    assert(stats.wisdom == 40);
 
     stats = makeStats(12, 100, 50, 40);
     stats.skillLevels[DM1_SKILL_FIRE] = 7;
