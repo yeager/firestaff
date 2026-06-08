@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.6 LANGUAGES C)
+project(Firestaff VERSION 2.7.7 LANGUAGES C)
 
 include_directories(include src)
 

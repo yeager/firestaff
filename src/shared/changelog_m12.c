@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.7  (2026-06-08)",
+    "  - DM1 V1 viewport: expanded source-lock and pixel gates for side walls, floor/ceiling fallback, stairs/pit dispatch, door fronts, wall ornaments, and projectile side-cell behavior",
+    "  - DM1 V1 inventory and champion panels: hardened chest routing, mirror-candidate handoff, hand-slot priority, status-hand, held-item, portrait, wound, and stale-pixel regressions",
+    "  - Runtime coverage: added focused gates for chest pickup/swap/close/reopen edges, spell-rune preservation, poison/cloud timing, room-transition pickup ordering, delayed timeline saves, and keyhole no-op behavior",
+    "  - Cross-game regressions: added CSB viewport/import/chaos/optional-asset gates plus DM2, Nexus, and Theron save/load, bounds, launch-marker, and transition guards",
+    "",
     "V2.7.6  (2026-06-07)",
     "  - DM1 V1 inventory panel: added a source-locked status-row hand-slot routing regression gate",
     "  - DM1 V1 input safety: proves status hand boxes resolve to the correct champion/source slot without crossing the inventory swap path",
@@ -123,5 +129,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.6";
+    return "2.7.7";
 }
