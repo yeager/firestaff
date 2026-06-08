@@ -12,6 +12,9 @@
  *   ReDMCSB CHEST.C F0333 lines 53-76 copies only the first eight linked
  *   contents into G0425 and draws C537..C544 chest slot boxes, including the
  *   eighth visible object while leaving a ninth linked tail item hidden.
+ *   ReDMCSB CHEST.C F0334 lines 112-132 clears G0426 and rewrites the
+ *   container from non-empty visible slots; after close the next inventory
+ *   draw must return C101 to the normal inventory panel, not stale C025.
  *   ReDMCSB PANEL.C F0352 lines 2123-2159 routes an eye click with a
  *   leader-hand container through F0342/F0333 with P0707_B_PressingEye true,
  *   so the C025/C537 panel appears without repainting C09 to C145.
@@ -216,6 +219,29 @@ static int count_panel_matches(const M11_AssetSlot* asset,
     return matched;
 }
 
+static int rect_diff_count(const unsigned char* a,
+                           const unsigned char* b,
+                           int x,
+                           int y,
+                           int w,
+                           int h)
+{
+    int diff = 0;
+    int yy;
+
+    if (!a || !b) return 0;
+    for (yy = 0; yy < h; ++yy) {
+        int xx;
+        for (xx = 0; xx < w; ++xx) {
+            if (a[(y + yy) * PROBE_FB_W + x + xx] !=
+                b[(y + yy) * PROBE_FB_W + x + xx]) {
+                ++diff;
+            }
+        }
+    }
+    return diff;
+}
+
 static int check_panel_pixels(const M11_GameViewState* game,
                               const unsigned char* fb)
 {
@@ -241,6 +267,39 @@ static int check_panel_pixels(const M11_GameViewState* game,
     matches = count_panel_matches(panel, fb, vx + x, vy + y);
     ok &= expect_true("C025 open chest panel pixels match framebuffer",
                       matches > (w * h) / 2);
+    return ok;
+}
+
+static int check_closed_panel_clears_c025(const M11_GameViewState* game,
+                                          const unsigned char* openFb,
+                                          const unsigned char* closedFb)
+{
+    const M11_AssetSlot* panel;
+    int x = 0, y = 0, w = 0, h = 0;
+    int vx = 0, vy = 0, vw = 0, vh = 0;
+    int openMatches;
+    int diff;
+    int ok = 1;
+
+    ok &= expect_true("closed-panel viewport origin",
+                      M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
+    ok &= expect_true("closed-panel C101 inventory panel zone",
+                      M11_GameView_GetV1InventoryPanelZone(&x, &y, &w, &h) &&
+                      w > 0 && h > 0);
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                 PROBE_OPEN_CHEST_PANEL_GRAPHIC);
+    ok &= expect_true("closed-panel C025 open chest panel asset",
+                      panel && panel->loaded && panel->pixels &&
+                      panel->width == (unsigned short)w &&
+                      panel->height == (unsigned short)h);
+    if (!ok) return 0;
+
+    openMatches = count_panel_matches(panel, openFb, vx + x, vy + y);
+    diff = rect_diff_count(openFb, closedFb, vx + x, vy + y, w, h);
+    ok &= expect_true("open C101 starts as source C025 chest panel",
+                      openMatches > (w * h) / 2);
+    ok &= expect_true("closed C101 repaints away from open chest panel pixels",
+                      diff > (w * h) / 4);
     return ok;
 }
 
@@ -360,6 +419,8 @@ int main(int argc, char** argv)
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    unsigned char openFb[PROBE_FB_W * PROBE_FB_H];
+    unsigned char closedFb[PROBE_FB_W * PROBE_FB_H];
     unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, 0);
     unsigned short eyeChestThing = thing_ref(THING_TYPE_CONTAINER, 1);
     unsigned short items[PROBE_CHAINED_CHEST_ITEMS];
@@ -411,6 +472,7 @@ int main(int argc, char** argv)
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    memcpy(openFb, fb, sizeof(openFb));
 
     actionIcon = M11_GameView_GetV1InventorySlotIconIndex(
         &game, CHAMPION_SLOT_ACTION_HAND);
@@ -439,6 +501,21 @@ int main(int argc, char** argv)
     ok &= check_chest_slot_icon(&game, fb, PROBE_VISIBLE_CHEST_SLOTS - 1,
                                 itemHIcon,
                                 "eighth visible chest item at C544");
+
+    M11_GameView_CloseV1OpenChest(&game);
+    ok &= expect_int("closed G0426 bridge open chest thing",
+                     (int)M11_GameView_GetV1OpenChestThing(&game),
+                     (int)THING_NONE);
+    actionIcon = M11_GameView_GetV1InventorySlotIconIndex(
+        &game, CHAMPION_SLOT_ACTION_HAND);
+    ok &= expect_int("closed action-hand chest icon returns to C144",
+                     actionIcon, PROBE_CHEST_CLOSED_ICON);
+    memset(closedFb, 0, sizeof(closedFb));
+    M11_GameView_Draw(&game, closedFb, PROBE_FB_W, PROBE_FB_H);
+    ok &= check_action_hand_chest_icon(&game, closedFb,
+                                       PROBE_CHEST_CLOSED_ICON,
+                                       "post-close action-hand closed chest");
+    ok &= check_closed_panel_clears_c025(&game, openFb, closedFb);
 
     ok &= expect_true("seed eye-path leader-hand chest with separate action chest",
                       seed_eye_runtime_chests(&game, chestThing, eyeChestThing,
