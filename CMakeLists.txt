@@ -1426,6 +1426,30 @@ if(BUILD_TESTING)
             NAME dm1_v1_original_capture_events_row_builder_self_test
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dosbox_capture_events_row_builder.py --self-test
         )
+        # Handoff closure gate: wires the on-disk preflight
+        # self-test, the on-disk events row builder, the on-disk
+        # transcript writer, and the on-disk pass608 verifier
+        # into a single end-to-end check that the deterministic
+        # toolchain actually flips the pass608 same-viewport
+        # capture blocker from
+        # ``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+        # to ``PASS608_DM1_V1_COMMAND_STATE_REDRAW_TRANSCRIPT_BOUND``.
+        # The negative-path subcheck exercises the
+        # ``firestaffViewportHashKnown`` gate so a future
+        # regression that drops the canonical-Firestaff-hash
+        # check is caught at the gate instead of at the next
+        # live DOSBox attempt.  Hermetic - synthesises a
+        # preflight receipt, a pass623 fixture, a Firestaff
+        # capture manifest, and 320x200 / 224x136 capture
+        # fixtures in a temp dir, then runs the real on-disk
+        # tools as subprocesses and feeds the emitted
+        # ``transcript.json`` to the real
+        # ``verify_pass608_dm1_v1_same_viewport_capture_blocker.py``.
+        add_test(
+            NAME dm1_v1_original_capture_route_handoff
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_route_handoff.py
+        )
+        set_tests_properties(dm1_v1_original_capture_route_handoff PROPERTIES TIMEOUT 300)
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
