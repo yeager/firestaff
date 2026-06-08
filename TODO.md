@@ -83,7 +83,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 Phase 2 - Dungeon/world data model: DM2 map, object, tile, and world-state ingestion probes pass against the local hash-verified PC English DUNGEON.DAT; remaining work is broader runtime parity and any still-stale CTest-era dungeon fixtures.
 - 🔧 Phase 3 - Rendering pipeline: viewport, UI chrome, items, outdoor/indoor, and palette behavior remain active; the real PC English GRAPHICS.DAT asset-loader probe is green again.
-- ❌ Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline.
+- 🔧 Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline; focused door-state projectile destination/event regression exists for open, closing, and blocked wooden doors, but broader runtime parity remains.
 - ❌ Phase 5 - Creature/combat parity: complete DM2 creature AI, projectile, damage, death/drop, and sound behavior.
 - 🔧 Phase 7 - Save/import compatibility verification: focused `test_dm2_v1_save_load` now covers invalid DM2 slot headers and corrupt-primary backup recovery; remaining work is broader real-runtime compatibility coverage.
 

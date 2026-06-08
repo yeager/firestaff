@@ -22,6 +22,8 @@
  *  18. Melee immunity: portcullis/iron/RA immune, wooden not
  *  19. Champion wound on close: party on door square, state=1 → wounds
  *  20. Champion wound on close: state=OPEN → no wound
+ *  21. Projectile door gate: open door advances to destination, closing/blocked
+ *      wooden door impacts at the door square
  *
  * Source refs:
  *   ReDMCSB DEFS.H:1039-1047 (door states C0-C5, M036/M037)
@@ -248,6 +250,100 @@ static int test_wooden_door_projectile_blocked(void)
     if (dm2_door_is_passable_to_projectile(4, wooden_attrs)) { printf("  closed wooden is passable?\n"); ok = 0; }
     /* DESTROYED → passable */
     if (!dm2_door_is_passable_to_projectile(5, wooden_attrs)) { printf("  destroyed wooden blocks?\n"); ok = 0; }
+    return ok;
+}
+
+/* ── Test 9: Projectile destination/event outcome at door gate ─── */
+
+typedef enum {
+    DM2_TEST_PROJECTILE_EVENT_NONE = 0,
+    DM2_TEST_PROJECTILE_EVENT_DOOR_IMPACT = 1,
+} DM2_TestProjectileEvent;
+
+typedef struct {
+    int x;
+    int y;
+    int event_x;
+    int event_y;
+    DM2_TestProjectileEvent event;
+} DM2_TestProjectileStepOutcome;
+
+static DM2_TestProjectileStepOutcome test_projectile_step_into_door(
+    int from_x,
+    int from_y,
+    int door_x,
+    int door_y,
+    int door_state,
+    uint16_t door_attributes
+) {
+    DM2_TestProjectileStepOutcome outcome;
+    /*
+     * ReDMCSB PROJEXPL.C F0217 lines 491-505: when the door-state/type gate
+     * accepts the projectile, the door branch returns C0_FALSE and no door
+     * impact is resolved; otherwise the impact event is addressed to the
+     * target door square.
+     */
+    if (dm2_door_is_passable_to_projectile(door_state, door_attributes)) {
+        outcome.x = door_x;
+        outcome.y = door_y;
+        outcome.event_x = -1;
+        outcome.event_y = -1;
+        outcome.event = DM2_TEST_PROJECTILE_EVENT_NONE;
+    } else {
+        outcome.x = from_x;
+        outcome.y = from_y;
+        outcome.event_x = door_x;
+        outcome.event_y = door_y;
+        outcome.event = DM2_TEST_PROJECTILE_EVENT_DOOR_IMPACT;
+    }
+    return outcome;
+}
+
+static int test_projectile_door_gate_destination_event(void)
+{
+    const int from_x = 10;
+    const int from_y = 7;
+    const int door_x = 11;
+    const int door_y = 7;
+    const uint16_t wooden_attrs = dm2_door_get_attributes(DM2_DOOR_TYPE_WOODEN);
+    DM2_TestProjectileStepOutcome outcome;
+    int ok = 1;
+
+    outcome = test_projectile_step_into_door(from_x, from_y, door_x, door_y,
+        DM2_DOOR_STATE_OPEN, wooden_attrs);
+    if (outcome.x != door_x || outcome.y != door_y ||
+        outcome.event_x != -1 || outcome.event_y != -1 ||
+        outcome.event != DM2_TEST_PROJECTILE_EVENT_NONE) {
+        printf("  open wooden door did not advance to destination without event\n");
+        ok = 0;
+    }
+
+    /* A closing wooden door crosses the projectile gate at state 2. */
+    {
+        int closing_state = dm2_door_advance_close(DM2_DOOR_STATE_CLOSED_ONE_FOURTH);
+        if (closing_state != DM2_DOOR_STATE_CLOSED_HALF) {
+            printf("  closing state expected half-closed, got %d\n", closing_state);
+            ok = 0;
+        }
+        outcome = test_projectile_step_into_door(from_x, from_y, door_x, door_y,
+            closing_state, wooden_attrs);
+    }
+    if (outcome.x != from_x || outcome.y != from_y ||
+        outcome.event_x != door_x || outcome.event_y != door_y ||
+        outcome.event != DM2_TEST_PROJECTILE_EVENT_DOOR_IMPACT) {
+        printf("  closing wooden door did not impact at door gate\n");
+        ok = 0;
+    }
+
+    outcome = test_projectile_step_into_door(from_x, from_y, door_x, door_y,
+        DM2_DOOR_STATE_CLOSED, wooden_attrs);
+    if (outcome.x != from_x || outcome.y != from_y ||
+        outcome.event_x != door_x || outcome.event_y != door_y ||
+        outcome.event != DM2_TEST_PROJECTILE_EVENT_DOOR_IMPACT) {
+        printf("  blocked wooden door did not impact at door gate\n");
+        ok = 0;
+    }
+
     return ok;
 }
 
@@ -539,6 +635,7 @@ int main(void)
     TEST(movement_blocking_tall_creature);
     TEST(portcullis_projectile_passable);
     TEST(wooden_door_projectile_blocked);
+    TEST(projectile_door_gate_destination_event);
     TEST(wooden_door_destroyed_at_defense);
     TEST(wooden_door_not_destroyed_below_defense);
     TEST(iron_door_by_attack_strength);
