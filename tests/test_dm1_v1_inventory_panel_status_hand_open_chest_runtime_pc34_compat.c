@@ -212,6 +212,23 @@ static int test_status_row_slotbox_rows(void)
         ok &= expect_int(label,
                          g_probe.rows[slotBoxIndex].resolvedPc34SourceSlot,
                          expectedSlot, f0302);
+        snprintf(label, sizeof(label),
+                 "slotbox %d open chest before click", slotBoxIndex);
+        ok &= expect_int(label,
+                         g_probe.rows[slotBoxIndex].openChestThingBeforeClick,
+                         g_probe.openChestThingAfterOpen, f0302);
+        snprintf(label, sizeof(label),
+                 "slotbox %d open chest after click", slotBoxIndex);
+        ok &= expect_int(label,
+                         g_probe.rows[slotBoxIndex].openChestThingAfterClick,
+                         g_probe.openChestThingAfterOpen, f0302);
+        snprintf(label, sizeof(label),
+                 "slotbox %d preserves open chest through click",
+                 slotBoxIndex);
+        ok &= expect_int(label,
+                         g_probe.rows[slotBoxIndex]
+                             .openChestThingPreservedByClick,
+                         1, f0302);
     }
     return ok;
 }
