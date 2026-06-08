@@ -465,6 +465,12 @@ int main(int argc, char** argv)
                      M11_GameView_GetV1InventorySlotIconIndex(
                          &game, CHAMPION_SLOT_ACTION_HAND),
                      144);
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    ok &= check_panel_pixels(&game, fb);
+    ok &= check_action_hand_chest_icon(
+        &game, fb, PROBE_CHEST_CLOSED_ICON,
+        "same-action-hand pressing-eye closed chest");
 
     M11_GameView_CloseV1OpenChest(&game);
     ok &= expect_true("leader hand accepts same chest for pressing-eye route",
