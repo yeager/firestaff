@@ -561,6 +561,9 @@ static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
     struct ExplosionInstance_Compat next;
     struct CellContentDigest_Compat digest;
     struct ExplosionTickResult_Compat result;
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat queued;
+    struct TimelineEvent_Compat popped;
 
     printf("  poison cloud single monster overlap tick boundary...\n");
 
@@ -610,6 +613,19 @@ static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
     ASSERT_EQ(result.outNextTick.mapY, 11, "monster overlap next tick y");
     ASSERT_EQ(result.outNextTick.aux0, 7, "monster overlap next tick slot");
     ASSERT_EQ(result.newCurrentFrame, 5, "monster overlap advances exactly one frame");
+
+    ASSERT_EQ(F0720_TIMELINE_Init_Compat(&queue, 777), 1, "monster overlap timeline init ok");
+    ASSERT_EQ(F0721_TIMELINE_Schedule_Compat(&queue, &result.outNextTick),
+              1, "monster overlap schedules follow-up into queue");
+    ASSERT_EQ(F0722_TIMELINE_Peek_Compat(&queue, &queued),
+              1, "monster overlap queued follow-up is visible");
+    ASSERT_EQ(queued.fireAtTick <= 777u, 0, "monster overlap follow-up is not due on same tick");
+    ASSERT_EQ(F0724_TIMELINE_Tick_Compat(&queue, 1), 1, "monster overlap advances queue one tick");
+    ASSERT_EQ(queued.fireAtTick <= queue.nowTick, 1, "monster overlap follow-up is due at tick+1");
+    ASSERT_EQ(F0723_TIMELINE_Pop_Compat(&queue, &popped), 1, "monster overlap pops one follow-up");
+    ASSERT_EQ(popped.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "monster overlap popped explosion event kind");
+    ASSERT_EQ(popped.fireAtTick, 778u, "monster overlap popped tick boundary");
+    ASSERT_EQ(queue.count, 0, "monster overlap queue contains no duplicate follow-up");
 }
 
 
