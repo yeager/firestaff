@@ -285,6 +285,151 @@ static void test_pixel_run_contract(void)
                0, "null run rejected");
 }
 
+static void test_actual_g0163_frame_pixel_contract(void)
+{
+    uint8_t native_source[64 * 111];
+    uint8_t parity_source[64 * 111];
+    uint8_t viewport[DM1_V1_D1R2_WALL_VIEWPORT_WIDTH_PC34 *
+                     DM1_V1_D1R2_WALL_VIEWPORT_HEIGHT_PC34];
+    DM1_V1_D1R2WallPixelPc34 out;
+    const DM1_V1_D1R2WallRouteSpecPc34 *native =
+        dm1_v1_viewport_d1r2_wall_route_spec_pc34(
+            DM1_V1_D1R2_WALL_ROUTE_NATIVE_PC34);
+    const DM1_V1_D1R2WallRouteSpecPc34 *parity =
+        dm1_v1_viewport_d1r2_wall_route_spec_pc34(
+            DM1_V1_D1R2_WALL_ROUTE_PARITY_FLIPPED_PC34);
+
+    memset(native_source, DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34,
+           sizeof(native_source));
+    memset(parity_source, DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34,
+           sizeof(parity_source));
+    memset(viewport, 0xee, sizeof(viewport));
+
+    native_source[0] = 0x11;
+    native_source[1] = DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34;
+    native_source[63] = 0x7d;
+    native_source[110 * 64 + 63] = 0x6f;
+    parity_source[63] = 0x3f;
+    parity_source[62] = DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34;
+    parity_source[0] = 0x2a;
+
+    expect_int("frame.native.left.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 160, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 G0163 D1R x=160 y=9");
+    expect_int("frame.native.left.in_clip", out.in_clip ? 1 : 0, 1,
+               "DUNVIEW.C:591 G0163 D1R frame");
+    expect_int("frame.native.left.source_x", out.source_x, 0,
+               "DUNVIEW.C:591 frame source x=0");
+    expect_int("frame.native.left.source_y", out.source_y, 0,
+               "DUNVIEW.C:591 frame source y=0");
+    expect_int("frame.native.left.offset", (int)out.source_offset, 0,
+               "DUNVIEW.C:3048-3058 F0100 source offset");
+    expect_int("frame.native.left.viewport_offset", (int)out.viewport_offset,
+               9 * 224 + 160, "DM1 PC34 C007 viewport row stride");
+    expect_int("frame.native.left.value", out.pixel_after, 0x11,
+               "synthetic source-locked D1R frame pixel");
+
+    expect_int("frame.native.c10.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 161, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:3055 C10 transparent blit");
+    expect_int("frame.native.c10.skip", out.transparent_skip ? 1 : 0, 1,
+               "DUNVIEW.C:3055 C10 transparent blit");
+    expect_int("frame.native.c10.no_write", out.writes_pixel ? 1 : 0, 0,
+               "DUNVIEW.C:3055 C10 transparent blit");
+    expect_int("frame.native.c10.preserved", out.pixel_after, 0xee,
+               "C10 preserves destination");
+
+    expect_int("frame.native.right.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 223, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 G0163 D1R x=223");
+    expect_int("frame.native.right.source_x", out.source_x, 63,
+               "DUNVIEW.C:591 D1R right edge");
+    expect_int("frame.native.right.offset", (int)out.source_offset, 63,
+               "DUNVIEW.C:3048-3058 F0100 source offset");
+    expect_int("frame.native.right.value", out.pixel_after, 0x7d,
+               "synthetic source-locked D1R right edge");
+
+    expect_int("frame.native.bottom.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 119, 223, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 G0163 D1R y=119");
+    expect_int("frame.native.bottom.source_y", out.source_y, 110,
+               "DUNVIEW.C:591 D1R height=111");
+    expect_int("frame.native.bottom.offset", (int)out.source_offset, 110 * 64 + 63,
+               "DUNVIEW.C:3048-3058 F0100 bottom source offset");
+    expect_int("frame.native.bottom.value", out.pixel_after, 0x6f,
+               "synthetic source-locked D1R bottom edge");
+
+    expect_int("frame.parity.left.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   parity, 9, 160, parity_source, sizeof(parity_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:7613-7615 F0105 flipped D1L into D1R");
+    expect_int("frame.parity.left.selected", out.selected_source_x, 63,
+               "DUNVIEW.C:3185-3204 F0105 scratch flip");
+    expect_int("frame.parity.left.value", out.pixel_after, 0x3f,
+               "synthetic flipped source pixel");
+
+    expect_int("frame.parity.next.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   parity, 9, 161, parity_source, sizeof(parity_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:3185-3204 F0105 flipped x=161");
+    expect_int("frame.parity.next.selected", out.selected_source_x, 62,
+               "DUNVIEW.C:3185-3204 F0105 scratch flip");
+    expect_int("frame.parity.next.skip", out.transparent_skip ? 1 : 0, 1,
+               "DUNVIEW.C:3055 C10 skip through F0105");
+
+    expect_int("frame.parity.right.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   parity, 9, 223, parity_source, sizeof(parity_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:7613-7615 F0105 right edge");
+    expect_int("frame.parity.right.selected", out.selected_source_x, 0,
+               "DUNVIEW.C:3185-3204 F0105 right edge selects source left");
+    expect_int("frame.parity.right.value", out.pixel_after, 0x2a,
+               "synthetic flipped right-edge source pixel");
+
+    expect_int("frame.outside.left.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 159, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 outside D1R left frame");
+    expect_int("frame.outside.left.no_write", out.no_write_metadata ? 1 : 0, 1,
+               "DUNVIEW.C:591 outside D1R left frame");
+    expect_int("frame.outside.right.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 224, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 outside D1R right frame");
+    expect_int("frame.outside.right.no_write", out.no_write_metadata ? 1 : 0, 1,
+               "DUNVIEW.C:591 outside D1R right frame");
+    expect_int("frame.outside.bottom.ok",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 120, 223, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               1, "DUNVIEW.C:591 outside D1R bottom frame");
+    expect_int("frame.outside.bottom.no_write", out.no_write_metadata ? 1 : 0, 1,
+               "DUNVIEW.C:591 outside D1R bottom frame");
+    expect_int("frame.invalid.null_out",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   native, 9, 160, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), NULL) ? 1 : 0,
+               0, "null frame output rejected");
+    expect_int("frame.invalid.null_spec",
+               dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+                   NULL, 9, 160, native_source, sizeof(native_source),
+                   viewport, sizeof(viewport), &out) ? 1 : 0,
+               0, "null frame spec rejected");
+}
+
 static void test_source_evidence_mentions_required_anchors(void)
 {
     const char *e = dm1_v1_viewport_d1r2_wall_source_evidence_pc34();
@@ -328,6 +473,7 @@ int main(void)
     test_anchor_table_source_locked();
     test_route_specs_source_locked();
     test_pixel_run_contract();
+    test_actual_g0163_frame_pixel_contract();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {

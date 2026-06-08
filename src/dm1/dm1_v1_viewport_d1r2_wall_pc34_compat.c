@@ -265,6 +265,69 @@ static bool dm1_v1_d1r2_wall_apply_pixel(
     return true;
 }
 
+bool dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+    const DM1_V1_D1R2WallRouteSpecPc34 *spec,
+    int viewport_y,
+    int viewport_x,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_D1R2WallPixelPc34 *out)
+{
+    int local_x;
+    int local_y;
+
+    if (!out) return false;
+    memset(out, 0, sizeof(*out));
+    out->spec = spec;
+    out->row = viewport_y;
+    out->viewport_x = viewport_x;
+    if (!spec) return false;
+
+    if (viewport_y < spec->frame_top_y ||
+        viewport_y > spec->frame_bottom_y ||
+        viewport_x < spec->frame_left_x ||
+        viewport_x > spec->frame_right_x) {
+        out->no_write_metadata = true;
+        return true;
+    }
+    if (!source || !viewport) return false;
+
+    local_x = viewport_x - spec->frame_left_x;
+    local_y = viewport_y - spec->frame_top_y;
+    out->parity_flip = spec->parity_flip;
+    out->uses_scratch = spec->uses_f0105_c10_flipped_wall_blit;
+    out->in_clip = true;
+    out->source_x = spec->frame_source_x + local_x;
+    out->source_y = spec->frame_source_y + local_y;
+    out->selected_source_x = spec->parity_flip
+        ? (spec->frame_source_x + (spec->frame_right_x - spec->frame_left_x) - local_x)
+        : out->source_x;
+    out->source_offset =
+        (size_t)out->source_y * (size_t)(spec->frame_right_x - spec->frame_left_x + 1) +
+        (size_t)out->selected_source_x;
+    out->viewport_offset =
+        (size_t)viewport_y * (size_t)DM1_V1_D1R2_WALL_VIEWPORT_WIDTH_PC34 +
+        (size_t)viewport_x;
+    if (out->source_offset >= source_len || out->viewport_offset >= viewport_len) {
+        return false;
+    }
+
+    out->pixel_before = viewport[out->viewport_offset];
+    out->source_pixel = source[out->source_offset];
+    out->transparent_skip =
+        out->source_pixel == DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34;
+    out->writes_pixel = !out->transparent_skip;
+    viewport[out->viewport_offset] =
+        dm1_v1_viewport_d1r2_wall_blend_pixel_pc34(
+            viewport[out->viewport_offset],
+            out->source_pixel,
+            DM1_V1_D1R2_WALL_C10_COLOR_FLESH_PC34);
+    out->pixel_after = viewport[out->viewport_offset];
+    return true;
+}
+
 static bool add_check(
     DM1_V1_D1R2WallRunPc34 *out,
     const DM1_V1_D1R2WallRouteSpecPc34 *spec,
