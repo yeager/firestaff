@@ -280,6 +280,55 @@ static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* 
     return 1;
 }
 
+static int framebuffer_preserves_inventory_backdrop_through_open_chest_red(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer) {
+    const M11_AssetSlot* chestPanel;
+    const M11_AssetSlot* backdrop;
+    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
+    int matched = 0;
+    int x, y;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
+                                              &panelW, &panelH) ||
+        !M11_GameView_GetV1InventoryBackdropZone(&viewportX, &viewportY,
+                                                 &viewportW, &viewportH)) {
+        return 0;
+    }
+    chestPanel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                      25u);
+    backdrop = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    (unsigned int)M11_GameView_GetV1InventoryBackdropGraphicId());
+    if (!chestPanel || !chestPanel->pixels || !backdrop || !backdrop->pixels ||
+        chestPanel->width != (unsigned short)panelW ||
+        chestPanel->height != (unsigned short)panelH ||
+        backdrop->width != (unsigned short)viewportW ||
+        backdrop->height != (unsigned short)viewportH ||
+        panelX + panelW > viewportW || panelY + panelH > viewportH) {
+        return 0;
+    }
+
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            unsigned char panelPixel = chestPanel->pixels[y * (int)chestPanel->width + x];
+            unsigned char want;
+            unsigned char got;
+
+            if (panelPixel != 8 || point_is_in_chest_slot_frame(panelX, panelY, x, y)) {
+                continue;
+            }
+            want = backdrop->pixels[(panelY + y) * (int)backdrop->width + panelX + x];
+            got = framebuffer[(viewportY + panelY + y) * 320 + (viewportX + panelX + x)];
+            if (got == want) {
+                ++matched;
+            }
+        }
+    }
+    return matched > 200;
+}
+
 static int framebuffer_matches_object_icon_at(const M11_GameViewState* state,
                                               const unsigned char* framebuffer,
                                               int iconIndex,
@@ -1039,6 +1088,44 @@ static void test_open_chest_slot_box_and_icon_source_pixels(void) {
                                                           1,
                                                           0),
                 "open chest empty C538 blits the full source C033 slot-box without icon overdraw");
+
+    M11_AssetLoader_Shutdown(&state.assetLoader);
+}
+
+static void test_open_chest_panel_red_transparency_preserves_inventory_backdrop(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonContainer_Compat container;
+    unsigned char framebuffer[320 * 200];
+    unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&container, 0, sizeof(container));
+    things.containers = &container;
+    things.containerCount = 1;
+    weapon.type = 8;
+    weapon.next = THING_ENDOFLIST;
+    container.slot = daggerThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
+
+    ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
+                "GRAPHICS.DAT asset loader is available for chest-panel transparency gate");
+    state.assetsAvailable = 1;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "action-hand chest opens before panel transparency gate");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+
+    /* ReDMCSB CHEST.C F0333 lines 47-51 blits C025 into C101 with
+     * C08_COLOR_RED as transparent.  PANEL.C F0355 lines 2375-2377
+     * establishes C017 as the inventory backdrop before panel content,
+     * so red pixels in the open-chest graphic must reveal C017. */
+    ASSERT_TRUE(framebuffer_preserves_inventory_backdrop_through_open_chest_red(
+                    &state, framebuffer),
+                "open chest C025 transparent red pixels preserve the C017 inventory backdrop");
 
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
@@ -2736,6 +2823,7 @@ int main(void) {
     test_open_chest_rejects_incompatible_leader_hand_without_mutation();
     test_leader_hand_container_eye_routes_to_chest_panel();
     test_open_chest_slot_box_and_icon_source_pixels();
+    test_open_chest_panel_red_transparency_preserves_inventory_backdrop();
     test_open_chest_second_visible_slot_uses_second_object_icon();
     test_open_chest_third_visible_slot_uses_third_object_icon();
     test_open_chest_fourth_visible_slot_uses_fourth_object_icon();
