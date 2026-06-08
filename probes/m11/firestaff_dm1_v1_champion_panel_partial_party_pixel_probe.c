@@ -2,11 +2,13 @@
  * DM1 V1 champion panel partial-party runtime pixel probe.
  *
  * This is Firestaff-side evidence only. It opens the hash-verified DM1 V1
- * runtime when local assets are available, renders a full-party warm frame,
- * then renders deterministic 1-, 2-, and 3-champion parties through the real
- * M11 V1 draw stack and checks that occupied party HUD/status-box/champion
- * panel zones are populated while empty later slots stay black. It does not
- * claim original DOS screenshot parity.
+ * runtime when local assets are available, renders a full-party warm frame
+ * before each reduced-party case, then renders deterministic 1-, 2-, and
+ * 3-champion parties into the same framebuffer through the real M11 V1 draw
+ * stack. It checks that occupied party HUD/status-box/champion panel zones
+ * are populated and that slots which were visibly populated by the previous
+ * full-party frame are actively cleared to black. It does not claim original
+ * DOS screenshot parity.
  *
  * Source evidence:
  *   ReDMCSB CHAMDRAW.C lines 1134-1138 redraws champion states only while
@@ -198,6 +200,51 @@ static int check_occupied_slot(const M11_GameViewState* game,
     return ok;
 }
 
+static int check_slot_populated_before_clear(const unsigned char* fb,
+                                             int slot,
+                                             int partyCount) {
+    int ok = 1;
+    int x, y, w, h;
+    int stat;
+    int hand;
+    char label[128];
+
+    snprintf(label, sizeof(label),
+             "party%d slot%d pre-clear status box populated",
+             partyCount, slot);
+    ok &= expect_true(label,
+        M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+        count_nonblack(fb, PROBE_FB_W, x, y, w, h) > 500);
+
+    snprintf(label, sizeof(label),
+             "party%d slot%d pre-clear champion icon populated",
+             partyCount, slot);
+    ok &= expect_true(label,
+        M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+        count_nonblack(fb, PROBE_FB_W, x, y, w, h) > 20);
+
+    for (stat = 0; stat < 3; ++stat) {
+        snprintf(label, sizeof(label),
+                 "party%d slot%d pre-clear stat%d bar populated",
+                 partyCount, slot, stat);
+        ok &= expect_true(label,
+            M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
+            count_nonblack(fb, PROBE_FB_W, x, y, w, h) == w * h);
+    }
+
+    for (hand = 0; hand < 2; ++hand) {
+        snprintf(label, sizeof(label),
+                 "party%d slot%d pre-clear hand%d box populated",
+                 partyCount, slot, hand);
+        ok &= expect_true(label,
+            M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
+                                                    &x, &y, &w, &h) &&
+            count_nonblack(fb, PROBE_FB_W, x, y, w, h) > 60);
+    }
+
+    return ok;
+}
+
 static int check_empty_slot(const M11_GameViewState* game,
                             const unsigned char* fb,
                             int slot,
@@ -255,6 +302,12 @@ static int check_party_count(M11_GameViewState* game,
                              int partyCount) {
     int ok = 1;
     int slot;
+    seed_party(game, PROBE_CHAMPION_COUNT);
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    for (slot = partyCount; slot < PROBE_CHAMPION_COUNT; ++slot) {
+        ok &= check_slot_populated_before_clear(fb, slot, partyCount);
+    }
+
     seed_party(game, partyCount);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
