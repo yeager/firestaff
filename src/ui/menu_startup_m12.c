@@ -2634,6 +2634,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_MESSAGE) {
+        if (state->dataDirPickerActive) {
+            return;
+        }
         if (input == M12_MENU_INPUT_BACK ||
             input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {

@@ -48,7 +48,10 @@ enum {
 
 static int failures = 0;
 static int dialogCalls = 0;
+static int dialogHoldOpen = 0;
 static char dialogDefaultLocation[M12_ASSET_DATA_DIR_CAPACITY];
+static SDL_DialogFileCallback dialogPendingCallback = NULL;
+static void* dialogPendingUserdata = NULL;
 
 #define CHECK(expr) do { \
     if (!(expr)) { \
@@ -68,9 +71,34 @@ void SDLCALL SDL_ShowOpenFolderDialog(SDL_DialogFileCallback callback,
     dialogCalls++;
     snprintf(dialogDefaultLocation, sizeof(dialogDefaultLocation),
              "%s", default_location ? default_location : "");
+    if (dialogHoldOpen) {
+        dialogPendingCallback = callback;
+        dialogPendingUserdata = userdata;
+        return;
+    }
     if (callback) {
         callback(userdata, canceledSelection, -1);
     }
+}
+
+static void complete_pending_dialog_cancel(void) {
+    const char* canceledSelection[] = { NULL };
+    SDL_DialogFileCallback callback = dialogPendingCallback;
+    void* userdata = dialogPendingUserdata;
+    dialogPendingCallback = NULL;
+    dialogPendingUserdata = NULL;
+    dialogHoldOpen = 0;
+    if (callback) {
+        callback(userdata, canceledSelection, -1);
+    }
+}
+
+static void reset_dialog_stub(void) {
+    dialogCalls = 0;
+    dialogHoldOpen = 0;
+    dialogPendingCallback = NULL;
+    dialogPendingUserdata = NULL;
+    dialogDefaultLocation[0] = '\0';
 }
 
 static int make_child_dir(const char* parent,
@@ -128,6 +156,7 @@ static void check_cancel_preserves_no_data_state(void) {
     char beforeDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     const char* beforeVersionId;
 
+    reset_dialog_stub();
     CHECK(isolate_home_and_data_root(dataRoot));
     if (failures) {
         return;
@@ -188,14 +217,73 @@ static void check_cancel_preserves_no_data_state(void) {
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), beforeDataDir) == 0);
 }
 
+static void check_active_picker_blocks_message_reentry(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    int callsBefore;
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    if (failures) {
+        return;
+    }
+
+    dialogHoldOpen = 1;
+    dialogPendingCallback = NULL;
+    dialogPendingUserdata = NULL;
+
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+
+    CHECK(dialogCalls == 1);
+    CHECK(dialogPendingCallback != NULL);
+    CHECK(dialogPendingUserdata == &state);
+    CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+
+    callsBefore = dialogCalls;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(dialogCalls == callsBefore);
+    CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(dialogCalls == callsBefore);
+    CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
+
+    complete_pending_dialog_cancel();
+    CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.quickResumeLaunchRequested == 0);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
+    check_active_picker_blocks_message_reentry();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: canceling M12 data-directory selection preserves the no-data root, selected DM1/version state, and launch gate");
+    puts("ok: M12 data-directory cancel/re-entry preserves no-data state and suppresses duplicate picker popups");
     return 0;
 }
