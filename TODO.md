@@ -94,6 +94,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
 - 🔧 Phase 5 - Mechanics parity hardening: runtime bridge and probe coverage for movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound.
+- 🔧 DGN actor placement parsing still needs real Saturn actor-list decoding; current regression coverage protects malformed actor type refs, 64x64 grid clamping, and active actor slot overflow.
 
 ### Nexus V2.0 / V2.1 / V2.2
 

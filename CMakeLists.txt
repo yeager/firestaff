@@ -8205,6 +8205,23 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_boot_profile_smoke
     )
 
+    add_executable(test_nexus_v1_dgn_actor_slot_bounds
+        tests/test_nexus_v1_dgn_actor_slot_bounds.c
+        src/nexus/nexus_v1_creatures.c
+        src/nexus/nexus_v1_movement.c
+        src/nexus/nexus_v1_squares.c
+    )
+    target_include_directories(test_nexus_v1_dgn_actor_slot_bounds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_actor_slot_bounds PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_actor_slot_bounds
+        COMMAND test_nexus_v1_dgn_actor_slot_bounds
+    )
+
     add_executable(test_nexus_v1_save_missing_root
         tests/test_nexus_v1_save_missing_root.c
     )
