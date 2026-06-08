@@ -75,6 +75,14 @@ static const V1SourceCommandRow g_v1_command_table[6] = {
 #define N_V1_COMMAND_ROWS \
     ((int)(sizeof(g_v1_command_table) / sizeof(g_v1_command_table[0])))
 
+static int colors_equal(const DM1_V2_Color* a, const DM1_V2_Color* b) {
+    return a && b &&
+           a->r == b->r &&
+           a->g == b->g &&
+           a->b == b->b &&
+           a->a == b->a;
+}
+
 /* ── TC-1: scaffold dimensions ──────────────────────────────────── */
 
 static int test_scaffold_dimensions(void) {
@@ -145,7 +153,62 @@ static int test_layout_hash_reproduces(void) {
     return 0;
 }
 
-/* ── TC-4: C001..C006 source command ids preserved under V1 source ─ */
+/* ── TC-4: composite pixel accessor matches canonical layout ────── */
+
+static int test_composite_pixel_accessor(void) {
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_Color c;
+    uint64_t hash;
+    int x, y;
+    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, 0, 0, &c) == 1);
+    CHECK(colors_equal(&c, &seed.v1.framebuffer[0][0]));
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, DM1_V2_VIEWPORT_W, 0, &c) == 1);
+    CHECK(c.r == DM1_V2_SIDE_BY_SIDE_GAP_R);
+    CHECK(c.g == DM1_V2_SIDE_BY_SIDE_GAP_G);
+    CHECK(c.b == DM1_V2_SIDE_BY_SIDE_GAP_B);
+    CHECK(c.a == DM1_V2_SIDE_BY_SIDE_GAP_A);
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed,
+              DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W,
+              0,
+              &c) == 1);
+    CHECK(colors_equal(&c, &seed.v2.framebuffer[0][0]));
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_W - 1,
+              DM1_V2_SIDE_BY_SIDE_H - 1,
+              &c) == 1);
+    CHECK(colors_equal(
+        &c,
+        &seed.v2.framebuffer[DM1_V2_VIEWPORT_H - 1][DM1_V2_VIEWPORT_W - 1]));
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(NULL, 0, 0, &c) == 0);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, 0, 0, NULL) == 0);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, -1, 0, &c) == 0);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, 0, -1, &c) == 0);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, DM1_V2_SIDE_BY_SIDE_W, 0, &c) == 0);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, 0, DM1_V2_SIDE_BY_SIDE_H, &c) == 0);
+
+    hash = DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS;
+    for (y = 0; y < DM1_V2_SIDE_BY_SIDE_H; ++y) {
+        for (x = 0; x < DM1_V2_SIDE_BY_SIDE_W; ++x) {
+            CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, x, y, &c) == 1);
+            hash = dm1_v2_side_by_side_seed_hash_color(hash, &c);
+        }
+    }
+    CHECK(hash == seed.sideBySideHash);
+    return 0;
+}
+
+/* ── TC-5: C001..C006 source command ids preserved under V1 source ─ */
 
 static int test_v1_source_commands_preserved(void) {
     int i;
@@ -165,7 +228,7 @@ static int test_v1_source_commands_preserved(void) {
     return 0;
 }
 
-/* ── TC-5: source evidence string references ReDMCSB ────────────── */
+/* ── TC-6: source evidence string references ReDMCSB ────────────── */
 
 static int test_source_evidence_anchors(void) {
     const char* ev = dm1_v2_side_by_side_seed_source_evidence();
@@ -177,7 +240,7 @@ static int test_source_evidence_anchors(void) {
     return 0;
 }
 
-/* ── TC-6: V1 viewport geometry scaffold accessor ───────────────
+/* ── TC-7: V1 viewport geometry scaffold accessor ───────────────
  *
  * Locks the source-locked V1 viewport geometry constants (portrait
  * + wall panel) used by future screenshot-diff and pixel-scaffolding
@@ -249,7 +312,7 @@ static int test_v1_geometry_scaffold(void) {
     return 0;
 }
 
-/* ── TC-7: v1_geometry(NULL) is null-safe ──────────────────────── */
+/* ── TC-8: v1_geometry(NULL) is null-safe ──────────────────────── */
 
 static int test_v1_geometry_null_safe(void) {
     CHECK(dm1_v2_side_by_side_seed_v1_geometry(NULL) == 0);
@@ -264,6 +327,7 @@ int main(void) {
     if (test_scaffold_dimensions()) return 1;
     if (test_build_entry_seed()) return 1;
     if (test_layout_hash_reproduces()) return 1;
+    if (test_composite_pixel_accessor()) return 1;
     if (test_v1_source_commands_preserved()) return 1;
     if (test_source_evidence_anchors()) return 1;
     if (test_v1_geometry_scaffold()) return 1;

@@ -138,6 +138,18 @@ uint64_t dm1_v2_side_by_side_seed_hash_color(uint64_t hash,
 uint64_t dm1_v2_side_by_side_seed_hash_layout(const DM1_V2_ViewportState* v1,
                                               const DM1_V2_ViewportState* v2);
 
+/* Sample one pixel from the canonical "V1 || gap || V2" composite
+ * described above. This is the small screenshot/pixel-scaffolding
+ * accessor for future visual-diff gates: callers can verify lane
+ * alignment and content without duplicating the V1/gap/V2 x-coordinate
+ * math. Returns 1 on success and writes *outColor. Returns 0 for NULL
+ * args or out-of-bounds composite coordinates. */
+int dm1_v2_side_by_side_seed_composite_pixel(
+    const DM1_V2_SideBySideSeed* seed,
+    int x,
+    int y,
+    DM1_V2_Color* outColor);
+
 /* Render the DM1 PC 3.4 entry composition into a V1 lane and a V2
  * lane (both presentation-disabled), populate *out with the seed
  * fields, and return 1 on success. Returns 0 if out is NULL, the
