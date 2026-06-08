@@ -282,6 +282,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 4 - Rendering pipeline slices and viewport/source-lock scaffolding.
 - ✅ Phase 6 - Save/import compatibility, including Nexus V1 save/load round-trip probe coverage.
 - ✅ Phase 7 - Verification-suite coverage for compile, save/load, and runtime-state paths.
+- ✅ Nexus V1 DGN actor slot bounds regression: malformed actor type refs are rejected without consuming slots, out-of-grid fixture coordinates clamp to the 64x64 DGN grid, and active actor slot overflow is rejected at `NEXUS_MAX_ACTIVE_CREATURES`.
 - 🔒 Source-lock audit coverage for Nexus DMDF/DGN loading, sensors, movement, input, inventory, doors, triggers, combat, AI, sound, save/load, and launch/runtime boundaries.
 
 ### Nexus V2.0 / V2.1 / V2.2
