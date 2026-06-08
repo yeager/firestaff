@@ -57,10 +57,11 @@
  * The second half of the probe drives the canonical legal Hall route
  * through the public M11 input path: start at (1,3,SOUTH), move
  * forward into the corridor, then turn around to face the second
- * mirror at (1,4,NORTH).  That locks the COMMAND.C F0359/F0361 ->
- * CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundary used by real
- * runtime input while keeping the pixel assertion identical to the
- * direct route above.
+ * mirror at (1,4,NORTH), then left-turn through the side-wall
+ * no-portrait pose and back to the south-facing mirror.  That locks
+ * both left/right COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 ->
+ * MOVESENS.C tick boundaries used by real runtime input while keeping
+ * the pixel assertion identical to the direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -133,6 +134,7 @@ typedef struct InputWalkStep {
     int mapY;
     int dir;
     int expectedOrdinal;
+    int inputBeforeCheck;
     const char* label;
 } InputWalkStep;
 
@@ -430,10 +432,18 @@ int main(int argc, char** argv) {
         {1, 3, 1,  "hall_walk_step_e_north_back_to_ordinal_1"},
     };
     const InputWalkStep inputSteps[] = {
-        {1, 3, DIR_SOUTH, -1, "hall_input_start_south_no_portrait"},
-        {1, 4, DIR_SOUTH, 3,  "hall_input_forward_south_ordinal_3"},
-        {1, 4, DIR_WEST, -1,  "hall_input_turn_west_no_portrait"},
-        {1, 4, DIR_NORTH, 2,  "hall_input_turn_north_ordinal_2"},
+        {1, 3, DIR_SOUTH, -1, -1,
+         "hall_input_start_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP,
+         "hall_input_forward_south_ordinal_3"},
+        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_RIGHT,
+         "hall_input_turn_right_west_no_portrait"},
+        {1, 4, DIR_NORTH, 2, M12_MENU_INPUT_RIGHT,
+         "hall_input_turn_right_north_ordinal_2"},
+        {1, 4, DIR_WEST, -1, M12_MENU_INPUT_LEFT,
+         "hall_input_turn_left_west_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_LEFT,
+         "hall_input_turn_left_south_ordinal_3"},
     };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
@@ -473,29 +483,26 @@ int main(int argc, char** argv) {
     /* Runtime input route: drive the legal Hall corridor through
      * M11_GameView_HandleInput so the movement command queue and
      * source-locked tick boundary participate in the mirror/no-floating
-     * pixel check.  Source anchors: COMMAND.C F0359/F0361 command
-     * dispatch, CLIKMENU.C F0365/F0366 relative movement conversion,
-     * MOVESENS.C:556 viewport redraw after accepted movement, and
-     * DUNVIEW.C:3913-3928 / 8522-8533 C026 D1C portrait blit. */
+     * pixel check.  The added left-turn tail proves the opposite
+     * CLIKMENU.C F0365/F0366 rotation branch after a live right-turn
+     * route has painted the same D1C rectangle.  Source anchors:
+     * COMMAND.C F0359/F0361 command dispatch, CLIKMENU.C F0365/F0366
+     * relative movement conversion, MOVESENS.C:556 viewport redraw
+     * after accepted movement, and DUNVIEW.C:3913-3928 / 8522-8533
+     * C026 D1C portrait blit. */
     set_pose(&game, 1, 3, DIR_SOUTH);
     prevOrdinal = -2;
     for (stepIdx = 0; stepIdx < (int)(sizeof(inputSteps) / sizeof(inputSteps[0])); ++stepIdx) {
         int prevOrd = prevOrdinal;
         int stepOk;
-        if (stepIdx == 1) {
+        if (inputSteps[stepIdx].inputBeforeCheck >= 0) {
             M11_GameInputResult result =
-                M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
+                M11_GameView_HandleInput(&game, inputSteps[stepIdx].inputBeforeCheck);
             if (result != M11_GAME_INPUT_REDRAW) {
-                fprintf(stderr, "FAIL %s forward result=%d want=%d\n",
-                        inputSteps[stepIdx].label, result, M11_GAME_INPUT_REDRAW);
-                ok = 0;
-            }
-        } else if (stepIdx == 2 || stepIdx == 3) {
-            M11_GameInputResult result =
-                M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
-            if (result != M11_GAME_INPUT_REDRAW) {
-                fprintf(stderr, "FAIL %s turn-right result=%d want=%d\n",
-                        inputSteps[stepIdx].label, result, M11_GAME_INPUT_REDRAW);
+                fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
+                        inputSteps[stepIdx].label,
+                        inputSteps[stepIdx].inputBeforeCheck,
+                        result, M11_GAME_INPUT_REDRAW);
                 ok = 0;
             }
         }
