@@ -1,0 +1,51 @@
+{
+  "schema": "firestaff.parity.dm1_v1_chest_teleport_survival.v1",
+  "status": "DM1_V1_CHEST_TELEPORT_SURVIVAL_CONTRACT_ONLY_SOURCE_LOCKED",
+  "scope": "DM1 V1 contract-only regression gate for open chest G0426/G0425 and leader-hand survival across teleporter level changes",
+  "contractOnly": true,
+  "sourceAudit": {
+    "CHEST.C:F0333": {
+      "lines": [31, 67],
+      "claim": "open chest selects G0426_T_OpenChest and materializes the first visible linked contents into G0425_aT_ChestSlots"
+    },
+    "CHEST.C:F0334": {
+      "lines": [113, 132],
+      "claim": "close chest clears G0426_T_OpenChest and recompacts non-empty G0425_aT_ChestSlots into the container link chain"
+    },
+    "CHAMPION.C:F0297/F0298/F0300/F0301/F0302": {
+      "lines": [243, 710],
+      "claim": "leader-hand put/remove, C30+ G0425 clear/write, and occupied-slot swap preserve distinct hand and chest-slot state"
+    },
+    "DUNGEON.C:F0163/F0173/F0174": {
+      "lines": [1769, 2756],
+      "claim": "link append and current/party map setters do not clear G0425/G0426 or leader-hand state"
+    },
+    "MOVESENS.C:F0267": {
+      "lines": [469, 492],
+      "claim": "teleporter target resolution can change the current map during movement without closing the currently open chest"
+    },
+    "OBJECT.C:F0033": {
+      "lines": [147, 212],
+      "claim": "open materialization refreshes object icon identity without changing thing identity"
+    },
+    "BLITMASK.C:F0133": {
+      "lines": [30, 33],
+      "claim": "masked blit routing is presentation-only and not a chest state mutation"
+    },
+    "DEFS.H": {
+      "lines": [810, 2088, 5878, 5881],
+      "claim": "C30, C10_COLOR_FLESH, G0425, and G0426 anchor the slot/global constants used by the gate"
+    }
+  },
+  "expectedRuntimeContract": [
+    "Open on level A fills three G0425 slots and leaves the leader hand occupied.",
+    "Teleporting to level B and back to level A preserves G0426, the G0425 slots, chest link identity, and leader-hand weight.",
+    "Closing after returning to level A clears G0426 and rewrites three visible links in slot order.",
+    "Reopening level A rematerializes the same three items in the same order.",
+    "Closing while still on level B follows the foreign-map close-without-open guard and preserves G0426/G0425."
+  ],
+  "verification": {
+    "ctestName": "dm1_v1_chest_teleport_survival_pc34_compat",
+    "minimumAssertions": 80
+  }
+}
