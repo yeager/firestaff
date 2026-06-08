@@ -111,6 +111,56 @@ int DM1_ChampionPanel_BuildPc34BarFillModel(
     return 1;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Status hand slot box pixel model — CHAMDRAW.C F0291_CHAMPION_DrawSlot
+ *
+ * ReDMCSB: F0291 lines 632-646 / 648-651 only render an 18x18 slot-box
+ * graphic when slotIndex is 0..5. For status hand slots (0 = ready
+ * hand, 1 = action hand), the slot box origin is the parent status box
+ * at the source-locked offsets:
+ *   ready hand  = (champIdx * 69 + 4, 10)
+ *   action hand = (champIdx * 69 + 24, 10)
+ * ReDMCSB: F0291 lines 648-651 choose the acting-hand override only
+ * when (slotIndex == C01_SLOT_ACTION_HAND) and isActingChampion. The
+ * wound bitmask (1 << slotIndex) is consulted only after that override
+ * is rejected, so a wounded action hand is still drawn with C034 when
+ * the champion is not acting.
+ * ReDMCSB: DEFS.H:2186-2188 C033/C034/C035 graphic IDs.
+ * ReDMCSB: layout-696 C211..C218 zone anchors for the 8 hand slots.
+ * ══════════════════════════════════════════════════════════════════════ */
+int DM1_ChampionPanel_BuildStatusHandSlotBoxModel(
+    int championIndex, int handIndex, int isActingChampion,
+    DM1_ChampionPanel_StatusHandSlotBoxModel *outModel)
+{
+    int x, y;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        handIndex < 0 || handIndex > 1) {
+        return 0;
+    }
+
+    DM1_ChampionPanel_StatusHandSlotXY(championIndex, handIndex, &x, &y);
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->championIndex = championIndex;
+    outModel->handIndex = handIndex;
+    outModel->isActionHand = (handIndex == DM1_SLOT_ACTION_HAND) ? 1 : 0;
+    outModel->isActingChampion = isActingChampion ? 1 : 0;
+    outModel->x = x;
+    outModel->y = y;
+    outModel->width = DM1_SLOT_BOX_SIZE;
+    outModel->height = DM1_SLOT_BOX_SIZE;
+    /*
+     * F0291 lines 632-646 only renders body slots 0..5; ready hand
+     * (slot 0) and action hand (slot 1) both use the F0291 graph
+     * routine, so the box graphic flows through the same wounded/
+     * acting/normal cascade.
+     */
+    outModel->graphicId = DM1_ChampionPanel_SlotBoxGraphic(
+        handIndex, 0u, isActingChampion ? 1 : 0);
+    return 1;
+}
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel)
