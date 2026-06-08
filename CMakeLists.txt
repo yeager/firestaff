@@ -84,6 +84,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d2l2_d2r2_f0111_front_cli
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d2l2_d2r2_f0111_front_clipped_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat.c
@@ -154,6 +158,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0r2_wall_pc34_compat\\.c
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d0r2_wall_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
@@ -222,6 +230,10 @@ list(APPEND M10_SOURCES
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_empty_reopen_runtime_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_empty_reopen_runtime_pc34_compat.c
+)
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat.c
 )
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_round_trip_hand_swap_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
@@ -1995,6 +2007,22 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_pc34_compat
     )
 
+    add_executable(test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat
+        tests/test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat
+        COMMAND test_csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_pc34_compat
+    )
+
     add_executable(firestaff_csb_v1_viewport_d2l2_d2r2_f0111_front_clipped_pc34_compat_test
         tests/test_csb_v1_viewport_d2l2_d2r2_f0111_front_clipped_pc34_compat.c
         src/csb/csb_v1_viewport_d2l2_d2r2_f0111_front_clipped_pc34_compat.c
@@ -2807,18 +2835,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_close_rewire_runtime_pc34_compat
     )
 
-    add_executable(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
+    add_executable(test_dm1_v1_chest_link_corruption_recovery_pc34_compat
         tests/test_dm1_v1_chest_link_corruption_recovery_pc34_compat.c
         src/dm1/dm1_v1_chest_link_corruption_recovery_pc34_compat.c
     )
-    target_link_libraries(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE firestaff_m10)
-    target_include_directories(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_chest_link_corruption_recovery_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_chest_link_corruption_recovery_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_chest_link_corruption_recovery_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
-        COMMAND firestaff_dm1_v1_chest_link_corruption_recovery_pc34_compat_test
+        NAME dm1_v1_chest_link_corruption_recovery_pc34_compat
+        COMMAND test_dm1_v1_chest_link_corruption_recovery_pc34_compat
     )
 
     add_executable(firestaff_dm1_v1_chest_empty_party_group_cleanup_pc34_compat_test
@@ -3253,6 +3281,20 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_empty_reopen_runtime_pc34_compat
         COMMAND test_dm1_v1_chest_empty_reopen_runtime_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat
+        tests/test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat.c
+        src/dm1/dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat PRIVATE include)
+    target_link_libraries(test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat
+        COMMAND test_dm1_v1_chest_scroll_wheel_pickup_drop_pc34_compat
     )
 
     add_executable(test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat
@@ -6340,6 +6382,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d0r2_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0r2_wall_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat
+        tests/test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat
         tests/test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat.c
@@ -6523,6 +6569,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d0r2_wall_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     target_link_libraries(test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat
         PRIVATE firestaff_m10
     )
@@ -6646,6 +6698,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_d1l2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -6781,6 +6834,14 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d0r2_wall_pc34_compat
         COMMAND test_dm1_v1_viewport_d0r2_wall_pc34_compat
+    add_test(
+        NAME dm1_v1_viewport_d0l2_d0r2_wall_source_lock
+        COMMAND test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat
+    )
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0l2_d0r2_wall_source_lock
+        COMMAND test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_source_lock
