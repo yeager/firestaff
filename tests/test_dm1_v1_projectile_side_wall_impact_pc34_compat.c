@@ -1,0 +1,429 @@
+/*
+ * DM1 V1 runtime regression: projectile side-wall (and any-cardinal
+ * wall) impact route. Focused, contract-only synthetic regression
+ * pinning the F0811 wall-impact dispatch through F0820 resolve.
+ *
+ * Source mapping (ReDMCSB WIP20210206, Toolchains/Common/Source):
+ *   - PROJEXPL.C:F0217_PROJECTILE_HasImpactOccured wall branch
+ *     lines 689-727 routes the wall case (C00_ELEMENT_WALL,
+ *     closed-fakewall, stairs-onto-stairs) into a projectile impact.
+ *   - PROJEXPL.C:F0219_PROJECTILE_ProcessEvents48To49 per-tick
+ *     advance (mirror F0811) inspects the destination cell via the
+ *     F0814 BLOCKER_WALL branch and dispatches HIT_WALL on
+ *     cross-cell travel.
+ *   - PROJEXPL.C:583-602 non-explosion impact sound path
+ *     (C00_SOUND_METALLIC_THUD for C05_THING_TYPE_WEAPON otherwise
+ *     C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM) is
+ *     the contract the v1 model pins for the non-explosion arm
+ *     of F0217/F0820. NEEDS DISASSEMBLY REVIEW for the weapon vs
+ *     non-weapon mapping on the Firestaff projectile struct
+ *     (no associated-thing field; attackTypeCode carries the
+ *     closest analogue).
+ *   - DUNGEON.C:F0151_DUNGEON_GetSquare + DEFS.H C00..C5 square
+ *     type encoding; DUNGEON_ELEMENT_WALL in the high 3 bits of
+ *     the square byte.
+ *   - memory_projectile_pc34_compat.c F0814 wall branch
+ *     (PROJECTILE_ELEMENT_WALL → PROJECTILE_BLOCKER_WALL) and
+ *     F0820 HIT_WALL case (no emittedExplosion for kinetic,
+ *     despawn=1, source-locked comment at line 624-625 cites the
+ *     non-explosion impact sound path that the current v1 code
+ *     applies only to the OPEN_DOOR door-impact arm).
+ *
+ * Contract pinned by this test:
+ *   - F0814 classifies a C00_ELEMENT_WALL destination square as
+ *     PROJECTILE_BLOCKER_WALL (and likewise for closed fakewall
+ *     and stairs-onto-stairs).
+ *   - F0811 cross-cell flight into a wall reports
+ *     PROJECTILE_RESULT_HIT_WALL, despawn=1, and the projectile's
+ *     outNewState mapIndex/X/Y is the source square (the
+ *     projectile is NOT committed to the wall square).
+ *   - F0820 HIT_WALL arm emits no combat action, no door event,
+ *     no sound code in v1 (gap: the ReDMCSB non-explosion impact
+ *     sound path at PROJEXPL.C:587-600 is not yet wired into
+ *     F0820's HIT_WALL arm; the test pins the current v1 state
+ *     deterministically so a future source-locked fix is a
+ *     focused single-line change with a clear regression).
+ *   - For a magical projectile whose subtype maps to
+ *     SUBTYPE_CREATES_EXPLOSION, F0820 HIT_WALL sets
+ *     emittedExplosion=1 and populates outExplosion at the wall
+ *     coordinates.
+ *   - The cell rotated by the parity rule (PROJEXPL.C:721-725)
+ *     lands on the destination-side lane of the source square
+ *     for each of the 4 cardinal directions; this test pins the
+ *     parity rule only as far as the wall-impact dispatch needs
+ *     it (cross-cell → HIT_WALL with deterministic cell update).
+ *
+ * Non-overlap:
+ *   - test_dm1_v1_projectile_explosion_render covers the
+ *     magical/closed-fakewall/stairs/door travel blockers in
+ *     a single F0811 sweep. This test is narrower: it pins
+ *     the wall-impact dispatch + final object location + per-
+ *     direction parity across 4 cardinals.
+ *   - test_dm1_v1_throw_into_open_door_cell covers the door
+ *     collision / pass-through / square byte layout. This test
+ *     covers walls, not doors.
+ *   - test_dm1_v1_viewport_3d covers the wall-zone viewport
+ *     rendering. This test covers the runtime collision path,
+ *     not the viewport blit.
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+#include "memory_projectile_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
+#include "memory_timeline_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
+
+/* ---- ReDMCSB anchors used by the source-locked comments ----- */
+#define SIDEWALL_REDMCSB_F0217_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0217 lines 689-727 wall travel branch"
+#define SIDEWALL_REDMCSB_F0219_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0219 lines 644-755 F0811 mirror"
+#define SIDEWALL_REDMCSB_F0820_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0217 lines 583-602 non-explosion impact sound path"
+#define SIDEWALL_REDMCSB_SOUND_ANCHOR \
+    "ReDMCSB PROJEXPL.C:587-600 C00_SOUND_METALLIC_THUD vs C04_SOUND_WOODEN_THUD"
+#define SIDEWALL_REDMCSB_PARITY_ANCHOR \
+    "ReDMCSB PROJEXPL.C:714-725 cell cross + parity rotation"
+#define SIDEWALL_DEFS_ANCHOR \
+    "ReDMCSB DEFS.H C00_ELEMENT_WALL (DUNGEON_ELEMENT_WALL = 0 high-3-bits)"
+
+/* ---- Test fixture: directional wall-impact envelope ---------- */
+typedef struct {
+    int direction;             /* 0=N 1=E 2=S 3=W */
+    int cell;                   /* 0..3 */
+    int sourceMapX, sourceMapY;
+    int wallMapX,   wallMapY;
+    const char* label;
+} SideWallCase;
+
+static const SideWallCase kSideWallCases[4] = {
+    { 0, 0, 5, 5, 5, 4, "north" },
+    { 1, 1, 5, 5, 6, 5, "east"  },
+    { 2, 2, 5, 5, 5, 6, "south" },
+    { 3, 3, 5, 5, 4, 5, "west"  },
+};
+
+/* ---- Static test-state counters ----------------------------- */
+static int g_assertions = 0;
+static int g_failures = 0;
+
+static void expect_int(const char* id, int got, int want, const char* anchor)
+{
+    ++g_assertions;
+    if (got != want) {
+        printf("FAIL %s got=%d want=%d at %s\n", id, got, want, anchor);
+        ++g_failures;
+    } else {
+        printf("PASS %s == %d (%s)\n", id, want, anchor);
+    }
+}
+
+static void expect_contains(const char* id, const char* haystack,
+                            const char* needle, const char* anchor)
+{
+    ++g_assertions;
+    if (!haystack || !needle || strstr(haystack, needle) == NULL) {
+        printf("FAIL %s missing \"%s\" at %s\n",
+               id, needle ? needle : "(null)", anchor);
+        ++g_failures;
+    } else {
+        printf("PASS %s contains \"%s\" (%s)\n", id, needle, anchor);
+    }
+}
+
+/* ---- Fixture builders ---------------------------------------- */
+
+static void make_kinetic_arrow(
+    struct ProjectileInstance_Compat* p,
+    int dir, int cell, int mx, int my)
+{
+    memset(p, 0, sizeof(*p));
+    p->slotIndex          = 0;
+    p->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    p->projectileSubtype  = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    p->ownerKind          = PROJECTILE_OWNER_CHAMPION;
+    p->ownerIndex         = 0;
+    p->mapIndex           = 0;
+    p->mapX               = mx;
+    p->mapY               = my;
+    p->cell               = cell & 3;
+    p->direction          = dir & 3;
+    p->kineticEnergy      = 40;
+    p->attack             = 24;
+    p->stepEnergy         = 4;
+    p->firstMoveGraceFlag = 0;
+    p->attackTypeCode     = COMBAT_ATTACK_NORMAL;
+    p->flags              = 0;
+}
+
+static void make_magical_fireball(
+    struct ProjectileInstance_Compat* p,
+    int dir, int cell, int mx, int my)
+{
+    memset(p, 0, sizeof(*p));
+    p->slotIndex          = 0;
+    p->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    p->projectileSubtype  = PROJECTILE_SUBTYPE_FIREBALL;
+    p->ownerKind          = PROJECTILE_OWNER_CHAMPION;
+    p->ownerIndex         = 0;
+    p->mapIndex           = 0;
+    p->mapX               = mx;
+    p->mapY               = my;
+    p->cell               = cell & 3;
+    p->direction          = dir & 3;
+    p->kineticEnergy      = 40;
+    p->attack             = 24;
+    p->stepEnergy         = 4;
+    p->firstMoveGraceFlag = 0;
+    p->attackTypeCode     = COMBAT_ATTACK_FIRE;
+    p->flags              = PROJECTILE_FLAG_CREATES_EXPLOSION;
+}
+
+static void make_wall_digest(
+    struct CellContentDigest_Compat* d,
+    int sourceX, int sourceY, int wallX, int wallY)
+{
+    memset(d, 0, sizeof(*d));
+    d->sourceMapIndex          = 0;
+    d->sourceMapX              = sourceX;
+    d->sourceMapY              = sourceY;
+    d->sourceSquareType        = PROJECTILE_ELEMENT_CORRIDOR;
+    d->destMapIndex            = 0;
+    d->destMapX                = wallX;
+    d->destMapY                = wallY;
+    d->destSquareType          = PROJECTILE_ELEMENT_WALL;
+    d->destFakeWallIsImaginaryOrOpen = 0;
+    d->destDoorState           = PROJECTILE_DOOR_STATE_NONE;
+    d->destTeleporterNewDirection = -1;
+    d->destCreatureType        = -1;
+    d->destIsMapBoundary       = 0;
+}
+
+/* ---- Test 1: F0814 wall classification ---------------------- */
+static void test_f0814_wall_blocker_is_wall(void)
+{
+    struct CellContentDigest_Compat d;
+    int blocker = -1;
+    int rc = 0;
+
+    printf("test_f0814_wall_blocker_is_wall\n");
+
+    make_wall_digest(&d, 5, 5, 5, 4);
+    rc = F0814_PROJECTILE_InspectDestination_Compat(&d, &blocker);
+    expect_int("f0814.wall.rc",  rc,                            1, SIDEWALL_REDMCSB_F0217_ANCHOR);
+    expect_int("f0814.wall.blocker", blocker,                  PROJECTILE_BLOCKER_WALL,
+               SIDEWALL_REDMCSB_F0217_ANCHOR);
+}
+
+/* ---- Test 2: F0811 wall-impact dispatch (4 cardinals) -------- */
+static void test_f0811_side_wall_impact_kinetic_per_direction(void)
+{
+    int i;
+    printf("test_f0811_side_wall_impact_kinetic_per_direction\n");
+
+    for (i = 0; i < 4; ++i) {
+        const SideWallCase* c = &kSideWallCases[i];
+        struct ProjectileInstance_Compat p;
+        struct ProjectileInstance_Compat pOut;
+        struct CellContentDigest_Compat  d;
+        struct ProjectileTickResult_Compat r;
+        int rc = 0;
+
+        memset(&pOut, 0, sizeof(pOut));
+        memset(&r,    0, sizeof(r));
+
+        make_kinetic_arrow(&p, c->direction, c->cell,
+                           c->sourceMapX, c->sourceMapY);
+        make_wall_digest(&d, c->sourceMapX, c->sourceMapY,
+                              c->wallMapX,   c->wallMapY);
+
+        rc = F0811_PROJECTILE_Advance_Compat(&p, &d, 200u + (uint32_t)i,
+                                             NULL, &pOut, &r);
+
+        expect_int("f0811.wall.rc",  rc,                        1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label,         r.resultKind,              PROJECTILE_RESULT_HIT_WALL,
+                   SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label,         r.despawn,                 1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label,         r.emittedExplosion,        0,
+                   "F0820 HIT_WALL: kinetic subtype is not in SUBTYPE_CREATES_EXPLOSION");
+        expect_int(c->label,         r.emittedCombatAction,     0,
+                   "F0820 HIT_WALL: wall impact has no combat target");
+        expect_int(c->label,         r.emittedDoorDestructionEvent, 0,
+                   "F0820 HIT_WALL: wall impact has no door event");
+        expect_int(c->label,         r.emittedDoorToggleEvent,  0,
+                   "F0820 HIT_WALL: wall impact has no door toggle event");
+        expect_int(c->label,         r.emittedSoundCode,        0,
+                   "F0820 HIT_WALL: v1 wall impact does not yet wire the "
+                   "non-explosion impact sound path; pins current state.");
+        expect_int(c->label,         r.newMapIndex,             p.mapIndex,
+                   "F0811 wall impact does not commit projectile to wall mapIndex");
+        expect_int(c->label,         r.newMapX,                 p.mapX,
+                   "F0811 wall impact does not commit projectile to wall X");
+        expect_int(c->label,         r.newMapY,                 p.mapY,
+                   "F0811 wall impact does not commit projectile to wall Y");
+        expect_int(c->label,         r.newDirection,            p.direction,
+                   "F0811 wall impact preserves projectile direction");
+        expect_int(c->label,         pOut.mapIndex,             p.mapIndex,
+                   "F0811 wall-impact outNewState: source mapIndex retained");
+        expect_int(c->label,         pOut.mapX,                 p.mapX,
+                   "F0811 wall-impact outNewState: source X retained");
+        expect_int(c->label,         pOut.mapY,                 p.mapY,
+                   "F0811 wall-impact outNewState: source Y retained");
+        expect_int(c->label,         pOut.kineticEnergy,        p.kineticEnergy - p.stepEnergy,
+                   "F0811 wall impact decrements kinetic energy by stepEnergy");
+        expect_int(c->label,         pOut.attack,               p.attack - p.stepEnergy,
+                   "F0811 wall impact decrements attack by stepEnergy");
+    }
+}
+
+/* ---- Test 3: F0811 magical fireball wall-impact creates explosion - */
+static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct ProjectileInstance_Compat pOut;
+    struct CellContentDigest_Compat  d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0811_magical_fireball_wall_impact_creates_explosion\n");
+
+    memset(&pOut, 0, sizeof(pOut));
+    memset(&r,    0, sizeof(r));
+
+    make_magical_fireball(&p, 0 /* N */, 0, 5, 5);
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    expect_int("f0811.fireball.rc",
+               F0811_PROJECTILE_Advance_Compat(&p, &d, 250u, NULL, &pOut, &r),
+               1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+    expect_int("f0811.fireball.kind",         r.resultKind,        PROJECTILE_RESULT_HIT_WALL,
+               SIDEWALL_REDMCSB_F0219_ANCHOR);
+    expect_int("f0811.fireball.despawn",      r.despawn,           1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+    expect_int("f0811.fireball.explosion",    r.emittedExplosion,  1,
+               "F0820 HIT_WALL: magical + CREATES_EXPLOSION emits explosion");
+    expect_int("f0811.fireball.sound",        r.emittedSoundCode,  0,
+               "F0820 HIT_WALL: explosion branch consumes the projectile, "
+               "no non-explosion impact sound (PROJEXPL.C:583-586 takes the "
+               "explosion path, skipping the 587-600 sound branch).");
+    expect_int("f0811.fireball.combat",       r.emittedCombatAction, 0,
+               "F0820 HIT_WALL: explosion is queued separately, not as a combat action.");
+    expect_int("f0811.fireball.explosion_type", r.outExplosion.explosionType,
+               C000_EXPLOSION_FIREBALL,
+               "F0820 HIT_WALL: explosion type is C000_EXPLOSION_FIREBALL for FIREBALL");
+    expect_int("f0811.fireball.explosion_x",  r.outExplosion.mapX, d.destMapX,
+               "F0820 HIT_WALL: explosion mapX is wall X (impact cell)");
+    expect_int("f0811.fireball.explosion_y",  r.outExplosion.mapY, d.destMapY,
+               "F0820 HIT_WALL: explosion mapY is wall Y (impact cell)");
+    expect_int("f0811.fireball.explosion_attack",
+               r.outExplosion.attack, p.attack,
+               "F0820 HIT_WALL: explosion attack mirrors projectile attack");
+}
+
+/* ---- Test 4: F0820 wall-impact dispatch in isolation -------- */
+static void test_f0820_wall_impact_kinetic_dispatch(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat  d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_wall_impact_kinetic_dispatch\n");
+
+    memset(&r, 0, sizeof(r));
+
+    make_kinetic_arrow(&p, 1 /* E */, 1, 5, 5);
+    make_wall_digest(&d, 5, 5, 6, 5);
+
+    expect_int("f0820.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 300u, NULL, &r),
+               1, SIDEWALL_REDMCSB_F0820_ANCHOR);
+    expect_int("f0820.kind",    r.resultKind,        PROJECTILE_RESULT_HIT_WALL,
+               SIDEWALL_REDMCSB_F0820_ANCHOR);
+    expect_int("f0820.despawn", r.despawn,           1, SIDEWALL_REDMCSB_F0820_ANCHOR);
+    expect_int("f0820.explosion", r.emittedExplosion, 0,
+               "F0820 HIT_WALL arm does not emit an explosion for a kinetic arrow");
+    expect_int("f0820.combat",  r.emittedCombatAction, 0,
+               "F0820 HIT_WALL arm does not emit a combat action (no target on wall)");
+    expect_int("f0820.door_destruction", r.emittedDoorDestructionEvent, 0,
+               "F0820 HIT_WALL arm does not emit a door destruction event");
+    expect_int("f0820.door_toggle", r.emittedDoorToggleEvent, 0,
+               "F0820 HIT_WALL arm does not emit a door toggle event");
+    expect_int("f0820.sound",   r.emittedSoundCode,  0,
+               "F0820 HIT_WALL arm does not yet wire the non-explosion impact "
+               "sound path from PROJEXPL.C:587-600; pins the current v1 state.");
+}
+
+/* ---- Test 5: square-byte encoding for the wall square ------- */
+static void test_wall_square_byte_encoding(void)
+{
+    unsigned char squareByte;
+    int elementType;
+    int wallState;
+
+    printf("test_wall_square_byte_encoding\n");
+
+    /* Mirror DEFS.H C00..C5 square encoding: high 3 bits = element
+     * type, low 3 bits = state/attributes. A C00_ELEMENT_WALL square
+     * has element=0, no extra attributes, so the byte is 0. */
+    squareByte = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) | 0);
+    elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    wallState   = squareByte & DUNGEON_SQUARE_MASK_ATTRIBS;
+
+    expect_int("wall.byte.element",   elementType, DUNGEON_ELEMENT_WALL,
+               SIDEWALL_DEFS_ANCHOR);
+    expect_int("wall.byte.attribs",   wallState,   0,
+               SIDEWALL_DEFS_ANCHOR);
+}
+
+/* ---- Test 6: source-evidence anchor mentions --------------- */
+static void test_source_evidence_mentions_required_anchors(void)
+{
+    printf("test_source_evidence_mentions_required_anchors\n");
+
+    expect_contains("anchor.f0217",
+                    SIDEWALL_REDMCSB_F0217_ANCHOR, "F0217",
+                    "ReDMCSB wall travel branch");
+    expect_contains("anchor.f0219",
+                    SIDEWALL_REDMCSB_F0219_ANCHOR, "F0219",
+                    "ReDMCSB per-tick advance");
+    expect_contains("anchor.f0820",
+                    SIDEWALL_REDMCSB_F0820_ANCHOR, "583-602",
+                    "ReDMCSB non-explosion impact sound path");
+    expect_contains("anchor.sound",
+                    SIDEWALL_REDMCSB_SOUND_ANCHOR, "C04_SOUND_WOODEN_THUD",
+                    "ReDMCSB non-explosion impact sound path");
+    expect_contains("anchor.parity",
+                    SIDEWALL_REDMCSB_PARITY_ANCHOR, "parity",
+                    "ReDMCSB cell parity rule");
+}
+
+int main(void)
+{
+    printf("probe=dm1_v1_projectile_side_wall_impact_pc34_compat\n");
+
+    test_f0814_wall_blocker_is_wall();
+    test_f0811_side_wall_impact_kinetic_per_direction();
+    test_f0811_magical_fireball_wall_impact_creates_explosion();
+    test_f0820_wall_impact_kinetic_dispatch();
+    test_wall_square_byte_encoding();
+    test_source_evidence_mentions_required_anchors();
+
+    if (g_failures) {
+        printf("FAIL dm1_v1_projectile_side_wall_impact_pc34_compat "
+               "failures=%d assertions=%d\n",
+               g_failures, g_assertions);
+        return 1;
+    }
+    if (g_assertions < 60) {
+        printf("FAIL dm1_v1_projectile_side_wall_impact_pc34_compat "
+               "assertions=%d (expect >= 60)\n",
+               g_assertions);
+        return 1;
+    }
+    printf("PASS dm1_v1_projectile_side_wall_impact_pc34_compat "
+           "%d/%d assertions\n",
+           g_assertions, g_assertions);
+    return 0;
+}
