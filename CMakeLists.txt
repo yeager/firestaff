@@ -5654,6 +5654,14 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME dm1_v1_champion_mirror_walkpath_runtime
+        COMMAND firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_mirror_walkpath_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
         NAME dm1_v1_champion_panel_pixels_runtime
         COMMAND firestaff_dm1_v1_champion_panel_pixels_runtime_probe "$ENV{HOME}/.firestaff/data"
     )

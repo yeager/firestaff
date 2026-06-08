@@ -54,6 +54,14 @@
  * per-direction wall draws are the existing zorder probe's
  * coverage.
  *
+ * The second half of the probe drives the canonical legal Hall route
+ * through the public M11 input path: start at (1,3,SOUTH), move
+ * forward into the corridor, then turn around to face the second
+ * mirror at (1,4,NORTH).  That locks the COMMAND.C F0359/F0361 ->
+ * CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundary used by real
+ * runtime input while keeping the pixel assertion identical to the
+ * direct route above.
+ *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
  *   ReDMCSB DUNGEON.C:2608-2612 sets G0289 for C127 champion
@@ -119,6 +127,14 @@ typedef struct WalkStep {
     int expectedOrdinal;
     const char* label;
 } WalkStep;
+
+typedef struct InputWalkStep {
+    int mapX;
+    int mapY;
+    int dir;
+    int expectedOrdinal;
+    const char* label;
+} InputWalkStep;
 
 /* Count the pixels in the front-wall box that match the C026
  * champion portrait ordinal.  This reuses the visibility probe's
@@ -310,6 +326,84 @@ static int check_walk_step(M11_GameViewState* game,
     return ok;
 }
 
+static int check_input_walk_step(M11_GameViewState* game,
+                                 const M11_AssetSlot* portraits,
+                                 int prevOrdinal,
+                                 const InputWalkStep* step,
+                                 unsigned char* outFb) {
+    MirrorMatch match;
+    int ordinal;
+    int ok = 1;
+
+    if (game->world.party.mapX != step->mapX ||
+        game->world.party.mapY != step->mapY ||
+        game->world.party.direction != step->dir) {
+        fprintf(stderr,
+                "FAIL %s pose got=(%d,%d,%d) want=(%d,%d,%d)\n",
+                step->label,
+                game->world.party.mapX, game->world.party.mapY,
+                game->world.party.direction,
+                step->mapX, step->mapY, step->dir);
+        ok = 0;
+    }
+
+    ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (ordinal != step->expectedOrdinal) {
+        fprintf(stderr,
+                "FAIL %s front ordinal got=%d want=%d\n",
+                step->label, ordinal, step->expectedOrdinal);
+        ok = 0;
+    }
+
+    memset(outFb, 0, sizeof(*outFb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, outFb, PROBE_FB_W, PROBE_FB_H);
+    match = match_front_portrait(portraits, outFb,
+                                 step->expectedOrdinal >= 0
+                                     ? step->expectedOrdinal
+                                     : 0);
+
+    if (step->expectedOrdinal >= 0) {
+        if (match.bestOrdinal != step->expectedOrdinal ||
+            match.compared <= 0 ||
+            match.expectedMatched * 100 < match.compared * 90) {
+            fprintf(stderr,
+                    "FAIL %s visible portrait expected=%d best=%d matched=%d/%d\n",
+                    step->label, step->expectedOrdinal, match.bestOrdinal,
+                    match.expectedMatched, match.compared);
+            ok = 0;
+        }
+    } else if (prevOrdinal != -2 &&
+               match.bestMatched * 100 >= 35 * (match.compared > 0 ? match.compared : 1)) {
+        /* The first input frame can be a no-portrait baseline with no
+         * prior ordinal to clear; only later no-portrait input frames
+         * prove the stale-pixel/no-floating invariant. */
+        fprintf(stderr,
+                "FAIL %s input no-portrait step leaked portrait best=%d matched=%d/%d\n",
+                step->label, match.bestOrdinal, match.bestMatched, match.compared);
+        ok = 0;
+    }
+
+    if (prevOrdinal >= 0 && prevOrdinal != step->expectedOrdinal) {
+        int stale = count_ordinal_matched_pixels(portraits, outFb, prevOrdinal);
+        int prevCompared = match_front_portrait(portraits, outFb, prevOrdinal).compared;
+        int prevPct = prevCompared > 0 ? (stale * 100) / prevCompared : 0;
+        if (prevPct >= 35) {
+            fprintf(stderr,
+                    "FAIL %s input stale ordinal=%d leaked matched=%d/%d after step to ordinal=%d\n",
+                    step->label, prevOrdinal, stale, prevCompared,
+                    step->expectedOrdinal);
+            ok = 0;
+        }
+    }
+
+    printf("%s input_pose=(%d,%d,%d) ordinal=%d best=%d matched=%d/%d\n",
+           step->label,
+           game->world.party.mapX, game->world.party.mapY,
+           game->world.party.direction, ordinal,
+           match.bestOrdinal, match.bestMatched, match.compared);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -334,6 +428,12 @@ int main(int argc, char** argv) {
         {3, 3, 19, "hall_walk_step_c_north_ordinal_19"},
         {2, 3, -1, "hall_walk_step_d_north_no_portrait_again"},
         {1, 3, 1,  "hall_walk_step_e_north_back_to_ordinal_1"},
+    };
+    const InputWalkStep inputSteps[] = {
+        {1, 3, DIR_SOUTH, -1, "hall_input_start_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3,  "hall_input_forward_south_ordinal_3"},
+        {1, 4, DIR_WEST, -1,  "hall_input_turn_west_no_portrait"},
+        {1, 4, DIR_NORTH, 2,  "hall_input_turn_north_ordinal_2"},
     };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
@@ -368,6 +468,43 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = steps[stepIdx].expectedOrdinal;
+    }
+
+    /* Runtime input route: drive the legal Hall corridor through
+     * M11_GameView_HandleInput so the movement command queue and
+     * source-locked tick boundary participate in the mirror/no-floating
+     * pixel check.  Source anchors: COMMAND.C F0359/F0361 command
+     * dispatch, CLIKMENU.C F0365/F0366 relative movement conversion,
+     * MOVESENS.C:556 viewport redraw after accepted movement, and
+     * DUNVIEW.C:3913-3928 / 8522-8533 C026 D1C portrait blit. */
+    set_pose(&game, 1, 3, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(inputSteps) / sizeof(inputSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        if (stepIdx == 1) {
+            M11_GameInputResult result =
+                M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s forward result=%d want=%d\n",
+                        inputSteps[stepIdx].label, result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        } else if (stepIdx == 2 || stepIdx == 3) {
+            M11_GameInputResult result =
+                M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s turn-right result=%d want=%d\n",
+                        inputSteps[stepIdx].label, result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &inputSteps[stepIdx], currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = inputSteps[stepIdx].expectedOrdinal;
     }
 
     M11_GameView_Shutdown(&game);
