@@ -173,6 +173,34 @@ int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
     return 1;
 }
 
+int dm1_v2_side_by_side_seed_v1_geometry(DM1_V2_SideBySideV1Geometry* out) {
+    if (!out) return 0;
+    /* Viewport dimensions: ReDMCSB COORD.C:1721-1722 + DUNVIEW.C:2999-3000. */
+    out->viewportW = DM1_V2_VIEWPORT_W;
+    out->viewportH = DM1_V2_VIEWPORT_H;
+    /* D1C champion portrait: ReDMCSB DUNVIEW.C:3913-3928 (32x29 blit at
+     * viewport-local {96,35}). These are the V1 source truth for the
+     * front-wall champion-portrait sensor square (sensor C127 view-
+     * direction mapping DUNGEON.C:2573,2610-12). */
+    out->d1cPortraitW = DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W;
+    out->d1cPortraitH = DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H;
+    out->d1cPortraitX = DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X;
+    out->d1cPortraitY = DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y;
+    out->portraitAnchor = "ReDMCSB DUNVIEW.C:3913-3928";
+    /* D1C wall panel: ReDMCSB DUNVIEW.C:581-593
+     * G0163_aauc_Graphic558_Frame_Walls[12][8] D1C row indexed by
+     * M606_VIEW_SQUARE_D1C (160x111 panel at viewport-local {32,9}).
+     * The wall panel is the D1C front-aspect blit for direction=2
+     * (south-facing party) when the front square is a WALL element,
+     * which is the DM1 PC 3.4 entry state. */
+    out->d1cWallX = DM1_V2_SIDE_BY_SIDE_D1C_WALL_X;
+    out->d1cWallY = DM1_V2_SIDE_BY_SIDE_D1C_WALL_Y;
+    out->d1cWallW = DM1_V2_SIDE_BY_SIDE_D1C_WALL_W;
+    out->d1cWallH = DM1_V2_SIDE_BY_SIDE_D1C_WALL_H;
+    out->wallAnchor = "ReDMCSB DUNVIEW.C:581-593 (G0163_aauc_Graphic558_Frame_Walls[12][8] D1C row, M606_VIEW_SQUARE_D1C)";
+    return 1;
+}
+
 const char* dm1_v2_side_by_side_seed_source_evidence(void) {
     return kSourceEvidence;
 }

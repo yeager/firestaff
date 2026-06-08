@@ -177,6 +177,85 @@ static int test_source_evidence_anchors(void) {
     return 0;
 }
 
+/* ── TC-6: V1 viewport geometry scaffold accessor ───────────────
+ *
+ * Locks the source-locked V1 viewport geometry constants (portrait
+ * + wall panel) used by future screenshot-diff and pixel-scaffolding
+ * gates. The macros are the source of truth; the accessor must
+ * report the same values. Both anchor strings must be non-empty and
+ * reference the ReDMCSB DUNVIEW.C lines that fix the constants.
+ *
+ * ReDMCSB DUNVIEW.C:3913-3928 champion portrait blit at {96,35}.
+ * ReDMCSB DUNVIEW.C:525  G0109 portrait box {96,127,35,63} (W=32, H=29).
+ * ReDMCSB DUNVIEW.C:587  G0163 Frame_Walls[12][8] D1C row {32,191,9,119,128,111,48,0}
+ *                       (W=160, H=111, viewport-local X=32, Y=9).
+ */
+
+static int test_v1_geometry_scaffold(void) {
+    DM1_V2_SideBySideV1Geometry geom;
+    memset(&geom, 0, sizeof(geom));
+    CHECK(dm1_v2_side_by_side_seed_v1_geometry(&geom) == 1);
+
+    /* Viewport dimensions: COORD.C:1721-1722 / DUNVIEW.C:2999-3000. */
+    CHECK(geom.viewportW == 224);
+    CHECK(geom.viewportH == 136);
+    CHECK(geom.viewportW == DM1_V2_VIEWPORT_W);
+    CHECK(geom.viewportH == DM1_V2_VIEWPORT_H);
+
+    /* D1C champion-portrait square: DUNVIEW.C:3913-3928. */
+    CHECK(geom.d1cPortraitW == 32);
+    CHECK(geom.d1cPortraitH == 29);
+    CHECK(geom.d1cPortraitX == 96);
+    CHECK(geom.d1cPortraitY == 35);
+    CHECK(geom.d1cPortraitW == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W);
+    CHECK(geom.d1cPortraitH == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H);
+    CHECK(geom.d1cPortraitX == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_X);
+    CHECK(geom.d1cPortraitY == DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_Y);
+    CHECK(geom.portraitAnchor != NULL);
+    CHECK(strlen(geom.portraitAnchor) > 4);
+    CHECK(strstr(geom.portraitAnchor, "ReDMCSB") != NULL);
+    CHECK(strstr(geom.portraitAnchor, "DUNVIEW.C:3913-3928") != NULL);
+
+    /* D1C wall panel: DUNVIEW.C:581-593 (G0163_aauc_Graphic558_Frame_Walls[12][8]
+     * D1C row indexed by M606_VIEW_SQUARE_D1C). */
+    CHECK(geom.d1cWallX == 32);
+    CHECK(geom.d1cWallY == 9);
+    CHECK(geom.d1cWallW == 160);
+    CHECK(geom.d1cWallH == 111);
+    CHECK(geom.d1cWallX == DM1_V2_SIDE_BY_SIDE_D1C_WALL_X);
+    CHECK(geom.d1cWallY == DM1_V2_SIDE_BY_SIDE_D1C_WALL_Y);
+    CHECK(geom.d1cWallW == DM1_V2_SIDE_BY_SIDE_D1C_WALL_W);
+    CHECK(geom.d1cWallH == DM1_V2_SIDE_BY_SIDE_D1C_WALL_H);
+    CHECK(geom.wallAnchor != NULL);
+    CHECK(strlen(geom.wallAnchor) > 4);
+    CHECK(strstr(geom.wallAnchor, "ReDMCSB") != NULL);
+    CHECK(strstr(geom.wallAnchor, "DUNVIEW.C:581-593") != NULL);
+
+    /* Consistency: the D1C portrait must be entirely inside the
+     * D1C wall panel. The wall panel is the front-aspect blit and
+     * the portrait is blit on top of it. If the portrait ever
+     * escapes the wall panel, the V1 source-truth chain breaks. */
+    CHECK(geom.d1cPortraitX >= geom.d1cWallX);
+    CHECK(geom.d1cPortraitY >= geom.d1cWallY);
+    CHECK(geom.d1cPortraitX + geom.d1cPortraitW <= geom.d1cWallX + geom.d1cWallW);
+    CHECK(geom.d1cPortraitY + geom.d1cPortraitH <= geom.d1cWallY + geom.d1cWallH);
+
+    /* Consistency: both rectangles must fit inside the 224x136
+     * viewport. */
+    CHECK(geom.d1cWallX + geom.d1cWallW <= geom.viewportW);
+    CHECK(geom.d1cWallY + geom.d1cWallH <= geom.viewportH);
+    CHECK(geom.d1cPortraitX + geom.d1cPortraitW <= geom.viewportW);
+    CHECK(geom.d1cPortraitY + geom.d1cPortraitH <= geom.viewportH);
+    return 0;
+}
+
+/* ── TC-7: v1_geometry(NULL) is null-safe ──────────────────────── */
+
+static int test_v1_geometry_null_safe(void) {
+    CHECK(dm1_v2_side_by_side_seed_v1_geometry(NULL) == 0);
+    return 0;
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -187,6 +266,8 @@ int main(void) {
     if (test_layout_hash_reproduces()) return 1;
     if (test_v1_source_commands_preserved()) return 1;
     if (test_source_evidence_anchors()) return 1;
+    if (test_v1_geometry_scaffold()) return 1;
+    if (test_v1_geometry_null_safe()) return 1;
     /* Print the canonical seed fingerprint so downstream visual-diff
      * gates can lock a known-good baseline against it. */
     if (dm1_v2_side_by_side_seed_build_entry(&seed) == 1) {
