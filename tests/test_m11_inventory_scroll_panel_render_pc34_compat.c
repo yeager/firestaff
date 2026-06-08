@@ -296,19 +296,22 @@ static void seed_chest_world(M11_GameViewState* state,
                              struct DungeonJunk_Compat* junks) {
     int i;
     memset(things, 0, sizeof(*things));
-    memset(containers, 0, sizeof(containers[0]) * 1);
+    memset(containers, 0, sizeof(containers[0]) * 2);
     memset(junks, 0, sizeof(junks[0]) * 2);
 
     containers[0].next = THING_ENDOFLIST;
     containers[0].slot = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
     containers[0].type = 0;
+    containers[1].next = THING_ENDOFLIST;
+    containers[1].slot = THING_ENDOFLIST;
+    containers[1].type = 0;
     junks[0].next = (unsigned short)((THING_TYPE_JUNK << 10) | 1);
     junks[0].type = 4;
     junks[1].next = THING_ENDOFLIST;
     junks[1].type = 5;
 
     things->containers = containers;
-    things->containerCount = 1;
+    things->containerCount = 2;
     things->junks = junks;
     things->junkCount = 2;
 
@@ -436,9 +439,12 @@ static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
 static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
-    struct DungeonContainer_Compat containers[1];
+    struct DungeonContainer_Compat containers[2];
     struct DungeonJunk_Compat junks[2];
-    const unsigned short chestThing = (unsigned short)(THING_TYPE_CONTAINER << 10);
+    const unsigned short leaderHandChest =
+        (unsigned short)(THING_TYPE_CONTAINER << 10);
+    const unsigned short actionHandChest =
+        (unsigned short)((THING_TYPE_CONTAINER << 10) | 1);
     const unsigned short firstChestItem =
         (unsigned short)((THING_TYPE_JUNK << 10) | 0);
     unsigned char framebuffer[320 * 200];
@@ -450,11 +456,13 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
                 "GRAPHICS.DAT asset loader is available for source C025 chest panel blit");
     state.assetsAvailable = 1;
-    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        actionHandChest;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, leaderHandChest), 1,
               "leader hand accepts source container thing");
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
-                  &state, CHAMPION_SLOT_ACTION_HAND), -1,
-              "action hand starts empty before pressing-eye chest open");
+                  &state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "action hand starts with a closed chest before pressing-eye chest open");
 
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
@@ -463,11 +471,14 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
               "chest eye route does not open Firestaff dialog overlay");
     ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
               "chest eye route does not mark object-description panel active");
-    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), leaderHandChest,
               "pressing-eye chest route opens the leader-hand container panel");
+    /* ReDMCSB CHEST.C F0333 lines 43-46 writes C145 to C09 only when
+     * P0694_B_PressingEye is false.  With the eye held, a closed action-hand
+     * chest remains C144 even though the leader-hand chest panel is open. */
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
-                  &state, CHAMPION_SLOT_ACTION_HAND), -1,
-              "pressing-eye chest open does not draw C145 into empty action hand");
+                  &state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "pressing-eye chest open does not remap the action-hand chest to C145");
     ASSERT_TRUE(strstr(state.inspectDetail, "CONTAINER CHEST PANEL") != NULL,
                 "chest eye route records source chest-panel detail");
 
