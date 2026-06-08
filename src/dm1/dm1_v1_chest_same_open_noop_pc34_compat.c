@@ -53,6 +53,7 @@ static int count_b_items_in_open_slots(const M11_InventoryState* state,
 const char* dm1_v1_chest_same_open_noop_source_evidence_pc34(void)
 {
     return
+        "CHEST.C F0333 line 28 sets M569_PANEL_CHEST before same-open return\n"
         "CHEST.C F0333 lines 30-32 returns when the requested chest is already G0426_T_OpenChest\n"
         "CHEST.C F0333 lines 53-76 materializes linked contents into G0425_aT_ChestSlots only on the real open path\n"
         "CHEST.C F0334 lines 113-132 closes/relinks only when the open path reaches the different-chest close guard\n"
@@ -134,6 +135,20 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     out->c538AfterSameOpen = state.champions[CHAMPION].chestSlots[1].itemType;
     out->c539AfterSameOpen = state.champions[CHAMPION].chestSlots[2].itemType;
     out->c540AfterSameOpen = state.champions[CHAMPION].chestSlots[3].itemType;
+
+    m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    out->panelContentBeforeReplacingSameOpen =
+        m11_inventory_get_panel_content_pc34(&state);
+    out->replacingSameOpenResult = m11_inventory_open_chest_replacing_current(
+        &state, CHAMPION, DM1_PC34_CHEST_SAME_OPEN_THING, alternate, 8,
+        closed, DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT);
+    out->panelContentAfterReplacingSameOpen =
+        m11_inventory_get_panel_content_pc34(&state);
+    out->openThingAfterReplacingSameOpen =
+        m11_inventory_get_open_chest_thing(&state, CHAMPION);
+    out->c538AfterReplacingSameOpen =
+        state.champions[CHAMPION].chestSlots[1].itemType;
+
     out->bItemsLeakedAfterSameOpen =
         count_b_items_in_open_slots(&state, CHAMPION);
     out->visibleWeightAfterSameOpen =

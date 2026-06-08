@@ -63,6 +63,8 @@ static int test_source_evidence(void)
 
     ok &= expect_contains("evidence same chest guard", evidence,
                           "lines 30-32", f0333Guard);
+    ok &= expect_contains("evidence panel side effect", evidence,
+                          "line 28", "ReDMCSB CHEST.C F0333 line 28");
     ok &= expect_contains("evidence G0425 materialization", evidence,
                           "lines 53-76", f0333Slots);
     ok &= expect_contains("evidence close bypass", evidence,
@@ -148,6 +150,21 @@ static int test_same_open_noop(
                      probe->c540AfterSameOpen,
                      DM1_PC34_CHEST_SAME_OPEN_ITEM_A1 + 3,
                      f0333Guard);
+    ok &= expect_int("replacing helper stale panel setup",
+                     probe->panelContentBeforeReplacingSameOpen,
+                     DM1_PC34_PANEL_SCROLL,
+                     "ReDMCSB CHEST.C F0333 line 28");
+    ok &= expect_int("replacing helper same-open result",
+                     probe->replacingSameOpenResult, 0, f0333Guard);
+    ok &= expect_int("replacing helper restores chest panel",
+                     probe->panelContentAfterReplacingSameOpen,
+                     DM1_PC34_PANEL_CHEST,
+                     "ReDMCSB CHEST.C F0333 line 28");
+    ok &= expect_int("replacing helper same-open keeps G0426",
+                     probe->openThingAfterReplacingSameOpen,
+                     DM1_PC34_CHEST_SAME_OPEN_THING, f0333Guard);
+    ok &= expect_int("replacing helper keeps sparse C538 empty",
+                     probe->c538AfterReplacingSameOpen, 0, f0333Guard);
     ok &= expect_int("same open leaks no alternate chain",
                      probe->bItemsLeakedAfterSameOpen, 0, f0333Guard);
     ok &= expect_int("same open preserves visible weight",
@@ -196,7 +213,7 @@ int main(void)
     ok &= test_pickup_sparse_panel(&probe);
     ok &= test_same_open_noop(&probe);
     ok &= expect_int("minimum assertion count",
-                     g_assertions >= 35 ? 1 : 0, 1, f0333Guard);
+                     g_assertions >= 40 ? 1 : 0, 1, f0333Guard);
 
     printf("assertionCount=%d\n", g_assertions);
     printf("chestSameOpenNoopInvariantOk=%d\n", ok ? 1 : 0);
