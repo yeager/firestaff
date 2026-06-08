@@ -435,10 +435,14 @@ static int parse_dm1_champion_record(const uint8_t *rec,
     /* Skills: 16 bytes from DM1 record */
     memcpy(c->Skills, rec + DM1_CHAMP_OFF_SKILLS, 16);
 
-    /* Equipment slots: 30 × 2-byte THING values */
+    /* ReDMCSB CEDTINCI.C F7090_MakeNewAdventure line ~176 calls
+     * F7020_RemoveObjectModifiersFromStatistics for each champion slot, then
+     * clears C00..C29 to C0xFFFF_THING_NONE and resets load for CSB import. */
     for (i = 0; i < CSB_V1_SLOT_COUNT; i++) {
-        c->Slots[i] = read_le16(rec + DM1_CHAMP_OFF_EQUIP + i * 2);
+        (void)read_le16(rec + DM1_CHAMP_OFF_EQUIP + i * 2);
+        c->Slots[i] = 0xFFFFu;
     }
+    c->Load = 0;
 
     /* Set dead flag if health is 0 */
     if (c->CurrentHealth <= 0) {

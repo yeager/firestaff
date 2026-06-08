@@ -190,6 +190,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### CSB V1
 
+- ✅ CSB V1 champion import carried-object guard: DM1→CSB utility import now clears all 30 imported champion slots to `C0xFFFF_THING_NONE` and resets load, matching ReDMCSB `CEDTINCI.C F7090_MakeNewAdventure`; `test_csb_v1_character_import` covers ready hand, action hand, belt, backpack, chest, final-slot, and load boundaries.
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, profile-specific asset discovery, boot state, diagnostics, and hash-matched launch boundary.
 - ✅ Phase 2 dungeon-data probe slice: synthetic CSB dungeon loading, square/thing accessors, door table, sensor helpers, endgame helpers, world-model behavior, and CSB-vs-DM1 difference checks are covered by `firestaff_csb_v1_dungeon_model_probe`.

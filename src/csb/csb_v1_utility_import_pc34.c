@@ -228,10 +228,15 @@ int csb_v1_dm1_record_to_csb_block(const uint8_t *dm1_record,
     csb_block->Water = 1500;
     csb_block->Load = 0;
 
-    /* Equipment slots: 30 × uint16_t from DM1 record */
+    /* ReDMCSB CEDTINCI.C F7090_MakeNewAdventure line ~176 clears champion
+     * slots C00..C29 to C0xFFFF_THING_NONE after removing possession
+     * modifiers, so CSB imports champion identity/progression but not carried
+     * DM1 objects into the new adventure. */
     for (i = 0; i < 30; i++) {
-        csb_block->Slots[i] = read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        (void)read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        csb_block->Slots[i] = 0xFFFFu;
     }
+    csb_block->Load = 0;
 
     /* Reserved padding bytes are already zero from memset */
     return 0;
