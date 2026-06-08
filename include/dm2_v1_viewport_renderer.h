@@ -189,6 +189,15 @@ void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level);
 void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_intensity);
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
 
+/* ── Lighting helpers ─────────────────────────────────────────── */
+/* dm2_v1_viewport_object_light_level — compute object light intensity
+ * for a tile at `distance_tiles`.
+ * Boundary rule: distance >= source radius extinguishes to 0.
+ */
+uint8_t dm2_v1_viewport_object_light_level(uint8_t base_light_level,
+                                           int distance_tiles,
+                                           const DM2_CreatureSprite *source);
+
 /* ── Main render entry ─────────────────────────────────────────── */
 /* dm2_v1_viewport_render — render one complete viewport frame.
  * Calls the appropriate indoor (T560) or outdoor (T600) path. */

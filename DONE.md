@@ -7,6 +7,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ `TODO.md` and `DONE.md` now document the rule that they must be updated at least twice per day while Firestaff work is active.
 - ✅ `TODO.md` is reserved for remaining fixes/builds; `DONE.md` is reserved for completed work.
 - ✅ Worker refill focus now supports the project priority order: DM1 V1, Theron V1, CSB V1, DM1 V2, CSB V2, DM2 V1, Theron V2, Nexus V1, Nexus V2.
+- ✅ 2026-06-08 10:08 — implemented `dm2_v1_viewport_object_light_level` boundary clipping in DM2 V1 and added the focused CTest `test_dm2_v1_lighting_falloff_boundary` (`distance == light_radius` extinguishes to 0), then registered it in `CMakeLists.txt`.
 
 ## Legend
 
