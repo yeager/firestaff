@@ -1663,6 +1663,26 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_load
     )
 
+    add_executable(test_dm2_v1_world_state_minimap
+        tests/test_dm2_v1_world_state_minimap.c
+        src/dm2/dm2_v1_world_state.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_world_state_minimap PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_world_state_minimap PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_world_state_minimap PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_world_state_minimap
+        COMMAND test_dm2_v1_world_state_minimap
+    )
+
     add_executable(test_dm2_v1_utility_import
         tests/test_dm2_v1_utility_import.c
         src/dm2/dm2_v1_new_game.c

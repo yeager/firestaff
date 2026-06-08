@@ -254,6 +254,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM2 V1
 
+- ✅ DM2 V1 world-state minimap reveal persistence: no-data regression coverage now exercises per-level exploration bits across a Firestaff-private serialize/load round trip.
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
 - ✅ Real-asset probe regression sweep: `probe_dm2_v1_asset_loader`, `probe_dm2_v1_dungeon_loader`, `probe_dm2_v1_object_model`, `probe_dm2_v1_world_state`, and `test_dm2_v1_save_load` pass against the local hash-verified PC English data.
