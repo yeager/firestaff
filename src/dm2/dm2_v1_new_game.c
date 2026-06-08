@@ -471,7 +471,12 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
     session->reputation      = (int16_t)p[24] | ((int16_t)p[25] << 8);
     session->rain_intensity  = p[26];
     session->weather_padding = p[27];
-    /* p[28] = session_version */
+    /* session_version is an explicit profile marker. Reject stale/mismatched
+     * fixtures before accepting loaded state (docs/dm2_save_format.md § session
+     * serialization format, byte 28). */
+    if (p[28] != DM2_SESSION_VERSION) {
+        return -1;
+    }
 
     /* Copy champion records */
     const uint8_t *chp = buf + 29;

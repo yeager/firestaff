@@ -12,6 +12,7 @@
  *   9. Champion record SUPPRESS mask (261 bytes, low nibbles only)
  *  10. DB handle identity (make + resolve round-trip)
  *  11. Invalid slot-header rejection + backup recovery
+ *  12. Stale session metadata mismatch (fixture guard)
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
@@ -20,6 +21,7 @@
  */
 
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_new_game.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -457,6 +459,46 @@ static int test_invalid_slot_header_rejected(void)
     return 1;
 }
 
+/* ── Test 12: Stale fixture metadata rejection ─────────────────── */
+
+static int test_stale_fixture_metadata_guard(void)
+{
+    printf("  Stale fixture metadata guard...\n");
+    DM2_V1_SessionState session;
+    DM2_V1_SessionState out;
+    uint8_t buf[DM2_SESSION_MAX_SIZE];
+    uint8_t stale[DM2_SESSION_MAX_SIZE];
+    int sz;
+    int r;
+
+    dm2_v1_session_new(&session);
+    sz = dm2_v1_session_serialize(&session, buf, sizeof(buf));
+    if (sz <= 0) {
+        printf("    FAIL: serialize base fixture failed\n");
+        return 0;
+    }
+
+    memcpy(stale, buf, (size_t)sz);
+    stale[28] = (uint8_t)(DM2_SESSION_VERSION + 1U);
+    r = dm2_v1_session_deserialize(&out, stale, (size_t)sz);
+    if (r == 0) {
+        printf("    FAIL: deserialize accepted stale session version 0x%02X\n",
+               stale[28]);
+        return 0;
+    }
+
+    memcpy(stale, buf, (size_t)sz);
+    stale[28] = 0;
+    r = dm2_v1_session_deserialize(&out, stale, (size_t)sz);
+    if (r == 0) {
+        printf("    FAIL: deserialize accepted zero session version\n");
+        return 0;
+    }
+
+    printf("    PASS: stale/mismatched session metadata is rejected\n");
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -481,6 +523,7 @@ int main(void)
     RUN(9,  test_champion_mask);
     RUN(10, test_db_handle_roundtrip);
     RUN(11, test_invalid_slot_header_rejected);
+    RUN(12, test_stale_fixture_metadata_guard);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

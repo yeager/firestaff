@@ -1626,6 +1626,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_save_load
         tests/test_dm2_v1_save_load.c
+        src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
