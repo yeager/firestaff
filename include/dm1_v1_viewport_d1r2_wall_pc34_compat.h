@@ -135,6 +135,16 @@ dm1_v1_viewport_d1r2_wall_route_spec_pc34(DM1_V1_D1R2WallRoutePc34 route);
 
 bool dm1_v1_viewport_d1r2_wall_pc34_compat_run(DM1_V1_D1R2WallRunPc34 *out);
 
+bool dm1_v1_viewport_d1r2_wall_apply_frame_pixel_pc34(
+    const DM1_V1_D1R2WallRouteSpecPc34 *spec,
+    int viewport_y,
+    int viewport_x,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_D1R2WallPixelPc34 *out);
+
 uint8_t dm1_v1_viewport_d1r2_wall_blend_pixel_pc34(
     uint8_t destination_pixel,
     uint8_t source_pixel,
