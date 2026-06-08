@@ -20805,6 +20805,28 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         return M11_GameView_GetV1StatusBoxZone(route->zoneId - 151,
                                                outX, outY, outW, outH);
     }
+    if (route->zoneId >= 211 && route->zoneId <= 218) {
+        const int slotBox = route->zoneId - 211;
+        const int championSlot = slotBox >> 1;
+        const int handSlot = slotBox & 1;
+        if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                             &relX, &relY, &relW, &relH)) {
+            return 0;
+        }
+        /* ReDMCSB COMMAND.C G0455 lines 489-496 maps C020..C027 to
+         * C211..C218; DATA.C lines 978-985 declares the status hand
+         * slot zones.  Layout-696 places each 16x16 hand hit box inside
+         * the parent champion status box at x=4 ready / x=24 action,
+         * y=10. */
+        (void)relW;
+        (void)relH;
+        if (outX) *outX = relX + (handSlot ? M11_V1_STATUS_ACTION_HAND_X
+                                           : M11_V1_STATUS_READY_HAND_X);
+        if (outY) *outY = relY + M11_V1_STATUS_HAND_Y;
+        if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
+        if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
+        return 1;
+    }
     if (route->zoneId >= 187 && route->zoneId <= 190) {
         slot = route->zoneId - 187;
         if (!M11_GameView_GetV1StatusBoxZone(slot, &relX, &relY, &relW, &relH)) {
@@ -20874,7 +20896,19 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int* outCoordinateSpace,
                                            int* outZoneId) {
     static const M11_V1MouseRoute interfaceRoutes[] = {
-        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface. */
+        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface
+         * plus the focused G0455 champion name/hand rows needed by the
+         * bounded status-panel resolver.  C020..C027 must precede the
+         * broader C012..C015 status-box routes so hand clicks keep their
+         * source command identity. */
+        { 20,  M11_DM1_MOUSE_SPACE_SCREEN, 211, M11_DM1_MOUSE_MASK_LEFT  },
+        { 21,  M11_DM1_MOUSE_SPACE_SCREEN, 212, M11_DM1_MOUSE_MASK_LEFT  },
+        { 22,  M11_DM1_MOUSE_SPACE_SCREEN, 213, M11_DM1_MOUSE_MASK_LEFT  },
+        { 23,  M11_DM1_MOUSE_SPACE_SCREEN, 214, M11_DM1_MOUSE_MASK_LEFT  },
+        { 24,  M11_DM1_MOUSE_SPACE_SCREEN, 215, M11_DM1_MOUSE_MASK_LEFT  },
+        { 25,  M11_DM1_MOUSE_SPACE_SCREEN, 216, M11_DM1_MOUSE_MASK_LEFT  },
+        { 26,  M11_DM1_MOUSE_SPACE_SCREEN, 217, M11_DM1_MOUSE_MASK_LEFT  },
+        { 27,  M11_DM1_MOUSE_SPACE_SCREEN, 218, M11_DM1_MOUSE_MASK_LEFT  },
         { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_RIGHT },
         { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_RIGHT },
         { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_RIGHT },

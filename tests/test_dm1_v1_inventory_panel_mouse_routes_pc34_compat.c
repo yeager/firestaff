@@ -33,8 +33,8 @@
  *   3. Mouth (C070) and eye (C071) routes from the inventory list,
  *      including a left-button click that the runtime routes to
  *      m11_process_v1_mouth_click / m11_process_v1_eye_click.
- *   4. Status-hand routes (C020..C027) through the interface list
- *      resolving to the C211..C218 status-box zones.
+ *   4. Status-hand routes (C020..C027) through the runtime resolver,
+ *      resolving to the C211..C218 status-box hand zones.
  *   5. Open/close chest action-hand icon swap (C144 <-> C145) and
  *      the close-time clear of v1OpenChestThing via
  *      M11_GameView_CloseV1OpenChest.
@@ -267,21 +267,12 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "eye press with empty leader hand activates champion stats panel state");
 }
 
-/* Detail 4: source-locked status slotbox API and current runtime mouse
- * resolver coverage for the same 8 status hand boxes.
- *
- * ReDMCSB COMMAND.C:489-496 binds C020..C027 status hand commands to
- * zones C211..C218.  The M11 runtime mouse resolver in
- * m11_game_view.c currently does NOT route any click in the status
- * hand rectangles to those C020..C027 commands; the status hand
- * click is dispatched via CHAMPION.C F0302 / CLIKCHAM.C on a separate
- * code path that bypasses the mouse command resolver.
- *
- * This probe therefore exercises the *source-locked slotbox table*
- * (champion_status_slotbox_pc34_compat) and pins the existing mouse
- * resolver behaviour so future additions to the runtime resolver are
- * a conscious, observable change. */
-static void test_inventory_status_hand_source_locked_table(void) {
+/* Detail 4: runtime status hand routes C020..C027.  ReDMCSB COMMAND.C
+ * G0455 lines 489-496 binds these commands to screen-relative zones
+ * C211..C218; CHAMPION.C F0302 then receives command-20 as the slot box
+ * index.  These narrow hand boxes must win over the broader C012..C015
+ * status-box routes in the bounded resolver. */
+static void test_inventory_status_hand_runtime_routes(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -290,8 +281,6 @@ static void test_inventory_status_hand_source_locked_table(void) {
     int space = M11_DM1_MOUSE_SPACE_NONE;
     int zoneId = 0;
     int command = 0;
-    int hitCount = 0;
-    int sawC020C027 = 0;
     unsigned int slotBox;
     int leftButton, topY;
 
@@ -313,10 +302,6 @@ static void test_inventory_status_hand_source_locked_table(void) {
                   "status slot box zone is C211..C218 in source order");
     }
 
-    /* Status name box sanity check: C016..C019 leader-name hit boxes
-     * are the only currently routed status-box click in the interface
-     * mouse list, so we pin that the runtime does match C012..C015 for
-     * a left-button click in those rectangles. */
     for (slotBox = 0; slotBox < 8u; ++slotBox) {
         const int championIndex = (int)(slotBox >> 1);
         const int handSlot = (int)(slotBox & 1u);
@@ -334,25 +319,22 @@ static void test_inventory_status_hand_source_locked_table(void) {
             leftButton, topY,
             M11_DM1_MOUSE_MASK_LEFT,
             &space, &zoneId);
-        if (command == 20 + (int)slotBox) {
-            sawC020C027 = 1;
-        }
-        if (command != 0) {
-            ++hitCount;
-        }
+        ASSERT_EQ(command, 20 + (int)slotBox,
+                  "status hand rectangle resolves to its C020..C027 command");
+        ASSERT_EQ(zoneId, 211 + (int)slotBox,
+                  "status hand rectangle returns its C211..C218 zone id");
+        ASSERT_EQ(space, M11_DM1_MOUSE_SPACE_SCREEN,
+                  "status hand rectangle is screen-relative");
     }
 
-    /* The interface mouse list does not currently expose the C020..C027
-     * status hand routes.  The status hand click is dispatched by
-     * CHAMPION.C F0302 / CLIKCHAM.C on a separate code path. */
-    ASSERT_EQ(sawC020C027, 0,
-              "interface mouse list does not currently route C020..C027 status hand commands");
-    /* It does, however, hit other interface rows (C012..C015 leader-name
-     * click, C007..C010 right-button activate, etc.) for clicks inside
-     * the same rectangles.  Just confirm we are not silently failing to
-     * route any interface click at all. */
-    ASSERT_TRUE(hitCount >= 1,
-                "interface mouse list does route at least one status hand rectangle command");
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_INTERFACE,
+        statusZoneX + 4 - 1,
+        statusZoneY + 10 + 2,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &space, &zoneId);
+    ASSERT_TRUE(command != 20,
+                "pixel immediately left of a status hand zone does not route to C020");
 }
 
 /* Detail 5: open/close chest action-hand icon swap (C144 <-> C145) and
@@ -471,7 +453,7 @@ int main(void) {
     test_inventory_close_panel_right_button_route();
     test_inventory_chest_slot_routes_all_eight();
     test_inventory_mouth_eye_routes_runtime();
-    test_inventory_status_hand_source_locked_table();
+    test_inventory_status_hand_runtime_routes();
     test_inventory_open_chest_action_hand_icon_swap();
     test_inventory_backpack_slot_accepts_non_container_swap();
 
