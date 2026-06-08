@@ -221,6 +221,46 @@ static void test_session_validate(void)
     CHECK(!dm2_v1_session_validate(NULL), "NULL session is invalid");
 }
 
+/* ── Test 4b: Champion inventory write/read order — stable slot layout ── */
+static void test_champion_inventory_order_roundtrip(void)
+{
+    printf("  Champion inventory write/read ordering...\n");
+    FILE *f = tmpfile();
+    if (!f) {
+        CHECK(0, "tmpfile() is available");
+        return;
+    }
+
+    uint32_t in[DM2_CHAMPION_INVENTORY_SLOTS];
+    uint32_t out[DM2_CHAMPION_INVENTORY_SLOTS];
+    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
+        in[i] = ((uint32_t)(0x10u + i) << 16) | (uint32_t)(i + 1);
+    }
+    /* keep one empty slot to ensure zero slot positions are preserved */
+    in[7] = 0;
+
+    CHECK(dm2_champion_inventory_write(in, f) == 0,
+          "inventory write returns success");
+
+    rewind(f);
+    memset(out, 0, sizeof(out));
+    CHECK(dm2_champion_inventory_read(out, f) == 0,
+          "inventory read returns success");
+
+    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
+        char msg[80];
+        snprintf(msg, sizeof(msg), "inventory slot %d order preserved", i);
+        CHECK(out[i] == in[i], msg);
+    }
+
+    CHECK(dm2_champion_inventory_write(NULL, f) == -1,
+          "inventory write rejects NULL inventory");
+    CHECK(dm2_champion_inventory_read(NULL, f) == -1,
+          "inventory read rejects NULL destination");
+
+    fclose(f);
+}
+
 /* ── Test 5: Serialize → deserialize round-trip ── */
 static void test_serialize_roundtrip(void)
 {
@@ -416,6 +456,10 @@ int main(void)
     /* ── Session validation ── */
     printf("\n--- Session validation ---\n");
     test_session_validate();
+
+    /* ── Champion inventory slot order ── */
+    printf("\n--- Champion inventory ordering ---\n");
+    test_champion_inventory_order_roundtrip();
 
     /* ── Serialize round-trip ── */
     printf("\n--- Serialize→deserialize round-trip ---\n");
