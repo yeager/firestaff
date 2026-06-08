@@ -876,6 +876,21 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_dsa_section_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 wall text / oracle-style extraction probe.
+# Headless: no game assets, no SDL rendering required.
+# Verifies: one hash-verified synthetic slice, one wall square, one
+# textstring object, and one decoded inscription payload (ORACLE).
+# Source: ReDMCSB DUNGEON.C F0168, F0171/F0172, BUG0_76.
+add_executable(firestaff_csb_v1_wall_text_oracle_probe
+    probes/csb/firestaff_csb_v1_wall_text_oracle_probe.c
+)
+target_include_directories(firestaff_csb_v1_wall_text_oracle_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_wall_text_oracle_probe PRIVATE firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_wall_text_oracle_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2.1 asset pipeline probe (pass648)
 add_executable(firestaff_pass648_dm1_v2_asset_pipeline_probe probes/verify_pass648_dm1_v2_asset_pipeline.c)
 target_link_libraries(firestaff_pass648_dm1_v2_asset_pipeline_probe PRIVATE firestaff_v2 firestaff_m10)
