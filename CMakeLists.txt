@@ -8261,6 +8261,7 @@ if(BUILD_TESTING)
     target_include_directories(test_nexus_v2_render_pipeline PRIVATE
         ${CMAKE_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v2_render_pipeline PRIVATE m)
     if(NOT MSVC)
         target_compile_options(test_nexus_v2_render_pipeline PRIVATE -Wall -Wextra -O2)
     endif()
