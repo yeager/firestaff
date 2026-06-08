@@ -22,6 +22,9 @@
  *     action-hand C144 closed-chest icon to C145 while a chest is
  *     open in the panel; PANEL.C:1651-1691 closes any prior chest
  *     and routes the action hand through F0342/F0333.
+ *   CHEST.C:30-32 returns before the pressing-eye branch when the
+ *     requested chest is already G0426_T_OpenChest, so an eye click on
+ *     the same normally-open chest must not suppress the C145 icon.
  *   CHEST.C:58-75 and F0334:112-133 compact non-empty visible slots
  *     back to the dungeon linked list on close.
  *   DATA.C:1063-1079 keeps C520..C536 backpack slots as
@@ -49,6 +52,8 @@
  *   8. Eye-click object-description handoff clears the food/water and
  *      champion-stats panel state while preserving the leader-hand object
  *      and carrying the named weapon metadata into the panel fields.
+ *   9. Same-chest pressing-eye reopen preserves the existing normal-open
+ *      C145 action-hand icon because F0333 returns before P0694 handling.
  */
 
 #include "m11_game_view.h"
@@ -619,6 +624,42 @@ static void test_inventory_open_chest_action_hand_icon_swap(void) {
               "closed action-hand chest renders as C144 after close");
 }
 
+/* Detail 6b: same-chest eye reopen does not retroactively mark a normally
+ * opened action-hand chest as eye-opened.  ReDMCSB CHEST.C F0333 lines 30-32
+ * return immediately when G0426_T_OpenChest already equals the requested
+ * thing, before the lines 43-46 P0694_B_PressingEye C09 suppression branch. */
+static void test_inventory_open_chest_same_eye_reopen_keeps_open_icon(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing =
+        (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short daggerThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chestThing;
+    containers[0].slot = daggerThing;
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "normal action-hand open initializes G0426");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), 145,
+              "normal action-hand open starts with C145");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand can hold the same already-open chest thing");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye route on same open chest redraws through F0352/F0342");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "same-eye reopen keeps G0426 on the same chest");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), 145,
+              "same-eye reopen keeps C145 because F0333 returned before P0694");
+}
+
 /* Detail 6: occupied backpack-slot swap with a non-container leader-hand
  * object.  ReDMCSB CHAMPION.C F0302 lines 697-710 validates the
  * leader-hand object against G0038 slot masks, then removes the old slot
@@ -727,6 +768,7 @@ int main(void) {
            "PANEL.C:1126-1200 eye object-description route, "
            "PANEL.C:1250-1254 weapon eye metadata flags, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
+           "CHEST.C:30-32 same-open return before pressing-eye branch, "
            "CHEST.C:112-133 close-time compact\n");
 
     test_inventory_close_panel_right_button_route();
@@ -735,6 +777,7 @@ int main(void) {
     test_inventory_mouth_eye_routes_runtime();
     test_inventory_status_hand_runtime_routes();
     test_inventory_open_chest_action_hand_icon_swap();
+    test_inventory_open_chest_same_eye_reopen_keeps_open_icon();
     test_inventory_backpack_slot_accepts_non_container_swap();
     test_inventory_keyhole_click_wrong_item_keeps_state();
 
