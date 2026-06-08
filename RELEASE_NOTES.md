@@ -1,3 +1,22 @@
+# Firestaff v2.7.7
+
+Patch release focused on DM1 V1 viewport, inventory, champion-panel, and runtime regression hardening after v2.7.6.
+
+## What's New
+
+- Expanded DM1 V1 source-lock and pixel coverage for viewport side walls, stairs/pit dispatch, floor/ceiling fallback, door fronts, wall ornaments, champion mirror paths, and projectile side-cell behavior.
+- Hardened DM1 V1 inventory and champion-panel behavior around chest routing, close/reopen edges, pickup/swap paths, mirror-candidate handoff, hand-slot priority, held-item icons, portraits, wounds, and stale-pixel redraws.
+- Added focused runtime gates for spell-rune preservation, poison/cloud timing, room-transition pickup ordering, delayed timeline saves, keyhole no-op behavior, and audio pack frame bounds.
+- Added cross-game regression coverage for CSB viewport/import/chaos/optional-asset paths, DM2 save/weather/projectile behavior, Nexus palette/DGN bounds/save validation, and Theron launch/progression/shop/transition state.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` at `8cc26c5aa` before release.
+- Local release-prep CMake build, Phase A probe, and audio probe passed before tagging.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.6
 
 Patch release focused on DM1 V1 inventory-panel source-lock hardening after v2.7.5.
