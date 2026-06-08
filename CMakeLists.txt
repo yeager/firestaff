@@ -2616,6 +2616,10 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_asset_status_scan_metrics PRIVATE firestaff_v2)
+    if(ZLIB_FOUND)
+        target_compile_definitions(test_asset_status_scan_metrics PRIVATE FIRESTAFF_HAS_ZLIB=1)
+        target_link_libraries(test_asset_status_scan_metrics PRIVATE ZLIB::ZLIB)
+    endif()
     target_include_directories(test_asset_status_scan_metrics PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )

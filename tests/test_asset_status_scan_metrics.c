@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef FIRESTAFF_HAS_ZLIB
+#include <zlib.h>
+#endif
+
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
@@ -67,6 +71,7 @@ static void put32(unsigned char* p, unsigned int v) {
     p[3] = (unsigned char)((v >> 24U) & 0xffU);
 }
 
+#ifndef FIRESTAFF_HAS_ZLIB
 static int write_stored_zip_file(const char* path, const char* entryName,
                                  const char* payload) {
     FILE* fp = fopen(path, "wb");
@@ -116,6 +121,91 @@ static int write_stored_zip_file(const char* path, const char* entryName,
     }
     return fclose(fp) == 0;
 }
+#endif
+
+#ifdef FIRESTAFF_HAS_ZLIB
+static int deflate_raw_payload(const char* payload,
+                               unsigned char* out,
+                               size_t outCapacity,
+                               unsigned int* outSize) {
+    z_stream zs;
+    int ret;
+    size_t payloadSize = strlen(payload);
+    if (!payload || !out || !outSize) return 0;
+    memset(&zs, 0, sizeof(zs));
+    zs.next_in = (Bytef*)payload;
+    zs.avail_in = (uInt)payloadSize;
+    zs.next_out = out;
+    zs.avail_out = (uInt)outCapacity;
+    ret = deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED,
+                       -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+    if (ret != Z_OK) return 0;
+    ret = deflate(&zs, Z_FINISH);
+    if (ret != Z_STREAM_END) {
+        deflateEnd(&zs);
+        return 0;
+    }
+    *outSize = (unsigned int)zs.total_out;
+    return deflateEnd(&zs) == Z_OK;
+}
+
+static int write_deflated_zip_file(const char* path, const char* entryName,
+                                   const char* payload) {
+    FILE* fp = fopen(path, "wb");
+    unsigned char compressed[512];
+    unsigned char local[30] = {0};
+    unsigned char central[46] = {0};
+    unsigned char eocd[22] = {0};
+    unsigned int payloadSize = (unsigned int)strlen(payload);
+    unsigned int compressedSize = 0U;
+    unsigned int nameLen = (unsigned int)strlen(entryName);
+    unsigned int centralOffset;
+    if (!fp) return 0;
+    if (!deflate_raw_payload(payload, compressed, sizeof(compressed),
+                             &compressedSize)) {
+        fclose(fp);
+        return 0;
+    }
+
+    put32(local, 0x04034b50U);
+    put16(local + 4, 20U);
+    put16(local + 8, 8U);
+    put32(local + 18, compressedSize);
+    put32(local + 22, payloadSize);
+    put16(local + 26, nameLen);
+    if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
+        fwrite(entryName, 1U, nameLen, fp) != nameLen ||
+        fwrite(compressed, 1U, compressedSize, fp) != compressedSize) {
+        fclose(fp);
+        return 0;
+    }
+
+    centralOffset = (unsigned int)ftell(fp);
+    put32(central, 0x02014b50U);
+    put16(central + 4, 20U);
+    put16(central + 6, 20U);
+    put16(central + 10, 8U);
+    put32(central + 20, compressedSize);
+    put32(central + 24, payloadSize);
+    put16(central + 28, nameLen);
+    if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
+        fwrite(entryName, 1U, nameLen, fp) != nameLen) {
+        fclose(fp);
+        return 0;
+    }
+
+    put32(eocd, 0x06054b50U);
+    put16(eocd + 8, 1U);
+    put16(eocd + 10, 1U);
+    put32(eocd + 12, (unsigned int)(sizeof(central) + nameLen));
+    put32(eocd + 16, centralOffset);
+    if (fwrite(eocd, 1U, sizeof(eocd), fp) != sizeof(eocd)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+#endif
 
 static int write_iso_record(unsigned char* dir, int offset, unsigned int lba,
                             unsigned int size, int isDir,
@@ -220,8 +310,13 @@ static int file_matches_payload(const char* path, const char* payload) {
 }
 
 static void check_dm2_virtual_required_files_materialize(const char* root) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    static const char graphicsPayload[] =
+        "Firestaff synthetic DM2 graphics deflated fixture v1\n";
+#else
     static const char graphicsPayload[] =
         "Firestaff synthetic DM2 graphics fixture v1\n";
+#endif
     static const char dungeonPayload[] =
         "Firestaff synthetic DM2 dungeon fixture v1\n";
     char zipPath[512];
@@ -234,16 +329,29 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
 
     snprintf(zipPath, sizeof(zipPath), "%s/dm2_graphics.zip", root);
     snprintf(isoPath, sizeof(isoPath), "%s/dm2_dungeon.iso", root);
+#ifdef FIRESTAFF_HAS_ZLIB
+    check_int(write_deflated_zip_file(zipPath, "dm2/GRAPHICS.DAT", graphicsPayload),
+              "synthetic DM2 deflated ZIP fixture should be written");
+#else
     check_int(write_stored_zip_file(zipPath, "dm2/GRAPHICS.DAT", graphicsPayload),
               "synthetic DM2 ZIP fixture should be written");
+#endif
     check_int(write_iso_file(isoPath, "DUNGEON.DAT;1", dungeonPayload),
               "synthetic DM2 ISO fixture should be written");
     memset(foundPath, 0, sizeof(foundPath));
+#ifdef FIRESTAFF_HAS_ZLIB
+    check_int(asset_find_by_md5(root, "bc27c2a532bbfa8086cbcd2a3dc72775",
+                                foundPath, (int)sizeof(foundPath), 32) &&
+                  strstr(foundPath, "dm2_graphics.zip") != NULL &&
+                  strstr(foundPath, "::dm2/GRAPHICS.DAT") != NULL,
+              "synthetic DM2 GRAPHICS hash should be found inside deflated ZIP");
+#else
     check_int(asset_find_by_md5(root, "1fa389d21b761938e01dd3aa0c26b35d",
                                 foundPath, (int)sizeof(foundPath), 32) &&
                   strstr(foundPath, "dm2_graphics.zip") != NULL &&
                   strstr(foundPath, "::") != NULL,
               "synthetic DM2 GRAPHICS hash should be found inside ZIP");
+#endif
     memset(foundPath, 0, sizeof(foundPath));
     check_int(asset_find_by_md5(root, "8c01c1def7ee3df8de50a3cd9cf05b36",
                                 foundPath, (int)sizeof(foundPath), 32) &&
@@ -251,7 +359,12 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
                   strstr(foundPath, "::") != NULL,
               "synthetic DM2 DUNGEON hash should be found inside ISO");
 
-    M12_AssetStatus_TestSetDm2SyntheticHashes("1fa389d21b761938e01dd3aa0c26b35d",
+    M12_AssetStatus_TestSetDm2SyntheticHashes(
+#ifdef FIRESTAFF_HAS_ZLIB
+                                              "bc27c2a532bbfa8086cbcd2a3dc72775",
+#else
+                                              "1fa389d21b761938e01dd3aa0c26b35d",
+#endif
                                               "8c01c1def7ee3df8de50a3cd9cf05b36");
     M12_AssetStatus_TestResetScanMetrics();
     M12_AssetStatus_Scan(&status, root);
