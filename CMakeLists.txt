@@ -1666,6 +1666,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_utility_import
     )
 
+    add_executable(test_dm2_v1_weather_seed_regression
+        tests/test_dm2_v1_weather_seed_regression.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_weather_seed_regression PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_seed_regression PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_seed_regression PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_seed_regression
+        COMMAND test_dm2_v1_weather_seed_regression
+    )
+
     # ── DM2 V1 Phase 4: Door Mechanics ──
 
     add_executable(test_dm2_door_mechanics

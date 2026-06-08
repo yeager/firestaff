@@ -48,6 +48,7 @@ typedef struct {
     int weather;          /* DM2_WEATHER_* */
     int time_of_day;      /* minutes from midnight (0-1439) */
     float time_fraction;  /* 0.0-1.0, derived from time_of_day */
+    uint32_t weather_seed;/* deterministic weather state */
     int weather_intensity;/* 0-100, affects particle density */
 } DM2_V1_WeatherState;
 
@@ -75,6 +76,9 @@ typedef struct {
 void dm2_v1_weather_init(DM2_V1_WeatherState *state);
 void dm2_v1_weather_set(DM2_V1_WeatherState *state, int weather);
 void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes);
+void dm2_v1_weather_set_seed(DM2_V1_WeatherState *state, uint32_t seed);
+uint32_t dm2_v1_weather_advance_seed(uint32_t seed);
+int dm2_v1_weather_next_state(DM2_V1_WeatherState *state);
 int  dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state);
 int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
 const char *dm2_v1_weather_name(int weather);
