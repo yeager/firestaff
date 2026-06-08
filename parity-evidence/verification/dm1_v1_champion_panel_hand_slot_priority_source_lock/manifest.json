@@ -1,0 +1,643 @@
+{
+  "claim": "DM1 V1 champion-panel/HUD hand-slot priority is source-locked: status hand -> leader hand -> backpack -> belt, with F0302 status hand routing and C30/G0425 chest storage evidence.",
+  "firestaffChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.h",
+      "hits": [
+        {
+          "line": 5,
+          "needle": "DM1 V1 champion panel hand-slot priority source-lock contract"
+        },
+        {
+          "line": 8,
+          "needle": "CHAMPION.C F0302:677-684"
+        },
+        {
+          "line": 10,
+          "needle": "CHAMPION.C F0297:243-298"
+        },
+        {
+          "line": 12,
+          "needle": "CHAMPION.C F0300:511-515"
+        },
+        {
+          "line": 13,
+          "needle": "CHAMPION.C F0301:606-614"
+        },
+        {
+          "line": 15,
+          "needle": "DEFS.H anchors C30_SLOT_CHEST_1, G0425_aT_ChestSlots"
+        },
+        {
+          "line": 18,
+          "needle": "CHAMDRAW.C F0291/F0292"
+        },
+        {
+          "line": 20,
+          "needle": "PANEL.C F0344/F0345"
+        },
+        {
+          "line": 46,
+          "needle": "DM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_SOURCE_STATUS_HAND_PC34"
+        },
+        {
+          "line": 160,
+          "needle": "dm1_v1_champion_panel_hand_slot_priority_resolve_pc34"
+        }
+      ],
+      "id": "firestaff_header_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c",
+      "hits": [
+        {
+          "line": 28,
+          "needle": "status hand -> leader hand -> backpack -> belt"
+        },
+        {
+          "line": 8,
+          "needle": "CHAMPION.C F0302:677-684 resolves status hand slot boxes"
+        },
+        {
+          "line": 10,
+          "needle": "CHAMPION.C F0297:243-298 and F0298"
+        },
+        {
+          "line": 12,
+          "needle": "CHAMPION.C F0300:511-515 clears C30+ through G0425_aT_ChestSlots"
+        },
+        {
+          "line": 13,
+          "needle": "F0301:606-614 writes C30+ through G0425_aT_ChestSlots"
+        },
+        {
+          "line": 14,
+          "needle": "M516_CHAMPIONS[].Load"
+        },
+        {
+          "line": 14,
+          "needle": "CHAMDRAW.C F0291/F0292 provide the redraw contract"
+        },
+        {
+          "line": 15,
+          "needle": "PANEL.C F0344/F0345 are only recorded as the panel redraw dependency"
+        },
+        {
+          "line": 16,
+          "needle": "DUNVIEW.C is a non-claim anchor"
+        },
+        {
+          "line": 171,
+          "needle": "input->slot_box_index <"
+        },
+        {
+          "line": 179,
+          "needle": "input->slot_box_index >> 1"
+        },
+        {
+          "line": 199,
+          "needle": "input->slot_box_index & 1u"
+        }
+      ],
+      "id": "firestaff_module_source_lock",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c",
+      "hits": [
+        {
+          "line": 133,
+          "needle": "test_status_hand_slotbox_0_to_7_routes"
+        },
+        {
+          "line": 146,
+          "needle": "slot%u.status_route"
+        },
+        {
+          "line": 149,
+          "needle": "slot%u.champion"
+        },
+        {
+          "line": 152,
+          "needle": "slot%u.hand"
+        },
+        {
+          "line": 155,
+          "needle": "slot%u.family"
+        },
+        {
+          "line": 159,
+          "needle": "slot%u.accepted"
+        },
+        {
+          "line": 158,
+          "needle": "CHAMPION.C F0302:677-684 slot-order chain"
+        },
+        {
+          "line": 387,
+          "needle": "Assertions:"
+        }
+      ],
+      "id": "firestaff_test_status_chain",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "hits": [
+        {
+          "line": 4566,
+          "needle": "test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat"
+        },
+        {
+          "line": 4568,
+          "needle": "src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c"
+        },
+        {
+          "line": 4578,
+          "needle": "dm1_v1_champion_panel_hand_slot_priority_source_lock"
+        }
+      ],
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No real GRAPHICS.DAT, DUNGEON.DAT, or savegame load.",
+    "No bitmap or original DOS pixel parity claim.",
+    "No change to DUNVIEW viewport presentation order.",
+    "No expansion of chest contents, backpack storage, or object type semantics beyond this contract."
+  ],
+  "problems": [],
+  "redmcsbChecks": [
+    {
+      "claim": "F0302 routes slot-box indices 0..7 through candidate/open/dead guards and M070 hand-slot mapping before inventory slots.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 677,
+          "needle": "if (P0633_ui_SlotBoxIndex < C08_SLOT_BOX_INVENTORY_FIRST_SLOT) {"
+        },
+        {
+          "line": 678,
+          "needle": "if (G0299_ui_CandidateChampionOrdinal)"
+        },
+        {
+          "line": 680,
+          "needle": "L0903_ui_ChampionIndex = P0633_ui_SlotBoxIndex >> 1;"
+        },
+        {
+          "line": 681,
+          "needle": "G0305_ui_PartyChampionCount"
+        },
+        {
+          "line": 681,
+          "needle": "G0423_i_InventoryChampionOrdinal"
+        },
+        {
+          "line": 681,
+          "needle": "M516_CHAMPIONS[L0903_ui_ChampionIndex].CurrentHealth"
+        },
+        {
+          "line": 683,
+          "needle": "L0904_ui_SlotIndex = M070_HAND_SLOT_INDEX(P0633_ui_SlotBoxIndex);"
+        }
+      ],
+      "id": "champion_f0302_status_hand_route",
+      "missing": [],
+      "source": "CHAMPION.C:677-684",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0297/F0298 own leader-hand object, pointer/name, load byte, and F0292 redraw side effects.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 243,
+          "needle": "void F0297_CHAMPION_PutObjectInLeaderHand"
+        },
+        {
+          "line": 253,
+          "needle": "G0415_ui_LeaderEmptyHanded = C0_FALSE;"
+        },
+        {
+          "line": 256,
+          "needle": "F0034_OBJECT_DrawLeaderHandObjectName(P0621_T_Thing);"
+        },
+        {
+          "line": 264,
+          "needle": "M516_CHAMPIONS[G0411_i_LeaderIndex].Load += F0140_DUNGEON_GetObjectWeight(P0621_T_Thing);"
+        },
+        {
+          "line": 266,
+          "needle": "F0292_CHAMPION_DrawState(G0411_i_LeaderIndex);"
+        },
+        {
+          "line": 270,
+          "needle": "THING F0298_CHAMPION_GetObjectRemovedFromLeaderHand"
+        },
+        {
+          "line": 279,
+          "needle": "G0415_ui_LeaderEmptyHanded = C1_TRUE;"
+        },
+        {
+          "line": 293,
+          "needle": "M516_CHAMPIONS[G0411_i_LeaderIndex].Load -= F0140_DUNGEON_GetObjectWeight(L0890_T_LeaderHandObject);"
+        },
+        {
+          "line": 298,
+          "needle": "return L0890_T_LeaderHandObject;"
+        }
+      ],
+      "id": "champion_f0297_f0298_leader_hand",
+      "missing": [],
+      "source": "CHAMPION.C:243-298",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0300 clears C30+ slots through G0425_aT_ChestSlots.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 511,
+          "needle": "L0896_ps_Champion = &M516_CHAMPIONS[P0628_ui_ChampionIndex];"
+        },
+        {
+          "line": 512,
+          "needle": "if (P0629_ui_SlotIndex >= C30_SLOT_CHEST_1) {"
+        },
+        {
+          "line": 513,
+          "needle": "L0894_T_Thing = G0425_aT_ChestSlots[P0629_ui_SlotIndex - C30_SLOT_CHEST_1];"
+        },
+        {
+          "line": 514,
+          "needle": "G0425_aT_ChestSlots[P0629_ui_SlotIndex - C30_SLOT_CHEST_1] = C0xFFFF_THING_NONE;"
+        }
+      ],
+      "id": "champion_f0300_c30_clear",
+      "missing": [],
+      "source": "CHAMPION.C:511-515",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0301 writes C30+ slots through G0425_aT_ChestSlots and then updates the champion load.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 606,
+          "needle": "if (P0631_T_Thing == C0xFFFF_THING_NONE)"
+        },
+        {
+          "line": 608,
+          "needle": "L0900_ps_Champion = &M516_CHAMPIONS[P0630_ui_ChampionIndex];"
+        },
+        {
+          "line": 609,
+          "needle": "if (P0632_ui_SlotIndex >= C30_SLOT_CHEST_1) {"
+        },
+        {
+          "line": 610,
+          "needle": "G0425_aT_ChestSlots[P0632_ui_SlotIndex - C30_SLOT_CHEST_1] = P0631_T_Thing;"
+        },
+        {
+          "line": 614,
+          "needle": "L0900_ps_Champion->Load += F0140_DUNGEON_GetObjectWeight(P0631_T_Thing);"
+        }
+      ],
+      "id": "champion_f0301_c30_write",
+      "missing": [],
+      "source": "CHAMPION.C:606-614",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0302 snapshots leader hand, reads storage, rejects empty/mask cases, then executes F0077/F0298/F0300/F0297/F0301/F0292/F0078 order.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 688,
+          "needle": "L0905_T_LeaderHandObject = G4055_s_LeaderHandObject.Thing;"
+        },
+        {
+          "line": 690,
+          "needle": "L0906_T_SlotThing = G0425_aT_ChestSlots[L0904_ui_SlotIndex - C30_SLOT_CHEST_1];"
+        },
+        {
+          "line": 692,
+          "needle": "L0906_T_SlotThing = M516_CHAMPIONS[L0903_ui_ChampionIndex].Slots[L0904_ui_SlotIndex];"
+        },
+        {
+          "line": 697,
+          "needle": "AllowedSlots & G0038_ai_Graphic562_SlotMasks[L0904_ui_SlotIndex]"
+        },
+        {
+          "line": 700,
+          "needle": "F0077_MOUSE_EnableScreenUpdate_CPSE();"
+        },
+        {
+          "line": 702,
+          "needle": "F0298_CHAMPION_GetObjectRemovedFromLeaderHand();"
+        },
+        {
+          "line": 705,
+          "needle": "F0300_CHAMPION_GetObjectRemovedFromSlot(L0903_ui_ChampionIndex, L0904_ui_SlotIndex);"
+        },
+        {
+          "line": 706,
+          "needle": "F0297_CHAMPION_PutObjectInLeaderHand(L0906_T_SlotThing, C0_FALSE);"
+        },
+        {
+          "line": 709,
+          "needle": "F0301_CHAMPION_AddObjectInSlot(L0903_ui_ChampionIndex, L0905_T_LeaderHandObject, L0904_ui_SlotIndex);"
+        },
+        {
+          "line": 711,
+          "needle": "F0292_CHAMPION_DrawState(L0903_ui_ChampionIndex);"
+        },
+        {
+          "line": 712,
+          "needle": "F0078_MOUSE_DisableScreenUpdate();"
+        }
+      ],
+      "id": "champion_f0302_transaction_order",
+      "missing": [],
+      "source": "CHAMPION.C:688-712",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H binds hand/body/backpack/chest slot constants including C30.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 780,
+          "needle": "#define C00_SLOT_READY_HAND"
+        },
+        {
+          "line": 781,
+          "needle": "#define C01_SLOT_ACTION_HAND"
+        },
+        {
+          "line": 793,
+          "needle": "#define C13_SLOT_BACKPACK_LINE1_1"
+        },
+        {
+          "line": 809,
+          "needle": "#define C29_SLOT_BACKPACK_LINE1_9"
+        },
+        {
+          "line": 810,
+          "needle": "#define C30_SLOT_CHEST_1"
+        },
+        {
+          "line": 817,
+          "needle": "#define C37_SLOT_CHEST_8"
+        }
+      ],
+      "id": "defs_hand_slot_symbols",
+      "missing": [],
+      "source": "DEFS.H:780-817",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H maps M516_CHAMPIONS to the party champion array.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 873,
+          "needle": "#define M516_CHAMPIONS"
+        }
+      ],
+      "id": "defs_m516_party_storage",
+      "missing": [],
+      "source": "DEFS.H:873-876",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H binds the status/inventory slot-box boundary and M070 hand-slot macro.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 1874,
+          "needle": "#define C08_SLOT_BOX_INVENTORY_FIRST_SLOT   8"
+        },
+        {
+          "line": 1876,
+          "needle": "#define C38_SLOT_BOX_CHEST_FIRST_SLOT      38"
+        },
+        {
+          "line": 1878,
+          "needle": "#define M070_HAND_SLOT_INDEX(slotboxindex) ((slotboxindex) & 0x0001)"
+        }
+      ],
+      "id": "defs_slotbox_and_m070",
+      "missing": [],
+      "source": "DEFS.H:1874-1878",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H binds slot-box metadata and the slot masks used by F0302 AllowedSlots.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 5324,
+          "needle": "extern SLOT_BOX G0030_as_Graphic562_SlotBoxes[46];"
+        },
+        {
+          "line": 5332,
+          "needle": "extern int16_t G0038_ai_Graphic562_SlotMasks[38];"
+        }
+      ],
+      "id": "defs_slot_masks",
+      "missing": [],
+      "source": "DEFS.H:5324-5332",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H exposes party count, inventory champion ordinal, chest slots, and open chest.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 5700,
+          "needle": "extern unsigned int16_t G0305_ui_PartyChampionCount;"
+        },
+        {
+          "line": 5876,
+          "needle": "extern int16_t G0423_i_InventoryChampionOrdinal;"
+        },
+        {
+          "line": 5878,
+          "needle": "extern THING G0425_aT_ChestSlots[8];"
+        },
+        {
+          "line": 5881,
+          "needle": "extern THING G0426_T_OpenChest;"
+        }
+      ],
+      "id": "defs_globals",
+      "missing": [],
+      "source": "DEFS.H:5700-5881",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0291 redraws a requested champion slot and reads C30+ inventory from G0425_aT_ChestSlots.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "hits": [
+        {
+          "line": 498,
+          "needle": "void F0291_CHAMPION_DrawSlot"
+        },
+        {
+          "line": 536,
+          "needle": "L0854_ps_Champion = &M516_CHAMPIONS[P0613_ui_ChampionIndex];"
+        },
+        {
+          "line": 537,
+          "needle": "L0852_B_IsInventoryChampion = (G0423_i_InventoryChampionOrdinal == M000_INDEX_TO_ORDINAL(P0613_ui_ChampionIndex));"
+        },
+        {
+          "line": 552,
+          "needle": "L0851_T_Thing = G0425_aT_ChestSlots[P0614_ui_SlotIndex - C30_SLOT_CHEST_1];"
+        }
+      ],
+      "id": "chamdraw_f0291_slot_redraw",
+      "missing": [],
+      "source": "CHAMDRAW.C:498-559",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0292 is the champion state redraw entry called by F0297/F0302.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "hits": [
+        {
+          "line": 703,
+          "needle": "void F0292_CHAMPION_DrawState"
+        },
+        {
+          "line": 709,
+          "needle": "REGISTER CHAMPION* L0865_ps_Champion;"
+        }
+      ],
+      "id": "chamdraw_f0292_redraw_contract",
+      "missing": [],
+      "source": "CHAMDRAW.C:703-711",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0292 redraws panel content and action hand when the relevant attributes are set.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "hits": [
+        {
+          "line": 1060,
+          "needle": "if (M007_GET(L0862_ui_ChampionAttributes, MASK0x0800_PANEL) && L0863_B_IsInventoryChampion) {"
+        },
+        {
+          "line": 1062,
+          "needle": "F0345_INVENTORY_DrawPanel_FoodWaterPoisoned();"
+        },
+        {
+          "line": 1075,
+          "needle": "F0347_INVENTORY_DrawPanel();"
+        },
+        {
+          "line": 1080,
+          "needle": "if (M007_GET(L0862_ui_ChampionAttributes, MASK0x8000_ACTION_HAND)) {"
+        },
+        {
+          "line": 1087,
+          "needle": "F0291_CHAMPION_DrawSlot(P0615_ui_ChampionIndex, C01_SLOT_ACTION_HAND);"
+        },
+        {
+          "line": 1088,
+          "needle": "F0386_MENUS_DrawActionIcon(P0615_ui_ChampionIndex);"
+        }
+      ],
+      "id": "chamdraw_f0292_action_hand",
+      "missing": [],
+      "source": "CHAMDRAW.C:1060-1088",
+      "status": "PASS"
+    },
+    {
+      "claim": "PANEL.C F0344/F0345 are the food/water panel redraw dependency reached by the action-hand panel path.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "hits": [
+        {
+          "line": 1493,
+          "needle": "STATICFUNCTION void F0344_INVENTORY_DrawPanel_FoodOrWaterBar"
+        },
+        {
+          "line": 1519,
+          "needle": "if (P0712_i_Amount < -512) {"
+        },
+        {
+          "line": 1563,
+          "needle": "void F0345_INVENTORY_DrawPanel_FoodWaterPoisoned"
+        },
+        {
+          "line": 1577,
+          "needle": "G0424_i_PanelContent = M565_PANEL_FOOD_WATER_POISONED;"
+        },
+        {
+          "line": 1579,
+          "needle": "L1074_ps_Champion = &M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0423_i_InventoryChampionOrdinal)];"
+        },
+        {
+          "line": 1610,
+          "needle": "F0344_INVENTORY_DrawPanel_FoodOrWaterBar(L1074_ps_Champion->Food"
+        },
+        {
+          "line": 1611,
+          "needle": "F0344_INVENTORY_DrawPanel_FoodOrWaterBar(L1074_ps_Champion->Water"
+        }
+      ],
+      "id": "panel_f0344_f0345_dependency",
+      "missing": [],
+      "source": "PANEL.C:1493-1616",
+      "status": "PASS"
+    },
+    {
+      "claim": "DUNVIEW viewport redraw/clickable setup exists as a non-claim fence for this HUD gate.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8337,
+          "needle": "if (G0297_B_DrawFloorAndCeilingRequested) {"
+        },
+        {
+          "line": 8338,
+          "needle": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+        },
+        {
+          "line": 8343,
+          "needle": "F0008_MAIN_ClearBytes(G0291_aauc_DungeonViewClickableBoxes"
+        },
+        {
+          "line": 8348,
+          "needle": "F0008_MAIN_ClearBytes(M772_CAST_PC(G2210_aai_XYZ_DungeonViewClickable)"
+        }
+      ],
+      "id": "dunview_non_claim_viewport_order",
+      "missing": [],
+      "source": "DUNVIEW.C:8337-8349",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.dm1_v1_champion_panel_hand_slot_priority_source_lock.v1",
+  "status": "passed",
+  "statusToken": "DM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_SOURCE_LOCKED",
+  "timestampUtc": "2026-06-08T08:04:19.590010+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat"
+      ],
+      "outputTail": "Assertions: 111\nFailures: 0\nDM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_PC34_COMPAT_OK",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
