@@ -20180,6 +20180,14 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     /* ReDMCSB CHEST.C F0333 lines 30-32 returns before the
      * P0694_B_PressingEye branch when G0426 already names this chest. */
     if (state->v1OpenChestThing == thing) return 1;
+    /* ReDMCSB CHEST.C F0333 lines 35-38 closes a different already-open
+     * G0426 chest before opening the requested container.  This matters for
+     * the close-time F0334 visible-slot rewrite, including hidden-tail
+     * truncation beyond C537..C544. */
+    if (state->v1OpenChestThing != THING_NONE &&
+        state->v1OpenChestThing != THING_ENDOFLIST) {
+        M11_GameView_CloseV1OpenChest(state);
+    }
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 0;
     state->v1FoodWaterPanelActive = 0;
@@ -20201,6 +20209,13 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
     /* ReDMCSB CHEST.C F0333 lines 30-32 makes same-chest reopen a no-op
      * before C09 open-icon suppression can observe P0694_B_PressingEye. */
     if (state->v1OpenChestThing == thing) return 1;
+    /* ReDMCSB CHEST.C F0333 lines 35-38 closes a different already-open
+     * G0426 chest before PANEL.C F0342/F0352 opens the leader-hand
+     * container through the pressing-eye path. */
+    if (state->v1OpenChestThing != THING_NONE &&
+        state->v1OpenChestThing != THING_ENDOFLIST) {
+        M11_GameView_CloseV1OpenChest(state);
+    }
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 1;
     state->v1FoodWaterPanelActive = 0;

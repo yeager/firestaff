@@ -1107,6 +1107,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_panel_pixels_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 transitive open-chest pressing-eye runtime gate.
+# Opens an action-hand chest with a hidden ninth tail, then opens a different
+# leader-hand chest through the eye path and verifies the previous chest was
+# closed/recompacted through the source C537..C544 visible-slot rewrite.
+add_executable(firestaff_dm1_v1_chest_transitive_eye_open_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_transitive_eye_open_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_transitive_eye_open_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_transitive_eye_open_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel status-recompute runtime integration probe.
 # Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
 # food/water/poison panel visible-delta spec against the M11 draw stack
