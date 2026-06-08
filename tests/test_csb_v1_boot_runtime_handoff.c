@@ -27,6 +27,8 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
+#include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
@@ -101,6 +103,91 @@ static int write_synthetic_dungeon(const char *path, uint8_t square_type_1_1)
     n = fwrite(buf, 1, sizeof(buf), f);
     fclose(f);
     return (n == sizeof(buf)) ? 0 : -1;
+}
+
+static int write_synthetic_dm1_save_for_utility_flow(const char *path)
+{
+    uint8_t buf[1024];
+    FILE *f;
+    size_t n;
+
+    memset(buf, 0, sizeof(buf));
+    buf[CSB_V1_DM1_HDR_CHAMP_COUNT] = 1;
+
+    /* One living champion. Keep structure minimal, but include all
+     * required stat offsets for import consistency. */
+    memcpy((char *)buf + CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_NAME,
+           "ALPHA   ", 8);
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_HEALTH] = 80;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_HEALTH + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH] = 100;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_STAMINA] = 60;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_STAMINA + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA] = 100;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MANA] = 30;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MANA + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_MANA] = 50;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_MAX_MANA + 1] = 0;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_STR] = 55;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_DEX] = 66;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_WIS] = 77;
+    buf[CSB_V1_DM1_HDR_CHAMPION_START + CSB_V1_DM1_CHAMP_OFF_VIT] = 88;
+
+    {
+        size_t equip_off = (size_t)CSB_V1_DM1_HDR_CHAMPION_START +
+                           (size_t)CSB_V1_DM1_CHAMP_OFF_EQUIP;
+        int slot;
+        for (slot = 0; slot < CSB_V1_SLOT_COUNT; slot++) {
+            buf[equip_off + (size_t)slot * 2u] = 0xFFu;
+            buf[equip_off + (size_t)slot * 2u + 1u] = 0xFFu;
+        }
+    }
+
+    f = fopen(path, "wb");
+    if (!f) return -1;
+    n = fwrite(buf, 1, sizeof(buf), f);
+    fclose(f);
+    return (n == sizeof(buf)) ? 0 : -1;
+}
+
+static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
+{
+    CSB_V1_UtilFlowContext ctx;
+    CSB_V1_PartyState party;
+    const char *save_path = "/tmp/firestaff-csb-v1-utility-flow-leader.sav";
+
+    CHECK(write_synthetic_dm1_save_for_utility_flow(save_path) == 0,
+          "synthetic DM1 save written for utility flow handoff test");
+
+    csb_v1_util_flow_init(&ctx);
+    csb_v1_util_flow_set_dm1_path(&ctx, save_path);
+    ctx.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "utility flow import step parses DM1 save");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_CONFIRM_IMPORT,
+          "utility flow enters CONFIRM_IMPORT after successful import");
+
+    csb_v1_util_flow_confirm_import(&ctx, 1);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "confirmed import advances utility flow to NEW_GAME");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_NEW_GAME,
+          "utility flow reaches NEW_GAME state");
+
+    CHECK(csb_v1_util_flow_step(&ctx) == 1,
+          "new-game step completes the utility flow");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_DONE,
+          "utility flow state is DONE after launch transition");
+
+    memset(&party, 0, sizeof(party));
+    CHECK(csb_v1_util_flow_get_party(&ctx, &party) == 1,
+          "get_party returns one champion after NEW_GAME");
+    CHECK(party.ChampionCount == 1,
+          "party.ChampionCount is preserved through NEW_GAME handoff");
+    CHECK(party.LeaderIndex == 0,
+          "LeaderIndex is preserved through NEW_GAME handoff");
 }
 
 static void test_enter_game_with_verified_profile_loads_dungeon(void)
@@ -275,10 +362,13 @@ int main(void)
     test_enter_game_with_verified_profile_loads_dungeon();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
+    test_utility_flow_new_game_handoff_preserves_leader_index();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 boot→runtime handoff completes dungeon load, asset metadata, and entrance/start map handoff in one step");
         puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 lines 409-441; LOADSAVE.C F0435 lines 1940-1944; CSBWin/CSBCode.cpp:6800-6950 LoadDungeon");
+        puts("ok: CSB utility flow NEW_GAME handoff preserves LeaderIndex in csb_v1_util_flow_get_party()");
+        puts("sourceEvidence=ReDMCSB SAVEGAME.C F0100-F0120 import state; ReDMCSB ENTRANCE.C F0806 startup flow");
     }
     return failed == 0 ? 0 : 1;
 }
