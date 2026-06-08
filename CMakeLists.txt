@@ -3498,6 +3498,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_ninth_item_hidden_tail_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chest_open_draw_events_pc34_compat
+        tests/test_dm1_v1_chest_open_draw_events_pc34_compat.c
+        src/dm1/dm1_v1_chest_open_draw_events_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_open_draw_events_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_chest_open_draw_events_pc34_compat PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_open_draw_events_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_open_draw_events_pc34_compat
+        COMMAND test_dm1_v1_chest_open_draw_events_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_chest_pickup_at_capacity_pc34_compat_test
         tests/test_dm1_v1_chest_pickup_at_capacity_pc34_compat.c
         src/dm1/dm1_v1_chest_pickup_at_capacity_pc34_compat.c
