@@ -42,7 +42,8 @@
  *      leader-hand object because backpack slots are any-slot routes,
  *      unlike chest C537..C544.
  *   7. Eye-click object-description handoff clears the food/water and
- *      champion-stats panel state while preserving the leader-hand object.
+ *      champion-stats panel state while preserving the leader-hand object
+ *      and carrying the named weapon metadata into the panel fields.
  */
 
 #include "m11_game_view.h"
@@ -399,7 +400,13 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
      * food/water panel to the object-description panel.  ReDMCSB
      * PANEL.C F0352:1126-1200 routes non-scroll, non-container objects
      * through the object description path after reading G0352 names and
-     * G0237 object info. */
+     * G0237 object info.  PANEL.C:1250-1254 then folds weapon cursed,
+     * poisoned, broken, and charge-count fields into the same eye panel. */
+    weapons[0].type = 4; /* STAFF OF CLAWS: named weapon metadata path. */
+    weapons[0].cursed = 1;
+    weapons[0].poisoned = 1;
+    weapons[0].broken = 1;
+    weapons[0].chargeCount = 7;
     state.v1FoodWaterPanelActive = 1;
     state.v1ObjectDescriptionPanelActive = 0;
     state.v1ObjectDescriptionThing = THING_NONE;
@@ -423,8 +430,20 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "object-description state records inspected leader-hand thing");
     ASSERT_EQ(state.v1ObjectDescriptionIconIndex >= 0, 1,
               "object-description state records a resolved icon index");
+    ASSERT_EQ(strcmp(state.v1ObjectDescriptionName, "STAFF OF CLAWS"), 0,
+              "object-description state records the source weapon name");
+    ASSERT_CONTAINS(state.inspectTitle, "WEAPON: STAFF OF CLAWS",
+                    "eye object-description title records weapon family and name");
     ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "WEAPON",
                     "object-description body records weapon type detail");
+    ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "CURSED",
+                    "object-description body records source cursed flag");
+    ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "POISONED",
+                    "object-description body records source poisoned flag");
+    ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "BROKEN",
+                    "object-description body records source broken flag");
+    ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "CHARGE 7",
+                    "object-description body records source weapon charge count");
 }
 
 /* Detail 4: runtime status hand routes C020..C027.  ReDMCSB COMMAND.C
@@ -650,6 +669,7 @@ int main(void) {
            "DATA.C:1063-1079 backpack MASK0xFFFF_ANY_SLOT vs "
            "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
            "PANEL.C:1126-1200 eye object-description route, "
+           "PANEL.C:1250-1254 weapon eye metadata flags, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
            "CHEST.C:112-133 close-time compact\n");
 

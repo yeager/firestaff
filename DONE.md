@@ -14,6 +14,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ 2026-06-08 18:10 — tightened the DM1 V1 D1C wall pixel gate so `test_dm1_v1_viewport_d1c_wall_pc34_compat` now proves the ReDMCSB `F0792`/`F0765` PC34 zone routes use `CM1_COLOR_NO_TRANSPARENCY`, making a C10 wall pixel write instead of being treated as transparent.
 - ✅ 2026-06-08 18:24 — broadened `firestaff_dm1_v1_champion_panel_pixels_runtime_probe` with a real-asset runtime HUD spacing slice: after drawing the deterministic four-champion DM1 V1 panel, the C151..C154 67x29 status boxes must keep their source-layout two-pixel black gutters across the 69px stride, without claiming original DOS screenshot parity.
+- ✅ 2026-06-08 18:31 — extended `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat` so the live C071 eye route proves a named Staff of Claws plus cursed/poisoned/broken/charge metadata reaches the runtime object-description panel state, beyond the previous generic weapon body check.
 
 ## Legend
 
