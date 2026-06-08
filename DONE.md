@@ -278,6 +278,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 1 - Runtime profile and launch/profile boundary scaffolding.
 - ✅ Phase 2 - Data format ingestion for Nexus dungeon and supporting Saturn data structures.
 - ✅ Phase 3 - Core world model and runtime state mapping.
+- ✅ Nexus V1 DGN actor-reference bounds: `firestaff_nexus_v1_mechanics_parity_probe` now rejects malformed creature spawn coordinates/facing and proves active creature slot overflow leaves the slot count stable, source-locked to ReDMCSB `DUNGEON.C F0151` and `GROUP.C F0183`.
 - ✅ Phase 4 - Rendering pipeline slices and viewport/source-lock scaffolding.
 - ✅ Phase 6 - Save/import compatibility, including Nexus V1 save/load round-trip probe coverage.
 - ✅ Phase 7 - Verification-suite coverage for compile, save/load, and runtime-state paths.

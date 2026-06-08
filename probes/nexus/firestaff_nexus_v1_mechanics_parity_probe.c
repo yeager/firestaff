@@ -43,6 +43,7 @@
 #include "nexus_v1_save.h"
 #include "nexus_v1_world.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_creatures.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_game.h"
 
@@ -457,13 +458,63 @@ static void probe_combat(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 4. Save/Load API — verify save/load function signatures
+ * 4. DGN Actor References — malformed creature spawn refs are rejected
+ * Source: src/nexus/nexus_v1_creatures.c;
+ *         ReDMCSB DUNGEON.C F0151, GROUP.C F0183
+ * ═══════════════════════════════════════════════════════════════════════ */
+static void probe_dgn_actor_refs(void)
+{
+    printf("\n[Probe 4: DGN Actor References -- creature slot bounds]\n");
+    printf("  Source: ReDMCSB DUNGEON.C F0151, GROUP.C F0183;\n");
+    printf("          nexus_v1_creatures.c\n");
+
+    Nexus_V1_CreatureManager mgr;
+    nexus_v1_creatures_init(&mgr);
+    CHECK(mgr.type_count > 0, "creature manager has fixture creature types");
+
+    int slot = nexus_v1_creature_spawn(&mgr, 0, 1, 1, NEXUS_DIR_NORTH);
+    CHECK(slot == 0, "valid DGN actor reference consumes slot 0");
+    CHECK(mgr.active_count == 1, "active_count increments after valid spawn");
+
+    int before = mgr.active_count;
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, -1, 1, NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor x=-1 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, NEXUS_MAX_MAP_SIZE, 1,
+                                  NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor x=64 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, -1, NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor y=-1 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, NEXUS_MAX_MAP_SIZE,
+                                  NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor y=64 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, 1, 4) == -1,
+          "malformed DGN actor facing=4 is rejected");
+    CHECK(mgr.active_count == before,
+          "malformed actor references do not consume active slots");
+
+    while (mgr.active_count < NEXUS_MAX_ACTIVE_CREATURES) {
+        int r = nexus_v1_creature_spawn(&mgr, 0,
+                                        mgr.active_count % NEXUS_MAX_MAP_SIZE,
+                                        mgr.active_count / NEXUS_MAX_MAP_SIZE,
+                                        NEXUS_DIR_EAST);
+        if (r < 0) break;
+    }
+    CHECK(mgr.active_count == NEXUS_MAX_ACTIVE_CREATURES,
+          "active creature slot pool reaches the configured limit");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 2, 2, NEXUS_DIR_SOUTH) == -1,
+          "spawn beyond active creature slot pool is rejected");
+    CHECK(mgr.active_count == NEXUS_MAX_ACTIVE_CREATURES,
+          "overflow spawn leaves active_count stable");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 5. Save/Load API — verify save/load function signatures
  * Source: nexus_v1_save.h, src/nexus/nexus_v1_save_load.c;
  *         ReDMCSB LOADSAVE.C F0433/F0434, SAVEHEAD.C F0429/F0430
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_save_load(void)
 {
-    printf("\n[Probe 4: Save/Load API -- nexus_v1_save.h]\n");
+    printf("\n[Probe 5: Save/Load API -- nexus_v1_save.h]\n");
     printf("  Source: ReDMCSB LOADSAVE.C F0433/F0434,\n");
     printf("          SAVEHEAD.C F0429/F0430; nexus_v1_save_load.c\n");
 
@@ -558,13 +609,13 @@ static void probe_save_load(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 5. World State API — verify world/objects/events/timers API
+ * 6. World State API — verify world/objects/events/timers API
  * Source: nexus_v1_world.h, src/nexus/nexus_v1_world.c;
  *         ReDMCSB DUNGEON.C F0029/F0044, MOVESENS.C F0067/F0071
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_world(void)
 {
-    printf("\n[Probe 5: World State API -- nexus_v1_world.h]\n");
+    printf("\n[Probe 6: World State API -- nexus_v1_world.h]\n");
     printf("  Source: ReDMCSB DUNGEON.C F0029/F0044,\n");
     printf("          MOVESENS.C F0067/F0071; nexus_v1_world.c\n");
 
@@ -712,12 +763,12 @@ static void probe_world(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 6. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 7. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 6: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 7: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -767,6 +818,7 @@ int main(int argc, char **argv)
     probe_dungeon();
     probe_movement();
     probe_combat();
+    probe_dgn_actor_refs();
     probe_save_load();
     probe_world();
     probe_engine_lifecycle();
