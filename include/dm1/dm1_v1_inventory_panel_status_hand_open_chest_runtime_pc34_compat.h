@@ -30,6 +30,8 @@ extern "C" {
  *      still apply while a chest is open
  *   4. confirming that the resolved champion's mouse-item swap is
  *      observable across the open/close cycle
+ *   5. confirming that F0333 sets the PC 3.4 G0424 panel content to
+ *      M569_PANEL_CHEST even when the requested chest is already open
  *
  * The test is contract-only synthetic. It does not claim real-asset
  * pixel parity, real mouse, or any chest/route behavior past the
@@ -86,6 +88,11 @@ typedef struct {
     int openChestThingBefore;
     int openChestThingAfterOpen;
     int openChestThingAfterClose;
+    int panelContentBeforeOpen;
+    int panelContentAfterOpen;
+    int panelContentAfterSameOpen;
+    int panelContentAfterClose;
+    int sameOpenChestResult;
     int leaderHandThingAfter;
     DM1_V1_InventoryPanelStatusHandOpenChestRowPc34
         rows[DM1_V1_IPHSOC_STATUS_SLOT_BOX_COUNT];

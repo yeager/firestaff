@@ -106,6 +106,14 @@ enum {
     DM1_PC34_RABBITS_FOOT_LUCK_BONUS = 10
 };
 
+enum {
+    DM1_PC34_PANEL_INVENTORY = 0,
+    DM1_PC34_PANEL_FOOD_WATER_POISONED = 1,
+    DM1_PC34_PANEL_SCROLL = 5,
+    DM1_PC34_PANEL_CHEST = 6,
+    DM1_PC34_PANEL_RESURRECT_REINCARNATE = 7
+};
+
 typedef struct {
     int itemType;
     int weight;
@@ -130,6 +138,7 @@ typedef struct {
 typedef struct {
     M11_ChampionInventory champions[M11_MAX_CHAMPIONS];
     int championCount;
+    int panelContent;
 } M11_InventoryState;
 
 void m11_inventory_init(M11_InventoryState* s, int championCount);
@@ -177,6 +186,9 @@ int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
                                                int linkedItemCount,
                                                M11_Item* previousItemsOut,
                                                int maxPreviousItemsOut);
+int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s);
+int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
+                                         int panelContent);
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
                               M11_Item* linkedItemsOut, int maxItemsOut);
 int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);
