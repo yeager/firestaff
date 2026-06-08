@@ -8602,6 +8602,23 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_save_load
     )
 
+    add_executable(test_theron_v1_world_serialize_purchase_state
+        tests/test_theron_v1_world_serialize_purchase_state.c
+    )
+    target_link_libraries(test_theron_v1_world_serialize_purchase_state PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_world_serialize_purchase_state PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_world_serialize_purchase_state PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_world_serialize_purchase_state
+        COMMAND test_theron_v1_world_serialize_purchase_state
+    )
+
     add_executable(test_theron_v1_save_header_rejection
         tests/test_theron_v1_save_header_rejection.c
     )
