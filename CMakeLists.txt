@@ -1570,6 +1570,20 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_chaos_cast_targeting_pc34_compat
     )
 
+    add_executable(test_csb_v1_dsa_trigger_single_step_pc34_compat
+        tests/test_csb_v1_dsa_trigger_single_step_pc34_compat.c
+        src/csb/csb_v1_chaos_magic_pc34_compat.c
+    )
+    target_link_libraries(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_dsa_trigger_single_step_pc34_compat
+        COMMAND test_csb_v1_dsa_trigger_single_step_pc34_compat
+    )
+
     add_executable(test_csb_v1_boot_runtime_handoff
         tests/test_csb_v1_boot_runtime_handoff.c
         src/csb/csb_v1_boot.c
