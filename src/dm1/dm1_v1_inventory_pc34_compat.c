@@ -50,6 +50,7 @@ void m11_inventory_init(M11_InventoryState* s, int championCount) {
     if (!s) return;
     memset(s, 0, sizeof(M11_InventoryState));
     s->championCount = championCount;
+    s->panelContent = DM1_PC34_PANEL_INVENTORY;
 }
 
 int m11_inventory_set_item(M11_InventoryState* s, int champ, int slot, int itemType, int weight, int charges) {
@@ -436,6 +437,10 @@ int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThin
         return 0;
     }
     M11_ChampionInventory* inv = &s->champions[champ];
+    /* ReDMCSB: CHEST.C F0333 line 28 sets G0424_i_PanelContent to
+     * M569_PANEL_CHEST before the F0333 lines 31-32 same-open return.  For
+     * PC 3.4, DEFS.H lines 3005-3008 define M569_PANEL_CHEST as 6. */
+    s->panelContent = DM1_PC34_PANEL_CHEST;
     if (inv->openChestThing == openChestThing) {
         return 1;
     }
@@ -449,6 +454,22 @@ int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThin
         inv->chestSlots[i] = linkedItems[i];
     }
     m11_inventory_recalc_load(s, champ);
+    return 1;
+}
+
+int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s) {
+    if (!s) {
+        return DM1_PC34_PANEL_INVENTORY;
+    }
+    return s->panelContent;
+}
+
+int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
+                                         int panelContent) {
+    if (!s) {
+        return 0;
+    }
+    s->panelContent = panelContent;
     return 1;
 }
 

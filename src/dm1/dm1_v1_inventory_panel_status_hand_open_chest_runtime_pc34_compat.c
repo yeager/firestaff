@@ -59,10 +59,13 @@ dm1_v1_inventory_panel_status_hand_open_chest_source_evidence_pc34(void)
         "CHAMPION.C F0302:681 dead champion early return\n"
         "CHAMPION.C F0302:695-708 leader-hand / slot swap path\n"
         "CHEST.C F0333:43-46 action-hand icon C144 -> C145 swap\n"
+        "CHEST.C F0333:28-32 PC 3.4 G0424_i_PanelContent = "
+        "M569_PANEL_CHEST before same-open return\n"
         "CHEST.C F0333:53-67 open-chest slot population\n"
         "CHEST.C F0334:112-133 close-time compaction and "
         "G0426_T_OpenChest clear\n"
         "CHAMDRAW.C F0291:621-630 action-hand icon C144/C145 binding\n"
+        "DEFS.H lines 2995-3008 PC 3.4 M569_PANEL_CHEST=6\n"
         "DEFS.H C08_SLOT_BOX_INVENTORY_FIRST_SLOT=8 status/inventory "
         "boundary\n"
         "DEFS.H M070_HAND_SLOT_INDEX(slotbox) = (slotbox) & 0x0001 "
@@ -411,6 +414,7 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     out->actionHandIconBefore = actionHandIconClosed;
     out->chestOpenBefore = 0;
     out->openChestThingBefore = 0;
+    out->panelContentBeforeOpen = m11_inventory_get_panel_content_pc34(&state);
     /* Open the chest in the panel. The open-chest state is owned by
      * CHEST.C F0333:43-67 and the icon swap is CHAMDRAW.C F0291:621-630.
      * The status hand slot box 0..7 routing is unaffected. */
@@ -423,6 +427,17 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     openChestThingAfterOpen =
         m11_inventory_get_open_chest_thing(&state, 0);
     out->openChestThingAfterOpen = openChestThingAfterOpen;
+    out->panelContentAfterOpen = m11_inventory_get_panel_content_pc34(&state);
+    /* ReDMCSB CHEST.C F0333 lines 28-32 sets M569_PANEL_CHEST before
+     * returning for the same already-open G0426 chest.  Reset the synthetic
+     * panel marker to prove the same-open path refreshes the panel content
+     * without rebuilding G0425. */
+    (void)m11_inventory_set_panel_content_pc34(
+        &state, DM1_PC34_PANEL_FOOD_WATER_POISONED);
+    out->sameOpenChestResult = m11_inventory_open_chest(
+        &state, /*champ=*/0, chestThing, linked, DM1_PC34_CHEST_SLOT_COUNT);
+    out->panelContentAfterSameOpen =
+        m11_inventory_get_panel_content_pc34(&state);
     actionHandIconOpen = (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
         /*isInventoryChampion=*/1u, /*slotIndex=*/1u,
         (unsigned int)chestThing, (unsigned int)chestThing,
@@ -458,6 +473,7 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     (void)m11_inventory_close_chest(&state, 0, NULL, 0);
     out->openChestThingAfterClose =
         m11_inventory_get_open_chest_thing(&state, 0);
+    out->panelContentAfterClose = m11_inventory_get_panel_content_pc34(&state);
     out->actionHandIconAfterClose =
         (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
             /*isInventoryChampion=*/1u, /*slotIndex=*/1u,

@@ -52,6 +52,7 @@ static int test_spec_and_evidence(void)
         dm1_v1_inventory_panel_status_hand_open_chest_source_evidence_pc34();
     const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-710";
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-76";
+    const char* f0333Panel = "ReDMCSB CHEST.C F0333 lines 28-32";
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 112-133";
     const char* f0291 = "ReDMCSB CHAMDRAW.C F0291 lines 621-630";
     const char* defs = "ReDMCSB DEFS.H lines 778-817";
@@ -79,12 +80,16 @@ static int test_spec_and_evidence(void)
                           f0302);
     ok &= expect_contains("evidence F0333:43-46", evidence, "F0333:43-46",
                           f0333);
+    ok &= expect_contains("evidence F0333:28-32", evidence, "F0333:28-32",
+                          f0333Panel);
     ok &= expect_contains("evidence F0334:112-133", evidence,
                           "F0334:112-133", f0334);
     ok &= expect_contains("evidence F0291:621-630", evidence,
                           "F0291:621-630", f0291);
     ok &= expect_contains("evidence DEFS.H boundary", evidence,
                           "C08_SLOT_BOX_INVENTORY_FIRST_SLOT=8", defs);
+    ok &= expect_contains("evidence PC34 chest panel value", evidence,
+                          "M569_PANEL_CHEST=6", defs);
     return ok;
 }
 
@@ -92,6 +97,7 @@ static int test_open_chest_state_with_status_hand_table(void)
 {
     const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-710";
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-76";
+    const char* f0333Panel = "ReDMCSB CHEST.C F0333 lines 28-32";
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 112-133";
     const char* f0291 = "ReDMCSB CHAMDRAW.C F0291 lines 621-630";
     int ok = 1;
@@ -114,6 +120,20 @@ static int test_open_chest_state_with_status_hand_table(void)
                      g_probe.openChestThingAfterAllClicks, f0333);
     ok &= expect_int("open chest thing is non-zero after open",
                      g_probe.openChestThingAfterOpen != 0, 1, f0333);
+    ok &= expect_int("panel content starts as inventory",
+                     g_probe.panelContentBeforeOpen,
+                     DM1_PC34_PANEL_INVENTORY, f0333Panel);
+    ok &= expect_int("open chest sets panel content to M569 chest",
+                     g_probe.panelContentAfterOpen, DM1_PC34_PANEL_CHEST,
+                     f0333Panel);
+    ok &= expect_int("same-open chest path returns success",
+                     g_probe.sameOpenChestResult, 1, f0333Panel);
+    ok &= expect_int("same-open chest refreshes panel content before return",
+                     g_probe.panelContentAfterSameOpen,
+                     DM1_PC34_PANEL_CHEST, f0333Panel);
+    ok &= expect_int("close leaves panel content on chest until redraw",
+                     g_probe.panelContentAfterClose, DM1_PC34_PANEL_CHEST,
+                     f0334);
     ok &= expect_int("closed action-hand icon baseline is C144",
                      g_probe.actionHandIconBefore, 144, f0291);
     ok &= expect_int("open action-hand icon swaps to C145",
