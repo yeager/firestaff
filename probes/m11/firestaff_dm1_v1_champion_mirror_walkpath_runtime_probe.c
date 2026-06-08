@@ -62,13 +62,13 @@
  * drives a backstep/forward Hall route from (1,4,SOUTH) to
  * (1,3,SOUTH) and back, proving the same stale-pixel/no-floating
  * invariant on the CLIKMENU.C F0366 backward movement branch.  It also
- * clicks the original V1 movement-arrow rectangles for a forward/back
- * Hall route, proving the mouse route enters the same source command
- * path before the D1C portrait box is re-blitted.  That locks keyboard
- * and pointer forward/back movement through COMMAND.C F0359/F0361 ->
- * CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries used by real
- * runtime input while keeping the pixel assertion identical to the
- * direct route above.
+ * clicks the original V1 movement-arrow rectangles for forward/back and
+ * left/right turn Hall routes, proving the mouse route enters the same
+ * source command path before the D1C portrait box is re-blitted.  That
+ * locks keyboard and pointer movement/turning through COMMAND.C
+ * F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries
+ * used by real runtime input while keeping the pixel assertion identical
+ * to the direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -495,6 +495,18 @@ int main(int argc, char** argv) {
         {1, 4, DIR_SOUTH, 3, 276, 135,
          "hall_pointer_forward_back_to_ordinal_3"},
     };
+    const PointerWalkStep pointerTurnSteps[] = {
+        {1, 4, DIR_SOUTH, 3, -1, -1,
+         "hall_pointer_turn_start_south_ordinal_3"},
+        {1, 4, DIR_WEST, -1, 304, 135,
+         "hall_pointer_turn_right_west_no_portrait"},
+        {1, 4, DIR_NORTH, 2, 304, 135,
+         "hall_pointer_turn_right_north_ordinal_2"},
+        {1, 4, DIR_WEST, -1, 248, 135,
+         "hall_pointer_turn_left_west_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, 248, 135,
+         "hall_pointer_turn_left_south_ordinal_3"},
+    };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
 
@@ -645,6 +657,50 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = pointerSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Pointer turn route: use the same G0448 movement list, but click the
+     * source turn-left/turn-right boxes (COMMAND.C:109-111 / 396-398:
+     * C001/C002 at x=234..261 and x=291..318, y=125..145).  This is
+     * intentionally separate from the pointer forward/back route above:
+     * it proves mouse-driven in-place turns clear the south-facing ordinal
+     * 3 portrait when rotating to the west no-portrait pose and repaint
+     * ordinal 2/3 when rotating back through NORTH/SOUTH. */
+    start_independent_input_route(&game, 1, 4, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(pointerTurnSteps) / sizeof(pointerTurnSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        InputWalkStep checkStep;
+        if (pointerTurnSteps[stepIdx].clickX >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandlePointer(&game,
+                                           pointerTurnSteps[stepIdx].clickX,
+                                           pointerTurnSteps[stepIdx].clickY,
+                                           1);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s pointer=(%d,%d) result=%d want=%d\n",
+                        pointerTurnSteps[stepIdx].label,
+                        pointerTurnSteps[stepIdx].clickX,
+                        pointerTurnSteps[stepIdx].clickY,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        memset(&checkStep, 0, sizeof(checkStep));
+        checkStep.mapX = pointerTurnSteps[stepIdx].mapX;
+        checkStep.mapY = pointerTurnSteps[stepIdx].mapY;
+        checkStep.dir = pointerTurnSteps[stepIdx].dir;
+        checkStep.expectedOrdinal = pointerTurnSteps[stepIdx].expectedOrdinal;
+        checkStep.inputBeforeCheck = -1;
+        checkStep.allowNoPortraitDominance = 0;
+        checkStep.label = pointerTurnSteps[stepIdx].label;
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &checkStep, currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = pointerTurnSteps[stepIdx].expectedOrdinal;
     }
 
     M11_GameView_Shutdown(&game);
