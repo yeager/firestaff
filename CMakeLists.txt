@@ -2655,6 +2655,33 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_irrelevant_data_root
     )
 
+    add_executable(test_asset_status_zip_cache_materialization
+        tests/test_asset_status_zip_cache_materialization.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE firestaff_v2)
+    target_include_directories(test_asset_status_zip_cache_materialization PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_zip_cache_materialization PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(ZLIB_FOUND)
+        target_compile_definitions(test_asset_status_zip_cache_materialization PRIVATE
+            FIRESTAFF_HAS_ZLIB=1
+        )
+        target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE ZLIB::ZLIB)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_zip_cache_materialization PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_zip_cache_materialization
+        COMMAND test_asset_status_zip_cache_materialization
+    )
+
     add_executable(test_firestaff_accessibility_manifest
         tests/test_firestaff_accessibility_manifest.c
     )
