@@ -1120,9 +1120,15 @@ static void test_open_chest_panel_red_transparency_preserves_inventory_backdrop(
     M11_GameView_Draw(&state, framebuffer, 320, 200);
 
     /* ReDMCSB CHEST.C F0333 lines 47-51 blits C025 into C101 with
-     * C08_COLOR_RED as transparent.  PANEL.C F0355 lines 2375-2377
-     * establishes C017 as the inventory backdrop before panel content,
-     * so red pixels in the open-chest graphic must reveal C017. */
+     * C08_COLOR_RED as transparent before lines 58-75 draw C537..C544.
+     * Lock both the opaque panel pixels and the transparent red pixels on
+     * the direct action-hand-open path, not only the leader-hand eye route. */
+    ASSERT_TRUE(framebuffer_matches_open_chest_panel_pixels(&state,
+                                                            framebuffer),
+                "action-hand open chest blits source C025 non-red panel pixels into C101");
+    /* PANEL.C F0355 lines 2375-2377 establishes C017 as the inventory
+     * backdrop before panel content, so red pixels in the open-chest graphic
+     * must reveal C017. */
     ASSERT_TRUE(framebuffer_preserves_inventory_backdrop_through_open_chest_red(
                     &state, framebuffer),
                 "open chest C025 transparent red pixels preserve the C017 inventory backdrop");
