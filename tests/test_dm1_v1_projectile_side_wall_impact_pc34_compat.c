@@ -383,18 +383,36 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
                    "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
         expect_int(c->label, r.emittedExplosion, 0,
                    "Kinetic thrown item side-cell blockers do not create explosions");
+        expect_int(c->label, r.crossedCell, 0,
+                   "F0217 impact return prevents a committed cross-cell move");
+        expect_int(c->label,
+                   r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
+                   0,
+                   "F0217 impact return may schedule impact side effects, but not a C49 projectile move");
         expect_int(c->label, pOut.mapIndex, p.mapIndex,
                    "F0811 side-cell blocker impact retains source mapIndex");
         expect_int(c->label, pOut.mapX, p.mapX,
                    "F0811 side-cell blocker impact retains source X");
         expect_int(c->label, pOut.mapY, p.mapY,
                    "F0811 side-cell blocker impact retains source Y");
+        expect_int(c->label, r.newMapIndex, p.mapIndex,
+                   "F0811 side-cell impact result reports source mapIndex");
+        expect_int(c->label, r.newMapX, p.mapX,
+                   "F0811 side-cell impact result reports source X, not blocked side-cell X");
+        expect_int(c->label, r.newMapY, p.mapY,
+                   "F0811 side-cell impact result reports source Y, not blocked side-cell Y");
         expect_int(c->label, pOut.cell, 2,
                    "ReDMCSB PROJEXPL.C:F0219 lines 729-734 side-lane cell parity rotation");
+        expect_int(c->label, r.newCell, pOut.cell,
+                   "F0811 side-cell impact result cell mirrors outNewState");
         expect_int(c->label, pOut.kineticEnergy, p.kineticEnergy - p.stepEnergy,
                    "F0811 side-cell blocker impact decrements kinetic energy by stepEnergy");
         expect_int(c->label, pOut.attack, p.attack - p.stepEnergy,
                    "F0811 side-cell blocker impact decrements attack by stepEnergy");
+        expect_int(c->label, r.newKineticEnergy, pOut.kineticEnergy,
+                   "F0811 side-cell impact result reports decremented kinetic energy");
+        expect_int(c->label, r.newAttack, pOut.attack,
+                   "F0811 side-cell impact result reports decremented attack");
     }
 }
 
