@@ -9,6 +9,7 @@ extern "C" {
 
 enum {
     DM1_PC34_CHEST_OPEN_DRAW_EVENT_MAX = 10,
+    DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX = 10,
     DM1_PC34_CHEST_OPEN_DRAW_EVENT_ACTION_ICON = 1,
     DM1_PC34_CHEST_OPEN_DRAW_EVENT_PANEL_BLIT = 2,
     DM1_PC34_CHEST_OPEN_DRAW_EVENT_SLOT_ICON = 3,
@@ -46,7 +47,11 @@ typedef struct {
     int firstSlotBox;
     int lastSlotBox;
     int firstFilledIcon;
+    int lastFilledIcon;
     int lastClearedIcon;
+    int materializedSlotCount;
+    int overflowInputCount;
+    int overflowTailMaterialized;
 } DM1_V1_ChestOpenDrawCasePc34;
 
 typedef struct {
@@ -59,6 +64,7 @@ typedef struct {
     DM1_V1_ChestOpenDrawCasePc34 normalOpen;
     DM1_V1_ChestOpenDrawCasePc34 pressingEyeOpen;
     DM1_V1_ChestOpenDrawCasePc34 sameChestNoop;
+    DM1_V1_ChestOpenDrawCasePc34 overflowOpen;
 } DM1_V1_ChestOpenDrawProbePc34;
 
 const char* dm1_v1_chest_open_draw_events_source_evidence_pc34(void);
