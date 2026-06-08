@@ -17,6 +17,7 @@
 #include "csb_v1_utility_import_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +55,27 @@
 static int16_t read_le16(const uint8_t *p)
 {
     return (int16_t)(p[0] | (p[1] << 8));
+}
+
+/* ReDMCSB CHAMPION.C F0300/F0301/F0302:511-515,606-614,688-710 move
+ * real THING values through the champion slot arrays.  THING_ENDOFLIST
+ * is a linked-list sentinel for dungeon/chest chains, not a valid
+ * carried object, so the DM1 import path rejects it before the slot is
+ * committed to CSB party state. */
+static int csb_v1_dm1_record_has_invalid_slot_state(const uint8_t *dm1_record)
+{
+    int i;
+
+    if (!dm1_record) return 1;
+
+    for (i = 0; i < 30; i++) {
+        uint16_t slot_value = (uint16_t)read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        if (slot_value == THING_ENDOFLIST) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 /* write_le16: reserved for future CSB→DM1 export path (Phase 6 covers import only). */
@@ -370,6 +392,15 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                 }
                 offset += DM1_CHAMPION_RECORD_SIZE;
                 continue; /* skip malformed record */
+            }
+
+            if (csb_v1_dm1_record_has_invalid_slot_state(dm1_buf + offset)) {
+                if (result) {
+                    result->error_code = CSB_V1_IMPORT_ERR_SLOT_STATE;
+                    result->byte_offset = offset;
+                    result->state = CSB_V1_IMPORT_STATE_ERROR;
+                }
+                return -1;
             }
 
             /* State 5: Verify block checksum */
