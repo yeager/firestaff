@@ -1,0 +1,25 @@
+{
+  "id": "csb_v1_viewport_d2c_f0095_floor_ornament",
+  "type": "source-lock-contract",
+  "scope": "CSB V1 viewport D2C F0095 floor-ornament dispatch",
+  "claims": [
+    "contract-only source-lock gate",
+    "no real-asset bitmap parity claim",
+    "no game data load"
+  ],
+  "anchors": [
+    "ReDMCSB DUNVIEW.C F0095:2124-2223",
+    "ReDMCSB DUNVIEW.C F0124:7874,7926",
+    "ReDMCSB DUNVIEW.C F0108:3959-3998",
+    "ReDMCSB DEFS.H:2088,2544,2558,2759,4042-4043",
+    "CSB-lineage Viewport.cpp:1903-1906",
+    "ReDMCSB DUNGEON.C F0163/F0164:1769-1840"
+  ],
+  "local_source_notes": [
+    "Local ReDMCSB D2C floor-ornament route is F0121_DUNGEONVIEW_DrawSquareD2C at DUNVIEW.C:7314 and 7357 using M592_VIEW_FLOOR_D2C.",
+    "Local ReDMCSB D2C dispatch from F0128 is DUNVIEW.C:8520-8521.",
+    "Local CSB-lineage D2C floor-decoration dispatch is Viewport.cpp:1151-1156, 1414-1420, and 1865-1867."
+  ],
+  "test": "firestaff_csb_v1_viewport_d2c_f0095_floor_ornament_pc34_compat_test",
+  "assertion_floor": 40
+}
