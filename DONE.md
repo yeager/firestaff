@@ -252,6 +252,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, asset discovery, launcher state, and runtime selection.
 - ✅ Real-asset probe regression sweep: `probe_dm2_v1_asset_loader`, `probe_dm2_v1_dungeon_loader`, `probe_dm2_v1_object_model`, `probe_dm2_v1_world_state`, and `test_dm2_v1_save_load` pass against the local hash-verified PC English data.
+- ✅ DM2 V1 projectile-door collision gate: `test_dm2_door_mechanics` now pins the ReDMCSB `PROJEXPL.C F0217:491-505` door passability boundary to an exact synthetic outcome: open wooden doors advance the projectile to the destination with no event, while a closing half-closed door and a fully blocked wooden door keep the projectile before the door and emit a door-impact event at the door square.
 - ✅ DM2 V1 save/load header hardening: direct slot loads now enforce the 0xBEEF/0xDEAD DM2 slot magic used by scans, reject stale/cross-game slot files, and recover from `SKSave.bak` when the primary slot is corrupt.
 - ✅ DM2 V1 weather seed regression: `test_dm2_v1_weather_seed_regression` covers seeded weather-state stepping and the 182-tick outdoor boundary transition without real assets.
 - ✅ Phase 6 - Utility/import flow: DM2-specific load/start flow and compatibility behavior.
