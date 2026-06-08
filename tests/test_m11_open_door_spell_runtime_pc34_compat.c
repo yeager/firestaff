@@ -208,12 +208,73 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
               "timeline carries Open Door subtype");
 }
 
+static void test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster(void) {
+    M11_GameViewState state;
+    struct ChampionState_Compat beforeChampion;
+    unsigned char beforeRunes[4];
+    int beforeRuneCount;
+    int beforeRuneRow;
+    int beforeActiveChampion;
+    uint32_t beforeGameTick;
+
+    memset(&state, 0, sizeof(state));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.gameTick = 70;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].mana.current = 0;
+    state.world.party.champions[0].mana.maximum = 80;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "spell panel opens for low-mana cast");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "LO power rune entered for low-mana cast");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1, "ZO element rune entered for low-mana cast");
+
+    beforeChampion = state.world.party.champions[0];
+    memcpy(beforeRunes, state.spellBuffer.runes, sizeof(beforeRunes));
+    beforeRuneCount = state.spellBuffer.runeCount;
+    beforeRuneRow = state.spellRuneRow;
+    beforeActiveChampion = state.world.party.activeChampionIndex;
+    beforeGameTick = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "insufficient mana cast consumes input");
+    ASSERT_EQ(state.spellPanelOpen, 0, "insufficient mana closes spell panel feedback");
+    ASSERT_EQ(state.spellBuffer.runeCount, beforeRuneCount,
+              "insufficient mana preserves selected rune count");
+    ASSERT_EQ(state.spellRuneRow, beforeRuneRow,
+              "insufficient mana preserves selected rune row");
+    ASSERT_EQ(memcmp(state.spellBuffer.runes, beforeRunes, sizeof(beforeRunes)), 0,
+              "insufficient mana preserves selected rune bytes");
+    ASSERT_EQ(state.world.party.activeChampionIndex, beforeActiveChampion,
+              "insufficient mana preserves active caster index");
+    ASSERT_EQ(memcmp(&state.world.party.champions[0], &beforeChampion, sizeof(beforeChampion)), 0,
+              "insufficient mana does not mutate caster state");
+    ASSERT_EQ((int)state.world.gameTick, (int)beforeGameTick,
+              "insufficient mana does not advance game tick");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "insufficient mana does not launch projectile");
+    ASSERT_EQ(state.world.timeline.count, 0,
+              "insufficient mana does not schedule projectile movement");
+}
+
 int main(void) {
     printf("=== M11 Open Door Spell Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C Open Door projectile; PROJEXPL.C door impact C10/C02 toggle branch\n\n");
 
     test_open_door_projectile_schedules_delayed_toggle_and_animates();
     test_open_door_ui_cast_launches_source_projectile();
+    test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

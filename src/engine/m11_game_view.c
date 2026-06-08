@@ -4193,6 +4193,12 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     /* Compute mana cost */
     F0753_MAGIC_ComputeManaCost_Compat(&state->spellBuffer, &manaCost);
     if ((int)champ->mana.current < manaCost) {
+        /* ReDMCSB MENU.C F0408 lines ~1633-1663 clears symbols only
+         * after F0412 returns a normal cast-click result.  Firestaff's
+         * V1 UI defers rune mana charging until this gate, so an
+         * insufficient-mana preflight must preserve the selected rune
+         * chain and caster state for retry/recant instead of routing
+         * through the normal cast-click clear path. */
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — NOT ENOUGH MANA (%d/%d)",
                       (unsigned int)state->world.gameTick, champName,
                       (int)champ->mana.current, manaCost);
@@ -4200,7 +4206,6 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         snprintf(state->inspectTitle, sizeof(state->inspectTitle), "NEED MANA");
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                  "COST %d, HAVE %d", manaCost, (int)champ->mana.current);
-        M11_GameView_ClearSpell(state);
         state->spellPanelOpen = 0;
         return 1;
     }
