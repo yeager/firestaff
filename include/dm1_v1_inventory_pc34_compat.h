@@ -189,6 +189,10 @@ int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
 int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s);
 int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
                                          int panelContent);
+/* ReDMCSB: PANEL.C F0347 redraws FOOD/WATER/POISONED when no container
+ * remains in the action hand; keeps CHEST when the action hand is container. */
+int m11_inventory_apply_panel_route_after_close_pc34(M11_InventoryState* s,
+                                                    int champ);
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
                               M11_Item* linkedItemsOut, int maxItemsOut);
 int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);

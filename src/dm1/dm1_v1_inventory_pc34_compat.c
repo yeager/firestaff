@@ -464,6 +464,29 @@ int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s) {
     return s->panelContent;
 }
 
+int m11_inventory_apply_panel_route_after_close_pc34(M11_InventoryState* s,
+                                                   int champ)
+{
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0347 lines 1651-1691 redraws the inventory action-hand
+     * route when close/click flows leave the chest panel: container action hands
+     * keep CHEST panel content, otherwise status panel content returns to
+     * food/water/poison fallback. */
+    const M11_Item* actionHand =
+        &s->champions[champ].slots[DM1_SLOT_HAND_LEFT];
+    if (!actionHand->itemType ||
+        (actionHand->allowedSlots & DM1_PC34_ALLOWED_CONTAINER) == 0) {
+        s->panelContent = DM1_PC34_PANEL_FOOD_WATER_POISONED;
+        return 1;
+    }
+
+    s->panelContent = DM1_PC34_PANEL_CHEST;
+    return 1;
+}
+
 int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
                                          int panelContent) {
     if (!s) {
