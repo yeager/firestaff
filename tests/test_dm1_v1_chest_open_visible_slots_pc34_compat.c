@@ -64,6 +64,9 @@ int main(void)
     const char* f0333Replace =
         "ReDMCSB CHEST.C F0333:34-43 closes a different open G0426 chest "
         "before assigning the replacement chest and rematerializing G0425.";
+    const char* f0333LimitedOut =
+        "ReDMCSB CHEST.C F0333:53-76 copies only eight visible slots; output "
+        "buffers for previous items are capped by maxPreviousItemsOut.";
     const char* f0334Compact =
         "ReDMCSB CHEST.C F0334:117-132 compacts non-empty G0425 slots back "
         "to the container list and ignores entries that are C0xFFFF_THING_NONE.";
@@ -71,6 +74,7 @@ int main(void)
     M11_Item overfull[10];
     M11_Item shortChest[3];
     M11_Item closed[10];
+    M11_Item limitedOut[2];
     int ok = 1;
     int i;
 
@@ -138,6 +142,45 @@ int main(void)
     ok &= expect_int("G0426 cleared after close",
                      m11_inventory_get_open_chest_thing(&state, 0),
                      0, f0334Compact);
+
+    m11_inventory_init(&state, 1);
+    ok &= expect_int("limited output scenario opens baseline chest",
+                     m11_inventory_open_chest(&state, 0, 0x7003, overfull, 10),
+                     1, f0333FirstEight);
+    memset(limitedOut, 0, sizeof(limitedOut));
+    ok &= expect_int("limited output scenario replaces current chest",
+                     m11_inventory_open_chest_replacing_current(
+                         &state, 0, 0x7004, shortChest, 3, limitedOut, 2),
+                     DM1_PC34_CHEST_SLOT_COUNT, f0333LimitedOut);
+    ok &= expect_int("limited output scenario first previous item",
+                     limitedOut[0].itemType, overfull[0].itemType,
+                     f0333LimitedOut);
+    ok &= expect_int("limited output scenario second previous item",
+                     limitedOut[1].itemType, overfull[1].itemType,
+                     f0333LimitedOut);
+
+    ok &= expect_int("limited output scenario new open chest",
+                     m11_inventory_get_open_chest_thing(&state, 0),
+                     0x7004, f0333Replace);
+    for (i = 0; i < 3; ++i) {
+        ok &= expect_chest_slot(&state, i, shortChest[i].itemType,
+                                f0333LimitedOut);
+    }
+    for (i = 3; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
+        ok &= expect_chest_slot(&state, i, 0, f0333LimitedOut);
+    }
+
+    memset(closed, 0, sizeof(closed));
+    ok &= expect_int("limited output scenario closes as three visible items",
+                     m11_inventory_close_chest(&state, 0, closed, 10),
+                     3, f0334Compact);
+    for (i = 0; i < 3; ++i) {
+        ok &= expect_int("limited output scenario close order",
+                         closed[i].itemType, shortChest[i].itemType,
+                         f0334Compact);
+    }
+    ok &= expect_int("limited output scenario ignores cleared tail",
+                     closed[3].itemType, 0, f0334Compact);
 
     printf("assertionCount=%d\n", g_assertions);
     printf("dm1V1ChestOpenVisibleSlotsInvariantOk=%d\n",
