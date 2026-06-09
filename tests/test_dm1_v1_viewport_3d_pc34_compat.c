@@ -1805,6 +1805,12 @@ static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
               viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0xee);
     check_int("d2l2_d2r2_gate.pit_no_write_right",
               viewport[20 * DM1_VIEWPORT_WIDTH + 221], 0xee);
+    memset(viewport, 0xee, sizeof(viewport));
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.pit_no_write_d2l2_left",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    check_int("d2l2_d2r2_gate.pit_no_write_d2l2_right",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 5], 0xee);
 
     /* Teleporter is the only non-wall write route and goes directly through
      * F0113 with C707/C708; this proves the no-thing contract is not a blanket
@@ -1815,6 +1821,12 @@ static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
               viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0x1c);
     check_int("d2l2_d2r2_gate.teleporter_left_zone_untouched",
               viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+    memset(viewport, 0xee, sizeof(viewport));
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.teleporter_writes_d2l2_zone",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0x1c);
+    check_int("d2l2_d2r2_gate.teleporter_d2l2_zone_untouched",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 38], 0xee);
 
     dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
 }
