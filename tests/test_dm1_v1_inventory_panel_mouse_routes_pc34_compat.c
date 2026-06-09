@@ -46,13 +46,15 @@
  *   6. Open/close chest action-hand icon swap (C144 <-> C145) and
  *      the close-time clear of v1OpenChestThing via
  *      M11_GameView_CloseV1OpenChest.
- *   7. Backpack C520 occupied-slot swap accepts a non-container
+ *   7. Replacing an already-open action-hand chest through C508 with a
+ *      different container closes the prior chest and reopens the replacement.
+ *   8. Backpack C520 occupied-slot swap accepts a non-container
  *      leader-hand object because backpack slots are any-slot routes,
  *      unlike chest C537..C544.
- *   8. Eye-click object-description handoff clears the food/water and
+ *   9. Eye-click object-description handoff clears the food/water and
  *      champion-stats panel state while preserving the leader-hand object
  *      and carrying the named weapon metadata into the panel fields.
- *   9. Same-chest pressing-eye reopen preserves the existing normal-open
+ *   10. Same-chest pressing-eye reopen preserves the existing normal-open
  *      C145 action-hand icon because F0333 returns before P0694 handling.
  */
 
@@ -660,7 +662,68 @@ static void test_inventory_open_chest_same_eye_reopen_keeps_open_icon(void) {
               "same-eye reopen keeps C145 because F0333 returned before P0694");
 }
 
-/* Detail 6: occupied backpack-slot swap with a non-container leader-hand
+/* Detail 7: replacing an open action-hand chest with a different container
+ * should close the old chest and keep the open state bound to the newly
+ * placed chest. ReDMCSB CHEST.C F0333 lines 35-38 close the previous
+ * chest before opening the requested one; CHAMPION.C F0302 swaps the leader
+ * hand with the selected slot object. */
+static void test_inventory_replace_open_action_hand_chest_from_slot_click(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[2];
+    unsigned short firstChestThing =
+        (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    unsigned short secondChestThing =
+        (unsigned short)((THING_TYPE_CONTAINER << 10) | 1);
+    unsigned short firstChestSlotThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short secondChestSlotThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    int sx = 0, sy = 0, sw = 0, sh = 0;
+
+    seed_panel_view(&state, &things, weapons, containers);
+    weapons[0].type = 2;
+    weapons[0].next = THING_ENDOFLIST;
+    weapons[1].type = 2;
+    weapons[1].next = THING_ENDOFLIST;
+    containers[0].type = 0;
+    containers[0].slot = firstChestSlotThing;
+    containers[1].type = 0;
+    containers[1].slot = secondChestSlotThing;
+    things.containerCount = 2;
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        firstChestThing;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "first chest opens to establish a known open-panel baseline");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), firstChestThing,
+              "first open chest is bound to v1OpenChestThing");
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, secondChestThing), 1,
+              "replacement chest is available in the leader hand for the click swap");
+    ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(9, &sx, &sy, &sw, &sh),
+                "C508 action-hand source slot is available for replacement swap");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C508 slot click with a different chest replaces the open action-hand chest");
+    ASSERT_EQ(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND],
+              secondChestThing,
+              "action hand now holds the replacement chest");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), firstChestThing,
+              "replaced action-hand chest moves the prior open chest to leader hand");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), secondChestThing,
+              "open chest state rebinds to the replacement container");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND),
+              145,
+              "replacement keeps action-hand icon as C145");
+    ASSERT_EQ(containers[0].slot, firstChestSlotThing,
+              "closing the first chest keeps its original content");
+    ASSERT_EQ(containers[1].slot, secondChestSlotThing,
+              "opening the second chest keeps its original content");
+}
+
+/* Detail 8: occupied backpack-slot swap with a non-container leader-hand
  * object.  ReDMCSB CHAMPION.C F0302 lines 697-710 validates the
  * leader-hand object against G0038 slot masks, then removes the old slot
  * occupant into the leader hand and writes the previous leader-hand object
@@ -715,7 +778,7 @@ static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
               "old C520 occupant moves to leader hand");
 }
 
-/* Detail 7: door-keyhole click with the wrong leader-hand object.  The
+/* Detail 9: door-keyhole click with the wrong leader-hand object.  The
  * ReDMCSB CLIKVIEW.C F0377/CLIKVIEW.C F0372 door-click path should
  * inspect the door and leave the held object untouched when the item is
  * not a valid fountain fill source.  This regression keeps the
@@ -767,8 +830,10 @@ int main(void) {
            "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
            "PANEL.C:1126-1200 eye object-description route, "
            "PANEL.C:1250-1254 weapon eye metadata flags, "
+           "CHEST.C:35-38 replace-open chest close-before-open ordering, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
            "CHEST.C:30-32 same-open return before pressing-eye branch, "
+           "CHAMPION.C:698-699 and 662-710 slotbox swap with open-action-hand chest, "
            "CHEST.C:112-133 close-time compact\n");
 
     test_inventory_close_panel_right_button_route();
@@ -777,6 +842,7 @@ int main(void) {
     test_inventory_mouth_eye_routes_runtime();
     test_inventory_status_hand_runtime_routes();
     test_inventory_open_chest_action_hand_icon_swap();
+    test_inventory_replace_open_action_hand_chest_from_slot_click();
     test_inventory_open_chest_same_eye_reopen_keeps_open_icon();
     test_inventory_backpack_slot_accepts_non_container_swap();
     test_inventory_keyhole_click_wrong_item_keeps_state();
