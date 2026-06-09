@@ -114,6 +114,25 @@ int main(void) {
     ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item);
     ok &= expect_item_type("same chest open preserves edited slot", &item, 999);
 
+    /* ReDMCSB CHEST.C F0333 calls F0334 only when replacing a different
+     * chest. Replacing the currently open chest id should be a no-op: it
+     * must keep the open chest thing and should not populate previousItemsOut.
+     */
+    closed[0].itemType = 777;
+    ok &= expect_int("replacing same chest is a no-op", m11_inventory_open_chest_replacing_current(
+                             &state,
+                             0,
+                             0x1234,
+                             linked,
+                             10,
+                             closed,
+                             DM1_PC34_CHEST_SLOT_COUNT),
+                         0);
+    ok &= expect_int("same-chest replacement keeps open chest thing", m11_inventory_get_open_chest_thing(&state, 0), 0x1234);
+    ok &= m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item);
+    ok &= expect_item_type("same-chest replacement preserves edited open slot", &item, 999);
+    ok &= expect_int("same-chest replacement does not overwrite output", closed[0].itemType, 777);
+
     ok &= expect_int("pc34 source setter writes open chest slot",
                      m11_inventory_set_item_in_pc34_source_slot(&state, 0, DM1_PC34_SLOT_CHEST_8,
                                                                 555, 1, 2, DM1_PC34_ALLOWED_CONTAINER), 1);
