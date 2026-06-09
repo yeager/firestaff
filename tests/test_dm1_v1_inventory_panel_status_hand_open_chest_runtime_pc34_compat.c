@@ -173,6 +173,9 @@ static int test_open_chest_state_with_status_hand_table(void)
                      "leader object",
                      g_probe.actionHandClickReplacesActionHandWithLeaderHandObject,
                      1, f0302);
+    ok &= expect_int("action-hand status click drops action-hand chest icon to closed",
+                     g_probe.actionHandClickDropsActionHandIconToClosed, 1,
+                     f0291);
     ok &= expect_int("action-hand status click preserves open chest thing",
                      g_probe.actionHandClickPreservesOpenChestThing, 1,
                      f0333);

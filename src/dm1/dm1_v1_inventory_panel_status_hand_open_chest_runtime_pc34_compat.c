@@ -374,6 +374,12 @@ static int capture_action_hand_container_edges(
         mouseItem.itemType == chestThing;
     out->actionHandClickReplacesActionHandWithLeaderHandObject =
         actionHand.itemType == DM1_V1_IPHSOC_LEADER_HAND_SCROLL;
+    out->actionHandClickDropsActionHandIconToClosed =
+        (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
+            /*isInventoryChampion=*/1u, /*slotIndex=*/1u,
+            (unsigned int)actionHand.itemType, (unsigned int)chestThing,
+            /*baseIconIndex=*/(unsigned int)DM1_V1_IPHSOC_CLOSED_ICON) ==
+        DM1_V1_IPHSOC_CLOSED_ICON;
     out->actionHandClickPreservesOpenChestThing =
         m11_inventory_get_open_chest_thing(&state, /*champ=*/0) == chestThing;
     return 1;
