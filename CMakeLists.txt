@@ -4100,6 +4100,18 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_d0_side_wall_edge_pixel_probe
     )
 
+    add_executable(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe
+        probes/dm1/firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe
+        COMMAND firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe
+    )
+
     add_executable(firestaff_dm1_v1_door_button_d1c_press_frame_gate
         probes/dm1/firestaff_dm1_v1_door_button_d1c_press_frame_gate.c
     )
