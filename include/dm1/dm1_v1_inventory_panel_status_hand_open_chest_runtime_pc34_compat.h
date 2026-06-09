@@ -115,6 +115,7 @@ typedef struct {
     int readyHandClickKeepsOpenActionHandIcon;
     int actionHandClickMovesOpenChestToLeaderHand;
     int actionHandClickReplacesActionHandWithLeaderHandObject;
+    int actionHandClickDropsActionHandIconToClosed;
     int actionHandClickPreservesOpenChestThing;
     int totalAssertions;
 } DM1_V1_InventoryPanelStatusHandOpenChestProbePc34;
