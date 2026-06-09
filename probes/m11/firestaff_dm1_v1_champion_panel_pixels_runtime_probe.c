@@ -59,16 +59,6 @@ static int count_color(const unsigned char* fb,
     return count;
 }
 
-static int count_not_color(const unsigned char* fb,
-                           int width,
-                           int x,
-                           int y,
-                           int w,
-                           int h,
-                           int color) {
-    return w * h - count_color(fb, width, x, y, w, h, color);
-}
-
 static int count_raw_pixel(const unsigned char* fb,
                            int width,
                            int x,
@@ -439,13 +429,77 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
                                       const unsigned char* fb,
                                       int slot) {
     int x, y, w, h;
-    int color = M11_GameView_GetV1ChampionBarColor(slot);
+    int iconIndex;
+    int gfxId;
+    int iconStripCellW;
+    int expected = 0;
+    int matched = 0;
+    int transparentMatch = 0;
+    int transparentPixels = 0;
+    const M11_AssetSlot* asset;
+    int baseColor = M11_GameView_GetV1ChampionBarColor(slot);
+    int xx;
+    int yy;
+    const int transparentColor = 12; /* M11_COLOR_DARK_GRAY */
     char label[128];
+    int ok = 1;
+    snprintf(label, sizeof(label), "slot%d champion icon source", slot);
+    iconIndex = M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
+    ok &= expect_true(label, iconIndex >= 0);
     snprintf(label, sizeof(label), "slot%d champion icon zone", slot);
-    return expect_true(label, M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
-                              M11_GameView_GetV1ChampionIconSourceIndex(game, slot) >= 0 &&
-                              count_color(fb, PROBE_FB_W, x, y, w, h, color) > 0 &&
-                              count_not_color(fb, PROBE_FB_W, x, y, w, h, 0) > 20);
+    ok &= expect_true(label, M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+                              w == 16 && h == 14);
+    gfxId = M11_GameView_GetV1ChampionIconGraphicId();
+    asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                 (unsigned int)gfxId);
+    snprintf(label, sizeof(label), "slot%d champion icon strip asset", slot);
+    ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
+                             asset->height >= 14 && asset->width >= 76 &&
+                             asset->width % 4 == 0 &&
+                             asset->height == (unsigned short)h);
+    if (!ok || !asset || !asset->pixels) {
+        return 0;
+    }
+
+    iconStripCellW = (int)asset->width / 4;
+
+    /* ReDMCSB: CHAMDRAW.C F0288 blends C028_GRAPHIC_CHAMPION_ICONS over a
+     * 19x14 icon cell strip with C12 dark-gray transparency.
+     * Reproduce that composite rule against the first 16 columns actually
+     * blitted by m11_draw_v1_champion_icons. */
+    for (yy = 0; yy < h; ++yy) {
+        int srcX0 = iconIndex * iconStripCellW;
+        for (xx = 0; xx < w; ++xx) {
+            int srcX = srcX0 + xx;
+            unsigned char src = (unsigned char)(asset->pixels[yy * (int)asset->width + srcX] & 0x0F);
+            unsigned char dst = px_index(fb, PROBE_FB_W, x + xx, y + yy);
+            if (src == transparentColor) {
+                ++transparentPixels;
+                if ((int)dst == baseColor) {
+                    ++transparentMatch;
+                }
+            } else {
+                ++expected;
+                if ((int)dst == (int)src) {
+                    ++matched;
+                }
+            }
+        }
+    }
+    snprintf(label, sizeof(label), "slot%d champion icon opaque pixel match", slot);
+    ok &= expect_true(label, expected > 0 && matched * 100 >= expected * 95);
+    if (transparentPixels > 0) {
+        snprintf(label, sizeof(label), "slot%d champion icon transparent fill match", slot);
+        ok &= expect_true(label,
+                          transparentMatch * 100 >= transparentPixels * 95);
+    } else {
+        snprintf(label, sizeof(label), "slot%d champion icon has transparent pixels", slot);
+        ok &= expect_true(label, 0);
+    }
+    printf("slot%d icon src=%d gfx=%d opaque=%d/%d transparent=%d/%d base=%d\n",
+           slot, iconIndex, gfxId, matched, expected,
+           transparentMatch, transparentPixels, baseColor);
+    return ok;
 }
 
 int main(int argc, char** argv) {
