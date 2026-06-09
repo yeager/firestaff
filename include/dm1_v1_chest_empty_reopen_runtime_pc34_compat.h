@@ -69,6 +69,9 @@ typedef struct {
     int crossChestBResult;
     int crossChestBPreviousCount;
     int crossChestBFinalOpenThing;
+    int crossChestBPanelBeforeReplace;
+    int crossChestBPanelAfterReplace;
+    int crossChestBPanelAfterClose;
     int crossChestBG0425AllNone;
     int crossChestBCloseAfterBResult;
     int crossChestBCloseAfterBCount;

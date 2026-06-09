@@ -227,15 +227,25 @@ static int test_phase_5_cross_chest(
 {
     const char* f0333Transitive = spec->f0333TransitiveCloseAnchor;
     const char* f0333Visible = spec->f0333VisibleFillAnchor;
+    const char* panelRouteAnchor = "ReDMCSB CHEST.C F0333 line 28";
     int ok = 1;
 
     ok &= expect_int("cross-chest A->B previous count",
                      probe->crossChestBPreviousCount, 0, f0333Transitive);
+    ok &= expect_int("cross-chest A->B panel before replace",
+                     probe->crossChestBPanelBeforeReplace,
+                     DM1_PC34_PANEL_SCROLL, panelRouteAnchor);
+    ok &= expect_int("cross-chest A->B panel after replace",
+                     probe->crossChestBPanelAfterReplace,
+                     DM1_PC34_PANEL_CHEST, panelRouteAnchor);
     ok &= expect_int("cross-chest A->B final open thing",
                      probe->crossChestBFinalOpenThing, spec->chestB,
                      f0333Transitive);
     ok &= expect_int("cross-chest A->B G0425 all NONE",
                      probe->crossChestBG0425AllNone, 1, f0333Visible);
+    ok &= expect_int("cross-chest A->B panel after B close",
+                     probe->crossChestBPanelAfterClose,
+                     DM1_PC34_PANEL_CHEST, panelRouteAnchor);
     return ok;
 }
 
@@ -377,7 +387,7 @@ int main(void)
     ok &= test_phase_9_leader_hand(probe, spec);
 
     ok &= expect_int("minimum assertion count",
-                     g_assertions >= 55 ? 1 : 0, 1, f0333Visible);
+                     g_assertions >= 59 ? 1 : 0, 1, f0333Visible);
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);
     printf("chestEmptyReopenRuntimeOk=%d\n",
