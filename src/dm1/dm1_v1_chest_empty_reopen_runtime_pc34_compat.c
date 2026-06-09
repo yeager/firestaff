@@ -14,7 +14,8 @@
  * G0425[i] before rewiring.  CHAMPION.C F0297/F0298:243-298 own the leader
  * hand identity/weight and are independent of F0333/F0334.  This gate proves
  * the empty-chest pathway preserves the leader hand and yields a fully NONE
- * G0425 window after every close.
+ * G0425 window after every close, while also proving panel content is switched
+ * to chest during replace-open.
  */
 
 static const char s_f0333_visible_fill_anchor[] =
@@ -226,8 +227,13 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
      * assigns G0426 = chest_B and fills G0425 with NONE again. */
     (void)m11_inventory_open_chest(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A, NULL, 0);
+    (void)m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    out->crossChestBPanelBeforeReplace =
+        m11_inventory_get_panel_content_pc34(&state);
     out->crossChestBResult = m11_inventory_open_chest_replacing_current(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_B, NULL, 0, NULL, 0);
+    out->crossChestBPanelAfterReplace =
+        m11_inventory_get_panel_content_pc34(&state);
     out->crossChestBPreviousCount = out->crossChestBResult;
     out->crossChestBFinalOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
     out->crossChestBG0425AllNone = all_g0425_none(&state, 0);
@@ -238,6 +244,8 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
     out->crossChestBCloseAfterBResult = m11_inventory_close_chest(
         &state, 0, NULL, 0);
     out->crossChestBCloseAfterBCount = out->crossChestBCloseAfterBResult;
+    out->crossChestBPanelAfterClose =
+        m11_inventory_get_panel_content_pc34(&state);
 
     /* Phase 7: close when nothing is open.  F0334:113-117 (MEDIA070) returns
      * before reading or clearing G0425 and before writing the caller's output
