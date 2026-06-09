@@ -54,6 +54,7 @@ typedef struct {
     const char* f0302Anchor;
     const char* f0333Anchor;
     const char* f0334Anchor;
+    const char* f0347Anchor;
     const char* f0291Anchor;
     const char* defsAnchor;
     const char* scope;
@@ -92,6 +93,7 @@ typedef struct {
     int panelContentAfterOpen;
     int panelContentAfterSameOpen;
     int panelContentAfterClose;
+    int panelContentAfterCloseRedraw;
     int sameOpenChestResult;
     int leaderHandThingAfter;
     DM1_V1_InventoryPanelStatusHandOpenChestRowPc34

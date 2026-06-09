@@ -54,6 +54,7 @@ static int test_spec_and_evidence(void)
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-76";
     const char* f0333Panel = "ReDMCSB CHEST.C F0333 lines 28-32";
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 112-133";
+    const char* f0347 = "ReDMCSB PANEL.C F0347 lines 1639-1691";
     const char* f0291 = "ReDMCSB CHAMDRAW.C F0291 lines 621-630";
     const char* defs = "ReDMCSB DEFS.H lines 778-817";
     int ok = 1;
@@ -70,6 +71,8 @@ static int test_spec_and_evidence(void)
                           "F0333", f0333);
     ok &= expect_contains("f0334 anchor in spec", spec->f0334Anchor,
                           "F0334", f0334);
+    ok &= expect_contains("f0347 anchor in spec", spec->f0347Anchor,
+                          "F0347", f0347);
     ok &= expect_contains("f0291 anchor in spec", spec->f0291Anchor,
                           "F0291", f0291);
     ok &= expect_contains("defs anchor in spec", spec->defsAnchor,
@@ -84,6 +87,8 @@ static int test_spec_and_evidence(void)
                           f0333Panel);
     ok &= expect_contains("evidence F0334:112-133", evidence,
                           "F0334:112-133", f0334);
+    ok &= expect_contains("evidence F0347:1639-1691", evidence, "F0347:1639-1691",
+                          f0347);
     ok &= expect_contains("evidence F0291:621-630", evidence,
                           "F0291:621-630", f0291);
     ok &= expect_contains("evidence DEFS.H boundary", evidence,
@@ -99,6 +104,7 @@ static int test_open_chest_state_with_status_hand_table(void)
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-76";
     const char* f0333Panel = "ReDMCSB CHEST.C F0333 lines 28-32";
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 112-133";
+    const char* f0347 = "ReDMCSB PANEL.C F0347 lines 1639-1691";
     const char* f0291 = "ReDMCSB CHAMDRAW.C F0291 lines 621-630";
     int ok = 1;
 
@@ -134,6 +140,10 @@ static int test_open_chest_state_with_status_hand_table(void)
     ok &= expect_int("close leaves panel content on chest until redraw",
                      g_probe.panelContentAfterClose, DM1_PC34_PANEL_CHEST,
                      f0334);
+    ok &= expect_int("redraw route sends panel back to food/water for "
+                     "non-container action hand",
+                     g_probe.panelContentAfterCloseRedraw,
+                     DM1_PC34_PANEL_FOOD_WATER_POISONED, f0347);
     ok &= expect_int("closed action-hand icon baseline is C144",
                      g_probe.actionHandIconBefore, 144, f0291);
     ok &= expect_int("open action-hand icon swaps to C145",

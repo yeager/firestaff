@@ -23,6 +23,11 @@ static const char s_f0334_anchor[] =
     "status hand slot box route is consumed before the open/close path "
     "and never touches G0426.";
 
+static const char s_f0347_anchor[] =
+    "PANEL.C:F0347_INVENTORY_DrawPanel:1639-1691 keeps chest panel on "
+    "container action hand and redraws food/water/poisoned when not "
+    "container-based.";
+
 static const char s_f0291_anchor[] =
     "CHAMDRAW.C:F0291:621-630 maps the action-hand icon C144 (closed) to "
     "C145 (open) while G0426_T_OpenChest is non-empty; the open-chest "
@@ -40,6 +45,7 @@ static const DM1_V1_InventoryPanelStatusHandOpenChestSpecPc34 s_spec = {
     s_f0302_anchor,
     s_f0333_anchor,
     s_f0334_anchor,
+    s_f0347_anchor,
     s_f0291_anchor,
     s_defs_anchor,
     "contract_only=1; synthetic DM1 V1 status hand slot box 0..7 reduction "
@@ -65,8 +71,10 @@ dm1_v1_inventory_panel_status_hand_open_chest_source_evidence_pc34(void)
         "CHEST.C F0334:112-133 close-time compaction and "
         "G0426_T_OpenChest clear\n"
         "CHAMDRAW.C F0291:621-630 action-hand icon C144/C145 binding\n"
-        "DEFS.H lines 2995-3008 PC 3.4 M569_PANEL_CHEST=6\n"
-        "DEFS.H C08_SLOT_BOX_INVENTORY_FIRST_SLOT=8 status/inventory "
+    "DEFS.H lines 2995-3008 PC 3.4 M569_PANEL_CHEST=6\n"
+    "PANEL.C F0347:1639-1691 redraws food/water/poisoned unless the action hand "
+    "is a container\n"
+    "DEFS.H C08_SLOT_BOX_INVENTORY_FIRST_SLOT=8 status/inventory "
         "boundary\n"
         "DEFS.H M070_HAND_SLOT_INDEX(slotbox) = (slotbox) & 0x0001 "
         "ready/action hand selector";
@@ -475,11 +483,22 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
                                              chestThing)) {
         return 0;
     }
+
     /* Close the chest and verify the icon reverts. */
     (void)m11_inventory_close_chest(&state, 0, NULL, 0);
     out->openChestThingAfterClose =
         m11_inventory_get_open_chest_thing(&state, 0);
     out->panelContentAfterClose = m11_inventory_get_panel_content_pc34(&state);
+
+    /* ReDMCSB PANEL.C F0347:1639-1691 redraws the panel based on the current
+     * action hand immediately after close/click flows. Use a non-container
+     * item to verify the fallback route to food/water/poisoned. */
+    (void)m11_inventory_set_item_in_pc34_source_slot(
+        &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, DM1_V1_IPHSOC_DAGGER, 1,
+        0, DM1_PC34_ALLOWED_HANDS);
+    (void)m11_inventory_apply_panel_route_after_close_pc34(&state, 0);
+    out->panelContentAfterCloseRedraw =
+        m11_inventory_get_panel_content_pc34(&state);
     out->actionHandIconAfterClose =
         (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
             /*isInventoryChampion=*/1u, /*slotIndex=*/1u,
