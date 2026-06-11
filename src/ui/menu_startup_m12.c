@@ -6882,6 +6882,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.valid = m12_game_supported(intent.gameId) &&
                    intent.rendererBackendAvailable &&
                    state->entries[state->activatedIndex].available &&
+                   M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId) &&
                    version && version->matched ? 1 : 0;
     /* Nexus Phase 1 gate: only V1.ORIGINAL is supported.
      * Block V2.0/V2.1/V2.2 for nexus until those render paths are implemented.

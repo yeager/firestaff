@@ -764,6 +764,55 @@ static void test_enter_game_rejects_partial_or_misrouted_profiles(void)
           "misrouted profile rejection does not rebuild runtime state");
 }
 
+static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
+{
+    CSB_V1_BootProfile p;
+    char dungeon_path[ASSET_PATH_MAX];
+    const char *tmp_dir = "/tmp/firestaff-csb-v2-profile-fallback-guard";
+
+    (void)TEST_MKDIR(tmp_dir);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
+          "synthetic DUNGEON.DAT written for CSB V2 profile fallback guard");
+
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/CSBGRAPH.DAT", tmp_dir);
+    snprintf(p.version_id, sizeof(p.version_id), "%s", "csb-v2.1-upscaled-selected");
+    snprintf(p.variant_label, sizeof(p.variant_label), "%s", "CSB V2.1 Upscaled");
+    snprintf(p.media_ref, sizeof(p.media_ref), "%s", "presentation-v2-profile");
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_ST21_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+    p.entrance_map_index = 255U;
+    p.start_map_index = 0U;
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "verified CSB V2-labeled profile falls back through the V1 handoff");
+    CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
+          "V2-labeled profile reaches the V1 runtime-ready state");
+    CHECK(p.runtime.state == CSB_STATE_TITLE,
+          "V2-labeled profile still enters the source-locked V1 title state");
+    CHECK(p.runtime.variant_id == CSB_V1_VARIANT_ST21_EN,
+          "V2-labeled profile preserves the CSB V1 media variant");
+    CHECK(p.runtime.dungeon_asset.path == p.dungeon_path &&
+              p.runtime.dungeon_asset.kind == CSB_V1_ASSET_GFX_ARCHIVE_NONE,
+          "V2-labeled profile hands off only the verified V1 DUNGEON.DAT path");
+    CHECK(p.runtime.graphics_asset.path == p.graphics_path &&
+              p.runtime.graphics_asset.kind == CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF,
+          "V2-labeled profile hands off only the verified V1 graphics archive path");
+    CHECK(p.runtime.dungeon_handle != NULL,
+          "V2-labeled profile loads the V1 dungeon during handoff");
+    CHECK(p.runtime.entrance_map_index == 255U && p.runtime.start_map_index == 0U,
+          "V2-labeled profile keeps the V1 entrance/start map boundary");
+
+    csb_v1_boot_cleanup(&p);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
@@ -773,6 +822,7 @@ int main(void)
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
     test_enter_game_rejects_partial_or_misrouted_profiles();
+    test_enter_game_v2_profile_labels_do_not_change_v1_handoff();
     test_utility_flow_new_game_handoff_preserves_leader_index();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
@@ -784,6 +834,8 @@ int main(void)
         puts("sourceEvidence=ReDMCSB LOADSAVE.C F0435 lines 2728-2734 imports party globals; CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
         puts("ok: CSB V1 verified boot handoff rotates an imported four-champion party through the source-locked F0284 delta-mod-4 invariant on every champion's Cell and Direction");
         puts("sourceEvidence=ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130 (MEDIA182 C source); CLIKCHAM.C F0368 line 67 (leader-switch alignment to G0308_i_PartyDirection)");
+        puts("ok: CSB V2 profile labels do not alter V1 runtime handoff paths, media kind, title state, or required dungeon load");
+        puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 lines 409-441 selects CSB media; LOADSAVE.C F0435 lines 1936-1944 loads the V1 dungeon");
     }
     return failed == 0 ? 0 : 1;
 }
