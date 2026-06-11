@@ -1207,6 +1207,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel mutable-state repaint runtime pixel gate.
+# Renders one HUD frame, mutates champion bars, hand-slot state, and icon
+# direction, then redraws into the same framebuffer to prove stale pixels
+# are replaced by the second state through the real M11 V1 draw stack.
+add_executable(firestaff_dm1_v1_champion_panel_repaint_delta_pixel_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_repaint_delta_pixel_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_repaint_delta_pixel_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_repaint_delta_pixel_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
