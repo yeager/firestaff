@@ -47,6 +47,7 @@
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -244,6 +245,9 @@ typedef struct {
     uint32_t                game_time;       /* V1 game_time */
     uint64_t                total_play_ms;   /* wall-clock ms */
     uint32_t                tick_count;       /* how many V1 ticks elapsed */
+    struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
+    struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
+    uint32_t                timeline_dispatch_count;
 
     /* ── Chaos Magic ────────────────────────────── */
     CSB_V1_ChaosMagicState  chaos_magic;
@@ -347,6 +351,23 @@ int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
 /* Check if a V1 tick is due at accumulated wall-clock time now_ms.
  * Pass 0 to use profile->total_play_ms. */
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms);
+
+/* Queue one source-locked timeline event for the CSB V1 runtime.
+ * The underlying event heap is the shared V1 ReDMCSB TIMELINE.C model used
+ * by DM1/CSB.  csb_v1_runtime_tick_v1() processes expired events at the
+ * pre-increment game_time boundary, matching GAMELOOP.C F0002 lines 69-124:
+ * F0261_TIMELINE_Process_CPSEF() runs before G0313_ul_GameTime++.
+ * Returns the event slot index or -1 on invalid input/full queue.
+ * Source: ReDMCSB TIMELINE.C F0238/F0240/F0261 lines 565-690,
+ * 702-708, 1833-1850; GAMELOOP.C F0002 lines 69-124. */
+int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
+                                      const struct DM1_Event_V1 *event);
+
+/* Copy the dispatch records produced by the most recent fired V1 tick.
+ * Returns the number of records copied or -1 on invalid input. */
+int csb_v1_runtime_get_last_timeline_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct DM1_TickDispatchResult_V1 *out_result);
 
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
