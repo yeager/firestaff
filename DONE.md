@@ -58,6 +58,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM1 V1 - Runtime and Source-Lock
 
+- ✅ 2026-06-11 — hardened the DM1 V1 original DOS capture runner with a no-runtime `--preflight-route` mode that validates the six-shot route shape, generated route helpers, and host injector selection before DOSBox launch; pass504 now executes that preflight and records the sanitized result in its manifest.
 - ✅ 2026-06-09 00:18 — hardened `test_dm1_v1_door_keyhole_wrong_item_pc34_compat` so the DM1 V1 D1C door keyhole/button wrong-leader-hand regression now explicitly proves the ReDMCSB `CLIKVIEW.C F0377:356-401` no-open/no-consume path also appends no invented wrong-item message and leaves the prior status/message-log state untouched.
 - ✅ 2026-06-11 — tightened `test_dm1_v1_door_keyhole_wrong_item_pc34_compat` so the wrong-leader-hand keyhole regression first proves its click resolves through the original C080/C007 movement viewport route and lands inside the D1C keyhole/button source rectangle `160..175,44..52` before asserting no open, no consume, no throw, no door event, and no invented message/status output.
 - ✅ 2026-06-11 — added `dm1_v1_monster_poison_cloud_overlap_tick`, a narrow DM1 V1 mechanics regression proving one poison cloud on one monster tile is not due before its first tick boundary, emits exactly one group-damage action at the boundary, decays by 3, and reschedules the cloud for the next tick, source-locked to ReDMCSB `PROJEXPL.C F0213/F0220` and `GROUP.C F0191/F0192`.
