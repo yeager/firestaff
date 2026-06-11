@@ -7,6 +7,7 @@ Patch release focused on DM1 V1 viewport, inventory, champion-panel, and runtime
 - Expanded DM1 V1 source-lock and pixel coverage for viewport side walls, stairs/pit dispatch, floor/ceiling fallback, door fronts, wall ornaments, champion mirror paths, and projectile side-cell behavior.
 - Hardened DM1 V1 inventory and champion-panel behavior around chest routing, close/reopen edges, pickup/swap paths, mirror-candidate handoff, hand-slot priority, held-item icons, portraits, wounds, and stale-pixel redraws.
 - Locked V2.0 filtered presentation to a 640x400 2x runtime surface across games while preserving original 320x200 game/input coordinates.
+- Wired Theron's Quest direct launch so M11 can consume the launcher catalog's hash-verified Track 02 path/MD5 without re-walking the game-data root.
 - Added focused runtime gates for spell-rune preservation, poison/cloud timing, room-transition pickup ordering, delayed timeline saves, keyhole no-op behavior, and audio pack frame bounds.
 - Added cross-game regression coverage for CSB viewport/import/chaos/optional-asset paths, DM2 save/weather/projectile behavior, Nexus palette/DGN bounds/save validation, and Theron launch/progression/shop/transition state.
 

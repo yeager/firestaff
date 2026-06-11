@@ -41,6 +41,8 @@ typedef struct {
     const char* dataDir;
     const char* sourceId;
     const char* dungeonPath;
+    const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
+    const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     int languageIndex;
     int rendererBackend;
