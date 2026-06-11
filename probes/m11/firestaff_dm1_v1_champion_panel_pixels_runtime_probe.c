@@ -32,7 +32,9 @@ enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
     PROBE_CHAMPION_COUNT = 4,
-    PROBE_STALE_PIXEL = M11_FB_ENCODE(0, 15)
+    PROBE_STALE_PIXEL = M11_FB_ENCODE(0, 15),
+    PROBE_ACTION_EMPTY_HAND_ICON = 201,
+    PROBE_ACTION_CELL_CYAN = 4
 };
 
 static unsigned char px_index(const unsigned char* fb, int width, int x, int y) {
@@ -151,6 +153,9 @@ static void seed_party(M11_GameViewState* game) {
     game->showDebugHUD = 0;
     game->inventoryPanelActive = 0;
     game->spellPanelOpen = 0;
+    game->resting = 0;
+    game->candidateMirrorOrdinal = 0;
+    game->candidateMirrorPanelActive = 0;
     game->actingChampionOrdinal = 2; /* slot 1 action hand uses C035 */
     game->world.magic.fireShieldDefense = 0;
     game->world.magic.spellShieldDefense = 0;
@@ -502,6 +507,114 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     return ok;
 }
 
+/* ReDMCSB: MENUS.C F0386 draws action-hand cells C089..C092 for live
+ * champions, fills the action icon bitmap with C04 cyan for an empty hand,
+ * then blits the empty-hand object icon through the action-area palette
+ * remap.  This is a Firestaff runtime pixel gate for the champion panel's
+ * action icon row; it does not claim original DOS screenshot parity. */
+static int check_action_icon_cell_pixels(const M11_GameViewState* game,
+                                         const unsigned char* fb,
+                                         int slot) {
+    int cellX, cellY, cellW, cellH;
+    int innerX, innerY, innerW, innerH;
+    int graphicIndex;
+    int srcX, srcY, srcW, srcH;
+    const M11_AssetSlot* asset;
+    int matched = 0;
+    int total = 0;
+    int cyanPixels;
+    int yy;
+    int ok = 1;
+    char label[128];
+
+    snprintf(label, sizeof(label), "slot%d action icon cell id", slot);
+    ok &= expect_int(label,
+                     M11_GameView_GetV1ActionIconCellZoneId(slot),
+                     89 + slot);
+    snprintf(label, sizeof(label), "slot%d action icon inner id", slot);
+    ok &= expect_int(label,
+                     M11_GameView_GetV1ActionIconInnerZoneId(slot),
+                     93 + slot);
+    snprintf(label, sizeof(label), "slot%d action icon cell zone", slot);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1ActionIconCellZone(slot,
+                                                           &cellX,
+                                                           &cellY,
+                                                           &cellW,
+                                                           &cellH) &&
+                      cellW == 20 && cellH == 35);
+    snprintf(label, sizeof(label), "slot%d action icon inner zone", slot);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1ActionIconInnerZone(slot,
+                                                            &innerX,
+                                                            &innerY,
+                                                            &innerW,
+                                                            &innerH) &&
+                      innerW == 16 && innerH == 16);
+    snprintf(label, sizeof(label), "slot%d action icon backdrop color", slot);
+    ok &= expect_int(label,
+                     M11_GameView_GetV1ActionIconCellBackdropColor(game, slot),
+                     PROBE_ACTION_CELL_CYAN);
+    snprintf(label, sizeof(label), "slot%d action empty-hand source zone", slot);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1ObjectIconSourceZone(
+                          PROBE_ACTION_EMPTY_HAND_ICON,
+                          &graphicIndex,
+                          &srcX,
+                          &srcY,
+                          &srcW,
+                          &srcH) &&
+                      srcW == 16 && srcH == 16);
+    if (!ok) {
+        return 0;
+    }
+
+    asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                 (unsigned int)graphicIndex);
+    snprintf(label, sizeof(label), "slot%d action empty-hand icon asset", slot);
+    ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
+                             srcX + srcW <= (int)asset->width &&
+                             srcY + srcH <= (int)asset->height);
+    if (!ok || !asset || !asset->pixels) {
+        return 0;
+    }
+
+    cyanPixels = count_color(fb, PROBE_FB_W,
+                             cellX, cellY, cellW, cellH,
+                             PROBE_ACTION_CELL_CYAN);
+    snprintf(label, sizeof(label), "slot%d action icon cyan backdrop visible",
+             slot);
+    ok &= expect_true(label, cyanPixels > 350);
+
+    for (yy = 0; yy < innerH; ++yy) {
+        int xx;
+        for (xx = 0; xx < innerW; ++xx) {
+            unsigned char src = (unsigned char)
+                (asset->pixels[(srcY + yy) * (int)asset->width + srcX + xx] & 0x0F);
+            unsigned char expected = (unsigned char)
+                M11_GameView_MapV1ActionIconPaletteColor(src, 1);
+            unsigned char dst = px_index(fb, PROBE_FB_W, innerX + xx, innerY + yy);
+            ++total;
+            if (dst == expected) {
+                ++matched;
+            }
+        }
+    }
+    snprintf(label, sizeof(label),
+             "slot%d action empty-hand GRAPHICS.DAT icon match", slot);
+    ok &= expect_true(label, total == 256 && matched == total);
+    printf("slot%d action cell C%d inner C%d icon=%d gfx=%d cyan=%d pixels=%d/%d\n",
+           slot,
+           M11_GameView_GetV1ActionIconCellZoneId(slot),
+           M11_GameView_GetV1ActionIconInnerZoneId(slot),
+           PROBE_ACTION_EMPTY_HAND_ICON,
+           graphicIndex,
+           cyanPixels,
+           matched,
+           total);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -546,6 +659,18 @@ int main(int argc, char** argv) {
         ok &= check_hand_slot_icon_pixels(&game, fb, slot, 1);
     }
     ok &= check_status_box_gutter_pixels(fb);
+
+    /* ReDMCSB: MENUS.C F0387 draws either the acting champion action
+     * menu or the four C089..C092 action icon cells.  The first pass keeps
+     * actingChampionOrdinal=2 to cover C035 in the status hand slot; this
+     * second pass clears the acting champion so the idle icon-mode branch
+     * is pixel-checked with the same real assets and seeded party. */
+    game.actingChampionOrdinal = 0;
+    memset(fb, PROBE_STALE_PIXEL, sizeof(fb));
+    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
+    for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
+        ok &= check_action_icon_cell_pixels(&game, fb, slot);
+    }
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion panel runtime pixel probe (Firestaff-side evidence)\n",
