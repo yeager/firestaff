@@ -1,0 +1,83 @@
+{
+  "schema": "firestaff.dm1_v1.creature_chain_original_capture_contract.v1",
+  "status": "BLOCKED_ON_REFERENCE",
+  "purpose": "Prepare the minimum original-DOS capture rows needed to compare DM1 V1 creature-chain viewport rendering without promoting parity before captures exist.",
+  "assetSet": {
+    "game": "Dungeon Master PC DOS English v3.4",
+    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+  },
+  "sourceAnchors": [
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "lines": "4547,5201-5586",
+      "claim": "thing-chain creature draw, pose, flip, depth palette, and viewport compositing route"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "symbol": "G0219_as_Graphic558_CreatureAspects",
+      "lines": "1656-1685",
+      "claim": "PC/I34E creature aspect table; Trolin type 16 has firstNative=51, coordinate/transparent byte 0x04, and replacement sets 0x65"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "symbols": ["G0221_auc_Graphic558_PaletteChanges_Creature_D3", "G0222_auc_Graphic558_PaletteChanges_Creature_D2"],
+      "lines": "1821-1822",
+      "claim": "depth-specific creature palette remap tables required by the comparison rows"
+    }
+  ],
+  "creature": {
+    "type": 16,
+    "name": "Trolin",
+    "firstNativeBitmapRelativeIndex": 51,
+    "frontNativeBitmapIndex": 635,
+    "coordinateSet": 0,
+    "transparentColor": 4,
+    "replacementColorSetIndices": "0x65",
+    "graphicInfo": "0x0680"
+  },
+  "requiredRows": [
+    {
+      "label": "creature_chain_d2c_trolin_front",
+      "captureClass": "dungeon_gameplay",
+      "routeKind": "original_dos_runtime_plus_firestaff_fixture",
+      "mapIndex": 0,
+      "viewSquare": "D2C",
+      "expectedOriginalFrame": {
+        "raw": {"width": 320, "height": 200},
+        "viewportCrop": {"x": 0, "y": 33, "width": 224, "height": 136}
+      },
+      "semanticChecks": [
+        "source asset hashes match assetSet",
+        "original and Firestaff rows share mapIndex/mapX/mapY/direction and creature cell tuple",
+        "creature type 16 resolves through G0219 and M618 to native front bitmap 635",
+        "D2 palette remap uses G0222",
+        "row contains rawSha256, cropSha256, firestaffViewportSha256, and capture timestamp"
+      ]
+    },
+    {
+      "label": "creature_chain_d1c_trolin_front",
+      "captureClass": "dungeon_gameplay",
+      "routeKind": "original_dos_runtime_plus_firestaff_fixture",
+      "mapIndex": 0,
+      "viewSquare": "D1C",
+      "expectedOriginalFrame": {
+        "raw": {"width": 320, "height": 200},
+        "viewportCrop": {"x": 0, "y": 33, "width": 224, "height": 136}
+      },
+      "semanticChecks": [
+        "source asset hashes match assetSet",
+        "original and Firestaff rows share mapIndex/mapX/mapY/direction and creature cell tuple",
+        "creature type 16 resolves through G0219 and M618 to native front bitmap 635",
+        "nearer creature row is ordered after farther creature row in the chain evidence",
+        "row contains rawSha256, cropSha256, firestaffViewportSha256, and capture timestamp"
+      ]
+    }
+  ],
+  "nonClaims": [
+    "No original creature screenshot is supplied by this contract.",
+    "No original-vs-Firestaff pixel parity is promoted by this contract.",
+    "No game logic or rendering behavior is changed by this contract."
+  ]
+}

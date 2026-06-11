@@ -1694,6 +1694,17 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_route_handoff.py
         )
         set_tests_properties(dm1_v1_original_capture_route_handoff PROPERTIES TIMEOUT 300)
+        # Creature-chain original capture gate: keeps the remaining
+        # creature screenshot gap machine-checkable by pinning the two
+        # required Trolin route rows (D2C and D1C), canonical PC 3.4
+        # asset hashes, viewport-crop geometry, and ReDMCSB F0115/G0219
+        # source anchors.  This is a blocker gate; it does not promote
+        # original-vs-Firestaff pixel parity before real original DOS
+        # screenshots exist.
+        add_test(
+            NAME dm1_v1_creature_chain_original_capture_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_creature_chain_original_capture_gate.py
+        )
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
