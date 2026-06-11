@@ -10,10 +10,10 @@ Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
 - DUNVIEW.C:6697-6714 redmcsb_center_walls_use_flip_flag status=PASS
 
 ## Firestaff anchors
-- m11_game_view.c:11579 firestaff_party_tuple_flip_predicate status=PASS
-- m11_game_view.c:11577 firestaff_wallset_variant_binding_before_draw status=PASS
-- m11_game_view.c:12203 firestaff_center_wall_flip_path status=PASS
-- m11_game_view.c:13073 firestaff_side_wall_lr_swap_path status=PASS
+- m11_game_view.c:11945 firestaff_party_tuple_flip_predicate scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:11951 firestaff_wallset_variant_binding_before_draw scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:12577 firestaff_center_wall_flip_path scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:13442 firestaff_side_wall_lr_swap_path scope=whole-file-local-evidence status=PASS
 
 ## Local references
 - dm1_pc34_graphics /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
@@ -23,8 +23,8 @@ Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
 - csb_lineage_source /Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp exists=True sha256=8842aa9caa32cfab0873576bc19ddf9aaced2decc2493d8a58f0d67a4a871cdb
 
 ## Gates
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass509_dm1_v1_wallset_startup_binding.py -> rc=0 passed=True
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=0 passed=True
+- /Applications/Xcode.app/Contents/Developer/usr/bin/python3 tools/verify_pass509_dm1_v1_wallset_startup_binding.py -> rc=0 passed=True
+- /Applications/Xcode.app/Contents/Developer/usr/bin/python3 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=0 passed=True
 
 ## Scope
 - Locks the source-visible wall parity/native flip path after pass509 startup binding.

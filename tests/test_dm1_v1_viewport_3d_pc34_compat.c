@@ -2982,6 +2982,22 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
         { "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
           "static void test_d0_d1_visible_square_draw_order_gate(void)",
           "pass577.runtime_test" },
+        /* pass510: m11_game_view.c wall parity/native flip path */
+        { "src/engine/m11_game_view.c",
+          "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set",
+          "pass510.party_tuple_source_citation" },
+        { "src/engine/m11_game_view.c",
+          "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
+          "pass510.party_tuple_flip_predicate" },
+        { "src/engine/m11_game_view.c",
+          "wallSet * M11_GFX_DM1_WALLSET_COUNT +",
+          "pass510.wallset_variant_binding" },
+        { "src/engine/m11_game_view.c",
+          "the native center-wall graphic flipped horizontally.",
+          "pass510.center_wall_flip_path" },
+        { "src/engine/m11_game_view.c",
+          "left zones use the right-side graphic flipped horizontally",
+          "pass510.side_wall_lr_swap_path" },
     };
     for (size_t i = 0; i < sizeof(needles) / sizeof(needles[0]); ++i) {
         char id[128];
