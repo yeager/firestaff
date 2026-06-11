@@ -51,6 +51,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Archive scanner ZIP cache regression: `asset_status_zip_cache_materialization` writes synthetic DM2 required files inside a ZIP, verifies hash lookup reports `archive.zip::entry` virtual paths, and proves required `GRAPHICS.DAT` / `DUNGEON.DAT` payloads materialize into the Firestaff `asset-cache/dm2/` runtime handoff. On zlib builds the fixture uses ZIP method 8 deflated entries; otherwise it falls back to stored entries.
 - ✅ 2026-06-11 — hardened the CSB V1 boot-to-runtime handoff guard so `csb_v1_boot_enter_game()` now rejects stale aggregate readiness, missing required asset paths, and non-CSB profile IDs before mutating runtime state; `csb_v1_boot_runtime_handoff` covers the negative paths without requiring retail game data.
+- ✅ 2026-06-11 — hardened reused CSB V1 boot-profile scans so `csb_v1_boot_scan_assets()` clears stale verified graphics/dungeon paths, hashes, flags, archive kind, and variant before each hash pass; `csb_v1_boot_profile_smoke` now proves a missing-data rescan cannot hand stale paths into `csb_v1_boot_enter_game()`.
 
 ## Dungeon Master (DM1)
 

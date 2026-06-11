@@ -46,6 +46,48 @@ static void test_scan_missing_data(void)
           "diagnostic report is populated");
 }
 
+static void test_rescan_missing_data_clears_stale_handoff(void)
+{
+    CSB_V1_BootProfile p;
+
+    csb_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    p.graphics_verified = 1;
+    p.dungeon_verified = 1;
+    p.state = CSB_V1_BOOT_STATE_RUNTIME_READY;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+    snprintf(p.graphics_path, sizeof(p.graphics_path),
+             "%s", "/tmp/firestaff-csb-stale/CSBGRAPH.DAT");
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path),
+             "%s", "/tmp/firestaff-csb-stale/DUNGEON.DAT");
+    snprintf(p.graphics_md5, sizeof(p.graphics_md5),
+             "%s", "61fbfd56887c94adc26888a9491c6611");
+    snprintf(p.dungeon_md5, sizeof(p.dungeon_md5),
+             "%s", "6695d2acebce49f95db1d8f3a5c733de");
+
+    CHECK(csb_v1_boot_scan_assets(&p, "/tmp/firestaff-csb-v1-rescan-no-assets") == -1,
+          "missing-data rescan fails on a reused profile");
+    CHECK(p.assets_verified == 0 &&
+          p.graphics_verified == 0 &&
+          p.dungeon_verified == 0,
+          "missing-data rescan clears all verification flags");
+    CHECK(p.graphics_path[0] == '\0' &&
+          p.dungeon_path[0] == '\0',
+          "missing-data rescan clears stale runtime asset paths");
+    CHECK(p.graphics_md5[0] == '\0' &&
+          p.dungeon_md5[0] == '\0',
+          "missing-data rescan clears stale hash labels");
+    CHECK(p.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_NONE,
+          "missing-data rescan clears stale graphics archive kind");
+    CHECK(p.variant_id == CSB_V1_VARIANT_UNKNOWN,
+          "missing-data rescan clears stale CSB variant id");
+    CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY,
+          "missing-data rescan returns the profile to PROFILE_READY");
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "launch remains blocked after stale handoff fields are cleared");
+}
+
 static void test_save_root_override(void)
 {
     CSB_V1_BootProfile p;
@@ -129,6 +171,7 @@ int main(void)
     printf("=== CSB V1 Boot Profile Smoke Test ===\n\n");
     test_defaults();
     test_scan_missing_data();
+    test_rescan_missing_data_clears_stale_handoff();
     test_save_root_override();
     test_enter_requires_assets();
     test_enter_handoff_state();
