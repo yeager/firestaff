@@ -46,6 +46,7 @@
 #include <stdint.h>
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_character_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -219,6 +220,10 @@ typedef struct {
     int                     party_z;         /* floor / height level */
     int                     party_dir;       /* 0=North, 1=East, 2=South, 3=West */
     int                     champion_count;  /* champions in party */
+    int                     leader_index;    /* G0411_i_LeaderIndex, -1 = none */
+    int                     magic_caster_index;
+    int                     party_state_valid;
+    CSB_V1_PartyState       party_state;
 
     /* ── State machine ─────────────────────────── */
     int                     state;   /* CSB_STATE_* enum */
@@ -270,6 +275,19 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
  * After this call, dungeon-layer accessors return ENDOF until
  * csb_v1_runtime_boot() is called again with a valid dungeon. */
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile);
+
+/* Copy the imported/loaded CSB party into the runtime profile.
+ * This is intentionally a snapshot: UI/utility flow owns the source state,
+ * while the runtime owns the state after verified CSB boot handoff.
+ * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 initializes the party
+ * map globals during new-game load; CLIKCHAM.C F0368 lines 38-73 mutates
+ * G0411_i_LeaderIndex after champion-status-box selection. */
+int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
+                                   const CSB_V1_PartyState *party);
+int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
+                                   CSB_V1_PartyState *out_party);
+int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
+                              int champion_index);
 
 /* Boot the CSB dungeon and initialize Chaos Magic.
  * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the

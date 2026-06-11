@@ -152,6 +152,42 @@ static int write_synthetic_dm1_save_for_utility_flow(const char *path)
     return (n == sizeof(buf)) ? 0 : -1;
 }
 
+static int build_synthetic_dm1_party_buffer(uint8_t *buf, size_t buf_size,
+                                            int champion_count)
+{
+    int i;
+    if (!buf || buf_size < 1024 || champion_count < 1 ||
+        champion_count > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    memset(buf, 0, buf_size);
+    buf[CSB_V1_DM1_HDR_CHAMP_COUNT] = (uint8_t)champion_count;
+    for (i = 0; i < champion_count; i++) {
+        size_t off = (size_t)CSB_V1_DM1_HDR_CHAMPION_START +
+                     (size_t)i * (size_t)CSB_V1_DM1_CHAMP_SIZE;
+        size_t equip_off = off + (size_t)CSB_V1_DM1_CHAMP_OFF_EQUIP;
+        int slot;
+
+        memcpy((char *)buf + off + CSB_V1_DM1_CHAMP_OFF_NAME,
+               i == 0 ? "ALPHA   " : "BETA    ", 8);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_HEALTH] = (uint8_t)(80 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH] = (uint8_t)(100 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_STAMINA] = (uint8_t)(60 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA] = (uint8_t)(100 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_MANA] = (uint8_t)(30 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_MAX_MANA] = (uint8_t)(50 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_STR] = (uint8_t)(55 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_DEX] = (uint8_t)(66 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_WIS] = (uint8_t)(77 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_VIT] = (uint8_t)(88 + i);
+        for (slot = 0; slot < CSB_V1_SLOT_COUNT; slot++) {
+            buf[equip_off + (size_t)slot * 2u] = 0xFFu;
+            buf[equip_off + (size_t)slot * 2u + 1u] = 0xFFu;
+        }
+    }
+    return 0;
+}
+
 static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
 {
     CSB_V1_UtilFlowContext ctx;
@@ -264,6 +300,69 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "boot cleanup clears the owned dungeon handle");
     CHECK(csb_v1_dungeon_get_current() == NULL,
           "boot cleanup clears the current dungeon singleton");
+}
+
+static void test_enter_game_preserves_imported_party_and_switches_leader(void)
+{
+    CSB_V1_BootProfile p;
+    CSB_V1_PartyState imported;
+    CSB_V1_PartyState runtime_party;
+    uint8_t save_buf[1024];
+    char dungeon_path[ASSET_PATH_MAX];
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-party";
+
+    (void)TEST_MKDIR(tmp_dir);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
+          "synthetic DUNGEON.DAT written for imported party handoff");
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+          "synthetic two-champion DM1 save buffer built");
+    CHECK(csb_v1_character_import_dm1_buffer(&imported, save_buf,
+                                             (int)sizeof(save_buf)) == 2,
+          "DM1 buffer import yields two CSB champions");
+    CHECK(imported.LeaderIndex == 0,
+          "imported party starts with first living champion as leader");
+    imported.PartyDirection = CSB_V1_DIR_EAST;
+
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+    CHECK(csb_v1_boot_set_imported_party(&p, &imported) == 0,
+          "boot profile accepts imported CSB party before handoff");
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "enter_game succeeds with verified assets and imported party");
+    CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
+          "boot state is RUNTIME_READY before leader switch");
+    CHECK(p.runtime.dungeon_handle != NULL,
+          "verified boot handoff loaded DUNGEON.DAT before leader switch");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 2,
+          "runtime party snapshot is visible after boot handoff");
+    CHECK(runtime_party.ChampionCount == 2,
+          "runtime party keeps imported champion count");
+    CHECK(runtime_party.ImportedFromDM1 == 1,
+          "runtime party keeps DM1 import provenance");
+    CHECK(runtime_party.LeaderIndex == 0 && p.runtime.leader_index == 0,
+          "runtime leader starts from imported first living champion");
+
+    CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
+          "runtime leader switch to second imported champion succeeds");
+    memset(&runtime_party, 0, sizeof(runtime_party));
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 2,
+          "runtime party snapshot remains available after leader switch");
+    CHECK(runtime_party.LeaderIndex == 1 && p.runtime.leader_index == 1,
+          "runtime leader index changes to champion 1 after source-locked switch");
+    CHECK(runtime_party.Champions[1].Direction == CSB_V1_DIR_EAST,
+          "selected leader direction aligns to party direction (CLIKCHAM.C F0368)");
+
+    csb_v1_boot_cleanup(&p);
 }
 
 static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
@@ -396,6 +495,7 @@ int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
+    test_enter_game_preserves_imported_party_and_switches_leader();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
     test_enter_game_rejects_partial_or_misrouted_profiles();
@@ -406,6 +506,8 @@ int main(void)
         puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 lines 409-441; LOADSAVE.C F0435 lines 1940-1944; CSBWin/CSBCode.cpp:6800-6950 LoadDungeon");
         puts("ok: CSB utility flow NEW_GAME handoff preserves LeaderIndex in csb_v1_util_flow_get_party()");
         puts("sourceEvidence=ReDMCSB SAVEGAME.C F0100-F0120 import state; ReDMCSB ENTRANCE.C F0806 startup flow");
+        puts("ok: CSB V1 verified boot handoff preserves an imported two-champion party and supports a deterministic leader switch");
+        puts("sourceEvidence=ReDMCSB CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
     }
     return failed == 0 ? 0 : 1;
 }
