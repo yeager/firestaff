@@ -62,16 +62,16 @@ static int16_t read_le16(const uint8_t *p)
  * is a linked-list sentinel for dungeon/chest chains, not a valid
  * carried object, so the DM1 import path rejects it before the slot is
  * committed to CSB party state. */
-static int csb_v1_dm1_record_has_invalid_slot_state(const uint8_t *dm1_record)
+static int csb_v1_dm1_record_invalid_slot_byte_offset(const uint8_t *dm1_record)
 {
     int i;
 
-    if (!dm1_record) return 1;
+    if (!dm1_record) return 0;
 
     for (i = 0; i < 30; i++) {
         uint16_t slot_value = (uint16_t)read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
         if (slot_value == THING_ENDOFLIST) {
-            return 1;
+            return DM1_REC_EQUIP + i * 2;
         }
     }
 
@@ -399,13 +399,17 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                 continue; /* skip malformed record */
             }
 
-            if (csb_v1_dm1_record_has_invalid_slot_state(dm1_buf + offset)) {
-                if (result) {
-                    result->error_code = CSB_V1_IMPORT_ERR_SLOT_STATE;
-                    result->byte_offset = offset;
-                    result->state = CSB_V1_IMPORT_STATE_ERROR;
+            {
+                int bad_slot_offset = csb_v1_dm1_record_invalid_slot_byte_offset(
+                    dm1_buf + offset);
+                if (bad_slot_offset > 0) {
+                    if (result) {
+                        result->error_code = CSB_V1_IMPORT_ERR_SLOT_STATE;
+                        result->byte_offset = offset + bad_slot_offset;
+                        result->state = CSB_V1_IMPORT_STATE_ERROR;
+                    }
+                    return -1;
                 }
-                return -1;
             }
 
             /* State 5: Verify block checksum.
