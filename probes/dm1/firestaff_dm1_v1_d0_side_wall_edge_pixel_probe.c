@@ -34,7 +34,8 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
                                 const char *name,
                                 uint8_t base,
                                 int expected_dst_x,
-                                int expected_before_x)
+                                int expected_before_x,
+                                int expected_unused_frame_x)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
     uint8_t source[16 * 136];
@@ -75,6 +76,7 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
     fill_source(source, frame, base);
     source[0] = PIXEL_TRANSPARENT;
     source[gate.width - 1] = (uint8_t)(base + 0x70);
+    source[frame->byte_width] = (uint8_t)(base + 0x73);
     source[(gate.height - 1) * frame->byte_width] = (uint8_t)(base + 0x71);
     source[(gate.height - 1) * frame->byte_width + gate.width - 1] = (uint8_t)(base + 0x72);
 
@@ -91,6 +93,10 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
     check_int(id,
               viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x + gate.width - 1],
               (uint8_t)(base + 0x70));
+    snprintf(id, sizeof(id), "%s.second_row_first_pixel_uses_next_source_row", name);
+    check_int(id,
+              viewport[(gate.dst_y + 1) * DM1_VIEWPORT_WIDTH + gate.dst_x],
+              (uint8_t)(base + 0x73));
     snprintf(id, sizeof(id), "%s.last_row_first_pixel", name);
     check_int(id,
               viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH + gate.dst_x],
@@ -119,6 +125,17 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
                            expected_before_x],
                   PIXEL_SENTINEL);
     }
+    if (expected_unused_frame_x >= 0) {
+        snprintf(id, sizeof(id), "%s.unused_frame_span_untouched", name);
+        check_int(id,
+                  viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + expected_unused_frame_x],
+                  PIXEL_SENTINEL);
+        snprintf(id, sizeof(id), "%s.last_row_unused_frame_span_untouched", name);
+        check_int(id,
+                  viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH +
+                           expected_unused_frame_x],
+                  PIXEL_SENTINEL);
+    }
 
     printf("d0SideWallEdge name=%s square=%d dst=(%d,%d) src=(%d,%d) size=%dx%d outsideLeft=%d source=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n",
            name, (int)square, gate.dst_x, gate.dst_y, gate.src_x, gate.src_y,
@@ -131,8 +148,8 @@ int main(void)
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
     printf("sourceEvidence=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n");
 
-    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0L, "D0L", 0x20, 0, -1);
-    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0R, "D0R", 0x50, 192, 191);
+    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0L, "D0L", 0x20, 0, -1, 31);
+    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0R, "D0R", 0x50, 192, 191, 223);
 
     if (failures) {
         printf("FAIL dm1_v1_d0_side_wall_edge_pixel_probe failures=%d\n", failures);
