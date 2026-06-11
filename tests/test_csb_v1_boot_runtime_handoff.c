@@ -365,6 +365,224 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_enter_game_rotate_party_aligns_champion_state(void)
+{
+    /* This is the narrow follow-up boundary for the green leader-switch
+     * runtime gate (test_enter_game_preserves_imported_party_and_switches_leader).
+     * ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130 is the
+     * single source of truth for the party-rotation invariant:
+     *   delta = (target_dir - party_dir) mod 4
+     *   for every champion in the party:
+     *     Cell      = (Cell      + delta) mod 4
+     *     Direction = (Direction + delta) mod 4
+     *   party_dir = target_dir
+     * The runtime must reproduce that invariant deterministically over the
+     * imported party snapshot that the boot handoff captured, without
+     * touching dungeon geometry, hand objects, or the F0292 redraw stack.
+     * Source-lock: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection
+     * lines 117-130 (MEDIA182 C source). */
+    CSB_V1_BootProfile p;
+    CSB_V1_PartyState imported;
+    CSB_V1_PartyState runtime_party;
+    uint8_t save_buf[1024];
+    char dungeon_path[ASSET_PATH_MAX];
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-rotation-followup";
+    int i;
+    int rotations_tested;
+
+    (void)TEST_MKDIR(tmp_dir);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
+          "synthetic DUNGEON.DAT written for party rotation follow-up");
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 4) == 0,
+          "synthetic four-champion DM1 save buffer built for rotation test");
+    CHECK(csb_v1_character_import_dm1_buffer(&imported, save_buf,
+                                             (int)sizeof(save_buf)) == 4,
+          "DM1 buffer import yields four CSB champions");
+    imported.PartyDirection = CSB_V1_DIR_NORTH;
+
+    /* Seed deterministic, non-zero Cell/Direction for every champion so
+     * the rotation math is observable.  Champion i starts at:
+     *   Cell      = (i + 1) mod 4     (so 1, 2, 3, 0)
+     *   Direction = (i + 2) mod 4     (so 2, 3, 0, 1)
+     * PartyDirection = NORTH (0). */
+    for (i = 0; i < imported.ChampionCount; i++) {
+        imported.Champions[i].Cell      = (uint8_t)((i + 1) & 3);
+        imported.Champions[i].Direction = (uint8_t)((i + 2) & 3);
+    }
+
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+    CHECK(csb_v1_boot_set_imported_party(&p, &imported) == 0,
+          "boot profile accepts the four-champion party before handoff");
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "enter_game succeeds for the rotation follow-up path");
+    CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
+          "boot state advances to RUNTIME_READY before rotation");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_NORTH,
+          "runtime party_dir starts at NORTH (matches PartyDirection)");
+
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "runtime party snapshot is visible after boot handoff");
+    /* Each champion's seeded Cell/Direction must survive handoff unchanged
+     * because F0284 only fires on a real rotation, not on import. */
+    for (i = 0; i < runtime_party.ChampionCount; i++) {
+        CHECK(runtime_party.Champions[i].Cell ==
+                  (uint8_t)((i + 1) & 3),
+                  "imported Cell survives handoff (no rotation yet)");
+        CHECK(runtime_party.Champions[i].Direction ==
+                  (uint8_t)((i + 2) & 3),
+                  "imported Direction survives handoff (no rotation yet)");
+    }
+
+    /* F0284 guard: rotation to the same direction is a deterministic
+     * no-op and must not perturb any champion state. */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_NORTH) == 0,
+          "rotate_party(NORTH) is a no-op when already facing NORTH");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_NORTH,
+          "party_dir stays NORTH after same-direction no-op");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "party snapshot still has four champions after no-op rotation");
+    for (i = 0; i < runtime_party.ChampionCount; i++) {
+        CHECK(runtime_party.Champions[i].Cell ==
+                  (uint8_t)((i + 1) & 3),
+                  "Cell is unchanged by same-direction no-op rotation");
+        CHECK(runtime_party.Champions[i].Direction ==
+                  (uint8_t)((i + 2) & 3),
+                  "Direction is unchanged by same-direction no-op rotation");
+    }
+
+    /* Real rotation NORTH -> EAST (delta=+1).  Every champion's Cell
+     * and Direction must advance by +1 mod 4 (matches F0284 line 124-125
+     * for the MEDIA182 C source). */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_EAST) == 0,
+          "rotate_party(EAST) succeeds after verified boot handoff");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_EAST,
+          "party_dir advances to EAST after rotation");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "party snapshot is live after NORTH->EAST rotation");
+    for (i = 0; i < runtime_party.ChampionCount; i++) {
+        CHECK(runtime_party.Champions[i].Cell ==
+                  (uint8_t)(((i + 1) + 1) & 3),
+                  "Cell advances by +1 mod 4 (CHAMPION.C F0284 delta=+1)");
+        CHECK(runtime_party.Champions[i].Direction ==
+                  (uint8_t)(((i + 2) + 1) & 3),
+                  "Direction advances by +1 mod 4 (CHAMPION.C F0284 delta=+1)");
+    }
+
+    /* Real rotation EAST -> WEST (delta=+2).  Every Cell/Direction
+     * advances by +2 mod 4 on top of the previous +1 offset. */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_WEST) == 0,
+          "rotate_party(WEST) succeeds after EAST pivot");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_WEST,
+          "party_dir advances to WEST after rotation");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "party snapshot is live after EAST->WEST rotation");
+    for (i = 0; i < runtime_party.ChampionCount; i++) {
+        CHECK(runtime_party.Champions[i].Cell ==
+                  (uint8_t)(((i + 1) + 1 + 2) & 3),
+                  "Cell advances by +2 mod 4 on top of the +1 offset "
+                  "(CHAMPION.C F0284 delta=+2)");
+        CHECK(runtime_party.Champions[i].Direction ==
+                  (uint8_t)(((i + 2) + 1 + 2) & 3),
+                  "Direction advances by +2 mod 4 on top of the +1 offset "
+                  "(CHAMPION.C F0284 delta=+2)");
+    }
+
+    /* Real rotation WEST -> SOUTH (delta=+3 mod 4, equivalent to -1).
+     * This exercises the F0284 negative-delta wrap branch
+     * (delta += 4 when target < current, lines 120-122). */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_SOUTH) == 0,
+          "rotate_party(SOUTH) succeeds after WEST pivot");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_SOUTH,
+          "party_dir advances to SOUTH after rotation");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "party snapshot is live after WEST->SOUTH rotation");
+    for (i = 0; i < runtime_party.ChampionCount; i++) {
+        CHECK(runtime_party.Champions[i].Cell ==
+                  (uint8_t)(((i + 1) + 1 + 2 + 3) & 3),
+                  "Cell advances by +3 mod 4 on top of the cumulative "
+                  "offset (CHAMPION.C F0284 delta=+3)");
+        CHECK(runtime_party.Champions[i].Direction ==
+                  (uint8_t)(((i + 2) + 1 + 2 + 3) & 3),
+                  "Direction advances by +3 mod 4 on top of the cumulative "
+                  "offset (CHAMPION.C F0284 delta=+3)");
+    }
+
+    /* Rotation tolerance: 4 successive rotations of +1 each must return
+     * party_dir to its starting value and bring every champion's Cell and
+     * Direction back to the pre-cycle state (delta accumulator is mod 4).
+     * Starting point is party_dir = SOUTH (2); we step
+     * SOUTH -> WEST -> NORTH -> EAST -> SOUTH. */
+    {
+        CSB_V1_PartyState pre_cycle;
+        memset(&pre_cycle, 0, sizeof(pre_cycle));
+        CHECK(csb_v1_runtime_get_party_state(&p.runtime, &pre_cycle) == 4,
+              "party snapshot captured before full rotation cycle");
+        rotations_tested = 0;
+        for (i = 0; i < 4; i++) {
+            int target = (CSB_V1_DIR_SOUTH + 1 + i) & 3;
+            CHECK(csb_v1_runtime_rotate_party(&p.runtime, target) == 0,
+                  "four-step rotation cycle keeps rotate_party returning 0");
+            rotations_tested++;
+        }
+        CHECK(rotations_tested == 4,
+              "all four step-rotation steps ran without rejection");
+        CHECK(p.runtime.party_dir == CSB_V1_DIR_SOUTH,
+              "party_dir returns to SOUTH after SOUTH->W->N->E->SOUTH cycle");
+        CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+              "party snapshot is live after full rotation cycle");
+        for (i = 0; i < runtime_party.ChampionCount; i++) {
+            CHECK(runtime_party.Champions[i].Cell == pre_cycle.Champions[i].Cell,
+                  "Cell returns to pre-cycle value after full rotation cycle");
+            CHECK(runtime_party.Champions[i].Direction ==
+                      pre_cycle.Champions[i].Direction,
+                  "Direction returns to pre-cycle value after full rotation cycle");
+        }
+    }
+
+    /* Leader-switch after rotation must follow the rotated party_dir
+     * (CLIKCHAM.C F0368 line 67: Champion.Direction = G0308_i_PartyDirection).
+     * Champion 2 is selected here; we re-read its Direction and expect
+     * the most recently committed party_dir regardless of pre-rotation
+     * seed.  This cross-cuts the F0284 boundary with the existing
+     * F0368 leader-switch boundary. */
+    CHECK(csb_v1_runtime_set_leader(&p.runtime, 2) == 0,
+          "leader switch to champion 2 succeeds after full rotation cycle");
+    CHECK(p.runtime.leader_index == 2,
+          "runtime leader index points at champion 2");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_SOUTH,
+          "party_dir stays at SOUTH after the full rotation cycle and "
+          "post-cycle leader switch");
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 4,
+          "party snapshot is live after post-rotation leader switch");
+    CHECK(runtime_party.Champions[2].Direction ==
+              (uint8_t)p.runtime.party_dir,
+          "post-rotation leader direction is aligned to party_dir "
+          "(CLIKCHAM.C F0368 line 67 over CHAMPION.C F0284)");
+
+    /* Argument validation: out-of-range and missing-party rejections. */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, 4) == -1,
+          "rotate_party rejects target_dir=4 (out of normalized range)");
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, -1) == -1,
+          "rotate_party rejects negative target_dir");
+    CHECK(csb_v1_runtime_rotate_party(NULL, CSB_V1_DIR_NORTH) == -1,
+          "rotate_party rejects NULL profile");
+
+    csb_v1_boot_cleanup(&p);
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_NORTH) == -1,
+          "rotate_party is unavailable after boot_cleanup clears the party");
+}
+
 static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
 {
     CSB_V1_BootProfile p;
@@ -496,6 +714,7 @@ int main(void)
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
     test_enter_game_preserves_imported_party_and_switches_leader();
+    test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
     test_enter_game_rejects_partial_or_misrouted_profiles();
@@ -508,6 +727,8 @@ int main(void)
         puts("sourceEvidence=ReDMCSB SAVEGAME.C F0100-F0120 import state; ReDMCSB ENTRANCE.C F0806 startup flow");
         puts("ok: CSB V1 verified boot handoff preserves an imported two-champion party and supports a deterministic leader switch");
         puts("sourceEvidence=ReDMCSB CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
+        puts("ok: CSB V1 verified boot handoff rotates an imported four-champion party through the source-locked F0284 delta-mod-4 invariant on every champion's Cell and Direction");
+        puts("sourceEvidence=ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130 (MEDIA182 C source); CLIKCHAM.C F0368 line 67 (leader-switch alignment to G0308_i_PartyDirection)");
     }
     return failed == 0 ? 0 : 1;
 }

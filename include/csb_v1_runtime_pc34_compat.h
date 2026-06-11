@@ -289,6 +289,34 @@ int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 
+/* Rotate the party to a new direction.
+ * Mirrors ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130:
+ * for every champion in the imported party, applies (target_dir - party_dir)
+ * to that champion's Cell and Direction (both modulo 4), then commits the
+ * new party_dir.  When target_dir == party_dir the call is a deterministic
+ * no-op (returns 0, no champion state is touched) and matches the F0284
+ * "if (P0600_i_Direction == G0308_i_PartyDirection) return;" guard.
+ *
+ * The Cell field encodes the champion's normalized view position
+ * (0=front-left, 1=front, 2=right, 3=back) and the Direction field encodes
+ * the per-champion facing direction. Both fields are part of the
+ * source-locked CHAMPION.C invariant and rotate together so that the
+ * relative geometry between party_dir and each champion is preserved
+ * across a party turn.
+ *
+ * This is intentionally a runtime boundary that is independent of full
+ * CSB playability: it operates only on the imported party snapshot stored
+ * by csb_v1_runtime_set_party_state() and does not depend on dungeon
+ * geometry, hand objects, or any F0292 redraw stack.  It is the
+ * narrow runtime equivalent of the F0284 assembly loop, exposed for the
+ * boot-handoff regression.
+ *
+ * Returns 0 on success, -1 if profile is NULL, no party is loaded, or
+ * target_dir is outside [0,3].
+ * Source: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130. */
+int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
+                                 int target_dir);
+
 /* Boot the CSB dungeon and initialize Chaos Magic.
  * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the
  * dungeon data into the current dungeon context
