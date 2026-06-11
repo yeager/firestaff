@@ -36,6 +36,20 @@
  *          byte-identical output (deterministic render)
  *        - calling with viewport_pixels == NULL is a guarded no-op (the
  *          staged-integration contract that lets M11 defer wiring)
+ *   6. Render is contained: when M11 points viewport_pixels at the full
+ *      320x200 framebuffer (the actual M11 wiring in fs_game_render_viewport),
+ *      the render must write only inside the 224x136 viewport region
+ *      (ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224, 136)); bytes outside
+ *      that region (chrome rows, side cols) must remain untouched.
+ *   7. Handoff preserves column-major *thing* data, not just square type.
+ *      The M11 view's depth ordering reads both csb_v1_dungeon_get_square_type
+ *      and csb_v1_dungeon_get_first_thing from the 16-bit square record
+ *      (ReDMCSB DUNGEON.C F0151 lines 1423-1475). A non-zero first_thing
+ *      high byte at the marker cell must round-trip through the handoff.
+ *   8. M11 reset path (init -> enter -> cleanup -> init -> enter) is
+ *      bit-stable: the second profile's runtime hits the same level, party
+ *      seed, and difficulty defaults, so alt+F4 / new-game M11 flows stay
+ *      deterministic.
  *
  * This is the missing bridge test between test_csb_v1_boot_runtime_handoff
  * (which proves the runtime handoff) and test_csb_v1_viewport_phase3_rendering
@@ -45,12 +59,14 @@
  *
  * Source-locks (matches the citation blocks in src/csb/csb_v1_boot.c and
  * src/csb/csb_v1_viewport_pc34_compat.c):
+ *   ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224, 136) viewport sub-region
  *   ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon
  *   ReDMCSB ENTRANCE.C F0806 lines 857-883 entrance waits + G0298_B_NewGame
  *   ReDMCSB LOADSAVE.C F0435 lines 1940-1944 new-game party at map 0
  *   ReDMCSB DUNGEON.C F0151 lines 1423-1475 column-major square access
  *   ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 current-map globals
  *   ReDMCSB DUNVIEW.C F0128 lines 8318-8542 shared DM1/CSB draw core
+ *   ReDMCSB PROJEXPL.C F0217 + CSBWin Character.cpp 3-champion difficulty
  *   CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
  *   CSBWin/CSBCode.cpp:26 CustomBackgrounds
  *   M11 fs_game_render_viewport() in src/engine/firestaff_game_loop.c
@@ -61,6 +77,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
@@ -97,9 +114,16 @@ static int failed;
  *            (low byte = type, high byte = first-thing high bits)
  *
  * Cell (x,y) lives at offset 10 + (x*height + y) * 2.
+ *
+ * The marker cell (1,1) gets marker_first_thing in its high byte so the
+ * handoff preservation check can prove column-major thing data survives,
+ * not just square type.  Earlier test functions pass 0 (legacy behaviour
+ * for the existing two-call shape); the third test function passes a
+ * non-zero value to exercise bits 5..14 of the 16-bit square record.
  */
 static int build_synthetic_dungeon(uint8_t *buf, int buf_size,
-                                    uint8_t marker_type)
+                                    uint8_t marker_type,
+                                    uint8_t marker_first_thing)
 {
     if (!buf || buf_size < 28) return -1;
     memset(buf, 0, (size_t)buf_size);
@@ -114,7 +138,7 @@ static int build_synthetic_dungeon(uint8_t *buf, int buf_size,
     buf[14] = 1; buf[15] = 0;
     /* Row 1: wall, marker (center), wall */
     buf[16] = 1; buf[17] = 0;
-    buf[18] = marker_type; buf[19] = 0;
+    buf[18] = marker_type; buf[19] = marker_first_thing;
     buf[20] = 1; buf[21] = 0;
     /* Row 2: walls */
     buf[22] = 1; buf[23] = 0;
@@ -123,12 +147,14 @@ static int build_synthetic_dungeon(uint8_t *buf, int buf_size,
     return 0;
 }
 
-static int write_synthetic_dungeon(const char *path, uint8_t marker_type)
+static int write_synthetic_dungeon(const char *path, uint8_t marker_type,
+                                    uint8_t marker_first_thing)
 {
     uint8_t buf[32];
     FILE *f;
     size_t n;
-    if (build_synthetic_dungeon(buf, (int)sizeof(buf), marker_type) != 0) {
+    if (build_synthetic_dungeon(buf, (int)sizeof(buf),
+                                 marker_type, marker_first_thing) != 0) {
         return -1;
     }
     f = fopen(path, "wb");
@@ -190,7 +216,7 @@ static void test_boot_runtime_handoff_exposes_m11_state(void)
 
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, MARKER) == 0,
+    CHECK(write_synthetic_dungeon(dungeon_path, MARKER, 0) == 0,
           "synthetic DUNGEON.DAT written to temp path with marker=7");
 
     csb_v1_boot_profile_init(&p);
@@ -285,7 +311,7 @@ static void test_m11_viewport_render_boundary_is_deterministic(void)
 
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, MARKER) == 0,
+    CHECK(write_synthetic_dungeon(dungeon_path, MARKER, 0) == 0,
           "synthetic DUNGEON.DAT written for render-boundary test");
 
     csb_v1_boot_profile_init(&p);
@@ -393,11 +419,284 @@ static void test_m11_viewport_render_boundary_is_deterministic(void)
           "(no stale dungeon leaks past the gate)");
 }
 
+/* Render-boundary containment + handoff thing-data + reset-path probes.
+ *
+ * This test strengthens the gate with three additional source-faithful
+ * invariants that the M11 view and the next integration pass both rely
+ * on but the earlier two test functions do not check:
+ *
+ *   1. Render-boundary containment: when M11 points viewport_pixels at
+ *      the full 320x200 framebuffer (the actual M11 wiring in
+ *      fs_game_render_viewport), the render must write only inside the
+ *      224x136 viewport region (rows 0..135, cols 0..223).  The chrome
+ *      rows 136..199 and side cols 224..319 must remain untouched.  This
+ *      is the source-locked ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224,136)
+ *      contract: the viewport is a 224x136 sub-region, not a full-screen
+ *      surface.  A regression that lets the renderer leak bytes outside
+ *      the region would clobber M12 chrome/HUD and is caught here.
+ *
+ *   2. Handoff preserves column-major *thing* data, not just square type.
+ *      The M11 view's depth ordering reads both csb_v1_dungeon_get_square_type
+ *      and csb_v1_dungeon_get_first_thing from the column-major 16-bit
+ *      square record (ReDMCSB DUNGEON.C F0151 lines 1423-1475).  This test
+ *      writes a non-zero first_thing_hi byte at cell (1,1) and asserts
+ *      csb_v1_dungeon_get_first_thing() returns the expected thing index,
+ *      proving the handoff preserved the high byte (bits 5..14) of the
+ *      square record, not only the low 5-bit type field.
+ *
+ *   3. Handoff reset-path is deterministic.  M11 may re-enter the game
+ *      (new-game after death, alt+F4 from title).  The M11 view's
+ *      fs_game_render_viewport() does not directly call enter_game(),
+ *      but M12's profile reload and the CSB V1 "new game" UI both do.
+ *      This test runs init -> enter -> cleanup -> init -> enter on a
+ *      fresh profile and asserts the new runtime has the same level,
+ *      difficulty, and party seed, so the M11 reset path is bit-stable.
+ */
+static void test_m11_viewport_render_region_and_handoff_thing_data(void)
+{
+    /* ── Part 1: render-boundary containment ─────────────────────────── */
+    {
+        CSB_V1_BootProfile p;
+        char dungeon_path[ASSET_PATH_MAX];
+        char graphics_path[ASSET_PATH_MAX];
+        const char *tmp_dir = "/tmp/firestaff-csb-v1-render-region";
+        const uint8_t MARKER = 5;
+        static uint8_t framebuffer[320 * 200];
+        CSB_V1_ViewportConfig cfg;
+        static uint8_t grid[32 * 32];
+        size_t i;
+        int bytes_outside_vp_match_sentinel = 1;
+        int bytes_inside_vp_diverge_from_sentinel = 0;
+        /* 224x136 viewport region: rows 0..135, cols 0..223 (stride 320). */
+        const int vp_w = DM1_VIEWPORT_WIDTH;
+        const int vp_h = DM1_VIEWPORT_HEIGHT;
+        const int fb_stride = 320;
+
+        memset(&p, 0, sizeof(p));
+        (void)TEST_MKDIR(tmp_dir);
+        memset(framebuffer, 0xAB, sizeof(framebuffer));
+
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+        snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+        CHECK(write_synthetic_dungeon(dungeon_path, MARKER, 0) == 0,
+              "synthetic DUNGEON.DAT written for render-region test");
+
+        csb_v1_boot_profile_init(&p);
+        snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+        snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+        snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+        snprintf(p.dungeon_md5, sizeof(p.dungeon_md5),
+                 "6695d2acebce49f95db1d8f3a5c733de");
+        p.dungeon_verified = 1;
+        p.graphics_verified = 1;
+        p.assets_verified = 1;
+        p.variant_id = CSB_V1_VARIANT_PC34_EN;
+        p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+        CHECK(csb_v1_boot_enter_game(&p) == 0,
+              "enter_game() succeeds for render-region probe");
+
+        csb_v1_viewport_init(&cfg);
+        csb_v1_viewport_set_wall_set(&cfg, 0);
+        snapshot_runtime_dungeon_grid(grid);
+        csb_v1_viewport_set_dungeon_grid(&cfg, grid, 32, 32);
+        cfg.viewport_pixels = framebuffer;
+        cfg.viewport_stride = fb_stride;
+
+        csb_v1_viewport_render_frame(&cfg, p.runtime.party_dir,
+                                      p.runtime.party_x, p.runtime.party_y);
+
+        /* Outside the 224x136 viewport region (cols 224..319, rows 136..199)
+         * the framebuffer must still hold the 0xAB sentinel: the render
+         * is contained to the source-locked viewport sub-region. */
+        for (i = 0; i < sizeof(framebuffer); i++) {
+            int row = (int)(i / (size_t)fb_stride);
+            int col = (int)(i % (size_t)fb_stride);
+            int in_vp = (row < vp_h) && (col < vp_w);
+            if (!in_vp && framebuffer[i] != 0xAB) {
+                bytes_outside_vp_match_sentinel = 0;
+                break;
+            }
+            if (in_vp && framebuffer[i] != 0xAB) {
+                bytes_inside_vp_diverge_from_sentinel = 1;
+            }
+        }
+        CHECK(bytes_outside_vp_match_sentinel,
+              "render_frame is contained: bytes outside the source-locked "
+              "224x136 viewport region (ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE) "
+              "remain the 0xAB sentinel (M11 chrome/HUD is not clobbered)");
+        CHECK(bytes_inside_vp_diverge_from_sentinel,
+              "render_frame actually wrote at least one byte inside the "
+              "viewport region (the single-frame proof is non-trivial, "
+              "not just an all-black blank pass)");
+
+        csb_v1_boot_cleanup(&p);
+        CHECK(csb_v1_dungeon_get_current() == NULL,
+              "boot cleanup after region test clears the singleton");
+    }
+
+    /* ── Part 2: handoff preserves first-thing data ─────────────────── */
+    {
+        CSB_V1_BootProfile p;
+        char dungeon_path[ASSET_PATH_MAX];
+        char graphics_path[ASSET_PATH_MAX];
+        const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-thing";
+        const uint8_t MARKER_TYPE = 5;
+        /* Square record is 16-bit, column-major (ReDMCSB DUNGEON.C F0151):
+         *   low 5 bits  (0..4) = square type
+         *   bits 5..14        = first-thing index
+         *   bit 15            = unused
+         * To encode first_thing = 0x20 = 32, the 16-bit value is
+         *   (0x20 << 5) | 0x05 = 0x0405
+         * so the high byte is 0x04 (NOT 0x20) and the low byte is 0x05. */
+        const uint8_t MARKER_THING_HI = 0x04;
+        const int EXPECTED_FIRST_THING = 0x20;
+        const CSB_V1_DungeonData *singleton;
+        int first_thing_returned;
+        int square_type_returned;
+
+        memset(&p, 0, sizeof(p));
+        (void)TEST_MKDIR(tmp_dir);
+
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+        snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+        CHECK(write_synthetic_dungeon(dungeon_path, MARKER_TYPE,
+                                        MARKER_THING_HI) == 0,
+              "synthetic DUNGEON.DAT with non-zero first_thing_hi written");
+
+        csb_v1_boot_profile_init(&p);
+        snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+        snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+        snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+        snprintf(p.dungeon_md5, sizeof(p.dungeon_md5),
+                 "6695d2acebce49f95db1d8f3a5c733de");
+        p.dungeon_verified = 1;
+        p.graphics_verified = 1;
+        p.assets_verified = 1;
+        p.variant_id = CSB_V1_VARIANT_PC34_EN;
+        p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+        CHECK(csb_v1_boot_enter_game(&p) == 0,
+              "enter_game() succeeds for first-thing preservation probe");
+
+        singleton = csb_v1_dungeon_get_current();
+        CHECK(singleton != NULL,
+              "singleton is live for first-thing probe");
+
+        square_type_returned = csb_v1_dungeon_get_square_type(
+            singleton, csb_v1_dungeon_get_current_level(), 1, 1);
+        first_thing_returned = csb_v1_dungeon_get_first_thing(
+            singleton, csb_v1_dungeon_get_current_level(), 1, 1);
+        CHECK(square_type_returned == (int)MARKER_TYPE,
+              "first-thing probe: square type at (1,1) still reads back "
+              "the marker value (low 5 bits of 16-bit record)");
+        CHECK(first_thing_returned == EXPECTED_FIRST_THING,
+              "first-thing probe: csb_v1_dungeon_get_first_thing(level 0, 1, 1) "
+              "returns the synthetic thing index (handoff preserved bits 5..14 "
+              "of the column-major 16-bit square record, ReDMCSB DUNGEON.C F0151)");
+
+        /* Also assert the runtime difficulty is the source-locked default,
+         * so M11 can read it via runtime.difficulty without further work. */
+        CHECK(p.runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
+              "runtime.difficulty == CSB_V1_DIFFICULTY_HARD (3-champion "
+              "default, ReDMCSB PROJEXPL.C + CSBWin Character.cpp scale)");
+
+        csb_v1_boot_cleanup(&p);
+    }
+
+    /* ── Part 3: handoff reset-path is deterministic ───────────────── */
+    {
+        CSB_V1_BootProfile p_first;
+        CSB_V1_BootProfile p_second;
+        char dungeon_path[ASSET_PATH_MAX];
+        char graphics_path[ASSET_PATH_MAX];
+        const char *tmp_dir = "/tmp/firestaff-csb-v1-reset-path";
+        const uint8_t MARKER = 5;
+        const CSB_V1_DungeonData *first_handle;
+        const CSB_V1_DungeonData *second_handle;
+        const CSB_V1_DungeonData *singleton_after_first;
+        const CSB_V1_DungeonData *singleton_after_second;
+
+        memset(&p_first, 0, sizeof(p_first));
+        memset(&p_second, 0, sizeof(p_second));
+        (void)TEST_MKDIR(tmp_dir);
+
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+        snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+        CHECK(write_synthetic_dungeon(dungeon_path, MARKER, 0) == 0,
+              "synthetic DUNGEON.DAT written for reset-path probe");
+
+        csb_v1_boot_profile_init(&p_first);
+        snprintf(p_first.asset_root, sizeof(p_first.asset_root), "%s", tmp_dir);
+        snprintf(p_first.dungeon_path, sizeof(p_first.dungeon_path), "%s", dungeon_path);
+        snprintf(p_first.graphics_path, sizeof(p_first.graphics_path), "%s", graphics_path);
+        snprintf(p_first.dungeon_md5, sizeof(p_first.dungeon_md5),
+                 "6695d2acebce49f95db1d8f3a5c733de");
+        p_first.dungeon_verified = 1;
+        p_first.graphics_verified = 1;
+        p_first.assets_verified = 1;
+        p_first.variant_id = CSB_V1_VARIANT_PC34_EN;
+        p_first.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+        CHECK(csb_v1_boot_enter_game(&p_first) == 0,
+              "first profile's enter_game() succeeds");
+        first_handle = p_first.runtime.dungeon_handle;
+        singleton_after_first = csb_v1_dungeon_get_current();
+        CHECK(first_handle != NULL && singleton_after_first == first_handle,
+              "first profile: singleton mirrors first handle");
+
+        csb_v1_boot_cleanup(&p_first);
+        CHECK(csb_v1_dungeon_get_current() == NULL,
+              "first profile cleanup releases the singleton (M11 reset is safe)");
+
+        /* Second profile: same fixture, same boot, expect same handle-shape
+         * invariants and a new live handle. */
+        csb_v1_boot_profile_init(&p_second);
+        snprintf(p_second.asset_root, sizeof(p_second.asset_root), "%s", tmp_dir);
+        snprintf(p_second.dungeon_path, sizeof(p_second.dungeon_path), "%s", dungeon_path);
+        snprintf(p_second.graphics_path, sizeof(p_second.graphics_path), "%s", graphics_path);
+        snprintf(p_second.dungeon_md5, sizeof(p_second.dungeon_md5),
+                 "6695d2acebce49f95db1d8f3a5c733de");
+        p_second.dungeon_verified = 1;
+        p_second.graphics_verified = 1;
+        p_second.assets_verified = 1;
+        p_second.variant_id = CSB_V1_VARIANT_PC34_EN;
+        p_second.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+        CHECK(csb_v1_boot_enter_game(&p_second) == 0,
+              "second profile's enter_game() succeeds after first cleanup");
+        second_handle = p_second.runtime.dungeon_handle;
+        singleton_after_second = csb_v1_dungeon_get_current();
+        CHECK(second_handle != NULL && singleton_after_second == second_handle,
+              "second profile: singleton mirrors second handle");
+
+        /* Reset-path invariants: the source-locked boot-time defaults
+         * survive a re-init of the same boot profile.  This is the
+         * M11 alt+F4 / new-game path. */
+        CHECK(p_second.runtime.party_x == CSB_V1_START_PARTY_X &&
+              p_second.runtime.party_y == CSB_V1_START_PARTY_Y &&
+              p_second.runtime.party_dir == CSB_V1_START_PARTY_DIR,
+              "second profile: party seed matches CSB_V1_START_PARTY_* "
+              "(M11 reset path is bit-stable)");
+        CHECK(p_second.runtime.entrance_map_index == 255U,
+              "second profile: entrance_map_index = 255 (C255_MAP_INDEX_ENTRANCE)");
+        CHECK(p_second.runtime.start_map_index == 0U,
+              "second profile: start_map_index = 0 (new-game map)");
+        CHECK(p_second.runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
+              "second profile: difficulty = CSB_V1_DIFFICULTY_HARD (3-champion)");
+        CHECK(csb_v1_dungeon_get_current_level() == 0,
+              "second profile: current level is 0 (source-locked new-game map)");
+
+        csb_v1_boot_cleanup(&p_second);
+    }
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime → M11/Viewport Render Gate ===\n\n");
     test_boot_runtime_handoff_exposes_m11_state();
     test_m11_viewport_render_boundary_is_deterministic();
+    test_m11_viewport_render_region_and_handoff_thing_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 verified boot handoff exposes the dungeon handle, "
@@ -411,6 +710,14 @@ int main(void)
              "identical render parameters produce byte-identical output");
         puts("sourceEvidence=ReDMCSB DUNVIEW.C F0128 lines 8318-8542; "
              "src/engine/firestaff_game_loop.c fs_game_render_viewport()");
+        puts("ok: CSB V1 render is contained to the 224x136 viewport region "
+             "(ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE) and the handoff "
+             "preserves column-major *thing* data, not just square type; "
+             "M11 reset path (init->enter->cleanup->enter) is bit-stable");
+        puts("sourceEvidence=ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224,136); "
+             "DUNGEON.C F0151 lines 1423-1475; PROJEXPL.C F0217 + CSBWin "
+             "Character.cpp difficulty scale; src/engine/firestaff_game_loop.c "
+             "fs_game_render_viewport() CSB V1 reset path");
     }
     return failed == 0 ? 0 : 1;
 }
