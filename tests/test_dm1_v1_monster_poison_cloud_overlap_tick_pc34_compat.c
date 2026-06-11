@@ -89,21 +89,31 @@ static void test_single_monster_cloud_tick_boundary(void)
     CHECK_EQ(F0723_TIMELINE_Pop_Compat(&timeline, &due), 1,
              "pop boundary cloud event");
     CHECK_EQ(due.aux0, slot, "due event carries cloud slot");
+    CHECK_EQ((int)timeline.count, 0, "one boundary pop consumes only event");
 
     CHECK_EQ(F0822_EXPLOSION_Advance_Compat(&explosions.entries[slot],
                                             &digest, due.fireAtTick, NULL,
                                             &next, &tick),
              1, "advance cloud on monster tile");
+    CHECK_EQ(tick.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME,
+             "cloud advances one persistent frame");
     CHECK_EQ(tick.emittedCombatActionPartyCount, 0, "no party action");
     CHECK_EQ(tick.emittedCombatActionGroupCount, 1, "one monster group action");
     CHECK_EQ(tick.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP,
              "group damage action kind");
+    CHECK_EQ(tick.outActionGroup.attackTypeCode, COMBAT_ATTACK_NORMAL,
+             "poison cloud uses normal attack channel");
+    CHECK_EQ(tick.outActionGroup.allowedWounds, 0,
+             "monster cloud damage carries no wound mask");
     CHECK_EQ(tick.outActionGroup.targetMapX, 10, "group damage x");
     CHECK_EQ(tick.outActionGroup.targetMapY, 11, "group damage y");
+    CHECK_EQ(tick.outActionGroup.targetCell, 0,
+             "centered cloud targets centered group cell");
     CHECK_EQ(tick.outActionGroup.rawAttackValue, 3,
              "attack 96 gives poison cloud base 3 without rng");
     CHECK_EQ(tick.despawn, 0, "cloud remains live");
     CHECK_EQ(next.attack, 93, "cloud attack decays by 3");
+    CHECK_EQ(next.currentFrame, 1, "cloud frame increments once");
     CHECK_EQ(tick.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE,
              "follow-up cloud event kind");
     CHECK_EQ((int)tick.outNextTick.fireAtTick, 1002,
