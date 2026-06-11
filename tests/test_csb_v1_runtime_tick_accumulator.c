@@ -172,6 +172,100 @@ static void test_timeline_events_fire_before_game_time_increment(void)
           "timeline queue is empty after both boundary events fire");
 }
 
+static void seed_two_champion_party(CSB_V1_PartyState *party)
+{
+    int i;
+
+    csb_v1_character_init_default(party);
+    party->ChampionCount = 2;
+    party->ImportedFromDM1 = 1;
+    party->PartyDirection = CSB_V1_DIR_NORTH;
+    party->LeaderIndex = 0;
+    for (i = 0; i < party->ChampionCount; i++) {
+        CSB_V1_Champion *champion = &party->Champions[i];
+        champion->CurrentHealth = (int16_t)(80 + i);
+        champion->MaximumHealth = (int16_t)(100 + i);
+        champion->Cell = (uint8_t)i;
+        champion->Direction = (uint8_t)((i + 2) & 3);
+    }
+}
+
+static void test_input_command_queue_turn_reaches_runtime_party_state(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    CSB_V1_PartyState after;
+    struct Dm1V1InputQueueProcessResultPc34Compat dispatch;
+
+    /* This is a focused CSB V1 command-boundary gate, not a full
+     * movement/playability claim.  ReDMCSB COMMAND.C F0380 lines
+     * 2075-2127 dequeues one source command and lines 2150-2156
+     * dispatch C001/C002 turns to CLIKMENU.C F0365; F0365 lines
+     * 156-173 maps TURN_RIGHT to party_dir+1 and calls CHAMPION.C F0284
+     * lines 117-130 to rotate champion Cell/Direction. */
+    csb_v1_runtime_init(&profile, NULL);
+    seed_two_champion_party(&party);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "runtime accepts a seeded imported party for input binding");
+
+    CHECK(csb_v1_runtime_enqueue_input_command(
+              &profile, DM1_V1_COMMAND_TURN_RIGHT, 291, 125) == 1,
+          "CSB runtime queues one source TURN_RIGHT command");
+    CHECK(profile.input_command_queue.count == 1U,
+          "input command queue contains one queued command before dispatch");
+    CHECK(csb_v1_runtime_process_one_input_command(&profile, 0, 0, 0) == 1,
+          "CSB runtime processes one queued input command");
+    CHECK(csb_v1_runtime_get_last_input_dispatch(&profile, &dispatch) == 1,
+          "last input dispatch reports one dequeued command");
+    CHECK(dispatch.command == DM1_V1_COMMAND_TURN_RIGHT,
+          "last input dispatch preserves the TURN_RIGHT source command id");
+    CHECK(dispatch.dispatchedTurn == 1 && dispatch.dispatchedMove == 0,
+          "queue boundary classifies TURN_RIGHT as a turn dispatch");
+    CHECK(profile.input_dispatch_count == 1U,
+          "CSB runtime records the command dispatch count");
+    CHECK(profile.input_command_queue.count == 0U,
+          "input command queue is empty after the turn dispatch");
+    CHECK(profile.party_dir == CSB_V1_DIR_EAST,
+          "queued TURN_RIGHT reaches CSB runtime party_dir NORTH->EAST");
+    CHECK(csb_v1_runtime_get_party_state(&profile, &after) == 2,
+          "runtime party snapshot remains visible after queued turn");
+    CHECK(after.PartyDirection == CSB_V1_DIR_EAST,
+          "party snapshot direction follows the queued turn");
+    CHECK(after.Champions[0].Cell == 1 &&
+              after.Champions[1].Cell == 2,
+          "queued turn rotates champion cells by +1 mod 4");
+    CHECK(after.Champions[0].Direction == 3 &&
+              after.Champions[1].Direction == 0,
+          "queued turn rotates champion directions by +1 mod 4");
+}
+
+static void test_input_command_queue_move_boundary_does_not_claim_movement(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    struct Dm1V1InputQueueProcessResultPc34Compat dispatch;
+
+    csb_v1_runtime_init(&profile, NULL);
+    seed_two_champion_party(&party);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "runtime accepts a seeded imported party for move-boundary guard");
+    CHECK(csb_v1_runtime_enqueue_input_command(
+              &profile, DM1_V1_COMMAND_MOVE_FORWARD, 263, 125) == 1,
+          "CSB runtime queues one source MOVE_FORWARD command");
+    CHECK(csb_v1_runtime_process_one_input_command(&profile, 0, 0, 0) == 1,
+          "CSB runtime dequeues one MOVE_FORWARD command at the command boundary");
+    CHECK(csb_v1_runtime_get_last_input_dispatch(&profile, &dispatch) == 1,
+          "last input dispatch reports MOVE_FORWARD was dequeued");
+    CHECK(dispatch.command == DM1_V1_COMMAND_MOVE_FORWARD &&
+              dispatch.dispatchedMove == 1,
+          "queue boundary classifies MOVE_FORWARD as a move dispatch");
+    CHECK(profile.party_dir == CSB_V1_DIR_NORTH,
+          "MOVE_FORWARD boundary does not mutate party_dir before CSB movement is bound");
+    CHECK(profile.party_x == CSB_V1_START_PARTY_X &&
+              profile.party_y == CSB_V1_START_PARTY_Y,
+          "MOVE_FORWARD boundary does not claim CSB party position movement");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
@@ -179,10 +273,14 @@ int main(void)
     test_multi_quantum_tick_and_due_probe();
     test_tick_v1_steps_exactly_once_and_honors_stop_states();
     test_timeline_events_fire_before_game_time_increment();
+    test_input_command_queue_turn_reaches_runtime_party_state();
+    test_input_command_queue_move_boundary_does_not_claim_movement();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");
         puts("sourceEvidence=ReDMCSB TIMELINE.C F0235/F0240/F0261 lines 702-708,1833-1850; GAMELOOP.C F0002 lines 69-124; COMMAND.C F0380 lines 2383-2429");
+        puts("ok: CSB V1 runtime input queue processes one source TURN_RIGHT into party_dir and champion Cell/Direction state without claiming full movement/playability");
+        puts("sourceEvidence=ReDMCSB COMMAND.C F0380 lines 2075-2127,2150-2156; CLIKMENU.C F0365 lines 156-173; CHAMPION.C F0284 lines 117-130");
     }
     return failed == 0 ? 0 : 1;
 }
