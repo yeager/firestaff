@@ -6129,6 +6129,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
+    if (M12_PresentationMode_AllowsResolutionChoice(spec->presentationMode) &&
+        spec->presentationWidth > 0 &&
+        spec->presentationHeight > 0) {
+        (void)M11_Render_SetWindowSize(spec->presentationWidth,
+                                       spec->presentationHeight);
+    }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
         const char *dd = spec->dataDir;
@@ -6142,6 +6151,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                       spec->verifiedAssetMd5);
         if (ok) {
             state->presentationMode = spec->presentationMode;
+            state->presentationWidth = spec->presentationWidth;
+            state->presentationHeight = spec->presentationHeight;
         }
         return ok;
     }
@@ -6175,6 +6186,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             int ok = M11_GameView_StartNexus(state, dd);
             if (ok) {
                 state->presentationMode = spec->presentationMode;
+                state->presentationWidth = spec->presentationWidth;
+                state->presentationHeight = spec->presentationHeight;
             }
             return ok;
         }
@@ -6193,6 +6206,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->active = 1;
         state->startedFromLauncher = 1;
         state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
         snprintf(state->title, sizeof(state->title), "%s",
                  spec->title ? spec->title : "CHAOS STRIKES BACK");
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6237,6 +6252,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
     state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
     state->fontScale = (spec->fontScale >= 1 && spec->fontScale <= 3) ? spec->fontScale : 0;
     snprintf(state->title, sizeof(state->title), "%s", spec->title);
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6339,6 +6356,8 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
         spec.presentationMode = intent.presentationMode;
+        spec.presentationWidth = intent.resolutionWidth;
+        spec.presentationHeight = intent.resolutionHeight;
         /* fontScale lives in M12_MenuSettingsState, not M12_GameOptions */
         spec.fontScale = menuState->settings.fontScale;
     } else {

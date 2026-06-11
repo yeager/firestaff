@@ -118,6 +118,11 @@ int  M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
                                       int logicalWidth,
                                       int logicalHeight,
                                       int scale);
+int  M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
+                                           int logicalWidth,
+                                           int logicalHeight,
+                                           int targetWidth,
+                                           int targetHeight);
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
@@ -144,6 +149,7 @@ int  M11_Render_PumpEvents(void);
 int  M11_Render_HandleResize(int newWidth, int newHeight);
 int  M11_Render_GetWindowWidth(void);
 int  M11_Render_GetWindowHeight(void);
+int  M11_Render_SetWindowSize(int width, int height);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);
 int  M11_Render_CycleScaleMode(void);

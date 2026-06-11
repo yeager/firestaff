@@ -138,13 +138,64 @@ static int m11_game_indexed_presentation_scale(const M11_GameViewState* gameView
             gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) ? 2 : 1;
 }
 
+static int m11_game_presentation_target(const M11_GameViewState* gameView,
+                                        int* outW,
+                                        int* outH) {
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    if (gameView && gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        targetW = M11_FB_WIDTH * 2;
+        targetH = M11_FB_HEIGHT * 2;
+    } else if (gameView &&
+               M12_PresentationMode_AllowsResolutionChoice(gameView->presentationMode) &&
+               gameView->presentationWidth > 0 &&
+               gameView->presentationHeight > 0) {
+        targetW = gameView->presentationWidth;
+        targetH = gameView->presentationHeight;
+    }
+    if (outW) {
+        *outW = targetW;
+    }
+    if (outH) {
+        *outH = targetH;
+    }
+    return targetW != M11_FB_WIDTH || targetH != M11_FB_HEIGHT;
+}
+
+static void m11_map_presented_game_point_to_source(const M11_GameViewState* gameView,
+                                                   int* x,
+                                                   int* y) {
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    if (!x || !y || !m11_game_presentation_target(gameView, &targetW, &targetH)) {
+        return;
+    }
+    if (targetW > 0 && targetH > 0) {
+        *x = (*x * M11_FB_WIDTH) / targetW;
+        *y = (*y * M11_FB_HEIGHT) / targetH;
+    }
+    if (*x < 0) *x = 0;
+    if (*y < 0) *y = 0;
+    if (*x >= M11_FB_WIDTH) *x = M11_FB_WIDTH - 1;
+    if (*y >= M11_FB_HEIGHT) *y = M11_FB_HEIGHT - 1;
+}
+
 static int m11_present_game_frame(const M11_GameViewState* gameView) {
     int scale = m11_game_indexed_presentation_scale(gameView);
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
     if (scale > 1) {
         return M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
                                                M11_FB_WIDTH,
                                                M11_FB_HEIGHT,
                                                scale);
+    }
+    if (m11_game_presentation_target(gameView, &targetW, &targetH)) {
+        return M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
+                                                     M11_FB_WIDTH,
+                                                     M11_FB_HEIGHT,
+                                                     targetW,
+                                                     targetH);
     }
     return M11_Render_Present();
 }
@@ -1596,11 +1647,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (int)ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
-                int presentationScale = m11_game_indexed_presentation_scale(gameView);
-                if (presentationScale > 1) {
-                    mappedX /= presentationScale;
-                    mappedY /= presentationScale;
-                }
+                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -1900,11 +1947,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
-                int presentationScale = m11_game_indexed_presentation_scale(gameView);
-                if (presentationScale > 1) {
-                    mappedX /= presentationScale;
-                    mappedY /= presentationScale;
-                }
+                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,

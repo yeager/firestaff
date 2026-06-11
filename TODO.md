@@ -19,7 +19,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Queue/refill priority order: DM1 V1 → Theron V1 → CSB V1 → DM1 V2 → CSB V2 → DM2 V1 → Theron V2 → Nexus V1 → Nexus V2. Worker refill focus should stay on `priority` unless intentionally pausing higher-priority lanes.
 - 🔧 Current remaining status by game/version, 2026-06-11:
   - DM1 V1: keep gameplay/runtime changes source-locked; remaining focus is paired original-DOS capture proof, remaining visual polish, and non-duplicative viewport/champion/inventory evidence only where it closes a real gap.
-  - DM1 V2.0/V2.1/V2.2: bind the side-by-side seed and region manifest into full enhanced-presentation screenshot/pixel gates, then broaden interpolation/UI polish without bypassing V1 command ownership.
+  - DM1 V2.0/V2.1/V2.2: with V2.0 locked to 640x400 and V2.1/V2.2 selectable from 640x400 through 3840x2160, bind the side-by-side seed and region manifest into full enhanced-presentation screenshot/pixel gates, then broaden interpolation/UI polish without bypassing V1 command ownership.
   - CSB V1: finish title/import UI composition, CSB-specific viewport integration, broader champion-state runtime transitions, input-command queue binding beyond the narrow timeline helper, and end-to-end playability verification.
   - CSB V2.0/V2.1/V2.2: finish enhanced assets, lighting/magic effects, touch/controller ergonomics, runtime binding to the V1 hardening path, and side-by-side screenshot/pixel gates.
   - DM2 V1: continue broader dungeon/render/mechanics parity, creature/combat behavior, shops/NPCs, and real-runtime save/import compatibility beyond the focused probes.

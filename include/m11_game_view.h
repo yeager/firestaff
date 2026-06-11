@@ -47,6 +47,8 @@ typedef struct {
     int languageIndex;
     int rendererBackend;
     int presentationMode;
+    int presentationWidth;
+    int presentationHeight;
     int fontScale;        /* Accessibility: font size scale (1..3), 0 = use default */
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
@@ -91,6 +93,8 @@ typedef struct {
     char sourceId[32];
     M11_GameSourceKind sourceKind;
     int presentationMode;
+    int presentationWidth;
+    int presentationHeight;
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     char lastAction[32];
     char lastOutcome[64];

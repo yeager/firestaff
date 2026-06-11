@@ -190,6 +190,11 @@ typedef enum {
     M12_RES_800x600,
     M12_RES_1024x768,
     M12_RES_1280x960,
+    M12_RES_1600x1000,
+    M12_RES_1920x1080,
+    M12_RES_2560x1440,
+    M12_RES_3200x2000,
+    M12_RES_3840x2160,
     M12_RES_COUNT
 } M12_Resolution;
 
@@ -233,6 +238,8 @@ typedef struct {
     int rendererBackend;
     int rendererBackendAvailable;
     M12_GameOptions options;
+    int resolutionWidth;
+    int resolutionHeight;
     int valid;
     const char* savePath;  /* Non-NULL when launching via quick resume */
 } M12_LaunchIntent;
@@ -356,6 +363,8 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
 int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state);
+int M12_PresentationMode_AllowsResolutionChoice(int presentationMode);
+int M12_Resolution_Dimensions(int resolution, int* outWidth, int* outHeight);
 int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
