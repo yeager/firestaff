@@ -25,6 +25,15 @@ static void check_source_anchor(const char *id, const char *text, const char *ne
     check_int(id, text && needle && strstr(text, needle) ? 1 : 0, 1);
 }
 
+static void check_viewport_pixel(const char *id,
+                                 const uint8_t *viewport,
+                                 int x,
+                                 int y,
+                                 int want)
+{
+    check_int(id, viewport[y * DM1_VIEWPORT_WIDTH + x], want);
+}
+
 static void verify_d0c_absent_wall_draw_path(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -45,10 +54,15 @@ static void verify_d0c_absent_wall_draw_path(void)
 
     check_int("d0c.absence.frame_width_zero", (int)frame->byte_width, 0);
     check_int("d0c.absence.frame_height_zero", (int)frame->height, 0);
+    check_int("d0c.absence.frame_left", (int)frame->left_x, 0);
+    check_int("d0c.absence.frame_right", (int)frame->right_x, 223);
+    check_int("d0c.absence.frame_top", (int)frame->top_y, 0);
+    check_int("d0c.absence.frame_bottom", (int)frame->bottom_y, 135);
     check_int("d0c.absence.draw_order_step_18_exists", step != NULL, 1);
     if (step) {
         check_int("d0c.absence.draw_order_step_18_is_d0c", step->square == DM1_VIEW_SQUARE_D0C, 1);
         check_source_anchor("d0c.absence.step_18_source", step->source_lines, "DUNVIEW.C:8542");
+        check_source_anchor("d0c.absence.step_18_helper", step->redmcsb_function, "F0127_DUNGEONVIEW_DrawSquareD0C");
     }
 
     gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
@@ -66,7 +80,25 @@ static void verify_d0c_absent_wall_draw_path(void)
 
     dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
     dm1_viewport_3d_draw_wall(&state, source, frame);
-    check_int("d0c.absence.viewport_unchanged", memcmp(viewport, before, sizeof(viewport)) == 0, 1);
+    check_int("d0c.absence.transparent_blit_viewport_unchanged",
+              memcmp(viewport, before, sizeof(viewport)) == 0, 1);
+
+    /* ReDMCSB source-lock: F0128 calls F0125 D0L and F0126 D0R before
+     * F0127 at DUNVIEW.C:8534-8542, but F0127's center-front body has
+     * door-side, stairs-front, pit/teleporter/thing, and field paths only
+     * (DUNVIEW.C:8185-8310).  There is no C00 wall bitmap branch for D0C,
+     * so the synthetic D0C wall frame must stay zero-sized and must not
+     * dirty any viewport edge or center pixel if an accidental wall draw
+     * reaches the generic F0100/F0101 helpers. */
+    check_viewport_pixel("d0c.absence.top_left_untouched", viewport, 0, 0, PIXEL_SENTINEL);
+    check_viewport_pixel("d0c.absence.top_right_untouched", viewport, 223, 0, PIXEL_SENTINEL);
+    check_viewport_pixel("d0c.absence.center_untouched", viewport, 112, 68, PIXEL_SENTINEL);
+    check_viewport_pixel("d0c.absence.bottom_left_untouched", viewport, 0, 135, PIXEL_SENTINEL);
+    check_viewport_pixel("d0c.absence.bottom_right_untouched", viewport, 223, 135, PIXEL_SENTINEL);
+
+    dm1_viewport_3d_draw_wall_opaque(&state, source, frame);
+    check_int("d0c.absence.opaque_blit_viewport_unchanged",
+              memcmp(viewport, before, sizeof(viewport)) == 0, 1);
 
     printf("d0c_absence frame=%p spec=%s dims=%ux%u\n",
            (const void *)frame,
@@ -79,7 +111,7 @@ int main(void)
 {
     printf("probe=firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
-    printf("sourceEvidence=DUNVIEW.C:8542,8117-8144,8185-8240,8007-8038\n");
+    printf("sourceEvidence=DUNVIEW.C:8185-8310,8534-8542; G0163 D0C zero-size frame\n");
 
     verify_d0c_absent_wall_draw_path();
 
