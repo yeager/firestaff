@@ -79,7 +79,22 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->default_party_x = CSB_V1_START_PARTY_X;
     profile->default_party_y = CSB_V1_START_PARTY_Y;
     profile->default_party_dir = CSB_V1_START_PARTY_DIR;
+    profile->imported_party_ready = 0;
+    csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
+}
+
+int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
+                                   const CSB_V1_PartyState *party)
+{
+    if (!profile || !party) return -1;
+    if (party->ChampionCount <= 0 ||
+        party->ChampionCount > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    profile->imported_party = *party;
+    profile->imported_party_ready = 1;
+    return 0;
 }
 
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir)
@@ -219,6 +234,10 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->runtime.chaos_magic.magic_initialized = 1;
     profile->runtime.chaos_magic.spell_grid_version = 0U;
     profile->runtime.chaos_magic.chaos_level = 0U;
+    if (profile->imported_party_ready) {
+        (void)csb_v1_runtime_set_party_state(&profile->runtime,
+                                             &profile->imported_party);
+    }
     /* Load the verified DUNGEON.DAT into the runtime so that the
      * dungeon-layer accessors (csb_v1_dungeon_get_current_level,
      * csb_v1_dungeon_get_square_type, ...) become live immediately

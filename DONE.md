@@ -4,6 +4,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Maintenance Cadence
 
+- ✅ 2026-06-11 — added a narrow CSB V1 verified boot handoff runtime gate: `csb_v1_boot_enter_game()` can now carry an imported two-champion party snapshot into the runtime, and `test_csb_v1_boot_runtime_handoff` proves a deterministic post-handoff leader switch to champion 1 with ReDMCSB `CLIKCHAM.C F0368` direction alignment, without claiming broader CSB playability.
 - ✅ 2026-06-11 — fixed the M11/M12/Theron static-library dependency cycle in CMake so GNU/MinGW linkers rescan M12 after Theron boot pulls `m12_file_md5_hex`; the full local CMake build and the two M11 inventory runtime CTests pass.
 - ✅ 2026-06-11 — tightened `firestaff_csb_v1_wall_text_oracle_probe` so the hash-verified CSB one-square slice now mutates the reopened sidecar text words after load and still decodes `ORACLE` from the loader-owned raw buffer, keeping the proof to one wall-square/textstring path.
 - ✅ 2026-06-11 — hardened the DM1 V1 original DOSBox capture session runner so a failed `--live` state-machine step now writes `dosbox_capture.live_abort.json` with the failing step, expected/last state, reason, state-sample paths, quality-log path, and last frame-quality metrics; the dry-run gate verifies the abort receipt shape without requiring DOSBox.

@@ -412,6 +412,10 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->level_count   = 1;
     profile->world_count   = 1;
     profile->champion_count = 3;
+    profile->leader_index = -1;
+    profile->magic_caster_index = -1;
+    profile->party_state_valid = 0;
+    csb_v1_character_init_default(&profile->party_state);
 
     profile->party_x = CSB_V1_START_PARTY_X;
     profile->party_y = CSB_V1_START_PARTY_Y;
@@ -430,6 +434,84 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
+}
+
+static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)
+{
+    int i;
+    if (!party) return -1;
+    for (i = 0; i < party->ChampionCount && i < CSB_V1_MAX_CHAMPIONS; i++) {
+        if (!csb_v1_champion_is_dead(&party->Champions[i]) &&
+            party->Champions[i].CurrentHealth > 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
+                                   const CSB_V1_PartyState *party)
+{
+    int leader;
+    if (!profile || !party) return -1;
+    if (party->ChampionCount < 0 ||
+        party->ChampionCount > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    profile->party_state = *party;
+    profile->party_state_valid = 1;
+    profile->champion_count = party->ChampionCount;
+    profile->party_dir = party->PartyDirection & 3;
+    profile->magic_caster_index = party->MagicCasterIndex;
+
+    leader = party->LeaderIndex;
+    if (leader < 0 || leader >= party->ChampionCount ||
+        csb_v1_champion_is_dead(&party->Champions[leader]) ||
+        party->Champions[leader].CurrentHealth <= 0) {
+        leader = csb_v1_runtime_first_living_champion(party);
+    }
+    profile->leader_index = leader;
+    profile->party_state.LeaderIndex = leader;
+    return 0;
+}
+
+int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
+                                   CSB_V1_PartyState *out_party)
+{
+    if (!profile || !out_party || !profile->party_state_valid) return -1;
+    *out_party = profile->party_state;
+    return out_party->ChampionCount;
+}
+
+int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
+                              int champion_index)
+{
+    CSB_V1_Champion *champion;
+    if (!profile || !profile->party_state_valid) return -1;
+    if (champion_index == profile->leader_index) return 0;
+    if (champion_index < 0) {
+        profile->leader_index = -1;
+        profile->party_state.LeaderIndex = -1;
+        return 0;
+    }
+    if (champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    /* Mirrors the source-locked F0368 guard and selection side effect:
+     * ignore dead/empty champions, then write G0411_i_LeaderIndex and align
+     * the selected champion direction to G0308_i_PartyDirection.
+     * Source: ReDMCSB CLIKCHAM.C F0368_COMMAND_SetLeader lines 51-68. */
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return -1;
+    }
+    profile->leader_index = champion_index;
+    profile->party_state.LeaderIndex = champion_index;
+    champion->Direction = (uint8_t)(profile->party_dir & 3);
+    return 0;
 }
 
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
