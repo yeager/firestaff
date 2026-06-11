@@ -306,16 +306,20 @@ static int write_and_verify_fixture(char *resolved_path, size_t resolved_cap,
 
 int main(void) {
     CSB_V1_DungeonData dungeon;
+    CSB_V1_DungeonData file_loaded_dungeon;
     unsigned char *file_buf = NULL;
     char resolved_path[ASSET_PATH_MAX];
     char fixture_path[ASSET_PATH_MAX];
     char fixture_dir[128];
     char decoded_label[32];
+    char file_loaded_label[32];
     FILE *fp = NULL;
     long file_size = 0;
     int load_ret;
+    int file_load_ret;
     int tile_ret;
     int ok;
+    int file_ok;
     CSB_V1_DecodedSquare decoded_square;
 
     printf("=== CSB V1 Wall Text / Oracle Probe ===\n");
@@ -401,6 +405,34 @@ int main(void) {
           "decoded tile keeps the wall square type");
     CHECK(tile_ret == 0 && decoded_square.first_thing == 0,
           "decoded tile keeps the wall text thing index");
+
+    memset(&file_loaded_dungeon, 0xCC, sizeof(file_loaded_dungeon));
+    file_load_ret = csb_v1_dungeon_load_from_file(&file_loaded_dungeon, resolved_path);
+    CHECK(file_load_ret == 0,
+          "CSB file loader accepts the scanner-resolved dungeon slice");
+    CHECK(file_load_ret == 0 && file_loaded_dungeon.raw_data != NULL,
+          "file loader owns a raw copy of the scanner-resolved slice");
+    CHECK(file_load_ret == 0 && file_loaded_dungeon.raw_size == (int)file_size,
+          "file loader raw copy preserves slice byte count");
+    CHECK(file_load_ret == 0 &&
+          csb_v1_dungeon_get_square_type(&file_loaded_dungeon, 0, 0, 0) == 0,
+          "file-loaded slice keeps the wall square type");
+    CHECK(file_load_ret == 0 &&
+          csb_v1_dungeon_get_first_thing(&file_loaded_dungeon, 0, 0, 0) == 0,
+          "file-loaded slice keeps the wall text thing index");
+    file_loaded_label[0] = '\0';
+    file_ok = -1;
+    if (file_load_ret == 0 && file_loaded_dungeon.raw_data &&
+        file_loaded_dungeon.raw_size > 0) {
+        file_ok = extract_wall_text_from_slice(file_loaded_dungeon.raw_data,
+                                               (size_t)file_loaded_dungeon.raw_size,
+                                               &file_loaded_dungeon,
+                                               file_loaded_label,
+                                               sizeof(file_loaded_label));
+    }
+    CHECK(file_ok == 0 && strcmp(file_loaded_label, "ORACLE") == 0,
+          "file-loaded hash path decodes the ORACLE wall text");
+    csb_v1_dungeon_free(&file_loaded_dungeon);
 
     poison_sidecar_text_words(file_buf, (size_t)file_size);
     CHECK(dungeon.raw_data != NULL &&
