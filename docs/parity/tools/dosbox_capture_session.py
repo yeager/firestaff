@@ -99,6 +99,7 @@ KEY_MAP = {
 DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 BLACKOUT_NONBLACK_THRESH = 0.005
+RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 
 
 class QuietRunTimeout:
@@ -141,14 +142,30 @@ def _is_executable_file(path: Path) -> bool:
     return path.is_file() and os.access(path, os.X_OK)
 
 
+def _has_case_insensitive_child(directory: Path, name: str) -> bool:
+    """Return whether ``directory`` contains ``name`` under DOS semantics."""
+    direct = directory / name
+    if direct.is_file():
+        return True
+    if not directory.is_dir():
+        return False
+    target = name.casefold()
+    try:
+        return any(child.is_file() and child.name.casefold() == target
+                   for child in directory.iterdir())
+    except OSError:
+        return False
+
+
 def _runtime_dir_failures(runtime_dir: Path) -> list[str]:
     """Return validation failures for the DOS runtime layout.
 
     The canonical hash root proved by preflight is not always the
     directory DOSBox can execute from.  The live route must mount the
     extracted PC 3.4 runtime subdir where DM.EXE can see its DATA/
-    sibling; mounting the parent hash root can leave DOSBox at a menu
-    or a black host capture even though the SHA preflight passed.
+    sibling and the required DAT payloads inside it; mounting the
+    parent hash root or an incomplete extraction can leave DOSBox at a
+    menu or a black host capture even though the SHA preflight passed.
     """
     failures: list[str] = []
     if not runtime_dir.is_dir():
@@ -162,8 +179,15 @@ def _runtime_dir_failures(runtime_dir: Path) -> list[str]:
             )
         else:
             failures.append(f"runtime dir missing DM.EXE: {runtime_dir}")
-    if not (runtime_dir / "DATA").is_dir():
+    data_dir = runtime_dir / "DATA"
+    if not data_dir.is_dir():
         failures.append(f"runtime dir missing DATA/ sibling: {runtime_dir}")
+    else:
+        for filename in RUNTIME_DATA_REQUIRED_FILES:
+            if not _has_case_insensitive_child(data_dir, filename):
+                failures.append(
+                    f"runtime DATA/ missing required {filename}: {data_dir}"
+                )
     return failures
 
 
@@ -272,7 +296,10 @@ def dry_run(plan: list[PlanStep],
         good = tmp_root / "DungeonMasterPC34"
         good.mkdir()
         (good / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
-        (good / "DATA").mkdir()
+        good_data = good / "DATA"
+        good_data.mkdir()
+        (good_data / "GRAPHICS.DAT").write_bytes(b"GRAPHICS_FIXTURE\n")
+        (good_data / "DUNGEON.DAT").write_bytes(b"DUNGEON_FIXTURE\n")
         if _runtime_dir_failures(good):
             failures.append("runtime layout guard: rejected valid DM.EXE + DATA/ layout")
         parent = tmp_root / "parent"
@@ -286,6 +313,21 @@ def dry_run(plan: list[PlanStep],
         (missing_data / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
         if not any("DATA/" in f for f in _runtime_dir_failures(missing_data)):
             failures.append("runtime layout guard: did not require DATA/ sibling")
+        incomplete_data = tmp_root / "incomplete_data"
+        incomplete_data.mkdir()
+        (incomplete_data / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
+        (incomplete_data / "DATA").mkdir()
+        if not any("GRAPHICS.DAT" in f for f in _runtime_dir_failures(incomplete_data)):
+            failures.append("runtime layout guard: did not require DATA/GRAPHICS.DAT")
+        lowercase_data = tmp_root / "lowercase_data"
+        lowercase_data.mkdir()
+        (lowercase_data / "DM.EXE").write_bytes(b"DM_FIXTURE\n")
+        lowercase_data_dir = lowercase_data / "DATA"
+        lowercase_data_dir.mkdir()
+        (lowercase_data_dir / "graphics.dat").write_bytes(b"GRAPHICS_FIXTURE\n")
+        (lowercase_data_dir / "dungeon.dat").write_bytes(b"DUNGEON_FIXTURE\n")
+        if _runtime_dir_failures(lowercase_data):
+            failures.append("runtime layout guard: rejected DOS-style lowercase DAT names")
         fake_bin = tmp_root / "fake-dosbox-staging"
         fake_bin.write_bytes(b"#!/bin/sh\nexit 0\n")
         fake_bin.chmod(0o755)
