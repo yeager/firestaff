@@ -10,6 +10,7 @@ extern "C" {
 
 #define DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_NONE_PC34_COMPAT (-1)
 #define DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_C100_PC34_COMPAT 100
+#define DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_C107_PC34_COMPAT 107
 
 typedef struct Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat {
     unsigned int candidateChampionOrdinal;
@@ -33,6 +34,8 @@ typedef struct Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat {
     int nestedSpellSymbolCommand;
     int symbolIndex;
     int runeAdded;
+    int runeDeleted;
+    int spellCancelled;
     int symbolStepBefore;
     int symbolStepAfter;
     int manaBefore;
@@ -51,6 +54,10 @@ int DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
     Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
     int x,
     int y,
+    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
+
+int DM1_V1_MirrorCandidateRuntimeSpellRune_CancelPc34Compat(
+    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
     Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
 
 const char *DM1_V1_MirrorCandidateRuntimeSpellRune_SourceEvidencePc34Compat(void);
