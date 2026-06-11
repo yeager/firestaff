@@ -407,6 +407,8 @@ int main(int argc, char **argv)
         CHECK_EQ(bad, -1, "import rejects THING_ENDOFLIST in action hand", "d");
         CHECK_EQ(res_bad.error_code, CSB_V1_IMPORT_ERR_SLOT_STATE,
                  "import result flags slot-state guard", "d");
+        CHECK_EQ(res_bad.byte_offset, 24 + 40 + CHAMPION_SLOT_ACTION_HAND * 2,
+                 "import result byte_offset points at bad slot word", "d");
         CHECK_EQ(res_bad.state, CSB_V1_IMPORT_STATE_ERROR,
                  "import result enters ERROR state", "d");
         CHECK_EQ(party_bad.ChampionCount, 0,
