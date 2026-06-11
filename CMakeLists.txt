@@ -2808,6 +2808,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_character_import
     )
 
+    add_executable(test_csb_v1_runtime_champion_load_attrs
+        tests/test_csb_v1_runtime_champion_load_attrs.c
+        src/csb/csb_v1_boot.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_runtime_champion_load_attrs PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_champion_load_attrs PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_champion_load_attrs PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_champion_load_attrs
+        COMMAND test_csb_v1_runtime_champion_load_attrs
+    )
+
     add_executable(test_csb_v1_phase7_verification
         tests/test_csb_v1_phase7_verification.c
         src/csb/csb_v1_boot.c
