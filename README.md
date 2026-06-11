@@ -36,13 +36,22 @@ place. DM1 is the strongest runtime target today. The other games have
 hash-verified launch profiles and substantial engine slices, with end-to-end
 playability still being hardened game by game.
 
-| Game | Runtime status | Data status | Presentation status |
-|---|---|---|---|
-| Dungeon Master (DM1) | Playable, source-locked V1 runtime with active visual polish | PC 3.4 English and multilingual data are hash-verified | V1 original, V2.0 filtered, V2.1 upscaled and V2.2 modern pipeline |
-| Chaos Strikes Back | Launch/profile boundary, dungeon model, mechanics, utility/import and verification slices implemented; full runtime proof still in progress | PC/ST/Amiga variants are catalogued by hash | V1 parity slices plus V2 scaffolding and active hardening |
-| Dungeon Master II: Skullkeep | Boot/profile and utility flow implemented; dungeon, rendering and mechanics are still being hardened | PC English, French and German/English JewelCase data are catalogued by hash | V2 presentation pipeline is implemented; V1 runtime completion remains active work |
-| DM Nexus (Saturn) | Saturn data, world, render, save/load and runtime-state paths implemented; real-asset handoff proof still in progress | Saturn DMDF/DGN data is catalogued by hash | V2 asset, lighting, UI and controller slices implemented; more verification remains |
-| Theron's Quest | V1 parser, rendering, mechanics, progression, save/load, direct Track 02 launch handoff and a narrow US bank-boundary signal are verified; full dungeon data parity is still being hardened | JP and US Track 02 provenance is hash-verified | V1 presentation implemented; V2 modes not started |
+The table below separates runtime fidelity from presentation work. A
+"verified slice" means the named behavior is covered by focused tests or
+probes; it is not a claim that the whole game is finished.
+
+| Game / version | Current status |
+|---|---|
+| DM1 V1 Original | Playable and source-locked against the PC 3.4 lineage. Recent work hardened viewport evidence drift, wall/door/floor source-lock gates, chest and inventory runtime behavior, champion-panel pixels, mirror/candidate routes, capture tooling, and verifier stability. Remaining work is mainly paired original-DOS capture proof and visual polish. |
+| DM1 V2.0 / V2.1 / V2.2 | Filtered, upscaled, and modern presentation pipelines exist with V1 command ownership preserved. Side-by-side V1/V2 seed and region manifests are in place; full enhanced screenshot/pixel gates and broader presentation polish remain active. |
+| CSB V1 Original | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end CSB playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. |
+| CSB V2.0 / V2.1 / V2.2 | V1 compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
+| DM2 V1 Original | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model, and map-state probes exist. Broader dungeon, rendering, mechanics, creature/combat, shops/NPCs, and real-runtime compatibility remain active work. |
+| DM2 V2.0 / V2.1 / V2.2 | Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. V2 remains presentation work on top of the still-active V1 parity effort. |
+| Nexus V1 Original | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding, and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof and broader runtime coverage remain active. |
+| Nexus V2.0 / V2.1 / V2.2 | Asset, UI, lighting, and touch/controller slices exist, but V2 compatibility lock, launch/profile separation, smooth movement, and full verification remain behind the V1 handoff proof. |
+| Theron's Quest V1 Original | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, initial mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, and a narrow US bank-boundary signal are verified. Exact Track 02 dungeon-bank offsets, full dungeon loader parity, runtime playability path, and README-eligible real screenshots remain active work. |
+| Theron's Quest V2.0 / V2.1 / V2.2 | Not started beyond keeping the V1 compatibility boundary honest. V2 work waits on stronger V1 Track 02 parity and runtime proof. |
 
 ## What Firestaff Gives You
 
