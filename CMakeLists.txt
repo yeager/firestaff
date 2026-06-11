@@ -1101,6 +1101,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_slot_click_swap_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest slot boundary runtime gate.
+# Opens a seeded action-hand chest, verifies adjacent outside-C538 clicks are
+# ignored, and proves inclusive C538 edge pixels pick up the visible item.
+add_executable(firestaff_dm1_v1_chest_slot_boundary_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_slot_boundary_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_slot_boundary_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_slot_boundary_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 sparse open-chest close-rewire runtime gate.
 # Opens a seeded action-hand chest, clicks C538 through the real pointer route,
 # closes G0426, and verifies the source C537/C539 visible slots are relinked in
