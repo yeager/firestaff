@@ -465,9 +465,110 @@ static void test_spell_cast_potion(void) {
     printf("    PASS\n");
 }
 
+static void test_spell_cast_potion_flask_inventory_mutation(void) {
+    printf("  [16] Spell cast — potion flask inventory mutation...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats;
+    DM1_SpellPotionInventory inventory;
+    DM1_SpellPotionCastResult result;
+    DM1_SpellPotionInventory beforeInventory;
+    DM1_ChampionSpellInput beforeInput;
+    DM1_ChampionSpellStats beforeStats;
+
+    dm1_spell_init(&s);
+    stats = makeStats(200, 200, 50, 60);
+    stats.skillLevels[DM1_SKILL_HEAL] = 10;
+    memset(&inventory, 0, sizeof(inventory));
+    inventory.slots[DM1_SPELL_SLOT_READY_HAND] = DM1_SPELL_THING_NONE_PC34;
+    inventory.slots[DM1_SPELL_SLOT_ACTION_HAND] = DM1_SPELL_THING_NONE_PC34;
+    inventory.load = 42;
+    inventory.potionCount = 1;
+    inventory.potions[0].thing = 0x2011u;
+    inventory.potions[0].iconIndex = DM1_SPELL_ICON_EMPTY_FLASK_PC34;
+    inventory.potions[0].type = DM1_SPELL_POTION_EMPTY_FLASK_PC34;
+    inventory.potions[0].power = 7;
+    inventory.potions[0].weight = 2;
+
+    /* ReDMCSB MENU.C:71 defines Vi as health-potion type 14; F0411 only
+     * finds C195 empty flasks in C01 action or C00 ready hand. */
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_VI) == 1);
+
+    beforeInventory = inventory;
+    beforeInput = s.input[0];
+    beforeStats = stats;
+    assert(dm1_spell_castPotionWithInventory(&s, 0, &stats, 0x000B,
+                                             &inventory, &result) ==
+           DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
+    assert(result.castResult == DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
+    assert(result.failureType == DM1_FAILURE_NEEDS_FLASK_IN_HAND);
+    assert(result.spellIndex == 19);
+    assert(result.powerOrdinal == 1);
+    assert(result.flaskSlotIndex == -1);
+    assert(result.symbolsCleared == 0);
+    assert(memcmp(&inventory, &beforeInventory, sizeof(inventory)) == 0);
+    assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
+    assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
+
+    inventory.slots[DM1_SPELL_SLOT_READY_HAND] = inventory.potions[0].thing;
+    assert(dm1_spell_castPotionWithInventory(&s, 0, &stats, 0x000B,
+                                             &inventory, &result) ==
+           DM1_SPELL_CAST_SUCCESS);
+    assert(result.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(result.failureType == -1);
+    assert(result.spellIndex == 19);
+    assert(result.powerOrdinal == 1);
+    assert(result.flaskSlotIndex == DM1_SPELL_SLOT_READY_HAND);
+    assert(result.flaskThing == 0x2011u);
+    assert(result.potionTypeBefore == DM1_SPELL_POTION_EMPTY_FLASK_PC34);
+    assert(result.potionTypeAfter == 14);
+    assert(result.potionPowerBefore == 7);
+    assert(result.potionPowerAfter == 51);
+    assert(inventory.potions[0].type == 14);
+    assert(inventory.potions[0].power == 51);
+    assert(result.loadBefore == 42);
+    assert(result.loadAfter == 42);
+    assert(inventory.load == 42);
+    assert(s.input[0].symbols[0] == '\0');
+    assert(s.input[0].symbolStep == 0);
+    assert(result.symbolsCleared == 1);
+
+    dm1_spell_init(&s);
+    stats = makeStats(200, 200, 50, 60);
+    stats.skillLevels[DM1_SKILL_HEAL] = 10;
+    inventory.slots[DM1_SPELL_SLOT_READY_HAND] = 0x3010u;
+    inventory.slots[DM1_SPELL_SLOT_ACTION_HAND] = 0x3011u;
+    inventory.potionCount = 2;
+    inventory.potions[0].thing = 0x3010u;
+    inventory.potions[0].iconIndex = DM1_SPELL_ICON_EMPTY_FLASK_PC34;
+    inventory.potions[0].type = DM1_SPELL_POTION_EMPTY_FLASK_PC34;
+    inventory.potions[0].power = 1;
+    inventory.potions[0].weight = 2;
+    inventory.potions[1].thing = 0x3011u;
+    inventory.potions[1].iconIndex = DM1_SPELL_ICON_EMPTY_FLASK_PC34;
+    inventory.potions[1].type = DM1_SPELL_POTION_EMPTY_FLASK_PC34;
+    inventory.potions[1].power = 2;
+    inventory.potions[1].weight = 2;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_VI) == 1);
+    assert(dm1_spell_castPotionWithInventory(&s, 0, &stats, 0x0000,
+                                             &inventory, &result) ==
+           DM1_SPELL_CAST_SUCCESS);
+    assert(result.flaskSlotIndex == DM1_SPELL_SLOT_ACTION_HAND);
+    assert(result.flaskThing == 0x3011u);
+    assert(inventory.potions[0].type == DM1_SPELL_POTION_EMPTY_FLASK_PC34);
+    assert(inventory.potions[0].power == 1);
+    assert(inventory.potions[1].type == 14);
+    assert(inventory.potions[1].power == 40);
+
+    printf("    PASS\n");
+}
+
 /* ── Test 15: Projectile kinetic energy ──────────────────────────── */
 static void test_projectile_kinetic_energy(void) {
-    printf("  [16] Projectile kinetic energy...\n");
+    printf("  [17] Projectile kinetic energy...\n");
 
     /* KE = bounded(21, (powerOrd+2)*(4+(skill<<1)), 255) */
     assert(dm1_spell_projectileKineticEnergy(3, 5, 0) == 70);
@@ -481,7 +582,7 @@ static void test_projectile_kinetic_energy(void) {
 
 /* ── Test 16: Projectile step energy ─────────────────────────────── */
 static void test_projectile_step_energy(void) {
-    printf("  [17] Projectile step energy...\n");
+    printf("  [18] Projectile step energy...\n");
 
     /* stepEnergy = 10 - min(8, maxMana >> 3) */
     assert(dm1_spell_projectileStepEnergy(0) == 10);
@@ -494,7 +595,7 @@ static void test_projectile_step_energy(void) {
 
 /* ── Test 17: Experience calculation ─────────────────────────────── */
 static void test_experience(void) {
-    printf("  [18] Experience calculation...\n");
+    printf("  [19] Experience calculation...\n");
 
     /* exp = rng8 + (req<<4) + ((powerOrd-1)*baseReq<<3) + req*req
      * pow=3, base=3, rng=5: req=6, exp=5+96+48+36=185 */
@@ -507,7 +608,7 @@ static void test_experience(void) {
 
 /* ── Test 18: Spell table integrity ──────────────────────────────── */
 static void test_spell_table(void) {
-    printf("  [19] Spell table integrity...\n");
+    printf("  [20] Spell table integrity...\n");
 
     /* Shield: Ya Ir = 0x00666F00 */
     assert(dm1_spells[0].symbols == 0x00666F00);
@@ -543,7 +644,7 @@ static void test_spell_table(void) {
 
 /* ── Test 19: Multiple champions independent ─────────────────────── */
 static void test_multiple_champions(void) {
-    printf("  [20] Multiple champions independent...\n");
+    printf("  [21] Multiple champions independent...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -568,7 +669,7 @@ static void test_multiple_champions(void) {
 
 /* ── Test 20: Zokathra full lookup ───────────────────────────────── */
 static void test_zokathra(void) {
-    printf("  [21] Zokathra full lookup...\n");
+    printf("  [22] Zokathra full lookup...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -591,7 +692,7 @@ static void test_zokathra(void) {
 
 /* ── Test 21: Lightning Bolt lookup ──────────────────────────────── */
 static void test_lightning_bolt(void) {
-    printf("  [22] Lightning Bolt lookup...\n");
+    printf("  [23] Lightning Bolt lookup...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -613,7 +714,7 @@ static void test_lightning_bolt(void) {
 
 /* ── Test 22: Only power symbol → no match ───────────────────────── */
 static void test_power_only_no_match(void) {
-    printf("  [23] Power symbol only → no match...\n");
+    printf("  [24] Power symbol only → no match...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -630,7 +731,7 @@ static void test_power_only_no_match(void) {
 
 /* ── Test 23: Spell cast failure feedback clears needs-practice ─────── */
 static void test_spell_cast_needs_practice_feedback(void) {
-    printf("  [24] Spell cast failure feedback — needs practice...\n");
+    printf("  [25] Spell cast failure feedback — needs practice...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -656,7 +757,7 @@ static void test_spell_cast_needs_practice_feedback(void) {
 
 /* ── Test 24: Spell failure feedback metadata ───────────────────────── */
 static void test_spell_failure_feedback_metadata(void) {
-    printf("  [25] Spell failure feedback metadata...\n");
+    printf("  [26] Spell failure feedback metadata...\n");
 
     const DM1_SpellFailureFeedback* practice = dm1_spell_failureFeedback(DM1_FAILURE_NEEDS_MORE_PRACTICE);
     (void)practice;
@@ -688,7 +789,7 @@ static void test_spell_failure_feedback_metadata(void) {
 
 /* ── Test 25: F0408 cast-click symbol cleanup predicate ─────────────── */
 static void test_spell_cast_click_cleanup_predicate(void) {
-    printf("  [26] Spell cast-click cleanup predicate...\n");
+    printf("  [27] Spell cast-click cleanup predicate...\n");
 
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE) == 1);
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_SUCCESS) == 1);
@@ -717,6 +818,7 @@ int main(void) {
     test_spell_cast_dead();
     test_spell_cast_meaningless();
     test_spell_cast_potion();
+    test_spell_cast_potion_flask_inventory_mutation();
     test_projectile_kinetic_energy();
     test_projectile_step_energy();
     test_experience();
@@ -729,6 +831,6 @@ int main(void) {
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
 
-    printf("\nAll 26 tests PASSED.\n");
+    printf("\nAll 27 tests PASSED.\n");
     return 0;
 }
