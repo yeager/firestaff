@@ -9,124 +9,152 @@
     {
       "hits": [
         {
-          "line": 11579,
+          "line": 11945,
+          "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
+        },
+        {
+          "line": 11953,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 11581,
+          "line": 11955,
           "needle": "return (state->world.party.mapX +"
         },
         {
-          "line": 11582,
+          "line": 11956,
           "needle": "state->world.party.mapY +"
         },
         {
-          "line": 11583,
+          "line": 11957,
           "needle": "state->world.party.direction) & 1;"
         }
       ],
       "id": "firestaff_party_tuple_flip_predicate",
-      "lines": "11579-11584",
+      "lines": null,
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "007b91d209ca0d1b9578f8e422a4b4b098266ba16fd54278c64ed3684783aa8e",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "scope": "whole-file-local-evidence",
+      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 11577,
+          "line": 11951,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 11643,
+          "line": 12002,
+          "needle": "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)"
+        },
+        {
+          "line": 12017,
           "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         },
         {
-          "line": 11646,
+          "line": 12020,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
+        },
+        {
+          "line": 12021,
+          "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         }
       ],
       "id": "firestaff_wallset_variant_binding_before_draw",
-      "lines": "11577-11649",
+      "lines": null,
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "007b91d209ca0d1b9578f8e422a4b4b098266ba16fd54278c64ed3684783aa8e",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "scope": "whole-file-local-evidence",
+      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 12203,
+          "line": 12577,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 12208,
+          "line": 12582,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 12209,
+          "line": 12583,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 12216,
+          "line": 12589,
+          "needle": "the native center-wall graphic flipped horizontally."
+        },
+        {
+          "line": 12590,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 12220,
+          "line": 12594,
           "needle": "} else {"
         },
         {
-          "line": 12221,
+          "line": 12595,
           "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
       "id": "firestaff_center_wall_flip_path",
-      "lines": "12203-12228",
+      "lines": null,
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "007b91d209ca0d1b9578f8e422a4b4b098266ba16fd54278c64ed3684783aa8e",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "scope": "whole-file-local-evidence",
+      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 13073,
+          "line": 13442,
+          "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
+        },
+        {
+          "line": 13502,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 13078,
+          "line": 13504,
+          "needle": "left zones use the right-side graphic flipped horizontally"
+        },
+        {
+          "line": 13507,
           "needle": "size_t partner = i ^ 1;"
         },
         {
-          "line": 13079,
+          "line": 13508,
           "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
         },
         {
-          "line": 13080,
+          "line": 13509,
           "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
         },
         {
-          "line": 13081,
+          "line": 13510,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
         },
         {
-          "line": 13087,
+          "line": 13516,
           "needle": "} else {"
         },
         {
-          "line": 13088,
+          "line": 13517,
           "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
         }
       ],
       "id": "firestaff_side_wall_lr_swap_path",
-      "lines": "13073-13096",
+      "lines": null,
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "sha256": "007b91d209ca0d1b9578f8e422a4b4b098266ba16fd54278c64ed3684783aa8e",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "scope": "whole-file-local-evidence",
+      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }
@@ -134,7 +162,7 @@
   "gates": [
     {
       "command": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
         "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"
       ],
       "outputTail": "- C07_WALL_D2R -> C100_GRAPHIC_WALLSET_0_D2R index=100 neg=-12 STARTUP2.C:632/989\n- C08_WALL_D2L -> C101_GRAPHIC_WALLSET_0_D2L index=101 neg=-11 STARTUP2.C:633/990\n- C09_WALL_D2C -> C102_GRAPHIC_WALLSET_0_D2C index=102 neg=-10 STARTUP2.C:634/991\n- C10_WALL_D3R2 -> C103_GRAPHIC_WALLSET_0_D3R2 index=103 neg=-4 STARTUP2.C:625/982\n- C11_WALL_D3L2 -> M663_GRAPHIC_WALLSET_0_D3L2 index=104 neg=-3 STARTUP2.C:626/983\n- C12_WALL_D3R -> C105_GRAPHIC_WALLSET_0_D3R index=105 neg=-7 STARTUP2.C:627/984\n- C13_WALL_D3L -> C106_GRAPHIC_WALLSET_0_D3L index=106 neg=-6 STARTUP2.C:628/985\n- C14_WALL_D3C -> C107_GRAPHIC_WALLSET_0_D3C index=107 neg=-5 STARTUP2.C:629/986",
@@ -143,7 +171,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
         "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
       ],
       "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",
@@ -197,6 +225,7 @@
       "lines": "183-200",
       "missing": [],
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "scope": "183-200",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -236,6 +265,7 @@
       "lines": "2427-2443",
       "missing": [],
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "scope": "2427-2443",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -263,6 +293,7 @@
       "lines": "8354-8414",
       "missing": [],
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "scope": "8354-8414",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -294,6 +325,7 @@
       "lines": "8543-8579",
       "missing": [],
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "scope": "8543-8579",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
@@ -317,6 +349,7 @@
       "lines": "6697-6714",
       "missing": [],
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "scope": "6697-6714",
       "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
       "sourceFile": "DUNVIEW.C",
       "status": "PASS"
