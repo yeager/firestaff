@@ -413,6 +413,17 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     }
 }
 
+static int csb_v1_runtime_input_command_target_dir(int current_dir, int command)
+{
+    if (command == DM1_V1_COMMAND_TURN_RIGHT) {
+        return (current_dir + 1) & 3;
+    }
+    if (command == DM1_V1_COMMAND_TURN_LEFT) {
+        return (current_dir + 3) & 3;
+    }
+    return -1;
+}
+
 /* ── Runtime profile API ────────────────────────────────────────────── */
 
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
@@ -450,6 +461,10 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
     profile->timeline_dispatch_count = 0;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&profile->input_command_queue);
+    memset(&profile->last_input_dispatch, 0,
+           sizeof(profile->last_input_dispatch));
+    profile->input_dispatch_count = 0;
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
@@ -470,6 +485,69 @@ int csb_v1_runtime_get_last_timeline_dispatch(
     if (!profile || !out_result) return -1;
     *out_result = profile->last_timeline_dispatch;
     return out_result->count;
+}
+
+int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
+                                         int command,
+                                         int x,
+                                         int y)
+{
+    if (!profile) return 0;
+    return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+        &profile->input_command_queue, command, x, y);
+}
+
+int csb_v1_runtime_process_one_input_command(
+    CSB_V1_RuntimeProfile *profile,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction)
+{
+    int target_dir;
+
+    if (!profile) return -1;
+    memset(&profile->last_input_dispatch, 0,
+           sizeof(profile->last_input_dispatch));
+
+    /* Source-lock: ReDMCSB COMMAND.C F0380 lines 2075-2127 locks the
+     * command queue, applies the movement-disabled gate, dequeues one
+     * command, and lines 2150-2156 dispatch turns to CLIKMENU.C F0365 or
+     * steps to F0366.  This CSB runtime boundary currently wires only the
+     * F0365 turn route into live CSB state; step commands are reported as
+     * dequeued/recognized but intentionally not applied here. */
+    profile->last_input_dispatch = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
+        &profile->input_command_queue,
+        profile->party_dir,
+        disabled_movement_ticks,
+        projectile_disabled_movement_ticks,
+        last_projectile_disabled_movement_direction);
+
+    if (!profile->last_input_dispatch.dequeued) {
+        return 0;
+    }
+
+    profile->input_dispatch_count++;
+    target_dir = csb_v1_runtime_input_command_target_dir(
+        profile->party_dir, profile->last_input_dispatch.command);
+    if (target_dir >= 0) {
+        /* Source-lock: ReDMCSB CLIKMENU.C F0365 lines 156-173 turns
+         * C001/C002 into (party_dir + 3/+1) & 3 and calls CHAMPION.C F0284
+         * lines 117-130 to rotate every champion Cell/Direction before
+         * committing G0308_i_PartyDirection. */
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            return -1;
+        }
+    }
+    return 1;
+}
+
+int csb_v1_runtime_get_last_input_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputQueueProcessResultPc34Compat *out_result)
+{
+    if (!profile || !out_result) return -1;
+    *out_result = profile->last_input_dispatch;
+    return out_result->dequeued;
 }
 
 static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)

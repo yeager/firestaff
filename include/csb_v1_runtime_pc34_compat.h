@@ -48,6 +48,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -248,6 +249,9 @@ typedef struct {
     struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;
+    struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
+    struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
+    uint32_t                input_dispatch_count;
 
     /* ── Chaos Magic ────────────────────────────── */
     CSB_V1_ChaosMagicState  chaos_magic;
@@ -368,6 +372,35 @@ int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_get_last_timeline_dispatch(
     const CSB_V1_RuntimeProfile *profile,
     struct DM1_TickDispatchResult_V1 *out_result);
+
+/* Queue one source command into the CSB runtime's V1 input command queue.
+ * CSB shares the DM1/CSB ReDMCSB command queue ids and queue mechanics.
+ * This entrypoint intentionally does not claim broad movement/playability;
+ * csb_v1_runtime_process_one_input_command() currently applies the
+ * source-locked turn boundary and reports unsupported step commands as
+ * dequeued but not applied.
+ * Source: ReDMCSB COMMAND.C F0380 lines 2075-2127 and 2150-2156. */
+int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
+                                         int command,
+                                         int x,
+                                         int y);
+
+/* Process one queued CSB V1 input command.
+ * TURN_LEFT/TURN_RIGHT dispatch through csb_v1_runtime_rotate_party(),
+ * matching CLIKMENU.C F0365 lines 156-173 and CHAMPION.C F0284 lines
+ * 117-130.  MOVE_* commands are deliberately not applied here yet; this
+ * gate proves the command boundary reaches runtime state without claiming
+ * full CSB movement/runtime playability.
+ * Returns 1 when a command was processed/dequeued, 0 when the queue was
+ * empty or movement cooldown blocked dequeue, and -1 on invalid input. */
+int csb_v1_runtime_process_one_input_command(CSB_V1_RuntimeProfile *profile,
+                                             int disabled_movement_ticks,
+                                             int projectile_disabled_movement_ticks,
+                                             int last_projectile_disabled_movement_direction);
+
+int csb_v1_runtime_get_last_input_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputQueueProcessResultPc34Compat *out_result);
 
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
