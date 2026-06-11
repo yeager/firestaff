@@ -534,6 +534,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Firestaff coding pass 2026-06-11: hardened `test_csb_v1_boot_runtime_handoff` so the verified CSB boot→runtime handoff now proves imported DM1 champion health, stamina, STR, DEX, and WIS survive into `csb_v1_runtime_pc34_compat` and remain stable across the source-locked leader-switch path. Source anchors: ReDMCSB `LOADSAVE.C F0435:2728-2734`, `CLIKCHAM.C F0368:51-68`, and `CHAMPION.C F0284:117-130`.
 
+### DM1 V1
+
+- ✅ Firestaff coding pass 2026-06-11: added `firestaff_dm1_v1_stair_pit_occlusion_pixel_gate`, a focused source-locked pixel-owner probe for D1/D2 stair and pit ordering. It proves the D2C open-pit BUG0_64 route can be covered by F0108 floor ornaments before F0115, and that the F0128 D1L stair/pit lane owns a shared pixel after the earlier D2C write. Source anchors: ReDMCSB `DUNVIEW.C F0121:7260-7368`, `F0122:7405-7536`, and `F0128:8518-8525`.
+
 ### DM1 V2
 
 - ✅ Firestaff coding pass 2026-06-08 16:42: tightened the DM1 V2 side-by-side presentation seed probe so its independent V1/V2 presentation-disabled render path now cross-checks the centralized `dm1_v2_side_by_side_seed_pc34` scaffold dimensions, composite pixel accessor, and FNV side-by-side hash. This keeps future screenshot/pixel gates anchored to one source helper while preserving the existing V1 command/runtime truth assertions.
