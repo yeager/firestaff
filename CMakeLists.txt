@@ -8942,6 +8942,21 @@ if(BUILD_TESTING)
         COMMAND test_theron_v1_direct_launch
     )
 
+    add_executable(test_theron_v1_m11_direct_launch
+        tests/theron_v1_m11_direct_launch_test.c
+    )
+    target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m11)
+    target_include_directories(test_theron_v1_m11_direct_launch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_m11_direct_launch PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_m11_direct_launch
+        COMMAND test_theron_v1_m11_direct_launch
+    )
+
     add_executable(test_tqr_v1_boot_profile_smoke
         tests/tqr_v1_boot_profile_smoke.c
         src/tqr/tqr_v1_boot_profile.c

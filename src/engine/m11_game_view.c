@@ -45,7 +45,10 @@
 
 /* Forward declarations for functions defined later in this file. */
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
-static int M11_GameView_StartTheron(M11_GameViewState* state, const char* dataDir);
+static int M11_GameView_StartTheron(M11_GameViewState* state,
+                                    const char* dataDir,
+                                    const char* verifiedPath,
+                                    const char* verifiedMd5);
 
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
@@ -6133,7 +6136,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!dd || !dd[0]) {
             return 0;
         }
-        ok = M11_GameView_StartTheron(state, dd);
+        ok = M11_GameView_StartTheron(state,
+                                      dd,
+                                      spec->verifiedAssetPath,
+                                      spec->verifiedAssetMd5);
         if (ok) {
             state->presentationMode = spec->presentationMode;
         }
@@ -6281,6 +6287,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     const M12_MenuEntry* entry;
     M11_GameLaunchSpec spec;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
+    int gameOptionSlot = -1;
     if (!state || !menuState) {
         return 0;
     }
@@ -6306,6 +6313,28 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.sourceId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                      entry->gameId);
+    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        gameOptionSlot = 0;
+    } else if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        gameOptionSlot = 1;
+    } else if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+        gameOptionSlot = 2;
+    } else if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
+        gameOptionSlot = 3;
+    } else if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        gameOptionSlot = 4;
+    }
+    if (gameOptionSlot >= 0 && gameOptionSlot < M12_CONFIG_GAME_COUNT) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(&menuState->assetStatus,
+                                       entry->gameId,
+                                       (size_t)menuState->gameOptions[gameOptionSlot].versionIndex);
+        if (version && version->matchedPath[0] != '\0' &&
+            version->matchedMd5[0] != '\0') {
+            spec.verifiedAssetPath = version->matchedPath;
+            spec.verifiedAssetMd5 = version->matchedMd5;
+        }
+    }
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
@@ -6431,7 +6460,10 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     return 1;
 }
 
-static int M11_GameView_StartTheron(M11_GameViewState* state, const char* dataDir) {
+static int M11_GameView_StartTheron(M11_GameViewState* state,
+                                    const char* dataDir,
+                                    const char* verifiedPath,
+                                    const char* verifiedMd5) {
     Theron_V1_BootProfile* profile = NULL;
     Theron_V1_World* world = NULL;
     Theron_V1_Viewport* viewport = NULL;
@@ -6457,8 +6489,16 @@ static int M11_GameView_StartTheron(M11_GameViewState* state, const char* dataDi
     }
 
     theron_v1_boot_profile_init(profile);
-    if (theron_v1_boot_scan_assets(profile, dataDir) != 0 ||
-        !profile->assets_verified) {
+    if (verifiedPath && verifiedPath[0] != '\0' &&
+        verifiedMd5 && verifiedMd5[0] != '\0') {
+        if (theron_v1_boot_load_verified_path(profile,
+                                              verifiedPath,
+                                              verifiedMd5) != 0) {
+            m11_set_status(state, "BOOT", "THERON TRACK 02 VERIFY FAILED");
+            goto fail;
+        }
+    } else if (theron_v1_boot_scan_assets(profile, dataDir) != 0 ||
+               !profile->assets_verified) {
         m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
         goto fail;
     }
