@@ -112,6 +112,8 @@ int main(void)
     const int clickX = 168;
     const int clickY = 81;
     int baselineMessageCount;
+    int baselineProjectileCount;
+    int baselineTimelineCount;
     int ok = 1;
 
     printf("probe=dm1_v1_door_keyhole_wrong_item_pc34_compat\n");
@@ -126,14 +128,19 @@ int main(void)
     state.lastWorldHash = 0xBADF00Du;
     snprintf(state.lastAction, sizeof(state.lastAction), "SENTINEL");
     snprintf(state.lastOutcome, sizeof(state.lastOutcome), "UNCHANGED");
+    snprintf(state.inspectTitle, sizeof(state.inspectTitle), "SENTINEL INSPECT");
+    snprintf(state.inspectDetail, sizeof(state.inspectDetail), "NO NEW DETAIL");
     M11_MessageLog_Push(&state.messageLog, "SENTINEL MESSAGE", 0);
     baselineMessageCount = M11_GameView_GetMessageLogCount(&state);
+    baselineProjectileCount = state.world.projectiles.count;
+    baselineTimelineCount = state.world.timeline.count;
 
     /* ReDMCSB CLIKVIEW.C F0377 lines 356-401: a door-button/keyhole
-     * click only schedules EVENT_DOOR when the leader hand is empty; with
-     * an occupied leader hand it immediately tries F0375 throw handling.
-     * Firestaff's D1C keyhole guard claims this source box so the click
-     * produces no open, no consume, and no invented wrong-item message. */
+     * click schedules EVENT_DOOR only from the empty leader-hand branch
+     * (lines 365-389); the occupied leader-hand branch goes to F0375
+     * throw handling instead (lines 396-400). Firestaff's D1C keyhole
+     * guard claims this source box so the click produces no open, no
+     * consume, no throw, and no invented wrong-item message/status. */
     ok &= expect_int("wrong-item door-keyhole click is ignored",
                      M11_GameView_HandlePointerButton(&state, clickX, clickY,
                                                      M11_DM1_MOUSE_MASK_LEFT),
@@ -148,9 +155,19 @@ int main(void)
     ok &= expect_int("wrong-item click does not append a message",
                      M11_GameView_GetMessageLogCount(&state),
                      baselineMessageCount);
+    ok &= expect_int("wrong-item click does not spawn projectile",
+                     state.world.projectiles.count,
+                     baselineProjectileCount);
+    ok &= expect_int("wrong-item click does not schedule door event",
+                     state.world.timeline.count,
+                     baselineTimelineCount);
     ok &= expect_int("wrong-item click does not report wrong-item status",
                      strcmp(state.lastAction, "SENTINEL") == 0 &&
                      strcmp(state.lastOutcome, "UNCHANGED") == 0, 1);
+    ok &= expect_int("wrong-item click does not publish inspect title",
+                     strcmp(state.inspectTitle, "SENTINEL INSPECT") == 0, 1);
+    ok &= expect_int("wrong-item click does not publish inspect detail",
+                     strcmp(state.inspectDetail, "NO NEW DETAIL") == 0, 1);
     ok &= expect_int("wrong-item click preserves prior message text",
                      strcmp(M11_GameView_GetMessageLogEntry(&state, 0),
                             "SENTINEL MESSAGE") == 0, 1);
