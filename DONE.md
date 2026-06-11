@@ -513,6 +513,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Firestaff coding pass 2026-06-09: hardened `firestaff_dm1_v1_champion_panel_partial_party_pixel_probe` so each 1-, 2-, and 3-champion runtime case first renders a full four-champion party into the same framebuffer, verifies the soon-empty status boxes/icons/bars/hand boxes were visibly populated, then proves the reduced-party M11 V1 draw clears those party HUD/champion-panel regions to black. Focused real-asset run `./build/firestaff_dm1_v1_champion_panel_partial_party_pixel_probe ~/.firestaff/data` passes.
 - ✅ Firestaff coding pass 2026-06-11: tightened `test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat` so the one-monster/one-poison-cloud/one-boundary regression now also pins single-event timeline consumption, the persistent-frame result kind, normal no-wound group damage metadata, centered target cell, attack decay, and frame increment against ReDMCSB `PROJEXPL.C F0213/F0220` and `GROUP.C F0191/F0192`.
 
+### CSB V1
+
+- ✅ Firestaff coding pass 2026-06-11: hardened `test_csb_v1_boot_runtime_handoff` so the verified CSB boot→runtime handoff now proves imported DM1 champion health, stamina, STR, DEX, and WIS survive into `csb_v1_runtime_pc34_compat` and remain stable across the source-locked leader-switch path. Source anchors: ReDMCSB `LOADSAVE.C F0435:2728-2734`, `CLIKCHAM.C F0368:51-68`, and `CHAMPION.C F0284:117-130`.
+
 ### DM1 V2
 
 - ✅ Firestaff coding pass 2026-06-08 16:42: tightened the DM1 V2 side-by-side presentation seed probe so its independent V1/V2 presentation-disabled render path now cross-checks the centralized `dm1_v2_side_by_side_seed_pc34` scaffold dimensions, composite pixel accessor, and FNV side-by-side hash. This keeps future screenshot/pixel gates anchored to one source helper while preserving the existing V1 command/runtime truth assertions.
