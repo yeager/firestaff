@@ -48,10 +48,24 @@ typedef struct {
     int delay_ticks;
 } CSB_V1_DSAScript;
 
+typedef enum {
+    CSB_V1_DSA_DISPATCH_NONE = 0,
+    CSB_V1_DSA_DISPATCH_MESSAGE
+} CSB_V1_DSADispatchKind;
+
+typedef struct {
+    CSB_V1_DSADispatchKind kind;
+    int opcode;
+    int operand;
+    int op_pc;
+} CSB_V1_DSADispatchRecord;
+
 typedef struct {
     CSB_V1_DSAScript scripts[CSB_V1_MAX_DSA_SCRIPTS];
     int script_count;
     int flags[256]; /* global DSA flags */
+    int dispatch_count;
+    CSB_V1_DSADispatchRecord last_dispatch;
 } CSB_V1_ChaosMagicState;
 
 void csb_v1_chaos_init(CSB_V1_ChaosMagicState *state);
@@ -64,4 +78,3 @@ int csb_v1_dsa_execute_step(CSB_V1_DSAScript *script,
 const char *csb_v1_chaos_source_evidence(void);
 
 #endif
-
