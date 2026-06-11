@@ -229,6 +229,8 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
 static void test_enter_game_with_verified_profile_loads_dungeon(void)
 {
     CSB_V1_BootProfile p;
+    struct DM1_Event_V1 ev;
+    struct DM1_TickDispatchResult_V1 dispatch;
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
@@ -289,6 +291,41 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "current level defaults to 0 after handoff");
     CHECK(p.runtime.chaos_magic.magic_initialized == 1,
           "chaos magic is initialized after handoff (ReDMCSB CASTER.C F0211)");
+
+    /* M11 receives this already-handoff runtime profile and advances it
+     * through the same deterministic V1 tick path.  Keep the transition
+     * intentionally small: one harmless timeline event at game_time 0,
+     * one 55ms tick, no CSB_STATE_GAME/DUNGEON claim.
+     * Source-lock: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
+     * F0261_TIMELINE_Process_CPSEF before G0313_ul_GameTime++, and
+     * TIMELINE.C F0240 lines 702-708 expires events whose time is <= the
+     * current game time. */
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_PLAY_SOUND;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 0);
+    ev.b_mapX = 1;
+    ev.b_mapY = 1;
+    CHECK(csb_v1_runtime_add_timeline_event(&p.runtime, &ev) >= 0,
+          "post-handoff runtime accepts one timeline event at game_time 0");
+    CHECK(p.runtime.timeline_queue.eventCount == 1,
+          "post-handoff timeline queue contains one pending event before tick");
+    CHECK(csb_v1_runtime_tick_v1(&p.runtime) == 1,
+          "post-handoff runtime fires exactly one deterministic V1 tick");
+    CHECK(p.runtime.tick_count == 1U && p.runtime.game_time == 1U,
+          "post-handoff tick advances tick_count/game_time by one safe step");
+    CHECK(p.runtime.game_ticks == CSB_V1_TICK_MS_NOMINAL &&
+              p.runtime.total_play_ms == CSB_V1_TICK_MS_NOMINAL,
+          "post-handoff tick records one nominal 55ms quantum");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&p.runtime, &dispatch) == 1,
+          "post-handoff tick dispatches the queued timeline event");
+    CHECK(dispatch.records[0].dispatchKind == DM1_DISPATCH_SOUND,
+          "post-handoff timeline dispatch stays on the sound boundary");
+    CHECK(dispatch.records[0].mapX == 1 && dispatch.records[0].mapY == 1,
+          "post-handoff timeline dispatch preserves event coordinates");
+    CHECK(p.runtime.timeline_queue.eventCount == 0,
+          "post-handoff timeline queue is empty after the single tick");
+    CHECK(p.runtime.state == CSB_STATE_TITLE,
+          "post-handoff tick does not claim a broader CSB gameplay state");
 
     /* Cleanup: the boot profile owns the handoff runtime and must clear the
      * global current-dungeon context that mirrors ReDMCSB's current map globals.
