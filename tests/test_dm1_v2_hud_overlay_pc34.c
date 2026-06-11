@@ -14,6 +14,18 @@ static int count_nonzero(const uint8_t* fb, int count) {
     return n;
 }
 
+static void check_guarded_tiny_render(int w, int h) {
+    uint8_t guarded[96];
+    int pixels = w * h;
+
+    memset(guarded, 0xA5, sizeof(guarded));
+    memset(guarded, 0, (size_t)pixels);
+    v2_hud_render(guarded, w, h);
+    for (int i = pixels; i < (int)sizeof(guarded); ++i) {
+        CHECK(guarded[i] == 0xA5);
+    }
+}
+
 int main(void) {
     uint8_t fb[320 * 200];
     const int w = 320;
@@ -60,8 +72,17 @@ int main(void) {
     v2_hud_render(fb, w, h);
     CHECK(count_nonzero(fb, (int)sizeof(fb)) == 0);
 
+    /* Clipped overlay surfaces are presentation-only; tiny 320x200-derived
+     * buffers must not write past the caller-owned framebuffer while V1
+     * gameplay state remains outside this API. */
+    v2_hud_toggle();
+    v2_hud_set_opacity(200);
+    v2_hud_set_direction(2);
+    check_guarded_tiny_render(8, 8);
+    check_guarded_tiny_render(16, 4);
+    check_guarded_tiny_render(24, 2);
+
     /* --- v22_hud_render_champion_panel tests (new) --- */
-    v2_hud_toggle(); /* re-enable so panel renders */
     v2_hud_set_opacity(200);
 
     int hp[4]  = {100, 75, 50, 25};
