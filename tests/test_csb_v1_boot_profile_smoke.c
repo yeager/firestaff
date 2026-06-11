@@ -1,5 +1,6 @@
 #include "csb_v1_boot.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -10,6 +11,23 @@ static int failed;
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
     else { failed++; printf("  FAIL: %s\n", msg); } \
 } while (0)
+
+static int write_synthetic_dungeon_fixture(const char *path)
+{
+    static const uint8_t fixture[] = {
+        0x01, 0x00, 0x10, 0x00, /* one level, 16 thing types */
+        0x02, 0x02, 0x0A, 0x00, 0x00, 0x00, /* 2x2 level at offset 10 */
+        0x00, 0x00, 0x01, 0x00, /* x=0 y=0..1 */
+        0x02, 0x00, 0x03, 0x00  /* x=1 y=0..1 */
+    };
+    FILE *f = fopen(path, "wb");
+    if (!f) return 0;
+    if (fwrite(fixture, 1U, sizeof(fixture), f) != sizeof(fixture)) {
+        fclose(f);
+        return 0;
+    }
+    return fclose(f) == 0;
+}
 
 static void test_defaults(void)
 {
@@ -155,6 +173,50 @@ static void test_enter_handoff_state(void)
           p.runtime.chaos_magic.spell_grid_version == 0U &&
           p.runtime.chaos_magic.chaos_level == 0U,
           "runtime initializes CSB chaos magic at handoff");
+    csb_v1_boot_cleanup(&p);
+}
+
+static void test_enter_loads_verified_dungeon_context(void)
+{
+    CSB_V1_BootProfile p;
+    const CSB_V1_DungeonData *current;
+    const char *fixture_path = "firestaff_csb_v1_handoff_fixture.dat";
+
+    remove(fixture_path);
+    CHECK(write_synthetic_dungeon_fixture(fixture_path),
+          "synthetic dungeon fixture is written");
+
+    csb_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    p.graphics_verified = 1;
+    p.dungeon_verified = 1;
+    p.state = CSB_V1_BOOT_STATE_ASSETS_READY;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", ".");
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", "GRAPHICS.DAT");
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", fixture_path);
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "enter_game accepts verified file-backed handoff");
+    current = csb_v1_dungeon_get_current();
+    CHECK(p.runtime.dungeon_handle != NULL,
+          "runtime owns a loaded dungeon handle after handoff");
+    CHECK(current == p.runtime.dungeon_handle,
+          "current dungeon singleton points at the runtime-owned handle");
+    CHECK(csb_v1_dungeon_get_current_level() == 0,
+          "handoff selects new-game map 0 as the current dungeon level");
+    CHECK(current && current->level_count == 1,
+          "loaded fixture exposes one dungeon level");
+    CHECK(current && csb_v1_dungeon_get_square_type(current, 0, 1, 1) == 3,
+          "loaded dungeon data is readable through the current context");
+
+    csb_v1_boot_cleanup(&p);
+    CHECK(csb_v1_dungeon_get_current() == NULL,
+          "boot cleanup clears the current dungeon context");
+    CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY,
+          "boot cleanup returns profile to PROFILE_READY");
+    remove(fixture_path);
 }
 
 static void test_source_evidence(void)
@@ -175,6 +237,7 @@ int main(void)
     test_save_root_override();
     test_enter_requires_assets();
     test_enter_handoff_state();
+    test_enter_loads_verified_dungeon_context();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
