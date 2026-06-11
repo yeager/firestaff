@@ -657,39 +657,41 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
 
 void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms)
 {
-    uint32_t ticks;
     if (!profile || profile->paused) return;
     if (profile->game_over || profile->victory) return;
 
     profile->total_play_ms += dt_ms;
 
-    ticks = dt_ms / CSB_V1_TICK_MS_NOMINAL;
-    for (; ticks > 0; ticks--) {
+    /* The original runtime gates event expiry against G0313_ul_GameTime,
+     * not against a single frame delta.  Accumulate wall time first, then
+     * fire every due 55ms quantum so common frame slices such as 16+16+23ms
+     * still produce one V1 tick.
+     * Source: ReDMCSB TIMELINE.C F0235 lines 702-708
+     * Source: ReDMCSB COMMAND.C F0380 lines 2383-2429
+     * (C147/C148 toggle G0301_B_GameTimeTicking). */
+    while (csb_v1_runtime_tick_due(profile, 0U)) {
         csb_v1_fire_tick(profile);
     }
 }
 
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile)
 {
-    uint32_t expected;
     if (!profile || profile->paused) return 0;
     if (profile->game_over || profile->victory) return 0;
 
-    expected = (uint32_t)(profile->total_play_ms / CSB_V1_TICK_MS_NOMINAL);
-    if (profile->tick_count < expected) {
-        csb_v1_fire_tick(profile);
-        return 1;
-    }
-    return 0;
+    profile->total_play_ms += CSB_V1_TICK_MS_NOMINAL;
+    csb_v1_fire_tick(profile);
+    return 1;
 }
 
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms)
 {
-    uint32_t game_ticks_now;
-    (void)now_ms;
+    uint64_t wall_ms;
+    uint64_t game_ticks_now;
     if (!profile) return 0;
 
-    game_ticks_now = (uint32_t)(profile->total_play_ms / CSB_V1_TICK_MS_NOMINAL);
+    wall_ms = (now_ms != 0U) ? (uint64_t)now_ms : profile->total_play_ms;
+    game_ticks_now = wall_ms / CSB_V1_TICK_MS_NOMINAL;
     return (profile->tick_count < game_ticks_now) ? 1 : 0;
 }
 

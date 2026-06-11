@@ -335,15 +335,17 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
                           const char *version_hint);
 
 /* Advance the runtime clock by dt_ms milliseconds.
- * Quantizes into 55ms V1 ticks; fires one tick per quantum.
- * Advances chaos_magic state each tick. */
+ * Accumulates sub-55ms frame deltas and fires one V1 tick for each full
+ * quantum reached by total_play_ms. Advances chaos_magic state each tick. */
 void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms);
 
 /* Advance exactly one V1 tick (55ms nominal).
- * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused. */
+ * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused,
+ * game-over, victorious, or profile is NULL. */
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
 
-/* Check if a V1 tick is due at wall-clock time now_ms. */
+/* Check if a V1 tick is due at accumulated wall-clock time now_ms.
+ * Pass 0 to use profile->total_play_ms. */
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms);
 
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
