@@ -1263,6 +1263,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_repaint_delta_pixel_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel damage feedback decay runtime pixel gate.
+# Renders an active C015 damage banner, ticks the per-champion timer to
+# zero, then redraws into the same framebuffer to prove stale damage/status
+# pixels are replaced by the ordinary C151 status-box redraw.
+add_executable(firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
