@@ -842,7 +842,6 @@ MOTION_STEP:
     } else {
         newCell = (in->cell + 1) & 3;
     }
-    outNewState->cell = newCell;
 
     if (crossesCell) {
         /* (7) Inspect destination cell. */
@@ -910,6 +909,7 @@ MOTION_STEP:
         /* Commit the cross-cell step. Teleporter rotation: v1 does
          * NOT rotate; caller pre-rotates via
          * destTeleporterNewDirection when != -1. */
+        outNewState->cell = newCell;
         outNewState->mapIndex = digest->destMapIndex;
         outNewState->mapX     = digest->destMapX;
         outNewState->mapY     = digest->destMapY;
@@ -938,6 +938,7 @@ MOTION_STEP:
             /* Door pass-through mirrors PROJEXPL.C:F0217 returning
              * C0_FALSE; the caller keeps flying and reschedules. */
         }
+        outNewState->cell = newCell;
     }
 
     /* (8) Reschedule next PROJECTILE_MOVE event. */
