@@ -102,6 +102,7 @@ DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
+LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
 
 
 class QuietRunTimeout:
@@ -377,6 +378,48 @@ def dry_run(plan: list[PlanStep],
             pins = receipt.get("live_conf_pins", {})
             if pins.get("machine") != "svga_s3" or pins.get("memsize") != "16":
                 failures.append("live input receipt: conf pin metadata mismatch")
+        abort_quality = FrameQuality(
+            label="entrance_menu_0006",
+            state="title_screen",
+            width=320,
+            height=200,
+            full_nonblack=0.0,
+            viewport_nonblack=0.0,
+            rightcol_nonblack=0.0,
+            champion_nonblack=0.0,
+            blackout=True,
+        )
+        abort_path = _write_live_abort_receipt(
+            capture_root=capture_root,
+            step=PlanStep(
+                "entrance_menu",
+                "entrance_menu",
+                keys=["Return"],
+                timeout_s=30.0,
+                stable_frames=3,
+            ),
+            last_state="capture_blackout",
+            reason="capture_blackout",
+            quality=abort_quality,
+        )
+        try:
+            abort_receipt = json.loads(abort_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            failures.append(f"live abort receipt: could not parse JSON: {exc}")
+        else:
+            if abort_receipt.get("schema") != LIVE_ABORT_RECEIPT_SCHEMA:
+                failures.append("live abort receipt: schema mismatch")
+            if abort_receipt.get("step") != "entrance_menu":
+                failures.append("live abort receipt: step mismatch")
+            if abort_receipt.get("expected_state") != "entrance_menu":
+                failures.append("live abort receipt: expected_state mismatch")
+            if abort_receipt.get("reason") != "capture_blackout":
+                failures.append("live abort receipt: reason mismatch")
+            last_quality = abort_receipt.get("last_frame_quality", {})
+            if not last_quality.get("blackout"):
+                failures.append("live abort receipt: last frame quality missing blackout")
+            if "quality_log" not in abort_receipt or "state_samples_dir" not in abort_receipt:
+                failures.append("live abort receipt: diagnostic paths missing")
     return matched, total, failures
 
 
@@ -686,6 +729,68 @@ def _write_live_input_receipt(
     return out
 
 
+def _last_quality_from_log(capture_root: Path) -> FrameQuality | None:
+    log_path = capture_root / "state-samples" / "quality.jsonl"
+    try:
+        lines = [line.strip() for line in log_path.read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
+    except OSError:
+        return None
+    if not lines:
+        return None
+    try:
+        data = json.loads(lines[-1])
+        return FrameQuality(
+            label=str(data.get("label", "")),
+            state=str(data.get("state", "")),
+            width=int(data.get("width", 0)),
+            height=int(data.get("height", 0)),
+            full_nonblack=float(data.get("full_nonblack", 0.0)),
+            viewport_nonblack=float(data.get("viewport_nonblack", 0.0)),
+            rightcol_nonblack=float(data.get("rightcol_nonblack", 0.0)),
+            champion_nonblack=float(data.get("champion_nonblack", 0.0)),
+            blackout=bool(data.get("blackout", False)),
+        )
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _write_live_abort_receipt(
+        capture_root: Path,
+        step: PlanStep,
+        last_state: str,
+        reason: str,
+        quality: FrameQuality | None = None) -> Path:
+    """Write the machine-readable reason a live capture stopped.
+
+    The live-input receipt records the launch shape.  This abort
+    receipt records the first failing state-machine step, including the
+    same frame-quality metrics printed to stderr, so a black-host-frame
+    failure can be compared across attempts without re-reading logs.
+    """
+    capture_root.mkdir(parents=True, exist_ok=True)
+    if quality is None:
+        quality = _last_quality_from_log(capture_root)
+    receipt = {
+        "schema": LIVE_ABORT_RECEIPT_SCHEMA,
+        "step": step.name,
+        "expected_state": step.expected_state,
+        "last_state": last_state,
+        "reason": reason,
+        "timeout_s": step.timeout_s,
+        "stable_frames_required": step.stable_frames,
+        "keys": list(step.keys),
+        "capture_root": str(capture_root),
+        "state_samples_dir": str(capture_root / "state-samples"),
+        "quality_log": str(capture_root / "state-samples" / "quality.jsonl"),
+        "last_frame_quality": asdict(quality) if quality is not None else None,
+    }
+    out = capture_root / "dosbox_capture.live_abort.json"
+    out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+                   encoding="utf-8")
+    return out
+
+
 def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     """Drive a real DOSBox Staging DM1 session and capture normalized frames."""
     if not _DETECTOR_OK:
@@ -770,10 +875,17 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 args.blackout_frame_limit,
             )
             if not ok:
+                abort = _write_live_abort_receipt(
+                    capture_root=capture_root,
+                    step=step,
+                    last_state=last,
+                    reason=last,
+                )
                 print(
                     f"FAIL live step={step.name} expected={step.expected_state} last={last}",
                     file=sys.stderr,
                 )
+                print(f"live abort receipt: {abort}", file=sys.stderr)
                 return 1
 
         start = _screenshot_frame(capture_root, "capture_01_ingame_start")
