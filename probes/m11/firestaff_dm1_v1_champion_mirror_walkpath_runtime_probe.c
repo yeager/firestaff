@@ -64,11 +64,14 @@
  * invariant on the CLIKMENU.C F0366 backward movement branch.  It also
  * clicks the original V1 movement-arrow rectangles for forward/back and
  * left/right turn Hall routes, proving the mouse route enters the same
- * source command path before the D1C portrait box is re-blitted.  That
- * locks keyboard and pointer movement/turning through COMMAND.C
- * F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries
- * used by real runtime input while keeping the pixel assertion identical
- * to the direct route above.
+ * source command path before the D1C portrait box is re-blitted.  A final
+ * mixed route alternates pointer and keyboard commands through the same live
+ * movement-pipeline state, covering the COMMAND.C F0359 mouse queue and
+ * F0361 keyboard dispatch interleave called out by BUG0_73 without widening
+ * the pixel contract.  That locks keyboard and pointer movement/turning
+ * through COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick
+ * boundaries used by real runtime input while keeping the pixel assertion
+ * identical to the direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -156,6 +159,18 @@ typedef struct PointerWalkStep {
     int clickY;
     const char* label;
 } PointerWalkStep;
+
+typedef struct MixedWalkStep {
+    int mapX;
+    int mapY;
+    int dir;
+    int expectedOrdinal;
+    int inputBeforeCheck;
+    int clickX;
+    int clickY;
+    int allowNoPortraitDominance;
+    const char* label;
+} MixedWalkStep;
 
 /* Count the pixels in the front-wall box that match the C026
  * champion portrait ordinal.  This reuses the visibility probe's
@@ -507,6 +522,22 @@ int main(int argc, char** argv) {
         {1, 4, DIR_SOUTH, 3, 248, 135,
          "hall_pointer_turn_left_south_ordinal_3"},
     };
+    const MixedWalkStep mixedSteps[] = {
+        {1, 4, DIR_SOUTH, 3, -1, -1, -1, 0,
+         "hall_mixed_start_south_ordinal_3"},
+        {1, 4, DIR_WEST, -1, -1, 304, 135, 0,
+         "hall_mixed_pointer_right_west_no_portrait"},
+        {1, 4, DIR_NORTH, 2, M12_MENU_INPUT_RIGHT, -1, -1, 0,
+         "hall_mixed_keyboard_right_north_ordinal_2"},
+        {1, 4, DIR_WEST, -1, -1, 248, 135, 0,
+         "hall_mixed_pointer_left_west_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_LEFT, -1, -1, 0,
+         "hall_mixed_keyboard_left_south_ordinal_3"},
+        {1, 3, DIR_SOUTH, -1, -1, 276, 157, 1,
+         "hall_mixed_pointer_back_south_no_portrait"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, -1, -1, 0,
+         "hall_mixed_keyboard_forward_south_ordinal_3"},
+    };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
 
@@ -701,6 +732,62 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = pointerTurnSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Mixed pointer/keyboard route: alternate G0448 pointer clicks and
+     * keyboard movement commands through one live movement-pipeline state.
+     * This narrows coverage to the COMMAND.C F0359/F0361 interleave described
+     * near BUG0_73 at lines 1478/1485, then the same F0365/F0366 movement
+     * handlers and MOVESENS.C:556 redraw boundary.  The pixel assertions stay
+     * on the DUNVIEW.C:3913-3928 / 8522-8533 C026 D1C portrait rectangle. */
+    start_independent_input_route(&game, 1, 4, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(mixedSteps) / sizeof(mixedSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        InputWalkStep checkStep;
+        if (mixedSteps[stepIdx].clickX >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandlePointer(&game,
+                                           mixedSteps[stepIdx].clickX,
+                                           mixedSteps[stepIdx].clickY,
+                                           1);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s pointer=(%d,%d) result=%d want=%d\n",
+                        mixedSteps[stepIdx].label,
+                        mixedSteps[stepIdx].clickX,
+                        mixedSteps[stepIdx].clickY,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        if (mixedSteps[stepIdx].inputBeforeCheck >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandleInput(&game,
+                                         mixedSteps[stepIdx].inputBeforeCheck);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
+                        mixedSteps[stepIdx].label,
+                        mixedSteps[stepIdx].inputBeforeCheck,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        memset(&checkStep, 0, sizeof(checkStep));
+        checkStep.mapX = mixedSteps[stepIdx].mapX;
+        checkStep.mapY = mixedSteps[stepIdx].mapY;
+        checkStep.dir = mixedSteps[stepIdx].dir;
+        checkStep.expectedOrdinal = mixedSteps[stepIdx].expectedOrdinal;
+        checkStep.inputBeforeCheck = -1;
+        checkStep.allowNoPortraitDominance =
+            mixedSteps[stepIdx].allowNoPortraitDominance;
+        checkStep.label = mixedSteps[stepIdx].label;
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &checkStep, currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = mixedSteps[stepIdx].expectedOrdinal;
     }
 
     M11_GameView_Shutdown(&game);
