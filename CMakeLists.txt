@@ -443,7 +443,10 @@ list(APPEND M10_SOURCES
 )
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
-target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(firestaff_m10 PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
