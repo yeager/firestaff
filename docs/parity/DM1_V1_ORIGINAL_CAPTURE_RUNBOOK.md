@@ -13,6 +13,7 @@
 - Python tools included: `dosbox_state_detector.py`, `dosbox_capture_session.py`, `compare_captures.py`, `dosbox_capture_preflight.py`
 - Preflight gate (`dosbox_capture_preflight.py`) verifies canonical SHA256s and writes the hardened `dosbox_capture.conf` with the runbook's required settings (machine=svga_s3, memsize=16, cpu core=dynamic, cpu_cycles=max).  Run it before any live attempt so the next session cannot reproduce the pass94 conf shape.
 - Selector sequence corrected for DM1 PC 3.4 (GRAPHICS=0 → SOUND=0 → ENTER four times)
+- Creature-chain capture is now pinned by `docs/parity/DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_CONTRACT.json`: the live session must produce `creature_chain_d2c_trolin_front` and `creature_chain_d1c_trolin_front` rows before creature-chain pixel parity can be promoted.
 
 ---
 
