@@ -671,6 +671,75 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
     return 0;
 }
 
+int csb_v1_runtime_process_input_queue(
+    CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputCommandQueuePc34Compat *queue,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction,
+    CSB_V1_InputCommandRuntimeResult *out_result)
+{
+    CSB_V1_InputCommandRuntimeResult local_result;
+    int target_dir;
+
+    if (!profile || !queue) return -1;
+    memset(&local_result, 0, sizeof(local_result));
+
+    local_result.old_party_x = profile->party_x;
+    local_result.old_party_y = profile->party_y;
+    local_result.old_party_dir = profile->party_dir & 3;
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+
+    /* Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 owns the command
+     * queue dequeue/gate/dispatch boundary.  The shared V1 queue helper
+     * preserves that C001/C002 vs C003-C006 split before this CSB runtime
+     * adapter applies only the state transition that has a CSB profile
+     * boundary today. */
+    local_result.queue_result =
+        DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
+            queue,
+            profile->party_dir,
+            disabled_movement_ticks,
+            projectile_disabled_movement_ticks,
+            last_projectile_disabled_movement_direction);
+
+    if (!local_result.queue_result.dequeued) {
+        if (out_result) *out_result = local_result;
+        return 0;
+    }
+
+    switch (local_result.queue_result.command) {
+    case DM1_V1_COMMAND_TURN_LEFT:
+        target_dir = (profile->party_dir + 3) & 3;
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            local_result.unsupported_runtime_command = 1;
+        }
+        break;
+    case DM1_V1_COMMAND_TURN_RIGHT:
+        target_dir = (profile->party_dir + 1) & 3;
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            local_result.unsupported_runtime_command = 1;
+        }
+        break;
+    default:
+        local_result.unsupported_runtime_command = 1;
+        break;
+    }
+
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+    local_result.runtime_state_changed =
+        (local_result.old_party_x != local_result.new_party_x) ||
+        (local_result.old_party_y != local_result.new_party_y) ||
+        (local_result.old_party_dir != local_result.new_party_dir);
+
+    if (out_result) *out_result = local_result;
+    return 1;
+}
+
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
     if (!profile) return;
     /*

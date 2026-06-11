@@ -47,6 +47,7 @@
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 
@@ -270,6 +271,18 @@ typedef struct {
     CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
 
+typedef struct {
+    struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
+    int old_party_x;
+    int old_party_y;
+    int old_party_dir;
+    int new_party_x;
+    int new_party_y;
+    int new_party_dir;
+    int runtime_state_changed;
+    int unsupported_runtime_command;
+} CSB_V1_InputCommandRuntimeResult;
+
 /* ── Runtime profile API ─────────────────────────────────────────────── */
 
 /* Initialize a fresh runtime profile with CSB defaults.
@@ -324,6 +337,26 @@ int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
  * Source: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130. */
 int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
                                  int target_dir);
+
+/* Consume one queued V1 input command and apply the narrow CSB V1 runtime
+ * boundary that is currently source-locked: C001/C002 turn commands dispatch
+ * through the shared V1 queue and mutate the CSB party direction via
+ * csb_v1_runtime_rotate_party().  Movement, inventory, action, and panel
+ * commands are deliberately reported as unsupported_runtime_command until
+ * their CSB runtime state boundaries are source-locked separately.
+ *
+ * Returns 1 when a queue item was dequeued, 0 when the queue was empty or a
+ * movement-disabled gate kept the command queued, and -1 on invalid input.
+ * Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
+ * F0365_COMMAND_ProcessTypes1To2_TurnParty; CHAMPION.C F0284 lines 117-130
+ * applies the party-direction delta to every champion Cell/Direction. */
+int csb_v1_runtime_process_input_queue(
+    CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputCommandQueuePc34Compat *queue,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction,
+    CSB_V1_InputCommandRuntimeResult *out_result);
 
 /* Boot the CSB dungeon and initialize Chaos Magic.
  * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the
