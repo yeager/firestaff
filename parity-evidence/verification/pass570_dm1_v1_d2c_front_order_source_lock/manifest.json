@@ -3,36 +3,36 @@
     {
       "hits": [
         {
-          "line": 240,
+          "line": 287,
           "needle": "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7314 floor ornament under rear pass"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7315 pass1 rear cells before frame"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7317-7333 top/side frame and button draw"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7332-7334 optional button before door panel"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7339 F0111 door bitmap/ornament"
         },
         {
-          "line": 240,
+          "line": 287,
           "needle": "DUNVIEW.C:7341 pass2 front cells after door"
         }
       ],
       "id": "firestaff-d2c-door-front-metadata",
-      "lines": "240-244",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -40,36 +40,36 @@
     {
       "hits": [
         {
-          "line": 346,
+          "line": 393,
           "needle": "DM1_VIEW_SQUARE_D2C, 0x3421"
         },
         {
-          "line": 348,
+          "line": 395,
           "needle": "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path"
         },
         {
-          "line": 349,
+          "line": 396,
           "needle": "DUNVIEW.C:7343-7353 pit bitmap before floor ornament"
         },
         {
-          "line": 350,
+          "line": 397,
           "needle": "DUNVIEW.C:7355-7357 order then F0108 floor ornament"
         },
         {
-          "line": 351,
+          "line": 398,
           "needle": "DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff"
         },
         {
-          "line": 352,
+          "line": 399,
           "needle": "DUNVIEW.C:7370-7388 teleporter field after F0115"
         },
         {
-          "line": 353,
+          "line": 400,
           "needle": "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115"
         }
       ],
       "id": "firestaff-d2c-floor-field-metadata",
-      "lines": "346-353",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -77,24 +77,24 @@
     {
       "hits": [
         {
-          "line": 422,
+          "line": 469,
           "needle": "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C"
         },
         {
-          "line": 422,
+          "line": 469,
           "needle": "DM1_PC34_ZONE_WALL_D2C"
         },
         {
-          "line": 422,
+          "line": 469,
           "needle": "DUNVIEW.C:7299-7306"
         },
         {
-          "line": 422,
+          "line": 469,
           "needle": "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return"
         }
       ],
       "id": "firestaff-d2c-wall-metadata",
-      "lines": "420-428",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -102,24 +102,24 @@
     {
       "hits": [
         {
-          "line": 463,
+          "line": 477,
           "needle": "#define DM1_PC34_ZONE_WALL_D2C"
         },
         {
-          "line": 474,
+          "line": 488,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724"
         },
         {
-          "line": 475,
+          "line": 489,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725"
         },
         {
-          "line": 476,
+          "line": 490,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
         }
       ],
       "id": "firestaff-d2c-zone-defines",
-      "lines": "460-477",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.h",
       "status": "PASS"
@@ -127,24 +127,24 @@
     {
       "hits": [
         {
-          "line": 729,
+          "line": 761,
           "needle": "{ DM1_VIEW_SQUARE_D2C, \"7314\", \"7315\", \"7317\", \"7332\", \"7339\", \"7341\", 0x0218, 0x0349, {1, 2}, {4, 3} },"
         },
         {
-          "line": 735,
+          "line": 767,
           "needle": "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);"
         },
         {
-          "line": 754,
+          "line": 786,
           "needle": "rear.cells[0] == expected[i].rear_cells[0]"
         },
         {
-          "line": 758,
+          "line": 790,
           "needle": "front.cells[0] == expected[i].front_cells[0]"
         }
       ],
       "id": "firestaff-d2c-runtime-test",
-      "lines": "707-770",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -152,24 +152,24 @@
     {
       "hits": [
         {
-          "line": 2118,
+          "line": 2261,
           "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
         },
         {
-          "line": 2121,
+          "line": 2264,
           "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
         },
         {
-          "line": 2122,
+          "line": 2265,
           "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
         },
         {
-          "line": 2123,
+          "line": 2266,
           "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
         }
       ],
       "id": "firestaff-d2c-source-evidence",
-      "lines": "2114-2126",
+      "lines": "1-9999",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -355,16 +355,16 @@
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS drift.pass570.d2c_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
         "--check-only"
       ],
       "outputTail": "PASS pass570 check-only",

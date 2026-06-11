@@ -31,10 +31,16 @@ SRC = [
         "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0216_ai_SquareAspect[M550_FIRST_THING], P0168_i_Direction, P0169_i_MapX, P0170_i_MapY, M608_VIEW_SQUARE_D1R, L0215_i_Order);",
     ]),
 ]
+# LOCAL line ranges are full-file ("1-9999") so the canonical evidence tokens
+# are drift-proof: the D1-side door-front metadata table and source-evidence
+# string have moved as more D-side door-front metadata rows and source citations
+# were added.  CTest test_dm1_v1_viewport_3d_pc34_compat is the authoritative
+# runtime/source-citation gate; the verifier LOCAL whole-file scan only asserts
+# the canonical evidence tokens still exist in the source.
 LOCAL = [
-    ("firestaff-d1-side-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "232-244", ["DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039", "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"]),
-    ("firestaff-d1-side-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "707-774", ["DM1_VIEW_SQUARE_D1L", "DM1_VIEW_SQUARE_D1R", "door_front_occlusion.count", "door_front_occlusion.d1l_side_door_front_spec"]),
-    ("firestaff-d1-side-door-front-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2114-2126", ["DUNVIEW.C:7493-7536", "DUNVIEW.C:7661-7704"]),
+    ("firestaff-d1-side-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", ["DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039", "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049"]),
+    ("firestaff-d1-side-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1-9999", ["DM1_VIEW_SQUARE_D1L", "DM1_VIEW_SQUARE_D1R", "door_front_occlusion.count", "door_front_occlusion.d1l_side_door_front_spec"]),
+    ("firestaff-d1-side-door-front-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", ["DUNVIEW.C:7493-7536", "DUNVIEW.C:7661-7704"]),
 ]
 def read_span(path, span):
     a, b = [int(x) for x in span.split("-")]

@@ -2,6 +2,7 @@
 #include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_failures = 0;
@@ -2794,6 +2795,159 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.same_viewport_assets", strstr(e, "canonical DM1 PC34 assets") != NULL, 1);
 }
 
+/* ── DM1 V1 Viewport 3D source-evidence drift regression ────────────────────
+ * The Python verifiers in tools/verify_pass563/565/570/576/577_dm1_v1_* previously
+ * checked that the canonical evidence tokens (D1L/D1R wall rows, D0C Thieves
+ * Eye table, D1-side door-front table, D2C door-front / floor-field / wall
+ * tables, the D-side wall table, and the F0128 D0/D1 visible-square table)
+ * lived inside a *narrow line range* of the source files.  The metadata tables
+ * grew over time (e.g., D1L/D1R wall rows moved from lines 416-417 to 470-471
+ * once D3L/D3R/D3C/D2L2/D2R2/D2L/D2R/D2C/D1C/D0L/D0R rows were inserted above),
+ * and the verifier line ranges drifted stale and started failing the
+ * pass563/565/570/576/577 verifiers even though the CTest itself remained
+ * green.
+ *
+ * The drift-proof whole-file scan in the Python verifiers is one half of the
+ * fix; this test is the other half — it reads the source files at CTest
+ * runtime and asserts the canonical evidence tokens are still present
+ * anywhere in the file, with NO line-range constraint.  A future metadata
+ * table reshuffle can no longer make this test fail, and a future *removal*
+ * of any canonical evidence token will.
+ */
+#ifndef FIRESTAFF_SOURCE_DIR
+#define FIRESTAFF_SOURCE_DIR "."
+#endif
+
+static int read_whole_file(const char *rel, char **out, size_t *out_size)
+{
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/%s", FIRESTAFF_SOURCE_DIR, rel);
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
+    long size = ftell(f);
+    if (size < 0) { fclose(f); return 0; }
+    rewind(f);
+    char *data = (char *)malloc((size_t)size + 1u);
+    if (!data) { fclose(f); return 0; }
+    size_t got = fread(data, 1, (size_t)size, f);
+    fclose(f);
+    if (got != (size_t)size) { free(data); return 0; }
+    data[size] = '\0';
+    *out = data;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int file_contains(const char *rel, const char *needle)
+{
+    char *data = NULL;
+    size_t size = 0;
+    if (!read_whole_file(rel, &data, &size)) return 0;
+    int hit = strstr(data, needle) != NULL;
+    free(data);
+    return hit;
+}
+
+static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
+{
+    /* These are the canonical evidence tokens the 5 stale-line-range
+     * pass563/565/570/576/577 verifier LOCAL checks were trying to assert
+     * existed.  Re-stated here as a single CTest-time whole-file scan so
+     * future metadata-table growth cannot defeat the regression. */
+    static const struct { const char *rel; const char *token; const char *id; } needles[] = {
+        /* pass563: D1L/D1R side-wall rows in the wall_draw_specs table */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  true,  false, DM1_PC34_ZONE_WALL_D1L",
+          "pass563.d1l_wall_row" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  true,  false, DM1_PC34_ZONE_WALL_D1R",
+          "pass563.d1r_wall_row" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DUNVIEW.C:7459-7460 side ornament then return",
+          "pass563.d1l_ornament_citation" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DUNVIEW.C:7627-7628 side ornament then return",
+          "pass563.d1r_ornament_citation" },
+        /* pass565 d0c: D0C Thieves Eye door-frame occlusion table */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736",
+          "pass565_d0c.thieves_eye_table" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion",
+          "pass565_d0c.thieves_eye_citation" },
+        /* pass565 d1: D1-side door-front table */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039",
+          "pass565_d1.d1l_door_front" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049",
+          "pass565_d1.d1r_door_front" },
+        /* pass570: D2C door-front / floor-field / wall tables */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349",
+          "pass570.d2c_door_front" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D2C, 0x3421",
+          "pass570.d2c_floor_field" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  true,  true,  DM1_PC34_ZONE_WALL_D2C",
+          "pass570.d2c_wall" },
+        /* pass570 zone defines in the public header */
+        { "include/dm1_v1_viewport_3d_pc34_compat.h",
+          "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
+          "pass570.d2c_zone_left" },
+        { "include/dm1_v1_viewport_3d_pc34_compat.h",
+          "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
+          "pass570.d2c_zone_right" },
+        { "include/dm1_v1_viewport_3d_pc34_compat.h",
+          "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730",
+          "pass570.d2c_zone_top" },
+        /* pass570 runtime test data */
+        { "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+          "{ DM1_VIEW_SQUARE_D2C, \"7314\", \"7315\", \"7317\", \"7332\", \"7339\", \"7341\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
+          "pass570.runtime_test" },
+        /* pass576: D-side wall table */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, true,  false, DM1_PC34_ZONE_WALL_D2L2",
+          "pass576.d2l2_wall" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L",
+          "pass576.d0l_wall" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate",
+          "pass576.wall_clip_gate" },
+        /* pass576 runtime assertions */
+        { "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+          "static void test_wall_source_row_clip_occlusion_gate(void)",
+          "pass576.test_wall_source_row_clip" },
+        /* pass577: F0128 D0/D1 visible-square draw-order table */
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1L, 1, -1",
+          "pass577.d1l_visible_square" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D0C, 0,  0",
+          "pass577.d0c_visible_square" },
+        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+          "DM1_VIEW_SQUARE_D1C,   3, 1,  8",
+          "pass577.d1c_projectile" },
+        /* pass577 runtime test */
+        { "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+          "static void test_d0_d1_visible_square_draw_order_gate(void)",
+          "pass577.runtime_test" },
+    };
+    for (size_t i = 0; i < sizeof(needles) / sizeof(needles[0]); ++i) {
+        char id[128];
+        snprintf(id, sizeof(id), "drift.%s", needles[i].id);
+        if (!file_contains(needles[i].rel, needles[i].token)) {
+            printf("FAIL %s missing in %s\n", id, needles[i].rel);
+            ++g_failures;
+        } else {
+            printf("PASS %s present in %s\n", id, needles[i].rel);
+        }
+    }
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -2837,6 +2991,7 @@ int main(void)
     test_post_command_redraw_contract();
     test_same_viewport_capture_contract();
     test_source_evidence_mentions_visual_lane();
+    test_dm1_v1_viewport_3d_source_evidence_drift_regression();
 
     if (g_failures) {
         printf("FAIL dm1_v1_viewport_3d_source_lock failures=%d\n", g_failures);

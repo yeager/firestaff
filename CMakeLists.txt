@@ -7268,6 +7268,9 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         src/dm1/dm1_v1_viewport_d1l2_d1r2_stairs_pit_dispatch_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
+    target_compile_definitions(test_dm1_v1_viewport_3d_pc34_compat PRIVATE
+        FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
     target_link_libraries(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
     target_link_libraries(test_dm1_v1_door_button_viewport_pc34_compat PRIVATE firestaff_m10)

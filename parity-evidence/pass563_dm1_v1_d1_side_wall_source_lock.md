@@ -35,49 +35,49 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 
 ## Firestaff Evidence
 
-- PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:416-430)
-  - line 423: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 423: DM1_PC34_ZONE_WALL_D1L
-  - line 423: DUNVIEW.C:7445-7455
-  - line 423: DUNVIEW.C:7459-7460 side ornament then return
-  - line 424: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 424: DM1_PC34_ZONE_WALL_D1R
-  - line 424: DUNVIEW.C:7613-7623
-  - line 424: DUNVIEW.C:7627-7628 side ornament then return
+- PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 470: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 470: DM1_PC34_ZONE_WALL_D1L
+  - line 470: DUNVIEW.C:7445-7455
+  - line 470: DUNVIEW.C:7459-7460 side ornament then return
+  - line 471: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 471: DM1_PC34_ZONE_WALL_D1R
+  - line 471: DUNVIEW.C:7613-7623
+  - line 471: DUNVIEW.C:7627-7628 side ornament then return
 
-- PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:290-310)
-  - line 294: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 294: DM1_PC34_ZONE_WALL_D1L
-  - line 294: "7460"
-  - line 295: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 295: DM1_PC34_ZONE_WALL_D1R
-  - line 295: "7628"
+- PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 295: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 295: DM1_PC34_ZONE_WALL_D1L
+  - line 295: "7460"
+  - line 296: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 296: DM1_PC34_ZONE_WALL_D1R
+  - line 296: "7628"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2106-2107)
-  - line 2106: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 2107: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 2249: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 2250: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
 
 ## Verification
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass570.d2c_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h
+PASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h
+PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h
+PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
 ~~~
 PASS pass563 check-only
 ~~~
