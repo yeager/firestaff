@@ -151,6 +151,8 @@ int csb_v1_save_game_auto(int slot,
                             const CSB_V1_SaveHeader *header);
 
 /* ── Load game ──────────────────────────────────────────────────────── */
+/* Passing state == NULL and max_size == 0 performs a header-only load for
+ * compatibility checks before the full runtime world is available. */
 int csb_v1_load_game(const char *path,
                       void *state, int max_size,
                       CSB_V1_SaveHeader *out_header);
