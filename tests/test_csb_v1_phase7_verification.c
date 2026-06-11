@@ -817,10 +817,17 @@ static void test_gamestate_set_get_state(void)
 {
     CSB_GameState gs;
     csb_gs_init(&gs);
+    gs.currentLevel = 3;
+    gs.currentWorld = 2;
+
     /* Test all valid state transitions */
     csb_gs_set_state(&gs, CSB_STATE_GAME);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_GAME,
           "set_state GAME is retrievable");
+    CHECK(gs.currentLevel == 3,
+          "set_state GAME preserves currentLevel for runtime handoff");
+    CHECK(gs.currentWorld == 2,
+          "set_state GAME preserves currentWorld for runtime handoff");
     csb_gs_set_state(&gs, CSB_STATE_DUNGEON);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_DUNGEON,
           "set_state DUNGEON is retrievable");
@@ -834,6 +841,8 @@ static void test_gamestate_set_get_state(void)
     csb_gs_set_state(&gs, CSB_STATE_COUNT + 99);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_COUNT + 99,
           "set_state accepts out-of-range value (no validation)");
+    CHECK(gs.currentLevel == 3,
+          "set_state out-of-range value still preserves currentLevel");
 }
 
 static void test_gamestate_tick(void)
