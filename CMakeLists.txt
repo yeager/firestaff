@@ -1352,6 +1352,10 @@ target_link_libraries(firestaff_m11_pass418_door_closing_obstruction_probe PRIVA
 if(NOT MSVC)
     target_compile_options(firestaff_m11_pass418_door_closing_obstruction_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME firestaff_m11_pass418_door_closing_obstruction_probe
+    COMMAND firestaff_m11_pass418_door_closing_obstruction_probe
+)
 
 # M12 Startup Menu probe
 if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
