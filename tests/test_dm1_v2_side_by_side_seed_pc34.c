@@ -39,6 +39,10 @@
  *         canonical label colour and the first/last lane pixels
  *         match the composite accessor on every row.
  *
+ *   TC-8. dm1_v2_side_by_side_seed_region() exposes named
+ *         composite-space rectangles for the V1 lane, gap, V2 lane,
+ *         and both D1C wall/portrait rectangles in both lanes.
+ *
  * The test is headless: it depends only on the firestaff_v2 static
  * library and does not require any game data files.
  *
@@ -459,6 +463,169 @@ static int test_v1_geometry_null_safe(void) {
     return 0;
 }
 
+/* ── TC-11: side-by-side region manifest ───────────────────────── */
+
+static int test_region_manifest(void) {
+    DM1_V2_SideBySideV1Geometry geom;
+    DM1_V2_SideBySideRegion r;
+    const int v2LaneX = DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W;
+    int i;
+    CHECK(dm1_v2_side_by_side_seed_v1_geometry(&geom) == 1);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE, &r) == 1);
+    CHECK(r.id == DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE);
+    CHECK(r.x == 0);
+    CHECK(r.y == 0);
+    CHECK(r.w == DM1_V2_VIEWPORT_W);
+    CHECK(r.h == DM1_V2_VIEWPORT_H);
+    CHECK(strcmp(r.label, "v1_lane") == 0);
+    CHECK(strstr(r.sourceAnchor, "DUNVIEW.C:2999-3000") != NULL);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_GAP, &r) == 1);
+    CHECK(r.x == DM1_V2_VIEWPORT_W);
+    CHECK(r.y == 0);
+    CHECK(r.w == DM1_V2_SIDE_BY_SIDE_GAP_W);
+    CHECK(r.h == DM1_V2_VIEWPORT_H);
+    CHECK(strcmp(r.label, "gap") == 0);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE, &r) == 1);
+    CHECK(r.x == v2LaneX);
+    CHECK(r.y == 0);
+    CHECK(r.w == DM1_V2_VIEWPORT_W);
+    CHECK(r.h == DM1_V2_VIEWPORT_H);
+    CHECK(strcmp(r.label, "v2_lane") == 0);
+    CHECK(r.x + r.w == DM1_V2_SIDE_BY_SIDE_W);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL, &r) == 1);
+    CHECK(r.x == geom.d1cWallX);
+    CHECK(r.y == geom.d1cWallY);
+    CHECK(r.w == geom.d1cWallW);
+    CHECK(r.h == geom.d1cWallH);
+    CHECK(strcmp(r.label, "v1_d1c_wall") == 0);
+    CHECK(strstr(r.sourceAnchor, "DUNVIEW.C:581-593") != NULL);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT, &r) == 1);
+    CHECK(r.x == geom.d1cPortraitX);
+    CHECK(r.y == geom.d1cPortraitY);
+    CHECK(r.w == geom.d1cPortraitW);
+    CHECK(r.h == geom.d1cPortraitH);
+    CHECK(strcmp(r.label, "v1_d1c_portrait") == 0);
+    CHECK(strstr(r.sourceAnchor, "DUNVIEW.C:3913-3928") != NULL);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL, &r) == 1);
+    CHECK(r.x == v2LaneX + geom.d1cWallX);
+    CHECK(r.y == geom.d1cWallY);
+    CHECK(r.w == geom.d1cWallW);
+    CHECK(r.h == geom.d1cWallH);
+    CHECK(strcmp(r.label, "v2_d1c_wall") == 0);
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT, &r) == 1);
+    CHECK(r.x == v2LaneX + geom.d1cPortraitX);
+    CHECK(r.y == geom.d1cPortraitY);
+    CHECK(r.w == geom.d1cPortraitW);
+    CHECK(r.h == geom.d1cPortraitH);
+    CHECK(strcmp(r.label, "v2_d1c_portrait") == 0);
+
+    for (i = 0; i < DM1_V2_SIDE_BY_SIDE_REGION_COUNT; ++i) {
+        CHECK(dm1_v2_side_by_side_seed_region((DM1_V2_SideBySideRegionId)i,
+                                              &r) == 1);
+        CHECK(r.label != NULL);
+        CHECK(r.sourceAnchor != NULL);
+        CHECK(r.w > 0);
+        CHECK(r.h > 0);
+        CHECK(r.x >= 0);
+        CHECK(r.y >= 0);
+        CHECK(r.x + r.w <= DM1_V2_SIDE_BY_SIDE_W);
+        CHECK(r.y + r.h <= DM1_V2_SIDE_BY_SIDE_H);
+    }
+
+    CHECK(dm1_v2_side_by_side_seed_region(
+              (DM1_V2_SideBySideRegionId)-1, &r) == 0);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_COUNT, &r) == 0);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE, NULL) == 0);
+    return 0;
+}
+
+/* ── TC-12: region pixels translate between V1 and V2 lanes ────── */
+
+static int test_region_manifest_pixel_translation(void) {
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_SideBySideRegion v1Wall;
+    DM1_V2_SideBySideRegion v2Wall;
+    DM1_V2_SideBySideRegion v1Portrait;
+    DM1_V2_SideBySideRegion v2Portrait;
+    DM1_V2_SideBySideRegion gap;
+    DM1_V2_Color a;
+    DM1_V2_Color b;
+    int dx, dy;
+
+    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL, &v1Wall) == 1);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL, &v2Wall) == 1);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT, &v1Portrait) == 1);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT, &v2Portrait) == 1);
+    CHECK(dm1_v2_side_by_side_seed_region(
+              DM1_V2_SIDE_BY_SIDE_REGION_GAP, &gap) == 1);
+
+    CHECK(v2Wall.x - v1Wall.x ==
+          DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W);
+    CHECK(v2Portrait.x - v1Portrait.x ==
+          DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W);
+
+    for (dy = 0; dy <= 1; ++dy) {
+        for (dx = 0; dx <= 1; ++dx) {
+            const int wallX = dx ? v1Wall.x + v1Wall.w - 1 : v1Wall.x;
+            const int wallY = dy ? v1Wall.y + v1Wall.h - 1 : v1Wall.y;
+            const int portraitX =
+                dx ? v1Portrait.x + v1Portrait.w - 1 : v1Portrait.x;
+            const int portraitY =
+                dy ? v1Portrait.y + v1Portrait.h - 1 : v1Portrait.y;
+
+            CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                      &seed, wallX, wallY, &a) == 1);
+            CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                      &seed, wallX + v2Wall.x - v1Wall.x, wallY, &b) == 1);
+            CHECK(colors_equal(&a, &b));
+
+            CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                      &seed, portraitX, portraitY, &a) == 1);
+            CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+                      &seed,
+                      portraitX + v2Portrait.x - v1Portrait.x,
+                      portraitY,
+                      &b) == 1);
+            CHECK(colors_equal(&a, &b));
+        }
+    }
+
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, gap.x, gap.y, &a) == 1);
+    CHECK(a.r == DM1_V2_SIDE_BY_SIDE_GAP_R);
+    CHECK(a.g == DM1_V2_SIDE_BY_SIDE_GAP_G);
+    CHECK(a.b == DM1_V2_SIDE_BY_SIDE_GAP_B);
+    CHECK(a.a == DM1_V2_SIDE_BY_SIDE_GAP_A);
+    CHECK(dm1_v2_side_by_side_seed_composite_pixel(
+              &seed, gap.x + gap.w - 1, gap.y + gap.h - 1, &a) == 1);
+    CHECK(a.r == DM1_V2_SIDE_BY_SIDE_GAP_R);
+    CHECK(a.g == DM1_V2_SIDE_BY_SIDE_GAP_G);
+    CHECK(a.b == DM1_V2_SIDE_BY_SIDE_GAP_B);
+    CHECK(a.a == DM1_V2_SIDE_BY_SIDE_GAP_A);
+    return 0;
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -474,6 +641,8 @@ int main(void) {
     if (test_source_evidence_anchors()) return 1;
     if (test_v1_geometry_scaffold()) return 1;
     if (test_v1_geometry_null_safe()) return 1;
+    if (test_region_manifest()) return 1;
+    if (test_region_manifest_pixel_translation()) return 1;
     /* Print the canonical seed fingerprint so downstream visual-diff
      * gates can lock a known-good baseline against it. */
     if (dm1_v2_side_by_side_seed_build_entry(&seed) == 1) {

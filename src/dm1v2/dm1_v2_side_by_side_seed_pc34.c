@@ -267,6 +267,79 @@ int dm1_v2_side_by_side_seed_v1_geometry(DM1_V2_SideBySideV1Geometry* out) {
     return 1;
 }
 
+int dm1_v2_side_by_side_seed_region(DM1_V2_SideBySideRegionId id,
+                                    DM1_V2_SideBySideRegion* out) {
+    DM1_V2_SideBySideV1Geometry geom;
+    const int v2LaneX = DM1_V2_VIEWPORT_W + DM1_V2_SIDE_BY_SIDE_GAP_W;
+    if (!out) return 0;
+    if (id < 0 || id >= DM1_V2_SIDE_BY_SIDE_REGION_COUNT) return 0;
+    if (!dm1_v2_side_by_side_seed_v1_geometry(&geom)) return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->id = id;
+
+    switch (id) {
+    case DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE:
+        out->x = 0;
+        out->y = 0;
+        out->w = DM1_V2_VIEWPORT_W;
+        out->h = DM1_V2_VIEWPORT_H;
+        out->label = "v1_lane";
+        out->sourceAnchor = "ReDMCSB COORD.C:1721-1722; DUNVIEW.C:2999-3000";
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_GAP:
+        out->x = DM1_V2_VIEWPORT_W;
+        out->y = 0;
+        out->w = DM1_V2_SIDE_BY_SIDE_GAP_W;
+        out->h = DM1_V2_VIEWPORT_H;
+        out->label = "gap";
+        out->sourceAnchor = "Firestaff canonical V1/V2 side-by-side gap";
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE:
+        out->x = v2LaneX;
+        out->y = 0;
+        out->w = DM1_V2_VIEWPORT_W;
+        out->h = DM1_V2_VIEWPORT_H;
+        out->label = "v2_lane";
+        out->sourceAnchor = "ReDMCSB COORD.C:1721-1722; DUNVIEW.C:2999-3000";
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL:
+        out->x = geom.d1cWallX;
+        out->y = geom.d1cWallY;
+        out->w = geom.d1cWallW;
+        out->h = geom.d1cWallH;
+        out->label = "v1_d1c_wall";
+        out->sourceAnchor = geom.wallAnchor;
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT:
+        out->x = geom.d1cPortraitX;
+        out->y = geom.d1cPortraitY;
+        out->w = geom.d1cPortraitW;
+        out->h = geom.d1cPortraitH;
+        out->label = "v1_d1c_portrait";
+        out->sourceAnchor = geom.portraitAnchor;
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL:
+        out->x = v2LaneX + geom.d1cWallX;
+        out->y = geom.d1cWallY;
+        out->w = geom.d1cWallW;
+        out->h = geom.d1cWallH;
+        out->label = "v2_d1c_wall";
+        out->sourceAnchor = geom.wallAnchor;
+        return 1;
+    case DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT:
+        out->x = v2LaneX + geom.d1cPortraitX;
+        out->y = geom.d1cPortraitY;
+        out->w = geom.d1cPortraitW;
+        out->h = geom.d1cPortraitH;
+        out->label = "v2_d1c_portrait";
+        out->sourceAnchor = geom.portraitAnchor;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 const char* dm1_v2_side_by_side_seed_source_evidence(void) {
     return kSourceEvidence;
 }

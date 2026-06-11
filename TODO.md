@@ -66,6 +66,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 5 - Smooth movement presentation hardening: runtime bridge/gates and optional Custom/V2 smooth turn-pan camera backend exist; remaining work is broader interpolation coverage and launcher UI polish while preserving V1 cooldowns, collision, sensors, creature timing, and redraw cadence.
 - 🔧 Phase 6 - Touch/controller ergonomics hardening: route gates exist; remaining work is broader V2-only gesture/controller affordances with V1 touch/click parity preserved.
 - 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash gate exists; remaining work is full side-by-side V1/V2 deterministic input scripts plus screenshot/pixel gates for enhanced presentation.
+  - 📌 The side-by-side seed now exposes a composite-space region manifest for the V1 lane, gap, V2 lane, and D1C wall/portrait rectangles in both lanes; remaining work is to bind these rectangles into full enhanced-presentation screenshot/pixel gates.
 
 ## Chaos Strikes Back (CSB)
 
