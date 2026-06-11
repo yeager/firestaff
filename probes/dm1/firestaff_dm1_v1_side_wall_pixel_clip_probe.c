@@ -7,7 +7,8 @@
 enum {
     PIXEL_BACKGROUND = 0x33,
     PIXEL_TRANSPARENT = 10,
-    PIXEL_SOURCE_ORIGIN_SENTINEL = 0xa5
+    PIXEL_SOURCE_ORIGIN_SENTINEL = 0xa5,
+    PIXEL_SOURCE_PRECLIP_SENTINEL = 0xb6
 };
 
 static int failures = 0;
@@ -67,6 +68,10 @@ static void verify_side_wall_pixels(DM1_ViewSquareIndex square,
      * as the source size, while C10_COLOR_FLESH remains transparent.
      * Source: DUNVIEW.C:3048-3058; G0163 frame data at DUNVIEW.C:581-594. */
     source[0] = PIXEL_SOURCE_ORIGIN_SENTINEL;
+    if (gate.src_x > 0) {
+        source[gate.src_y * frame->byte_width + gate.src_x - 1] =
+            PIXEL_SOURCE_PRECLIP_SENTINEL;
+    }
     source[gate.src_y * frame->byte_width + gate.src_x] = PIXEL_TRANSPARENT;
     source[(gate.src_y + gate.height - 1) * frame->byte_width + gate.src_x + gate.width - 1] =
         (uint8_t)(base + 0x40);
@@ -89,10 +94,27 @@ static void verify_side_wall_pixels(DM1_ViewSquareIndex square,
     } else {
         check_int(id, 1, 1);
     }
+    snprintf(id, sizeof(id), "%s.preclip_source_not_leaked", name);
+    if (gate.src_x > 0) {
+        check_int(id,
+                  viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x] !=
+                      PIXEL_SOURCE_PRECLIP_SENTINEL,
+                  1);
+    } else {
+        check_int(id, 1, 1);
+    }
     snprintf(id, sizeof(id), "%s.last_visible_pixel", name);
     check_int(id,
               viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH + gate.dst_x + gate.width - 1],
               (uint8_t)(base + 0x40));
+    snprintf(id, sizeof(id), "%s.before_left_edge_untouched", name);
+    if (gate.dst_x > 0) {
+        check_int(id,
+                  viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x - 1],
+                  PIXEL_BACKGROUND);
+    } else {
+        check_int(id, 1, 1);
+    }
     snprintf(id, sizeof(id), "%s.after_right_edge_untouched", name);
     if (gate.dst_x + gate.width < DM1_VIEWPORT_WIDTH) {
         check_int(id,
@@ -138,12 +160,14 @@ int main(void)
 {
     printf("probe=firestaff_dm1_v1_side_wall_pixel_clip_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
-    printf("sourceEvidence=DUNVIEW.C:579-594,3048-3058,8448-8462,6406-6437,6545-6573,6954-6964,7105-7115,7445-7455,7613-7623\n");
+    printf("sourceEvidence=DUNVIEW.C:579-594,3048-3058,6837-6896,8448-8462,6406-6437,6545-6573,6954-6964,7105-7115,7445-7455,7613-7623\n");
 
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D3L2, "D3L2", 0x08, "DUNVIEW.C:579,8448-8451");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D3R2, "D3R2", 0x0c, "DUNVIEW.C:580,8456-8462");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D3L, "D3L", 0x10, "DUNVIEW.C:584,6406-6437");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D3R, "D3R", 0x18, "DUNVIEW.C:585,6545-6573");
+    verify_side_wall_pixels(DM1_VIEW_SQUARE_D2L2, "D2L2", 0x1c, "DUNVIEW.C:6837-6865");
+    verify_side_wall_pixels(DM1_VIEW_SQUARE_D2R2, "D2R2", 0x1e, "DUNVIEW.C:6868-6896");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D2L, "D2L", 0x20, "DUNVIEW.C:587,6954-6964");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D2R, "D2R", 0x40, "DUNVIEW.C:588,7105-7115");
     verify_side_wall_pixels(DM1_VIEW_SQUARE_D1R, "D1R", 0x60, "DUNVIEW.C:591,7613-7623");
