@@ -2697,6 +2697,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
             state->launchRequested = 0;
+            state->quickResumeLaunchRequested = 0;
             state->view = M12_MENU_VIEW_MAIN;
             state->messageLine1 = "";
             state->messageLine2 = "";

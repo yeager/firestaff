@@ -119,6 +119,44 @@ static void check_csb_quickplay_blocks_missing_asset(
     CHECK(intent.valid == 0);
     CHECK(intent.gameId && strcmp(intent.gameId, "csb") == 0);
     CHECK(intent.savePath == NULL);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "") == 0);
+}
+
+static void check_csb_quickplay_ready_return_clears_launch_latches(void) {
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+
+    seed_csb_quickplay_state(&state, 1, 1);
+
+    CHECK(state.quickResumeAvailable == 1);
+    CHECK(state.selectedIndex == -1);
+    CHECK(state.entries[CSB_GAME_INDEX].available == 1);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "csb") == 1);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+
+    CHECK(state.launchRequested == 1);
+    CHECK(state.quickResumeLaunchRequested == 1);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "RESUMING SAVE") == 0);
+
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    CHECK(intent.valid == 1);
+    CHECK(intent.gameId && strcmp(intent.gameId, "csb") == 0);
+    CHECK(intent.savePath && strcmp(intent.savePath, state.quickResumeSavePath) == 0);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "") == 0);
+    CHECK(state.messageLine2 && strcmp(state.messageLine2, "") == 0);
+    CHECK(state.messageLine3 && strcmp(state.messageLine3, "") == 0);
 }
 
 int main(void) {
@@ -131,11 +169,12 @@ int main(void) {
      */
     check_csb_quickplay_blocks_missing_asset(1, 0, "DUNGEON.DAT");
     check_csb_quickplay_blocks_missing_asset(0, 1, "GRAPHICS.DAT");
+    check_csb_quickplay_ready_return_clears_launch_latches();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: CSB V1 quickplay blocks when either required GRAPHICS or DUNGEON hash is missing");
+    puts("ok: CSB V1 quickplay blocks missing required files and clears launch latches on menu return");
     return 0;
 }
