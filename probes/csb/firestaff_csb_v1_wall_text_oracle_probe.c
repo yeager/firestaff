@@ -180,6 +180,21 @@ static void render_oracle_label(const unsigned char *codes,
     out[pos] = '\0';
 }
 
+static void poison_sidecar_text_words(unsigned char *file_buf, size_t file_size)
+{
+    size_t i;
+
+    if (!file_buf ||
+        WALL_TEXT_ORACLE_TEXT_BASE +
+            (WALL_TEXT_ORACLE_TEXT_WORDS * 2U) > file_size) {
+        return;
+    }
+
+    for (i = 0; i < WALL_TEXT_ORACLE_TEXT_WORDS * 2U; ++i) {
+        file_buf[WALL_TEXT_ORACLE_TEXT_BASE + i] ^= 0x5AU;
+    }
+}
+
 static int extract_wall_text_from_slice(const unsigned char *file_buf,
                                         size_t file_size,
                                         const CSB_V1_DungeonData *dungeon,
@@ -369,6 +384,8 @@ int main(void) {
     CHECK(dungeon.level_heights[0] == 1, "slice level height is one square");
     CHECK(dungeon.raw_data != NULL, "loader owns a raw copy of the hash-verified slice");
     CHECK(dungeon.raw_size == (int)file_size, "loader raw copy preserves slice byte count");
+    CHECK(dungeon.raw_data != file_buf,
+          "loader raw copy is independent from the reopened sidecar buffer");
     CHECK(dungeon.raw_data != NULL &&
           dungeon.raw_size == (int)file_size &&
           memcmp(dungeon.raw_data, file_buf, (size_t)file_size) == 0,
@@ -384,6 +401,11 @@ int main(void) {
           "decoded tile keeps the wall square type");
     CHECK(tile_ret == 0 && decoded_square.first_thing == 0,
           "decoded tile keeps the wall text thing index");
+
+    poison_sidecar_text_words(file_buf, (size_t)file_size);
+    CHECK(dungeon.raw_data != NULL &&
+          memcmp(dungeon.raw_data, file_buf, (size_t)file_size) != 0,
+          "sidecar text mutation cannot affect the loader-owned raw buffer");
 
     decoded_label[0] = '\0';
     ok = 0;
