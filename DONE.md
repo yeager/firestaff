@@ -4,6 +4,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Maintenance Cadence
 
+- ✅ 2026-06-11 — tightened `firestaff_csb_v1_wall_text_oracle_probe` so the hash-verified CSB one-square slice now mutates the reopened sidecar text words after load and still decodes `ORACLE` from the loader-owned raw buffer, keeping the proof to one wall-square/textstring path.
 - ✅ 2026-06-11 — registered `csb_v1_wall_text_oracle_gate` as a focused CTest probe and hardened its synthetic hash-verified CSB dungeon slice setup so the one wall-square/textstring path deterministically decodes the source-locked `ORACLE` inscription without claiming end-to-end CSB runtime parity.
 - ✅ 2026-06-11 — strengthened `firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe` so the ReDMCSB `DUNVIEW.C` D0C center-front route now proves the F0128 slot is F0127, the synthetic D0C wall frame remains zero-sized, and accidental transparent/opaque wall blits leave viewport corners and center untouched.
 - ✅ 2026-06-11 — extended `firestaff_dm1_v1_side_wall_pixel_clip_probe` with a D2L2/D2R2 wall pixel slice so the ReDMCSB `DUNVIEW.C` F0678/F0679 lateral-2 route now proves clipped visible strips, source pre-offset rejection for D2L2, C10 transparent first-pixel behavior, and untouched neighboring viewport pixels.
