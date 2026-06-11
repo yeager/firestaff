@@ -23,6 +23,7 @@ enum {
     DM1_PC34_CHEST_CLOSE_FULL_HAND_CONTAINER_BASE_WEIGHT = 50,
     DM1_PC34_CHEST_CLOSE_FULL_HAND_LEADER_MAX_LOAD = 100,
     DM1_PC34_CHEST_CLOSE_FULL_HAND_BASE_BACKPACK_WEIGHT = 13,
+    DM1_PC34_CHEST_CLOSE_FULL_HAND_BACKPACK_ITEM = 700,
     DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_ITEM_TYPE = 0x0040,
     DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_WEIGHT = 9
 };
@@ -96,6 +97,13 @@ typedef struct {
     int chestAHiddenTailInputType;
     int chestAHiddenTailExcludedOnClose;
     int leaderHandAfterChestAClose;
+    int leaderHandWeightAfterChestAClose;
+    int leaderHandAllowedSlotsAfterChestAClose;
+    int readyHandAfterChestAClose;
+    int actionHandAfterChestAClose;
+    int backpackAfterChestAClose;
+    int loadAfterChestAClose;
+    int chestAReadSlotAfterCloseResult;
     int leaderHandFullDuringChestAClose;
     int chestAOpenThingAfterClose;
 
@@ -115,6 +123,13 @@ typedef struct {
     int chestBClosedTypes[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
     int chestBClosedWeights[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
     int leaderHandAfterChestBClose;
+    int leaderHandWeightAfterChestBClose;
+    int leaderHandAllowedSlotsAfterChestBClose;
+    int readyHandAfterChestBClose;
+    int actionHandAfterChestBClose;
+    int backpackAfterChestBClose;
+    int loadAfterChestBClose;
+    int chestBReadSlotAfterCloseResult;
     int leaderHandFullDuringChestBClose;
     int chestBOpenThingAfterClose;
 
