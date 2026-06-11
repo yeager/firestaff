@@ -66,6 +66,7 @@ static int projectile_open_door_spell_impacts_door(
 }
 
 enum {
+    PHASE17_SOUND_METALLIC_THUD = 0, /* C00_SOUND_METALLIC_THUD */
     PHASE17_SOUND_WOODEN_THUD = 4 /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM */
 };
 
@@ -204,6 +205,22 @@ static int champion_index_from_cell(
     (void)digest;
     if (cell < 0 || cell > 3) return 0;
     return cell & 3;
+}
+
+static int projectile_non_explosion_impact_sound_code(
+    const struct ProjectileInstance_Compat* in)
+{
+    /* ReDMCSB PROJEXPL.C:F0217 lines 587-600 selects
+     * C00_SOUND_METALLIC_THUD only when the projectile associated thing
+     * is C05_THING_TYPE_WEAPON; all other non-explosion impacts request
+     * C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM.  Phase17's
+     * compact projectile subtype has no full associated-thing record, so
+     * the kinetic arrow subtype is the only local weapon-backed analogue. */
+    if (in && in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
+        && in->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
+        return PHASE17_SOUND_METALLIC_THUD;
+    }
+    return PHASE17_SOUND_WOODEN_THUD;
 }
 
 /* ==========================================================
@@ -654,6 +671,9 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         if (createsExplosion) {
             populate_explosion_on_impact(in, digest, &outResult->outExplosion);
             outResult->emittedExplosion = 1;
+        } else {
+            outResult->emittedSoundCode =
+                projectile_non_explosion_impact_sound_code(in);
         }
         outResult->despawn = 1;
         return 1;
