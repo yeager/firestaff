@@ -6,6 +6,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ 2026-06-11 — hardened `firestaff_dm1_v1_d0_side_wall_edge_pixel_probe` so the ReDMCSB `DUNVIEW.C` D0L/D0R near side-wall route now proves first-row and last-row pixels immediately outside the F0100 C10-transparent blit strip remain untouched, including the D0R left-neighbor guard.
 - ✅ 2026-06-11 — hardened the DM1 V1 original DOSBox capture session runner so `--validate-live-inputs` and `--live` now write `dosbox_capture.live_inputs.json` with the resolved DOSBox binary, extracted runtime layout, generated live conf SHA256, capture directory, required DAT presence, and pinned render/CPU/capture settings; the existing dry-run gate now verifies that receipt shape without launching DOSBox.
+- ✅ 2026-06-11 — added `test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat`, a focused DM1 V1 M11 runtime gate proving the C071 eye route closes an already-open action-hand chest via the `PANEL.C F0342` / `CHEST.C F0334` path, recompacts visible C537..C544 contents, drops the hidden ninth tail, and activates object-description state for the inspected leader-hand weapon.
 - ✅ `TODO.md` and `DONE.md` now document the rule that they must be updated at least twice per day while Firestaff work is active.
 - ✅ `TODO.md` is reserved for remaining fixes/builds; `DONE.md` is reserved for completed work.
 - ✅ Worker refill focus now supports the project priority order: DM1 V1, Theron V1, CSB V1, DM1 V2, CSB V2, DM2 V1, Theron V2, Nexus V1, Nexus V2.
