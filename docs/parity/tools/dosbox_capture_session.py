@@ -25,6 +25,7 @@ needs it for `--live` mode on macOS.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -100,6 +101,7 @@ DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
+LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 
 
 class QuietRunTimeout:
@@ -216,9 +218,16 @@ def validate_live_inputs(args: argparse.Namespace) -> int:
         return 1
     conf = capture_root / "dosbox_capture.live.conf"
     _write_live_conf(conf, runtime_dir, capture_root)
+    receipt = _write_live_input_receipt(
+        capture_root=capture_root,
+        runtime_dir=runtime_dir,
+        dosbox_bin=dosbox_bin,
+        conf=conf,
+    )
     print(
         "PASS live input validation: "
-        f"dosbox_bin={dosbox_bin} runtime={runtime_dir} conf={conf}"
+        f"dosbox_bin={dosbox_bin} runtime={runtime_dir} "
+        f"conf={conf} receipt={receipt}"
     )
     return 0
 
@@ -340,6 +349,34 @@ def dry_run(plan: list[PlanStep],
         missing_bin = tmp_root / "missing-dosbox"
         if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=missing_bin)) is not None:
             failures.append("dosbox binary resolver: accepted a missing explicit path")
+        capture_root = tmp_root / "capture-root"
+        conf = capture_root / "dosbox_capture.live.conf"
+        _write_live_conf(conf, good, capture_root)
+        receipt_path = _write_live_input_receipt(
+            capture_root=capture_root,
+            runtime_dir=good,
+            dosbox_bin=str(fake_bin),
+            conf=conf,
+        )
+        try:
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            failures.append(f"live input receipt: could not parse JSON: {exc}")
+        else:
+            if receipt.get("schema") != LIVE_INPUT_RECEIPT_SCHEMA:
+                failures.append("live input receipt: schema mismatch")
+            if receipt.get("runtime_dir") != str(good):
+                failures.append("live input receipt: runtime_dir mismatch")
+            if receipt.get("dosbox_bin") != str(fake_bin):
+                failures.append("live input receipt: dosbox_bin mismatch")
+            if receipt.get("conf_sha256") != _sha256_file(conf):
+                failures.append("live input receipt: conf hash mismatch")
+            required = receipt.get("runtime_required_files", {})
+            if not required.get("GRAPHICS.DAT") or not required.get("DUNGEON.DAT"):
+                failures.append("live input receipt: required DAT presence missing")
+            pins = receipt.get("live_conf_pins", {})
+            if pins.get("machine") != "svga_s3" or pins.get("memsize") != "16":
+                failures.append("live input receipt: conf pin metadata mismatch")
     return matched, total, failures
 
 
@@ -595,6 +632,60 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
     )
 
 
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _write_live_input_receipt(
+        capture_root: Path,
+        runtime_dir: Path,
+        dosbox_bin: str,
+        conf: Path) -> Path:
+    """Write a deterministic receipt for no-launch validation/live launch.
+
+    The preflight receipt proves the canonical asset hashes; this live
+    receipt proves the host-side launch shape that has been blocking
+    original captures: resolved DOSBox binary, extracted runtime
+    layout, generated conf, and the capture directory DOSBox will use.
+    """
+    capture_root.mkdir(parents=True, exist_ok=True)
+    required = {}
+    data_dir = runtime_dir / "DATA"
+    for filename in RUNTIME_DATA_REQUIRED_FILES:
+        required[filename] = _has_case_insensitive_child(data_dir, filename)
+    receipt = {
+        "schema": LIVE_INPUT_RECEIPT_SCHEMA,
+        "dosbox_bin": str(dosbox_bin),
+        "runtime_dir": str(runtime_dir),
+        "runtime_has_dm_exe": (runtime_dir / "DM.EXE").is_file(),
+        "runtime_data_dir": str(data_dir),
+        "runtime_required_files": required,
+        "capture_root": str(capture_root),
+        "dosbox_capture_dir": str(capture_root / "dosbox-capture"),
+        "conf_path": str(conf),
+        "conf_sha256": _sha256_file(conf),
+        "live_conf_pins": {
+            "output": "opengl",
+            "windowresolution": "1024x768",
+            "viewport_resolution": "1024x768",
+            "machine": "svga_s3",
+            "memsize": "16",
+            "frameskip": "0",
+            "core": "dynamic",
+            "cycles": "max",
+            "default_image_capture_formats": "raw",
+        },
+    }
+    out = capture_root / "dosbox_capture.live_inputs.json"
+    out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+                   encoding="utf-8")
+    return out
+
+
 def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     """Drive a real DOSBox Staging DM1 session and capture normalized frames."""
     if not _DETECTOR_OK:
@@ -635,6 +726,12 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             return 2
         conf = capture_root / "dosbox_capture.live.conf"
         _write_live_conf(conf, runtime_dir, capture_root)
+        receipt = _write_live_input_receipt(
+            capture_root=capture_root,
+            runtime_dir=runtime_dir,
+            dosbox_bin=dosbox_bin,
+            conf=conf,
+        )
     else:
         conf = capture_root / "dosbox_capture.conf"
         if not conf.exists():
@@ -644,10 +741,13 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return 2
+        receipt = None
 
     original_dir = capture_root / "original"
     original_dir.mkdir(parents=True, exist_ok=True)
     print(f"launching DOSBox with {conf} via {dosbox_bin}", file=sys.stderr)
+    if receipt is not None:
+        print(f"live input receipt: {receipt}", file=sys.stderr)
     proc = subprocess.Popen(
         [dosbox_bin, "-conf", str(conf)],
         stdout=subprocess.DEVNULL,
