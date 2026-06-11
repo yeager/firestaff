@@ -4523,6 +4523,10 @@ if(BUILD_TESTING)
         src/engine/m11_game_input_mapping.c
     )
     target_link_libraries(test_dm1_v2_4k_input_zone_mapping_pc34 PRIVATE firestaff_v2)
+    add_executable(test_dm1_v2_selected_resolution_input_mapping_pc34
+        tests/test_dm1_v2_selected_resolution_input_mapping_pc34.c
+        src/engine/m11_game_input_mapping.c
+    )
     add_executable(test_dm1_v2_lighting_dynamic_pc34
         tests/test_dm1_v2_lighting_dynamic_pc34.c
         src/dm1v2/dm1_v2_lighting_dynamic_pc34.c
@@ -4662,6 +4666,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_4k_input_zone_mapping_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_selected_resolution_input_mapping_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_lighting_dynamic_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_field_projectile_effect_metadata_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE -Wall -Wextra -O2)
@@ -4776,6 +4781,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_4k_input_zone_mapping_pc34
         COMMAND test_dm1_v2_4k_input_zone_mapping_pc34
+    )
+    add_test(
+        NAME dm1_v2_selected_resolution_input_mapping_pc34
+        COMMAND test_dm1_v2_selected_resolution_input_mapping_pc34
     )
     add_test(
         NAME dm1_v2_hud_overlay_source_lock
