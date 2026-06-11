@@ -200,7 +200,7 @@ firestaff --duration 5000 --fps
 | Mode | Resolution target | Purpose |
 |---|---|---|
 | V1 Original | 320x200 | Pixel-faithful original rendering |
-| V2.0 Filtered | 320x200 plus post-processing | CRT scanlines, palette correction and sharpening |
+| V2.0 Filtered | 640x400 | 2x presentation of the original framebuffer with CRT scanlines, palette correction and sharpening |
 | V2.1 Upscaled | High-resolution source-preserving upscale | Cleaner modern output while preserving the DM look |
 | V2.2 Modern | 1920x1080 class presentation | New modern art and UI experiments |
 

@@ -114,6 +114,10 @@ long M11_Render_ClearFramebuffer(unsigned char colorIndex);
    copy to the window, and flip. Returns M11_RENDER_OK on success or
    an error code. Safe to call with an all-zero framebuffer. */
 int  M11_Render_Present(void);
+int  M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
+                                      int logicalWidth,
+                                      int logicalHeight,
+                                      int scale);
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);

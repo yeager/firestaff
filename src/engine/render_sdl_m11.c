@@ -469,6 +469,49 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
     }
 }
 
+static void m11_framebuffer_to_rgba_scaled(const unsigned char* src,
+                                           int logicalWidth,
+                                           int logicalHeight,
+                                           int scale) {
+    unsigned char* dst = g_state.presentBuffer;
+    const int globalLevel = g_state.paletteLevel;
+    const int useV2Palette = (g_state.v2_palette_enabled && g_state.v2_palette_lut_built);
+    int outW;
+    int y;
+    if (!dst || !src || logicalWidth <= 0 || logicalHeight <= 0 || scale <= 1) {
+        return;
+    }
+    outW = logicalWidth * scale;
+    for (y = 0; y < logicalHeight; ++y) {
+        int x;
+        for (x = 0; x < logicalWidth; ++x) {
+            unsigned char raw = src[y * logicalWidth + x];
+            unsigned char idx = raw & M11_FB_INDEX_MASK;
+            int perPixelLevel = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
+            int level = perPixelLevel > 0 ? perPixelLevel : globalLevel;
+            const unsigned char* rgb;
+            int sy;
+            if (level >= M11_PALETTE_LEVELS) {
+                level = M11_PALETTE_LEVELS - 1;
+            }
+            rgb = useV2Palette
+                ? g_state.v2_palette_corrected[level][idx]
+                : G9010_auc_VgaPaletteAll_Compat[level][idx];
+            for (sy = 0; sy < scale; ++sy) {
+                int sx;
+                unsigned char* row = dst + ((y * scale + sy) * outW + x * scale) * 4;
+                for (sx = 0; sx < scale; ++sx) {
+                    unsigned char* px = row + sx * 4;
+                    px[0] = rgb[0];
+                    px[1] = rgb[1];
+                    px[2] = rgb[2];
+                    px[3] = 0xFF;
+                }
+            }
+        }
+    }
+}
+
 /* DM1 V2.0 post-process hook. Called from M11_Render_PresentIndexed
  * after framebuffer-to-RGBA expansion, before SDL_UpdateTexture.
  * V1 launch path leaves all v2_* flags zero so this short-circuits. */
@@ -928,6 +971,119 @@ long M11_Render_ClearFramebuffer(unsigned char colorIndex) {
 
 int M11_Render_Present(void) {
     return M11_Render_PresentIndexed(g_state.framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+}
+
+int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
+                                    int logicalWidth,
+                                    int logicalHeight,
+                                    int scale) {
+    int scaledWidth;
+    int scaledHeight;
+    int destX = 0;
+    int destY = 0;
+    int destW = 0;
+    int destH = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_FRect sourceRect;
+    SDL_FRect destRect;
+#else
+    SDL_Rect sourceRect;
+    SDL_Rect destRect;
+#endif
+
+    if (scale == 1) {
+        return M11_Render_PresentIndexed(framebuffer, logicalWidth, logicalHeight);
+    }
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!framebuffer || logicalWidth <= 0 || logicalHeight <= 0 || scale <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (logicalWidth > 4096 / scale || logicalHeight > 4096 / scale) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    scaledWidth = logicalWidth * scale;
+    scaledHeight = logicalHeight * scale;
+    if (m11_recreate_texture_if_needed(scaledWidth, scaledHeight) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.contentW = scaledWidth;
+    g_state.contentH = scaledHeight;
+    if (g_state.v2_dither_enabled
+            && logicalWidth == M11_FB_WIDTH
+            && logicalHeight == M11_FB_HEIGHT) {
+        static unsigned char v2DitherScratch[M11_FB_BYTES];
+        memcpy(v2DitherScratch, framebuffer, (size_t)M11_FB_BYTES);
+        m11_apply_v2_filters_indexed_pre(v2DitherScratch, logicalWidth, logicalHeight);
+        m11_framebuffer_to_rgba_scaled(v2DitherScratch, logicalWidth, logicalHeight, scale);
+    } else {
+        m11_framebuffer_to_rgba_scaled(framebuffer, logicalWidth, logicalHeight, scale);
+    }
+    m11_apply_v2_filters_rgba_post(scaledWidth, scaledHeight);
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    sourceRect.x = 0.0f;
+    sourceRect.y = 0.0f;
+    sourceRect.w = (float)scaledWidth;
+    sourceRect.h = (float)scaledHeight;
+    {
+        SDL_Rect updateRect;
+        updateRect.x = 0;
+        updateRect.y = 0;
+        updateRect.w = scaledWidth;
+        updateRect.h = scaledHeight;
+        if (!SDL_UpdateTexture(
+                g_state.texture,
+                &updateRect,
+                g_state.presentBuffer,
+                scaledWidth * 4)) {
+            return M11_RENDER_ERR_TEXTURE;
+        }
+    }
+    if (!SDL_RenderClear(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = (float)destX;
+    destRect.y = (float)destY;
+    destRect.w = (float)destW;
+    destRect.h = (float)destH;
+    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 scaledWidth, scaledHeight);
+    if (!SDL_RenderPresent(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+#else
+    sourceRect.x = 0;
+    sourceRect.y = 0;
+    sourceRect.w = scaledWidth;
+    sourceRect.h = scaledHeight;
+    if (SDL_UpdateTexture(
+            g_state.texture,
+            &sourceRect,
+            g_state.presentBuffer,
+            scaledWidth * 4) != 0) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    if (SDL_RenderClear(g_state.renderer) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = destX;
+    destRect.y = destY;
+    destRect.w = destW;
+    destRect.h = destH;
+    if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 scaledWidth, scaledHeight);
+    SDL_RenderPresent(g_state.renderer);
+#endif
+    return M11_RENDER_OK;
 }
 
 int M11_Render_PresentIndexed(const unsigned char* framebuffer,

@@ -133,6 +133,22 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
                                      M11_LAUNCHER_FB_HEIGHT);
 }
 
+static int m11_game_indexed_presentation_scale(const M11_GameViewState* gameView) {
+    return (gameView &&
+            gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) ? 2 : 1;
+}
+
+static int m11_present_game_frame(const M11_GameViewState* gameView) {
+    int scale = m11_game_indexed_presentation_scale(gameView);
+    if (scale > 1) {
+        return M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scale);
+    }
+    return M11_Render_Present();
+}
+
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     int requestedWindowMode;
     int actualWindowMode;
@@ -1580,6 +1596,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (int)ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
+                int presentationScale = m11_game_indexed_presentation_scale(gameView);
+                if (presentationScale > 1) {
+                    mappedX /= presentationScale;
+                    mappedY /= presentationScale;
+                }
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -1879,6 +1900,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
+                int presentationScale = m11_game_indexed_presentation_scale(gameView);
+                if (presentationScale > 1) {
+                    mappedX /= presentationScale;
+                    mappedY /= presentationScale;
+                }
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -2407,7 +2433,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             DM1_CombatLog_Render(&gameView,
                                  M11_Render_GetFramebuffer(),
                                  M11_FB_WIDTH, M11_FB_HEIGHT);
-            M11_Render_Present();
+            m11_present_game_frame(&gameView);
         } else {
             /* Redraw the launcher every tick so animations (pulse,
              * hover) remain alive even without input. */
