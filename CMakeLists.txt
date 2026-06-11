@@ -593,6 +593,12 @@ set(M12_SOURCES
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
+# M11 game-view objects call back into M12 menu/config/asset helpers, and the
+# Theron boot path uses the M12 asset MD5 helper. Keep both reverse static-library
+# edges visible so GNU/MinGW linkers rescan the cycle instead of dropping symbols
+# after their first archive pass.
+target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
+target_link_libraries(firestaff_theron PUBLIC firestaff_m12)
 find_package(ZLIB QUIET)
 if(ZLIB_FOUND)
     target_compile_definitions(firestaff_m12 PUBLIC FIRESTAFF_HAS_ZLIB=1)
