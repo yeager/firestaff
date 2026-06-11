@@ -214,6 +214,40 @@ static void seed_keyhole_view(M11_GameViewState* state,
     snprintf(state->inspectDetail, sizeof(state->inspectDetail), "UNCHANGED");
 }
 
+static unsigned short panel_route_next_thing(const struct DungeonThings_Compat* things,
+                                             unsigned short thing) {
+    int index;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    index = (int)THING_GET_INDEX(thing);
+    switch (THING_GET_TYPE(thing)) {
+        case THING_TYPE_WEAPON:
+            return (things->weapons && index >= 0 && index < things->weaponCount) ?
+                things->weapons[index].next : THING_ENDOFLIST;
+        case THING_TYPE_JUNK:
+            return (things->junks && index >= 0 && index < things->junkCount) ?
+                things->junks[index].next : THING_ENDOFLIST;
+        default:
+            return THING_ENDOFLIST;
+    }
+}
+
+static int panel_route_chain_count(const struct DungeonThings_Compat* things,
+                                   unsigned short first,
+                                   int maxWalk) {
+    int count = 0;
+    unsigned short thing = first;
+
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           count < maxWalk) {
+        ++count;
+        thing = panel_route_next_thing(things, thing);
+    }
+    return count;
+}
+
 /* Detail 1: right-button C011 close-inventory route from the inventory
  * mouse input list.  ReDMCSB COMMAND.C:412 binds the right button
  * anywhere in screen zone C002 to C011_ZONE_SCREEN. */
@@ -717,36 +751,51 @@ static void test_inventory_open_chest_same_eye_reopen_keeps_open_icon(void) {
 /* Detail 7: replacing an open action-hand chest with a different container
  * should close the old chest and keep the open state bound to the newly
  * placed chest. ReDMCSB CHEST.C F0333 lines 35-38 close the previous
- * chest before opening the requested one; CHAMPION.C F0302 swaps the leader
- * hand with the selected slot object. */
+ * chest before opening the requested one, F0334 lines 112-133 rewrites only
+ * the visible C537..C544 slots, and CHAMDRAW.C F0291 lines 621-630 then maps
+ * the newly open action-hand chest from C144 to C145. CHAMPION.C F0302 swaps
+ * the leader hand with the selected slot object. */
 static void test_inventory_replace_open_action_hand_chest_from_slot_click(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonWeapon_Compat weapons[3];
+    struct DungeonJunk_Compat junks[9];
     struct DungeonContainer_Compat containers[2];
     unsigned short firstChestThing =
         (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
     unsigned short secondChestThing =
         (unsigned short)((THING_TYPE_CONTAINER << 10) | 1);
-    unsigned short firstChestSlotThing =
-        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     unsigned short secondChestSlotThing =
-        (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    unsigned short firstChestSlots[9];
     int sx = 0, sy = 0, sw = 0, sh = 0;
+    int i;
 
     seed_panel_view(&state, &things, weapons, containers);
-    weapons[0].type = 2;
-    weapons[0].next = THING_ENDOFLIST;
-    weapons[1].type = 2;
-    weapons[1].next = THING_ENDOFLIST;
+    memset(junks, 0, sizeof(junks));
+    for (i = 0; i < 3; ++i) {
+        weapons[i].type = 2;
+        weapons[i].next = THING_ENDOFLIST;
+    }
+    things.weaponCount = 3;
+    things.junks = junks;
+    things.junkCount = 9;
+    for (i = 0; i < 9; ++i) {
+        firstChestSlots[i] = (unsigned short)((THING_TYPE_JUNK << 10) | i);
+        junks[i].type = (unsigned char)((i % 2) + 1);
+        junks[i].next = (i + 1 < 9) ? firstChestSlots[i + 1] : THING_ENDOFLIST;
+    }
     containers[0].type = 0;
-    containers[0].slot = firstChestSlotThing;
+    containers[0].slot = firstChestSlots[0];
     containers[1].type = 0;
     containers[1].slot = secondChestSlotThing;
     things.containerCount = 2;
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         firstChestThing;
+    ASSERT_EQ(panel_route_chain_count(&things, containers[0].slot, 10),
+              9,
+              "first chest starts with a ninth hidden tail before open");
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
               "first chest opens to establish a known open-panel baseline");
     ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), firstChestThing,
@@ -769,8 +818,9 @@ static void test_inventory_replace_open_action_hand_chest_from_slot_click(void) 
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND),
               145,
               "replacement keeps action-hand icon as C145");
-    ASSERT_EQ(containers[0].slot, firstChestSlotThing,
-              "closing the first chest keeps its original content");
+    ASSERT_EQ(panel_route_chain_count(&things, containers[0].slot, 10),
+              8,
+              "close-before-open rewrites prior chest from the eight visible slots");
     ASSERT_EQ(containers[1].slot, secondChestSlotThing,
               "opening the second chest keeps its original content");
 }
