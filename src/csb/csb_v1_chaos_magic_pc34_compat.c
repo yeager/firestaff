@@ -12,6 +12,29 @@
  *   CSBWin/CSBCode.cpp: StartChaos (line 11414)
  */
 
+#define CSB_V1_DSA_FLAG_COUNT 256
+
+static int csb_v1_dsa_has_operands(const CSB_V1_DSAScript *script, int count) {
+    return script && count >= 0 && script->pc <= script->bytecode_len &&
+           count <= script->bytecode_len - script->pc;
+}
+
+static int csb_v1_dsa_flag_is_valid(int flag) {
+    return flag >= 0 && flag < CSB_V1_DSA_FLAG_COUNT;
+}
+
+static int csb_v1_dsa_target_is_valid(const CSB_V1_DSAScript *script, int target) {
+    return script && target >= 0 && target < script->bytecode_len;
+}
+
+static int csb_v1_dsa_reject_malformed_at(CSB_V1_DSAScript *script, int pc) {
+    if (script) {
+        script->pc = pc;
+        script->active = 0;
+    }
+    return 0;
+}
+
 void csb_v1_chaos_init(CSB_V1_ChaosMagicState *state) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
@@ -59,42 +82,76 @@ int csb_v1_dsa_execute_step(CSB_V1_DSAScript *script,
     CSB_V1_ChaosMagicState *state)
 {
     uint16_t op;
+    int op_pc;
     if (!script || !state || !script->active || !script->bytecode) return 0;
     if (script->delay_ticks > 0) { script->delay_ticks--; return 1; }
     if (script->pc >= script->bytecode_len) { script->active = 0; return 0; }
 
+    op_pc = script->pc;
     op = script->bytecode[script->pc++];
     switch (op & 0xFF) {
         case CSB_DSA_OP_NOP: break;
         case CSB_DSA_OP_SET:
-            if (script->pc < script->bytecode_len) {
+            if (!csb_v1_dsa_has_operands(script, 1)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            {
                 int flag = script->bytecode[script->pc++];
-                if (flag >= 0 && flag < 256) state->flags[flag] = 1;
+                if (!csb_v1_dsa_flag_is_valid(flag)) {
+                    return csb_v1_dsa_reject_malformed_at(script, op_pc);
+                }
+                state->flags[flag] = 1;
             }
             break;
         case CSB_DSA_OP_CLEAR:
-            if (script->pc < script->bytecode_len) {
+            if (!csb_v1_dsa_has_operands(script, 1)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            {
                 int flag = script->bytecode[script->pc++];
-                if (flag >= 0 && flag < 256) state->flags[flag] = 0;
+                if (!csb_v1_dsa_flag_is_valid(flag)) {
+                    return csb_v1_dsa_reject_malformed_at(script, op_pc);
+                }
+                state->flags[flag] = 0;
             }
             break;
         case CSB_DSA_OP_TOGGLE:
-            if (script->pc < script->bytecode_len) {
+            if (!csb_v1_dsa_has_operands(script, 1)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            {
                 int flag = script->bytecode[script->pc++];
-                if (flag >= 0 && flag < 256) state->flags[flag] ^= 1;
+                if (!csb_v1_dsa_flag_is_valid(flag)) {
+                    return csb_v1_dsa_reject_malformed_at(script, op_pc);
+                }
+                state->flags[flag] ^= 1;
             }
             break;
         case CSB_DSA_OP_TEST:
-            if (script->pc + 1 < script->bytecode_len) {
+            if (!csb_v1_dsa_has_operands(script, 2)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            {
                 int flag = script->bytecode[script->pc++];
                 int target = script->bytecode[script->pc++];
-                if (flag >= 0 && flag < 256 && state->flags[flag])
+                /* ReDMCSB: DEFS.H lines 1206-1208 constrain remote sensor
+                 * target fields, and MOVESENS.C lines 1198-1206 indexes the
+                 * target square directly before enqueuing the event.  Reject
+                 * malformed DSA target operands at parse/VM time so imported
+                 * edge scripts cannot drive an out-of-range target lookup. */
+                if (!csb_v1_dsa_flag_is_valid(flag) ||
+                    !csb_v1_dsa_target_is_valid(script, target)) {
+                    return csb_v1_dsa_reject_malformed_at(script, op_pc);
+                }
+                if (state->flags[flag])
                     script->pc = target;
             }
             break;
         case CSB_DSA_OP_DELAY:
-            if (script->pc < script->bytecode_len)
-                script->delay_ticks = script->bytecode[script->pc++];
+            if (!csb_v1_dsa_has_operands(script, 1)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            script->delay_ticks = script->bytecode[script->pc++];
             break;
         case CSB_DSA_OP_END:
             script->active = 0;
@@ -127,4 +184,3 @@ const char *csb_v1_chaos_source_evidence(void) {
         "CSBWin/CSBCode.cpp:11414 StartChaos\n"
         "CSB-specific: DSA bytecode VM, 256 global flags\n";
 }
-

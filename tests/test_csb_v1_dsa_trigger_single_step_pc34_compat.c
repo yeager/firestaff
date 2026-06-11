@@ -353,7 +353,98 @@ static void test_single_step_guards(void)
 }
 
 /* ----------------------------------------------------------------
- * Test 6: source-evidence string must cite CSBWin DSA anchors so
+ * Test 7: malformed DSA operands reject the script without mutation.
+ * ----------------------------------------------------------------
+ * Imported or damaged DSA bytecode can carry edge flag ids or jump
+ * targets.  The VM must stop cleanly instead of partially executing a
+ * target reference.
+ *
+ * Source: csb_v1_dsa_execute_step malformed operand guards.
+ */
+static void test_malformed_target_operands_reject_cleanly(void)
+{
+    CSB_V1_ChaosMagicState chaos;
+
+    {
+        uint16_t script[] = { CSB_DSA_OP_SET };
+        install_single_script(&chaos, script,
+            (int)(sizeof(script) / sizeof(script[0])));
+        (void)csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID);
+        check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos) == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_SET",
+              "truncated SET operand rejects the script");
+        check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].active == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_reject_malformed_at",
+              "truncated SET deactivates cleanly");
+        check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_reject_malformed_at",
+              "truncated SET leaves pc at the malformed opcode");
+        check(chaos.flags[DSA_KNOWN_FLAG] == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_SET",
+              "truncated SET does not mutate flags");
+    }
+
+    {
+        uint16_t script[] = { CSB_DSA_OP_SET, 256 };
+        install_single_script(&chaos, script,
+            (int)(sizeof(script) / sizeof(script[0])));
+        (void)csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID);
+        check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos) == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_flag_is_valid",
+              "out-of-range flag id rejects the script");
+        check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_reject_malformed_at",
+              "out-of-range flag leaves pc at the malformed opcode");
+        check(chaos.flags[DSA_KNOWN_FLAG] == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_SET",
+              "out-of-range flag does not mutate nearby flags");
+    }
+
+    {
+        uint16_t script[] = {
+            CSB_DSA_OP_SET, (uint16_t)DSA_KNOWN_FLAG,
+            CSB_DSA_OP_TEST, (uint16_t)DSA_KNOWN_FLAG, 5
+        };
+        install_single_script(&chaos, script,
+            (int)(sizeof(script) / sizeof(script[0])));
+        (void)csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID);
+        check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos) == 1,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_SET",
+              "edge-target fixture first sets the test flag");
+        check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos) == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_target_is_valid",
+              "TEST target equal to bytecode_len rejects the script");
+        check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 2,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_reject_malformed_at",
+              "bad TEST target leaves pc at the TEST opcode");
+    }
+
+    {
+        uint16_t script[] = {
+            CSB_DSA_OP_SET, (uint16_t)DSA_KNOWN_FLAG,
+            CSB_DSA_OP_TEST, (uint16_t)DSA_KNOWN_FLAG, 0xFFFFu
+        };
+        install_single_script(&chaos, script,
+            (int)(sizeof(script) / sizeof(script[0])));
+        (void)csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID);
+        (void)csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos);
+        check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID],
+              &chaos) == 0,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_target_is_valid",
+              "large TEST target rejects the script");
+        check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 2,
+              "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_reject_malformed_at",
+              "large TEST target leaves pc at the TEST opcode");
+    }
+}
+
+/* ----------------------------------------------------------------
+ * Test 8: source-evidence string must cite CSBWin DSA anchors so
  * future readers can trace the test back to ReDMCSB / CSBWin.
  * ---------------------------------------------------------------- */
 static void test_source_evidence_anchors(void)
@@ -388,6 +479,7 @@ int main(void)
     test_single_step_test_unset_flag_no_jump();
     test_single_step_test_set_flag_jumps_to_target();
     test_single_step_guards();
+    test_malformed_target_operands_reject_cleanly();
     test_source_evidence_anchors();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);

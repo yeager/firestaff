@@ -540,6 +540,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Firestaff coding pass 2026-06-11: added a CSB V2 profile fallback guard across M12 and the CSB V1 boot handoff. `test_csb_v1_launch_blocker_m12` now proves a V2.1 presentation/version-only CSB selection cannot bypass missing `GRAPHICS.DAT`/`DUNGEON.DAT` required-file gating or produce a valid launch intent, and `test_csb_v1_boot_runtime_handoff` proves V2-looking profile labels still hand off only verified V1 paths, media kind, title state, and entrance/start map indices.
 - ✅ Firestaff coding pass 2026-06-11: hardened `test_csb_v1_boot_runtime_handoff` so the verified CSB boot→runtime handoff now proves imported DM1 champion health, stamina, STR, DEX, and WIS survive into `csb_v1_runtime_pc34_compat` and remain stable across the source-locked leader-switch path. Source anchors: ReDMCSB `LOADSAVE.C F0435:2728-2734`, `CLIKCHAM.C F0368:51-68`, and `CHAMPION.C F0284:117-130`.
+- ✅ Firestaff coding pass 2026-06-11: added CSB V1 DSA operand bounds guards for malformed flags and TEST jump targets. The DSA VM now rejects malformed operands by deactivating the script at the offending opcode without mutating flags, and `test_csb_v1_dsa_trigger_single_step_pc34_compat` proves truncated SET, out-of-range flag, target-at-end, and large target rejection. Source anchors: CSBWin `DSA.cpp`; ReDMCSB `DEFS.H:1206-1208` and `MOVESENS.C:1198-1206`.
 
 ### DM1 V1
 
