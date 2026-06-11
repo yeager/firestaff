@@ -30,6 +30,37 @@ static int timeline_queue_has_valid_count(const struct TimelineQueue_Compat* que
     return (queue->count >= 0) && (queue->count <= TIMELINE_QUEUE_CAPACITY);
 }
 
+static int timeline_events_same_square_time(
+    const struct TimelineEvent_Compat* a,
+    const struct TimelineEvent_Compat* b)
+{
+    return a->fireAtTick == b->fireAtTick &&
+           a->mapIndex == b->mapIndex &&
+           a->mapX == b->mapX &&
+           a->mapY == b->mapY;
+}
+
+static int timeline_try_merge_event(
+    struct TimelineQueue_Compat* queue,
+    const struct TimelineEvent_Compat* event)
+{
+    int i;
+    if (event->kind != TIMELINE_EVENT_DOOR_ANIMATE) return 0;
+
+    for (i = 0; i < queue->count; ++i) {
+        struct TimelineEvent_Compat* prior = &queue->events[i];
+        if (prior->kind == TIMELINE_EVENT_DOOR_ANIMATE &&
+            timeline_events_same_square_time(prior, event)) {
+            /* ReDMCSB: TIMELINE.C F0652_MergeEvent lines 3883-3895
+             * updates an existing C01_EVENT_DOOR_ANIMATION at the same
+             * Map_Time/MapXY instead of queueing a duplicate retrigger. */
+            prior->aux1 = event->aux1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int F0720_TIMELINE_Init_Compat(
     struct TimelineQueue_Compat* queue,
     uint32_t nowTick)
@@ -47,6 +78,7 @@ int F0721_TIMELINE_Schedule_Compat(
     int insertIndex;
     if (queue == 0 || !timeline_event_is_valid(event)) return 0;
     if (!timeline_queue_has_valid_count(queue)) return 0;
+    if (timeline_try_merge_event(queue, event)) return 1;
     if (queue->count >= TIMELINE_QUEUE_CAPACITY) return 0;
 
     insertIndex = queue->count;

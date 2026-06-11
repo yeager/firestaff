@@ -1338,6 +1338,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_fs_portable_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M11 Pass 38 -- DM1 V1 door animation and retrigger timing probe
+add_executable(firestaff_m11_pass38_door_animation_probe probes/firestaff_m11_pass38_door_animation_probe.c)
+target_link_libraries(firestaff_m11_pass38_door_animation_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass38_door_animation_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 
 # M11 Pass 418 -- DM1 V1 door closing obstruction parity probe
 add_executable(firestaff_m11_pass418_door_closing_obstruction_probe probes/firestaff_m11_pass418_door_closing_obstruction_probe.c)
