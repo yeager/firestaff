@@ -408,9 +408,19 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                 return -1;
             }
 
-            /* State 5: Verify block checksum */
+            /* State 5: Verify block checksum.
+             * ReDMCSB SAVEGAME.C F0100-F0120 import state keeps validation
+             * before the store-party step; a bad converted champion must not
+             * be allowed to reach the CSB utility import preview/party state. */
             if (result) result->state = CSB_V1_IMPORT_STATE_VERIFY_CHECKSUM;
-            (void)csb_v1_champion_block_verify(&block);
+            if (csb_v1_champion_block_verify(&block) != 0) {
+                if (result) {
+                    result->error_code = CSB_V1_IMPORT_ERR_CHECKSUM;
+                    result->byte_offset = offset;
+                    result->state = CSB_V1_IMPORT_STATE_ERROR;
+                }
+                return -1;
+            }
 
             /* State 6: Store in party slot */
             if (result) result->state = CSB_V1_IMPORT_STATE_STORE_PARTY;
