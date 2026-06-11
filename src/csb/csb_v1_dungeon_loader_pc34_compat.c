@@ -339,7 +339,37 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
     int v = csb_v1_dungeon_get_raw_square(d, level, x, y);
     if (v < 0) return -1;
     if (d && d->square_bytes == 1) {
-        return (v & 0x10) ? 0 : -1;
+        int i;
+        int column_index = 0;
+        int column_counts_base;
+        int thing_index;
+        int thing_offset;
+        int square_offset;
+
+        if ((v & 0x10) == 0) return -1;
+        column_counts_base = CSB_DUNGEON_HEADER_SIZE +
+                             d->level_count * CSB_DUNGEON_MAP_DESC_SIZE;
+        for (i = 0; i < level; i++) {
+            column_index += d->level_widths[i];
+        }
+        column_counts_base += (column_index + x) * 2;
+        if (column_counts_base + 2 > d->raw_size) return -1;
+
+        /* ReDMCSB DUNGEON.C F0160:1699-1728 starts from
+         * G0270_pui_CurrentMapColumnsCumulativeSquareFirstThingCount[x],
+         * then counts MASK0x0010_THING_LIST_PRESENT in earlier rows of the
+         * same column. F0161:1730-1746 returns G0283_pT_SquareFirstThings[index]. */
+        thing_index = (int)rd16(d->raw_data + column_counts_base);
+        square_offset = d->level_offsets[level] + x * d->level_heights[level];
+        for (i = 0; i < y; i++) {
+            if (square_offset + i >= d->raw_size) return -1;
+            if (d->raw_data[square_offset + i] & 0x10u) thing_index++;
+        }
+        if (thing_index < 0 || thing_index >= d->square_first_thing_count) return -1;
+
+        thing_offset = d->square_first_thing_base + thing_index * 2;
+        if (thing_offset + 2 > d->raw_size) return -1;
+        return (int)rd16(d->raw_data + thing_offset);
     }
     return ((v >> 5) & 0x3FF);
 }
@@ -402,6 +432,7 @@ const char *csb_v1_dungeon_source_evidence(void) {
         "CSBWin/CSBCode.cpp:318-480 DBank::Initialize TAG00332a\n"
         "CSBWin/CSBCode.cpp:6800-6950 LoadDungeon\n"
         "ReDMCSB DUNGEON.C F0148-F0170 shared format\n"
+        "ReDMCSB DUNGEON.C F0160/F0161 square-first-thing table lookup\n"
         "CSB-specific: DSA thing type 15, custom backgrounds\n"
     ;
 }
