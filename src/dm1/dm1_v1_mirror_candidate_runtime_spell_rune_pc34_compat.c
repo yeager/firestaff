@@ -6,11 +6,16 @@ enum {
     kNoCommand = 0,
     kSpellSymbol1Command = 101,
     kSpellSymbol6Command = 106,
+    kSpellRecantCommand = 107,
     kSpellSymbol1Left = 235,
     kSpellSymbol1Top = 51,
     kSpellSymbolWidth = 13,
     kSpellSymbolHeight = 11,
-    kSpellSymbolStride = 14
+    kSpellSymbolStride = 14,
+    kSpellRecantLeft = 305,
+    kSpellRecantTop = 63,
+    kSpellRecantWidth = 14,
+    kSpellRecantHeight = 11
 };
 
 static int in_box(int x, int y, int left, int top, int width, int height)
@@ -33,6 +38,13 @@ static int nested_spell_symbol_command(int x, int y)
                    kSpellSymbolHeight)) {
             return kSpellSymbol1Command + symbolIndex;
         }
+    }
+    if (in_box(x, y,
+               kSpellRecantLeft,
+               kSpellRecantTop,
+               kSpellRecantWidth,
+               kSpellRecantHeight)) {
+        return kSpellRecantCommand;
     }
     return kNoCommand;
 }
@@ -161,12 +173,50 @@ int DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
             casterIndex,
             &state->casterStats,
             outResult->symbolIndex);
+    } else if (nestedCommand == kSpellRecantCommand) {
+        /* ReDMCSB: COMMAND.C:482 maps C107 to the recant zone; CLIKMENU.C
+         * F0369:373-381/F0370:499-512 routes index >= 6 to SYMBOL.C F0400,
+         * which deletes the previous Champion.Symbol without refunding mana. */
+        outResult->symbolIndex =
+            DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_NONE_PC34_COMPAT;
+        dm1_spell_deleteSymbol(&state->spellState, casterIndex);
+        outResult->runeDeleted = 1;
     } else {
         outResult->symbolIndex =
             DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_NONE_PC34_COMPAT;
     }
     capture_result_after(state, outResult);
     return outResult->dispatchedSpellArea;
+}
+
+int DM1_V1_MirrorCandidateRuntimeSpellRune_CancelPc34Compat(
+    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult)
+{
+    int casterIndex;
+
+    if (!state || !outResult) {
+        return 0;
+    }
+    memset(outResult, 0, sizeof(*outResult));
+    capture_result_before(state, outResult);
+
+    casterIndex = state->magicCasterChampionIndex;
+    if (casterIndex < 0 || casterIndex >= state->partyChampionCount) {
+        outResult->blockedByMissingCaster = 1;
+        capture_result_after(state, outResult);
+        return 0;
+    }
+
+    /* Firestaff's cancel/clear binding preserves the source-locked clear
+     * contract used after a completed cast: MENU.C:1656-1657 clears
+     * Champion.Symbols[0] and resets Champion.SymbolStep to 0. */
+    state->spellState.input[casterIndex].symbols[0] = '\0';
+    state->spellState.input[casterIndex].symbolStep = 0;
+    outResult->spellCancelled = 1;
+
+    capture_result_after(state, outResult);
+    return 1;
 }
 
 const char *DM1_V1_MirrorCandidateRuntimeSpellRune_SourceEvidencePc34Compat(void)
@@ -176,6 +226,8 @@ const char *DM1_V1_MirrorCandidateRuntimeSpellRune_SourceEvidencePc34Compat(void
            "!G0299; COMMAND.C:2302-2311 gates C100 spell-area dispatch on "
            "!G0299 and G0514; MOVESENS.C:1501-1503 sends C127 portrait "
            "sensors to F0280; COMMAND.C:474-482 and CLIKMENU.C F0370:386-510 "
-           "resolve C100 child spell-symbol clicks; SYMBOL.C F0399 appends "
-           "the selected rune and advances Champion.SymbolStep.";
+           "resolve C100 child spell-symbol clicks; CLIKMENU.C F0369:373-381 "
+           "and F0370:499-512 route C107 recant to SYMBOL.C F0400; SYMBOL.C "
+           "F0399 appends the selected rune and advances Champion.SymbolStep; "
+           "MENU.C:1656-1657 clears Champion.Symbols and resets SymbolStep.";
 }
