@@ -131,6 +131,48 @@ static void test_creature_damage_multi(void) {
     PASS();
 }
 
+/* -- Test: lethal hit compacts a multi-creature group (F0190) -------- */
+static void test_creature_damage_group_split_compacts_state(void) {
+    TEST(creature_damage_group_split_compacts_state);
+    DM1_CreatureGroup g;
+    dm1_combat_init_group(&g);
+    g.info.defense = 5;
+    g.count = 3; /* 4 creatures */
+    g.creatures[0].health = 44;
+    g.creatures[0].cell = 0;
+    g.creatures[0].direction = 1;
+    g.creatures[1].health = 12;
+    g.creatures[1].cell = 1;
+    g.creatures[1].direction = 2;
+    g.creatures[2].health = 36;
+    g.creatures[2].cell = 2;
+    g.creatures[2].direction = 3;
+    g.creatures[3].health = 28;
+    g.creatures[3].cell = 3;
+    g.creatures[3].direction = 0;
+
+    /*
+     * ReDMCSB GROUP.C F0190 lines 892-905 shifts Health, group cells,
+     * and group directions down after a killed middle creature, then
+     * decrements Count. F0199 remains a behavior distance helper; this
+     * regression deliberately proves only the attacked-group transition.
+     */
+    int r = dm1_creature_take_damage(&g, 1, 12);
+    CHECK(r == DM1_OUTCOME_KILLED_SOME, "lethal middle hit should kill one creature");
+    CHECK(g.count == 2, "count should be 2 (3 creatures remaining)");
+    CHECK(g.creatures[0].health == 44, "leader health should stay in slot 0");
+    CHECK(g.creatures[0].cell == 0, "leader cell should stay in slot 0");
+    CHECK(g.creatures[0].direction == 1, "leader direction should stay in slot 0");
+    CHECK(g.creatures[1].health == 36, "slot 2 health should compact into slot 1");
+    CHECK(g.creatures[1].cell == 2, "slot 2 cell should compact into slot 1");
+    CHECK(g.creatures[1].direction == 3, "slot 2 direction should compact into slot 1");
+    CHECK(g.creatures[2].health == 28, "slot 3 health should compact into slot 2");
+    CHECK(g.creatures[2].cell == 3, "slot 3 cell should compact into slot 2");
+    CHECK(g.creatures[2].direction == 0, "slot 3 direction should compact into slot 2");
+
+    PASS();
+}
+
 /* ── Test: archenemy immune (F0190) ──────────────────────────────── */
 static void test_archenemy_immune(void) {
     TEST(archenemy_immune);
@@ -697,6 +739,7 @@ int main(void) {
     test_stat_adjusted_attack();
     test_creature_damage();
     test_creature_damage_multi();
+    test_creature_damage_group_split_compacts_state();
     test_archenemy_immune();
     test_champion_damage_pipeline();
     test_sharp_attack_wounds();
