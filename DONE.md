@@ -2,6 +2,10 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+## Latest Watchdog Integration
+
+- ✅ 2026-06-11 — `watchdog: integrate pass665 CSB V1 D0C F0111 door panel + pass666 DM1 V1 mirror-candidate thought-project overlay + pass667 DM1 V1 chest pickup stack failover with full leader hand`. The three worker commits landed locally, the new test binaries build clean under `-Wall -Wextra -O2`, all three suites pass (pass666 = 135 assertions / 0 fail, pass667 = 130 / 0, pass665 = 118 / 0) with ReDMCSB anchors (DUNVIEW.C F0107/F0127 + DEFS.H + CSB-lineage Viewport.cpp for the CSB D0C door panel, CHEST.C F0334:117-132 for the chest failover, and the existing mirror-candidate thought-project source-lock for the overlay), and the watchdog pushes the integrated HEAD to origin/main.
+
 ## Maintenance Cadence
 
 - ✅ 2026-06-11 — hardened the DM1 V2 HUD overlay raster clipping path: `v2_hud_render()` now bounds-checks framebuffer height for compass, depth text, and stats-band pixels, and `test_dm1_v2_hud_overlay_pc34` adds guarded tiny-surface regressions proving clipped presentation overlays do not write past the caller-owned framebuffer while remaining V1-gameplay neutral.
