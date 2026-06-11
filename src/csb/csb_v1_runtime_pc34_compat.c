@@ -383,6 +383,21 @@ const char *csb_v1_runtime_save_path(int slot)
 
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
 {
+    int dispatched;
+
+    /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
+     * F0261_TIMELINE_Process_CPSEF() before incrementing
+     * G0313_ul_GameTime.  TIMELINE.C F0240 lines 702-708 expires the
+     * first heap event when event_time <= G0313_ul_GameTime. */
+    profile->timeline_queue.gameTick = profile->game_time;
+    memset(&profile->last_timeline_dispatch, 0,
+           sizeof(profile->last_timeline_dispatch));
+    dispatched = dm1v1_event_process_tick(&profile->timeline_queue,
+                                          &profile->last_timeline_dispatch);
+    if (dispatched > 0) {
+        profile->timeline_dispatch_count += (uint32_t)dispatched;
+    }
+
     profile->game_time++;
     profile->tick_count++;
     profile->game_ticks += CSB_V1_TICK_MS_NOMINAL;
@@ -431,9 +446,30 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->game_time     = 0;
     profile->total_play_ms = 0;
     profile->tick_count    = 0;
+    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+    memset(&profile->last_timeline_dispatch, 0,
+           sizeof(profile->last_timeline_dispatch));
+    profile->timeline_dispatch_count = 0;
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
+}
+
+int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
+                                      const struct DM1_Event_V1 *event)
+{
+    if (!profile || !event) return -1;
+    profile->timeline_queue.gameTick = profile->game_time;
+    return dm1v1_event_add(&profile->timeline_queue, event);
+}
+
+int csb_v1_runtime_get_last_timeline_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct DM1_TickDispatchResult_V1 *out_result)
+{
+    if (!profile || !out_result) return -1;
+    *out_result = profile->last_timeline_dispatch;
+    return out_result->count;
 }
 
 static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)

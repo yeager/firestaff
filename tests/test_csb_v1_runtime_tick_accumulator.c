@@ -113,16 +113,76 @@ static void test_tick_v1_steps_exactly_once_and_honors_stop_states(void)
           "game_over runtime_tick does not accumulate wall time");
 }
 
+static void test_timeline_events_fire_before_game_time_increment(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    struct DM1_Event_V1 ev;
+    struct DM1_TickDispatchResult_V1 dispatch;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_PLAY_SOUND;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 1);
+    ev.b_mapX = 7;
+    ev.b_mapY = 8;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "CSB runtime accepts a queued V1 timeline event");
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_DOOR_ANIMATION;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 2);
+    ev.b_mapX = 9;
+    ev.b_mapY = 10;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "CSB runtime accepts a second boundary event");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "first tick fires while game_time is still zero");
+    CHECK(profile.game_time == 1U,
+          "first tick increments game_time after timeline processing");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 0,
+          "event scheduled for time 1 does not fire at pre-increment time 0");
+    CHECK(profile.timeline_queue.eventCount == 2,
+          "both boundary events remain queued after tick zero processing");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "second tick processes pre-increment game_time 1");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1,
+          "event scheduled for time 1 fires before game_time advances to 2");
+    CHECK(dispatch.records[0].dispatchKind == DM1_DISPATCH_SOUND,
+          "time 1 event dispatches through the sound event boundary");
+    CHECK(dispatch.records[0].mapX == 7 && dispatch.records[0].mapY == 8,
+          "time 1 dispatch preserves event coordinates");
+    CHECK(profile.game_time == 2U,
+          "second tick increments game_time after event dispatch");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "future time 2 event remains queued after the time 1 boundary");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "third tick processes pre-increment game_time 2");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1,
+          "event scheduled for time 2 fires on the next boundary");
+    CHECK(dispatch.records[0].dispatchKind == DM1_DISPATCH_DOOR_ANIMATION,
+          "time 2 event dispatches through the door-animation boundary");
+    CHECK(profile.timeline_dispatch_count == 2U,
+          "CSB runtime records the cumulative timeline dispatch count");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "timeline queue is empty after both boundary events fire");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
     test_subquantum_frame_slices_fire_one_tick();
     test_multi_quantum_tick_and_due_probe();
     test_tick_v1_steps_exactly_once_and_honors_stop_states();
+    test_timeline_events_fire_before_game_time_increment();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
-        puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices and fires source-locked V1 quanta");
-        puts("sourceEvidence=ReDMCSB TIMELINE.C F0235 lines 702-708; COMMAND.C F0380 lines 2383-2429");
+        puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");
+        puts("sourceEvidence=ReDMCSB TIMELINE.C F0235/F0240/F0261 lines 702-708,1833-1850; GAMELOOP.C F0002 lines 69-124; COMMAND.C F0380 lines 2383-2429");
     }
     return failed == 0 ? 0 : 1;
 }
