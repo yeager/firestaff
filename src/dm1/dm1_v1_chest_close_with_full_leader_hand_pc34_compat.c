@@ -14,7 +14,6 @@ enum {
     DM1_PC34_FULL_HAND_CHEST_A_FIRST_ITEM = 800,
     DM1_PC34_FULL_HAND_CHEST_A_HIDDEN_TAIL = 808,
     DM1_PC34_FULL_HAND_CHEST_B_FIRST_ITEM = 900,
-    DM1_PC34_FULL_HAND_BACKPACK_ITEM = 700,
     DM1_PC34_FULL_HAND_CHEST_A_C537_WEIGHT = 2,
     DM1_PC34_FULL_HAND_CHEST_B_C537_WEIGHT = 11
 };
@@ -207,7 +206,7 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     m11_inventory_init(&state, 1);
     out->setupBaseLoadResult = m11_inventory_set_item_in_pc34_source_slot(
         &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1,
-        DM1_PC34_FULL_HAND_BACKPACK_ITEM,
+        DM1_PC34_CHEST_CLOSE_FULL_HAND_BACKPACK_ITEM,
         DM1_PC34_CHEST_CLOSE_FULL_HAND_BASE_BACKPACK_WEIGHT,
         0, DM1_PC34_ALLOWED_ANY_SLOT);
     if (!out->setupBaseLoadResult) {
@@ -292,6 +291,27 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
         return 0;
     }
     out->leaderHandAfterChestAClose = item.itemType;
+    out->leaderHandWeightAfterChestAClose = item.weight;
+    out->leaderHandAllowedSlotsAfterChestAClose = item.allowedSlots;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_READY_HAND, &item)) {
+        return 0;
+    }
+    out->readyHandAfterChestAClose = item.itemType;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_ACTION_HAND, &item)) {
+        return 0;
+    }
+    out->actionHandAfterChestAClose = item.itemType;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1, &item)) {
+        return 0;
+    }
+    out->backpackAfterChestAClose = item.itemType;
+    out->loadAfterChestAClose = m11_inventory_get_load(&state, 0);
+    out->chestAReadSlotAfterCloseResult =
+        m11_inventory_get_item_in_chest_slot(
+            &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C537_INDEX, &item);
     out->chestAOpenThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
     copy_int_array(out->chestAClosedTypes, chestAClosedSnapshot);
     out->containerAWeightAfterFirstClose =
@@ -349,6 +369,27 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
         return 0;
     }
     out->leaderHandAfterChestBClose = item.itemType;
+    out->leaderHandWeightAfterChestBClose = item.weight;
+    out->leaderHandAllowedSlotsAfterChestBClose = item.allowedSlots;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_READY_HAND, &item)) {
+        return 0;
+    }
+    out->readyHandAfterChestBClose = item.itemType;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_ACTION_HAND, &item)) {
+        return 0;
+    }
+    out->actionHandAfterChestBClose = item.itemType;
+    if (!m11_inventory_get_item_in_pc34_source_slot(
+            &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1, &item)) {
+        return 0;
+    }
+    out->backpackAfterChestBClose = item.itemType;
+    out->loadAfterChestBClose = m11_inventory_get_load(&state, 0);
+    out->chestBReadSlotAfterCloseResult =
+        m11_inventory_get_item_in_chest_slot(
+            &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C537_INDEX, &item);
     out->chestBOpenThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
 
     copy_int_array(out->chestAClosedTypes, out->chestAAfterChestBCloseTypes);

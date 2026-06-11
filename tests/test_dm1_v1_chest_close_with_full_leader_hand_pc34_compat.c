@@ -158,6 +158,27 @@ static int test_chest_a_open_pickup_and_close(void)
                      g_probe.leaderHandAfterChestAClose,
                      DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_ITEM_TYPE,
                      f0302Swap);
+    ok &= expect_int("leader hand helmet weight after chest A closes",
+                     g_probe.leaderHandWeightAfterChestAClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_WEIGHT,
+                     f0140Weight);
+    ok &= expect_int("leader hand helmet mask after chest A closes",
+                     g_probe.leaderHandAllowedSlotsAfterChestAClose,
+                     DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER,
+                     f0302Swap);
+    ok &= expect_int("ready hand remains empty after chest A closes",
+                     g_probe.readyHandAfterChestAClose, 0, f0302Swap);
+    ok &= expect_int("action hand remains empty after chest A closes",
+                     g_probe.actionHandAfterChestAClose, 0, f0302Swap);
+    ok &= expect_int("backpack item survives chest A close",
+                     g_probe.backpackAfterChestAClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_BACKPACK_ITEM, f0334Close);
+    ok &= expect_int("closed chest A no longer contributes to load",
+                     g_probe.loadAfterChestAClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_BASE_BACKPACK_WEIGHT,
+                     f0297Load);
+    ok &= expect_int("closed chest A slot read is rejected",
+                     g_probe.chestAReadSlotAfterCloseResult, 0, f0334Close);
     ok &= expect_int("no chest open after chest A closes",
                      g_probe.chestAOpenThingAfterClose, 0, f0334Close);
 
@@ -215,6 +236,27 @@ static int test_chest_b_open_close_without_leader_contamination(void)
                      g_probe.leaderHandAfterChestBClose,
                      DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_ITEM_TYPE,
                      f0302Swap);
+    ok &= expect_int("leader hand helmet weight after chest B closes",
+                     g_probe.leaderHandWeightAfterChestBClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_WEIGHT,
+                     f0140Weight);
+    ok &= expect_int("leader hand helmet mask after chest B closes",
+                     g_probe.leaderHandAllowedSlotsAfterChestBClose,
+                     DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER,
+                     f0302Swap);
+    ok &= expect_int("ready hand remains empty after chest B closes",
+                     g_probe.readyHandAfterChestBClose, 0, f0302Swap);
+    ok &= expect_int("action hand remains empty after chest B closes",
+                     g_probe.actionHandAfterChestBClose, 0, f0302Swap);
+    ok &= expect_int("backpack item survives chest B close",
+                     g_probe.backpackAfterChestBClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_BACKPACK_ITEM, f0334Close);
+    ok &= expect_int("closed chest B no longer contributes to load",
+                     g_probe.loadAfterChestBClose,
+                     DM1_PC34_CHEST_CLOSE_FULL_HAND_BASE_BACKPACK_WEIGHT,
+                     f0140Weight);
+    ok &= expect_int("closed chest B slot read is rejected",
+                     g_probe.chestBReadSlotAfterCloseResult, 0, f0334Close);
     ok &= expect_int("no chest open after chest B closes",
                      g_probe.chestBOpenThingAfterClose, 0, f0334Close);
 
