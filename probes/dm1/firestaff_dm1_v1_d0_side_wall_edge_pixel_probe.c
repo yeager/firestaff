@@ -33,7 +33,8 @@ static void fill_source(uint8_t *source, const DM1_WallFrame *frame, uint8_t bas
 static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
                                 const char *name,
                                 uint8_t base,
-                                int expected_dst_x)
+                                int expected_dst_x,
+                                int expected_before_x)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
     uint8_t source[16 * 136];
@@ -102,10 +103,26 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
     check_int(id,
               viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + gate.dst_x + gate.width],
               PIXEL_SENTINEL);
+    snprintf(id, sizeof(id), "%s.last_row_after_right_edge_untouched", name);
+    check_int(id,
+              viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH +
+                       gate.dst_x + gate.width],
+              PIXEL_SENTINEL);
+    if (expected_before_x >= 0) {
+        snprintf(id, sizeof(id), "%s.before_left_edge_untouched", name);
+        check_int(id,
+                  viewport[gate.dst_y * DM1_VIEWPORT_WIDTH + expected_before_x],
+                  PIXEL_SENTINEL);
+        snprintf(id, sizeof(id), "%s.last_row_before_left_edge_untouched", name);
+        check_int(id,
+                  viewport[(gate.dst_y + gate.height - 1) * DM1_VIEWPORT_WIDTH +
+                           expected_before_x],
+                  PIXEL_SENTINEL);
+    }
 
-    printf("d0SideWallEdge name=%s square=%d dst=(%d,%d) src=(%d,%d) size=%dx%d source=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n",
+    printf("d0SideWallEdge name=%s square=%d dst=(%d,%d) src=(%d,%d) size=%dx%d outsideLeft=%d source=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n",
            name, (int)square, gate.dst_x, gate.dst_y, gate.src_x, gate.src_y,
-           gate.width, gate.height);
+           gate.width, gate.height, expected_before_x);
 }
 
 int main(void)
@@ -114,8 +131,8 @@ int main(void)
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
     printf("sourceEvidence=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n");
 
-    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0L, "D0L", 0x20, 0);
-    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0R, "D0R", 0x50, 192);
+    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0L, "D0L", 0x20, 0, -1);
+    verify_d0_edge_wall(DM1_VIEW_SQUARE_D0R, "D0R", 0x50, 192, 191);
 
     if (failures) {
         printf("FAIL dm1_v1_d0_side_wall_edge_pixel_probe failures=%d\n", failures);
