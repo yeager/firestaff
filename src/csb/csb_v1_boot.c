@@ -108,6 +108,20 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     if (!profile) return -1;
     root = (data_dir && data_dir[0] != '\0') ? data_dir : ".";
     csb_v1_boot_copy(profile->asset_root, sizeof(profile->asset_root), root);
+    /* A reused launcher profile must not carry stale CSB paths across scans.
+     * ReDMCSB only enters the CSB load path after the current media probe has
+     * selected CSB and found a dungeon to load.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 */
+    profile->assets_verified = 0;
+    profile->graphics_verified = 0;
+    profile->dungeon_verified = 0;
+    profile->graphics_path[0] = '\0';
+    profile->dungeon_path[0] = '\0';
+    profile->graphics_md5[0] = '\0';
+    profile->dungeon_md5[0] = '\0';
+    profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+    profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
 
     profile->graphics_verified =
         asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
