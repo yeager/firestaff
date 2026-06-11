@@ -31,15 +31,18 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <process.h>
 #define MKDIR(path) _mkdir(path)
 #define RMDIR(path) _rmdir(path)
 #define UNLINK(path) remove(path)
+#define GETPID() _getpid()
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0775)
 #define RMDIR(path) rmdir(path)
 #define UNLINK(path) remove(path)
+#define GETPID() getpid()
 #endif
 
 enum {
@@ -245,15 +248,28 @@ static int extract_wall_text_from_slice(const unsigned char *file_buf,
     return 0;
 }
 
-static int write_and_verify_fixture(char *resolved_path, size_t resolved_cap) {
-    const char *dir = "csb_wall_text_oracle_probe_tmp";
+static int write_and_verify_fixture(char *resolved_path, size_t resolved_cap,
+                                    char *fixture_path, size_t fixture_path_cap,
+                                    char *fixture_dir, size_t fixture_dir_cap) {
     char path[256];
 
-    if (!ensure_dir(dir)) {
+    if (!resolved_path || resolved_cap == 0 || !fixture_path ||
+        fixture_path_cap == 0 || !fixture_dir || fixture_dir_cap == 0) {
         return 0;
     }
 
-    if (snprintf(path, sizeof(path), "%s/wall_text_oracle_slice.bin", dir) <= 0) {
+    if (snprintf(fixture_dir, fixture_dir_cap,
+                 "csb_wall_text_oracle_probe_tmp_%ld",
+                 (long)GETPID()) <= 0) {
+        return 0;
+    }
+
+    if (!ensure_dir(fixture_dir)) {
+        return 0;
+    }
+
+    if (snprintf(path, sizeof(path), "%s/wall_text_oracle_slice.bin",
+                 fixture_dir) <= 0) {
         return 0;
     }
 
@@ -261,7 +277,11 @@ static int write_and_verify_fixture(char *resolved_path, size_t resolved_cap) {
         return 0;
     }
 
-    if (!verify_slice_hash(dir, resolved_path, (int)resolved_cap)) {
+    if (!verify_slice_hash(fixture_dir, resolved_path, (int)resolved_cap)) {
+        return 0;
+    }
+
+    if (snprintf(fixture_path, fixture_path_cap, "%s", path) <= 0) {
         return 0;
     }
 
@@ -272,6 +292,8 @@ int main(void) {
     CSB_V1_DungeonData dungeon;
     unsigned char *file_buf = NULL;
     char resolved_path[ASSET_PATH_MAX];
+    char fixture_path[ASSET_PATH_MAX];
+    char fixture_dir[128];
     char decoded_label[32];
     FILE *fp = NULL;
     long file_size = 0;
@@ -280,23 +302,27 @@ int main(void) {
 
     printf("=== CSB V1 Wall Text / Oracle Probe ===\n");
 
-    if (!write_and_verify_fixture(resolved_path, sizeof(resolved_path))) {
+    if (!write_and_verify_fixture(resolved_path, sizeof(resolved_path),
+                                  fixture_path, sizeof(fixture_path),
+                                  fixture_dir, sizeof(fixture_dir))) {
         printf("FAIL: could not write and hash-verify the synthetic slice\n");
         return 1;
     }
+    CHECK(strcmp(resolved_path, fixture_path) == 0,
+          "hash discovery returns the generated CSB dungeon slice path");
 
     fp = fopen(resolved_path, "rb");
     if (!fp) {
         printf("FAIL: could not reopen hash-verified slice: %s\n", resolved_path);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
 
     if (fseek(fp, 0, SEEK_END) != 0) {
         fclose(fp);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
 
@@ -304,14 +330,14 @@ int main(void) {
     if (file_size <= 0) {
         fclose(fp);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
 
     if (fseek(fp, 0, SEEK_SET) != 0) {
         fclose(fp);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
 
@@ -319,7 +345,7 @@ int main(void) {
     if (!file_buf) {
         fclose(fp);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
 
@@ -327,7 +353,7 @@ int main(void) {
         free(file_buf);
         fclose(fp);
         UNLINK(resolved_path);
-        RMDIR("csb_wall_text_oracle_probe_tmp");
+        RMDIR(fixture_dir);
         return 1;
     }
     fclose(fp);
@@ -361,7 +387,7 @@ int main(void) {
     csb_v1_dungeon_free(&dungeon);
     free(file_buf);
     UNLINK(resolved_path);
-    RMDIR("csb_wall_text_oracle_probe_tmp");
+    RMDIR(fixture_dir);
 
     printf("Result: %s\n", g_failures == 0 ? "PASS" : "FAIL");
     return g_failures == 0 ? 0 : 1;
