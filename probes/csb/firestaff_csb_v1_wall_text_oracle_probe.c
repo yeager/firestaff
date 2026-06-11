@@ -9,6 +9,7 @@
  *   - one wall square
  *   - one textstring object
  *   - one encoded inscription payload ("ORACLE")
+ *   - extraction from the loader-owned raw buffer, not the sidecar file copy
  *
  * Why this exists:
  *   ReDMCSB DUNGEON.C F0168 decodes inscription text from dungeon text
@@ -298,7 +299,9 @@ int main(void) {
     FILE *fp = NULL;
     long file_size = 0;
     int load_ret;
+    int tile_ret;
     int ok;
+    CSB_V1_DecodedSquare decoded_square;
 
     printf("=== CSB V1 Wall Text / Oracle Probe ===\n");
 
@@ -364,15 +367,28 @@ int main(void) {
     CHECK(dungeon.level_count == 1, "slice contains exactly one level");
     CHECK(dungeon.level_widths[0] == 1, "slice level width is one square");
     CHECK(dungeon.level_heights[0] == 1, "slice level height is one square");
+    CHECK(dungeon.raw_data != NULL, "loader owns a raw copy of the hash-verified slice");
+    CHECK(dungeon.raw_size == (int)file_size, "loader raw copy preserves slice byte count");
+    CHECK(dungeon.raw_data != NULL &&
+          dungeon.raw_size == (int)file_size &&
+          memcmp(dungeon.raw_data, file_buf, (size_t)file_size) == 0,
+          "loader raw copy is byte-identical to the hash-verified slice");
     CHECK(csb_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 0,
           "single square is a wall square");
     CHECK(csb_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) == 0,
           "single wall square exposes the first thing index");
+    memset(&decoded_square, 0xCC, sizeof(decoded_square));
+    tile_ret = csb_v1_dungeon_decode_tile(&dungeon, 0, 0, 0, &decoded_square);
+    CHECK(tile_ret == 0, "decoded tile is available for the wall square");
+    CHECK(tile_ret == 0 && decoded_square.type == 0,
+          "decoded tile keeps the wall square type");
+    CHECK(tile_ret == 0 && decoded_square.first_thing == 0,
+          "decoded tile keeps the wall text thing index");
 
     decoded_label[0] = '\0';
     ok = 0;
-    if (load_ret == 0) {
-        ok = extract_wall_text_from_slice(file_buf, (size_t)file_size,
+    if (load_ret == 0 && dungeon.raw_data && dungeon.raw_size > 0) {
+        ok = extract_wall_text_from_slice(dungeon.raw_data, (size_t)dungeon.raw_size,
                                           &dungeon, decoded_label,
                                           sizeof(decoded_label));
     }
