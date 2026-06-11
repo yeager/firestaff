@@ -5,10 +5,10 @@
  * the M11 V1 bridge, clicks a visible chest slot through the real
  * pointer/COMMAND route, then redraws into the already-used framebuffer.
  * The first-slot branch is already covered by the original version of this
- * probe. This hardened path fills all eight visible slots and clicks C544, the
- * second-row/rightmost slot. The picked slot must repaint to the clean
- * empty-slot state, C537 must remain stable, and the leader hand must hold the
- * picked item.
+ * probe. This hardened path fills all eight visible slots and covers both the
+ * C544 second-row/rightmost pickup and a C538 middle pickup. The middle pickup
+ * must compact the visible runtime chain so downstream item icons shift left
+ * into C538/C539 and C544 repaints to a clean empty slot.
  *
  * Source evidence:
  *   ReDMCSB CHEST.C F0333_INVENTORY_OpenAndDrawChest lines 43-76 opens
@@ -20,8 +20,10 @@
  *   hand.  CHEST.C F0334 lines 117-132 later compacts only non-empty visible
  *   slots; Firestaff's bridge rewrites the same visible list after the click.
  */
+#include "asset_loader_m11.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +36,8 @@ enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
     PROBE_SLOT_C537 = 0,
+    PROBE_SLOT_C538 = 1,
+    PROBE_SLOT_C539 = 2,
     PROBE_SLOT_C544 = 7,
     PROBE_CHEST_SLOT_COUNT = 8
 };
@@ -157,6 +161,100 @@ static int rect_equal(const unsigned char* a,
     return rect_diff_count(a, b, x, y, w, h) == 0;
 }
 
+static int count_icon_matches(const M11_GameViewState* game,
+                              const unsigned char* fb,
+                              int iconIndex,
+                              int dstX,
+                              int dstY,
+                              const char* label)
+{
+    const M11_AssetSlot* iconSheet;
+    int graphicIndex = 0;
+    int srcX = 0;
+    int srcY = 0;
+    int srcW = 0;
+    int srcH = 0;
+    int matched = 0;
+    int total = 0;
+    int yy;
+    int ok = 1;
+    char zoneLabel[128];
+
+    snprintf(zoneLabel, sizeof(zoneLabel), "%s icon source zone", label);
+    ok &= expect_true(zoneLabel,
+                      M11_GameView_GetV1ObjectIconSourceZone(iconIndex,
+                                                             &graphicIndex,
+                                                             &srcX, &srcY,
+                                                             &srcW, &srcH) &&
+                      srcW == 16 && srcH == 16);
+    iconSheet = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                     (unsigned int)graphicIndex);
+    snprintf(zoneLabel, sizeof(zoneLabel), "%s icon sheet", label);
+    ok &= expect_true(zoneLabel,
+                      iconSheet && iconSheet->loaded && iconSheet->pixels &&
+                      srcX + srcW <= (int)iconSheet->width &&
+                      srcY + srcH <= (int)iconSheet->height);
+    if (!ok || !iconSheet || !iconSheet->pixels) {
+        return 0;
+    }
+
+    for (yy = 0; yy < srcH; ++yy) {
+        int xx;
+        for (xx = 0; xx < srcW; ++xx) {
+            unsigned char src = (unsigned char)
+                (iconSheet->pixels[(srcY + yy) * (int)iconSheet->width +
+                                   srcX + xx] & 0x0F);
+            unsigned char dst = (unsigned char)
+                M11_FB_DECODE_INDEX(fb[(dstY + yy) * PROBE_FB_W +
+                                       dstX + xx]);
+            if (src != 12) {
+                ++total;
+                if (src == dst) {
+                    ++matched;
+                }
+            }
+        }
+    }
+    snprintf(zoneLabel, sizeof(zoneLabel), "%s visible icon pixels", label);
+    if (!(total > 0 && matched == total)) {
+        fprintf(stderr, "FAIL %s matched=%d total=%d icon=%d dst=%d,%d\n",
+                zoneLabel, matched, total, iconIndex, dstX, dstY);
+        return 0;
+    }
+    printf("PASS %s matched=%d total=%d icon=%d\n",
+           zoneLabel, matched, total, iconIndex);
+    return 1;
+}
+
+static int check_chest_slot_icon(const M11_GameViewState* game,
+                                 const unsigned char* fb,
+                                 int chestOrdinal,
+                                 int expectedIcon,
+                                 const char* label)
+{
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    int h = 0;
+    int vx = 0;
+    int vy = 0;
+    int vw = 0;
+    int vh = 0;
+    char zoneLabel[128];
+    int ok = 1;
+
+    snprintf(zoneLabel, sizeof(zoneLabel), "%s viewport origin", label);
+    ok &= expect_true(zoneLabel,
+                      M11_GameView_GetV1ViewportZone(&vx, &vy, &vw, &vh));
+    snprintf(zoneLabel, sizeof(zoneLabel), "%s C537+Cn zone", label);
+    ok &= expect_true(zoneLabel,
+                      M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal,
+                                                         &x, &y, &w, &h) &&
+                      w == 16 && h == 16);
+    if (!ok) return 0;
+    return count_icon_matches(game, fb, expectedIcon, vx + x, vy + y, label);
+}
+
 int main(int argc, char** argv)
 {
     const char* dataDir;
@@ -169,6 +267,8 @@ int main(int argc, char** argv)
     unsigned short items[PROBE_CHEST_SLOT_COUNT];
     int vx = 0, vy = 0, vw = 0, vh = 0;
     int firstSx = 0, firstSy = 0, firstSw = 0, firstSh = 0;
+    int secondSx = 0, secondSy = 0, secondSw = 0, secondSh = 0;
+    int thirdSx = 0, thirdSy = 0, thirdSw = 0, thirdSh = 0;
     int pickSx = 0, pickSy = 0, pickSw = 0, pickSh = 0;
     int clickX;
     int clickY;
@@ -209,6 +309,14 @@ int main(int argc, char** argv)
                       M11_GameView_GetV1ChestSlotBoxZone(
                           PROBE_SLOT_C537,
                           &firstSx, &firstSy, &firstSw, &firstSh));
+    ok &= expect_true("C538 chest slot zone available",
+                      M11_GameView_GetV1ChestSlotBoxZone(
+                          PROBE_SLOT_C538,
+                          &secondSx, &secondSy, &secondSw, &secondSh));
+    ok &= expect_true("C539 chest slot zone available",
+                      M11_GameView_GetV1ChestSlotBoxZone(
+                          PROBE_SLOT_C539,
+                          &thirdSx, &thirdSy, &thirdSw, &thirdSh));
     ok &= expect_true("C544 chest slot zone available",
                       M11_GameView_GetV1ChestSlotBoxZone(
                           PROBE_SLOT_C544,
@@ -260,8 +368,67 @@ int main(int argc, char** argv)
                       rect_equal(reusedFb, cleanAfterFb,
                                  vx + pickSx, vy + pickSy, pickSw, pickSh));
 
+    M11_GameView_CloseV1OpenChest(&game);
+    ok &= expect_true("reset full chest for C538 pickup compaction",
+                      seed_records(&game, chestThing, items));
+    ok &= expect_true("reopen seeded full action-hand chest for C538 pickup",
+                      M11_GameView_OpenV1ActionHandChest(&game));
+    ok &= expect_int("leader hand empty before C538 click",
+                     (int)M11_GameView_GetV1LeaderHandThing(&game),
+                     (int)THING_NONE);
+
+    memset(reusedFb, 0, sizeof(reusedFb));
+    M11_GameView_Draw(&game, reusedFb, PROBE_FB_W, PROBE_FB_H);
+    memcpy(beforeFb, reusedFb, sizeof(beforeFb));
+
+    clickX = vx + secondSx + (secondSw / 2);
+    clickY = vy + secondSy + (secondSh / 2);
+    ok &= expect_true("left click on C538 picks up middle visible item",
+                      M11_GameView_HandlePointerButton(
+                          &game, clickX, clickY, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("leader hand holds picked C538 item",
+                     (int)M11_GameView_GetV1LeaderHandThing(&game),
+                     (int)items[PROBE_SLOT_C538]);
+    ok &= expect_int("chest remains open after C538 pickup",
+                     (int)M11_GameView_GetV1OpenChestThing(&game),
+                     (int)chestThing);
+
+    memset(cleanAfterFb, 0, sizeof(cleanAfterFb));
+    M11_GameView_Draw(&game, cleanAfterFb, PROBE_FB_W, PROBE_FB_H);
+    M11_GameView_Draw(&game, reusedFb, PROBE_FB_W, PROBE_FB_H);
+
+    ok &= expect_true("C537 remains stable after C538 compaction pickup",
+                      rect_equal(beforeFb, cleanAfterFb,
+                                 vx + firstSx, vy + firstSy,
+                                 firstSw, firstSh));
+    ok &= expect_true("C538 visibly changes after middle pickup",
+                      rect_diff_count(beforeFb, cleanAfterFb,
+                                      vx + secondSx, vy + secondSy,
+                                      secondSw, secondSh) > 8);
+    ok &= expect_true("C539 visibly changes after middle pickup",
+                      rect_diff_count(beforeFb, cleanAfterFb,
+                                      vx + thirdSx, vy + thirdSy,
+                                      thirdSw, thirdSh) > 8);
+    ok &= expect_true("C544 clears after middle pickup compaction",
+                      rect_diff_count(beforeFb, cleanAfterFb,
+                                      vx + pickSx, vy + pickSy,
+                                      pickSw, pickSh) > 8);
+    ok &= expect_true("reused framebuffer C544 matches clean empty tail slot",
+                      rect_equal(reusedFb, cleanAfterFb,
+                                 vx + pickSx, vy + pickSy,
+                                 pickSw, pickSh));
+    ok &= check_chest_slot_icon(
+        &game, cleanAfterFb, PROBE_SLOT_C538,
+        M11_GameView_GetObjectIconIndexForThing(&game, items[2]),
+        "post-C538-pickup compacted C538 item");
+    ok &= check_chest_slot_icon(
+        &game, cleanAfterFb, PROBE_SLOT_C539,
+        M11_GameView_GetObjectIconIndexForThing(&game, items[3]),
+        "post-C538-pickup compacted C539 item");
+
     printf("sourceEvidence=CHEST.C:F0333:43-76;COMMAND.C:F0359:2174-2176;CHAMPION.C:F0302:688-710;CHEST.C:F0334:117-132\n");
-    printf("%s dm1 v1 chest C544 slot-click pickup runtime pixel probe\n",
+    printf("%s dm1 v1 chest slot-click pickup runtime pixel probe\n",
            ok ? "PASS" : "FAIL");
     M11_GameView_Shutdown(&game);
     return ok ? 0 : 1;
