@@ -1,4 +1,5 @@
 #include "render_sdl_m11.h"
+#include "touch_click_zone_matrix_pc34_compat.h"
 
 #include <stdio.h>
 
@@ -37,6 +38,83 @@ static void check_rect(int windowW,
     CHECK(h == expectedH);
 }
 
+static int scaled_window_coord(int rectStart, int rectSize, int logical, int logicalSize) {
+    return rectStart + ((logical * rectSize) + (rectSize / 2)) / logicalSize;
+}
+
+static void check_scaled_dm1_command(int logicalX,
+                                     int logicalY,
+                                     int expectedCommand,
+                                     int expectedZone) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int windowX;
+    int windowY;
+    int fbX = -1;
+    int fbY = -1;
+    TouchClickZonePc34Compat hit;
+    int rc;
+
+    rc = M11_Render_ComputePresentationRect(3600,
+                                            2092,
+                                            M11_FB_WIDTH,
+                                            M11_FB_HEIGHT,
+                                            M11_SCALE_FIT,
+                                            0,
+                                            M11_DISPLAY_ASPECT_CONTENT,
+                                            &rectX,
+                                            &rectY,
+                                            &rectW,
+                                            &rectH);
+    CHECK(rc == M11_RENDER_OK);
+
+    windowX = scaled_window_coord(rectX, rectW, logicalX, M11_FB_WIDTH);
+    windowY = scaled_window_coord(rectY, rectH, logicalY, M11_FB_HEIGHT);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           3600,
+                                           2092,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == logicalX);
+    CHECK(fbY == logicalY);
+
+    /* Source route: ReDMCSB COMMAND.C G0448 movement arrow table. */
+    CHECK(TOUCHCLICK_Compat_HitTestWithButton(
+        fbX,
+        fbY,
+        TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+        &hit) == 1);
+    CHECK(hit.commandId == (unsigned int)expectedCommand);
+    CHECK(hit.zoneIndex == (unsigned int)expectedZone);
+    CHECK(hit.coordMode == TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT);
+}
+
+static void check_scaled_letterbox_rejection(void) {
+    int fbX = -1;
+    int fbY = -1;
+
+    CHECK(M11_Render_MapPointToFramebuffer(30,
+                                           100,
+                                           3600,
+                                           2092,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+}
+
 int main(void) {
     check_rect(1920, 1080, M11_SCALE_STRETCH, 0, M11_DISPLAY_ASPECT_16_9,
                0, 0, 1920, 1080);
@@ -52,6 +130,8 @@ int main(void) {
                240, 0, 1440, 1080);
     check_rect(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
                126, 0, 3347, 2092);
+    check_scaled_dm1_command(264, 126, 3, 70);
+    check_scaled_letterbox_rejection();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
