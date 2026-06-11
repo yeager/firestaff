@@ -19,6 +19,10 @@
  *     non-weapon mapping on the Firestaff projectile struct
  *     (no associated-thing field; attackTypeCode carries the
  *     closest analogue).
+ *   - PROJEXPL.C:F0218_PROJECTILE_GetImpactCount lines 621-638
+ *     scans projectiles in a target cell, calls F0217 for each
+ *     projectile impact, deletes the impacted projectile event,
+ *     and increments the impact count.
  *   - DUNGEON.C:F0151_DUNGEON_GetSquare + DEFS.H C00..C5 square
  *     type encoding; DUNGEON_ELEMENT_WALL in the high 3 bits of
  *     the square byte.
@@ -83,6 +87,8 @@
     "ReDMCSB PROJEXPL.C:F0219 lines 644-755 F0811 mirror"
 #define SIDEWALL_REDMCSB_F0820_ANCHOR \
     "ReDMCSB PROJEXPL.C:F0217 lines 583-602 non-explosion impact sound path"
+#define SIDEWALL_REDMCSB_F0218_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0218 lines 621-638 projectile-vs-projectile impact scan"
 #define SIDEWALL_REDMCSB_SOUND_ANCHOR \
     "ReDMCSB PROJEXPL.C:587-600 C00_SOUND_METALLIC_THUD vs C04_SOUND_WOODEN_THUD"
 #define SIDEWALL_REDMCSB_PARITY_ANCHOR \
@@ -111,16 +117,18 @@ typedef struct {
     int destSquareType;
     int destDoorState;
     int destHasFluxcage;
+    int destHasOtherProjectile;
     int expectedBlocker;
     int expectedResultKind;
     int expectedDoorDestructionEvent;
 } SideCellBlockerCase;
 
-static const SideCellBlockerCase kSideCellBlockers[3] = {
+static const SideCellBlockerCase kSideCellBlockers[] = {
     {
         "side_lane_wall",
         PROJECTILE_ELEMENT_WALL,
         PROJECTILE_DOOR_STATE_NONE,
+        0,
         0,
         PROJECTILE_BLOCKER_WALL,
         PROJECTILE_RESULT_HIT_WALL,
@@ -131,6 +139,7 @@ static const SideCellBlockerCase kSideCellBlockers[3] = {
         PROJECTILE_ELEMENT_DOOR,
         PROJECTILE_DOOR_STATE_CLOSED_FULL,
         0,
+        0,
         PROJECTILE_BLOCKER_CLOSED_DOOR,
         PROJECTILE_RESULT_HIT_DOOR,
         1
@@ -140,11 +149,25 @@ static const SideCellBlockerCase kSideCellBlockers[3] = {
         PROJECTILE_ELEMENT_CORRIDOR,
         PROJECTILE_DOOR_STATE_NONE,
         1,
+        0,
         PROJECTILE_BLOCKER_FLUXCAGE,
         PROJECTILE_RESULT_HIT_FLUXCAGE,
         0
+    },
+    {
+        "side_lane_other_projectile",
+        PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_DOOR_STATE_NONE,
+        0,
+        1,
+        PROJECTILE_BLOCKER_OTHER_PROJECTILE,
+        PROJECTILE_RESULT_HIT_OTHER_PROJECTILE,
+        0
     }
 };
+
+#define SIDE_CELL_BLOCKER_COUNT \
+    ((int)(sizeof(kSideCellBlockers) / sizeof(kSideCellBlockers[0])))
 
 typedef struct {
     int direction;
@@ -274,6 +297,7 @@ static void make_side_cell_blocker_digest(
     d->destSquareType          = c->destSquareType;
     d->destDoorState           = c->destDoorState;
     d->destHasFluxcage         = c->destHasFluxcage;
+    d->destHasOtherProjectile  = c->destHasOtherProjectile;
     d->destTeleporterNewDirection = -1;
     d->destCreatureType        = -1;
 }
@@ -361,7 +385,7 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
     int i, j;
     printf("test_f0811_thrown_item_side_cell_blockers\n");
 
-    for (i = 0; i < 3; ++i) {
+    for (i = 0; i < SIDE_CELL_BLOCKER_COUNT; ++i) {
         const SideCellBlockerCase* c = &kSideCellBlockers[i];
         for (j = 0; j < 4; ++j) {
             const SideCellMotionCase* m = &kSideCellMotionCases[j];
@@ -395,6 +419,11 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
                        1, SIDEWALL_REDMCSB_F0219_ANCHOR);
             expect_int(c->label, r.resultKind, c->expectedResultKind,
                        "ReDMCSB PROJEXPL.C:F0219 lines 717-725 + F0217 impact resolution");
+            if (c->expectedResultKind == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE) {
+                expect_int(c->label, r.resultKind,
+                           PROJECTILE_RESULT_HIT_OTHER_PROJECTILE,
+                           SIDEWALL_REDMCSB_F0218_ANCHOR);
+            }
             expect_int(c->label, r.despawn, 1,
                        "ReDMCSB PROJEXPL.C:F0217 lines 607-608 unlinks/deletes projectile after impact");
             expect_int(c->label, r.emittedDoorDestructionEvent,
@@ -425,10 +454,10 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
                            "F0819 door destruction event records owner kind");
             } else {
                 expect_int(c->label, r.outNextTick.kind, 0,
-                           "Side-cell wall/fluxcage blockers do not emit door destruction events");
+                           "Side-cell wall/fluxcage/projectile blockers do not emit door destruction events");
             }
             expect_int(c->label, r.emittedCombatAction, 0,
-                       "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
+                       "F0217 side-cell wall/door/fluxcage/projectile blockers have no champion or creature target");
             expect_int(c->label, r.emittedExplosion, 0,
                        "Kinetic thrown item side-cell blockers do not create explosions");
             expect_int(c->label, r.crossedCell, 0,
@@ -471,7 +500,7 @@ static void test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers(void)
     int i, j;
     printf("test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers\n");
 
-    for (i = 0; i < 3; ++i) {
+    for (i = 0; i < SIDE_CELL_BLOCKER_COUNT; ++i) {
         const SideCellBlockerCase* c = &kSideCellBlockers[i];
         for (j = 0; j < 4; ++j) {
             const SideCellMotionCase* m = &kSideCellMotionCases[j];
@@ -694,6 +723,9 @@ static void test_source_evidence_mentions_required_anchors(void)
     expect_contains("anchor.f0820",
                     SIDEWALL_REDMCSB_F0820_ANCHOR, "583-602",
                     "ReDMCSB non-explosion impact sound path");
+    expect_contains("anchor.f0218",
+                    SIDEWALL_REDMCSB_F0218_ANCHOR, "F0218",
+                    "ReDMCSB projectile-vs-projectile scan");
     expect_contains("anchor.sound",
                     SIDEWALL_REDMCSB_SOUND_ANCHOR, "C04_SOUND_WOODEN_THUD",
                     "ReDMCSB non-explosion impact sound path");
