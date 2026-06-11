@@ -210,6 +210,38 @@ typedef struct {
 
 int dm1_v2_side_by_side_seed_v1_geometry(DM1_V2_SideBySideV1Geometry* out);
 
+/* ── Side-by-side composite region manifest ──────────────────────
+ *
+ * Named rectangles in composite coordinates for screenshot and pixel
+ * probes. The lane rectangles cover the full V1/gap/V2 scaffold.
+ * The D1C wall and portrait rectangles are the V1 source-locked
+ * geometry from dm1_v2_side_by_side_seed_v1_geometry(), translated
+ * into each lane of the side-by-side composite.
+ */
+typedef enum {
+    DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE = 0,
+    DM1_V2_SIDE_BY_SIDE_REGION_GAP,
+    DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE,
+    DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL,
+    DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT,
+    DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL,
+    DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT,
+    DM1_V2_SIDE_BY_SIDE_REGION_COUNT
+} DM1_V2_SideBySideRegionId;
+
+typedef struct {
+    DM1_V2_SideBySideRegionId id;
+    int x;
+    int y;
+    int w;
+    int h;
+    const char* label;
+    const char* sourceAnchor;
+} DM1_V2_SideBySideRegion;
+
+int dm1_v2_side_by_side_seed_region(DM1_V2_SideBySideRegionId id,
+                                    DM1_V2_SideBySideRegion* out);
+
 /* Return the ReDMCSB source evidence string for this seed module. */
 const char* dm1_v2_side_by_side_seed_source_evidence(void);
 
