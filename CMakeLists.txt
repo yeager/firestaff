@@ -6829,7 +6829,14 @@ if(NOT TARGET test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat
     add_executable(test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat
         tests/test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    # The m11 object file holds M11_GameView_OpenSelectedMenuEntry which
+    # references M12_StartupMenu_GetEntry and friends; a single-pass
+    # static-link on Linux/Windows Release builds cannot resolve the
+    # m12 symbols from a non-grouped link line. The m12/m11 duplicates
+    # are a known-working static-archive pass pattern in this codebase
+    # (see test_m11_starvation_runtime_pc34_compat) — macOS ld does
+    # iterative resolution on its own so the dupes are harmless there.
+    target_link_libraries(test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -6843,7 +6850,9 @@ if(NOT TARGET test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat)
     add_executable(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat
         tests/test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat.c
     )
-    target_link_libraries(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    # See the link-pattern comment on test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat
+    # above for the m12/m11 duplicate rationale.
+    target_link_libraries(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
