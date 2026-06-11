@@ -351,6 +351,18 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "runtime party keeps DM1 import provenance");
     CHECK(runtime_party.LeaderIndex == 0 && p.runtime.leader_index == 0,
           "runtime leader starts from imported first living champion");
+    CHECK(runtime_party.Champions[0].CurrentHealth == 80 &&
+              runtime_party.Champions[0].MaximumHealth == 100,
+          "runtime champion 0 keeps imported health current/max");
+    CHECK(runtime_party.Champions[0].CurrentStamina == 60 &&
+              runtime_party.Champions[0].MaximumStamina == 100,
+          "runtime champion 0 keeps imported stamina current/max");
+    CHECK(runtime_party.Champions[0].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] == 55 &&
+              runtime_party.Champions[0].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_MAX] == 55,
+          "runtime champion 0 keeps imported STR current/max");
+    CHECK(runtime_party.Champions[1].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] == 67 &&
+              runtime_party.Champions[1].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_MAX] == 67,
+          "runtime champion 1 keeps imported DEX current/max");
 
     CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
           "runtime leader switch to second imported champion succeeds");
@@ -361,6 +373,12 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "runtime leader index changes to champion 1 after source-locked switch");
     CHECK(runtime_party.Champions[1].Direction == CSB_V1_DIR_EAST,
           "selected leader direction aligns to party direction (CLIKCHAM.C F0368)");
+    CHECK(runtime_party.Champions[1].CurrentHealth == 81 &&
+              runtime_party.Champions[1].MaximumHealth == 101,
+          "leader switch preserves imported champion 1 health current/max");
+    CHECK(runtime_party.Champions[1].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] == 56 &&
+              runtime_party.Champions[1].Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] == 78,
+          "leader switch preserves imported champion 1 STR/WIS current stats");
 
     csb_v1_boot_cleanup(&p);
 }
@@ -726,7 +744,7 @@ int main(void)
         puts("ok: CSB utility flow NEW_GAME handoff preserves LeaderIndex in csb_v1_util_flow_get_party()");
         puts("sourceEvidence=ReDMCSB SAVEGAME.C F0100-F0120 import state; ReDMCSB ENTRANCE.C F0806 startup flow");
         puts("ok: CSB V1 verified boot handoff preserves an imported two-champion party and supports a deterministic leader switch");
-        puts("sourceEvidence=ReDMCSB CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
+        puts("sourceEvidence=ReDMCSB LOADSAVE.C F0435 lines 2728-2734 imports party globals; CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
         puts("ok: CSB V1 verified boot handoff rotates an imported four-champion party through the source-locked F0284 delta-mod-4 invariant on every champion's Cell and Direction");
         puts("sourceEvidence=ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130 (MEDIA182 C source); CLIKCHAM.C F0368 line 67 (leader-switch alignment to G0308_i_PartyDirection)");
     }
