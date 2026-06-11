@@ -43,6 +43,11 @@
  *         composite-space rectangles for the V1 lane, gap, V2 lane,
  *         and both D1C wall/portrait rectangles in both lanes.
  *
+ *   TC-9. The manifest rectangles are bound to actual pixels: full
+ *         V1/V2 lanes, D1C wall rectangles, and D1C portrait
+ *         rectangles compare byte-identically and produce matching
+ *         region hashes.
+ *
  * The test is headless: it depends only on the firestaff_v2 static
  * library and does not require any game data files.
  *
@@ -626,6 +631,115 @@ static int test_region_manifest_pixel_translation(void) {
     return 0;
 }
 
+/* ── TC-13: region manifest full-pixel gates ─────────────────────
+ *
+ * This is the enhanced-presentation screenshot/pixel gate binding for
+ * the seed manifest: compare the full named rectangles, not only their
+ * translated corners. With presentation disabled the V1 and V2 lanes
+ * must be byte-identical across the full 224x136 viewport, and the
+ * source-locked D1C wall/portrait sub-rectangles must match pixel-for-
+ * pixel in both lanes.
+ */
+
+static int test_region_manifest_full_pixel_gates(void) {
+    DM1_V2_SideBySideSeed seed;
+    DM1_V2_SideBySideRegionCompareResult cmp;
+    int pixelsA = 0;
+    int pixelsB = 0;
+    uint64_t hashA;
+    uint64_t hashB;
+
+    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE,
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE,
+              &cmp) == 1);
+    CHECK(cmp.comparedPixels == DM1_V2_VIEWPORT_W * DM1_V2_VIEWPORT_H);
+    CHECK(cmp.mismatchedPixels == 0);
+    CHECK(cmp.firstMismatchAX == -1);
+    CHECK(cmp.firstMismatchBX == -1);
+    hashA = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE, &pixelsA);
+    hashB = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE, &pixelsB);
+    CHECK(pixelsA == DM1_V2_VIEWPORT_W * DM1_V2_VIEWPORT_H);
+    CHECK(pixelsB == pixelsA);
+    CHECK(hashA == hashB);
+    CHECK(hashA != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL,
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL,
+              &cmp) == 1);
+    CHECK(cmp.comparedPixels ==
+          DM1_V2_SIDE_BY_SIDE_D1C_WALL_W * DM1_V2_SIDE_BY_SIDE_D1C_WALL_H);
+    CHECK(cmp.mismatchedPixels == 0);
+    pixelsA = pixelsB = 0;
+    hashA = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL, &pixelsA);
+    hashB = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_WALL, &pixelsB);
+    CHECK(pixelsA ==
+          DM1_V2_SIDE_BY_SIDE_D1C_WALL_W * DM1_V2_SIDE_BY_SIDE_D1C_WALL_H);
+    CHECK(pixelsB == pixelsA);
+    CHECK(hashA == hashB);
+    CHECK(hashA != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT,
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT,
+              &cmp) == 1);
+    CHECK(cmp.comparedPixels ==
+          DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W *
+          DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H);
+    CHECK(cmp.mismatchedPixels == 0);
+    pixelsA = pixelsB = 0;
+    hashA = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT, &pixelsA);
+    hashB = dm1_v2_side_by_side_seed_hash_region(
+        &seed, DM1_V2_SIDE_BY_SIDE_REGION_V2_D1C_PORTRAIT, &pixelsB);
+    CHECK(pixelsA ==
+          DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_W *
+          DM1_V2_SIDE_BY_SIDE_D1C_PORTRAIT_H);
+    CHECK(pixelsB == pixelsA);
+    CHECK(hashA == hashB);
+    CHECK(hashA != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_PORTRAIT,
+              &cmp) == 0);
+    CHECK(cmp.comparedPixels == 0);
+    CHECK(cmp.mismatchedPixels == 0);
+
+    pixelsA = 1234;
+    CHECK(dm1_v2_side_by_side_seed_hash_region(
+              NULL, DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE, &pixelsA) ==
+          DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+    CHECK(pixelsA == 0);
+    pixelsA = 1234;
+    CHECK(dm1_v2_side_by_side_seed_hash_region(
+              &seed, DM1_V2_SIDE_BY_SIDE_REGION_COUNT, &pixelsA) ==
+          DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+    CHECK(pixelsA == 0);
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              NULL,
+              DM1_V2_SIDE_BY_SIDE_REGION_V1_LANE,
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE,
+              &cmp) == 0);
+    CHECK(dm1_v2_side_by_side_seed_compare_regions(
+              &seed,
+              DM1_V2_SIDE_BY_SIDE_REGION_COUNT,
+              DM1_V2_SIDE_BY_SIDE_REGION_V2_LANE,
+              &cmp) == 0);
+    return 0;
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -643,6 +757,7 @@ int main(void) {
     if (test_v1_geometry_null_safe()) return 1;
     if (test_region_manifest()) return 1;
     if (test_region_manifest_pixel_translation()) return 1;
+    if (test_region_manifest_full_pixel_gates()) return 1;
     /* Print the canonical seed fingerprint so downstream visual-diff
      * gates can lock a known-good baseline against it. */
     if (dm1_v2_side_by_side_seed_build_entry(&seed) == 1) {
