@@ -39,11 +39,12 @@ PASS513_SCAFFOLD="${OUT_DIR}/pass513_i34e_route_key_transcript_scaffold.json"
 
 usage() {
     cat <<EOF
-Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--run|--normalize-only|--print-pass94-diagnostic]
+Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--preflight-route|--run|--normalize-only|--print-pass94-diagnostic]
 
 Modes:
   --prepare                  write DOSBox config and Swift key helper only (default)
   --dry-run                  show blockers/plan, no launch
+  --preflight-route          validate route shape and host injector, no DOSBox launch
   --run                      launch DOSBox, post an explicit route, capture raw frames, normalize crops
   --normalize-only           crop/hash existing image*.png raw screenshots in OUT_DIR
   --print-pass94-diagnostic  print the pass94 entrance-click diagnostic command and audit expectations
@@ -108,6 +109,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --prepare) mode="prepare"; shift ;;
         --dry-run) mode="dry-run"; shift ;;
+        --preflight-route) mode="preflight-route"; shift ;;
         --run) mode="run"; shift ;;
         --normalize-only) mode="normalize-only"; shift ;;
         --print-pass94-diagnostic) mode="print-pass94-diagnostic"; shift ;;
@@ -230,6 +232,44 @@ if diagnostic_hits:
     print("[pass-70] diagnostic-only labels present: " + ", ".join(diagnostic_hits))
     print("[pass-70] note: diagnostic labels are for manual/pass94 routing only; pass84 overlay readiness requires party_hud, blank, blank, spell_panel, blank, inventory_panel")
 PY
+}
+
+select_route_injector() {
+    local uname_s
+    local swift_path
+    uname_s="$(uname -s 2>/dev/null || true)"
+    swift_path="$(command -v swift 2>/dev/null || true)"
+    if [[ "${uname_s}" == "Darwin" && -n "${swift_path}" && -x "${swift_path}" ]]; then
+        echo "swift"
+        return 0
+    fi
+    if command -v xdotool >/dev/null 2>&1; then
+        echo "xdotool"
+        return 0
+    fi
+    return 1
+}
+
+preflight_route() {
+    if [[ -z "${ROUTE_EVENTS}" ]]; then
+        echo "ERROR: DM1_ORIGINAL_ROUTE_EVENTS is required for --preflight-route" >&2
+        return 5
+    fi
+    write_helpers
+    validate_route_shape
+
+    local injector
+    if ! injector="$(select_route_injector)"; then
+        echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
+        return 6
+    fi
+    if [[ "${injector}" == "xdotool" && -z "${DISPLAY:-}" ]]; then
+        echo "ERROR: xdotool route injector selected but DISPLAY is not set; run the capture under an X server such as xvfb-run -a" >&2
+        return 6
+    fi
+
+    echo "[pass-70] selected route injector: ${injector}"
+    echo "[pass-70] route preflight OK"
 }
 
 write_helpers() {
@@ -775,6 +815,10 @@ case "$mode" in
         echo "[pass-70] normalize command after raw screenshots exist: scripts/dosbox_dm1_original_viewport_reference_capture.sh --normalize-only"
         exit 0
         ;;
+    preflight-route)
+        preflight_route
+        exit $?
+        ;;
     normalize-only)
         normalize_existing
         exit 0
@@ -792,12 +836,17 @@ case "$mode" in
             exit 7
         fi
         write_helpers
-        if command -v swift >/dev/null 2>&1; then
+        injector="$(select_route_injector || true)"
+        if [[ "$injector" == "swift" ]]; then
             route_injector=(swift "$KEY_HELPER")
-        elif command -v xdotool >/dev/null 2>&1; then
+        elif [[ "$injector" == "xdotool" ]]; then
+            if [[ -z "${DISPLAY:-}" ]]; then
+                echo "ERROR: xdotool route injector selected but DISPLAY is not set; run under an X server such as xvfb-run -a" >&2
+                exit 6
+            fi
             route_injector=("$KEY_HELPER_XDOTOOL")
         else
-            echo "ERROR: swift or xdotool is required for targeted route input" >&2
+            echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
         fi
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
