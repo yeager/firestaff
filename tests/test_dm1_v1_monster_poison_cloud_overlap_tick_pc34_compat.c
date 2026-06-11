@@ -109,6 +109,13 @@ static void test_single_monster_cloud_tick_boundary(void)
     CHECK_EQ((int)tick.outNextTick.fireAtTick, 1002,
              "follow-up cloud event tick+1");
     CHECK_EQ(tick.outNextTick.aux0, slot, "follow-up carries same cloud slot");
+    CHECK_EQ(F0721_TIMELINE_Schedule_Compat(&timeline, &tick.outNextTick), 1,
+             "schedule follow-up cloud event");
+    CHECK_EQ(F0722_TIMELINE_Peek_Compat(&timeline, &due), 1,
+             "peek follow-up cloud event");
+    CHECK_EQ((int)timeline.nowTick, 1001, "timeline remains on boundary");
+    CHECK_EQ(due.fireAtTick <= timeline.nowTick, 0,
+             "follow-up cloud is not due on same boundary");
 }
 
 int main(void)
