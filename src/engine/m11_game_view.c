@@ -21528,10 +21528,6 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
     } else {
         state->v1ChampionStatsPanelActive = 0;
         state->v1FoodWaterPanelActive = 0;
-        /* ReDMCSB PANEL.C F0342 lines 1119-1124 closes any current
-         * G0426 chest via CHEST.C F0334 before scroll, container, or
-         * object-description eye routes draw their replacement panel. */
-        M11_GameView_CloseV1OpenChest(state);
         /* Show detailed item description.
          * ReDMCSB F0352: eye click with item in hand shows object panel
          * with name, weight, type-specific stats (damage, armor, charges). */
@@ -21560,6 +21556,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             /* ReDMCSB PANEL.C F0352 -> F0342 keeps scrolls on the inventory
              * panel route: F0342 clears object-description state and dispatches
              * C07 things directly to F0341 open-scroll rendering. */
+            M11_GameView_CloseV1OpenChest(state);
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
@@ -21579,8 +21576,9 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             INVENTORY_OBJECT_EYE_PANEL_ROUTE_CONTAINER_CHEST_PC34_COMPAT) {
             /* ReDMCSB PANEL.C F0352 -> F0342 routes leader-hand containers to
              * F0333 instead of the object-description body.  CHEST.C F0333
-             * opens G0426_T_OpenChest and redraws the C025 chest panel even
-             * while P0707_B_PressingEye suppresses the action-hand open icon. */
+             * lines 30-32 return before the P0694_B_PressingEye branch when
+             * G0426 already names the same chest; different open chests still
+             * close through F0333 lines 35-38 inside the helper below. */
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
@@ -21598,6 +21596,9 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             m11_set_status(state, "INSPECT", itemName);
             return 1;
         }
+
+        /* Non-container eye routes replace the open-chest panel. */
+        M11_GameView_CloseV1OpenChest(state);
 
         if (itemType == THING_TYPE_POTION &&
             state->world.things && state->world.things->potions &&
