@@ -165,19 +165,14 @@ static int m11_game_presentation_target(const M11_GameViewState* gameView,
 static void m11_map_presented_game_point_to_source(const M11_GameViewState* gameView,
                                                    int* x,
                                                    int* y) {
-    int targetW = M11_FB_WIDTH;
-    int targetH = M11_FB_HEIGHT;
-    if (!x || !y || !m11_game_presentation_target(gameView, &targetW, &targetH)) {
+    if (!gameView) {
         return;
     }
-    if (targetW > 0 && targetH > 0) {
-        *x = (*x * M11_FB_WIDTH) / targetW;
-        *y = (*y * M11_FB_HEIGHT) / targetH;
-    }
-    if (*x < 0) *x = 0;
-    if (*y < 0) *y = 0;
-    if (*x >= M11_FB_WIDTH) *x = M11_FB_WIDTH - 1;
-    if (*y >= M11_FB_HEIGHT) *y = M11_FB_HEIGHT - 1;
+    (void)M11_MapPresentedGamePointToSourceForPresentation(gameView->presentationMode,
+                                                           gameView->presentationWidth,
+                                                           gameView->presentationHeight,
+                                                           x,
+                                                           y);
 }
 
 static int m11_present_game_frame(const M11_GameViewState* gameView) {
