@@ -1021,6 +1021,57 @@ static void test_post_move_environment_side_effects(void)
     EXPECT_INT("post_pit_hp_applied", party.champions[0].hp.current, 80);
     EXPECT_INT("post_pit_any_movement", result.anyMovementOccurred, 1);
 
+    /* ReDMCSB MOVESENS.C F0267 lines 538-606 resolves the open pit
+     * before MOVESENS.C F0276 lines 799-818 publishes party leave/enter
+     * sensors.  The pit square is an intermediate transition square: the
+     * fall damage, final map tuple, and lower-map destination sensor are the
+     * small consequence bundle this gate locks down. */
+    {
+        struct DungeonThings_Compat things;
+        unsigned short firstThings[2];
+        struct DungeonSensor_Compat sensors[2];
+
+        setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+        set_sq(level0, 5, 2, 1,
+            sq(DUNGEON_ELEMENT_PIT, DUNGEON_SQUARE_MASK_THING_LIST | 0x08));
+        set_sq(level1, 5, 2, 1,
+            sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+        memset(&things, 0, sizeof(things));
+        memset(sensors, 0, sizeof(sensors));
+        firstThings[0] = thing_ref(THING_TYPE_SENSOR, 0);
+        firstThings[1] = thing_ref(THING_TYPE_SENSOR, 1);
+        sensors[0].next = THING_ENDOFLIST;
+        sensors[0].sensorType = 13;
+        sensors[0].sensorData = 31;
+        sensors[1].next = THING_ENDOFLIST;
+        sensors[1].sensorType = 13;
+        sensors[1].sensorData = 62;
+        things.loaded = 1;
+        things.squareFirstThings = firstThings;
+        things.squareFirstThingCount = 2;
+        things.sensors = sensors;
+        things.sensorCount = 2;
+
+        setup_party(&party, 2, 2, DIR_NORTH, 1);
+        DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+        DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &dungeon, &things, &party, NULL, &result);
+
+        EXPECT_INT("post_pit_sensor_gate_step_applied", result.core.stepApplied, 1);
+        EXPECT_INT("post_pit_sensor_gate_pit_count", result.postMove.pitCount, 1);
+        EXPECT_INT("post_pit_sensor_gate_map", party.mapIndex, 1);
+        EXPECT_INT("post_pit_sensor_gate_x", party.mapX, 2);
+        EXPECT_INT("post_pit_sensor_gate_y", party.mapY, 1);
+        EXPECT_INT("post_pit_sensor_gate_damage", result.postMove.championFallDamage[0], 20);
+        EXPECT_INT("post_pit_sensor_gate_hp", party.champions[0].hp.current, 80);
+        EXPECT_INT("post_pit_sensor_gate_enter_count", result.core.enterEffects.count, 1);
+        EXPECT_INT("post_pit_sensor_gate_landing_text",
+            result.core.enterEffects.effects[0].textIndex, 62);
+        EXPECT_INT("post_pit_sensor_gate_not_intermediate",
+            result.core.enterEffects.effects[0].textIndex == 31, 0);
+    }
+
     setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
     set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_PIT, 0x08));
     setup_party(&party, 2, 2, DIR_NORTH, 1);
