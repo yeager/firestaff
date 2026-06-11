@@ -151,7 +151,9 @@ static void seed_keyhole_view(M11_GameViewState* state,
     memset(squares, 0, 9u * sizeof(*squares));
     memset(things, 0, sizeof(*things));
     memset(doors, 0, sizeof(*doors));
-    memset(squareFirstThings, 0, sizeof(unsigned short));
+    for (x = 0; x < 9; ++x) {
+        squareFirstThings[x] = THING_ENDOFLIST;
+    }
 
     map->width = 3;
     map->height = 3;
@@ -171,25 +173,26 @@ static void seed_keyhole_view(M11_GameViewState* state,
 
     /* Front cell (1,1) is a closed door with a decorative ornament
      * ordinal so the click path models the keyhole-facing door case.
-     * ReDMCSB CLIKVIEW.C F0377 routes the viewport click through the
-     * door inspection path without consuming the held object when the
-     * item is not a fountain container. */
+     * ReDMCSB CLIKVIEW.C F0377 lines 356-401 schedules EVENT_DOOR only
+     * from the empty leader-hand keyhole/button branch; an occupied
+     * leader hand falls through to the throw helper and, on this exact
+     * keyhole box, Firestaff must preserve the no-message no-op. */
     squares[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
                                          0x10u | 4u);
-    squareFirstThings[0] = (unsigned short)((THING_TYPE_DOOR << 10) | 0u);
+    squareFirstThings[1 * 3 + 1] = (unsigned short)((THING_TYPE_DOOR << 10) | 0u);
     doors[0].next = THING_ENDOFLIST;
     doors[0].ornamentOrdinal = 1u;
     doors[0].vertical = 0u;
-    doors[0].button = 0u;
+    doors[0].button = 1u;
     things->loaded = 1;
     things->squareFirstThings = squareFirstThings;
-    things->squareFirstThingCount = 1;
+    things->squareFirstThingCount = 9;
     things->doors = doors;
     things->doorCount = 1;
 
     M11_GameView_Init(state);
     state->active = 1;
-    state->showDebugHUD = 1;
+    state->showDebugHUD = 0;
     state->world.dungeon = dungeon;
     state->world.things = things;
     state->world.party.mapIndex = 0;
@@ -828,10 +831,10 @@ static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
 }
 
 /* Detail 9: door-keyhole click with the wrong leader-hand object.  The
- * ReDMCSB CLIKVIEW.C F0377/CLIKVIEW.C F0372 door-click path should
- * inspect the door and leave the held object untouched when the item is
- * not a valid fountain fill source.  This regression keeps the
- * no-open/no-consume contract pinned for a keyhole-faced door. */
+ * ReDMCSB CLIKVIEW.C F0377 door-click path only toggles the door from
+ * the empty-hand branch; this regression keeps the no-open/no-consume
+ * and no invented message/status contract pinned for a keyhole-faced
+ * door. */
 static void test_inventory_keyhole_click_wrong_item_keeps_state(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -840,31 +843,40 @@ static void test_inventory_keyhole_click_wrong_item_keeps_state(void) {
     unsigned char squares[9];
     struct DungeonThings_Compat things;
     struct DungeonDoor_Compat doors[1];
-    unsigned short squareFirstThings[1];
+    unsigned short squareFirstThings[9];
+    int baselineMessageCount;
     int result;
 
     seed_keyhole_view(&state, &dungeon, &map, &tiles, squares, &things, doors, squareFirstThings);
+    M11_MessageLog_Push(&state.messageLog, "SENTINEL MESSAGE", 0);
+    baselineMessageCount = M11_GameView_GetMessageLogCount(&state);
 
     result = M11_GameView_HandlePointerButton(&state,
-                                              112,
-                                              133,
+                                              168,
+                                              81,
                                               M11_DM1_MOUSE_MASK_LEFT);
-    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
-              "door keyhole click redraws through the inspect path");
+    ASSERT_EQ(result, M11_GAME_INPUT_IGNORED,
+              "door keyhole click with wrong leader-hand object is ignored");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state),
               (unsigned short)((THING_TYPE_WEAPON << 10) | 0u),
               "wrong leader-hand object is not consumed by the keyhole click");
     ASSERT_EQ(dungeon.tiles[0].squareData[1 * 3 + 1] & 0x07,
               4,
               "door keyhole click does not open the door");
-    ASSERT_EQ(strcmp(state.lastAction, "INSPECT"), 0,
-              "door keyhole click records the inspect action");
-    ASSERT_EQ(strcmp(state.lastOutcome, "DOOR CHECK"), 0,
-              "door keyhole click records the door-check outcome");
-    ASSERT_EQ(strcmp(state.inspectTitle, "FRONT DOOR"), 0,
-              "door keyhole click keeps the front-door inspect title");
-    ASSERT_TRUE(strstr(state.inspectDetail, "STILL CLOSED") != NULL,
-                "door keyhole click reports the closed door state");
+    ASSERT_EQ(M11_GameView_GetMessageLogCount(&state),
+              baselineMessageCount,
+              "door keyhole click with wrong item appends no message");
+    ASSERT_EQ(strcmp(state.lastAction, "SENTINEL"), 0,
+              "door keyhole click leaves last action untouched");
+    ASSERT_EQ(strcmp(state.lastOutcome, "UNCHANGED"), 0,
+              "door keyhole click leaves last outcome untouched");
+    ASSERT_EQ(strcmp(state.inspectTitle, "SENTINEL"), 0,
+              "door keyhole click leaves inspect title untouched");
+    ASSERT_EQ(strcmp(state.inspectDetail, "UNCHANGED"), 0,
+              "door keyhole click leaves inspect detail untouched");
+    ASSERT_EQ(strcmp(M11_GameView_GetMessageLogEntry(&state, 0),
+                     "SENTINEL MESSAGE"), 0,
+              "door keyhole click preserves prior message text");
 }
 
 int main(void) {
