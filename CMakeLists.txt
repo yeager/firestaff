@@ -4448,6 +4448,11 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_launch_smoke_pc34 PRIVATE firestaff_m12)
+    add_executable(test_dm1_v22_modern_resolution_matrix_pc34
+        tests/test_dm1_v22_modern_resolution_matrix_pc34.c
+    )
+    target_link_libraries(test_dm1_v22_modern_resolution_matrix_pc34
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     add_executable(test_dm1_v2_hud_overlay_pc34
         tests/test_dm1_v2_hud_overlay_pc34.c
         src/dm1v2/dm1_v2_hud_overlay_pc34.c
@@ -4603,6 +4608,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v22_modern_resolution_matrix_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_v1_v2_side_by_side_seed_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_side_by_side_seed_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
@@ -4692,6 +4698,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_launch_smoke_pc34
         COMMAND test_dm1_v2_launch_smoke_pc34
+    )
+    add_test(
+        NAME dm1_v22_modern_resolution_matrix_pc34
+        COMMAND test_dm1_v22_modern_resolution_matrix_pc34
     )
     add_test(
         NAME dm1_v2_launch_smoke_source_lock
