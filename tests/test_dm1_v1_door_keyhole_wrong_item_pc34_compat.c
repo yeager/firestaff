@@ -111,9 +111,14 @@ int main(void)
     unsigned short wrongThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     const int clickX = 168;
     const int clickY = 81;
+    const int localClickX = clickX;
+    const int localClickY = clickY - 33;
     int baselineMessageCount;
     int baselineProjectileCount;
     int baselineTimelineCount;
+    int coordinateSpace = 0;
+    int zoneId = 0;
+    int command = 0;
     int ok = 1;
 
     printf("probe=dm1_v1_door_keyhole_wrong_item_pc34_compat\n");
@@ -124,6 +129,24 @@ int main(void)
                      M11_GameView_SetV1LeaderHandObject(&state, wrongThing), 1);
     ok &= expect_int("leader hand holds wrong item before click",
                      M11_GameView_GetV1LeaderHandThing(&state), wrongThing);
+
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_MOVEMENT,
+        clickX,
+        clickY,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &coordinateSpace,
+        &zoneId);
+    ok &= expect_int("click resolves through C080 broad viewport command",
+                     command, 80);
+    ok &= expect_int("click resolves through C007 viewport zone",
+                     zoneId, 7);
+    ok &= expect_int("click uses screen-space movement route",
+                     coordinateSpace, M11_DM1_MOUSE_SPACE_SCREEN);
+    ok &= expect_int("click is inside D1C keyhole/button source x",
+                     localClickX >= 160 && localClickX <= 175, 1);
+    ok &= expect_int("click is inside D1C keyhole/button source y",
+                     localClickY >= 44 && localClickY <= 52, 1);
 
     state.lastWorldHash = 0xBADF00Du;
     snprintf(state.lastAction, sizeof(state.lastAction), "SENTINEL");
