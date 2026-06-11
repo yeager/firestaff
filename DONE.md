@@ -4,6 +4,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Maintenance Cadence
 
+- ✅ 2026-06-11 — added `test_m11_inventory_chest_different_open_runtime_pc34_compat`, a focused DM1 V1 M11 runtime gate proving a different action-hand chest open follows `CHEST.C F0333` by closing the prior G0426 chest through `F0334`, recompacting visible C537..C544 contents, dropping the hidden ninth tail, and then exposing the replacement chest as the open action-hand container.
 - ✅ 2026-06-11 — added a narrow CSB V1 verified boot handoff runtime gate: `csb_v1_boot_enter_game()` can now carry an imported two-champion party snapshot into the runtime, and `test_csb_v1_boot_runtime_handoff` proves a deterministic post-handoff leader switch to champion 1 with ReDMCSB `CLIKCHAM.C F0368` direction alignment, without claiming broader CSB playability.
 - ✅ 2026-06-11 — fixed the M11/M12/Theron static-library dependency cycle in CMake so GNU/MinGW linkers rescan M12 after Theron boot pulls `m12_file_md5_hex`; the full local CMake build and the two M11 inventory runtime CTests pass.
 - ✅ 2026-06-11 — tightened `firestaff_csb_v1_wall_text_oracle_probe` so the hash-verified CSB one-square slice now mutates the reopened sidecar text words after load and still decodes `ORACLE` from the loader-owned raw buffer, keeping the proof to one wall-square/textstring path.
