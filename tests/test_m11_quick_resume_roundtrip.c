@@ -41,6 +41,8 @@ int main(void) {
     M11_GameViewState resumed;
     M11_GameLaunchSpec spec;
     int mapIndex, mapX, mapY, direction;
+    const unsigned short leaderHandThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1U);
+    const unsigned short openChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 2U);
     unsigned int revealedCell = (17U * 32U) + 9U;
     unsigned int currentCell;
 
@@ -78,6 +80,11 @@ int main(void) {
     currentCell = (unsigned int)(view.world.party.mapX * 32 + view.world.party.mapY);
     view.exploredBits[currentCell / 32U] |= (1U << (currentCell % 32U));
     view.exploredBits[revealedCell / 32U] |= (1U << (revealedCell % 32U));
+    view.leaderHandObjectPresent = 1;
+    view.leaderHandThing = leaderHandThing;
+    view.leaderHandIconIndex = -1;
+    view.v1OpenChestThing = openChestThing;
+    view.v1OpenChestOpenedByEye = 1;
     if (!expect(F0891_ORCH_WorldHash_Compat(&view.world, &view.lastWorldHash),
                 "world hash refresh should succeed before save")) return 1;
     if (!expect(M11_GameView_QuickSave(&view), "quick save should write valid state")) return 1;
@@ -99,8 +106,14 @@ int main(void) {
                 "resumed explored tile should match saved reveal state")) return 1;
     if (!expect(explored_cell_is_set(&resumed, currentCell),
                 "resumed current tile should stay marked explored")) return 1;
+    if (!expect(M11_GameView_GetV1LeaderHandThing(&resumed) == leaderHandThing,
+                "resumed leader hand should match saved V1 hand state")) return 1;
+    if (!expect(M11_GameView_GetV1OpenChestThing(&resumed) == openChestThing,
+                "resumed open chest should match saved V1 chest state")) return 1;
+    if (!expect(resumed.v1OpenChestOpenedByEye == 1,
+                "resumed open chest should preserve pressing-eye route state")) return 1;
     M11_GameView_Shutdown(&resumed);
 
-    puts("ok: valid saved DM1 V1 state resumes with explored tiles intact");
+    puts("ok: valid saved DM1 V1 state resumes with explored tiles and V1 hand/chest state intact");
     return 0;
 }
