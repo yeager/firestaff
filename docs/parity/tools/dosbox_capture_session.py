@@ -73,6 +73,10 @@ class FrameQuality:
     rightcol_nonblack: float
     champion_nonblack: float
     blackout: bool
+    capture_backend: str = "unknown"
+    capture_source: str = ""
+    host_active_app: str = ""
+    dosbox_window_bounds: str = ""
 
 
 # The capture route plan.  This mirrors the runbook §3 state machine
@@ -99,6 +103,7 @@ KEY_MAP = {
 
 DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
+MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/MacOS/dosbox")
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
@@ -134,6 +139,8 @@ def _resolve_dosbox_bin(args: argparse.Namespace) -> str | None:
         found = shutil.which(expanded)
         if found:
             return found
+    if _is_executable_file(MACOS_DOSBOX_STAGING_APP_BIN):
+        return str(MACOS_DOSBOX_STAGING_APP_BIN)
     for candidate in DOSBOX_BIN_CANDIDATES:
         found = shutil.which(candidate)
         if found:
@@ -224,6 +231,7 @@ def validate_live_inputs(args: argparse.Namespace) -> int:
         runtime_dir=runtime_dir,
         dosbox_bin=dosbox_bin,
         conf=conf,
+        capture_backend=getattr(args, "capture_backend", "auto"),
     )
     print(
         "PASS live input validation: "
@@ -299,8 +307,8 @@ def dry_run(plan: list[PlanStep],
     blackouts = [blackout_quality] * 6
     if not _should_abort_for_blackout(blackouts, "entrance_menu", 6):
         failures.append("blackout guard: did not abort a non-title target after repeated black frames")
-    if _should_abort_for_blackout(blackouts, "title_screen", 6):
-        failures.append("blackout guard: aborted the legitimate mostly-black title step")
+    if not _should_abort_for_blackout(blackouts, "title_screen", 6):
+        failures.append("blackout guard: did not abort repeated all-black title captures")
     with tempfile.TemporaryDirectory(prefix="dm1-live-runtime-") as tmp:
         tmp_root = Path(tmp)
         good = tmp_root / "DungeonMasterPC34"
@@ -358,6 +366,7 @@ def dry_run(plan: list[PlanStep],
             runtime_dir=good,
             dosbox_bin=str(fake_bin),
             conf=conf,
+            capture_backend="auto",
         )
         try:
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -372,6 +381,8 @@ def dry_run(plan: list[PlanStep],
                 failures.append("live input receipt: dosbox_bin mismatch")
             if receipt.get("conf_sha256") != _sha256_file(conf):
                 failures.append("live input receipt: conf hash mismatch")
+            if receipt.get("capture_backend") != "auto":
+                failures.append("live input receipt: capture backend mismatch")
             required = receipt.get("runtime_required_files", {})
             if not required.get("GRAPHICS.DAT") or not required.get("DUNGEON.DAT"):
                 failures.append("live input receipt: required DAT presence missing")
@@ -485,6 +496,114 @@ end tell
     return x, y, w, h
 
 
+def _frontmost_process_name() -> str:
+    script = r'''
+tell application "System Events"
+  set frontApps to name of every process whose frontmost is true
+  if (count of frontApps) is greater than 0 then
+    return item 1 of frontApps
+  end if
+end tell
+'''
+    proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout.strip()
+
+
+def _bounds_text(bounds: tuple[int, int, int, int] | None) -> str:
+    if bounds is None:
+        return ""
+    return ",".join(str(part) for part in bounds)
+
+
+def _capture_with_screencapture(raw: Path) -> tuple[dict[str, str], bool]:
+    _activate_dosbox()
+    bounds = _dosbox_window_bounds()
+    if bounds is not None:
+        x, y, w, h = bounds
+        cmd = ["screencapture", "-x", "-R", f"{x},{y},{w},{h}", str(raw)]
+        source = "screencapture:dosbox-window"
+    else:
+        cmd = ["screencapture", "-x", str(raw)]
+        source = "screencapture:screen"
+    proc = _run_quiet(cmd, timeout=15.0)
+    return {
+        "capture_backend": "screencapture",
+        "capture_source": source,
+        "host_active_app": _frontmost_process_name(),
+        "dosbox_window_bounds": _bounds_text(bounds),
+    }, proc.returncode == 0 and raw.is_file()
+
+
+def _capture_with_peekaboo(raw: Path) -> tuple[dict[str, str], bool]:
+    if shutil.which("peekaboo") is None:
+        return {
+            "capture_backend": "peekaboo",
+            "capture_source": "peekaboo:missing",
+            "host_active_app": _frontmost_process_name(),
+            "dosbox_window_bounds": _bounds_text(_dosbox_window_bounds()),
+        }, False
+    _activate_dosbox()
+    bounds = _dosbox_window_bounds()
+    for app_name in ("DOSBox Staging", "DOSBox"):
+        cmd = [
+            "peekaboo", "image",
+            "--app", app_name,
+            "--mode", "window",
+            "--path", str(raw),
+            "--json",
+            "--no-remote",
+        ]
+        proc = _run_quiet(cmd, timeout=20.0)
+        if proc.returncode == 0 and raw.is_file():
+            return {
+                "capture_backend": "peekaboo",
+                "capture_source": f"peekaboo:window:{app_name}",
+                "host_active_app": _frontmost_process_name(),
+                "dosbox_window_bounds": _bounds_text(bounds),
+            }, True
+    cmd = [
+        "peekaboo", "image",
+        "--mode", "screen",
+        "--path", str(raw),
+        "--json",
+        "--no-remote",
+    ]
+    proc = _run_quiet(cmd, timeout=20.0)
+    return {
+        "capture_backend": "peekaboo",
+        "capture_source": "peekaboo:screen",
+        "host_active_app": _frontmost_process_name(),
+        "dosbox_window_bounds": _bounds_text(bounds),
+    }, proc.returncode == 0 and raw.is_file()
+
+
+def _capture_raw_frame(raw: Path, capture_backend: str) -> dict[str, str]:
+    if capture_backend == "peekaboo":
+        meta, ok = _capture_with_peekaboo(raw)
+        if not ok:
+            raise RuntimeError(f"Peekaboo failed to capture {raw}")
+        return meta
+    if capture_backend == "screencapture":
+        meta, ok = _capture_with_screencapture(raw)
+        if not ok:
+            raise RuntimeError(f"screencapture failed to capture {raw}")
+        return meta
+    if capture_backend != "auto":
+        raise ValueError(f"unsupported capture backend: {capture_backend}")
+    if shutil.which("peekaboo") is not None:
+        meta, ok = _capture_with_peekaboo(raw)
+        if ok:
+            meta["capture_backend"] = "peekaboo"
+            return meta
+    meta, ok = _capture_with_screencapture(raw)
+    if not ok:
+        raise RuntimeError(f"host screenshot failed to capture {raw}")
+    meta["capture_backend"] = "screencapture"
+    return meta
+
+
 def _crop_to_4x3(img):
     """Crop a window screenshot down to its likely DOSBox framebuffer area."""
     target = 4.0 / 3.0
@@ -503,7 +622,7 @@ def _crop_to_4x3(img):
     return img
 
 
-def _screenshot_frame(capture_root: Path, label: str):
+def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
     if not _DETECTOR_OK:
         raise RuntimeError("Pillow and numpy are required for --live")
     from PIL import Image
@@ -511,17 +630,10 @@ def _screenshot_frame(capture_root: Path, label: str):
     capture_root.mkdir(parents=True, exist_ok=True)
     raw = capture_root / "state-samples" / f"{label}.png"
     raw.parent.mkdir(parents=True, exist_ok=True)
-    _activate_dosbox()
-    bounds = _dosbox_window_bounds()
-    if bounds is not None:
-        x, y, w, h = bounds
-        cmd = ["screencapture", "-x", "-R", f"{x},{y},{w},{h}", str(raw)]
-    else:
-        cmd = ["screencapture", "-x", str(raw)]
-    subprocess.run(cmd, check=True)
+    meta = _capture_raw_frame(raw, capture_backend)
     img = Image.open(raw).convert("RGB")
     resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
-    return _crop_to_4x3(img).resize((320, 200), resample)
+    return _crop_to_4x3(img).resize((320, 200), resample), meta
 
 
 def _region_density_from_array(arr, x0: int, y0: int, x1: int, y1: int) -> float:
@@ -536,7 +648,11 @@ def _region_density_from_array(arr, x0: int, y0: int, x1: int, y1: int) -> float
     return float(n_nonblack / n_pixels)
 
 
-def _frame_quality(img, label: str, state: str) -> FrameQuality:
+def _frame_quality(
+        img,
+        label: str,
+        state: str,
+        capture_meta: dict[str, str] | None = None) -> FrameQuality:
     """Measure whether a normalized frame is useful for route verification."""
     if not _DETECTOR_OK:
         raise RuntimeError("Pillow and numpy are required for frame-quality diagnostics")
@@ -548,6 +664,7 @@ def _frame_quality(img, label: str, state: str) -> FrameQuality:
     viewport = _region_density_from_array(arr, 0, 33, 224, 169)
     rightcol = _region_density_from_array(arr, 224, 33, 320, 169)
     champion = _region_density_from_array(arr, 0, 0, 320, 65)
+    meta = capture_meta or {}
     return FrameQuality(
         label=label,
         state=state,
@@ -558,6 +675,10 @@ def _frame_quality(img, label: str, state: str) -> FrameQuality:
         rightcol_nonblack=rightcol,
         champion_nonblack=champion,
         blackout=full < BLACKOUT_NONBLACK_THRESH,
+        capture_backend=meta.get("capture_backend", "fixture"),
+        capture_source=meta.get("capture_source", ""),
+        host_active_app=meta.get("host_active_app", ""),
+        dosbox_window_bounds=meta.get("dosbox_window_bounds", ""),
     )
 
 
@@ -573,7 +694,7 @@ def _should_abort_for_blackout(
         recent: list[FrameQuality],
         target: str,
         blackout_frame_limit: int) -> bool:
-    if target == "title_screen" or blackout_frame_limit <= 0:
+    if blackout_frame_limit <= 0:
         return False
     if len(recent) < blackout_frame_limit:
         return False
@@ -594,7 +715,8 @@ def _press_key(key: str) -> None:
 
 def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
                     screenshot_int: float, stable_frames: int,
-                    blackout_frame_limit: int) -> tuple[bool, str]:
+                    blackout_frame_limit: int,
+                    capture_backend: str) -> tuple[bool, str]:
     deadline = time.time() + timeout_s
     stable = 0
     last_state = "unknown"
@@ -603,10 +725,10 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
     while time.time() < deadline:
         sample += 1
         label = f"{target}_{sample:04d}"
-        img = _screenshot_frame(capture_root, label)
+        img, capture_meta = _screenshot_frame(capture_root, label, capture_backend)
         state = classify(img)
         last_state = state
-        quality = _frame_quality(img, label, state)
+        quality = _frame_quality(img, label, state, capture_meta)
         _write_quality_log(capture_root, quality)
         recent_quality.append(quality)
         print(
@@ -614,7 +736,10 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
             f"full_nonblack={quality.full_nonblack:.4f} "
             f"viewport_nonblack={quality.viewport_nonblack:.4f} "
             f"rightcol_nonblack={quality.rightcol_nonblack:.4f} "
-            f"blackout={int(quality.blackout)}",
+            f"blackout={int(quality.blackout)} "
+            f"backend={quality.capture_backend} "
+            f"source={quality.capture_source} "
+            f"active={quality.host_active_app}",
             file=sys.stderr,
         )
         if _should_abort_for_blackout(recent_quality, target, blackout_frame_limit):
@@ -687,7 +812,8 @@ def _write_live_input_receipt(
         capture_root: Path,
         runtime_dir: Path,
         dosbox_bin: str,
-        conf: Path) -> Path:
+        conf: Path,
+        capture_backend: str) -> Path:
     """Write a deterministic receipt for no-launch validation/live launch.
 
     The preflight receipt proves the canonical asset hashes; this live
@@ -708,6 +834,7 @@ def _write_live_input_receipt(
         "runtime_data_dir": str(data_dir),
         "runtime_required_files": required,
         "capture_root": str(capture_root),
+        "capture_backend": capture_backend,
         "dosbox_capture_dir": str(capture_root / "dosbox-capture"),
         "conf_path": str(conf),
         "conf_sha256": _sha256_file(conf),
@@ -750,6 +877,10 @@ def _last_quality_from_log(capture_root: Path) -> FrameQuality | None:
             rightcol_nonblack=float(data.get("rightcol_nonblack", 0.0)),
             champion_nonblack=float(data.get("champion_nonblack", 0.0)),
             blackout=bool(data.get("blackout", False)),
+            capture_backend=str(data.get("capture_backend", "unknown")),
+            capture_source=str(data.get("capture_source", "")),
+            host_active_app=str(data.get("host_active_app", "")),
+            dosbox_window_bounds=str(data.get("dosbox_window_bounds", "")),
         )
     except (TypeError, ValueError, json.JSONDecodeError):
         return None
@@ -836,6 +967,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             runtime_dir=runtime_dir,
             dosbox_bin=dosbox_bin,
             conf=conf,
+            capture_backend=args.capture_backend,
         )
     else:
         conf = capture_root / "dosbox_capture.conf"
@@ -873,6 +1005,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 args.screenshot_int,
                 step.stable_frames,
                 args.blackout_frame_limit,
+                args.capture_backend,
             )
             if not ok:
                 abort = _write_live_abort_receipt(
@@ -888,11 +1021,19 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 print(f"live abort receipt: {abort}", file=sys.stderr)
                 return 1
 
-        start = _screenshot_frame(capture_root, "capture_01_ingame_start")
+        start, _meta = _screenshot_frame(
+            capture_root,
+            "capture_01_ingame_start",
+            args.capture_backend,
+        )
         start.save(original_dir / "01_ingame_start.png")
         _press_key("Key-Up")
         time.sleep(1.0)
-        step = _screenshot_frame(capture_root, "capture_02_ingame_step_forward")
+        step, _meta = _screenshot_frame(
+            capture_root,
+            "capture_02_ingame_step_forward",
+            args.capture_backend,
+        )
         step.save(original_dir / "02_ingame_step_forward.png")
         print(f"PASS live captures written: {original_dir}")
         return 0
@@ -938,8 +1079,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state-timeout", type=float, default=300.0,
                         help="give up on a state after N seconds (default 300)")
     parser.add_argument("--blackout-frame-limit", type=int, default=6,
-                        help="abort a non-title state after N consecutive all-black "
-                             "host captures (default 6; set 0 to disable)")
+                        help="abort after N consecutive all-black host captures "
+                             "(default 6; set 0 to disable)")
+    parser.add_argument("--capture-backend", choices=("auto", "peekaboo", "screencapture"),
+                        default="auto",
+                        help="host screenshot backend for --live (default auto: "
+                             "Peekaboo when available, else screencapture)")
     args = parser.parse_args(argv)
 
     plan = DEFAULT_PLAN
