@@ -353,6 +353,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_inventory_portrai
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_chest_close_pending_panel_pc34_compat.c
@@ -408,6 +412,10 @@ list(APPEND M10_SOURCES
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_mouth_eye_release_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_mouth_eye_release_pc34_compat.c
+)
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c
 )
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
@@ -5422,6 +5430,23 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_champion_panel_status_hand_slot_pixels_source_lock
         COMMAND test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
+        tests/test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
     )
 
     add_executable(test_dm1_v1_champion_panel_wound_handling_pc34_compat
