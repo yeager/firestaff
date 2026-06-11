@@ -21597,7 +21597,11 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             return 1;
         }
 
-        /* Non-container eye routes replace the open-chest panel. */
+        /* Non-container object-description routes replace any open chest
+         * panel.  Container routes above must go through the F0333-equivalent
+         * helper so CHEST.C lines 30-38 control same-open and close-before-open
+         * ordering before CHAMDRAW.C lines 621-630 evaluates the C144/C145
+         * action-hand icon state. */
         M11_GameView_CloseV1OpenChest(state);
 
         if (itemType == THING_TYPE_POTION &&
