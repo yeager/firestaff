@@ -65,6 +65,10 @@
  * clicks the original V1 movement-arrow rectangles for forward/back and
  * left/right turn Hall routes, proving the mouse route enters the same
  * source command path before the D1C portrait box is re-blitted.  It also
+ * clicks the visible front-wall portrait after pointer movement has exposed
+ * it, proving the C080 viewport route opens C040 over a movement-produced
+ * mirror pose and that cancel clears the overlay while preserving the mirror
+ * route.  It also
  * drives the source C006/C004 lateral command pair against the south-facing
  * Hall mirror, covering the blocked movement redraw branch that the
  * forward/back and turn routes do not touch.  It also
@@ -125,6 +129,16 @@ enum {
     PROBE_PORTRAIT_Y = PROBE_VIEWPORT_Y + 35,
     PROBE_PORTRAIT_W = 32,
     PROBE_PORTRAIT_H = 29,
+    /* PANEL.C F0342/F0346 source C101 panel placement: C040 is drawn at
+     * viewport-relative (80,52).  COMMAND.C:228-233 / 508-511 then routes
+     * C160/C161/C162 panel buttons while G0299 is live. */
+    PROBE_RR_PANEL_GRAPHIC = 40,
+    PROBE_PANEL_X = PROBE_VIEWPORT_X + 80,
+    PROBE_PANEL_Y = PROBE_VIEWPORT_Y + 52,
+    PROBE_FRONT_PORTRAIT_CLICK_X = PROBE_PORTRAIT_X + 16,
+    PROBE_FRONT_PORTRAIT_CLICK_Y = PROBE_PORTRAIT_Y + 14,
+    PROBE_CANCEL_CLICK_X = 160,
+    PROBE_CANCEL_CLICK_Y = 151,
     /* DUNVIEW.C:3916: the C026 champion portrait blit masks the
      * C01_COLOR_DARK_GRAY (value 1) as transparency.  This is the
      * same constant the existing visibility / zorder / reblt
@@ -191,6 +205,11 @@ typedef struct LateralWalkStep {
     int clickY;
     const char* label;
 } LateralWalkStep;
+
+typedef struct PanelMatch {
+    int assetOpaque;
+    int assetDrawn;
+} PanelMatch;
 
 /* Count the pixels in the front-wall box that match the C026
  * champion portrait ordinal.  This reuses the visibility probe's
@@ -271,6 +290,42 @@ static MirrorMatch match_front_portrait(const M11_AssetSlot* portraits,
         if (ordinal == expectedOrdinal) {
             out.expectedMatched = matched;
             out.compared = compared;
+        }
+    }
+    return out;
+}
+
+static PanelMatch match_panel(const M11_AssetSlot* panel,
+                              const unsigned char* fb,
+                              int transparentColor) {
+    PanelMatch out;
+    int x;
+    int y;
+    memset(&out, 0, sizeof(out));
+    if (!panel || !panel->loaded || !panel->pixels || !fb) {
+        return out;
+    }
+    for (y = 0; y < (int)panel->height; ++y) {
+        int fbY = PROBE_PANEL_Y + y;
+        if (fbY < 0 || fbY >= PROBE_FB_H) {
+            continue;
+        }
+        for (x = 0; x < (int)panel->width; ++x) {
+            int fbX = PROBE_PANEL_X + x;
+            unsigned char src;
+            unsigned char dst;
+            if (fbX < 0 || fbX >= PROBE_FB_W) {
+                continue;
+            }
+            src = (unsigned char)(panel->pixels[y * (int)panel->width + x] & 0x0F);
+            if (src == transparentColor) {
+                continue;
+            }
+            dst = M11_FB_DECODE_INDEX(fb[fbY * PROBE_FB_W + fbX]);
+            ++out.assetOpaque;
+            if (dst == src) {
+                ++out.assetDrawn;
+            }
         }
     }
     return out;
@@ -473,11 +528,136 @@ static int check_input_walk_step(M11_GameViewState* game,
     return ok;
 }
 
+static int check_pointer_moved_mirror_candidate_cancel(M11_GameViewState* game,
+                                                       const M11_AssetSlot* portraits,
+                                                       const M11_AssetSlot* rrPanel,
+                                                       unsigned char* outFb) {
+    M11_GameInputResult result;
+    PanelMatch panelMatch;
+    InputWalkStep checkStep;
+    int ok = 1;
+
+    /* This route composes the pointer movement path with the C080 viewport
+     * mirror selection path.  ReDMCSB COMMAND.C G0448/F0359 sends the arrow
+     * click through CLIKMENU.C F0366 first; a later C080 viewport click enters
+     * CLIKVIEW.C F0377/F0372/F0275 and REVIVE.C F0280/F0282 to append the
+     * candidate and show C040. */
+    start_independent_input_route(game, 1, 3, DIR_SOUTH);
+    result = M11_GameView_HandlePointer(game, 276, 135, 1);
+    if (result != M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_forward pointer result=%d want=%d\n",
+                result, M11_GAME_INPUT_REDRAW);
+        ok = 0;
+    }
+
+    memset(&checkStep, 0, sizeof(checkStep));
+    checkStep.mapX = 1;
+    checkStep.mapY = 4;
+    checkStep.dir = DIR_SOUTH;
+    checkStep.expectedOrdinal = 3;
+    checkStep.inputBeforeCheck = -1;
+    checkStep.allowNoPortraitDominance = 0;
+    checkStep.label = "hall_pointer_candidate_after_forward_ordinal_3";
+    if (!check_input_walk_step(game, portraits, -2, &checkStep, outFb)) {
+        ok = 0;
+    }
+
+    result = M11_GameView_HandlePointerButton(game,
+                                              PROBE_FRONT_PORTRAIT_CLICK_X,
+                                              PROBE_FRONT_PORTRAIT_CLICK_Y,
+                                              M11_DM1_MOUSE_MASK_LEFT);
+    if (result != M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_portrait_click result=%d want=%d\n",
+                result, M11_GAME_INPUT_REDRAW);
+        ok = 0;
+    }
+    if (game->candidateMirrorPanelActive != 1 ||
+        game->inventoryPanelActive != 1 ||
+        game->candidateMirrorOrdinal != 3 ||
+        game->candidateMirrorPartyIndex != 0 ||
+        game->world.party.championCount != 1) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_open state panel=%d inventory=%d ordinal=%d partyIndex=%d champions=%d\n",
+                game->candidateMirrorPanelActive,
+                game->inventoryPanelActive,
+                game->candidateMirrorOrdinal,
+                game->candidateMirrorPartyIndex,
+                game->world.party.championCount);
+        ok = 0;
+    }
+    memset(outFb, 0, sizeof(*outFb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, outFb, PROBE_FB_W, PROBE_FB_H);
+    panelMatch = match_panel(rrPanel, outFb, 6);
+    if (panelMatch.assetOpaque <= 0 ||
+        panelMatch.assetDrawn * 100 < 90 * panelMatch.assetOpaque) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_open C040 missing drawn=%d/%d\n",
+                panelMatch.assetDrawn, panelMatch.assetOpaque);
+        ok = 0;
+    }
+
+    result = M11_GameView_HandlePointerButton(game,
+                                              PROBE_CANCEL_CLICK_X,
+                                              PROBE_CANCEL_CLICK_Y,
+                                              M11_DM1_MOUSE_MASK_LEFT);
+    if (result != M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_cancel result=%d want=%d\n",
+                result, M11_GAME_INPUT_REDRAW);
+        ok = 0;
+    }
+    if (game->candidateMirrorPanelActive != 0 ||
+        game->inventoryPanelActive != 0 ||
+        game->candidateMirrorOrdinal != -1 ||
+        game->candidateMirrorPartyIndex != -1 ||
+        game->world.party.championCount != 0 ||
+        M11_GameView_GetFrontMirrorOrdinal(game) != 3) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_cancel state panel=%d inventory=%d ordinal=%d partyIndex=%d champions=%d front=%d\n",
+                game->candidateMirrorPanelActive,
+                game->inventoryPanelActive,
+                game->candidateMirrorOrdinal,
+                game->candidateMirrorPartyIndex,
+                game->world.party.championCount,
+                M11_GameView_GetFrontMirrorOrdinal(game));
+        ok = 0;
+    }
+    memset(outFb, 0, sizeof(*outFb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, outFb, PROBE_FB_W, PROBE_FB_H);
+    panelMatch = match_panel(rrPanel, outFb, 6);
+    if (panelMatch.assetOpaque > 0 &&
+        panelMatch.assetDrawn * 100 >= 40 * panelMatch.assetOpaque) {
+        fprintf(stderr,
+                "FAIL hall_pointer_candidate_cancel C040 leaked drawn=%d/%d\n",
+                panelMatch.assetDrawn, panelMatch.assetOpaque);
+        ok = 0;
+    }
+    memset(&checkStep, 0, sizeof(checkStep));
+    checkStep.mapX = 1;
+    checkStep.mapY = 4;
+    checkStep.dir = DIR_SOUTH;
+    checkStep.expectedOrdinal = 3;
+    checkStep.inputBeforeCheck = -1;
+    checkStep.allowNoPortraitDominance = 0;
+    checkStep.label = "hall_pointer_candidate_after_cancel_ordinal_3";
+    if (!check_input_walk_step(game, portraits, -2, &checkStep, outFb)) {
+        ok = 0;
+    }
+
+    printf("hall_pointer_candidate_move_select_cancel C040=%d/%d front=%d\n",
+           panelMatch.assetDrawn, panelMatch.assetOpaque,
+           M11_GameView_GetFrontMirrorOrdinal(game));
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
+    const M11_AssetSlot* rrPanel;
     static unsigned char currFb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
     /* Forward walk through the Hall of Champions corridor: the party
@@ -615,6 +795,14 @@ int main(int argc, char** argv) {
     if (!portraits || !portraits->loaded || !portraits->pixels ||
         portraits->width < 256 || portraits->height < 87) {
         fprintf(stderr, "FAIL GRAPHICS.DAT champion portrait strip unavailable\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    rrPanel = M11_AssetLoader_Load(&game.assetLoader,
+                                   (unsigned int)PROBE_RR_PANEL_GRAPHIC);
+    if (!rrPanel || !rrPanel->loaded || !rrPanel->pixels ||
+        rrPanel->width <= 0 || rrPanel->height <= 0) {
+        fprintf(stderr, "FAIL GRAPHICS.DAT C040 resurrect/reincarnate panel unavailable\n");
         M11_GameView_Shutdown(&game);
         return 1;
     }
@@ -776,6 +964,10 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = pointerSteps[stepIdx].expectedOrdinal;
+    }
+
+    if (!check_pointer_moved_mirror_candidate_cancel(&game, portraits, rrPanel, currFb)) {
+        ok = 0;
     }
 
     /* Pointer turn route: use the same G0448 movement list, but click the
