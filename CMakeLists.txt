@@ -5661,6 +5661,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat
     )
 
+    add_executable(test_m11_mirror_candidate_scroll_pickup_pc34_compat
+        tests/test_m11_mirror_candidate_scroll_pickup_pc34_compat.c
+    )
+    target_include_directories(test_m11_mirror_candidate_scroll_pickup_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m11_mirror_candidate_scroll_pickup_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_mirror_candidate_scroll_pickup_pc34_compat
+        COMMAND test_m11_mirror_candidate_scroll_pickup_pc34_compat
+    )
+
     add_executable(test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat
         tests/test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat.c
         src/dm1/dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat.c
