@@ -400,6 +400,33 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
             expect_int(c->label, r.emittedDoorDestructionEvent,
                        c->expectedDoorDestructionEvent,
                        "ReDMCSB PROJEXPL.C:F0217 lines 506-508 door impact attack event");
+            if (c->expectedDoorDestructionEvent) {
+                expect_int(c->label, r.outNextTick.kind,
+                           TIMELINE_EVENT_DOOR_DESTRUCTION,
+                           "ReDMCSB PROJEXPL.C:F0217 lines 506-508 schedules door destruction at impact cell");
+                expect_int(c->label, (int)r.outNextTick.fireAtTick,
+                           321 + (i * 4 + j),
+                           "F0819 door destruction event fires one tick after side-cell impact");
+                expect_int(c->label, r.outNextTick.mapIndex, d.destMapIndex,
+                           "F0819 door destruction event uses blocked side-cell mapIndex");
+                expect_int(c->label, r.outNextTick.mapX, d.destMapX,
+                           "F0819 door destruction event uses blocked side-cell X");
+                expect_int(c->label, r.outNextTick.mapY, d.destMapY,
+                           "F0819 door destruction event uses blocked side-cell Y");
+                expect_int(c->label, r.outNextTick.cell, p.cell,
+                           "F0819 door destruction event keeps the projectile impact lane");
+                expect_int(c->label, r.outNextTick.aux0, p.attack,
+                           "F0819 door destruction event carries deterministic impact attack when rng=NULL");
+                expect_int(c->label, r.outNextTick.aux1, p.projectileSubtype,
+                           "F0819 door destruction event records projectile subtype");
+                expect_int(c->label, r.outNextTick.aux2, p.ownerIndex,
+                           "F0819 door destruction event records owner index");
+                expect_int(c->label, r.outNextTick.aux3, p.ownerKind,
+                           "F0819 door destruction event records owner kind");
+            } else {
+                expect_int(c->label, r.outNextTick.kind, 0,
+                           "Side-cell wall/fluxcage blockers do not emit door destruction events");
+            }
             expect_int(c->label, r.emittedCombatAction, 0,
                        "F0217 side-cell wall/door/fluxcage blockers have no champion or creature target");
             expect_int(c->label, r.emittedExplosion, 0,
