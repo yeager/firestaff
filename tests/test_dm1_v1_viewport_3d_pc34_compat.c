@@ -2796,16 +2796,16 @@ static void test_source_evidence_mentions_visual_lane(void)
 }
 
 /* ── DM1 V1 Viewport 3D source-evidence drift regression ────────────────────
- * The Python verifiers in tools/verify_pass563/565/570/576/577_dm1_v1_* previously
- * checked that the canonical evidence tokens (D1L/D1R wall rows, D0C Thieves
- * Eye table, D1-side door-front table, D2C door-front / floor-field / wall
- * tables, the D-side wall table, and the F0128 D0/D1 visible-square table)
- * lived inside a *narrow line range* of the source files.  The metadata tables
- * grew over time (e.g., D1L/D1R wall rows moved from lines 416-417 to 470-471
- * once D3L/D3R/D3C/D2L2/D2R2/D2L/D2R/D2C/D1C/D0L/D0R rows were inserted above),
- * and the verifier line ranges drifted stale and started failing the
- * pass563/565/570/576/577 verifiers even though the CTest itself remained
- * green.
+ * The Python verifiers in tools/verify_pass404/406/563/565/570/576/577_dm1_v1_*
+ * previously checked that canonical evidence tokens (side-content center
+ * blockers, redraw cadence, D1L/D1R wall rows, D0C Thieves Eye table, D1-side
+ * door-front table, D2C door-front / floor-field / wall tables, the D-side wall
+ * table, and the F0128 D0/D1 visible-square table) lived inside narrow line
+ * ranges of the source files.  The metadata tables grew over time (e.g.,
+ * D1L/D1R wall rows moved from lines 416-417 to 470-471 once
+ * D3L/D3R/D3C/D2L2/D2R2/D2L/D2R/D2C/D1C/D0L/D0R rows were inserted above), and
+ * the verifier line ranges drifted stale and started failing verifiers even
+ * though the CTest itself remained green.
  *
  * The drift-proof whole-file scan in the Python verifiers is one half of the
  * fix; this test is the other half — it reads the source files at CTest
@@ -2851,11 +2851,58 @@ static int file_contains(const char *rel, const char *needle)
 
 static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
 {
-    /* These are the canonical evidence tokens the 5 stale-line-range
-     * pass563/565/570/576/577 verifier LOCAL checks were trying to assert
-     * existed.  Re-stated here as a single CTest-time whole-file scan so
-     * future metadata-table growth cannot defeat the regression. */
+    /* These are the canonical evidence tokens the stale-line-range verifier
+     * LOCAL checks were trying to assert existed.  Re-stated here as a single
+     * CTest-time whole-file scan so future metadata-table growth cannot defeat
+     * the regression. */
     static const struct { const char *rel; const char *token; const char *id; } needles[] = {
+        /* pass404: side-content/deferred-explosion center-blocker guards */
+        { "src/engine/m11_game_view.c",
+          "static void m11_draw_dm1_side_contents(const M11_GameViewState* state",
+          "pass404.side_contents_function" },
+        { "src/engine/m11_game_view.c",
+          "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
+          "pass404.blocking_center_depth" },
+        { "src/engine/m11_game_view.c",
+          "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
+          "pass404.side_contents_blocker_gate" },
+        { "src/engine/m11_game_view.c",
+          "m11_draw_item_sprite(g_drawState, framebuffer",
+          "pass404.side_contents_item_draw" },
+        { "src/engine/m11_game_view.c",
+          "static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state",
+          "pass404.deferred_explosion_function" },
+        { "src/engine/m11_game_view.c",
+          "m11_draw_dm1_deferred_side_explosion(",
+          "pass404.deferred_side_explosion_draw" },
+        /* pass406: M11 redraw cadence / viewport-dirty publication route */
+        { "src/engine/m11_game_view.c",
+          "static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,",
+          "pass406.pipeline_tick_function" },
+        { "src/engine/m11_game_view.c",
+          "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
+          "pass406.enqueue_command" },
+        { "src/engine/m11_game_view.c",
+          "DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(",
+          "pass406.decrement_cooldowns" },
+        { "src/engine/m11_game_view.c",
+          "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(",
+          "pass406.process_one_tick" },
+        { "src/engine/m11_game_view.c",
+          "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
+          "pass406.redraw_publication" },
+        { "src/engine/main_loop_m11.c",
+          "redrawWasAfterViewportDirty =",
+          "pass406.main_loop_dirty_snapshot" },
+        { "src/engine/main_loop_m11.c",
+          "lastInputRedrawAfterViewportDirty = redrawWasAfterViewportDirty;",
+          "pass406.main_loop_dirty_record" },
+        { "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+          "outResult->viewportDirty = outResult->core.viewportRedrawRequested;",
+          "pass406.pipeline_viewport_dirty" },
+        { "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+          "outResult->provenance.viewportPresentEvidence =",
+          "pass406.pipeline_present_evidence" },
         /* pass563: D1L/D1R side-wall rows in the wall_draw_specs table */
         { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
           "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  true,  false, DM1_PC34_ZONE_WALL_D1L",
