@@ -317,6 +317,13 @@ static const unsigned char g_m11_quicksave_magic[8] = {
     'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
 };
 
+static const unsigned char g_m11_quicksave_v1_runtime_magic[8] = {
+    'F', 'S', 'M', '1', '1', 'R', 'T', '1'
+};
+
+static void m11_write_u32_le(unsigned char* dst, uint32_t value);
+static uint32_t m11_read_u32_le(const unsigned char* src);
+
 static int m11_build_quicksave_sidecar_path(const char *path,
                                             char *out,
                                             size_t out_size)
@@ -387,6 +394,99 @@ static int m11_load_quicksave_explored_bits(M11_GameViewState *state,
     }
 
     memcpy(state->exploredBits, explored, sizeof(explored));
+    return 1;
+}
+
+static int m11_build_quicksave_v1_runtime_path(const char *path,
+                                               char *out,
+                                               size_t out_size)
+{
+    int rc;
+
+    if (!path || !path[0] || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s.v1runtime", path);
+    return (rc > 0 && rc < (int)out_size) ? 1 : 0;
+}
+
+static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
+                                          const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char buf[28];
+    FILE *file;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_v1_runtime_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    /* ReDMCSB CHAMPION.C F0297/F0298 owns G4055_s_LeaderHandObject,
+     * and CHEST.C F0333/F0334 owns G0426_T_OpenChest.  These are
+     * transient V1 presentation/runtime fields outside GameWorld_Compat,
+     * so quick-resume persists them beside the source-locked world blob. */
+    memset(buf, 0, sizeof(buf));
+    memcpy(buf, g_m11_quicksave_v1_runtime_magic,
+           sizeof(g_m11_quicksave_v1_runtime_magic));
+    m11_write_u32_le(buf + 8, 1U);
+    m11_write_u32_le(buf + 12, (uint32_t)(state->leaderHandObjectPresent ? 1 : 0));
+    m11_write_u32_le(buf + 16, (uint32_t)state->leaderHandThing);
+    m11_write_u32_le(buf + 20, (uint32_t)state->v1OpenChestThing);
+    m11_write_u32_le(buf + 24, (uint32_t)(state->v1OpenChestOpenedByEye ? 1 : 0));
+
+    file = fopen(sidecarPath, "wb");
+    if (!file) {
+        return 0;
+    }
+    if (fwrite(buf, 1U, sizeof(buf), file) != sizeof(buf)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
+                                         const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char buf[28];
+    FILE *file;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_v1_runtime_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "rb");
+    if (!file) {
+        return 0;
+    }
+    if (fread(buf, 1U, sizeof(buf), file) != sizeof(buf)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    if (memcmp(buf, g_m11_quicksave_v1_runtime_magic,
+               sizeof(g_m11_quicksave_v1_runtime_magic)) != 0 ||
+        m11_read_u32_le(buf + 8) != 1U) {
+        return 0;
+    }
+
+    state->leaderHandObjectPresent = m11_read_u32_le(buf + 12) ? 1 : 0;
+    state->leaderHandThing = (unsigned short)m11_read_u32_le(buf + 16);
+    state->leaderHandIconIndex = -1;
+    state->v1OpenChestThing = (unsigned short)m11_read_u32_le(buf + 20);
+    state->v1OpenChestOpenedByEye = m11_read_u32_le(buf + 24) ? 1 : 0;
     return 1;
 }
 
@@ -6649,6 +6749,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         m11_set_status(state, "SAVE", "EXPLORED STATE FAILED");
         return 0;
     }
+    if (!m11_write_quicksave_v1_runtime(state, path)) {
+        m11_set_status(state, "SAVE", "V1 RUNTIME STATE FAILED");
+        return 0;
+    }
     m11_set_status(state, "SAVE", "QUICKSAVE WRITTEN");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SAVE SLOT READY");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -6741,6 +6845,7 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     (void)m11_load_quicksave_explored_bits(state, path);
+    (void)m11_load_quicksave_v1_runtime(state, path);
     m11_mark_explored(state);
     /* G0319_ul_LoadGameTime / G2018_ul_LastSaveTime mirror
      * (ReDMCSB LOADSAVE.C:2724).  After a load, both anchors point at the
