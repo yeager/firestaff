@@ -21507,6 +21507,10 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
 
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE) {
+        /* ReDMCSB PANEL.C F0351 lines 2013-2015 closes G0426 through
+         * CHEST.C F0334 before switching the inventory panel to champion
+         * skills/statistics. */
+        M11_GameView_CloseV1OpenChest(state);
         state->v1ObjectDescriptionPanelActive = 0;
         state->v1ScrollPanelActive = 0;
         state->v1ScrollPanelThing = THING_NONE;
@@ -21524,6 +21528,10 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
     } else {
         state->v1ChampionStatsPanelActive = 0;
         state->v1FoodWaterPanelActive = 0;
+        /* ReDMCSB PANEL.C F0342 lines 1119-1124 closes any current
+         * G0426 chest via CHEST.C F0334 before scroll, container, or
+         * object-description eye routes draw their replacement panel. */
+        M11_GameView_CloseV1OpenChest(state);
         /* Show detailed item description.
          * ReDMCSB F0352: eye click with item in hand shows object panel
          * with name, weight, type-specific stats (damage, armor, charges). */
