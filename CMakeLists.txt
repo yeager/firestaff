@@ -890,6 +890,10 @@ target_link_libraries(firestaff_csb_v1_wall_text_oracle_probe PRIVATE firestaff_
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_wall_text_oracle_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v1_wall_text_oracle_gate
+    COMMAND firestaff_csb_v1_wall_text_oracle_probe
+)
 
 # DM1 V2.1 asset pipeline probe (pass648)
 add_executable(firestaff_pass648_dm1_v2_asset_pipeline_probe probes/verify_pass648_dm1_v2_asset_pipeline.c)
