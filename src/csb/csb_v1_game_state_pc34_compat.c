@@ -18,13 +18,16 @@ void csb_gs_init(CSB_GameState* s) {
 
 void csb_gs_set_state(CSB_GameState* s, int state) {
     if (!s) return;
-    /* No validation — accept any state value per ReDMCSB state-machine pattern */
-    s->currentLevel = state;
+    /* Keep runtime mode separate from dungeon map/level selection.
+     * ReDMCSB LOADSAVE.C F0435 lines 1940-1944 initializes
+     * G0309_i_PartyMapIndex independently from the new-game transition,
+     * and DUNGEON.C F0174 lines 2754-2755 updates the party/current map. */
+    s->gameMode = state;
 }
 
 int csb_gs_get_state(const CSB_GameState* s) {
     if (!s) return CSB_STATE_UNINIT;
-    return s->currentLevel;
+    return s->gameMode;
 }
 
 void csb_gs_tick(CSB_GameState* s, int ms) {
