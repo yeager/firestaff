@@ -197,6 +197,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_f0111_door_panel_pc34_com
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_f0111_door_panel_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d3c_center_field_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d3c_center_field_pc34_compat.c
@@ -7057,6 +7061,35 @@ if(NOT TARGET test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat)
     )
 endif()
 
+# ── DM1 V1 inventory eye-route scroll runtime regression ─────────────
+# Companion to test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat
+# and test_dm1_v1_inventory_panel_mouse_routes_pc34_compat: pins the
+# ReDMCSB PANEL.C F0352 -> F0342 -> F0341 scroll panel state machine
+# for the C071 eye click on a leader-hand scroll.  The earlier
+# regressions only prove that the generic object-description and
+# chest-panel routes toggle correctly; this probe pins the four
+# scroll-specific contracts: the scroll stays in the leader hand,
+# v1ScrollPanelThing binds to the inspected scroll's
+# textStringThingIndex, follow-up C071 clicks on the same scroll
+# are idempotent, a C071 click on a different scroll rebinds the
+# panel, and a C071 click on a non-scroll item closes the scroll
+# panel.
+if(NOT TARGET test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat)
+    add_executable(test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat
+        tests/test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat.c
+    )
+    # See the link-pattern comment on test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat
+    # above for the m12/m11 duplicate rationale.
+    target_link_libraries(test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat
+        COMMAND test_dm1_v1_inventory_eye_route_scroll_runtime_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_inventory_full_panel_runtime_pc34_compat)
     add_executable(test_m11_inventory_full_panel_runtime_pc34_compat
         tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
@@ -7288,6 +7321,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
     )
+    add_executable(firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test
+        tests/test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d1l2_wall_pc34_compat
         tests/test_dm1_v1_viewport_d1l2_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1l2_wall_pc34_compat.c
@@ -7499,6 +7536,15 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test PRIVATE
+        FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
     target_link_libraries(test_dm1_v1_viewport_d1l2_wall_pc34_compat
         PRIVATE firestaff_m10
     )
@@ -7659,6 +7705,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(firestaff_dm1_v1_viewport_d2c_stair_rail_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_f0111_door_panel_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0r2_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -7804,6 +7851,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d1c_f0115_door_frame_source_lock
         COMMAND test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0c_f0111_door_panel_source_lock
+        COMMAND firestaff_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat_test
     )
     add_test(
         NAME dm1_v1_viewport_d1l2_wall_source_lock
