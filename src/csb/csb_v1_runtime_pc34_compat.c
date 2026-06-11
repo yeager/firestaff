@@ -514,6 +514,49 @@ int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
     return 0;
 }
 
+int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
+                                 int target_dir)
+{
+    /* Source: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines
+     * 117-130.  The PC 3.4 C version (MEDIA182) computes
+     *   delta = (P0600_i_Direction - G0308_i_PartyDirection); if delta<0
+     *   then delta += 4;
+     * then loops over G0305_ui_PartyChampionCount champions, applying
+     *   Champion.Cell      = (Champion.Cell + delta) & 3;
+     *   Champion.Direction = (Champion.Direction + delta) & 3;
+     * and finally writes G0308_i_PartyDirection = P0600_i_Direction.
+     * The M021_NORMALIZE() macro is just (x & 3). */
+    int delta;
+    int current_dir;
+    int i;
+
+    if (!profile) return -1;
+    if (!profile->party_state_valid) return -1;
+    if (target_dir < 0 || target_dir > 3) return -1;
+
+    current_dir = profile->party_dir & 3;
+    if (target_dir == current_dir) {
+        /* Source-locked F0284 early return.  No champion state is
+         * touched and the caller still gets 0. */
+        return 0;
+    }
+
+    delta = target_dir - current_dir;
+    if (delta < 0) delta += 4;
+
+    for (i = 0; i < profile->party_state.ChampionCount &&
+                i < CSB_V1_MAX_CHAMPIONS; i++) {
+        uint8_t *cell = &profile->party_state.Champions[i].Cell;
+        uint8_t *dir = &profile->party_state.Champions[i].Direction;
+        *cell = (uint8_t)(((int)*cell + delta) & 3);
+        *dir  = (uint8_t)(((int)*dir  + delta) & 3);
+    }
+
+    profile->party_dir = (uint8_t)target_dir;
+    profile->party_state.PartyDirection = (uint8_t)target_dir;
+    return 0;
+}
+
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
     if (!profile) return;
     /*
