@@ -515,6 +515,65 @@ static void test_projectile_travel_blockers(void) {
     ASSERT_EQ(result.despawn, 0, "destroyed door keeps open-door projectile flying");
 }
 
+static void assert_side_cell_blocker_keeps_source(
+    const char* label,
+    int destSquareType,
+    int doorState,
+    int hasOtherProjectile,
+    int expectedResultKind)
+{
+    char check[128];
+    struct ProjectileInstance_Compat p;
+    struct ProjectileInstance_Compat next;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat result;
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_KINETIC,
+                               PROJECTILE_SUBTYPE_KINETIC_ARROW);
+    p.cell = 1;
+    p.direction = 0;
+
+    d = make_travel_digest(destSquareType);
+    d.destDoorState = doorState;
+    d.destHasOtherProjectile = hasOtherProjectile;
+
+    /* ReDMCSB source-lock:
+     *   PROJEXPL.C F0219 lines 714-725 tests whether the current cell
+     *     crosses into the next square, then checks wall/stair impacts
+     *     before applying the M015_THING_WITH_NEW_CELL update.
+     *   PROJEXPL.C F0219 lines 743-749 applies the door impact check
+     *     on intra-square handling before relinking the projectile. */
+    snprintf(check, sizeof(check), "%s advance ok", label);
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 200, NULL, &next, &result),
+              1, check);
+    snprintf(check, sizeof(check), "%s result kind", label);
+    ASSERT_EQ(result.resultKind, expectedResultKind, check);
+    snprintf(check, sizeof(check), "%s despawns", label);
+    ASSERT_EQ(result.despawn, 1, check);
+    snprintf(check, sizeof(check), "%s next state stays source cell", label);
+    ASSERT_EQ(next.cell, 1, check);
+    snprintf(check, sizeof(check), "%s result stays source cell", label);
+    ASSERT_EQ(result.newCell, 1, check);
+    snprintf(check, sizeof(check), "%s result source x", label);
+    ASSERT_EQ(result.newMapX, p.mapX, check);
+    snprintf(check, sizeof(check), "%s result source y", label);
+    ASSERT_EQ(result.newMapY, p.mapY, check);
+}
+
+static void test_projectile_side_cell_blockers(void) {
+    printf("  projectile side-cell blockers...\n");
+
+    assert_side_cell_blocker_keeps_source(
+        "side wall", PROJECTILE_ELEMENT_WALL, PROJECTILE_DOOR_STATE_NONE, 0,
+        PROJECTILE_RESULT_HIT_WALL);
+    assert_side_cell_blocker_keeps_source(
+        "side closed door", PROJECTILE_ELEMENT_DOOR, PROJECTILE_DOOR_STATE_CLOSED_HALF, 0,
+        PROJECTILE_RESULT_HIT_DOOR);
+    assert_side_cell_blocker_keeps_source(
+        "side projectile blocker", PROJECTILE_ELEMENT_CORRIDOR, PROJECTILE_DOOR_STATE_NONE, 1,
+        PROJECTILE_RESULT_HIT_OTHER_PROJECTILE);
+}
+
 
 static void test_poison_cloud_party_damage_over_time(void) {
     struct ExplosionInstance_Compat explosion;
@@ -695,6 +754,7 @@ int main(void) {
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
     test_projectile_travel_blockers();
+    test_projectile_side_cell_blockers();
     test_poison_cloud_party_damage_over_time();
     test_poison_cloud_single_monster_overlap_tick_boundary();
     test_harm_non_material_materializer_attack_only();
