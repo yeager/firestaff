@@ -64,7 +64,10 @@
  * invariant on the CLIKMENU.C F0366 backward movement branch.  It also
  * clicks the original V1 movement-arrow rectangles for forward/back and
  * left/right turn Hall routes, proving the mouse route enters the same
- * source command path before the D1C portrait box is re-blitted.  A final
+ * source command path before the D1C portrait box is re-blitted.  It also
+ * drives the source C006/C004 lateral command pair against the south-facing
+ * Hall mirror, covering the blocked movement redraw branch that the
+ * forward/back and turn routes do not touch.  A final
  * mixed route alternates pointer and keyboard commands through the same live
  * movement-pipeline state, covering the COMMAND.C F0359 mouse queue and
  * F0361 keyboard dispatch interleave called out by BUG0_73 without widening
@@ -500,6 +503,14 @@ int main(int argc, char** argv) {
         {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, 0,
          "hall_backstep_forward_back_to_ordinal_3"},
     };
+    const InputWalkStep strafeSteps[] = {
+        {1, 4, DIR_SOUTH, 3, -1, 0,
+         "hall_blocked_strafe_start_south_ordinal_3"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_STRAFE_LEFT, 0,
+         "hall_blocked_strafe_left_keeps_ordinal_3"},
+        {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_STRAFE_RIGHT, 0,
+         "hall_blocked_strafe_right_keeps_ordinal_3"},
+    };
     const PointerWalkStep pointerSteps[] = {
         {1, 3, DIR_SOUTH, -1, -1, -1,
          "hall_pointer_start_south_no_portrait"},
@@ -641,6 +652,38 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = backstepSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Blocked lateral-command route: keep the party facing SOUTH and issue
+     * the source-backed C006/C004 movement pair through keyboard strafe inputs.
+     * ReDMCSB DEFS.H:238-243 names C004/C006 as move-right/move-left, and
+     * CLIKMENU.C F0366:224-233 maps the relative lateral step before the
+     * MOVESENS.C:556 redraw.  In this Hall pose both lateral commands are
+     * blocked, so this proves the DUNVIEW.C:3913-3928 / 8522-8533 C026 D1C
+     * portrait rectangle survives a rejected lateral command without dropping
+     * or drifting from ordinal 3. */
+    start_independent_input_route(&game, 1, 4, DIR_SOUTH);
+    prevOrdinal = -2;
+    for (stepIdx = 0; stepIdx < (int)(sizeof(strafeSteps) / sizeof(strafeSteps[0])); ++stepIdx) {
+        int prevOrd = prevOrdinal;
+        int stepOk;
+        if (strafeSteps[stepIdx].inputBeforeCheck >= 0) {
+            M11_GameInputResult result =
+                M11_GameView_HandleInput(&game, strafeSteps[stepIdx].inputBeforeCheck);
+            if (result != M11_GAME_INPUT_REDRAW) {
+                fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
+                        strafeSteps[stepIdx].label,
+                        strafeSteps[stepIdx].inputBeforeCheck,
+                        result, M11_GAME_INPUT_REDRAW);
+                ok = 0;
+            }
+        }
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &strafeSteps[stepIdx], currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+        prevOrdinal = strafeSteps[stepIdx].expectedOrdinal;
     }
 
     /* Pointer route: click the original V1 movement-arrow boxes in the
