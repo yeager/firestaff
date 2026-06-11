@@ -1404,12 +1404,6 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
                                       int windowY,
                                       int* outFbX,
                                       int* outFbY) {
-    int rectX;
-    int rectY;
-    int rectW;
-    int rectH;
-    int localX;
-    int localY;
     int mapWindowW;
     int mapWindowH;
 
@@ -1456,23 +1450,54 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
         }
     }
 
-    /* Mouse events in SDL3 use logical (window) coordinates, not pixel
-     * coordinates.  Compute the presentation rect in logical space so
-     * the hit-test and coordinate mapping are correct. */
-    {
-        int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
-        int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
-        (void)M11_Render_ComputePresentationRect(mapWindowW,
-                                                 mapWindowH,
-                                                 contentW,
-                                                 contentH,
-                                                 g_state.scaleMode,
-                                                 g_state.integerScaling,
-                                                 g_state.displayAspectMode,
-                                                 &rectX,
-                                                 &rectY,
-                                                 &rectW,
-                                                 &rectH);
+    return M11_Render_MapPointToFramebuffer(
+        windowX,
+        windowY,
+        mapWindowW,
+        mapWindowH,
+        g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH,
+        g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT,
+        g_state.scaleMode,
+        g_state.integerScaling,
+        g_state.displayAspectMode,
+        outFbX,
+        outFbY);
+}
+
+int M11_Render_MapPointToFramebuffer(int windowX,
+                                     int windowY,
+                                     int windowW,
+                                     int windowH,
+                                     int contentW,
+                                     int contentH,
+                                     int scaleMode,
+                                     int integerScaling,
+                                     int displayAspectMode,
+                                     int* outFbX,
+                                     int* outFbY) {
+    int rectX;
+    int rectY;
+    int rectW;
+    int rectH;
+    int localX;
+    int localY;
+
+    if (!outFbX || !outFbY || contentW <= 0 || contentH <= 0) {
+        return 0;
+    }
+
+    if (M11_Render_ComputePresentationRect(windowW,
+                                           windowH,
+                                           contentW,
+                                           contentH,
+                                           scaleMode,
+                                           integerScaling,
+                                           displayAspectMode,
+                                           &rectX,
+                                           &rectY,
+                                           &rectW,
+                                           &rectH) != M11_RENDER_OK) {
+        return 0;
     }
     if (rectW <= 0 || rectH <= 0) {
         return 0;
@@ -1483,12 +1508,12 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
 
     localX = windowX - rectX;
     localY = windowY - rectY;
-    *outFbX = (localX * g_state.contentW) / rectW;
-    *outFbY = (localY * g_state.contentH) / rectH;
+    *outFbX = (localX * contentW) / rectW;
+    *outFbY = (localY * contentH) / rectH;
     if (*outFbX < 0) *outFbX = 0;
     if (*outFbY < 0) *outFbY = 0;
-    if (*outFbX >= g_state.contentW) *outFbX = g_state.contentW - 1;
-    if (*outFbY >= g_state.contentH) *outFbY = g_state.contentH - 1;
+    if (*outFbX >= contentW) *outFbX = contentW - 1;
+    if (*outFbY >= contentH) *outFbY = contentH - 1;
     return 1;
 }
 

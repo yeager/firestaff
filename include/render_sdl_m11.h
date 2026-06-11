@@ -158,6 +158,17 @@ int  M11_Render_ComputePresentationRect(int windowW,
                                         int* outH);
 int  M11_Render_ToggleFullscreen(void);
 int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
+int  M11_Render_MapPointToFramebuffer(int windowX,
+                                      int windowY,
+                                      int windowW,
+                                      int windowH,
+                                      int contentW,
+                                      int contentH,
+                                      int scaleMode,
+                                      int integerScaling,
+                                      int displayAspectMode,
+                                      int* outFbX,
+                                      int* outFbY);
 int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int windowY,
                                        int* outFbX,
