@@ -19,7 +19,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Queue/refill priority order: DM1 V1 → Theron V1 → CSB V1 → DM1 V2 → CSB V2 → DM2 V1 → Theron V2 → Nexus V1 → Nexus V2. Worker refill focus should stay on `priority` unless intentionally pausing higher-priority lanes.
 - 🔧 Current remaining status by game/version, 2026-06-11:
   - DM1 V1: keep gameplay/runtime changes source-locked; remaining focus is paired original-DOS capture proof, remaining visual polish, and non-duplicative viewport/champion/inventory evidence only where it closes a real gap.
-  - DM1 V2.0/V2.1/V2.2: with V2.0 locked to 640x400 and V2.1/V2.2 selectable from 640x400 through 3840x2160, bind the side-by-side seed and region manifest into full enhanced-presentation screenshot/pixel gates, then broaden interpolation/UI polish without bypassing V1 command ownership.
+  - DM1 V2.0/V2.1/V2.2: with V2.0 locked to 640x400, V2.1/V2.2 selectable from 640x400 through 3840x2160, and the side-by-side region manifest bound to full lane/D1C pixel gates, add screenshot materialization gates for enhanced presentation, then broaden interpolation/UI polish without bypassing V1 command ownership.
   - CSB V1: finish title/import UI composition, CSB-specific viewport integration, broader champion-state runtime transitions, input-command queue binding beyond the narrow timeline helper, and end-to-end playability verification.
   - CSB V2.0/V2.1/V2.2: finish enhanced assets, lighting/magic effects, touch/controller ergonomics, runtime binding to the V1 hardening path, and side-by-side screenshot/pixel gates.
   - DM2 V1: continue broader dungeon/render/mechanics parity, creature/combat behavior, shops/NPCs, and real-runtime save/import compatibility beyond the focused probes.
@@ -78,7 +78,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 5 - Smooth movement presentation hardening: runtime bridge/gates and optional Custom/V2 smooth turn-pan camera backend exist; remaining work is broader interpolation coverage and launcher UI polish while preserving V1 cooldowns, collision, sensors, creature timing, and redraw cadence.
 - 🔧 Phase 6 - Touch/controller ergonomics hardening: route gates exist; remaining work is broader V2-only gesture/controller affordances with V1 touch/click parity preserved.
 - 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash gate exists; remaining work is full side-by-side V1/V2 deterministic input scripts plus screenshot/pixel gates for enhanced presentation.
-  - 📌 The side-by-side seed now exposes a composite-space region manifest for the V1 lane, gap, V2 lane, and D1C wall/portrait rectangles in both lanes; remaining work is to bind these rectangles into full enhanced-presentation screenshot/pixel gates.
+  - 📌 The side-by-side seed now exposes a composite-space region manifest for the V1 lane, gap, V2 lane, and D1C wall/portrait rectangles in both lanes, plus full-region hash/compare gates for the V1/V2 lane, D1C wall, and D1C portrait rectangles. Remaining work is screenshot materialization for enhanced-presentation visual diffs.
 
 ## Chaos Strikes Back (CSB)
 

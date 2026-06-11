@@ -340,6 +340,99 @@ int dm1_v2_side_by_side_seed_region(DM1_V2_SideBySideRegionId id,
     }
 }
 
+uint64_t dm1_v2_side_by_side_seed_hash_region(
+    const DM1_V2_SideBySideSeed* seed,
+    DM1_V2_SideBySideRegionId id,
+    int* outPixelCount) {
+    DM1_V2_SideBySideRegion region;
+    uint64_t hash = DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS;
+    int dx, dy;
+
+    if (outPixelCount) *outPixelCount = 0;
+    if (!seed) return hash;
+    if (!dm1_v2_side_by_side_seed_region(id, &region)) return hash;
+
+    /* Full screenshot-region hash. The region manifest carries
+     * ReDMCSB viewport/D1C anchors; this fold binds those rectangles
+     * to real seed pixels instead of leaving them as coordinates only. */
+    for (dy = 0; dy < region.h; ++dy) {
+        for (dx = 0; dx < region.w; ++dx) {
+            DM1_V2_Color c;
+            if (!dm1_v2_side_by_side_seed_composite_pixel(
+                    seed, region.x + dx, region.y + dy, &c)) {
+                return DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS;
+            }
+            hash = dm1_v2_side_by_side_seed_hash_color(hash, &c);
+            if (outPixelCount) (*outPixelCount)++;
+        }
+    }
+    return hash;
+}
+
+int dm1_v2_side_by_side_seed_compare_regions(
+    const DM1_V2_SideBySideSeed* seed,
+    DM1_V2_SideBySideRegionId a,
+    DM1_V2_SideBySideRegionId b,
+    DM1_V2_SideBySideRegionCompareResult* result) {
+    DM1_V2_SideBySideRegion ra;
+    DM1_V2_SideBySideRegion rb;
+    DM1_V2_SideBySideRegionCompareResult local;
+    int dx, dy;
+
+    if (result) {
+        result->comparedPixels = 0;
+        result->mismatchedPixels = 0;
+        result->firstMismatchAX = -1;
+        result->firstMismatchAY = -1;
+        result->firstMismatchBX = -1;
+        result->firstMismatchBY = -1;
+    }
+    if (!seed) return 0;
+    if (!dm1_v2_side_by_side_seed_region(a, &ra)) return 0;
+    if (!dm1_v2_side_by_side_seed_region(b, &rb)) return 0;
+    if (ra.w != rb.w || ra.h != rb.h) return 0;
+
+    local.comparedPixels = 0;
+    local.mismatchedPixels = 0;
+    local.firstMismatchAX = -1;
+    local.firstMismatchAY = -1;
+    local.firstMismatchBX = -1;
+    local.firstMismatchBY = -1;
+
+    /* Pixel gate for named manifest rectangles. DUNVIEW.C:2999-3000
+     * fixes lane dimensions, while DUNVIEW.C:581-593 and 3913-3928
+     * fix the D1C wall/portrait rectangles this helper compares. */
+    for (dy = 0; dy < ra.h; ++dy) {
+        for (dx = 0; dx < ra.w; ++dx) {
+            DM1_V2_Color ca;
+            DM1_V2_Color cb;
+            const int ax = ra.x + dx;
+            const int ay = ra.y + dy;
+            const int bx = rb.x + dx;
+            const int by = rb.y + dy;
+            if (!dm1_v2_side_by_side_seed_composite_pixel(seed, ax, ay, &ca)) {
+                return 0;
+            }
+            if (!dm1_v2_side_by_side_seed_composite_pixel(seed, bx, by, &cb)) {
+                return 0;
+            }
+            ++local.comparedPixels;
+            if (ca.r != cb.r || ca.g != cb.g ||
+                ca.b != cb.b || ca.a != cb.a) {
+                if (local.mismatchedPixels == 0) {
+                    local.firstMismatchAX = ax;
+                    local.firstMismatchAY = ay;
+                    local.firstMismatchBX = bx;
+                    local.firstMismatchBY = by;
+                }
+                ++local.mismatchedPixels;
+            }
+        }
+    }
+    if (result) *result = local;
+    return local.mismatchedPixels == 0;
+}
+
 const char* dm1_v2_side_by_side_seed_source_evidence(void) {
     return kSourceEvidence;
 }

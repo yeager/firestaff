@@ -242,6 +242,37 @@ typedef struct {
 int dm1_v2_side_by_side_seed_region(DM1_V2_SideBySideRegionId id,
                                     DM1_V2_SideBySideRegion* out);
 
+/* Hash every pixel in one named composite-space region. The hash uses
+ * the same RGBA FNV-1a fold as dm1_v2_side_by_side_seed_hash_layout(),
+ * but it only sweeps the requested manifest rectangle. Returns the
+ * FNV-1a basis for invalid inputs; writes the number of folded pixels
+ * when outPixelCount is non-NULL. */
+uint64_t dm1_v2_side_by_side_seed_hash_region(
+    const DM1_V2_SideBySideSeed* seed,
+    DM1_V2_SideBySideRegionId id,
+    int* outPixelCount);
+
+/* Full pixel comparison for two same-sized side-by-side manifest
+ * rectangles. This is the screenshot/pixel gate helper that binds the
+ * manifest rectangles to actual framebuffer content instead of only
+ * checking their coordinates. Returns 1 when both regions are valid,
+ * same-sized, and byte-identical. Returns 0 on invalid inputs, size
+ * mismatch, or at least one pixel mismatch. */
+typedef struct {
+    int comparedPixels;
+    int mismatchedPixels;
+    int firstMismatchAX;
+    int firstMismatchAY;
+    int firstMismatchBX;
+    int firstMismatchBY;
+} DM1_V2_SideBySideRegionCompareResult;
+
+int dm1_v2_side_by_side_seed_compare_regions(
+    const DM1_V2_SideBySideSeed* seed,
+    DM1_V2_SideBySideRegionId a,
+    DM1_V2_SideBySideRegionId b,
+    DM1_V2_SideBySideRegionCompareResult* result);
+
 /* Return the ReDMCSB source evidence string for this seed module. */
 const char* dm1_v2_side_by_side_seed_source_evidence(void);
 
