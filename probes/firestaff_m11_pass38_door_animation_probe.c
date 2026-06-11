@@ -194,6 +194,53 @@ int main(void) {
            "F0713 rejects negative mapIndex");
 
     /* ================================================================
+     *  F0721 — source-locked door retrigger merge gate
+     *
+     *  ReDMCSB TIMELINE.C:F0652_MergeEvent lines 3883-3895 updates an
+     *  existing C01_EVENT_DOOR_ANIMATION event at the same Map_Time and
+     *  MapXY instead of adding a duplicate.  Adjacent ticks or adjacent
+     *  squares are intentionally not merged.
+     * ================================================================ */
+    {
+        struct TimelineQueue_Compat queue;
+        struct TimelineEvent_Compat openEv;
+        struct TimelineEvent_Compat closeEv;
+        struct TimelineEvent_Compat nearTickEv;
+        struct TimelineEvent_Compat nearSquareEv;
+
+        F0720_TIMELINE_Init_Compat(&queue, 0);
+        F0713_DOOR_BuildAnimationEvent_Compat(0, 1, 1, DOOR_EFFECT_SET,
+                                              90u, &openEv);
+        F0713_DOOR_BuildAnimationEvent_Compat(0, 1, 1, DOOR_EFFECT_CLEAR,
+                                              90u, &closeEv);
+        F0713_DOOR_BuildAnimationEvent_Compat(0, 1, 1, DOOR_EFFECT_SET,
+                                              91u, &nearTickEv);
+        F0713_DOOR_BuildAnimationEvent_Compat(0, 2, 1, DOOR_EFFECT_SET,
+                                              90u, &nearSquareEv);
+
+        record("P38_F0721_DOOR_RETRIGGER_MERGES",
+               F0721_TIMELINE_Schedule_Compat(&queue, &openEv) == 1 &&
+                   F0721_TIMELINE_Schedule_Compat(&queue, &closeEv) == 1 &&
+                   queue.count == 1 &&
+                   queue.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE &&
+                   queue.events[0].fireAtTick == 90u &&
+                   queue.events[0].mapX == 1 &&
+                   queue.events[0].mapY == 1 &&
+                   queue.events[0].aux1 == DOOR_EFFECT_CLEAR,
+               "same-tick same-square door-button retrigger replaces the pending door animation effect");
+
+        record("P38_F0721_DOOR_RETRIGGER_TICK_GATE",
+               F0721_TIMELINE_Schedule_Compat(&queue, &nearTickEv) == 1 &&
+                   queue.count == 2,
+               "same-square door animation on a later tick remains a separate timeline event");
+
+        record("P38_F0721_DOOR_RETRIGGER_LOCATION_GATE",
+               F0721_TIMELINE_Schedule_Compat(&queue, &nearSquareEv) == 1 &&
+                   queue.count == 3,
+               "same-tick door animation on a different square remains a separate timeline event");
+    }
+
+    /* ================================================================
      *  F0712 — stepper walks (pure / mutating)
      * ================================================================ */
 
