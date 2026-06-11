@@ -56,6 +56,8 @@
  *      and carrying the named weapon metadata into the panel fields.
  *   10. Same-chest pressing-eye reopen preserves the existing normal-open
  *      C145 action-hand icon because F0333 returns before P0694 handling.
+ *   11. Eye-clicking a leader-hand scroll routes through the C071 runtime
+ *      mouse path to the scroll panel, not the object-description panel.
  */
 
 #include "m11_game_view.h"
@@ -405,7 +407,9 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonContainer_Compat containers[1];
+    struct DungeonScroll_Compat scrolls[1];
     unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short scrollThing = (unsigned short)((THING_TYPE_SCROLL << 10) | 0);
     int space = M11_DM1_MOUSE_SPACE_NONE;
     int zoneId = 0;
     int command = 0;
@@ -507,6 +511,51 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
                     "object-description body records source broken flag");
     ASSERT_CONTAINS(state.v1ObjectDescriptionBody, "CHARGE 7",
                     "object-description body records source weapon charge count");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss weapon eye overlay before the scroll eye route");
+
+    /* Eye-clicking a scroll follows the PANEL.C F0352 -> F0342 scroll-text
+     * route instead of the generic object-description route.  Keep stale
+     * object-description state populated so this regression proves the
+     * runtime C071 path clears it before marking the scroll panel active. */
+    memset(scrolls, 0, sizeof(scrolls));
+    scrolls[0].next = THING_ENDOFLIST;
+    scrolls[0].textStringThingIndex = 0;
+    scrolls[0].closed = 0;
+    things.scrolls = scrolls;
+    things.scrollCount = 1;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, scrollThing), 1,
+              "leader hand accepts the scroll inspected by the eye route");
+    state.v1ObjectDescriptionPanelActive = 1;
+    state.v1ObjectDescriptionThing = weaponThing;
+    state.v1ObjectDescriptionIconIndex = 123;
+    snprintf(state.v1ObjectDescriptionName,
+             sizeof(state.v1ObjectDescriptionName), "STALE");
+    snprintf(state.v1ObjectDescriptionBody,
+             sizeof(state.v1ObjectDescriptionBody), "STALE BODY");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, eyeScreenX, eyeScreenY, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye press with scroll in leader hand redraws scroll panel");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), scrollThing,
+              "eye scroll route preserves leader-hand scroll");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "eye scroll route clears stale object-description panel");
+    ASSERT_EQ(state.v1ObjectDescriptionThing, THING_NONE,
+              "eye scroll route clears stale object-description thing");
+    ASSERT_EQ(state.v1ObjectDescriptionIconIndex, -1,
+              "eye scroll route clears stale object-description icon");
+    ASSERT_EQ(state.v1ObjectDescriptionName[0], '\0',
+              "eye scroll route clears stale object-description name");
+    ASSERT_EQ(state.v1ObjectDescriptionBody[0], '\0',
+              "eye scroll route clears stale object-description body");
+    ASSERT_EQ(state.v1ScrollPanelActive, 1,
+              "eye scroll route activates scroll panel state");
+    ASSERT_EQ(state.v1ScrollPanelThing, scrollThing,
+              "eye scroll route records inspected scroll thing");
+    ASSERT_CONTAINS(state.inspectTitle, "SCROLL:",
+                    "eye scroll route records scroll inspect title");
+    ASSERT_CONTAINS(state.inspectDetail, "SCROLL TEXT PANEL",
+                    "eye scroll route records scroll panel detail");
 }
 
 /* Detail 4: runtime status hand routes C020..C027.  ReDMCSB COMMAND.C
@@ -829,6 +878,7 @@ int main(void) {
            "DATA.C:1063-1079 backpack MASK0xFFFF_ANY_SLOT vs "
            "DATA.C:1080-1087 chest MASK0x0400_CONTAINER, "
            "PANEL.C:1126-1200 eye object-description route, "
+           "PANEL.C:1126-1131 scroll eye route through F0342/F0341, "
            "PANEL.C:1250-1254 weapon eye metadata flags, "
            "CHEST.C:35-38 replace-open chest close-before-open ordering, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
