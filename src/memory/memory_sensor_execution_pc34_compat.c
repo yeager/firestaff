@@ -325,6 +325,44 @@ static unsigned short sensor_step_thing(
     return nextThing;
 }
 
+static int sensor_square_has_existing_floor_weight(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int sftIdx;
+    unsigned short thingRef;
+    int safety = 0;
+
+    if (!dungeon || !things || !things->loaded) return 0;
+    sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
+    if (sftIdx < 0 || sftIdx >= things->squareFirstThingCount) return 0;
+
+    thingRef = things->squareFirstThings[sftIdx];
+    while (thingRef != THING_NONE && thingRef != THING_ENDOFLIST && safety < 64) {
+        int type, index;
+        unsigned short nextThing = sensor_step_thing(things, thingRef, &type, &index);
+        (void)index;
+
+        /* ReDMCSB MOVESENS.C:F0276 lines 1624-1648 computes
+         * L0772_B_SquareContainsObject and L0773_B_SquareContainsGroup
+         * before party floor sensors run.  Case C001 at lines 1664-1667
+         * suppresses a party/object/creature pressure pad when an object
+         * or group already weighs the square. */
+        if (type == THING_TYPE_GROUP ||
+            (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE)) {
+            return 1;
+        }
+
+        thingRef = nextThing;
+        ++safety;
+    }
+
+    return 0;
+}
+
 int F0717_SENSOR_EnumerateOnSquare_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -397,6 +435,7 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
     int sensorCount, i;
     int squareType = -1;
+    int squareHasExistingFloorWeight = 0;
 
     if (!outList) return 0;
     memset(outList, 0, sizeof(*outList));
@@ -408,6 +447,10 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
 
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         dungeon, things, mapIndex, mapX, mapY, sensors);
+    if (triggerEvent == SENSOR_EVENT_WALK_ON) {
+        squareHasExistingFloorWeight = sensor_square_has_existing_floor_weight(
+            dungeon, things, mapIndex, mapX, mapY);
+    }
 
     if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount) {
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
@@ -426,6 +469,9 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
          * party-enter/leave wrapper already models party triggers, so it
          * must preserve the stairs-square predicate before execution. */
         if (sensors[i].sensorType == 5 && squareType != DUNGEON_ELEMENT_STAIRS) {
+            continue;
+        }
+        if (sensors[i].sensorType == 1 && squareHasExistingFloorWeight) {
             continue;
         }
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],

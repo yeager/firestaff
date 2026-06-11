@@ -541,6 +541,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM1 V1
 
+- ✅ Firestaff coding pass 2026-06-11: fixed and locked the DM1 V1 runtime pressure-pad party/object weight gate. `F0718_SENSOR_ProcessPartyEnterLeave_Compat` now suppresses a C001 party/object/creature pressure-pad walk-on when an object or group already weighs the square, matching ReDMCSB `MOVESENS.C F0276:1624-1648,1664-1667`; `test_dm1_v1_sensor_trigger_pc34_compat` adds an asset-free regression for empty-pad trigger vs object-weight suppression. Focused local verification: `cmake --build build --target test_dm1_v1_sensor_trigger_pc34_compat --parallel`, `ctest --test-dir build -R '^dm1_v1_sensor_trigger_pc34_compat$' --output-on-failure`, and `git diff --check` passed.
 - ✅ Firestaff coding pass 2026-06-11: added `firestaff_dm1_v1_stair_pit_occlusion_pixel_gate`, a focused source-locked pixel-owner probe for D1/D2 stair and pit ordering. It proves the D2C open-pit BUG0_64 route can be covered by F0108 floor ornaments before F0115, and that the F0128 D1L stair/pit lane owns a shared pixel after the earlier D2C write. Source anchors: ReDMCSB `DUNVIEW.C F0121:7260-7368`, `F0122:7405-7536`, and `F0128:8518-8525`.
 
 ### DM1 V2
