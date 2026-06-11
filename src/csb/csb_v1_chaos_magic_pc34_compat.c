@@ -35,6 +35,17 @@ static int csb_v1_dsa_reject_malformed_at(CSB_V1_DSAScript *script, int pc) {
     return 0;
 }
 
+static void csb_v1_dsa_record_dispatch(CSB_V1_ChaosMagicState *state,
+    CSB_V1_DSADispatchKind kind, int opcode, int operand, int op_pc)
+{
+    if (!state) return;
+    state->dispatch_count++;
+    state->last_dispatch.kind = kind;
+    state->last_dispatch.opcode = opcode;
+    state->last_dispatch.operand = operand;
+    state->last_dispatch.op_pc = op_pc;
+}
+
 void csb_v1_chaos_init(CSB_V1_ChaosMagicState *state) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
@@ -153,6 +164,21 @@ int csb_v1_dsa_execute_step(CSB_V1_DSAScript *script,
             }
             script->delay_ticks = script->bytecode[script->pc++];
             break;
+        case CSB_DSA_OP_MESSAGE:
+            if (!csb_v1_dsa_has_operands(script, 1)) {
+                return csb_v1_dsa_reject_malformed_at(script, op_pc);
+            }
+            /* CSBWin/DSA.cpp QueueDSASwitchAction lines 523-531 queues
+             * TT_DESSAGE timer records, and ProcessDSATimer6 lines
+             * 5415-5441 maps timer position/function to an Execute message
+             * column.  The text surface eventually reaches ReDMCSB TEXT.C
+             * F0047_TEXT_MESSAGEAREA_PrintMessage lines 1670-1775. */
+            csb_v1_dsa_record_dispatch(state,
+                CSB_V1_DSA_DISPATCH_MESSAGE,
+                CSB_DSA_OP_MESSAGE,
+                script->bytecode[script->pc++],
+                op_pc);
+            break;
         case CSB_DSA_OP_END:
             script->active = 0;
             break;
@@ -180,6 +206,9 @@ const char *csb_v1_chaos_source_evidence(void) {
         "CSBWin/Chaos.cpp:584 InitializeE\n"
         "CSBWin/Chaos.cpp:60-69 _CALL0-_CALL9 DSA dispatch\n"
         "CSBWin/DSA.cpp DSA interpreter (5806 lines)\n"
+        "CSBWin/DSA.cpp:523-531 QueueDSASwitchAction TT_DESSAGE timer dispatch\n"
+        "CSBWin/DSA.cpp:5415-5441 ProcessDSATimer6 message column execution\n"
+        "ReDMCSB TEXT.C:1670-1775 F0047_TEXT_MESSAGEAREA_PrintMessage\n"
         "CSBWin/CSBCode.cpp:9196 _DisplayChaosStrikesBack\n"
         "CSBWin/CSBCode.cpp:11414 StartChaos\n"
         "CSB-specific: DSA bytecode VM, 256 global flags\n";

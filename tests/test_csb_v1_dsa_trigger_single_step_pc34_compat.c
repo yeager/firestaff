@@ -47,6 +47,7 @@
 #define DSA_KNOWN_SCRIPT_ID   0
 #define DSA_KNOWN_FLAG        42
 #define DSA_KNOWN_OTHER_FLAG  43
+#define DSA_KNOWN_MESSAGE_ID  77
 
 static int g_assertions;
 static int g_failures;
@@ -444,7 +445,64 @@ static void test_malformed_target_operands_reject_cleanly(void)
 }
 
 /* ----------------------------------------------------------------
- * Test 8: source-evidence string must cite CSBWin DSA anchors so
+ * Test 8: single MESSAGE step records one deterministic dispatch.
+ * ----------------------------------------------------------------
+ * This is intentionally only the DSA/message dispatch boundary: one
+ * target message id enters the compat state as one observable dispatch
+ * record.  The renderer/text-log path remains outside this VM gate.
+ *
+ * Source: CSBWin/DSA.cpp QueueDSASwitchAction TT_DESSAGE branch and
+ *         ProcessDSATimer6 message-column execution; ReDMCSB TEXT.C
+ *         F0047_TEXT_MESSAGEAREA_PrintMessage for the eventual text
+ *         surface.
+ */
+static void test_single_step_message_records_dispatch(void)
+{
+    uint16_t script[] = {
+        CSB_DSA_OP_MESSAGE, (uint16_t)DSA_KNOWN_MESSAGE_ID,
+        CSB_DSA_OP_END
+    };
+    CSB_V1_ChaosMagicState chaos;
+
+    install_single_script(&chaos, script, (int)(sizeof(script) / sizeof(script[0])));
+    check(chaos.dispatch_count == 0,
+          "include/csb_v1_chaos_magic_pc34_compat.h:CSB_V1_ChaosMagicState",
+          "message dispatch count starts at zero");
+    check(chaos.last_dispatch.kind == CSB_V1_DSA_DISPATCH_NONE,
+          "include/csb_v1_chaos_magic_pc34_compat.h:CSB_V1_DSADispatchRecord",
+          "last dispatch starts empty");
+    (void)csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID);
+    check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID], &chaos) == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "single MESSAGE step keeps the script active");
+    check(chaos.dispatch_count == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_record_dispatch",
+          "single MESSAGE step records exactly one dispatch");
+    check(chaos.last_dispatch.kind == CSB_V1_DSA_DISPATCH_MESSAGE,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "dispatch kind is MESSAGE");
+    check(chaos.last_dispatch.opcode == CSB_DSA_OP_MESSAGE,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "dispatch records the source opcode");
+    check(chaos.last_dispatch.operand == DSA_KNOWN_MESSAGE_ID,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "dispatch records the known message target");
+    check(chaos.last_dispatch.op_pc == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "dispatch records the opcode pc");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 2,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "MESSAGE consumes opcode + message argument");
+    check(chaos.flags[DSA_KNOWN_FLAG] == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_MESSAGE",
+          "MESSAGE dispatch does not mutate DSA flags");
+    check(csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID], &chaos) == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:CSB_DSA_OP_END",
+          "END after MESSAGE deactivates the script");
+}
+
+/* ----------------------------------------------------------------
+ * Test 9: source-evidence string must cite CSBWin DSA anchors so
  * future readers can trace the test back to ReDMCSB / CSBWin.
  * ---------------------------------------------------------------- */
 static void test_source_evidence_anchors(void)
@@ -465,6 +523,12 @@ static void test_source_evidence_anchors(void)
     check(strstr(ev, "_CALL0") != NULL || strstr(ev, "_CALL") != NULL,
           "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_source_evidence",
           "source evidence cites _CALL0-_CALL9 dispatch frame set");
+    check(strstr(ev, "TT_DESSAGE") != NULL,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_source_evidence",
+          "source evidence cites TT_DESSAGE message dispatch");
+    check(strstr(ev, "TEXT.C") != NULL,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_source_evidence",
+          "source evidence cites ReDMCSB TEXT.C message surface");
 }
 
 int main(void)
@@ -480,6 +544,7 @@ int main(void)
     test_single_step_test_set_flag_jumps_to_target();
     test_single_step_guards();
     test_malformed_target_operands_reject_cleanly();
+    test_single_step_message_records_dispatch();
     test_source_evidence_anchors();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);
