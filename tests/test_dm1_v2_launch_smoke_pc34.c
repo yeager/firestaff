@@ -49,14 +49,36 @@ int main(void) {
      * M12 launch intent; the V1/source route remains inspectable and unchanged. */
     menu.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
     menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
+    menu.gameOptions[0].resolution = M12_RES_3840x2160;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     CHECK(intent.valid == 1);
     CHECK(intent.gameId && strcmp(intent.gameId, "dm1") == 0);
     CHECK(intent.versionId && strcmp(intent.versionId, "pc34-en") == 0);
     CHECK(intent.presentationMode == M12_PRESENTATION_V21_UPSCALED);
+    CHECK(intent.options.resolution == M12_RES_3840x2160);
+    CHECK(intent.resolutionWidth == 3840);
+    CHECK(intent.resolutionHeight == 2160);
     CHECK(intent.rendererBackendAvailable == 1);
     CHECK(intent.options.presentationModeIndex == M12_PRESENTATION_V21_UPSCALED);
     CHECK(intent.savePath == NULL);
+
+    menu.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V20_FILTERED;
+    menu.gameOptions[0].resolution = M12_RES_3840x2160;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid == 1);
+    CHECK(intent.options.resolution == M12_RES_640x400);
+    CHECK(intent.resolutionWidth == 640);
+    CHECK(intent.resolutionHeight == 400);
+
+    menu.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
+    menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
+    menu.gameOptions[0].resolution = M12_RES_320x200;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid == 1);
+    CHECK(intent.options.resolution == M12_RES_640x400);
+    CHECK(intent.resolutionWidth == 640);
+    CHECK(intent.resolutionHeight == 400);
 
     sourceRoute = dm1_v2_movement_command_route_for_presentation(0, DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD);
     CHECK(sourceRoute.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE);

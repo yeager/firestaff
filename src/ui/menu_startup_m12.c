@@ -247,7 +247,35 @@ const char *m12_localized_main_label(int index);
 const char *m12_localized_extras_label(int index);
 
 static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10", "32:9"};
-static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
+static const char* g_resolutions[] = {
+    "320x200",
+    "640x400",
+    "800x600",
+    "1024x768",
+    "1280x960",
+    "1600x1000",
+    "1920x1080",
+    "2560x1440",
+    "3200x2000",
+    "3840x2160"
+};
+typedef struct {
+    int width;
+    int height;
+} M12_ResolutionSize;
+
+static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
+    {320, 200},
+    {640, 400},
+    {800, 600},
+    {1024, 768},
+    {1280, 960},
+    {1600, 1000},
+    {1920, 1080},
+    {2560, 1440},
+    {3200, 2000},
+    {3840, 2160}
+};
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH")};
 static const char* g_languageNames[] = {
@@ -278,6 +306,22 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
         return 0;
     }
     return opts->cheatsEnabled ? 1 : 0;
+}
+
+int M12_PresentationMode_AllowsResolutionChoice(int presentationMode) {
+    return presentationMode == M12_PRESENTATION_V21_UPSCALED ||
+           presentationMode == M12_PRESENTATION_V22_MODERN;
+}
+
+int M12_Resolution_Dimensions(int resolution, int* outWidth, int* outHeight) {
+    resolution = m12_clamp_index(resolution, M12_RES_COUNT);
+    if (outWidth) {
+        *outWidth = g_resolutionSizes[resolution].width;
+    }
+    if (outHeight) {
+        *outHeight = g_resolutionSizes[resolution].height;
+    }
+    return 1;
 }
 
 int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
@@ -341,6 +385,9 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
             if (opts->presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL) {
                 opts->aspectRatio = M12_ASPECT_ORIGINAL;
                 opts->resolution = M12_RES_320x200;
+            } else if (M12_PresentationMode_AllowsResolutionChoice(opts->presentationModeIndex) &&
+                       opts->resolution < M12_RES_640x400) {
+                opts->resolution = M12_RES_640x400;
             }
             break;
         case M12_GAME_OPT_ROW_VERSION:
@@ -383,6 +430,9 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
         opts->aspectRatio = M12_ASPECT_ORIGINAL;
         opts->resolution = M12_RES_320x200;
     } else if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        opts->resolution = M12_RES_640x400;
+    } else if (M12_PresentationMode_AllowsResolutionChoice(presentationMode) &&
+               opts->resolution < M12_RES_640x400) {
         opts->resolution = M12_RES_640x400;
     }
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
@@ -6516,7 +6566,10 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                       framebufferHeight,
                       panelX + 10,
                       rowY + 28,
-                      m12_tr(state, "LOCKED BY V1 ORIGINAL MODE"),
+                      m12_tr(state,
+                             pmode == M12_PRESENTATION_V20_FILTERED
+                                 ? "LOCKED BY V2.0 FILTERED MODE"
+                                 : "LOCKED BY V1 ORIGINAL MODE"),
                       &g_textSmallMuted);
     }
     rowY += resLocked ? 42 : 36;
@@ -6823,6 +6876,9 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
+    M12_Resolution_Dimensions(intent.options.resolution,
+                              &intent.resolutionWidth,
+                              &intent.resolutionHeight);
     intent.valid = m12_game_supported(intent.gameId) &&
                    intent.rendererBackendAvailable &&
                    state->entries[state->activatedIndex].available &&
