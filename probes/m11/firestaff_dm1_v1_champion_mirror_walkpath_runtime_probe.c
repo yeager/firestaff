@@ -67,14 +67,17 @@
  * source command path before the D1C portrait box is re-blitted.  It also
  * drives the source C006/C004 lateral command pair against the south-facing
  * Hall mirror, covering the blocked movement redraw branch that the
- * forward/back and turn routes do not touch.  A final
- * mixed route alternates pointer and keyboard commands through the same live
- * movement-pipeline state, covering the COMMAND.C F0359 mouse queue and
- * F0361 keyboard dispatch interleave called out by BUG0_73 without widening
- * the pixel contract.  That locks keyboard and pointer movement/turning
- * through COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick
- * boundaries used by real runtime input while keeping the pixel assertion
- * identical to the direct route above.
+ * forward/back and turn routes do not touch.  It also
+ * drives keyboard and pointer lateral movement through the lower movement
+ * arrow row (C004/C006), proving the same no-floating invariant across
+ * the strafe branches of CLIKMENU.C F0366.  A final mixed route alternates
+ * pointer and keyboard commands through the same live movement-pipeline state,
+ * covering the COMMAND.C F0359 mouse queue and F0361 keyboard dispatch
+ * interleave called out by BUG0_73 without widening the pixel contract.
+ * That locks keyboard and pointer movement/turning through COMMAND.C
+ * F0359/F0361 -> CLIKMENU.C F0365/F0366 -> MOVESENS.C tick boundaries used
+ * by real runtime input while keeping the pixel assertion identical to the
+ * direct route above.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect.
@@ -174,6 +177,20 @@ typedef struct MixedWalkStep {
     int allowNoPortraitDominance;
     const char* label;
 } MixedWalkStep;
+
+typedef struct LateralWalkStep {
+    int startMapX;
+    int startMapY;
+    int startDir;
+    int startOrdinal;
+    int expectedMapX;
+    int expectedMapY;
+    int expectedOrdinal;
+    int inputBeforeCheck;
+    int clickX;
+    int clickY;
+    const char* label;
+} LateralWalkStep;
 
 /* Count the pixels in the front-wall box that match the C026
  * champion portrait ordinal.  This reuses the visibility probe's
@@ -503,7 +520,7 @@ int main(int argc, char** argv) {
         {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_UP, 0,
          "hall_backstep_forward_back_to_ordinal_3"},
     };
-    const InputWalkStep strafeSteps[] = {
+    const InputWalkStep blockedStrafeSteps[] = {
         {1, 4, DIR_SOUTH, 3, -1, 0,
          "hall_blocked_strafe_start_south_ordinal_3"},
         {1, 4, DIR_SOUTH, 3, M12_MENU_INPUT_STRAFE_LEFT, 0,
@@ -532,6 +549,34 @@ int main(int argc, char** argv) {
          "hall_pointer_turn_left_west_no_portrait"},
         {1, 4, DIR_SOUTH, 3, 248, 135,
          "hall_pointer_turn_left_south_ordinal_3"},
+    };
+    const LateralWalkStep strafeSteps[] = {
+        {1, 3, DIR_NORTH, 1, 1, 3, 1,
+         M12_MENU_INPUT_STRAFE_LEFT, -1, -1,
+         "hall_strafe_keyboard_left_ordinal_1_blocked_stable"},
+        {1, 3, DIR_NORTH, 1, 1, 3, 1,
+         M12_MENU_INPUT_STRAFE_RIGHT, -1, -1,
+         "hall_strafe_keyboard_right_ordinal_1_blocked_stable"},
+        {0, 3, DIR_NORTH, -1, 1, 3, 1,
+         M12_MENU_INPUT_STRAFE_RIGHT, -1, -1,
+         "hall_strafe_keyboard_right_no_portrait_to_ordinal_1"},
+        {2, 3, DIR_NORTH, -1, 1, 3, 1,
+         M12_MENU_INPUT_STRAFE_LEFT, -1, -1,
+         "hall_strafe_keyboard_left_no_portrait_to_ordinal_1"},
+    };
+    const LateralWalkStep pointerStrafeSteps[] = {
+        {1, 3, DIR_NORTH, 1, 1, 3, 1,
+         -1, 248, 157,
+         "hall_pointer_strafe_left_ordinal_1_blocked_stable"},
+        {1, 3, DIR_NORTH, 1, 1, 3, 1,
+         -1, 304, 157,
+         "hall_pointer_strafe_right_ordinal_1_blocked_stable"},
+        {0, 3, DIR_NORTH, -1, 1, 3, 1,
+         -1, 304, 157,
+         "hall_pointer_strafe_right_no_portrait_to_ordinal_1"},
+        {2, 3, DIR_NORTH, -1, 1, 3, 1,
+         -1, 248, 157,
+         "hall_pointer_strafe_left_no_portrait_to_ordinal_1"},
     };
     const MixedWalkStep mixedSteps[] = {
         {1, 4, DIR_SOUTH, 3, -1, -1, -1, 0,
@@ -664,26 +709,26 @@ int main(int argc, char** argv) {
      * or drifting from ordinal 3. */
     start_independent_input_route(&game, 1, 4, DIR_SOUTH);
     prevOrdinal = -2;
-    for (stepIdx = 0; stepIdx < (int)(sizeof(strafeSteps) / sizeof(strafeSteps[0])); ++stepIdx) {
+    for (stepIdx = 0; stepIdx < (int)(sizeof(blockedStrafeSteps) / sizeof(blockedStrafeSteps[0])); ++stepIdx) {
         int prevOrd = prevOrdinal;
         int stepOk;
-        if (strafeSteps[stepIdx].inputBeforeCheck >= 0) {
+        if (blockedStrafeSteps[stepIdx].inputBeforeCheck >= 0) {
             M11_GameInputResult result =
-                M11_GameView_HandleInput(&game, strafeSteps[stepIdx].inputBeforeCheck);
+                M11_GameView_HandleInput(&game, blockedStrafeSteps[stepIdx].inputBeforeCheck);
             if (result != M11_GAME_INPUT_REDRAW) {
                 fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
-                        strafeSteps[stepIdx].label,
-                        strafeSteps[stepIdx].inputBeforeCheck,
+                        blockedStrafeSteps[stepIdx].label,
+                        blockedStrafeSteps[stepIdx].inputBeforeCheck,
                         result, M11_GAME_INPUT_REDRAW);
                 ok = 0;
             }
         }
         stepOk = check_input_walk_step(&game, portraits, prevOrd,
-                                       &strafeSteps[stepIdx], currFb);
+                                       &blockedStrafeSteps[stepIdx], currFb);
         if (!stepOk) {
             ok = 0;
         }
-        prevOrdinal = strafeSteps[stepIdx].expectedOrdinal;
+        prevOrdinal = blockedStrafeSteps[stepIdx].expectedOrdinal;
     }
 
     /* Pointer route: click the original V1 movement-arrow boxes in the
@@ -775,6 +820,90 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = pointerTurnSteps[stepIdx].expectedOrdinal;
+    }
+
+    /* Strafe route: drive C006/C004 lateral movement through the keyboard
+     * route.  COMMAND.C:109-113 / 396-402 define the lower movement-arrow
+     * row, CLIKMENU.C F0366:256-269 maps commands C003..C006 to
+     * forward/right/back/left relative movement, and
+     * DUNGEON.C F0150:1389-1391 applies those relative deltas without
+     * changing party direction.  Each strafe is an independent one-command
+     * interaction so the test isolates C004/C006 rendering from G0310
+     * movement-cooldown cadence.  The accepted cases cover C004/C006 from
+     * neighbouring no-portrait cells into ordinal 1; the blocked cases start
+     * on ordinal 1 and prove lateral wall bumps keep the portrait stable
+     * instead of leaving a partially cleared/floating box. */
+    for (stepIdx = 0; stepIdx < (int)(sizeof(strafeSteps) / sizeof(strafeSteps[0])); ++stepIdx) {
+        int prevOrd = strafeSteps[stepIdx].startOrdinal;
+        int stepOk;
+        InputWalkStep checkStep;
+        M11_GameInputResult result;
+        start_independent_input_route(&game,
+                                      strafeSteps[stepIdx].startMapX,
+                                      strafeSteps[stepIdx].startMapY,
+                                      strafeSteps[stepIdx].startDir);
+        result = M11_GameView_HandleInput(&game,
+                                          strafeSteps[stepIdx].inputBeforeCheck);
+        if (result != M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "FAIL %s input=%d result=%d want=%d\n",
+                    strafeSteps[stepIdx].label,
+                    strafeSteps[stepIdx].inputBeforeCheck,
+                    result, M11_GAME_INPUT_REDRAW);
+            ok = 0;
+        }
+        memset(&checkStep, 0, sizeof(checkStep));
+        checkStep.mapX = strafeSteps[stepIdx].expectedMapX;
+        checkStep.mapY = strafeSteps[stepIdx].expectedMapY;
+        checkStep.dir = strafeSteps[stepIdx].startDir;
+        checkStep.expectedOrdinal = strafeSteps[stepIdx].expectedOrdinal;
+        checkStep.inputBeforeCheck = -1;
+        checkStep.allowNoPortraitDominance = 0;
+        checkStep.label = strafeSteps[stepIdx].label;
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &checkStep, currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
+    }
+
+    /* Pointer strafe route: click the same lower movement-arrow row through
+     * M11_GameView_HandlePointer.  It proves G0448 C073/C071 mouse hits
+     * route to C006/C004 lateral movement before the D1C portrait rectangle
+     * is rebuilt by the source-locked runtime draw path. */
+    for (stepIdx = 0; stepIdx < (int)(sizeof(pointerStrafeSteps) / sizeof(pointerStrafeSteps[0])); ++stepIdx) {
+        int prevOrd = pointerStrafeSteps[stepIdx].startOrdinal;
+        int stepOk;
+        InputWalkStep checkStep;
+        M11_GameInputResult result;
+        start_independent_input_route(&game,
+                                      pointerStrafeSteps[stepIdx].startMapX,
+                                      pointerStrafeSteps[stepIdx].startMapY,
+                                      pointerStrafeSteps[stepIdx].startDir);
+        result = M11_GameView_HandlePointer(&game,
+                                            pointerStrafeSteps[stepIdx].clickX,
+                                            pointerStrafeSteps[stepIdx].clickY,
+                                            1);
+        if (result != M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "FAIL %s pointer=(%d,%d) result=%d want=%d\n",
+                    pointerStrafeSteps[stepIdx].label,
+                    pointerStrafeSteps[stepIdx].clickX,
+                    pointerStrafeSteps[stepIdx].clickY,
+                    result, M11_GAME_INPUT_REDRAW);
+            ok = 0;
+        }
+        memset(&checkStep, 0, sizeof(checkStep));
+        checkStep.mapX = pointerStrafeSteps[stepIdx].expectedMapX;
+        checkStep.mapY = pointerStrafeSteps[stepIdx].expectedMapY;
+        checkStep.dir = pointerStrafeSteps[stepIdx].startDir;
+        checkStep.expectedOrdinal = pointerStrafeSteps[stepIdx].expectedOrdinal;
+        checkStep.inputBeforeCheck = -1;
+        checkStep.allowNoPortraitDominance = 0;
+        checkStep.label = pointerStrafeSteps[stepIdx].label;
+        stepOk = check_input_walk_step(&game, portraits, prevOrd,
+                                       &checkStep, currFb);
+        if (!stepOk) {
+            ok = 0;
+        }
     }
 
     /* Mixed pointer/keyboard route: alternate G0448 pointer clicks and
