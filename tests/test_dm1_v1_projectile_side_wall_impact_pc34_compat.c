@@ -465,7 +465,97 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
     }
 }
 
-/* ---- Test 4: F0811 magical fireball wall-impact creates explosion - */
+/* ---- Test 4: created thrown item despawns on side-cell blockers ---- */
+static void test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers(void)
+{
+    int i;
+    printf("test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers\n");
+
+    for (i = 0; i < 3; ++i) {
+        const SideCellBlockerCase* c = &kSideCellBlockers[i];
+        const SideCellMotionCase* m = &kSideCellMotionCases[1]; /* east_south_side_lane */
+        struct ProjectileCreateInput_Compat createIn;
+        struct ProjectileList_Compat list;
+        struct TimelineEvent_Compat firstMoveEvent;
+        struct ProjectileInstance_Compat pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        int slot = -1;
+
+        memset(&createIn, 0, sizeof(createIn));
+        memset(&list, 0, sizeof(list));
+        memset(&firstMoveEvent, 0, sizeof(firstMoveEvent));
+        memset(&pOut, 0, sizeof(pOut));
+        memset(&r, 0, sizeof(r));
+
+        /* ReDMCSB PROJEXPL.C:F0212 creates the projectile thing and
+         * schedules C48/C49 movement; F0219 lines 717-725 then resolves
+         * a post-grace side-lane blocker before committing the move.
+         * This fixture goes through Firestaff's create/list/despawn
+         * contract instead of calling F0811 with an unattached struct. */
+        createIn.category = PROJECTILE_CATEGORY_KINETIC;
+        createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+        createIn.ownerIndex = 0;
+        createIn.mapIndex = 0;
+        createIn.mapX = m->sourceMapX;
+        createIn.mapY = m->sourceMapY;
+        createIn.cell = m->sideCell;
+        createIn.direction = m->direction;
+        createIn.kineticEnergy = 40;
+        createIn.attack = 24;
+        createIn.stepEnergy = 4;
+        createIn.currentTick = 400 + i;
+        createIn.attackTypeCode = COMBAT_ATTACK_NORMAL;
+        createIn.firstMoveGraceFlag = 0;
+
+        make_side_cell_blocker_digest(&d, c, m);
+
+        expect_int("f0810.side_cell_create",
+                   F0810_PROJECTILE_Create_Compat(&createIn, &list, &slot, &firstMoveEvent),
+                   1,
+                   "ReDMCSB PROJEXPL.C:F0212 lines 43-92 projectile create + C48/C49 schedule");
+        expect_int(c->label, list.count, 1,
+                   "F0810 projectile list owns the thrown item before impact");
+        expect_int(c->label, slot, 0,
+                   "F0810 first available projectile slot");
+        expect_int(c->label, list.entries[slot].reserved3, 1,
+                   "F0810 occupied projectile sentinel");
+
+        expect_int("f0811.created_side_cell.rc",
+                   F0811_PROJECTILE_Advance_Compat(&list.entries[slot], &d,
+                                                   500u + (uint32_t)i,
+                                                   NULL, &pOut, &r),
+                   1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+        expect_int(c->label, r.resultKind, c->expectedResultKind,
+                   "ReDMCSB PROJEXPL.C:F0219 lines 717-725 side-cell blocker impact");
+        expect_int(c->label, r.despawn, 1,
+                   "ReDMCSB PROJEXPL.C:F0217 lines 607-608 deletes projectile after impact");
+        expect_int(c->label, r.newMapX, m->sourceMapX,
+                   "F0219 blocker impact retains source X before F0267 move commit");
+        expect_int(c->label, r.newMapY, m->sourceMapY,
+                   "F0219 blocker impact retains source Y before F0267 move commit");
+        expect_int(c->label, r.newMapX == m->blockerMapX && r.newMapY == m->blockerMapY,
+                   0,
+                   "F0219 side-cell impact does not materialize the thrown item in the blocked cell");
+        expect_int(c->label, r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
+                   0,
+                   "F0217 impact return stops projectile rescheduling");
+
+        expect_int("f0813.side_cell_despawn",
+                   F0813_PROJECTILE_Despawn_Compat(&list, slot),
+                   1,
+                   "ReDMCSB PROJEXPL.C:F0217 lines 607-608 unlink/delete projectile");
+        expect_int(c->label, list.count, 0,
+                   "F0813 projectile list releases impacted thrown item");
+        expect_int(c->label, list.entries[slot].reserved3, 0,
+                   "F0813 clears occupied projectile sentinel after side-cell impact");
+        expect_int(c->label, list.entries[slot].slotIndex, -1,
+                   "F0813 marks projectile slot unused after side-cell impact");
+    }
+}
+
+/* ---- Test 5: F0811 magical fireball wall-impact creates explosion - */
 static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
 {
     struct ProjectileInstance_Compat p;
@@ -507,7 +597,7 @@ static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
                "F0820 HIT_WALL: explosion attack mirrors projectile attack");
 }
 
-/* ---- Test 5: F0820 wall-impact dispatch in isolation -------- */
+/* ---- Test 6: F0820 wall-impact dispatch in isolation -------- */
 static void test_f0820_wall_impact_kinetic_dispatch(void)
 {
     struct ProjectileInstance_Compat p;
@@ -541,7 +631,7 @@ static void test_f0820_wall_impact_kinetic_dispatch(void)
                "sound path from PROJEXPL.C:587-600; pins the current v1 state.");
 }
 
-/* ---- Test 6: square-byte encoding for the wall square ------- */
+/* ---- Test 7: square-byte encoding for the wall square ------- */
 static void test_wall_square_byte_encoding(void)
 {
     unsigned char squareByte;
@@ -563,7 +653,7 @@ static void test_wall_square_byte_encoding(void)
                SIDEWALL_DEFS_ANCHOR);
 }
 
-/* ---- Test 7: source-evidence anchor mentions --------------- */
+/* ---- Test 8: source-evidence anchor mentions --------------- */
 static void test_source_evidence_mentions_required_anchors(void)
 {
     printf("test_source_evidence_mentions_required_anchors\n");
@@ -592,6 +682,7 @@ int main(void)
     test_f0814_wall_blocker_is_wall();
     test_f0811_side_wall_impact_kinetic_per_direction();
     test_f0811_thrown_item_side_cell_blockers();
+    test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_wall_impact_kinetic_dispatch();
     test_wall_square_byte_encoding();
