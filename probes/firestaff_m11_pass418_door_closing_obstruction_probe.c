@@ -75,6 +75,12 @@ static void build_group_fixture(struct DungeonThings_Compat* things,
     things->groupCount = 1;
     things->loaded = 1;
 }
+static void build_nonmaterial_group_fixture(struct DungeonThings_Compat* things,
+                                           unsigned short* squareFirstThings,
+                                           struct DungeonGroup_Compat* groups) {
+    build_group_fixture(things, squareFirstThings, groups);
+    groups[0].creatureType = 11; /* Black Flame: non-material in ReDMCSB I34 attrs */
+}
 static int has_emit(const struct TickResult_Compat* r, int kind) {
     int i;
     for (i = 0; i < r->emissionCount; ++i) if (r->emissions[i].kind == kind) return 1;
@@ -169,6 +175,35 @@ int main(void) {
         ev.aux1 == DOOR_EFFECT_CLEAR,
         "occupied-door CLEAR event is rescheduled two ticks later, matching TIMELINE.C party branch");
 
+    build_fixture(&dungeon, squares);
+    memset(&world, 0, sizeof(world));
+    F0881_WORLD_InitDefault_Compat(&world, 1235u);
+    world.dungeon = &dungeon;
+    world.ownsDungeon = 0;
+    world.party.mapIndex = 1;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    world.party.championCount = 4;
+    world.party.champions[0].present = 1;
+    world.gameTick = 10;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_DOOR_ANIMATE;
+    ev.fireAtTick = 10;
+    ev.mapIndex = 0;
+    ev.mapX = 1;
+    ev.mapY = 1;
+    ev.aux1 = DOOR_EFFECT_CLEAR;
+    F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev);
+
+    memset(&result, 0, sizeof(result));
+    F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    rec("P418_ORCH_PARTY_REQUIRES_SAME_MAP",
+        square_state(&dungeon, 1, 1) == 3 &&
+        !has_emit(&result, EMIT_DAMAGE_DEALT) &&
+        count_sound_payload(&result, EMIT_SOUND_REQUEST, DM1_SND_PARTY_DAMAGED) == 0,
+        "party crush damage requires TIMELINE.C:759 same map/X/Y contact, not matching coordinates on another map");
+
 
     build_fixture(&dungeon, squares);
     squares[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_DOOR,
@@ -213,6 +248,44 @@ int main(void) {
             ev.kind == TIMELINE_EVENT_DOOR_ANIMATE && ev.fireAtTick == 11 &&
             ev.aux1 == DOOR_EFFECT_CLEAR,
             "material-creature obstruction reschedules after the single pre-increment tick");
+    }
+
+    build_fixture(&dungeon, squares);
+    squares[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_DOOR,
+                                  DUNGEON_SQUARE_MASK_THING_LIST | 2);
+    {
+        struct DungeonThings_Compat things;
+        unsigned short squareFirstThings[1];
+        struct DungeonGroup_Compat groups[1];
+        build_nonmaterial_group_fixture(&things, squareFirstThings, groups);
+        memset(&world, 0, sizeof(world));
+        F0881_WORLD_InitDefault_Compat(&world, 4322u);
+        world.dungeon = &dungeon;
+        world.things = &things;
+        world.ownsDungeon = 0;
+        world.party.mapIndex = 0;
+        world.party.mapX = 0;
+        world.party.mapY = 0;
+        world.party.championCount = 4;
+        world.gameTick = 10;
+
+        memset(&ev, 0, sizeof(ev));
+        ev.kind = TIMELINE_EVENT_DOOR_ANIMATE;
+        ev.fireAtTick = 10;
+        ev.mapIndex = 0;
+        ev.mapX = 1;
+        ev.mapY = 1;
+        ev.aux1 = DOOR_EFFECT_CLEAR;
+        F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev);
+
+        memset(&result, 0, sizeof(result));
+        F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+        rec("P418_ORCH_NONMATERIAL_CREATURE_NO_CRUSH",
+            square_state(&dungeon, 1, 1) == 3 &&
+            groups[0].health[0] == 20 && groups[0].health[1] == 20 &&
+            !has_emit(&result, EMIT_DAMAGE_DEALT) &&
+            count_sound_payload(&result, EMIT_SOUND_REQUEST, DM1_SND_WOODEN_THUD) == 0,
+            "non-material creature is ignored by TIMELINE.C:779 material-creature crush gate");
     }
     free_fixture(&dungeon);
     printf("# summary: %d/%d passed\n", g_pass, g_pass + g_fail);
