@@ -115,6 +115,83 @@ static void check_scaled_letterbox_rejection(void) {
                                            &fbY) == 0);
 }
 
+static void check_macbook_retina_drawable_rect_regression(void) {
+    int logicalX = -1;
+    int logicalY = -1;
+    int logicalW = -1;
+    int logicalH = -1;
+    int drawableX = -1;
+    int drawableY = -1;
+    int drawableW = -1;
+    int drawableH = -1;
+    int fbX = -1;
+    int fbY = -1;
+
+    /* Regression for the MacBook "tiny view" report: SDL3 mouse events
+     * are in logical window coordinates, but SDL_RenderTexture's dest rect
+     * is in drawable pixels. A 1512x982 point MacBook window typically has
+     * a 3024x1964 render output; presenting with the logical rect would
+     * fill only the center quarter of the drawable. */
+    CHECK(M11_Render_ComputePresentationRect(1512,
+                                             982,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &logicalX,
+                                             &logicalY,
+                                             &logicalW,
+                                             &logicalH) == M11_RENDER_OK);
+    CHECK(M11_Render_ComputePresentationRect(3024,
+                                             1964,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &drawableX,
+                                             &drawableY,
+                                             &drawableW,
+                                             &drawableH) == M11_RENDER_OK);
+    CHECK(logicalX == 0);
+    CHECK(logicalY == 18);
+    CHECK(logicalW == 1512);
+    CHECK(logicalH == 945);
+    CHECK(drawableX == 0);
+    CHECK(drawableY == 37);
+    CHECK(drawableW == 3024);
+    CHECK(drawableH == 1890);
+    CHECK(drawableW == logicalW * 2);
+    CHECK(drawableH == logicalH * 2);
+    CHECK(drawableW > 2900);
+
+    CHECK(M11_Render_MapPointToFramebuffer(1511,
+                                           981,
+                                           1512,
+                                           982,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(756,
+                                           491,
+                                           1512,
+                                           982,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 160);
+    CHECK(fbY == 100);
+}
+
 int main(void) {
     check_rect(1920, 1080, M11_SCALE_STRETCH, 0, M11_DISPLAY_ASPECT_16_9,
                0, 0, 1920, 1080);
@@ -132,6 +209,7 @@ int main(void) {
                126, 0, 3347, 2092);
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
+    check_macbook_retina_drawable_rect_regression();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
