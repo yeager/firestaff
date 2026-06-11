@@ -3142,6 +3142,18 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_required_complete_launches
     )
 
+    add_executable(test_csb_v1_quickplay_missing_asset_blocker
+        tests/test_csb_v1_quickplay_missing_asset_blocker.c
+    )
+    target_link_libraries(test_csb_v1_quickplay_missing_asset_blocker PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_quickplay_missing_asset_blocker PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_quickplay_missing_asset_blocker
+        COMMAND test_csb_v1_quickplay_missing_asset_blocker
+    )
+
     add_executable(test_m12_data_dir_cancel
         tests/test_m12_data_dir_cancel.c
     )
