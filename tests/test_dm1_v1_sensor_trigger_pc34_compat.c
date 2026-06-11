@@ -509,6 +509,74 @@ static void test_floor_party_on_stairs_runtime_gate(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0718: Runtime floor C001 gate -- party does not retrigger
+ *  a pressure pad already held down by object weight.
+ *  Source: MOVESENS.C F0276 lines 1624-1648 and case C001 at 1664-1667.
+ * ---------------------------------------------------------------- */
+static void test_floor_pressure_plate_runtime_party_object_weight_gate(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct DungeonWeapon_Compat weapons[1];
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(weapons, 0, sizeof(weapons));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+    sensors[0].targetMapX = 1;
+    sensors[0].targetMapY = 1;
+    sensors[0].targetCell = 0;
+    sensors[0].next = THING_ENDOFLIST;
+    weapons[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.loaded = 1;
+
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 1, "Runtime C001: party triggers empty pressure pad");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "Runtime C001: empty pressure pad emits remote toggle");
+    CHECK(effects.effects[0].sensorType == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT,
+          "Runtime C001: empty pressure pad carries sensor type");
+
+    sensors[0].next = make_thing(THING_TYPE_WEAPON, 0, 0);
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 0, "Runtime C001: object weight suppresses party retrigger");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — simple click
  *  Source: F0275 case C001 (WALL_ORNAMENT_CLICK)
  * ---------------------------------------------------------------- */
@@ -1375,6 +1443,7 @@ int main(void) {
     test_floor_party_possession();
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
+    test_floor_pressure_plate_runtime_party_object_weight_gate();
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
