@@ -164,6 +164,20 @@ int csb_v1_boot_probe_available(const char *data_dir)
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 {
     if (!profile || !profile->assets_verified) return -1;
+    /* The launcher may carry several game profiles at once.  Do not let an
+     * aggregate READY bit alone hand a non-CSB or partial profile to the CSB
+     * runtime: ReDMCSB enters the CSB dungeon only after the CSB entrance/media
+     * path has selected C28_ENTRANCE_CSB and the load path has a dungeon header
+     * to consume.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 */
+    if (strcmp(profile->game_id, CSB_V1_BOOT_GAME_ID) != 0 ||
+        !profile->graphics_verified ||
+        !profile->dungeon_verified ||
+        profile->graphics_path[0] == '\0' ||
+        profile->dungeon_path[0] == '\0') {
+        return -1;
+    }
     /* Re-entering the CSB profile replaces the live dungeon context just as
      * ReDMCSB's global dungeon/map state is replaced when a new game is
      * loaded.  Clear the previous heap-owned runtime before csb_v1_runtime_init

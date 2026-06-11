@@ -356,12 +356,49 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
           "cleanup after repeated handoff clears the singleton");
 }
 
+static void test_enter_game_rejects_partial_or_misrouted_profiles(void)
+{
+    CSB_V1_BootProfile p;
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-guard";
+
+    csb_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    p.graphics_verified = 1;
+    p.dungeon_verified = 0;
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects stale aggregate readiness without DUNGEON proof");
+    CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY,
+          "partial proof rejection leaves profile state unchanged");
+    CHECK(p.runtime.dungeon_handle == NULL,
+          "partial proof rejection does not load or attach a dungeon");
+
+    p.dungeon_verified = 1;
+    p.graphics_path[0] = '\0';
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects verified flags without a graphics path");
+    CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY,
+          "missing path rejection leaves profile state unchanged");
+
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    snprintf(p.game_id, sizeof(p.game_id), "%s", "dm1");
+    p.runtime.chaos_magic.magic_initialized = 77;
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects a non-CSB profile routed to the CSB runtime");
+    CHECK(p.runtime.chaos_magic.magic_initialized == 77,
+          "misrouted profile rejection does not rebuild runtime state");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
+    test_enter_game_rejects_partial_or_misrouted_profiles();
     test_utility_flow_new_game_handoff_preserves_leader_index();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
