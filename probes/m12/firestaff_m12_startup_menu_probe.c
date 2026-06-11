@@ -846,15 +846,34 @@ int main(void) {
                      M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_PATCH, M12_PRESENTATION_V1_ORIGINAL) == 0 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V20_FILTERED) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V21_UPSCALED) == 0 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V21_UPSCALED) == 0,
                      "RowLockedByMode reports correct constraints per mode");
+
+        /* V2.0 mode: fixed 640x400 presentation */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_17B",
+                     modeState.gameOptions[0].resolution == M12_RES_640x400 &&
+                         intent.valid == 1 &&
+                         intent.presentationMode == M12_PRESENTATION_V20_FILTERED &&
+                         intent.options.resolution == M12_RES_640x400,
+                     "V2.0 mode locks launch resolution to 640x400");
 
         /* V2 mode: aspect and resolution cycle freely */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
+        modeState.gameOptions[0].resolution = M12_RES_320x200;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;

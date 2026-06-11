@@ -6129,10 +6129,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
         const char *dd = spec->dataDir;
+        int ok;
         if (!dd || !dd[0]) {
             return 0;
         }
-        return M11_GameView_StartTheron(state, dd);
+        ok = M11_GameView_StartTheron(state, dd);
+        if (ok) {
+            state->presentationMode = spec->presentationMode;
+        }
+        return ok;
     }
     /* ── Nexus V1: bypass DM1 dungeon loader entirely ───────────────
      * When gameId == "nexus" the M11 game-loop passes through
@@ -6160,7 +6165,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
         if (!dd || !dd[0]) return 0;
-        return M11_GameView_StartNexus(state, dd);
+        {
+            int ok = M11_GameView_StartNexus(state, dd);
+            if (ok) {
+                state->presentationMode = spec->presentationMode;
+            }
+            return ok;
+        }
     }
     /* ── CSB V1: bypass DM1 dungeon loader, use CSB V1 runtime boot ──
      * When gameId == "csb", the M11 game-loop launches CSB via the
@@ -6175,6 +6186,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * launch handoff.  The FS game loop takes it from here. */
         state->active = 1;
         state->startedFromLauncher = 1;
+        state->presentationMode = spec->presentationMode;
         snprintf(state->title, sizeof(state->title), "%s",
                  spec->title ? spec->title : "CHAOS STRIKES BACK");
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6218,6 +6230,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
+    state->presentationMode = spec->presentationMode;
     state->fontScale = (spec->fontScale >= 1 && spec->fontScale <= 3) ? spec->fontScale : 0;
     snprintf(state->title, sizeof(state->title), "%s", spec->title);
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6287,6 +6300,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     }
     memset(&spec, 0, sizeof(spec));
     spec.rendererBackend = rendererBackend;
+    spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.title = entry->title;
     spec.gameId = entry->gameId;
     spec.sourceId = entry->gameId;
@@ -6295,6 +6309,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
+        spec.presentationMode = intent.presentationMode;
         /* fontScale lives in M12_MenuSettingsState, not M12_GameOptions */
         spec.fontScale = menuState->settings.fontScale;
     } else {

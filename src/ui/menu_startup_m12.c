@@ -287,6 +287,10 @@ int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
             return 1;
         }
     }
+    if (presentationMode == M12_PRESENTATION_V20_FILTERED &&
+        row == M12_GAME_OPT_ROW_RESOLUTION) {
+        return 1;
+    }
     return 0;
 }
 
@@ -378,6 +382,8 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
     if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
         opts->aspectRatio = M12_ASPECT_ORIGINAL;
         opts->resolution = M12_RES_320x200;
+    } else if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        opts->resolution = M12_RES_640x400;
     }
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
      * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
