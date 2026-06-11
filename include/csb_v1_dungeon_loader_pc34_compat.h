@@ -78,10 +78,13 @@ int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path);
  */
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y);
 
-/* Return the first thing index stored in the square record.
+/* Return the square's first thing.
  * Returns -1 if d is NULL, raw_data is NULL, or coordinates out of bounds.
+ * Real CSB-format maps return the full THING handle from the imported
+ * square-first-thing table. Legacy synthetic fixtures return the older
+ * Firestaff-only 10-bit index stored in the 16-bit test square record.
  *
- * ReDMCSB: DUNGEON.C F0151 lines 1423-1475 (bits 5-14 of square record)
+ * ReDMCSB: DUNGEON.C F0160 lines 1699-1728, F0161 lines 1730-1746.
  */
 int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x, int y);
 

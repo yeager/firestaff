@@ -85,27 +85,26 @@ uint16_t csb_dungeon_get_group(
  * and current level (set by csb_v1_dungeon_set_current_level) to
  * service F0161_DUNGEON_GetSquareFirstThing calls from the world model.
  *
- * Returns the raw thing index from the square record, or ENDOF if no
- * dungeon is loaded or the square has no things.
+ * Returns the square's first THING handle, or ENDOF if no dungeon is loaded
+ * or the square has no things.
  *
- * NOTE: This returns a raw THING index (0-1023), not a full THING
- * handle.  The full handle encoding is (type << 10) | index; the caller
- * must read thing data to determine the type.  Until M10 thing-data
- * integration, this stub returns ENDOF.  For GROUP detection use
- * csb_dungeon_get_group() with the real F0159/F0156 accessors.
+ * Real CSB-format dungeons return the imported full THING handle from
+ * the square-first-thing table. Legacy 16-bit synthetic fixtures still
+ * encode only an untyped index in the square word, so this default runtime
+ * accessor leaves those fixtures at ENDOF.
  *
- * ReDMCSB: DUNGEON.C F0161_DUNGEON_GetSquareFirstThing (lines 1730-1760)
+ * ReDMCSB: DUNGEON.C F0160_DUNGEON_GetSquareFirstThingIndex lines 1699-1728,
+ *          F0161_DUNGEON_GetSquareFirstThing lines 1730-1746.
  */
 uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY) {
     const CSB_V1_DungeonData *d = csb_v1_dungeon_get_current();
+    int thing;
     if (!d || !d->raw_data) return CSB_THING_ENDOFLIST;
 
-    /* Use level 0 as default when called without explicit level context.
-     * The real M10 integration would use the party's current map level.
-     * Until that wiring is in place, this stub returns ENDOF to avoid
-     * returning untyped thing indices that could be misinterpreted. */
-    (void)mapX; (void)mapY;
-    return CSB_THING_ENDOFLIST; /* M10 thing-data integration pending */
+    if (d->square_bytes != 1) return CSB_THING_ENDOFLIST;
+    thing = csb_v1_dungeon_get_first_thing(
+        d, csb_v1_dungeon_get_current_level(), mapX, mapY);
+    return (thing >= 0) ? (uint16_t)thing : CSB_THING_ENDOFLIST;
 }
 
 /*

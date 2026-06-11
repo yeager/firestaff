@@ -122,6 +122,12 @@ static void build_synthetic_dungeon_dat(uint8_t *buf, int buf_size,
     buf[off+12]=1; buf[off+13]=0; buf[off+14]=1; buf[off+15]=0; buf[off+16]=1; buf[off+17]=0;
 }
 
+static void put_le16(uint8_t *buf, int off, uint16_t value)
+{
+    buf[off + 0] = (uint8_t)(value & 0xffu);
+    buf[off + 1] = (uint8_t)(value >> 8);
+}
+
 static uint16_t pack3_codes(int a, int b, int c)
 {
     return (uint16_t)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
@@ -239,6 +245,55 @@ static void test_dungeon_first_thing(void)
     CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 1, 1) == 0x123,
           "first_thing at (1,1) is 0x123 (bits 5-14 of raw record)");
     csb_v1_dungeon_free(&d);
+}
+
+static void test_dungeon_real_format_square_first_thing_chain(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[96];
+    const int map_desc = 44;
+    const int column_counts = 60;
+    const int square_first_things = 66;
+    const int raw_map = 72;
+    const uint16_t raw_bit_a = (uint16_t)(0 | ((3 - 1) << 6) | ((3 - 1) << 11));
+
+    memset(buf, 0, sizeof(buf));
+    put_le16(buf, 0, 0);       /* text data word count */
+    buf[4] = 1;                /* map count */
+    put_le16(buf, 6, 0);       /* text string word count */
+    put_le16(buf, 10, 3);      /* square-first-thing table entries */
+    put_le16(buf, map_desc + 0, 0);
+    put_le16(buf, map_desc + 8, raw_bit_a);
+
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 1);
+    put_le16(buf, column_counts + 4, 2);
+    put_le16(buf, square_first_things + 0, 0x1402u); /* textstring handle */
+    put_le16(buf, square_first_things + 2, 0x2807u); /* weapon handle */
+    put_le16(buf, square_first_things + 4, 0x3a09u); /* junk handle */
+
+    buf[raw_map + 1] = 0x31u; /* x=0,y=1: present + corridor */
+    buf[raw_map + 3] = 0x31u; /* x=1,y=0: present + corridor */
+    buf[raw_map + 8] = 0x31u; /* x=2,y=2: present + corridor */
+
+    int r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "real-format dungeon with square-first-thing table loads");
+    CHECK(d.square_bytes == 1, "real-format square records are byte-sized");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 0, 1) == 0x1402,
+          "real-format first thing at x0,y1 uses column cumulative index 0");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 1, 0) == 0x2807,
+          "real-format first thing at x1,y0 uses next column cumulative index");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 2, 2) == 0x3a09,
+          "real-format first thing at x2,y2 uses imported table handle");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 2, 1) == -1,
+          "real-format empty cell returns no first thing");
+    csb_v1_dungeon_set_current(&d);
+    csb_v1_dungeon_set_current_level(0);
+    CHECK(csb_dungeon_get_first_thing_default(1, 0) == 0x2807,
+          "current-dungeon default accessor exposes imported square object handle");
+    CHECK(csb_dungeon_get_first_thing_default(2, 1) == CSB_THING_ENDOFLIST,
+          "current-dungeon default accessor returns ENDOFLIST for an empty cell");
+    csb_v1_dungeon_unload();
 }
 
 static void test_dungeon_decode_square(void)
@@ -1140,6 +1195,7 @@ int main(void)
     test_dungeon_load_basic();
     test_dungeon_square_access();
     test_dungeon_first_thing();
+    test_dungeon_real_format_square_first_thing_chain();
     test_dungeon_decode_square();
     test_wall_text_oracle_slice();
     test_dungeon_collision_wall();

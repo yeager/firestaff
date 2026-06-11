@@ -233,6 +233,11 @@ uint16_t csb_dungeon_get_group(
     uint16_t (*fn_get_next)(uint16_t thing),
     int mapX, int mapY);
 
+uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY);
+uint16_t csb_dungeon_get_next_thing_default(uint16_t thing);
+uint16_t csb_dungeon_thing_data_u16_default(uint16_t thing, int offset);
+void     csb_move_thing_default(uint16_t thing, void* ctxOpaque);
+
 /* ================================================================
  *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)
  * ================================================================ */
