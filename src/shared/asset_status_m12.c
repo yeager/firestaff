@@ -1275,12 +1275,55 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     return 1;
 }
 
+static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
+                                             const char* requestedDataDir) {
+    int theronIndex = m12_game_index_from_id("theron");
+    const M12_AssetVersionStatus* version;
+    size_t requiredIndex;
+    if (!status || theronIndex < 0 ||
+        !requestedDataDir || requestedDataDir[0] == '\0' ||
+        status->dataDir[0] == '\0' ||
+        strcmp(status->dataDir, requestedDataDir) != 0 ||
+        !status->theronAvailable) {
+        return 0;
+    }
+    version = m12_first_matched_version(status, theronIndex);
+    if (!version || !version->matched ||
+        version->matchedPath[0] == '\0' ||
+        version->matchedMd5[0] == '\0' ||
+        status->runtimeDataDirs[theronIndex][0] == '\0') {
+        return 0;
+    }
+    for (requiredIndex = 0U;
+         requiredIndex < status->requiredFileCounts[theronIndex];
+         ++requiredIndex) {
+        const M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[theronIndex][requiredIndex];
+        if (required->roleId && strcmp(required->roleId, "track02") == 0) {
+            if (!required->matched ||
+                strcmp(required->matchedPath, version->matchedPath) != 0 ||
+                strcmp(required->matchedHash, version->matchedMd5) != 0) {
+                return 0;
+            }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+            g_m12ScanMetrics.reusableTheronRefreshes++;
+#endif
+            m12_refresh_v22_modern_asset_status(status);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
     int i;
     if (!status) {
+        return;
+    }
+    if (m12_reuse_verified_theron_refresh(status, requestedDataDir)) {
         return;
     }
     if (m12_scan_direct_theron_request(status, requestedDataDir)) {

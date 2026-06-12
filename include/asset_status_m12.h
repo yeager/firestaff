@@ -95,6 +95,7 @@ typedef struct {
     size_t duplicateRootSkips;
     size_t versionHashLookups;
     size_t requiredHashLookups;
+    size_t reusableTheronRefreshes;
 } M12_AssetStatusScanMetrics;
 
 void M12_AssetStatus_TestResetScanMetrics(void);

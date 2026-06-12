@@ -10389,6 +10389,27 @@ if(BUILD_TESTING)
         COMMAND test_theron_v1_direct_launch
     )
 
+    add_executable(test_theron_v1_launcher_scan_reuse
+        tests/theron_v1_launcher_scan_reuse_test.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE firestaff_v2)
+    target_include_directories(test_theron_v1_launcher_scan_reuse PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_theron_v1_launcher_scan_reuse PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_launcher_scan_reuse PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_launcher_scan_reuse
+        COMMAND test_theron_v1_launcher_scan_reuse
+    )
+
     add_executable(test_theron_v1_m11_direct_launch
         tests/theron_v1_m11_direct_launch_test.c
     )
