@@ -91,6 +91,10 @@
     "ReDMCSB PROJEXPL.C:587-600 C00_SOUND_METALLIC_THUD vs C04_SOUND_WOODEN_THUD"
 #define SIDEWALL_REDMCSB_PARITY_ANCHOR \
     "ReDMCSB PROJEXPL.C:714-725 cell cross + parity rotation"
+#define SIDEWALL_REDMCSB_F0212_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0212 lines 43-92 projectile create + C48/C49 first move"
+#define SIDEWALL_REDMCSB_GRACE_ANCHOR \
+    "ReDMCSB PROJEXPL.C:F0219 lines 670-689 first-move grace flag skip"
 #define SIDEWALL_DEFS_ANCHOR \
     "ReDMCSB DEFS.H C00_ELEMENT_WALL (DUNGEON_ELEMENT_WALL = 0 high-3-bits)"
 
@@ -809,7 +813,152 @@ static void test_f0811_open_door_wall_impact_emits_wooden_thud(void)
                "F0811 wall impact outNewState retains source square Y");
 }
 
-/* ---- Test 8: square-byte encoding for the wall square ------- */
+/* ---- Test 8: fresh thrown item first-move grace crosses side-cell blocker ----
+ *
+ * ReDMCSB PROJEXPL.C F0212 lines 43-92 creates the projectile thing and
+ * schedules a C48/C49 first move with `firstMoveGraceFlag=1` so the
+ * thrown item does not bounce off the source champion lane. F0219
+ * lines 670-689 honour the grace flag by jumping straight to
+ * MOTION_STEP on the first tick, then F0219 lines 714-749 still apply
+ * the cross-square gate and the wall/door/fluxcage/projectile
+ * side-cell impact resolution for the very first move. This test
+ * exercises that F0810 → F0811 grace-tick path so a freshly thrown
+ * item with a wall, closed door, fluxcage, or other projectile
+ * directly in the side-cell cross direction still consumes the
+ * projectile on the destination square and never materialises it
+ * there.
+ */
+static void test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers(void)
+{
+    int i, j;
+    printf("test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers\n");
+
+    for (i = 0; i < SIDE_CELL_BLOCKER_COUNT; ++i) {
+        const SideCellBlockerCase* c = &kSideCellBlockers[i];
+        for (j = 0; j < 4; ++j) {
+            const SideCellMotionCase* m = &kSideCellMotionCases[j];
+            struct ProjectileCreateInput_Compat createIn;
+            struct ProjectileList_Compat list;
+            struct TimelineEvent_Compat firstMoveEvent;
+            struct ProjectileInstance_Compat pOut;
+            struct CellContentDigest_Compat d;
+            struct ProjectileTickResult_Compat r;
+            uint32_t createTick = 600u + (uint32_t)(i * 4 + j);
+            uint32_t moveTick   = 601u + (uint32_t)(i * 4 + j);
+            int slot = -1;
+
+            memset(&createIn,        0, sizeof(createIn));
+            memset(&list,            0, sizeof(list));
+            memset(&firstMoveEvent,  0, sizeof(firstMoveEvent));
+            memset(&pOut,            0, sizeof(pOut));
+            memset(&d,               0, sizeof(d));
+            memset(&r,               0, sizeof(r));
+
+            /* ReDMCSB PROJEXPL.C F0212 lines 43-92 throws a fresh
+             * item into the side lane with the grace flag set, so
+             * the F0811 first-move tick (moveTick = createTick + 1)
+             * must skip the source-cell champion/creature check
+             * (F0219 lines 670-689) and still apply the side-cell
+             * impact path (F0219 lines 714-749). */
+            createIn.category           = PROJECTILE_CATEGORY_KINETIC;
+            createIn.subtype            = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+            createIn.ownerKind          = PROJECTILE_OWNER_CHAMPION;
+            createIn.ownerIndex         = 0;
+            createIn.mapIndex           = 0;
+            createIn.mapX               = m->sourceMapX;
+            createIn.mapY               = m->sourceMapY;
+            createIn.cell               = m->sideCell;
+            createIn.direction          = m->direction;
+            createIn.kineticEnergy      = 40;
+            createIn.attack             = 24;
+            createIn.stepEnergy         = 4;
+            createIn.currentTick        = (int)createTick;
+            createIn.attackTypeCode     = COMBAT_ATTACK_NORMAL;
+            createIn.firstMoveGraceFlag = 1;
+
+            make_side_cell_blocker_digest(&d, c, m);
+
+            /* F0212 lines 43-92 link the projectile thing onto the
+             * source square and schedule the C48/C49 first move with
+             * the grace flag set. F0810 must reflect that. */
+            expect_int("f0810.first_move_grace_create",
+                       F0810_PROJECTILE_Create_Compat(&createIn, &list, &slot,
+                                                       &firstMoveEvent),
+                       1, SIDEWALL_REDMCSB_F0212_ANCHOR);
+            expect_int(c->label, slot, 0,
+                       "F0810 fresh-throw side-lane item occupies slot 0");
+            expect_int(c->label, list.count, 1,
+                       "F0810 fresh-throw side-lane item is in the projectile list");
+            expect_int(m->label, list.entries[slot].firstMoveGraceFlag, 1,
+                       "F0212 first-move grace flag survives F0810 link step");
+            expect_int(m->label, list.entries[slot].cell, m->sideCell,
+                       "F0212 first-move grace projectile keeps the side-lane cell");
+            expect_int(m->label, firstMoveEvent.kind, TIMELINE_EVENT_PROJECTILE_MOVE,
+                       "F0212 first move is C48/C49 PROJECTILE_MOVE");
+            expect_int(m->label, (int)firstMoveEvent.fireAtTick, (int)createTick + 1,
+                       "F0212 first-move tick is createTick + 1");
+            expect_int(m->label, firstMoveEvent.cell, m->sideCell,
+                       "F0212 first-move event keeps the side-lane cell");
+
+            /* F0219 lines 670-689: grace tick skips the source-cell
+             * impact check and jumps to MOTION_STEP. The F0811 cross
+             * gate then publishes crossedCell=1 for a side-cell
+             * projectile, and the side-cell blocker dispatch yields
+             * the same final result as the post-grace Test 3 path. */
+            expect_int("f0811.first_move_grace_advance",
+                       F0811_PROJECTILE_Advance_Compat(&list.entries[slot], &d,
+                                                       moveTick, NULL, &pOut, &r),
+                       1, SIDEWALL_REDMCSB_F0219_ANCHOR);
+            expect_int(c->label, r.newFirstMoveGraceFlag, 0,
+                       "F0219 lines 670-689 grace tick clears the grace flag");
+            expect_int(m->label, list.entries[slot].firstMoveGraceFlag, 1,
+                       "F0810 instance is unchanged by the F0811 advance (caller commits)");
+            expect_int(c->label, r.crossedCell, 1,
+                       "F0219 lines 714-719 cross-square gate still fires on the grace tick");
+            expect_int(c->label, r.resultKind, c->expectedResultKind,
+                       "F0219 lines 714-749 side-cell blocker impact on grace tick");
+            expect_int(c->label, r.despawn, 1,
+                       "F0217 lines 607-608 unlinks the thrown item after the grace-tick impact");
+            expect_int(c->label, r.newMapIndex, d.sourceMapIndex,
+                       "F0811 grace-tick side-cell impact retains source mapIndex (not blocked X,Y)");
+            expect_int(m->label, r.newMapX, m->sourceMapX,
+                       "F0811 grace-tick side-cell impact retains source X");
+            expect_int(m->label, r.newMapY, m->sourceMapY,
+                       "F0811 grace-tick side-cell impact retains source Y");
+            expect_int(m->label, r.newMapX == m->blockerMapX
+                                 && r.newMapY == m->blockerMapY, 0,
+                       "F0811 grace-tick side-cell impact does not materialise the thrown item "
+                       "in the blocked side cell");
+            expect_int(m->label, pOut.mapX, m->sourceMapX,
+                       "F0811 grace-tick side-cell impact outNewState keeps source X");
+            expect_int(m->label, pOut.mapY, m->sourceMapY,
+                       "F0811 grace-tick side-cell impact outNewState keeps source Y");
+            expect_int(c->label, r.emittedCombatAction, 0,
+                       "F0217 grace-tick side-cell wall/door/fluxcage/projectile impact has no combat target");
+            expect_int(c->label, r.emittedExplosion, 0,
+                       "F0820 grace-tick side-cell impact: kinetic thrown item has no explosion");
+            expect_int(c->label, r.emittedDoorDestructionEvent,
+                       c->expectedDoorDestructionEvent,
+                       "F0217 grace-tick closed-door side-cell impact still schedules door destruction");
+            expect_int(c->label, r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
+                       0,
+                       "F0217 grace-tick impact stops the projectile rescheduling chain");
+            if (c->expectedDoorDestructionEvent) {
+                expect_int(c->label, r.outNextTick.mapX, m->blockerMapX,
+                           "F0217 grace-tick closed-door side-cell event targets blocked X");
+                expect_int(c->label, r.outNextTick.mapY, m->blockerMapY,
+                           "F0217 grace-tick closed-door side-cell event targets blocked Y");
+            }
+            expect_int(m->label, pOut.cell, m->expectedImpactCell,
+                       "F0219 lines 717-727 grace-tick impact returns before the side-lane "
+                       "cell parity commit (F0811 outNewState)");
+            expect_int(m->label, r.newCell, pOut.cell,
+                       "F0811 grace-tick side-cell impact result cell mirrors outNewState");
+        }
+    }
+}
+
+/* ---- Test 9: square-byte encoding for the wall square ------- */
 static void test_wall_square_byte_encoding(void)
 {
     unsigned char squareByte;
@@ -831,7 +980,7 @@ static void test_wall_square_byte_encoding(void)
                SIDEWALL_DEFS_ANCHOR);
 }
 
-/* ---- Test 9: source-evidence anchor mentions --------------- */
+/* ---- Test 10: source-evidence anchor mentions --------------- */
 static void test_source_evidence_mentions_required_anchors(void)
 {
     printf("test_source_evidence_mentions_required_anchors\n");
@@ -854,6 +1003,12 @@ static void test_source_evidence_mentions_required_anchors(void)
     expect_contains("anchor.parity",
                     SIDEWALL_REDMCSB_PARITY_ANCHOR, "parity",
                     "ReDMCSB cell parity rule");
+    expect_contains("anchor.f0212",
+                    SIDEWALL_REDMCSB_F0212_ANCHOR, "F0212",
+                    "ReDMCSB projectile create + C48/C49 first-move schedule");
+    expect_contains("anchor.grace",
+                    SIDEWALL_REDMCSB_GRACE_ANCHOR, "grace",
+                    "ReDMCSB first-move grace flag skip");
 }
 
 int main(void)
@@ -864,6 +1019,7 @@ int main(void)
     test_f0811_side_wall_impact_kinetic_per_direction();
     test_f0811_thrown_item_side_cell_blockers();
     test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers();
+    test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_wall_impact_kinetic_dispatch();
     test_f0811_open_door_wall_impact_emits_wooden_thud();
