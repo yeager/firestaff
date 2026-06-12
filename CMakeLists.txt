@@ -7969,7 +7969,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         PRIVATE firestaff_m10
     )
     target_include_directories(test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
         PRIVATE firestaff_m10
