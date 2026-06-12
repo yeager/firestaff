@@ -72,8 +72,9 @@
  * lateral movement into the north-facing Hall mirror, proving a strafe-produced
  * mirror pose can enter and clear the same real-asset panel without leaving
  * stale portrait or panel pixels.  It also clicks the original movement-arrow
- * boxes while C040 is live, proving the M568 panel dispatch ignores off-panel
- * movement hits and keeps the mirror portrait/panel stack stable.  It also
+ * boxes while C040 is live, including the lower-row lateral arrows, proving
+ * the M568 panel dispatch ignores off-panel movement hits and keeps the
+ * mirror portrait/panel stack stable.  It also
  * drives the source C006/C004 lateral command pair against the south-facing
  * Hall mirror, covering the blocked movement redraw branch that the
  * forward/back and turn routes do not touch.  It also
@@ -795,7 +796,9 @@ static int check_panel_live_movement_arrow_guard(M11_GameViewState* game,
      * only through the resurrect/reincarnate/cancel panel boxes.  Movement
      * arrows outside C160/C161/C162 must therefore be ignored while the
      * panel owns input, preserving the live Hall mirror pose and C040 over
-     * the DUNVIEW.C:3913-3928 / 8522-8533 D1C portrait blit. */
+     * the DUNVIEW.C:3913-3928 / 8522-8533 D1C portrait blit.  COMMAND.C
+     * lines 109-113/396-402 anchor the upper C001/C003 turn/forward boxes
+     * and the lower C006/C004 lateral movement boxes exercised here. */
     start_independent_input_route(game, 1, 4, DIR_SOUTH);
     memset(&checkStep, 0, sizeof(checkStep));
     checkStep.mapX = 1;
@@ -845,6 +848,20 @@ static int check_panel_live_movement_arrow_guard(M11_GameViewState* game,
     if (result != M11_GAME_INPUT_IGNORED) {
         fprintf(stderr,
                 "FAIL hall_panel_arrow_guard_forward_arrow result=%d want=%d\n",
+                result, M11_GAME_INPUT_IGNORED);
+        ok = 0;
+    }
+    result = M11_GameView_HandlePointer(game, 248, 157, 1);
+    if (result != M11_GAME_INPUT_IGNORED) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_left_strafe_arrow result=%d want=%d\n",
+                result, M11_GAME_INPUT_IGNORED);
+        ok = 0;
+    }
+    result = M11_GameView_HandlePointer(game, 304, 157, 1);
+    if (result != M11_GAME_INPUT_IGNORED) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_right_strafe_arrow result=%d want=%d\n",
                 result, M11_GAME_INPUT_IGNORED);
         ok = 0;
     }
@@ -903,7 +920,7 @@ static int check_panel_live_movement_arrow_guard(M11_GameViewState* game,
         ok = 0;
     }
 
-    printf("hall_panel_live_movement_arrow_guard C040=%d/%d front=%d\n",
+    printf("hall_panel_live_movement_arrow_guard lateral_arrows=ignored C040=%d/%d front=%d\n",
            panelMatch.assetDrawn, panelMatch.assetOpaque,
            M11_GameView_GetFrontMirrorOrdinal(game));
     return ok;
