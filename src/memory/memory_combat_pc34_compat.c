@@ -189,10 +189,13 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
 
 /* ==========================================================
  *  Internal helper for F0736 — defender-statistic adjustment
- *  per attack type. Mirror of the C0..C7 switch in CHAMPION.C:1824–1910.
- *  v1 supports C0 (normal), C2 (self), C3 (blunt), C4 (sharp),
- *  C7 (lightning) in full; C1 (fire), C5 (magic), C6 (psychic) fall
- *  through to "no adjustment" and are flagged for phase 14 review.
+ *  per attack type. Mirror of CHAMPION.C:1860–1896 inside F0321
+ *  (the C0..C7 switch on P0665_ui_AttackType). v1 implements the
+ *  F0307 / F0030_MAIN_GetScaledProduct call for C1_ATTACK_FIRE and
+ *  C5_ATTACK_MAGIC (the only F0230 attack types that route through
+ *  the F0307 path). C3/C4/C7 are no-ops here, matching the
+ *  `break;` path of the source. C0/C2/C6 are out of scope (see
+ *  F0321 NEEDS DISASSEMBLY REVIEW markers below).
  * ========================================================== */
 
 static int combat_apply_defender_statistic_adjustment(
@@ -204,43 +207,37 @@ static int combat_apply_defender_statistic_adjustment(
     int tmp;
 
     switch (attackType) {
-        case COMBAT_ATTACK_NORMAL:
-            /* No statistic adjustment. */
-            break;
-
-        case COMBAT_ATTACK_SELF:
-            /* Self-inflicted (e.g. trap damage) — halved vs vitality. */
+        case COMBAT_ATTACK_FIRE:
+            /* F0321 C1 case: F0307 vs C6_STATISTIC_ANTIFIRE, then
+             * subtract G0407_s_Party.FireShieldDefense. Shield subtraction
+             * is not modelled in v1 — NEEDS DISASSEMBLY REVIEW. */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticVitality, 255, adjusted, &tmp)) {
+                    defender->statisticAntifire, 255, adjusted, &tmp)) {
                 adjusted = tmp;
             }
             break;
 
-        case COMBAT_ATTACK_BLUNT:
-        case COMBAT_ATTACK_SHARP:
-            /* Physical — vitality tempers it. */
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticVitality, 255, adjusted, &tmp)) {
-                adjusted = tmp;
-            }
-            break;
-
-        case COMBAT_ATTACK_LIGHTNING:
-            /* Antimagic scales lightning damage down, per CHAMPION.C:1878. */
+        case COMBAT_ATTACK_MAGIC:
+            /* F0321 C5 case: F0307 vs C5_STATISTIC_ANTIMAGIC, then
+             * subtract G0407_s_Party.SpellShieldDefense. Shield subtraction
+             * is not modelled in v1 — NEEDS DISASSEMBLY REVIEW. */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
                     defender->statisticAntimagic, 255, adjusted, &tmp)) {
                 adjusted = tmp;
             }
             break;
 
-        case COMBAT_ATTACK_FIRE:
-        case COMBAT_ATTACK_MAGIC:
+        case COMBAT_ATTACK_NORMAL:
+        case COMBAT_ATTACK_SELF:
+        case COMBAT_ATTACK_BLUNT:
+        case COMBAT_ATTACK_SHARP:
         case COMBAT_ATTACK_PSYCHIC:
-            /* NEEDS DISASSEMBLY REVIEW: fire/magic/psychic defence paths
-             * depend on SpellShieldDefense / FireShieldDefense globals that
-             * are not modelled in phase 13. Phase 14 magic will wire these
-             * through. For v1 we leave `adjusted` unchanged and DO NOT
-             * fabricate. Goldens do not exercise these attack types. */
+        case COMBAT_ATTACK_LIGHTNING:
+            /* F0321 source: C0 skips the F0321 body, C2/C3/C4/C7 fall
+             * through with `break;` (no F0307 call), C6 uses the wisdom
+             * factor and `goto T0321024`. The compat v1 does not model
+             * C2 (Ninja + half-defense) or C6 (wisdom factor); those
+             * stay out of scope and untouched here. */
             break;
 
         default:
@@ -249,6 +246,90 @@ static int combat_apply_defender_statistic_adjustment(
     }
 
     return adjusted;
+}
+
+/* ==========================================================
+ *  Internal helper for F0736 — F0321 armor+defense scale.
+ *
+ *  ReDMCSB: CHAMPION.C F0321 lines 1838-1900. After the per-attack-type
+ *  statistic adjustment, F0321 sums F0313 (armour+shield+vitality per
+ *  wound slot) over the allowedWound bits, averages them, and scales
+ *  the attack value by (130 - avgDefense) / 64:
+ *
+ *      P0663_i_Attack = F0030_MAIN_GetScaledProduct(
+ *          P0663_i_Attack, 6, 130 - L0977_ui_Defense);
+ *
+ *  The C5_MAGIC and C6_PSYCHIC branches `goto T0321024`, which skips
+ *  this scale (handled below). C1_FIRE and C2/C3/C4/C7 fall through
+ *  to it. C0_ATTACK_NORMAL takes the outer `if (P0665_ui_AttackType
+ *  != C0_ATTACK_NORMAL)` short-circuit and never reaches the scale.
+ *
+ *  In v1 the snapshot pre-bakes the F0313 stochastic term into a
+ *  deterministic add (see F0733 doc), so the scale is also
+ *  deterministic.
+ * ========================================================== */
+
+static int combat_apply_f0321_armor_defense_scale(
+    int attackType,
+    int attack,
+    int allowedWoundMask,
+    const struct CombatantChampionSnapshot_Compat* defender)
+{
+    int slot;
+    int defenseSum;
+    int defenseCount;
+    int avgDefense;
+    int useSharpDefense;
+    int scaled;
+
+    if (attack <= 0) {
+        return attack;
+    }
+    /* F0321 outer if: C0 short-circuits the entire F0321 body. */
+    if (attackType == COMBAT_ATTACK_NORMAL) {
+        return attack;
+    }
+    /* F0321 switch: C5 and C6 jump to T0321024 which skips the
+     * (130 - defense) scale. C6 also folds its own wisdom factor
+     * which is out of scope (NEEDS DISASSEMBLY REVIEW). */
+    if (attackType == COMBAT_ATTACK_MAGIC ||
+        attackType == COMBAT_ATTACK_PSYCHIC) {
+        return attack;
+    }
+
+    useSharpDefense = (attackType == COMBAT_ATTACK_SHARP) ? 1 : 0;
+    defenseSum = 0;
+    defenseCount = 0;
+    for (slot = 0; slot < 6; ++slot) {
+        int bit = (1 << slot);
+        if (allowedWoundMask & bit) {
+            int perSlot = 0;
+            if (F0733_COMBAT_GetChampionWoundDefense_Compat(
+                    defender, slot, useSharpDefense, &perSlot)) {
+                defenseSum += perSlot;
+                defenseCount++;
+            }
+        }
+    }
+
+    if (defenseCount <= 0) {
+        /* F0321 source: with no allowed wound slots, defense stays 0
+         * and the scale evaluates to (attack * 130) / 64. We mirror
+         * that to keep the gate deterministic for fixtures whose
+         * wound mask collapses to zero. */
+        return (attack * 130) >> 6;
+    }
+    avgDefense = defenseSum / defenseCount;
+    if (avgDefense > 130) {
+        /* F0321 BUG0_44 path: 130 - defense would underflow; clamp
+         * to mirror the source's signed behaviour. */
+        avgDefense = 130;
+    }
+    scaled = (attack * (130 - avgDefense)) >> 6;
+    if (scaled < 0) {
+        scaled = 0;
+    }
+    return scaled;
 }
 
 /* ==========================================================
@@ -530,9 +611,20 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
             out->rngCallCount++;
         }
 
-        /* Statistic adjustment by attack type. */
+        /* ReDMCSB: CHAMPION.C F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage
+         * line 1407 is the F0230 handoff. F0321 then (1) applies the per
+         * attack-type F0307 statistic adjustment (C1/C5 only — the
+         * C3/C4/C7 common case is `break;`), (2) sums F0313 per allowed
+         * wound slot and averages, then (3) scales attack by
+         * (130 - defense) / 64. The wound-vs-vitality extra-wound loop
+         * (CHAMPION.C:1902-1911) and the pending-damage accumulator
+         * (line 1922) remain in M11 — the compat resolver returns the
+         * scaled atk as damageApplied. */
         atk = combat_apply_defender_statistic_adjustment(
             attacker->attackType, defender, atk);
+
+        atk = combat_apply_f0321_armor_defense_scale(
+            attacker->attackType, atk, out->woundMaskAdded, defender);
 
         if (atk <= 0) {
             out->outcome = COMBAT_OUTCOME_MISS;
