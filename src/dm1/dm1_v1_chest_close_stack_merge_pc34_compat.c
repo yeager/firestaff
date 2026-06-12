@@ -27,45 +27,6 @@ enum {
     DM1_PC34_CHEST_CLOSE_STACK_MERGE_CONTAINER_BASE_WEIGHT = 50
 };
 
-static const DM1_V1_ChestCloseStackMergeAnchorsPc34 s_anchors = {
-    /* f0333_open */
-    "ReDMCSB CHEST.C F0333:30-67 open-materialization: same-open return, "
-    "PanelContent=M569_PANEL_CHEST, Container->Slot walk via F0159, "
-    "eight-item cap, G0425_aT_ChestSlots writes in chain order, "
-    "C0xFFFE_THING_ENDOFLIST stop, C0xFFFF_THING_NONE tail fill.",
-    /* f0334_close */
-    "ReDMCSB CHEST.C F0334:113-132 close-rewire: no-open return, "
-    "G0426 clear, Container->Slot=C0xFFFE_THING_ENDOFLIST clobber, scan "
-    "eight G0425 entries, skip C0xFFFF_THING_NONE, clear slots, relink via "
-    "DUNGEON.C F0163:1769-1837 list-append with CM1_MAPX_NOT_ON_A_SQUARE.",
-    /* f0163_append */
-    "ReDMCSB DUNGEON.C F0163:1769-1838 list-append: "
-    "P0287_T_ThingToLink->Next=C0xFFFE_THING_ENDOFLIST, then F0159 walk from "
-    "P0288_T_ThingInList to find the END, then P0288_T_ThingInList->Next is "
-    "overwritten with P0287_T_ThingToLink.",
-    /* f0159_get_next */
-    "ReDMCSB DUNGEON.C F0159:1664-1681 get-next-thing: returns the Next field "
-    "of the carried thing's GENERIC record verbatim; used by the F0163 walk "
-    "to traverse the chain.",
-    /* f0140_container_weight */
-    "ReDMCSB DUNGEON.C F0140:1114-1120 container weight: 50 base plus "
-    "recursive content weights while the chain is not END; for an open "
-    "chest the visible G0425 contents contribute.",
-    /* f0297_put_leader_hand */
-    "ReDMCSB CHAMPION.C F0297:243-268 leader-hand put: store Thing, derive "
-    "icon with F0033, add F0140 weight, mark load.",
-    /* f0302_slot */
-    "ReDMCSB CHAMPION.C F0302:662-713 C30+ slot click: leader-hand swap "
-    "reads C30+ slot, validates AllowedSlots & SlotMasks, swaps the hand "
-    "and the slot; on close F0334 must not call this.",
-    /* sentinel_chain */
-    "ReDMCSB sentinels from CHEST.C F0333:58-76 and F0334:113-132: "
-    "C0xFFFE_THING_ENDOFLIST terminates lists; C0xFFFF_THING_NONE marks an "
-    "empty G0425 slot. F0334 close writes C0xFFFF_THING_NONE into cleared "
-    "G0425 entries; F0333 open writes C0xFFFF_THING_NONE into trailing "
-    "empty G0425 entries."
-};
-
 static const DM1_V1_ChestCloseStackMergeSpecPc34 s_spec = {
     /* contract_marker */
     "Source-locked contract gate; no real-asset parity claim.",
@@ -112,14 +73,42 @@ static const DM1_V1_ChestCloseStackMergeSpecPc34 s_spec = {
     /* rewire_container_base_weight */
     DM1_PC34_CHEST_CLOSE_STACK_MERGE_CONTAINER_BASE_WEIGHT,
     /* anchors */ {
-        s_anchors.f0333_open,
-        s_anchors.f0334_close,
-        s_anchors.f0163_append,
-        s_anchors.f0159_get_next,
-        s_anchors.f0140_container_weight,
-        s_anchors.f0297_put_leader_hand,
-        s_anchors.f0302_slot,
-        s_anchors.sentinel_chain
+        /* f0333_open */
+        "ReDMCSB CHEST.C F0333:30-67 open-materialization: same-open return, "
+        "PanelContent=M569_PANEL_CHEST, Container->Slot walk via F0159, "
+        "eight-item cap, G0425_aT_ChestSlots writes in chain order, "
+        "C0xFFFE_THING_ENDOFLIST stop, C0xFFFF_THING_NONE tail fill.",
+        /* f0334_close */
+        "ReDMCSB CHEST.C F0334:113-132 close-rewire: no-open return, "
+        "G0426 clear, Container->Slot=C0xFFFE_THING_ENDOFLIST clobber, scan "
+        "eight G0425 entries, skip C0xFFFF_THING_NONE, clear slots, relink via "
+        "DUNGEON.C F0163:1769-1837 list-append with CM1_MAPX_NOT_ON_A_SQUARE.",
+        /* f0163_append */
+        "ReDMCSB DUNGEON.C F0163:1769-1838 list-append: "
+        "P0287_T_ThingToLink->Next=C0xFFFE_THING_ENDOFLIST, then F0159 walk from "
+        "P0288_T_ThingInList to find the END, then P0288_T_ThingInList->Next is "
+        "overwritten with P0287_T_ThingToLink.",
+        /* f0159_get_next */
+        "ReDMCSB DUNGEON.C F0159:1664-1681 get-next-thing: returns the Next field "
+        "of the carried thing's GENERIC record verbatim; used by the F0163 walk "
+        "to traverse the chain.",
+        /* f0140_container_weight */
+        "ReDMCSB DUNGEON.C F0140:1114-1120 container weight: 50 base plus "
+        "recursive content weights while the chain is not END; for an open "
+        "chest the visible G0425 contents contribute.",
+        /* f0297_put_leader_hand */
+        "ReDMCSB CHAMPION.C F0297:243-268 leader-hand put: store Thing, derive "
+        "icon with F0033, add F0140 weight, mark load.",
+        /* f0302_slot */
+        "ReDMCSB CHAMPION.C F0302:662-713 C30+ slot click: leader-hand swap "
+        "reads C30+ slot, validates AllowedSlots & SlotMasks, swaps the hand "
+        "and the slot; on close F0334 must not call this.",
+        /* sentinel_chain */
+        "ReDMCSB sentinels from CHEST.C F0333:58-76 and F0334:113-132: "
+        "C0xFFFE_THING_ENDOFLIST terminates lists; C0xFFFF_THING_NONE marks an "
+        "empty G0425 slot. F0334 close writes C0xFFFF_THING_NONE into cleared "
+        "G0425 entries; F0333 open writes C0xFFFF_THING_NONE into trailing "
+        "empty G0425 entries."
     }
 };
 
