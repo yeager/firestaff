@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -23,10 +24,14 @@ static int fail_count = 0;
 int main(void) {
     struct DungeonGroup_Compat group;
     struct CombatResult_Compat result;
+    struct DM1GroupBehaviorContext_Compat behaviorCtx;
+    int visibleDistance = -1;
+    int smelledDirOrdinal = -1;
     int outcome = -1;
 
     memset(&group, 0, sizeof(group));
     memset(&result, 0, sizeof(result));
+    memset(&behaviorCtx, 0, sizeof(behaviorCtx));
 
     group.count = 3; /* ReDMCSB Count stores actual creature count minus one. */
     group.cells = (unsigned char)((0 << 0) | (1 << 2) | (2 << 4) | (3 << 6));
@@ -60,6 +65,34 @@ int main(void) {
           "packed cells should compact to live cells 0,2,3");
     CHECK(group.behavior == 6, "split compaction should not change group behavior");
     CHECK(group.direction == 2, "split compaction should not change base group direction");
+
+    /*
+     * ReDMCSB GROUP.C F0199 lines 1238-1281 returns distance 1 immediately
+     * for adjacent source/destination squares. F0200/F0201 then consume that
+     * visibility/smell distance; after an attacked group loses one member,
+     * this must remain a deterministic group-state input rather than a widened
+     * creature-AI transition.
+     */
+    behaviorCtx.currentGroupDistanceToParty = 1;
+    behaviorCtx.currentGroupPrimaryDirToParty = 1;
+    behaviorCtx.distanceToVisibleParty = 1;
+    behaviorCtx.creatureInfo.ranges = 0x1403; /* sight=3, smell=4, attack=1 */
+    behaviorCtx.groupBehavior = group.behavior;
+    behaviorCtx.creatureCount = group.count;
+    CHECK(F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
+              &behaviorCtx, -1, &visibleDistance) == 1,
+          "F0818 should accept the compacted group visibility context");
+    CHECK(F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
+              &behaviorCtx, &smelledDirOrdinal) == 1,
+          "F0819 should accept the compacted group smell context");
+    CHECK(visibleDistance == 1,
+          "adjacent attacked group should keep F0199/F0200 visible distance 1");
+    CHECK(smelledDirOrdinal == 2,
+          "adjacent attacked group should smell toward primary direction ordinal");
+    CHECK(behaviorCtx.groupBehavior == group.behavior,
+          "F0199/F0200/F0201 distance checks should not mutate behavior");
+    CHECK(behaviorCtx.creatureCount == group.count,
+          "F0199/F0200/F0201 distance checks should not mutate split count");
 
     if (fail_count == 0) {
         printf("PASS: DM1 V1 creature group split gate\n");
