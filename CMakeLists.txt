@@ -2138,6 +2138,37 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_route_handoff.py
         )
         set_tests_properties(dm1_v1_original_capture_route_handoff PROPERTIES TIMEOUT 300)
+        # Live row gate: wires the on-disk live session
+        # runner's exact ``original/01_ingame_start.png`` /
+        # ``original/02_ingame_step_forward.png`` filenames to
+        # the pass623 canonical input-capture fixture and
+        # the Firestaff fixture viewport hash set, then
+        # runs the on-disk preflight + row builder + transcript
+        # writer + pass608 verifier to confirm the live row
+        # binding flips the pass608 same-viewport capture
+        # blocker from
+        # ``BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE``
+        # to ``PASS608_DM1_V1_COMMAND_STATE_REDRAW_TRANSCRIPT_BOUND``.
+        # The negative-path subcheck patches the second row's
+        # Firestaff viewport hash to a never-seen 64-hex value
+        # and asserts the BLOCKED status is preserved, so a
+        # future regression that drops the live-binding's hash
+        # discipline is caught at the gate instead of at the
+        # next live DOSBox attempt.  Companion to the
+        # ``dm1_v1_original_capture_route_handoff`` gate, which
+        # exercises the same chain for the standalone
+        # ``02_turn_right_west_1_3`` route.  Hermetic -
+        # synthesises a preflight receipt, a pass623 fixture,
+        # a Firestaff capture manifest, and 320x200 / 224x136
+        # capture fixtures in a temp dir, then runs the real
+        # on-disk tools as subprocesses and feeds the emitted
+        # ``transcript.json`` to the real
+        # ``verify_pass608_dm1_v1_same_viewport_capture_blocker.py``.
+        add_test(
+            NAME dm1_v1_original_capture_live_row_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_live_row_gate.py
+        )
+        set_tests_properties(dm1_v1_original_capture_live_row_gate PROPERTIES TIMEOUT 300)
         # Creature-chain original capture gate: keeps the remaining
         # creature screenshot gap machine-checkable by pinning the two
         # required Trolin route rows (D2C and D1C), canonical PC 3.4

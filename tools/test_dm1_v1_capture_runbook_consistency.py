@@ -75,6 +75,7 @@ DETECTOR = TOOLS_DIR / "dosbox_state_detector.py"
 MANIFEST_WRITER = TOOLS_DIR / "dosbox_capture_manifest_writer.py"
 TRANSCRIPT_WRITER = TOOLS_DIR / "dosbox_capture_transcript_writer.py"
 EVENTS_ROW_BUILDER = TOOLS_DIR / "dosbox_capture_events_row_builder.py"
+LIVE_ROW_GATE = REPO_ROOT / "tools" / "verify_dm1_v1_original_capture_live_row_gate.py"
 ORIGINAL_VIEWPORT_CAPTURE = (
     REPO_ROOT / "scripts" / "dosbox_dm1_original_viewport_reference_capture.sh"
 )
@@ -792,6 +793,52 @@ def check_events_row_builder_selftest_passes() -> list[str]:
     return failures
 
 
+def check_live_row_gate_selftest_passes() -> list[str]:
+    """The on-disk live row gate
+    (``tools/verify_dm1_v1_original_capture_live_row_gate.py``)
+    must keep passing; this is the regression guard for the
+    live session runner's
+    ``original/01_ingame_start.png`` /
+    ``original/02_ingame_step_forward.png`` filenames binding
+    to the pass623 canonical input-capture fixture and the
+    Firestaff fixture viewport hash set, and then feeding the
+    on-disk preflight + row builder + transcript writer +
+    pass608 verifier chain to a PROMOTED status.  Without this
+    gate a future operator who renames the live capture file
+    or its binding pass623 label would silently ship a
+    transcript whose original frame path is no longer in the
+    live runbook; the runbook-consistency probe is the CI
+    companion to the CTest
+    ``dm1_v1_original_capture_live_row_gate`` (which lives in
+    the same script) so the regression is caught on the
+    first runbook-touching commit, not at the next live
+    attempt.
+    """
+    failures: list[str] = []
+    if not LIVE_ROW_GATE.exists():
+        return [
+            f"{LIVE_ROW_GATE.relative_to(REPO_ROOT)}: live row gate "
+            "not found; the live-binding companion to "
+            "verify_dm1_v1_original_capture_route_handoff.py must ship "
+            "alongside the runbook"
+        ]
+    proc = subprocess.run(
+        [sys.executable, str(LIVE_ROW_GATE)],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    if proc.returncode != 0:
+        failures.append(
+            f"{LIVE_ROW_GATE.relative_to(REPO_ROOT)} self-test failed: "
+            f"exit={proc.returncode} "
+            f"stderr={proc.stderr.strip()!r} "
+            f"stdout_tail={proc.stdout.strip().splitlines()[-3:] if proc.stdout.strip() else []!r}"
+        )
+    return failures
+
+
 def check_original_viewport_capture_single_row_mode() -> list[str]:
     """The live DOSBox rawshot runner used to hard-code six screenshots
     everywhere.  That was fine for the old overlay lane, but the current
@@ -935,6 +982,7 @@ def main() -> int:
         ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
         ("transcript_writer_selftest",   check_transcript_writer_selftest_passes, []),
         ("events_row_builder_selftest",  check_events_row_builder_selftest_passes, []),
+        ("live_row_gate_selftest",       check_live_row_gate_selftest_passes, []),
         ("capture_session_focus_recovery_dry_run", check_capture_session_focus_recovery_dry_run, []),
         ("original_viewport_capture_single_row_mode", check_original_viewport_capture_single_row_mode, []),
     ]

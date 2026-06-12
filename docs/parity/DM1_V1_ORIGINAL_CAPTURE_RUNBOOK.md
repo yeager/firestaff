@@ -752,6 +752,93 @@ self-test.
 
 ---
 
+## Step 5e: Live Row Gate (deterministic)
+
+The handoff closure gate at
+``tools/verify_dm1_v1_original_capture_route_handoff.py``
+wires the preflight + row builder + transcript writer +
+pass608 verifier chain for the standalone
+``02_turn_right_west_1_3`` route.  The live row gate at
+``tools/verify_dm1_v1_original_capture_live_row_gate.py``
+is the live-binding companion: it pins the live session
+runner
+(``docs/parity/tools/dosbox_capture_session.py``)'s exact
+``original/01_ingame_start.png`` and
+``original/02_ingame_step_forward.png`` filenames (the
+files ``live_run()`` writes at lines 2124 / 2132) to
+pass623 route labels + Firestaff fixture viewport hashes,
+then runs the same on-disk toolchain and confirms the
+pass608 blocker flips to
+``PASS608_DM1_V1_COMMAND_STATE_REDRAW_TRANSCRIPT_BOUND``.
+
+The live-binding table is part of the public contract:
+
+| Live runner ``save()`` filename      | Pass623 route label           | Firestaff fixture viewport hash (sha256) |
+|--------------------------------------+-------------------------------+------------------------------------------|
+| ``01_ingame_start.png``              | ``01_start_south_1_3``        | ``50661c78…8bf9`` (``01_ingame_start_latest_viewport_224x136.ppm``) |
+| ``02_ingame_step_forward.png``       | ``03_blocked_west_wall_1_3``  | ``0cb83803…92b8`` (``03_ingame_move_forward_latest_viewport_224x136.ppm``) |
+
+The live row gate is hermetic and runs in CI as the
+CTest ``dm1_v1_original_capture_live_row_gate`` (see the
+CMake block below) and as a sub-check of the
+runbook-consistency probe at
+``tools/test_dm1_v1_capture_runbook_consistency.py`` under
+``live_row_gate_selftest``.  A future operator who
+renames either side of the binding table (the live
+session's ``save()`` filename, the pass623 label, the
+Firestaff fixture viewport hash) without updating the
+gate gets a self-describing CI failure, so the next
+live attempt cannot ship a transcript whose
+``originalFrame.path`` is no longer in the live
+runbook.
+
+Run the gate locally before the live attempt:
+
+```bash
+python3 tools/verify_dm1_v1_original_capture_live_row_gate.py
+# Expected: DM1_V1_ORIGINAL_CAPTURE_LIVE_ROW_GATE_CLOSED: 8/8 live row gate checks passed
+#           PASS
+```
+
+The gate's 8 sub-checks: (1) the on-disk pass608
+verifier is importable and reports the baseline BLOCKED
+status; (2) the on-disk preflight self-test passes; (3)
+the on-disk live session runner's ``live_run()`` saves
+its captures to the exact filenames in the live-binding
+table (a regex pin on the source string keeps a future
+rename of ``01_ingame_start.png`` or
+``02_ingame_step_forward.png`` from silently breaking
+the live handoff); (4) the on-disk row builder renders
+a 41-column events TSV row for each live-binding row,
+using the row builder's own preflight + pass623
+validation pipeline (the row builder refuses to emit a
+row for a label that is not in the pass623 fixture, so
+this sub-check is also the
+live-binding-table-matches-pass623 check); (5) the
+on-disk transcript writer consumes the two
+live-binding rows and emits a transcript whose
+``promotable`` flag is True; (6) the pass608 verifier
+reads the same transcript and flips its status to
+``PROMOTED`` with ``loaded_promotable_same_run``; (7) a
+negative path: the Firestaff viewport hash for the
+second live capture is patched to a never-seen 64-hex
+value and the pass608 verifier's
+``firestaffViewportHashKnown`` check must fail and keep
+the BLOCKED status, so a future regression that drops
+the live-binding's hash discipline is caught at the
+gate instead of at the next live attempt; (8) every
+row of the live-binding table is anchored to the
+real on-disk
+``parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json``
+(pass623 route label) and the real on-disk
+``verification-screens/capture_manifest_sha256.tsv``
+(Firestaff fixture viewport sha), so a future pass623
+rotation or Firestaff capture manifest rename is
+caught at the gate instead of at the next live
+attempt.
+
+---
+
 ## Step 6: Pass/Fail Criteria
 
 | Criterion | Threshold |
