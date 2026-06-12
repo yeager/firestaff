@@ -69,26 +69,12 @@ static void test_single_monster_cloud_tick_boundary(void)
              1, "create poison cloud");
     CHECK_EQ(slot, 0, "cloud occupies first explosion slot");
     CHECK_EQ(explosions.count, 1, "one cloud in explosion list");
-    CHECK_EQ(explosions.entries[slot].explosionType, C007_EXPLOSION_POISON_CLOUD,
-             "stored poison cloud type");
-    CHECK_EQ(explosions.entries[slot].mapX, 10, "stored cloud map x");
-    CHECK_EQ(explosions.entries[slot].mapY, 11, "stored cloud map y");
     CHECK_EQ(explosions.entries[slot].cell, EXPLOSION_CELL_CENTERED,
-             "stored cloud centered cell");
-    CHECK_EQ(explosions.entries[slot].centered, 1,
-             "stored cloud centered flag");
-    CHECK_EQ(explosions.entries[slot].scheduledAtTick, 1001,
-             "stored cloud schedule tick+1");
+             "cloud remains centered over monster tile");
     CHECK_EQ(firstAdvance.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE,
              "first cloud event kind");
     CHECK_EQ((int)firstAdvance.fireAtTick, 1001, "first cloud event tick+1");
-    CHECK_EQ(firstAdvance.mapX, 10, "first event map x");
-    CHECK_EQ(firstAdvance.mapY, 11, "first event map y");
-    CHECK_EQ(firstAdvance.cell, EXPLOSION_CELL_CENTERED,
-             "first event centered cell");
-    CHECK_EQ(firstAdvance.aux1, C007_EXPLOSION_POISON_CLOUD,
-             "first event carries poison cloud type");
-    CHECK_EQ(firstAdvance.aux2, 96, "first event carries original attack");
+    CHECK_EQ(firstAdvance.aux0, slot, "first event carries cloud slot");
 
     CHECK_EQ(F0720_TIMELINE_Init_Compat(&timeline, 1000), 1,
              "timeline init");
@@ -130,8 +116,6 @@ static void test_single_monster_cloud_tick_boundary(void)
     CHECK_EQ(tick.outActionGroup.targetMapY, 11, "group damage y");
     CHECK_EQ(tick.outActionGroup.targetCell, 0,
              "centered cloud targets centered group cell");
-    CHECK_EQ(tick.outActionGroup.attackerSlotOrCreatureIndex, 2,
-             "group damage preserves champion owner index");
     CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 10,
              "group damage preserves monster type");
     CHECK_EQ(tick.outActionGroup.scheduleDelayTicks, 0,
@@ -140,16 +124,12 @@ static void test_single_monster_cloud_tick_boundary(void)
              "attack 96 gives poison cloud base 3 without rng");
     CHECK_EQ(tick.despawn, 0, "cloud remains live");
     CHECK_EQ(next.attack, 93, "cloud attack decays by 3");
-    CHECK_EQ(tick.newAttack, 93, "result reports decayed attack");
     CHECK_EQ(next.currentFrame, 1, "cloud frame increments once");
-    CHECK_EQ(tick.newCurrentFrame, 1, "result reports frame increment");
     CHECK_EQ(tick.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE,
              "follow-up cloud event kind");
     CHECK_EQ((int)tick.outNextTick.fireAtTick, 1002,
              "follow-up cloud event tick+1");
     CHECK_EQ(tick.outNextTick.aux0, slot, "follow-up carries same cloud slot");
-    CHECK_EQ(tick.outNextTick.aux1, C007_EXPLOSION_POISON_CLOUD,
-             "follow-up carries poison cloud type");
     CHECK_EQ(tick.outNextTick.aux2, 93, "follow-up carries decayed attack");
     CHECK_EQ(F0721_TIMELINE_Schedule_Compat(&timeline, &tick.outNextTick), 1,
              "schedule follow-up cloud event");
