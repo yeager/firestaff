@@ -1017,6 +1017,165 @@ static void test_floor_field_stairs_pit_teleporter_order(void)
 }
 
 
+static void pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        DM1_ViewSquareIndex paired_wall_square;
+        DM1_WallSetIndex native_wall;
+        DM1_WallSetIndex parity_wall;
+        uint16_t pc34_wall_zone;
+        uint16_t companion_d3_wall_zone;
+        int rel_lateral;
+        int view_square_ordinal;
+        int view_floor_ordinal;
+        int view_wall_side_ordinal;
+        int view_wall_front_ordinal;
+        uint16_t open_cell_order;
+        const char *wall_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D0L2, DM1_VIEW_SQUARE_D0L, DM1_WALL_D0L, DM1_WALL_D0R,
+          DM1_PC34_ZONE_WALL_D0L, DM1_PC34_ZONE_WALL_D3L, -2, 1, 8, 2, 4, 0x0002,
+          "6432-6480" },
+        { DM1_VIEW_SQUARE_D0R2, DM1_VIEW_SQUARE_D0R, DM1_WALL_D0R, DM1_WALL_D0L,
+          DM1_PC34_ZONE_WALL_D0R, DM1_PC34_ZONE_WALL_D3R, 2, 2, 10, 3, 6, 0x0001,
+          "6545-6600" },
+    };
+
+    check_int("pass760.count",
+              (int)dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(), 2);
+    check_int("pass760.out_of_range",
+              dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(2) == NULL, 1);
+    check_int("pass760.d0l_not_d0l",
+              DM1_VIEW_SQUARE_D0L2 != DM1_VIEW_SQUARE_D0L, 1);
+    check_int("pass760.d0r_not_d0r",
+              DM1_VIEW_SQUARE_D0R2 != DM1_VIEW_SQUARE_D0R, 1);
+    check_int("pass760.d0l_not_d0c",
+              DM1_VIEW_SQUARE_D0L2 != DM1_VIEW_SQUARE_D0C, 1);
+    check_int("pass760.d0r_not_d0c",
+              DM1_VIEW_SQUARE_D0R2 != DM1_VIEW_SQUARE_D0C, 1);
+    check_int("pass760.d0l_not_d1l2",
+              DM1_VIEW_SQUARE_D0L2 != DM1_VIEW_SQUARE_D2L2, 1);
+    check_int("pass760.d0r_not_d1r2",
+              DM1_VIEW_SQUARE_D0R2 != DM1_VIEW_SQUARE_D2R2, 1);
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportD0L2D0R2F0108CompositionSpec *spec =
+            dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec_for_square(expected[i].square);
+        const DM1_ViewportD0L2D0R2F0108CompositionSpec *by_index =
+            dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(i);
+        const DM1_ViewportWallDrawSpec *wall =
+            dm1_viewport_3d_get_wall_draw_spec_for_square(expected[i].paired_wall_square);
+        char id[160];
+
+        snprintf(id, sizeof(id), "pass760.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        snprintf(id, sizeof(id), "pass760.%zu.by_index", i);
+        check_int(id, spec == by_index, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_nonnull", i);
+        check_nonnull(id, wall);
+        if (!spec || !wall) continue;
+
+        snprintf(id, sizeof(id), "pass760.%zu.square", i);
+        check_int(id, spec->square, expected[i].square);
+        snprintf(id, sizeof(id), "pass760.%zu.paired_wall_square", i);
+        check_int(id, spec->paired_wall_square, expected[i].paired_wall_square);
+        snprintf(id, sizeof(id), "pass760.%zu.native_wall", i);
+        check_int(id, spec->native_wall, expected[i].native_wall);
+        snprintf(id, sizeof(id), "pass760.%zu.parity_wall", i);
+        check_int(id, spec->parity_wall, expected[i].parity_wall);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_spec_native", i);
+        check_int(id, wall->native_wall, expected[i].native_wall);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_spec_parity", i);
+        check_int(id, wall->parity_wall, expected[i].parity_wall);
+        snprintf(id, sizeof(id), "pass760.%zu.pc34_wall_zone", i);
+        check_int(id, spec->pc34_wall_zone, expected[i].pc34_wall_zone);
+        snprintf(id, sizeof(id), "pass760.%zu.companion_d3_wall_zone", i);
+        check_int(id, spec->companion_d3_wall_zone, expected[i].companion_d3_wall_zone);
+        snprintf(id, sizeof(id), "pass760.%zu.rel_depth", i);
+        check_int(id, spec->rel_depth, 0);
+        snprintf(id, sizeof(id), "pass760.%zu.rel_lateral", i);
+        check_int(id, spec->rel_lateral, expected[i].rel_lateral);
+        snprintf(id, sizeof(id), "pass760.%zu.view_square_ordinal", i);
+        check_int(id, spec->view_square_ordinal, expected[i].view_square_ordinal);
+        snprintf(id, sizeof(id), "pass760.%zu.view_floor_ordinal", i);
+        check_int(id, spec->view_floor_ordinal, expected[i].view_floor_ordinal);
+        snprintf(id, sizeof(id), "pass760.%zu.view_wall_side_ordinal", i);
+        check_int(id, spec->view_wall_side_ordinal, expected[i].view_wall_side_ordinal);
+        snprintf(id, sizeof(id), "pass760.%zu.view_wall_front_ordinal", i);
+        check_int(id, spec->view_wall_front_ordinal, expected[i].view_wall_front_ordinal);
+        snprintf(id, sizeof(id), "pass760.%zu.open_cell_order", i);
+        check_int(id, spec->open_cell_order, expected[i].open_cell_order);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_return_cell_order", i);
+        check_int(id, spec->wall_return_cell_order, 0);
+        snprintf(id, sizeof(id), "pass760.%zu.keepout_mask", i);
+        check_int(id, spec->floor_ornament_keepout_mask, 0x8000);
+        snprintf(id, sizeof(id), "pass760.%zu.floor_zone_base", i);
+        check_int(id, spec->floor_ornament_zone_base, 1500);
+        snprintf(id, sizeof(id), "pass760.%zu.floor_zone_stride", i);
+        check_int(id, spec->floor_ornament_zone_stride, 11);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_composition_locked", i);
+        check_int(id, spec->wall_composition_locked ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.floor_ceiling_base_locked", i);
+        check_int(id, spec->floor_ceiling_base_locked ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.floor_ornament_locked", i);
+        check_int(id, spec->floor_ornament_locked ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.ceiling_locked", i);
+        check_int(id, spec->ceiling_locked ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_ornament_locked", i);
+        check_int(id, spec->wall_ornament_locked ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_returns", i);
+        check_int(id, spec->wall_returns_before_f0115 ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.open_floor_before_f0115", i);
+        check_int(id, spec->open_path_floor_before_f0115 ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.c10", i);
+        check_int(id, spec->c10_transparent_blit ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_pass729", i);
+        check_int(id, spec->non_duplicate_pass729_d0l_d0r ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_pass733", i);
+        check_int(id, spec->non_duplicate_pass733_d0c ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_pass717", i);
+        check_int(id, spec->non_duplicate_pass717_d1l2_d1r2_wall ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_line", i);
+        check_int(id, strstr(spec->redmcsb_wall_source_lines, expected[i].wall_line) != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.wall_return_line", i);
+        check_int(id, strstr(spec->redmcsb_wall_source_lines, i == 0 ? "8016-8038" : "8126-8144") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0108_lines", i);
+        check_int(id, strstr(spec->redmcsb_f0108_source_lines, "3940-4011") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0108_mask", i);
+        check_int(id, strstr(spec->redmcsb_f0108_source_lines, "MASK0x8000") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0107_lines", i);
+        check_int(id, strstr(spec->redmcsb_f0107_source_lines, "3502-3938") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0107_coordinate", i);
+        check_int(id, strstr(spec->redmcsb_f0107_source_lines, "coordinateSet") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0098_lines", i);
+        check_int(id, strstr(spec->redmcsb_f0098_source_lines, "2962-3002") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.f0115_lines", i);
+        check_int(id, strstr(spec->redmcsb_f0115_source_lines, "4547-4581") != NULL &&
+                      strstr(spec->redmcsb_f0115_source_lines, "5180-5188") != NULL &&
+                      strstr(spec->redmcsb_f0115_source_lines, "5211-5214") != NULL &&
+                      strstr(spec->redmcsb_f0115_source_lines, "5668-5671") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.defs_lines", i);
+        check_int(id, strstr(spec->redmcsb_defs_source_lines, "2088") != NULL &&
+                      strstr(spec->redmcsb_defs_source_lines, "2596-2611") != NULL &&
+                      strstr(spec->redmcsb_defs_source_lines, "2668-2677") != NULL &&
+                      strstr(spec->redmcsb_defs_source_lines, "2698-2702") != NULL &&
+                      strstr(spec->redmcsb_defs_source_lines, "4045-4046") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.drawview_lines", i);
+        check_int(id, strstr(spec->redmcsb_drawview_source_lines, "F0097:1-50") != NULL &&
+                      strstr(spec->redmcsb_drawview_source_lines, "F0104:3113-3156") != NULL &&
+                      strstr(spec->redmcsb_drawview_source_lines, "F0105:3185-3247") != NULL, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_standalone_d0l_d0r", i);
+        check_int(id, spec->square != spec->paired_wall_square, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_d0c", i);
+        check_int(id, spec->paired_wall_square != DM1_VIEW_SQUARE_D0C, 1);
+        snprintf(id, sizeof(id), "pass760.%zu.not_d1_side", i);
+        check_int(id, spec->paired_wall_square != DM1_VIEW_SQUARE_D1L &&
+                      spec->paired_wall_square != DM1_VIEW_SQUARE_D1R, 1);
+    }
+}
+
+
 static void test_wall_source_row_clip_occlusion_gate(void)
 {
     DM1_WallFrame frame = { 2, 5, 3, 6, 10, 8, 4, 1 };
@@ -3046,6 +3205,7 @@ int main(void)
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();
+    pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament();
     test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
     test_wall_frame_bitmap_global_null_guard();
