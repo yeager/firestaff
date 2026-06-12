@@ -387,6 +387,45 @@ static int test_combat_proximity_penalty(void) {
     return 0;
 }
 
+/* ── Test: Practice sub-skill XP crosses base threshold (F0304) ─────── */
+static int test_practice_subskill_threshold_routing(void) {
+    TEST(practice_subskill_threshold_routing);
+
+    DM1_ChampionSkillState state;
+    dm1_skill_state_init(&state);
+    uint32_t rng = 24680;
+
+    DM1_SkillContext ctx;
+    ctx.mapDifficulty = 1;
+    ctx.lastCreatureAttackTime = 10;
+    ctx.gameTime = 200;
+    ctx.partyIsResting = 0;
+
+    /* ReDMCSB CHAMPION.C F0304 lines 866-893:
+     * the stale-combat half-XP gate applies only to Swing..Shoot (C04..C11),
+     * while every hidden skill still routes full XP into its base skill. */
+    state.skills[DM1_SKILL_IDX_PRIEST].experience = 490;
+    state.skills[DM1_SKILL_IDX_INFLUENCE].experience = 490;
+
+    DM1_LevelUpBonuses b = dm1_skill_add_experience(
+        &state, DM1_SKILL_IDX_INFLUENCE, 10, &ctx, &rng);
+
+    ASSERT_EQ(dm1_skill_get_experience(&state, DM1_SKILL_IDX_INFLUENCE, 0), 500);
+    ASSERT_EQ(dm1_skill_get_experience(&state, DM1_SKILL_IDX_PRIEST, 0), 500);
+
+    /* ReDMCSB CHAMPION.C F0303 lines 757-768: hidden-skill level uses the
+     * average of hidden + base XP, so 500/500 crosses the first threshold. */
+    ASSERT_EQ(dm1_skill_get_level(&state, DM1_SKILL_IDX_PRIEST,
+              DM1_SKILL_FLAG_IGNORE_TEMP), 2);
+    ASSERT_EQ(dm1_skill_get_level(&state, DM1_SKILL_IDX_INFLUENCE,
+              DM1_SKILL_FLAG_IGNORE_TEMP), 2);
+    ASSERT_EQ(state.skills[DM1_SKILL_IDX_INFLUENCE].temporaryExperience, 1);
+    ASSERT_GT(b.maxManaDelta, 0);
+
+    PASS();
+    return 0;
+}
+
 /* ── Test: Map difficulty multiplier (F0304) ────────────────────────── */
 static int test_difficulty_multiplier(void) {
     TEST(difficulty_multiplier);
@@ -532,6 +571,7 @@ int main(void) {
     rc |= test_add_experience_levelup();
     rc |= test_subskill_xp_propagation();
     rc |= test_combat_proximity_penalty();
+    rc |= test_practice_subskill_threshold_routing();
     rc |= test_difficulty_multiplier();
     rc |= test_wizard_levelup_mana();
     rc |= test_priest_levelup();
@@ -540,7 +580,7 @@ int main(void) {
 
     printf("\n%d/%d tests passed\n", g_tests_passed, g_tests_run);
 
-    if (g_tests_passed == g_tests_run) {
+    if (rc == 0 && g_tests_passed == g_tests_run) {
         printf("ALL TESTS PASSED ✓\n");
         return 0;
     } else {
