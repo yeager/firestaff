@@ -16,6 +16,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Current Priority Queue
 
+- 🔧 2026-06-12 10:10 worker note: DM1 V1 pit/fall regression coverage now has a focused real-orchestrator gate for one open-pit party transition, one 20 HP fall-damage consequence, and one lower-map landing sensor emission. Remaining DM1 V1 refills should avoid duplicating this narrow pit/fall party-state gate and continue targeting distinct runtime/chest/mirror/viewport evidence.
 - 🔧 v2.7.9 release follow-up: patch release is published; have the v2.7.8 reporter retest the FTL/SWSH swoosh plus Entrance button clicks on the same Retina display.
 - 🔧 Queue/refill priority order: DM1 V1 → Theron V1 → CSB V1 → DM1 V2 → CSB V2 → DM2 V1 → Theron V2 → Nexus V1 → Nexus V2. Worker refill focus should stay on `priority` unless intentionally pausing higher-priority lanes.
 - 🔧 2026-06-12 10:00 worker note: pass742 added a DM1 V1 D0L2/D0R2 F0115 fluxcage-field source-lock extension to the existing thing-pass gate, covering `DUNVIEW.C:6006-6015` deferral and `6199-6219` field-zone handoff through `C702 + G2035` to C716/C717. Remaining DM1 V1 viewport refills should avoid duplicating D0L2/D0R2 F0115 item/projectile/creature/explosion/fluxcage metadata and target capture-backed pixel evidence or a distinct uncovered path.
