@@ -143,6 +143,8 @@ static void test_open_door_projectile_wall_impact_wooden_thud(void)
                "ReDMCSB PROJEXPL.C:F0219 lines 717-725 wall impact dispatch");
     expect_int("result.kind", result.resultKind, PROJECTILE_RESULT_HIT_WALL,
                "ReDMCSB PROJEXPL.C:F0219 lines 721-725 C00_ELEMENT_WALL");
+    expect_int("result.crossed", result.crossedCell, 1,
+               "ReDMCSB PROJEXPL.C:F0219 lines 717-724 crosses before wall impact");
     expect_int("result.despawn", result.despawn, 1,
                "ReDMCSB PROJEXPL.C:F0217 lines 607-608 deletes projectile");
     expect_int("result.sound", result.emittedSoundCode, DM1_SND_WOODEN_THUD,
@@ -193,6 +195,8 @@ static void test_non_weapon_projectile_wall_impact_wooden_thud(void)
     expect_int("nonweapon.result.kind", result.resultKind,
                PROJECTILE_RESULT_HIT_WALL,
                "ReDMCSB PROJEXPL.C:F0219 lines 721-725 C00_ELEMENT_WALL");
+    expect_int("nonweapon.result.crossed", result.crossedCell, 1,
+               "ReDMCSB PROJEXPL.C:F0219 lines 717-724 crosses before wall impact");
     expect_int("nonweapon.result.sound", result.emittedSoundCode,
                DM1_SND_WOODEN_THUD,
                "ReDMCSB PROJEXPL.C:F0217 lines 587-600 non-weapon impact sound");
@@ -233,6 +237,8 @@ static void test_weapon_arrow_projectile_wall_impact_metallic_thud(void)
     expect_int("weapon.result.kind", result.resultKind,
                PROJECTILE_RESULT_HIT_WALL,
                "ReDMCSB PROJEXPL.C:F0219 lines 721-725 C00_ELEMENT_WALL");
+    expect_int("weapon.result.crossed", result.crossedCell, 1,
+               "ReDMCSB PROJEXPL.C:F0219 lines 717-724 crosses before wall impact");
     expect_int("weapon.result.sound", result.emittedSoundCode,
                DM1_SND_METALLIC_THUD,
                "ReDMCSB PROJEXPL.C:F0217 lines 587-591 weapon impact sound");
