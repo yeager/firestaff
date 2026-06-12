@@ -65,6 +65,24 @@ typedef struct {
     const char *source_evidence;
 } DM1_V1_D2CCenterCompositionTracePc34;
 
+typedef struct {
+    uint16_t rear_cell_order;
+    uint16_t front_cell_order;
+    int rear_cell_count;
+    int front_cell_count;
+    int rear_cells[2];
+    int front_cells[2];
+    uint8_t initial_pixel;
+    uint8_t after_floor_ornament;
+    uint8_t after_rear_f0115;
+    uint8_t after_f0111_door;
+    uint8_t after_front_f0115;
+    bool floor_transparent;
+    bool rear_transparent;
+    bool door_transparent;
+    bool front_transparent;
+} DM1_V1_D2CDoorFrontPixelTracePc34;
+
 const char *dm1_v1_viewport_d2c_center_wall_composition_source_evidence_pc34(void);
 
 DM1_V1_D2CCenterCompositionTracePc34
@@ -76,6 +94,15 @@ int dm1_v1_viewport_d2c_center_wall_composition_apply_c10_layer_pc34(
     uint8_t *destination,
     size_t count,
     uint8_t transparent_color);
+
+int dm1_v1_viewport_d2c_door_front_compose_pixel_pc34(
+    uint8_t initial_pixel,
+    uint8_t floor_ornament_pixel,
+    uint8_t rear_f0115_pixel,
+    uint8_t f0111_door_pixel,
+    uint8_t front_f0115_pixel,
+    uint8_t transparent_color,
+    DM1_V1_D2CDoorFrontPixelTracePc34 *out_trace);
 
 #ifdef __cplusplus
 }

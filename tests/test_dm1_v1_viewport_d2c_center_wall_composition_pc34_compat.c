@@ -210,6 +210,71 @@ static void test_c10_layer_preserves_prior_composition_pixels(void)
                -1, "ReDMCSB DUNVIEW.C:4382-4474 synthetic helper rejects null source");
 }
 
+static void test_d2c_door_front_pixel_pass_order_and_c10(void)
+{
+    DM1_V1_D2CDoorFrontPixelTracePc34 trace;
+
+    expect_int("door_pixel.compose",
+               dm1_v1_viewport_d2c_door_front_compose_pixel_pc34(
+                   0x11, 0x21, 0x31, 0x41, 0x51,
+                   DM1_V1_D2C_CENTER_COMPOSITION_PC34_C10_COLOR_FLESH,
+                   &trace),
+               1, "ReDMCSB DUNVIEW.C:7314-7342 F0121");
+    expect_int("door_pixel.rear_order", trace.rear_cell_order, 0x0218,
+               "ReDMCSB DUNVIEW.C:7315; DEFS.H:2669");
+    expect_int("door_pixel.front_order", trace.front_cell_order, 0x0349,
+               "ReDMCSB DUNVIEW.C:7341-7342; DEFS.H:2672");
+    expect_int("door_pixel.rear_count", trace.rear_cell_count, 2,
+               "ReDMCSB DUNVIEW.C:4561-4564 F0115");
+    expect_int("door_pixel.rear_cell0", trace.rear_cells[0], 1,
+               "ReDMCSB DEFS.H:2669 BACKLEFT");
+    expect_int("door_pixel.rear_cell1", trace.rear_cells[1], 2,
+               "ReDMCSB DEFS.H:2669 BACKRIGHT");
+    expect_int("door_pixel.front_count", trace.front_cell_count, 2,
+               "ReDMCSB DUNVIEW.C:4561-4564 F0115");
+    expect_int("door_pixel.front_cell0", trace.front_cells[0], 4,
+               "ReDMCSB DEFS.H:2672 FRONTLEFT");
+    expect_int("door_pixel.front_cell1", trace.front_cells[1], 3,
+               "ReDMCSB DEFS.H:2672 FRONTRIGHT");
+    expect_int("door_pixel.after_floor", trace.after_floor_ornament, 0x21,
+               "ReDMCSB DUNVIEW.C:7314 F0108 first");
+    expect_int("door_pixel.after_rear", trace.after_rear_f0115, 0x31,
+               "ReDMCSB DUNVIEW.C:7315 F0115 pass 1 before door");
+    expect_int("door_pixel.after_door", trace.after_f0111_door, 0x41,
+               "ReDMCSB DUNVIEW.C:7336-7339 F0111 after pass 1");
+    expect_int("door_pixel.after_front", trace.after_front_f0115, 0x51,
+               "ReDMCSB DUNVIEW.C:7341-7342 F0115 pass 2 last");
+
+    expect_int("door_pixel.c10.compose",
+               dm1_v1_viewport_d2c_door_front_compose_pixel_pc34(
+                   0x66, 10, 0x32, 10, 0x52,
+                   DM1_V1_D2C_CENTER_COMPOSITION_PC34_C10_COLOR_FLESH,
+                   &trace),
+               1, "ReDMCSB DUNVIEW.C:3048-3058/F0115 C10 preservation");
+    expect_bool("door_pixel.c10.floor", trace.floor_transparent, true,
+                "ReDMCSB DUNVIEW.C:7314 floor C10 preserves initial");
+    expect_int("door_pixel.c10.after_floor", trace.after_floor_ornament, 0x66,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    expect_bool("door_pixel.c10.rear", trace.rear_transparent, false,
+                "ReDMCSB DUNVIEW.C:7315 opaque rear thing pass");
+    expect_int("door_pixel.c10.after_rear", trace.after_rear_f0115, 0x32,
+               "ReDMCSB DUNVIEW.C:7315 rear F0115 writes");
+    expect_bool("door_pixel.c10.door", trace.door_transparent, true,
+                "ReDMCSB DUNVIEW.C:7336-7339 transparent door pixel preserves rear");
+    expect_int("door_pixel.c10.after_door", trace.after_f0111_door, 0x32,
+               "ReDMCSB DUNVIEW.C:4218-4337/F0111 C10 skip");
+    expect_bool("door_pixel.c10.front", trace.front_transparent, false,
+                "ReDMCSB DUNVIEW.C:7341-7342 opaque front thing pass");
+    expect_int("door_pixel.c10.after_front", trace.after_front_f0115, 0x52,
+               "ReDMCSB DUNVIEW.C:7341-7342 front F0115 writes last");
+    expect_int("door_pixel.null_out",
+               dm1_v1_viewport_d2c_door_front_compose_pixel_pc34(
+                   0, 0, 0, 0, 0,
+                   DM1_V1_D2C_CENTER_COMPOSITION_PC34_C10_COLOR_FLESH,
+                   NULL),
+               0, "synthetic helper rejects null trace");
+}
+
 static void test_source_evidence_mentions_all_anchors(void)
 {
     const char *e =
@@ -233,6 +298,8 @@ static void test_source_evidence_mentions_all_anchors(void)
                     "ReDMCSB DUNVIEW.C:7370-7388 F0113 tail");
     expect_contains("evidence.f0113", e, "DUNVIEW.C:4382-4474 F0113",
                     "ReDMCSB DUNVIEW.C:4382-4474 F0113");
+    expect_contains("evidence.f0115", e, "DUNVIEW.C:4547-4581 F0115",
+                    "ReDMCSB DUNVIEW.C:4547-4581 F0115");
     expect_contains("evidence.c10", e, "DEFS.H:2088",
                     "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
     expect_contains("evidence.orders", e, "DEFS.H:2656-2677",
@@ -248,6 +315,7 @@ int main(void)
     test_door_front_two_pass_composition();
     test_open_and_teleporter_center_field_composition();
     test_c10_layer_preserves_prior_composition_pixels();
+    test_d2c_door_front_pixel_pass_order_and_c10();
     test_source_evidence_mentions_all_anchors();
 
     if (g_failures) {
