@@ -66,3 +66,30 @@ Source: `CHAMPION.C:780–810`
 - `F0304_AddSkillExperience()` — XP scaling, temporary XP, level-up bonuses
 
 **Parity status:** FULL — level-up XP formula matches ReDMCSB exactly.
+
+---
+
+## 6. Action XP Routing (GRAPHIC 560)
+
+The action→skill / action→XP routing is data-driven from
+`GRAPHIC 560` (`MENU.C:382, 427, 947–987`):
+
+- `G0496_auc_Graphic560_ActionSkillIndex[44]` — 44 actions indexed by
+  handle; PC 3.4 inherits the Atari ST 1.2+ branch.
+- `G0497_auc_Graphic560_ActionExperienceGain[44]` — per-action XP grant.
+- **War Cry (action 8)** is the only action that grants XP in two
+  skills in v1.2+: primary 7 XP → `C07_SKILL_PARRY` (fighter sub-skill,
+  propagated to `C00_SKILL_FIGHTER`), plus a secondary 12 XP →
+  `C14_SKILL_INFLUENCE` via the fright path at `MENU.C:947–987`.
+
+**Fixture:** `src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c`
+- Local PC 3.4 copy of the G0496 / G0497 tables, plus
+  `dm1_v1_action_xp_route(actionIndex, out)` query helper.
+- Read-only data; no balance or difficulty interpretation.
+
+**Gate test:** `tests/test_dm1_v1_skill_levelup_formula_gate_pc34_compat.c`
+- Locks the deterministic War Cry fixture end-to-end.
+- Verifies 71 × 7 XP = 497 (still level 1) and 72 × 7 XP = 504
+  (level 2), with the F0304 sub→base propagation mirrored on FIGHTER.
+- Verifies the secondary 12 XP fright-path grant to INFLUENCE and
+  the F0303 sub/base average used for hidden-skill level.
