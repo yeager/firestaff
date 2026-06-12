@@ -541,6 +541,58 @@ def dry_run(plan: list[PlanStep],
             failures.append("auto capture backend: fallback backend metadata mismatch")
         if "auto-visible-after-peekaboo-blackout" not in fallback_meta.get("capture_source", ""):
             failures.append("auto capture backend: fallback provenance missing")
+        capture_root = tmp_root / "auto-rawshot-fallback-capture-root"
+        original_capture_raw_frame = globals()["_capture_raw_frame"]
+        original_capture_with_screencapture = globals()["_capture_with_screencapture"]
+        original_capture_with_dosbox_rawshot = globals()["_capture_with_dosbox_rawshot"]
+        try:
+            def fake_black_capture_raw_frame(raw: Path, backend: str) -> dict[str, str]:
+                if backend != "auto":
+                    raise AssertionError("rawshot fallback fixture expected auto backend")
+                black.save(raw)
+                return {
+                    "capture_backend": "peekaboo",
+                    "capture_source": "peekaboo:window:DOSBox Staging",
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }
+
+            def fake_black_screencapture(raw: Path) -> tuple[dict[str, str], bool]:
+                black.save(raw)
+                return {
+                    "capture_backend": "screencapture",
+                    "capture_source": "screencapture:dosbox-window",
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }, True
+
+            def fake_visible_rawshot(raw: Path) -> tuple[object, dict[str, str]]:
+                visible.save(raw)
+                return visible, {
+                    "capture_backend": "dosbox-rawshot",
+                    "capture_source": str(capture_root / "dosbox-capture" / "fixture.raw"),
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }
+
+            globals()["_capture_raw_frame"] = fake_black_capture_raw_frame
+            globals()["_capture_with_screencapture"] = fake_black_screencapture
+            globals()["_capture_with_dosbox_rawshot"] = fake_visible_rawshot
+            rawshot_fallback_img, rawshot_fallback_meta = _screenshot_frame(
+                capture_root,
+                "auto_backend_rawshot_fallback",
+                "auto",
+            )
+        finally:
+            globals()["_capture_raw_frame"] = original_capture_raw_frame
+            globals()["_capture_with_screencapture"] = original_capture_with_screencapture
+            globals()["_capture_with_dosbox_rawshot"] = original_capture_with_dosbox_rawshot
+        if _is_capture_blackout(rawshot_fallback_img):
+            failures.append("auto capture backend: did not fall back to visible DOSBox rawshot")
+        if rawshot_fallback_meta.get("capture_backend") != "dosbox-rawshot":
+            failures.append("auto capture backend: rawshot fallback metadata mismatch")
+        if "auto-visible-after-peekaboo-blackout" not in rawshot_fallback_meta.get("capture_source", ""):
+            failures.append("auto capture backend: rawshot fallback provenance missing")
         rawshot_root = tmp_root / "rawshot-capture-root"
         rawshot_capture_dir = rawshot_root / "dosbox-capture"
         rawshot_capture_dir.mkdir(parents=True)
@@ -912,6 +964,7 @@ def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
             else "peekaboo"
         )
         alternate_raw = raw.with_name(f"{raw.stem}.{alternate_backend}.png")
+        fallback_errors: list[str] = []
         try:
             alternate_meta, alternate_ok = (
                 _capture_with_screencapture(alternate_raw)
@@ -928,9 +981,27 @@ def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
                     )
                     return alternate_img, alternate_meta
         except Exception as exc:
+            fallback_errors.append(
+                f"auto-alternate-{alternate_backend}-failed:{type(exc).__name__}"
+            )
+        rawshot_raw = raw.with_name(f"{raw.stem}.dosbox-rawshot.png")
+        try:
+            rawshot_img, rawshot_meta = _capture_with_dosbox_rawshot(rawshot_raw)
+            rawshot_img = _normalize_loaded_capture_image(rawshot_img)
+            if not _is_capture_blackout(rawshot_img):
+                rawshot_meta["capture_source"] = (
+                    rawshot_meta.get("capture_source", "") +
+                    f":auto-visible-after-{meta.get('capture_backend', 'unknown')}-blackout"
+                )
+                return rawshot_img, rawshot_meta
+            fallback_errors.append("auto-dosbox-rawshot-blackout")
+        except Exception as exc:
+            fallback_errors.append(
+                f"auto-dosbox-rawshot-failed:{type(exc).__name__}"
+            )
+        if fallback_errors:
             meta["capture_source"] = (
-                meta.get("capture_source", "") +
-                f":auto-alternate-{alternate_backend}-failed:{type(exc).__name__}"
+                meta.get("capture_source", "") + ":" + ":".join(fallback_errors)
             )
     return img, meta
 
