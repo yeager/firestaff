@@ -2819,6 +2819,21 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat
     )
 
+    add_executable(test_csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat
+        tests/test_csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat.c
+        src/csb/csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat
+        COMMAND test_csb_v1_viewport_custom_backgrounds_d1lr_first_backdrop_pc34_compat
+    )
+
     add_executable(test_csb_v1_viewport_custom_backgrounds_mask_after_floor_ceiling_pc34_compat
         tests/test_csb_v1_viewport_custom_backgrounds_mask_after_floor_ceiling_pc34_compat.c
         src/csb/csb_v1_viewport_custom_backgrounds_mask_after_floor_ceiling_pc34_compat.c
@@ -6371,6 +6386,17 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_projectile_side_wall_impact_runtime_regression
         COMMAND test_dm1_v1_projectile_side_wall_impact_pc34_compat
+    )
+    add_executable(test_dm1_v1_ra_door_projectile_reject_pc34_compat
+        tests/test_dm1_v1_ra_door_projectile_reject_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_ra_door_projectile_reject_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_ra_door_projectile_reject_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_ra_door_projectile_reject_pc34_compat
+        COMMAND test_dm1_v1_ra_door_projectile_reject_pc34_compat
     )
     add_executable(test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat
         tests/test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat.c
