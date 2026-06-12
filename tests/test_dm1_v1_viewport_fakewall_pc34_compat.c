@@ -1,6 +1,7 @@
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -46,6 +47,27 @@ static void expect_contains(const char *id, const char *text,
     } else {
         printf("PASS %s contains \"%s\" (%s)\n", id, needle, anchor);
     }
+}
+
+static void setup_one_square_dungeon(struct DungeonDatState_Compat *dungeon,
+                                     struct DungeonMapDesc_Compat *map,
+                                     struct DungeonMapTiles_Compat *tiles,
+                                     unsigned char *square,
+                                     unsigned char squareByte)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(map, 0, sizeof(*map));
+    memset(tiles, 0, sizeof(*tiles));
+    *square = squareByte;
+    map->width = 1;
+    map->height = 1;
+    tiles->squareData = square;
+    tiles->squareCount = 1;
+    dungeon->header.mapCount = 1;
+    dungeon->maps = map;
+    dungeon->tiles = tiles;
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
 }
 
 static void test_fakewall_square_aspect_contract(void)
@@ -204,6 +226,48 @@ static void test_fakewall_floor_and_blit_contract(void)
                "DUNVIEW.C:7210-7214 F0108 is open floor route");
 }
 
+static void test_imaginary_fakewall_collision_viewport_split(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char square;
+    const unsigned char fakewall_real_closed =
+        square_of(DUNGEON_ELEMENT_FAKEWALL, 0);
+    const unsigned char fakewall_imaginary =
+        square_of(DUNGEON_ELEMENT_FAKEWALL, 0x01);
+    const unsigned char fakewall_open =
+        square_of(DUNGEON_ELEMENT_FAKEWALL, 0x04);
+
+    expect_int("split.real_closed.viewport_wall",
+               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_real_closed), 1,
+               "DUNGEON.C:2651-2661 !MASK0x0004_FAKEWALL_OPEN -> wall aspect");
+    setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_real_closed);
+    expect_int("split.real_closed.collision_blocks",
+               F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 0, 0), 0,
+               "CLIKMENU.C:280-281 !OPEN && !IMAGINARY blocks movement");
+
+    expect_int("split.imaginary.viewport_still_wall",
+               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_imaginary), 1,
+               "DUNGEON.C:2651-2661 ignores MASK0x0001_FAKEWALL_IMAGINARY");
+    expect_int("split.imaginary.viewport_not_open",
+               M11_DM1_ViewportSquareIsOpenPc34(fakewall_imaginary), 0,
+               "DUNGEON.C:2651-2661 imaginary-only fakewall remains wall aspect");
+    setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_imaginary);
+    expect_int("split.imaginary.collision_passes",
+               F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 0, 0), 1,
+               "CLIKMENU.C:280-281 MASK0x0001_FAKEWALL_IMAGINARY allows movement");
+
+    expect_int("split.open.viewport_corridor",
+               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_open),
+               DUNGEON_ELEMENT_CORRIDOR,
+               "DUNGEON.C:2662-2666 MASK0x0004_FAKEWALL_OPEN -> corridor aspect");
+    setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_open);
+    expect_int("split.open.collision_passes",
+               F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 0, 0), 1,
+               "CLIKMENU.C:280-281 MASK0x0004_FAKEWALL_OPEN allows movement");
+}
+
 static void test_source_evidence_mentions_required_anchors(void)
 {
     const char *e =
@@ -214,7 +278,8 @@ static void test_source_evidence_mentions_required_anchors(void)
         "DUNVIEW.C:3048-3059 F0100 uses C10 transparent blit; "
         "DUNVIEW.C:7180-7197 F0111 door route; "
         "DUNVIEW.C:7210-7224 F0108 then F0115 open-floor route; "
-        "DEFS.H:1034 MASK0x0004_FAKEWALL_OPEN; "
+        "DEFS.H:1034-1035 MASK0x0001_FAKEWALL_IMAGINARY / MASK0x0004_FAKEWALL_OPEN; "
+        "CLIKMENU.C:280-281 fakewall movement blocks only when !OPEN && !IMAGINARY; "
         "DEFS.H:1039-1044 door open/destroyed states; "
         "COMMAND.C:2154-2156 movement command delegates to F0366.";
 
@@ -234,8 +299,10 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "DUNVIEW.C:7180-7197");
     expect_contains("evidence.f0108_f0115", e, "F0108 then F0115",
                     "DUNVIEW.C:7210-7224");
-    expect_contains("evidence.defs_fakewall", e, "DEFS.H:1034",
+    expect_contains("evidence.defs_fakewall", e, "DEFS.H:1034-1035",
                     "DEFS.H fakewall bit");
+    expect_contains("evidence.clickmenu_fakewall", e, "CLIKMENU.C:280-281",
+                    "CLIKMENU.C fakewall passability");
     expect_contains("evidence.command", e, "COMMAND.C:2154-2156",
                     "COMMAND.C movement dispatch checked");
 }
@@ -244,6 +311,7 @@ int main(void)
 {
     test_fakewall_square_aspect_contract();
     test_fakewall_floor_and_blit_contract();
+    test_imaginary_fakewall_collision_viewport_split();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {
