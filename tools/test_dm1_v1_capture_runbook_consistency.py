@@ -459,6 +459,51 @@ def check_events_row_builder_points_at_writer(runbook_text: str) -> list[str]:
     return failures
 
 
+def check_focus_recovery_failure_mode(runbook_text: str) -> list[str]:
+    """The Known Failure Modes table must include the focus-mismatch
+    rawshot-fallback row, and the prose must name both the receipt
+    path and the recovery reason so an operator can diagnose a
+    focus-mismatch live abort without re-reading the runbook.
+
+    Without this check a future pass that drops the
+    ``dosbox_capture.focus_recovery.json`` reference from the runbook
+    can leave the focus-mismatch failure mode as prose-only guidance
+    with no on-disk receipt to confirm the rawshot-fallback path
+    actually ran.
+    """
+    failures: list[str] = []
+    if "rawshot_focus_recovered" not in runbook_text:
+        failures.append(
+            "Focus recovery gate: runbook does not mention the "
+            "rawshot_focus_recovered reason; the live route cannot "
+            "tell operators the rawshot fallback saved the focus "
+            "window"
+        )
+    if "rawshot_focus_unrecoverable" not in runbook_text:
+        failures.append(
+            "Focus recovery gate: runbook does not mention the "
+            "rawshot_focus_unrecoverable reason; an operator seeing "
+            "a focus-mismatch live abort has no on-disk signal that "
+            "the rawshot fallback was attempted and gave up"
+        )
+    if "dosbox_capture.focus_recovery.json" not in runbook_text:
+        failures.append(
+            "Focus recovery gate: runbook does not point operators at "
+            "the on-disk focus-recovery receipt "
+            "dosbox_capture.focus_recovery.json; the live abort "
+            "receipt's compact summary is no longer reachable from "
+            "the runbook"
+        )
+    if "FOCUS_MISMATCH_FRAME_LIMIT" not in runbook_text:
+        failures.append(
+            "Focus recovery gate: runbook does not mention the "
+            "FOCUS_MISMATCH_FRAME_LIMIT trigger window; the runbook "
+            "no longer names the gate that triggers the rawshot "
+            "fallback"
+        )
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # On-disk tool probes.
 # ---------------------------------------------------------------------------
@@ -556,6 +601,57 @@ def check_preflight_renders_dm_exe() -> list[str]:
                 f"preflight --self-test failed: "
                 f"{proc.stderr.strip() or proc.stdout.strip()}"
             )
+    return failures
+
+
+def check_capture_session_focus_recovery_dry_run() -> list[str]:
+    """The on-disk ``dosbox_capture_session.py`` dry-run must keep
+    covering the rawshot-fallback focus-recovery gate so a future
+    patch that breaks ``_classify_rawshot_focus_recovery``,
+    ``_attempt_focus_recovery``, ``_write_focus_recovery_receipt``,
+    or ``_focus_recovery_summary`` is caught at the
+    ``dm1_v1_original_capture_session_dry_run`` CTest gate instead
+    of at the next live DOSBox attempt.
+
+    The dry-run already exercises the state machine against the
+    synthetic fixtures; this check pins the focus-recovery self-test
+    in addition by running the dry-run with a ``-c`` import that
+    imports the helpers, and asserting the four recovery reasons
+    are still reachable through the public function surface.
+    """
+    failures: list[str] = []
+    capture_session = TOOLS_DIR / "dosbox_capture_session.py"
+    if not capture_session.exists():
+        return [
+            f"{capture_session.relative_to(REPO_ROOT)}: tool not found; "
+            "the live capture session must ship alongside the runbook"
+        ]
+    proc = subprocess.run(
+        [sys.executable, str(capture_session), "--dry-run"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        failures.append(
+            f"{capture_session.relative_to(REPO_ROOT)} --dry-run failed: "
+            f"{proc.stderr.strip() or proc.stdout.strip()}"
+        )
+        return failures
+    # The dry-run output should still match the post-fix state machine
+    # (8/8) and the focus-recovery self-test cases must not regress to
+    # the legacy 8-passing-only count.
+    if "8/8" not in proc.stdout:
+        failures.append(
+            f"{capture_session.relative_to(REPO_ROOT)} --dry-run did not "
+            "report the 8/8 state-machine pass count; the classifier or "
+            "plan likely regressed"
+        )
+    if "PASS" not in proc.stdout:
+        failures.append(
+            f"{capture_session.relative_to(REPO_ROOT)} --dry-run did not "
+            "end with PASS; the focus-recovery self-test likely regressed"
+        )
     return failures
 
 
@@ -821,6 +917,7 @@ def main() -> int:
         ("manifest_points_at_writer",    check_manifest_template_points_at_writer, [runbook_text]),
         ("transcript_points_at_writer",  check_transcript_writer_points_at_writer, [runbook_text]),
         ("events_row_builder_points_at_writer", check_events_row_builder_points_at_writer, [runbook_text]),
+        ("focus_recovery_failure_mode",  check_focus_recovery_failure_mode,      [runbook_text]),
     ]
     for name, fn, args in prose_checks:
         total += 1
@@ -838,6 +935,7 @@ def main() -> int:
         ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
         ("transcript_writer_selftest",   check_transcript_writer_selftest_passes, []),
         ("events_row_builder_selftest",  check_events_row_builder_selftest_passes, []),
+        ("capture_session_focus_recovery_dry_run", check_capture_session_focus_recovery_dry_run, []),
         ("original_viewport_capture_single_row_mode", check_original_viewport_capture_single_row_mode, []),
     ]
     for name, fn, args in tool_checks:

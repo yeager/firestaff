@@ -775,6 +775,7 @@ self-test.
 | `dungeon_gameplay` timeout | DOSBox entrance failed; enter not processed | Check that DOSBox has keyboard focus; add extra ENTER |
 | Black viewport region | DOSBox not focused or host capture API returned the wrong/blank window | First try `--capture-backend dosbox-rawshot` so DOSBox writes its own Ctrl+F5 capture into `dosbox-capture/`; otherwise add `osascript -e 'tell app "DOSBox Staging" to activate'` and retry `auto` |
 | Duplicate crop SHA256 | Game state identical — no input was processed | Verify key was sent (check `cliclick` output) |
+| Repeated non-DOSBox frontmost samples across `FOCUS_MISMATCH_FRAME_LIMIT` (4) | macOS window focus drifted off DOSBox; host peekaboo/screencapture backends now show the wrong window | The live route auto-attempts a rawshot-fallback recovery probe (DOSBox's own Ctrl+F5 capture, which is independent of macOS window focus) and writes `dosbox_capture.focus_recovery.json` with the `rawshot_focus_recovered` / `rawshot_focus_unrecoverable` reason.  If the recovery is `rawshot_focus_unrecoverable`, re-focus DOSBox Staging (`osascript -e 'tell app "DOSBox Staging" to activate'`) and retry `--capture-backend dosbox-rawshot` directly. |
 
 ---
 

@@ -10,13 +10,27 @@ scaffold that:
   transitions and asserting the classifier can pick up each one in
   order.  This is the regression guard for the pass94 failure mode
   where a working classifier would have caught the route bug at the
-  `unclassified` step instead of after a full session.
+  `unclassified` step instead of after a full session.  The dry-run
+  also exercises the focus-mismatch rawshot-fallback recovery gate
+  (see ``_classify_rawshot_focus_recovery`` / ``_attempt_focus_recovery``)
+  so a future patch that breaks the recovery classification or the
+  ``dosbox_capture.focus_recovery.json`` schema is caught at the
+  ``dm1_v1_original_capture_session_dry_run`` CTest gate instead of
+  at the next live DOSBox attempt.
 * Runs in `--plan` mode to dump the planned key sequence, expected
   state after each key, and timeout budget to stdout.  Useful for
   hand-running a session.
 * Runs in `--live` mode to drive a real DOSBox Staging session.
   This is a thin wrapper over the documented behaviour and inherits
-  the same `cliclick`-based key dispatch from the runbook.
+  the same `cliclick`-based key dispatch from the runbook.  When the
+  focus-mismatch window fills, the live route triggers a
+  ``dosbox-rawshot`` recovery probe (DOSBox's own Ctrl+F5 capture,
+  which is independent of macOS window focus) and writes
+  ``dosbox_capture.focus_recovery.json`` so a future operator can see
+  whether the rawshot path saved the focus window or gave up.  The
+  live abort receipt (``dosbox_capture.live_abort.json``) also
+  carries a compact ``focus_recovery`` summary so the focus-recovery
+  outcome is visible from the existing abort-receipt flow.
 
 The script intentionally does not depend on `cliclick` being installed
 for the `--dry-run` and `--plan` modes.  The capture pipeline only
@@ -124,7 +138,13 @@ BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
+LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.focus_recovery.v1"
 FOCUS_MISMATCH_FRAME_LIMIT = 4
+RAWSHOT_FOCUS_RECOVERY_REASONS = (
+    "rawshot_focus_recovered",
+    "rawshot_focus_unrecoverable",
+    "no_focus_recovery_needed",
+)
 DOSBOX_INTERNAL_CAPTURE_GLOBS = ("*.png", "*.bmp", "*.raw")
 DosboxCaptureSignature = tuple[int, int]
 
@@ -369,6 +389,235 @@ def dry_run(plan: list[PlanStep],
     if _should_abort_for_focus_mismatch(
             focused_samples, FOCUS_MISMATCH_FRAME_LIMIT):
         failures.append("focus guard: aborted after DOSBox focus recovered")
+    no_mismatch_window = [
+        FrameQuality(
+            label=f"focus_ok_{i:04d}",
+            state="unknown",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.5,
+            rightcol_nonblack=0.5,
+            champion_nonblack=0.5,
+            blackout=False,
+            capture_backend="fixture",
+            capture_source="fixture:screen",
+            host_active_app="DOSBox Staging",
+            dosbox_window_bounds="1,2,1024,768",
+        )
+        for i in range(FOCUS_MISMATCH_FRAME_LIMIT)
+    ]
+    if _classify_rawshot_focus_recovery(
+            no_mismatch_window,
+            rawshot_meta={"capture_backend": "dosbox-rawshot"},
+            rawshot_visible=True,
+    ) != "no_focus_recovery_needed":
+        failures.append(
+            "focus recovery classifier: did not return no_focus_recovery_needed "
+            "for a clean DOSBox-frontmost window"
+        )
+    if _classify_rawshot_focus_recovery(
+            focus_mismatches,
+            rawshot_meta=None,
+            rawshot_visible=False,
+    ) != "rawshot_focus_unrecoverable":
+        failures.append(
+            "focus recovery classifier: did not return rawshot_focus_unrecoverable "
+            "for a focus-mismatched window with no rawshot attempt"
+        )
+    if _classify_rawshot_focus_recovery(
+            focus_mismatches,
+            rawshot_meta={"capture_backend": "dosbox-rawshot"},
+            rawshot_visible=False,
+    ) != "rawshot_focus_unrecoverable":
+        failures.append(
+            "focus recovery classifier: did not return rawshot_focus_unrecoverable "
+            "for a focus-mismatched window whose rawshot was blackout"
+        )
+    if _classify_rawshot_focus_recovery(
+            focus_mismatches,
+            rawshot_meta={"capture_backend": "peekaboo"},
+            rawshot_visible=True,
+    ) != "rawshot_focus_unrecoverable":
+        failures.append(
+            "focus recovery classifier: did not return rawshot_focus_unrecoverable "
+            "when the rawshot_meta backend is not dosbox-rawshot"
+        )
+    if _classify_rawshot_focus_recovery(
+            focus_mismatches,
+            rawshot_meta={"capture_backend": "dosbox-rawshot"},
+            rawshot_visible=True,
+    ) != "rawshot_focus_recovered":
+        failures.append(
+            "focus recovery classifier: did not return rawshot_focus_recovered "
+            "for a focus-mismatched window whose rawshot decoded as visible"
+        )
+    if "rawshot_focus_recovered" not in RAWSHOT_FOCUS_RECOVERY_REASONS:
+        failures.append(
+            "focus recovery reasons: rawshot_focus_recovered missing from "
+            "RAWSHOT_FOCUS_RECOVERY_REASONS"
+        )
+    with tempfile.TemporaryDirectory(prefix="dm1-focus-recovery-") as focus_tmp:
+        focus_root = Path(focus_tmp) / "capture-root"
+        try:
+            from PIL import Image, ImageDraw
+            visible = Image.new("RGB", (320, 200), (0, 0, 0))
+            draw = ImageDraw.Draw(visible)
+            draw.rectangle((0, 33, 223, 168), fill=(96, 80, 48))
+
+            def _visible_rawshot_probe(raw: Path):
+                visible.save(raw)
+                return visible, {
+                    "capture_backend": "dosbox-rawshot",
+                    "capture_source": str(focus_root / "dosbox-capture" / "fixture.raw"),
+                    "capture_source_sha256": "deadbeef" * 8,
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }
+
+            def _identity_normalize(img):
+                return img
+
+            reason, quality, meta = _attempt_focus_recovery(
+                focus_root, focus_mismatches,
+                probe_factory=_visible_rawshot_probe,
+                normalize_factory=_identity_normalize,
+            )
+            if reason != "rawshot_focus_recovered":
+                failures.append(
+                    "focus recovery attempt: did not return rawshot_focus_recovered "
+                    f"for a visible rawshot probe (got {reason!r})"
+                )
+            if meta is None or meta.get("capture_backend") != "dosbox-rawshot":
+                failures.append("focus recovery attempt: did not propagate rawshot_meta")
+            if quality is None or quality.blackout:
+                failures.append("focus recovery attempt: did not produce a non-blackout quality")
+            receipt_path = _write_focus_recovery_receipt(
+                focus_root, reason, focus_mismatches, quality, meta,
+            )
+            try:
+                receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            except Exception as exc:
+                failures.append(f"focus recovery receipt: could not parse JSON: {exc}")
+            else:
+                if receipt.get("schema") != LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA:
+                    failures.append("focus recovery receipt: schema mismatch")
+                if receipt.get("reason") != "rawshot_focus_recovered":
+                    failures.append("focus recovery receipt: reason mismatch")
+                if not receipt.get("rawshot_attempted"):
+                    failures.append("focus recovery receipt: rawshot_attempted flag missing")
+                if not receipt.get("rawshot_visible"):
+                    failures.append("focus recovery receipt: rawshot_visible flag missing")
+                if receipt.get("trigger_quality") is None:
+                    failures.append("focus recovery receipt: trigger_quality missing")
+                if receipt.get("focus_mismatch_frame_limit") != FOCUS_MISMATCH_FRAME_LIMIT:
+                    failures.append("focus recovery receipt: focus_mismatch_frame_limit mismatch")
+
+            black = Image.new("RGB", (320, 200), (0, 0, 0))
+
+            def _blackout_rawshot_probe(raw: Path):
+                black.save(raw)
+                return black, {
+                    "capture_backend": "dosbox-rawshot",
+                    "capture_source": str(focus_root / "dosbox-capture" / "black.raw"),
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }
+
+            reason, quality, meta = _attempt_focus_recovery(
+                focus_root, focus_mismatches,
+                probe_factory=_blackout_rawshot_probe,
+                normalize_factory=_identity_normalize,
+            )
+            if reason != "rawshot_focus_unrecoverable":
+                failures.append(
+                    "focus recovery attempt: did not return rawshot_focus_unrecoverable "
+                    f"for a blackout rawshot probe (got {reason!r})"
+                )
+            if meta is None or meta.get("capture_backend") != "dosbox-rawshot":
+                failures.append("focus recovery attempt (blackout): did not propagate rawshot_meta")
+            if quality is None or not quality.blackout:
+                failures.append("focus recovery attempt (blackout): did not detect blackout")
+
+            def _raise_rawshot_probe(raw: Path):
+                raise RuntimeError("simulated Ctrl+F5 failure")
+
+            reason, quality, meta = _attempt_focus_recovery(
+                focus_root, focus_mismatches,
+                probe_factory=_raise_rawshot_probe,
+                normalize_factory=_identity_normalize,
+            )
+            if reason != "rawshot_focus_unrecoverable":
+                failures.append(
+                    "focus recovery attempt: did not return rawshot_focus_unrecoverable "
+                    f"when the rawshot probe raised (got {reason!r})"
+                )
+            if meta is None or "capture_error" not in meta:
+                failures.append(
+                    "focus recovery attempt (raised): did not capture the probe error in meta"
+                )
+
+            reason, quality, meta = _attempt_focus_recovery(
+                focus_root, no_mismatch_window,
+                probe_factory=_visible_rawshot_probe,
+                normalize_factory=_identity_normalize,
+            )
+            if reason != "no_focus_recovery_needed":
+                failures.append(
+                    "focus recovery attempt: did not return no_focus_recovery_needed "
+                    f"for a clean DOSBox-frontmost window (got {reason!r})"
+                )
+
+        except Exception as exc:
+            failures.append(f"focus recovery self-test: unexpected exception: {exc}")
+
+    with tempfile.TemporaryDirectory(prefix="dm1-focus-recovery-abort-") as abort_tmp:
+        abort_root = Path(abort_tmp) / "capture-root"
+        try:
+            summary = _focus_recovery_summary(abort_root)
+            if summary is not None:
+                failures.append("focus recovery summary: returned non-None for a missing receipt")
+            from PIL import Image, ImageDraw
+            visible = Image.new("RGB", (320, 200), (0, 0, 0))
+            draw = ImageDraw.Draw(visible)
+            draw.rectangle((0, 33, 223, 168), fill=(96, 80, 48))
+            (abort_root / "state-samples").mkdir(parents=True, exist_ok=True)
+            visible.save(str(abort_root / "state-samples" / "placeholder.png"))
+            visible_quality = FrameQuality(
+                label="placeholder",
+                state="unknown",
+                width=320,
+                height=200,
+                full_nonblack=0.5,
+                viewport_nonblack=0.5,
+                rightcol_nonblack=0.5,
+                champion_nonblack=0.5,
+                blackout=False,
+                capture_backend="dosbox-rawshot",
+                capture_source="fixture:rawshot",
+                host_active_app="DOSBox Staging",
+            )
+            _write_focus_recovery_receipt(
+                abort_root, "rawshot_focus_recovered", focus_mismatches,
+                visible_quality, {"capture_backend": "dosbox-rawshot"},
+            )
+            summary = _focus_recovery_summary(abort_root)
+            if summary is None:
+                failures.append("focus recovery summary: returned None for a present receipt")
+            elif summary.get("reason") != "rawshot_focus_recovered":
+                failures.append("focus recovery summary: reason mismatch")
+            elif not summary.get("rawshot_visible"):
+                failures.append("focus recovery summary: rawshot_visible flag missing")
+            step = PlanStep("entrance_menu", "entrance_menu", keys=["Return"], timeout_s=30.0)
+            abort_path = _write_live_abort_receipt(
+                abort_root, step, "capture_focus_mismatch", "capture_focus_mismatch",
+            )
+            abort_receipt = json.loads(abort_path.read_text(encoding="utf-8"))
+            fr = abort_receipt.get("focus_recovery")
+            if not isinstance(fr, dict) or fr.get("reason") != "rawshot_focus_recovered":
+                failures.append("live abort receipt: focus_recovery summary not propagated")
+        except Exception as exc:
+            failures.append(f"focus recovery abort-receipt self-test: unexpected exception: {exc}")
     with tempfile.TemporaryDirectory(prefix="dm1-live-runtime-") as tmp:
         tmp_root = Path(tmp)
         good = tmp_root / "DungeonMasterPC34"
@@ -1201,6 +1450,133 @@ def _should_abort_for_focus_mismatch(
     return all(_is_focus_mismatch(item) for item in window)
 
 
+def _has_focus_mismatch_window(
+        recent: list[FrameQuality],
+        focus_frame_limit: int) -> bool:
+    """Return True if a non-DOSBox frontmost app appears anywhere in the window.
+
+    A single focus mismatch is the trigger to attempt a rawshot-fallback
+    recovery, even when the focus-frame window is not yet full enough to
+    abort.  This lets the live route ask DOSBox to write its own Ctrl+F5
+    capture *before* the focus-mismatch window has filled, so a transient
+    Terminal/Editor frontmost sample does not cost the session a full
+    focus-recovery + rawshot cycle.
+    """
+    if focus_frame_limit <= 0 or not recent:
+        return False
+    window = recent[-focus_frame_limit:]
+    return any(_is_focus_mismatch(item) for item in window)
+
+
+def _classify_rawshot_focus_recovery(
+        recent: list[FrameQuality],
+        rawshot_meta: dict[str, str] | None,
+        rawshot_visible: bool) -> str:
+    """Decide whether a focus mismatch is recoverable via the rawshot path.
+
+    The live route runs on macOS where the host peekaboo / screencapture
+    backends can return a non-DOSBox window when the user clicks out of
+    DOSBox.  The dosbox-rawshot backend triggers DOSBox's own Ctrl+F5
+    capture so it is independent of macOS window focus, but it still has
+    to (a) successfully trigger, and (b) decode into a non-black
+    frame.  This helper turns the recent focus window, the rawshot
+    capture metadata, and the rawshot-frame blackout flag into one of:
+
+    * ``rawshot_focus_recovered`` - the focus window had at least one
+      non-DOSBox frontmost sample AND the rawshot backend produced a
+      non-black frame.  The live route can keep going.
+    * ``rawshot_focus_unrecoverable`` - the focus window had at least
+      one non-DOSBox frontmost sample AND the rawshot backend either
+      did not run (no ``rawshot_meta``) or produced a black frame
+      (``rawshot_visible`` is False).  The live route must abort with
+      this reason.
+    * ``no_focus_recovery_needed`` - the focus window had no non-DOSBox
+      frontmost sample.  The live route has no focus issue to recover
+      from, and the rawshot path is informational only.
+
+    A future live attempt that silently keeps a focus-mismatched
+    window alive (i.e. never escalates to dosbox-rawshot) is caught
+    by the ``rawshot_focus_unrecoverable`` branch, which is the new
+    rawshot-fallback gate for the focus-mismatch failure mode the
+    runbook §"Known Failure Modes" already names.
+    """
+    if not _has_focus_mismatch_window(recent, FOCUS_MISMATCH_FRAME_LIMIT):
+        return "no_focus_recovery_needed"
+    if rawshot_meta is None:
+        return "rawshot_focus_unrecoverable"
+    if not rawshot_visible:
+        return "rawshot_focus_unrecoverable"
+    if rawshot_meta.get("capture_backend") != "dosbox-rawshot":
+        return "rawshot_focus_unrecoverable"
+    return "rawshot_focus_recovered"
+
+
+def _attempt_focus_recovery(
+        capture_root: Path,
+        recent: list[FrameQuality],
+        probe_factory: Optional[Callable[[Path], tuple[object, dict[str, str]]]] = None,
+        normalize_factory: Optional[Callable[[object], object]] = None) -> tuple[str, FrameQuality | None, dict[str, str] | None]:
+    """Run the rawshot-fallback recovery probe and classify the result.
+
+    ``probe_factory`` triggers DOSBox's own Ctrl+F5 capture and decodes
+    the latest ``dosbox-capture/`` artifact into a normalized image +
+    metadata tuple.  ``normalize_factory`` is the same image
+    normalization the live route uses (crop-to-4x3 + resize-to-320x200).
+    Tests can pass fakes for both; the default call sites fall through
+    to ``_capture_with_dosbox_rawshot`` and
+    ``_normalize_loaded_capture_image``.
+
+    The return tuple is ``(reason, rawshot_quality, rawshot_meta)``:
+    ``reason`` is one of ``RAWSHOT_FOCUS_RECOVERY_REASONS``;
+    ``rawshot_quality`` is the ``FrameQuality`` for the decoded
+    rawshot, or ``None`` when the rawshot did not produce an image;
+    ``rawshot_meta`` is the capture metadata the rawshot returned, or
+    ``None`` when the rawshot was never attempted.  Callers can use the
+    ``rawshot_meta`` and ``rawshot_quality`` to enrich the abort
+    receipt when the recovery is unrecoverable.
+    """
+    capture_root.mkdir(parents=True, exist_ok=True)
+    if probe_factory is None:
+        probe_factory = _capture_with_dosbox_rawshot
+    if normalize_factory is None:
+        normalize_factory = _normalize_loaded_capture_image
+    rawshot_meta: dict[str, str] | None = None
+    rawshot_quality: FrameQuality | None = None
+    try:
+        probe_dir = capture_root / "state-samples"
+        probe_dir.mkdir(parents=True, exist_ok=True)
+        probe_target = probe_dir / "focus_recovery_rawshot_probe.png"
+        img, meta = probe_factory(probe_target)
+    except Exception as exc:  # pragma: no cover - host-only failure
+        meta = {
+            "capture_backend": "dosbox-rawshot",
+            "capture_source": "",
+            "capture_error": f"{type(exc).__name__}: {exc}",
+            "host_active_app": _frontmost_process_name(),
+            "dosbox_window_bounds": _bounds_text(_dosbox_window_bounds()),
+        }
+        rawshot_meta = meta
+    else:
+        rawshot_meta = dict(meta) if isinstance(meta, dict) else None
+        try:
+            normalized = normalize_factory(img)
+            rawshot_quality = _frame_quality(
+                normalized,
+                "focus_recovery_rawshot_probe",
+                "capture_focus_recovery",
+                meta,
+            )
+        except Exception:  # pragma: no cover - normalize-only failure
+            rawshot_quality = None
+    rawshot_visible = bool(rawshot_quality is not None and not rawshot_quality.blackout)
+    reason = _classify_rawshot_focus_recovery(
+        recent,
+        rawshot_meta,
+        rawshot_visible,
+    )
+    return reason, rawshot_quality, rawshot_meta
+
+
 def _press_key(key: str) -> None:
     time.sleep(0.25)
     mapped = KEY_MAP.get(key)
@@ -1316,13 +1692,46 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
             return False, "capture_blackout"
         if _should_abort_for_focus_mismatch(
                 recent_quality, FOCUS_MISMATCH_FRAME_LIMIT):
+            recovery_reason, recovery_quality, recovery_meta = _attempt_focus_recovery(
+                capture_root, recent_quality,
+            )
             print(
-                "FAIL capture focus: repeated host samples show a non-DOSBox "
-                f"frontmost app while waiting for target={target}; see "
-                f"{capture_root / 'state-samples' / 'quality.jsonl'}",
+                f"rawshot focus recovery probe: reason={recovery_reason} "
+                f"visible={recovery_quality is not None and not recovery_quality.blackout} "
+                f"backend={recovery_meta.get('capture_backend') if recovery_meta else 'n/a'}",
                 file=sys.stderr,
             )
-            return False, "capture_focus_mismatch"
+            if recovery_reason == "rawshot_focus_recovered":
+                # Drop the focus-mismatch window so the live route can
+                # keep advancing instead of immediately re-aborting on
+                # the same samples.  The recovery_meta/recovery_quality
+                # are written to the focus-recovery receipt below so a
+                # future operator can see what saved the session.
+                _write_focus_recovery_receipt(
+                    capture_root,
+                    reason=recovery_reason,
+                    recent=recent_quality,
+                    rawshot_quality=recovery_quality,
+                    rawshot_meta=recovery_meta,
+                )
+                recent_quality = []
+            else:
+                print(
+                    "FAIL capture focus: repeated host samples show a "
+                    "non-DOSBox frontmost app while waiting for "
+                    f"target={target}; rawshot recovery reason="
+                    f"{recovery_reason}; see "
+                    f"{capture_root / 'state-samples' / 'quality.jsonl'}",
+                    file=sys.stderr,
+                )
+                _write_focus_recovery_receipt(
+                    capture_root,
+                    reason=recovery_reason,
+                    recent=recent_quality,
+                    rawshot_quality=recovery_quality,
+                    rawshot_meta=recovery_meta,
+                )
+                return False, "capture_focus_mismatch"
         if state == target:
             stable += 1
             if stable >= stable_frames:
@@ -1430,6 +1839,76 @@ def _write_live_input_receipt(
     return out
 
 
+def _last_focus_mismatch_in_window(
+        recent: list[FrameQuality],
+        focus_frame_limit: int) -> FrameQuality | None:
+    """Return the most recent focus-mismatched quality in the window.
+
+    Used by ``_write_focus_recovery_receipt`` so the receipt points at
+    the exact sample that triggered the rawshot-fallback probe (rather
+    than a synthetic stand-in).  Returns ``None`` when the window has
+    no focus-mismatched sample.
+    """
+    if focus_frame_limit <= 0 or not recent:
+        return None
+    window = recent[-focus_frame_limit:]
+    for item in reversed(window):
+        if _is_focus_mismatch(item):
+            return item
+    return None
+
+
+def _write_focus_recovery_receipt(
+        capture_root: Path,
+        reason: str,
+        recent: list[FrameQuality],
+        rawshot_quality: FrameQuality | None,
+        rawshot_meta: dict[str, str] | None) -> Path:
+    """Write the focus-recovery decision receipt.
+
+    The live abort receipt captures the *first* failing step.  This
+    receipt captures the rawshot-fallback decision that the focus
+    window triggered, so a future operator can answer two questions
+    without re-reading the log:
+
+    * did the rawshot probe actually run? (the
+      ``rawshot_meta`` ``capture_backend`` / ``capture_source`` /
+      ``capture_source_sha256`` fields, plus the
+      ``rawshot_attempted`` boolean);
+    * did the rawshot decode into a usable frame?
+      (the ``rawshot_quality`` ``full_nonblack`` / ``viewport_nonblack``
+      / ``blackout`` fields, plus the ``rawshot_visible`` boolean).
+
+    The schema is versioned (``LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA``)
+    so a future patch that changes the field set can be detected by
+    a regression test that asserts the schema id rather than re-reading
+    the JSON shape.
+    """
+    capture_root.mkdir(parents=True, exist_ok=True)
+    if reason not in RAWSHOT_FOCUS_RECOVERY_REASONS:
+        raise ValueError(
+            f"unsupported focus recovery reason: {reason!r}; "
+            f"expected one of {RAWSHOT_FOCUS_RECOVERY_REASONS!r}"
+        )
+    trigger = _last_focus_mismatch_in_window(recent, FOCUS_MISMATCH_FRAME_LIMIT)
+    receipt = {
+        "schema": LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA,
+        "reason": reason,
+        "focus_mismatch_frame_limit": FOCUS_MISMATCH_FRAME_LIMIT,
+        "focus_window_size": min(len(recent), FOCUS_MISMATCH_FRAME_LIMIT),
+        "trigger_quality": asdict(trigger) if trigger is not None else None,
+        "rawshot_attempted": rawshot_meta is not None,
+        "rawshot_visible": bool(
+            rawshot_quality is not None and not rawshot_quality.blackout),
+        "rawshot_quality": asdict(rawshot_quality) if rawshot_quality is not None else None,
+        "rawshot_meta": dict(rawshot_meta) if rawshot_meta is not None else None,
+    }
+    out = capture_root / "dosbox_capture.focus_recovery.json"
+    out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+                   encoding="utf-8")
+    return out
+
+
 def _last_quality_from_log(capture_root: Path) -> FrameQuality | None:
     log_path = capture_root / "state-samples" / "quality.jsonl"
     try:
@@ -1462,6 +1941,34 @@ def _last_quality_from_log(capture_root: Path) -> FrameQuality | None:
         return None
 
 
+def _focus_recovery_summary(capture_root: Path) -> dict[str, object] | None:
+    """Read the focus-recovery receipt and return a compact summary.
+
+    Used by ``_write_live_abort_receipt`` so an operator looking at
+    only the live abort receipt can still see whether the rawshot
+    fallback saved the focus window (``rawshot_focus_recovered``) or
+    gave up (``rawshot_focus_unrecoverable``).  Returns ``None`` when
+    the focus-recovery receipt is absent, which is the steady-state
+    case (no focus issue ever triggered the rawshot probe).
+    """
+    path = capture_root / "dosbox_capture.focus_recovery.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("schema") != LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA:
+        return None
+    return {
+        "path": str(path),
+        "reason": data.get("reason"),
+        "rawshot_attempted": bool(data.get("rawshot_attempted")),
+        "rawshot_visible": bool(data.get("rawshot_visible")),
+        "focus_window_size": data.get("focus_window_size"),
+    }
+
+
 def _write_live_abort_receipt(
         capture_root: Path,
         step: PlanStep,
@@ -1474,11 +1981,19 @@ def _write_live_abort_receipt(
     receipt records the first failing state-machine step, including the
     same frame-quality metrics printed to stderr, so a black-host-frame
     failure can be compared across attempts without re-reading logs.
+
+    When the focus-recovery path produced a focus-recovery receipt
+    (``dosbox_capture.focus_recovery.json``), the abort receipt also
+    carries a compact ``focus_recovery`` summary so an operator can
+    see at a glance whether the rawshot fallback saved the focus
+    window or gave up.  The full receipt is at the path listed in
+    ``focus_recovery.path``.
     """
     capture_root.mkdir(parents=True, exist_ok=True)
     if quality is None:
         quality = _last_quality_from_log(capture_root)
     key_dispatch = _last_key_dispatch_from_log(capture_root)
+    focus_summary = _focus_recovery_summary(capture_root)
     receipt = {
         "schema": LIVE_ABORT_RECEIPT_SCHEMA,
         "step": step.name,
@@ -1492,6 +2007,7 @@ def _write_live_abort_receipt(
         "state_samples_dir": str(capture_root / "state-samples"),
         "quality_log": str(capture_root / "state-samples" / "quality.jsonl"),
         "key_dispatch_log": str(_key_dispatch_log_path(capture_root)),
+        "focus_recovery": focus_summary,
         "last_key_dispatch": asdict(key_dispatch) if key_dispatch is not None else None,
         "last_frame_quality": asdict(quality) if quality is not None else None,
     }
