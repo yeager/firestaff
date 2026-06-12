@@ -46,6 +46,22 @@ static int read_i32_le(const unsigned char* p) {
     return (int)u;
 }
 
+static int group_get_packed_creature_value(int packed, int creatureIndex) {
+    return (packed >> (creatureIndex << 1)) & 0x03;
+}
+
+static int group_set_packed_creature_value(
+    int packed,
+    int creatureIndex,
+    int creatureValue)
+{
+    int shift = creatureIndex << 1;
+    int mask = 0x03 << shift;
+    packed &= ~mask;
+    packed |= (creatureValue & 0x03) << shift;
+    return packed;
+}
+
 /* ==========================================================
  *  Static lookup tables (mirrors of Fontanel CHAMPION.C globals).
  * ========================================================== */
@@ -587,14 +603,25 @@ int F0738_COMBAT_ApplyDamageToGroup_Compat(
         if (group->count == 0) {
             *outOutcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
         } else {
+            int i;
+            int cells = group->cells;
+            /* ReDMCSB: GROUP.C F0190 lines 892-905 compacts Health and
+             * group cells after a killed member of a multi-creature group,
+             * then masks cells with 0x003F and decrements Count. Direction
+             * compaction lives in ACTIVE_GROUP and is not represented by
+             * DungeonGroup_Compat's single base direction field. */
+            for (i = creatureIndex; i < (int)group->count; i++) {
+                int nextIndex = i + 1;
+                group->health[i] = group->health[nextIndex];
+                cells = group_set_packed_creature_value(
+                    cells,
+                    i,
+                    group_get_packed_creature_value(cells, nextIndex));
+            }
+            group->cells = (unsigned char)(cells & 0x3F);
             group->count = (unsigned char)((int)group->count - 1);
             *outOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
         }
-        /* NEEDS DISASSEMBLY REVIEW: cell / direction packing reshuffle on
-         * kill — deferred to phase 14 (tangled with ACTIVE_GROUP state,
-         * not yet modelled). v1 leaves group->cells and group->direction
-         * untouched; the visual consequence is acceptable since we are
-         * not rendering. HP math matches Fontanel. */
     }
     return 1;
 }
