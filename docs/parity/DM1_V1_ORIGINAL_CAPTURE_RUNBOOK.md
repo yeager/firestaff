@@ -711,6 +711,10 @@ The row builder refuses to emit a row when:
   * the recorded 224x136 crop is missing or its
     on-disk SHA256 does not match the recorded
     ``crop_sha256``;
+  * the raw capture header is not 320x200 or the crop
+    header is not 224x136 (this catches a stale
+    full-frame file passed as the viewport crop before
+    a plausible transcript row can be emitted);
   * the preflight receipt's pin checks are not all PASS
     (the upstream contract is violated);
   * the route is multi-command but the recorded
