@@ -40,6 +40,8 @@ static void test_accessors_and_contract_markers(void)
 
     expect_int("count", (int)dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_count_pc34(),
                2, "ReDMCSB DUNVIEW.C:8005/8115 D0L/D0R near side thing routes");
+    expect_int("spec_count", (int)dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_count_pc34(),
+               2, "ReDMCSB DUNVIEW.C:8005/8115 D0L/D0R near side thing routes");
     expect_int("d0l2.present", d0l2 != NULL, 1,
                "ReDMCSB DUNVIEW.C:7960-8062 F0125_DUNGEONVIEW_DrawSquareD0L");
     expect_int("d0r2.present", d0r2 != NULL, 1,
@@ -50,11 +52,29 @@ static void test_accessors_and_contract_markers(void)
     expect_int("at0.d0l2",
                dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_at_pc34(0) == d0l2,
                1, "ReDMCSB DUNVIEW.C:8005 left fixture first");
+    expect_int("spec_at0.d0l2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_at_pc34(0) == d0l2,
+               1, "ReDMCSB DUNVIEW.C:8005 left fixture first");
     expect_int("at1.d0r2",
                dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_at_pc34(1) == d0r2,
                1, "ReDMCSB DUNVIEW.C:8115 right fixture second");
+    expect_int("spec_at1.d0r2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_at_pc34(1) == d0r2,
+               1, "ReDMCSB DUNVIEW.C:8115 right fixture second");
     expect_int("past.end.null",
                dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_at_pc34(2) == NULL,
+               1, "contract-only accessor bounds");
+    expect_int("spec_past.end.null",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_at_pc34(2) == NULL,
+               1, "contract-only accessor bounds");
+    expect_int("spec_for_side.d0l2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_for_side_pc34(1) == d0l2,
+               1, "ReDMCSB DEFS.H:2597 M610_VIEW_SQUARE_D0L");
+    expect_int("spec_for_side.d0r2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_for_side_pc34(2) == d0r2,
+               1, "ReDMCSB DEFS.H:2598 M611_VIEW_SQUARE_D0R");
+    expect_int("spec_for_side.unknown.null",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_for_side_pc34(0) == NULL,
                1, "contract-only accessor bounds");
     expect_int("d0l2.contract_only", d0l2 ? d0l2->source_locked_contract_only : 0,
                1, "ReDMCSB DUNVIEW.C:4547 F0115 contract-only marker");
@@ -68,6 +88,38 @@ static void test_accessors_and_contract_markers(void)
                1, "contract-only synthetic fixture");
     expect_int("d0r2.no_game_data", d0r2 ? d0r2->no_game_data_load : 0,
                1, "contract-only synthetic fixture");
+}
+
+static void test_cell_order_decode_and_pass703_shape(void)
+{
+    expect_int("decode.d0l2.backright",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0002u, 0),
+               1, "ReDMCSB DUNVIEW.C:4547-4581; DEFS.H:2660");
+    expect_int("decode.d0r2.backleft",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0001u, 0),
+               0, "ReDMCSB DUNVIEW.C:4547-4581; DEFS.H:2659");
+    expect_int("decode.zero.terminator",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0002u, 1),
+               -1, "ReDMCSB DUNVIEW.C:4561-4564 zero terminates cells");
+    expect_int("decode.door.pass.marker8",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0018u, 0),
+               -1, "ReDMCSB DUNVIEW.C:4563 door-pass marker");
+    expect_int("decode.door.pass.marker9",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0039u, 0),
+               -1, "ReDMCSB DUNVIEW.C:4563 door-pass marker");
+    expect_int("decode.bad.ordinal.high",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0001u, 4),
+               -1, "decode guard");
+    expect_int("decode.bad.ordinal.negative",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_decode_cell_order_pc34(
+                   0x0001u, -1),
+               -1, "decode guard");
 }
 
 static void test_route_metadata(void)
@@ -89,6 +141,18 @@ static void test_route_metadata(void)
                "ReDMCSB DUNVIEW.C:8005 one F0115 call");
     expect_int("d0r2.f0115_call_count", d0r2 ? d0r2->f0115_call_count : -1, 1,
                "ReDMCSB DUNVIEW.C:8115 one F0115 call");
+    expect_int("d0l2.f0108_stage_before_f0115",
+               d0l2 ? d0l2->f0108_floor_stage_before_f0115 : 0, 1,
+               "ReDMCSB DUNVIEW.C:3940-4008 C10 floor stage before F0115 composition");
+    expect_int("d0r2.f0108_stage_before_f0115",
+               d0r2 ? d0r2->f0108_floor_stage_before_f0115 : 0, 1,
+               "ReDMCSB DUNVIEW.C:3940-4008 C10 floor stage before F0115 composition");
+    expect_int("d0l2.f0108_direct_call_count",
+               d0l2 ? d0l2->f0108_direct_call_count : -1, 0,
+               "ReDMCSB DUNVIEW.C:7977-8005 D0L has no direct F0108");
+    expect_int("d0r2.f0108_direct_call_count",
+               d0r2 ? d0r2->f0108_direct_call_count : -1, 0,
+               "ReDMCSB DUNVIEW.C:8081-8115 D0R has no direct F0108");
     expect_int("d0l2.no_f0107", d0l2 ? d0l2->no_f0107_contract : 0, 1,
                "ReDMCSB DUNVIEW.C:8007-8038 wall branch returns separately");
     expect_int("d0r2.no_f0107", d0r2 ? d0r2->no_f0107_contract : 0, 1,
@@ -101,6 +165,10 @@ static void test_route_metadata(void)
                "ReDMCSB DUNVIEW.C:8003 before 8005");
     expect_int("d0r2.f0112_before", d0r2 ? d0r2->f0112_before_f0115 : 0, 1,
                "ReDMCSB DUNVIEW.C:8113 before 8115");
+    expect_int("d0l2.f0172_source", d0l2 ? d0l2->f0172_square_aspect_source : 0,
+               1, "ReDMCSB DUNGEON.C:2466-2523 F0172");
+    expect_int("d0r2.f0172_source", d0r2 ? d0r2->f0172_square_aspect_source : 0,
+               1, "ReDMCSB DUNGEON.C:2466-2523 F0172");
 }
 
 static void test_view_square_lane_order_metadata(void)
@@ -225,6 +293,10 @@ static void test_explosion_and_field_metadata(void)
                "ReDMCSB DUNVIEW.C:8059 C716_ZONE_WALL_D0L");
     expect_int("d0r2.wall_zone", d0r2 ? d0r2->wall_zone : -1, 717,
                "ReDMCSB DUNVIEW.C:8159 C717_ZONE_WALL_D0R");
+    expect_int("d0l2.no_door_zone", d0l2 ? d0l2->door_zone : 0, -1,
+               "ReDMCSB DEFS.H:4250-4260 has no D0 door-front zone");
+    expect_int("d0r2.no_door_zone", d0r2 ? d0r2->door_zone : 0, -1,
+               "ReDMCSB DEFS.H:4250-4260 has no D0 door-front zone");
     expect_int("d0l2.ceiling_zone", d0l2 ? d0l2->ceiling_pit_zone : -1, 870,
                "ReDMCSB DUNVIEW.C:8003 C870_ZONE_CEILING_PIT_D0L");
     expect_int("d0r2.ceiling_zone", d0r2 ? d0r2->ceiling_pit_zone : -1, 872,
@@ -233,6 +305,83 @@ static void test_explosion_and_field_metadata(void)
                "ReDMCSB DUNVIEW.C:8050-8059 after 8005");
     expect_int("d0r2.field_after_f0115", d0r2 ? d0r2->field_draw_after_f0115 : 0, 1,
                "ReDMCSB DUNVIEW.C:8150-8159 after 8115");
+}
+
+static void test_f0108_f0115_composition_and_mutation_guard(void)
+{
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *d0l2 =
+        dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_for_side_pc34(1);
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *d0r2 =
+        dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_spec_for_side_pc34(2);
+    DM1_V1_D0L2D0R2F0115ThingPassTracePc34 trace;
+
+    expect_int("blend.transparent",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_blend_pixel_pc34(77, 10),
+               77, "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    expect_int("blend.opaque",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_blend_pixel_pc34(77, 42),
+               42, "ReDMCSB DUNVIEW.C:3988-4004 C10 transparent blit");
+
+    expect_int("compose.d0l2.ok",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_compose_pixel_pc34(
+                   d0l2, 3, 4, 5, &trace),
+               0, "ReDMCSB DUNVIEW.C:3940-4008 F0108 then 4547-4581 F0115");
+    expect_int("compose.d0l2.trace.ok", trace.ok, 1,
+               "ReDMCSB DUNVIEW.C:4547-4581 F0115 composition");
+    expect_int("compose.d0l2.f0108_calls", trace.f0108_calls, 1,
+               "ReDMCSB DUNVIEW.C:3940-4008 synthetic floor stage");
+    expect_int("compose.d0l2.f0115_calls", trace.f0115_calls, 1,
+               "ReDMCSB DUNVIEW.C:8005 one F0115 call");
+    expect_int("compose.d0l2.after_f0108", trace.after_f0108, 4,
+               "ReDMCSB DUNVIEW.C:3988-4004 C10 transparent floor blit");
+    expect_int("compose.d0l2.after_f0115", trace.after_f0115, 5,
+               "ReDMCSB DUNVIEW.C:4547-4581 thing pass overlays after floor");
+    expect_int("compose.d0l2.floor_transparent", trace.f0108_transparent, 0,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    expect_int("compose.d0l2.thing_transparent", trace.f0115_transparent, 0,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+
+    expect_int("compose.transparent.floor.ok",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_compose_pixel_pc34(
+                   d0r2, 9, 10, 6, &trace),
+               0, "ReDMCSB DUNVIEW.C:3940-4008 F0108 C10 transparency");
+    expect_int("compose.transparent.floor.after_f0108", trace.after_f0108, 9,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    expect_int("compose.transparent.floor.after_f0115", trace.after_f0115, 6,
+               "ReDMCSB DUNVIEW.C:4547-4581 F0115 follows floor stage");
+    expect_int("compose.transparent.floor.flag", trace.f0108_transparent, 1,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+
+    expect_int("compose.transparent.thing.ok",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_compose_pixel_pc34(
+                   d0r2, 9, 6, 10, &trace),
+               0, "ReDMCSB DUNVIEW.C:4547-4581 F0115 C10 transparency");
+    expect_int("compose.transparent.thing.after_f0115", trace.after_f0115, 6,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    expect_int("compose.transparent.thing.flag", trace.f0115_transparent, 1,
+               "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+
+    expect_int("compose.null.spec",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_compose_pixel_pc34(
+                   NULL, 0, 1, 2, &trace),
+               -1, "invalid input guard");
+    expect_int("compose.null.trace",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_compose_pixel_pc34(
+                   d0l2, 0, 1, 2, NULL),
+               -1, "invalid input guard");
+    expect_int("mutation.d0l2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_is_draw_mutating_pc34(d0l2),
+               0, "ReDMCSB DUNGEON.C:1769-1838 F0163 not called by draw");
+    expect_int("mutation.d0r2",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_is_draw_mutating_pc34(d0r2),
+               0, "ReDMCSB DUNGEON.C:1840-1905 F0164 not called by draw");
+    expect_int("mutation.null",
+               dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_is_draw_mutating_pc34(NULL),
+               -1, "invalid input guard");
+    expect_int("d0l2.f0163_guard", d0l2 ? d0l2->f0163_not_called_by_draw : 0, 1,
+               "ReDMCSB DUNGEON.C:1769-1838 F0163");
+    expect_int("d0r2.f0164_guard", d0r2 ? d0r2->f0164_not_called_by_draw : 0, 1,
+               "ReDMCSB DUNGEON.C:1840-1905 F0164");
 }
 
 static void test_source_evidence_mentions_required_anchors(void)
@@ -253,6 +402,8 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "DUNVIEW.C D0R function");
     expect_contains("evidence.f0128", e, "DUNVIEW.C:8536-8541 F0128",
                     "DUNVIEW.C D0L/D0R caller");
+    expect_contains("evidence.f0108", e, "DUNVIEW.C:3940-4008 F0108",
+                    "DUNVIEW.C floor-ornament C10 transparent stage");
     expect_contains("evidence.f0115", e, "DUNVIEW.C:4547-4581 F0115",
                     "DUNVIEW.C thing pass");
     expect_contains("evidence.items_disabled", e, "4923",
@@ -267,6 +418,16 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "DUNVIEW.C explosion zones");
     expect_contains("evidence.defs", e, "DEFS.H:2642-2660",
                     "DEFS.H cell order anchors");
+    expect_contains("evidence.defs_c10", e, "DEFS.H:2088 C10_COLOR_FLESH",
+                    "DEFS.H C10 transparency anchor");
+    expect_contains("evidence.no_d0_door_zone", e, "DEFS.H:4250-4260",
+                    "DEFS.H door-zone absence anchor");
+    expect_contains("evidence.f0163", e, "DUNGEON.C:1769-1838 F0163",
+                    "DUNGEON.C mutating link anchor");
+    expect_contains("evidence.f0164", e, "1840-1905 F0164",
+                    "DUNGEON.C mutating unlink anchor");
+    expect_contains("evidence.f0172", e, "DUNGEON.C:2466-2523 F0172",
+                    "DUNGEON.C square-aspect anchor");
     expect_contains("d0l2.anchor", d0l2 ? d0l2->redmcsb_dispatch_anchor : NULL,
                     "8003/8005/8059", "fixture source anchor");
     expect_contains("d0r2.anchor", d0r2 ? d0r2->redmcsb_dispatch_anchor : NULL,
@@ -275,15 +436,21 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "5295", "fixture F0115 anchor");
     expect_contains("d0r2.f0115.anchor", d0r2 ? d0r2->redmcsb_f0115_anchor : NULL,
                     "5668-5671", "fixture F0115 anchor");
+    expect_contains("d0l2.dungeon.anchor", d0l2 ? d0l2->redmcsb_dungeon_anchor : NULL,
+                    "F0172", "fixture DUNGEON.C anchor");
+    expect_contains("d0r2.defs.anchor", d0r2 ? d0r2->redmcsb_defs_anchor : NULL,
+                    "4250-4260", "fixture DEFS.H anchor");
 }
 
 int main(void)
 {
     test_accessors_and_contract_markers();
+    test_cell_order_decode_and_pass703_shape();
     test_route_metadata();
     test_view_square_lane_order_metadata();
     test_zone_bindings_and_disabled_item_projectile_rows();
     test_explosion_and_field_metadata();
+    test_f0108_f0115_composition_and_mutation_guard();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {
