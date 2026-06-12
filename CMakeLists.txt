@@ -8373,6 +8373,25 @@ if(NOT TARGET test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat)
     )
 endif()
 
+# ── DM1 V1 empty-hand eye stats closes open chest runtime regression ─
+# Pins PANEL.C F0352 -> F0351 -> CHEST.C F0334 when C071 is clicked
+# with an empty leader hand while an action-hand chest is open.
+if(NOT TARGET test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat)
+    add_executable(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+        tests/test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat.c
+    )
+    # See the link-pattern comment on test_m11_inventory_chest_same_open_hidden_tail_runtime_pc34_compat
+    # above for the m12/m11 duplicate rationale.
+    target_link_libraries(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+        COMMAND test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 inventory eye-route scroll runtime regression ─────────────
 # Companion to test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat
 # and test_dm1_v1_inventory_panel_mouse_routes_pc34_compat: pins the
