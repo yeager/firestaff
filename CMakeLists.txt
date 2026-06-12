@@ -1375,6 +1375,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_eye_object_description_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 inventory status-hand runtime gate.
+# Opens an action-hand chest, clicks C020..C027 status hand zones through
+# the real pointer route, and verifies non-owner swaps plus owner/dead rejects
+# while preserving the active G0426 open-chest sentinel.
+add_executable(firestaff_dm1_v1_inventory_status_hand_runtime_probe
+    probes/m11/firestaff_dm1_v1_inventory_status_hand_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_inventory_status_hand_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_inventory_status_hand_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel status-recompute runtime integration probe.
 # Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
 # food/water/poison panel visible-delta spec against the M11 draw stack
