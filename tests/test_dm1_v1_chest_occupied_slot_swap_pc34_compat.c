@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-static DM1_V1_ChestOccupiedSlotSwapProbePc34 g_probe;
 static int g_assertions;
+static int g_failures;
 
 static int expect_int(const char* label,
                       int got,
@@ -13,10 +13,12 @@ static int expect_int(const char* label,
 {
     ++g_assertions;
     if (!redmcsbAnchor || redmcsbAnchor[0] == '\0') {
+        ++g_failures;
         printf("FAIL %s missing ReDMCSB anchor\n", label);
         return 0;
     }
     if (got != want) {
+        ++g_failures;
         printf("FAIL %s got=%d want=%d anchor=%s\n",
                label, got, want, redmcsbAnchor);
         return 0;
@@ -25,400 +27,298 @@ static int expect_int(const char* label,
     return 1;
 }
 
-static int expect_uint_equal(const char* label,
-                             unsigned int got,
-                             unsigned int want,
-                             const char* redmcsbAnchor)
+static int expect_contains(const char* label,
+                           const char* got,
+                           const char* needle,
+                           const char* redmcsbAnchor)
 {
     ++g_assertions;
     if (!redmcsbAnchor || redmcsbAnchor[0] == '\0') {
+        ++g_failures;
         printf("FAIL %s missing ReDMCSB anchor\n", label);
         return 0;
     }
-    if (got != want) {
-        printf("FAIL %s got=%u want=%u anchor=%s\n",
-               label, got, want, redmcsbAnchor);
+    if (!got || !needle || !strstr(got, needle)) {
+        ++g_failures;
+        printf("FAIL %s missing=%s anchor=%s\n",
+               label, needle ? needle : "(null)", redmcsbAnchor);
         return 0;
     }
-    printf("PASS %s=%u anchor=%s\n", label, got, redmcsbAnchor);
+    printf("PASS %s contains=%s anchor=%s\n",
+           label, needle, redmcsbAnchor);
     return 1;
 }
 
-static int expect_str(const char* label,
-                      const char* got,
-                      const char* want,
-                      const char* redmcsbAnchor)
+static int expect_empty_tail(const char* phase,
+                             const int* types,
+                             const char* redmcsbAnchor)
 {
-    ++g_assertions;
-    if (!redmcsbAnchor || redmcsbAnchor[0] == '\0') {
-        printf("FAIL %s missing ReDMCSB anchor\n", label);
-        return 0;
+    int ok = 1;
+    int i;
+
+    for (i = 3; i < DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT; ++i) {
+        char label[96];
+
+        snprintf(label, sizeof(label), "%s C%d empty",
+                 phase, DM1_PC34_CHEST_OCCUPIED_SWAP_C537_ORDINAL + i);
+        ok &= expect_int(label, types[i], 0, redmcsbAnchor);
     }
-    if (!got || !want || strcmp(got, want) != 0) {
-        printf("FAIL %s got=%s want=%s anchor=%s\n",
-               label, got ? got : "(null)", want ? want : "(null)",
-               redmcsbAnchor);
-        return 0;
-    }
-    printf("PASS %s=%s anchor=%s\n", label, got, redmcsbAnchor);
-    return 1;
+    return ok;
 }
 
 static int test_spec(void)
 {
-    const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
-    const char* f0031 =
-        "ReDMCSB OBJECT.C F0031 lines 25-120";
+    const char* defs =
+        "ReDMCSB DEFS.H lines 810-817,1878,3906-3913";
+    const char* f0302 =
+        "ReDMCSB CHAMPION.C F0302 lines 662-713";
     const DM1_V1_ChestOccupiedSlotSwapSpecPc34* spec =
         dm1_v1_chest_occupied_slot_swap_spec_pc34();
     int ok = 1;
 
-    ok &= expect_str("contract marker", spec->contractMarker,
-                     "Source-locked contract gate only; not full real-asset chest runtime parity.",
-                     f0333);
-    ok &= expect_int("probe contract-only marker",
-                     g_probe.sourceLockedContractOnly, 1, f0333);
-    ok &= expect_int("C537 slot constant", spec->c537Pc34Slot,
-                     DM1_PC34_SLOT_CHEST_1, f0333);
-    ok &= expect_int("C544 slot constant", spec->c544Pc34Slot,
-                     DM1_PC34_SLOT_CHEST_8, f0333);
-    ok &= expect_int("chest slot count", spec->chestSlotCount,
-                     DM1_PC34_CHEST_SLOT_COUNT, f0333);
-    ok &= expect_int("case count", spec->caseCount,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CASE_COUNT, f0333);
-    ok &= expect_int("backpack source index", spec->backpackSourceIndex,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_SOURCE_INDEX,
-                     f0333);
-    ok &= expect_int("backpack destination slot",
-                     spec->backpackDestinationPc34Slot,
-                     DM1_PC34_SLOT_BACKPACK_LINE1_2, f0333);
-    ok &= expect_int("chest B source index", spec->chestBSourceIndex,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_SOURCE_INDEX,
-                     f0333);
-    ok &= expect_int("chest B destination index",
-                     spec->chestBDestinationIndex,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_DEST_INDEX,
-                     f0333);
-    ok &= expect_int("deterministic backpack potion id",
-                     spec->backpackPotion.itemType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_POTION, f0031);
-    ok &= expect_int("deterministic chest A weapon id",
-                     spec->chestAWeapon.itemType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_WEAPON, f0031);
+    ok &= expect_contains("contract marker", spec->contractMarker,
+                          "pass706", f0302);
+    ok &= expect_int("spec G0305 party count",
+                     spec->g0305PartyChampionCount, 1, defs);
+    ok &= expect_int("spec G0423 ordinal",
+                     spec->g0423InventoryChampionOrdinal, 1, defs);
+    ok &= expect_int("spec C537 ordinal", spec->c537Ordinal,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C537_ORDINAL, defs);
+    ok &= expect_int("spec C538 ordinal", spec->c538Ordinal,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_ORDINAL, defs);
+    ok &= expect_int("spec C544 ordinal", spec->c544Ordinal,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C544_ORDINAL, defs);
+    ok &= expect_int("spec C538 pc34 slot", spec->c538Pc34Slot,
+                     DM1_PC34_SLOT_CHEST_2, defs);
+    ok &= expect_int("spec C538 G0425 index", spec->c538G0425Index,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_INDEX, defs);
+    ok &= expect_int("spec M070 ready hand",
+                     spec->m070ReadyHandSlotIndex, 0, defs);
+    ok &= expect_int("spec M070 action hand",
+                     spec->m070ActionHandSlotIndex, 1, defs);
+    ok &= expect_int("spec visible slots", spec->visibleSlotCount,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT, defs);
+    ok &= expect_int("spec old stack type", spec->oldStackType,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_STACK, f0302);
+    ok &= expect_int("spec old stack count", spec->oldStackCount,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_COUNT, f0302);
+    ok &= expect_int("spec leader stack type", spec->leaderStackType,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK, f0302);
+    ok &= expect_int("spec leader stack count", spec->leaderStackCount,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_COUNT, f0302);
+    ok &= expect_contains("evidence includes F0333",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "CHEST.C F0333:30-67",
+                          "ReDMCSB CHEST.C F0333 lines 30-67");
+    ok &= expect_contains("evidence includes F0300",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "CHAMPION.C F0300:489-584",
+                          "ReDMCSB CHAMPION.C F0300 lines 489-584");
+    ok &= expect_contains("evidence includes PANEL",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "PANEL.C F0354:2299-2322",
+                          "ReDMCSB PANEL.C F0354 lines 2299-2322");
+    ok &= expect_contains("evidence includes UTAMSCR",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "UTAMSCR.C F0077/F0078:141-150",
+                          "ReDMCSB UTAMSCR.C F0077/F0078 lines 141-150");
+    ok &= expect_contains("evidence includes BLITMASK",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "BLITMASK.C F0133:30-33",
+                          "ReDMCSB BLITMASK.C F0133 lines 30-33");
+    ok &= expect_contains("evidence includes OBJECT",
+                          dm1_v1_chest_occupied_slot_swap_source_evidence_pc34(),
+                          "OBJECT.C F0033:147-212",
+                          "ReDMCSB OBJECT.C F0033 lines 147-212");
     return ok;
 }
 
-static int assert_original_order(
-    const char* caseName,
-    const DM1_V1_ChestOccupiedSlotSwapCasePc34* c,
-    int firstType,
-    int visibleCount)
+static int test_setup(
+    const DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state,
+    const DM1_V1_ChestOccupiedSlotSwapProbePc34* probe)
 {
-    const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
-    const char* f0031 =
-        "ReDMCSB OBJECT.C F0031 lines 25-120";
+    const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-67";
+    const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-713";
+    const char* defs =
+        "ReDMCSB DEFS.H lines 810-817,1878,5700,5876-5881,3906-3913";
     int ok = 1;
-    int i;
 
-    ok &= expect_int(caseName, c->sourceVisibleCountBefore,
-                     visibleCount, f0333);
-    for (i = 0; i < visibleCount; ++i) {
-        char label[96];
-
-        snprintf(label, sizeof(label), "%s original C537-C544 order %d",
-                 caseName, i);
-        ok &= expect_int(label, c->originalVisibleTypes[i],
-                         firstType + i, f0031);
-    }
-    for (i = visibleCount; i < DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT; ++i) {
-        char label[96];
-
-        snprintf(label, sizeof(label), "%s original empty visible slot %d",
-                 caseName, i);
-        ok &= expect_int(label, c->originalVisibleTypes[i], 0, f0333);
-    }
+    ok &= expect_int("runtime G0305 party count",
+                     state->g0305PartyChampionCount, 1, defs);
+    ok &= expect_int("runtime G0423 ordinal",
+                     state->g0423InventoryChampionOrdinal, 1, defs);
+    ok &= expect_int("runtime G0426 open chest",
+                     probe->openChestThingBefore,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_OPEN_CHEST_THING, f0333);
+    ok &= expect_int("runtime M070 ready",
+                     state->m070ReadyHandSlotIndex, 0, defs);
+    ok &= expect_int("runtime M070 action",
+                     state->m070ActionHandSlotIndex, 1, defs);
+    ok &= expect_int("setup visible count", probe->visibleCountBefore, 3,
+                     f0333);
+    ok &= expect_int("setup C537 stack", probe->beforeTypes[0],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C537_STACK, f0333);
+    ok &= expect_int("setup C538 occupied stack", probe->beforeTypes[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_STACK, f0333);
+    ok &= expect_int("setup C538 stack count", probe->beforeCounts[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_COUNT, f0333);
+    ok &= expect_int("setup C538 stack weight", probe->beforeWeights[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_WEIGHT, f0333);
+    ok &= expect_int("setup C539 stack", probe->beforeTypes[2],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C539_STACK, f0333);
+    ok &= expect_empty_tail("setup", probe->beforeTypes, f0333);
+    ok &= expect_int("setup leader stack", probe->leaderHandBeforeType,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK, f0302);
+    ok &= expect_int("setup leader stack count",
+                     probe->leaderHandBeforeCount,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_COUNT, f0302);
+    ok &= expect_int("setup leader stack allowed in C538",
+                     probe->replacementAllowedInC538, 1, f0302);
+    ok &= expect_int("setup source-equivalent load",
+                     probe->sourceEquivalentLoadBefore,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C537_WEIGHT +
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_WEIGHT +
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C539_WEIGHT +
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_WEIGHT,
+                     f0302);
     return ok;
 }
 
-static int assert_final_order(
-    const char* caseName,
-    const DM1_V1_ChestOccupiedSlotSwapCasePc34* c,
-    int visibleCount)
+static int test_exercise(
+    const DM1_V1_ChestOccupiedSlotSwapProbePc34* probe)
 {
-    const char* f0334 =
-        "ReDMCSB CHEST.C F0334 lines 113-132";
-    const char* f0163 =
-        "ReDMCSB DUNGEON.C F0163 lines 1796-1837";
+    const char* f0297 = "ReDMCSB CHAMPION.C F0297 lines 243-268";
+    const char* f0300 = "ReDMCSB CHAMPION.C F0300 lines 489-584";
+    const char* f0301 = "ReDMCSB CHAMPION.C F0301 lines 587-660";
+    const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-713";
+    const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-67";
     int ok = 1;
-    int i;
 
-    ok &= expect_int(caseName, c->finalVisibleCount, visibleCount, f0334);
-    ok &= expect_int("visible head unchanged", c->visibleHeadUnchanged, 1,
-                     f0163);
-    ok &= expect_int("visible tail unchanged", c->visibleTailUnchanged, 1,
-                     f0163);
-    ok &= expect_int("visible head membership count",
-                     c->finalHeadMembershipCount, 1, f0163);
-    ok &= expect_int("visible order unchanged", c->visibleOrderUnchanged, 1,
-                     f0163);
-    ok &= expect_int("reopened order unchanged", c->reopenedOrderUnchanged, 1,
+    ok &= expect_int("exercise result", probe->exerciseResult, 1, f0302);
+    ok &= expect_int("F0302 click accepted", probe->f0302Accepted, 1,
+                     f0302);
+    ok &= expect_int("F0300 removed occupied C538",
+                     probe->f0300RemovedOccupiedC538, 1, f0300);
+    ok &= expect_int("F0297 old stack in leader hand",
+                     probe->f0297PlacedOldC538InLeaderHand, 1, f0297);
+    ok &= expect_int("F0301 replacement in C538",
+                     probe->f0301StoredLeaderObjectInC538, 1, f0301);
+    ok &= expect_int("after leader has old stack",
+                     probe->leaderHandAfterType,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_STACK, f0297);
+    ok &= expect_int("after leader old stack count",
+                     probe->leaderHandAfterCount,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C538_COUNT, f0297);
+    ok &= expect_int("after C538 has replacement",
+                     probe->afterTypes[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK, f0301);
+    ok &= expect_int("after C538 replacement count",
+                     probe->afterCounts[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_COUNT, f0301);
+    ok &= expect_int("after C537 stable", probe->c537StableAfterClick, 1,
+                     f0333);
+    ok &= expect_int("after C539 stable", probe->c539StableAfterClick, 1,
+                     f0333);
+    ok &= expect_int("after visible count", probe->visibleCountAfterClick,
+                     3, f0333);
+    ok &= expect_empty_tail("after click", probe->afterTypes, f0333);
+    ok &= expect_int("after old stack absent from chest",
+                     probe->oldStackNoLongerInChestAfterClick, 1, f0300);
+    ok &= expect_int("after replacement absent from leader",
+                     probe->replacementNoLongerInLeaderHandAfterClick, 1,
+                     f0301);
+    ok &= expect_int("source-equivalent load unchanged",
+                     probe->sourceEquivalentLoadUnchanged, 1, f0302);
+    ok &= expect_int("source-equivalent load after",
+                     probe->sourceEquivalentLoadAfterClick,
+                     probe->sourceEquivalentLoadBefore, f0302);
+    ok &= expect_int("G0426 still open after click",
+                     probe->openChestThingAfterClick,
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_OPEN_CHEST_THING, f0333);
+    return ok;
+}
+
+static int test_close_reopen(
+    const DM1_V1_ChestOccupiedSlotSwapProbePc34* probe)
+{
+    const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-67";
+    const char* f0334 = "ReDMCSB CHEST.C F0334 lines 113-132";
+    int ok = 1;
+
+    ok &= expect_int("close count", probe->closedCount, 3, f0334);
+    ok &= expect_int("close cleared G0426", probe->closeClearedG0426, 1,
                      f0334);
-    for (i = 0; i < DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT; ++i) {
-        char label[96];
-
-        snprintf(label, sizeof(label), "%s final visible slot %d",
-                 caseName, i);
-        ok &= expect_int(label, c->finalVisibleTypes[i],
-                         c->originalVisibleTypes[i], f0163);
-        snprintf(label, sizeof(label), "%s closed visible slot %d",
-                 caseName, i);
-        ok &= expect_int(label, c->closedTypes[i],
-                         c->originalVisibleTypes[i], f0334);
-        snprintf(label, sizeof(label), "%s reopened visible slot %d",
-                 caseName, i);
-        ok &= expect_int(label, c->reopenedTypes[i],
-                         c->originalVisibleTypes[i], f0334);
-    }
+    ok &= expect_int("close visible rewrite", probe->closeRewroteVisibleOnly,
+                     1, f0334);
+    ok &= expect_int("closed C537", probe->closedTypes[0],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C537_STACK, f0334);
+    ok &= expect_int("closed C538 replacement", probe->closedTypes[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK, f0334);
+    ok &= expect_int("closed C539", probe->closedTypes[2],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C539_STACK, f0334);
+    ok &= expect_empty_tail("closed", probe->closedTypes, f0334);
+    ok &= expect_int("reopen result", probe->reopenResult, 1, f0333);
+    ok &= expect_int("reopen count", probe->reopenedCount, 3, f0333);
+    ok &= expect_int("reopen keeps C538 replacement",
+                     probe->reopenPreservedC538Replacement, 1, f0333);
+    ok &= expect_int("reopened C537", probe->reopenedTypes[0],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C537_STACK, f0333);
+    ok &= expect_int("reopened C538 replacement", probe->reopenedTypes[1],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK, f0333);
+    ok &= expect_int("reopened C539", probe->reopenedTypes[2],
+                     DM1_PC34_CHEST_OCCUPIED_SWAP_C539_STACK, f0333);
+    ok &= expect_empty_tail("reopened", probe->reopenedTypes, f0333);
     return ok;
 }
 
-static int assert_world_hash_stable(
-    const DM1_V1_ChestOccupiedSlotSwapCasePc34* c,
-    const char* caseName)
+static int test_module_assertions(void)
 {
-    const char* f0302 =
-        "ReDMCSB CHAMPION.C F0297/F0298/F0302 lines 250-298,688-710";
+    const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-713";
+    const DM1_V1_ChestOccupiedSlotSwapAssertionsPc34* assertions =
+        dm1_v1_chest_occupied_slot_swap_assertions_pc34();
     int ok = 1;
 
-    ok &= expect_int(caseName, c->worldHashBeforeResult, 1, f0302);
-    ok &= expect_int("world hash after result", c->worldHashAfterResult, 1,
-                     f0302);
-    ok &= expect_uint_equal("world hash unchanged value",
-                            c->worldHashAfter, c->worldHashBefore, f0302);
-    ok &= expect_int("world hash unchanged flag", c->worldHashUnchanged, 1,
-                     f0302);
-    return ok;
-}
-
-static int test_backpack_round_trip(void)
-{
-    const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
-    const char* f0334 =
-        "ReDMCSB CHEST.C F0334 lines 113-132";
-    const char* f0302 =
-        "ReDMCSB CHAMPION.C F0297/F0298/F0302 lines 250-298,688-710";
-    const char* f0163 =
-        "ReDMCSB DUNGEON.C F0163 lines 1796-1837";
-    const DM1_V1_ChestOccupiedSlotSwapCasePc34* c =
-        &g_probe.cases[DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_CASE];
-    int ok = 1;
-
-    ok &= expect_int("backpack source opens", c->sourceOpenResult, 1,
-                     f0333);
-    ok &= expect_int("backpack source open thing", c->sourceOpenThing,
-                     c->sourceChestThing, f0333);
-    ok &= expect_int("backpack hidden tail input", c->sourceHiddenTailInput,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_HIDDEN_TAIL,
-                     f0333);
-    ok &= assert_original_order("backpack case",
-                                c,
-                                DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_CHEST_FIRST,
-                                DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT);
-    ok &= expect_int("backpack leader starts with replacement",
-                     c->leaderHandBefore,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_REPLACEMENT,
-                     f0302);
-    ok &= expect_int("backpack source swap click",
-                     c->sourceSwapClickResult, 1, f0302);
-    ok &= expect_int("backpack source slot receives replacement",
-                     c->sourceSlotAfterSourceSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_REPLACEMENT,
-                     f0302);
-    ok &= expect_int("backpack replacement stored at original index",
-                     c->sourceReplacementStoredAtOriginalIndex, 1, f0302);
-    ok &= expect_int("backpack potion moves to leader",
-                     c->leaderHandAfterSourceSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_POTION,
-                     f0302);
-    ok &= expect_int("backpack swapped object identity",
-                     c->swappedObjectType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_POTION,
-                     f0302);
-    ok &= expect_int("backpack destination swap click",
-                     c->destinationSwapClickResult, 1, f0302);
-    ok &= expect_int("backpack potion stored in destination",
-                     c->destinationAfterSwapType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_POTION,
-                     f0302);
-    ok &= expect_int("backpack destination occupant moves to leader",
-                     c->leaderHandAfterDestinationSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_DEST_OCCUPANT,
-                     f0302);
-    ok &= expect_int("backpack occupant moved flag",
-                     c->destinationOccupantMovedToLeader, 1, f0302);
-    ok &= expect_int("backpack return click",
-                     c->destinationReturnClickResult, 1, f0302);
-    ok &= expect_int("backpack destination occupant restored",
-                     c->destinationAfterReturnType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_DEST_OCCUPANT,
-                     f0302);
-    ok &= expect_int("backpack swapped object ready for reinsert",
-                     c->swappedObjectReadyForReinsert, 1, f0302);
-    ok &= expect_int("backpack reinsert click",
-                     c->sourceReinsertClickResult, 1, f0302);
-    ok &= expect_int("backpack potion restored to source index",
-                     c->sourceSlotAfterReinsert,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_BACKPACK_POTION,
-                     f0302);
-    ok &= expect_int("backpack replacement returned to leader",
-                     c->replacementReturnedToLeader, 1, f0302);
-    ok &= expect_int("backpack leader hand stable",
-                     c->leaderHandStable, 1, f0302);
-    ok &= expect_int("backpack close count",
-                     c->sourceCloseCount,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT, f0334);
-    ok &= expect_int("backpack hidden tail excluded on close",
-                     c->hiddenTailClosed, 0, f0334);
-    ok &= expect_int("backpack reopen after close",
-                     c->sourceReopenAfterCloseResult, 1, f0333);
-    ok &= expect_int("backpack hidden tail excluded on reopen",
-                     c->hiddenTailReopened, 0, f0333);
-    ok &= expect_int("backpack no duplicate object ids",
-                     c->noDuplicateObjectIds, 1, f0163);
-    ok &= expect_int("backpack no evictions",
-                     c->noEvictions, 1, f0163);
-    ok &= assert_final_order("backpack case", c,
-                             DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT);
-    ok &= assert_world_hash_stable(c, "backpack world hash before");
-    return ok;
-}
-
-static int test_chest_b_round_trip(void)
-{
-    const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
-    const char* f0334 =
-        "ReDMCSB CHEST.C F0334 lines 113-132";
-    const char* f0302 =
-        "ReDMCSB CHAMPION.C F0297/F0298/F0302 lines 250-298,688-710";
-    const char* f0163 =
-        "ReDMCSB DUNGEON.C F0163 lines 1796-1837";
-    const DM1_V1_ChestOccupiedSlotSwapCasePc34* c =
-        &g_probe.cases[DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_CASE];
-    int ok = 1;
-
-    ok &= expect_int("chest B source opens", c->sourceOpenResult, 1,
-                     f0333);
-    ok &= expect_int("chest B source open thing", c->sourceOpenThing,
-                     c->sourceChestThing, f0333);
-    ok &= expect_int("chest B hidden tail input", c->sourceHiddenTailInput,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_HIDDEN_TAIL,
-                     f0333);
-    ok &= assert_original_order("chest B case",
-                                c,
-                                DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_FIRST,
-                                3);
-    ok &= expect_int("chest B leader starts with replacement",
-                     c->leaderHandBefore,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_REPLACEMENT,
-                     f0302);
-    ok &= expect_int("chest B source swap click",
-                     c->sourceSwapClickResult, 1, f0302);
-    ok &= expect_int("chest B source slot receives replacement",
-                     c->sourceSlotAfterSourceSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_REPLACEMENT,
-                     f0302);
-    ok &= expect_int("chest B weapon moves to leader",
-                     c->leaderHandAfterSourceSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_WEAPON,
-                     f0302);
-    ok &= expect_int("chest B swapped object identity",
-                     c->swappedObjectType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_WEAPON,
-                     f0302);
-    ok &= expect_int("chest A closes before chest B opens",
-                     c->sourceReopenResult, 1, f0334);
-    ok &= expect_int("chest B destination swap click",
-                     c->destinationSwapClickResult, 1, f0302);
-    ok &= expect_int("chest B weapon stored in destination",
-                     c->destinationAfterSwapType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_WEAPON,
-                     f0302);
-    ok &= expect_int("chest B destination occupant moves to leader",
-                     c->leaderHandAfterDestinationSwap,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_DEST_OCCUPANT,
-                     f0302);
-    ok &= expect_int("chest B return click",
-                     c->destinationReturnClickResult, 1, f0302);
-    ok &= expect_int("chest B destination occupant restored",
-                     c->destinationAfterReturnType,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_DEST_OCCUPANT,
-                     f0302);
-    ok &= expect_int("chest B swapped object ready for reinsert",
-                     c->swappedObjectReadyForReinsert, 1, f0302);
-    ok &= expect_int("chest B close count while reopening source",
-                     c->destinationCloseCount, 1, f0334);
-    ok &= expect_int("chest B closed occupant restored",
-                     c->destinationClosedTypes[0],
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_B_DEST_OCCUPANT,
-                     f0334);
-    ok &= expect_int("chest B reinsert click",
-                     c->sourceReinsertClickResult, 1, f0302);
-    ok &= expect_int("chest B weapon restored to source index",
-                     c->sourceSlotAfterReinsert,
-                     DM1_PC34_CHEST_OCCUPIED_SWAP_CHEST_A_WEAPON,
-                     f0302);
-    ok &= expect_int("chest B replacement returned to leader",
-                     c->replacementReturnedToLeader, 1, f0302);
-    ok &= expect_int("chest B leader hand stable",
-                     c->leaderHandStable, 1, f0302);
-    ok &= expect_int("chest B source close count",
-                     c->sourceCloseCount, 3, f0334);
-    ok &= expect_int("chest B hidden tail excluded on close",
-                     c->hiddenTailClosed, 0, f0334);
-    ok &= expect_int("chest B reopen after close",
-                     c->sourceReopenAfterCloseResult, 1, f0333);
-    ok &= expect_int("chest B hidden tail excluded on reopen",
-                     c->hiddenTailReopened, 0, f0333);
-    ok &= expect_int("chest B no duplicate object ids",
-                     c->noDuplicateObjectIds, 1, f0163);
-    ok &= expect_int("chest B no evictions",
-                     c->noEvictions, 1, f0163);
-    ok &= assert_final_order("chest B case", c, 3);
-    ok &= assert_world_hash_stable(c, "chest B world hash before");
+    ok &= expect_int("module assertion failures",
+                     assertions->failedAssertions, 0, f0302);
+    ok &= expect_int("module assertion total >= 30",
+                     assertions->totalAssertions >= 30 ? 1 : 0, 1, f0302);
+    ok &= expect_int("module assertion accounting",
+                     assertions->passedAssertions +
+                     assertions->failedAssertions,
+                     assertions->totalAssertions, f0302);
     return ok;
 }
 
 int main(void)
 {
-    const char* f0333 =
-        "ReDMCSB CHEST.C F0333 lines 31-67";
+    DM1_V1_ChestOccupiedSlotSwapRuntimePc34 state;
+    DM1_V1_ChestOccupiedSlotSwapProbePc34 probe;
+    const char* f0333 = "ReDMCSB CHEST.C F0333 lines 30-67";
+    const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 662-713";
     int ok = 1;
 
     printf("probe=dm1_v1_chest_occupied_slot_swap_pc34_compat\n");
     printf("sourceEvidence=%s\n",
            dm1_v1_chest_occupied_slot_swap_source_evidence_pc34());
 
-    ok &= expect_int("probe setup",
-                     dm1_v1_chest_occupied_slot_swap_pc34(&g_probe),
+    ok &= expect_int("init",
+                     dm1_v1_chest_occupied_slot_swap_init_pc34(&state),
                      1, f0333);
-    if (!ok) {
-        printf("assertionCount=%d\n", g_assertions);
-        printf("chestOccupiedSlotSwapInvariantOk=0\n");
-        return 1;
-    }
-
+    ok &= expect_int("exercise",
+                     dm1_v1_chest_occupied_slot_swap_exercise_pc34(
+                         &state, &probe),
+                     1, f0302);
     ok &= test_spec();
-    ok &= test_backpack_round_trip();
-    ok &= test_chest_b_round_trip();
-
+    ok &= test_setup(&state, &probe);
+    ok &= test_exercise(&probe);
+    ok &= test_close_reopen(&probe);
+    ok &= test_module_assertions();
     ok &= expect_int("minimum assertion count",
-                     g_assertions >= 60 ? 1 : 0, 1, f0333);
+                     g_assertions >= 30 ? 1 : 0, 1, f0302);
 
     printf("assertionCount=%d\n", g_assertions);
-    printf("chestOccupiedSlotSwapInvariantOk=%d\n", ok ? 1 : 0);
-    return ok ? 0 : 1;
+    printf("failureCount=%d\n", g_failures);
+    printf("chestOccupiedSlotSwapInvariantOk=%d\n",
+           ok && g_failures == 0 ? 1 : 0);
+    return ok && g_failures == 0 ? 0 : 1;
 }

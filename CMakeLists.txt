@@ -4007,12 +4007,14 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_teleport_survival_pc34_compat
     )
 
+    # pass706 DM1 V1 C538 occupied-slot stack swap gate:
+    # ReDMCSB CHEST.C F0333/F0334 and CHAMPION.C F0300/F0297/F0301/F0302.
     add_executable(test_dm1_v1_chest_occupied_slot_swap_pc34_compat
         tests/test_dm1_v1_chest_occupied_slot_swap_pc34_compat.c
         src/dm1/dm1_v1_chest_occupied_slot_swap_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE firestaff_m10)
-    target_include_directories(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE include)
+    target_include_directories(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
