@@ -328,6 +328,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d1l_d1r_f0107_wall_orname
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat.c
     )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
+    )
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -9780,6 +9784,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
+        tests/test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
         tests/test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -10182,6 +10190,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
         PRIVATE firestaff_m10
     )
@@ -10468,6 +10482,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3l_d3r_f0107_wall_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -10713,6 +10728,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME pass773_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat
         COMMAND test_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_source_lock
+        COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
