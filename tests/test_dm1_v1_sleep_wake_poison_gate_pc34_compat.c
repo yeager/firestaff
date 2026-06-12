@@ -110,10 +110,17 @@ static void test_creature_melee_f0230_late_reduction_fixture(void)
     int i;
 
     /*
-     * ReDMCSB PROJEXPL.C F0230 lines 1390-1404: after the staged creature
-     * attack roll, the PC34 path applies a final 50% random reduction before
-     * CHAMPION.C F0321 handles defense/vitality/pending damage.  Seed 4 takes
-     * that branch, so rngCallCount and final seed lock the extra random term.
+     * ReDMCSB PROJEXPL.C F0230 lines 1390-1404 + CHAMPION.C F0321
+     * lines 1838-1900: after the staged creature attack roll, the PC34
+     * path applies a final 50% random reduction; F0321 then sums the
+     * per-slot F0313 wound defense for the chosen wound bit (FEET) and
+     * scales attack by (130 - avg_defense) / 64. Seed 4 takes the
+     * 50%-reduction branch and the BLUNT (C3) attack type, so:
+     *   atk after late reduction = 19
+     *   F0321 per-slot F0313(FEET) = 5 + (0x12*45>>8) = 5 + 3 = 8
+     *   F0321 scale = (19 * (130 - 8)) >> 6 = 36
+     * rngCallCount and final seed lock the late random term and the
+     * post-scale deterministic output.
      */
     memset(&attacker, 0, sizeof(attacker));
     attacker.creatureType = 14;
@@ -144,8 +151,8 @@ static void test_creature_melee_f0230_late_reduction_fixture(void)
           "F0230 late-reduction fixture resolves");
     CHECK(result.outcome == COMBAT_OUTCOME_HIT_DAMAGE,
           "F0230 fixture lands damage");
-    CHECK(result.damageApplied == 18,
-          "F0230 fixture applies exact post-reduction damage");
+    CHECK(result.damageApplied == 36,
+          "F0230 fixture applies exact F0321 armor+defense scale");
     CHECK(result.rawAttackRoll == 25,
           "F0230 fixture keeps exact dodge random term");
     CHECK(result.woundMaskAdded == COMBAT_WOUND_FEET,
@@ -156,11 +163,80 @@ static void test_creature_melee_f0230_late_reduction_fixture(void)
           "F0230 fixture leaves exact rng seed");
 }
 
+static void test_creature_melee_f0321_armor_defense_scale_fixture(void)
+{
+    struct CombatantCreatureSnapshot_Compat attacker;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct RngState_Compat rng;
+    struct CombatResult_Compat result;
+
+    /*
+     * ReDMCSB CHAMPION.C F0321 lines 1838-1900: the F0230 handoff routes
+     * through F0321 which (1) sums F0313 wound defense per allowed slot,
+     * (2) averages, and (3) scales attack by (130 - avg_defense) / 64.
+     * Seed 37 selects the HEAD wound bit for the SHARP (C4) attacker,
+     * which exercises the useSharpDefense path of F0733. The fixture
+     * has varied per-slot woundDefense and high vitality (80) so the
+     * F0313 vitality term contributes non-trivially.
+     *
+     * Walk-through with seed 37:
+     *   rand1=9, rand2=0 -> dexFails (resting skipped; attack lands)
+     *   woundTest selects HEAD (slot 1) via prob table 0x8421
+     *   staged attack roll: rnd16=10, atk stages -> atk=12
+     *   reduceGate=0 -> no F0230 late reduction (atk stays 12)
+     *   F0733(HEAD, sharp=1, vit=80, baseline=4)
+     *     = 4 + 0 + (0x10*80>>8) + (0x10>>1)
+     *     = 4 + 5 + 8 = 17
+     *   F0321 scale: (12 * (130 - 17)) >> 6 = 1356 >> 6 = 21
+     */
+    memset(&attacker, 0, sizeof(attacker));
+    attacker.creatureType = 7;
+    attacker.attack = 35;
+    attacker.defense = 18;
+    attacker.dexterity = 28;
+    attacker.baseHealth = 90;
+    attacker.attackType = COMBAT_ATTACK_SHARP;
+    attacker.woundProbabilities = 0x8421;
+    attacker.doubledMapDifficulty = 0;
+    attacker.healthBefore = 90;
+
+    memset(&defender, 0, sizeof(defender));
+    defender.championIndex = 1;
+    defender.currentHealth = 50;
+    defender.dexterity = 60;
+    defender.statisticVitality = 80;
+    defender.statisticAntifire = 30;
+    defender.statisticAntimagic = 30;
+    defender.woundDefense[0] = 2;
+    defender.woundDefense[1] = 4;
+    defender.woundDefense[2] = 6;
+    defender.woundDefense[3] = 8;
+    defender.woundDefense[4] = 10;
+    defender.woundDefense[5] = 12;
+
+    CHECK(F0730_COMBAT_RngInit_Compat(&rng, 37u) == 1,
+          "rng initialises for F0321 armor+defense scale fixture");
+    CHECK(F0736_COMBAT_ResolveCreatureMelee_Compat(
+              &attacker, &defender, &rng, &result) == 1,
+          "F0321 armor+defense scale fixture resolves");
+    CHECK(result.outcome == COMBAT_OUTCOME_HIT_DAMAGE,
+          "F0321 fixture lands damage");
+    CHECK(result.woundMaskAdded == COMBAT_WOUND_HEAD,
+          "F0321 fixture selects HEAD wound slot for F0313 lookup");
+    CHECK(result.damageApplied == 21,
+          "F0321 fixture applies exact (130 - defense) / 64 scale");
+    CHECK(result.rngCallCount == 10,
+          "F0321 fixture skips the F0230 late-reduction random term");
+    CHECK(rng.seed == 0xaff42123u,
+          "F0321 fixture leaves exact rng seed");
+}
+
 int main(void)
 {
     test_poison_cloud_wakes_resting_champion();
     test_creature_melee_wakes_resting_champion();
     test_creature_melee_f0230_late_reduction_fixture();
+    test_creature_melee_f0321_armor_defense_scale_fixture();
 
     printf("%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
