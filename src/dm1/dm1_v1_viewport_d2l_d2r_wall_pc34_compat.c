@@ -49,6 +49,8 @@ static const char s_source_evidence[] =
     "side/front wall ornaments, and enter the first-backdrop F0115 pass "
     "only when the front ornament is an alcove. ReDMCSB DUNVIEW.C:"
     "3048-3058 F0100 supplies the transparent D2LCR wall frame blit; "
+    "its G0163 frame rows use ByteWidth=72, which is 144 packed PC34 "
+    "pixels for the synthetic indexed-pixel edge gate; "
     "DUNVIEW.C:3113-3156 F0104 and 3185-3247 F0105 preserve DEFS.H:2088 "
     "C10_COLOR_FLESH transparency. ReDMCSB DUNVIEW.C:3502-3938 F0107 "
     "uses DM1 D2 wall ornament views M580/M581/M582/M584, not the D3 "
@@ -175,6 +177,67 @@ uint8_t dm1_v1_viewport_d2l_d2r_wall_blend_c10_pc34(
     /* ReDMCSB DUNVIEW.C:3113-3156 F0104 and 3185-3247 F0105 pass
      * DEFS.H:2088 C10_COLOR_FLESH as the transparent color. */
     return source_pixel == DM1_C10_COLOR_FLESH ? destination_pixel : source_pixel;
+}
+
+int dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+    const DM1_V1_D2LD2RWallSpecPc34 *spec,
+    int viewport_y,
+    int viewport_x,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_D2LD2RWallFramePixelPc34 *out)
+{
+    int local_x;
+    int local_y;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->spec = spec;
+    out->row = viewport_y;
+    out->viewport_x = viewport_x;
+    if (!spec) return 0;
+
+    if (viewport_y < spec->wall_frame_y1 ||
+        viewport_y > spec->wall_frame_y2 ||
+        viewport_x < spec->wall_frame_x1 ||
+        viewport_x > spec->wall_frame_x2) {
+        out->no_write_metadata = DM1_PRESENT;
+        return 1;
+    }
+    if (!source || !viewport) return 0;
+
+    local_x = viewport_x - spec->wall_frame_x1;
+    local_y = viewport_y - spec->wall_frame_y1;
+    out->in_clip = DM1_PRESENT;
+    out->source_x = spec->wall_frame_source_x + local_x;
+    out->source_y = spec->wall_frame_source_y + local_y;
+    out->source_offset =
+        (size_t)out->source_y *
+        (size_t)DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 +
+        (size_t)out->source_x;
+    out->viewport_offset =
+        (size_t)viewport_y * (size_t)DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 +
+        (size_t)viewport_x;
+    if (out->source_x < 0 ||
+        out->source_x >= DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 ||
+        out->source_y < 0 ||
+        out->source_y >= DM1_V1_D2L_D2R_WALL_SOURCE_HEIGHT_PC34 ||
+        out->source_offset >= source_len ||
+        out->viewport_offset >= viewport_len) {
+        return 0;
+    }
+
+    out->pixel_before = viewport[out->viewport_offset];
+    out->source_pixel = source[out->source_offset];
+    out->transparent_skip = out->source_pixel == DM1_C10_COLOR_FLESH;
+    out->writes_pixel = !out->transparent_skip;
+    viewport[out->viewport_offset] =
+        dm1_v1_viewport_d2l_d2r_wall_blend_c10_pc34(
+            viewport[out->viewport_offset], out->source_pixel);
+    out->pixel_after = viewport[out->viewport_offset];
+    return 1;
 }
 
 static int source_offset(int y, int x)

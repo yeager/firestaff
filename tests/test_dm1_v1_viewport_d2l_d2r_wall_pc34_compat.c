@@ -383,6 +383,83 @@ static int test_flipped_alcove_compose_trace(void)
     return ok;
 }
 
+static int test_frame_edge_pixel_gate(void)
+{
+    int ok = 1;
+    uint8_t source[DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 *
+                   DM1_V1_D2L_D2R_WALL_SOURCE_HEIGHT_PC34];
+    uint8_t viewport[DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 *
+                     DM1_V1_D2L_D2R_WALL_VIEWPORT_HEIGHT_PC34];
+    DM1_V1_D2LD2RWallFramePixelPc34 pixel;
+    const DM1_V1_D2LD2RWallSpecPc34 *d2l =
+        dm1_v1_viewport_d2l_d2r_wall_spec_for_side_pc34(
+            DM1_V1_D2L_D2R_WALL_SIDE_D2L_PC34);
+    const DM1_V1_D2LD2RWallSpecPc34 *d2r =
+        dm1_v1_viewport_d2l_d2r_wall_spec_for_side_pc34(
+            DM1_V1_D2L_D2R_WALL_SIDE_D2R_PC34);
+
+    memset(source, 10, sizeof(source));
+    memset(viewport, 0xee, sizeof(viewport));
+    source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 + 61] = 0x31;
+    source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 + 135] = 0x7b;
+    source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 + 0] = 0x42;
+    source[0 * DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 + 74] = 10;
+
+    ok &= expect_int("pixel.source_width", DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34,
+                     72, "ReDMCSB G0163 ByteWidth=72");
+    ok &= expect_int("pixel.source_pixel_width",
+                     DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34,
+                     144, "ReDMCSB G0163 ByteWidth=72 packed PC34 pixels");
+    ok &= expect_int("pixel.d2l.left.apply",
+                     dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+                         d2l, 20, 0, source, sizeof(source), viewport,
+                         sizeof(viewport), &pixel),
+                     1, "ReDMCSB DUNVIEW.C:587 G0163 D2L left edge");
+    ok &= expect_int("pixel.d2l.left.source_x", pixel.source_x, 61,
+                     "ReDMCSB DUNVIEW.C:587 G0163 D2L source X");
+    ok &= expect_int("pixel.d2l.left.value", pixel.pixel_after, 0x31,
+                     "F0100/F0104 C10 transparent blit writes opaque pixel");
+    ok &= expect_int("pixel.d2l.right.apply",
+                     dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+                         d2l, 20, 74, source, sizeof(source), viewport,
+                         sizeof(viewport), &pixel),
+                     1, "ReDMCSB DUNVIEW.C:587 G0163 D2L right edge");
+    ok &= expect_int("pixel.d2l.right.source_x", pixel.source_x, 135,
+                     "D2L source X 61 + local X 74");
+    ok &= expect_int("pixel.d2l.right.value", pixel.pixel_after, 0x7b,
+                     "right-edge pixel requires 144-pixel source stride");
+    ok &= expect_int("pixel.d2l.after_edge.apply",
+                     dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+                         d2l, 20, 75, source, sizeof(source), viewport,
+                         sizeof(viewport), &pixel),
+                     1, "D2L no-write after frame X2");
+    ok &= expect_int("pixel.d2l.after_edge.no_write", pixel.no_write_metadata, 1,
+                     "D2L frame clips at viewport X2=74");
+
+    ok &= expect_int("pixel.d2r.left.apply",
+                     dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+                         d2r, 20, 149, source, sizeof(source), viewport,
+                         sizeof(viewport), &pixel),
+                     1, "ReDMCSB DUNVIEW.C:588 G0163 D2R left edge");
+    ok &= expect_int("pixel.d2r.left.source_x", pixel.source_x, 0,
+                     "ReDMCSB DUNVIEW.C:588 G0163 D2R source X");
+    ok &= expect_int("pixel.d2r.left.value", pixel.pixel_after, 0x42,
+                     "F0100/F0104 C10 transparent blit writes opaque pixel");
+    ok &= expect_int("pixel.d2r.right.apply",
+                     dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+                         d2r, 20, 223, source, sizeof(source), viewport,
+                         sizeof(viewport), &pixel),
+                     1, "ReDMCSB DUNVIEW.C:588 G0163 D2R right edge");
+    ok &= expect_int("pixel.d2r.right.source_x", pixel.source_x, 74,
+                     "D2R source X 0 + local X 74");
+    ok &= expect_int("pixel.d2r.right.skip", pixel.transparent_skip, 1,
+                     "DEFS.H:2088 C10_COLOR_FLESH transparent pixel");
+    ok &= expect_int("pixel.d2r.right.preserved", pixel.pixel_after, 0xee,
+                     "F0100/F0104 C10 transparent blit preserves destination");
+
+    return ok;
+}
+
 static int test_blend_invalid_and_evidence(void)
 {
     int ok = 1;
@@ -433,6 +510,8 @@ static int test_blend_invalid_and_evidence(void)
                           A_LINEAGE);
     ok &= expect_contains("evidence.no_assets", e, "no real-asset bitmap parity",
                           "contract-only source lock");
+    ok &= expect_contains("evidence.bytewidth", e, "ByteWidth=72",
+                          "ReDMCSB G0163 packed source stride");
 
     return ok;
 }
@@ -449,6 +528,7 @@ int main(void)
     ok &= test_ornament_and_order_metadata();
     ok &= test_native_compose_trace();
     ok &= test_flipped_alcove_compose_trace();
+    ok &= test_frame_edge_pixel_gate();
     ok &= test_blend_invalid_and_evidence();
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);

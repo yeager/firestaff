@@ -20,6 +20,7 @@ extern "C" {
 #define DM1_V1_D2L_D2R_WALL_VIEWPORT_WIDTH_PC34 224
 #define DM1_V1_D2L_D2R_WALL_VIEWPORT_HEIGHT_PC34 136
 #define DM1_V1_D2L_D2R_WALL_SOURCE_WIDTH_PC34 72
+#define DM1_V1_D2L_D2R_WALL_SOURCE_PIXEL_WIDTH_PC34 144
 #define DM1_V1_D2L_D2R_WALL_SOURCE_HEIGHT_PC34 71
 #define DM1_V1_D2L_D2R_WALL_C10_COLOR_FLESH_PC34 10
 #define DM1_V1_D2L_D2R_WALL_MAX_BLITS_PC34 16
@@ -117,6 +118,23 @@ typedef struct {
 } DM1_V1_D2LD2RWallComposeStatePc34;
 
 typedef struct {
+    const DM1_V1_D2LD2RWallSpecPc34 *spec;
+    int in_clip;
+    int writes_pixel;
+    int transparent_skip;
+    int no_write_metadata;
+    int row;
+    int viewport_x;
+    int source_x;
+    int source_y;
+    size_t source_offset;
+    size_t viewport_offset;
+    uint8_t pixel_before;
+    uint8_t source_pixel;
+    uint8_t pixel_after;
+} DM1_V1_D2LD2RWallFramePixelPc34;
+
+typedef struct {
     int ok;
     int source_locked_contract_only;
     int no_real_asset_bitmap_parity;
@@ -166,6 +184,16 @@ int dm1_v1_viewport_d2l_d2r_wall_compose(
 uint8_t dm1_v1_viewport_d2l_d2r_wall_blend_c10_pc34(
     uint8_t destination_pixel,
     uint8_t source_pixel);
+
+int dm1_v1_viewport_d2l_d2r_wall_apply_frame_pixel_pc34(
+    const DM1_V1_D2LD2RWallSpecPc34 *spec,
+    int viewport_y,
+    int viewport_x,
+    const uint8_t *source,
+    size_t source_len,
+    uint8_t *viewport,
+    size_t viewport_len,
+    DM1_V1_D2LD2RWallFramePixelPc34 *out);
 
 int dm1_v1_viewport_d2l_d2r_wall_pc34_compat_run(
     DM1_V1_D2LD2RWallTracePc34 *out_trace);
