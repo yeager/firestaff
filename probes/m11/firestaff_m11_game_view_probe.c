@@ -1521,6 +1521,7 @@ int main(int argc, char** argv) {
     {
         M11_GameViewState doorButtonMiss;
         M11_GameViewState doorButtonHit;
+        M11_GameViewState doorButtonWrongItem;
         M11_GameViewState doorButtonLeftEdge;
         M11_GameViewState doorButtonBottomEdge;
         (void)probe_init_synthetic_view(&doorButtonMiss);
@@ -1554,6 +1555,68 @@ int main(int argc, char** argv) {
                          (doorButtonHit.world.dungeon->tiles[0].squareData[3 * doorButtonHit.world.dungeon->maps[0].height + 2] & 0x07) == 2,
                      "V1 C080 source D1C door-button interior click toggles the front door through the door animation path");
         probe_free_synthetic_view(&doorButtonHit);
+
+        (void)probe_init_synthetic_view(&doorButtonWrongItem);
+        doorButtonWrongItem.showDebugHUD = 0;
+        doorButtonWrongItem.world.party.direction = DIR_NORTH;
+        doorButtonWrongItem.world.party.mapX = 2;
+        doorButtonWrongItem.world.party.mapY = 3;
+        doorButtonWrongItem.world.party.activeChampionIndex = 0;
+        {
+            const unsigned short wrongItem =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            int initialLogCount;
+            char initialLastAction[sizeof(doorButtonWrongItem.lastAction)];
+            char initialLastOutcome[sizeof(doorButtonWrongItem.lastOutcome)];
+            int initialDoorState;
+            int ok;
+
+            /* ReDMCSB CLIKVIEW.C F0377 lines 356-390 only schedules
+             * C10_EVENT_DOOR from the empty-leader-hand D1C button route.
+             * Lines 392-402 route a non-empty hand to throw/drop handling;
+             * Firestaff's D1C keyhole guard must therefore ignore a wrong
+             * item without opening the door or consuming G4055. */
+            ok = M11_GameView_SetV1LeaderHandObject(&doorButtonWrongItem,
+                                                    wrongItem);
+            doorButtonWrongItem.world.party.activeChampionIndex = 1;
+            doorButtonWrongItem.world.party.direction = DIR_EAST;
+            doorButtonWrongItem.world.party.mapX = 2;
+            doorButtonWrongItem.world.party.mapY = 2;
+            doorButtonWrongItem.world.things->doors[0].button = 1;
+            initialTick = doorButtonWrongItem.world.gameTick;
+            initialLogCount =
+                M11_GameView_GetMessageLogCount(&doorButtonWrongItem);
+            snprintf(initialLastAction, sizeof(initialLastAction), "%s",
+                     doorButtonWrongItem.lastAction);
+            snprintf(initialLastOutcome, sizeof(initialLastOutcome), "%s",
+                     doorButtonWrongItem.lastOutcome);
+            initialDoorState =
+                doorButtonWrongItem.world.dungeon->tiles[0].squareData[
+                    3 * doorButtonWrongItem.world.dungeon->maps[0].height + 2] &
+                0x07;
+            probe_record(&tally,
+                         "INV_GV_07I1W",
+                         ok &&
+                             M11_GameView_HandlePointer(&doorButtonWrongItem,
+                                                        171, 80, 1) ==
+                                 M11_GAME_INPUT_IGNORED &&
+                             doorButtonWrongItem.world.gameTick == initialTick &&
+                             doorButtonWrongItem.world.party.activeChampionIndex == 1 &&
+                             doorButtonWrongItem.world.party.direction == DIR_EAST &&
+                             M11_GameView_GetV1LeaderHandThing(
+                                 &doorButtonWrongItem) == wrongItem &&
+                             M11_GameView_GetMessageLogCount(
+                                 &doorButtonWrongItem) == initialLogCount &&
+                             strcmp(doorButtonWrongItem.lastAction,
+                                    initialLastAction) == 0 &&
+                             strcmp(doorButtonWrongItem.lastOutcome,
+                                    initialLastOutcome) == 0 &&
+                             (doorButtonWrongItem.world.dungeon->tiles[0].squareData[
+                                  3 * doorButtonWrongItem.world.dungeon->maps[0].height + 2] &
+                              0x07) == initialDoorState,
+                         "V1 C080 D1C door keyhole wrong item after leader/facing change is ignored without open, consume, or message/state churn");
+        }
+        probe_free_synthetic_view(&doorButtonWrongItem);
 
         (void)probe_init_synthetic_view(&doorButtonLeftEdge);
         doorButtonLeftEdge.showDebugHUD = 0;
