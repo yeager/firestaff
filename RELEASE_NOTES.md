@@ -1,3 +1,22 @@
+# Firestaff v2.7.8
+
+Patch release focused on DM1 V1 viewport, inventory, mirror-candidate, and CSB V1 source-lock/runtime hardening after v2.7.7.
+
+## What's New
+
+- Added DM1 V1 source-lock coverage for D1L2/D1R2, D3L2/D3R2, D2L2/D2R2, D0L2/D0R2, and D0C viewport floor, ceiling, ornament, door-front, and thing-pass paths.
+- Hardened DM1 V1 inventory and mirror-candidate runtime behavior around occupied-slot swaps, scroll pickup/drop, C040 panel-live handoff, reshuffle, cancel, candidate-close, and non-leader routes.
+- Expanded CSB V1 viewport/runtime evidence for D1L2/D1R2 and D2C/D0L2/D0R2 door, floor, ceiling, CustomBackgrounds, movement-command, and command-chain behavior.
+- Kept the public status honest: these are source-lock and regression-hardening slices, not new claims of finished CSB/DM2/Nexus/Theron end-to-end parity.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` at `cf0501377` before release.
+- Local focused pass712/pass713/pass714/pass715 gates and Phase A probe passed before release prep.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.7
 
 Patch release focused on DM1 V1 viewport, inventory, champion-panel, and runtime regression hardening after v2.7.6.

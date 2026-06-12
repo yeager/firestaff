@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.8  (2026-06-12)",
+    "  - DM1 V1 viewport: added source-lock coverage for D1L2/D1R2, D3L2/D3R2, D2L2/D2R2, D0L2/D0R2, and D0C floor, ceiling, ornament, door-front, and thing-pass paths",
+    "  - DM1 V1 inventory and mirror-candidate runtime: hardened chest occupied-slot swaps, scroll pickup/drop, C040 panel-live handoff, reshuffle, cancel, and candidate-close routes",
+    "  - CSB V1 viewport/runtime: expanded D1L2/D1R2 and D2C/D0L2/D0R2 door/floor/ceiling evidence plus movement-command, command-chain, and CustomBackgrounds gates",
+    "  - Verification: latest strict warnings, M10 verify, CMake build matrix, Phase A, audio probe, and cross-platform determinism run green on GitHub Actions before release",
+    "",
     "V2.7.7  (2026-06-08)",
     "  - DM1 V1 viewport: expanded source-lock and pixel gates for side walls, floor/ceiling fallback, stairs/pit dispatch, door fronts, wall ornaments, and projectile side-cell behavior",
     "  - DM1 V1 inventory and champion panels: hardened chest routing, mirror-candidate handoff, hand-slot priority, status-hand, held-item, portrait, wound, and stale-pixel regressions",
@@ -129,5 +135,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.7";
+    return "2.7.8";
 }
