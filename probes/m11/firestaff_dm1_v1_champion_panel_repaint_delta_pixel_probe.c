@@ -337,7 +337,7 @@ int main(int argc, char** argv) {
     ok &= expect_true("slot0 champion icon zone",
                       M11_GameView_GetV1ChampionIconZone(0, &iconX, &iconY,
                                                          &iconW, &iconH) &&
-                      iconW == 16 && iconH == 14);
+                      iconW == 19 && iconH == 14);
     ok &= expect_true("slot0 ready hand zone",
                       M11_GameView_GetV1StatusHandSlotBoxZone(0, 0,
                                                               &handX[0],

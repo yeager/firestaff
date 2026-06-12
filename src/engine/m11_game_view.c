@@ -20723,7 +20723,10 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
     if (!M11_GameView_GetV1ChampionIconZoneId(championSlot)) return 0;
     if (outX) *outX = xs[championSlot];
     if (outY) *outY = ys[championSlot];
-    if (outW) *outW = 16;
+    /* ReDMCSB: CHAMDRAW.C F0622 lines 41-58 prepares a full
+     * G2080_C19_ChampionIconWidth x G2081_C14_ChampionIconHeight
+     * temporary bitmap before blitting it to C113..C116. */
+    if (outW) *outW = M11_CHAMPION_ICON_W;
     if (outH) *outH = 14;
     return 1;
 }
