@@ -135,6 +135,25 @@ static unsigned short next_for_thing(const struct DungeonThings_Compat* things,
     }
 }
 
+static void store_raw_next(unsigned char* raw, unsigned short next) {
+    raw[0] = (unsigned char)(next & 0xFFu);
+    raw[1] = (unsigned char)((next >> 8) & 0xFFu);
+}
+
+static unsigned short raw_next_for_thing(const struct DungeonThings_Compat* things,
+                                         unsigned short thing) {
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+    unsigned char* raw;
+    if (!things || type < 0 || type >= 16 ||
+        index < 0 || index >= things->thingCounts[type] ||
+        !things->rawThingData[type]) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type] + (index * 4);
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
 static int count_square_chain(const struct DungeonThings_Compat* things) {
     unsigned short thing = things->squareFirstThings[0];
     int count = 0;
@@ -318,6 +337,81 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
               "death/drop chain terminates after generated steaks");
 }
 
+static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[1];
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[12][4];
+    unsigned char groupRaw[1][16];
+    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    unsigned short existingFloorJunk =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    unsigned short carriedJunk =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 1);
+    unsigned short fixedClub;
+
+    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+                    weapons, armours, junks, squareFirstThings,
+                    weaponRaw, armourRaw, junkRaw);
+    memset(groups, 0, sizeof(groups));
+    memset(groupRaw, 0, sizeof(groupRaw));
+
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = 25;
+    store_raw_next(junkRaw[0], THING_ENDOFLIST);
+    junkRaw[0][2] = 25;
+    junks[1].next = THING_ENDOFLIST;
+    junks[1].type = 33;
+    store_raw_next(junkRaw[1], THING_ENDOFLIST);
+    junkRaw[1][2] = 33;
+
+    groups[0].next = existingFloorJunk;
+    groups[0].slot = carriedJunk;
+    groups[0].creatureType = DM1_CREATURE_TYPE_TROLIN;
+    groups[0].cells = 1;
+    groups[0].count = 0;
+    groups[0].health[0] = 0;
+    store_raw_next(groupRaw[0], existingFloorJunk);
+    things.groups = groups;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
+    things.squareFirstThings[0] = groupThing;
+
+    /* ReDMCSB GROUP.C:F0188:716-731 invokes F0186 before walking Slot.
+     * F0186:610-645 allocates the fixed Trolin club, cell-tags it, and
+     * inserts it through F0267, so the existing square chain survives between
+     * the later group-slot prepend and the generated fixed possession. */
+    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+                  &state, groupThing, 0, 0, 0),
+              1, "dead trolin runtime death/drop path accepted");
+
+    fixedClub = (unsigned short)((1u << 14) | (THING_TYPE_WEAPON << 10) | 0);
+    ASSERT_EQ(things.squareFirstThings[0], carriedJunk,
+              "group slot possession is first after group removal");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedJunk), existingFloorJunk,
+              "carried possession links to pre-existing floor object");
+    ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), fixedClub,
+              "pre-existing floor object links to generated fixed club");
+    ASSERT_EQ(raw_next_for_thing(&things, fixedClub), THING_ENDOFLIST,
+              "generated fixed club terminates object chain");
+    ASSERT_EQ(weapons[0].type, 23, "generated Trolin fixed drop is club subtype");
+    ASSERT_EQ(THING_GET_CELL(fixedClub), 1,
+              "generated Trolin fixed club keeps deterministic source cell");
+    ASSERT_EQ(groups[0].next, THING_NONE,
+              "dead trolin group slot is returned to source unused pool");
+}
+
 int main(void) {
     printf("M11 creature fixed possession runtime source-lock gate\n");
     printf("Source: ReDMCSB GROUP.C F0186/F0188, DUNGEON.C F0166, MOVESENS.C F0267\n\n");
@@ -326,6 +420,7 @@ int main(void) {
     test_animated_armour_materializes_cursed_armour_and_weapons();
     test_fixed_drops_do_not_append_when_pool_exhausted();
     test_dead_group_runtime_materializes_and_removes_group();
+    test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
