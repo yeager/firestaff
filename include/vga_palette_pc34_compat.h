@@ -24,7 +24,7 @@
 #define VGA_PALETTE_PC34_SPECIAL_ENTRANCE        1
 #define VGA_PALETTE_PC34_SPECIAL_TITLE           2
 /* ReDMCSB TITLE.C F0437 PC/F20 runs the "PRESENTS" word on its own
- * C12_PRESENTS palette (only color 0x0F = white is non-black) before
+ * C12_PRESENTS palette row (color 0x0F = white) before
  * fading back to black and applying C13_DUNGEON + C14_MASTER for the
  * "DUNGEON MASTER" / "STRIKES BACK" zoom and reveal.  Apply the two
  * palettes in their original order; the previous v2.7.4 release folded
@@ -46,7 +46,7 @@ extern const unsigned char G9010_auc_VgaPaletteAll_Compat[6][16][3];
    and PRESENTS palettes merged from the C12_PRESENTS, C13_DUNGEON and
    C14_MASTER COLOR_DEF tables in DRAWVIEW.C.  ReDMCSB TITLE.C F0437
    switches between them in source order: PRESENTS first (white text on
-   black), then a fade-to-black curtain, then DUNGEON+MASTER for the
+   black), then a fade-to-black curtain, then DUNGEON+MASTER rows over LIGHT0 for the
    "DUNGEON" zoom and "STRIKES BACK" reveal. */
 extern const unsigned char G9011_auc_VgaPaletteCredits_Compat[16][3];
 extern const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3];

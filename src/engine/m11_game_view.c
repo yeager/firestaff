@@ -414,7 +414,7 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
                                           const char *path)
 {
     char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
-    unsigned char buf[44];
+    unsigned char buf[48];
     FILE *file;
 
     if (!state || !path || !path[0]) {
@@ -433,7 +433,7 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
     memset(buf, 0, sizeof(buf));
     memcpy(buf, g_m11_quicksave_v1_runtime_magic,
            sizeof(g_m11_quicksave_v1_runtime_magic));
-    m11_write_u32_le(buf + 8, 2U);
+    m11_write_u32_le(buf + 8, 3U);
     m11_write_u32_le(buf + 12, (uint32_t)(state->leaderHandObjectPresent ? 1 : 0));
     m11_write_u32_le(buf + 16, (uint32_t)state->leaderHandThing);
     m11_write_u32_le(buf + 20, (uint32_t)state->v1OpenChestThing);
@@ -442,6 +442,7 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
     m11_write_u32_le(buf + 32, (uint32_t)(int32_t)state->candidateMirrorPartyIndex);
     m11_write_u32_le(buf + 36, (uint32_t)(state->candidateMirrorPanelActive ? 1 : 0));
     m11_write_u32_le(buf + 40, (uint32_t)(state->inventoryPanelActive ? 1 : 0));
+    m11_write_u32_le(buf + 44, state->lastPartyMovementTick);
 
     file = fopen(sidecarPath, "wb");
     if (!file) {
@@ -461,7 +462,7 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
                                          const char *path)
 {
     char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
-    unsigned char buf[44];
+    unsigned char buf[48];
     FILE *file;
     size_t readCount;
     uint32_t version;
@@ -479,7 +480,7 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     }
     memset(buf, 0, sizeof(buf));
     readCount = fread(buf, 1U, sizeof(buf), file);
-    if (readCount != 28U && readCount != sizeof(buf)) {
+    if (readCount != 28U && readCount != 44U && readCount != sizeof(buf)) {
         (void)fclose(file);
         return 0;
     }
@@ -489,8 +490,9 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     version = m11_read_u32_le(buf + 8);
     if (memcmp(buf, g_m11_quicksave_v1_runtime_magic,
                sizeof(g_m11_quicksave_v1_runtime_magic)) != 0 ||
-        (version != 1U && version != 2U) ||
-        (version == 2U && readCount < sizeof(buf))) {
+        (version != 1U && version != 2U && version != 3U) ||
+        (version == 2U && readCount < 44U) ||
+        (version == 3U && readCount < sizeof(buf))) {
         return 0;
     }
 
@@ -518,6 +520,14 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
         state->candidateMirrorOrdinal = -1;
         state->candidateMirrorPartyIndex = -1;
         state->candidateMirrorPanelActive = 0;
+    }
+    if (version >= 3U) {
+        state->lastPartyMovementTick = m11_read_u32_le(buf + 44);
+    } else {
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
+    if (state->lastPartyMovementTick > state->world.gameTick) {
+        state->lastPartyMovementTick = state->world.gameTick;
     }
     return 1;
 }
@@ -4459,6 +4469,15 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
         if (!champ->present || champ->hp.current == 0) {
             continue; /* absent or dead */
         }
+        /* ReDMCSB CHAMPION.C F0331:2333-2335 excludes
+         * G0299_ui_CandidateChampionOrdinal while the C040
+         * resurrect/reincarnate panel is open.  REVIVE.C F0280:272-284
+         * appends that candidate to the party before the player confirms;
+         * do not let the Hall of Champions dialog drain or kill it. */
+        if (state->candidateMirrorPanelActive &&
+            i == state->candidateMirrorPartyIndex) {
+            continue;
+        }
         /* Build needs snapshot */
         DM1_ChampionNeeds needs;
         DM1_NeedsTickContext ctx;
@@ -4485,9 +4504,9 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
         if (needs.wizard_skill_level < 0) needs.wizard_skill_level = 0;
 
         ctx.game_time = state->world.gameTick;
-        ctx.last_movement_time = state->world.gameTick > 100U
-            ? state->world.gameTick - 100U
-            : 0U;
+        ctx.last_movement_time = state->lastPartyMovementTick <= state->world.gameTick
+            ? state->lastPartyMovementTick
+            : state->world.gameTick;
         ctx.party_is_resting = state->resting ? 1 : 0;
 
         /* ReDMCSB CHAMPION.C F0331: food/water drain embedded in stamina cycle.
@@ -7049,6 +7068,13 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
+    if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
+        /* ReDMCSB MOVESENS.C:763-775 updates
+         * G0362_l_LastPartyMovementTime when the party actually changes
+         * square, and CHAMPION.C F0331 uses that timestamp for stamina
+         * recovery/drain thresholds. */
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
     (void)F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
 
     m11_apply_survival_drain(state);
@@ -7479,6 +7505,11 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     state->candidateMirrorPartyIndex = previousPartyCount;
     state->candidateMirrorPanelActive = 1;
     state->inventoryPanelActive = 1;
+    if (previousPartyCount == 0) {
+        /* ReDMCSB REVIVE.C:837-840 seeds G0362_l_LastPartyMovementTime
+         * when the first champion joins from a mirror. */
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
     (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
@@ -7505,7 +7536,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
+    championIndex = state->candidateMirrorPartyIndex;
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
         !state->world.party.champions[championIndex].present) {
@@ -7536,7 +7567,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     if (!state || !state->active || !state->candidateMirrorPanelActive) {
         return 0;
     }
-    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
+    championIndex = state->candidateMirrorPartyIndex;
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
         (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                    championIndex);

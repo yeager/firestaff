@@ -87,16 +87,16 @@ static void check_rgb(unsigned int palette,
 
 int main(void) {
     static const unsigned char expectedPresents[16][3] = {
-        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
-        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
-        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
-        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {255, 255, 255}
+        {0, 0, 0}, {109, 109, 109}, {146, 146, 146}, {109, 36, 0},
+        {0, 219, 219}, {146, 73, 0}, {0, 146, 0}, {0, 219, 0},
+        {255, 0, 0}, {255, 182, 0}, {219, 146, 109}, {255, 255, 0},
+        {73, 73, 73}, {182, 182, 182}, {0, 0, 255}, {255, 255, 255}
     };
     static const unsigned char expectedDungeonMaster[16][3] = {
-        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {188, 156, 60},
+        {0, 0, 0}, {109, 109, 109}, {146, 146, 146}, {188, 156, 60},
         {156, 92, 60}, {220, 188, 60}, {188, 92, 60}, {220, 220, 92},
-        {252, 252, 60}, {0, 0, 0}, {0, 0, 0}, {124, 60, 28},
-        {252, 0, 0}, {0, 0, 0}, {0, 0, 0}, {252, 0, 0}
+        {255, 255, 60}, {255, 182, 0}, {219, 146, 109}, {124, 60, 28},
+        {255, 0, 0}, {182, 182, 182}, {0, 0, 255}, {255, 0, 0}
     };
 
     /* The helper must always succeed and never write a negative or
@@ -191,18 +191,18 @@ int main(void) {
                     != VGA_PALETTE_PC34_SPECIAL_TITLE,
                 "PRESENTS and DUNGEON+MASTER palette slots are distinct");
 
-    /* The two palettes must be visually distinct: the PRESENTS palette
-     * has only 0x0F as non-black, while the DUNGEON+MASTER palette
-     * lights colors 3..8, 0x0B, 0x0C, 0x0F.  Sample color 4 (used for
-     * the "DUNGEON" word) to prove the palettes are not the same row. */
+    /* The two palettes must be visually distinct: the PRESENTS phase
+     * keeps LIGHT0 while DUNGEON+MASTER overrides colors 3..8, 0x0B,
+     * 0x0C, 0x0F.  Sample color 4 to prove the palettes are not the
+     * same row. */
     const unsigned char* presentsColor4 =
         F9011_VGA_GetSpecialColorRgb_Compat(4, VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS);
     const unsigned char* titleColor4 =
         F9011_VGA_GetSpecialColorRgb_Compat(4, VGA_PALETTE_PC34_SPECIAL_TITLE);
     ASSERT_TRUE(presentsColor4 && titleColor4,
                 "color 4 must resolve in both PRESENTS and DUNGEON+MASTER palettes");
-    ASSERT_TRUE(presentsColor4[0] == 0u && presentsColor4[1] == 0u && presentsColor4[2] == 0u,
-                "PRESENTS color 4 is black (C12_PRESENTS only lights 0x0F)");
+    ASSERT_TRUE(presentsColor4[0] == 0u && presentsColor4[1] == 219u && presentsColor4[2] == 219u,
+                "PRESENTS color 4 remains LIGHT0 cyan while C12_PRESENTS only changes 0x0F");
     ASSERT_TRUE(!(titleColor4[0] == 0u && titleColor4[1] == 0u && titleColor4[2] == 0u),
                 "DUNGEON+MASTER color 4 is not black (C13_DUNGEON lights 0x03..0x08, 0x0B, 0x0C)");
 
@@ -211,8 +211,8 @@ int main(void) {
      * v2.7.4 wrong-palette gold (170, 119, 0). */
     const unsigned char* titleColor15 =
         F9011_VGA_GetSpecialColorRgb_Compat(15, VGA_PALETTE_PC34_SPECIAL_TITLE);
-    ASSERT_TRUE(titleColor15 && titleColor15[0] == 252u && titleColor15[1] == 0u && titleColor15[2] == 0u,
-                "DUNGEON+MASTER color 0x0F is bright red (C14_MASTER 0x3F,0x00,0x00 -> 0xFC,0x00,0x00)");
+    ASSERT_TRUE(titleColor15 && titleColor15[0] == 255u && titleColor15[1] == 0u && titleColor15[2] == 0u,
+                "DUNGEON+MASTER color 0x0F is bright red (C14_MASTER 0x3F,0x00,0x00)");
 
     /* Full ReDMCSB DRAWVIEW.C F20E palette lock:
      *   G8159_PRESENTS rows 273-290: only 0x0F is white.

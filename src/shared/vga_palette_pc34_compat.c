@@ -136,7 +136,9 @@ const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3] = {
  * C12_PRESENTS from the same file; the F20E TITLE.C F0437 routine
  * calls F1012_PALETTE_SetCurtain(C0_BLACK_PALETTE) and then
  * F0694_SetMultipleColorsInPalette(C12_PRESENTS) before the PRESENTS
- * blit, so only color 0x0F is non-black on the PRESENTS step. */
+ * blit.  The source normal palette remains live behind that row because
+ * SetCurtain(C0_BLACK_PALETTE) blacks hardware output, not the saved
+ * full palette. */
 const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT][16][3] = {
         /* VGA_PALETTE_PC34_SPECIAL_CREDITS — VIDEODRV.C G8147_CREDITS */
         {
@@ -153,31 +155,28 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
                 { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
         },
         /* VGA_PALETTE_PC34_SPECIAL_TITLE — F20E PC 3.4 DUNGEON+MASTER palette.
-         * ReDMCSB DRAWVIEW.C F20E:
-         *   G8160_DUNGEON (C13_DUNGEON) sets 0x03, 0x04, 0x05, 0x06, 0x07,
-         *   0x08, 0x0B, 0x0C with the warm brown/gold/red DUNGEON text.
-         *   G8161_MASTER (C14_MASTER) sets 0x0F to bright red for the
-         *   MASTER / STRIKES BACK text.  All other indices stay black so
-         *   the curtain-to-black fade in TITLE.C:333 / TITLE.C:358-360
-         *   works the same as on the original. */
+         * ReDMCSB DRAWVIEW.C F1012_PALETTE_SetCurtain:665-679 blacks the
+         * hardware palette only; it does not erase G8183_aac_FullPalette.
+         * TITLE.C:362-367 then applies C13_DUNGEON and C14_MASTER on top
+         * of the normal LIGHT0 row before restoring the curtain. */
         {
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {188, 156,  60},
+                {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {188, 156,  60},
                 {156,  92,  60}, {220, 188,  60}, {188,  92,  60}, {220, 220,  92},
-                {252, 252,  60}, {  0,   0,   0}, {  0,   0,   0}, {124,  60,  28},
-                {252,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {252,   0,   0}
+                {255, 255,  60}, {255, 182,   0}, {219, 146, 109}, {124,  60,  28},
+                {255,   0,   0}, {182, 182, 182}, {  0,   0, 255}, {255,   0,   0}
         },
         /* VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS — F20E PC 3.4 PRESENTS palette.
          * ReDMCSB DRAWVIEW.C F20E:
-         *   G8159_PRESENTS (C12_PRESENTS) sets only 0x0F to white; the rest
-         *   of the 16-color palette stays black, so the PRESENTS blit
-         *   (TITLE.C:319-324) fades in to a black canvas with the word
-         *   "PRESENTS" lit in white.  TITLE.C:333 then fades back to black
+         *   G8159_PRESENTS (C12_PRESENTS) sets 0x0F to white over the
+         *   normal palette, so the PRESENTS blit (TITLE.C:319-324)
+         *   fades in with the word "PRESENTS" lit in white.
+         *   TITLE.C:333 then fades back to black
          *   before C13_DUNGEON + C14_MASTER take over. */
         {
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {255, 255, 255}
+                {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {109,  36,   0},
+                {  0, 219, 219}, {146,  73,   0}, {  0, 146,   0}, {  0, 219,   0},
+                {255,   0,   0}, {255, 182,   0}, {219, 146, 109}, {255, 255,   0},
+                { 73,  73,  73}, {182, 182, 182}, {  0,   0, 255}, {255, 255, 255}
         }
 };
 

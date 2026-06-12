@@ -35,21 +35,44 @@ const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
         return 0;
 }
 
-static unsigned char SWSH_Compat_AtariRgb3ToRgb8(unsigned int component) {
-        component &= 0x07u;
-        return (unsigned char)((component * 255u + 3u) / 7u);
+static unsigned char SWSH_Compat_Vga6ToRgb8(unsigned int component) {
+        component &= 0x3Fu;
+        return (unsigned char)((component << 2) | (component >> 4));
 }
 
-void SWSH_Compat_ConvertAtariRgbWordToRgb8(unsigned int colorValue,
-                                            unsigned char outRgb[3]) {
+void SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(unsigned int colorValue,
+                                              unsigned char outRgb[3]) {
         if (!outRgb) return;
-        /* ReDMCSB SWSH.C:21-28 masks palette commands with 0x0777 and
-         * passes the value directly to XBIOS Setcolor().  The word is Atari
-         * 3-bit RGB (0xRGB), so 0x777 is white, 0x555 light grey,
-         * 0x222 dark grey, and 0x770 yellow. */
-        outRgb[0] = SWSH_Compat_AtariRgb3ToRgb8((colorValue >> 8) & 0x07u);
-        outRgb[1] = SWSH_Compat_AtariRgb3ToRgb8((colorValue >> 4) & 0x07u);
-        outRgb[2] = SWSH_Compat_AtariRgb3ToRgb8(colorValue & 0x07u);
+        /* ReDMCSB SWSH.C F2255:3017-3026 applies PC/F20E Swoosh palette
+         * rows C16..C25 from DRAWVIEW.C G8162-G8171.  The old Atari
+         * Setcolor words are kept as source-step tokens, but their visible
+         * PC values are VGA DAC rows: white 0x3F, grey 0x2F/0x1F and
+         * final yellow 0x3F,0x3F,0. */
+        switch (colorValue & 0x0777u) {
+        case 0x0777u:
+                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
+                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
+                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
+                break;
+        case 0x0555u:
+                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
+                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
+                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
+                break;
+        case 0x0222u:
+                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
+                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
+                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
+                break;
+        case 0x0770u:
+                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
+                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
+                outRgb[2] = 0u;
+                break;
+        default:
+                outRgb[0] = outRgb[1] = outRgb[2] = 0u;
+                break;
+        }
 }
 
 

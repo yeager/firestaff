@@ -1,3 +1,24 @@
+# Firestaff v2.7.11
+
+Patch release for DM1 V1 regressions reported after v2.7.10.
+
+## Fixes
+
+- Fixed Hall of Champions movement/survival timing so champions no longer drain or die while walking the Hall.
+- Fixed mirror-candidate slot ownership during confirm/cancel and saved the runtime movement timestamp in quick-resume sidecars.
+- Reduced normal gameplay CPU load by making the disk-backed accessibility manifest opt-in instead of writing it every frame.
+- Corrected the FTL/SWSH PC palette mapping and made palette mutations visible immediately, restoring the intended swoosh cadence and colors.
+- Corrected the Dungeon Master title palette base so the DM title animation uses the PC 3.4 palette instead of a blacked-out fallback.
+
+## Verification
+
+- Full local CMake build completed.
+- Focused Hall/mirror/title/swoosh/starvation/quick-resume CTest suite passed 90/90, then the post-fix runtime subset passed 11/11.
+- Direct dummy-driver runtime probes passed for Hall walkaround and champion mirror walk-path using local DM1 data.
+- Phase A probe passed 23/23 and `git diff --check` passed.
+
+---
+
 # Firestaff v2.7.10
 
 Patch release focused on the large DM1 V1 hardening batch after v2.7.9.

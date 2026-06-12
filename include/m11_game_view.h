@@ -136,6 +136,7 @@ typedef struct {
     int candidateMirrorOrdinal;
     int candidateMirrorPartyIndex;
     int candidateMirrorPanelActive;
+    uint32_t lastPartyMovementTick;
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
