@@ -9009,6 +9009,26 @@ if(NOT TARGET test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat)
     )
 endif()
 
+# ── DM1 V1 sleep/wakeup/clock temporary-XP decay gate ───────────────
+# Contract-only gate for F0847_LIFECYCLE_ApplyTemporaryXPDecay_Compat,
+# the per-tick Skills[19..0].temporaryExperience-- slice that the
+# pass777 F0331 clock gate and the F0331 stamina + hunger/thirst gate
+# do not pin.  ReDMCSB CHAMPION.C F0331 lines 2362-2368.
+if(NOT TARGET test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat)
+    add_executable(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat
+        tests/test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat.c
+        src/memory/memory_champion_lifecycle_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sleep_wakeup_clock_temp_xp_gate_source_lock
+        COMMAND test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 Event Timer source-lock gate ──────────────────────────────
 if(NOT TARGET test_dm1_v1_event_timer_pc34_compat)
     add_executable(test_dm1_v1_event_timer_pc34_compat
