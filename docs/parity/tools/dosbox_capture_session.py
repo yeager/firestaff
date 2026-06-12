@@ -431,6 +431,51 @@ def dry_run(plan: list[PlanStep],
                 failures.append("live abort receipt: last frame quality missing blackout")
             if "quality_log" not in abort_receipt or "state_samples_dir" not in abort_receipt:
                 failures.append("live abort receipt: diagnostic paths missing")
+        from PIL import Image, ImageDraw
+        black = Image.new("RGB", (320, 200), (0, 0, 0))
+        visible = Image.new("RGB", (320, 200), (0, 0, 0))
+        draw = ImageDraw.Draw(visible)
+        draw.rectangle((0, 33, 223, 168), fill=(96, 80, 48))
+        capture_root = tmp_root / "auto-backend-capture-root"
+        original_capture_raw_frame = globals()["_capture_raw_frame"]
+        original_capture_with_screencapture = globals()["_capture_with_screencapture"]
+        try:
+            def fake_capture_raw_frame(raw: Path, backend: str) -> dict[str, str]:
+                if backend != "auto":
+                    raise AssertionError("auto fallback fixture expected auto backend")
+                black.save(raw)
+                return {
+                    "capture_backend": "peekaboo",
+                    "capture_source": "peekaboo:window:DOSBox Staging",
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }
+
+            def fake_capture_with_screencapture(raw: Path) -> tuple[dict[str, str], bool]:
+                visible.save(raw)
+                return {
+                    "capture_backend": "screencapture",
+                    "capture_source": "screencapture:dosbox-window",
+                    "host_active_app": "DOSBox Staging",
+                    "dosbox_window_bounds": "1,2,1024,768",
+                }, True
+
+            globals()["_capture_raw_frame"] = fake_capture_raw_frame
+            globals()["_capture_with_screencapture"] = fake_capture_with_screencapture
+            fallback_img, fallback_meta = _screenshot_frame(
+                capture_root,
+                "auto_backend_blackout_fallback",
+                "auto",
+            )
+        finally:
+            globals()["_capture_raw_frame"] = original_capture_raw_frame
+            globals()["_capture_with_screencapture"] = original_capture_with_screencapture
+        if _is_capture_blackout(fallback_img):
+            failures.append("auto capture backend: did not prefer visible alternate backend")
+        if fallback_meta.get("capture_backend") != "screencapture":
+            failures.append("auto capture backend: fallback backend metadata mismatch")
+        if "auto-visible-after-peekaboo-blackout" not in fallback_meta.get("capture_source", ""):
+            failures.append("auto capture backend: fallback provenance missing")
     return matched, total, failures
 
 
@@ -622,18 +667,58 @@ def _crop_to_4x3(img):
     return img
 
 
-def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
+def _normalize_capture_image(raw: Path):
     if not _DETECTOR_OK:
         raise RuntimeError("Pillow and numpy are required for --live")
     from PIL import Image
+
+    img = Image.open(raw).convert("RGB")
+    resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+    return _crop_to_4x3(img).resize((320, 200), resample)
+
+
+def _is_capture_blackout(img) -> bool:
+    quality = _frame_quality(img, "auto_backend_probe", "capture_probe")
+    return quality.blackout
+
+
+def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for --live")
 
     capture_root.mkdir(parents=True, exist_ok=True)
     raw = capture_root / "state-samples" / f"{label}.png"
     raw.parent.mkdir(parents=True, exist_ok=True)
     meta = _capture_raw_frame(raw, capture_backend)
-    img = Image.open(raw).convert("RGB")
-    resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
-    return _crop_to_4x3(img).resize((320, 200), resample), meta
+    img = _normalize_capture_image(raw)
+    if capture_backend == "auto" and _is_capture_blackout(img):
+        alternate_backend = (
+            "screencapture"
+            if meta.get("capture_backend") == "peekaboo"
+            else "peekaboo"
+        )
+        alternate_raw = raw.with_name(f"{raw.stem}.{alternate_backend}.png")
+        try:
+            alternate_meta, alternate_ok = (
+                _capture_with_screencapture(alternate_raw)
+                if alternate_backend == "screencapture"
+                else _capture_with_peekaboo(alternate_raw)
+            )
+            if alternate_ok and alternate_raw.is_file():
+                alternate_img = _normalize_capture_image(alternate_raw)
+                if not _is_capture_blackout(alternate_img):
+                    alternate_meta["capture_backend"] = alternate_backend
+                    alternate_meta["capture_source"] = (
+                        alternate_meta.get("capture_source", "") +
+                        f":auto-visible-after-{meta.get('capture_backend', 'unknown')}-blackout"
+                    )
+                    return alternate_img, alternate_meta
+        except Exception as exc:
+            meta["capture_source"] = (
+                meta.get("capture_source", "") +
+                f":auto-alternate-{alternate_backend}-failed:{type(exc).__name__}"
+            )
+    return img, meta
 
 
 def _region_density_from_array(arr, x0: int, y0: int, x1: int, y1: int) -> float:
