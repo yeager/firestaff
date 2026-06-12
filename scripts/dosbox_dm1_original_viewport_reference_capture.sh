@@ -32,6 +32,7 @@ KEY_HELPER_XDOTOOL="${OUT_DIR}/original_viewport_route_keys_xdotool.sh"
 KEY_LOG="${OUT_DIR}/original-viewpoint-route-keys.log"
 SHOT_LABEL_MANIFEST="${OUT_DIR}/original_viewport_shot_labels.tsv"
 RAW_MANIFEST="${OUT_DIR}/raw_manifest.tsv"
+RAW_HEALTH_MANIFEST="${OUT_DIR}/raw_frame_health.json"
 CROP_MANIFEST="${OUT_DIR}/original_viewport_224x136_manifest.tsv"
 CROP_DIR="${OUT_DIR}/viewport_224x136"
 SIZE_LOG="${OUT_DIR}/artifact-sizes.txt"
@@ -67,6 +68,7 @@ Labeled shot tokens:
 Outputs:
   raw screenshots: ${OUT_DIR}/image*.png (raw 320x200; exact DOSBox 640x400 2x captures are normalized to 320x200)
   crops:           ${CROP_DIR}/*.ppm and *.png
+  raw health:      ${RAW_HEALTH_MANIFEST}
 
 Optional environment:
   DM1_ORIGINAL_STAGE_DIR=/path/to/DM1-PC34-tree-with-DM.EXE
@@ -605,7 +607,7 @@ normalize_existing() {
     local image_tool
     image_tool="$(need_image_tool)"
     mkdir -p "${CROP_DIR}"
-    rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}"
+    rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}"
 
     python3 - "${OUT_DIR}" "${RAW_MANIFEST}" <<'PY'
 from __future__ import annotations
@@ -658,6 +660,96 @@ with manifest.open("w") as f:
         st = path.stat()
         iso = datetime.fromtimestamp(st.st_mtime_ns / 1_000_000_000, timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
         f.write(f"{i:02d}\t{path}\t{st.st_mtime_ns}\t{iso}\t{hashlib.sha256(data).hexdigest()}\t{st.st_size}\t{w}\t{h}\n")
+PY
+
+    python3 - "${OUT_DIR}" "${RAW_HEALTH_MANIFEST}" "${image_tool}" <<'PY'
+from __future__ import annotations
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+
+out = Path(sys.argv[1])
+manifest = Path(sys.argv[2])
+image_tool = sys.argv[3]
+
+def ppm_pixels(data: bytes, path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]]:
+    tokens: list[bytes] = []
+    i = 0
+    n = len(data)
+    while len(tokens) < 4 and i < n:
+        while i < n and data[i] in b" \t\r\n":
+            i += 1
+        if i < n and data[i] == ord("#"):
+            while i < n and data[i] not in b"\r\n":
+                i += 1
+            continue
+        start = i
+        while i < n and data[i] not in b" \t\r\n":
+            i += 1
+        if start < i:
+            tokens.append(data[start:i])
+    if len(tokens) < 4 or tokens[0] != b"P6" or tokens[3] != b"255":
+        raise SystemExit(f"ERROR: ImageMagick did not produce binary PPM for {path}")
+    while i < n and data[i] in b" \t\r\n":
+        i += 1
+    width = int(tokens[1])
+    height = int(tokens[2])
+    raw = data[i:]
+    if len(raw) != width * height * 3:
+        raise SystemExit(f"ERROR: PPM pixel payload size mismatch for {path}")
+    pixels = [(raw[j], raw[j + 1], raw[j + 2]) for j in range(0, len(raw), 3)]
+    return (width, height), pixels
+
+def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]]:
+    if image_tool == "pillow":
+        from PIL import Image
+        im = Image.open(path).convert("RGB")
+        return im.size, list(im.getdata())
+    data = subprocess.check_output([image_tool, str(path), "ppm:-"])
+    return ppm_pixels(data, path)
+
+paths = sorted(out.glob("image*.png"))
+rows = []
+problems = []
+for idx, path in enumerate(paths, 1):
+    dims, pixels = load_pixels(path)
+    total = len(pixels)
+    nonblack = sum(1 for rgb in pixels if rgb != (0, 0, 0))
+    unique = len(set(pixels))
+    data = path.read_bytes()
+    row = {
+        "index": idx,
+        "path": str(path),
+        "width": dims[0],
+        "height": dims[1],
+        "sizeBytes": path.stat().st_size,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "nonblackRatio": round(nonblack / total, 6),
+        "uniqueColors": unique,
+    }
+    if dims != (320, 200):
+        problems.append(f"{path.name}: rawshot dimensions are {dims[0]}x{dims[1]}, expected 320x200")
+    if row["nonblackRatio"] <= 0.005 or unique <= 1:
+        problems.append(f"{path.name}: black/blank rawshot candidate nonblack={row['nonblackRatio']} uniqueColors={unique}")
+    rows.append(row)
+payload = {
+    "schema": "dm1_original_raw_frame_health.v1",
+    "attemptDir": str(out),
+    "captureCount": len(rows),
+    "honesty": "Rawshot health gate only. Passing this gate does not claim route semantics or pixel parity.",
+    "captures": rows,
+    "problems": problems,
+    "pass": len(rows) == 6 and not problems,
+}
+manifest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+if not payload["pass"]:
+    print(f"ERROR: raw screenshot health gate failed; see {manifest}", file=sys.stderr)
+    for problem in problems:
+        print(f"ERROR: {problem}", file=sys.stderr)
+    raise SystemExit(9)
+print(f"[pass-70] raw screenshot health OK: {manifest}")
 PY
 
     local labels=(
@@ -777,7 +869,7 @@ with manifest.open("w") as f:
             raise SystemExit(f"ERROR: wrong crop geometry for {path}: {width}x{height}")
         f.write(f"original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
 PY
-    ls -lh "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
+    ls -lh "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
     if [[ -n "${ROUTE_EVENTS}" ]]; then
         python3 "${REPO}/tools/pass513_i34e_route_transcript_scaffold.py" \
             --repo-root "${REPO}" \
@@ -813,6 +905,7 @@ case "$mode" in
             validate_route_shape
         fi
         echo "[pass-70] normalize command after raw screenshots exist: scripts/dosbox_dm1_original_viewport_reference_capture.sh --normalize-only"
+        echo "[pass-70] normalize-only now writes ${RAW_HEALTH_MANIFEST} and fails black/blank rawshots before cropping"
         exit 0
         ;;
     preflight-route)
@@ -849,7 +942,7 @@ case "$mode" in
             echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
         fi
-        rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
+        rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
         # DOSBox 0.74 names screenshots after the active program/window
         # (selector_NNN.png, fires_NNN.png) instead of imageNNNN.png.  Remove
         # stale top-level captures before a run so normalize_existing can map
