@@ -414,7 +414,7 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
                                           const char *path)
 {
     char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
-    unsigned char buf[28];
+    unsigned char buf[44];
     FILE *file;
 
     if (!state || !path || !path[0]) {
@@ -425,17 +425,23 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
     }
 
     /* ReDMCSB CHAMPION.C F0297/F0298 owns G4055_s_LeaderHandObject,
-     * and CHEST.C F0333/F0334 owns G0426_T_OpenChest.  These are
+     * CHEST.C F0333/F0334 owns G0426_T_OpenChest, and REVIVE.C
+     * F0280:124-132 + F0282:744-806 with COMMAND.C F0359:1985-1990
+     * own the live C040 resurrect/reincarnate candidate panel. These are
      * transient V1 presentation/runtime fields outside GameWorld_Compat,
      * so quick-resume persists them beside the source-locked world blob. */
     memset(buf, 0, sizeof(buf));
     memcpy(buf, g_m11_quicksave_v1_runtime_magic,
            sizeof(g_m11_quicksave_v1_runtime_magic));
-    m11_write_u32_le(buf + 8, 1U);
+    m11_write_u32_le(buf + 8, 2U);
     m11_write_u32_le(buf + 12, (uint32_t)(state->leaderHandObjectPresent ? 1 : 0));
     m11_write_u32_le(buf + 16, (uint32_t)state->leaderHandThing);
     m11_write_u32_le(buf + 20, (uint32_t)state->v1OpenChestThing);
     m11_write_u32_le(buf + 24, (uint32_t)(state->v1OpenChestOpenedByEye ? 1 : 0));
+    m11_write_u32_le(buf + 28, (uint32_t)(int32_t)state->candidateMirrorOrdinal);
+    m11_write_u32_le(buf + 32, (uint32_t)(int32_t)state->candidateMirrorPartyIndex);
+    m11_write_u32_le(buf + 36, (uint32_t)(state->candidateMirrorPanelActive ? 1 : 0));
+    m11_write_u32_le(buf + 40, (uint32_t)(state->inventoryPanelActive ? 1 : 0));
 
     file = fopen(sidecarPath, "wb");
     if (!file) {
@@ -455,8 +461,10 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
                                          const char *path)
 {
     char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
-    unsigned char buf[28];
+    unsigned char buf[44];
     FILE *file;
+    size_t readCount;
+    uint32_t version;
 
     if (!state || !path || !path[0]) {
         return 0;
@@ -469,16 +477,20 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     if (!file) {
         return 0;
     }
-    if (fread(buf, 1U, sizeof(buf), file) != sizeof(buf)) {
+    memset(buf, 0, sizeof(buf));
+    readCount = fread(buf, 1U, sizeof(buf), file);
+    if (readCount != 28U && readCount != sizeof(buf)) {
         (void)fclose(file);
         return 0;
     }
     if (fclose(file) != 0) {
         return 0;
     }
+    version = m11_read_u32_le(buf + 8);
     if (memcmp(buf, g_m11_quicksave_v1_runtime_magic,
                sizeof(g_m11_quicksave_v1_runtime_magic)) != 0 ||
-        m11_read_u32_le(buf + 8) != 1U) {
+        (version != 1U && version != 2U) ||
+        (version == 2U && readCount < sizeof(buf))) {
         return 0;
     }
 
@@ -487,6 +499,26 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     state->leaderHandIconIndex = -1;
     state->v1OpenChestThing = (unsigned short)m11_read_u32_le(buf + 20);
     state->v1OpenChestOpenedByEye = m11_read_u32_le(buf + 24) ? 1 : 0;
+    if (version >= 2U) {
+        state->candidateMirrorOrdinal = (int)(int32_t)m11_read_u32_le(buf + 28);
+        state->candidateMirrorPartyIndex = (int)(int32_t)m11_read_u32_le(buf + 32);
+        state->candidateMirrorPanelActive = m11_read_u32_le(buf + 36) ? 1 : 0;
+        state->inventoryPanelActive = m11_read_u32_le(buf + 40) ? 1 : 0;
+        if (state->candidateMirrorPanelActive) {
+            if (state->candidateMirrorPartyIndex < 0 ||
+                state->candidateMirrorPartyIndex >= state->world.party.championCount) {
+                state->candidateMirrorPanelActive = 0;
+                state->candidateMirrorOrdinal = -1;
+                state->candidateMirrorPartyIndex = -1;
+            } else {
+                state->inventoryPanelActive = 1;
+            }
+        }
+    } else {
+        state->candidateMirrorOrdinal = -1;
+        state->candidateMirrorPartyIndex = -1;
+        state->candidateMirrorPanelActive = 0;
+    }
     return 1;
 }
 
