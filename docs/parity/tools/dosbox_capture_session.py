@@ -110,6 +110,7 @@ LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
 FOCUS_MISMATCH_FRAME_LIMIT = 4
 DOSBOX_INTERNAL_CAPTURE_GLOBS = ("*.png", "*.bmp", "*.raw")
+DosboxCaptureSignature = tuple[int, int]
 
 
 class QuietRunTimeout:
@@ -608,7 +609,8 @@ def dry_run(plan: list[PlanStep],
         rawshot_target = rawshot_root / "state-samples" / "rawshot_fixture.png"
         rawshot_img, rawshot_meta = _load_latest_dosbox_capture(
             rawshot_target,
-            {existing_rawshot},
+            {existing_rawshot: (existing_rawshot.stat().st_mtime_ns,
+                                existing_rawshot.stat().st_size)},
         )
         if _is_capture_blackout(rawshot_img):
             failures.append("dosbox rawshot backend: latest .raw fixture decoded as blackout")
@@ -616,6 +618,30 @@ def dry_run(plan: list[PlanStep],
             failures.append("dosbox rawshot backend: metadata backend mismatch")
         if rawshot_meta.get("capture_source") != str(rawshot_source):
             failures.append("dosbox rawshot backend: metadata source mismatch")
+        if rawshot_meta.get("capture_source_size") != str(320 * 200):
+            failures.append("dosbox rawshot backend: source size metadata missing")
+        rewrite_capture_dir = tmp_root / "rawshot-rewrite-capture-root" / "dosbox-capture"
+        rewrite_capture_dir.mkdir(parents=True)
+        rewrite_source = rewrite_capture_dir / "rewritten.raw"
+        rewrite_source.write_bytes(b"\x00" * (320 * 200))
+        rewrite_known = _known_dosbox_capture_files(rewrite_capture_dir)
+        rewrite_source.write_bytes(
+            b"\x00" * (320 * 33) +
+            b"\x66" * (320 * 136) +
+            b"\x00" * (320 * 31)
+        )
+        rewrite_target = (
+            tmp_root / "rawshot-rewrite-capture-root" /
+            "state-samples" / "rawshot_rewrite_fixture.png"
+        )
+        rewrite_img, rewrite_meta = _load_latest_dosbox_capture(
+            rewrite_target,
+            rewrite_known,
+        )
+        if _is_capture_blackout(rewrite_img):
+            failures.append("dosbox rawshot backend: rewritten .raw fixture decoded as blackout")
+        if rewrite_meta.get("capture_source") != str(rewrite_source):
+            failures.append("dosbox rawshot backend: rewritten source metadata mismatch")
     return matched, total, failures
 
 
@@ -768,12 +794,25 @@ def _dosbox_capture_dir(raw: Path) -> Path:
     return raw.parent.parent / "dosbox-capture"
 
 
-def _known_dosbox_capture_files(capture_dir: Path) -> set[Path]:
-    known: set[Path] = set()
+def _dosbox_capture_signature(path: Path) -> DosboxCaptureSignature | None:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    if not path.is_file():
+        return None
+    return (st.st_mtime_ns, st.st_size)
+
+
+def _known_dosbox_capture_files(capture_dir: Path) -> dict[Path, DosboxCaptureSignature]:
+    known: dict[Path, DosboxCaptureSignature] = {}
     if not capture_dir.is_dir():
         return known
     for pattern in DOSBOX_INTERNAL_CAPTURE_GLOBS:
-        known.update(capture_dir.glob(pattern))
+        for item in capture_dir.glob(pattern):
+            sig = _dosbox_capture_signature(item)
+            if sig is not None:
+                known[item] = sig
     return known
 
 
@@ -837,23 +876,27 @@ def _load_dosbox_capture_image(source: Path):
     return Image.open(source).convert("RGB")
 
 
-def _load_latest_dosbox_capture(raw: Path, known: set[Path]) -> tuple[object, dict[str, str]]:
+def _load_latest_dosbox_capture(
+        raw: Path,
+        known: dict[Path, DosboxCaptureSignature]) -> tuple[object, dict[str, str]]:
     capture_dir = _dosbox_capture_dir(raw)
-    candidates = [
-        item
-        for pattern in DOSBOX_INTERNAL_CAPTURE_GLOBS
-        for item in capture_dir.glob(pattern)
-        if item not in known and item.is_file()
-    ]
+    candidates: list[tuple[Path, DosboxCaptureSignature]] = []
+    for pattern in DOSBOX_INTERNAL_CAPTURE_GLOBS:
+        for item in capture_dir.glob(pattern):
+            sig = _dosbox_capture_signature(item)
+            if sig is not None and known.get(item) != sig:
+                candidates.append((item, sig))
     if not candidates:
         raise RuntimeError(f"DOSBox rawshot did not create a capture in {capture_dir}")
-    latest = max(candidates, key=lambda p: (p.stat().st_mtime_ns, p.name))
+    latest, latest_sig = max(candidates, key=lambda p: (p[1][0], p[0].name))
     img = _load_dosbox_capture_image(latest)
     raw.parent.mkdir(parents=True, exist_ok=True)
     img.save(raw)
     return img, {
         "capture_backend": "dosbox-rawshot",
         "capture_source": str(latest),
+        "capture_source_mtime_ns": str(latest_sig[0]),
+        "capture_source_size": str(latest_sig[1]),
         "host_active_app": _frontmost_process_name(),
         "dosbox_window_bounds": _bounds_text(_dosbox_window_bounds()),
     }
