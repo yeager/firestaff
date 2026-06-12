@@ -28,7 +28,7 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 enum {
     PROBE_CHAMPION_COUNT = 4,
-    PROBE_REQUIRED_JUNKS = 6
+    PROBE_REQUIRED_JUNKS = 7
 };
 
 static unsigned short thing_ref(int thingType, int thingIndex)
@@ -152,6 +152,7 @@ int main(int argc, char** argv)
     const unsigned short activeReadyThing = thing_ref(THING_TYPE_JUNK, 3);
     const unsigned short deadReadyThing = thing_ref(THING_TYPE_JUNK, 4);
     const unsigned short rejectedLeaderThing = thing_ref(THING_TYPE_JUNK, 5);
+    const unsigned short champion3ActionThing = thing_ref(THING_TYPE_JUNK, 6);
     int space = 0;
     int zoneId = 0;
     int ok = 1;
@@ -246,6 +247,40 @@ int main(int argc, char** argv)
     ok &= expect_int("open chest still active after rejects",
                      (int)M11_GameView_GetV1OpenChestThing(&game),
                      (int)actionChestThing);
+
+    game.world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        champion3ActionThing;
+    ok &= expect_true("replace leader hand before champion3 action route",
+                      M11_GameView_SetV1LeaderHandObject(&game,
+                                                         rejectedLeaderThing));
+    {
+        int x, y, w, h;
+        ok &= expect_true("champion3 action status-hand zone",
+                          M11_GameView_GetV1StatusHandZone(3, 1, &x, &y,
+                                                           &w, &h));
+        ok &= expect_int("champion3 action status-hand command",
+                         M11_GameView_GetV1MouseCommandForPoint(
+                             M11_DM1_MOUSE_LIST_INVENTORY,
+                             x + w / 2, y + h / 2,
+                             M11_DM1_MOUSE_MASK_LEFT, &space, &zoneId),
+                         27);
+        ok &= expect_int("champion3 action status-hand zone id", zoneId, 218);
+    }
+    ok &= expect_int("champion3 action click swaps through pointer route",
+                     click_status_hand(&game, 3, 1),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("champion3 action receives leader object",
+                     (int)game.world.party.champions[3]
+                         .inventory[CHAMPION_SLOT_ACTION_HAND],
+                     (int)rejectedLeaderThing);
+    ok &= expect_int("leader hand receives champion3 action object",
+                     (int)M11_GameView_GetV1LeaderHandThing(&game),
+                     (int)champion3ActionThing);
+    ok &= expect_int("action status-hand click preserves open chest",
+                     (int)M11_GameView_GetV1OpenChestThing(&game),
+                     (int)actionChestThing);
+    ok &= expect_int("action status-hand click keeps inventory owner",
+                     game.world.party.activeChampionIndex, 0);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 inventory status-hand runtime probe "
