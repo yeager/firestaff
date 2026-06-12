@@ -1416,6 +1416,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_status_box_asset_slice_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel shield-border runtime pixel gate.
+# Isolates C037/C038/C039 party/spell/fire shield borders on live
+# status boxes and exact-matches the unobscured 67x29 GRAPHICS.DAT
+# asset pixels after the real M11 V1 child-overdraw stack.
+add_executable(firestaff_dm1_v1_champion_panel_shield_border_pixel_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_shield_border_pixel_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_shield_border_pixel_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_shield_border_pixel_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel partial-party runtime pixel gate.
 # Extends the Firestaff-side champion-panel evidence with 1-, 2-, and
 # 3-champion parties: occupied C151..C153 status boxes/icons/bars/hand
@@ -7277,6 +7288,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_leader_rotation_pixel_slice PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_shield_border_pixel
+        COMMAND firestaff_dm1_v1_champion_panel_shield_border_pixel_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_shield_border_pixel PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
