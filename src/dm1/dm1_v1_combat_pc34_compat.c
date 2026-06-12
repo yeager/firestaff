@@ -544,38 +544,95 @@ int dm1_poison_adjusted_attack(int poisonResistance, int poisonAttack) {
     return ((poisonAttack + dm1_combat_random(4)) << 3) / (poisonResistance + 1);
 }
 
+static uint16_t dm1_f0230_allowed_wound_pc34(int woundTest, int woundProbabilities)
+{
+    static const uint16_t woundProbabilityIndexToMask[4] = {
+        DM1_WOUND_FEET, DM1_WOUND_LEGS, DM1_WOUND_TORSO, DM1_WOUND_HEAD
+    };
+    int idx;
+
+    if ((woundTest & 0x0070) == 0) {
+        return (uint16_t)(woundTest & DM1_WOUND_READY_HAND);
+    }
+
+    woundTest &= 0x000F;
+    idx = 0;
+    while (woundTest > (woundProbabilities & 0x000F)) {
+        woundProbabilities >>= 4;
+        idx++;
+        if (idx > 3) {
+            idx = 3;
+            break;
+        }
+    }
+    return woundProbabilityIndexToMask[idx];
+}
+
 /*
  * F0230_GROUP_GetChampionDamage (referenced from F0207)
- * ReDMCSB GROUP.C: Calculate damage from creature melee attack to champion.
- *
- * Creature attack value is computed, then champion takes damage with
- * wound probabilities from the creature info.
+ * ReDMCSB PROJEXPL.C F0230 lines 1377-1408: creature melee rolls an
+ * allowed wound, computes attack from creature attack + random(16) minus
+ * parry, runs the staged random damage terms including the late
+ * random(2)/random((attack >> 1) + 1) reduction, then hands the result to
+ * CHAMPION.C F0321 for armor, shield, statistic, wound, and pending-damage
+ * processing. This wrapper has no current-map/dungeon-view global context,
+ * so doubled map difficulty and palette/invisibility difficulty are zero.
  */
 int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* group,
-                                 int creatureIdx __attribute__((unused)), int targetChampIdx) {
+                                 int creatureIdx, int targetChampIdx) {
+    const DM1_ChampionCombat* ch;
+    const DM1_CreatureInfo* ci;
+    int championDexterity;
+    int dexterityRoll;
+    int missGateRoll;
+    int woundTest;
+    int woundProbabilities;
+    uint16_t allowedWounds;
+    int atk;
+    int damage;
+
     if (!s || !group) return 0;
     if (targetChampIdx < 0 || targetChampIdx >= s->championCount) return 0;
+    if (creatureIdx < 0 || creatureIdx > group->count) return 0;
 
-    const DM1_CreatureInfo* ci = &group->info;
+    ch = &s->champions[targetChampIdx];
+    if (!ch->alive || !ch->currentHealth) return 0;
 
-    /* Base attack: creature attack + random(attack >> 2) + random(4) */
-    int atk = ci->attack;
-    int randAtk = (atk >> 2) + 1;
-    atk += dm1_combat_random(randAtk > 0 ? randAtk : 1);
-    atk += dm1_combat_random(4);
+    ci = &group->info;
+    championDexterity = dm1_champion_dexterity(ch);
+    dexterityRoll = dm1_combat_random(32);
+    missGateRoll = dm1_combat_random(4);
+    if (!((championDexterity < (dexterityRoll + ci->dexterity - 16)) ||
+          (missGateRoll == 0))) {
+        return 0;
+    }
 
-    /* Compute allowed wounds from creature wound probabilities */
-    uint16_t allowedWounds = 0;
-    if (dm1_combat_random(16) < ci->woundProbHead)  allowedWounds |= DM1_WOUND_HEAD;
-    if (dm1_combat_random(16) < ci->woundProbTorso) allowedWounds |= DM1_WOUND_TORSO;
-    if (dm1_combat_random(16) < ci->woundProbLegs)  allowedWounds |= DM1_WOUND_LEGS;
-    if (dm1_combat_random(16) < ci->woundProbFeet)  allowedWounds |= DM1_WOUND_FEET;
+    woundTest = (dm1_combat_random(32768) << 1) | dm1_combat_random(2);
+    woundProbabilities =
+        ((ci->woundProbHead & 0x0F) << 12) |
+        ((ci->woundProbTorso & 0x0F) << 8) |
+        ((ci->woundProbLegs & 0x0F) << 4) |
+        (ci->woundProbFeet & 0x0F);
+    allowedWounds = dm1_f0230_allowed_wound_pc34(woundTest, woundProbabilities);
 
-    /* Hands can always be wounded */
-    allowedWounds |= DM1_WOUND_READY_HAND | DM1_WOUND_ACTION_HAND;
+    atk = dm1_combat_random(16) + ci->attack;
+    if (atk <= 1) {
+        if (dm1_combat_random(2) != 0) {
+            return 0;
+        }
+        atk = dm1_combat_random(4) + 2;
+    }
+    atk >>= 1;
+    atk += dm1_combat_random(atk > 0 ? atk : 1) + dm1_combat_random(4);
+    atk += dm1_combat_random(atk > 0 ? atk : 1);
+    atk >>= 2;
+    atk += dm1_combat_random(4) + 1;
+    if (dm1_combat_random(2) != 0) {
+        atk -= dm1_combat_random((atk >> 1) + 1) - 1;
+    }
 
-    int damage = dm1_champion_take_damage(s, targetChampIdx, atk,
-                                          allowedWounds, ci->attackType);
+    damage = dm1_champion_take_damage(s, targetChampIdx, atk,
+                                      allowedWounds, ci->attackType);
 
     /* Poison — ReDMCSB PROJEXPL.C F0230 lines 1404-1408:
      * only after damage, with a 50% gate, then F0307 Vitality adjustment

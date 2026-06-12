@@ -394,23 +394,38 @@ static void test_creature_melee_attack(void) {
     dm1_combat_init_champion(&s.champions[0]);
     s.champions[0].currentHealth = 500;
     s.champions[0].maxHealth = 500;
+    s.champions[0].dexterity = 8;
+    s.champions[0].strength = 40;
+    s.champions[0].vitality = 40;
+    s.champions[0].hasArmor[DM1_WOUND_IDX_TORSO] = 1;
+    s.champions[0].armor[DM1_WOUND_IDX_TORSO].defense = 24;
+    s.champions[0].armor[DM1_WOUND_IDX_TORSO].sharpDefense = 6;
+    s.partyShieldDefense = 6;
 
     DM1_CreatureGroup g;
     dm1_combat_init_group(&g);
-    g.info.attack = 40;
+    g.info.attack = 70;
     g.info.defense = 10;
-    g.info.dexterity = 20;
+    g.info.dexterity = 40;
     g.info.attackType = DM1_ATTACK_SHARP;
-    g.info.woundProbHead = 8;
-    g.info.woundProbTorso = 12;
-    g.info.woundProbLegs = 6;
-    g.info.woundProbFeet = 4;
+    g.info.woundProbHead = 15;
+    g.info.woundProbTorso = 15;
+    g.info.woundProbLegs = 15;
+    g.info.woundProbFeet = 15;
     g.count = 0;
     g.creatures[0].health = 50;
 
+    /*
+     * ReDMCSB PROJEXPL.C F0230 lines 1377-1408: this fixed RNG fixture
+     * exercises the champion-dexterity hit gate, wound roll, staged
+     * creature attack random terms including the late armor-style reduction,
+     * and the CHAMPION.C F0321 armor/shield handoff for a sharp attack.
+     */
     int dmg = dm1_creature_attack_champion(&s, &g, 0, 0);
-    /* Damage may be 0 (miss) or positive, but function should not crash */
-    CHECK(dmg >= 0, "damage should be non-negative");
+    CHECK(dmg == 57, "sharp creature attack fixture should resolve to 57 damage");
+    CHECK(s.pendingDamage[0] == 57, "creature damage should be queued as pending champion damage");
+    CHECK(s.pendingWounds[0] == 0, "fixture should not add a wound after F0321 vitality check");
+    CHECK(s.champions[0].currentHealth == 500, "pending damage should not be applied immediately");
 
     PASS();
 }
