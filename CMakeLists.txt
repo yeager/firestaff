@@ -1364,6 +1364,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_empty_hand_mouth_close_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 empty-hand eye stats close runtime gate.
+# Opens an action-hand chest with a hidden ninth tail, clicks C546 through the
+# real pointer route while the leader hand is empty, and verifies F0352/F0351
+# closes G0426 before showing champion skills/statistics.
+add_executable(firestaff_dm1_v1_chest_empty_hand_eye_stats_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_empty_hand_eye_stats_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_empty_hand_eye_stats_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_empty_hand_eye_stats_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 open-chest eye object-description runtime gate.
 # Opens an action-hand chest with a hidden ninth tail, clicks C546 with a
 # weapon in the leader hand through the real pointer route, and verifies the
