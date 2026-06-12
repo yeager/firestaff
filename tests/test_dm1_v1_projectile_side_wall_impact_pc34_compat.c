@@ -49,10 +49,11 @@
  *     SUBTYPE_CREATES_EXPLOSION, F0820 HIT_WALL sets
  *     emittedExplosion=1 and populates outExplosion at the wall
  *     coordinates.
- *   - Side-lane blockers resolve before the parity-rotated cell is
- *     committed; this test pins that impact-return boundary for all
- *     four cardinal directions, including map-boundary blockers,
- *     without broadening projectile motion.
+ *   - Side-lane blockers set the F0219 cross-square gate before the
+ *     impact return, but resolve before the destination square is
+ *     committed; this test pins that boundary for all four cardinal
+ *     directions, including map-boundary blockers, without broadening
+ *     projectile motion.
  *
  * Non-overlap:
  *   - test_dm1_v1_projectile_explosion_render covers the
@@ -536,8 +537,8 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
                        "F0217 side-cell wall/door/fluxcage/projectile blockers have no champion or creature target");
             expect_int(c->label, r.emittedExplosion, 0,
                        "Kinetic thrown item side-cell blockers do not create explosions");
-            expect_int(c->label, r.crossedCell, 0,
-                       "F0217 impact return prevents a committed cross-cell move");
+            expect_int(c->label, r.crossedCell, 1,
+                       "F0219 lines 717-725 publish the cross-square gate before the impact return");
             expect_int(c->label,
                        r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,
                        0,
