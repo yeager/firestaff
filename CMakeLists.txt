@@ -1297,6 +1297,16 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_slot_boundary_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest empty-slot no-op runtime gate.
+# Opens a one-item action-hand chest, clicks empty C539 with an empty leader
+# hand, and proves the source F0302 early-return leaves state and pixels stable.
+add_executable(firestaff_dm1_v1_chest_empty_slot_noop_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_empty_slot_noop_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_empty_slot_noop_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_empty_slot_noop_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 open-chest action-hand pickup close runtime gate.
 # Opens a seeded action-hand chest, exact-matches C145 in C09, clicks that
 # visible action-hand slot through the real pointer route, and proves G0426
