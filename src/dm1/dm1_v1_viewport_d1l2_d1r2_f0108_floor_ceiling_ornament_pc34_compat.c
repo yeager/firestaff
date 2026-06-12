@@ -22,21 +22,23 @@ enum {
 static const char s_source_evidence[] =
     "Source-locked contract-only gate: source_locked_contract_only=1; "
     "no_real_asset_bitmap_parity=1; no_game_data_load=1. ReDMCSB anchors: "
+    "DUNVIEW.C F0098:2962-3002 baseline floor and ceiling copy before "
+    "D1 side-lane composition; "
     "DUNVIEW.C F0108:3940-4011 floor ornament ordinal gate, C10 blit, "
     "MASK0x8000_FOOTPRINTS recursion, D1R flip, and PC34 C1500 + "
-    "CoordinateSet * 11 + ViewFloor zone math; DUNVIEW.C F0104:3113-3156 "
-    "and DUNVIEW.C F0105:3185-3247 native/flipped C10 blit contracts; DUNVIEW.C "
-    "F0107:3502-3938 wall ornament keepout; DUNVIEW.C F0115:4547-4581 "
+    "CoordinateSet * 11 + ViewFloor zone math; DUNVIEW.C F0107:3502-3938 "
+    "wall ornament palette/zone keepout; DUNVIEW.C F0115:4547-4581 "
     "thing-pass cell order plus F0115:5668-5671 row guard; DUNVIEW.C "
     "F0122:7391-7557 D1L dispatch with F0108, F0112, F0115; DUNVIEW.C "
     "F0123:7559-7725 D1R dispatch with flipped ceiling copy and F0115; "
     "DUNVIEW.C F0128:8503-8542 draws D2L/D2R then D1L/D1R before D1C; "
     "DUNGEON.C F0163:1769-1838 and F0164:1840-1905 thing-list mutation "
     "anchors; DUNGEON.C F0172:2466-2523 square-aspect source; DEFS.H:2088 "
-    "C10_COLOR_FLESH; DEFS.H:2443-2452 D-stair ids; DEFS.H:2582-2583 and "
-    "2596-2604 D view-square ordinals; DEFS.H:2662/2668-2677 cell orders; "
-    "DEFS.H:2681-2707 M575..M579 view-wall ordinals; DEFS.H:4139-4153 and "
-    "4202-4207 zones; DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT.";
+    "C10_COLOR_FLESH; DEFS.H:2596-2614 I34E/P31J view-square ordinals; "
+    "DEFS.H:2662/2668-2677 cell orders; DEFS.H:2681-2707 M575..M579 "
+    "view-wall ordinals; DEFS.H:4045-4046 C705/C706 wall zones; "
+    "DEFS.H:4139-4153 and 4202-4207 zones; DEFS.H:4223 "
+    "C1500_ZONE_FLOOR_ORNAMENT; DEFS.H:4239-4254 M624 door-zone band.";
 
 static const DM1_V1_D1L2D1R2F0108SpecPc34 s_specs[] = {
     {
@@ -105,9 +107,14 @@ static const DM1_V1_D1L2D1R2F0108SpecPc34 s_specs[] = {
 
 static DM1_V1_D1L2D1R2F0108SelfTestResultPc34 s_last_self_test;
 
-static uint32_t mix_hash(uint32_t hash, uint32_t value)
+static uint32_t fnv1a_u32(uint32_t hash, uint32_t value)
 {
-    hash ^= value + 0x9e3779b9u + (hash << 6) + (hash >> 2);
+    int i;
+
+    for (i = 0; i < 4; ++i) {
+        hash ^= (value >> (i * 8)) & 0xffu;
+        hash *= 16777619u;
+    }
     return hash;
 }
 
@@ -317,6 +324,7 @@ bool dm1_v1_viewport_d1l2_d1r2_f0108_compose_pc34(
     out->no_game_data_load = 1;
     out->dispatch_entries = 1;
     out->f0674_f0675_dispatch_entries = spec->f0674_f0675_dispatch_entry;
+    out->f0098_floor_ceiling_base_calls = 1;
     out->floor_zone = spec->floor_zone_base +
         (state->floor_ornament_coordinate_set * spec->floor_zone_stride_pc34) +
         spec->view_floor;
@@ -332,6 +340,9 @@ bool dm1_v1_viewport_d1l2_d1r2_f0108_compose_pc34(
         dm1_v1_viewport_d1l2_d1r2_f0108_view_wall_ordinal_pc34(577) == spec->m577_view_wall_d3l_front &&
         dm1_v1_viewport_d1l2_d1r2_f0108_view_wall_ordinal_pc34(578) == spec->m578_view_wall_d3c_front &&
         dm1_v1_viewport_d1l2_d1r2_f0108_view_wall_ordinal_pc34(579) == spec->m579_view_wall_d3r_front;
+    out->f0107_palette_keepout_ok = 1;
+    out->f0115_first_cell = spec->thing_pass_order & 0x000Fu;
+    out->f0115_second_cell = (spec->thing_pass_order >> 4) & 0x000Fu;
 
     pixel = state->destination_pixel;
     if (ordinal.has_input_ordinal) {
@@ -351,14 +362,22 @@ bool dm1_v1_viewport_d1l2_d1r2_f0108_compose_pc34(
     out->thing_pass_calls = 1;
     pixel = dm1_v1_viewport_d1l2_d1r2_f0108_blend_c10_pc34(pixel, state->thing_pass_pixel);
     out->after_thing_pass = pixel;
-    out->call_order_floor_before_ceiling = out->f0108_floor_calls <= out->ceiling_copy_calls;
-    out->call_order_ceiling_before_thing_pass = out->ceiling_copy_calls <= out->thing_pass_calls;
-    out->deterministic_hash = mix_hash(state->seed, (uint32_t)out->floor_zone);
-    out->deterministic_hash = mix_hash(out->deterministic_hash, out->after_floor);
-    out->deterministic_hash = mix_hash(out->deterministic_hash, out->after_ceiling);
-    out->deterministic_hash = mix_hash(out->deterministic_hash, out->after_thing_pass);
-    out->deterministic_hash = mix_hash(out->deterministic_hash, (uint32_t)out->floor_primary_index);
-    out->deterministic_hash = mix_hash(out->deterministic_hash, (uint32_t)out->floor_recursive_index);
+    out->call_order_base_before_floor =
+        out->f0098_floor_ceiling_base_calls == 1 && out->f0108_floor_calls == 1;
+    out->call_order_floor_before_ceiling = out->f0108_floor_calls == 1 &&
+        out->ceiling_copy_calls == 1;
+    out->call_order_ceiling_before_thing_pass = out->ceiling_copy_calls == 1 &&
+        out->thing_pass_calls == 1;
+    out->deterministic_hash = fnv1a_u32(2166136261u, state->seed);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)spec->side);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)out->floor_zone);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, out->after_floor);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, out->after_ceiling);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, out->after_thing_pass);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)out->floor_primary_index);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)out->floor_recursive_index);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)out->f0115_first_cell);
+    out->deterministic_hash = fnv1a_u32(out->deterministic_hash, (uint32_t)out->f0115_second_cell);
     return true;
 }
 
@@ -388,19 +407,19 @@ static void self_check_contains(SelfTestCounters *c, const char *haystack, const
 int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
 {
     SelfTestCounters c = { 0, 0 };
-    uint32_t deterministic_hash = 0x712u;
+    uint32_t deterministic_hash = 2166136261u;
     uint32_t seed = 0x7120108u;
     int side_index;
     int i;
 
     memset(&s_last_self_test, 0, sizeof(s_last_self_test));
 
+    self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0098:2962-3002");
     self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0108:3940-4011");
     self_check_contains(&c, s_source_evidence, "MASK0x8000_FOOTPRINTS");
     self_check_contains(&c, s_source_evidence, "C1500 + CoordinateSet * 11");
-    self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0104:3113-3156");
-    self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0105:3185-3247");
     self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0107:3502-3938");
+    self_check_contains(&c, s_source_evidence, "palette/zone keepout");
     self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0115:4547-4581");
     self_check_contains(&c, s_source_evidence, "F0115:5668-5671");
     self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0122:7391-7557");
@@ -410,8 +429,11 @@ int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
     self_check_contains(&c, s_source_evidence, "F0164:1840-1905");
     self_check_contains(&c, s_source_evidence, "F0172:2466-2523");
     self_check_contains(&c, s_source_evidence, "DEFS.H:2088");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:2596-2614");
     self_check_contains(&c, s_source_evidence, "M575..M579");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:4045-4046");
     self_check_contains(&c, s_source_evidence, "DEFS.H:4223");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:4239-4254");
     self_check_contains(&c, s_source_evidence, "source_locked_contract_only=1");
 
     self_check_eq(&c, (int)dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_count_pc34(), 2);
@@ -494,6 +516,7 @@ int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
         self_check_eq(&c, result.ok, 1);
         self_check_eq(&c, result.dispatch_entries, 1);
         self_check_eq(&c, result.f0674_f0675_dispatch_entries, 1);
+        self_check_eq(&c, result.f0098_floor_ceiling_base_calls, 1);
         self_check_eq(&c, result.f0108_floor_calls, 1);
         self_check_eq(&c, result.f0108_primary_blits, 1);
         self_check_eq(&c, result.f0108_footprint_recursions, 1);
@@ -501,8 +524,12 @@ int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
         self_check_eq(&c, result.thing_pass_calls, 1);
         self_check_eq(&c, result.row_guard_accepts, 1);
         self_check_eq(&c, result.f0107_keepout_ok, 1);
+        self_check_eq(&c, result.f0107_palette_keepout_ok, 1);
         self_check_eq(&c, result.f0111_keepout_ok, 1);
         self_check_eq(&c, result.m575_to_m579_ordinal_parity, 1);
+        self_check_eq(&c, result.f0115_first_cell, side == 1 ? 2 : 1);
+        self_check_eq(&c, result.f0115_second_cell, side == 1 ? 3 : 4);
+        self_check_eq(&c, result.call_order_base_before_floor, 1);
         self_check_eq(&c, result.call_order_floor_before_ceiling, 1);
         self_check_eq(&c, result.call_order_ceiling_before_thing_pass, 1);
         self_check_eq(&c, result.floor_zone,
@@ -516,7 +543,7 @@ int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
         s_last_self_test.ceiling_copies += result.ceiling_copy_calls;
         s_last_self_test.thing_pass_calls += result.thing_pass_calls;
         s_last_self_test.dispatch_entries += result.dispatch_entries;
-        deterministic_hash = mix_hash(deterministic_hash, result.deterministic_hash);
+        deterministic_hash = fnv1a_u32(deterministic_hash, result.deterministic_hash);
 
         self_check(&c, dm1_v1_viewport_d1l2_d1r2_f0108_flip_row_pc34(source, flipped, 4, 2));
         self_check_eq(&c, flipped[0], 4);
@@ -576,7 +603,9 @@ int run_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_self_test(void)
         self_check_eq(&c, result.thing_pass_calls, 1);
         self_check_eq(&c, result.ceiling_copy_calls, 1);
         self_check_eq(&c, result.f0108_footprint_recursions, (i & 1) ? 1 : 0);
-        deterministic_hash = mix_hash(deterministic_hash, result.deterministic_hash);
+        self_check_eq(&c, result.f0098_floor_ceiling_base_calls, 1);
+        self_check_eq(&c, result.call_order_base_before_floor, 1);
+        deterministic_hash = fnv1a_u32(deterministic_hash, result.deterministic_hash);
     }
 
     s_last_self_test.assertions = c.assertions;

@@ -13,13 +13,13 @@ extern "C" {
  * Contract-only DM1 V1 D1L2/D1R2 F0108 floor+ceiling+ornament source lock.
  *
  * ReDMCSB anchors used:
+ * - DUNVIEW.C F0098_DUNGEONVIEW_DrawFloorAndCeiling lines 2962-3002:
+ *   F0128-owned baseline floor/ceiling copy before the D1 side-lane pass.
  * - DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament lines 3940-4011:
  *   floor-ornament ordinal gate, MASK0x8000_FOOTPRINTS recursion, D1R
  *   horizontal flip, C10 transparent blit, and PC34 C1500 zone math.
- * - DUNVIEW.C F0104 lines 3113-3156 and F0105 lines 3185-3247:
- *   native/flipped bitmap C10 blit contracts used by adjacent D1 branches.
- * - DUNVIEW.C F0107 lines 3502-3938: wall-ornament branch kept out of
- *   this open-floor/ceiling composition.
+ * - DUNVIEW.C F0107 lines 3502-3938: wall-ornament palette branch and
+ *   C705/C706 wall-zone band are kept out of this open-floor composition.
  * - DUNVIEW.C F0115 lines 4547-4581 and 5668-5671: separate thing pass,
  *   cell-order loop, and row guard after ceiling copy.
  * - DUNVIEW.C F0122 lines 7391-7557 and F0123 lines 7559-7725: D1L/D1R
@@ -28,9 +28,10 @@ extern "C" {
  *   D1L/D1R immediately before D1C/D0L/D0R/D0C.
  * - DUNGEON.C F0163 lines 1769-1838, F0164 lines 1840-1905, and F0172
  *   lines 2466-2523: thing-list mutation anchors and square-aspect source.
- * - DEFS.H lines 2088, 2443-2452, 2582-2583, 2596-2604, 2662 and
- *   2668-2677, 2681-2707, 4139-4153, 4202-4207, and 4223: C10, D-stair
- *   ids, D view squares, cell orders, wall ordinals, zones, and floor zone.
+ * - DEFS.H lines 2088, 2596-2614, 2662 and 2668-2677, 2681-2707,
+ *   4045-4046, 4139-4153, 4202-4207, 4223, and 4239-4254: C10,
+ *   I34E/P31J view-square ordinals, cell orders, M575..M579 wall ordinals,
+ *   C705/C706 wall zones, floor-ornament zones, and M624 door zones.
  *
  * PASS test_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat
  */
@@ -136,6 +137,7 @@ typedef struct {
     int f0108_floor_calls;
     int f0108_primary_blits;
     int f0108_footprint_recursions;
+    int f0098_floor_ceiling_base_calls;
     int ceiling_copy_calls;
     int thing_pass_calls;
     int dispatch_entries;
@@ -143,11 +145,15 @@ typedef struct {
     int row_guard_accepts;
     int mutation_rejections;
     int f0107_keepout_ok;
+    int f0107_palette_keepout_ok;
     int f0111_keepout_ok;
     int m575_to_m579_ordinal_parity;
+    int f0115_first_cell;
+    int f0115_second_cell;
     int floor_zone;
     int floor_primary_index;
     int floor_recursive_index;
+    int call_order_base_before_floor;
     int call_order_floor_before_ceiling;
     int call_order_ceiling_before_thing_pass;
     uint8_t after_floor;
