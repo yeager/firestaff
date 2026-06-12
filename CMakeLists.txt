@@ -8673,6 +8673,26 @@ if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     )
 endif()
 
+# ── DM1 V1 Practice-Based Level-Up Formula gate (PC 3.4) ─────────────
+# Source-locks the GRAPHIC560 G0496/G0497 action-routing fixture for the
+# deterministic War Cry champion/action pair and verifies the
+# F0303 (XP→level) / F0304 (XP routing) end-to-end formula crossing
+# at exactly 500 XP.
+if(NOT TARGET test_dm1_v1_skill_levelup_formula_gate_pc34_compat)
+    add_executable(test_dm1_v1_skill_levelup_formula_gate_pc34_compat
+        tests/test_dm1_v1_skill_levelup_formula_gate_pc34_compat.c
+        src/dm1/dm1_v1_skill_experience_pc34_compat.c
+        src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_skill_levelup_formula_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_skill_levelup_formula_gate
+        COMMAND test_dm1_v1_skill_levelup_formula_gate_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 Endgame System source-lock gate ───────────────────────────
 if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
     add_executable(test_dm1_v1_endgame_system_pc34_compat
