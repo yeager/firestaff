@@ -251,6 +251,7 @@ static void test_fixed_drops_do_not_append_when_pool_exhausted(void) {
 }
 
 static void test_dead_group_runtime_materializes_and_removes_group(void) {
+    static const int expectedCells[10] = {2, 2, 2, 1, 2, 3, 2, 2, 2, 2};
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -267,6 +268,8 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
     unsigned char junkRaw[12][4];
     unsigned char groupRaw[1][16];
     unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    unsigned short thing;
+    int i;
 
     seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
                     weapons, armours, junks, squareFirstThings,
@@ -296,6 +299,23 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
               "dead group is unlinked before first fixed drop");
     ASSERT_EQ(groups[0].next, THING_NONE,
               "dead group slot is returned to source unused pool");
+
+    thing = things.squareFirstThings[0];
+    for (i = 0; i < 10; ++i) {
+        ASSERT_EQ(THING_GET_TYPE(thing), THING_TYPE_JUNK,
+                  "death/drop chain entry keeps source-generated junk type");
+        ASSERT_EQ(THING_GET_INDEX(thing), i,
+                  "death/drop chain entry preserves F0166 allocation order");
+        ASSERT_EQ(THING_GET_CELL(thing), expectedCells[i],
+                  "death/drop chain entry keeps source RNG cell");
+        ASSERT_EQ(junks[i].type, 36,
+                  "death/drop chain entry keeps dragon steak subtype");
+        ASSERT_EQ(junks[i].cursed, 0,
+                  "death/drop chain entry keeps dragon steaks uncursed");
+        thing = next_for_thing(&things, thing);
+    }
+    ASSERT_EQ(thing, THING_ENDOFLIST,
+              "death/drop chain terminates after generated steaks");
 }
 
 int main(void) {
