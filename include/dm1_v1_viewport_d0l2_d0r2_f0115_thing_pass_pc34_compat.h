@@ -31,6 +31,10 @@ typedef struct {
     int explosion_row;
     int field_aspect_index;
     int wall_zone;
+    int fluxcage_field_zone;
+    int fluxcage_field_after_explosions;
+    int fluxcage_suppressed_on_door_pass1;
+    int fluxcage_suppressed_during_endgame;
     int door_zone;
     int ceiling_pit_zone;
     int field_draw_after_f0115;
@@ -116,6 +120,11 @@ int dm1_v1_viewport_d0l2_d0r2_f0115_centered_explosion_zone_pc34(
 int dm1_v1_viewport_d0l2_d0r2_f0115_side_explosion_zone_pc34(
     const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int view_cell);
+
+int dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int door_front_pass,
+    int endgame_suppressed);
 
 const char *dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void);
 

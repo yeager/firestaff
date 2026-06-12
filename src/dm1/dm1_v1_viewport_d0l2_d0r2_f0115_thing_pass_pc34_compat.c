@@ -16,6 +16,7 @@ enum {
     DM1_D0R2_FIELD_ASPECT = 15,        /* ReDMCSB DUNVIEW.C:377 G2035[2] */
     DM1_D0L2_WALL_ZONE = 716,          /* ReDMCSB DEFS.H:4056 C716_ZONE_WALL_D0L */
     DM1_D0R2_WALL_ZONE = 717,          /* ReDMCSB DEFS.H:4057 C717_ZONE_WALL_D0R */
+    DM1_FLUXCAGE_FIELD_ZONE_BASE = 702,/* ReDMCSB DUNVIEW.C:6219 C702 + G2035 row */
     DM1_NO_D0_DOOR_ZONE = -1,          /* ReDMCSB DEFS.H:4250-4260 has no D0 door zone. */
     DM1_D0L2_CEILING_ZONE = 870,       /* ReDMCSB DUNVIEW.C:8003 C870_ZONE_CEILING_PIT_D0L */
     DM1_D0R2_CEILING_ZONE = 872,       /* ReDMCSB DUNVIEW.C:8113 C872_ZONE_CEILING_PIT_D0R */
@@ -51,6 +52,10 @@ static const char s_source_evidence[] =
     "D0L quarter creatures to BACKRIGHT and D0R to BACKLEFT, and "
     "5615-5617 binds C3200 creature zones. DUNVIEW.C:5920-5923 and "
     "6107/6122 bind explosion rows from G2034/C3014/C3031. "
+    "DUNVIEW.C:6006-6015 defers fluxcage explosions, and "
+    "DUNVIEW.C:6199-6219 draws them after normal explosions only when "
+    "G2035 is valid, the door-front pass is not 1, and endgame suppression "
+    "is not active; C702 + G2035 maps D0L/D0R fluxcages to C716/C717. "
     "DUNVIEW.C:8050-8059 and 8150-8159 draw teleporter fields after the "
     "F0115 route using G2035 and C716/C717 wall zones. DEFS.H:2596-2606 "
     "view-square indices; DEFS.H:2642-2660 cell ordinals/orders; "
@@ -83,6 +88,10 @@ static const DM1_V1_D0L2D0R2F0115ThingPassPc34 s_fixtures[] = {
         DM1_D0L2_EXPLOSION_ROW,
         DM1_D0L2_FIELD_ASPECT,
         DM1_D0L2_WALL_ZONE,
+        DM1_FLUXCAGE_FIELD_ZONE_BASE + DM1_D0L2_FIELD_ASPECT,
+        1,
+        1,
+        1,
         DM1_NO_D0_DOOR_ZONE,
         DM1_D0L2_CEILING_ZONE,
         1,
@@ -98,7 +107,7 @@ static const DM1_V1_D0L2D0R2F0115ThingPassPc34 s_fixtures[] = {
         1,
         1,
         "DUNVIEW.C:7960-8062 F0125_DUNGEONVIEW_DrawSquareD0L; 8003/8005/8059",
-        "DUNVIEW.C:4547-4581 F0115; 4923/5211/5295/5615-5617/5668-5671/6107/6122",
+        "DUNVIEW.C:4547-4581 F0115; 4923/5211/5295/5615-5617/5668-5671/6107/6122/6199-6219",
         "DUNGEON.C:1769-1838 F0163; 1840-1905 F0164; 2466-2523 F0172",
         "DEFS.H:2088 C10; 2596-2606 view squares; 2642-2660 cells; 4056/4250-4260 zones",
         s_source_evidence
@@ -121,6 +130,10 @@ static const DM1_V1_D0L2D0R2F0115ThingPassPc34 s_fixtures[] = {
         DM1_D0R2_EXPLOSION_ROW,
         DM1_D0R2_FIELD_ASPECT,
         DM1_D0R2_WALL_ZONE,
+        DM1_FLUXCAGE_FIELD_ZONE_BASE + DM1_D0R2_FIELD_ASPECT,
+        1,
+        1,
+        1,
         DM1_NO_D0_DOOR_ZONE,
         DM1_D0R2_CEILING_ZONE,
         1,
@@ -136,7 +149,7 @@ static const DM1_V1_D0L2D0R2F0115ThingPassPc34 s_fixtures[] = {
         1,
         1,
         "DUNVIEW.C:8064-8162 F0126_DUNGEONVIEW_DrawSquareD0R; 8113/8115/8159",
-        "DUNVIEW.C:4547-4581 F0115; 4923/5211/5295/5615-5617/5668-5671/6107/6122",
+        "DUNVIEW.C:4547-4581 F0115; 4923/5211/5295/5615-5617/5668-5671/6107/6122/6199-6219",
         "DUNGEON.C:1769-1838 F0163; 1840-1905 F0164; 2466-2523 F0172",
         "DEFS.H:2088 C10; 2596-2606 view squares; 2642-2660 cells; 4057/4250-4260 zones",
         s_source_evidence
@@ -320,6 +333,21 @@ int dm1_v1_viewport_d0l2_d0r2_f0115_side_explosion_zone_pc34(
     /* ReDMCSB: DUNVIEW.C F0115 lines 6110-6122 uses C3031 plus
      * G2034[viewSquare]*2 plus the front-left/front-right explosion cell. */
     return DM1_SIDE_EXPLOSION_BASE + fixture->explosion_row * 2 + view_cell;
+}
+
+int dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int door_front_pass,
+    int endgame_suppressed)
+{
+    if (!fixture || fixture->field_aspect_index < 0 ||
+        door_front_pass == 1 || endgame_suppressed) {
+        return -1;
+    }
+    /* ReDMCSB: DUNVIEW.C F0115 lines 6006-6015 records fluxcage
+     * explosions, then lines 6199-6219 draw the field after other
+     * explosion blits as C702_ZONE_WALL_D3L2 + G2035[viewSquare]. */
+    return DM1_FLUXCAGE_FIELD_ZONE_BASE + fixture->field_aspect_index;
 }
 
 const char *dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void)
