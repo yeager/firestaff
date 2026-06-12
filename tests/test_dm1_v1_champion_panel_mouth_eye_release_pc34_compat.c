@@ -82,6 +82,12 @@ static void test_evidence(void)
     expect_str_eq("evidence.eye_release", evidence->eye_release_anchor,
                   "PANEL.C F0353_INVENTORY_DrawStopPressingEye:2162-2193",
                   "PANEL.C F0353:2162-2193");
+    expect_contains("evidence.slotbox", evidence->slotbox_anchor,
+                    "CHAMPION.C F0302", "CHAMPION.C F0302:677-711");
+    expect_contains("evidence.chest", evidence->chest_anchor,
+                    "CHEST.C F0333", "CHEST.C F0333/F0334");
+    expect_contains("evidence.command_queue", evidence->command_queue_anchor,
+                    "COMMAND.C F0359/F0380", "COMMAND.C F0359/F0380");
     expect_contains("evidence.icons", evidence->icon_anchor,
                     "C202/C203/C205", "DEFS.H:1953-1956");
     expect_contains("evidence.zones", evidence->zone_anchor,
@@ -103,6 +109,13 @@ static void test_evidence(void)
                     "PANEL.C F0352 source evidence");
     expect_contains("source.f0353", source, "F0353:2174-2192",
                     "PANEL.C F0353 source evidence");
+    expect_contains("source.f0302", source, "CHAMPION.C F0302:677-711",
+                    "CHAMPION.C source evidence");
+    expect_contains("source.f0333", source, "CHEST.C F0333:30-38",
+                    "CHEST.C source evidence");
+    expect_contains("source.command_queue", source,
+                    "COMMAND.C F0359/F0380:1982-1990",
+                    "COMMAND.C source evidence");
     expect_contains("source.icons", source, "C202/C203/C205",
                     "DEFS.H icon ordinals");
     expect_contains("source.zones", source, "C545/C546",
@@ -418,15 +431,103 @@ static void test_eye_release_routes_and_validation(void)
                0, "synthetic null output guard");
 }
 
+static void test_pending_hand_overlap_no_consume_no_stale_panel(void)
+{
+    DM1_V1_ChampionPanelMouthEyeReleaseInputPc34Compat input;
+    DM1_V1_ChampionPanelMouthEyeReleaseResultPc34Compat result;
+
+    DM1_V1_ChampionPanelMouthEyeRelease_DefaultInputPc34Compat(&input);
+    input.action = DM1_V1_CPMER_ACTION_EYE_PRESS_PC34;
+    input.leader_empty_handed = false;
+    input.leader_hand_has_object = true;
+    input.leader_hand_thing_before = 0x4a11;
+    input.pending_hand_queue_count = 2;
+    input.pending_hand_thing_before = 0x4b22;
+
+    expect_int("overlap_eye_live_hand.build",
+               DM1_V1_ChampionPanelMouthEyeRelease_BuildPc34Compat(&input, &result),
+               1, "PANEL.C F0352:2155-2159 live G4055 object panel");
+    expect_int("overlap_eye_live_hand.route", result.panel_route,
+               DM1_V1_CPMER_PANEL_ROUTE_OBJECT_DESCRIPTION_PC34,
+               "PANEL.C F0352:2155-2158 uses live leader hand");
+    expect_int("overlap_eye_live_hand.leader_before",
+               result.leader_hand_thing_before, 0x4a11,
+               "CHAMPION.C F0302 live hand remains separate");
+    expect_int("overlap_eye_live_hand.leader_after",
+               result.leader_hand_thing_after, 0x4a11,
+               "PANEL.C F0352 inspects without consuming");
+    expect_bool("overlap_eye_live_hand.leader_consumed",
+                result.leader_hand_consumed, false,
+                "PANEL.C F0352 no F0298 leader-hand remove");
+    expect_int("overlap_eye_live_hand.pending_count_before",
+               result.pending_hand_queue_count_before, 2,
+               "COMMAND.C F0380 pending queue snapshot");
+    expect_int("overlap_eye_live_hand.pending_count_after",
+               result.pending_hand_queue_count_after, 2,
+               "COMMAND.C F0380 not drained by F0352");
+    expect_int("overlap_eye_live_hand.pending_before",
+               result.pending_hand_thing_before, 0x4b22,
+               "COMMAND.C pending click is not G4055");
+    expect_int("overlap_eye_live_hand.pending_after",
+               result.pending_hand_thing_after, 0x4b22,
+               "COMMAND.C pending click preserved");
+    expect_bool("overlap_eye_live_hand.pending_consumed",
+                result.pending_hand_consumed, false,
+                "PANEL.C F0352 no pending-hand consume");
+    expect_bool("overlap_eye_live_hand.pending_preserved",
+                result.pending_queue_preserved, true,
+                "COMMAND.C F0380 pending hand survives eye route");
+    expect_bool("overlap_eye_live_hand.stale_panel",
+                result.stale_panel_after, false,
+                "object panel came from live G4055, not pending hand");
+
+    DM1_V1_ChampionPanelMouthEyeRelease_DefaultInputPc34Compat(&input);
+    input.action = DM1_V1_CPMER_ACTION_EYE_PRESS_PC34;
+    input.leader_empty_handed = true;
+    input.leader_hand_has_object = false;
+    input.leader_hand_thing_before = -1;
+    input.pending_hand_queue_count = 1;
+    input.pending_hand_thing_before = 0x4c33;
+
+    expect_int("overlap_eye_pending_only.build",
+               DM1_V1_ChampionPanelMouthEyeRelease_BuildPc34Compat(&input, &result),
+               1, "PANEL.C F0352:2153-2154 empty live hand stats route");
+    expect_int("overlap_eye_pending_only.route", result.panel_route,
+               DM1_V1_CPMER_PANEL_ROUTE_SKILLS_STATISTICS_PC34,
+               "PANEL.C F0352 must not inspect pending hand as G4055");
+    expect_bool("overlap_eye_pending_only.pending_preserved",
+                result.pending_queue_preserved, true,
+                "COMMAND.C F0380 pending hand remains queued");
+    expect_bool("overlap_eye_pending_only.stale_panel",
+                result.stale_panel_after, false,
+                "pending hand must not leave stale object panel");
+
+    input.action = DM1_V1_CPMER_ACTION_MOUTH_PRESS_PC34;
+    input.left_button_down = true;
+    expect_int("overlap_mouth_pending_only.build",
+               DM1_V1_ChampionPanelMouthEyeRelease_BuildPc34Compat(&input, &result),
+               1, "PANEL.C F0349:1788-1818 empty live hand mouth route");
+    expect_int("overlap_mouth_pending_only.route", result.panel_route,
+               DM1_V1_CPMER_PANEL_ROUTE_FOOD_WATER_POISON_PC34,
+               "PANEL.C F0349 uses G0415, not pending hand queue");
+    expect_bool("overlap_mouth_pending_only.pending_consumed",
+                result.pending_hand_consumed, false,
+                "PANEL.C F0349 no pending-hand consume");
+    expect_bool("overlap_mouth_pending_only.stale_panel",
+                result.stale_panel_after, false,
+                "mouth route cannot leave object-description panel stale");
+}
+
 int main(void)
 {
     test_evidence();
     test_mouth_press_and_release();
     test_eye_press_routes();
     test_eye_release_routes_and_validation();
+    test_pending_hand_overlap_no_consume_no_stale_panel();
 
-    if (g_assertions < 50) {
-        printf("FAIL assertion_count got=%d want>=50\n", g_assertions);
+    if (g_assertions < 85) {
+        printf("FAIL assertion_count got=%d want>=85\n", g_assertions);
         return 1;
     }
     if (g_failures) {
