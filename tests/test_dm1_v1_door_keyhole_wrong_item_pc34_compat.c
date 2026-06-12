@@ -122,9 +122,11 @@ int main(void)
     int baselineMessageCount;
     int baselineProjectileCount;
     int baselineTimelineCount;
+    int baselineSoundIndex;
     int secondBaselineMessageCount;
     int secondBaselineProjectileCount;
     int secondBaselineTimelineCount;
+    int secondBaselineSoundIndex;
     unsigned int secondBaselineWorldHash;
     char secondBaselineAction[sizeof(state.lastAction)];
     char secondBaselineOutcome[sizeof(state.lastOutcome)];
@@ -136,6 +138,9 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_door_keyhole_wrong_item_pc34_compat\n");
+    printf("sourceEvidence=COMMAND.C:2322-2324 C080 dispatch; "
+           "CLIKVIEW.C:F0377:365-400 empty-hand door event vs occupied-hand throw branch; "
+           "DUNVIEW.C:4210-4212 D1C door-button/keyhole click box\n");
     seed_door_view(&state, &dungeon, &map, &tiles, squares, &things, doors,
                    squareFirstThings, weapons);
 
@@ -171,6 +176,8 @@ int main(void)
     baselineMessageCount = M11_GameView_GetMessageLogCount(&state);
     baselineProjectileCount = state.world.projectiles.count;
     baselineTimelineCount = state.world.timeline.count;
+    state.audioState.lastSoundIndex = 77;
+    baselineSoundIndex = state.audioState.lastSoundIndex;
 
     /* ReDMCSB CLIKVIEW.C F0377 lines 356-401: a door-button/keyhole
      * click schedules EVENT_DOOR only from the empty leader-hand branch
@@ -198,6 +205,9 @@ int main(void)
     ok &= expect_int("wrong-item click does not schedule door event",
                      state.world.timeline.count,
                      baselineTimelineCount);
+    ok &= expect_int("wrong-item click does not play switch/door sound",
+                     state.audioState.lastSoundIndex,
+                     baselineSoundIndex);
     ok &= expect_int("wrong-item click does not report wrong-item status",
                      strcmp(state.lastAction, "SENTINEL") == 0 &&
                      strcmp(state.lastOutcome, "UNCHANGED") == 0, 1);
@@ -224,6 +234,7 @@ int main(void)
     secondBaselineMessageCount = M11_GameView_GetMessageLogCount(&state);
     secondBaselineProjectileCount = state.world.projectiles.count;
     secondBaselineTimelineCount = state.world.timeline.count;
+    secondBaselineSoundIndex = state.audioState.lastSoundIndex;
 
     /* Same ReDMCSB F0377 branch after changing the active champion and
      * facing direction: the wrong item still belongs to G4055 leader hand,
@@ -253,6 +264,9 @@ int main(void)
     ok &= expect_int("leader/facing wrong-item click does not schedule door event",
                      state.world.timeline.count,
                      secondBaselineTimelineCount);
+    ok &= expect_int("leader/facing wrong-item click does not play switch/door sound",
+                     state.audioState.lastSoundIndex,
+                     secondBaselineSoundIndex);
     ok &= expect_int("leader/facing wrong-item click keeps status",
                      strcmp(state.lastAction, secondBaselineAction) == 0 &&
                      strcmp(state.lastOutcome, secondBaselineOutcome) == 0, 1);
