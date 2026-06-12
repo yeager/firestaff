@@ -1,0 +1,210 @@
+{
+  "anchorDriftTodos": [
+    "Required anchor DRAWVIEW.C F0097:1-50 appears drifted in local ReDMCSB; F0097_DUNGEONVIEW_DrawViewport is at line 709. Anchor text was not changed."
+  ],
+  "localChecks": [
+    {
+      "file": "include/dm1_v1_viewport_3d_pc34_compat.h",
+      "ok": true,
+      "token": "DM1_ViewportD0L2D0R2F0108CompositionSpec"
+    },
+    {
+      "file": "include/dm1_v1_viewport_3d_pc34_compat.h",
+      "ok": true,
+      "token": "#define DM1_VIEW_SQUARE_D0L2"
+    },
+    {
+      "file": "include/dm1_v1_viewport_3d_pc34_compat.h",
+      "ok": true,
+      "token": "#define DM1_VIEW_SQUARE_D0R2"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "s_d0l2_d0r2_f0108_composition_specs"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DM1_VIEW_SQUARE_D0L2, DM1_VIEW_SQUARE_D0L"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DM1_VIEW_SQUARE_D0R2, DM1_VIEW_SQUARE_D0R"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DUNVIEW.C:3940-4011 F0108 floor ornament MASK0x8000 keepout"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DUNVIEW.C:3502-3938 F0107 wall ornament ordinal/coordinateSet"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DUNVIEW.C:2962-3002 F0098 floor+ceiling base"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DUNVIEW.C:4547-4581,5180-5188,5211-5214,5668-5671 F0115"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "DRAWVIEW.C F0097:1-50 wall-side dispatch"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "ok": true,
+      "token": "pass760.count"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "ok": true,
+      "token": "pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock"
+    }
+  ],
+  "nonClaims": [
+    "No original DOS pixel parity is claimed.",
+    "No real game data is loaded by this gate.",
+    "The D0L2/D0R2 rows are intentionally separate from pass729/pass733/pass717 metadata."
+  ],
+  "pass": 760,
+  "redmcsbChecks": [
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "3940-4011",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "3502-3938",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "2962-3002",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "4547-4581",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "5180-5188",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "5211-5214",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "5668-5671",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "6432-6600",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DEFS.H",
+      "lines": "2088-2088",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DEFS.H",
+      "lines": "2596-2611",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DEFS.H",
+      "lines": "2668-2677",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DEFS.H",
+      "lines": "2698-2702",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DEFS.H",
+      "lines": "4045-4046",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "3113-3156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DUNVIEW.C",
+      "lines": "3185-3247",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "Source/DRAWVIEW.C",
+      "lines": "1-50",
+      "missing": [
+        "F0097_DUNGEONVIEW_DrawViewport"
+      ],
+      "ok": false
+    }
+  ],
+  "requiredAnchors": [
+    "DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011",
+    "DUNVIEW.C F0107:3502-3938",
+    "DUNVIEW.C F0098:2962-3002",
+    "DUNVIEW.C F0115:4547-4581,5180-5188,5211-5214,5668-5671",
+    "DUNVIEW.C:6432-6600 M575_VIEW_WALL_D3L_RIGHT",
+    "DEFS.H:2088 C10_COLOR_FLESH",
+    "DEFS.H:2596-2611 I34E/P31J view-square ordinals",
+    "DEFS.H:2668-2677 and 2698-2702 cell orders and M575..M579 view-square ordinals",
+    "DEFS.H:4045-4046 C705/C706 wall zones",
+    "DRAWVIEW.C F0097:1-50 wall-side dispatch",
+    "DUNVIEW.C F0104:3113-3156 native C10 blit",
+    "DUNVIEW.C F0105:3185-3247 flipped C10 blit"
+  ],
+  "schema": "firestaff.parity.pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock.v1",
+  "status": "PASS",
+  "testRun": {
+    "command": [
+      "/Users/bosse/.openclaw/workspace-main-20260612142622-d0l2-d0r2-f0108-wall-floor-ornament/build/test_dm1_v1_viewport_3d_pc34_compat"
+    ],
+    "outputTail": "PASS drift.pass570.d2c_floor_field present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass570.d2c_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
+    "pass760Assertions": 100,
+    "pass760Failures": 0,
+    "passed": true,
+    "returncode": 0
+  },
+  "timestampUtc": "2026-06-12T12:40:00.107479+00:00"
+}
