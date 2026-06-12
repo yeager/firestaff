@@ -4,7 +4,7 @@
  * Validates the pure projectile/explosion tick-transform data layer
  * against PHASE17_PLAN.md §5 invariants.
  *
- * Shipped: 54 invariants (≥30 gate, 48 target). Two sub-checks are
+ * Shipped: 56 invariants (≥30 gate, 48 target). Two sub-checks are
  * folded under invariant #49 and counted as one.
  */
 
@@ -1000,6 +1000,53 @@ int main(int argc, char* argv[]) {
         CHECK(r.emittedCombatActionPartyCount == 0
               && r.emittedCombatActionGroupCount == 1,
               "Poison cloud, no champion -> group action only");
+    }
+    /* 33b: DM1 V1 monster/cloud overlap tick boundary.
+     * Source-lock: TIMELINE.C:1872-1873 dispatches C25_EVENT_EXPLOSION
+     * to PROJEXPL.C F0220; PROJEXPL.C:817-818 computes poison-cloud
+     * attack, 859-864 routes to the group when not on the party square,
+     * and 867-872 decrements cloud attack by 3 then requeues +1 tick. */
+    {
+        struct ExplosionInstance_Compat e, eOut;
+        struct CellContentDigest_Compat d;
+        struct ExplosionTickResult_Compat r;
+        struct RngState_Compat rng;
+        memset(&e, 0, sizeof(e));
+        e.slotIndex     = 2;
+        e.explosionType = C007_EXPLOSION_POISON_CLOUD;
+        e.mapIndex      = 0;
+        e.mapX          = 8;
+        e.mapY          = 9;
+        e.cell          = EXPLOSION_CELL_CENTERED;
+        e.centered      = 1;
+        e.attack        = 32;
+        e.maxFrames     = 30;
+        e.reserved0     = 1;
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 8, 9, 8, 9);
+        d.destHasChampion      = 0;
+        d.destHasCreatureGroup = 1;
+        d.destCreatureCellMask = 0x0F;
+        d.destCreatureType     = 10;
+        F0730_COMBAT_RngInit_Compat(&rng, 0x9);
+        F0822_EXPLOSION_Advance_Compat(&e, &d, 700, &rng, &eOut, &r);
+        CHECK(r.emittedCombatActionPartyCount == 0
+              && r.emittedCombatActionGroupCount == 1
+              && r.outActionGroup.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP
+              && r.outActionGroup.targetMapIndex == 0
+              && r.outActionGroup.targetMapX == 8
+              && r.outActionGroup.targetMapY == 9
+              && r.outActionGroup.targetCell == 0
+              && r.despawn == 0
+              && r.newAttack == 29
+              && eOut.attack == 29
+              && r.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE
+              && r.outNextTick.fireAtTick == 701u
+              && r.outNextTick.mapIndex == 0
+              && r.outNextTick.mapX == 8
+              && r.outNextTick.mapY == 9
+              && r.outNextTick.cell == EXPLOSION_CELL_CENTERED,
+              "DM1 V1 centered poison cloud overlapping one monster tile emits one group tick and requeues event 25 at +1");
     }
 
     /* ================================================================
