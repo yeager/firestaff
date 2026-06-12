@@ -7941,6 +7941,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
+static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
+                                                     int slotBoxIndex);
 
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
@@ -8153,6 +8155,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             &space,
             &zoneId);
         (void)space;
+        if (command >= 20 && command <= 27 &&
+            zoneId >= 211 && zoneId <= 218) {
+            if (m11_process_v1_status_hand_slot_box_click(state,
+                                                          command - 20)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (command >= 28 && command <= 65 && zoneId >= 507 && zoneId <= 544) {
             if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
                 return M11_GAME_INPUT_REDRAW;
@@ -17555,6 +17565,8 @@ static unsigned int m11_allowed_slots_for_thing(const struct DungeonThings_Compa
 
 static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
     switch (sourceSlotBoxIndex) {
+        case 0:
+        case 1:  return 0xFFFFu;
         case 8:
         case 9:  return 0x0200u;
         case 10: return 0x0002u;
@@ -17581,6 +17593,73 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
             }
             return 0;
     }
+}
+
+static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
+                                                      int slotBoxIndex) {
+    int championIndex;
+    int championSlot;
+    struct ChampionState_Compat* champ;
+    unsigned short leaderThing;
+    unsigned short slotThing;
+
+    if (!state || !state->inventoryPanelActive ||
+        slotBoxIndex < 0 || slotBoxIndex >= 8) {
+        return 0;
+    }
+
+    /* ReDMCSB: CLIKCHAM.C F0367 line 32 dispatches C020..C027 to
+     * CHAMPION.C F0302 with slotBoxIndex 0..7.  F0302 lines 677-683
+     * rejects candidate flow, the currently open inventory champion,
+     * out-of-party/dead champions, then maps even/odd slot boxes through
+     * DEFS.H line 1878 M070_HAND_SLOT_INDEX. */
+    if (state->candidateMirrorOrdinal || state->candidateMirrorPanelActive) {
+        return 0;
+    }
+    championIndex = slotBoxIndex >> 1;
+    championSlot = (slotBoxIndex & 1) ? CHAMPION_SLOT_ACTION_HAND
+                                      : CHAMPION_SLOT_HAND_LEFT;
+    if (championIndex < 0 ||
+        championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex == state->world.party.activeChampionIndex) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current <= 0) {
+        return 0;
+    }
+
+    leaderThing = M11_GameView_GetV1LeaderHandThing(state);
+    slotThing = champ->inventory[championSlot];
+    if ((leaderThing == THING_NONE || leaderThing == THING_ENDOFLIST) &&
+        (slotThing == THING_NONE || slotThing == THING_ENDOFLIST)) {
+        return 0;
+    }
+    if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST) {
+        unsigned int allowedSlots =
+            m11_allowed_slots_for_thing(state->world.things, leaderThing);
+        unsigned int slotMask =
+            m11_v1_inventory_source_slot_box_mask(slotBoxIndex & 1);
+        if ((allowedSlots & slotMask) == 0) {
+            return 0;
+        }
+        champ->inventory[championSlot] = leaderThing;
+        M11_GameView_ClearV1LeaderHandObject(state);
+        if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST &&
+            !M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
+    } else {
+        champ->inventory[championSlot] = THING_NONE;
+        if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
+    }
+    m11_refresh_hash(state);
+    return 1;
 }
 
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
@@ -21185,7 +21264,17 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2,  M11_DM1_MOUSE_MASK_RIGHT }
     };
     static const M11_V1MouseRoute inventoryRoutes[] = {
-        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory. */
+        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory,
+         * plus CLIKCHAM.C F0367 line 32 / CHAMPION.C F0302 lines 677-683
+         * status-hand C020..C027 dispatch while the inventory is open. */
+        { 20, M11_DM1_MOUSE_SPACE_SCREEN,   211, M11_DM1_MOUSE_MASK_LEFT },
+        { 21, M11_DM1_MOUSE_SPACE_SCREEN,   212, M11_DM1_MOUSE_MASK_LEFT },
+        { 22, M11_DM1_MOUSE_SPACE_SCREEN,   213, M11_DM1_MOUSE_MASK_LEFT },
+        { 23, M11_DM1_MOUSE_SPACE_SCREEN,   214, M11_DM1_MOUSE_MASK_LEFT },
+        { 24, M11_DM1_MOUSE_SPACE_SCREEN,   215, M11_DM1_MOUSE_MASK_LEFT },
+        { 25, M11_DM1_MOUSE_SPACE_SCREEN,   216, M11_DM1_MOUSE_MASK_LEFT },
+        { 26, M11_DM1_MOUSE_SPACE_SCREEN,   217, M11_DM1_MOUSE_MASK_LEFT },
+        { 27, M11_DM1_MOUSE_SPACE_SCREEN,   218, M11_DM1_MOUSE_MASK_LEFT },
         { 11, M11_DM1_MOUSE_SPACE_SCREEN,   2, M11_DM1_MOUSE_MASK_RIGHT },
         { 28, M11_DM1_MOUSE_SPACE_VIEWPORT, 507, M11_DM1_MOUSE_MASK_LEFT },
         { 29, M11_DM1_MOUSE_SPACE_VIEWPORT, 508, M11_DM1_MOUSE_MASK_LEFT },
