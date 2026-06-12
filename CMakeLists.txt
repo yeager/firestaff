@@ -505,10 +505,6 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_scroll_pickup_wit
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat.c
 )
-list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat\\.c$")
-list(APPEND M10_SOURCES
-    src/dm1/dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat.c
-)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_scroll_pickup_non_leader_panel_live_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_scroll_pickup_non_leader_panel_live_pc34_compat.c
@@ -6185,6 +6181,23 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_hand_slot_priority_source_lock
         COMMAND test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat
     )
+    add_executable(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
+        tests/test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME pass764_dm1_v1_champion_panel_second_leader_hand_slot_priority_source_lock
+        COMMAND test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
+    )
     add_executable(firestaff_dm1_v1_champion_panel_damage_indicator_pc34_compat_test
         tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
@@ -6801,22 +6814,6 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat
-    )
-
-    add_executable(test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
-        tests/test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat.c
-        src/dm1/dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
-        PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
-        COMMAND test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
     )
 
     add_executable(test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat
